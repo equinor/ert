@@ -278,3 +278,12 @@ def print_timing(func):
         print '%s took %0.3f ms' % (func.func_name, (t2-t1)*1000.0)
         return res
     return wrapper
+
+def may_take_a_long_time(func):
+    """A function decorator to show the wait cursor while the function is working."""
+    def wrapper(*arg):
+        QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.WaitCursor))
+        res = func(*arg)
+        QtGui.QApplication.restoreOverrideCursor()
+        return res
+    return wrapper

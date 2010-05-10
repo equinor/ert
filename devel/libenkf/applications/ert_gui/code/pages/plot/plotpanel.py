@@ -7,6 +7,10 @@ import widgets.helpedwidget
 from widgets.helpedwidget import ContentModel
 from pages.config.parameters.parametermodels import DataModel, FieldModel, KeywordModel, SummaryModel
 from pages.plot.plotdata import PlotContextDataFetcher, PlotDataFetcher, enums
+import widgets.util
+import datetime
+import time
+import matplotlib.dates
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -76,6 +80,7 @@ class PlotPanel(QtGui.QWidget):
 
         self.plotViewSettings.setDefaultErrorbarMaxValue(self.plotContextDataFetcher.data.errorbar_max)
 
+    @widgets.util.may_take_a_long_time
     def initParameter(self):
         parameter = self.plotDataFetcher.getParameter()
         self.plotDataFetcher.setState(self.plotDataPanel.getState())
@@ -113,7 +118,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.showErrorbarChk = QtGui.QCheckBox("")
         self.showErrorbarChk.setChecked(plotView.getShowErrorbar())
         self.connect(self.showErrorbarChk, QtCore.SIGNAL("stateChanged(int)"), lambda state : self.plotView.showErrorbar(state == QtCore.Qt.Checked))
-        layout.addRow("Show errorbars", self.showErrorbarChk)
+        layout.addRow("Show errorbars:", self.showErrorbarChk)
 
 
         self.errorbarModes = QtGui.QComboBox()
@@ -130,7 +135,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
 
         self.connect(self.errorbarModes, QtCore.SIGNAL("currentIndexChanged(int)"), errorbar)
-        layout.addRow("Errorbar", self.errorbarModes)
+        layout.addRow("Errorbar:", self.errorbarModes)
 
 
         self.alphaSpn = QtGui.QDoubleSpinBox(self)
@@ -140,10 +145,29 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.alphaSpn.setSingleStep(0.01)
         self.alphaSpn.setValue(plotView.getAlphaValue())
         self.connect(self.alphaSpn, QtCore.SIGNAL('valueChanged(double)'), self.plotView.setAlphaValue)
-        layout.addRow("Blend factor", self.alphaSpn)
+        layout.addRow("Blend factor:", self.alphaSpn)
 
+
+        self.xlimitLower = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.xlimitUpper = QtGui.QSlider(QtCore.Qt.Horizontal)
+
+        self.xlimitUpper.setValue(self.xlimitUpper.maximum())
+
+        self.xlimitUpper.connect(self.xlimitUpper, QtCore.SIGNAL('valueChanged(int)'), self.xlimitLower.setMaximum)
+        self.xlimitUpper.connect(self.xlimitUpper, QtCore.SIGNAL('valueChanged(int)'), self.rangeChanged)
+        self.xlimitUpper.connect(self.xlimitLower, QtCore.SIGNAL('valueChanged(int)'), self.xlimitUpper.setMinimum)
+        self.xlimitUpper.connect(self.xlimitLower, QtCore.SIGNAL('valueChanged(int)'), self.rangeChanged)
+        layout.addRow(self.xlimitLower)
+        layout.addRow(self.xlimitUpper)
 
         self.setLayout(layout)
+
+
+    def rangeChanged(self):
+        xminf = self.xlimitLower.value() / (self.xlimitUpper.maximum() * 1.0)
+        xmaxf = self.xlimitUpper.value() / (self.xlimitUpper.maximum() * 1.0)
+        self.plotView.setXViewFactors(xminf, xmaxf)
+
 
     def setDefaultErrorbarMaxValue(self, errorbar_max):
         self.errorbar_max = errorbar_max
@@ -227,17 +251,17 @@ class PlotParameterPanel(QtGui.QFrame):
         layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
 
         self.keyIndexI = QtGui.QSpinBox()
-        self.keyIndexI.setMinimum(0)
+        self.keyIndexI.setMinimum(1)
 
-        layout.addRow("I:", self.keyIndexI)
+        layout.addRow("i:", self.keyIndexI)
 
         self.keyIndexJ = QtGui.QSpinBox()
-        self.keyIndexJ.setMinimum(0)
-        layout.addRow("J:", self.keyIndexJ)
+        self.keyIndexJ.setMinimum(1)
+        layout.addRow("j:", self.keyIndexJ)
 
         self.keyIndexK = QtGui.QSpinBox()
-        self.keyIndexK.setMinimum(0)
-        layout.addRow("K:", self.keyIndexK)
+        self.keyIndexK.setMinimum(1)
+        layout.addRow("k:", self.keyIndexK)
 
         self.setFieldBounds(1, 1, 1)
 
@@ -245,9 +269,9 @@ class PlotParameterPanel(QtGui.QFrame):
         return widget
 
     def setFieldBounds(self, i, j, k):
-        self.keyIndexI.setMaximum(i - 1)
-        self.keyIndexJ.setMaximum(j - 1)
-        self.keyIndexK.setMaximum(k - 1)
+        self.keyIndexI.setMaximum(i)
+        self.keyIndexJ.setMaximum(j)
+        self.keyIndexK.setMaximum(k)
 
     def getFieldPosition(self):
         return (self.keyIndexI.value(), self.keyIndexJ.value(), self.keyIndexK.value())

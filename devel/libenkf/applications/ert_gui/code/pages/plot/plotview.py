@@ -7,6 +7,8 @@ import time
 import numpy
 from widgets.util import print_timing
 from  pages.plot.plotdata import PlotData
+import widgets
+from matplotlib.dates import AutoDateLocator
 
 class PlotView(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -37,8 +39,7 @@ class PlotView(QtGui.QFrame):
         self.canvas.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         self.axes = self.fig.add_subplot(111)
-
-
+        self.axes.set_xlim()
 
         def onclick(event):
             print 'button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(
@@ -63,10 +64,14 @@ class PlotView(QtGui.QFrame):
         self.errorbar_visible = False
         self.alpha = 0.125
         self.errorbar_limit = 10
+        self.xminf = 0.0
+        self.xmaxf = 1.0
 
     #@print_timing
+    @widgets.util.may_take_a_long_time
     def drawPlot(self):
         self.axes.cla()
+        self.lines = []
 
         name = self.data.getName()
         key_index = self.data.getKeyIndex()
@@ -82,12 +87,12 @@ class PlotView(QtGui.QFrame):
             x = [datetime.date(*time.localtime(t)[0:3]) for t in x]
             y = self.data.y_data[member]
 
-
             x = numpy.array(x)
             y = numpy.array(y)
 
             line, = self.axes.plot_date(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
             line.set_gid(member)
+            self.lines.append(line)
 
 
         if self.errorbar_visible and not self.data.obs_x is None:
@@ -108,17 +113,26 @@ class PlotView(QtGui.QFrame):
                 self.axes.plot_date(x, y + std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
 
 
-        years = matplotlib.dates.YearLocator()   # every year
-        months = matplotlib.dates.MonthLocator()  # every month
-        #yearsFmt = matplotlib.dates.DateFormatter('%b %y')
-        yearsFmt = matplotlib.dates.DateFormatter('%Y')
-        self.axes.xaxis.set_major_locator(years)
+        self.xlimits = self.axes.get_xlim()
+        #self.axes.set_xlim(xlim[0] - 30, xlim[1] + 30)
+
+        #years = matplotlib.dates.YearLocator()   # every year
+#        months = matplotlib.dates.MonthLocator()  # every month
+#        #yearsFmt = matplotlib.dates.DateFormatter('%b %y')
+        yearsFmt = matplotlib.dates.DateFormatter('%b \'%Y')
+        #monthFmt = matplotlib.dates.DateFormatter('%b')
+        #self.axes.xaxis.set_major_locator(years)
         self.axes.xaxis.set_major_formatter(yearsFmt)
-        self.axes.xaxis.set_minor_locator(months)
+#        self.axes.xaxis.set_minor_locator(months)
+        #self.axes.xaxis.set_minor_formatter(monthFmt)
+#
+#        self.axes.xaxis.set_major_locator(AutoDateLocator())
+        #self.axes.xaxis.set_minor_locator(AutoDateLocator())
 
+        self.setXViewFactors(self.xminf, self.xmaxf, False)
+        self.fig.autofmt_xdate()
         self.canvas.draw()
-
-
+        
     def resizeEvent(self, event):
         QtGui.QFrame.resizeEvent(self, event)
         self.canvas.resize(event.size().width(), event.size().height())
@@ -140,8 +154,11 @@ class PlotView(QtGui.QFrame):
             self.alpha = 1.0
         else:
             self.alpha = value
-            
-        self.drawPlot()
+
+        for line in self.lines:
+            line.set_alpha(self.alpha)
+
+        self.canvas.draw()
 
     def getAlphaValue(self):
         return self.alpha
@@ -150,7 +167,22 @@ class PlotView(QtGui.QFrame):
         self.errorbar_limit = limit
         self.drawPlot()
     
+    def setXViewFactors(self, xminf, xmaxf, draw=True):
+        self.xminf = xminf
+        self.xmaxf = xmaxf
+        x_min = self.convertDate(self.data.x_min)
+        x_max = self.convertDate(self.data.x_max)
+        range = x_max - x_min
+        self.axes.set_xlim(x_min + xminf * range - 60, x_min + xmaxf * range + 60)
 
+        if draw:
+            self.canvas.draw()
 
-
+    def convertDate(self, ert_time):
+        if ert_time < 0:
+            ert_time = 0
+        elif ert_time > time.time():
+            ert_time = time.time() + (60 * 60 * 24 * 365 * 10) #ten years into the future
+            
+        return matplotlib.dates.date2num(datetime.date(*time.localtime(ert_time)[0:3]))
 

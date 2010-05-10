@@ -4,6 +4,7 @@ from pages.config.parameters.parametermodels import DataModel, KeywordModel, Fie
 from pages.config.parameters.parameterpanel import Parameter
 import ertwrapper
 import enums
+import sys
 
 class PlotDataFetcher(ContentModel):
 
@@ -55,11 +56,8 @@ class PlotDataFetcher(ContentModel):
 
                 if self.parameter.getType() == FieldModel.TYPE:
                     field_config = ert.enkf.enkf_config_node_get_ref(config_node)
-                    position = "%i,%i,%i" % (key_index[0], key_index[1], key_index[2])
-
-                    print "State:", ert.enkf.field_config_ijk_active(field_config, *key_index), key_index 
-                    if ert.enkf.field_config_ijk_active(field_config, *key_index):
-                        key_index = position
+                    if ert.enkf.field_config_ijk_active(field_config, key_index[0] - 1, key_index[1] - 1, key_index[2] - 1):
+                        key_index = "%i,%i,%i" % (key_index[0], key_index[1], key_index[2])
                     else:
                         return data
 
@@ -68,6 +66,7 @@ class PlotDataFetcher(ContentModel):
                 state_list = [self.state]
                 if self.state == enums.ert_state_enum.BOTH:
                     state_list = [enums.ert_state_enum.FORECAST, enums.ert_state_enum.ANALYZED]
+
 
                 for member in range(0, num_realizations):
                     data.x_data[member] = []
@@ -86,33 +85,37 @@ class PlotDataFetcher(ContentModel):
                                 valid = ertwrapper.c_int()
                                 value = ert.enkf.enkf_node_user_get(node, key_index, ertwrapper.byref(valid))
                                 if valid.value == 1:
+                                    data.checkMaxMin(sim_time)
                                     x_time.append(sim_time)
                                     y.append(value)
                                 else:
                                     print "Not valid: ", key, member, step, key_index
 
-                if not key_index is None:
-                    user_key = "%s:%s" % (key, key_index)
-                else:
-                    user_key = key
-
-                obs_count = ert.enkf.enkf_main_get_observation_count(ert.main, user_key)
-                if obs_count > 0:
-                    obs_x = (ertwrapper.c_long * obs_count)()
-                    obs_y = (ertwrapper.c_double * obs_count)()
-                    obs_std = (ertwrapper.c_double * obs_count)()
-
-                    ert.enkf.enkf_main_get_observations(ert.main, user_key, obs_count, obs_x,  obs_y, obs_std)
-
-                    data.obs_x = obs_x
-                    data.obs_y = obs_y
-                    data.obs_std = obs_std
+                self.getObservations(ert, key, key_index, data)
 
                 ert.enkf.enkf_node_free(node)
 
 
         return data
 
+    def getObservations(self, ert, key, key_index, data):
+        if not key_index is None:
+            user_key = "%s:%s" % (key, key_index)
+        else:
+            user_key = key
+
+        obs_count = ert.enkf.enkf_main_get_observation_count(ert.main, user_key)
+        if obs_count > 0:
+            obs_x = (ertwrapper.c_long * obs_count)()
+            obs_y = (ertwrapper.c_double * obs_count)()
+            obs_std = (ertwrapper.c_double * obs_count)()
+            ert.enkf.enkf_main_get_observations(ert.main, user_key, obs_count, obs_x, obs_y, obs_std)
+            data.obs_x = obs_x
+            data.obs_y = obs_y
+            data.obs_std = obs_std
+
+            data.checkMaxMin(max(obs_x))
+            data.checkMaxMin(min(obs_x))
 
     def fetchContent(self):
         self.data = self.getFromModel()
@@ -136,6 +139,13 @@ class PlotData:
         self.obs_x = None
         self.obs_y = None
         self.obs_std = None
+
+        self.x_min = sys.maxint
+        self.x_max = -sys.maxint
+
+    def checkMaxMin(self, value):
+        self.x_min = min(value, self.x_min)
+        self.x_max = max(value, self.x_max)
 
     def getName(self):
         return self.name
