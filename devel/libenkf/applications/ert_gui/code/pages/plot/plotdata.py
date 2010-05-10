@@ -149,6 +149,8 @@ class PlotContextDataFetcher(ContentModel):
         ert.prototype("long enkf_config_node_get_ref(long)")
         ert.prototype("long gen_kw_config_alloc_name_list(long)")
 
+        ert.prototype("int plot_config_get_errorbar_max(long)")
+
 
     #@print_timing
     def getter(self, ert):
@@ -167,7 +169,9 @@ class PlotContextDataFetcher(ContentModel):
                 data.parameters.append(p)
                 p.setData(None)
             elif type == FieldModel.TYPE:
-                data.parameters.append(Parameter(key, FieldModel.TYPE))
+                p = Parameter(key, FieldModel.TYPE)
+                data.parameters.append(p)
+                p.setData("0,0,0")
             elif type == DataModel.TYPE:
                 data.parameters.append(Parameter(key, DataModel.TYPE))
             elif type == KeywordModel.TYPE:
@@ -177,6 +181,8 @@ class PlotContextDataFetcher(ContentModel):
                 s = ert.enkf.gen_kw_config_alloc_name_list(gen_kw_config)
                 data.key_index_list[key] = ert.getStringList(s, free_after_use=True)
                 p.setData(data.key_index_list[key][0])
+
+        data.errorbar_max = ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
 
         return data
 
@@ -189,6 +195,7 @@ class PlotContextData:
         self.keys = None
         self.parameters = None
         self.key_index_list = {}
+        self.errorbar_max = 0
 
     def getKeyIndexList(self, key):
         if self.key_index_list.has_key(key):
