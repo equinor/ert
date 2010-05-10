@@ -39,13 +39,17 @@ class SimulationItem(QtGui.QListWidgetItem):
 
 class SimulationItemDelegate(QtGui.QStyledItemDelegate):
     """The delegate that renders the custom SimulationListItems"""
-    waiting = QtGui.QColor(164, 164, 255)
-    running = QtGui.QColor(200, 255, 200)
-    failed = QtGui.QColor(255, 200, 200)
-    unknown = QtGui.QColor(255, 200, 128)
+    waiting = QtGui.QColor(164 , 164 , 255)
+    pending = QtGui.QColor(164 , 200 , 255)
+    running = QtGui.QColor(200 , 255 , 200)
+    failed  = QtGui.QColor(255 , 200 , 200)
+    
     userkilled = QtGui.QColor(255, 255, 200)
-    finished = QtGui.QColor(200, 200, 200)
-    notactive = QtGui.QColor(255, 255, 255)
+    finished   = QtGui.QColor(200, 200, 200)
+    notactive  = QtGui.QColor(255, 255, 255)
+    unknown    = running    # Loading + the intermidate states.
+
+    #Cool orange color: QtGui.QColor(255, 200, 128)   
 
     size = QtCore.QSize(32, 18)
 
@@ -67,6 +71,8 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
 
         if data.isWaiting():
             color = self.waiting
+        elif data.isPending():
+            color = self.pending
         elif data.isRunning():
             color = self.running
         elif data.finishedSuccessfully():
@@ -418,7 +424,11 @@ class Simulation:
 
     def isWaiting(self):
         """Is the job waiting?"""
-        return self.checkStatus(ert_job_status_type.WAITING) or self.checkStatus(ert_job_status_type.PENDING)
+        return self.checkStatus(ert_job_status_type.WAITING)
+
+    def isPending(self):
+        """Is the job PENDING in the LSF queue?"""
+        return self.checkStatus(ert_job_status_type.PENDING)
 
     def isRunning(self):
         """Is the job running?"""
