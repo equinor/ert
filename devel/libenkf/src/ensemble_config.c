@@ -655,12 +655,12 @@ void ensemble_config_init_internalization( ensemble_config_type * config ) {
 */
 
 
-int ensemble_config_get_observations( const ensemble_config_type * config , const enkf_obs_type * enkf_obs , const char * user_key , time_t * obs_time , double * y , double * std) {
+int ensemble_config_get_observations( const ensemble_config_type * config , const enkf_obs_type * enkf_obs , const char * user_key , int obs_count , time_t * obs_time , double * y , double * std) {
   int num_obs = 0;
   char * index_key;
   const enkf_config_node_type * config_node = ensemble_config_user_get_node( config , user_key , &index_key);
   if (config_node != NULL) {
-    num_obs = enkf_config_node_load_obs( config_node , enkf_obs , index_key , obs_time , y , std);
+    num_obs = enkf_config_node_load_obs( config_node , enkf_obs , index_key , obs_count , obs_time , y , std);
     util_safe_free( index_key );
   } 
 

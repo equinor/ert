@@ -336,7 +336,7 @@ int enkf_config_node_get_num_obs( const enkf_config_node_type * config_node ) {
    This checks the index_key - and sums up over all the time points of the observation.
 */
 
-int enkf_config_node_load_obs( const enkf_config_node_type * config_node , const enkf_obs_type * enkf_obs ,const char * key_index , time_t * sim_time , double * y , double * std) {
+int enkf_config_node_load_obs( const enkf_config_node_type * config_node , const enkf_obs_type * enkf_obs ,const char * key_index , int obs_count , time_t * _sim_time , double * _y , double * _std) {
   enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
   int num_obs = 0;
   int iobs;
@@ -367,15 +367,32 @@ int enkf_config_node_load_obs( const enkf_config_node_type * config_node , const
           obs_vector_user_get( obs_vector , key_index , report_step , &value , &std1 , &valid);
         
         if (valid) {
-          if (sim_time != NULL) {
-            sim_time[num_obs] = obs_vector_iget_obs_time( obs_vector , report_step );
-            y[num_obs]        = value;
-            std[num_obs]      = std1;
+          if (obs_count > 0) {
+            _sim_time[num_obs] = obs_vector_iget_obs_time( obs_vector , report_step );
+            _y[num_obs]        = value;
+            _std[num_obs]      = std1;
           }
           num_obs++;
         }
       }
     }
+  }
+
+  /* Sorting the observations in time order. */
+  if (obs_count > 0) {
+    double_vector_type * y        = double_vector_alloc_shared_wrapper( 0 , 0 , _y        , obs_count );
+    double_vector_type * std      = double_vector_alloc_shared_wrapper( 0 , 0 , _std      , obs_count );
+    time_t_vector_type * sim_time = time_t_vector_alloc_shared_wrapper( 0 , 0 , _sim_time , obs_count );
+    int * sort_perm               = time_t_vector_alloc_sort_perm( sim_time );
+    
+    time_t_vector_permute( sim_time , sort_perm );
+    double_vector_permute( y        , sort_perm );
+    double_vector_permute( std      , sort_perm );
+    
+    free( sort_perm );
+    double_vector_free( y );
+    double_vector_free( std );
+    time_t_vector_free( sim_time );
   }
   return num_obs;
 }

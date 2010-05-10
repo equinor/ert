@@ -2840,13 +2840,13 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 
 /*****************************************************************/
 
-int enkf_main_get_observations( const enkf_main_type * enkf_main, const char * user_key , time_t * obs_time , double * y , double * std) {
-  return ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , obs_time , y , std);
+void enkf_main_get_observations( const enkf_main_type * enkf_main, const char * user_key , int obs_count , time_t * obs_time , double * y , double * std) {
+  ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , obs_count , obs_time , y , std);
 }
 
 
 int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const char * user_key ) {
-  return ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , NULL , NULL , NULL);
+  return ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , 0 , NULL , NULL , NULL);
 }
 
 
