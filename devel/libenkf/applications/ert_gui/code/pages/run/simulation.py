@@ -3,6 +3,7 @@ from PyQt4 import QtGui, QtCore
 from widgets.util import resourceIcon, resourceStateIcon, shortTime
 import time
 import ertwrapper
+from enums import ert_job_status_type
 
 
 class SimulationList(QtGui.QListWidget):
@@ -377,8 +378,7 @@ class SimulationPanelController:
             self.view.runningLabel.setText(str(waitingTime) + " secs")
             self.view.waitingLabel.setText(str(runningTime) + " secs")
 
-            status = Simulation.job_status_type[sim.status]
-            status = status[10:]
+            status = sim.status.name[10:]
             self.view.stateLabel.setText(status)
 
 
@@ -402,61 +402,11 @@ class SimulationPanelController:
 
 
 class Simulation:
-    """An object that represents a single job"""
-    # These "enum" values are all copies from the header file "basic_queue_driver.h".
 
-    NOT_ACTIVE  =    1
-    LOADING     =    2
-    WAITING     =    4
-    PENDING     =    8
-    RUNNING     =   16
-    DONE        =   32
-    EXIT        =   64
-    RUN_OK      =  128
-    RUN_FAIL    =  256
-    ALL_OK      =  512
-    ALL_FAIL    = 1024
-    USER_KILLED = 2048
-    USER_EXIT   = 4096
-
-#
-# Observe that the status strings are available from the function: libjob_queue.job_queue_status_name( status_code )
-#
-
-
-    job_status_type_reverse = {"JOB_QUEUE_NOT_ACTIVE" : NOT_ACTIVE,
-                               "JOB_QUEUE_LOADING" : LOADING,
-                               "JOB_QUEUE_WAITING" : WAITING,
-                               "JOB_QUEUE_PENDING" : PENDING,
-                               "JOB_QUEUE_RUNNING" : RUNNING,
-                               "JOB_QUEUE_DONE" : DONE,
-                               "JOB_QUEUE_EXIT" : EXIT,
-                               "JOB_QUEUE_RUN_OK" : RUN_OK,
-                               "JOB_QUEUE_RUN_FAIL" : RUN_FAIL,
-                               "JOB_QUEUE_ALL_OK" : ALL_OK,
-                               "JOB_QUEUE_ALL_FAIL" : ALL_FAIL,
-                               "JOB_QUEUE_USER_KILLED" : USER_KILLED}
-
-    job_status_type = {NOT_ACTIVE : "JOB_QUEUE_NOT_ACTIVE",
-                       LOADING : "JOB_QUEUE_LOADING",
-                       WAITING : "JOB_QUEUE_WAITING",
-                       PENDING : "JOB_QUEUE_PENDING",
-                       RUNNING : "JOB_QUEUE_RUNNING",
-                       DONE : "JOB_QUEUE_DONE",
-                       EXIT : "JOB_QUEUE_EXIT",
-                       RUN_OK : "JOB_QUEUE_RUN_OK",
-                       RUN_FAIL : "JOB_QUEUE_RUN_FAIL",
-                       ALL_OK : "JOB_QUEUE_ALL_OK",
-                       ALL_FAIL : "JOB_QUEUE_ALL_FAIL",
-                       USER_KILLED : "JOB_QUEUE_USER_KILLED"}
-    
-    
-
-    
 
     def __init__(self, name, statistics=None):
         self.name = name
-        self.status = Simulation.NOT_ACTIVE
+        self.status = ert_job_status_type.NOT_ACTIVE
         self.statuslog = []
         self.statistics = statistics
 
@@ -468,27 +418,27 @@ class Simulation:
 
     def isWaiting(self):
         """Is the job waiting?"""
-        return self.checkStatus(Simulation.WAITING) or self.checkStatus(Simulation.PENDING)
+        return self.checkStatus(ert_job_status_type.WAITING) or self.checkStatus(ert_job_status_type.PENDING)
 
     def isRunning(self):
         """Is the job running?"""
-        return self.checkStatus(Simulation.RUNNING)
+        return self.checkStatus(ert_job_status_type.RUNNING)
 
     def hasFailed(self):
         """Has the job failed?"""
-        return self.checkStatus(Simulation.ALL_FAIL)
+        return self.checkStatus(ert_job_status_type.ALL_FAIL)
 
     def notActive(self):
         """Is the job active?"""
-        return self.checkStatus(Simulation.NOT_ACTIVE)
+        return self.checkStatus(ert_job_status_type.NOT_ACTIVE)
 
     def finishedSuccessfully(self):
         """Has  the job finished?"""
-        return self.checkStatus(Simulation.ALL_OK)
+        return self.checkStatus(ert_job_status_type.ALL_OK)
 
     def isUserKilled(self):
         """Has the job been killed by the user?"""
-        return self.checkStatus(Simulation.USER_KILLED) or self.checkStatus(Simulation.USER_EXIT)
+        return self.checkStatus(ert_job_status_type.USER_KILLED) or self.checkStatus(ert_job_status_type.USER_EXIT)
 
 
     def setStatus(self, status):
@@ -496,7 +446,7 @@ class Simulation:
         if len(self.statuslog) == 0 or not self.statuslog[len(self.statuslog) - 1] == status:
             self.statuslog.append(status)
 
-            if status == Simulation.ALL_OK:
+            if status == ert_job_status_type.ALL_OK:
                 self.setFinishedTime(int(time.time()))
 
         self.status = status

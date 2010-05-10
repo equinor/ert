@@ -7,6 +7,7 @@ import threading
 import time
 import ertwrapper
 from widgets.util import getItemsFromList
+from enums import ert_job_status_type
 
 class SimulationsDialog(QtGui.QDialog):
     """A dialog that shows the progress of a simulation"""
@@ -199,9 +200,9 @@ class SimulationsDialogController:
                     state = ert.enkf.enkf_main_iget_state(ert.main, member)
                     status = ert.enkf.enkf_state_get_run_status(state)
 
-                    simulations[member].simulation.setStatus(status)
+                    simulations[member].simulation.setStatus(ert_job_status_type.resolveValue(status))
 
-                    if not status == Simulation.NOT_ACTIVE:
+                    if not ert_job_status_type.NOT_ACTIVE == status:
                         start_time = ert.enkf.enkf_state_get_start_time(state)
                         submit_time = ert.enkf.enkf_state_get_submit_time(state)
 
