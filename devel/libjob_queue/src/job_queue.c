@@ -330,10 +330,10 @@ static void job_queue_node_set_status(job_queue_node_type * node, job_status_typ
 }
 
 static void job_queue_node_free_data(job_queue_node_type * node) {
-  util_safe_free(node->run_path);  node->run_path  = NULL;
-  util_safe_free(node->job_name);  node->job_name  = NULL;
-  util_safe_free(node->exit_file); node->exit_file = NULL;
-  util_safe_free(node->ok_file);   node->ok_file   = NULL;
+  util_safe_free(node->run_path);  
+  util_safe_free(node->job_name);  
+  util_safe_free(node->exit_file); 
+  util_safe_free(node->ok_file);   
   if (node->job_data != NULL) 
     util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }
@@ -924,7 +924,11 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
     }
     if (verbose) 
       printf("\n");
+    /*
+      Be ready for the next run 
+    */
     queue->user_exit = false;
+    queue->pause_on  = false;
   }
   job_queue_finalize( queue );
   pthread_mutex_unlock( &queue->run_mutex );
@@ -954,6 +958,18 @@ void * job_queue_run_jobs__(void * __arg_pack) {
   return NULL;
 }
 
+
+
+
+/**
+   This initializes the non-driver-spesific fields of a job, i.e. the
+   name, runpath and so on, and sets the job->status ==
+   JOB_QUEUE_WAITING. This status means the job is ready to be
+   submitted proper to one of the drivers (when a slot is ready).
+
+   When submitted the job will get (driver specific) job_data != NULL
+   and status SUBMITTED.
+*/
 
 
 void job_queue_insert_job(job_queue_type * queue , const char * run_path , const char * job_name , int job_index , const void * job_arg) {
