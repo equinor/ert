@@ -22,11 +22,11 @@ class PlotPanel(QtGui.QWidget):
         self.plotList.setMinimumWidth(150)
 
         self.plotDataPanel = PlotParameterPanel(self, 150)
-        self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
-        self.connect(self.plotDataPanel.stateCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.stateChanged)
-        self.connect(self.plotDataPanel.keyIndexI, QtCore.SIGNAL('valueChanged(int)'), lambda i : self.fieldPositionChanged(self.plotDataPanel.getFieldPosition()))
-        self.connect(self.plotDataPanel.keyIndexJ, QtCore.SIGNAL('valueChanged(int)'), lambda i : self.fieldPositionChanged(self.plotDataPanel.getFieldPosition()))
-        self.connect(self.plotDataPanel.keyIndexK, QtCore.SIGNAL('valueChanged(int)'), lambda i : self.fieldPositionChanged(self.plotDataPanel.getFieldPosition()))
+        self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.parameterChanged)
+        self.connect(self.plotDataPanel.stateCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.parameterChanged)
+        self.connect(self.plotDataPanel.keyIndexI, QtCore.SIGNAL('valueChanged(int)'), self.parameterChanged)
+        self.connect(self.plotDataPanel.keyIndexJ, QtCore.SIGNAL('valueChanged(int)'), self.parameterChanged)
+        self.connect(self.plotDataPanel.keyIndexK, QtCore.SIGNAL('valueChanged(int)'), self.parameterChanged)
         parameterLayout.addWidget(self.plotList)
         parameterLayout.addWidget(self.plotDataPanel)
 
@@ -51,21 +51,19 @@ class PlotPanel(QtGui.QWidget):
         self.plot.drawPlot()
 
     def select(self, current, previous):
-        self.plotDataFetcher.setParameter(current)
-        self.plotDataFetcher.setState(self.plotDataPanel.getState())
-        self.plotDataFetcher.fetchContent()
-
-        self.plotDataPanel.activatePanel(current.getType().name)
 
         if current.getType() == KeywordModel.TYPE:
-            self.disconnect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
+            self.disconnect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.parameterChanged)
             self.plotDataPanel.keyIndexCombo.clear()
             self.plotDataPanel.keyIndexCombo.addItems(self.plotContextDataFetcher.data.getKeyIndexList(current.getName()))
-            self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
+            self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.parameterChanged)
         elif current.getType() == FieldModel.TYPE:
-            #self.plotDataPanel.setFieldBounds()
-            pass
+            bounds = self.plotContextDataFetcher.data.field_bounds
+            self.plotDataPanel.setFieldBounds(*bounds)
 
+        self.plotDataFetcher.setParameter(current)
+        self.initParameter()
+        self.plotDataPanel.activatePanel(current.getType().name)
         self.drawPlot()
 
     def updateList(self):
@@ -78,24 +76,22 @@ class PlotPanel(QtGui.QWidget):
 
         self.plotViewSettings.setDefaultErrorbarMaxValue(self.plotContextDataFetcher.data.errorbar_max)
 
-    def stateChanged(self):
-        self.plotDataFetcher.setState(self.plotDataPanel.getState())
-        self.plotDataFetcher.fetchContent()
-        self.drawPlot()
-
-    def fieldPositionChanged(self, position):
+    def initParameter(self):
         parameter = self.plotDataFetcher.getParameter()
-        pos = "%i,%i,%i" % (position[0], position[1], position[2])
-        parameter.setData(pos)
         self.plotDataFetcher.setState(self.plotDataPanel.getState())
-        self.plotDataFetcher.fetchContent()
-        self.drawPlot()
 
-    def keyIndexChanged(self, key):
-        parameter = self.plotDataFetcher.getParameter()
-        parameter.setData(str(key))
-        self.plotDataFetcher.setState(self.plotDataPanel.getState())
+        if parameter.getType() == FieldModel.TYPE:
+            position = self.plotDataPanel.getFieldPosition()
+            parameter.setData(position)
+        elif parameter.getType() == KeywordModel.TYPE:
+            parameter.setData(self.plotDataPanel.getKeyIndex())
+        else:
+            parameter.setData(None)
+
         self.plotDataFetcher.fetchContent()
+
+    def parameterChanged(self):
+        self.initParameter()
         self.drawPlot()
 
 
@@ -243,15 +239,15 @@ class PlotParameterPanel(QtGui.QFrame):
         self.keyIndexK.setMinimum(0)
         layout.addRow("K:", self.keyIndexK)
 
-        self.setFieldBounds(10, 10, 10)
+        self.setFieldBounds(1, 1, 1)
 
         widget.setLayout(layout)
         return widget
 
     def setFieldBounds(self, i, j, k):
-        self.keyIndexI.setMaximum(i)
-        self.keyIndexJ.setMaximum(j)
-        self.keyIndexK.setMaximum(k)
+        self.keyIndexI.setMaximum(i - 1)
+        self.keyIndexJ.setMaximum(j - 1)
+        self.keyIndexK.setMaximum(k - 1)
 
     def getFieldPosition(self):
         return (self.keyIndexI.value(), self.keyIndexJ.value(), self.keyIndexK.value())
@@ -259,3 +255,6 @@ class PlotParameterPanel(QtGui.QFrame):
     def getState(self):
         selectedName = str(self.stateCombo.currentText())
         return enums.ert_state_enum.resolveName(selectedName)
+
+    def getKeyIndex(self):
+        return str(self.keyIndexCombo.currentText())
