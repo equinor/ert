@@ -45,9 +45,9 @@ class SimulationsDialog(QtGui.QDialog):
 
         legendLayout = QtGui.QHBoxLayout()
         legendLayout.addLayout(Legend("Not active", SimulationItemDelegate.notactive))
-        legendLayout.addLayout(Legend("Waiting/Pending", SimulationItemDelegate.waiting))
+        legendLayout.addLayout(Legend("Waiting", SimulationItemDelegate.waiting))
+        legendLayout.addLayout(Legend("Pending", SimulationItemDelegate.pending))
         legendLayout.addLayout(Legend("Running", SimulationItemDelegate.running))
-        legendLayout.addLayout(Legend("Loading/etc.", SimulationItemDelegate.unknown))
         legendLayout.addLayout(Legend("User killed", SimulationItemDelegate.userkilled))
         legendLayout.addLayout(Legend("Failed", SimulationItemDelegate.failed))
         legendLayout.addLayout(Legend("Finished", SimulationItemDelegate.finished))
