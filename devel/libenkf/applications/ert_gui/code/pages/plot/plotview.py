@@ -60,7 +60,9 @@ class PlotView(QtGui.QFrame):
 
 
 
-        self.errorbarVisible = False
+        self.errorbar_visible = False
+        self.alpha = 0.125
+        self.errorbar_limit = 10
 
     #@print_timing
     def drawPlot(self):
@@ -84,12 +86,11 @@ class PlotView(QtGui.QFrame):
             x = numpy.array(x)
             y = numpy.array(y)
 
-            #line, = self.axes.plot_date(x, y, "b-", color=self.blue, alpha=0.075, picker=2, zorder=100 + member) #list of lines returned (we only add one)
-            line, = self.axes.plot_date(x, y, "b-", color=self.blue, alpha=0.125, picker=2, zorder=100 + member) #list of lines returned (we only add one)
+            line, = self.axes.plot_date(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
             line.set_gid(member)
 
 
-        if not self.data.obs_x is None:
+        if self.errorbar_visible and not self.data.obs_x is None:
             x = self.data.obs_x
             x = [datetime.date(*time.localtime(t)[0:3]) for t in x]
             y = self.data.obs_y
@@ -99,14 +100,13 @@ class PlotView(QtGui.QFrame):
             y = numpy.array(y)
             std = numpy.array(std)
 
-            if self.errorbarVisible:
-                self.axes.errorbar(x, y, std, fmt=None, ecolor=self.orange, zorder=10) 
-            #line, = self.axes.plot_date(x, y, "yo", picker=2) #list of lines returned (we only add one)
-            #self.axes.errorbar(x, y, std, fmt=None, ecolor=(0.0, 0.0, 0.0), barsabove=True, zorder=1000) #list of lines returned (we only add one)
+            if len(x) <= self.errorbar_limit:
+                self.axes.errorbar(x, y, std, fmt=None, ecolor=self.orange, zorder=10)
+            else:
+                self.axes.plot_date(x, y, "-", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                self.axes.plot_date(x, y - std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                self.axes.plot_date(x, y + std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
 
-            #self.axes.plot_date(x, y, "-", color=(1.0, 0.0, 0.0), alpha=0.75) #list of lines returned (we only add one)
-            #self.axes.plot_date(x, y - std, "--", color=(1.0, 0.0, 0.0), alpha=0.75) #list of lines returned (we only add one)
-            #self.axes.plot_date(x, y + std, "--", color=(1.0, 0.0, 0.0), alpha=0.75) #list of lines returned (we only add one)
 
         years = matplotlib.dates.YearLocator()   # every year
         months = matplotlib.dates.MonthLocator()  # every month
@@ -126,8 +126,28 @@ class PlotView(QtGui.QFrame):
     def setData(self, data):
         self.data = data
 
-    def showErrorbar(self, errorbarVisible=False):
-        self.errorbarVisible = errorbarVisible
+    def showErrorbar(self, errorbar_visible=False):
+        self.errorbar_visible = errorbar_visible
+        self.drawPlot()
+
+    def getShowErrorbar(self):
+        return self.errorbar_visible
+
+    def setAlphaValue(self, value):
+        if value < 0.0:
+            self.alpha = 0.0
+        elif value > 1.0:
+            self.alpha = 1.0
+        else:
+            self.alpha = value
+            
+        self.drawPlot()
+
+    def getAlphaValue(self):
+        return self.alpha
+
+    def setErrorbarLimit(self, limit):
+        self.errorbar_limit = limit
         self.drawPlot()
     
 

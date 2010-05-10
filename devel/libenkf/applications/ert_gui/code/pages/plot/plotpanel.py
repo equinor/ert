@@ -24,6 +24,9 @@ class PlotPanel(QtGui.QWidget):
         self.plotDataPanel = PlotParameterPanel(self, 150)
         self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
         self.connect(self.plotDataPanel.stateCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.stateChanged)
+        self.connect(self.plotDataPanel.keyIndexI, QtCore.SIGNAL('valueChanged(int)'), lambda i : self.fieldPositionChanged(self.plotDataPanel.getFieldPosition()))
+        self.connect(self.plotDataPanel.keyIndexJ, QtCore.SIGNAL('valueChanged(int)'), lambda i : self.fieldPositionChanged(self.plotDataPanel.getFieldPosition()))
+        self.connect(self.plotDataPanel.keyIndexK, QtCore.SIGNAL('valueChanged(int)'), lambda i : self.fieldPositionChanged(self.plotDataPanel.getFieldPosition()))
         parameterLayout.addWidget(self.plotList)
         parameterLayout.addWidget(self.plotDataPanel)
 
@@ -31,13 +34,16 @@ class PlotPanel(QtGui.QWidget):
         ContentModel.modelConnect('initialized()', self.updateList)
         #todo: listen to ensemble changes!
 
-        plotLayout.addLayout(parameterLayout)
-        plotLayout.addWidget(self.plot)
-        plotLayout.addWidget(PlotViewSettingsPanel(plotView=self.plot, width=150))
-        self.setLayout(plotLayout)
 
         self.plotDataFetcher = PlotDataFetcher()
         self.plotContextDataFetcher = PlotContextDataFetcher()
+
+
+        plotLayout.addLayout(parameterLayout)
+        plotLayout.addWidget(self.plot)
+        self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=150)
+        plotLayout.addWidget(self.plotViewSettings)
+        self.setLayout(plotLayout)
 
 
     def drawPlot(self):
@@ -56,6 +62,9 @@ class PlotPanel(QtGui.QWidget):
             self.plotDataPanel.keyIndexCombo.clear()
             self.plotDataPanel.keyIndexCombo.addItems(self.plotContextDataFetcher.data.getKeyIndexList(current.getName()))
             self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
+        elif current.getType() == FieldModel.TYPE:
+            #self.plotDataPanel.setFieldBounds()
+            pass
 
         self.drawPlot()
 
@@ -67,7 +76,17 @@ class PlotPanel(QtGui.QWidget):
 
         self.plotList.sortItems()
 
+        self.plotViewSettings.setDefaultErrorbarMaxValue(self.plotContextDataFetcher.data.errorbar_max)
+
     def stateChanged(self):
+        self.plotDataFetcher.setState(self.plotDataPanel.getState())
+        self.plotDataFetcher.fetchContent()
+        self.drawPlot()
+
+    def fieldPositionChanged(self, position):
+        parameter = self.plotDataFetcher.getParameter()
+        pos = "%i,%i,%i" % (position[0], position[1], position[2])
+        parameter.setData(pos)
         self.plotDataFetcher.setState(self.plotDataPanel.getState())
         self.plotDataFetcher.fetchContent()
         self.drawPlot()
@@ -93,12 +112,47 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.plotView = plotView
 
         layout = QtGui.QFormLayout()
+        layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
 
-        self.showErrorbarChk = QtGui.QCheckBox("Show errorbar")
+        self.showErrorbarChk = QtGui.QCheckBox("")
+        self.showErrorbarChk.setChecked(plotView.getShowErrorbar())
         self.connect(self.showErrorbarChk, QtCore.SIGNAL("stateChanged(int)"), lambda state : self.plotView.showErrorbar(state == QtCore.Qt.Checked))
-        layout.addRow(self.showErrorbarChk)
+        layout.addRow("Show errorbars", self.showErrorbarChk)
+
+
+        self.errorbarModes = QtGui.QComboBox()
+        errorbarItems = ["Auto", "Errorbar", "Errorline"]
+        self.errorbarModes.addItems(errorbarItems)
+        self.errorbar_max = -1
+        def errorbar(index):
+            if index == 0: #auto
+                self.plotView.setErrorbarLimit(self.errorbar_max)
+            elif index == 1: #only show show errorbars
+                self.plotView.setErrorbarLimit(10000)
+            else: #only show error lines
+                self.plotView.setErrorbarLimit(0)
+
+
+        self.connect(self.errorbarModes, QtCore.SIGNAL("currentIndexChanged(int)"), errorbar)
+        layout.addRow("Errorbar", self.errorbarModes)
+
+
+        self.alphaSpn = QtGui.QDoubleSpinBox(self)
+        self.alphaSpn.setMinimum(0.0)
+        self.alphaSpn.setMaximum(1.0)
+        self.alphaSpn.setDecimals(3)
+        self.alphaSpn.setSingleStep(0.01)
+        self.alphaSpn.setValue(plotView.getAlphaValue())
+        self.connect(self.alphaSpn, QtCore.SIGNAL('valueChanged(double)'), self.plotView.setAlphaValue)
+        layout.addRow("Blend factor", self.alphaSpn)
+
 
         self.setLayout(layout)
+
+    def setDefaultErrorbarMaxValue(self, errorbar_max):
+        self.errorbar_max = errorbar_max
+        if self.errorbarModes.currentIndex == 0: #auto
+            self.plotView.setErrorbarLimit(errorbar_max)
 
 
 class PlotParameterPanel(QtGui.QFrame):
@@ -117,9 +171,11 @@ class PlotParameterPanel(QtGui.QFrame):
 
         self.summaryPanel = self.createSummaryPanel()
         self.keywordPanel = self.createKeywordPanel()
+        self.fieldPanel = self.createFieldPanel()
 
         self.stack.addWidget(self.summaryPanel)
         self.stack.addWidget(self.keywordPanel)
+        self.stack.addWidget(self.fieldPanel)
 
         comboLayout, self.stateCombo = self.createStateCombo()
 
@@ -134,6 +190,8 @@ class PlotParameterPanel(QtGui.QFrame):
             self.stack.setCurrentWidget(self.summaryPanel)
         elif parameter_type_name == KeywordModel.TYPE.name:
             self.stack.setCurrentWidget(self.keywordPanel)
+        elif parameter_type_name == FieldModel.TYPE.name:
+            self.stack.setCurrentWidget(self.fieldPanel)
         else:
             print "Unknown parametertype"
 
@@ -165,6 +223,38 @@ class PlotParameterPanel(QtGui.QFrame):
         layout.addRow("Key index:", self.keyIndexCombo)
         widget.setLayout(layout)
         return widget
+
+    def createFieldPanel(self):
+        widget = QtGui.QWidget()
+        layout = QtGui.QFormLayout()
+        layout.setMargin(0)
+        layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
+
+        self.keyIndexI = QtGui.QSpinBox()
+        self.keyIndexI.setMinimum(0)
+
+        layout.addRow("I:", self.keyIndexI)
+
+        self.keyIndexJ = QtGui.QSpinBox()
+        self.keyIndexJ.setMinimum(0)
+        layout.addRow("J:", self.keyIndexJ)
+
+        self.keyIndexK = QtGui.QSpinBox()
+        self.keyIndexK.setMinimum(0)
+        layout.addRow("K:", self.keyIndexK)
+
+        self.setFieldBounds(10, 10, 10)
+
+        widget.setLayout(layout)
+        return widget
+
+    def setFieldBounds(self, i, j, k):
+        self.keyIndexI.setMaximum(i)
+        self.keyIndexJ.setMaximum(j)
+        self.keyIndexK.setMaximum(k)
+
+    def getFieldPosition(self):
+        return (self.keyIndexI.value(), self.keyIndexJ.value(), self.keyIndexK.value())
 
     def getState(self):
         selectedName = str(self.stateCombo.currentText())
