@@ -424,7 +424,7 @@ class Simulation:
 
     def isWaiting(self):
         """Is the job waiting?"""
-        return self.checkStatus(ert_job_status_type.WAITING)
+        return self.checkStatus(ert_job_status_type.WAITING) or self.checkStatus(ert_job_status_type.SUBMITTED)
 
     def isPending(self):
         """Is the job PENDING in the LSF queue?"""

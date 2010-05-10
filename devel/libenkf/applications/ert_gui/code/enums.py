@@ -86,6 +86,7 @@ class ert_job_status_type(enum):
     NOT_ACTIVE  = None
     LOADING     = None
     WAITING     = None
+    SUBMITTED   = None
     PENDING     = None
     RUNNING     = None
     DONE        = None
@@ -100,16 +101,17 @@ class ert_job_status_type(enum):
 ert_job_status_type.NOT_ACTIVE = ert_job_status_type("JOB_QUEUE_NOT_ACTIVE", 1)
 ert_job_status_type.LOADING = ert_job_status_type("JOB_QUEUE_LOADING", 2)
 ert_job_status_type.WAITING = ert_job_status_type("JOB_QUEUE_WAITING", 4)
-ert_job_status_type.PENDING = ert_job_status_type("JOB_QUEUE_PENDING", 8)
-ert_job_status_type.RUNNING = ert_job_status_type("JOB_QUEUE_RUNNING", 16)
-ert_job_status_type.DONE = ert_job_status_type("JOB_QUEUE_DONE", 32)
-ert_job_status_type.EXIT = ert_job_status_type("JOB_QUEUE_EXIT", 64)
-ert_job_status_type.RUN_OK = ert_job_status_type("JOB_QUEUE_RUN_OK", 128)
-ert_job_status_type.RUN_FAIL = ert_job_status_type("JOB_QUEUE_RUN_FAIL", 256)
-ert_job_status_type.ALL_OK = ert_job_status_type("JOB_QUEUE_ALL_OK", 512)
-ert_job_status_type.ALL_FAIL = ert_job_status_type("JOB_QUEUE_ALL_FAIL", 1024)
-ert_job_status_type.USER_KILLED = ert_job_status_type("JOB_QUEUE_USER_KILLED", 2048)
-ert_job_status_type.USER_EXIT = ert_job_status_type("JOB_QUEUE_USER_EXIT", 4096)
+ert_job_status_type.SUBMITTED = ert_job_status_type("JOB_QUEUE_SUBMITTED", 8)
+ert_job_status_type.PENDING = ert_job_status_type("JOB_QUEUE_PENDING", 16)
+ert_job_status_type.RUNNING = ert_job_status_type("JOB_QUEUE_RUNNING", 32)
+ert_job_status_type.DONE = ert_job_status_type("JOB_QUEUE_DONE", 64)
+ert_job_status_type.EXIT = ert_job_status_type("JOB_QUEUE_EXIT", 128)
+ert_job_status_type.RUN_OK = ert_job_status_type("JOB_QUEUE_RUN_OK", 256)
+ert_job_status_type.RUN_FAIL = ert_job_status_type("JOB_QUEUE_RUN_FAIL", 512)
+ert_job_status_type.ALL_OK = ert_job_status_type("JOB_QUEUE_ALL_OK", 1024)
+ert_job_status_type.ALL_FAIL = ert_job_status_type("JOB_QUEUE_ALL_FAIL", 2048)
+ert_job_status_type.USER_KILLED = ert_job_status_type("JOB_QUEUE_USER_KILLED", 4096)
+ert_job_status_type.USER_EXIT = ert_job_status_type("JOB_QUEUE_USER_EXIT", 8192)
 
 
 #print enum._enums

@@ -14,18 +14,19 @@ typedef enum { NULL_DRIVER  = 0,
 typedef enum {JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in external query routines - for jobs which are (currently) not active. */
               JOB_QUEUE_LOADING       =    2 ,   /* This value is used by external routines. Not used in the libjob_queue implementation. */
 	      JOB_QUEUE_WAITING       =    4 ,   /* A node which is waiting in the internal queue. */
-	      JOB_QUEUE_PENDING       =    8 ,   /* A node which is pending - a status returned by the external system. I.e LSF */
-	      JOB_QUEUE_RUNNING       =   16 ,   /* The job is running */
-	      JOB_QUEUE_DONE          =   32 ,   /* The job is done - but we have not yet checked if the target file is produced */
-	      JOB_QUEUE_EXIT          =   64 ,   /* The job has exited - check attempts to determine if we retry or go to complete_fail   */
-	      JOB_QUEUE_RUN_OK        =  128 ,   /* The job has completed - and all checks performed by the queue layer indicate success. */
-	      JOB_QUEUE_RUN_FAIL      =  256 ,   /* The job has completed - but the queue system has detected that it has failed.         */
-              JOB_QUEUE_ALL_OK        =  512 ,   /* The job has loaded OK - observe that it is the calling scope which will set the status to this. */
-              JOB_QUEUE_ALL_FAIL      = 1024 ,   /* The job has failed completely - the calling scope must set this status. */
-              JOB_QUEUE_USER_KILLED   = 2048 ,   /* The job has been killed by the user - can restart. */
-              JOB_QUEUE_USER_EXIT     = 4096 }   /* The whole job_queue has been exited by the user - the job can NOT be restarted. */
+              JOB_QUEUE_SUBMITTED     =    8 ,   /* Internal status: It has has been submitted - the next status update will (should) place it as pending or running. */
+	      JOB_QUEUE_PENDING       =   16 ,   /* A node which is pending - a status returned by the external system. I.e LSF */
+	      JOB_QUEUE_RUNNING       =   32 ,   /* The job is running */
+	      JOB_QUEUE_DONE          =   64 ,   /* The job is done - but we have not yet checked if the target file is produced */
+	      JOB_QUEUE_EXIT          =  128 ,   /* The job has exited - check attempts to determine if we retry or go to complete_fail   */
+	      JOB_QUEUE_RUN_OK        =  256 ,   /* The job has completed - and all checks performed by the queue layer indicate success. */
+	      JOB_QUEUE_RUN_FAIL      =  512 ,   /* The job has completed - but the queue system has detected that it has failed.         */
+              JOB_QUEUE_ALL_OK        = 1024 ,   /* The job has loaded OK - observe that it is the calling scope which will set the status to this. */
+              JOB_QUEUE_ALL_FAIL      = 2048 ,   /* The job has failed completely - the calling scope must set this status. */
+              JOB_QUEUE_USER_KILLED   = 4096 ,   /* The job has been killed by the user - can restart. */
+              JOB_QUEUE_USER_EXIT     = 8192 }   /* The whole job_queue has been exited by the user - the job can NOT be restarted. */
               job_status_type;
-#define JOB_QUEUE_MAX_STATE 13
+#define JOB_QUEUE_MAX_STATE 14
 
 
 /*
@@ -42,7 +43,7 @@ typedef enum {JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in extern
   job which is not in this state, the only thing happening is that the
   function job_queue_kill_simulation() wil return false.
 */
-#define JOB_QUEUE_CAN_KILL    (JOB_QUEUE_WAITING + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING)
+#define JOB_QUEUE_CAN_KILL    (JOB_QUEUE_WAITING + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING + JOB_QUEUE_SUBMITTED)
 
 
 /*
@@ -56,7 +57,7 @@ typedef enum {JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in extern
 
 
 
-
+#define JOB_QUEUE_CAN_UPDATE_STATUS (JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING + JOB_QUEUE_SUBMITTED)
 
 
 typedef struct basic_queue_driver_struct basic_queue_driver_type;

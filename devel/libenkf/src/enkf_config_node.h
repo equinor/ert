@@ -6,6 +6,8 @@ extern "C" {
 #include <stringlist.h>
 #include <enkf_types.h>
 #include <enkf_macros.h>
+#include <ecl_grid.h>
+#include <field_trans.h>
 
 typedef void   (config_free_ftype)   (void *);
 typedef int    (get_data_size_ftype) (const void *);
@@ -38,6 +40,74 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       const char          * , 
 					       const char          * , 
 					       const void          * );
+
+
+void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max );
+
+enkf_config_node_type * enkf_config_node_alloc_state_field( const char * key              ,
+                                                            ecl_grid_type * ecl_grid      , 
+                                                            int truncation                ,
+                                                            double value_min              , 
+                                                            double value_max              ,
+                                                            field_trans_table_type * trans_table );
+
+
+void enkf_config_node_update_parameter_field( enkf_config_node_type * config_node , 
+                                              const char * enkf_outfile_fmt , 
+                                              const char * init_file_fmt , 
+                                              const char * min_std_file , 
+                                              int truncation , double value_min , double value_max ,
+                                              const char * init_transform , 
+                                              const char * output_transform );
+
+
+enkf_config_node_type * enkf_config_node_alloc_parameter_field( const char * key                     ,
+                                                                ecl_grid_type * ecl_grid             , 
+                                                                const char * enkf_outfile_fmt        , 
+                                                                const char * init_file_fmt           , 
+                                                                const char * min_std_file            , 
+                                                                int truncation                       ,
+                                                                double value_min                     , 
+                                                                double value_max                     ,            
+                                                                field_trans_table_type * trans_table ,
+                                                                const char * init_transform          ,
+                                                                const char * output_transform );
+
+
+
+
+
+void enkf_config_node_update_general_field( enkf_config_node_type * config_node , 
+                                            const char * enkf_outfile_fmt        , 
+                                            const char * enkf_infile_fmt         , 
+                                            const char * init_file_fmt           , 
+                                            const char * min_std_file            , 
+                                            int truncation                       ,
+                                            double value_min                     , 
+                                            double value_max                     ,            
+                                            const char * init_transform          ,
+                                            const char * input_transform         ,
+                                            const char * output_transform );
+
+
+enkf_config_node_type * enkf_config_node_alloc_general_field( const char * key                     ,
+                                                              ecl_grid_type * ecl_grid             , 
+                                                              const char * enkf_outfile_fmt        , 
+                                                              const char * enkf_infile_fmt         , 
+                                                              const char * init_file_fmt           , 
+                                                              const char * min_std_file            , 
+                                                              int truncation                       ,
+                                                              double value_min                     , 
+                                                              double value_max                     ,            
+                                                              field_trans_table_type * trans_table ,
+                                                              const char * init_transform          ,
+                                                              const char * input_transform         ,
+                                                              const char * output_transform );
+
+
+
+/*****************************************************************/
+
 
 int                     enkf_config_node_get_data_size( const enkf_config_node_type * node , int report_step);					
 char                  * enkf_config_node_alloc_infile(const enkf_config_node_type * , int );

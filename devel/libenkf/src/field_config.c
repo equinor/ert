@@ -126,10 +126,15 @@ struct field_config_struct {
 
   field_type_enum           type;
   field_type              * min_std;
+  /*****************************************************************/
   field_trans_table_type  * trans_table;          /* Internalize a (pointer to) a table of the available transformation functions. */
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
   field_func_type         * init_transform;       /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/
   field_func_type         * input_transform;      /* Function to apply on the data when they are loaded from the forward model - i.e. for dynamic data. */
+  
+  char * output_transform_name;
+  char * init_transform_name;
+  char * input_transform_name;
 };
 
 
@@ -221,23 +226,31 @@ static bool field_config_valid_file_type(field_file_format_type file_type, bool 
 }
 
 
-static field_file_format_type field_config_default_export_format(const char * filename) {
-  field_file_format_type export_format = ECL_KW_FILE_ALL_CELLS;   /* Suitable for PERMX/PORO/... */
-  char * extension;
-  util_alloc_file_components( filename , NULL , NULL , &extension);
-  if (extension != NULL) {
-    util_strupr(extension);
-
-    if (strcmp(extension , "GRDECL") == 0)
-      export_format = ECL_GRDECL_FILE;
-    else if (strcmp(extension , "ROFF") == 0)
-      export_format = RMS_ROFF_FILE;
-
-    free(extension);
+field_file_format_type field_config_default_export_format(const char * filename) {
+  field_file_format_type export_format = FILE_FORMAT_NULL;
+  if (filename != NULL) {
+    export_format = ECL_KW_FILE_ALL_CELLS;   /* Suitable for PERMX/PORO/... ; when this export format is
+                                                used IMPORT must be used in the datafile instead of
+                                                INCLUDE. This gives faster ECLIPSE startup time, but is
+                                                (unfortunately) quite unstandard. */
+    
+    char * extension;
+    util_alloc_file_components(filename , NULL,NULL,&extension);
+    if (extension != NULL) {
+      util_strupr(extension);
+      if (strcmp(extension , "GRDECL") == 0)
+        export_format = ECL_GRDECL_FILE;
+      else if (strcmp(extension , "ROFF") == 0)
+        export_format = RMS_ROFF_FILE;
+        
+      free(extension);
+    }
+    
   }
-
   return export_format;
 }
+
+
 
 
 
@@ -330,6 +343,25 @@ field_file_format_type field_config_get_import_format(const field_config_type * 
 }
 
 /**
+   Will return the name of the init_transform function, or NULL if no
+   init_transform function has been registered.
+*/
+
+
+const char * field_config_get_init_transform_name( const field_config_type * field_config ) {
+  return field_config->init_transform_name;
+}
+
+const char * field_config_get_input_transform_name( const field_config_type * field_config ) {
+  return field_config->input_transform_name;
+}
+
+const char * field_config_get_output_transform_name( const field_config_type * field_config ) {
+  return field_config->output_transform_name;
+}
+
+
+/**
    IFF the @private_grid parameter is true, the field_config instance
    will take ownership of grid, i.e. freeing it in
    field_config_free().
@@ -366,15 +398,19 @@ field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_gri
   UTIL_TYPE_ID_INIT( config , FIELD_CONFIG_ID);
   
   config->ecl_kw_name      = util_alloc_string_copy( ecl_kw_name );
-
   config->private_grid     = false;
   config->active_list      = active_list_alloc( ALL_ACTIVE );
   config->__enkf_mode      = true;
   config->grid             = NULL;
   config->write_compressed = true;
-  config->output_transform = NULL;
-  config->input_transform  = NULL;
-  config->init_transform   = NULL;
+
+  config->output_transform      = NULL;
+  config->input_transform       = NULL;
+  config->init_transform        = NULL;
+  config->output_transform_name = NULL;
+  config->input_transform_name  = NULL;
+  config->init_transform_name   = NULL;
+  
   config->truncation       = TRUNCATE_NONE;
   config->init_file_fmt    = NULL;
   config->min_std          = NULL;
@@ -392,6 +428,47 @@ void field_config_set_init_file_fmt( field_config_type * field_config , const ch
 }
 
 
+static void field_config_set_init_transform( field_config_type * config , const char * __init_transform_name ) {
+  const char * init_transform_name = NULL;
+  if (field_trans_table_has_key( config->trans_table , __init_transform_name)) 
+    init_transform_name = __init_transform_name;
+  
+  
+  config->init_transform_name = util_realloc_string_copy( config->init_transform_name , init_transform_name );
+  if (init_transform_name != NULL)
+    config->init_transform = field_trans_table_lookup( config->trans_table , init_transform_name);
+  else
+    config->init_transform = NULL;
+}
+
+
+static void field_config_set_output_transform( field_config_type * config , const char * __output_transform_name ) {
+  const char * output_transform_name = NULL;
+  if (field_trans_table_has_key( config->trans_table , __output_transform_name)) 
+    output_transform_name = __output_transform_name;
+  
+  
+  config->output_transform_name = util_realloc_string_copy( config->output_transform_name , output_transform_name );
+  if (output_transform_name != NULL)
+    config->output_transform = field_trans_table_lookup( config->trans_table , output_transform_name);
+  else
+    config->output_transform = NULL;
+}
+
+
+static void field_config_set_input_transform( field_config_type * config , const char * __input_transform_name ) {
+  const char * input_transform_name = NULL;
+  if (field_trans_table_has_key( config->trans_table , __input_transform_name)) 
+    input_transform_name = __input_transform_name;
+  
+  
+  config->input_transform_name = util_realloc_string_copy( config->input_transform_name , input_transform_name );
+  if (input_transform_name != NULL)
+    config->input_transform = field_trans_table_lookup( config->trans_table , input_transform_name);
+  else
+    config->input_transform = NULL;
+}
+
 
 
 void field_config_update_state_field( field_config_type * config, int truncation, double min_value , double max_value) {
@@ -403,9 +480,9 @@ void field_config_update_state_field( field_config_type * config, int truncation
   config->export_format = ECL_FILE;
   field_config_set_init_file_fmt( config , NULL );
   
-  config->output_transform = NULL;
-  config->input_transform  = NULL;
-  config->init_transform   = NULL;
+  field_config_set_output_transform( config , NULL );
+  field_config_set_input_transform( config , NULL );
+  field_config_set_init_transform( config , NULL );
 }
  
 
@@ -423,24 +500,19 @@ void field_config_update_parameter_field( field_config_type * config , int trunc
   config->import_format = UNDEFINED_FORMAT;  /* Guess from filename when loading. */
 
   config->input_transform = NULL;
-  
-  if (field_trans_table_has_key( config->trans_table , init_transform )) 
-    config->init_transform = field_trans_table_lookup( config->trans_table , init_transform);
-  else 
-    config->init_transform = NULL;
-  
-  if (field_trans_table_has_key( config->trans_table , output_transform )) 
-    config->output_transform = field_trans_table_lookup( config->trans_table , output_transform );
-  else 
-    config->output_transform = NULL;
 
+  field_config_set_input_transform( config , NULL ); 
+  field_config_set_init_transform( config , init_transform ); 
+  field_config_set_output_transform( config , output_transform ); 
 }
 
 
 void field_config_update_general_field( field_config_type * config , int truncation, double min_value , double max_value, 
                                         field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
                                         const char * init_file_fmt, 
-                                        const char * init_transform , const char * output_transform ) {
+                                        const char * init_transform , 
+                                        const char * input_transform , 
+                                        const char * output_transform ) {
   field_config_set_truncation( config , truncation , min_value , max_value );
   field_config_set_init_file_fmt( config , init_file_fmt);  
   config->type = GENERAL;
@@ -448,27 +520,18 @@ void field_config_update_general_field( field_config_type * config , int truncat
   config->export_format = export_format;
   config->import_format = UNDEFINED_FORMAT;  /* Guess from filename when loading. */
 
-  config->input_transform = NULL;            /* This is a transformation on the data loaded from the forward model - could in principle be != NULL. */ 
-  
-  if (field_trans_table_has_key( config->trans_table , init_transform )) 
-    config->init_transform = field_trans_table_lookup( config->trans_table , init_transform);
-  else 
-    config->init_transform = NULL;
-  
-  if (field_trans_table_has_key( config->trans_table , output_transform )) 
-    config->output_transform = field_trans_table_lookup( config->trans_table , output_transform );
-  else 
-    config->output_transform = NULL;
-
+  field_config_set_input_transform( config , input_transform ); 
+  field_config_set_init_transform( config , init_transform ); 
+  field_config_set_output_transform( config , output_transform ); 
 }
+
+
 
 
 
 field_type_enum field_config_get_type( const field_config_type * config) {
   return config->type;
 }
-
-
 
 
 
@@ -635,6 +698,7 @@ bool field_config_ijk_valid(const field_config_type * config , int i , int j , i
 bool field_config_ijk_active(const field_config_type * config , int i , int j , int k) {
   if (ecl_grid_ijk_valid(config->grid , i,j,k)) {
     int active_index = ecl_grid_get_active_index3( config->grid , i , j , k);
+
     if (active_index >= 0)
       return true;
     else
@@ -765,6 +829,9 @@ truncation_type field_config_get_truncation(const field_config_type * config , d
 
 void field_config_free(field_config_type * config) {
   util_safe_free(config->ecl_kw_name);
+  util_safe_free(config->input_transform_name);
+  util_safe_free(config->output_transform_name);
+  util_safe_free(config->init_transform_name);
   active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
   if ((config->private_grid) && (config->grid != NULL)) ecl_grid_free( config->grid );
@@ -1002,10 +1069,6 @@ field_func_type * field_config_get_input_transform(const field_config_type * con
 
 field_func_type * field_config_get_init_transform(const field_config_type * config) {
   return config->init_transform;
-}
-
-void field_config_set_output_transform(field_config_type * config , field_func_type * func) {
-  config->output_transform = func;
 }
 
 

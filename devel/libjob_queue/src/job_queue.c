@@ -11,6 +11,9 @@
 #include <unistd.h>
 #include <arg_pack.h>
 
+//job_queue_node_free_data: internal error - driver spesific job data has not been freed - will leak.
+
+
 /**
    The running of external jobs is handled thrugh an abstract
    job_queue implemented in this file; the job_queue then contains a
@@ -341,6 +344,7 @@ static void job_queue_node_free(job_queue_node_type * node) {
   free(node);
 }
 
+
 static job_status_type job_queue_node_get_status(const job_queue_node_type * node) {
   return node->job_status;
 }
@@ -474,7 +478,7 @@ static bool job_queue_update_status(job_queue_type * queue ) {
     {
       if (node->job_data != NULL) {
         job_status_type current_status = job_queue_node_get_status(node);
-        if ((current_status == JOB_QUEUE_RUNNING) || (current_status == JOB_QUEUE_WAITING) || (current_status == JOB_QUEUE_PENDING)) {
+        if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
           job_status_type new_status = driver->get_status(driver , node->job_data);
           job_queue_change_node_status(queue , node , new_status);
         }
@@ -520,9 +524,13 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
           {
             node->job_data = job_data;
             node->submit_attempt++;
-            job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING ); /* This is when it is installed as runnable in the internal queue   */ 
-                                                                             /* The update_status function will grab this and update to running. */
+            job_queue_change_node_status(queue , node , JOB_QUEUE_SUBMITTED ); 
             submit_status = SUBMIT_OK;
+            /* 
+               The status JOB_QUEUE_SUBMITTED is internal, and not exported anywhere. The job_queue_update_status() will
+               update this to PENDING or RUNNING at the next call. The important differnce between SUBMITTED and WAITING
+               is that SUBMITTED have job_data != NULL and the job_queue_node free function must be called on it.
+            */
           }
           pthread_rwlock_unlock( &node->job_lock );
         } else
@@ -619,11 +627,13 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
   {
     if (node->job_status & JOB_QUEUE_CAN_KILL) {
       basic_queue_driver_type * driver = queue->driver;
-      
-      if (node->job_status != JOB_QUEUE_WAITING) { /* Jobs with status JOB_QUEUE_WAITING are killable - in the sense
-                                                      that status should be set to JOB_QUEUE_USER_KILLED; but they do
-                                                      not have any driver specific job_data, and the driver->kill_job()
-                                                      function can NOT be called. */
+      job_status_type org_status = node->job_status;
+      /* 
+         Jobs with status JOB_QUEUE_WAITING are killable - in the sense that status should be set to
+         JOB_QUEUE_USER_KILLED; but they do not have any driver specific job_data, and the driver->kill_job() function
+         can NOT be called.
+      */
+      if (node->job_status != JOB_QUEUE_WAITING) { 
         driver->kill_job( driver , node->job_data );
         node->job_data = NULL;
       }
@@ -729,7 +739,9 @@ static void job_queue_display_job_info( job_queue_type * job_queue , job_queue_n
 
 /** 
     This function goes through all the nodes and call finalize on
-    them. 
+    them. hat about jobs which were NOT in a CAN_KILL state when the
+    killing was done, i.e. jobs which are in one of the intermediate
+    load like states?? They 
 */
 
 static void job_queue_finalize(job_queue_type * queue) {
@@ -751,6 +763,19 @@ bool job_queue_is_running( const job_queue_type * queue ) {
 
 
 
+static void job_queue_user_exit__( job_queue_type * queue ) {
+  int queue_index;
+
+  
+  for (queue_index = 0; queue_index < queue->size; queue_index++) {
+    job_queue_kill_job( queue , queue_index );
+    job_queue_change_node_status( queue , queue->jobs[queue_index] , JOB_QUEUE_USER_EXIT);
+  }
+}
+
+
+
+
 void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
   int trylock = pthread_mutex_trylock( &queue->run_mutex );
   if (trylock != 0)
@@ -766,22 +791,19 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
       bool new_jobs         = false;
       bool cont             = true;
       int  phase = 0;
-    
+      
       do {
+        bool local_user_exit = false;
         phase++;
         /*****************************************************************/
-        if (queue->user_exit) { /* An external thread has called the job_queue_user_exit() function, and we
-                                   should kill all jobs, do some clearing up and go home. */
-          int queue_index;
-          for (queue_index = 0; queue_index < queue->size; queue_index++) {
-            job_queue_kill_job( queue , queue_index);
-            job_queue_change_node_status( queue , queue->jobs[queue_index] , JOB_QUEUE_USER_EXIT);
-          }
-          cont = false;
-        } 
+        if (queue->user_exit)  {/* An external thread has called the job_queue_user_exit() function, and we should kill
+                                  all jobs, do some clearing up and go home. Observe that we will go through the
+                                  queue handling codeblock below ONE LAST TIME before exiting. */
+          job_queue_user_exit__( queue ); 
+          local_user_exit = true;
+        }
         /*****************************************************************/
-        
-        if (cont) {
+        {
           bool update_status = job_queue_update_status( queue );
           if ((verbose) & update_status || new_jobs) 
             job_queue_print_summary(queue , update_status , phase);
@@ -886,8 +908,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                 }
               }
             }
-          
-            if (!new_jobs)
+            if (local_user_exit)
+              cont = false;    /* This is how we signal that we want to get out . */
+            
+            if (!new_jobs && cont)
               usleep(queue->usleep_time);
             /*
               else we have submitted new jobs - and know the status is out
@@ -1165,6 +1189,9 @@ const char * job_queue_status_name( job_status_type status ) {
   case(JOB_QUEUE_WAITING):
     return "JOB_QUEUE_WAITING";
     break;
+  case(JOB_QUEUE_SUBMITTED):
+    return "JOB_QUEUE_SUBMITTED";
+    break;
   case(JOB_QUEUE_PENDING):
     return "JOB_QUEUE_PENDING";
     break;
@@ -1191,6 +1218,9 @@ const char * job_queue_status_name( job_status_type status ) {
     break;
   case(JOB_QUEUE_USER_KILLED):
     return "JOB_QUEUE_USER_KILLED";
+    break;
+  case(JOB_QUEUE_USER_EXIT):
+    return "JOB_QUEUE_USER_EXIT";
     break;
   default:
     util_abort("%s: invalid job_status value:%d \n",__func__ , status);

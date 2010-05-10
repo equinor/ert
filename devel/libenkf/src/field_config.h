@@ -70,7 +70,8 @@ typedef enum { UNDEFINED_FORMAT         = 0,
 	       ECL_KW_FILE_ACTIVE_CELLS = 3,       /* ecl_kw format, only active cells - used writing to file. */
 	       ECL_KW_FILE_ALL_CELLS    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
 	       ECL_GRDECL_FILE          = 5, 
-               ECL_FILE                 = 6        /* Assumes packed on export. */}  field_file_format_type; 
+               ECL_FILE                 = 6,       /* Assumes packed on export. */
+               FILE_FORMAT_NULL         = 7}       /* Used when the guess functions are given NULL to check -should never be read. */ field_file_format_type; 
 
 	        
 /* active_cells currently not really implemented */
@@ -80,6 +81,20 @@ typedef enum { UNDEFINED_FORMAT         = 0,
   
 
 void                    field_config_update_state_field( field_config_type * config, int truncation, double min_value , double max_value);
+
+
+void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value, 
+                                          field_file_format_type export_format , 
+                                          const char * init_file_fmt, 
+                                          const char * init_transform , const char * output_transform );
+
+
+void field_config_update_general_field( field_config_type * config , int truncation, double min_value , double max_value, 
+                                        field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
+                                        const char * init_file_fmt, 
+                                        const char * init_transform , 
+                                        const char * input_transform , 
+                                        const char * output_transform );
 
 
 field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table );
@@ -127,11 +142,14 @@ const char            * field_config_get_key(const field_config_type * );
 field_func_type       * field_config_get_init_transform(const field_config_type * );
 field_func_type       * field_config_get_output_transform(const field_config_type * );
 field_func_type       * field_config_get_input_transform(const field_config_type * );
-void                    field_config_set_output_transform(field_config_type * config , field_func_type * );
+  //void                    field_config_set_output_transform(field_config_type * config , field_func_type * );
 void                    field_config_assert_binary( const field_config_type *  , const field_config_type *  , const char * );
 void                    field_config_assert_unary( const field_config_type *  , const char * );
 void                    field_config_activate(field_config_type *  , active_mode_type  , void * );
 
+const char            * field_config_get_init_transform_name( const field_config_type * field_config );
+const char            * field_config_get_input_transform_name( const field_config_type * field_config );
+const char            * field_config_get_output_transform_name( const field_config_type * field_config );
 
 void            	field_config_set_truncation_from_strings(field_config_type * , const char * , const char **);
 void            	field_config_set_truncation(field_config_type * , truncation_type , double , double );
@@ -140,6 +158,12 @@ const ecl_grid_type   * field_config_get_grid(const field_config_type * );
 const char            * field_config_get_grid_name( const field_config_type * );
 
 int                     field_config_parse_user_key(const field_config_type * config, const char * index_key , int *_i , int *_j , int *_k);
+
+field_file_format_type    field_config_default_export_format(const char * filename);
+const char              * field_config_get_input_transform_name( const field_config_type * field_config ) ;
+const char              * field_config_get_output_transform_name( const field_config_type * field_config ) ;
+const char              * field_config_get_init_transform_name( const field_config_type * field_config ) ;
+
 
 /*Generated headers */
 SAFE_CAST_HEADER(field_config);
