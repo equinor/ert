@@ -624,6 +624,28 @@ bool field_config_ijk_valid(const field_config_type * config , int i , int j , i
 }
 
 
+/**
+    This function checks that i,j,k are in the intervals [0..nx),
+    [0..ny) and [0..nz) AND that the corresponding cell is active. If
+    the function returns false it is impossible to differentiate
+    between (i,j,k) values which are out of bounds and an inactive
+    cell.
+*/
+
+bool field_config_ijk_active(const field_config_type * config , int i , int j , int k) {
+  if (ecl_grid_ijk_valid(config->grid , i,j,k)) {
+    int active_index = ecl_grid_get_active_index3( config->grid , i , j , k);
+    if (active_index >= 0)
+      return true;
+    else
+      return false;
+  } else
+    return false;
+}
+
+
+
+
 void field_config_get_ijk( const field_config_type * config , int active_index , int *i , int * j , int * k) {
   ecl_grid_get_ijk1A( config->grid , active_index , i,j,k);
 }
