@@ -33,6 +33,7 @@ class PlotPanel(QtGui.QWidget):
 
         plotLayout.addLayout(parameterLayout)
         plotLayout.addWidget(self.plot)
+        plotLayout.addWidget(PlotViewSettingsPanel(plotView=self.plot, width=150))
         self.setLayout(plotLayout)
 
         self.plotDataFetcher = PlotDataFetcher()
@@ -79,10 +80,31 @@ class PlotPanel(QtGui.QWidget):
         self.drawPlot()
 
 
+class PlotViewSettingsPanel(QtGui.QFrame):
+    def __init__(self, parent=None, plotView=None, width=100):
+        QtGui.QFrame.__init__(self, parent)
+        self.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.setFrameShadow(QtGui.QFrame.Plain)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        self.setMinimumWidth(width)
+        self.setMaximumWidth(width)
+
+        self.plotView = plotView
+
+        layout = QtGui.QFormLayout()
+
+        self.showErrorbarChk = QtGui.QCheckBox("Show errorbar")
+        self.connect(self.showErrorbarChk, QtCore.SIGNAL("stateChanged(int)"), lambda state : self.plotView.showErrorbar(state == QtCore.Qt.Checked))
+        layout.addRow(self.showErrorbarChk)
+
+        self.setLayout(layout)
+
+
 class PlotParameterPanel(QtGui.QFrame):
 
     def __init__(self, parent=None, width=100):
-        QtGui.QStackedWidget.__init__(self, parent)
+        QtGui.QFrame.__init__(self, parent)
         self.setFrameShape(QtGui.QFrame.StyledPanel)
         self.setFrameShadow(QtGui.QFrame.Plain)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)

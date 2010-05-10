@@ -58,6 +58,10 @@ class PlotView(QtGui.QFrame):
 
         self.fig.canvas.mpl_connect('pick_event', onpick)
 
+
+
+        self.errorbarVisible = False
+
     #@print_timing
     def drawPlot(self):
         self.axes.cla()
@@ -94,9 +98,12 @@ class PlotView(QtGui.QFrame):
             x = numpy.array(x)
             y = numpy.array(y)
             std = numpy.array(std)
+
+            if self.errorbarVisible:
+                self.axes.errorbar(x, y, std, fmt=None, ecolor=self.orange, zorder=10) 
             #line, = self.axes.plot_date(x, y, "yo", picker=2) #list of lines returned (we only add one)
             #self.axes.errorbar(x, y, std, fmt=None, ecolor=(0.0, 0.0, 0.0), barsabove=True, zorder=1000) #list of lines returned (we only add one)
-            #self.axes.errorbar(x, y, std, fmt=None, ecolor=self.orange, zorder=10) #list of lines returned (we only add one)
+
             #self.axes.plot_date(x, y, "-", color=(1.0, 0.0, 0.0), alpha=0.75) #list of lines returned (we only add one)
             #self.axes.plot_date(x, y - std, "--", color=(1.0, 0.0, 0.0), alpha=0.75) #list of lines returned (we only add one)
             #self.axes.plot_date(x, y + std, "--", color=(1.0, 0.0, 0.0), alpha=0.75) #list of lines returned (we only add one)
@@ -118,6 +125,10 @@ class PlotView(QtGui.QFrame):
 
     def setData(self, data):
         self.data = data
+
+    def showErrorbar(self, errorbarVisible=False):
+        self.errorbarVisible = errorbarVisible
+        self.drawPlot()
     
 
 
