@@ -79,6 +79,7 @@ class PlotPanel(QtGui.QWidget):
         self.plotList.sortItems()
 
         self.plotViewSettings.setDefaultErrorbarMaxValue(self.plotContextDataFetcher.data.errorbar_max)
+        self.plot.setPlotPath(self.plotContextDataFetcher.data.plot_path)
 
     @widgets.util.may_take_a_long_time
     def initParameter(self):
@@ -159,6 +160,13 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.xlimitUpper.connect(self.xlimitLower, QtCore.SIGNAL('valueChanged(int)'), self.rangeChanged)
         layout.addRow(self.xlimitLower)
         layout.addRow(self.xlimitUpper)
+
+
+        self.saveBtn = QtGui.QPushButton()
+        self.saveBtn.setIcon(widgets.util.resourceIcon("disk"))
+        self.saveBtn.setIconSize(QtCore.QSize(16, 16))
+        layout.addRow("Save:", self.saveBtn)
+        self.connect(self.saveBtn, QtCore.SIGNAL('clicked()'), self.plotView.save)
 
         self.setLayout(layout)
 

@@ -186,3 +186,11 @@ class PlotView(QtGui.QFrame):
             
         return matplotlib.dates.date2num(datetime.date(*time.localtime(ert_time)[0:3]))
 
+    def save(self):
+        path = self.plot_path + "/" + self.axes.get_title()
+        self.fig.savefig(path + ".png", dpi=300, format="png")
+        self.fig.savefig(path + ".pdf", dpi=300, format="pdf")
+
+    def setPlotPath(self, plot_path):
+        self.plot_path = plot_path
+
