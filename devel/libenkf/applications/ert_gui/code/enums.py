@@ -1,5 +1,6 @@
 
 class enum:
+    """A base class for enums."""
     _enums = {}  #This contains all sub classed enums! {class : [list of enums], ...}
     def __init__(self, name, value):
         self.name = name
@@ -17,7 +18,7 @@ class enum:
 
     @classmethod
     def resolveName(cls, name):
-        """Finds an enum based on name. Ignores the case of the name."""
+        """Finds an enum based on name. Ignores the case of the name. Returns None if not found."""
         for e in enum._enums[cls]:
             if e.name.lower() == name.lower():
                 return e
@@ -25,7 +26,10 @@ class enum:
 
     @classmethod
     def resolveValue(cls, value):
-        """If several enums have the same value the first will be returned"""
+        """
+        Returns the enum with the specified value.
+        If several enums have the same value the first will be returned
+        """
         for e in enum._enums[cls]:
             if e.value == value:
                 return e
@@ -49,6 +53,10 @@ class enum:
     def __hash__(self):
         return hash("%s : %i" % (self.name, self.value))
 
+
+#-------------------------------------------------------------------
+#    enum implementations
+#-------------------------------------------------------------------
 
 class ert_state_enum(enum):
     """Defined in enkf_types.h"""
@@ -113,5 +121,30 @@ ert_job_status_type.ALL_FAIL = ert_job_status_type("JOB_QUEUE_ALL_FAIL", 2048)
 ert_job_status_type.USER_KILLED = ert_job_status_type("JOB_QUEUE_USER_KILLED", 4096)
 ert_job_status_type.USER_EXIT = ert_job_status_type("JOB_QUEUE_USER_EXIT", 8192)
 
+
+class gen_data_file_format(enum):
+    #defined in gen_data_config.h 
+    #GEN_DATA_UNDEFINED = 0
+    ASCII          = None
+    ASCII_TEMPLATE = None
+    BINARY_DOUBLE  = None
+    BINARY_FLOAT   = None
+
+    INPUT_TYPES  = None
+    OUTPUT_TYPES = None
+
+gen_data_file_format.ASCII = gen_data_file_format("ASCII", 1)
+gen_data_file_format.ASCII_TEMPLATE = gen_data_file_format("ASCII_TEMPLATE", 2)
+gen_data_file_format.BINARY_DOUBLE = gen_data_file_format("BINARY_DOUBLE", 3)
+gen_data_file_format.BINARY_FLOAT = gen_data_file_format("BINARY_FLOAT", 4)
+
+gen_data_file_format.INPUT_TYPES = [gen_data_file_format.ASCII,
+                                    gen_data_file_format.BINARY_FLOAT,
+                                    gen_data_file_format.BINARY_DOUBLE]
+
+gen_data_file_format.OUTPUT_TYPES = [gen_data_file_format.ASCII,
+                                     gen_data_file_format.ASCII_TEMPLATE,
+                                     gen_data_file_format.BINARY_FLOAT,
+                                     gen_data_file_format.BINARY_DOUBLE]
 
 #print enum._enums

@@ -14,8 +14,8 @@ def createEnsemblePage(configPanel, parent):
 
     #todo: must have an apply button!!!
     r = configPanel.addRow(IntegerSpinner(parent, "Number of realizations", "num_realizations", 1, 10000))
-    r.initialize = lambda ert : [ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int),
-                                 ert.setTypes("enkf_main_resize_ensemble", None, [ertwrapper.c_int])]
+    r.initialize = lambda ert : [ert.prototype("int enkf_main_get_ensemble_size(long)"),
+                                 ert.prototype("void enkf_main_resize_ensemble(int)")]
 
     r.getter = lambda ert : ert.enkf.enkf_main_get_ensemble_size(ert.main)
     r.setter = lambda ert, value : ert.enkf.enkf_main_resize_ensemble(ert.main, value)
@@ -23,7 +23,6 @@ def createEnsemblePage(configPanel, parent):
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("ensembleResized()"))
 
 
-    #todo: must have an apply button!!!
     configPanel.startGroup("Parameters")
     r = configPanel.addRow(ParameterPanel(parent, "", "parameters"))
 
@@ -38,7 +37,6 @@ def createEnsemblePage(configPanel, parent):
 
         ert.prototype("char* gen_kw_config_get_template_file(long)")
         ert.prototype("char* gen_kw_get_init_file_fmt(long)")
-
 
     r.initialize = initialize
 

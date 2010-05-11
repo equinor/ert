@@ -16,7 +16,7 @@ class ComboChoice(HelpedWidget):
             choiceList = ["No choices"]
 
         for choice in choiceList:
-            self.combo.addItem(choice)
+            self.combo.addItem(str(choice))
 
         self.addWidget(self.combo)
         self.addStretch()
