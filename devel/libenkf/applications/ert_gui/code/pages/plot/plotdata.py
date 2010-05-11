@@ -179,6 +179,7 @@ class PlotContextDataFetcher(ContentModel):
         ert.prototype("int field_config_get_nz(long)")
 
         ert.prototype("int plot_config_get_errorbar_max(long)")
+        ert.prototype("char plot_config_get_path(long)")
 
 
 
@@ -223,6 +224,7 @@ class PlotContextDataFetcher(ContentModel):
                 p.setData(data.key_index_list[key][0])
 
         data.errorbar_max = ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
+        data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config)
 
         return data
 
@@ -236,6 +238,7 @@ class PlotContextData:
         self.parameters = None
         self.key_index_list = {}
         self.errorbar_max = 0
+        self.plot_path = ""
         self.field_bounds = None
 
     def getKeyIndexList(self, key):
