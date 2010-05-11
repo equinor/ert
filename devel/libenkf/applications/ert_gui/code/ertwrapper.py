@@ -11,8 +11,9 @@ class ErtWrapper:
     def __init__(self, site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config", enkf_so="/private/jpb/EnKF/"):
         self.__loadLibraries__(enkf_so)
 
-        self.pattern = re.compile("(?P<return>\w+) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
-
+        self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
+        self.registerDefaultTypes()
+        
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
         print "\nBootstrap complete!"
@@ -24,6 +25,7 @@ class ErtWrapper:
         self.ensemble_config = self.getErtPointer("enkf_main_get_ensemble_config")
         self.model_config = self.getErtPointer("enkf_main_get_model_config")
         self.logh = self.getErtPointer("enkf_main_get_logh")
+
 
         self.initializeTypes()
         
@@ -51,19 +53,6 @@ class ErtWrapper:
         self.run_template = [["...", ".....", "asdf:asdf asdfasdf:asdfasdf"], ["other", "sdtsdf", ".as.asdfsdf"]]
         self.forward_model = [["MY_RELPERM_SCRIPT", "Arg1<some> COPY(asdfdf)"]]
 
-        self.registered_types = {}
-        self.registerType("void", None)
-        self.registerType("int", ctypes.c_int)
-        self.registerType("int*", ctypes.POINTER(ctypes.c_int))
-        self.registerType("bool", ctypes.c_int)
-        self.registerType("bool*", ctypes.POINTER(ctypes.c_int))
-        self.registerType("long", ctypes.c_long)
-        self.registerType("long*", ctypes.POINTER(ctypes.c_long))
-        self.registerType("char", ctypes.c_char_p)
-        self.registerType("float", ctypes.c_float)
-        self.registerType("double", ctypes.c_double)
-        self.registerType("double*", ctypes.POINTER(ctypes.c_double))
-
 
     def __loadLibraries__(self, prefix):
         """Load libraries that are required by ERT and ERT itself"""
@@ -81,7 +70,22 @@ class ErtWrapper:
         self.enkf = CDLL(prefix + "libenkf/slib/libenkf.so", RTLD_GLOBAL)
 
         self.enkf.enkf_main_install_SIGNALS()
-        self.enkf.enkf_main_init_debug( "/usr/bin/python" )
+        self.enkf.enkf_main_init_debug("/usr/bin/python")
+        
+    def registerDefaultTypes(self):
+        self.registered_types = {}
+        self.registerType("void", None)
+        self.registerType("int", ctypes.c_int)
+        self.registerType("int*", ctypes.POINTER(ctypes.c_int))
+        self.registerType("bool", ctypes.c_int)
+        self.registerType("bool*", ctypes.POINTER(ctypes.c_int))
+        self.registerType("long", ctypes.c_long)
+        self.registerType("long*", ctypes.POINTER(ctypes.c_long))
+        self.registerType("char", ctypes.c_char)
+        self.registerType("char*", ctypes.c_char_p)
+        self.registerType("float", ctypes.c_float)
+        self.registerType("double", ctypes.c_double)
+        self.registerType("double*", ctypes.POINTER(ctypes.c_double))
 
     def registerType(self, type, value):
         """Register a type against a legal ctypes type"""
@@ -130,7 +134,12 @@ class ErtWrapper:
 
             func = getattr(lib , functioname)
             func.restype = self._parseType(restype)
-            func.argtypes = [self._parseType(arg) for arg in arguments]
+
+            if len(arguments) == 1 and arguments[0].strip() == "":
+                func.argtypes = []
+            else:
+                func.argtypes = [self._parseType(arg) for arg in arguments]
+
             #print func, func.restype, func.argtypes
 
     def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer = True):
@@ -175,30 +184,29 @@ class ErtWrapper:
         return getattr(self, attribute)
 
     def initializeTypes(self):
-        self.setTypes("stringlist_iget", c_char_p, c_int, library = self.util)
-        self.setTypes("stringlist_alloc_new", library = self.util, selfpointer=False)
-        self.setTypes("stringlist_append_copy", None, c_char_p, library = self.util)
-        self.setTypes("stringlist_get_size", c_int, library = self.util)
-        self.setTypes("stringlist_free", None, library = self.util)
+        self.prototype("char* stringlist_iget(long, int)", lib=self.util)
+        self.prototype("long stringlist_alloc_new()", lib=self.util)
+        self.prototype("void stringlist_append_copy(long, char*)", lib=self.util)
+        self.prototype("int stringlist_get_size(long)", lib=self.util)
+        self.prototype("void stringlist_free(long)", lib=self.util)
 
-        self.setTypes("hash_iter_alloc", library = self.util)
-        self.setTypes("hash_iter_get_next_key", c_char_p, library = self.util)
-        self.setTypes("hash_get", c_char_p, library = self.util)
-        self.setTypes("hash_get_int", c_int, library = self.util)
-        self.setTypes("hash_iter_free", None, library = self.util)
-        self.setTypes("hash_iter_is_complete", c_int, library = self.util)
+        self.prototype("long hash_iter_alloc(long)", lib=self.util)
+        self.prototype("char* hash_iter_get_next_key(long)", lib=self.util)
+        self.prototype("char* hash_get(long, char*)", lib=self.util)
+        self.prototype("int hash_get_int(long, char*)", lib=self.util)
+        self.prototype("void hash_iter_free(long)", lib=self.util)
+        self.prototype("bool hash_iter_is_complete(long)", lib=self.util)
 
-        self.setTypes("subst_list_get_size", c_int, library = self.util)
-        self.setTypes("subst_list_iget_key", c_char_p, c_int, library = self.util)
-        self.setTypes("subst_list_iget_value", c_char_p, c_int, library = self.util)
+        self.prototype("int subst_list_get_size(long)", lib=self.util)
+        self.prototype("char* subst_list_iget_key(long, int)", lib=self.util)
+        self.prototype("char* subst_list_iget_value(long, int)", lib=self.util)
 
-        self.setTypes("bool_vector_alloc", c_long, [c_int, c_int], library = self.util, selfpointer=False)
-        self.setTypes("bool_vector_iset", c_long, [c_int, c_int], library = self.util)
-        self.setTypes("bool_vector_get_ptr", library = self.util)
-        self.setTypes("bool_vector_free", None, library = self.util)
+        self.prototype("long bool_vector_alloc(int, bool)", lib=self.util)
+        self.prototype("void bool_vector_iset(long, int, bool)", lib=self.util)
+        self.prototype("long bool_vector_get_ptr(long)", lib=self.util)
+        self.prototype("void bool_vector_free(long)", lib=self.util)
 
-        self.setTypes("enkf_main_free", None)
-
+        self.prototype("void enkf_main_free(long)")
         
     def getStringList(self, stringlistpointer, free_after_use=False):
         """Retrieve a list of strings"""
@@ -295,25 +303,4 @@ class ErtWrapper:
         """Called at atexit to clean up before shutdown"""
         print "Calling enkf_main_free()"
         self.enkf.enkf_main_free(self.main)
-
-
-
-def testPrototypes():
-    import ertwrapper
-    import local
-    site_config = "/project/res/etc/ERT/Config/site-config"
-    enkf_config = local.enkf_config
-    enkf_so     = local.enkf_so
-    ert = ertwrapper.ErtWrapper(site_config = site_config, enkf_config = enkf_config, enkf_so = enkf_so)
-
-    ert.prototype("c_char_p subst_list_iget_value(c_long, c_int)", ert.util)
-    ert.prototype("void bool_vector_free (long)", ert.util)
-    ert.prototype("void bool_vector_free (c_long)", ert.util)
-    ert.prototype("char bool_vector_free (bool)", ert.util)
-    #ert.prototype("int fungus()")
-    #ert.prototype("int fungus(int, char_p, boo)")
-    #ert.prototype("int fungus(int, char_p, boo")
-
-if __name__ == "__main__":
-    testPrototypes()
 
