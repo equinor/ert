@@ -39,9 +39,10 @@ class KeywordModel(Model):
         Model.__init__(self, name)
         self.name = name
 
-        self["eclipse_file"] = ""
+        self["min_std"] = ""
+        self["enkf_outfile"] = ""
         self["template"] = ""
-        self["priors"] = ""
+        self["init_file"] = ""
 
 class DataModel(Model):
     TYPE = enkf_impl_type.GEN_DATA

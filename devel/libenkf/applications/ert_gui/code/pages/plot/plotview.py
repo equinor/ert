@@ -29,6 +29,7 @@ class PlotView(QtGui.QFrame):
         """Create a PlotPanel"""
         QtGui.QFrame.__init__(self)
 
+
         self.data = PlotData()
 
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
@@ -37,6 +38,8 @@ class PlotView(QtGui.QFrame):
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setParent(self)
         self.canvas.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        #self.canvas.draw = print_timing(self.canvas.draw)
 
         self.axes = self.fig.add_subplot(111)
         self.axes.set_xlim()
@@ -66,6 +69,7 @@ class PlotView(QtGui.QFrame):
         self.errorbar_limit = 10
         self.xminf = 0.0
         self.xmaxf = 1.0
+        self.plot_path = "."
 
     #@print_timing
     @widgets.util.may_take_a_long_time

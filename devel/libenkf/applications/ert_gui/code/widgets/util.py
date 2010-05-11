@@ -269,6 +269,11 @@ def shortTime(secs):
         t = time.localtime(secs)
         return time.strftime("%H:%M:%S", t)
 
+
+#-------------------------------------------------------------
+# Function decorators
+#-------------------------------------------------------------
+
 def print_timing(func):
     """A function decorator that performs timing of the applied function"""
     def wrapper(*arg):
@@ -279,6 +284,7 @@ def print_timing(func):
         return res
     return wrapper
 
+    
 def may_take_a_long_time(func):
     """A function decorator to show the wait cursor while the function is working."""
     def wrapper(*arg):

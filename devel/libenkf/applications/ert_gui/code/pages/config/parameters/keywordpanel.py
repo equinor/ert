@@ -17,27 +17,33 @@ class KeywordPanel(QtGui.QFrame):
 
         self.keywordModel = KeywordModel("")
 
-        self.eclipse_file = PathChooser(self, "", "gen_kw_eclipse_file", True)
-        self.eclipse_file.setter = lambda model, value: self.keywordModel.set("eclipse_file", value)
-        self.eclipse_file.getter = lambda model: self.keywordModel["eclipse_file"]
+        self.min_std = PathChooser(self, "", "gen_kw_min_std", True)
+        self.min_std.setter = lambda model, value: self.keywordModel.set("min_std", value)
+        self.min_std.getter = lambda model: self.keywordModel["min_std"]
 
         self.template = PathChooser(self, "", "gen_kw_template", True, must_be_set=False)
         self.template.setter = lambda model, value: self.keywordModel.set("template", value)
         self.template.getter = lambda model: self.keywordModel["template"]
 
-        self.priors = PathChooser(self, "", "gen_kw_result_file", True, must_be_set=False)
-        self.priors.setter = lambda model, value: self.keywordModel.set("priors", value)
-        self.priors.getter = lambda model: self.keywordModel["priors"]
+        self.enkf_outfile = PathChooser(self, "", "gen_kw_enkf_outfile", True, must_be_set=False)
+        self.enkf_outfile.setter = lambda model, value: self.keywordModel.set("enkf_outfile", value)
+        self.enkf_outfile.getter = lambda model: self.keywordModel["enkf_outfile"]
 
-        layout.addRow("Eclipse file:", self.eclipse_file)
+        self.init_file = PathChooser(self, "", "gen_kw_init_file", True, must_be_set=False)
+        self.init_file.setter = lambda model, value: self.keywordModel.set("init_file", value)
+        self.init_file.getter = lambda model: self.keywordModel["init_file"]
+
+        layout.addRow("Min. std.:", self.min_std)
         layout.addRow("Template:", self.template)
-        layout.addRow("Priors:", self.priors)
+        layout.addRow("EnKF outfile:", self.enkf_outfile)
+        layout.addRow("Init file:", self.init_file)
 
         self.setLayout(layout)
 
     def setKeywordModel(self, keywordModel):
         self.keywordModel = keywordModel
 
-        self.eclipse_file.fetchContent()
+        self.min_std.fetchContent()
         self.template.fetchContent()
-        self.priors.fetchContent()
+        self.enkf_outfile.fetchContent()
+        self.init_file.fetchContent()

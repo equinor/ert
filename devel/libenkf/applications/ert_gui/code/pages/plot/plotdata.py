@@ -15,21 +15,21 @@ class PlotDataFetcher(ContentModel):
 
 
     def initialize(self, ert):
-        ert.prototype("long ensemble_config_get_node(long, char)")
-        ert.prototype("bool ensemble_config_has_key(long, char)")
+        ert.prototype("long ensemble_config_get_node(long, char*)")
+        ert.prototype("bool ensemble_config_has_key(long, char*)")
 
         ert.prototype("long enkf_main_get_fs(long)")
         ert.prototype("int enkf_main_get_ensemble_size(long)")
         ert.prototype("long enkf_main_iget_member_config(long, int)")
-        ert.prototype("void enkf_main_get_observations(long, char, int, long*, double*, double*)") #main, user_key, *time, *y, *std
-        ert.prototype("int enkf_main_get_observation_count(long, char)")
+        ert.prototype("void enkf_main_get_observations(long, char*, int, long*, double*, double*)") #main, user_key, *time, *y, *std
+        ert.prototype("int enkf_main_get_observation_count(long, char*)")
 
         ert.prototype("bool enkf_fs_has_node(long, long, int, int, int)")
         ert.prototype("void enkf_fs_fread_node(long, long, int, int, int)")
 
         ert.prototype("long enkf_node_alloc(long)")
         ert.prototype("void enkf_node_free(long)")
-        ert.prototype("double enkf_node_user_get(long, char, bool*)")
+        ert.prototype("double enkf_node_user_get(long, char*, bool*)")
 
         ert.prototype("double member_config_iget_sim_days(long, int, int)")
         ert.prototype("long member_config_iget_sim_time(long, int, int)")
@@ -167,7 +167,7 @@ class PlotContextDataFetcher(ContentModel):
 
     def initialize(self, ert):
         ert.prototype("long ensemble_config_alloc_keylist(long)")
-        ert.prototype("long ensemble_config_get_node(long, char)")
+        ert.prototype("long ensemble_config_get_node(long, char*)")
 
         ert.prototype("long enkf_config_node_get_impl_type(long)")
         ert.prototype("long enkf_config_node_get_ref(long)")
@@ -179,7 +179,7 @@ class PlotContextDataFetcher(ContentModel):
         ert.prototype("int field_config_get_nz(long)")
 
         ert.prototype("int plot_config_get_errorbar_max(long)")
-        ert.prototype("char plot_config_get_path(long)")
+        ert.prototype("char* plot_config_get_path(long)")
 
 
 

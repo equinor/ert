@@ -26,11 +26,21 @@ def createEnsemblePage(configPanel, parent):
     #todo: must have an apply button!!!
     configPanel.startGroup("Parameters")
     r = configPanel.addRow(ParameterPanel(parent, "", "parameters"))
-    r.initialize = lambda ert : [ert.setTypes("ensemble_config_get_node", argtypes=ertwrapper.c_char_p),
-                                 ert.setTypes("enkf_config_node_get_impl_type"),
-                                 ert.setTypes("ensemble_config_alloc_keylist"),
-                                 ert.setTypes("gen_kw_config_get_template_file", ertwrapper.c_char_p),
-                                 ert.setTypes("enkf_config_node_get_ref")]
+
+    def initialize(ert):
+        ert.prototype("long ensemble_config_get_node(long, char*)")
+        ert.prototype("long ensemble_config_alloc_keylist(long)")
+
+        ert.prototype("long enkf_config_node_get_impl_type(long)")
+        ert.prototype("long enkf_config_node_get_ref(long)")
+        ert.prototype("char* enkf_config_node_get_min_std_file(long)")
+        ert.prototype("char* enkf_config_node_get_enkf_outfile(long)")
+
+        ert.prototype("char* gen_kw_config_get_template_file(long)")
+        ert.prototype("char* gen_kw_get_init_file_fmt(long)")
+
+
+    r.initialize = initialize
 
     def get_ensemble_parameters(ert):
         ens_conf = ert.ensemble_config
@@ -51,7 +61,10 @@ def createEnsemblePage(configPanel, parent):
             elif KeywordModel.TYPE == type:
                 model = KeywordModel(key)
 
+                model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
+                model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
                 model["template"] = ert.enkf.gen_kw_config_get_template_file(data)
+                #model["init_file"] = ert.enkf.gen_kw_get_init_file_fmt(data)
             elif SummaryModel.TYPE == type:
                 model = SummaryModel(key)
             else:
