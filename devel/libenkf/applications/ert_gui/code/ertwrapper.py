@@ -9,10 +9,10 @@ class ErtWrapper:
     """Wraps the functionality of ERT using ctypes"""
 
     def __init__(self, site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config", enkf_so="/private/jpb/EnKF/"):
-        self.__loadLibraries__(enkf_so)
+        self.__loadLibraries(enkf_so)
 
         self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
-        self.registerDefaultTypes()
+        self.__registerDefaultTypes()
         
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
@@ -54,7 +54,7 @@ class ErtWrapper:
         self.forward_model = [["MY_RELPERM_SCRIPT", "Arg1<some> COPY(asdfdf)"]]
 
 
-    def __loadLibraries__(self, prefix):
+    def __loadLibraries(self, prefix):
         """Load libraries that are required by ERT and ERT itself"""
         CDLL("libblas.so", RTLD_GLOBAL)
         CDLL("liblapack.so", RTLD_GLOBAL)
@@ -72,7 +72,8 @@ class ErtWrapper:
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug("/usr/bin/python")
         
-    def registerDefaultTypes(self):
+    def __registerDefaultTypes(self):
+        """Registers the default available types for prototyping."""
         self.registered_types = {}
         self.registerType("void", None)
         self.registerType("int", ctypes.c_int)
@@ -84,6 +85,7 @@ class ErtWrapper:
         self.registerType("char", ctypes.c_char)
         self.registerType("char*", ctypes.c_char_p)
         self.registerType("float", ctypes.c_float)
+        self.registerType("float*", ctypes.POINTER(ctypes.c_float))
         self.registerType("double", ctypes.c_double)
         self.registerType("double*", ctypes.POINTER(ctypes.c_double))
 
@@ -91,7 +93,7 @@ class ErtWrapper:
         """Register a type against a legal ctypes type"""
         self.registered_types[type] = value
 
-    def _parseType(self, type):
+    def __parseType(self, type):
         """Convert a prototype definition type from string to a ctypes legal type."""
         type = type.strip()
 
@@ -105,7 +107,7 @@ class ErtWrapper:
         Provides the same functionality as setTypes but in a different way.
         prototype is a string formatted like this:
 
-            "type functionName(type,type,type)"
+            "type functionName(type, ... ,type)"
 
         where type is a type available to ctypes
         Some type are automatically converted:
@@ -116,7 +118,13 @@ class ErtWrapper:
             void -> None
             double -> c_double
             float -> c_float
-            ref -> c_void_p (typically used for '&variable_name' situations (by reference))
+
+        There are also pointer versions of these:
+            long* -> POINTER(c_long)
+            bool* -> POINTER(c_int)
+            double* -> POINTER(c_double)
+            char* -> c_char_p
+            ...
 
         if lib is None lib defaults to the enkf library
         """
@@ -126,6 +134,7 @@ class ErtWrapper:
         match = re.match(self.pattern, prototype)
         if not match:
             sys.stderr.write("Illegal prototype definition: %s\n" % (prototype))
+            return None
         else:
             restype = match.groupdict()["return"]
             functioname = match.groupdict()["function"]
@@ -133,14 +142,15 @@ class ErtWrapper:
             #print restype, functioname, arguments
 
             func = getattr(lib , functioname)
-            func.restype = self._parseType(restype)
+            func.restype = self.__parseType(restype)
 
             if len(arguments) == 1 and arguments[0].strip() == "":
                 func.argtypes = []
             else:
-                func.argtypes = [self._parseType(arg) for arg in arguments]
+                func.argtypes = [self.__parseType(arg) for arg in arguments]
 
-            #print func, func.restype, func.argtypes
+            #print func, func.restype, func.argtyp
+            return func
 
     def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer = True):
         """

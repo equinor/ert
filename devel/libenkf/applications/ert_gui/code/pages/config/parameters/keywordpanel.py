@@ -18,20 +18,16 @@ class KeywordPanel(QtGui.QFrame):
         self.keywordModel = KeywordModel("")
 
         self.min_std = PathChooser(self, "", "gen_kw_min_std", True)
-        self.min_std.setter = lambda model, value: self.keywordModel.set("min_std", value)
-        self.min_std.getter = lambda model: self.keywordModel["min_std"]
+        self.modelWrap(self.min_std, "min_std")
 
         self.template = PathChooser(self, "", "gen_kw_template", True, must_be_set=False)
-        self.template.setter = lambda model, value: self.keywordModel.set("template", value)
-        self.template.getter = lambda model: self.keywordModel["template"]
+        self.modelWrap(self.template, "template")
 
         self.enkf_outfile = PathChooser(self, "", "gen_kw_enkf_outfile", True, must_be_set=False)
-        self.enkf_outfile.setter = lambda model, value: self.keywordModel.set("enkf_outfile", value)
-        self.enkf_outfile.getter = lambda model: self.keywordModel["enkf_outfile"]
+        self.modelWrap(self.enkf_outfile, "enkf_outfile")
 
         self.init_file = PathChooser(self, "", "gen_kw_init_file", True, must_be_set=False)
-        self.init_file.setter = lambda model, value: self.keywordModel.set("init_file", value)
-        self.init_file.getter = lambda model: self.keywordModel["init_file"]
+        self.modelWrap(self.init_file, "init_file")
 
         layout.addRow("Min. std.:", self.min_std)
         layout.addRow("Template:", self.template)
@@ -47,3 +43,8 @@ class KeywordPanel(QtGui.QFrame):
         self.template.fetchContent()
         self.enkf_outfile.fetchContent()
         self.init_file.fetchContent()
+
+    def modelWrap(self, widget, attribute):
+        widget.setter = lambda model, value: self.keywordModel.set(attribute, value)
+        widget.getter = lambda model: self.keywordModel[attribute]
+

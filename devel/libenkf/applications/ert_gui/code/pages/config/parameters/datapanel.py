@@ -3,6 +3,7 @@ from widgets.combochoice import ComboChoice
 from widgets.stringbox import DoubleBox
 from widgets.pathchooser import PathChooser
 from pages.config.parameters.parametermodels import DataModel
+import enums
 
 class DataPanel(QtGui.QFrame):
 
@@ -18,30 +19,23 @@ class DataPanel(QtGui.QFrame):
 
         self.dataModel = DataModel("")
 
-        self.input = ComboChoice(self, ["ASCII", "BINARY_FLOAT", "BINARY_DOUBLE"], "", "param_init")
-        self.input.setter = lambda model, value: self.dataModel.set("input", value)
-        self.input.getter = lambda model: self.dataModel["input"]
+        self.input = ComboChoice(self, enums.gen_data_file_format.INPUT_TYPES, "", "param_init")
+        self.modelWrap(self.input, "input")
 
-        self.output = ComboChoice(self, ["ASCII", "ASCII_TEMPLATE", "BINARY_FLOAT", "BINARY_DOUBLE"], "", "param_output")
-        self.output.setter = lambda model, value: self.dataModel.set("output", value)
-        self.output.getter = lambda model: self.dataModel["output"]
+        self.output = ComboChoice(self, enums.gen_data_file_format.OUTPUT_TYPES, "", "param_output")
+        self.modelWrap(self.output, "output")
 
         self.eclipse_file = PathChooser(self, "", "gen_data_eclipse_file", True , True)
-        self.eclipse_file.setter = lambda model, value: self.dataModel.set("eclipse_file", value)
-        self.eclipse_file.getter = lambda model: self.dataModel["eclipse_file"]
+        self.modelWrap(self.eclipse_file, "eclipse_file")
 
         self.init_files = PathChooser(self, "", "gen_data_init_files", True , True)
-        self.init_files.setter = lambda model, value: self.dataModel.set("init_files", value)
-        self.init_files.getter = lambda model: self.dataModel["init_files"]
+        self.modelWrap(self.init_files, "init_files")
 
         self.template = PathChooser(self, "", "gen_data_template", True , False)
-        self.template.setter = lambda model, value: self.dataModel.set("template", value)
-        self.template.getter = lambda model: self.dataModel["template"]
+        self.modelWrap(self.template, "template")
 
         self.result_file = PathChooser(self, "", "gen_data_result_file", True , False)
-        self.result_file.setter = lambda model, value: self.dataModel.set("result_file", value)
-        self.result_file.getter = lambda model: self.dataModel["result_file"]
-
+        self.modelWrap(self.result_file, "result_file")
 
 
         layout.addRow("Input:", self.input)
@@ -52,6 +46,10 @@ class DataPanel(QtGui.QFrame):
         layout.addRow("Result File:", self.result_file)
 
         self.setLayout(layout)
+
+    def modelWrap(self, widget, attribute):
+        widget.setter = lambda model, value: self.dataModel.set(attribute, value)
+        widget.getter = lambda model: self.dataModel[attribute]
 
     def setDataModel(self, dataModel):
         self.dataModel = dataModel
