@@ -1,20 +1,83 @@
+GEN_KW
+------
 
-int enkf_main_get_observations( const enkf_main_type * enkf_main , const char * user_key , time_t * obs_time , double * y , double * std);
+1. Opprette en ny: ensemble_config_add_gen_kw( ensemble_config , new_key );
 
-o Kall funksjonen to ganger - første gang med NULL for de tre array
-  argumentene til slutt, da vil den bare telle opp hvor mange
-  observasjoner det er og returnere det. Dersom nøkkelen ikke er
-  gyldig vil funksjonen bare returnere 0.
+   Denne funksjonen oppretter en ny gen_kw_config instans og setter
+   den inn i ensemble_config systemet; returverdien fra funksjonen er
+   (en peker til) den nyopprettede enkf_config_node instansen.
 
-o user_key skal være en fully qualified nøkkel av typen WWCT:OP,
-  PRESSURE:10,10,2, FLUID_PARAMS:SGCR; hvis det du sender inn er
-  ugyldig får du bare returnert 0.
+2. Get:
 
----------------------
+      gen_kw_config = enkf_config_node_get_ref( config_node )
+
+      gen_kw_config_get_template_file( gen_kw_config )
+      gen_kw_config_get_parameter_file( gen_kw_config )
+      gen_kw_config_get_init_file_fmt( gen_kw_config )
+      ...................
+      enkf_config_node_get_enkf_outfile( config_node )
+      enkf_config_node_get_min_std_file( config_node )
+
+3. Update:
+
+      enkf_config_node_update_gen_kw( config_node , enkf_outfile_fmt , template_file , parameter_file , min_std_file , init_file_fmt )      
+      
 
 
-Eclipse include : enkf_config_node_get_get_enkf_outfile( const enkf_config_node_type * config_node );
 
-Min_std         : enkf_config_node_get_min_std_file( const enkf_config_node_type * config_node );
+FIELD
+-----
 
-init_file_fmt   : gen_kw_config_get_init_file_fmt( const gen_kw_config_type * gen_kw_config );
+1. Opprette en ny: ensemble_config_add_field( ensemble_config , new_key , grid );
+
+   Funksjonen er helt tilsvarende som for gen_kw. En grid referanse
+   får du fra ecl_config_get_grid(). 
+
+2. Get:
+
+      field_config = enkf_config_node_get_ref( config_node )  
+      
+      field_config_get_truncation_mode( field_config )       - returnerer en int som er en or kombinasjon fra enumen : truncation_type.
+      field_config_get_truncation_min( field_config )        - returnerer trunkerings minimum.
+      field_config_get_truncation_max( field_config )        - returnerer trunkerings maximum
+      field_config_get_type( field_config )                  - returnerer en field_type_enum verdi.
+      field_config_get_init_transform_name( field_config )
+      field_config_get_output_transform_name( field_config )
+      field_config_get_init_file_fmt( field_config )
+
+      
+      ...................
+      enkf_config_node_get_enkf_outfile( config_node )
+      enkf_config_node_get_enkf_infile( config_node )      <- Denne tror jeg ikke er i GUI(?) Skal kun være aktiv for GENERAL, og kan ha label: "Result file"
+      enkf_config_node_get_min_std_file( config_node )
+                                               
+3. Update:
+
+    enkf_config_node_update_state_field(config_node , truncation , value_min , value_max)       
+    enkf_config_node_update_parameter_field( config_node , enkf_outfile , init_files , min_std_file , truncation , min_value , max_value , init_transform , output_transform)
+    enkf_config_node_update_general_field( config_node , enkf_outfile , enkf_infile , init_files , min_std_file , truncation , min_value , max_value , init_transform , 
+                                           input_transform /* Denne er det ikke støtte for i GUI - du kan bare hardkode NULL*/ , output_transform)
+      
+               
+
+SUMMARY 
+------- 
+Disse har ikke noe kontekst - de er fullt definert ved sin key; det er
+heller ikke mulig å gjøre noen oppdateringer på SUMMARY variabler.
+
+      
+GEN_DATA
+--------
+Ikke implementert ....
+
+
+VALID?
+------
+enkf_config_node_is_valid( config_node ) - legg merk til at variabler av typen SUMMARY ALLTID vil returnere true - ikke nødvendig å spørre dem.
+
+
+
+Slette en node?
+---------------
+enkf_main_del_node( enkf_main , key )
+
