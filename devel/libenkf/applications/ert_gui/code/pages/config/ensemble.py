@@ -36,7 +36,8 @@ def createEnsemblePage(configPanel, parent):
         ert.prototype("char* enkf_config_node_get_enkf_outfile(long)")
 
         ert.prototype("char* gen_kw_config_get_template_file(long)")
-        ert.prototype("char* gen_kw_get_init_file_fmt(long)")
+        ert.prototype("char* gen_kw_config_get_init_file_fmt(long)")
+        ert.prototype("char* gen_kw_config_get_parameter_file(long)")
 
     r.initialize = initialize
 
@@ -58,11 +59,11 @@ def createEnsemblePage(configPanel, parent):
                 model = DataModel(key)
             elif KeywordModel.TYPE == type:
                 model = KeywordModel(key)
-
                 model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
                 model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
                 model["template"] = ert.enkf.gen_kw_config_get_template_file(data)
-                #model["init_file"] = ert.enkf.gen_kw_get_init_file_fmt(data)
+                model["init_file"] = ert.enkf.gen_kw_config_get_init_file_fmt(data)
+                model["parameter_file"] = ert.enkf.gen_kw_config_get_parameter_file(data)
             elif SummaryModel.TYPE == type:
                 model = SummaryModel(key)
             else:

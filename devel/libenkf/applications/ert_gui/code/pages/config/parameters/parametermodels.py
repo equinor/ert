@@ -43,6 +43,7 @@ class KeywordModel(Model):
         self["enkf_outfile"] = ""
         self["template"] = ""
         self["init_file"] = ""
+        self["parameter_file"] = ""
 
 class DataModel(Model):
     TYPE = enkf_impl_type.GEN_DATA
