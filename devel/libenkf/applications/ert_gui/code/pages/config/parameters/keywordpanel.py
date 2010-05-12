@@ -17,10 +17,10 @@ class KeywordPanel(QtGui.QFrame):
 
         self.keywordModel = KeywordModel("")
 
-        self.min_std = PathChooser(self, "", "gen_kw_min_std", True)
+        self.min_std = PathChooser(self, "", "gen_kw_min_std", True , must_be_set = False)
         self.modelWrap(self.min_std, "min_std")
-
-        self.template = PathChooser(self, "", "gen_kw_template", True, must_be_set=False)
+        
+        self.template = PathChooser(self, "", "gen_kw_template", True)
         self.modelWrap(self.template, "template")
 
         self.enkf_outfile = PathChooser(self, "", "gen_kw_enkf_outfile", True, must_be_set=False)
@@ -29,10 +29,11 @@ class KeywordPanel(QtGui.QFrame):
         self.init_file = PathChooser(self, "", "gen_kw_init_file", True, must_be_set=False)
         self.modelWrap(self.init_file, "init_file")
 
-        layout.addRow("Min. std.:", self.min_std)
-        layout.addRow("Template:", self.template)
-        layout.addRow("EnKF outfile:", self.enkf_outfile)
-        layout.addRow("Init file:", self.init_file)
+        
+        layout.addRow("Template:"     , self.template)
+        layout.addRow("Include file:" , self.enkf_outfile)
+        layout.addRow("Minimum std:"  , self.min_std)
+        layout.addRow("Init files:"   , self.init_file)
 
         self.setLayout(layout)
 
