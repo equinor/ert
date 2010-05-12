@@ -100,7 +100,7 @@ void field_config_update_general_field( field_config_type * config , int truncat
 field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table );
 
 
-
+const char            * field_config_get_init_file_fmt( const field_config_type * config );
 void                    field_config_get_ijk( const field_config_type * config , int active_index , int *i , int * j , int * k);
 field_type            * field_config_get_min_std( const field_config_type * field_config );
 const char            * field_config_default_extension(field_file_format_type , bool );
@@ -148,9 +148,10 @@ const char            * field_config_get_init_transform_name( const field_config
 const char            * field_config_get_input_transform_name( const field_config_type * field_config );
 const char            * field_config_get_output_transform_name( const field_config_type * field_config );
 
-void            	field_config_set_truncation_from_strings(field_config_type * , const char * , const char **);
-void            	field_config_set_truncation(field_config_type * , truncation_type , double , double );
-truncation_type 	field_config_get_truncation(const field_config_type * , double * , double *);
+void            	field_config_set_truncation(field_config_type * , int , double , double );
+int                     field_config_get_truncation_mode(const field_config_type * config );
+double                  field_config_get_truncation_min( const field_config_type * config );
+double                  field_config_get_truncation_max( const field_config_type * config );
 const ecl_grid_type   * field_config_get_grid(const field_config_type * );
 const char            * field_config_get_grid_name( const field_config_type * );
 

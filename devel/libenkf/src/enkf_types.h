@@ -84,13 +84,12 @@ typedef enum   {UNDEFINED   = 0 ,
 
 
   /** 
-      These are 2^n bitmasks - truncate_minmax == truncate_min + truncate_max. 
+      These are 2^n bitmasks.
   */
 
-typedef enum {TRUNCATE_NONE   = 0,
-	      TRUNCATE_MIN    = 1,
-	      TRUNCATE_MAX    = 2,
-	      TRUNCATE_MINMAX = 3} truncation_type;
+typedef enum { TRUNCATE_NONE   = 0,
+	       TRUNCATE_MIN    = 1,
+	       TRUNCATE_MAX    = 2 } truncation_type;
 
 
 

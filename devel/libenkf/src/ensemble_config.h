@@ -9,6 +9,7 @@
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
+void                     ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key);
 enkf_config_node_type  * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key );
 enkf_config_node_type  * ensemble_config_add_field( ensemble_config_type * config , const char * key , ecl_grid_type * ecl_grid );
 int                      ensemble_config_get_observations( const ensemble_config_type * config , const enkf_obs_type * enkf_obs , const char * user_key , int obs_count , 
@@ -31,7 +32,6 @@ enkf_config_node_type  * ensemble_config_add_node(ensemble_config_type * ,
 						const void   * );
 
 void                          ensemble_config_init_internalization( ensemble_config_type * );
-void 			      ensemble_config_ensure_summary(ensemble_config_type *  , const char * , const ecl_sum_type * refcase);
 void 			      ensemble_config_del_node(ensemble_config_type * , const char * );
 void                          ensemble_config_add_config_items(config_type * );
 enkf_config_node_type       * ensemble_config_get_node(const ensemble_config_type * , const char * );

@@ -427,6 +427,13 @@ void field_config_set_init_file_fmt( field_config_type * field_config , const ch
   field_config->init_file_fmt = path_fmt_realloc_path_fmt( field_config->init_file_fmt , init_file_fmt );
 }
 
+const char * field_config_get_init_file_fmt( const field_config_type * config ) {
+  if (config->init_file_fmt == NULL)
+    return NULL;
+  else
+    return path_fmt_get_fmt( config->init_file_fmt );
+}
+
 
 static void field_config_set_init_transform( field_config_type * config , const char * __init_transform_name ) {
   const char * init_transform_name = NULL;
@@ -595,7 +602,7 @@ bool field_config_write_compressed(const field_config_type * config) { return co
 
 
 
-void field_config_set_truncation(field_config_type * config , truncation_type truncation, double min_value, double max_value) {
+void field_config_set_truncation(field_config_type * config , int truncation, double min_value, double max_value) {
   config->truncation = truncation;
   config->min_value  = min_value;
   config->max_value  = max_value;
@@ -604,11 +611,18 @@ void field_config_set_truncation(field_config_type * config , truncation_type tr
 
 
 
-truncation_type field_config_get_truncation(const field_config_type * config , double * min_value , double * max_value) {
-  *min_value = config->min_value;
-  *max_value = config->max_value;
+int field_config_get_truncation_mode(const field_config_type * config ) {
   return config->truncation;
 }
+
+double field_config_get_truncation_min( const field_config_type * config ) {
+  return config->min_value;
+}
+
+double field_config_get_truncation_max( const field_config_type * config ) {
+  return config->max_value;
+}
+
 
 
 

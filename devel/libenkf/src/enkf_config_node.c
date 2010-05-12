@@ -190,6 +190,14 @@ enkf_config_node_type * enkf_config_node_alloc_gen_kw( const char * key         
 
 /*****************************************************************/
 
+enkf_config_node_type * enkf_config_node_alloc_summary( const char * key ) {
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_RESULT , SUMMARY , key );
+  config_node->data = summary_config_alloc( key );
+  return config_node;
+}
+
+
+/*****************************************************************/
 
 /**
    This will create a new gen_kw_config instance which is NOT yet

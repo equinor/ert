@@ -42,6 +42,9 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       const void          * );
 
 
+enkf_config_node_type * enkf_config_node_alloc_summary( const char * key );
+
+
 void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max );
 
 enkf_config_node_type * enkf_config_node_alloc_state_field( const char * key              ,

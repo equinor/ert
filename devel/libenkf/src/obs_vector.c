@@ -294,7 +294,7 @@ int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int pre
 /*****************************************************************/
 
 
-obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history, const ecl_sum_type * refcase , ensemble_config_type * ensemble_config) {
+obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history, ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
     util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
@@ -310,7 +310,7 @@ obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_
     time_t       obs_time        = history_get_time_t_from_restart_nr( history , obs_restart_nr );
     summary_obs_type * sum_obs;
 
-    ensemble_config_ensure_summary( ensemble_config , sum_key , refcase );
+    ensemble_config_add_summary( ensemble_config , sum_key );
     obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
     sum_obs = summary_obs_alloc(sum_key , obs_value , obs_error);
     obs_vector_install_node( obs_vector , obs_restart_nr , obs_time , sum_obs );
@@ -376,7 +376,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 
 // Should check the refcase for key - if it is != NULL.
 
-obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config, double std_cutoff) {
+obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff) {
   if(!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
     util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" instance, got \"%s\".\n",__func__, conf_instance_get_class_name_ref(conf_instance) );
   
@@ -395,7 +395,7 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
     // Get time series data from history object and allocate
     history_alloc_time_series_from_summary_key(history, sum_key, &size, &value, &default_used);
     
-    ensemble_config_ensure_summary( ensemble_config , sum_key , refcase);
+    ensemble_config_add_summary( ensemble_config , sum_key );
     std = util_malloc(size * sizeof * std, __func__);
     obs_vector = obs_vector_alloc( SUMMARY_OBS , sum_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
     

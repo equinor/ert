@@ -565,9 +565,11 @@ for (int i=0; i < s; i++) {  		       \
     
 
 static void field_apply_truncation(field_type * field) {
-  double min_value, max_value;
-  truncation_type   truncation = field_config_get_truncation(field->config , &min_value , &max_value); 
+  truncation_type   truncation = field_config_get_truncation_mode( field->config );
   if (truncation != TRUNCATE_NONE) {
+    double min_value = field_config_get_truncation_min( field->config );
+    double max_value = field_config_get_truncation_max( field->config );
+
     const int data_size          = field_config_get_data_size(field->config );   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
     if (ecl_type == ECL_FLOAT_TYPE) {
@@ -587,9 +589,8 @@ static void field_apply_truncation(field_type * field) {
 */
 
 static void field_output_transform(field_type * field) {
-  double min_value , max_value;
   field_func_type * output_transform = field_config_get_output_transform(field->config);
-  truncation_type   truncation       = field_config_get_truncation(field->config , &min_value , &max_value); 
+  truncation_type   truncation       = field_config_get_truncation_mode( field->config );
   if ((output_transform != NULL) || (truncation != TRUNCATE_NONE)) {
     field->export_data = util_alloc_copy(field->data , field_config_get_byte_size(field->config) , __func__);
     field->__data = field->data;  /* Storing a pointer to the original data. */
