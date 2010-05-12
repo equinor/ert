@@ -31,6 +31,7 @@ struct enkf_config_node_struct {
   void               	* data;             /* This points to the config object of the actual implementation.        */
   enkf_node_type        * min_std;
   char                  * min_std_file; 
+  bool                    valid;            /* Is the config node in an internally consistent / OK state? */
   /*****************************************************************/
   /* Function pointers to methods working on the underlying config object. */
   get_data_size_ftype   * get_data_size;    /* Function pointer to ask the underlying config object of the size - i.e. number of elements. */
@@ -47,6 +48,15 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
   node->var_type   	= var_type;
   node->impl_type  	= impl_type;
   node->key        	= util_alloc_string_copy( key );
+
+
+  /**
+     Summary nodes have no context and are valid "from birth".
+  */
+  if (node->impl_type == SUMMARY)
+    node->valid = true;
+  else
+    node->valid = false;
 
   node->enkf_infile_fmt  = NULL;
   node->enkf_outfile_fmt = NULL;
@@ -85,6 +95,10 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
   return node;
 }
 
+
+bool enkf_config_node_is_valid( const enkf_config_node_type * config_node ) {
+  return config_node->valid;
+}
 
 
 void enkf_config_node_update_min_std( enkf_config_node_type * config_node , const char * min_std_file ) {
@@ -133,46 +147,70 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
 
 
 
-void enkf_config_node_update_gen_kw_config( enkf_config_node_type * config_node ,
-                                            const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
-                                            const char * template_file    , 
-                                            const char * parameter_file   ,
-                                            const char * min_std_file     ,
-                                            const char * init_file_fmt ) {
+void enkf_config_node_update_gen_kw( enkf_config_node_type * config_node ,
+                                     const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
+                                     const char * template_file    , 
+                                     const char * parameter_file   ,
+                                     const char * min_std_file     ,
+                                     const char * init_file_fmt ) {
   /* 1: Update the low level gen_kw_config stuff. */
   gen_kw_config_update( config_node->data , template_file , parameter_file , init_file_fmt );    
 
   /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
   enkf_config_node_update( config_node , enkf_outfile_fmt , NULL , min_std_file);
+  config_node->valid = true;
 }
 
 
-
-
-enkf_config_node_type * enkf_config_node_alloc_gen_kw_config( const char * key              , 
-                                                              const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
-                                                              const char * template_file    , 
-                                                              const char * parameter_file   ,
-                                                              const char * min_std_file     ,
-                                                              const char * init_file_fmt ) {
-  /* 1: Allocate bare bones instances         */
+/**
+   This will create a new gen_kw_config instance which is NOT yet
+   valid. Mainly support code for the GUI.
+*/
+enkf_config_node_type * enkf_config_node_new_gen_kw( const char * key ) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , GEN_KW , key );
   config_node->data = gen_kw_config_alloc_empty( key );
-  
-  /* 2: Update the content of the instances.  */
-  enkf_config_node_update_gen_kw_config( config_node , enkf_outfile_fmt , template_file , parameter_file , min_std_file , init_file_fmt );
   return config_node;
 }
 
+
+enkf_config_node_type * enkf_config_node_alloc_gen_kw( const char * key              , 
+                                                       const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
+                                                       const char * template_file    , 
+                                                       const char * parameter_file   ,
+                                                       const char * min_std_file     ,
+                                                       const char * init_file_fmt ) {
+  /* 1: Allocate bare bones instances         */
+  enkf_config_node_type * config_node = enkf_config_node_new_gen_kw( key );
+  
+  /* 2: Update the content of the instances.  */
+  enkf_config_node_update_gen_kw( config_node , enkf_outfile_fmt , template_file , parameter_file , min_std_file , init_file_fmt );
+  return config_node;
+}
+
+
 /*****************************************************************/
+
+
+/**
+   This will create a new gen_kw_config instance which is NOT yet
+   valid. Mainly support code for the GUI.
+*/
+enkf_config_node_type * enkf_config_node_new_field( const char * key , ecl_grid_type * ecl_grid, field_trans_table_type * trans_table) {
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( INVALID , FIELD , key );
+  config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
+  return config_node;
+}
+
 
 /**
    This is for dynamic ECLIPSE fields like PRESSURE and SWAT; they
    only have truncation as possible parameters.
 */
 void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max ) {
+  config_node->var_type = DYNAMIC_STATE;
   field_config_update_state_field( config_node->data , truncation , value_min , value_max );
   enkf_config_node_update( config_node , NULL , NULL , NULL );
+  config_node->valid = true;
 }
 
 
@@ -184,9 +222,8 @@ enkf_config_node_type * enkf_config_node_alloc_state_field( const char * key    
                                                             double value_max              ,
                                                             field_trans_table_type * trans_table ) {
   /* 1: Allocate bare bones instances         */
-  enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_STATE , FIELD , key );
-  config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
-
+  enkf_config_node_type * config_node = enkf_config_node_new_field( key , ecl_grid , trans_table);
+  
   /* 2: Update the content of the instances.  */
   enkf_config_node_update_state_field( config_node , truncation , value_min , value_max );
   return config_node;
@@ -210,8 +247,9 @@ void enkf_config_node_update_parameter_field( enkf_config_node_type * config_nod
                                        init_file_fmt , 
                                        init_transform , 
                                        output_transform );
+  config_node->var_type = PARAMETER;
   enkf_config_node_update( config_node , enkf_outfile_fmt , NULL , min_std_file);
-
+  config_node->valid = true;
 }
 
 
@@ -229,8 +267,7 @@ enkf_config_node_type * enkf_config_node_alloc_parameter_field( const char * key
                                                                 const char * init_transform          ,
                                                                 const char * output_transform ) {       
   /* 1: Allocate bare bones instances         */
-  enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , FIELD , key );
-  config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
+  enkf_config_node_type * config_node = enkf_config_node_new_field( key , ecl_grid , trans_table);
   
   /* 2: Update the content of the instances.  */
   enkf_config_node_update_parameter_field( config_node , enkf_outfile_fmt , init_file_fmt , min_std_file , truncation , value_min , value_max , init_transform , output_transform);
@@ -255,6 +292,18 @@ void enkf_config_node_update_general_field( enkf_config_node_type * config_node 
 
   
   field_file_format_type export_format = field_config_default_export_format( enkf_outfile_fmt ); /* Purely based on extension, recognizes ROFF and GRDECL, the rest will be ecl_kw format. */
+  {
+    enkf_var_type var_type;
+    if (enkf_infile_fmt == NULL)
+      var_type = PARAMETER;
+    else {
+      if (enkf_outfile_fmt == NULL)
+        var_type = DYNAMIC_RESULT;   /* Probably not very realistic */
+      else
+        var_type = DYNAMIC_STATE;
+    }
+    config_node->var_type = var_type;
+  }
   field_config_update_general_field( config_node->data , 
                                      truncation , value_min , value_max ,
                                      export_format , 
@@ -264,7 +313,9 @@ void enkf_config_node_update_general_field( enkf_config_node_type * config_node 
                                      output_transform );
 
   enkf_config_node_update( config_node , enkf_outfile_fmt , enkf_infile_fmt, min_std_file);
+  config_node->valid = true;
 }
+
   
 
 
@@ -281,21 +332,9 @@ enkf_config_node_type * enkf_config_node_alloc_general_field( const char * key  
                                                               const char * init_transform          ,
                                                               const char * input_transform         ,
                                                               const char * output_transform ) {       
-  /* 1: Allocate bare bones instances         */
-  enkf_var_type var_type;
-  if (enkf_infile_fmt == NULL)
-    var_type = PARAMETER;
-  else {
-    if (enkf_outfile_fmt == NULL)
-      var_type = DYNAMIC_RESULT;   /* Probably not very realistic */
-    else
-      var_type = DYNAMIC_STATE;
-  }
   
-  
-  enkf_config_node_type * config_node = enkf_config_node_alloc__( var_type , FIELD , key );
-  config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
-  
+  enkf_config_node_type * config_node = enkf_config_node_new_field( key , ecl_grid , trans_table);
+
   /* 2: Update the content of the instances.  */
   enkf_config_node_update_general_field( config_node , enkf_outfile_fmt , enkf_infile_fmt , init_file_fmt , min_std_file , truncation , value_min , value_max , init_transform , input_transform , output_transform);
   return config_node;

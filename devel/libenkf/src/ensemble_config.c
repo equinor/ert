@@ -95,7 +95,6 @@ void ensemble_config_free(ensemble_config_type * ensemble_config) {
 
 
 
-
 bool ensemble_config_has_key(const ensemble_config_type * ensemble_config , const char * key) {
   return hash_has_key( ensemble_config->config_nodes , key);
 }
@@ -201,11 +200,6 @@ void ensemble_config_add_gen_param(ensemble_config_type * config , const char * 
   }
 }
 
-
-
-void ensemble_config_add_field(ensemble_config_type * config ) {
-
-}
 
 
 
@@ -401,12 +395,11 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
 
   /* FIELD */
   {
-    field_trans_table_type * field_trans_table = ensemble_config->field_trans_table;
     for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
-      stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
-      enkf_config_node_type * config_node = NULL;
-      const char *  key             = stringlist_iget(tokens , 0);
-      const char *  var_type_string = stringlist_iget(tokens , 1);
+      stringlist_type * tokens            = config_iget_stringlist_ref(config , "FIELD" , i);
+      const char *  key                   = stringlist_iget(tokens , 0);
+      const char *  var_type_string       = stringlist_iget(tokens , 1);
+      enkf_config_node_type * config_node = ensemble_config_add_field( ensemble_config , key , grid );
       
       {
         hash_type * options = hash_alloc_from_options( tokens );
@@ -427,7 +420,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
         
         
         if (strcmp(var_type_string , "DYNAMIC") == 0) 
-          config_node = enkf_config_node_alloc_state_field( key , grid , truncation , value_min , value_max , field_trans_table);
+          enkf_config_node_update_state_field( config_node , truncation , value_min , value_max );
         else if (strcmp(var_type_string , "PARAMETER") == 0) {
           const char *  ecl_file          = stringlist_iget(tokens , 2);
           const char *  init_file_fmt     = hash_safe_get( options , "INIT_FILES" );
@@ -435,17 +428,15 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
           const char *  output_transform  = hash_safe_get( options , "OUTPUT_TRANSFORM" );
           const char *  min_std_file      = hash_safe_get( options , "MIN_STD");
           
-          config_node = enkf_config_node_alloc_parameter_field( key               , 
-                                                                grid              , 
-                                                                ecl_file          , 
-                                                                init_file_fmt     , 
-                                                                min_std_file      , 
-                                                                truncation        , 
-                                                                value_min         , 
-                                                                value_max         ,    
-                                                                field_trans_table , 
-                                                                init_transform    , 
-                                                                output_transform   );
+          enkf_config_node_update_parameter_field( config_node, 
+                                                   ecl_file          , 
+                                                   init_file_fmt     , 
+                                                   min_std_file      , 
+                                                   truncation        , 
+                                                   value_min         , 
+                                                   value_max         ,    
+                                                   init_transform    , 
+                                                   output_transform   );
         } else if (strcmp(var_type_string , "GENERAL") == 0) {
           const char *  ecl_file          = stringlist_iget(tokens , 2);
           const char *  enkf_infile       = stringlist_iget(tokens , 3);
@@ -456,17 +447,15 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
           const char *  min_std_file      = hash_safe_get( options , "MIN_STD");
           
 
-          config_node = enkf_config_node_alloc_general_field( key , 
-                                                              grid , 
-                                                              ecl_file , 
-                                                              enkf_infile , 
-                                                              init_file_fmt , 
-                                                              min_std_file , 
-                                                              truncation , value_min , value_max , 
-                                                              field_trans_table , 
-                                                              init_transform , 
-                                                              input_transform , 
-                                                              output_transform);
+          enkf_config_node_update_general_field( config_node,
+                                                 ecl_file , 
+                                                 enkf_infile , 
+                                                 init_file_fmt , 
+                                                 min_std_file , 
+                                                 truncation , value_min , value_max , 
+                                                 init_transform , 
+                                                 input_transform , 
+                                                 output_transform);
 
           
         } else 
@@ -474,7 +463,6 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
         
         hash_free( options );
       }
-      ensemble_config_add_node__( ensemble_config , config_node );
     }
   }
 
@@ -492,8 +480,8 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
 
     {
       hash_type * opt_hash                = hash_alloc_from_options( tokens );
-      enkf_config_node_type * config_node = enkf_config_node_alloc_gen_kw_config( key , enkf_outfile , template_file , parameter_file , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
-      ensemble_config_add_node__( ensemble_config , config_node );
+      enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
+      enkf_config_node_update_gen_kw( config_node , enkf_outfile , template_file , parameter_file , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
       hash_free( opt_hash );
     }
   
@@ -534,8 +522,9 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
     stringlist_idel( tokens , 0);
     {
       hash_type * opt_hash                = hash_alloc_from_options( tokens );
-      enkf_config_node_type * config_node = enkf_config_node_alloc_gen_kw_config( key , target_file , template_file , hash_safe_get( opt_hash , "PARAMETERS") , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
-      ensemble_config_add_node__( ensemble_config , config_node );
+      enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
+
+      enkf_config_node_update_gen_kw( config_node , target_file , template_file , hash_safe_get( opt_hash , "PARAMETERS") , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
       hash_free( opt_hash );
     }
     free(target_file);
@@ -695,3 +684,28 @@ int ensemble_config_get_observations( const ensemble_config_type * config , cons
 }
 
 
+/*****************************************************************/
+
+
+/* 
+   The ensemble_config_add_xxx() functions below will create a new xxx
+   instance and add it to the ensemble_config; the return value from
+   the functions is the newly created config_node instances.
+
+   The newly created enkf_config_node instances are __NOT__ fully
+   initialized, and a subsequent call to enkf_config_node_update_xxx()
+   is essential for proper operation.
+*/
+
+enkf_config_node_type * ensemble_config_add_field( ensemble_config_type * config , const char * key , ecl_grid_type * ecl_grid ) {
+  enkf_config_node_type * config_node = enkf_config_node_new_field( key , ecl_grid , config->field_trans_table );
+  ensemble_config_add_node__( config , config_node );
+  return config_node;
+}
+
+
+enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key ) {
+  enkf_config_node_type * config_node = enkf_config_node_new_gen_kw( key );
+  ensemble_config_add_node__( config , config_node );
+  return config_node;
+}

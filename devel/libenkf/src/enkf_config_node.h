@@ -18,21 +18,21 @@ typedef struct enkf_node_struct        enkf_node_type;
 
 
 
-enkf_config_node_type * enkf_config_node_alloc_gen_kw_config( const char * key              , 
-                                                              const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
-                                                              const char * template_file    , 
-                                                              const char * parameter_file   ,
-                                                              const char * min_std_file     ,
-                                                              const char * init_file_fmt );
+  enkf_config_node_type * enkf_config_node_alloc_gen_kw( const char * key              , 
+                                                         const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
+                                                         const char * template_file    , 
+                                                         const char * parameter_file   ,
+                                                         const char * min_std_file     ,
+                                                         const char * init_file_fmt );
 
 
-void enkf_config_node_update_gen_kw_config( enkf_config_node_type * config_node ,
-                                            const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
-                                            const char * template_file    , 
-                                            const char * parameter_file   ,
-                                            const char * min_std_file     ,
-                                            const char * init_file_fmt );
-
+  void enkf_config_node_update_gen_kw( enkf_config_node_type * config_node ,
+                                       const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
+                                       const char * template_file    , 
+                                       const char * parameter_file   ,
+                                       const char * min_std_file     ,
+                                       const char * init_file_fmt );
+  
 
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       enkf_impl_type        ,
@@ -108,7 +108,9 @@ enkf_config_node_type * enkf_config_node_alloc_general_field( const char * key  
 
 /*****************************************************************/
 
-
+enkf_config_node_type * enkf_config_node_new_gen_kw( const char * key );
+enkf_config_node_type * enkf_config_node_new_field( const char * key , ecl_grid_type * ecl_grid, field_trans_table_type * trans_table);
+bool                    enkf_config_node_is_valid( const enkf_config_node_type * config_node );
 int                     enkf_config_node_get_data_size( const enkf_config_node_type * node , int report_step);					
 char                  * enkf_config_node_alloc_infile(const enkf_config_node_type * , int );
 char                  * enkf_config_node_alloc_outfile(const enkf_config_node_type * , int );
