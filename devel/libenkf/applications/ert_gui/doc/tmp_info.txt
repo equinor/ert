@@ -65,6 +65,8 @@ SUMMARY
 Disse har ikke noe kontekst - de er fullt definert ved sin key; det er
 heller ikke mulig å gjøre noen oppdateringer på SUMMARY variabler.
 
+ensemble_config_add_summary( ensemble_config , new_key );
+
       
 GEN_DATA
 --------
