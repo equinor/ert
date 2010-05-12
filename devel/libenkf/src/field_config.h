@@ -113,9 +113,6 @@ void                    field_config_get_dims(const field_config_type * , int * 
 int                     field_config_get_nx(const field_config_type * config );
 int                     field_config_get_ny(const field_config_type * config );
 int                     field_config_get_nz(const field_config_type * config );
-field_config_type     * field_config_alloc_dynamic(const char * , ecl_grid_type * , field_trans_table_type * , const stringlist_type *);
-field_config_type     * field_config_alloc_parameter(const char * , const char * , ecl_grid_type * , field_trans_table_type * , const stringlist_type *);
-field_config_type     * field_config_alloc_general(const char *  , const char * , ecl_grid_type *  , ecl_type_enum , field_trans_table_type * , const stringlist_type *);
 void                    field_config_free(field_config_type *);
 int                     field_config_get_volume(const field_config_type * );
 void                    field_config_set_ecl_kw_name(field_config_type * , const char * );

@@ -301,7 +301,7 @@ class SimulationPanelController:
     def initialize(self, ert):
         """Set prototypes for ERT"""
         if not self.initialized:
-            ert.setTypes("job_queue_get_pause", library = ert.job_queue)
+            ert.prototype("bool job_queue_get_pause(long)", lib = ert.job_queue)
             ert.setTypes("job_queue_set_pause_on", library = ert.job_queue)
             ert.setTypes("job_queue_set_pause_off", library = ert.job_queue)
             ert.setTypes("job_queue_user_exit", library = ert.job_queue)

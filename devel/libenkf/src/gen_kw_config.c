@@ -81,8 +81,11 @@ void gen_kw_config_set_init_file_fmt( gen_kw_config_type * gen_kw_config , const
 }
 
 
-const char * gen_kw_get_init_file_fmt( const gen_kw_config_type * config ) {
-  return path_fmt_get_fmt( config->init_file_fmt );
+const char * gen_kw_config_get_init_file_fmt( const gen_kw_config_type * config ) {
+  if (config->init_file_fmt == NULL)
+    return NULL;
+  else
+    return path_fmt_get_fmt( config->init_file_fmt );
 }
 
 char * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens ) {

@@ -352,7 +352,7 @@ void ensemble_config_add_config_items(config_type * config) {
 ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
   ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( );
-  ensemble_config->field_trans_table     = field_trans_table_alloc();
+  ensemble_config->field_trans_table     = field_trans_table_alloc();    /* This currently leaks. */
 
   /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
   if (config_get_occurences(config , "MULTFLT") > 0) {
@@ -405,49 +405,76 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
     for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
       stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
       enkf_config_node_type * config_node = NULL;
-      char *  key             = stringlist_iget_copy(tokens , 0);
-      char *  var_type_string = stringlist_iget_copy(tokens , 1);
-      stringlist_idel( tokens , 0 );   
-      stringlist_idel( tokens , 0 );
+      const char *  key             = stringlist_iget(tokens , 0);
+      const char *  var_type_string = stringlist_iget(tokens , 1);
       
-      if (strcmp(var_type_string , "DYNAMIC") == 0) {
-	config_node = ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid , field_trans_table , tokens));
-      } else if (strcmp(var_type_string , "PARAMETER") == 0) {
-	char *  ecl_file        = stringlist_iget_copy(tokens , 0);
-	stringlist_idel( tokens , 0 );
-	
-	config_node = ensemble_config_add_node(ensemble_config , key , PARAMETER   , FIELD , ecl_file , NULL , 
-                                               field_config_alloc_parameter(key , ecl_file , grid , field_trans_table , tokens));
-	free(ecl_file);
-      } else if (strcmp(var_type_string , "GENERAL") == 0) {
-	char * enkf_outfile = stringlist_iget_copy(tokens , 0); /* Out before in ?? */
-	char * enkf_infile  = stringlist_iget_copy(tokens , 1);
-	stringlist_idel( tokens , 0 );
-	stringlist_idel( tokens , 0 );
-	
-	config_node = ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , enkf_outfile , enkf_infile , 
-                                               field_config_alloc_general(key , enkf_outfile , grid , ECL_FLOAT_TYPE , field_trans_table , tokens));
-	free(enkf_outfile);
-	free(enkf_infile);
-      } else 
-	util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
-
-
-      /**
-         This will essentially install a min std instance.
-      */
       {
-        const field_config_type * field_config  = enkf_config_node_get_ref( config_node  );
-        field_type        * field_min_std       = field_config_get_min_std( field_config );
+        hash_type * options = hash_alloc_from_options( tokens );
         
-        if (field_min_std != NULL) {
-          enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , field_min_std);
-          enkf_config_node_set_min_std( config_node , min_std_node );
+        int    truncation = TRUNCATE_NONE;
+        double value_min  = -1;
+        double value_max  = -1;
+
+        if (hash_has_key( options , "MIN")) {
+          truncation |= TRUNCATE_MIN;
+          value_min   = atof(hash_get( options , "MIN"));
         }
+
+        if (hash_has_key( options , "MAX")) {
+          truncation |= TRUNCATE_MAX;
+          value_max   = atof(hash_get( options , "MAX"));
+        }
+        
+        
+        if (strcmp(var_type_string , "DYNAMIC") == 0) 
+          config_node = enkf_config_node_alloc_state_field( key , grid , truncation , value_min , value_max , field_trans_table);
+        else if (strcmp(var_type_string , "PARAMETER") == 0) {
+          const char *  ecl_file          = stringlist_iget(tokens , 2);
+          const char *  init_file_fmt     = hash_safe_get( options , "INIT_FILES" );
+          const char *  init_transform    = hash_safe_get( options , "INIT_TRANSFORM" );
+          const char *  output_transform  = hash_safe_get( options , "OUTPUT_TRANSFORM" );
+          const char *  min_std_file      = hash_safe_get( options , "MIN_STD");
+          
+          config_node = enkf_config_node_alloc_parameter_field( key               , 
+                                                                grid              , 
+                                                                ecl_file          , 
+                                                                init_file_fmt     , 
+                                                                min_std_file      , 
+                                                                truncation        , 
+                                                                value_min         , 
+                                                                value_max         ,    
+                                                                field_trans_table , 
+                                                                init_transform    , 
+                                                                output_transform   );
+        } else if (strcmp(var_type_string , "GENERAL") == 0) {
+          const char *  ecl_file          = stringlist_iget(tokens , 2);
+          const char *  enkf_infile       = stringlist_iget(tokens , 3);
+          const char *  init_file_fmt     = hash_safe_get( options , "INIT_FILES" );
+          const char *  init_transform    = hash_safe_get( options , "INIT_TRANSFORM" );
+          const char *  output_transform  = hash_safe_get( options , "OUTPUT_TRANSFORM" );
+          const char *  input_transform   = hash_safe_get( options , "INPUT_TRANSFORM" );
+          const char *  min_std_file      = hash_safe_get( options , "MIN_STD");
+          
+
+          config_node = enkf_config_node_alloc_general_field( key , 
+                                                              grid , 
+                                                              ecl_file , 
+                                                              enkf_infile , 
+                                                              init_file_fmt , 
+                                                              min_std_file , 
+                                                              truncation , value_min , value_max , 
+                                                              field_trans_table , 
+                                                              init_transform , 
+                                                              input_transform , 
+                                                              output_transform);
+
+          
+        } else 
+          util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
+        
+        hash_free( options );
       }
-      
-      free( key );
-      free( var_type_string );
+      ensemble_config_add_node__( ensemble_config , config_node );
     }
   }
 
