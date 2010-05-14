@@ -4,6 +4,7 @@ import sys
 from widgets.util import resourceIcon, resourceImage
 import inspect
 import widgets.helpedwidget
+import enums
 
 def abstract():
     """Abstract keyword that indicate an abstract function"""
@@ -11,6 +12,13 @@ def abstract():
     caller = inspect.getouterframes(inspect.currentframe())[1][3]
     raise NotImplementedError(caller + ' must be implemented in subclass')
 
+class UpdateOperations(enums.enum):
+    INSERT = None
+    REMOVE = None
+    UPDATE = None
+UpdateOperations.INSERT = UpdateOperations("Insert", 1)
+UpdateOperations.REMOVE = UpdateOperations("Remove", 2)
+UpdateOperations.UPDATE = UpdateOperations("Update", 3)
 
 
 class ContentModel:
@@ -19,9 +27,9 @@ class ContentModel:
     signalManager = QtCore.QObject()
     observers = []
 
-    INSERT = 1
-    REMOVE = 2
-    UPDATE = 3
+    INSERT = UpdateOperations.INSERT
+    REMOVE = UpdateOperations.REMOVE
+    UPDATE = UpdateOperations.UPDATE
 
     def __init__(self):
         """Constructs a ContentModel. All inheritors are registered"""
@@ -73,11 +81,11 @@ class ContentModel:
         Emits a SIGNAL 'contentsChanged(int)' after the function has been called, where int is the operation performed.
         """
         if not ContentModel.contentModel is None :
-            if operation == ContentModel.INSERT:
+            if ContentModel.INSERT == operation:
                 result = self.insert(ContentModel.contentModel, value)
-            elif operation == ContentModel.REMOVE:
+            elif ContentModel.REMOVE == operation:
                 result = self.remove(ContentModel.contentModel, value)
-            elif operation == ContentModel.UPDATE:
+            elif ContentModel.UPDATE == operation:
                 result = self.setter(ContentModel.contentModel, value)
             else:
                 sys.stderr.write("Unknown operation: %d\n" % (operation))

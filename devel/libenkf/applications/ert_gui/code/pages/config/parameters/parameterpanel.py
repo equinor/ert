@@ -96,10 +96,9 @@ class ParameterPanel(HelpedWidget):
 
         pd = ParameterDialog(self, Parameter.typeIcons, uniqueNames)
         if pd.exec_():
-            self.addToList(list, pd.getTypeName(), pd.getName())
+            result = self.addToList(list, pd.getTypeName(), pd.getName())
+            self.updateContent(result, operation=ContentModel.INSERT)
 
-
-        #self.contentsChanged()
         # todo: emit when a new field is added also make initandcopy listen -> self.modelEmit("casesUpdated()")
 
 
@@ -111,13 +110,9 @@ class ParameterPanel(HelpedWidget):
             doDelete = QtGui.QMessageBox.question(self, "Delete parameter?", "Are you sure you want to delete the parameter?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
 
             if doDelete == QtGui.QMessageBox.Yes:
+                item = list.curentItem()
+                self.updateContent(item.getName(), operation=ContentModel.REMOVE)
                 list.takeItem(currentRow)
-                #self.contentsChanged()
-
-
-    def contentsChanged(self):
-        """Called whenever the contents of a cell changes."""
-        pass
 
 
     def fetchContent(self):

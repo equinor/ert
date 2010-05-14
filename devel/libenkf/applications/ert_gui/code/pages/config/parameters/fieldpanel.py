@@ -3,6 +3,7 @@ from widgets.combochoice import ComboChoice
 from widgets.stringbox import DoubleBox
 from widgets.pathchooser import PathChooser
 from pages.config.parameters.parametermodels import FieldModel
+from enums import field_type
 
 class FieldPanel(QtGui.QFrame):
 
@@ -18,9 +19,10 @@ class FieldPanel(QtGui.QFrame):
 
         self.fieldModel = FieldModel("")
 
-        self.fieldType = ComboChoice(self, ["Dynamic", "Parameter", "General"], "", "field_type")
-        self.fieldType.setter = lambda model, value: self.typeChanged(value)
-        self.fieldType.getter = lambda model: self.fieldModel["type"]
+        self.fieldType = ComboChoice(self, field_type.values(), "", "field_type")
+        self.fieldType.setter = lambda model, value: self.typeChanged(field_type[str(value)])
+        self.fieldType.getter = lambda model: str(self.fieldModel["type"])
+        self.fieldType.initialize = self.initialize
 
         self.min = DoubleBox(self, "", "field_min")
         self.modelWrap(self.min, "min")
@@ -54,9 +56,13 @@ class FieldPanel(QtGui.QFrame):
 
         self.setLayout(layout)
 
-        self.typeChanged("Dynamic")
+        self.typeChanged(field_type.ECLIPSE_RESTART)
+
+    def initialize(self, model):
+        pass
 
     def modelWrap(self, widget, attribute):
+        widget.initialize = self.initialize #mute missing initializer warning
         widget.setter = lambda model, value: self.fieldModel.set(attribute, value)
         widget.getter = lambda model: self.fieldModel[attribute]
 
@@ -71,14 +77,14 @@ class FieldPanel(QtGui.QFrame):
         self.file_generated_by_enkf.setEnabled(True)
         self.file_loaded_by_enkf.setEnabled(True)
 
-        if value == "Dynamic":
+        if value == field_type.ECLIPSE_RESTART:
             self.init.setEnabled(False)
             self.output.setEnabled(False)
             self.init_files.setEnabled(False)
             self.file_generated_by_enkf.setEnabled(False)
             self.file_loaded_by_enkf.setEnabled(False)
 
-        elif value == "Parameter":
+        elif value == field_type.ECLIPSE_PARAMETER:
             self.file_loaded_by_enkf.setEnabled(False)
 
     def setFieldModel(self, fieldModel):
