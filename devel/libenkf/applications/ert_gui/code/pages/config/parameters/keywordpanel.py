@@ -26,8 +26,8 @@ class KeywordPanel(QtGui.QFrame):
         self.enkf_outfile = PathChooser(self, "", "gen_kw_enkf_outfile", True, must_be_set=False)
         self.modelWrap(self.enkf_outfile, "enkf_outfile")
 
-        self.init_file = PathChooser(self, "", "gen_kw_init_file", True, must_be_set=False)
-        self.modelWrap(self.init_file, "init_file")
+        self.init_files = PathChooser(self, "", "gen_kw_init_files", True, must_be_set=False)
+        self.modelWrap(self.init_files, "init_files")
 
         self.parameter_file = PathChooser(self, "", "gen_kw_parameter_file", True, must_be_set=False)
         self.modelWrap(self.parameter_file, "parameter_file")
@@ -36,7 +36,7 @@ class KeywordPanel(QtGui.QFrame):
         layout.addRow("Template:"     , self.template)
         layout.addRow("Include file:" , self.enkf_outfile)
         layout.addRow("Minimum std:"  , self.min_std)
-        layout.addRow("Init files:"   , self.init_file)
+        layout.addRow("Init files:"   , self.init_files)
         layout.addRow("Parameter file:"   , self.parameter_file)
 
         self.setLayout(layout)
@@ -47,10 +47,14 @@ class KeywordPanel(QtGui.QFrame):
         self.min_std.fetchContent()
         self.template.fetchContent()
         self.enkf_outfile.fetchContent()
-        self.init_file.fetchContent()
+        self.init_files.fetchContent()
         self.parameter_file.fetchContent()
 
+    def initialize(self, model):
+        pass
+
     def modelWrap(self, widget, attribute):
+        widget.initialize = self.initialize
         widget.setter = lambda model, value: self.keywordModel.set(attribute, value)
         widget.getter = lambda model: self.keywordModel[attribute]
 

@@ -1,4 +1,4 @@
-from enums import enkf_impl_type
+from enums import enkf_impl_type, field_type
 
 class Model:
 
@@ -23,7 +23,7 @@ class FieldModel(Model):
         Model.__init__(self, name)
         self.name = name
 
-        self["type"] = "General"
+        self["type"] = field_type.GENERAL
         self["min"] = ""
         self["max"] = ""
         self["init"] = "None"
@@ -31,6 +31,7 @@ class FieldModel(Model):
         self["init_files"] = ""
         self["file_generated_by_enkf"] = ""
         self["file_loaded_by_enkf"] = ""
+        self["min_std"] = ""
 
 class KeywordModel(Model):
     TYPE = enkf_impl_type.GEN_KW
@@ -42,7 +43,7 @@ class KeywordModel(Model):
         self["min_std"] = ""
         self["enkf_outfile"] = ""
         self["template"] = ""
-        self["init_file"] = ""
+        self["init_files"] = ""
         self["parameter_file"] = ""
 
 class DataModel(Model):

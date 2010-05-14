@@ -4,7 +4,7 @@
 from PyQt4 import QtGui, QtCore
 from widgets.spinnerwidgets import IntegerSpinner
 import ertwrapper
-from pages.config.parameters.parameterpanel import ParameterPanel
+from pages.config.parameters.parameterpanel import ParameterPanel, enums
 from pages.config.parameters.parametermodels import SummaryModel, DataModel, FieldModel, KeywordModel
 
 
@@ -34,10 +34,21 @@ def createEnsemblePage(configPanel, parent):
         ert.prototype("long enkf_config_node_get_ref(long)")
         ert.prototype("char* enkf_config_node_get_min_std_file(long)")
         ert.prototype("char* enkf_config_node_get_enkf_outfile(long)")
+        #ert.prototype("char* enkf_config_node_get_enkf_infile(long)") q:not implemented
 
         ert.prototype("char* gen_kw_config_get_template_file(long)")
         ert.prototype("char* gen_kw_config_get_init_file_fmt(long)")
         ert.prototype("char* gen_kw_config_get_parameter_file(long)")
+
+        ert.prototype("int field_config_get_type(long)")
+        ert.prototype("int field_config_get_truncation_mode(long)")
+        ert.prototype("double field_config_get_truncation_min(long)")
+        ert.prototype("double field_config_get_truncation_max(long)")
+        ert.prototype("char* field_config_get_init_transform_name(long)")
+        ert.prototype("char* field_config_get_output_transform_name(long)")
+        ert.prototype("char* field_config_get_init_file_fmt(long)")
+
+
 
     r.initialize = initialize
 
@@ -53,18 +64,38 @@ def createEnsemblePage(configPanel, parent):
             #print key, type
 
             model = None
-            if FieldModel.TYPE == type:
+            if type == FieldModel.TYPE:
                 model = FieldModel(key)
-            elif DataModel.TYPE == type:
+
+                field_type = ert.enkf.field_config_get_type(data)
+                field_type = enums.field_type[field_type]
+                model["type"] = field_type
+
+                truncation = ert.enkf.field_config_get_truncation_mode(data)
+
+                if truncation & enums.truncation_type.TRUNCATE_MAX:
+                    model["max"] = ert.enkf.field_config_get_truncation_max(data)
+
+                if truncation & enums.truncation_type.TRUNCATE_MIN:
+                    model["min"] = ert.enkf.field_config_get_truncation_min(data)
+
+                model["init"] = ert.enkf.field_config_get_init_transform_name(data)
+                model["output"] = ert.enkf.field_config_get_output_transform_name(data)
+                model["init_files"] = ert.enkf.field_config_get_init_file_fmt(data)
+                model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
+                #model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node) q: segfault
+                #model["enkf_infile"] = ert.enkf.enkf_config_node_get_enkf_infile(node) q: not implemented
+
+            elif type == DataModel.TYPE:
                 model = DataModel(key)
-            elif KeywordModel.TYPE == type:
+            elif type == KeywordModel.TYPE:
                 model = KeywordModel(key)
                 model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
                 model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
                 model["template"] = ert.enkf.gen_kw_config_get_template_file(data)
                 model["init_file"] = ert.enkf.gen_kw_config_get_init_file_fmt(data)
                 model["parameter_file"] = ert.enkf.gen_kw_config_get_parameter_file(data)
-            elif SummaryModel.TYPE == type:
+            elif type == SummaryModel.TYPE:
                 model = SummaryModel(key)
             else:
                 pass #Unknown type

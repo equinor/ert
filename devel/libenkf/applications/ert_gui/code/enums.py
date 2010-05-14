@@ -1,6 +1,31 @@
 
+class enumtype(type):
+    def __call__(cls, *args, **kwargs):
+        newtype = super(enumtype, cls).__call__(*args, **kwargs)
+        newtype.__getitem__ = classmethod(enumtype.__getitem__)
+        return newtype
+
+    def __getitem__(cls, item):
+        """All enums can be accessed with the subscript operator, using the name or value as key"""
+        v = cls.resolveValue(item)
+        if v is None:
+            return cls.resolveName(item)
+        else:
+            return v
+
+#        if isinstance(item, long) or isinstance(item, int):
+#            return cls.resolveValue(item)
+#        else:
+#            return cls.resolveName(item)
+
 class enum:
-    """A base class for enums."""
+    """
+    A base class for enums.
+    All enums support the subscript operator as a class method. The value or the name can be used as key/index.
+    The subscript operator uses the resolveName and resolveValue functions as basis.
+    """
+    __metaclass__ = enumtype
+
     _enums = {}  #This contains all sub classed enums! {class : [list of enums], ...}
     def __init__(self, name, value):
         self.name = name
@@ -36,8 +61,25 @@ class enum:
         return None
 
     def __add__(self, other):
-        return self.value + other.value
-        
+        """Two enums can be added together returning the sum of the value fields"""
+        if isinstance(other, self.__class__):
+            return self.value + other.value
+        else:
+            raise NotImplemented
+
+
+    def __and__(self, other):
+        """Bitwise and of two enums or an enum and a long or int."""
+        if isinstance(other, self.__class__):
+            return self.value & other.value
+        elif isinstance(other, long) or isinstance(other, int):
+            return self.value & other
+        else:
+            raise NotImplemented
+
+    def __rand__(self, other):
+        return self.__and__(other)
+
     def __str__(self):
         return self.name
 
@@ -52,6 +94,13 @@ class enum:
 
     def __hash__(self):
         return hash("%s : %i" % (self.name, self.value))
+
+#    @classmethod
+#    def __getitem__(cls, item):
+#        if isinstance(item, long) or isinstance(item, int):
+#            cls.resolveValue(cls, item)
+#        else:
+#            cls.resolveName(cls, item)
 
 
 #-------------------------------------------------------------------
@@ -146,5 +195,24 @@ gen_data_file_format.OUTPUT_TYPES = [gen_data_file_format.ASCII,
                                      gen_data_file_format.ASCII_TEMPLATE,
                                      gen_data_file_format.BINARY_FLOAT,
                                      gen_data_file_format.BINARY_DOUBLE]
+
+class field_type(enum):
+    ECLIPSE_RESTART = None
+    ECLIPSE_PARAMETER = None
+    GENERAL = None
+
+field_type.ECLIPSE_RESTART = field_type("Dynamic", 1)
+field_type.ECLIPSE_PARAMETER = field_type("Parameter", 2)
+field_type.GENERAL = field_type("General", 3)
+
+
+class truncation_type(enum):
+    TRUNCATE_NONE = None
+    TRUNCATE_MIN = None
+    TRUNCATE_MAX = None
+
+truncation_type.TRUNCATE_NONE = truncation_type("TRUNCATE_NONE", 0)
+truncation_type.TRUNCATE_MIN = truncation_type("TRUNCATE_MIN", 1)
+truncation_type.TRUNCATE_MAX = truncation_type("TRUNCATE_MAX", 2)
 
 #print enum._enums
