@@ -11,7 +11,6 @@
 #include <rms_util.h>
 #include <path_fmt.h>
 #include <math.h>
-#include <field_active.h>
 #include <active_list.h>
 #include <field_trans.h>
 #include <field_common.h>  
@@ -908,19 +907,6 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 
 
 
-//void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
-//  field_active_type * active = field_active_safe_cast( active_config );
-//
-//  if (active_mode == ALL_ACTIVE)
-//    active_list_set_all_active(config->active_list);
-//  else {
-//    active_list_reset(config->active_list);
-//    if (active_mode == PARTLY_ACTIVE)
-//      field_active_update_active_list( active , config->active_list);
-//  }
-//}
-
-
 
 /**
    Parses a string of the type "1,5,6", and returns the indices i,j,k
@@ -974,7 +960,8 @@ const ecl_grid_type *field_config_get_grid(const field_config_type * config) { r
 
 
 /*****************************************************************/
-SAFE_CAST(field_config , FIELD_CONFIG_ID)
+UTIL_SAFE_CAST_FUNCTION(field_config , FIELD_CONFIG_ID)
+UTIL_SAFE_CAST_FUNCTION_CONST(field_config , FIELD_CONFIG_ID)
 CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_GET_DATA_SIZE(field)

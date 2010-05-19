@@ -10,6 +10,7 @@ extern "C" {
 #include <field_config.h>
 #include <enkf_serialize.h>
 #include <field_common.h>
+#include <util.h>
 
 /* Typedef field_type moved to field_config.h */
 
@@ -54,7 +55,8 @@ void          field_update_sum(field_type * sum , const field_type * field , dou
 
 void          field_upgrade_103(const char * filename);
 
-SAFE_CAST_HEADER(field);
+UTIL_SAFE_CAST_HEADER(field);
+UTIL_SAFE_CAST_HEADER_CONST(field);
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);
 VOID_COPY_HEADER      (field);

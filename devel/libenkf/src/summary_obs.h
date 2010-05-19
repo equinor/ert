@@ -15,6 +15,7 @@ extern "C" {
 #include <summary_config.h>
 #include <summary.h>
 #include <active_list.h>
+#include <util.h>
 
 typedef struct summary_obs_struct summary_obs_type;
 
@@ -48,8 +49,7 @@ void summary_obs_set(summary_obs_type * , double , double );
 VOID_FREE_HEADER(summary_obs);
 VOID_GET_OBS_HEADER(summary_obs);
 VOID_MEASURE_HEADER(summary_obs);
-SAFE_CAST_HEADER(summary_obs);
-IS_INSTANCE_HEADER(summary_obs);
+UTIL_IS_INSTANCE_HEADER(summary_obs);
 VOID_USER_GET_OBS_HEADER(summary_obs);
 VOID_CHI2_HEADER(summary_obs);
 

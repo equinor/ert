@@ -17,7 +17,7 @@
 
 
 struct summary_obs_struct {
-  int       __type_id; 
+  UTIL_TYPE_ID_DECLARATION;
   char    * summary_key;    /** The observation, in summary.x syntax, e.g. GOPR:FIELD.    */
 
   double    value;          /** Observation value. */
@@ -45,8 +45,8 @@ summary_obs_type * summary_obs_alloc(
   double std)
 {
   summary_obs_type * obs = util_malloc(sizeof * obs , __func__);
-  
-  obs->__type_id     = SUMMARY_OBS_TYPE_ID; 
+  UTIL_TYPE_ID_INIT( obs , SUMMARY_OBS_TYPE_ID )
+
   obs->summary_key   = util_alloc_string_copy(summary_key);
   obs->value         = value;
   obs->std           = std;
@@ -55,8 +55,9 @@ summary_obs_type * summary_obs_alloc(
 }
 
 
-SAFE_CAST(summary_obs   , SUMMARY_OBS_TYPE_ID);
-IS_INSTANCE(summary_obs , SUMMARY_OBS_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION_CONST(summary_obs   , SUMMARY_OBS_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION(summary_obs   , SUMMARY_OBS_TYPE_ID);
+UTIL_IS_INSTANCE_FUNCTION(summary_obs , SUMMARY_OBS_TYPE_ID);
 
 
 void summary_obs_free(summary_obs_type * summary_obs) {

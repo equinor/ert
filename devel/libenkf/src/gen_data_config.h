@@ -6,9 +6,9 @@ extern "C" {
 
 #include <enkf_macros.h>
 #include <stdbool.h>
-#include <gen_data_active.h>
 #include <stringlist.h>
 #include <gen_data_common.h>
+#include <util.h>
 
 typedef enum { GEN_DATA_UNDEFINED = 0,  
 	       ASCII           	  = 1,   /*   The file is ASCII file with a vector of numbers formatted with "%g".       */
@@ -43,7 +43,8 @@ const char  *                gen_data_config_get_key( const gen_data_config_type
 int                          gen_data_config_get_byte_size( const gen_data_config_type * config , int report_step);
 int                          gen_data_config_get_data_size( const gen_data_config_type * config , int report_step);
 
-SAFE_CAST_HEADER(gen_data_config)
+UTIL_SAFE_CAST_HEADER(gen_data_config)
+UTIL_SAFE_CAST_HEADER_CONST(gen_data_config)
 GET_ACTIVE_LIST_HEADER(gen_data)
 VOID_FREE_HEADER(gen_data_config)
 

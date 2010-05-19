@@ -11,6 +11,7 @@ extern "C" {
 #include <field_config.h>
 #include <field.h>
 #include <active_list.h>
+#include <util.h>
 
 typedef struct field_obs_struct field_obs_type;
 
@@ -51,10 +52,9 @@ int         field_obs_get_size(const field_obs_type * );
 void        field_obs_iget(const field_obs_type * field_obs, int  , double * , double * );
 void        field_obs_iget_ijk(const field_obs_type * field_obs , int block_nr , int * i , int * j , int * k);
 
-SAFE_CAST_HEADER(field_obs);
 VOID_FREE_HEADER(field_obs);
 VOID_GET_OBS_HEADER(field_obs);
-IS_INSTANCE_HEADER(field_obs);
+UTIL_IS_INSTANCE_HEADER(field_obs);
 VOID_MEASURE_HEADER(field_obs);
 VOID_USER_GET_OBS_HEADER(field_obs);
 VOID_CHI2_HEADER(field_obs);

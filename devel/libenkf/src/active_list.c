@@ -44,7 +44,7 @@ a fault object. Then the code will be like:
 #define ACTIVE_LIST_TYPE_ID 66109
 
 struct active_list_struct {
-  int     	    __type_id;      /* Used for checking run_time casting. */
+  UTIL_TYPE_ID_DECLARATION;
   active_mode_type  mode;           /* ALL_ACTIVE | INACTIVE | PARTLY_ACTIVE */
   int_vector_type  *index_list;     /* A list of active indices - if data_size == active_size this can be NULL. */
 };
@@ -52,7 +52,7 @@ struct active_list_struct {
 /*****************************************************************/
 
 
-SAFE_CAST(active_list , ACTIVE_LIST_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(active_list , ACTIVE_LIST_TYPE_ID)
 
 
 
@@ -61,7 +61,7 @@ SAFE_CAST(active_list , ACTIVE_LIST_TYPE_ID)
 */
 active_list_type * active_list_alloc(active_mode_type mode) {
   active_list_type * active_list = util_malloc(sizeof * active_list , __func__);
-  active_list->__type_id   = ACTIVE_LIST_TYPE_ID;
+  UTIL_TYPE_ID_INIT( active_list , ACTIVE_LIST_TYPE_ID );
   active_list->index_list  = int_vector_alloc(0 , -1);
   active_list->mode        = mode;
   return active_list;

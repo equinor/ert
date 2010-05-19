@@ -39,7 +39,12 @@ struct gen_kw_config_struct {
 
 /*****************************************************************/
 
-static UTIL_SAFE_CAST_FUNCTION( gen_kw_parameter , GEN_KW_PARAMETER_TYPE_ID )
+UTIL_SAFE_CAST_FUNCTION( gen_kw_parameter , GEN_KW_PARAMETER_TYPE_ID )
+UTIL_SAFE_CAST_FUNCTION_CONST( gen_kw_parameter , GEN_KW_PARAMETER_TYPE_ID )
+
+
+UTIL_SAFE_CAST_FUNCTION( gen_kw_config , GEN_KW_CONFIG_TYPE_ID )
+UTIL_SAFE_CAST_FUNCTION_CONST( gen_kw_config , GEN_KW_CONFIG_TYPE_ID )
 
 static gen_kw_parameter_type * gen_kw_parameter_alloc( const char * parameter_name ) {
   gen_kw_parameter_type * parameter = util_malloc( sizeof * parameter , __func__ );
@@ -181,9 +186,10 @@ double gen_kw_config_transform(const gen_kw_config_type * config , int index, do
 
 void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
   util_safe_free( gen_kw_config->key );
-  util_safe_free(gen_kw_config->template_file);
-  
-  
+  util_safe_free( gen_kw_config->template_file );
+  util_safe_free( gen_kw_config->parameter_file );
+
+  active_list_free( gen_kw_config->active_list );
   vector_free( gen_kw_config->parameters );
   if (gen_kw_config->init_file_fmt != NULL)
     path_fmt_free( gen_kw_config->init_file_fmt );
@@ -266,6 +272,5 @@ int gen_kw_config_get_index(const gen_kw_config_type * config , const char * key
 
 /*****************************************************************/
 
-SAFE_CAST(gen_kw_config , GEN_KW_CONFIG_TYPE_ID)
 VOID_FREE(gen_kw_config)
 VOID_GET_DATA_SIZE(gen_kw)

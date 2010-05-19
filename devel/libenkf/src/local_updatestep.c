@@ -17,22 +17,23 @@
 #define LOCAL_UPDATESTEP_TYPE_ID 77159
 
 struct local_updatestep_struct {
-  int           __type_id;
+  UTIL_TYPE_ID_DECLARATION;
   char        * name;
   vector_type * ministep;
 };
 
 
 
-SAFE_CAST(local_updatestep , LOCAL_UPDATESTEP_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(local_updatestep , LOCAL_UPDATESTEP_TYPE_ID)
 
 
 local_updatestep_type * local_updatestep_alloc( const char * name ) {
   local_updatestep_type * updatestep = util_malloc( sizeof * updatestep , __func__);
-
+  
+  UTIL_TYPE_ID_INIT( updatestep , LOCAL_UPDATESTEP_TYPE_ID );
   updatestep->name      = util_alloc_string_copy( name );
   updatestep->ministep  = vector_alloc_new();
-  updatestep->__type_id = LOCAL_UPDATESTEP_TYPE_ID;
+  
   return updatestep;
 }
 

@@ -13,7 +13,6 @@
 #include <gen_data.h>
 #include <gen_obs.h>
 #include <gen_common.h>
-#include <gen_obs_active.h>
 #include <active_list.h>
 
 /**
@@ -31,7 +30,7 @@
 #define GEN_OBS_TYPE_ID 77619
 
 struct gen_obs_struct {
-  int                          __type_id;
+  UTIL_TYPE_ID_DECLARATION;
   int                          obs_size;         /* This is the total size of the observation vector. */ 
   int                        * data_index_list;  /* The indexes which are observed in the corresponding gen_data instance - of length obs_size. */
   bool                         observe_all_data; /* Flag which indiactes whether all data in the gen_data instance should be observed - in that case we must do a size comparizon-check at use time. */
@@ -47,6 +46,9 @@ struct gen_obs_struct {
 
 /******************************************************************/
 
+
+static UTIL_SAFE_CAST_FUNCTION_CONST(gen_obs , GEN_OBS_TYPE_ID)
+static UTIL_SAFE_CAST_FUNCTION(gen_obs , GEN_OBS_TYPE_ID)
 
 void gen_obs_free(gen_obs_type * gen_obs) {
   util_safe_free(gen_obs->obs_data);
@@ -131,7 +133,7 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
 gen_obs_type * gen_obs_alloc(const char * obs_key , const char * obs_file , double scalar_value , double scalar_error , const char * data_index_file , const char * data_index_string) {
   gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
-  obs->__type_id       	= GEN_OBS_TYPE_ID;
+  UTIL_TYPE_ID_INIT( obs , GEN_OBS_TYPE_ID );
   obs->obs_data    	= NULL;
   obs->obs_std    	= NULL;
   obs->obs_file        	= util_alloc_string_copy( obs_file );
@@ -339,8 +341,7 @@ void gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , const char 
 
   
 /*****************************************************************/
-SAFE_CAST(gen_obs , GEN_OBS_TYPE_ID)
-IS_INSTANCE(gen_obs , GEN_OBS_TYPE_ID)
+UTIL_IS_INSTANCE_FUNCTION(gen_obs , GEN_OBS_TYPE_ID)
 VOID_FREE(gen_obs)
 VOID_GET_OBS(gen_obs)
 VOID_MEASURE(gen_obs , gen_data)

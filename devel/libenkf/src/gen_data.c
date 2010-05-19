@@ -622,8 +622,8 @@ void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * st
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-SAFE_CONST_CAST(gen_data , GEN_DATA)
-SAFE_CAST(gen_data , GEN_DATA)
+UTIL_SAFE_CAST_FUNCTION_CONST(gen_data , GEN_DATA)
+UTIL_SAFE_CAST_FUNCTION(gen_data , GEN_DATA)
 VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)

@@ -10,7 +10,6 @@
 #include <pthread.h>
 #include <path_fmt.h>
 #include <gen_data_common.h>
-#include <gen_data_active.h>
 #include <active_list.h>
 #include <int_vector.h>
 
@@ -42,7 +41,8 @@ struct gen_data_config_struct {
 
 /*****************************************************************/
 
-SAFE_CAST(gen_data_config , GEN_DATA_CONFIG_ID)
+UTIL_SAFE_CAST_FUNCTION(gen_data_config , GEN_DATA_CONFIG_ID)
+UTIL_SAFE_CAST_FUNCTION_CONST(gen_data_config , GEN_DATA_CONFIG_ID)
 
 gen_data_file_format_type gen_data_config_get_input_format ( const gen_data_config_type * config) { return config->input_format; }
 gen_data_file_format_type gen_data_config_get_output_format( const gen_data_config_type * config) { return config->output_format; }
@@ -96,7 +96,7 @@ gen_data_config_type * gen_data_config_alloc(const char * key,
                                              const char * min_std_file) {
   
   gen_data_config_type * config = util_malloc(sizeof * config , __func__);
-  config->__type_id         = GEN_DATA_CONFIG_ID;
+  UTIL_TYPE_ID_INIT( config , GEN_DATA_CONFIG_ID);
   config->key               = util_alloc_string_copy( key );
   config->data_size  	    = 0;
   config->internal_type     = internal_type;

@@ -12,6 +12,7 @@ extern "C" {
 #include <enkf_fs.h>
 #include <sched_file.h>
 #include <job_queue.h>
+#include <util.h>
 #include <ext_joblist.h>
 #include <stringlist.h>
 #include <enkf_obs.h>
@@ -99,7 +100,6 @@ void                     enkf_main_delete_pid( );
 void                     enkf_main_list_users(  set_type * users , const char * executable );
 matrix_type      *       enkf_main_getA(enkf_main_type * enkf_main , const local_ministep_type * ministep, int report_step , hash_type * use_count);
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
-SAFE_CAST_HEADER(enkf_main)
 
 subst_list_type        * enkf_main_get_data_kw( const enkf_main_type * enkf_main );
 void                     enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value);
@@ -115,6 +115,8 @@ const                char * enkf_main_get_SVN_VERSION( void );
 const                char * enkf_main_get_COMPILE_TIME( void );
 void                        enkf_main_init_debug( const char * executable) ;
 bool                        enkf_main_is_initialized( const enkf_main_type * enkf_main );
+
+UTIL_SAFE_CAST_HEADER(enkf_main);
 
 #ifdef __cplusplus
 }

@@ -129,7 +129,7 @@ void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 
 /*****************************************************************/
 
-SAFE_CAST(enkf_main , ENKF_MAIN_ID)
+UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
 
 analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
@@ -2501,11 +2501,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	  obs_config_file = config_iget(config  , "OBS_CONFIG" , 0,0);
 	else
 	  obs_config_file = NULL;
-        
-	enkf_main->obs = enkf_obs_fscanf_alloc(obs_config_file , 
-                                               model_config_get_history(enkf_main->model_config) , 
-                                               enkf_main->ensemble_config , 
-                                               analysis_config_get_std_cutoff(enkf_main->analysis_config) );
+
+        enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config), analysis_config_get_std_cutoff(enkf_main->analysis_config) );
+	enkf_obs_load(enkf_main->obs , obs_config_file , enkf_main->ensemble_config );
       }
 
       enkf_main_update_obs_keys(enkf_main);

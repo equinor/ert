@@ -5,7 +5,7 @@
 #include <enkf_macros.h>
 #include <ecl_sum.h>
 #include <ecl_smspec.h>
-
+#include <util.h>
 
 typedef struct summary_config_struct summary_config_type;
 typedef struct summary_struct        summary_type;
@@ -27,7 +27,8 @@ void                   summary_config_summarize(const summary_config_type * );
 void                   summary_config_add_obs_key(summary_config_type * , const char * );
 int                    summary_config_get_byte_size(const summary_config_type * );
 
-SAFE_CAST_HEADER(summary_config);
+UTIL_SAFE_CAST_HEADER(summary_config);
+UTIL_SAFE_CAST_HEADER_CONST(summary_config);
 GET_ACTIVE_LIST_HEADER(summary);
 GET_DATA_SIZE_HEADER(summary);
 VOID_GET_DATA_SIZE_HEADER(summary);

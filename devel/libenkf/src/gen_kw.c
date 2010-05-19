@@ -313,7 +313,6 @@ void gen_kw_set_subst_parent(gen_kw_type * gen_kw , const subst_list_type * subs
 
 
 void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std) {
-  const int log_level           = 3;
   const int data_size           = gen_kw_config_get_data_size(std->config );
   const double * std_data       = std->data;
   const double * min_std_data   = min_std->data;
@@ -364,8 +363,8 @@ void gen_kw_isqrt( gen_kw_type * gen_kw ) {
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-SAFE_CAST(gen_kw , GEN_KW);
-SAFE_CONST_CAST(gen_kw , GEN_KW);
+UTIL_SAFE_CAST_FUNCTION(gen_kw , GEN_KW);
+UTIL_SAFE_CAST_FUNCTION_CONST(gen_kw , GEN_KW);
 VOID_ALLOC(gen_kw);
 VOID_INITIALIZE(gen_kw);
 VOID_COPY(gen_kw)

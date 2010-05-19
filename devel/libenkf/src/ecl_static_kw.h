@@ -6,6 +6,7 @@ extern "C" {
 #include <stdbool.h>
 #include <ecl_kw.h>
 #include <enkf_macros.h>
+#include <util.h>
 typedef struct ecl_static_kw_struct ecl_static_kw_type;
 
 
@@ -16,7 +17,8 @@ ecl_kw_type        * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * );
 void               * ecl_static_kw_alloc__(const void *);
 void                 ecl_static_kw_upgrade_103( const char * filename );
 
-SAFE_CAST_HEADER(ecl_static_kw);
+UTIL_SAFE_CAST_HEADER(ecl_static_kw);
+UTIL_SAFE_CAST_HEADER_CONST(ecl_static_kw);
 VOID_FREE_HEADER(ecl_static_kw);
 VOID_FREE_DATA_HEADER(ecl_static_kw);
 VOID_COPY_HEADER(ecl_static_kw);

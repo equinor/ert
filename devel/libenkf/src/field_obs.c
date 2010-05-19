@@ -20,7 +20,7 @@
 
 
 struct field_obs_struct {
-  int      __type_id;    		  /** Id used for runtime type checking. */
+  UTIL_TYPE_ID_DECLARATION;
   char   * field_name;   		  /** The state keyword for the observed field - PRESSURE / SWAT / PORO /...   */
   char   * obs_label;    		  /** A user provided label for the observation.      */
   int      size;         		  /** The number of field cells observed.             */
@@ -36,8 +36,9 @@ struct field_obs_struct {
 };
 
 
-SAFE_CAST(field_obs , FIELD_OBS_TYPE_ID);
-IS_INSTANCE(field_obs , FIELD_OBS_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION_CONST(field_obs , FIELD_OBS_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION(field_obs , FIELD_OBS_TYPE_ID);
+UTIL_IS_INSTANCE_FUNCTION(field_obs , FIELD_OBS_TYPE_ID);
 
 
 
@@ -57,7 +58,7 @@ field_obs_type * field_obs_alloc(
 {
   
   field_obs_type * field_obs = util_malloc(sizeof * field_obs, __func__);
-  field_obs->__type_id       = FIELD_OBS_TYPE_ID;
+  UTIL_TYPE_ID_INIT( field_obs , FIELD_OBS_TYPE_ID );
   field_obs->size            = size;
   field_obs->field_name      = util_alloc_string_copy(field_name);
   field_obs->obs_label       = util_alloc_string_copy(obs_label);

@@ -154,7 +154,10 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 
 struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
-  hash_type * obs_hash;
+  hash_type           * obs_hash;
+  double                std_cutoff;   /* (Dimensionfull) Std values below this limit are considered zero. */
+  const history_type  * history;      /* A shared (not owned by enkf_obs) reference to the history object - used when
+                                         adding HISTORY observations. */
 };
 
 
@@ -163,11 +166,12 @@ struct enkf_obs_struct {
 
 
 
-enkf_obs_type * enkf_obs_alloc(
-)
+enkf_obs_type * enkf_obs_alloc( const history_type * history , double std_cutoff )
 {
   enkf_obs_type * enkf_obs = util_malloc(sizeof * enkf_obs, __func__);
   enkf_obs->obs_hash       = hash_alloc();
+  enkf_obs->std_cutoff     = std_cutoff;
+  enkf_obs->history        = history;
   return enkf_obs;
 }
 
@@ -247,104 +251,100 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
 
 
 
-/**
-    TODO
 
-    When configuration has been unified, this should take a
-    conf_instance_type, not a config_file.
-*/
-
-enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_type * hist, ensemble_config_type * ensemble_config, double std_cutoff) {
-  enkf_obs_type      * enkf_obs        = enkf_obs_alloc();
-  if(config_file == NULL)
-    return enkf_obs;
-
-  conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
-  conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file);
-
-  if(conf_instance_validate(enkf_conf) == false)
-    {
-      util_abort("Can not proceed with this configuration.\n");
-    }
-
-
-
-
-  /** Handle HISTORY_OBSERVATION instances. */
-  {
-    stringlist_type * hist_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "HISTORY_OBSERVATION");
-    int               num_hist_obs  = stringlist_get_size(hist_obs_keys);
-
-    for(int hist_obs_nr = 0; hist_obs_nr < num_hist_obs; hist_obs_nr++)
-    {
-      const char               * sum_key       = stringlist_iget(hist_obs_keys, hist_obs_nr);
-      const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, sum_key);
-
-      obs_vector_type * obs_vector = obs_vector_alloc_from_HISTORY_OBSERVATION(hist_obs_conf , hist , ensemble_config , std_cutoff);
-      enkf_obs_add_obs_vector(enkf_obs, sum_key, obs_vector);
-    }
-
-    stringlist_free(hist_obs_keys);
-  }
-
-
-
-  /** Handle SUMMARY_OBSERVATION instances. */
-  {
-    stringlist_type * sum_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "SUMMARY_OBSERVATION");
-    int               num_sum_obs  = stringlist_get_size(sum_obs_keys);
-
-    for(int sum_obs_nr = 0; sum_obs_nr < num_sum_obs; sum_obs_nr++)
-    {
-      const char               * obs_key      = stringlist_iget(sum_obs_keys, sum_obs_nr);
-      const conf_instance_type * sum_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-      obs_vector_type * obs_vector = obs_vector_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf , hist , ensemble_config);
-      enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
-    }
-
-    stringlist_free(sum_obs_keys);
-  }
-
-
-
-  /** Handle BLOCK_OBSERVATION instances. */
-  {
-    stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "BLOCK_OBSERVATION");
-    int               num_block_obs  = stringlist_get_size(block_obs_keys);
-
-    for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
-    {
-      const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
-      const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-
-      obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , hist ,   ensemble_config);
-      enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
-    }
-    stringlist_free(block_obs_keys);
-  }
-
-
-  /** Handle GENERAL_OBSERVATION instances. */
-  {
-    stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "GENERAL_OBSERVATION");
-    int               num_block_obs  = stringlist_get_size(block_obs_keys);
+void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensemble_config_type * ensemble_config) {
+  if (config_file != NULL) {
+    int num_reports                      = history_get_num_restarts( enkf_obs->history );
+    conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
+    conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file);
     
-    for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
+    if(conf_instance_validate(enkf_conf) == false) 
+      util_abort("Can not proceed with this configuration.\n");
+    
+    
+    
+    /** Handle HISTORY_OBSERVATION instances. */
     {
-      const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
-      const conf_instance_type * gen_obs_conf   = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-  
-      obs_vector_type * obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(gen_obs_conf , hist  , ensemble_config);
-      enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+      stringlist_type * hist_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "HISTORY_OBSERVATION");
+      int               num_hist_obs  = stringlist_get_size(hist_obs_keys);
+      
+      for(int hist_obs_nr = 0; hist_obs_nr < num_hist_obs; hist_obs_nr++)
+        {
+          const char               * obs_key       = stringlist_iget(hist_obs_keys, hist_obs_nr);
+          const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+          obs_vector_type * obs_vector;
+          
+          ensemble_config_add_summary( ensemble_config , obs_key );
+          obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ) , num_reports);
+          obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff);
+          enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+        }
+      
+      stringlist_free(hist_obs_keys);
     }
-    stringlist_free(block_obs_keys);
+    
+    
+    
+    /** Handle SUMMARY_OBSERVATION instances. */
+    {
+      stringlist_type * sum_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "SUMMARY_OBSERVATION");
+      int               num_sum_obs  = stringlist_get_size(sum_obs_keys);
+
+      for(int sum_obs_nr = 0; sum_obs_nr < num_sum_obs; sum_obs_nr++)
+        {
+          const char               * obs_key      = stringlist_iget(sum_obs_keys, sum_obs_nr);
+          const conf_instance_type * sum_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+          const char               * sum_key      = conf_instance_get_item_value_ref(   sum_obs_conf , "KEY"   );
+          obs_vector_type * obs_vector;
+          ensemble_config_add_summary( ensemble_config , sum_key );
+
+          obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , sum_key ) , num_reports);
+          obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector , sum_obs_conf , enkf_obs->history , ensemble_config);
+          enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+        }
+      
+      stringlist_free(sum_obs_keys);
+    }
+    
+    
+    
+    /** Handle BLOCK_OBSERVATION instances. */
+    {
+      stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "BLOCK_OBSERVATION");
+      int               num_block_obs  = stringlist_get_size(block_obs_keys);
+      
+      for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
+        {
+          const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
+          const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+          
+          obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , enkf_obs->history ,   ensemble_config);
+          enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+        }
+      stringlist_free(block_obs_keys);
+    }
+    
+    
+    /** Handle GENERAL_OBSERVATION instances. */
+    {
+      stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "GENERAL_OBSERVATION");
+      int               num_block_obs  = stringlist_get_size(block_obs_keys);
+      
+      for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
+        {
+          const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
+          const conf_instance_type * gen_obs_conf   = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+          
+          obs_vector_type * obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(gen_obs_conf , enkf_obs->history  , ensemble_config);
+          enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+        }
+      stringlist_free(block_obs_keys);
+    }
+    
+    
+    conf_instance_free(enkf_conf      );
+    conf_class_free(   enkf_conf_class);
   }
-
-
-  conf_instance_free(enkf_conf      );
-  conf_class_free(   enkf_conf_class);
-
-  return enkf_obs;
 }
 
 

@@ -39,28 +39,6 @@ bool prefix ## _is_instance__(const void * __arg) {             	   \
 
 /******************************************************************/
 
-#define SAFE_CAST(prefix , ID) \
-prefix ## _type * prefix ## _safe_cast(const void * __arg) {   \
-  prefix ## _type * arg = (prefix ## _type *) __arg;         \
-  if (arg->__type_id != ID)                                     \
-    util_abort("%s: run_time cast failed: got:%d  expected:%d  - aborting \n",__func__ , arg->__type_id , ID); \
-  return arg;                                                   \
-}
-
-#define SAFE_CAST_HEADER(prefix) prefix ## _type * prefix ## _safe_cast(const void * );
-
-
-#define SAFE_CONST_CAST(prefix , ID) \
-const prefix ## _type * prefix ## _safe_const_cast(const void * __arg) {   \
-  const prefix ## _type * arg = (prefix ## _type *) __arg;         \
-  if (arg->__type_id != ID)                                     \
-    util_abort("%s: run_time cast failed: got:%d  expected:%d  - aborting \n",__func__ , arg->__type_id , ID); \
-  return arg;                                                   \
-}
-
-#define SAFE_CONST_CAST_HEADER(prefix) const prefix ## _type * prefix ## _safe_const_cast(const void * );
-
-/*****************************************************************/
 
 
 /*****************************************************************/
@@ -74,7 +52,7 @@ const prefix ## _type * prefix ## _safe_const_cast(const void * __arg) {   \
 #define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *arg);
 
 #define VOID_GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size__ (const void * arg) {\
-   prefix ## _config_type * config = prefix ## _config_safe_cast( arg ); \
+   prefix ## _config_type * config = prefix ## _config_safe_cast_const( arg ); \
    return prefix ## _config_get_data_size( config );                     \
 }
 #define VOID_GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size__ (const void * arg);
@@ -85,7 +63,7 @@ const prefix ## _type * prefix ## _safe_const_cast(const void * __arg) {   \
 
 #define VOID_ALLOC(prefix)                                                            \
 void * prefix ## _alloc__(const void *void_config) {                                  \
-  const prefix ## _config_type * config = prefix ## _config_safe_cast( void_config ); \
+  const prefix ## _config_type * config = prefix ## _config_safe_cast_const( void_config ); \
   return prefix ## _alloc(config);                                                    \
 }
 
@@ -95,7 +73,7 @@ void * prefix ## _alloc__(const void *void_config) {                            
 
 #define VOID_STORE(prefix)                                        \
 bool prefix ## _store__(const void * void_arg , buffer_type * buffer , int report_step , bool internal_state) {  \
-   const prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
+   const prefix ## _type * arg = prefix ## _safe_cast_const( void_arg ); \
    return prefix ## _store(arg , buffer , report_step , internal_state);        \
 }
 
@@ -121,7 +99,7 @@ void prefix ## _fload__(void * void_arg , const char * filename) {              
 
 #define VOID_ECL_WRITE(prefix) \
 void prefix ## _ecl_write__(const void * void_arg , const char * path , const char * file , fortio_type * restart_fortio) { \
-   const prefix ## _type * arg = prefix ## _safe_cast( void_arg );       \
+   const prefix ## _type * arg = prefix ## _safe_cast_const( void_arg );       \
    prefix ## _ecl_write(arg , path , file , restart_fortio);                    \
 }
 
@@ -197,7 +175,7 @@ void prefix ## _realloc_data__(void * void_arg) {            \
 
 #define VOID_COPY(prefix)                                             \
 void prefix ## _copy__(const void * void_src, void * void_target) {   \
-   const prefix ## _type * src = prefix ## _safe_cast( void_src );    \
+   const prefix ## _type * src = prefix ## _safe_cast_const( void_src );    \
    prefix ## _type * target = prefix ## _safe_cast( void_target );    \
    prefix ## _copy( src , target );                                   \
 }
@@ -214,7 +192,7 @@ void prefix ## _copy__(const void * void_src, void * void_target) {   \
 
 #define VOID_MATRIX_SERIALIZE(prefix)     \
 void prefix ## _matrix_serialize__(const void *void_arg, const active_list_type * active_list , matrix_type * A , int row_offset , int column) {\
-   const prefix ## _type  *arg = prefix ## _safe_cast( void_arg );                         				      \
+   const prefix ## _type  *arg = prefix ## _safe_cast_const( void_arg );                         				      \
    prefix ## _matrix_serialize (arg , active_list , A , row_offset , column);                 				      \
 }
 #define VOID_MATRIX_SERIALIZE_HEADER(prefix) void prefix ## _matrix_serialize__(const void * , const active_list_type * , matrix_type *  , int , int);
@@ -243,7 +221,7 @@ bool prefix ## _initialize__(void *void_arg, int iens) {         \
 
 #define VOID_SET_INFLATION(prefix) \
 void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std) {                                               \
-   prefix ## _set_inflation( prefix ## _safe_cast( void_inflation ) , prefix ## _safe_const_cast( void_std ) , prefix ## _safe_const_cast( void_min_std )); \
+   prefix ## _set_inflation( prefix ## _safe_cast( void_inflation ) , prefix ## _safe_cast_const( void_std ) , prefix ## _safe_cast_const( void_min_std )); \
 }
 #define VOID_SET_INFLATION_HEADER(prefix) void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std );
 
@@ -261,9 +239,9 @@ void prefix ## _get_observations__(const void * void_arg , int report_step, obs_
 
 #define VOID_MEASURE(obs_prefix, state_prefix) \
 void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state , meas_vector_type * meas_vector, const active_list_type * __active_list) { \
-   const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast( void_obs );     \
-   const state_prefix ## _type * state = state_prefix ## _safe_cast( void_state ); \
-   obs_prefix ## _measure(obs , state , meas_vector , __active_list);                              \
+   const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast_const( void_obs );     \
+   const state_prefix ## _type * state = state_prefix ## _safe_cast_const( void_state );       \
+   obs_prefix ## _measure(obs , state , meas_vector , __active_list);                    \
 }
 
 #define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , meas_vector_type * , const active_list_type *)
@@ -272,9 +250,9 @@ void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state ,
 /*****************************************************************/
 
 #define VOID_CHI2(obs_prefix, state_prefix) \
-double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {   \
-   const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast( void_obs );     \
-   const state_prefix ## _type * state = state_prefix ## _safe_cast( void_state ); \
+double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {         \
+   const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast_const( void_obs );     \
+   const state_prefix ## _type * state = state_prefix ## _safe_cast_const( void_state ); \
    return obs_prefix ## _chi2(obs , state);                                        \
 }
 
@@ -304,7 +282,7 @@ double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {
 /*****************************************************************/
 
 #define VOID_IADD(prefix)   void prefix ## _iadd__( void * void_arg , const void * void_delta ) { \
-   prefix ## _iadd( prefix ## _safe_cast( void_arg ) , prefix ## _safe_const_cast( void_delta ) ); \
+   prefix ## _iadd( prefix ## _safe_cast( void_arg ) , prefix ## _safe_cast_const( void_delta ) ); \
 } 
 
 #define VOID_IADD_HEADER(prefix)   void prefix ## _iadd__( void * void_arg , const void * void_delta );
@@ -312,7 +290,7 @@ double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {
 /*****************************************************************/
 
 #define VOID_IMUL(prefix)   void prefix ## _imul__( void * void_arg , const void * void_delta ) { \
-   prefix ## _imul( prefix ## _safe_cast( void_arg ) , prefix ## _safe_const_cast( void_delta ) ); \
+   prefix ## _imul( prefix ## _safe_cast( void_arg ) , prefix ## _safe_cast_const( void_delta ) ); \
 } 
 
 #define VOID_IMUL_HEADER(prefix)   void prefix ## _imul__( void * void_arg , const void * void_delta );
@@ -320,7 +298,7 @@ double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {
 /*****************************************************************/
 
 #define VOID_IADDSQR(prefix)   void prefix ## _iaddsqr__( void * void_arg , const void * void_delta ) { \
-   prefix ## _iaddsqr( prefix ## _safe_cast( void_arg ) , prefix ## _safe_const_cast( void_delta ) ); \
+   prefix ## _iaddsqr( prefix ## _safe_cast( void_arg ) , prefix ## _safe_cast_const( void_delta ) ); \
 } 
 
 #define VOID_IADDSQR_HEADER(prefix)   void prefix ## _iaddsqr__( void * void_arg , const void * void_delta );

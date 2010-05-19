@@ -13,11 +13,10 @@ extern "C" {
 #include <rms_file.h>
 #include <ecl_grid.h>
 #include <active_list.h>
-#include <field_active.h>
 #include <field_trans.h>
 #include <stringlist.h>
 #include <field_common.h>
-
+#include <util.h>
 
 
 /**
@@ -164,7 +163,8 @@ const char              * field_config_get_init_transform_name( const field_conf
 
 
 /*Generated headers */
-SAFE_CAST_HEADER(field_config);
+UTIL_SAFE_CAST_HEADER(field_config);
+UTIL_SAFE_CAST_HEADER_CONST(field_config);
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
 VOID_FREE_HEADER(field_config);
 GET_ACTIVE_LIST_HEADER(field);

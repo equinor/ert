@@ -33,7 +33,8 @@ char           * gen_kw_alloc_user_key(const gen_kw_config_type *  , const char 
 void             gen_kw_set_subst_parent(gen_kw_type * gen_kw , const subst_list_type * parent_subst);
 
 
-SAFE_CAST_HEADER(gen_kw);
+UTIL_SAFE_CAST_HEADER(gen_kw);
+UTIL_SAFE_CAST_HEADER_CONST(gen_kw);
 ALLOC_STATS_HEADER(gen_kw)
 VOID_ECL_WRITE_HEADER  (gen_kw)
 VOID_COPY_HEADER (gen_kw);

@@ -242,8 +242,8 @@ void summary_isqrt( summary_type * summary ) {
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-SAFE_CAST(summary , SUMMARY)
-SAFE_CONST_CAST(summary , SUMMARY)
+UTIL_SAFE_CAST_FUNCTION(summary , SUMMARY)
+UTIL_SAFE_CAST_FUNCTION_CONST(summary , SUMMARY)
 VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_COPY     (summary)

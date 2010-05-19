@@ -80,7 +80,8 @@ int summary_config_get_byte_size(const summary_config_type * config) {
 
 
 /*****************************************************************/
-SAFE_CAST(summary_config , SUMMARY_CONFIG_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(summary_config , SUMMARY_CONFIG_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION_CONST(summary_config , SUMMARY_CONFIG_TYPE_ID)
 GET_DATA_SIZE(summary)
 VOID_GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)

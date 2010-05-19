@@ -18,6 +18,8 @@
 #include <msg.h>
 #include <active_list.h>
 #include <ecl_sum.h>
+#include <vector.h>
+#include <time_t_vector.h>
 
 #define OBS_VECTOR_TYPE_ID 120086
 
@@ -27,18 +29,16 @@ struct obs_vector_struct {
   obs_get_ftype        *get_obs;      /* Function used to build the 'd' vector. */
   obs_meas_ftype       *measure;      /* Function used to measure on the state, and add to to the S matrix. */
   obs_activate_ftype   *activate;     /* This is used to activate / deactivate (parts of) the observation. */ 
-  obs_type_check_ftype *type_check;   /* Used to to type_check the void pointers when installing a node. */
   obs_user_get_ftype   *user_get;     /* Function to get an observation based on KEY:INDEX input from user.*/
   obs_chi2_ftype       *chi2;         /* Function to evaluate chi-squared for an observation. */ 
   
 
+  time_t_vector_type             * obs_time;
+  vector_type                    * nodes; 
   char                           * obs_key;     /* The key this observation vector has in the enkf_obs layer. */ 
   enkf_config_node_type          * config_node; /* The config_node of the node type we are observing - shared reference */
   obs_impl_type    	           obs_type; 
-  void             	        ** nodes;       /* List of summary_obs/block_obs/gen_obs instances - NULL for all inactive report steps. */
-  int              	           size;        /* The number of report_steps. */
   int              	           num_active;  /* The total number of timesteps where this observation is active (i.e. nodes[ ] != NULL) */
-  time_t                         * obs_time;    /* The true of the observations - index by report step. */
 };
 
 
@@ -70,20 +70,16 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
 
 
 static void obs_vector_resize(obs_vector_type * vector , int new_size) {
+  int current_size = vector_get_size( vector->nodes );
   int i;
-  vector->obs_time = util_realloc( vector->obs_time , new_size * sizeof * vector->obs_time , __func__ );
-  vector->nodes    = util_realloc( vector->nodes    , new_size * sizeof * vector->nodes    , __func__);
-  for (i=vector->size; i < new_size; i++) {
-    vector->nodes[i]    = NULL;
-    vector->obs_time[i] = -1;
-  }
-
-  vector->size  = new_size;
+  for (i=current_size; i < new_size; i++) 
+    vector_append_ref( vector->nodes , NULL);
+  
 }
 
 
 
-static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node ,int num_reports) {
+obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node , int num_reports) {
   obs_vector_type * vector = util_malloc(sizeof * vector , __func__);
   
   UTIL_TYPE_ID_INIT( vector , OBS_VECTOR_TYPE_ID);
@@ -91,7 +87,6 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
   vector->measure    = NULL;
   vector->get_obs    = NULL;
   vector->activate   = NULL;
-  vector->type_check = NULL;
   vector->user_get   = NULL;
   vector->chi2       = NULL;
   
@@ -100,7 +95,6 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
     vector->freef      = summary_obs_free__;
     vector->measure    = summary_obs_measure__;
     vector->get_obs    = summary_obs_get_observations__;
-    vector->type_check = summary_obs_is_instance__;
     vector->user_get   = summary_obs_user_get__;
     vector->chi2       = summary_obs_chi2__;
     break;
@@ -108,7 +102,6 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
     vector->freef      = field_obs_free__;
     vector->measure    = field_obs_measure__;
     vector->get_obs    = field_obs_get_observations__;
-    vector->type_check = field_obs_is_instance__;
     vector->user_get   = field_obs_user_get__;
     vector->chi2       = field_obs_chi2__;
     break;
@@ -116,7 +109,6 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
     vector->freef      = gen_obs_free__;
     vector->measure    = gen_obs_measure__;
     vector->get_obs    = gen_obs_get_observations__;
-    vector->type_check = gen_obs_is_instance__;
     vector->user_get   = gen_obs_user_get__;
     vector->chi2       = gen_obs_chi2__; 
     break;
@@ -127,10 +119,9 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
   vector->obs_type           = obs_type;
   vector->config_node        = config_node;
   vector->obs_key            = util_alloc_string_copy( obs_key );
-  vector->size               = 0;
   vector->num_active         = 0;
-  vector->nodes              = NULL;
-  vector->obs_time           = NULL;
+  vector->obs_time           = time_t_vector_alloc( 0 , -1 );
+  vector->nodes              = vector_alloc_new();
   obs_vector_resize(vector , num_reports); /* +1 here ?? Ohh  - these fucking +/- problems. */
 
   return vector;
@@ -159,42 +150,57 @@ enkf_config_node_type * obs_vector_get_config_node(obs_vector_type * obs_vector)
 
 
 void obs_vector_free(obs_vector_type * obs_vector) {
-  int i;
-  for (i=0; i < obs_vector->size; i++)
-    if (obs_vector->nodes[i] != NULL) 
-      obs_vector->freef(obs_vector->nodes[i]);
-
-  util_safe_free(obs_vector->obs_time);
-  util_safe_free(obs_vector->nodes);
+  vector_free( obs_vector->nodes );
+  time_t_vector_free( obs_vector->obs_time );
   free(obs_vector->obs_key);
   free(obs_vector);
 }
 
 
+static void obs_vector_assert_node_type( const obs_vector_type * obs_vector , const void * node ) {
+  bool type_OK;
+  switch (obs_vector->obs_type) {
+  case(SUMMARY_OBS):
+    type_OK = summary_obs_is_instance( node );
+    break;
+  case(FIELD_OBS):
+    type_OK = field_obs_is_instance( node );
+    break;
+  case(GEN_OBS):
+    type_OK = gen_obs_is_instance( node );
+    break;
+  default:
+    util_abort("%s: What the fuck? \n",__func__);
+    type_OK = false;
+  }
+  if (!type_OK) 
+    util_abort("%s: Type mismatch when trying to add observation node to observation vector \n",__func__);
+}
+
+
 static void obs_vector_install_node(obs_vector_type * obs_vector , int index , time_t obs_time , void * node) {
-  if (obs_vector->nodes[index] != NULL)
-    util_abort("%s: node is already installed for index:%d. \n",__func__ , index);
-
-  if (obs_vector->type_check(node)) {
-    obs_vector->obs_time[index] = obs_time;
-    obs_vector->nodes[index]    = node;
-    obs_vector->num_active++;
-  } else
-    util_abort("%s: tried to insert obs_node of wrong type - aborting \n",__func__);
+  obs_vector_assert_node_type( obs_vector , node );
+  {
+    if (vector_iget_const( obs_vector->nodes , index ) == NULL)
+      obs_vector->num_active++;
+    
+    time_t_vector_iset( obs_vector->obs_time , index , obs_time );
+    vector_iset_owned_ref( obs_vector->nodes , index , node , obs_vector->freef );
+  }
 }
 
 
 
+//void obs_vector_install_summary_obs( obs_vector_type * obs_vector , int obs_index , time_t obs_time , const char * obs_key , double value , doubel std) {
+//  if (obs_vector->obs_type != SUMMARY_OBS)
+//    util_abort("%s: Observation type mismatch \n",__func__);
+//  {
+//    
+//  }
+//}
 
 
-void obs_vector_delete_node(obs_vector_type * obs_vector , int index) {
-  if (obs_vector->nodes[index] != NULL)
-    util_abort("%s: missing node for index:%d. \n",__func__ , index);
-  obs_vector->freef(obs_vector->nodes[index]);
-  obs_vector->nodes[index]    = NULL;
-  obs_vector->obs_time[index] = -1;
-  obs_vector->num_active--;
-}
+
 
 
 
@@ -217,8 +223,9 @@ int obs_vector_get_active_report_step(const obs_vector_type * vector) {
   if (vector->num_active == 1) {
     int active_step = -1;
     int i;
-    for (i=0; i < vector->size; i++) {
-      if (vector->nodes[i] != NULL) {
+    for (i=0; i < vector_get_size(vector->nodes); i++) {
+      void * obs_node = vector_iget( vector->nodes , i);
+      if (obs_node != NULL) {
 	if (active_step >= 0)
 	  util_abort("%s: internal error - mismatch in obs_vector->nodes and obs_vector->num_active \n",__func__);
 	active_step = i;
@@ -236,21 +243,21 @@ int obs_vector_get_active_report_step(const obs_vector_type * vector) {
 
 
 time_t obs_vector_iget_obs_time( const obs_vector_type * vector , int index) {
-  return vector->obs_time[index];
+  return time_t_vector_iget( vector->obs_time , index);
 }
 
 bool obs_vector_iget_active(const obs_vector_type * vector, int index) {
   /* We accept this ... */
-  if (index >= vector->size)
+  if (index >= vector_get_size( vector->nodes ))
     return false;
-
-  if (index < 0) 
-    util_abort("%s: index:%d invald. Limits: [0,%d) \n",__func__ , index , vector->size);
-
-  if (vector->nodes[index] != NULL)
-    return true;
-  else
-    return false;
+  
+  {
+    void * obs_data = vector_iget( vector->nodes , index );
+    if (obs_data != NULL) 
+      return true;
+    else
+      return false;
+  }
 }
 
 
@@ -258,15 +265,12 @@ bool obs_vector_iget_active(const obs_vector_type * vector, int index) {
    Will happily return NULL if index is not active. 
 */
 void * obs_vector_iget_node(const obs_vector_type * vector, int index) {
-  if (index < 0 || index >= vector->size)
-    util_abort("%s: index:%d invald. Limits: [0,%d) \n",__func__ , index , vector->size);
-  
-  return vector->nodes[index]; 
+  return vector_iget( vector->nodes , index );
 }
 
 
 void obs_vector_user_get(const obs_vector_type * obs_vector , const char * index_key , int report_step , double * value , double * std , bool * valid) {
-  obs_vector->user_get(obs_vector->nodes[report_step] , index_key , value , std , valid);
+  obs_vector->user_get(obs_vector_iget_node(obs_vector , report_step) , index_key , value , std , valid);
 }
 
 /*
@@ -276,14 +280,15 @@ void obs_vector_user_get(const obs_vector_type * obs_vector , const char * index
 */
 
 int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int prev_step) {
-  if (prev_step >= (obs_vector->size - 1))
+  if (prev_step >= (vector_get_size(obs_vector->nodes) - 1))
     return -1;
   else {
+    int size = vector_get_size( obs_vector->nodes );
     int next_step = prev_step + 1;
-    while (( next_step < obs_vector->size) && (obs_vector->nodes[next_step] == NULL))
+    while (( next_step < size) && (obs_vector_iget_node(obs_vector , next_step) == NULL))
       next_step++;
 
-    if (next_step == obs_vector->size)
+    if (next_step == size)
       return -1; /* No more active steps. */
     else
       return next_step;
@@ -294,7 +299,7 @@ int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int pre
 /*****************************************************************/
 
 
-obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history, ensemble_config_type * ensemble_config) {
+void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , const history_type * history, ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
     util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
@@ -305,16 +310,12 @@ obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_
     const char * sum_key         = conf_instance_get_item_value_ref(   conf_instance, "KEY"   );
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
     int          size            = history_get_num_restarts(          history          );
-    obs_vector_type * obs_vector;
     int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
     time_t       obs_time        = history_get_time_t_from_restart_nr( history , obs_restart_nr );
     summary_obs_type * sum_obs;
 
-    ensemble_config_add_summary( ensemble_config , sum_key );
-    obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
     sum_obs = summary_obs_alloc(sum_key , obs_value , obs_error);
     obs_vector_install_node( obs_vector , obs_restart_nr , obs_time , sum_obs );
-    return obs_vector;
   }
 }
 
@@ -376,7 +377,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 
 // Should check the refcase for key - if it is != NULL.
 
-obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff) {
+ void obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff) {
   if(!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
     util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" instance, got \"%s\".\n",__func__, conf_instance_get_class_name_ref(conf_instance) );
   
@@ -390,14 +391,12 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
     double         error_min  = conf_instance_get_item_value_double(conf_instance, "ERROR_MIN" );
     const char *   error_mode = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
     const char *   sum_key    = conf_instance_get_name_ref(         conf_instance              );
-    obs_vector_type * obs_vector;  
     
     // Get time series data from history object and allocate
     history_alloc_time_series_from_summary_key(history, sum_key, &size, &value, &default_used);
     
-    ensemble_config_add_summary( ensemble_config , sum_key );
+    
     std = util_malloc(size * sizeof * std, __func__);
-    obs_vector = obs_vector_alloc( SUMMARY_OBS , sum_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
     
     // Create  the standard deviation vector
     if(strcmp(error_mode, "ABS") == 0) {
@@ -487,8 +486,6 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
     free(std);
     free(value);
     free(default_used);
-    
-    return obs_vector;
   }
 }
 
@@ -561,14 +558,16 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
 /*****************************************************************/
 
 void obs_vector_iget_observations(const obs_vector_type * obs_vector , int report_step , obs_data_type * obs_data, const active_list_type * active_list) {
-  if (obs_vector->nodes[report_step] != NULL)
-    obs_vector->get_obs(obs_vector->nodes[report_step] , report_step , obs_data , active_list);
+  void * obs_node = vector_iget( obs_vector->nodes , report_step );
+  if ( obs_node != NULL) 
+    obs_vector->get_obs(obs_node , report_step , obs_data , active_list);
 }
 
 
 void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,const enkf_node_type * enkf_node ,  meas_vector_type * meas_vector, const active_list_type * active_list) {
-  if (obs_vector->nodes[report_step] != NULL)
-    obs_vector->measure(obs_vector->nodes[report_step] , enkf_node_value_ptr(enkf_node) , meas_vector, active_list);
+  void * obs_node = vector_iget( obs_vector->nodes , report_step );
+  if ( obs_node != NULL) 
+    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , meas_vector, active_list);
 }
 
 
@@ -594,9 +593,9 @@ void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,co
 
 
 static double obs_vector_chi2__(const obs_vector_type * obs_vector , int report_step , const enkf_node_type * node) { 
-  if (obs_vector->nodes[report_step] != NULL) {
-    return obs_vector->chi2( obs_vector->nodes[report_step] , enkf_node_value_ptr( node ));
-  }
+  void * obs_node = vector_iget( obs_vector->nodes , report_step );
+  if ( obs_node != NULL) 
+    return obs_vector->chi2( obs_node , enkf_node_value_ptr( node ));
   else
     return 0.0;  /* Observation not active for this report step. */
 }
@@ -673,7 +672,7 @@ void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type 
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
   for (step = step1; step < step2; step++) {
     int iens;
-    if (obs_vector->nodes[step] != NULL) {
+    if (vector_iget( obs_vector->nodes , step) != NULL) {
       for (iens = iens1; iens < iens2; iens++) {
 	if (obs_vector_load_node__(fs , enkf_node , load_state ,step , iens) != UNDEFINED) 
 	  chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node);
@@ -699,8 +698,9 @@ double obs_vector_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type *
   int report_step;
   double sum_chi2 = 0;
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
-  for (report_step = 0; report_step < obs_vector->size; report_step++) {
-    if (obs_vector->nodes[report_step] != NULL) {
+
+  for (report_step = 0; report_step < vector_get_size( obs_vector->nodes ); report_step++) {
+    if (vector_iget(obs_vector->nodes , report_step) != NULL) {
       if (obs_vector_load_node__(fs , enkf_node , load_state , report_step , iens) != UNDEFINED) 
 	sum_chi2 += obs_vector_chi2__(obs_vector , report_step , enkf_node);
     }
@@ -729,12 +729,12 @@ void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs
   }
 
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
-  for (report_step = 0; report_step < obs_vector->size; report_step++) {
+  for (report_step = 0; report_step < vector_get_size( obs_vector->nodes); report_step++) { 
     if (verbose) {
       msg_text = util_realloc_sprintf( msg_text , "%s[%03d]" , obs_vector->obs_key , report_step);
       msg_update(msg , msg_text);
     }
-    if (obs_vector->nodes[report_step] != NULL) {
+    if (vector_iget(obs_vector->nodes , report_step) != NULL) {
       for (iens = 0; iens < ens_size; iens++) {
 	if (obs_vector_load_node__(fs , enkf_node , load_state , report_step , iens) != UNDEFINED) 
 	  sum_chi2[iens] += obs_vector_chi2__(obs_vector , report_step , enkf_node);
@@ -757,6 +757,6 @@ const char * obs_vector_get_obs_key( const obs_vector_type * obs_vector) {
 
 
 
+UTIL_SAFE_CAST_FUNCTION(obs_vector , OBS_VECTOR_TYPE_ID)
 VOID_FREE(obs_vector)
-SAFE_CAST(obs_vector , OBS_VECTOR_TYPE_ID)
      

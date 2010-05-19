@@ -1390,7 +1390,6 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
 
 
 void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std) {
-  const int log_level              = 3;
   const field_config_type * config = inflation->config;
   ecl_type_enum ecl_type           = field_config_get_ecl_type( config );
   const int data_size              = field_config_get_data_size( config );   
@@ -1425,8 +1424,8 @@ void field_set_inflation(field_type * inflation , const field_type * std , const
   MATH_OPS(field)
   ENSEMBLE_MULX_VECTOR(field);
 */
-SAFE_CAST(field , FIELD)
-SAFE_CONST_CAST(field , FIELD)
+UTIL_SAFE_CAST_FUNCTION(field , FIELD)
+UTIL_SAFE_CAST_FUNCTION_CONST(field , FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_ECL_WRITE (field)

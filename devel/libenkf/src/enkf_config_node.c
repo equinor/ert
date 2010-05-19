@@ -577,6 +577,5 @@ void enkf_config_node_clear_obs_keys(enkf_config_node_type * config_node) {
 
 
 /*****************************************************************/
-
-SAFE_CAST(enkf_config_node , ENKF_CONFIG_NODE_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION( enkf_config_node , ENKF_CONFIG_NODE_TYPE_ID)
 VOID_FREE(enkf_config_node)

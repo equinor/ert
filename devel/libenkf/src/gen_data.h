@@ -11,7 +11,7 @@ extern "C" {
 #include <buffer.h>
 #include <gen_data_common.h>
 #include <gen_data_config.h>
-
+#include <util.h>
 
 void                     gen_data_assert_size( gen_data_type * gen_data , int size , int report_step);
 bool          	         gen_data_ecl_load(gen_data_type * , const char *  ,  const ecl_sum_type * , const ecl_file_type * , int );
@@ -26,7 +26,8 @@ void                     gen_data_upgrade_103(const char * filename);
 int                      gen_data_get_size( const gen_data_type * gen_data );
 
 
-SAFE_CAST_HEADER(gen_data);
+UTIL_SAFE_CAST_HEADER(gen_data);
+UTIL_SAFE_CAST_HEADER_CONST(gen_data);
 VOID_USER_GET_HEADER(gen_data);
 VOID_ALLOC_HEADER(gen_data);
 VOID_FREE_HEADER(gen_data);

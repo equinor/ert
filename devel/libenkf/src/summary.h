@@ -5,12 +5,13 @@
 #include <enkf_macros.h>
 #include <enkf_util.h>
 #include <summary_config.h>
+#include <util.h>
 
 double    summary_get(const summary_type * );
 void      summary_upgrade_103( const char * filename );
 
-SAFE_CAST_HEADER(summary);
-SAFE_CONST_CAST_HEADER(summary);
+UTIL_SAFE_CAST_HEADER(summary);
+UTIL_SAFE_CAST_HEADER_CONST(summary);
 VOID_ALLOC_HEADER(summary);
 VOID_FREE_HEADER(summary);
 VOID_COPY_HEADER(summary);

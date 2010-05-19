@@ -28,7 +28,6 @@
 #include <summary_config.h>
 #include <ext_joblist.h>
 #include <gen_data.h>
-#include <pilot_point_config.h>
 #include <gen_data_config.h>
 #include <stringlist.h>
 #include <ensemble_config.h>

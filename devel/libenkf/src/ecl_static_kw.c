@@ -8,7 +8,7 @@
 
 
 struct ecl_static_kw_struct {
-  int           __type_id;
+  UTIL_TYPE_ID_DECLARATION;
   ecl_kw_type * ecl_kw;  /* Mostly NULL */
 };
 
@@ -17,8 +17,8 @@ struct ecl_static_kw_struct {
 
 ecl_static_kw_type * ecl_static_kw_alloc( ) {  
   ecl_static_kw_type * static_kw = util_malloc(sizeof *static_kw , __func__);
+  UTIL_TYPE_ID_INIT( static_kw , STATIC );
   static_kw->ecl_kw    	   = NULL;
-  static_kw->__type_id 	   = STATIC;
   return static_kw;
 }
 
@@ -118,7 +118,8 @@ bool ecl_static_kw_store(const ecl_static_kw_type * ecl_static_kw , buffer_type 
 
 /*****************************************************************/
 VOID_FREE_DATA(ecl_static_kw);
-SAFE_CAST(ecl_static_kw , STATIC)
+UTIL_SAFE_CAST_FUNCTION(ecl_static_kw , STATIC)
+UTIL_SAFE_CAST_FUNCTION_CONST(ecl_static_kw , STATIC)
 VOID_FREE(ecl_static_kw)
 VOID_ECL_WRITE (ecl_static_kw)
 VOID_COPY(ecl_static_kw)
