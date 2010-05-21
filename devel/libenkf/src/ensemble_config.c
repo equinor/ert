@@ -695,11 +695,12 @@ enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * confi
    type == SUMMARY.
    
    If the @refcase pointer is different from NULL the key will be
-   validated. Keys which do not exist in the refcase will be ignored
-   and a warning will be printed on stderr.
+   validated. Keys which do not exist in the refcase will be ignored,
+   a warning will be printed on stderr and the function will return
+   false.
 */
 
-void ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key) {
+bool ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key) {
   if (hash_has_key(ensemble_config->config_nodes, key)) {
     if (ensemble_config_impl_type(ensemble_config , key) != SUMMARY)
       util_abort("%s: ensemble key:%s already existst - but it is not of summary type\n",__func__ , key);
@@ -707,12 +708,13 @@ void ensemble_config_add_summary(ensemble_config_type * ensemble_config , const 
     if (ensemble_config->refcase != NULL) {
       if (!ecl_sum_has_general_var( ensemble_config->refcase , key )) {
         fprintf(stderr,"** Warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( ensemble_config->refcase ) , key);
-        return;
+        return false;
       }
     }
     {
       enkf_config_node_type * config_node = enkf_config_node_alloc_summary( key );
       ensemble_config_add_node__(ensemble_config , config_node );
+      return true;
     }
   }
 }

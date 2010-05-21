@@ -17,6 +17,19 @@
 #include <stringlist.h>
 
 #define FIELD_OBS_TYPE_ID 661098
+#define POINT_OBS_TYPE_ID 778196
+
+
+typedef struct  {
+  UTIL_TYPE_ID_DECLARATION;
+  int    i;
+  int    j;
+  int    k;
+  int    active_index;
+  double value;
+  double std;
+} point_obs_type; 
+
 
 
 struct field_obs_struct {
@@ -25,7 +38,7 @@ struct field_obs_struct {
   char   * obs_label;    		  /** A user provided label for the observation.      */
   int      size;         		  /** The number of field cells observed.             */
   int    * index_list;   		  /** The list indices which are observed - (active indices). */
-  int    * i;            		  /** The vector of indices i,j,k are equivalent to those in index_list - they are only retained for RFT plotting. */
+  int    * i;            		  /** The vector of indices i,j,k are equivalent to those in index_list - i,j,k are only retained for RFT plotting. */
   int    * j;
   int    * k;
   double * obs_value;    		  /** The observed values.                            */
@@ -39,6 +52,34 @@ struct field_obs_struct {
 static UTIL_SAFE_CAST_FUNCTION_CONST(field_obs , FIELD_OBS_TYPE_ID);
 static UTIL_SAFE_CAST_FUNCTION(field_obs , FIELD_OBS_TYPE_ID);
 UTIL_IS_INSTANCE_FUNCTION(field_obs , FIELD_OBS_TYPE_ID);
+
+static UTIL_SAFE_CAST_FUNCTION_CONST(point_obs , POINT_OBS_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION(point_obs , POINT_OBS_TYPE_ID);
+UTIL_IS_INSTANCE_FUNCTION(point_obs , POINT_OBS_TYPE_ID);
+
+
+/*****************************************************************/
+
+static point_obs_type * point_obs_alloc( int i , int j , int k , int active_index , double value , double std) {
+  point_obs_type * point_obs = util_malloc( sizeof * point_obs , __func__);
+  UTIL_TYPE_ID_INIT( point_obs , POINT_OBS_TYPE_ID );
+  point_obs->i            = i;
+  point_obs->j            = j;
+  point_obs->k            = k;       
+  point_obs->active_index = active_index;
+  point_obs->value        = value;
+  point_obs->std          = std;
+  
+  return point_obs;
+}
+
+
+static void point_obs_free( point_obs_type * point_obs ) {
+  free( point_obs );
+}
+
+
+/*****************************************************************/
 
 
 
@@ -174,37 +215,6 @@ double field_obs_chi2(const field_obs_type * field_obs,  const field_type     * 
 
 
 
-//bool field_obs_fwrite(
-//  const field_obs_type * field_obs,
-//  FILE                 * stream) {
-//  util_fwrite_string(field_obs->field_name, stream);
-//  util_fwrite_string(field_obs->obs_label , stream);
-//
-//  util_fwrite_int   (field_obs->size      , stream);
-//
-//  util_fwrite       (field_obs->index_list , sizeof *field_obs->index_list , field_obs->size, stream, __func__);
-//  util_fwrite       (field_obs->obs_value  , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
-//  util_fwrite       (field_obs->obs_std    , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
-//
-//  return true;
-//}
-//
-//
-//
-//void field_obs_fread(
-//  field_obs_type * field_obs,
-//  FILE           * stream)
-//{
-//  field_obs->field_name = util_fread_alloc_string(stream);
-//  field_obs->obs_label  = util_fread_alloc_string(stream);
-//
-//  field_obs->size       = util_fread_int(         stream);
-//
-//  util_fread       (field_obs->index_list , sizeof *field_obs->index_list , field_obs->size, stream, __func__);
-//  util_fread       (field_obs->obs_value  , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
-//  util_fread       (field_obs->obs_std    , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
-//}
-
 
 /**
    The index is into the the number of active cells which are observed by this observation.
@@ -232,19 +242,6 @@ void field_obs_user_get(const field_obs_type * field_obs , const char * index_ke
       }
       l++;
     }
-    //if (!(*valid))
-    // fprintf(stderr,": observation object does not observe index:%d,%d,%d \n",i+1,j+1,k+1);
-  } else {
-    /*
-      if (parse_user_key == 1)
-      fprintf(stderr,"Failed to parse \"%s\" as three integers \n",index_key);
-    else if (parse_user_key == 2)
-      fprintf(stderr," ijk: %d , %d, %d is invalid \n",i+1 , j + 1 , k + 1);
-    else if (parse_user_key == 3)
-      fprintf(stderr," ijk: %d , %d, %d is an inactive cell. \n",i+1 , j + 1 , k + 1);
-    else
-      util_abort("%s: internal error -invalid value:%d \n",__func__ , parse_user_key);
-    */
   }
 }
 
