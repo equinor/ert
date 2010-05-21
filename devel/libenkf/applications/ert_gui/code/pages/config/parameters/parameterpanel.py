@@ -62,7 +62,8 @@ class ParameterPanel(HelpedWidget):
         else:
             self.pagesWidget.setCurrentWidget(self.emptyPanel)
 
-    def addToList(self, list, type_name, name):
+
+    def createParameter(self, type_name, name):
         """Adds a new parameter to the list"""
 
         if type_name == FieldModel.TYPE.name:
@@ -83,10 +84,12 @@ class ParameterPanel(HelpedWidget):
         param = Parameter(name, type)
         param.setUserData(data)
         param.setValid(False)
-
-        list.addItem(param)
-        list.setCurrentItem(param)
         return param
+
+
+    def addToList(self, list, parameter):
+        list.addItem(parameter)
+        list.setCurrentItem(parameter)
 
 
     def addItem(self, list):
@@ -97,8 +100,10 @@ class ParameterPanel(HelpedWidget):
 
         pd = ParameterDialog(self, Parameter.typeIcons, uniqueNames)
         if pd.exec_():
-            result = self.addToList(list, pd.getTypeName(), pd.getName())
-            self.updateContent(result, operation=ContentModel.INSERT) #todo: add valid state of new parameter
+            parameter = self.createParameter(pd.getTypeName(), pd.getName())
+            ok = self.updateContent(parameter, operation=ContentModel.INSERT)
+            if ok:
+                self.addToList(list, parameter)
 
         # todo: emit when a new field is added also make initandcopy listen -> self.modelEmit("casesUpdated()")
 

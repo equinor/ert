@@ -68,7 +68,10 @@ heller ikke mulig å gjøre noen oppdateringer på SUMMARY variabler.
 
 ensemble_config_add_summary( ensemble_config , new_key );
 
-      
+
+WWIR:WI_1
+
+
 GEN_DATA
 --------
 Ikke implementert ....
