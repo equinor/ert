@@ -46,7 +46,7 @@ class ValidatedDialog(QtGui.QDialog):
         """Called when the name is not valid."""
         self.okbutton.setEnabled(False)
         palette = self.paramName.palette()
-        palette.setColor(self.paramName.backgroundRole(), self.invalidColor)
+        palette.setColor(self.paramName.backgroundRole(), self.INVALID_COLOR)
         self.paramName.setToolTip(msg)
         self.paramName.setPalette(palette)
 

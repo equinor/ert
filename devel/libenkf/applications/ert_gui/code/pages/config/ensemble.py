@@ -28,8 +28,12 @@ def createEnsemblePage(configPanel, parent):
     def initialize(ert):
         ert.prototype("long ensemble_config_get_node(long, char*)")
         ert.prototype("long ensemble_config_alloc_keylist(long)")
+        ert.prototype("bool ensemble_config_add_summary(long, char*)")
+        ert.prototype("long ensemble_config_add_gen_kw(long, char*)")
+        ert.prototype("long ensemble_config_add_field(long, char*, long)")
 
         ert.prototype("void enkf_main_del_node(long, char*)")
+        ert.prototype("long ecl_config_get_grid(long)")
 
         ert.prototype("long enkf_config_node_get_impl_type(long)")
         ert.prototype("long enkf_config_node_get_ref(long)")
@@ -103,7 +107,7 @@ def createEnsemblePage(configPanel, parent):
             else:
                 pass #Unknown type
 
-            #model.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            model.setValid(ert.enkf.enkf_config_node_is_valid(node))
 
             parameters.append(model)
 
@@ -112,9 +116,29 @@ def createEnsemblePage(configPanel, parent):
     def removeParameter(ert, parameter_key):
         ert.enkf.enkf_main_del_node(ert.main, parameter_key)
 
+    def insertParameter(ert, parameter):
+        key = parameter.getName()
+        if parameter.getType() == FieldModel.TYPE:
+            grid = ert.enkf.ecl_config_get_grid(ert.ecl_config)
+            node = ert.enkf.ensemble_config_add_field(ert.ensemble_config, key, grid)
+            parameter.setValid(ert.enkf.enkf_config_node_is_valid(node))
+        elif parameter.getType() == DataModel.TYPE:
+            pass
+        elif parameter.getType() == KeywordModel.TYPE:
+            node = ert.enkf.ensemble_config_add_gen_kw(ert.ensemble_config, key)
+            parameter.setValid(ert.enkf.enkf_config_node_is_valid(node))
+        elif parameter.getType() == SummaryModel.TYPE:
+            parameter.setValid(True)
+            b = ert.enkf.ensemble_config_add_summary(ert.ensemble_config, key)
+            return b
+        else:
+            print "Unknown type: ", parameter
+
+
 
     r.getter = getEnsembleParameters
     r.remove = removeParameter
+    r.insert = insertParameter
     configPanel.endGroup()
 
     configPanel.endPage()
