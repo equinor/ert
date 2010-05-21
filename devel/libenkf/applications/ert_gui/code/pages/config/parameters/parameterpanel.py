@@ -52,13 +52,13 @@ class ParameterPanel(HelpedWidget):
             self.pagesWidget.setCurrentWidget(self.emptyPanel)
         elif FieldModel.TYPE == current.getType():
             self.pagesWidget.setCurrentWidget(self.fieldPanel)
-            self.fieldPanel.setFieldModel(current.getData())
+            self.fieldPanel.setFieldModel(current.getUserData())
         elif DataModel.TYPE == current.getType():
             self.pagesWidget.setCurrentWidget(self.dataPanel)
-            self.dataPanel.setDataModel(current.getData())
+            self.dataPanel.setDataModel(current.getUserData())
         elif KeywordModel.TYPE == current.getType():
             self.pagesWidget.setCurrentWidget(self.keywordPanel)
-            self.keywordPanel.setKeywordModel(current.getData())
+            self.keywordPanel.setKeywordModel(current.getUserData())
         else:
             self.pagesWidget.setCurrentWidget(self.emptyPanel)
 
@@ -81,7 +81,8 @@ class ParameterPanel(HelpedWidget):
             raise AssertionError("Type name unknown: %s" % (type_name))
 
         param = Parameter(name, type)
-        param.setData(data)
+        param.setUserData(data)
+        param.setValid(False)
 
         list.addItem(param)
         list.setCurrentItem(param)
@@ -89,7 +90,7 @@ class ParameterPanel(HelpedWidget):
 
 
     def addItem(self, list):
-        """Called by the add button to insert a new parameter"""
+        """Called by the add button to insert a new parameter. A Parameter object is sent to the ContentModel inserter"""
         uniqueNames = []
         for index in range(list.count()):
             uniqueNames.append(str(list.item(index).text()))
@@ -97,23 +98,23 @@ class ParameterPanel(HelpedWidget):
         pd = ParameterDialog(self, Parameter.typeIcons, uniqueNames)
         if pd.exec_():
             result = self.addToList(list, pd.getTypeName(), pd.getName())
-            self.updateContent(result, operation=ContentModel.INSERT)
+            self.updateContent(result, operation=ContentModel.INSERT) #todo: add valid state of new parameter
 
         # todo: emit when a new field is added also make initandcopy listen -> self.modelEmit("casesUpdated()")
 
 
     def removeItem(self, list):
-        """Called by the remove button to remove a selected parameter"""
+        """Called by the remove button to remove a selected parameter. The key is forwarded to the ContentModel remover"""
         currentRow = list.currentRow()
 
         if currentRow >= 0:
             doDelete = QtGui.QMessageBox.question(self, "Delete parameter?", "Are you sure you want to delete the parameter?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
 
             if doDelete == QtGui.QMessageBox.Yes:
-                item = list.curentItem()
+                item = list.item(currentRow)
                 self.updateContent(item.getName(), operation=ContentModel.REMOVE)
                 list.takeItem(currentRow)
-
+        #todo: emit change
 
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the list"""
@@ -124,7 +125,8 @@ class ParameterPanel(HelpedWidget):
                 raise AssertionError("Unknown type name!")
 
             param = Parameter(parameter.name, parameter.TYPE)
-            param.setData(parameter)
+            param.setUserData(parameter)
+            param.setValid(parameter.isValid())
 
             self.searchableList.getList().addItem(param)
             self.searchableList.getList().setCurrentItem(param)
@@ -144,7 +146,8 @@ class Parameter(QtGui.QListWidgetItem):
         QtGui.QListWidgetItem.__init__(self, Parameter.typeIcons[type], name)
         self.type = type
         self.name = name
-        self.data = None
+        self.user_data = None
+        self.setValid(True)
 
     def getType(self):
         """Retruns the type of this parameter"""
@@ -163,10 +166,19 @@ class Parameter(QtGui.QListWidgetItem):
     def __lt__(self, other):
         return not self >= other
 
-    def setData(self, data):
+    def setUserData(self, data):
         """Set user data for this parameter."""
-        self.data = data
+        self.user_data = data
 
-    def getData(self):
+    def getUserData(self):
         """Retrieve the user data."""
-        return self.data
+        return self.user_data
+
+    def setValid(self, valid):
+        """Set the validity of this item. An invalid item is colored red"""
+        self.valid = valid
+
+        if valid:
+            self.setBackgroundColor(QtCore.Qt.white)
+        else:
+            self.setBackgroundColor(HelpedWidget.STRONG_ERROR_COLOR)

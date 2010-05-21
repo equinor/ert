@@ -187,6 +187,10 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
     The help button must manually be added to the containing layout with addHelpButton().
     """
 
+    STRONG_ERROR_COLOR = QtGui.QColor(255, 215, 215)
+    ERROR_COLOR = QtGui.QColor(255, 235, 235)
+    INVALID_COLOR = QtGui.QColor(235, 235, 255)
+
     WARNING = "warning"
     EXCLAMATION = "exclamation"
 
