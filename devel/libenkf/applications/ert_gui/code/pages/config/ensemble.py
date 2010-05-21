@@ -12,7 +12,6 @@ from pages.config.parameters.parametermodels import SummaryModel, DataModel, Fie
 def createEnsemblePage(configPanel, parent):
     configPanel.startPage("Ensemble")
 
-    #todo: must have an apply button!!!
     r = configPanel.addRow(IntegerSpinner(parent, "Number of realizations", "num_realizations", 1, 10000))
     r.initialize = lambda ert : [ert.prototype("int enkf_main_get_ensemble_size(long)"),
                                  ert.prototype("void enkf_main_resize_ensemble(int)")]
@@ -30,11 +29,14 @@ def createEnsemblePage(configPanel, parent):
         ert.prototype("long ensemble_config_get_node(long, char*)")
         ert.prototype("long ensemble_config_alloc_keylist(long)")
 
+        ert.prototype("void enkf_main_del_node(long, char*)")
+
         ert.prototype("long enkf_config_node_get_impl_type(long)")
         ert.prototype("long enkf_config_node_get_ref(long)")
+        ert.prototype("bool enkf_config_node_is_valid(long)")
         ert.prototype("char* enkf_config_node_get_min_std_file(long)")
         ert.prototype("char* enkf_config_node_get_enkf_outfile(long)")
-        #ert.prototype("char* enkf_config_node_get_enkf_infile(long)") q:not implemented
+        ert.prototype("char* enkf_config_node_get_enkf_infile(long)")
 
         ert.prototype("char* gen_kw_config_get_template_file(long)")
         ert.prototype("char* gen_kw_config_get_init_file_fmt(long)")
@@ -52,7 +54,7 @@ def createEnsemblePage(configPanel, parent):
 
     r.initialize = initialize
 
-    def get_ensemble_parameters(ert):
+    def getEnsembleParameters(ert):
         ens_conf = ert.ensemble_config
         keys = ert.getStringList(ert.enkf.ensemble_config_alloc_keylist(ens_conf), free_after_use=True)
 
@@ -81,10 +83,11 @@ def createEnsemblePage(configPanel, parent):
 
                 model["init"] = ert.enkf.field_config_get_init_transform_name(data)
                 model["output"] = ert.enkf.field_config_get_output_transform_name(data)
+                
                 model["init_files"] = ert.enkf.field_config_get_init_file_fmt(data)
                 model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
-                #model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node) q: segfault
-                #model["enkf_infile"] = ert.enkf.enkf_config_node_get_enkf_infile(node) q: not implemented
+                model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
+                model["enkf_infile"] = ert.enkf.enkf_config_node_get_enkf_infile(node)
 
             elif type == DataModel.TYPE:
                 model = DataModel(key)
@@ -100,13 +103,18 @@ def createEnsemblePage(configPanel, parent):
             else:
                 pass #Unknown type
 
+            #model.setValid(ert.enkf.enkf_config_node_is_valid(node))
+
             parameters.append(model)
 
         return parameters
 
+    def removeParameter(ert, parameter_key):
+        ert.enkf.enkf_main_del_node(ert.main, parameter_key)
 
-    r.getter = get_ensemble_parameters
-    r.setter = lambda ert, value : ert.setAttribute("summary", value)
+
+    r.getter = getEnsembleParameters
+    r.remove = removeParameter
     configPanel.endGroup()
 
     configPanel.endPage()

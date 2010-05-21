@@ -196,6 +196,7 @@ gen_data_file_format.OUTPUT_TYPES = [gen_data_file_format.ASCII,
                                      gen_data_file_format.BINARY_FLOAT,
                                      gen_data_file_format.BINARY_DOUBLE]
 
+
 class field_type(enum):
     ECLIPSE_RESTART = None
     ECLIPSE_PARAMETER = None

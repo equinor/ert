@@ -52,7 +52,7 @@ class PlotDataFetcher(ContentModel):
                 node = ert.enkf.enkf_node_alloc(config_node)
                 num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
 
-                key_index = self.parameter.getData()
+                key_index = self.parameter.getUserData()
 
                 if self.parameter.getType() == FieldModel.TYPE:
                     field_config = ert.enkf.enkf_config_node_get_ref(config_node)
@@ -198,12 +198,12 @@ class PlotContextDataFetcher(ContentModel):
             if type == SummaryModel.TYPE:
                 p = Parameter(key, SummaryModel.TYPE)
                 data.parameters.append(p)
-                p.setData(None)
+                p.setUserData(None)
 
             elif type == FieldModel.TYPE:
                 p = Parameter(key, FieldModel.TYPE)
                 data.parameters.append(p)
-                p.setData((0,0,0)) #key_index
+                p.setUserData((0,0,0)) #key_index
 
                 if data.field_bounds is None:
                     field_config = ert.enkf.enkf_config_node_get_ref(config_node)
@@ -221,7 +221,7 @@ class PlotContextDataFetcher(ContentModel):
                 gen_kw_config = ert.enkf.enkf_config_node_get_ref(config_node)
                 s = ert.enkf.gen_kw_config_alloc_name_list(gen_kw_config)
                 data.key_index_list[key] = ert.getStringList(s, free_after_use=True)
-                p.setData(data.key_index_list[key][0])
+                p.setUserData(data.key_index_list[key][0])
 
         data.errorbar_max = ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
         data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config)

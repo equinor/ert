@@ -43,13 +43,14 @@ FIELD
       field_config_get_type( field_config )                  - returnerer en field_type_enum verdi.
       field_config_get_init_transform_name( field_config )
       field_config_get_output_transform_name( field_config )
-      field_config_get_init_file_fmt( field_config )
+      field_config_get_init_file_fmt( field_config )  -> init files
 
       
       ...................
-      enkf_config_node_get_enkf_outfile( config_node )
-      enkf_config_node_get_enkf_infile( config_node )      <- Denne tror jeg ikke er i GUI(?) Skal kun være aktiv for GENERAL, og kan ha label: "Result file"
-      enkf_config_node_get_min_std_file( config_node )
+      enkf_config_node_get_enkf_outfile( config_node )  -> Include file (parameter/general)
+      enkf_config_node_get_min_std_file( config_node )  -> Min. std.   (parameter/general)
+      enkf_config_node_get_enkf_infile( config_node )   -> File loaded by EnKF (general)
+
                                                
 3. Update:
 

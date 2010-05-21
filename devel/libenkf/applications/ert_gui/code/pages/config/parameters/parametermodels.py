@@ -5,6 +5,7 @@ class Model:
     def __init__(self, name):
         self.name = name
         self.data = {}
+        self.valid = True
 
     def set(self, attr, value):
         self[attr] = value
@@ -14,6 +15,12 @@ class Model:
 
     def __getitem__(self, item):
         return self.data[item]
+
+    def isValid(self):
+        return self.valid
+
+    def setValid(self, valid):
+        self.valid = valid
 
 
 class FieldModel(Model):
@@ -29,8 +36,8 @@ class FieldModel(Model):
         self["init"] = "None"
         self["output"] = "None"
         self["init_files"] = ""
-        self["file_generated_by_enkf"] = ""
-        self["file_loaded_by_enkf"] = ""
+        self["enkf_outfile"] = ""
+        self["enkf_infile"] = ""
         self["min_std"] = ""
 
 class KeywordModel(Model):

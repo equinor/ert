@@ -88,11 +88,11 @@ class PlotPanel(QtGui.QWidget):
 
         if parameter.getType() == FieldModel.TYPE:
             position = self.plotDataPanel.getFieldPosition()
-            parameter.setData(position)
+            parameter.setUserData(position)
         elif parameter.getType() == KeywordModel.TYPE:
-            parameter.setData(self.plotDataPanel.getKeyIndex())
+            parameter.setUserData(self.plotDataPanel.getKeyIndex())
         else:
-            parameter.setData(None)
+            parameter.setUserData(None)
 
         self.plotDataFetcher.fetchContent()
 

@@ -6,9 +6,6 @@ import re
 class PathChooser(HelpedWidget):
     """PathChooser shows, enables choosing of and validates paths. The data structure expected and sent to the getter and setter is a string."""
 
-    errorColor = QtGui.QColor(255, 235, 235)
-    invalidColor = QtGui.QColor(235, 235, 255)
-
     file_does_not_exist_msg = "The specified path does not exist."
     file_is_not_executable_msg = "The specified file is not an executable."
     path_is_not_a_file_msg = "The specified path must be a file."
@@ -65,10 +62,10 @@ class PathChooser(HelpedWidget):
     def getValidationTypeAndColor(self):
         """Returns the type of validation message and the color that should be applied"""
         if self.must_be_set:
-            color = self.errorColor
+            color = self.ERROR_COLOR
             type = self.WARNING
         else:
-            color = self.invalidColor
+            color = self.INVALID_COLOR
             type = self.EXCLAMATION
         return type, color
 
@@ -87,11 +84,11 @@ class PathChooser(HelpedWidget):
 
         if path == "" and self.must_be_set:
             message = self.required_field_msg
-            color = self.errorColor
+            color = self.ERROR_COLOR
             self.valid = False
         elif self.path_format and not re.search("%[0-9]*d", path):
             message = self.path_format_msg
-            color = self.errorColor
+            color = self.ERROR_COLOR
             self.valid = False
         elif not exists:
             if not self.path_format and self.must_exist:

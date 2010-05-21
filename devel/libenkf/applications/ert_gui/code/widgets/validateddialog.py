@@ -4,7 +4,7 @@ import util
 class ValidatedDialog(QtGui.QDialog):
     """A dialog for creating a validated. Performs validation of name."""
 
-    invalidColor = QtGui.QColor(255, 235, 235)
+    INVALID_COLOR = QtGui.QColor(255, 235, 235)
 
     def __init__(self, parent, title = "Title", description = "Description", uniqueNames = None):
         """Creates a new dialog that validates uniqueness against the provided list"""
