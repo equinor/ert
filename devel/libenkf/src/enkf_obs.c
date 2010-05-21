@@ -156,6 +156,7 @@ struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
   hash_type           * obs_hash;
   double                std_cutoff;   /* (Dimensionfull) Std values below this limit are considered zero. */
+  time_t_vector_type  * obs_time;     /* For fast lookup of report_step -> obs_time */
   const history_type  * history;      /* A shared (not owned by enkf_obs) reference to the history object - used when
                                          adding HISTORY observations. */
 };
@@ -172,18 +173,30 @@ enkf_obs_type * enkf_obs_alloc( const history_type * history , double std_cutoff
   enkf_obs->obs_hash       = hash_alloc();
   enkf_obs->std_cutoff     = std_cutoff;
   enkf_obs->history        = history;
+  enkf_obs->obs_time       = time_t_vector_alloc(0  , -1 );
   return enkf_obs;
 }
 
 
 
-void enkf_obs_free(
-  enkf_obs_type * enkf_obs)
-{
+void enkf_obs_free(enkf_obs_type * enkf_obs) {
   hash_free(enkf_obs->obs_hash);
+  time_t_vector_free( enkf_obs->obs_time );
   free(enkf_obs);
 }
 
+
+
+
+time_t enkf_obs_iget_obs_time(enkf_obs_type * enkf_obs , int report_step) {
+  time_t obs_time     = time_t_vector_safe_iget( enkf_obs->obs_time , report_step );
+  time_t default_time = time_t_vector_get_default( enkf_obs->obs_time );
+  if (obs_time == default_time) {
+    obs_time = history_get_time_t_from_restart_nr( enkf_obs->history , report_step );
+    time_t_vector_iset( enkf_obs->obs_time , report_step , obs_time );
+  }
+  return obs_time;
+}
 
 
 /**

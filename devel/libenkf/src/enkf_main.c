@@ -562,7 +562,7 @@ static void serialize_node( enkf_fs_type * fs ,
   
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
   enkf_fs_fread_node( fs , node , report_step , iens , load_state);
-  enkf_node_matrix_serialize( node , active_list , A , row_offset , iens);
+  enkf_node_serialize( node , active_list , A , row_offset , iens);
   
 }
 
@@ -587,7 +587,7 @@ static void deserialize_node( enkf_fs_type            * fs,
                               matrix_type * A) {
   
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  enkf_node_matrix_deserialize(node , active_list , A , row_offset , iens);
+  enkf_node_deserialize(node , active_list , A , row_offset , iens);
   enkf_fs_fwrite_node( fs , node , report_step , iens , ANALYZED);
   
 }
@@ -1181,7 +1181,7 @@ matrix_type * enkf_main_getA(enkf_main_type * enkf_main , const local_ministep_t
               printf("\nLoading key %s\n",key);
             
  	    enkf_fs_fread_node( fs , node , report_step , iens , load_state);
-	    enkf_node_matrix_serialize( node , active_list , A , row_offset[ikw] , iens);
+	    enkf_node_serialize( node , active_list , A , row_offset[ikw] , iens);
 	  }
           
                 

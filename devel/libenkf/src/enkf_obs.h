@@ -13,7 +13,7 @@ extern "C" {
 #include <hash.h>
 #include <local_ministep.h>
 #include <enkf_types.h>
-
+#include <time.h>
 
 
 
@@ -54,6 +54,7 @@ bool 	  enkf_obs_has_key(const enkf_obs_type * , const char * );
 hash_iter_type  * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs );
 
 stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string);
+time_t            enkf_obs_iget_obs_time(enkf_obs_type * enkf_obs , int report_step);
 
 #ifdef __cplusplus
 }

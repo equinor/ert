@@ -105,7 +105,7 @@ void summary_free(summary_type *summary) {
 
 
 
-void summary_matrix_serialize(const summary_type * summary , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+void summary_serialize(const summary_type * summary , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const summary_config_type *config  = summary->config;
   const int                data_size = summary_config_get_data_size(config );
   
@@ -113,7 +113,7 @@ void summary_matrix_serialize(const summary_type * summary , const active_list_t
 }
 
 
-void summary_matrix_deserialize(summary_type * summary , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void summary_deserialize(summary_type * summary , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const summary_config_type *config  = summary->config;
   const int                data_size = summary_config_get_data_size(config );
   
@@ -251,8 +251,8 @@ VOID_ECL_LOAD(summary)
 VOID_USER_GET(summary)
 VOID_STORE(summary)
 VOID_LOAD(summary)
-VOID_MATRIX_SERIALIZE(summary)
-VOID_MATRIX_DESERIALIZE(summary)
+VOID_SERIALIZE(summary)
+VOID_DESERIALIZE(summary)
 VOID_SET_INFLATION(summary)
 VOID_CLEAR(summary)
 VOID_IADD(summary)

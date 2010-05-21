@@ -427,10 +427,7 @@ void field_config_set_init_file_fmt( field_config_type * field_config , const ch
 }
 
 const char * field_config_get_init_file_fmt( const field_config_type * config ) {
-  if (config->init_file_fmt == NULL)
-    return NULL;
-  else
-    return path_fmt_get_fmt( config->init_file_fmt );
+  return path_fmt_get_fmt( config->init_file_fmt );
 }
 
 

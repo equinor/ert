@@ -179,7 +179,7 @@ void gen_data_upgrade_103(const char * filename) {
 
 
 
-void gen_data_matrix_serialize(const gen_data_type * gen_data , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+void gen_data_serialize(const gen_data_type * gen_data , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const gen_data_config_type *config   = gen_data->config;
   const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
   ecl_type_enum ecl_type               = gen_data_config_get_internal_type( config );
@@ -188,7 +188,7 @@ void gen_data_matrix_serialize(const gen_data_type * gen_data , const active_lis
 }
 
 
-void gen_data_matrix_deserialize(gen_data_type * gen_data , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void gen_data_deserialize(gen_data_type * gen_data , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   {
     const gen_data_config_type *config   = gen_data->config;
     const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
@@ -633,8 +633,8 @@ VOID_ECL_WRITE(gen_data)
 VOID_ECL_LOAD(gen_data)
 VOID_LOAD(gen_data);
 VOID_STORE(gen_data);
-VOID_MATRIX_SERIALIZE(gen_data)
-VOID_MATRIX_DESERIALIZE(gen_data)
+VOID_SERIALIZE(gen_data)
+VOID_DESERIALIZE(gen_data)
 VOID_SET_INFLATION(gen_data)
 VOID_CLEAR(gen_data)
 VOID_SCALE(gen_data)

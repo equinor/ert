@@ -157,37 +157,12 @@ ext_job_type * ext_job_alloc(const char * name , const char * license_root_path 
 
 
 
-/**
-   Difficult to make a general hash_alloc_copy() which handles all
-   possible variations of ownership+++ 
-   
-   This is a specialized implementation where it is assumed that all
-   values in the hash are actual pointers to \0 terminated strings.
-*/
-
-
-static hash_type * ext_job_hash_copyc__(hash_type * h) {
-  if (h != NULL) {
-    hash_type      * new_hash = hash_alloc();
-    hash_iter_type * iter     = hash_iter_alloc( h);
-    const char * key = hash_iter_get_next_key(iter);
-    
-    while (key != NULL) {
-      char * value = hash_get( h , key);
-      hash_insert_hash_owned_ref( new_hash , key , util_alloc_string_copy(value) , free);
-      key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter); 
-    return new_hash;
-  } else return NULL;
-}
-
 
 ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   ext_job_type * new_job  = ext_job_alloc__( src_job->name , src_job->license_root_path , true /* All copies are by default private jobs. */);
   
   new_job->config_file    = util_alloc_string_copy(src_job->config_file);
-  new_job->executable   = util_alloc_string_copy(src_job->executable);
+  new_job->executable     = util_alloc_string_copy(src_job->executable);
   new_job->target_file    = util_alloc_string_copy(src_job->target_file);
   new_job->start_file     = util_alloc_string_copy(src_job->start_file);
   new_job->stdout_file    = util_alloc_string_copy(src_job->stdout_file);
@@ -200,9 +175,19 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
 
   new_job->max_running_minutes   = src_job->max_running_minutes;
   new_job->max_running           = src_job->max_running;
-  new_job->environment           = ext_job_hash_copyc__( src_job->environment );
   new_job->private_args          = subst_list_alloc_deep_copy( src_job->private_args );
-
+  /* Copying over all the keys in the environment hash table */
+  {
+    hash_iter_type * iter     = hash_iter_alloc( src_job->environment );
+    const char * key = hash_iter_get_next_key(iter);
+    while (key != NULL) {
+      char * value = hash_get( src_job->environment , key);
+      hash_insert_hash_owned_ref( new_job->environment , key , util_alloc_string_copy(value) , free);
+      key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter); 
+  }
+  
   return new_job;
 }
 

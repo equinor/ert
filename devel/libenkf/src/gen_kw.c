@@ -145,13 +145,13 @@ bool gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
 
 
 
-void gen_kw_matrix_serialize(const gen_kw_type *gen_kw , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+void gen_kw_serialize(const gen_kw_type *gen_kw , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   enkf_matrix_serialize( gen_kw->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
 }
 
 
-void gen_kw_matrix_deserialize(gen_kw_type *gen_kw , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void gen_kw_deserialize(gen_kw_type *gen_kw , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   enkf_matrix_deserialize( gen_kw->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
 }
@@ -373,8 +373,8 @@ VOID_ECL_WRITE(gen_kw)
 VOID_USER_GET(gen_kw)
 VOID_STORE(gen_kw)
 VOID_LOAD(gen_kw)
-VOID_MATRIX_SERIALIZE(gen_kw)
-VOID_MATRIX_DESERIALIZE(gen_kw)
+VOID_SERIALIZE(gen_kw)
+VOID_DESERIALIZE(gen_kw)
 VOID_SET_INFLATION(gen_kw)
 VOID_CLEAR(gen_kw)
 VOID_IADD(gen_kw)

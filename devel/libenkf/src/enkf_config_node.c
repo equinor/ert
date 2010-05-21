@@ -399,6 +399,10 @@ const char * enkf_config_node_get_enkf_outfile( const enkf_config_node_type * co
   return path_fmt_get_fmt( config_node->enkf_outfile_fmt );
 }
 
+const char * enkf_config_node_get_enkf_infile( const enkf_config_node_type * config_node ) {
+  return path_fmt_get_fmt( config_node->enkf_infile_fmt );
+}
+
 
 void enkf_config_node_set_min_std( enkf_config_node_type * config_node , enkf_node_type * min_std ) {
   if (config_node->min_std != NULL)
@@ -500,7 +504,7 @@ int enkf_config_node_get_num_obs( const enkf_config_node_type * config_node ) {
    This checks the index_key - and sums up over all the time points of the observation.
 */
 
-int enkf_config_node_load_obs( const enkf_config_node_type * config_node , const enkf_obs_type * enkf_obs ,const char * key_index , int obs_count , time_t * _sim_time , double * _y , double * _std) {
+int enkf_config_node_load_obs( const enkf_config_node_type * config_node , enkf_obs_type * enkf_obs ,const char * key_index , int obs_count , time_t * _sim_time , double * _y , double * _std) {
   enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
   int num_obs = 0;
   int iobs;
@@ -532,7 +536,7 @@ int enkf_config_node_load_obs( const enkf_config_node_type * config_node , const
         
         if (valid) {
           if (obs_count > 0) {
-            _sim_time[num_obs] = obs_vector_iget_obs_time( obs_vector , report_step );
+            _sim_time[num_obs] = enkf_obs_iget_obs_time( enkf_obs , report_step );
             _y[num_obs]        = value;
             _std[num_obs]      = std1;
           }

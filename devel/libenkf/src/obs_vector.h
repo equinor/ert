@@ -23,7 +23,6 @@ extern "C" {
 typedef void   (obs_free_ftype)                (void *);
 typedef void   (obs_get_ftype)                 (const void * , int , obs_data_type * , const active_list_type * );
 typedef void   (obs_meas_ftype)                (const void * , const void *, meas_vector_type * , const active_list_type * );
-typedef void   (obs_activate_ftype)            (void * , active_mode_type , void *);
 typedef void   (obs_user_get_ftype)            (void * , const char * , double * , double * , bool *); 
 typedef double (obs_chi2_ftype)                (const void * , const void *);
 
@@ -35,12 +34,9 @@ typedef enum { GEN_OBS     = 1,
 typedef struct obs_vector_struct obs_vector_type;
 
 
-  //obs_vector_type    * obs_vector_alloc(int);
+void                 obs_vector_clear_nodes( obs_vector_type * obs_vector );
+void                 obs_vector_del_node(obs_vector_type * obs_vector , int index);
 void                 obs_vector_free(obs_vector_type * );
-void 		     obs_vector_activate_report_step(obs_vector_type * , int , int );
-void 		     obs_vector_deactivate_report_step(obs_vector_type * , int , int );
-void 		     obs_vector_activate_time_t(obs_vector_type * , const sched_file_type * , time_t , time_t );
-void 		     obs_vector_deactivate_time_t(obs_vector_type * , const sched_file_type * , time_t , time_t );
 int                  obs_vector_get_num_active(const obs_vector_type * );
 time_t               obs_vector_iget_obs_time( const obs_vector_type * vector , int index);
 bool   	   	     obs_vector_iget_active(const obs_vector_type * , int );

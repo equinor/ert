@@ -174,8 +174,8 @@ struct enkf_node_struct {
   set_inflation_ftype            * set_inflation;
   fload_ftype                    * fload;
 
-  matrix_serialize_ftype         * matrix_serialize;
-  matrix_deserialize_ftype       * matrix_deserialize;
+  serialize_ftype                * serialize;
+  deserialize_ftype              * deserialize;
   load_ftype                     * load;
   store_ftype                    * store;    
   initialize_ftype   		 * initialize;
@@ -482,16 +482,16 @@ void enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int repor
 
 
 
-void enkf_node_matrix_serialize(enkf_node_type *enkf_node , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
-  FUNC_ASSERT(enkf_node->matrix_serialize);
-  enkf_node->matrix_serialize(enkf_node->data , active_list , A , row_offset , column);
+void enkf_node_serialize(enkf_node_type *enkf_node , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+  FUNC_ASSERT(enkf_node->serialize);
+  enkf_node->serialize(enkf_node->data , active_list , A , row_offset , column);
 }
 
 
 
-void enkf_node_matrix_deserialize(enkf_node_type *enkf_node , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
-  FUNC_ASSERT(enkf_node->matrix_deserialize);
-  enkf_node->matrix_deserialize(enkf_node->data , active_list , A , row_offset , column);
+void enkf_node_deserialize(enkf_node_type *enkf_node , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+  FUNC_ASSERT(enkf_node->deserialize);
+  enkf_node->deserialize(enkf_node->data , active_list , A , row_offset , column);
   enkf_node->__modified = true;
 }
 
@@ -644,8 +644,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->fload              = NULL; 
   node->load               = NULL;
   node->store              = NULL;
-  node->matrix_serialize   = NULL; 
-  node->matrix_deserialize = NULL;
+  node->serialize          = NULL; 
+  node->deserialize        = NULL;
   node->clear              = NULL;
   node->set_inflation      = NULL;
 
@@ -668,8 +668,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->user_get           = gen_kw_user_get__; 
     node->store              = gen_kw_store__;
     node->load               = gen_kw_load__;
-    node->matrix_serialize   = gen_kw_matrix_serialize__;
-    node->matrix_deserialize = gen_kw_matrix_deserialize__;
+    node->serialize          = gen_kw_serialize__;
+    node->deserialize        = gen_kw_deserialize__;
     node->clear              = gen_kw_clear__;
     node->iadd               = gen_kw_iadd__;
     node->scale              = gen_kw_scale__;
@@ -689,8 +689,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->user_get           = summary_user_get__; 
     node->load               = summary_load__;
     node->store              = summary_store__;
-    node->matrix_serialize   = summary_matrix_serialize__;
-    node->matrix_deserialize = summary_matrix_deserialize__;
+    node->serialize          = summary_serialize__;
+    node->deserialize        = summary_deserialize__;
     node->clear              = summary_clear__;
     node->iadd               = summary_iadd__;
     node->scale              = summary_scale__;
@@ -710,8 +710,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->user_get     	     = field_user_get__;
     node->load         	     = field_load__;
     node->store        	     = field_store__;
-    node->matrix_serialize   = field_matrix_serialize__;
-    node->matrix_deserialize = field_matrix_deserialize__;
+    node->serialize          = field_serialize__;
+    node->deserialize        = field_deserialize__;
 
     node->clear              = field_clear__; 
     node->set_inflation      = field_set_inflation__;
@@ -744,8 +744,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->user_get     	     = gen_data_user_get__;
     node->load         	     = gen_data_load__;
     node->store        	     = gen_data_store__;
-    node->matrix_serialize   = gen_data_matrix_serialize__;
-    node->matrix_deserialize = gen_data_matrix_deserialize__;
+    node->serialize          = gen_data_serialize__;
+    node->deserialize        = gen_data_deserialize__;
     node->set_inflation      = gen_data_set_inflation__;
 
     node->clear              = gen_data_clear__; 

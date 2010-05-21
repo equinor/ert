@@ -725,7 +725,7 @@ void field_free(field_type *field) {
 
 
 
-void field_matrix_serialize(const field_type * field , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+void field_serialize(const field_type * field , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config );
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
@@ -734,7 +734,7 @@ void field_matrix_serialize(const field_type * field , const active_list_type * 
 }
 
 
-void field_matrix_deserialize(field_type * field , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void field_deserialize(field_type * field , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config );
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
@@ -1436,8 +1436,8 @@ VOID_USER_GET(field)
 VOID_LOAD(field)
 VOID_STORE(field)
 VOID_CLEAR(field)
-VOID_MATRIX_SERIALIZE(field)
-VOID_MATRIX_DESERIALIZE(field)
+VOID_SERIALIZE(field)
+VOID_DESERIALIZE(field)
 VOID_SET_INFLATION(field)
 VOID_IADD(field)
 VOID_SCALE(field)

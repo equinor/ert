@@ -190,20 +190,20 @@ void prefix ## _copy__(const void * void_src, void * void_target) {   \
 
 /*****************************************************************/
 
-#define VOID_MATRIX_SERIALIZE(prefix)     \
-void prefix ## _matrix_serialize__(const void *void_arg, const active_list_type * active_list , matrix_type * A , int row_offset , int column) {\
+#define VOID_SERIALIZE(prefix)     \
+void prefix ## _serialize__(const void *void_arg, const active_list_type * active_list , matrix_type * A , int row_offset , int column) {\
    const prefix ## _type  *arg = prefix ## _safe_cast_const( void_arg );                         				      \
-   prefix ## _matrix_serialize (arg , active_list , A , row_offset , column);                 				      \
+   prefix ## _serialize (arg , active_list , A , row_offset , column);                 				      \
 }
-#define VOID_MATRIX_SERIALIZE_HEADER(prefix) void prefix ## _matrix_serialize__(const void * , const active_list_type * , matrix_type *  , int , int);
+#define VOID_SERIALIZE_HEADER(prefix) void prefix ## _serialize__(const void * , const active_list_type * , matrix_type *  , int , int);
 
 
-#define VOID_MATRIX_DESERIALIZE(prefix)     \
-void prefix ## _matrix_deserialize__(void *void_arg, const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {\
+#define VOID_DESERIALIZE(prefix)     \
+void prefix ## _deserialize__(void *void_arg, const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {\
    prefix ## _type  *arg = prefix ## _safe_cast( void_arg );                         				      \
-   prefix ## _matrix_deserialize (arg , active_list , A , row_offset , column);                 				      \
+   prefix ## _deserialize (arg , active_list , A , row_offset , column);                 				      \
 }
-#define VOID_MATRIX_DESERIALIZE_HEADER(prefix) void prefix ## _matrix_deserialize__(void * , const active_list_type * , const matrix_type *  , int , int);
+#define VOID_DESERIALIZE_HEADER(prefix) void prefix ## _deserialize__(void * , const active_list_type * , const matrix_type *  , int , int);
 
 
 
