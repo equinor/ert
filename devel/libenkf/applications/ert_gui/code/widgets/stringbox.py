@@ -56,21 +56,21 @@ class DoubleBox(HelpedWidget):
 
         #self.connect(self.doubleBox, QtCore.SIGNAL('editingFinished()'), self.validateString)
         self.connect(self.doubleBox, QtCore.SIGNAL('editingFinished()'), self.contentsChanged)
-        #self.connect(self.doubleBox, QtCore.SIGNAL('textChanged(QString)'), self.validateString)
+        self.connect(self.doubleBox, QtCore.SIGNAL('textChanged(QString)'), self.validateString)
         self.addWidget(self.doubleBox)
 
         self.addStretch()
         self.addHelpButton()
 
 
-    #def validateString(self):
-    #    """Override this to provide validation of the contained string. NOT SUPPORTED YET!"""
-    #    stringToValidate = self.doubleBox.text()
-
+    def validateString(self):
+        stringToValidate = str(self.doubleBox.text())
+        if stringToValidate.strip() == "":
+            self.contentsChanged()
 
     def contentsChanged(self):
         """Called whenever the contents of the editline changes."""
-        self.updateContent(self.doubleBox.text().toDouble()[0])
+        self.updateContent(str(self.doubleBox.text()))
 
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the edit line"""

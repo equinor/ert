@@ -1,8 +1,11 @@
 from enums import enkf_impl_type, field_type
+from PyQt4.QtCore import QObject
+from PyQt4.Qt import SIGNAL
 
-class Model:
+class Model(QObject):
 
     def __init__(self, name):
+        QObject.__init__(self)
         self.name = name
         self.data = {}
         self.valid = True
@@ -12,6 +15,7 @@ class Model:
 
     def __setitem__(self, attr, value):
         self.data[attr] = value
+        self.emit(SIGNAL("modelChanged(Model)"), self)
 
     def __getitem__(self, item):
         return self.data[item]
@@ -21,6 +25,9 @@ class Model:
 
     def setValid(self, valid):
         self.valid = valid
+
+    def getName(self):
+        return self.name
 
 
 class FieldModel(Model):
