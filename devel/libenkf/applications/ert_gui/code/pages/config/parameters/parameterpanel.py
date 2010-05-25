@@ -13,6 +13,7 @@ from pages.config.parameters.datapanel import DataPanel
 from pages.config.parameters.keywordpanel import KeywordPanel
 import widgets.util
 from pages.config.parameters.parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
+from PyQt4.QtCore import SIGNAL
 
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
@@ -91,6 +92,13 @@ class ParameterPanel(HelpedWidget):
         list.addItem(parameter)
         list.setCurrentItem(parameter)
 
+        user_data = parameter.getUserData()
+        self.connect(user_data, SIGNAL('modelChanged(Model)'), self.modelChanged)
+
+    def modelChanged(self, parameter_model):
+        """Called whenever the content of a model changes"""
+        self.updateContent(parameter_model)
+
 
     def addItem(self, list):
         """Called by the add button to insert a new parameter. A Parameter object is sent to the ContentModel inserter"""
@@ -117,6 +125,8 @@ class ParameterPanel(HelpedWidget):
 
             if doDelete == QtGui.QMessageBox.Yes:
                 item = list.item(currentRow)
+                user_data = item.getUserData()
+                self.disconnect(user_data, SIGNAL('modelChanged(Model)'), self.modelChanged)
                 self.updateContent(item.getName(), operation=ContentModel.REMOVE)
                 list.takeItem(currentRow)
         #todo: emit change
@@ -133,8 +143,7 @@ class ParameterPanel(HelpedWidget):
             param.setUserData(parameter)
             param.setValid(parameter.isValid())
 
-            self.searchableList.getList().addItem(param)
-            self.searchableList.getList().setCurrentItem(param)
+            self.addToList(self.searchableList.getList(), param)
 
         if self.searchableList.getList().count > 0:
             self.searchableList.getList().setCurrentRow(0)

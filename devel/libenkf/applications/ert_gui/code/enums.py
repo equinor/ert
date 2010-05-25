@@ -29,12 +29,15 @@ class enum:
     _enums = {}  #This contains all sub classed enums! {class : [list of enums], ...}
     def __init__(self, name, value):
         self.name = name
-        self.value = value
+        self.__value = value
 
         if not enum._enums.has_key(self.__class__):
             enum._enums[self.__class__] = []
 
         enum._enums[self.__class__].append(self)
+
+    def value(self):
+        return self.__value
 
     @classmethod
     def values(cls):
@@ -56,24 +59,29 @@ class enum:
         If several enums have the same value the first will be returned
         """
         for e in enum._enums[cls]:
-            if e.value == value:
+            if e.__value == value:
                 return e
         return None
 
     def __add__(self, other):
-        """Two enums can be added together returning the sum of the value fields"""
+        """Two enums can be added together returning the sum of the value fields as a new enum or an existing one."""
         if isinstance(other, self.__class__):
-            return self.value + other.value
+            sum = self.__value + other.__value
+            existing_enum = self.__class__.resolveValue(sum)
+            if not existing_enum is None:
+                return existing_enum
+            else:
+                return self.__class__(self.name + " + " + other.name, sum)
         else:
             raise NotImplemented
 
 
     def __and__(self, other):
-        """Bitwise and of two enums or an enum and a long or int."""
+        """Bitwise and of two enums or an enum and a long or int. Returns the and'ed value."""
         if isinstance(other, self.__class__):
-            return self.value & other.value
+            return self.__value & other.__value            
         elif isinstance(other, long) or isinstance(other, int):
-            return self.value & other
+            return self.__value & other
         else:
             raise NotImplemented
 
@@ -88,19 +96,12 @@ class enum:
 
     def __eq__(self, other):
         if isinstance(other, long) or isinstance(other, int):
-            return self.value == other
+            return self.__value == other
         else:
-            return self.value == other.value
+            return self.__value == other.__value
 
     def __hash__(self):
-        return hash("%s : %i" % (self.name, self.value))
-
-#    @classmethod
-#    def __getitem__(cls, item):
-#        if isinstance(item, long) or isinstance(item, int):
-#            cls.resolveValue(cls, item)
-#        else:
-#            cls.resolveName(cls, item)
+        return hash("%s : %i" % (self.name, self.__value))
 
 
 #-------------------------------------------------------------------
@@ -211,6 +212,20 @@ class truncation_type(enum):
     TRUNCATE_NONE = None
     TRUNCATE_MIN = None
     TRUNCATE_MAX = None
+
+    @staticmethod
+    def resolveTruncationType(minimum, maximum):
+        if minimum == "" and maximum == "":
+            return truncation_type.TRUNCATE_NONE
+        elif not minimum == "" and not maximum == "":
+            return truncation_type.TRUNCATE_MIN + truncation_type.TRUNCATE_MAX
+        elif not minimum == "":
+            return truncation_type.TRUNCATE_MIN
+        elif not maximum == "":
+            return truncation_type.TRUNCATE_MAX
+        else:
+            raise AssertionError("This should not happen! o_O")
+            
 
 truncation_type.TRUNCATE_NONE = truncation_type("TRUNCATE_NONE", 0)
 truncation_type.TRUNCATE_MIN = truncation_type("TRUNCATE_MIN", 1)
