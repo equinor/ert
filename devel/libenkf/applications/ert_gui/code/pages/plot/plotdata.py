@@ -79,9 +79,9 @@ class PlotDataFetcher(ContentModel):
 
                     for step in range(0, stop_time + 1):
                         for state in state_list:
-                            if ert.enkf.enkf_fs_has_node(fs, config_node, step, member, state.value) == 1:
+                            if ert.enkf.enkf_fs_has_node(fs, config_node, step, member, state.value()):
                                 sim_time = ert.enkf.member_config_iget_sim_time(member_config, step, fs)
-                                ert.enkf.enkf_fs_fread_node(fs, node, step, member, state.value)
+                                ert.enkf.enkf_fs_fread_node(fs, node, step, member, state.value())
                                 valid = ertwrapper.c_int()
                                 value = ert.enkf.enkf_node_user_get(node, key_index, ertwrapper.byref(valid))
                                 if valid.value == 1:
