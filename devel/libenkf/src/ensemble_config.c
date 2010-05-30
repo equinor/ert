@@ -649,7 +649,7 @@ void ensemble_config_init_internalization( ensemble_config_type * config ) {
 */
 
 
-int ensemble_config_get_observations( const ensemble_config_type * config , const enkf_obs_type * enkf_obs , const char * user_key , int obs_count , time_t * obs_time , double * y , double * std) {
+int ensemble_config_get_observations( const ensemble_config_type * config , enkf_obs_type * enkf_obs , const char * user_key , int obs_count , time_t * obs_time , double * y , double * std) {
   int num_obs = 0;
   char * index_key;
   const enkf_config_node_type * config_node = ensemble_config_user_get_node( config , user_key , &index_key);
@@ -697,25 +697,21 @@ enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * confi
    If the @refcase pointer is different from NULL the key will be
    validated. Keys which do not exist in the refcase will be ignored,
    a warning will be printed on stderr and the function will return
-   false.
+   NULL.
 */
 
-bool ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key) {
+enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key) {
+  enkf_config_node_type * config_node = NULL;
   if (hash_has_key(ensemble_config->config_nodes, key)) {
     if (ensemble_config_impl_type(ensemble_config , key) != SUMMARY)
       util_abort("%s: ensemble key:%s already existst - but it is not of summary type\n",__func__ , key);
   } else {
-    if (ensemble_config->refcase != NULL) {
-      if (!ecl_sum_has_general_var( ensemble_config->refcase , key )) {
-        fprintf(stderr,"** Warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( ensemble_config->refcase ) , key);
-        return false;
-      }
-    }
-    {
-      enkf_config_node_type * config_node = enkf_config_node_alloc_summary( key );
+    if ((ensemble_config->refcase == NULL) || (ecl_sum_has_general_var( ensemble_config->refcase , key ))) {
+      config_node = enkf_config_node_alloc_summary( key );
       ensemble_config_add_node__(ensemble_config , config_node );
-      return true;
-    }
+    } else
+      fprintf(stderr,"** Warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( ensemble_config->refcase ) , key);
   }
+  return config_node;
 }
 
