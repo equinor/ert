@@ -1,5 +1,6 @@
 from widgets.tablewidgets import AddRemoveWidget
 from PyQt4 import QtGui, QtCore
+from widgets.tablewidgets import OrderWidget
 
 class SearchableList(QtGui.QWidget):
     """
@@ -8,7 +9,7 @@ class SearchableList(QtGui.QWidget):
     """
     passiveColor = QtGui.QColor(194, 194, 194)
 
-    def __init__(self, parent=None, converter=lambda item : str(item.text()), list_height=350, list_width = 130, ignore_case=False):
+    def __init__(self, parent=None, converter=lambda item : str(item.text()), list_height=350, list_width = 130, ignore_case=False, order_editable=False):
         QtGui.QWidget.__init__(self, parent)
         self.setMaximumWidth(list_width)
         self.setMinimumWidth(list_width)
@@ -32,11 +33,46 @@ class SearchableList(QtGui.QWidget):
         self.list.setMaximumWidth(list_width - 2)
         self.list.setMinimumWidth(list_width - 2)
         self.list.setMinimumHeight(list_height)
-        self.list.setSortingEnabled(True)
+
+        if not order_editable:
+            self.list.setSortingEnabled(True)
+            
         vlayout.addWidget(self.list)
+
         addItem = lambda : self.emit(QtCore.SIGNAL("addItem(list)"), self.list)
         removeItem = lambda : self.emit(QtCore.SIGNAL("removeItem(list)"), self.list)
-        vlayout.addWidget(AddRemoveWidget(self, addItem, removeItem, True))
+        add_remove_widget = AddRemoveWidget(self, addItem, removeItem, True)
+
+        if order_editable:
+            def moveItemUp():
+                index = self.list.currentRow()
+                if index > 0 and self.list.count() > 1:
+                    item = self.list.takeItem(index)
+                    self.list.insertItem(index - 1, item)
+                    self.list.setCurrentItem(item)
+                    self.emit(QtCore.SIGNAL("orderChanged(list)"), self.list)
+
+            def moveItemDown():
+                index = self.list.currentRow()
+                if index < self.list.count() - 1 and self.list.count() > 1:
+                    item = self.list.takeItem(index)
+                    self.list.insertItem(index + 1, item)
+                    self.list.setCurrentItem(item)
+                    self.emit(QtCore.SIGNAL("orderChanged(list)"), self.list)
+
+            hlayout = QtGui.QHBoxLayout()
+            hlayout.setMargin(0)
+            hlayout.addWidget(OrderWidget(self, moveItemUp, moveItemDown, True))
+            
+            hlayout.addWidget(add_remove_widget)
+            vlayout.addLayout(hlayout)
+
+        else:
+            vlayout.addWidget(add_remove_widget)
+
+
+
+            
         self.setLayout(vlayout)
 
         def emitter(current, previous):
@@ -91,3 +127,10 @@ class SearchableList(QtGui.QWidget):
     def getList(self):
         """Returns the contained list widget"""
         return self.list
+
+    def getItems(self):
+        items = []
+
+        for index in range(self.list.count()):
+            items.append(self.list.item(index))
+        return items

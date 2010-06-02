@@ -9,6 +9,7 @@ from widgets.pathchooser import PathChooser
 from widgets.checkbox import CheckBox
 from widgets.configpanel import ConfigPanel
 from widgets.stringbox import StringBox
+from pages.config.jobs.forwardmodelpanel import ForwardModelPanel
 
 def createSimulationsPage(configPanel, parent):
     configPanel.startPage("Simulations")
@@ -26,10 +27,17 @@ def createSimulationsPage(configPanel, parent):
     r.getter = lambda ert : ert.enkf.model_config_get_max_resample(ert.model_config)
     r.setter = lambda ert, value : ert.enkf.model_config_set_max_resample(ert.model_config, value)
 
+    r = configPanel.addRow(ForwardModelPanel(parent))
+    def dummy(model):
+        print "Missing"
+    r.getter = dummy
+    def dummy_set(model, value):
+        print "mioisng"
+    r.setter = dummy_set
 
-    r = configPanel.addRow(KeywordTable(parent, "Forward model", "forward_model", "Job", "Arguments"))
-    r.getter = lambda ert : ert.getAttribute("forward_model")
-    r.setter = lambda ert, value : ert.setAttribute("forward_model", value)
+#    r = configPanel.addRow(KeywordTable(parent, "Forward model", "forward_model", "Job", "Arguments"))
+#    r.getter = lambda ert : ert.getAttribute("forward_model")
+#    r.setter = lambda ert, value : ert.setAttribute("forward_model", value)
 
     r = configPanel.addRow(PathChooser(parent, "Case table", "case_table"))
     r.getter = lambda ert : ert.getAttribute("case_table")
