@@ -95,6 +95,7 @@ struct ext_job_struct {
   char            * argv_string;
   stringlist_type * argv;                  /* This should *NOT* start with the executable */
   hash_type  	  * environment;
+  char            * help_text;
   
   bool              private_job;           /* Can the current user/delete this job? (private_job == true) means the user can edit it. */
   bool              __valid;               /* Temporary variable consulted during the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
@@ -102,6 +103,8 @@ struct ext_job_struct {
 
 
 static UTIL_SAFE_CAST_FUNCTION( ext_job , EXT_JOB_TYPE_ID)
+
+
 
 
 
@@ -130,15 +133,24 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->max_running         = 0;                  /* 0 means unlimited. */
   ext_job->max_running_minutes = 0;                  /* 0 means unlimited. */
   ext_job->private_job         = private_job;        /* If private_job == true the job is user editable. */ 
+  ext_job->help_text           = NULL; 
 
   /* 
      ext_job->private_args is set explicitly in the ext_job_alloc() 
      and ext_job_alloc_copy() functions. 
   */
+  ext_job_set_help_text( ext_job , "Hjelp deg selv - sier <b>herren</b>.<br/> Thouh shall use HTML: <ol> <li> Do this </li> <li> Do that </li> </ol>\n");
   return ext_job;
 }
 
 
+const char * ext_job_get_help_text( const ext_job_type * job ) {
+  return job->help_text;
+}
+
+void ext_job_set_help_text( ext_job_type * job , const char * help_text) {
+  job->help_text = util_string_realloc( job->help_text , help_text  );
+}
 
 /* 
    Exported function - must have name != NULL. Observe that the
@@ -170,9 +182,9 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   new_job->stderr_file    = util_alloc_string_copy(src_job->stderr_file);
   new_job->lsf_resources  = util_alloc_string_copy(src_job->lsf_resources);  
   new_job->license_path   = util_alloc_string_copy(src_job->license_path);  
-  
-  if (src_job->argv      != NULL) new_job->argv          = stringlist_alloc_deep_copy( src_job->argv );
-
+  new_job->help_text      = util_alloc_string_copy(src_job->help_text);  
+ 
+  new_job->argv                  = stringlist_alloc_deep_copy( src_job->argv );
   new_job->max_running_minutes   = src_job->max_running_minutes;
   new_job->max_running           = src_job->max_running;
   new_job->private_args          = subst_list_alloc_deep_copy( src_job->private_args );
@@ -206,6 +218,7 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->license_root_path);
   util_safe_free(ext_job->config_file);
   util_safe_free(ext_job->argv_string);
+  util_safe_free(ext_job->help_text);
   
   hash_free( ext_job->environment );
   
