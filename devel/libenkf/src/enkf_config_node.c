@@ -351,6 +351,16 @@ enkf_config_node_type * enkf_config_node_alloc_general_field( const char * key  
 
 /*****************************************************************/
 
+void enkf_config_node_update_gen_data( enkf_config_node_type * config_node, 
+                                       const char * enkf_outfile_fmt        , 
+                                       const char * enkf_infile_fmt         , 
+                                       const char * init_file_fmt           , 
+                                       const char * min_std_file            , 
+                                       
+
+
+
+/*****************************************************************/
 
 /**
    Invokes the get_data_size() function of the underlying node object.
