@@ -17,3 +17,16 @@ forward_model_add_job( forward_model , job_name );
 forward_model_iset_job_arg( forward_model , job_nr , key , value); <- Set argument - observe that the jobs are identified with the index in
                                                                       the forward model, and not by name.     
 
+more
+----
+s = enkf_main_get_site_config( enkf_main )
+joblist = site_config_get_installed_jobs( s );
+job_names = ext_joblist_alloc_list( joblist );  <- Stringlist
+
+
+
+forward_model_get_job( forward_model , ?NAME?)
+ext_joblist_get_job( joblist , ?NAME?)
+
+
+ext_job_get_help_text( job );
