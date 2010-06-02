@@ -39,7 +39,7 @@
 
 struct model_config_struct {
   stringlist_type      * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
-  forward_model_type   * std_forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
+  forward_model_type   * forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
   bool                   use_lsf;             	    /* The forward models need to know whether we are using lsf. */  
   history_type         * history;             	    /* The history object. */
   path_fmt_type        * runpath;             	    /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
@@ -105,6 +105,7 @@ char * model_config_get_enkf_sched_file(const model_config_type * model_config )
 }
 
 
+
 void model_config_set_enspath( model_config_type * model_config , const char * enspath) {
   model_config->enspath = util_realloc_string_copy( model_config->enspath , enspath );
 }
@@ -163,10 +164,10 @@ model_config_type * model_config_alloc(const config_type * config ,
   model_config->runpath                   = NULL;
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;   
-  model_config->std_forward_model         = forward_model_alloc(  joblist , statoil_mode , model_config->use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
+  model_config->forward_model             = forward_model_alloc(  joblist , statoil_mode , model_config->use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
-    forward_model_parse_init( model_config->std_forward_model , config_string );
+    forward_model_parse_init( model_config->forward_model , config_string );
     free(config_string);
   }
   
@@ -277,7 +278,7 @@ void model_config_free(model_config_type * model_config) {
   free( model_config->enspath );
   util_safe_free( model_config->enkf_sched_file );
   history_free(model_config->history);
-  forward_model_free(model_config->std_forward_model);
+  forward_model_free(model_config->forward_model);
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_state);
     if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
@@ -337,8 +338,8 @@ void model_config_interactive_set_runpath__(void * arg) {
 }
 
 
-forward_model_type * model_config_get_std_forward_model( const model_config_type * config) {
-  return config->std_forward_model;
+forward_model_type * model_config_get_forward_model( const model_config_type * config) {
+  return config->forward_model;
 }
 
 

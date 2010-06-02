@@ -2225,7 +2225,7 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
                                                    enkf_main->ensemble_config                                   ,
                                                    enkf_main->site_config                                       ,
                                                    enkf_main->ecl_config                                        ,
-                                                   model_config_get_std_forward_model(enkf_main->model_config)  ,
+                                                   model_config_get_forward_model(enkf_main->model_config)      ,
                                                    enkf_main->logh                                              ,
                                                    enkf_main->templates                                         ,
                                                    enkf_main->subst_list);

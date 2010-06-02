@@ -35,7 +35,7 @@ void                   model_config_free(model_config_type *);
 path_fmt_type        * model_config_get_runpath_fmt(const model_config_type * );
 enkf_sched_type      * model_config_get_enkf_sched(const model_config_type * );
 history_type         * model_config_get_history(const model_config_type * );
-forward_model_type   * model_config_get_std_forward_model( const model_config_type * );
+forward_model_type   * model_config_get_forward_model( const model_config_type * );
 bool                   model_config_internalize_state( const model_config_type *, int );
 bool                   model_config_load_state( const model_config_type *, int );
 void                   model_config_set_enkf_sched(model_config_type *  , const ext_joblist_type * , run_mode_type , bool);
