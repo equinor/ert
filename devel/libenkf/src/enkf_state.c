@@ -1573,10 +1573,10 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
     } else 
       if (!enkf_state_internal_retry( enkf_state , true)) 
         /* 
-           We tell the queue system that the job failed hard; it
-           will immediately come back here with status
-           job_queue_run_FAIL and then it falls all the way
-           through to runOK = false and no more attempts.
+           We tell the queue system that the job failed to load the
+           data; it will immediately come back here with status
+           job_queue_run_FAIL and then it falls all the way through to
+           runOK = false and no more attempts.
         */
         job_queue_set_external_fail( shared_info->job_queue , iens );
   } else if (status == JOB_QUEUE_RUN_FAIL) {

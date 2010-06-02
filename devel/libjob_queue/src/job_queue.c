@@ -660,13 +660,16 @@ void job_queue_set_external_restart(job_queue_type * queue , int job_index) {
 
 
 /**
-   The external scope has decided that no more attempts will be tried. This job
-   should really fail!! 
+   The queue system has said that the job completed OK, hwoever the
+   external scope failed to load all the results and are using this
+   function to inform the queue system that the job has indeed
+   failed. The queue system will then either retry the job, or switch
+   status to JOB_QUEUE_RUN_FAIL.
 */
 void job_queue_set_external_fail(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   node->submit_attempt       = 0;
-  job_queue_change_node_status( queue , node , JOB_QUEUE_ALL_FAIL);
+  job_queue_change_node_status( queue , node , JOB_QUEUE_EXIT);
 }
 
 /**

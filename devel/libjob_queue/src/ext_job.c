@@ -122,7 +122,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->argv 	       = NULL;
   ext_job->lsf_resources       = NULL;
   ext_job->environment         = hash_alloc();
-  ext_job->argv                = NULL;
+  ext_job->argv                = stringlist_alloc_new();
   ext_job->argv_string         = NULL;
   ext_job->__valid             = true;
   ext_job->license_path        = NULL;
