@@ -56,6 +56,22 @@ forward_model_type * forward_model_alloc(const ext_joblist_type * ext_joblist, b
 
 
 /**
+   Allocates and returns a stringlist with all the names in the
+   current forward_model.
+*/
+stringlist_type * forward_model_alloc_joblist( const forward_model_type * forward_model ) {
+  stringlist_type * names = stringlist_alloc_new( );
+  int i;
+  for (i=0; i < vector_get_size( forward_model->jobs ); i++) {
+    const ext_job_type * job = vector_iget_const( forward_model->jobs , i);
+    stringlist_append_ref( names , ext_job_get_name( job ));
+  }
+  
+  return names;
+}
+
+
+/**
    This function adds the job named 'job_name' to the forward model. The return
    value is the newly created ext_job instance. This can be used to set private
    arguments for this job.
@@ -80,7 +96,16 @@ ext_job_type * forward_model_add_job(forward_model_type * forward_model , const 
 
 void forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value) {
   ext_job_type * job = vector_iget( forward_model->jobs , job_index );
-  ext_job_set_private_arg(job , arg , value);
+  {
+    char * tagged_arg = forward_model_alloc_tagged_string(forward_model , arg);
+    ext_job_set_private_arg(job , tagged_arg , value);
+    free( tagged_arg );
+  }
+}
+
+
+void forward_model_clear( forward_model_type * forward_model ) {
+  vector_clear( forward_model->jobs );
 }
 
 
@@ -157,7 +182,7 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
 	    util_abort("%s: could not find \'=\' in argument string:%s \n",__func__ , key_value_list[iarg]);
 	  
 	  {
-	    char * key , * value , *tagged_key;
+	    char * key , * value;
 	    char * tmp     = key_value_list[iarg];
 	    int arg_length , value_length;
 	    while (isspace(*tmp))  /* Skipping initial space */
@@ -168,16 +193,14 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
 	    tmp += arg_length;
 	    while ((*tmp == ' ') || (*tmp == '='))
 	      tmp++;
-	    tagged_key = forward_model_alloc_tagged_string(forward_model , key);
-
+	    
 	    value_length = strcspn(tmp , " ");
 	    value = util_alloc_substring_copy( tmp , value_length);
 
 	    /* Setting the argument */
-            forward_model_iset_job_arg( forward_model , job_index , tagged_key , value);
+            forward_model_iset_job_arg( forward_model , job_index , key , value);
 	    free(key);
 	    free(value);
-	    free(tagged_key);
 	    tmp += value_length;
 
 
