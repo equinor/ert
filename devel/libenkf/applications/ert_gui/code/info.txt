@@ -1,0 +1,19 @@
+forward_model:
+--------------
+
+get:
+----
+model_config   = enkf_main_get_model_config( enkf_main )
+forward_model  = model_config_get_forward_model( model_config )
+names          = forward_model_alloc_joblist( forward_model )     <- Allokerer en stringlist() med navnene på jobbene.
+
+
+
+set
+---
+forward_model_clear( forward_model )
+
+forward_model_add_job( forward_model , job_name );
+forward_model_iset_job_arg( forward_model , job_nr , key , value); <- Set argument - observe that the jobs are identified with the index in
+                                                                      the forward model, and not by name.     
+
