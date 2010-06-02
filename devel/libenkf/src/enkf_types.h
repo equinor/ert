@@ -23,14 +23,14 @@ typedef enum {INVALID_VAR      =  0  , /**/
 	      DYNAMIC_STATE    =  2  , /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
 	      DYNAMIC_RESULT   =  4  , /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
 	      STATIC_STATE     =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
-  enkf_var_type; 
+enkf_var_type; 
   
   
 
 typedef enum { DEFAULT_KEEP    = 0,    /* Remove for enkf assimilation - keep for ensemble experiments. */
 	       EXPLICIT_DELETE = 1,    /* Remove unconditionally */
 	       EXPLICIT_KEEP   = 2}    /* keep unconditionally */
-  keep_runpath_type;
+keep_runpath_type;
 
 
 

@@ -18,7 +18,9 @@ struct gen_data_config_struct {
   CONFIG_STD_FIELDS;
   char                         * key;                   /* The key this gen_data instance is known under - needed for debugging. */
   ecl_type_enum  	         internal_type;         /* The underlying type (float | double) of the data in the corresponding gen_data instances. */
+  char                         * template_file;        
   char           	       * template_buffer;       /* Buffer containing the content of the template - read and internalized at boot time. */
+  char                         * template_key;
   int            	         template_data_offset;  /* The offset into the template buffer before the data should come. */
   int            	         template_data_skip;    /* The length of data identifier in the template.*/ 
   int            	         template_buffer_size;  /* The total size (bytes) of the template buffer .*/
@@ -28,15 +30,6 @@ struct gen_data_config_struct {
   active_list_type             * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
   int_vector_type              * data_size_vector;      /* Data size, i.e. number of elements , indexed with report_step */
-
-  /* 
-     The data below this line is just held during booting,
-     later the enkf_node layer takes ownership of the data.
-  */
-  /*****************************************************************/  
-  gen_data_type                * min_std;              
-  char                         * enkf_outfile;
-  char                         * enkf_infile;
 };
 
 /*****************************************************************/
@@ -76,19 +69,38 @@ int gen_data_config_get_byte_size( const gen_data_config_type * config , int rep
 gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   gen_data_config_type * config = util_malloc(sizeof * config , __func__);
   UTIL_TYPE_ID_INIT( config , GEN_DATA_CONFIG_ID);
+
   config->key               = util_alloc_string_copy( key );
+  config->template_file     = NULL;
+  config->template_buffer   = NULL;
+  config->template_key      = NULL;
   config->data_size  	    = 0;
-  config->internal_type     = internal_type;
+  config->internal_type     = ECL_DOUBLE_TYPE;
   config->active_list       = active_list_alloc( ALL_ACTIVE );
-  config->input_format      = input_format;
-  config->output_format     = output_format;
-  config->enkf_infile       = util_alloc_string_copy( enkf_infile );
-  config->enkf_outfile      = util_alloc_string_copy( enkf_outfile );
+  config->input_format      = GEN_DATA_UNDEFINED;
+  config->output_format     = GEN_DATA_UNDEFINED;
   config->data_size_vector  = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
+  pthread_mutex_init( &config->update_lock , NULL );
+
+  return config;
 }
 
-void gen_data_config_set_template( gen_data_config_type * config , const char * template_ecl_file , const char * template_data_key ) {
-  util_safe_free( config->template_buffer ); config->template_buffer = NULL;
+
+static void gen_data_config_set_init_file_fmt( gen_data_config_type * gen_data_config , const char * init_file_fmt ) {
+  gen_data_config->init_file_fmt = path_fmt_realloc_path_fmt( gen_data_config->init_file_fmt , init_file_fmt );
+}
+
+
+const char * gen_data_config_get_init_file_fmt( const gen_data_config_type * config ) {
+  return path_fmt_get_fmt( config->init_file_fmt );
+}
+
+
+
+static void gen_data_config_set_template( gen_data_config_type * config , const char * template_ecl_file , const char * template_data_key ) {
+  util_safe_free( config->template_buffer ); 
+  config->template_buffer = NULL;
+
   if (template_ecl_file != NULL) {
     char *data_ptr;
     config->template_buffer = util_fread_alloc_file_content( template_ecl_file , &config->template_buffer_size);
@@ -101,139 +113,73 @@ void gen_data_config_set_template( gen_data_config_type * config , const char * 
     }
   } else 
     config->template_buffer = NULL;
+  config->template_file = util_realloc_string_copy( config->template_file , template_ecl_file );
+  config->template_key  = util_realloc_string_copy( config->template_key , template_data_key );
 }
 
 
-void gen_data_config_set_init_file_fmt( gen_data_config_type * gen_data_config , const char * init_file_fmt ) {
-  gen_data_config->init_file_fmt = path_fmt_realloc_path_fmt( gen_data_config->init_file_fmt , init_file_fmt );
+const char * gen_data_config_get_template_file( const gen_data_config_type * config ) {
+  return config->template_file;
 }
+
+const char * gen_data_config_get_template_key( const gen_data_config_type * config ) {
+  return config->template_key;
+}
+
+
+static void gen_data_config_set_io_format( gen_data_config_type * config , gen_data_file_format_type output_format , gen_data_file_format_type input_format) {
+  
+  config->output_format = output_format;
+  config->input_format  = input_format;
+}
+
 
 
 /**
-   Internal consistency checks:
+   Observe that all the consistency checks are in thise functions, and not in
+   the various small static functions called by this function, it is therefor
+   important that only this full function is used, and not the small individual
+   (static for a reason ...) functions.
 
-   1. (enkf_outfile != NULL)                             => out_format != gen_data_undefined.
-   2. ((enkf_infile != NULL) || (init_file_fmt != NULL)) => input_format != gen_data_undefined
-   3. (output_format == ASCII_template)                  => (template_ecl_file != NULL) && (template_data_key != NULL)
-   4. as_param == true                                   => init_file_fmt != NULL
-   5. input_format == ASCII_template                     => INVALID
+   Observe that the checks on == NULL and != NULL for the various parameters
+   should already have been performed (in enkf_config_node_update_gen_data).
 */
 
-
-
 void gen_data_config_update(gen_data_config_type * config           , 
-                            bool as_param                           ,         
-                            ecl_type_enum internal_type             , 
+                            enkf_var_type var_type                  , /* This is ONLY included too be able to do a sensible consistency check. */
                             gen_data_file_format_type input_format  ,
                             gen_data_file_format_type output_format ,
                             const char * init_file_fmt              ,  
                             const char * template_ecl_file          , 
-                            const char * template_data_key          ,
-                            const char * enkf_outfile               ,
-                            const char * enkf_infile                ,       
-                            const char * min_std_file) {
-  
-  /* Condition 1: */
-  if ((enkf_outfile != NULL) && (output_format == GEN_DATA_UNDEFINED))
-    util_abort("%s: invalid configuration. When enkf_outfile != NULL you must explicitly specify an output format with OUTPUT_FORMAT:.\n",__func__);
+                            const char * template_data_key) {
 
-  /* Condition 2: */
-  if (((enkf_infile != NULL) || (init_file_fmt != NULL)) && (input_format == GEN_DATA_UNDEFINED))
-    util_abort("%s: invalid configuration. When loading with enkf_infile / init_files you must specify an input format with INPUT_FORMAT: \n",__func__);
   
-  /* Condition 3: */
-  if (config->output_format == ASCII_TEMPLATE) {
-    if (template_ecl_file == NULL)
-      util_abort("%s: internal error - when using format ASCII_template you must supply a temlate file \n",__func__);
-  } else
-    if (template_ecl_file != NULL)
-      util_abort("%s: internal error have template and format mismatch \n",__func__);
+  if ((var_type != DYNAMIC_RESULT) && (output_format == GEN_DATA_UNDEFINED))
+    util_abort("%s: When specifying an enkf output file you must specify an output format as well. \n",__func__);
   
-  /* Condition 4: */
-  if (as_param)
-    if (init_file_fmt == NULL)
-      util_abort("%s: when adding a parameter you must supply files to initialize from with INIT_FILES:/path/to/files/with%d \n",__func__);
+  if ((var_type != PARAMETER) && (input_format == GEN_DATA_UNDEFINED))
+    util_abort("%s: When specifying a file for ERT to load from - you must also specify the format of the loaded files. \n",__func__);
   
-  /* Condition 5: */
   if (input_format == ASCII_TEMPLATE)
     util_abort("%s: Format ASCII_TEMPLATE is not valid as INPUT_FORMAT \n",__func__);
+
+  if ((template_ecl_file != NULL) && (template_data_key == NULL))
+    util_abort("%s: When using a template you MUST also set a template_key \n",__func__);
 
   /*****************************************************************/
 
   gen_data_config_set_template( config , template_ecl_file , template_data_key );
   gen_data_config_set_init_file_fmt( config , init_file_fmt );
-  
-  pthread_mutex_init( &config->update_lock , NULL );
-  if (config->output_format == GEN_DATA_UNDEFINED) 
-    config->output_format = config->input_format;
-  
-    
-  /* 
-     min_std for inflation. 
-     ----------------------
+  gen_data_config_set_io_format( config , output_format , input_format);
 
-     This code must be at the VERY END of the constructor because the
-     function calls loading the min-std instance will use this
-     gen_data_config instance, and consequently assume that it is
-     fully initialized.
-  */
-     
-  if (min_std_file != NULL) {
-    config->min_std = gen_data_alloc( config );
-    gen_data_fload( config->min_std , min_std_file );
-  } else 
-    config->min_std = NULL;
+  /*****************************************************************/
+
+  if ((output_format == ASCII_TEMPLATE) && (config->template_buffer == NULL))
+    util_abort("%s: When specifying output_format == ASCII_TEMPLATE you must also supply a template_ecl_file\n",__func__);
+
 }
 
 
-
-
-gen_data_config_type * gen_data_config_alloc(const char * key,  
-                                             bool as_param, 
-                                             ecl_type_enum internal_type       , 
-                                             gen_data_file_format_type input_format ,
-                                             gen_data_file_format_type output_format,
-                                             const char * init_file_fmt     ,  
-                                             const char * template_ecl_file , 
-                                             const char * template_data_key ,
-                                             const char * enkf_outfile          ,
-                                             const char * enkf_infile       ,
-                                             const char * min_std_file) {
-  
-  gen_data_config_type * config = gen_data_config_alloc_empty( key );
-  gen_data_config_update( config , as_param , internal_type , input_format , output_format , init_file_fmt , template_ecl_file , template_data_key , enkf_outfile , enkf_infile , min_std_file);
-  return config;
-}
-
-
-
-/**
-   The gen_data_config object has (during the boot process) had
-   temporary ownership to some objects, these should go be handled by
-   the enkf_node layer. The pop_xxx functions will return the objects
-   in question, and set the internal gen_data_config pointer to NULL.
-
-   I.e. these functions can only be called once.
-*/
-   
-
-
-gen_data_type * gen_data_config_get_min_std( const gen_data_config_type * config ) {
-  return config->min_std;
-}
-
-
-char * gen_data_config_pop_enkf_infile( gen_data_config_type * config ) {
-  char * enkf_infile  = config->enkf_infile;
-  config->enkf_infile = NULL;
-  return enkf_infile;
-}
-
-char * gen_data_config_pop_enkf_outfile( gen_data_config_type * config ) {
-  char * enkf_outfile  = config->enkf_outfile;
-  config->enkf_outfile = NULL;
-  return enkf_outfile;
-}
 
 
 /**
@@ -246,23 +192,22 @@ char * gen_data_config_pop_enkf_outfile( gen_data_config_type * config ) {
 */
 
 
-static gen_data_file_format_type __gen_data_config_check_format( const void * __format ) {
+gen_data_file_format_type gen_data_config_check_format( const void * format_string ) {
   gen_data_file_format_type type = GEN_DATA_UNDEFINED;
-
-  if (__format != NULL) {
-    const char * format = (const char *) __format;
-
-    if (strcmp(format , "ASCII") == 0)
+  
+  if (format_string != NULL) {
+    
+    if (strcmp(format_string , "ASCII") == 0)
       type = ASCII;
-    else if (strcmp(format , "ASCII_TEMPLATE") == 0)
+    else if (strcmp(format_string , "ASCII_TEMPLATE") == 0)
       type = ASCII_TEMPLATE;
-    else if (strcmp(format , "BINARY_DOUBLE") == 0)
+    else if (strcmp(format_string , "BINARY_DOUBLE") == 0)
       type = BINARY_DOUBLE;
-    else if (strcmp(format , "BINARY_FLOAT") == 0)
+    else if (strcmp(format_string , "BINARY_FLOAT") == 0)
       type = BINARY_FLOAT;
     
     if (type == GEN_DATA_UNDEFINED)
-      util_exit("Sorry: format:\"%s\" not recognized - valid values: ASCII / ASCII_TEMPLATE / BINARY_DOUBLE / BINARY_FLOAT \n", format);
+      util_exit("Sorry: format:\"%s\" not recognized - valid values: ASCII / ASCII_TEMPLATE / BINARY_DOUBLE / BINARY_FLOAT \n", format_string);
   }
   
   return type;
@@ -282,26 +227,26 @@ static gen_data_file_format_type __gen_data_config_check_format( const void * __
 
 */
 
-gen_data_config_type * gen_data_config_alloc_with_options(const char * key , bool as_param , const stringlist_type * options) {
-  const ecl_type_enum internal_type = ECL_DOUBLE_TYPE;
-  gen_data_config_type * config;
-  hash_type * opt_hash              = hash_alloc_from_options( options );
-  
-  config = gen_data_config_alloc(key      , 
-                                 as_param , 
-                                 internal_type , 
-                                 __gen_data_config_check_format( hash_safe_get( opt_hash , "INPUT_FORMAT") ),
-                                 __gen_data_config_check_format( hash_safe_get( opt_hash , "OUTPUT_FORMAT") ),
-                                 hash_safe_get( opt_hash , "INIT_FILES" ),
-                                 hash_safe_get( opt_hash , "TEMPLATE" ),
-                                 hash_safe_get( opt_hash , "KEY"),
-                                 hash_safe_get( opt_hash , "ECL_FILE"),
-                                 hash_safe_get( opt_hash , "RESULT_FILE"),
-                                 hash_safe_get( opt_hash , "MIN_STD" ));
-  
-  hash_free(opt_hash);
-  return config;
-}
+//gen_data_config_type * gen_data_config_alloc_with_options(const char * key , bool as_param , const stringlist_type * options) {
+//  const ecl_type_enum internal_type = ECL_DOUBLE_TYPE;
+//  gen_data_config_type * config;
+//  hash_type * opt_hash              = hash_alloc_from_options( options );
+//  
+//  config = gen_data_config_alloc(key      , 
+//                                 as_param , 
+//                                 internal_type , 
+//                                 __gen_data_config_check_format( hash_safe_get( opt_hash , "INPUT_FORMAT") ),
+//                                 __gen_data_config_check_format( hash_safe_get( opt_hash , "OUTPUT_FORMAT") ),
+//                                 hash_safe_get( opt_hash , "INIT_FILES" ),
+//                                 hash_safe_get( opt_hash , "TEMPLATE" ),
+//                                 hash_safe_get( opt_hash , "KEY"),
+//                                 hash_safe_get( opt_hash , "ECL_FILE"),
+//                                 hash_safe_get( opt_hash , "RESULT_FILE"),
+//                                 hash_safe_get( opt_hash , "MIN_STD" ));
+//  
+//  hash_free(opt_hash);
+//  return config;
+//}
 
 
 
@@ -310,7 +255,12 @@ void gen_data_config_free(gen_data_config_type * config) {
   active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free(config->init_file_fmt);
   int_vector_free( config->data_size_vector );
+  
   util_safe_free( config->key );
+  util_safe_free( config->template_buffer );
+  util_safe_free( config->template_file );
+  util_safe_free( config->template_key );
+
   free(config);
 }
 

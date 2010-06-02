@@ -8,6 +8,7 @@ extern "C" {
 #include <enkf_macros.h>
 #include <ecl_grid.h>
 #include <field_trans.h>
+#include <gen_data_config.h>
 
 typedef void   (config_free_ftype)   (void *);
 typedef int    (get_data_size_ftype) (const void *);
@@ -15,6 +16,19 @@ typedef int    (get_data_size_ftype) (const void *);
 
 typedef struct enkf_config_node_struct enkf_config_node_type;
 typedef struct enkf_node_struct        enkf_node_type;
+
+
+enkf_config_node_type * enkf_config_node_new_gen_data( const char * key );
+
+void enkf_config_node_update_gen_data( enkf_config_node_type * config_node, 
+                                       gen_data_file_format_type input_format,
+                                       gen_data_file_format_type output_format,
+                                       const char * init_file_fmt     ,  
+                                       const char * template_ecl_file , 
+                                       const char * template_data_key ,
+                                       const char * enkf_outfile_fmt  ,
+                                       const char * enkf_infile_fmt   , 
+                                       const char * min_std_file);
 
 
 

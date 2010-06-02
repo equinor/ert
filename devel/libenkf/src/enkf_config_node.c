@@ -199,6 +199,18 @@ enkf_config_node_type * enkf_config_node_alloc_summary( const char * key ) {
 
 /*****************************************************************/
 
+enkf_config_node_type * enkf_config_node_new_gen_data( const char * key ) {
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( INVALID , GEN_DATA , key );
+  config_node->data = gen_data_config_alloc_empty( key );
+  return config_node;
+}
+
+
+                                       
+                                       
+
+/*****************************************************************/
+
 /**
    This will create a new gen_kw_config instance which is NOT yet
    valid. Mainly support code for the GUI.
@@ -208,6 +220,7 @@ enkf_config_node_type * enkf_config_node_new_field( const char * key , ecl_grid_
   config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
   return config_node;
 }
+
 
 
 /**
@@ -351,11 +364,51 @@ enkf_config_node_type * enkf_config_node_alloc_general_field( const char * key  
 
 /*****************************************************************/
 
+
 void enkf_config_node_update_gen_data( enkf_config_node_type * config_node, 
+                                       gen_data_file_format_type input_format,
+                                       gen_data_file_format_type output_format,
+                                       const char * init_file_fmt           , 
+                                       const char * template_ecl_file       , 
+                                       const char * template_data_key       ,
                                        const char * enkf_outfile_fmt        , 
                                        const char * enkf_infile_fmt         , 
-                                       const char * init_file_fmt           , 
-                                       const char * min_std_file            , 
+                                       const char * min_std_file) {
+
+  enkf_config_node_update( config_node , enkf_outfile_fmt , enkf_infile_fmt, min_std_file);
+  {
+    enkf_var_type var_type = INVALID_VAR;
+    /*
+      PARAMETER:      init_file_fmt    != NULL
+                      enkf_outfile_fmt != NULL
+                      enkf_infile_fmt  == NULL
+
+      DYNAMIC_STATE:  init_file_fmt    != NULL
+                      enkf_outfile_fmt != NULL
+                      enkf_infile_fmt  != NULL
+
+      DYNAMIC_RESULT: init_file_fmt    == NULL
+                      enkf_outfile_fmt == NULL
+                      enkf_infile_fmt  != NULL                
+
+    */
+    
+    if ((init_file_fmt != NULL) && (enkf_outfile_fmt != NULL) && (enkf_infile_fmt == NULL)) var_type = PARAMETER;
+
+    if ((init_file_fmt != NULL) && (enkf_outfile_fmt != NULL) && (enkf_infile_fmt != NULL)) var_type = DYNAMIC_STATE;
+
+    if ((init_file_fmt == NULL) && (enkf_outfile_fmt == NULL) && (enkf_infile_fmt != NULL)) var_type = DYNAMIC_RESULT;
+
+    if (var_type == INVALID_VAR)
+      util_abort("%s: inconsistent input for node:%s \n",__func__ , config_node->key);
+
+    config_node->var_type = var_type;
+  }
+
+  gen_data_config_update(config_node->data , config_node->var_type , input_format , output_format , 
+                         init_file_fmt , template_ecl_file , template_data_key);
+}
+
                                        
 
 

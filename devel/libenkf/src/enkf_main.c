@@ -188,6 +188,10 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
   return enkf_main->obs;
 }
 
+void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
+  enkf_obs_load(enkf_main->obs , obs_config_file , enkf_main->ensemble_config );
+}
+
 
 misfit_table_type * enkf_main_get_misfit(const enkf_main_type * enkf_main) {
   return enkf_main->misfit_table;
@@ -1759,8 +1763,8 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
     int i;
     for (i = 0; i < stringlist_get_size( keylist ); i++) {
       const char * key = stringlist_iget( keylist , i);
-      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
       bool add_node = true;
+      //const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
 
       /*
          We make sure that summary nodes which are not observed
@@ -2033,16 +2037,30 @@ static config_type * enkf_main_alloc_config() {
 }
 
 
-static void enkf_main_iset_keep_runpath( enkf_main_type * enkf_main , int index , keep_runpath_type keep) {
-  int_vector_iset( enkf_main->keep_runpath , index , keep );
+
+
+keep_runpath_type  enkf_main_iget_keep_runpath( const enkf_main_type * enkf_main , int iens ) {
+  return enkf_state_get_keep_runpath( enkf_main->ensemble[iens] );
 }
+
+void enkf_main_iset_keep_runpath( enkf_main_type * enkf_main , int iens , keep_runpath_type keep_runpath) {
+  enkf_state_set_keep_runpath( enkf_main->ensemble[iens] , keep_runpath);
+}
+
+/**
+   Observe that this function parses and TEMPORARILY stores the keep_runpath
+   information ion the enkf_main object. This is subsequently passed on the
+   enkf_state members, and the functions enkf_main_iget_keep_runpath() and
+   enkf_main_iset_keep_runpath() act on the enkf_state objects, and not on the
+   internal keep_runpath field of the enkf_main object (what a fxxxing mess).
+*/
 
 
 void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep_runpath_string , const char * delete_runpath_string , int ens_size ) {
 
   int i;
   for (i = 0; i < ens_size; i++)
-    enkf_main_iset_keep_runpath( enkf_main , i , DEFAULT_KEEP);
+    int_vector_iset( enkf_main->keep_runpath , i , DEFAULT_KEEP);
 
   {
     int * active_list; 
@@ -2050,7 +2068,7 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
 
     active_list = util_sscanf_alloc_active_list(keep_runpath_string , &num_items);
     for (i = 0; i < num_items; i++)
-      enkf_main_iset_keep_runpath( enkf_main , active_list[i] , EXPLICIT_KEEP);
+      int_vector_iset( enkf_main->keep_runpath , i , EXPLICIT_KEEP);
     
     
     free( active_list );
@@ -2063,7 +2081,7 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
 
     active_list = util_sscanf_alloc_active_list(delete_runpath_string , &num_items);
     for (i = 0; i < num_items; i++) 
-      enkf_main_iset_keep_runpath( enkf_main , active_list[i] , EXPLICIT_DELETE);
+      int_vector_iset( enkf_main->keep_runpath , i , EXPLICIT_DELETE);
     
     free( active_list );
   }
@@ -2504,7 +2522,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	  obs_config_file = NULL;
 
         enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config), analysis_config_get_std_cutoff(enkf_main->analysis_config) );
-	enkf_obs_load(enkf_main->obs , obs_config_file , enkf_main->ensemble_config );
+        enkf_main_load_obs( enkf_main , obs_config_file );
       }
 
       enkf_main_update_obs_keys(enkf_main);
@@ -2857,7 +2875,7 @@ int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const cha
    all realizations will be checked).
 */
 
-bool enkf_main_is_initialized( const enkf_main_type * enkf_main , const bool_vector_type * __mask) {
+bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_type * __mask) {
   stringlist_type  * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
   bool_vector_type * mask;
   bool initialized = true;

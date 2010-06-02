@@ -1756,3 +1756,12 @@ bool enkf_state_has_report_step( const enkf_state_type * enkf_state , int report
   return member_config_has_report_step(enkf_state->my_config , report_step );
 }
 
+
+void enkf_state_set_keep_runpath( enkf_state_type * enkf_state , keep_runpath_type keep_runpath) {
+  member_config_set_keep_runpath( enkf_state->my_config , keep_runpath);
+}
+
+
+keep_runpath_type enkf_state_get_keep_runpath( const enkf_state_type * enkf_state ) {
+  return member_config_get_keep_runpath( enkf_state->my_config );
+}

@@ -174,78 +174,78 @@ void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , 
 }
 
 
-/* 
-   Required options:
-   * INPUT_FORMAT 
-   * INPUT_FILES
-   * INIT_FILES
-   * OUTPUT_FORMAT
-	 
-   Optional:
-   * TEMPLATE
-   * KEY
-*/
-
-void ensemble_config_add_gen_param(ensemble_config_type * config , const char * key , const char * enkf_outfile , stringlist_type * options) {
-  gen_data_config_type * node = gen_data_config_alloc_with_options( key , true , options );
-  {
-    //char                  * enkf_outfile   = gen_data_config_pop_enkf_outfile( node );
-    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , PARAMETER , GEN_DATA , enkf_outfile , NULL , node );
-    gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
-
-    if (gen_data_min_std != NULL) {
-      enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
-      enkf_config_node_set_min_std( config_node , min_std_node );
-    }
-
-    //util_safe_free( enkf_outfile );
-  }
-}
-
-
-
-
-/* 
-   For this datatype the cooperation between the enkf_node layer and
-   the underlying type NOT particularly elegant.
-   
-   The problem is that the enkf_node layer owns the ECLIPSE
-   input/output filenames. However, the node itself knows whether it
-   should import/export ECLIPSE files (and therefore whether it
-   needs the input/output filenames.
-*/
-
-
-void ensemble_config_add_gen_data(ensemble_config_type * config , const char * key , stringlist_type * options) {
-  enkf_var_type var_type;
-  char * enkf_outfile;
-  char * enkf_infile;
-  gen_data_config_type * node = gen_data_config_alloc_with_options( key , false , options);
-  enkf_outfile = gen_data_config_pop_enkf_outfile( node );
-  enkf_infile  = gen_data_config_pop_enkf_infile( node );
-  
-  if (enkf_outfile == NULL) 
-    /* 
-       EnKF should not provide the forward model with an instance of this
-       data => We have dynamic_result.
-    */
-    var_type = DYNAMIC_RESULT;
-  else
-    var_type = DYNAMIC_STATE;   
-
-  {
-    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , var_type , GEN_DATA , enkf_outfile , enkf_infile , node );
-    gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
-    
-    if (gen_data_min_std != NULL) {
-      enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
-      enkf_config_node_set_min_std( config_node , min_std_node );
-    }
-  }
-  
-  util_safe_free( enkf_outfile );
-  util_safe_free( enkf_infile );
-}
+///* 
+//   Required options:
+//   * INPUT_FORMAT 
+//   * INPUT_FILES
+//   * INIT_FILES
+//   * OUTPUT_FORMAT
+//	 
+//   Optional:
+//   * TEMPLATE
+//   * KEY
+//*/
+//
+//void ensemble_config_add_gen_param(ensemble_config_type * config , const char * key , const char * enkf_outfile , stringlist_type * options) {
+//  gen_data_config_type * node = gen_data_config_alloc_with_options( key , true , options );
+//  {
+//    //char                  * enkf_outfile   = gen_data_config_pop_enkf_outfile( node );
+//    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , PARAMETER , GEN_DATA , enkf_outfile , NULL , node );
+//    gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
+//
+//    if (gen_data_min_std != NULL) {
+//      enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
+//      enkf_config_node_set_min_std( config_node , min_std_node );
+//    }
+//
+//    //util_safe_free( enkf_outfile );
+//  }
+//}
+//
+//
+//
+//
+///* 
+//   For this datatype the cooperation between the enkf_node layer and
+//   the underlying type NOT particularly elegant.
+//   
+//   The problem is that the enkf_node layer owns the ECLIPSE
+//   input/output filenames. However, the node itself knows whether it
+//   should import/export ECLIPSE files (and therefore whether it
+//   needs the input/output filenames.
+//*/
+//
+//
+//void ensemble_config_add_gen_data(ensemble_config_type * config , const char * key , stringlist_type * options) {
+//  enkf_var_type var_type;
+//  char * enkf_outfile;
+//  char * enkf_infile;
+//  gen_data_config_type * node = gen_data_config_alloc_with_options( key , false , options);
+//  enkf_outfile = gen_data_config_pop_enkf_outfile( node );
+//  enkf_infile  = gen_data_config_pop_enkf_infile( node );
+//  
+//  if (enkf_outfile == NULL) 
+//    /* 
+//       EnKF should not provide the forward model with an instance of this
+//       data => We have dynamic_result.
+//    */
+//    var_type = DYNAMIC_RESULT;
+//  else
+//    var_type = DYNAMIC_STATE;   
+//
+//  {
+//    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , var_type , GEN_DATA , enkf_outfile , enkf_infile , node );
+//    gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
+//    
+//    if (gen_data_min_std != NULL) {
+//      enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
+//      enkf_config_node_set_min_std( config_node , min_std_node );
+//    }
+//  }
+//  
+//  util_safe_free( enkf_outfile );
+//  util_safe_free( enkf_infile );
+//}
 
 
 
@@ -324,7 +324,7 @@ void ensemble_config_add_config_items(config_type * config) {
 ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
   ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( refcase );
-  ensemble_config->field_trans_table     = field_trans_table_alloc();    /* This currently leaks. */
+  ensemble_config->field_trans_table     = field_trans_table_alloc();    
 
   /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
   if (config_get_occurences(config , "MULTFLT") > 0) {
@@ -344,30 +344,49 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
   }
 
   
-  /* GEN_PARAM */
+  /* GEN_PARAM  - should be unified with the GEN_DATA*/
   for (i=0; i < config_get_occurences(config , "GEN_PARAM"); i++) {
-    stringlist_type * options = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
-    char * key           = stringlist_iget_copy(options , 0);
-    char * ecl_file      = stringlist_iget_copy(options , 1);
-    stringlist_idel( options , 0 );
-    stringlist_idel( options , 0 );
-    
-    ensemble_config_add_gen_param(ensemble_config , key , ecl_file , options);
-
-    free( key );
-    free( ecl_file );
+    stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
+    const char * key                          = stringlist_iget(tokens , 0);
+    const char * ecl_file                     = stringlist_iget(tokens , 1);  /* Only difference from GEN_DATA is that the ECL_FILE is not a ":" keyword. */
+    enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
+    {
+      hash_type * options = hash_alloc_from_options( tokens );
+      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , "INPUT_FORMAT"));
+      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , "OUTPUT_FORMAT"));
+      const char * init_file_fmt              = hash_safe_get( options , "INIT_FILES");
+      const char * template                   = hash_safe_get( options , "TEMPLATE");
+      const char * key                        = hash_safe_get( options , "KEY");
+      const char * result_file                = hash_safe_get( options , "RESULT_FILE");
+      const char * min_std_file               = hash_safe_get( options , "MIN_STD");
+      
+      enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+      
+      hash_free( options );
+    }
   }
-  
   
   /* GEN_DATA */
   for (i=0; i < config_get_occurences(config , "GEN_DATA"); i++) {
-    stringlist_type * options = config_iget_stringlist_ref(config , "GEN_DATA" , i);
-    char * key           = stringlist_iget_copy(options , 0);
-    stringlist_idel( options , 0 );
-      
-    ensemble_config_add_gen_data(ensemble_config , key , options);
+    stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
+    const char * key                          = stringlist_iget(tokens , 0);
+    enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
+    {
+      hash_type * options = hash_alloc_from_options( tokens );
+      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , "INPUT_FORMAT"));
+      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , "OUTPUT_FORMAT"));
+      const char * init_file_fmt              = hash_safe_get( options , "INIT_FILES");
+      const char * template                   = hash_safe_get( options , "TEMPLATE");
+      const char * key                        = hash_safe_get( options , "KEY");
+      const char * ecl_file                   = hash_safe_get( options , "ECL_FILE");
+      const char * result_file                = hash_safe_get( options , "RESULT_FILE");
+      const char * min_std_file               = hash_safe_get( options , "MIN_STD");
 
-    free( key );
+
+      enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+      
+      hash_free( options );
+    }
   }
 
 
@@ -684,10 +703,16 @@ enkf_config_node_type * ensemble_config_add_field( ensemble_config_type * config
 
 enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key ) {
   enkf_config_node_type * config_node = enkf_config_node_new_gen_kw( key );
-  ensemble_config_add_node__( config , config_node );
+   ensemble_config_add_node__( config , config_node );
   return config_node;
 }
 
+
+enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key ) {
+  enkf_config_node_type * config_node = enkf_config_node_new_gen_data( key );
+  ensemble_config_add_node__( config , config_node );
+  return config_node;
+}
 
 
 /**

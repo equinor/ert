@@ -149,7 +149,7 @@ const char * ext_job_get_help_text( const ext_job_type * job ) {
 }
 
 void ext_job_set_help_text( ext_job_type * job , const char * help_text) {
-  job->help_text = util_string_realloc( job->help_text , help_text  );
+  job->help_text = util_realloc_string_copy( job->help_text , help_text  );
 }
 
 /* 

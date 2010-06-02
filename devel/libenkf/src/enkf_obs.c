@@ -154,6 +154,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 
 struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
+  char                * config_file;  /* The name of the config file which has been loaded. */ 
   hash_type           * obs_hash;
   double                std_cutoff;   /* (Dimensionfull) Std values below this limit are considered zero. */
   time_t_vector_type  * obs_time;     /* For fast lookup of report_step -> obs_time */
@@ -174,6 +175,7 @@ enkf_obs_type * enkf_obs_alloc( const history_type * history , double std_cutoff
   enkf_obs->std_cutoff     = std_cutoff;
   enkf_obs->history        = history;
   enkf_obs->obs_time       = time_t_vector_alloc(0  , -1 );
+  enkf_obs->config_file    = NULL; 
   return enkf_obs;
 }
 
@@ -182,6 +184,7 @@ enkf_obs_type * enkf_obs_alloc( const history_type * history , double std_cutoff
 void enkf_obs_free(enkf_obs_type * enkf_obs) {
   hash_free(enkf_obs->obs_hash);
   time_t_vector_free( enkf_obs->obs_time );
+  util_safe_free( enkf_obs->config_file );
   free(enkf_obs);
 }
 
@@ -264,9 +267,18 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
 
 
 
+/**
+   This function will load an observation configuration from the
+   observation file @config_file. If @config_file is NULL the current
+   content will be cleared.
+*/
+
+
 
 void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensemble_config_type * ensemble_config) {
-  if (config_file != NULL) {
+  if (config_file == NULL)
+    hash_clear( enkf_obs->obs_hash );
+  else {
     int num_reports                      = history_get_num_restarts( enkf_obs->history );
     conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
     conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file);
@@ -274,7 +286,9 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensembl
     if(conf_instance_validate(enkf_conf) == false) 
       util_abort("Can not proceed with this configuration.\n");
     
-    
+    if (enkf_obs->config_file != NULL)      /* Clear current instance, observe that this function   */
+      hash_clear( enkf_obs->obs_hash );     /* will reload even if it is called repeatedly with the */
+                                            /* same config_file.                                    */ 
     
     /** Handle HISTORY_OBSERVATION instances. */
     {
@@ -358,7 +372,11 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensembl
     conf_instance_free(enkf_conf      );
     conf_class_free(   enkf_conf_class);
   }
+  enkf_obs->config_file = util_realloc_string_copy( enkf_obs->config_file , config_file );
 }
+
+
+
 
 
 
@@ -708,6 +726,10 @@ hash_iter_type * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs ) {
   return hash_iter_alloc(enkf_obs->obs_hash);
 }
 
+
+const char * enkf_obs_get_config_file( const enkf_obs_type * enkf_obs) {
+  return enkf_obs->config_file;
+}
 
 
 /**

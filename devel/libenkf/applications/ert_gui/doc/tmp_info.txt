@@ -1,89 +1,69 @@
-GEN_KW
-------
-
-1. Opprette en ny: ensemble_config_add_gen_kw( ensemble_config , new_key );
-
-   Denne funksjonen oppretter en ny gen_kw_config instans og setter
-   den inn i ensemble_config systemet; returverdien fra funksjonen er
-   (en peker til) den nyopprettede enkf_config_node instansen.
-
-2. Get:
-
-      gen_kw_config = enkf_config_node_get_ref( config_node )
-
-      gen_kw_config_get_template_file( gen_kw_config )
-      gen_kw_config_get_parameter_file( gen_kw_config )
-      gen_kw_config_get_init_file_fmt( gen_kw_config )
-      ...................
-      enkf_config_node_get_enkf_outfile( config_node )
-      enkf_config_node_get_min_std_file( config_node )
-
-3. Update:
-
-      enkf_config_node_update_gen_kw( config_node , enkf_outfile_fmt , template_file , parameter_file , min_std_file , init_file_fmt )      
-      
-
-
-
-FIELD
------
-
-1. Opprette en ny: ensemble_config_add_field( ensemble_config , new_key , grid );
-
-   Funksjonen er helt tilsvarende som for gen_kw. En grid referanse
-   får du fra ecl_config_get_grid(). 
-
-2. Get:
-
-      field_config = enkf_config_node_get_ref( config_node )  
-      
-      field_config_get_truncation_mode( field_config )       - returnerer en int som er en or kombinasjon fra enumen : truncation_type.
-      field_config_get_truncation_min( field_config )        - returnerer trunkerings minimum.
-      field_config_get_truncation_max( field_config )        - returnerer trunkerings maximum
-      field_config_get_type( field_config )                  - returnerer en field_type_enum verdi.
-      field_config_get_init_transform_name( field_config )
-      field_config_get_output_transform_name( field_config )
-      field_config_get_init_file_fmt( field_config )  -> init files
-
-      
-      ...................
-      enkf_config_node_get_enkf_outfile( config_node )  -> Include file (parameter/general)
-      enkf_config_node_get_min_std_file( config_node )  -> Min. std.   (parameter/general)
-      enkf_config_node_get_enkf_infile( config_node )   -> File loaded by EnKF (general)
-
-                                               
-3. Update:
-
-    enkf_config_node_update_state_field(config_node , truncation , value_min , value_max)       
-    enkf_config_node_update_parameter_field( config_node , enkf_outfile , init_files , min_std_file , truncation , min_value , max_value , init_transform , output_transform)
-    enkf_config_node_update_general_field( config_node , enkf_outfile , enkf_infile , init_files , min_std_file , truncation , min_value , max_value , init_transform , 
-                                           input_transform /* Denne er det ikke støtte for i GUI - du kan bare hardkode NULL*/ , output_transform)
-      
-               
-
-SUMMARY 
-------- 
-Disse har ikke noe kontekst - de er fullt definert ved sin key; det er
-heller ikke mulig å gjøre noen oppdateringer på SUMMARY variabler.
-
-ensemble_config_add_summary( ensemble_config , new_key );
-
-
-WWIR:WI_1
-
-
-GEN_DATA
+GEN_DATA (Det er ikke skille p GEN_DATA og GEN_PARAM - alt er GEN_DATA)
 --------
-Ikke implementert ....
+
+1. Opprette en ny: ensemble_config_add_gen_data( ensemble_config , new_key );
 
 
-VALID?
-------
-enkf_config_node_is_valid( config_node ) - legg merk til at variabler av typen SUMMARY ALLTID vil returnere true - ikke nødvendig å spørre dem.
+2 Get:
+     
+    gen_data_config = enkf_config_node_get_ref( config_node );
+
+    output_format   = gen_data_config_get_output_format( gen_data_config );    <- Returverdien her er en enum: gen_data_file_format_type, 
+    input_format    = gen_data_config_get_input_format( gen_data_config );        definert i gen_data_config.h
+    template_file   = gen_data_config_get_template_file( gen_data_config );
+    template_key    = gen_data_config_get_template_key( gen_data_config );
+    init_file_fmt   = gen_data_config_get_init_file_fmt( gen_data_config );
+    .....
+    enkf_config_node_get_enkf_outfile( config_node )  -> Include file (parameter/general)
+    enkf_config_node_get_min_std_file( config_node )  -> Min. std.   (parameter/general)
+    enkf_config_node_get_enkf_infile( config_node )   -> File loaded by EnKF (general)
 
 
 
-Slette en node?
----------------
-enkf_main_del_node( enkf_main , key )
+3. Update:
+    
+    enkf_config_node_update_gen_data( config_node , input_format , output_format ,   /* Enum: gen_data_file_format_type */
+                                      init_file_format , 
+                                      template_file , 
+                                      template_key , 
+                                      enkf_outfile_fmt , 
+                                      enkf_infile_fmt , 
+                                      min_std_file );
 
+    Legg merke til at det er ganske MAANGE innbyrdes krav mellom de
+    forskjellige variablene som maa vaere tilfredsstilt; dette er
+    "dokumentert" i funksjonene enkf_config_node_update_gen_data() og
+    gen_data_config_update().
+
+
+
+
+
+OBS_CONFIG:
+----------
+
+Get:
+----
+obs = enkf_main_get_obs( enkf_main );
+enkf_obs_get_config_file( obs );
+
+
+Set:
+enkf_main_load_obs( enkf_main , obs_config_file );
+
+
+
+
+
+KEEP_RUNPATH / DELETE_RUNPATH
+-----------------------------
+
+Denne variabelen er definert som en streng i tui - jeg foreslr at du
+heller bruker en tilsvarende tilnaerming som naar vi skal velge hvilke
+realisasjoner som skal simuleres paa, hver av de smaa boksene skal ha
+tre mulige verdier, tilsvarende enum keep_runpath_type i enkf_types.h.
+
+Deretter:
+
+enkf_main_iget_keep_runpath( enkf_main , index );
+enkf_main_iset_keep_runpath( enkf_main , index , enum_value );

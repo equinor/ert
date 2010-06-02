@@ -17,6 +17,7 @@ extern "C" {
 
 
 
+const char    * enkf_obs_get_config_file( const enkf_obs_type * enkf_obs);
 enkf_obs_type * enkf_obs_alloc( const history_type * hist, double std_cutoff );
 
 void            enkf_obs_free(  enkf_obs_type * enkf_obs);

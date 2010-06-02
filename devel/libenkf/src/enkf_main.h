@@ -82,6 +82,7 @@ model_config_type           * enkf_main_get_model_config( const enkf_main_type *
 local_config_type           * enkf_main_get_local_config( const enkf_main_type * enkf_main );
 plot_config_type            * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
+void                          enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file );
 enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
 analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );
 
@@ -110,13 +111,18 @@ void                     enkf_main_resize_ensemble( enkf_main_type * enkf_main ,
 void                     enkf_main_get_observations( const enkf_main_type * enkf_main, const char * user_key , int obs_count , time_t * obs_time , double * y , double * std);
 int                      enkf_main_get_observation_count( const enkf_main_type * enkf_main, const char * user_key );
 
+keep_runpath_type        enkf_main_iget_keep_runpath( const enkf_main_type * enkf_main , int iens );
+void                     enkf_main_iset_keep_runpath( enkf_main_type * enkf_main , int iens , keep_runpath_type keep_runpath);
+
 /*****************************************************************/
 void                        enkf_main_install_SIGNALS(void);
 const                char * enkf_main_get_SVN_VERSION( void );
 const                char * enkf_main_get_COMPILE_TIME( void );
 void                        enkf_main_init_debug( const char * executable) ;
-bool                        enkf_main_is_initialized( const enkf_main_type * enkf_main , const bool_vector_type * __mask);
+bool                        enkf_main_is_initialized( const enkf_main_type * enkf_main ,bool_vector_type * __mask);
 void 			    enkf_main_del_node(enkf_main_type * enkf_main , const char * key);
+
+
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 
