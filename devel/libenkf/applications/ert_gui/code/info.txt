@@ -17,34 +17,3 @@ forward_model_add_job( forward_model , job_name );
 forward_model_iset_job_arg( forward_model , job_nr , key , value); <- Set argument - observe that the jobs are identified with the index in
                                                                       the forward model, and not by name.     
 
-
-------------------------------------------
-
-Init/run:
---------
-
-Funksjonen enkf_main_is_initialized() har fått ett nytt argument nr
-to, som kan brukes til å spesifisere hvilke realisasjoner du er
-interessert i.
-
-1. Hvis du sender inn None / NULL så sjekkes alle realisasjoner.
-2. Hvsi du skal ha noe som er forskjellig fra NULL så må du sende inn
-   enn bool_vector instans:
-
-
-mask = util.bool_vector_alloc(0 , false) <- Første argument er initiell størrelse, spiller ingen rolle siden vektoren
-                                            vokser vilkårlig. Andre argument er verdien som skal returneres som default,
-                                            dersom du spør om en indeks som ikke er eksplisitt satt - en litt pussig
-                                            datastruktur som jeg har funnet på helt selv, og hatt en del glede av :-)
-runpanel.py(Linje: 94)
-for iens in selectedMembers:
-    bool_vector_iset( mask , iens , true )
-
-
-
-                             
-
-
-
-
-

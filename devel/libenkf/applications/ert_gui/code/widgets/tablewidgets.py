@@ -2,6 +2,54 @@ from PyQt4 import QtGui, QtCore
 from helpedwidget import *
 from widgets.util import *
 
+class OrderWidget(QtGui.QWidget):
+    """
+    A simple class that provides to vertically positioned buttons for adding and removing something.
+    The addFunction and removeFunction functions must be provided.
+    """
+    def __init__(self, parent=None, upFunction=None, downFunction=None, horizontal=False):
+        """Creates a two button widget"""
+        QtGui.QWidget.__init__(self, parent)
+
+        self.moveUpButton = QtGui.QToolButton(self)
+        self.moveUpButton.setIcon(resourceIcon("arrow_up"))
+        self.moveUpButton.setIconSize(QtCore.QSize(16, 16))
+        self.connect(self.moveUpButton, QtCore.SIGNAL('clicked()'), upFunction)
+
+        self.moveDownButton = QtGui.QToolButton(self)
+        self.moveDownButton.setIcon(resourceIcon("arrow_down"))
+        self.moveDownButton.setIconSize(QtCore.QSize(16, 16))
+        self.connect(self.moveDownButton, QtCore.SIGNAL('clicked()'), downFunction)
+
+        if horizontal:
+            self.buttonLayout = QtGui.QHBoxLayout()
+        else:
+            self.buttonLayout = QtGui.QVBoxLayout()
+
+        self.buttonLayout.setMargin(0)
+
+        if not horizontal:
+            self.buttonLayout.addStretch(1)
+
+        self.buttonLayout.addWidget(self.moveUpButton)
+        self.buttonLayout.addWidget(self.moveDownButton)
+
+        if horizontal:
+            self.buttonLayout.addStretch(1)
+        else:
+            self.buttonLayout.addSpacing(2)
+
+        self.setLayout(self.buttonLayout)
+
+    def enableUpButton(self, state):
+        """Enable or disable the add button"""
+        self.moveUpButton.setEnabled(state)
+
+    def enableDownButton(self, state):
+        """Enable or disable the remove button"""
+        self.moveDownButton.setEnabled(state)
+
+
 class AddRemoveWidget(QtGui.QWidget):
     """
     A simple class that provides to vertically positioned buttons for adding and removing something.

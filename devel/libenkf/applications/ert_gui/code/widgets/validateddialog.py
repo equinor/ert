@@ -6,7 +6,7 @@ class ValidatedDialog(QtGui.QDialog):
 
     INVALID_COLOR = QtGui.QColor(255, 235, 235)
 
-    def __init__(self, parent, title = "Title", description = "Description", uniqueNames = None):
+    def __init__(self, parent, title = "Title", description = "Description", uniqueNames = None, chooseFromList=False):
         """Creates a new dialog that validates uniqueness against the provided list"""
         QtGui.QDialog.__init__(self, parent)
         self.setModal(True)
@@ -24,16 +24,25 @@ class ValidatedDialog(QtGui.QDialog):
         self.layout.addRow(util.createSpace(10))
 
 
-        self.paramName = QtGui.QLineEdit(self)
-        self.connect(self.paramName, QtCore.SIGNAL('textChanged(QString)'), self.validateName)
-        self.validColor = self.paramName.palette().color(self.paramName.backgroundRole())
-
-        self.layout.addRow("Name:", self.paramName)
-        self.layout.addRow(util.createSpace(10))
-
         buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, self)
         self.okbutton = buttons.button(QtGui.QDialogButtonBox.Ok)
         self.okbutton.setEnabled(False)
+
+
+        if chooseFromList:
+            self.paramNameCombo = QtGui.QComboBox()
+            self.connect(self.paramNameCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.validateChoice)
+            for item in uniqueNames:
+                self.paramNameCombo.addItem(item)
+            self.layout.addRow("Job:", self.paramNameCombo)
+        else:
+            self.paramName = QtGui.QLineEdit(self)
+            self.connect(self.paramName, QtCore.SIGNAL('textChanged(QString)'), self.validateName)
+            self.validColor = self.paramName.palette().color(self.paramName.backgroundRole())
+
+            self.layout.addRow("Name:", self.paramName)
+        self.layout.addRow(util.createSpace(10))
+
 
         self.layout.addRow(buttons)
 
@@ -71,9 +80,17 @@ class ValidatedDialog(QtGui.QDialog):
         else:
             self.valid()
 
+    def validateChoice(self, choice):
+        """Only called when using selection mode."""
+        self.okbutton.setEnabled(not choice == "")
+            
+
     def getName(self):
         """Return the new name chosen by the user"""
-        return str(self.paramName.text())
+        if hasattr(self, "paraName"):
+            return str(self.paramName.text())
+        else:
+            return str(self.paramNameCombo.currentText())
 
     def showAndTell(self):
         """Shows the dialog and returns the result"""
