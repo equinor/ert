@@ -59,6 +59,7 @@
 #include <subst_func.h>
 #include <int_vector.h>
 #include <ert_build_info.h>
+#include <bool_vector.h>
 #include "enkf_defaults.h"
 
 /**
@@ -2850,25 +2851,36 @@ int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const cha
 
 /**
    This function will go through the filesystem and check that we have
-   initial data for all parameters and all realizations.
+   initial data for all parameters and all realizations. If the second
+   argument mask is different from NULL, the function will only
+   consider the realizations for which mask is true (if mask == NULL
+   all realizations will be checked).
 */
 
-bool enkf_main_is_initialized( const enkf_main_type * enkf_main ) {
-  stringlist_type * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-  
+bool enkf_main_is_initialized( const enkf_main_type * enkf_main , const bool_vector_type * __mask) {
+  stringlist_type  * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+  bool_vector_type * mask;
   bool initialized = true;
   int ikey = 0;
+  if (__mask != NULL)
+    mask = __mask;
+  else
+    mask = bool_vector_alloc(0 , true );
+  
   do {
     const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
     int iens = 0;
     do {
-      initialized = enkf_fs_has_node( enkf_main->dbase , config_node , 0 , iens , ANALYZED );
+      if (bool_vector_safe_iget( mask , iens)) 
+        initialized = enkf_fs_has_node( enkf_main->dbase , config_node , 0 , iens , ANALYZED );
       iens++;
     } while ((iens < enkf_main->ens_size) && (initialized));
     ikey++;
   } while ((ikey < stringlist_get_size( parameter_keys )) && (initialized));
   
   stringlist_free( parameter_keys );
+  if (__mask == NULL)
+    bool_vector_free( mask );
   return initialized;
 }
 
