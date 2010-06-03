@@ -218,20 +218,20 @@ class ErtWrapper:
 
         self.prototype("void enkf_main_free(long)")
         
-    def getStringList(self, stringlistpointer, free_after_use=False):
+    def getStringList(self, stringlist_pointer, free_after_use=False):
         """Retrieve a list of strings"""
-        if stringlistpointer == 0:
-            return []
-
         result = []
 
-        numberOfStrings = self.util.stringlist_get_size(stringlistpointer)
+        if stringlist_pointer == 0:
+            return result
 
-        for index in range(numberOfStrings):
-            result.append(self.util.stringlist_iget(stringlistpointer, index))
+        number_of_strings = self.util.stringlist_get_size(stringlist_pointer)
+
+        for index in range(number_of_strings):
+            result.append(self.util.stringlist_iget(stringlist_pointer, index))
 
         if free_after_use:
-            self.freeStringList(stringlistpointer)
+            self.freeStringList(stringlist_pointer)
 
         return result
 

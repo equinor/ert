@@ -132,7 +132,7 @@ class JobsPanel(HelpedWidget):
             new_job = self.addToList(list, pd.getName())
 
             self.updateContent(new_job, operation=self.INSERT)
-        #todo: tell forward model that a new variable is available
+            self.modelEmit('jobListChanged()')
 
     def removeItem(self, list):
         """Called by the remove button to remove a selected job"""
@@ -150,6 +150,7 @@ class JobsPanel(HelpedWidget):
                 success = self.updateContent(job, operation=self.REMOVE)
                 if success:
                     list.takeItem(currentRow)
+                    self.modelEmit('jobListChanged()')
 
 
 class Job:

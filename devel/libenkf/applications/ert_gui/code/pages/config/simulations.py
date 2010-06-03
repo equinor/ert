@@ -27,13 +27,50 @@ def createSimulationsPage(configPanel, parent):
     r.getter = lambda ert : ert.enkf.model_config_get_max_resample(ert.model_config)
     r.setter = lambda ert, value : ert.enkf.model_config_set_max_resample(ert.model_config, value)
 
+
+
     r = configPanel.addRow(ForwardModelPanel(parent))
-    def dummy(model):
-        print "Missing"
-    r.getter = dummy
-    def dummy_set(model, value):
+    r.initialize = lambda ert: [ert.prototype("long model_config_get_forward_model(long)"),
+                                ert.prototype("long site_config_get_installed_jobs(long)"),
+                                ert.prototype("long ext_joblist_alloc_list(long)", lib=ert.job_queue),
+                                ert.prototype("char* ext_job_get_private_args_as_string(long)", lib=ert.job_queue),
+                                ert.prototype("char* ext_job_get_help_text(long)", lib=ert.job_queue),
+                                ert.prototype("long forward_model_alloc_joblist(long)", lib=ert.job_queue),]
+    def get_forward_model(ert):
+        site_config = ert.site_config
+        installed_jobs_pointer = ert.enkf.site_config_get_installed_jobs(site_config)
+        installed_jobs_stringlist_pointer = ert.job_queue.ext_joblist_alloc_list(installed_jobs_pointer)
+        available_jobs = ert.getStringList(installed_jobs_stringlist_pointer, free_after_use=True)
+
+        result = {'available_jobs': available_jobs}
+
+        model_config = ert.model_config
+        forward_model = ert.enkf.model_config_get_forward_model(model_config)
+        name_string_list = ert.job_queue.forward_model_alloc_joblist(forward_model)
+        job_names = ert.getStringList(name_string_list, free_after_use=True)
+
+        forward_model_jobs = []
+
+        count = 0
+        for name in job_names:
+            ext_job = ert.job_queue.forward_model_iget_job(forward_model, count)
+            arg_string = ert.job_queue.ext_job_get_private_args_as_string(ext_job)
+            help_text = ert.job_queue.ext_job_get_help_text(ext_job)
+            forward_model_jobs.append((name, arg_string, help_text))
+            count+=1
+
+        result['forward_model'] = forward_model_jobs
+
+        return result
+
+    r.getter = get_forward_model
+
+    def update_forward_model(ert, value):
         print "mioisng"
-    r.setter = dummy_set
+    r.setter = update_forward_model
+
+
+
 
 #    r = configPanel.addRow(KeywordTable(parent, "Forward model", "forward_model", "Job", "Arguments"))
 #    r.getter = lambda ert : ert.getAttribute("forward_model")
