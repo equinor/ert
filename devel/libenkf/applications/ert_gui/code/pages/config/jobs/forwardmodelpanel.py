@@ -19,7 +19,7 @@ class ForwardModelPanel(HelpedWidget):
     def __init__(self, parent=None):
         HelpedWidget.__init__(self, parent, "Forward Model", "forward_model")
 
-        self.forward_model = ForwardModel("undefined")
+        self.forward_model = ForwardModelJob("undefined")
 
         self.createWidgets(parent)
 
@@ -61,6 +61,7 @@ class ForwardModelPanel(HelpedWidget):
         layout.addRow(widgets.util.centeredWidget(self.help_text))
 
         self.forward_model_panel.setLayout(layout)
+        self.modelConnect('jobListChanged()', self.fetchContent)
 
     def setArguments(self, model, arguments):
         self.forward_model.setArguments(arguments)
@@ -68,14 +69,22 @@ class ForwardModelPanel(HelpedWidget):
 
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the widget"""
-        forward_model = self.getFromModel()
+        data = self.getFromModel()
 
-#        for job in jobs:
-#            jobitem = QtGui.QListWidgetItem()
-#            jobitem.setText(job.name)
-#            jobitem.setData(QtCore.Qt.UserRole, job)
-#            jobitem.setToolTip(job.name)
-#            self.searchableList.list.addItem(jobitem)
+        self.available_jobs = data['available_jobs']
+
+        forward_model = data['forward_model']
+        self.searchableList.list.clear()
+        for job in forward_model:
+            jobitem = QtGui.QListWidgetItem()
+            jobitem.setText(job[0])
+            forward_model_job = ForwardModelJob(job[0])
+            forward_model_job.setArguments(job[1])
+            forward_model_job.setHelpText(job[2])
+
+            jobitem.setData(QtCore.Qt.UserRole, forward_model_job)
+            jobitem.setToolTip(job[0])
+            self.searchableList.list.addItem(jobitem)
 
     def setForwardModel(self, forward_model):
         self.forward_model = forward_model
@@ -91,14 +100,21 @@ class ForwardModelPanel(HelpedWidget):
             self.setForwardModel(current.data(QtCore.Qt.UserRole).toPyObject())
 
     def forwardModelChanged(self):
-        self.updateContent(self.searchableList.getItems())
+        items = self.searchableList.getItems()
+
+        forward_model = []
+        for item in items:
+            forward_model_job = item.data(QtCore.Qt.UserRole).toPyObject()
+            forward_model.append((forward_model_job.name, forward_model_job.arguments))
+
+        self.updateContent(forward_model)
 
     def addToList(self, list, name):
         """Adds a new job to the list"""
         param = QtGui.QListWidgetItem()
         param.setText(name)
 
-        new_job = ForwardModel(name)
+        new_job = ForwardModelJob(name)
         param.setData(QtCore.Qt.UserRole, new_job)
 
         list.addItem(param)
@@ -107,10 +123,8 @@ class ForwardModelPanel(HelpedWidget):
 
     def addItem(self, list):
         """Called by the add button to insert a new job"""
-        availableNames = []
-        #todo: fetch list from ert
 
-        pd = ValidatedDialog(self, "New forward model", "Select a job:", availableNames, True)
+        pd = ValidatedDialog(self, "New forward model", "Select a job:", self.available_jobs, True)
         if pd.exec_():
             self.addToList(list, pd.getName())
             self.forwardModelChanged()
@@ -131,18 +145,24 @@ class ForwardModelPanel(HelpedWidget):
 
 
 
-class ForwardModel:
+class ForwardModelJob:
 
-    def __init__(self, name, arguments=None, help_text="No help available for this job."):
+    def __init__(self, name, arguments=None, help_text=""):
         self.name = name
         if arguments is None:
             arguments = ""
         self.arguments = arguments
-        self.help_text = help_text
+        self.setHelpText(help_text)
 
     def setArguments(self, args):
         if args is None:
             args = ""
         self.arguments = args
+
+    def setHelpText(self, text):
+        if text == "":
+            self.help_text = "No help available for this job."
+        else:
+            self.help_text = text
 
 

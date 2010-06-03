@@ -87,7 +87,7 @@ class ValidatedDialog(QtGui.QDialog):
 
     def getName(self):
         """Return the new name chosen by the user"""
-        if hasattr(self, "paraName"):
+        if hasattr(self, "paramName"):
             return str(self.paramName.text())
         else:
             return str(self.paramNameCombo.currentText())
