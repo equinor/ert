@@ -235,3 +235,12 @@ truncation_type.TRUNCATE_MIN = truncation_type("TRUNCATE_MIN", 1)
 truncation_type.TRUNCATE_MAX = truncation_type("TRUNCATE_MAX", 2)
 
 #print enum._enums
+
+class keep_runpath_type(enum):
+    DEFAULT_KEEP = None
+    EXPLICIT_DELETE = None
+    EXPLICIT_KEEP = None
+
+keep_runpath_type.DEFAULT_KEEP = keep_runpath_type("DEFAULT_KEEP", 0)
+keep_runpath_type.EXPLICIT_DELETE = keep_runpath_type("EXPLICIT_DELETE", 1)
+keep_runpath_type.EXPLICIT_KEEP = keep_runpath_type("EXPLICIT_KEEP", 2)
