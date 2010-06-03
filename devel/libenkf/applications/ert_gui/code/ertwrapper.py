@@ -32,27 +32,24 @@ class ErtWrapper:
         atexit.register(self.cleanup)
         
 
-        self.add_fixed_length_schedule_kw = ["item1", "item2"]
-        self.schedule_prediction_file = "Missing???"
+        self.add_fixed_length_schedule_kw = ["item1", "item2", "not implemented"]
+        self.schedule_prediction_file = "Still missing???"
 
         self.dbase_type = "BLOCK_FS"
-        self.enspath = "storage"
-        self.select_case = "some_case"
-        self.update_log_path = "one path"
+        self.enspath = "storage is missing as well"
+        self.select_case = "some_case is missing"
+        self.update_log_path = "one really missing path"
 
         self.history_source = "REFCASE_HISTORY"
-        self.obs_config = "..."
+        self.obs_config = "... not available"
 
         self.pre_clear_runpath = True
         self.delete_runpath = "0 - 10, 12, 15, 20"
         self.keep_runpath = "0-15, 18, 20"
 
-        self.license_path = "/usr"
-        self.case_table = "..."
+        self.case_table = "... not here"
 
         self.run_template = [["...", ".....", "asdf:asdf asdfasdf:asdfasdf"], ["other", "sdtsdf", ".as.asdfsdf"]]
-        self.forward_model = [["MY_RELPERM_SCRIPT", "Arg1<some> COPY(asdfdf)"]]
-
 
     def __loadLibraries(self, prefix):
         """Load libraries that are required by ERT and ERT itself"""

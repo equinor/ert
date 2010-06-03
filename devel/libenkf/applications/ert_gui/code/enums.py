@@ -174,7 +174,7 @@ ert_job_status_type.USER_EXIT = ert_job_status_type("JOB_QUEUE_USER_EXIT", 8192)
 
 class gen_data_file_format(enum):
     #defined in gen_data_config.h 
-    #GEN_DATA_UNDEFINED = 0
+    GEN_DATA_UNDEFINED = None
     ASCII          = None
     ASCII_TEMPLATE = None
     BINARY_DOUBLE  = None
@@ -183,16 +183,19 @@ class gen_data_file_format(enum):
     INPUT_TYPES  = None
     OUTPUT_TYPES = None
 
+gen_data_file_format.GEN_DATA_UNDEFINED = gen_data_file_format("", 0)
 gen_data_file_format.ASCII = gen_data_file_format("ASCII", 1)
 gen_data_file_format.ASCII_TEMPLATE = gen_data_file_format("ASCII_TEMPLATE", 2)
 gen_data_file_format.BINARY_DOUBLE = gen_data_file_format("BINARY_DOUBLE", 3)
 gen_data_file_format.BINARY_FLOAT = gen_data_file_format("BINARY_FLOAT", 4)
 
-gen_data_file_format.INPUT_TYPES = [gen_data_file_format.ASCII,
+gen_data_file_format.INPUT_TYPES = [gen_data_file_format.GEN_DATA_UNDEFINED,
+                                    gen_data_file_format.ASCII,
                                     gen_data_file_format.BINARY_FLOAT,
                                     gen_data_file_format.BINARY_DOUBLE]
 
-gen_data_file_format.OUTPUT_TYPES = [gen_data_file_format.ASCII,
+gen_data_file_format.OUTPUT_TYPES = [gen_data_file_format.GEN_DATA_UNDEFINED,
+                                     gen_data_file_format.ASCII,
                                      gen_data_file_format.ASCII_TEMPLATE,
                                      gen_data_file_format.BINARY_FLOAT,
                                      gen_data_file_format.BINARY_DOUBLE]

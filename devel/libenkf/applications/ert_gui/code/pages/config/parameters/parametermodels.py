@@ -62,24 +62,16 @@ class KeywordModel(Model):
 
 class DataModel(Model):
     TYPE = enkf_impl_type.GEN_DATA
-
-    #gen_data_file_format_type;
-    #GEN_DATA_UNDEFINED = 0,
-    ASCII = 1
-    ASCII_TEMPLATE = 2
-    BINARY_DOUBLE = 3
-    BINARY_FLOAT = 4
     
     def __init__(self, name):
         Model.__init__(self, name)
         self.name = name
 
-        self["input"] = "ASCII"
-        self["output"] = "ASCII"
-        self["eclipse_file"] = ""
-        self["init_files"] = ""
-        self["template"] = ""
-        self["result_file"] = ""
+        self["input_format"] = ""
+        self["output_format"] = ""
+        self["template_file"] = ""
+        self["template_key"] = ""
+        self["init_file_fmt"] = ""
 
 class SummaryModel(Model):
     TYPE = enkf_impl_type.SUMMARY
