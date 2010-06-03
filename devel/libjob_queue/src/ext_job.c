@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 #include <util.h>
@@ -92,6 +93,7 @@ struct ext_job_struct {
   int               max_running_minutes;   /* The maximum number of minutes this job is allowed to run - 0: unlimited. */
   subst_list_type * private_args;          /* A substitution list of input arguments which is performed before the external substitutions - 
                                               these are the arguments supplied as key=value pairs in the forward model call. */
+  char            * private_args_string;
   char            * argv_string;
   stringlist_type * argv;                  /* This should *NOT* start with the executable */
   hash_type  	  * environment;
@@ -134,6 +136,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->max_running_minutes = 0;                  /* 0 means unlimited. */
   ext_job->private_job         = private_job;        /* If private_job == true the job is user editable. */ 
   ext_job->help_text           = NULL; 
+  ext_job->private_args_string = NULL;
 
   /* 
      ext_job->private_args is set explicitly in the ext_job_alloc() 
@@ -219,10 +222,10 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->config_file);
   util_safe_free(ext_job->argv_string);
   util_safe_free(ext_job->help_text);
+  util_safe_free(ext_job->private_args_string);
   
   hash_free( ext_job->environment );
-  
-  if (ext_job->argv != NULL)         stringlist_free(ext_job->argv);
+  stringlist_free(ext_job->argv);
   
   subst_list_free( ext_job->private_args );
   free(ext_job);
@@ -672,45 +675,110 @@ const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
    
 */
 
-const char * ext_job_get_arglist_as_string( ext_job_type * ext_job ) {
-  if (stringlist_get_size( ext_job->argv ) == 0)
-    return NULL;
-  else {
-    const char * sep = "  ";
-    int argc =  stringlist_get_size( ext_job->argv );
-    int i;
-    buffer_type * buffer = buffer_alloc( 512 );
-    for (i = 0; i < argc; i++) {
-      const char * arg = stringlist_iget( ext_job->argv , i );
-      bool quote       = false;
-      if (strchr(arg , ' ') != NULL)
-        quote = true;
+//const char * ext_job_get_arglist_as_string( ext_job_type * ext_job ) {
+//  if (stringlist_get_size( ext_job->argv ) == 0)
+//    return NULL;
+//  else {
+//    const char * sep = "  ";
+//    int argc =  stringlist_get_size( ext_job->argv );
+//    int i;
+//    buffer_type * buffer = buffer_alloc( 512 );
+//    for (i = 0; i < argc; i++) {
+//      const char * arg = stringlist_iget( ext_job->argv , i );
+//      bool quote       = false;
+//      if (strchr(arg , ' ') != NULL)
+//        quote = true;
+//
+//      if (quote)
+//        buffer_fwrite_char( buffer , ' ' );
+//      buffer_fwrite_char_ptr( buffer , arg );
+//      if (quote)
+//        buffer_fwrite_char( buffer , ' ' );
+//      
+//      if (i < (argc - 1))
+//        buffer_fwrite_char_ptr( buffer , sep );
+//    
+//    buffer_fwrite_char( buffer , '\0');
+//    util_safe_free(ext_job->argv_string);
+//    ext_job->argv_string = buffer_alloc_data_copy( buffer );
+//    buffer_free( buffer );
+//    
+//    return ext_job->argv_string;
+//  }
+//}
+// 
+//
+//void ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string ) {
+//  parser_type * parser = parser_alloc(" " , "\"" , NULL , NULL , NULL , NULL );
+//  stringlist_free( ext_job->argv );
+//  ext_job->argv = parser_tokenize_buffer( parser , argv_string , true );
+//  parser_free( parser );
+//}
 
-      if (quote)
-        buffer_fwrite_char( buffer , ' ' );
-      buffer_fwrite_char_ptr( buffer , arg );
-      if (quote)
-        buffer_fwrite_char( buffer , ' ' );
-      
-      if (i < (argc - 1))
-        buffer_fwrite_char_ptr( buffer , sep );
-    }
-    buffer_fwrite_char( buffer , '\0');
-    util_safe_free(ext_job->argv_string);
-    ext_job->argv_string = buffer_alloc_data_copy( buffer );
-    buffer_free( buffer );
-    
-    return ext_job->argv_string;
+
+const char * ext_job_get_private_args_as_string( ext_job_type * ext_job ) {
+  buffer_type * buffer = buffer_alloc( 512 );
+  int size = subst_list_get_size( ext_job->private_args );
+  int i;
+  
+  for (i=0; i < size; i++) {
+    buffer_fwrite_char_ptr( buffer , subst_list_iget_key( ext_job->private_args , i));
+    buffer_fwrite_char(buffer , '=');
+    buffer_fwrite_char_ptr( buffer , subst_list_iget_value( ext_job->private_args , i));
+    if (i < (size - 1)) 
+      buffer_fwrite_char_ptr( buffer , " , ");
   }
+  buffer_fwrite_char( buffer , '\0');
+  util_safe_free( ext_job->private_args_string );
+  ext_job->private_args_string = buffer_alloc_data_copy( buffer );
+  buffer_free( buffer );
+  return ext_job->private_args_string;
 }
- 
 
-void ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string ) {
-  parser_type * parser = parser_alloc(" " , "\"" , NULL , NULL , NULL , NULL );
-  stringlist_free( ext_job->argv );
-  ext_job->argv = parser_tokenize_buffer( parser , argv_string , true );
-  parser_free( parser );
+
+void ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string ) {
+  char ** key_value_list;
+  int     num_arg, iarg;
+  
+  util_split_string(arg_string , "," , &num_arg , &key_value_list);
+  for (iarg = 0; iarg < num_arg; iarg++) {
+    if (strchr(key_value_list[iarg] , '=') == NULL)
+      util_abort("%s: could not find \'=\' in argument string:%s \n",__func__ , key_value_list[iarg]);
+    
+    {
+      char * key , * value;
+      char * tmp     = key_value_list[iarg];
+      int arg_length , value_length;
+      while (isspace(*tmp))  /* Skipping initial space */
+        tmp++;
+      
+      arg_length = strcspn(tmp , " =");
+      key  = util_alloc_substring_copy(tmp , arg_length);
+      tmp += arg_length;
+      while ((*tmp == ' ') || (*tmp == '='))
+        tmp++;
+      
+      value_length = strcspn(tmp , " ");
+      value = util_alloc_substring_copy( tmp , value_length);
+      
+      /* Setting the argument */
+      ext_job_set_private_arg( ext_job , key , value );
+      free(key);
+      free(value);
+      tmp += value_length;
+      
+      
+      /* Accept only trailing space - any other character indicates a failed parsing. */
+      while (*tmp != '\0') {
+        if (!isspace(*tmp))
+          util_abort("%s: something wrong with:%s  - spaces are not allowed in key or value part.\n",__func__ , key_value_list[iarg]);
+        tmp++;
+      }
+    }
+  }
+  util_free_stringlist(key_value_list , num_arg);
 }
+
 
 
 bool ext_job_is_shared( const ext_job_type * ext_job ) {

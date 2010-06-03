@@ -20,4 +20,5 @@ void                   	 forward_model_free( forward_model_type * );
 forward_model_type *   	 forward_model_alloc_copy(const forward_model_type * forward_model , bool statoil_mode);
 const char         *     forward_model_get_lsf_request(const forward_model_type * );
 void                     forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value);
+ext_job_type           * forward_model_iget_job( forward_model_type * forward_model , int index);
 #endif
