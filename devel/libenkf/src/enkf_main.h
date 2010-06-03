@@ -33,6 +33,12 @@ extern "C" {
 
 
 typedef struct enkf_main_struct enkf_main_type;
+
+
+void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
+const char                  * enkf_main_get_log_file( const enkf_main_type * enkf_main );
+void                          enkf_main_set_log_level( enkf_main_type * enkf_main , int log_level );
+int                           enkf_main_get_log_level( const enkf_main_type * enkf_main );
 log_type                    * enkf_main_get_logh( const enkf_main_type * enkf_main );
 member_config_type          * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens);
 misfit_table_type           * enkf_main_get_misfit(const enkf_main_type * enkf_main);

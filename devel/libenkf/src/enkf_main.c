@@ -2113,7 +2113,7 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   enkf_main->ensemble     = NULL;
   enkf_main->ens_size     = 0;
   enkf_main->keep_runpath = int_vector_alloc( 0 , DEFAULT_KEEP );
-                                              
+  enkf_main->logh         = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
 
   /* Here we add the functions which should be available for string substitution operations. */
   enkf_main->subst_func_pool = subst_func_pool_alloc( );
@@ -2190,7 +2190,6 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     free( date_key );
   }
   enkf_main->templates    = ert_templates_alloc( enkf_main->subst_list );
-  enkf_main->logh         = logh_alloc();
   return enkf_main;
 }
 
@@ -2358,6 +2357,8 @@ void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
   }
 }
 
+/*****************************************************************/
+
 
 void enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file ) {
   log_reset_filename( enkf_main->logh , log_file);
@@ -2365,9 +2366,20 @@ void enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file 
 
 
 const char * enkf_main_get_log_file( const enkf_main_type * enkf_main ) {
-  log_get_filename( enkf_main->logh );
+  return log_get_filename( enkf_main->logh );
 }
 
+
+void enkf_main_set_log_level( enkf_main_type * enkf_main , int log_level ) {
+  log_set_level( enkf_main->logh , log_level);
+}
+
+
+int enkf_main_get_log_level( const enkf_main_type * enkf_main ) {
+  return log_get_level( enkf_main->logh );
+}
+
+/*****************************************************************/
 
 /**
    This function boots everything needed for running a EnKF
@@ -2437,21 +2449,17 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main = enkf_main_alloc_empty( data_kw );
       hash_free( data_kw );
     }
-
-
-    /* The log object */
-    {
-      char * log_file = util_alloc_filename(NULL , model_config , DEFAULT_LOG_FILE);
-      enkf_main->logh = log_alloc_existing( log_file , DEFAULT_LOG_LEVEL);
-      free( log_file );
-    }
-    
+        
     if (config_item_set( config , "LOG_LEVEL"))
-      log_set_level( enkf_main->logh , config_get_value_as_int(config , "LOG_LEVEL"));
+      enkf_main_set_log_level( enkf_main , config_get_value_as_int(config , "LOG_LEVEL"));
     
     if (config_item_set( config , "LOG_FILE"))
-      enkf_main_set_logfile( enkf_main , config_get_value(config , "LOG_FILE"));
-
+      enkf_main_set_log_file( enkf_main , config_get_value(config , "LOG_FILE"));
+    else {
+      char * log_file = util_alloc_filename(NULL , model_config , DEFAULT_LOG_FILE);
+      enkf_main_set_log_file( enkf_main , log_file );
+      free( log_file );
+    }
 
     
 
