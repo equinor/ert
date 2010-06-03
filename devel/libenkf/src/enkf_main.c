@@ -2565,18 +2565,19 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	    ecl_config_add_static_kw(enkf_main->ecl_config , stringlist_iget( static_kw_list , k));
 	}
       }
-
+      
+      
       /* Installing templates */
       {
         for (int i=0; i < config_get_occurences( config , "RUN_TEMPLATE"); i++) {
           const char * template_file = config_iget( config , "RUN_TEMPLATE" , i , 0);
           const char * target_file   = config_iget( config , "RUN_TEMPLATE" , i , 1);
-          ert_template_type * template = ert_templates_add_template( enkf_main->templates , template_file , target_file );
+          ert_template_type * template = ert_templates_add_template( enkf_main->templates , NULL , template_file , target_file , NULL);
           
           for (int iarg = 2; iarg < config_get_occurence_size( config , "RUN_TEMPLATE" , i); iarg++) {
             char * key , *value;
             util_binary_split_string( config_iget( config , "RUN_TEMPLATE" , i , iarg ), "=:" , true , &key , &value);
-
+            
             if (value != NULL) {
               char * tagged_key = enkf_util_alloc_tagged_string( key );
               ert_template_add_arg( template , tagged_key , value );
@@ -3001,5 +3002,9 @@ void enkf_main_init_debug( const char * executable ) {
     util_abort_set_executable( executable );
 }  
 
+
+ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
+  return enkf_main->templates;
+}
 
 

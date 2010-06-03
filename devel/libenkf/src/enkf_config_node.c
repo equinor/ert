@@ -375,7 +375,6 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
                                        const char * enkf_infile_fmt         , 
                                        const char * min_std_file) {
 
-  enkf_config_node_update( config_node , enkf_outfile_fmt , enkf_infile_fmt, min_std_file);
   {
     enkf_var_type var_type = INVALID_VAR;
     /*
@@ -400,13 +399,18 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
     if ((init_file_fmt == NULL) && (enkf_outfile_fmt == NULL) && (enkf_infile_fmt != NULL)) var_type = DYNAMIC_RESULT;
 
     if (var_type == INVALID_VAR)
-      util_abort("%s: inconsistent input for node:%s \n",__func__ , config_node->key);
-
+      config_node->valid = false;
+    else
+      config_node->valid = true;
     config_node->var_type = var_type;
   }
 
-  gen_data_config_update(config_node->data , config_node->var_type , input_format , output_format , 
-                         init_file_fmt , template_ecl_file , template_data_key);
+  if (config_node->valid) {
+    enkf_config_node_update( config_node , enkf_outfile_fmt , enkf_infile_fmt, min_std_file);                                       /* Generisk oppdatering */
+    config_node->valid = gen_data_config_update(config_node->data , config_node->var_type , input_format , output_format ,          /* Special update */ 
+                                                init_file_fmt , template_ecl_file , template_data_key);
+  }
+  
 }
 
                                        

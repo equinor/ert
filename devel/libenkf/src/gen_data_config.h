@@ -40,7 +40,7 @@ const char  *                gen_data_config_get_key( const gen_data_config_type
 int                          gen_data_config_get_byte_size( const gen_data_config_type * config , int report_step);
 int                          gen_data_config_get_data_size( const gen_data_config_type * config , int report_step);
 gen_data_file_format_type    gen_data_config_check_format( const void * format_string );
-void gen_data_config_update(gen_data_config_type * config           , 
+bool gen_data_config_update(gen_data_config_type * config           , 
                             enkf_var_type var_type                  ,
                             gen_data_file_format_type input_format  ,
                             gen_data_file_format_type output_format ,

@@ -146,38 +146,44 @@ static void gen_data_config_set_io_format( gen_data_config_type * config , gen_d
    should already have been performed (in enkf_config_node_update_gen_data).
 */
 
-void gen_data_config_update(gen_data_config_type * config           , 
+bool gen_data_config_update(gen_data_config_type * config           , 
                             enkf_var_type var_type                  , /* This is ONLY included too be able to do a sensible consistency check. */
                             gen_data_file_format_type input_format  ,
                             gen_data_file_format_type output_format ,
                             const char * init_file_fmt              ,  
                             const char * template_ecl_file          , 
                             const char * template_data_key) {
-
+  bool valid = true;
   
   if ((var_type != DYNAMIC_RESULT) && (output_format == GEN_DATA_UNDEFINED))
-    util_abort("%s: When specifying an enkf output file you must specify an output format as well. \n",__func__);
+    valid = false;
+    //util_abort("%s: When specifying an enkf output file you must specify an output format as well. \n",__func__);
   
   if ((var_type != PARAMETER) && (input_format == GEN_DATA_UNDEFINED))
-    util_abort("%s: When specifying a file for ERT to load from - you must also specify the format of the loaded files. \n",__func__);
+    valid = false;
+    //util_abort("%s: When specifying a file for ERT to load from - you must also specify the format of the loaded files. \n",__func__);
   
   if (input_format == ASCII_TEMPLATE)
-    util_abort("%s: Format ASCII_TEMPLATE is not valid as INPUT_FORMAT \n",__func__);
+    valid = false;
+    //util_abort("%s: Format ASCII_TEMPLATE is not valid as INPUT_FORMAT \n",__func__);
 
   if ((template_ecl_file != NULL) && (template_data_key == NULL))
-    util_abort("%s: When using a template you MUST also set a template_key \n",__func__);
+    valid = false;
+    //util_abort("%s: When using a template you MUST also set a template_key \n",__func__);
+
+  
 
   /*****************************************************************/
-
-  gen_data_config_set_template( config , template_ecl_file , template_data_key );
-  gen_data_config_set_init_file_fmt( config , init_file_fmt );
-  gen_data_config_set_io_format( config , output_format , input_format);
-
-  /*****************************************************************/
-
-  if ((output_format == ASCII_TEMPLATE) && (config->template_buffer == NULL))
-    util_abort("%s: When specifying output_format == ASCII_TEMPLATE you must also supply a template_ecl_file\n",__func__);
-
+  if (valid) {
+    gen_data_config_set_template( config , template_ecl_file , template_data_key );
+    gen_data_config_set_init_file_fmt( config , init_file_fmt );
+    gen_data_config_set_io_format( config , output_format , input_format);
+    
+    if ((output_format == ASCII_TEMPLATE) && (config->template_buffer == NULL))
+      valid = false;
+      //util_abort("%s: When specifying output_format == ASCII_TEMPLATE you must also supply a template_ecl_file\n",__func__);
+  }
+  return valid;
 }
 
 

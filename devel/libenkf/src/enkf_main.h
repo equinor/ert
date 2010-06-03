@@ -27,6 +27,7 @@ extern "C" {
 #include <local_config.h>
 #include <log.h>  
 #include <bool_vector.h>
+#include <ert_template.h>
 
 /*****************************************************************/
 
@@ -34,7 +35,7 @@ extern "C" {
 
 typedef struct enkf_main_struct enkf_main_type;
 
-
+ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
 void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
 const char                  * enkf_main_get_log_file( const enkf_main_type * enkf_main );
 void                          enkf_main_set_log_level( enkf_main_type * enkf_main , int log_level );

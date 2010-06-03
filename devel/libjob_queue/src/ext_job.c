@@ -717,66 +717,15 @@ const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
 
 
 const char * ext_job_get_private_args_as_string( ext_job_type * ext_job ) {
-  buffer_type * buffer = buffer_alloc( 512 );
-  int size = subst_list_get_size( ext_job->private_args );
-  int i;
-  
-  for (i=0; i < size; i++) {
-    buffer_fwrite_char_ptr( buffer , subst_list_iget_key( ext_job->private_args , i));
-    buffer_fwrite_char(buffer , '=');
-    buffer_fwrite_char_ptr( buffer , subst_list_iget_value( ext_job->private_args , i));
-    if (i < (size - 1)) 
-      buffer_fwrite_char_ptr( buffer , " , ");
-  }
-  buffer_fwrite_char( buffer , '\0');
   util_safe_free( ext_job->private_args_string );
-  ext_job->private_args_string = buffer_alloc_data_copy( buffer );
-  buffer_free( buffer );
+  ext_job->private_args_string = subst_list_alloc_string_representation( ext_job->private_args );
   return ext_job->private_args_string;
 }
 
 
-void ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string ) {
-  char ** key_value_list;
-  int     num_arg, iarg;
-  
-  util_split_string(arg_string , "," , &num_arg , &key_value_list);
-  for (iarg = 0; iarg < num_arg; iarg++) {
-    if (strchr(key_value_list[iarg] , '=') == NULL)
-      util_abort("%s: could not find \'=\' in argument string:%s \n",__func__ , key_value_list[iarg]);
-    
-    {
-      char * key , * value;
-      char * tmp     = key_value_list[iarg];
-      int arg_length , value_length;
-      while (isspace(*tmp))  /* Skipping initial space */
-        tmp++;
-      
-      arg_length = strcspn(tmp , " =");
-      key  = util_alloc_substring_copy(tmp , arg_length);
-      tmp += arg_length;
-      while ((*tmp == ' ') || (*tmp == '='))
-        tmp++;
-      
-      value_length = strcspn(tmp , " ");
-      value = util_alloc_substring_copy( tmp , value_length);
-      
-      /* Setting the argument */
-      ext_job_set_private_arg( ext_job , key , value );
-      free(key);
-      free(value);
-      tmp += value_length;
-      
-      
-      /* Accept only trailing space - any other character indicates a failed parsing. */
-      while (*tmp != '\0') {
-        if (!isspace(*tmp))
-          util_abort("%s: something wrong with:%s  - spaces are not allowed in key or value part.\n",__func__ , key_value_list[iarg]);
-        tmp++;
-      }
-    }
-  }
-  util_free_stringlist(key_value_list , num_arg);
+int ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string ) {
+  subst_list_clear( ext_job->private_args );
+  return subst_list_add_from_string( ext_job->private_args , arg_string );
 }
 
 
