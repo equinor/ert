@@ -10,6 +10,9 @@ from widgets.checkbox import CheckBox
 from widgets.configpanel import ConfigPanel
 from widgets.stringbox import StringBox
 from pages.config.jobs.forwardmodelpanel import ForwardModelPanel
+from pages.config.runpath.runpathpanel import RunpathMemberList
+from pages.config.runpath.runpathpanel import RunpathMemberPanel
+from enums import keep_runpath_type
 
 def createSimulationsPage(configPanel, parent):
     configPanel.startPage("Simulations")
@@ -117,13 +120,28 @@ def createSimulationsPage(configPanel, parent):
     r.getter = lambda ert : ert.getAttribute("pre_clear_runpath")
     r.setter = lambda ert, value : ert.setAttribute("pre_clear_runpath", value)
 
-    r = internalPanel.addRow(StringBox(parent, "Delete", "delete_runpath"))
-    r.getter = lambda ert : ert.getAttribute("delete_runpath")
-    r.setter = lambda ert, value : ert.setAttribute("delete_runpath", value)
+    r = internalPanel.addRow(RunpathMemberPanel(widgetLabel="Retain runpath", helpLabel="runpath_retain"))
+    r.initialize = lambda ert : [ert.prototype("int enkf_main_get_ensemble_size(long)"),
+                                 ert.prototype("int enkf_main_iget_keep_runpath(long, int)"),
+                                 ert.prototype("void enkf_main_iset_keep_runpath(long, int, long)"),]
+    def get_runpath_retain_state(ert):
+        ensemble_size = ert.enkf.enkf_main_get_ensemble_size(ert.main)
 
-    r = internalPanel.addRow(StringBox(parent, "Keep", "keep_runpath"))
-    r.getter = lambda ert : ert.getAttribute("keep_runpath")
-    r.setter = lambda ert, value : ert.setAttribute("keep_runpath", value)
+        result = []
+        for index in range(ensemble_size):
+            state = ert.enkf.enkf_main_iget_keep_runpath(ert.main, index)
+            result.append((index, keep_runpath_type.resolveValue(state)))
+            
+        return result
+
+    r.getter = get_runpath_retain_state
+
+    def set_runpath_retain_state(ert, items):
+        for item in items:
+            ert.enkf.enkf_main_iset_keep_runpath(ert.main, item.member, item.runpath_state.value())
+
+    r.setter = set_runpath_retain_state
+
 
     internalPanel.endPage()
 
