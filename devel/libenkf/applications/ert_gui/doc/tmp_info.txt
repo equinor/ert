@@ -58,7 +58,7 @@ enkf_main_load_obs( enkf_main , obs_config_file );
 KEEP_RUNPATH / DELETE_RUNPATH
 -----------------------------
 
-Denne variabelen er definert som en streng i tui - jeg foreslr at du
+Denne variabelen er definert som en streng i tui - jeg foreslaar at du
 heller bruker en tilsvarende tilnaerming som naar vi skal velge hvilke
 realisasjoner som skal simuleres paa, hver av de smaa boksene skal ha
 tre mulige verdier, tilsvarende enum keep_runpath_type i enkf_types.h.
