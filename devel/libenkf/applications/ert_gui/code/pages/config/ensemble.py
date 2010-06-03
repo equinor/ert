@@ -31,6 +31,7 @@ def createEnsemblePage(configPanel, parent):
         ert.prototype("long ensemble_config_alloc_keylist(long)")
         ert.prototype("long ensemble_config_add_summary(long, char*)")
         ert.prototype("long ensemble_config_add_gen_kw(long, char*)")
+        ert.prototype("long ensemble_config_add_gen_data(long, char*)")
         ert.prototype("long ensemble_config_add_field(long, char*, long)")
 
         ert.prototype("void enkf_main_del_node(long, char*)")
@@ -46,6 +47,7 @@ def createEnsemblePage(configPanel, parent):
         ert.prototype("void enkf_config_node_update_state_field(long, int, double, double)")
         ert.prototype("void enkf_config_node_update_parameter_field(long, char*, char*, char*, int, double, double, char*, char*)")
         ert.prototype("void enkf_config_node_update_general_field(long, char*, char*, char*, char*, int, double, double, char*, char*, char*)")
+        ert.prototype("void enkf_config_node_update_gen_data(long, int, int, char*, char*, char*, char*, char*, char*)")
 
         ert.prototype("char* gen_kw_config_get_template_file(long)")
         ert.prototype("char* gen_kw_config_get_init_file_fmt(long)")
@@ -122,6 +124,10 @@ def createEnsemblePage(configPanel, parent):
                 model["template_key"] = template_key
                 model["init_file_fmt"] = init_file_fmt
 
+                model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
+                model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
+                model["enkf_infile"] = ert.enkf.enkf_config_node_get_enkf_infile(node)
+
             elif type == KeywordModel.TYPE:
                 model = KeywordModel(key)
                 model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
@@ -150,7 +156,8 @@ def createEnsemblePage(configPanel, parent):
             node = ert.enkf.ensemble_config_add_field(ert.ensemble_config, key, grid)
             parameter.setValid(ert.enkf.enkf_config_node_is_valid(node))
         elif parameter.getType() == DataModel.TYPE:
-            pass
+            node = ert.enkf.ensemble_config_add_gen_data(ert.ensemble_config, key)
+            parameter.setValid(ert.enkf.enkf_config_node_is_valid(node))
         elif parameter.getType() == KeywordModel.TYPE:
             node = ert.enkf.ensemble_config_add_gen_kw(ert.ensemble_config, key)
             parameter.setValid(ert.enkf.enkf_config_node_is_valid(node))
@@ -160,7 +167,9 @@ def createEnsemblePage(configPanel, parent):
             return b > 0 #0 == NULL 
         else:
             print "Unknown type: ", parameter
+            return False
 
+        return True
 
     def updateParameter(ert, parameter_model):
         key = parameter_model.getName()
@@ -207,6 +216,8 @@ def createEnsemblePage(configPanel, parent):
                                                                None,
                                                                parameter_model["output"])
 
+            parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
+
         elif isinstance(parameter_model, KeywordModel):
             enkf_outfile_fmt = parameter_model["enkf_outfile"]
             template_file = parameter_model["template"]
@@ -219,14 +230,26 @@ def createEnsemblePage(configPanel, parent):
                                                     parameter_file,
                                                     min_std_file,
                                                     init_file_fmt)
-
+            parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
         elif isinstance(parameter_model, SummaryModel):
             #should never be called from SummaryModel...
             raise AssertionError("Summary keys can not be updated!")
         elif isinstance(parameter_model, DataModel):
-            raise NotImplementedError("No support for gen_data yet!")
+            input_format = gen_data_file_format.resolveName(str(parameter_model["input_format"]))
+            output_format = gen_data_file_format.resolveName(str(parameter_model["output_format"]))
+            ert.enkf.enkf_config_node_update_gen_data(node,
+                                                      input_format.value(),
+                                                      output_format.value(),
+                                                      parameter_model["init_file_fmt"],
+                                                      parameter_model["template_file"],
+                                                      parameter_model["template_key"],
+                                                      parameter_model["enkf_outfile"],
+                                                      parameter_model["enkf_infile"],
+                                                      parameter_model["min_std"])
+            parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
         else:
             raise AssertionError("Type is not supported: %s" % (parameter_model.__class__))
+
 
 
 
