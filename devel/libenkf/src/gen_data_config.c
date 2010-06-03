@@ -71,6 +71,7 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   UTIL_TYPE_ID_INIT( config , GEN_DATA_CONFIG_ID);
 
   config->key               = util_alloc_string_copy( key );
+  config->init_file_fmt     = NULL;
   config->template_file     = NULL;
   config->template_buffer   = NULL;
   config->template_key      = NULL;
