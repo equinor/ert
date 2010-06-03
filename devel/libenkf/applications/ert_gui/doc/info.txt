@@ -53,5 +53,59 @@ enkf_main_set_log_file( enkf_main , "log_file" )
 enkf_main_set_log_level( enkf_main , log_level )
 
 
+analysis_config = enkf_main_get_analysis_config( enkf_main )
+log_path = analysis_config_get_log_path( analysis_config );
+analysis_config_set_log_path( analysis_config , log_path );
+
+
+
+
+INITIALIZED
+-----------
+
+enkf_main_is_initialized(enkf_main , active_mask);
+
+active_mask er nå en vector av typen: bool_vector som er implementert i
+libutil. Dersom alle elemementene er aktive kan du sende inn None /
+NULL, ellers må allokere og initialisere en active_mask instans:
+
+mask = bool_vector_alloc(0 , false)
+for index in selectedMembers:
+    bool_vector_iset( mask , index , true )
+
+enkf_main_is_initialized( enkf_main , mask )
+bool_vector_free( mask )
+
+
+
+
+TEMPLATES:
+----------
+Get:
+----
+templates = enkf_main_get_templates( enkf_main );
+s         = ert_templates_alloc_list( templates );   <- Returnerer en stringlist med navn
+template  = ert_templates_get_template( templates , "Navn")
+template_file = ert_template_get_template_file( template ); 
+target_file   = ert_template_get_target_file( template );
+arg_string    = ert_template_get_args_as_string( template )
+
+
+Set: (kan enten gjøres med manuelle add / del eller ved hjelp av clear og add).
+----
+templates = enkf_main_get_templates( enkf_main );
+ert_templates_clear( templates );
+ert_templates_del_template( templates , "Key");
+template = ert_templates_add_template( templates , "Key", "Template_file" , "target_file" , arg_string /* Can be None / NULL */);
+
+template  = ert_templates_get_template( templates , Key)
+ert_template_set_target_file(template , target_file );
+ert_template_set_template_file(template , template_file );
+ert_template_set_args_as_string(template , arg_string);
+
+
+
+
+
 
 
