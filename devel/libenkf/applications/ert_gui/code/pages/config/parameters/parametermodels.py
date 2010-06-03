@@ -13,7 +13,7 @@ class Model(QObject):
     def set(self, attr, value):
         self[attr] = value
 
-    def __setitem__(self, attr, value):
+    def __setitem__(self, attr, value):        
         self.data[attr] = value
         self.emit(SIGNAL("modelChanged(Model)"), self)
 
@@ -24,7 +24,10 @@ class Model(QObject):
         return self.valid
 
     def setValid(self, valid):
-        self.valid = valid
+        if not self.valid == valid:
+            self.valid = valid
+            self.emit(SIGNAL("modelChanged(Model)"), self)
+
 
     def getName(self):
         return self.name
@@ -72,6 +75,9 @@ class DataModel(Model):
         self["template_file"] = ""
         self["template_key"] = ""
         self["init_file_fmt"] = ""
+        self["enkf_outfile"] = ""
+        self["enkf_infile"] = ""
+        self["min_std"] = ""
 
 class SummaryModel(Model):
     TYPE = enkf_impl_type.SUMMARY
