@@ -129,3 +129,19 @@ ext_job_get_help_text( job );
 --------------------------------------
 
 
+LOG:
+
+Get
+---
+log_file  = enkf_main_get_log_file( enkf_main )
+log_level = enkf_main_get_log_level( enkf_main )
+
+
+Set
+---
+enkf_main_set_log_file( enkf_main , "log_file" )
+enkf_main_set_log_level( enkf_main , log_level )
+
+
+
+
