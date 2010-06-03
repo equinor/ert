@@ -42,6 +42,7 @@ struct ecl_config_struct {
   time_t               start_date;                 /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   ecl_sum_type       * refcase;                    /* Refcase - can be NULL. */
   ecl_grid_type      * grid;                   	   /* The grid which is active for this model. */
+  char               * schedule_prediction_file;   /* Name of schedule prediction file - observe that this is internally handled as a gen_kw node. */
   char               * schedule_target_file;   	   /* File name to write schedule info to */
   char               * input_init_section;         /* File name for ECLIPSE (EQUIL) initialisation - can be NULL if the user has not supplied INIT_SECTION. */
   char               * init_section;               /* Equal to the full path of input_init_section IFF input_init_section points to an existing file - otherwise equal to input_init_section. */
@@ -90,13 +91,26 @@ const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
 }
 
 
-const char * ecl_config_get_schedule_file( const ecl_config_type * ecl_config ) {
+const char * ecl_config_get_schedule_prediction_file( const ecl_config_type * ecl_config ) {
+  return ecl_config->schedule_prediction_file;
+}
 
+/**
+   Observe: The real schedule prediction functionality is implemented
+   as a special GEN_KW node in ensemble_config.
+*/
+
+
+void ecl_config_set_schedule_prediction_file( ecl_config_type * ecl_config , const char * schedule_prediction_file ) {
+  ecl_config->schedule_prediction_file = util_realloc_string_copy( ecl_config->schedule_prediction_file , schedule_prediction_file );
+}
+
+
+const char * ecl_config_get_schedule_file( const ecl_config_type * ecl_config ) {
   if (ecl_config->sched_file != NULL) 
     return sched_file_iget_filename( ecl_config->sched_file , 0 );
   else 
     return NULL;
-  
 }
 
 
@@ -278,20 +292,21 @@ static void ecl_config_init_static_kw( ecl_config_type * ecl_config ) {
 
 
 ecl_config_type * ecl_config_alloc( const config_type * config ) {
-  ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
-  ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
-  ecl_config->eclbase               = NULL;
-  ecl_config->include_all_static_kw = false;
-  ecl_config->static_kw_set         = set_alloc_empty();
-  ecl_config->user_static_kw        = stringlist_alloc_new();
-  ecl_config->data_file             = NULL;
-  ecl_config->input_init_section    = NULL; 
-  ecl_config->init_section          = NULL;
-  ecl_config->refcase               = NULL;
-  ecl_config->grid                  = NULL;
-  ecl_config->can_restart           = false;
-  ecl_config->start_date            = -1;
-  ecl_config->sched_file            = NULL;
+  ecl_config_type * ecl_config         = util_malloc(sizeof * ecl_config , __func__);
+  ecl_config->io_config 	       = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
+  ecl_config->eclbase                  = NULL;
+  ecl_config->include_all_static_kw    = false;
+  ecl_config->static_kw_set            = set_alloc_empty();
+  ecl_config->user_static_kw           = stringlist_alloc_new();
+  ecl_config->data_file                = NULL;
+  ecl_config->input_init_section       = NULL; 
+  ecl_config->init_section             = NULL;
+  ecl_config->refcase                  = NULL;
+  ecl_config->grid                     = NULL;
+  ecl_config->can_restart              = false;
+  ecl_config->start_date               = -1;
+  ecl_config->sched_file               = NULL;
+  ecl_config->schedule_prediction_file = NULL;
 
   /*****************************************************************/
   ecl_config_init_static_kw( ecl_config );
@@ -351,6 +366,7 @@ void ecl_config_free(ecl_config_type * ecl_config) {
 
   util_safe_free(ecl_config->input_init_section);
   util_safe_free(ecl_config->init_section);
+  util_safe_free(ecl_config->schedule_prediction_file);
 
   if (ecl_config->grid != NULL)
     ecl_grid_free( ecl_config->grid );

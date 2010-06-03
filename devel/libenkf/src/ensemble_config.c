@@ -37,7 +37,7 @@
 #include <field_trans.h>
 #include <subst_func.h>
 #include <enkf_obs.h>
-
+#include <ecl_config.h>
 
 struct ensemble_config_struct {
   pthread_mutex_t          mutex;
@@ -488,47 +488,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
     free(parameter_file);
   }
 
-  
-  /* SCHEDULE_PREDICTION_FILE.
 
-     The SCHEDULE_PREDICTION_FILE is implemented as a GEN_KW instance,
-     with some twists. Observe the following:
-     
-     1. The SCHEDULE_PREDICTION_FILE is added to the ensemble_config
-        as a GEN_KW node with key 'PRED'.
-
-     2. The target file is set equal to the initial prediction file
-        (i.e. the template in this case), NOT including any path
-        components.
-        
-  */
-  
-  if (config_item_set( config , "SCHEDULE_PREDICTION_FILE")) {
-    stringlist_type * tokens = config_iget_stringlist_ref(config , "SCHEDULE_PREDICTION_FILE" , 0);
-    const char * key = "PRED"; /* Hardcoded key */
-    char * template_file = stringlist_iget_copy(tokens , 0);
-    char * target_file;
-    {
-      char * base;
-      char * ext;
-      util_alloc_file_components( template_file , NULL , &base , &ext);
-      target_file = util_alloc_filename(NULL , base , ext );
-      util_safe_free( base );
-      util_safe_free( ext );
-    }
-    stringlist_idel( tokens , 0);
-    {
-      hash_type * opt_hash                = hash_alloc_from_options( tokens );
-      enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
-
-      enkf_config_node_update_gen_kw( config_node , target_file , template_file , hash_safe_get( opt_hash , "PARAMETERS") , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
-      hash_free( opt_hash );
-    }
-    free(target_file);
-    free(template_file);
-  }
-  
-  
   /* SUMMARY */
   {
     stringlist_type * keys = stringlist_alloc_new ( );

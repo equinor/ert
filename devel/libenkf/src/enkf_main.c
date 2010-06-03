@@ -2292,6 +2292,47 @@ void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case
 
 
 /******************************************************************/
+
+/**
+   SCHEDULE_PREDICTION_FILE.
+   
+   The SCHEDULE_PREDICTION_FILE is implemented as a GEN_KW instance,
+   with some twists. Observe the following:
+   
+   1. The SCHEDULE_PREDICTION_FILE is added to the ensemble_config
+      as a GEN_KW node with key 'PRED'.
+   
+   2. The target file is set equal to the initial prediction file
+      (i.e. the template in this case), NOT including any path
+      components.
+
+*/
+
+
+void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , const char * template_file , const char * parameters , const char * min_std , const char * init_file_fmt) {
+  const char * key = "PRED";
+  char * target_file;
+  enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key );                                                
+  {
+    char * base;
+    char * ext;
+    util_alloc_file_components( template_file , NULL , &base , &ext);
+    target_file = util_alloc_filename(NULL , base , ext );
+    util_safe_free( base );
+    util_safe_free( ext );
+  }
+  enkf_config_node_update_gen_kw( config_node , target_file , template_file , parameters , min_std , init_file_fmt );
+  free( target_file );
+  ecl_config_set_schedule_prediction_file( enkf_main->ecl_config , template_file );
+}
+
+
+void enkf_main_set_schedule_prediction_file( enkf_main_type * enkf_main , const char * schedule_prediction_file) {
+  enkf_main_set_schedule_prediction_file__(enkf_main , schedule_prediction_file , NULL , NULL , NULL );
+}
+
+
+
 /*
    Adding inverse observation keys to the enkf_nodes; can be called
    several times.
@@ -2435,6 +2476,23 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 						      use_lsf);
     }
 
+    {
+      if (config_item_set( config , "SCHEDULE_PREDICTION_FILE")) {
+        stringlist_type * tokens = config_iget_stringlist_ref(config , "SCHEDULE_PREDICTION_FILE" , 0);
+        const char * template_file = stringlist_iget(tokens , 0);
+        {
+          hash_type * opt_hash                = hash_alloc_from_options( tokens );
+          
+          const char * parameters = hash_safe_get( opt_hash , "PARAMETERS" );
+          const char * min_std    = hash_safe_get( opt_hash , "MIN_STD" );
+          const char * init_files = hash_safe_get( opt_hash , "INIT_FILES");  
+          
+          enkf_main_set_schedule_prediction_file__( enkf_main , template_file , parameters , min_std , init_files );
+          hash_free( opt_hash );
+        }
+      }
+    }
+    
 
     /*****************************************************************/
     /**
