@@ -19,7 +19,7 @@ class ForwardModelPanel(HelpedWidget):
     def __init__(self, parent=None):
         HelpedWidget.__init__(self, parent, "Forward Model", "forward_model")
 
-        self.forward_model = ForwardModelJob("undefined")
+        self.forward_model_job = ForwardModelJob("undefined")
 
         self.createWidgets(parent)
 
@@ -49,7 +49,7 @@ class ForwardModelPanel(HelpedWidget):
 
         self.forward_model_args = StringBox(self, "", "forward_model_arguments")
         self.forward_model_args.setter = self.setArguments
-        self.forward_model_args.getter = lambda model: self.forward_model.arguments
+        self.forward_model_args.getter = lambda model: self.forward_model_job.arguments
 
         layout.addRow("Arguments:", self.forward_model_args)
 
@@ -64,7 +64,7 @@ class ForwardModelPanel(HelpedWidget):
         self.modelConnect('jobListChanged()', self.fetchContent)
 
     def setArguments(self, model, arguments):
-        self.forward_model.setArguments(arguments)
+        self.forward_model_job.setArguments(arguments)
         self.forwardModelChanged()
 
     def fetchContent(self):
@@ -86,9 +86,10 @@ class ForwardModelPanel(HelpedWidget):
             jobitem.setToolTip(job[0])
             self.searchableList.list.addItem(jobitem)
 
-    def setForwardModel(self, forward_model):
-        self.forward_model = forward_model
-        self.help_text.setText(forward_model.help_text)
+    def setForwardModelJob(self, forward_model_job):
+        """Set the current visible forward model job"""
+        self.forward_model_job = forward_model_job
+        self.help_text.setText(forward_model_job.help_text)
         self.forward_model_args.fetchContent()
 
     def changeParameter(self, current, previous):
@@ -97,17 +98,20 @@ class ForwardModelPanel(HelpedWidget):
             self.pagesWidget.setCurrentWidget(self.emptyPanel)
         else:
             self.pagesWidget.setCurrentWidget(self.forward_model_panel)
-            self.setForwardModel(current.data(QtCore.Qt.UserRole).toPyObject())
+            self.setForwardModelJob(current.data(QtCore.Qt.UserRole).toPyObject())
 
     def forwardModelChanged(self):
+        """Called whenever the forward model is changed. (reordering, adding, removing)"""
         items = self.searchableList.getItems()
-
+        currentRow = self.searchableList.list.currentRow()
         forward_model = []
         for item in items:
             forward_model_job = item.data(QtCore.Qt.UserRole).toPyObject()
             forward_model.append((forward_model_job.name, forward_model_job.arguments))
 
         self.updateContent(forward_model)
+        self.fetchContent()
+        self.searchableList.list.setCurrentRow(currentRow)
 
     def addToList(self, list, name):
         """Adds a new job to the list"""
@@ -119,12 +123,12 @@ class ForwardModelPanel(HelpedWidget):
 
         list.addItem(param)
         list.setCurrentItem(param)
-        return new_job
+        return param
 
     def addItem(self, list):
         """Called by the add button to insert a new job"""
 
-        pd = ValidatedDialog(self, "New forward model", "Select a job:", self.available_jobs, True)
+        pd = ValidatedDialog(self, "New forward model job", "Select a job:", self.available_jobs, True)
         if pd.exec_():
             self.addToList(list, pd.getName())
             self.forwardModelChanged()
@@ -135,7 +139,7 @@ class ForwardModelPanel(HelpedWidget):
 
         if currentRow >= 0:
             title = "Delete forward model?"
-            msg = "Are you sure you want to delete the forward model?"
+            msg = "Are you sure you want to delete the job from the forward model?"
             btns = QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
             doDelete = QtGui.QMessageBox.question(self, title, msg, btns)
 
@@ -143,9 +147,8 @@ class ForwardModelPanel(HelpedWidget):
                 list.takeItem(currentRow)
                 self.forwardModelChanged()
 
-
-
 class ForwardModelJob:
+    """Stores the name, arguments and help text of a job."""
 
     def __init__(self, name, arguments=None, help_text=""):
         self.name = name

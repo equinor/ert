@@ -35,6 +35,9 @@ def createSimulationsPage(configPanel, parent):
                                 ert.prototype("long ext_joblist_alloc_list(long)", lib=ert.job_queue),
                                 ert.prototype("char* ext_job_get_private_args_as_string(long)", lib=ert.job_queue),
                                 ert.prototype("char* ext_job_get_help_text(long)", lib=ert.job_queue),
+                                ert.prototype("void forward_model_clear(long)", lib=ert.job_queue),
+                                ert.prototype("long forward_model_add_job(long, char*)", lib=ert.job_queue),
+                                ert.prototype("void ext_job_set_private_args_from_string(long, char*)", lib=ert.job_queue),
                                 ert.prototype("long forward_model_alloc_joblist(long)", lib=ert.job_queue),]
     def get_forward_model(ert):
         site_config = ert.site_config
@@ -65,8 +68,16 @@ def createSimulationsPage(configPanel, parent):
 
     r.getter = get_forward_model
 
-    def update_forward_model(ert, value):
-        print "mioisng"
+    def update_forward_model(ert, forward_model):
+        forward_model_pointer = ert.enkf.model_config_get_forward_model(ert.model_config)
+        ert.job_queue.forward_model_clear(forward_model_pointer)
+
+        for job in forward_model:
+            name = job[0]
+            args = job[1]
+            ext_job = ert.job_queue.forward_model_add_job(forward_model_pointer, name)
+            ert.job_queue.ext_job_set_private_args_from_string(ext_job, args)
+
     r.setter = update_forward_model
 
 
