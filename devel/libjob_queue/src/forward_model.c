@@ -84,6 +84,7 @@ ext_job_type * forward_model_add_job(forward_model_type * forward_model , const 
 }
 
 
+
 /**
    This function is used to set private argument values to jobs in the
    forward model (i.e. the argument values passed in with KEY=VALUE
@@ -157,6 +158,7 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
 
   char * p1                          = (char *) input_string;
   while (true) {
+    ext_job_type *  current_job;
     char         * job_name;
     int            job_index;          
     {
@@ -165,56 +167,17 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
       p1 += job_length;
     }
     job_index = vector_get_size( forward_model->jobs );
-    forward_model_add_job(forward_model , job_name);
+    current_job = forward_model_add_job(forward_model , job_name);
 
     if (*p1 == '(') {  /* The function has arguments. */
       int arg_length = strcspn(p1 , ")");
       if (arg_length == strlen(p1))
 	util_abort("%s: paranthesis not terminated for job:%s \n",__func__ , job_name);
       {
-	char  * arg_string = util_alloc_substring_copy((p1 + 1) , arg_length - 1);
-	char ** key_value_list;
-	int     num_arg, iarg;
-	
-	util_split_string(arg_string , "," , &num_arg , &key_value_list);
-	for (iarg = 0; iarg < num_arg; iarg++) {
-	  if (strchr(key_value_list[iarg] , '=') == NULL)
-	    util_abort("%s: could not find \'=\' in argument string:%s \n",__func__ , key_value_list[iarg]);
-	  
-	  {
-	    char * key , * value;
-	    char * tmp     = key_value_list[iarg];
-	    int arg_length , value_length;
-	    while (isspace(*tmp))  /* Skipping initial space */
-	      tmp++;
-	    
-	    arg_length = strcspn(tmp , " =");
-	    key  = util_alloc_substring_copy(tmp , arg_length);
-	    tmp += arg_length;
-	    while ((*tmp == ' ') || (*tmp == '='))
-	      tmp++;
-	    
-	    value_length = strcspn(tmp , " ");
-	    value = util_alloc_substring_copy( tmp , value_length);
-
-	    /* Setting the argument */
-            forward_model_iset_job_arg( forward_model , job_index , key , value);
-	    free(key);
-	    free(value);
-	    tmp += value_length;
-
-
-	    /* Accept only trailing space - any other character indicates a failed parsing. */
-	    while (*tmp != '\0') {
-	      if (!isspace(*tmp))
-		util_abort("%s: something wrong with:%s  - spaces are not allowed in key or value part.\n",__func__ , key_value_list[iarg]);
-	      tmp++;
-	    }
-	  }
-	}
-	util_free_stringlist(key_value_list , num_arg);
-	free(arg_string);
+	char  * arg_string          = util_alloc_substring_copy((p1 + 1) , arg_length - 1);
+        ext_job_set_private_args_from_string( current_job , arg_string );
 	p1 += (1 + arg_length);
+        free( arg_string );
       }
     } 
     
@@ -289,6 +252,11 @@ forward_model_type * forward_model_alloc_copy(const forward_model_type * forward
   
   return new;
 }
+
+ext_job_type * forward_model_iget_job( forward_model_type * forward_model , int index) {
+  return vector_iget( forward_model->jobs , index );
+}
+
 
 
 void forward_model_fprintf(const forward_model_type * forward_model , FILE * stream) {
