@@ -8,6 +8,7 @@ from pages.config.parameters.parameterpanel import ParameterPanel, enums
 from pages.config.parameters.parametermodels import SummaryModel, DataModel, FieldModel, KeywordModel
 from enums import field_type
 from enums import truncation_type
+from enums import gen_data_file_format
 
 def createEnsemblePage(configPanel, parent):
     configPanel.startPage("Ensemble")
@@ -49,6 +50,12 @@ def createEnsemblePage(configPanel, parent):
         ert.prototype("char* gen_kw_config_get_template_file(long)")
         ert.prototype("char* gen_kw_config_get_init_file_fmt(long)")
         ert.prototype("char* gen_kw_config_get_parameter_file(long)")
+
+        ert.prototype("long gen_data_config_get_output_format(long)")
+        ert.prototype("long gen_data_config_get_input_format(long)")
+        ert.prototype("char* gen_data_config_get_template_file(long)")
+        ert.prototype("char* gen_data_config_get_template_key(long)")
+        ert.prototype("char* gen_data_config_get_init_file_fmt(long)")
 
         ert.prototype("int field_config_get_type(long)")
         ert.prototype("int field_config_get_truncation_mode(long)")
@@ -98,6 +105,23 @@ def createEnsemblePage(configPanel, parent):
 
             elif type == DataModel.TYPE:
                 model = DataModel(key)
+
+                output_format_value = ert.enkf.gen_data_config_get_output_format(data)
+                output_format = gen_data_file_format.resolveValue(output_format_value)
+
+                input_format_value = ert.enkf.gen_data_config_get_input_format(data)
+                input_format = gen_data_file_format.resolveValue(input_format_value)
+
+                template_file = ert.enkf.gen_data_config_get_template_file(data)
+                template_key = ert.enkf.gen_data_config_get_template_key(data)
+                init_file_fmt = ert.enkf.gen_data_config_get_init_file_fmt(data)
+
+                model["output_format"] = output_format
+                model["input_format"] = input_format
+                model["template_file"] = template_file
+                model["template_key"] = template_key
+                model["init_file_fmt"] = init_file_fmt
+
             elif type == KeywordModel.TYPE:
                 model = KeywordModel(key)
                 model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)

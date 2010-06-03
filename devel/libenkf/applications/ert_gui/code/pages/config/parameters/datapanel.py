@@ -19,35 +19,35 @@ class DataPanel(QtGui.QFrame):
 
         self.dataModel = DataModel("")
 
-        self.input = ComboChoice(self, enums.gen_data_file_format.INPUT_TYPES, "", "param_init")
-        self.modelWrap(self.input, "input")
+        self.input = ComboChoice(self, enums.gen_data_file_format.INPUT_TYPES, "", "gen_data_param_init")
+        self.modelWrap(self.input, "input_format")
 
-        self.output = ComboChoice(self, enums.gen_data_file_format.OUTPUT_TYPES, "", "param_output")
-        self.modelWrap(self.output, "output")
+        self.output = ComboChoice(self, enums.gen_data_file_format.OUTPUT_TYPES, "", "gen_data_param_output")
+        self.modelWrap(self.output, "output_format")
 
-        self.eclipse_file = PathChooser(self, "", "gen_data_eclipse_file", True , True)
-        self.modelWrap(self.eclipse_file, "eclipse_file")
+        self.template_file = PathChooser(self, "", "gen_data_template_file", True , True)
+        self.modelWrap(self.template_file, "template_file")
 
-        self.init_files = PathChooser(self, "", "gen_data_init_files", True , True)
-        self.modelWrap(self.init_files, "init_files")
+        self.template_key = PathChooser(self, "", "gen_data_template_key", True , False)
+        self.modelWrap(self.template_key, "template_key")
 
-        self.template = PathChooser(self, "", "gen_data_template", True , False)
-        self.modelWrap(self.template, "template")
-
-        self.result_file = PathChooser(self, "", "gen_data_result_file", True , False)
-        self.modelWrap(self.result_file, "result_file")
+        self.init_file_fmt = PathChooser(self, "", "gen_data_init_file_fmt", True , False)
+        self.modelWrap(self.init_file_fmt, "init_file_fmt")
 
 
         layout.addRow("Input:", self.input)
         layout.addRow("Output:", self.output)
-        layout.addRow("Eclipse file:", self.eclipse_file)
-        layout.addRow("Init files:", self.init_files)
-        layout.addRow("Template:", self.template)
-        layout.addRow("Result File:", self.result_file)
+        layout.addRow("Template file:", self.template_file)
+        layout.addRow("Template key:", self.template_key)
+        layout.addRow("Init files:", self.init_file_fmt)
 
         self.setLayout(layout)
 
+    def initialize(self, model):
+        pass
+
     def modelWrap(self, widget, attribute):
+        #widget.initialize = self.initialize #mute missing initializer warning
         widget.setter = lambda model, value: self.dataModel.set(attribute, value)
         widget.getter = lambda model: self.dataModel[attribute]
 
@@ -56,7 +56,6 @@ class DataPanel(QtGui.QFrame):
 
         self.input.fetchContent()
         self.output.fetchContent()
-        self.eclipse_file.fetchContent()
-        self.init_files.fetchContent()
-        self.template.fetchContent()
-        self.result_file.fetchContent()
+        self.template_file.fetchContent()
+        self.template_key.fetchContent()
+        self.init_file_fmt.fetchContent()

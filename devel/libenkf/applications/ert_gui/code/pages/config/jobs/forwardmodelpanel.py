@@ -12,7 +12,7 @@ from widgets.stringbox import StringBox
 class ForwardModelPanel(HelpedWidget):
     """
     Widget for adding, removing and editing forward models.
-    These additional ContentModel functions must be implemented: insert and remove.
+    Only uses the setter and getter hooks.
     The panel expects remove to return True or False based on the success of the removal.
     """
 
@@ -64,11 +64,17 @@ class ForwardModelPanel(HelpedWidget):
         self.modelConnect('jobListChanged()', self.fetchContent)
 
     def setArguments(self, model, arguments):
+        """Set the arguments of the current forward model job."""
         self.forward_model_job.setArguments(arguments)
         self.forwardModelChanged()
 
     def fetchContent(self):
-        """Retrieves data from the model and inserts it into the widget"""
+        """
+        Retrieves data from the model and inserts it into the widget.
+        Expects a hash containing these two keys: available_jobs and forward_model.
+        available_jobs=list of names
+        forward_model)list of tuples containing(name, arguments, help_text)
+        """
         data = self.getFromModel()
 
         self.available_jobs = data['available_jobs']
@@ -101,7 +107,10 @@ class ForwardModelPanel(HelpedWidget):
             self.setForwardModelJob(current.data(QtCore.Qt.UserRole).toPyObject())
 
     def forwardModelChanged(self):
-        """Called whenever the forward model is changed. (reordering, adding, removing)"""
+        """
+        Called whenever the forward model is changed. (reordering, adding, removing)
+        The data submitted to the updateContent() (from ContentModel) is a list of tuples (name, arguments)
+        """
         items = self.searchableList.getItems()
         currentRow = self.searchableList.list.currentRow()
         forward_model = []

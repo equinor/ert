@@ -39,6 +39,7 @@ def createSimulationsPage(configPanel, parent):
                                 ert.prototype("long forward_model_add_job(long, char*)", lib=ert.job_queue),
                                 ert.prototype("void ext_job_set_private_args_from_string(long, char*)", lib=ert.job_queue),
                                 ert.prototype("long forward_model_alloc_joblist(long)", lib=ert.job_queue),]
+
     def get_forward_model(ert):
         site_config = ert.site_config
         installed_jobs_pointer = ert.enkf.site_config_get_installed_jobs(site_config)
@@ -81,11 +82,6 @@ def createSimulationsPage(configPanel, parent):
     r.setter = update_forward_model
 
 
-
-
-#    r = configPanel.addRow(KeywordTable(parent, "Forward model", "forward_model", "Job", "Arguments"))
-#    r.getter = lambda ert : ert.getAttribute("forward_model")
-#    r.setter = lambda ert, value : ert.setAttribute("forward_model", value)
 
     r = configPanel.addRow(PathChooser(parent, "Case table", "case_table"))
     r.getter = lambda ert : ert.getAttribute("case_table")
@@ -136,18 +132,6 @@ def createSimulationsPage(configPanel, parent):
     r = internalPanel.addRow(MultiColumnTable(parent, "", "run_template", ["Template", "Target file", "Arguments"]))
     r.getter = lambda ert : ert.getAttribute("run_template")
     r.setter = lambda ert, value : ert.setAttribute("run_template", value)
-
-    #r = internalPanel.addRow(PathChooser(widget, "Template", "run_template", True))
-    #r.getter = lambda ert : ert.getAttribute("run_template")
-    #r.setter = lambda ert, value : ert.setAttribute("run_template", value)
-    #
-    #r = internalPanel.addRow(PathChooser(widget, "Target file", "target_file", True))
-    #r.getter = lambda ert : ert.getAttribute("target_file")
-    #r.setter = lambda ert, value : ert.setAttribute("target_file", value)
-    #
-    #r = internalPanel.addRow(KeywordTable(widget, "Arguments", "template_arguments"))
-    #r.getter = lambda ert : ert.getAttribute("template_arguments")
-    #r.setter = lambda ert, value : ert.setAttribute("template_arguments", value)
 
     internalPanel.endPage()
     configPanel.addRow(internalPanel)
