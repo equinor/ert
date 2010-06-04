@@ -1,4 +1,4 @@
-from widgets.helpedwidget import HelpedWidget
+from widgets.helpedwidget import HelpedWidget, ContentModel
 from widgets.searchablelist import SearchableList
 from PyQt4 import QtGui, QtCore
 from widgets.pathchooser import PathChooser
@@ -44,6 +44,7 @@ class JobsPanel(HelpedWidget):
         layout.setLabelAlignment(QtCore.Qt.AlignRight)
 
         self.jobpath = PathChooser(self, "", "install_job_path", show_files=True, must_be_set=True)
+        self.jobpath.initialize = ContentModel.emptyInitializer
         self.jobpath.setter = self.setPath
         self.jobpath.getter = lambda model: self.job.path
 
