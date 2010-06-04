@@ -4,6 +4,7 @@ from widgets.stringbox import DoubleBox
 from widgets.pathchooser import PathChooser
 from pages.config.parameters.parametermodels import FieldModel
 from enums import field_type
+from widgets.helpedwidget import ContentModel
 
 class FieldPanel(QtGui.QFrame):
 
@@ -22,7 +23,7 @@ class FieldPanel(QtGui.QFrame):
         self.fieldType = ComboChoice(self, field_type.values(), "", "field_type")
         self.fieldType.setter = lambda model, value: self.typeChanged(field_type[str(value)])
         self.fieldType.getter = lambda model: str(self.fieldModel["type"])
-        self.fieldType.initialize = self.initialize
+        self.fieldType.initialize = ContentModel.emptyInitializer
 
         self.min = DoubleBox(self, "", "field_min")
         self.modelWrap(self.min, "min")
@@ -62,11 +63,8 @@ class FieldPanel(QtGui.QFrame):
 
         self.typeChanged(field_type.ECLIPSE_RESTART)
 
-    def initialize(self, model):
-        pass
-
     def modelWrap(self, widget, attribute):
-        widget.initialize = self.initialize #mute missing initializer warning
+        widget.initialize = ContentModel.emptyInitializer
         widget.setter = lambda model, value: self.fieldModel.set(attribute, value)
         widget.getter = lambda model: self.fieldModel[attribute]
 

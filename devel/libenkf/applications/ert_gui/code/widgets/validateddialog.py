@@ -20,7 +20,11 @@ class ValidatedDialog(QtGui.QDialog):
 
         self.layout = QtGui.QFormLayout()
 
-        self.layout.addRow(QtGui.QLabel(description))
+        q_label = QtGui.QLabel(description)
+        q_label.setAlignment(QtCore.Qt.AlignHCenter)
+        
+        self.layout.addRow(util.createSpace(5))
+        self.layout.addRow(q_label)
         self.layout.addRow(util.createSpace(10))
 
 

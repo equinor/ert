@@ -38,14 +38,10 @@ class ErtWrapper:
         self.dbase_type = "BLOCK_FS"
         self.enspath = "storage is missing as well"
         self.select_case = "some_case is missing"
-        self.update_log_path = "one really missing path"
 
         self.history_source = "REFCASE_HISTORY"
-        self.obs_config = "... not available"
 
         self.pre_clear_runpath = True
-        self.delete_runpath = "0 - 10, 12, 15, 20"
-        self.keep_runpath = "0-15, 18, 20"
 
         self.case_table = "... not here"
 
