@@ -19,22 +19,22 @@ def createLogPage(configPanel, widget):
                                  ert.prototype("void log_set_level(long, int)", lib=ert.util)]
     r.getter = lambda ert : ert.util.log_get_level(ert.logh)
     r.setter = lambda ert, value : ert.util.log_set_level(ert.logh, value)
-
-    r = configPanel.addRow(PathChooser(widget, "Update log path", "update_log_path"))
-    r.initialize = lambda ert : [ert.prototype("long enkf_main_get_analysis_config(long)"),
-                                 ert.prototype("char* analysis_config_get_log_path(long)"),
-                                 ert.prototype("void analysis_config_set_log_path(long, char*)")]
-
-    def get_update_log_path(ert):
-        analysis_config = ert.enkf.enkf_main_get_analysis_config(ert.main)
-        return ert.enkf.analysis_config_get_log_path(analysis_config)
-
-    r.getter = get_update_log_path
-
-    def set_update_log_path(ert, value):
-        analysis_config = ert.enkf.enkf_main_get_analysis_config(ert.main)
-        ert.enkf.analysis_config_set_log_path(analysis_config, str(value))
-
-    r.setter = set_update_log_path
+#
+#    r = configPanel.addRow(PathChooser(widget, "Update log path", "update_log_path"))
+#    r.initialize = lambda ert : [ert.prototype("long enkf_main_get_analysis_config(long)"),
+#                                 ert.prototype("char* analysis_config_get_log_path(long)"),
+#                                 ert.prototype("void analysis_config_set_log_path(long, char*)")]
+#
+#    def get_update_log_path(ert):
+#        analysis_config = ert.enkf.enkf_main_get_analysis_config(ert.main)
+#        return ert.enkf.analysis_config_get_log_path(analysis_config)
+#
+#    r.getter = get_update_log_path
+#
+#    def set_update_log_path(ert, value):
+#        analysis_config = ert.enkf.enkf_main_get_analysis_config(ert.main)
+#        ert.enkf.analysis_config_set_log_path(analysis_config, str(value))
+#
+#    r.setter = set_update_log_path
 
     configPanel.endPage()

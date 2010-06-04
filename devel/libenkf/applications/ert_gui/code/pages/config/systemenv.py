@@ -8,6 +8,7 @@ import ertwrapper
 from PyQt4 import QtGui, QtCore
 from pages.config.jobs.jobspanel import JobsPanel, Job
 import os
+import widgets.spinnerwidgets
 
 def createSystemPage(configPanel, parent):
     configPanel.startPage("System")
@@ -134,9 +135,23 @@ def createSystemPage(configPanel, parent):
     r.setter = update_job
     r.insert = add_job
     r.remove = remove_job
-    
+
+
+
     internalPanel.endPage()
     configPanel.addRow(internalPanel)
+
+    r = configPanel.addRow(PathChooser(parent, "Log file", "log_file", True))
+    r.initialize = lambda ert : [ert.prototype("char* log_get_filename(long)", lib=ert.util),
+                                 ert.prototype("void log_reset_filename(long, char*)", lib=ert.util)]
+    r.getter = lambda ert : ert.util.log_get_filename(ert.logh)
+    r.setter = lambda ert, value : ert.util.log_reset_filename(ert.logh, value)
+
+    r = configPanel.addRow(widgets.spinnerwidgets.IntegerSpinner(parent, "Log level", "log_level", 0, 1000))
+    r.initialize = lambda ert : [ert.prototype("int log_get_level(long)", lib=ert.util),
+                                 ert.prototype("void log_set_level(long, int)", lib=ert.util)]
+    r.getter = lambda ert : ert.util.log_get_level(ert.logh)
+    r.setter = lambda ert, value : ert.util.log_set_level(ert.logh, value)
 
     configPanel.endPage()
 
