@@ -3,6 +3,7 @@ from widgets.combochoice import ComboChoice
 from widgets.stringbox import DoubleBox
 from widgets.pathchooser import PathChooser
 from pages.config.parameters.parametermodels import KeywordModel
+from widgets.helpedwidget import ContentModel
 
 class KeywordPanel(QtGui.QFrame):
     def __init__(self, parent):
@@ -50,11 +51,8 @@ class KeywordPanel(QtGui.QFrame):
         self.init_files.fetchContent()
         self.parameter_file.fetchContent()
 
-    def initialize(self, model):
-        pass
-
     def modelWrap(self, widget, attribute):
-        widget.initialize = self.initialize
+        widget.initialize = ContentModel.emptyInitializer
         widget.setter = lambda model, value: self.keywordModel.set(attribute, value)
         widget.getter = lambda model: self.keywordModel[attribute]
 

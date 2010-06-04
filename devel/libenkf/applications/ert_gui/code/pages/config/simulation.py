@@ -4,29 +4,30 @@
 from PyQt4 import QtCore
 from widgets.spinnerwidgets import IntegerSpinner
 import ertwrapper
-from widgets.tablewidgets import KeywordTable, MultiColumnTable, MultiColumnTable
+from widgets.tablewidgets import KeywordTable
 from widgets.pathchooser import PathChooser
 from widgets.checkbox import CheckBox
 from widgets.configpanel import ConfigPanel
 from widgets.stringbox import StringBox
 from pages.config.jobs.forwardmodelpanel import ForwardModelPanel
-from pages.config.runpath.runpathpanel import RunpathMemberList
-from pages.config.runpath.runpathpanel import RunpathMemberPanel
+from pages.config.simulations.runpathpanel import RunpathMemberList, RunpathMemberPanel
 from enums import keep_runpath_type
+from pages.config.simulations.runtemplatepanel import RunTemplatePanel
+import widgets.helpedwidget
 
 def createSimulationsPage(configPanel, parent):
     configPanel.startPage("Simulations")
 
 
     r = configPanel.addRow(IntegerSpinner(parent, "Max submit", "max_submit", 1, 10000))
-    r.initialize = lambda ert : [ert.setTypes("site_config_get_max_submit", ertwrapper.c_int),
-                                 ert.setTypes("site_config_set_max_submit", None, [ertwrapper.c_int])]
+    r.initialize = lambda ert : [ert.prototype("int site_config_get_max_submit(long)"),
+                                 ert.prototype("void site_config_set_max_submit(long, int)")]
     r.getter = lambda ert : ert.enkf.site_config_get_max_submit(ert.site_config)
     r.setter = lambda ert, value : ert.enkf.site_config_set_max_submit(ert.site_config, value)
 
     r = configPanel.addRow(IntegerSpinner(parent, "Max resample", "max_resample", 1, 10000))
-    r.initialize = lambda ert : [ert.setTypes("model_config_get_max_resample", ertwrapper.c_int),
-                                 ert.setTypes("model_config_set_max_resample", None, [ertwrapper.c_int])]
+    r.initialize = lambda ert : [ert.prototype("int model_config_get_max_resample(long)"),
+                                 ert.prototype("void model_config_set_max_resample(long, int)")]
     r.getter = lambda ert : ert.enkf.model_config_get_max_resample(ert.model_config)
     r.setter = lambda ert, value : ert.enkf.model_config_set_max_resample(ert.model_config, value)
 
@@ -91,8 +92,8 @@ def createSimulationsPage(configPanel, parent):
     r.setter = lambda ert, value : ert.setAttribute("case_table", value)
 
     r = configPanel.addRow(PathChooser(parent, "License path", "license_path"))
-    r.initialize = lambda ert : [ert.setTypes("site_config_get_license_root_path__", ertwrapper.c_char_p),
-                                 ert.setTypes("site_config_set_license_root_path", None, ertwrapper.c_char_p)]
+    r.initialize = lambda ert : [ert.prototype("char* site_config_get_license_root_path__(long)"),
+                                 ert.prototype("void site_config_set_license_root_path(long, char*)")]
     r.getter = lambda ert : ert.enkf.site_config_get_license_root_path__(ert.site_config)
 
     def ls(string):
@@ -110,8 +111,9 @@ def createSimulationsPage(configPanel, parent):
     internalPanel.startPage("Runpath")
 
     r = internalPanel.addRow(PathChooser(parent, "Runpath", "runpath", path_format=True))
-    r.initialize = lambda ert : [ert.setTypes("model_config_get_runpath_as_char", ertwrapper.c_char_p),
-                                 ert.setTypes("model_config_set_runpath_fmt", None, [ertwrapper.c_char_p])]
+    r.initialize = lambda ert : [ert.prototype("char* model_config_get_runpath_as_char(long)"),
+                                 ert.prototype("void model_config_set_runpath_fmt(long, char*)")]
+
     r.getter = lambda ert : ert.enkf.model_config_get_runpath_as_char(ert.model_config)
     r.setter = lambda ert, value : ert.enkf.model_config_set_runpath_fmt(ert.model_config, str(value))
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("runpathChanged()"))
@@ -147,9 +149,44 @@ def createSimulationsPage(configPanel, parent):
 
     internalPanel.startPage("Run Template")
 
-    r = internalPanel.addRow(MultiColumnTable(parent, "", "run_template", ["Template", "Target file", "Arguments"]))
-    r.getter = lambda ert : ert.getAttribute("run_template")
-    r.setter = lambda ert, value : ert.setAttribute("run_template", value)
+    r = internalPanel.addRow(RunTemplatePanel(parent))
+    r.initialize = lambda ert : [ert.prototype("long enkf_main_get_templates(long)"),
+                                 ert.prototype("long ert_templates_alloc_list(long)"),
+                                 ert.prototype("long ert_templates_get_template(long, char*)"),
+                                 ert.prototype("char* ert_template_get_template_file(long)"),
+                                 ert.prototype("char* ert_template_get_target_file(long)"),
+                                 ert.prototype("char* ert_template_get_args_as_string(long)"),
+                                 ert.prototype("void ert_templates_clear(long)"),
+                                 ert.prototype("void ert_templates_add_template(long, char*, char*, char*, char*)"),]
+
+    def get_run_templates(ert):
+        templates = ert.enkf.enkf_main_get_templates(ert.main)
+        template_list = ert.enkf.ert_templates_alloc_list(templates)
+
+        template_names = ert.getStringList(template_list, free_after_use=True)
+        result = []
+        for name in template_names:
+            template = ert.enkf.ert_templates_get_template(templates, name)
+            template_file = ert.enkf.ert_template_get_template_file(template)
+            target_file = ert.enkf.ert_template_get_target_file(template)
+            arguments = ert.enkf.ert_template_get_args_as_string(template)
+            result.append((name, template_file, target_file, arguments))
+        return result
+
+    r.getter = get_run_templates
+
+    def set_run_templates(ert, template_list):
+        templates_pointer = ert.enkf.enkf_main_get_templates(ert.main)
+        ert.enkf.ert_templates_clear(templates_pointer)
+
+        for template in template_list:
+            ert.enkf.ert_templates_add_template(templates_pointer, template[0], template[1], template[2], template[3])
+
+    r.setter = set_run_templates  
+    
+#    r = internalPanel.addRow(MultiColumnTable(parent, "", "run_template", ["Template", "Target file", "Arguments"]))
+#    r.getter = lambda ert : ert.getAttribute("run_template")
+#    r.setter = lambda ert, value : ert.setAttribute("run_template", value)
 
     internalPanel.endPage()
     configPanel.addRow(internalPanel)

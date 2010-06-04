@@ -97,9 +97,11 @@ class RunWidget(HelpedWidget):
             QtGui.QMessageBox.warning(self, "Missing data", "At least one member must be selected!")
             return
 
-        if not ert.enkf.enkf_main_is_initialized(ert.main):
+        member_mask = ert.createBoolVector(len(selectedMembers), selectedMembers)
+        if not ert.enkf.enkf_main_is_initialized(ert.main, member_mask):
             QtGui.QMessageBox.warning(self, "Case not initialized", "The case must be initialized before simulation can start!")
             return
+        ert.freeBoolVector(member_mask)
 
 
         simFrom = self.simulateFrom.getSelectedValue()

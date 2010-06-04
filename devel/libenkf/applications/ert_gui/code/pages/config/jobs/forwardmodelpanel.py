@@ -1,4 +1,4 @@
-from widgets.helpedwidget import HelpedWidget
+from widgets.helpedwidget import HelpedWidget, ContentModel
 from widgets.searchablelist import SearchableList
 from PyQt4 import QtGui, QtCore
 from widgets.pathchooser import PathChooser
@@ -47,7 +47,9 @@ class ForwardModelPanel(HelpedWidget):
         layout = QtGui.QFormLayout()
         layout.setLabelAlignment(QtCore.Qt.AlignRight)
 
+
         self.forward_model_args = StringBox(self, "", "forward_model_arguments")
+        self.forward_model_args.initialize = ContentModel.emptyInitializer
         self.forward_model_args.setter = self.setArguments
         self.forward_model_args.getter = lambda model: self.forward_model_job.arguments
 
@@ -147,7 +149,7 @@ class ForwardModelPanel(HelpedWidget):
         currentRow = list.currentRow()
 
         if currentRow >= 0:
-            title = "Delete forward model?"
+            title = "Delete forward model job?"
             msg = "Are you sure you want to delete the job from the forward model?"
             btns = QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
             doDelete = QtGui.QMessageBox.question(self, title, msg, btns)
@@ -161,9 +163,7 @@ class ForwardModelJob:
 
     def __init__(self, name, arguments=None, help_text=""):
         self.name = name
-        if arguments is None:
-            arguments = ""
-        self.arguments = arguments
+        self.setArguments(arguments)
         self.setHelpText(help_text)
 
     def setArguments(self, args):

@@ -4,6 +4,7 @@ from widgets.stringbox import DoubleBox
 from widgets.pathchooser import PathChooser
 from pages.config.parameters.parametermodels import DataModel
 import enums
+import widgets.helpedwidget
 
 class DataPanel(QtGui.QFrame):
 
@@ -55,11 +56,9 @@ class DataPanel(QtGui.QFrame):
 
         self.setLayout(layout)
 
-    def initialize(self, model):
-        pass
 
     def modelWrap(self, widget, attribute):
-        widget.initialize = self.initialize #mute missing initializer warning
+        widget.initialize = widgets.helpedwidget.ContentModel.emptyInitializer
         widget.setter = lambda model, value: self.dataModel.set(attribute, value)
         widget.getter = lambda model: self.dataModel[attribute]
 

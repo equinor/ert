@@ -138,6 +138,11 @@ class ContentModel:
         for o in ContentModel.observers:
             print o
 
+    @classmethod
+    def emptyInitializer(cls, model):
+        """An empty initializer. Provided for convenience."""
+        pass
+
 class ContentModelProxy:
     """
     A ContentModelProxy adds an apply mode to a ContentModel
