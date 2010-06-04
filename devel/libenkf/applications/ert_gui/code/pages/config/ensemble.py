@@ -124,9 +124,15 @@ def createEnsemblePage(configPanel, parent):
                 model["template_key"] = template_key
                 model["init_file_fmt"] = init_file_fmt
 
-                model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
-                model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
-                model["enkf_infile"] = ert.enkf.enkf_config_node_get_enkf_infile(node)
+                min_std = ert.enkf.enkf_config_node_get_min_std_file(node)
+                enkf_outfile = ert.enkf.enkf_config_node_get_enkf_outfile(node)
+                enkf_infile = ert.enkf.enkf_config_node_get_enkf_infile(node)
+
+
+
+                model["min_std"] = min_std
+                model["enkf_outfile"] = enkf_outfile
+                model["enkf_infile"] = enkf_infile
 
             elif type == KeywordModel.TYPE:
                 model = KeywordModel(key)
@@ -195,9 +201,9 @@ def createEnsemblePage(configPanel, parent):
                                                              float(maximum))
             elif type == field_type.ECLIPSE_PARAMETER: #parameter
                 ert.enkf.enkf_config_node_update_parameter_field(node,
-                                                                 parameter_model["enkf_outfile"],
-                                                                 parameter_model["init_files"],
-                                                                 parameter_model["min_std"],
+                                                                 ert.nonify(parameter_model["enkf_outfile"]),
+                                                                 ert.nonify(parameter_model["init_files"]),
+                                                                 ert.nonify(parameter_model["min_std"]),
                                                                  truncate.value(),
                                                                  float(minimum),
                                                                  float(maximum),
@@ -205,10 +211,10 @@ def createEnsemblePage(configPanel, parent):
                                                                  parameter_model["output"])
             elif type == field_type.GENERAL: #general
                 ert.enkf.enkf_config_node_update_general_field(node,
-                                                               parameter_model["enkf_outfile"],
-                                                               parameter_model["enkf_infile"],
-                                                               parameter_model["init_files"],
-                                                               parameter_model["min_std"],
+                                                               ert.nonify(parameter_model["enkf_outfile"]),
+                                                               ert.nonify(parameter_model["enkf_infile"]),
+                                                               ert.nonify(parameter_model["init_files"]),
+                                                               ert.nonify(parameter_model["min_std"]),
                                                                truncate.value(),
                                                                float(minimum),
                                                                float(maximum),
@@ -240,12 +246,12 @@ def createEnsemblePage(configPanel, parent):
             ert.enkf.enkf_config_node_update_gen_data(node,
                                                       input_format.value(),
                                                       output_format.value(),
-                                                      parameter_model["init_file_fmt"],
-                                                      parameter_model["template_file"],
-                                                      parameter_model["template_key"],
-                                                      parameter_model["enkf_outfile"],
-                                                      parameter_model["enkf_infile"],
-                                                      parameter_model["min_std"])
+                                                      ert.nonify(parameter_model["init_file_fmt"]),
+                                                      ert.nonify(parameter_model["template_file"]),
+                                                      ert.nonify(parameter_model["template_key"]),
+                                                      ert.nonify(parameter_model["enkf_outfile"]),
+                                                      ert.nonify(parameter_model["enkf_infile"]),
+                                                      ert.nonify(parameter_model["min_std"]))
             parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
         else:
             raise AssertionError("Type is not supported: %s" % (parameter_model.__class__))
