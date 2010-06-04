@@ -307,3 +307,6 @@ class ErtWrapper:
         print "Calling enkf_main_free()"
         self.enkf.enkf_main_free(self.main)
 
+    def nonify(self, s):
+        return s or None
+
