@@ -169,13 +169,25 @@ const char * ecl_config_get_eclbase( const ecl_config_type * ecl_config ) {
 }
 
 
-
-void ecl_config_set_refcase( ecl_config_type * ecl_config , const char * refcase){ 
-
-  ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
-  if (ecl_config->refcase == NULL)
-    util_exit("%s:\nSorry: failed to load refcase:%s \n",__func__ , refcase );
-  
+/**
+   Can be called with @refcase == NULL - which amounts to clearing the
+   current refcase. 
+*/
+void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase ){ 
+  if (ecl_config->refcase != NULL) {
+    if (refcase == NULL) {    /* Clear the refcase */
+      ecl_sum_free( ecl_config->refcase );
+      ecl_config->refcase = NULL;
+    } else {                  /* Check if the currently loaded case is the same as refcase */
+      if (!ecl_sum_same_case( ecl_config->refcase , refcase )) {
+        ecl_sum_free( ecl_config->refcase );
+        ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
+      }
+    }
+  } else {
+    if (refcase != NULL)
+      ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
+  }
 }
 
 
@@ -318,7 +330,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
     ecl_config_set_grid( ecl_config , config_iget(config , "GRID" , 0,0) );
   
   if (config_item_set( config , "REFCASE")) 
-    ecl_config_set_refcase( ecl_config , config_get_value( config , "REFCASE" ));
+    ecl_config_load_refcase( ecl_config , config_get_value( config , "REFCASE" ));
 
   if (config_has_set_item(config , "INIT_SECTION")) 
     ecl_config_set_init_section( ecl_config , config_get_value( config , "INIT_SECTION" ));

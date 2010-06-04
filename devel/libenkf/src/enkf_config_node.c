@@ -404,7 +404,7 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
       config_node->valid = true;
     config_node->var_type = var_type;
   }
-
+  
   if (config_node->valid) {
     enkf_config_node_update( config_node , enkf_outfile_fmt , enkf_infile_fmt, min_std_file);                                       /* Generisk oppdatering */
     config_node->valid = gen_data_config_update(config_node->data , config_node->var_type , input_format , output_format ,          /* Special update */ 

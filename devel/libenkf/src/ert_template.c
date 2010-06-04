@@ -140,6 +140,7 @@ ert_template_type * ert_templates_add_template( ert_templates_type * ert_templat
         new_key = util_realloc_string_copy( new_key , base_name );
       else
         new_key = util_realloc_sprintf( new_key , "%s.%d" , base_name , counter );
+      counter++;
     } while (hash_has_key( ert_templates->templates , new_key));
     hash_insert_hash_owned_ref( ert_templates->templates , new_key , template , ert_template_free__);
     free( new_key );

@@ -96,6 +96,11 @@ bool member_config_pre_clear_runpath(const member_config_type * member_config) {
 }
 
 
+void member_config_set_pre_clear_runpath(member_config_type * member_config , bool pre_clear_runpath) {
+  member_config->pre_clear_runpath = pre_clear_runpath;
+}
+
+
 
 void member_config_iset_sim_time( member_config_type * member_config , int report_step , time_t sim_time ) {
   time_t_vector_iset( member_config->report_time , report_step , sim_time );

@@ -23,6 +23,7 @@ typedef enum {
 
 typedef struct history_struct history_type;
 
+history_source_type history_get_source_type( const char * string_source );
 
 // Manipulators.
 void           history_free(history_type *);

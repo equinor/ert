@@ -438,6 +438,21 @@ static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_c
 }
 
 
+/**
+   This variable is on a per-instance basis, but that is not really
+   supported. The exported functionality applies to all realizations.
+*/
+
+bool enkf_state_get_pre_clear_runpath( const enkf_state_type * enkf_state ) {
+  return member_config_pre_clear_runpath( enkf_state->my_config );
+}
+
+
+void enkf_state_set_pre_clear_runpath( enkf_state_type * enkf_state , bool pre_clear_runpath ) {
+  member_config_set_pre_clear_runpath( enkf_state->my_config , pre_clear_runpath );
+}
+
+
 
 enkf_state_type * enkf_state_alloc(int iens,
                                    enkf_fs_type              * fs, 

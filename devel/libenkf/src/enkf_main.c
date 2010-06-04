@@ -133,8 +133,26 @@ void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
 
+
 analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
   return enkf_main->analysis_config;
+}
+
+bool enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main ) {
+  return enkf_state_get_pre_clear_runpath( enkf_main->ensemble[0] );
+}
+
+void enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath) {
+  const int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    enkf_state_set_pre_clear_runpath( enkf_main->ensemble[iens] , pre_clear_runpath );
+}
+
+
+void enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
+  ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
+  model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
 }
 
 
@@ -2310,19 +2328,26 @@ void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case
 
 void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , const char * template_file , const char * parameters , const char * min_std , const char * init_file_fmt) {
   const char * key = "PRED";
-  char * target_file;
-  enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key );                                                
+  /*
+    First remove/delete existing PRED node if it is already installed.
+  */
+  if (ensemble_config_has_key( enkf_main->ensemble_config , key))
+    enkf_main_del_node( enkf_main , key );
   {
-    char * base;
-    char * ext;
-    util_alloc_file_components( template_file , NULL , &base , &ext);
-    target_file = util_alloc_filename(NULL , base , ext );
-    util_safe_free( base );
-    util_safe_free( ext );
+    char * target_file;
+    enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key );                                                
+    {
+      char * base;
+      char * ext;
+      util_alloc_file_components( template_file , NULL , &base , &ext);
+      target_file = util_alloc_filename(NULL , base , ext );
+      util_safe_free( base );
+      util_safe_free( ext );
+    }
+    enkf_config_node_update_gen_kw( config_node , target_file , template_file , parameters , min_std , init_file_fmt );
+    free( target_file );
+    ecl_config_set_schedule_prediction_file( enkf_main->ecl_config , template_file );
   }
-  enkf_config_node_update_gen_kw( config_node , target_file , template_file , parameters , min_std , init_file_fmt );
-  free( target_file );
-  ecl_config_set_schedule_prediction_file( enkf_main->ecl_config , template_file );
 }
 
 
@@ -2330,6 +2355,10 @@ void enkf_main_set_schedule_prediction_file( enkf_main_type * enkf_main , const 
   enkf_main_set_schedule_prediction_file__(enkf_main , schedule_prediction_file , NULL , NULL , NULL );
 }
 
+
+const char * enkf_main_get_schedule_prediction_file( const enkf_main_type * enkf_main ) {
+  return ecl_config_get_schedule_prediction_file( enkf_main->ecl_config );
+}
 
 
 /*

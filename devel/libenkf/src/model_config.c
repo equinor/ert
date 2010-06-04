@@ -50,92 +50,130 @@ struct model_config_struct {
   int                    last_history_restart;       /* The end of the history - this is inclusive.*/
   bool                   has_prediction; 
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
-  
-  /** The results are always loaded. */
-  bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
-  bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
-};
+  history_source_type    history_source;
+  const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer 
+                                                         to the ecl_sum instance owned and held by the ecl_config object. */
+   /** The results are always loaded. */
+   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
+   bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
+ };
 
 
 
 
-path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
-  return model_config->runpath;
+ path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
+   return model_config->runpath;
+ }
+
+ const char * model_config_get_runpath_as_char( const model_config_type * model_config ) {
+   return path_fmt_get_fmt( model_config->runpath );
+ }
+
+
+ void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
+   if (model_config->runpath != NULL)
+     path_fmt_free( model_config->runpath );
+
+   model_config->runpath  = path_fmt_alloc_directory_fmt( fmt );
+ }
+
+ /**
+    This function is not called at bootstrap time, but rather as part of an initialization
+    just before the run. Can be called maaaanye times for one application invokation.
+
+    Observe that the 'total' length is set as as the return value from this function.
+ */
+
+
+ void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode , bool statoil_mode) {
+   if (model_config->enkf_sched != NULL)
+     enkf_sched_free( model_config->enkf_sched );
+
+   model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file       , 
+                                                       model_config->last_history_restart  , 
+                                                       run_mode                            , 
+                                                       joblist                             , 
+                                                       statoil_mode , 
+                                                       model_config->use_lsf );
+ }
+
+
+ void model_config_set_enkf_sched_file(model_config_type * model_config , const char * enkf_sched_file) {
+   model_config->enkf_sched_file = util_realloc_string_copy( model_config->enkf_sched_file , enkf_sched_file);
+ }
+
+ char * model_config_get_enkf_sched_file(const model_config_type * model_config ) {
+   return model_config->enkf_sched_file;
+ }
+
+
+
+ void model_config_set_enspath( model_config_type * model_config , const char * enspath) {
+   model_config->enspath = util_realloc_string_copy( model_config->enspath , enspath );
+ }
+
+
+ void model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string) {
+   model_config->dbase_type = fs_types_lookup_string_name( dbase_type_string );
+   if (model_config->dbase_type == INVALID_DRIVER_ID)
+     util_abort("%s: did not recognize driver_type:%s \n",__func__ , dbase_type_string);
+ }
+
+
+ const char * model_config_get_enspath( const model_config_type * model_config) {
+   return model_config->enspath;
+ }
+
+
+ fs_driver_impl model_config_get_dbase_type(const model_config_type * model_config ) {
+   return model_config->dbase_type;
+ }
+
+
+
+ void model_config_set_max_resample( model_config_type * model_config , int max_resample ) {
+   model_config->max_internal_submit = max_resample;
+ }
+
+
+ int model_config_get_max_resample(const model_config_type * model_config ) {
+   return model_config->max_internal_submit;
+ }
+
+
+void model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase ) {
+  model_config->refcase = refcase;
 }
 
-const char * model_config_get_runpath_as_char( const model_config_type * model_config ) {
-  return path_fmt_get_fmt( model_config->runpath );
-}
 
-
-void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
-  if (model_config->runpath != NULL)
-    path_fmt_free( model_config->runpath );
-  
-  model_config->runpath  = path_fmt_alloc_directory_fmt( fmt );
+history_source_type model_config_get_history_source( const model_config_type * model_config ) {
+  return model_config->history_source;
 }
 
 /**
-   This function is not called at bootstrap time, but rather as part of an initialization
-   just before the run. Can be called maaaanye times for one application invokation.
-
-   Observe that the 'total' length is set as as the return value from this function.
+   Current implementation is ONLY prepared to do a reload from a
+   schedule based history to a refcase based history.
 */
 
+void model_config_set_history_source( model_config_type * model_config , history_source_type history_source ) {
+  if (model_config->history_source != history_source) {
+    bool use_history = false;
 
-void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode , bool statoil_mode) {
-  if (model_config->enkf_sched != NULL)
-    enkf_sched_free( model_config->enkf_sched );
-  
-  model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file       , 
-						      model_config->last_history_restart  , 
-						      run_mode                            , 
-						      joblist                             , 
-						      statoil_mode , 
-						      model_config->use_lsf );
-}
-
-
-void model_config_set_enkf_sched_file(model_config_type * model_config , const char * enkf_sched_file) {
-  model_config->enkf_sched_file = util_realloc_string_copy( model_config->enkf_sched_file , enkf_sched_file);
-}
-
-char * model_config_get_enkf_sched_file(const model_config_type * model_config ) {
-  return model_config->enkf_sched_file;
-}
-
-
-
-void model_config_set_enspath( model_config_type * model_config , const char * enspath) {
-  model_config->enspath = util_realloc_string_copy( model_config->enspath , enspath );
-}
-
-
-void model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string) {
-  model_config->dbase_type = fs_types_lookup_string_name( dbase_type_string );
-  if (model_config->dbase_type == INVALID_DRIVER_ID)
-    util_abort("%s: did not recognize driver_type:%s \n",__func__ , dbase_type_string);
-}
-
-
-const char * model_config_get_enspath( const model_config_type * model_config) {
-  return model_config->enspath;
-}
-
-
-fs_driver_impl model_config_get_dbase_type(const model_config_type * model_config ) {
-  return model_config->dbase_type;
-}
-
-
-
-void model_config_set_max_resample( model_config_type * model_config , int max_resample ) {
-  model_config->max_internal_submit = max_resample;
-}
-
-
-int model_config_get_max_resample(const model_config_type * model_config ) {
-  return model_config->max_internal_submit;
+    model_config->history_source = history_source;
+    if (history_source == REFCASE_HISTORY)
+      use_history = true;
+    if ((history_source != SCHEDULE) && (model_config->refcase == NULL))
+      util_abort("%s: when using a REFCASE based history you must have a refcase installed. \n",__func__);
+    
+    if (history_source != SCHEDULE) {
+      /* We want to use the REFCASE */
+      
+      if (model_config->refcase != NULL) 
+        history_realloc_from_summary( model_config->history , model_config->refcase , use_history);        
+      else
+        util_exit("%s: Invalid configuration. When using HISTORY_SOURCE != SCHEDULE you must supply a REFCASE.\n",__func__);
+    }
+  }
 }
 
 
@@ -165,6 +203,7 @@ model_config_type * model_config_alloc(const config_type * config ,
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;   
   model_config->forward_model             = forward_model_alloc(  joblist , statoil_mode , model_config->use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
+  model_config_set_refcase( model_config , refcase );
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
     forward_model_parse_init( model_config->forward_model , config_string );
@@ -190,20 +229,14 @@ model_config_type * model_config_alloc(const config_type * config ,
   {
     const char * history_source = config_iget(config , "HISTORY_SOURCE", 0,0);
     bool  use_history;
-
-    if (strcmp(history_source , "REFCASE_SIMULATED") == 0) 
-      use_history = false;
-    else if (strcmp(history_source , "REFCASE_HISTORY") == 0) 
-      use_history = true;
+    history_source_type source_type = history_get_source_type( history_source );
     
-    if (strcmp( history_source , "SCHEDULE" ) != 0) {
-      /* We want to use the REFCASE */
-      
-      if (refcase != NULL) 
-        history_realloc_from_summary( model_config->history , refcase , use_history);        
-      else
-        util_exit("%s: Invalid configuration. When using HISTORY_SOURCE != SCHEDULE you must supply a REFCASE.\n",__func__);
-    }
+    if (source_type == REFCASE_SIMULATED)
+      use_history = false;
+    else if (source_type == REFCASE_HISTORY)
+      use_history = true;
+
+    model_config_set_history_source( model_config , source_type );
   }
 
   {

@@ -35,6 +35,10 @@ extern "C" {
 
 typedef struct enkf_main_struct enkf_main_type;
 
+bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
+void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
+void                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
+
 ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
 void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
 const char                  * enkf_main_get_log_file( const enkf_main_type * enkf_main );

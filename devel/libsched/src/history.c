@@ -33,6 +33,22 @@ struct history_struct{
 };
 
 
+history_source_type history_get_source_type( const char * string_source ) {
+  history_source_type source_type;
+
+  if (strcmp( string_source , "REFCASE_SIMULATED") == 0)
+    source_type = REFCASE_SIMULATED;
+  else if (strcmp( string_source , "REFCASE_HISTORY") == 0)
+    source_type = REFCASE_HISTORY;
+  else if (strcmp( string_source , "SCHEDULE") == 0)
+    source_type = SCHEDULE;
+  else
+    util_abort("%s: Sorry source:%s not recognized\n",__func__ , string_source);
+
+  return source_type;
+}
+
+
 
 
 /******************************************************************/

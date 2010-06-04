@@ -34,6 +34,8 @@ const char *            member_config_get_casename( const member_config_type * m
 const sched_file_type * member_config_get_sched_file( const member_config_type * member_config);
 
 bool                    member_config_pre_clear_runpath(const member_config_type * member_config);
+void                    member_config_set_pre_clear_runpath(member_config_type * member_config , bool pre_clear_runpath);
+
 
 member_config_type *    member_config_alloc(int iens , 
                                             const char * casename , 
