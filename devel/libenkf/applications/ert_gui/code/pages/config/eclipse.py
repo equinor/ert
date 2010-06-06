@@ -43,9 +43,9 @@ def createEclipsePage(configPanel, parent):
 
     r = configPanel.addRow(PathChooser(parent, "Refcase", "refcase", True))
     r.initialize = lambda ert : [ert.setTypes("ecl_config_get_refcase_name", ertwrapper.c_char_p),
-                                 ert.setTypes("ecl_config_set_refcase", None, ertwrapper.c_char_p)]
+                                 ert.setTypes("ecl_config_load_refcase", None, ertwrapper.c_char_p)]
     r.getter = lambda ert : ert.enkf.ecl_config_get_refcase_name(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.ecl_config_set_refcase(ert.ecl_config, str(value))
+    r.setter = lambda ert, value : ert.enkf.ecl_config_load_refcase(ert.ecl_config, str(value))
 
     r = configPanel.addRow(PathChooser(parent, "Schedule prediction file", "schedule_prediction_file"))
     r.getter = lambda ert : ert.getAttribute("schedule_prediction_file")

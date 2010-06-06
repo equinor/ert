@@ -89,7 +89,7 @@ class ParametersAndMembers(HelpedWidget):
 
         for member in members:
             m = int(member.strip())
-            ert.enkf.enkf_main_initialize(ert.main, stringlist, m , m)
+            ert.enkf.enkf_main_initialize_from_scratch(ert.main, stringlist, m , m)
 
         ert.freeStringList(stringlist)
         #print parameters
@@ -148,7 +148,7 @@ class ParametersAndMembers(HelpedWidget):
 
     def initialize(self, ert):
         ert.setTypes("ensemble_config_alloc_keylist_from_var_type", ertwrapper.c_long, ertwrapper.c_int)
-        ert.setTypes("enkf_main_initialize", ertwrapper.c_int, [ertwrapper.c_long, ertwrapper.c_int, ertwrapper.c_int])
+        ert.setTypes("enkf_main_initialize_from_scratch", ertwrapper.c_int, [ertwrapper.c_long, ertwrapper.c_int, ertwrapper.c_int])
         ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
         ert.setTypes("enkf_main_get_fs")
         ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)

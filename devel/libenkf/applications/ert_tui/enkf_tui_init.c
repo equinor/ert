@@ -48,7 +48,7 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
 
     
 
-  enkf_main_initialize(enkf_main , param_list , iens1 , iens2);
+  enkf_main_initialize_from_scratch(enkf_main , param_list , iens1 , iens2);
   stringlist_free( param_list );
 }
 

@@ -107,5 +107,58 @@ ert_template_set_args_as_string(template , arg_string);
 
 
 
+INITIALIZATION
+--------------
+
+enkf_main_initialize_from_existing__( enkf_main , source_case , source_step , source_state , 
+                                      iens_mask , ranking_key /* Will be NULL*/ ,          
+                                      node_list);
+
+
+
+node_list ~ stringlist med de valgt nodene.
+
+iens_mask = bool_vector_alloc(0 , false);   <- Allokereres med false som default.
+iens_mask ~ bool_vector hvor alle de aktive indeksene er satt til true
+ 
+
+
+SCHEDULE_PREDICTION_FILE
+------------------------
+Get:  enkf_main_get_schedule_prediction_file( enkf_main )
+Set:  enkf_main_set_schedule_prediction_file( enkf_main , filename )
+
+
+REFCASE
+-------
+Get:
+ecle_config = enkf_main_get_ecl_config( enkf_main );
+refacse = ecl_config_get_refcase_name( ecl_config )
+
+Set:
+enkf_main_set_refcase( enkf_main , refcase )
+
+
+
+HISTORY_SOURCE
+--------------
+Get:
+m = enkf_main_get_model_config( enkf_main )
+history_source = model_config_get_history_source( m )    <- History_source ~ enum history_source_type fra libsched/src/history.y
+
+
+Set:
+m = enkf_main_get_model_config( enkf_main )
+model_config_get_history_source( m , source)    <- NB Hvis source har en av verdiene REFCASE_HISTORY / REFCASE_SMULATED du maa satt ett REFACSE forst.
+
+
+
+PRE_CLEAR_RUNPATH:
+-----------------
+Get: enkf_main_get_pre_clear_runpath( enkf_main )   <- Return value: true | false
+Set: enkf_main_set_pre_clear_runpath( enkf_main , true | false )
+
+
+
 
 
