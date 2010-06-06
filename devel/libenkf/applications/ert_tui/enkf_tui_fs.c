@@ -102,6 +102,8 @@ void enkf_tui_fs_select_case(void * arg)
 
 
 
+
+
 static void enkf_tui_fs_copy_ensemble__(
   enkf_main_type * enkf_main,
   const char     * source_case,
@@ -117,9 +119,9 @@ static void enkf_tui_fs_copy_ensemble__(
   ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
   int ens_size                  = enkf_main_get_ensemble_size(enkf_main);
   char * ranking_key;
-  const int  * ranking_permutation = NULL;
-  
-  
+  int  * ranking_permutation = NULL;
+  int  * identity_permutation;
+
   misfit_table_type * misfit_table = enkf_main_get_misfit( enkf_main );
   
   if (misfit_table != NULL) {
@@ -132,9 +134,17 @@ static void enkf_tui_fs_copy_ensemble__(
       return;
     }
   }
+  identity_permutation = util_malloc( ens_size * sizeof * identity_permutation , __func__ );
+  {
+    int iens;
+    for (iens =0; iens < ens_size; iens++) 
+      identity_permutation[iens] = iens;
+  }
 
+  if (ranking_permutation == NULL)
+    ranking_permutation = identity_permutation;
   
-   
+
   {
     /* Store current selections */
     char * user_read_dir  = util_alloc_string_copy(enkf_fs_get_read_dir( fs));
@@ -178,7 +188,7 @@ static void enkf_tui_fs_copy_ensemble__(
       const char * key = stringlist_iget(nodes, i);
       enkf_config_node_type * config_node = ensemble_config_get_node(config , key);
       msg_update(msg , key);
-      enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , ens_size , ranking_permutation);
+      enkf_fs_copy_node_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , ens_size , ranking_permutation);
     }
     
     msg_free(msg , true);
@@ -190,6 +200,7 @@ static void enkf_tui_fs_copy_ensemble__(
     free(user_read_dir);
     free(user_write_dir);
   }
+  free( identity_permutation );
 }
 
 
@@ -202,11 +213,10 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
   char * source_case;
   int ens_size;
   int last_report;
-  int src_step, target_step;
+  int src_step;
   state_enum src_state, target_state;
-  
-  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
+  enkf_main_type   * enkf_main = enkf_main_safe_cast( arg );
+  enkf_fs_type     * fs        = enkf_main_get_fs(enkf_main);
 
   const ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
   ens_size = enkf_main_get_ensemble_size( enkf_main );
@@ -216,14 +226,12 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
 
   source_case = enkf_tui_fs_alloc_existing_case( fs , "Initialize from case" , prompt_len);
   if (source_case != NULL) {                                              
-    char * current_case = util_alloc_string_copy(enkf_fs_get_read_dir(fs));
+    char * ranking_key  = NULL;
+    bool_vector_type * iens_mask = bool_vector_alloc( 0 , true ); 
     src_step         = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
     src_state        = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
-    target_state     = ANALYZED;
-    target_step      = 0;
-    
-    enkf_tui_fs_copy_ensemble__(enkf_main, source_case, current_case, src_step, src_state, 0, ANALYZED, true);
-    free(current_case);
+    enkf_main_initialize_from_existing( enkf_main , source_case , src_step , src_state , iens_mask , ranking_key );
+    bool_vector_free( iens_mask );
   }
   util_safe_free( source_case );
 }

@@ -1581,30 +1581,18 @@ void enkf_fs_copy_node(enkf_fs_type * enkf_fs,
 /**
   Copy an ensemble of nodes. Note that the limits are inclusive.
 */
-void enkf_fs_copy_ensemble(enkf_fs_type * enkf_fs, 
-			   enkf_config_node_type * config_node,               
-			   int report_step_from, state_enum state_from,    /* src state */
-			   int report_step_to  , state_enum state_to,      /* target state */
-			   int ens_size, 
-			   const int * __permutations) {
-  
-  int * permutations;
-  if (__permutations == NULL) {
-    /* No reordering of ensemble members. */
-    permutations = util_malloc( ens_size * sizeof * permutations , __func__);
-    for (int i = 0; i < ens_size; i++)
-      permutations[i] = i;
-  } else
-    permutations = (int *) __permutations;
-
+void enkf_fs_copy_node_ensemble(enkf_fs_type * enkf_fs, 
+                                enkf_config_node_type * config_node,               
+                                int report_step_from, state_enum state_from,    /* src state */
+                                int report_step_to  , state_enum state_to,      /* target state */
+                                int ens_size, 
+                                const int * permutations) {
   
   for(int iens_from =0; iens_from < ens_size; iens_from++) {
     int iens_to = permutations[iens_from];
     enkf_fs_copy_node(enkf_fs, config_node, report_step_from, iens_from , state_from, report_step_to, iens_to , state_to);
   }
-
-  if (__permutations == NULL) 
-    free( permutations );
+  
 }
 
 

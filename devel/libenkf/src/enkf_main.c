@@ -1733,9 +1733,126 @@ bool enkf_main_run(enkf_main_type * enkf_main            ,
   return true;
 }
 
+/*****************************************************************/
+/*  Filesystem copy functions                                    */
 
 
-void enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2) {
+void enkf_main_copy_ensemble(enkf_main_type * enkf_main        , 
+                             const char * source_case          , 
+                             int          source_report_step   ,
+                             state_enum   source_state         ,
+                             const char * target_case          ,  
+                             int          target_report_step   ,
+                             state_enum   target_state         , 
+                             const bool_vector_type * iens_mask,
+                             const char * ranking_key ,    /* It is OK to supply NULL - but if != NULL it must exist */
+                             const stringlist_type * node_list) {
+
+  /**
+     Must start by setting up the enkf_fs instance to read and write
+     from the correct cases.
+  */
+
+  const int ens_size            = enkf_main_get_ensemble_size( enkf_main );
+  
+  {
+    /* Store current selections */
+    char * user_read_dir  = util_alloc_string_copy(enkf_fs_get_read_dir( enkf_main->dbase));
+    char * user_write_dir = util_alloc_string_copy(enkf_fs_get_write_dir(enkf_main->dbase));
+    
+    enkf_fs_select_write_dir(enkf_main->dbase , target_case, true );
+    enkf_fs_select_read_dir( enkf_main->dbase , source_case       );
+
+    {
+      int * ranking_permutation;
+      int inode , src_iens;
+      
+      if (ranking_key != NULL) 
+        ranking_permutation = (int *) enkf_main_get_ranking_permutation( enkf_main , ranking_key );
+      else {
+        ranking_permutation = util_malloc( ens_size * sizeof * ranking_permutation , __func__);
+        for (src_iens = 0; src_iens < ens_size; src_iens++)
+          ranking_permutation[src_iens] = src_iens;
+      }
+      
+      for (inode =0; inode < stringlist_get_size( node_list ); inode++) {
+        enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( node_list , inode ));
+        for (src_iens = 0; src_iens < enkf_main_get_ensemble_size( enkf_main ); src_iens++) {
+          if (bool_vector_safe_iget(iens_mask , src_iens)) {
+            int target_iens = ranking_permutation[src_iens];
+            enkf_fs_copy_node( enkf_main->dbase , config_node , 
+                               source_report_step , src_iens    , source_state, 
+                               target_report_step , target_iens , target_state );
+          }
+        }
+      }
+
+      if (ranking_permutation == NULL) 
+        free( ranking_permutation );
+    }
+    /* Recover initial selections. */
+    enkf_fs_select_write_dir(enkf_main->dbase , user_write_dir, false);
+    enkf_fs_select_read_dir( enkf_main->dbase , user_read_dir        );
+    free(user_read_dir);
+    free(user_write_dir);
+  }
+}
+
+
+
+
+
+
+/**
+   This is based on a general copy function, but a couple of variables
+   have been set to default values because this is an initialization:
+
+     target_step  = 0
+     target_state = analyzed
+   
+*/
+
+void enkf_main_initialize_from_existing__(enkf_main_type * enkf_main , 
+                                          const char * source_case , 
+                                          int          source_report_step,
+                                          state_enum   source_state,
+                                          const bool_vector_type * iens_mask,
+                                          const char * ranking_key ,    /* It is OK to supply NULL - but if != NULL it must exist */
+                                          const stringlist_type * node_list) {
+  
+  const int target_report_step  = 0;
+  const state_enum target_state = ANALYZED;
+  const char * target_case      = enkf_fs_get_write_dir( enkf_main->dbase );
+
+  enkf_main_copy_ensemble(enkf_main , 
+                          source_case , source_report_step , source_state , 
+                          target_case , target_report_step , target_state , 
+                          iens_mask , ranking_key , node_list);
+  
+}
+
+
+
+/**
+   This function will select all the parameter variables in the
+   ensmeble, and then call enkf_main_initialize_from_existing__() with
+   that list.
+*/
+void enkf_main_initialize_from_existing(enkf_main_type * enkf_main , 
+                                        const char * source_case , 
+                                        int          source_report_step,
+                                        state_enum   source_state,
+                                        const bool_vector_type * iens_mask,
+                                        const char  * ranking_key) { 
+  stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER ); /* Select only paramters - will fail for GEN_DATA of type DYNAMIC_STATE. */
+  enkf_main_initialize_from_existing__(enkf_main , source_case , source_report_step , source_state , iens_mask , ranking_key , param_list );
+  stringlist_free( param_list );
+}
+
+
+
+
+void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2) {
   int iens;
   msg_type * msg = msg_alloc("Initializing...: " );
   msg_show(msg);
@@ -2707,6 +2824,30 @@ misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main
 }
 
 
+/**
+   o If enkf_main->misfit_table == NULL (i.e. no misfit table has been
+     calculated) the ranking key must also be NULL, otherwise it will
+     fail hard.
+
+   o ranking_key == NULL the function will return NULL:
+   
+   o If ranking_key != NULL and NOT an existing ranking key the function will fail hard.
+
+*/
+
+const int * enkf_main_get_ranking_permutation( const enkf_main_type * enkf_main , const char * ranking_key) {
+  if (enkf_main->misfit_table == NULL) {
+    if (ranking_key != NULL) {
+      util_abort("%s: This is a logical error - asking for ranking_key:%s - when no misfit table has been calculated\n",__func__ , ranking_key);
+      return NULL;
+    } else
+      return NULL;
+  } else
+    return misfit_table_get_ranking_permutation( enkf_main->misfit_table , ranking_key );
+}
+
+
+
 
 /**
    First deleting all the nodes - then the configuration.
@@ -3035,5 +3176,7 @@ void enkf_main_init_debug( const char * executable ) {
 ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
   return enkf_main->templates;
 }
+
+/*****************************************************************/
 
 

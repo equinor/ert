@@ -54,10 +54,11 @@ struct misfit_ranking_struct {
 struct misfit_table_struct {
   UTIL_TYPE_ID_DECLARATION;
   int         	        history_length;  
-  vector_type 	      * ensemble;       /* Vector of misfit_node_type instances - one for each ensemble member. */
-  hash_type   	      * ranking_list;   /* A hash table of stored permutation vectors. */
-  const enkf_obs_type * enkf_obs;       /* A pointer to the active enkf_obs instance - NOT owned by the misfit_table. */
-  char                * current_case;   /* The (filesystem) case which was used when building the misfit table. */
+  vector_type 	      * ensemble;           /* Vector of misfit_node_type instances - one for each ensemble member. */
+  hash_type   	      * ranking_list;       /* A hash table of stored permutation vectors. */
+  const enkf_obs_type * enkf_obs;           /* A pointer to the active enkf_obs instance - NOT owned by the misfit_table. */
+  char                * current_case;       /* The (filesystem) case which was used when building the misfit table. */
+
 };
 
 
@@ -325,11 +326,34 @@ void misfit_table_fwrite( const misfit_table_type * misfit_table , FILE * stream
 */
 
 static misfit_table_type * misfit_table_alloc_empty(const enkf_obs_type * enkf_obs) {
-  misfit_table_type * table = util_malloc( sizeof * table , __func__);
-  table->enkf_obs           = enkf_obs;
-  table->ensemble           = vector_alloc_new();
-  table->ranking_list       = hash_alloc();
+  misfit_table_type * table    = util_malloc( sizeof * table , __func__);
+  table->enkf_obs              = enkf_obs;
+  table->ensemble              = vector_alloc_new();
+  table->ranking_list          = hash_alloc();
   return table;
+}
+
+
+/**
+   This funcion is a feeble attempt at allowing the ensemble size to
+   change runtime. If the new ensemble size is larger than the current
+   ensemble size ALL the currently internalized misfit information is
+   dropped on the floor; if the the ensemble is shrinked only the the
+   last elements of the misfit table are discarded (NOT exactly battle-tested).
+
+*/
+
+void misfit_table_set_ens_size( misfit_table_type * misfit_table , int ens_size) {
+  int iens;
+  if (ens_size > vector_get_size( misfit_table->ensemble )) {
+    /* The new ensemble is larger than what we have currently internalized, 
+       we drop everything and add empty misfit_node instances. */
+    vector_clear( misfit_table->ensemble );
+    for (iens = 0; iens < ens_size; iens++)
+      vector_append_owned_ref( misfit_table->ensemble , misfit_node_alloc( iens ) , misfit_node_free__);
+  } else 
+    /* We shrink the vector by removing the last elements. */
+    vector_shrink( misfit_table->ensemble , ens_size);
 }
 
 
@@ -342,10 +366,11 @@ misfit_table_type * misfit_table_fread_alloc( const char * filename , const enkf
   misfit_table->current_case   = buffer_fread_alloc_string( buffer );
   misfit_table->history_length = buffer_fread_int( buffer );
   ens_size                     = buffer_fread_int( buffer );
+  misfit_table_set_ens_size( misfit_table , ens_size );
   {
     for (int iens = 0; iens < ens_size; iens++) {
       misfit_node_type * node = misfit_node_buffer_fread_alloc( buffer );
-      vector_append_owned_ref( misfit_table->ensemble , node , misfit_node_free__);
+      vector_iset_owned_ref( misfit_table->ensemble , iens , node , misfit_node_free__);
     }
   }
 
@@ -359,11 +384,7 @@ misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , en
   misfit_table_type * table = misfit_table_alloc_empty( enkf_obs );
   table->current_case       = util_alloc_string_copy( enkf_fs_get_read_dir( fs ));
   table->history_length     = history_length;
-  {
-    int iens;
-    for (iens = 0; iens < ens_size; iens++) 
-      vector_append_owned_ref( table->ensemble , misfit_node_alloc( iens ) , misfit_node_free__);
-  }
+  misfit_table_set_ens_size( table , ens_size );
   misfit_table_update(table , config , fs);
   {
     FILE * stream = enkf_fs_open_case_file( fs , "misfit" , "w");

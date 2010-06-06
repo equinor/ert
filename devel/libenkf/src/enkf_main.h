@@ -104,7 +104,36 @@ const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main );
 void         enkf_main_analysis_update(enkf_main_type * , int , int );
 const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
 void         enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int step1 , int step2);
-void         enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2);
+void         enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2);
+
+void enkf_main_initialize_from_existing(enkf_main_type * enkf_main , 
+                                        const char * source_case , 
+                                        int          source_report_step,
+                                        state_enum   source_state,
+                                        const bool_vector_type * iens_mask,
+                                        const char * ranking_key);
+
+void enkf_main_copy_ensemble(enkf_main_type * enkf_main , 
+                             const char * source_case , 
+                             int          source_report_step,
+                             state_enum   source_state,
+                             const char * target_case , 
+                             int          target_report_step,
+                             state_enum   target_state,
+                             const bool_vector_type * iens_mask,
+                             const char * ranking_key ,    
+                             const stringlist_type * node_list);
+
+void enkf_main_initialize_from_existing__(enkf_main_type * enkf_main , 
+                                          const char * source_case , 
+                                          int          source_report_step,
+                                          state_enum   source_state,
+                                          const bool_vector_type * iens_mask,
+                                          const char * ranking_key,
+                                          const stringlist_type * node_list);
+
+
+const int         * enkf_main_get_ranking_permutation( const enkf_main_type * enkf_main , const char * ranking_key);
 void                enkf_main_set_misfit_table( enkf_main_type * enkf_main , misfit_table_type * misfit);
 misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main );
 
