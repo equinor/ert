@@ -7,10 +7,10 @@ import sys
 #    print k
 #
 #QtGui.QApplication.setStyle("Plastique")
+import os
 
 app = QtGui.QApplication(sys.argv) #Early so that QT is initialized before other imports
 
-import local
 import ertwrapper
 
 from pages.application import Application
@@ -37,8 +37,13 @@ splash.showMessage("Bootstrapping...", color=QtCore.Qt.white)
 app.processEvents()
 
 site_config = "/project/res/etc/ERT/Config/site-config"
-enkf_config = local.enkf_config
-enkf_so     = local.enkf_so
+enkf_config = sys.argv[1]
+
+if os.environ.has_key("ERT_HOME"):
+    enkf_so = os.environ["ERT_HOME"]
+else:
+    enkf_so = "."
+    
 ert = ertwrapper.ErtWrapper(site_config = site_config, enkf_config = enkf_config, enkf_so = enkf_so)
 
 splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
@@ -47,7 +52,6 @@ app.processEvents()
 window.addPage("Configuration", resourceIcon("config"), ConfigPages(window))
 window.addPage("Init", resourceIcon("db"), InitPanel(window))
 window.addPage("Run", resourceIcon("run"), RunPanel(window))
-#window.addPage("Plots", resourceIcon("plot"), ImagePlotPanel("plots/default"))
 window.addPage("Plots", resourceIcon("plot"), PlotPanel())
 
 splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)
