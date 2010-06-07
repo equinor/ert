@@ -37,7 +37,6 @@ splash.showMessage("Bootstrapping...", color=QtCore.Qt.white)
 app.processEvents()
 
 site_config = "/project/res/etc/ERT/Config/site-config"
-print "->", sys.argv, "<-"
 enkf_config = sys.argv[1]
 
 if os.environ.has_key("ERT_HOME"):
