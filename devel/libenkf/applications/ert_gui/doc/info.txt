@@ -161,4 +161,11 @@ Set: enkf_main_set_pre_clear_runpath( enkf_main , true | false )
 
 
 
+CASE_TABLE
+----------
+model_config = enkf_main_get_model_config( enkf_main );
+
+get: model_config_get_case_table_file( model_config )
+set: enkf_main_set_case_table( model_config , filename );   <- File must exist
+
 
