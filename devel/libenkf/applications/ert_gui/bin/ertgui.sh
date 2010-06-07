@@ -7,7 +7,9 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/project/res/x86_64_RH_4/lib
 
 export ERT_HOME=/private/jpb/EnKF/
 
-echo $0
+TEMP_DIRECTORY=$PWD
+
+cd dirname $0
 cd ../code
 
 python ../bin/clean.py
@@ -23,6 +25,4 @@ else
     python main.py "$1"
 fi
 
-#strace python main.py
-#gdb python
-
+cd "$TEMP_DIRECTORY"
