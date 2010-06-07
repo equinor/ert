@@ -244,3 +244,12 @@ class keep_runpath_type(enum):
 keep_runpath_type.DEFAULT_KEEP = keep_runpath_type("DEFAULT_KEEP", 0)
 keep_runpath_type.EXPLICIT_DELETE = keep_runpath_type("EXPLICIT_DELETE", 1)
 keep_runpath_type.EXPLICIT_KEEP = keep_runpath_type("EXPLICIT_KEEP", 2)
+
+class history_source_type(enum):
+    SCHEDULE = None
+    REFCASE_SIMULATED = None
+    REFCASE_HISTORY = None
+
+history_source_type.SCHEDULE = history_source_type("SCHEDULE", 0)
+history_source_type.REFCASE_SIMULATED = history_source_type("REFCASE_SIMULATED", 1)
+history_source_type.REFCASE_HISTORY = history_source_type("REFCASE_HISTORY", 2)

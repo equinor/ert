@@ -32,21 +32,6 @@ class ErtWrapper:
         atexit.register(self.cleanup)
         
 
-        self.add_fixed_length_schedule_kw = ["item1", "item2", "not implemented"]
-        self.schedule_prediction_file = "Still missing???"
-
-        self.dbase_type = "BLOCK_FS"
-        self.enspath = "storage is missing as well"
-        self.select_case = "some_case is missing"
-
-        self.history_source = "REFCASE_HISTORY"
-
-        self.pre_clear_runpath = True
-
-        self.case_table = "... not here"
-
-        self.run_template = [["...", ".....", "asdf:asdf asdfasdf:asdfasdf"], ["other", "sdtsdf", ".as.asdfsdf"]]
-
     def __loadLibraries(self, prefix):
         """Load libraries that are required by ERT and ERT itself"""
         CDLL("libblas.so", RTLD_GLOBAL)
@@ -176,15 +161,6 @@ class ErtWrapper:
 
         #print "Setting: " + str(func.restype) + " " + function + "( " + str(func.argtypes) + " ) "
         return func
-
-
-    def setAttribute(self, attribute, value):
-        #print "set " + attribute + ": " + str(getattr(self, attribute)) + " -> " + str(value)
-        setattr(self, attribute, value)
-
-    def getAttribute(self, attribute):
-        #print "get " + attribute + ": " + str(getattr(self, attribute))
-        return getattr(self, attribute)
 
     def initializeTypes(self):
         self.prototype("char* stringlist_iget(long, int)", lib=self.util)

@@ -136,7 +136,7 @@ ecle_config = enkf_main_get_ecl_config( enkf_main );
 refacse = ecl_config_get_refcase_name( ecl_config )
 
 Set:
-enkf_main_set_refcase( enkf_main , refcase )
+enkf_main_set_refcase( enkf_main , refcase )    ????????????????????   Ikkje load?
 
 
 

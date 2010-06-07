@@ -88,8 +88,11 @@ def createSimulationsPage(configPanel, parent):
 
 
     r = configPanel.addRow(PathChooser(parent, "Case table", "case_table"))
-    r.getter = lambda ert : ert.getAttribute("case_table")
-    r.setter = lambda ert, value : ert.setAttribute("case_table", value)
+    r.getter = lambda ert : "Missing getter"
+
+    def setteru(ert, value):
+        print "Missing setter"
+    r.setter = setteru
 
     r = configPanel.addRow(PathChooser(parent, "License path", "license_path"))
     r.initialize = lambda ert : [ert.prototype("char* site_config_get_license_root_path__(long)"),
@@ -118,9 +121,14 @@ def createSimulationsPage(configPanel, parent):
     r.setter = lambda ert, value : ert.enkf.model_config_set_runpath_fmt(ert.model_config, str(value))
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("runpathChanged()"))
 
+
     r = internalPanel.addRow(CheckBox(parent, "Pre clear", "pre_clear_runpath", "Perform pre clear"))
-    r.getter = lambda ert : ert.getAttribute("pre_clear_runpath")
-    r.setter = lambda ert, value : ert.setAttribute("pre_clear_runpath", value)
+    r.initialize = lambda ert : [ert.prototype("bool enkf_main_get_pre_clear_runpath(long)"),
+                                 ert.prototype("void enkf_main_set_pre_clear_runpath(long, bool)")]
+
+    r.getter = lambda ert : ert.enkf.enkf_main_get_pre_clear_runpath(ert.main)
+    r.setter = lambda ert, value : ert.enkf.enkf_main_set_pre_clear_runpath(ert.main, value)
+
 
     r = internalPanel.addRow(RunpathMemberPanel(widgetLabel="Retain runpath", helpLabel="runpath_retain"))
     r.initialize = lambda ert : [ert.prototype("int enkf_main_get_ensemble_size(long)"),

@@ -3,16 +3,28 @@
 # ----------------------------------------------------------------------------------------------
 from widgets.combochoice import ComboChoice
 from widgets.pathchooser import PathChooser
+from enums import history_source_type
 
 def createObservationsPage(configPanel, parent):
     configPanel.startPage("Observations")
 
-    r = configPanel.addRow(ComboChoice(parent, ["REFCASE_SIMULATED", "REFCASE_HISTORY"], "History source", "history_source"))
-    r.getter = lambda ert : ert.getAttribute("history_source")
-    r.setter = lambda ert, value : ert.setAttribute("history_source", value)
+    r = configPanel.addRow(ComboChoice(parent, history_source_type.values(), "History source", "history_source"))
+    r.initialize = lambda ert : [ert.prototype("int model_config_get_history_source(long)"),
+                                 ert.prototype("void model_config_set_history_source(long, int)")]
 
+    def get_history_source(ert):
+        history_source = ert.enkf.model_config_get_history_source(ert.model_config)
+        return history_source_type.resolveValue(history_source)
 
+    r.getter = get_history_source
 
+    def set_history_source(ert, value):
+        history_source = history_source_type.resolveName(str(value))
+        ert.enkf.model_config_get_history_source(ert.model_config, history_source.value())
+        
+    r.setter = set_history_source
+
+    
     r = configPanel.addRow(PathChooser(parent, "Observations config", "obs_config", True))
     r.initialize = lambda ert : [ert.prototype("long enkf_main_get_obs(long)"),
                                  ert.prototype("char* enkf_obs_get_config_file(long)"),
