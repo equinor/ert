@@ -14,8 +14,8 @@ def createSystemPage(configPanel, parent):
     configPanel.startPage("System")
 
     r = configPanel.addRow(PathChooser(parent, "Job script", "job_script", True))
-    r.initialize = lambda ert : [ert.setTypes("site_config_get_job_script", ertwrapper.c_char_p),
-                                 ert.setTypes("site_config_set_job_script", None, ertwrapper.c_char_p)]
+    r.initialize = lambda ert : [ert.prototype("char* site_config_get_job_script(long)"),
+                                 ert.prototype("void site_config_set_job_script(long, char*)")]
     r.getter = lambda ert : ert.enkf.site_config_get_job_script(ert.site_config)
     r.setter = lambda ert, value : ert.enkf.site_config_set_job_script(ert.site_config, str(value))
 
@@ -23,9 +23,9 @@ def createSystemPage(configPanel, parent):
     internalPanel.startPage("setenv")
 
     r = internalPanel.addRow(KeywordTable(parent, "", "setenv"))
-    r.initialize = lambda ert : [ert.setTypes("site_config_get_env_hash"),
-                                 ert.setTypes("site_config_clear_env", None),
-                                 ert.setTypes("site_config_setenv", None, [ertwrapper.c_char_p, ertwrapper.c_char_p])]
+    r.initialize = lambda ert : [ert.prototype("long site_config_get_env_hash(long)"),
+                                 ert.prototype("void site_config_clear_env(long)"),
+                                 ert.prototype("void site_config_setenv(long, char*, char*)")]
     r.getter = lambda ert : ert.getHash(ert.enkf.site_config_get_env_hash(ert.site_config))
 
     def setenv(ert, value):
@@ -40,11 +40,10 @@ def createSystemPage(configPanel, parent):
     internalPanel.startPage("Update path")
 
     r = internalPanel.addRow(KeywordTable(parent, "", "update_path"))
-    r.initialize = lambda ert : [ert.setTypes("site_config_get_path_variables"),
-                                 ert.setTypes("site_config_get_path_values"),
-                                 ert.setTypes("site_config_clear_pathvar", None),
-                                 ert.setTypes("site_config_update_pathvar", None,
-                                              [ertwrapper.c_char_p, ertwrapper.c_char_p])]
+    r.initialize = lambda ert : [ert.prototype("long site_config_get_path_variables(long)"),
+                                 ert.prototype("long site_config_get_path_values(long)"),
+                                 ert.prototype("void site_config_clear_pathvar(long)"),
+                                 ert.prototype("void site_config_update_pathvar(long, char*, char*)")]
     def get_update_path(ert):
         paths = ert.getStringList(ert.enkf.site_config_get_path_variables(ert.site_config))
         values =  ert.getStringList(ert.enkf.site_config_get_path_values(ert.site_config))
@@ -67,23 +66,23 @@ def createSystemPage(configPanel, parent):
     internalPanel.startPage("Jobs")
 
     r = internalPanel.addRow(JobsPanel(parent))
-    r.initialize = lambda ert : [ert.setTypes("site_config_get_installed_jobs"),
-                                 ert.setTypes("site_config_get_license_root_path__", ertwrapper.c_char_p),
-                                 ert.setTypes("ext_job_is_private", ertwrapper.c_int, library=ert.job_queue),
-                                 ert.setTypes("ext_job_get_config_file", ertwrapper.c_char_p, library=ert.job_queue),
-                                 ert.setTypes("ext_job_set_config_file", None, ertwrapper.c_char_p, library=ert.job_queue),
-                                 ert.setTypes("ext_job_alloc", argtypes=[ertwrapper.c_char_p, ertwrapper.c_char_p, ertwrapper.c_int], library=ert.job_queue, selfpointer=False),
-                                 ert.setTypes("ext_job_fscanf_alloc", argtypes=[ertwrapper.c_char_p, ertwrapper.c_char_p, ertwrapper.c_int, ertwrapper.c_char_p], library=ert.job_queue, selfpointer=False),
-                                 ert.setTypes("ext_joblist_get_job", argtypes=ertwrapper.c_char_p, library=ert.job_queue),
-                                 ert.setTypes("ext_joblist_del_job", ertwrapper.c_int, ertwrapper.c_char_p, library=ert.job_queue),
-                                 ert.setTypes("ext_joblist_has_job", ertwrapper.c_int, ertwrapper.c_char_p, library=ert.job_queue),
-                                 ert.setTypes("ext_joblist_add_job", None, [ertwrapper.c_char_p, ertwrapper.c_long], library=ert.job_queue),
-                                 ert.setTypes("ext_joblist_get_jobs", library=ert.job_queue)]
+    r.initialize = lambda ert : [ert.prototype("long site_config_get_installed_jobs(long)"),
+                                 ert.prototype("char* site_config_get_license_root_path__(long)"),
+                                 ert.prototype("int ext_job_is_private(long)", lib=ert.job_queue),
+                                 ert.prototype("char* ext_job_get_config_file(long)", lib=ert.job_queue),
+                                 ert.prototype("void ext_job_set_config_file(long, char*)", lib=ert.job_queue),
+                                 ert.prototype("long ext_job_alloc(char*, char*, int)", lib=ert.job_queue),
+                                 ert.prototype("long ext_job_fscanf_alloc(char*, char*, int, char*)", lib=ert.job_queue),
+                                 ert.prototype("long ext_joblist_get_job(long, char*)", lib=ert.job_queue),
+                                 ert.prototype("int ext_joblist_del_job(long, char*)", lib=ert.job_queue),
+                                 ert.prototype("int ext_joblist_has_job(long, char*)", lib=ert.job_queue),
+                                 ert.prototype("void ext_joblist_add_job(long, char*, long)", lib=ert.job_queue),
+                                 ert.prototype("long ext_joblist_get_jobs(long)", lib=ert.job_queue)]
     def get_jobs(ert):
         jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
         h  = ert.job_queue.ext_joblist_get_jobs(jl)
 
-        jobs = ert.getHash(h, return_type=ertwrapper.c_long)
+        jobs = ert.getHash(h, return_type="long")
 
         private_jobs = []
         for k, v in jobs:

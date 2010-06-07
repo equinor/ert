@@ -159,7 +159,7 @@ class ErtWrapper:
                 func.argtypes = [argtypes]
 
 
-        #print "Setting: " + str(func.restype) + " " + function + "( " + str(func.argtypes) + " ) "
+        print "Setting: " + str(func.restype) + " " + function + "( " + str(func.argtypes) + " ) "
         return func
 
     def initializeTypes(self):
@@ -219,13 +219,13 @@ class ErtWrapper:
         self.util.stringlist_free(stringlistpointer)
 
 
-    def getHash(self, hashpointer, intValue = False, return_type=c_char_p):
+    def getHash(self, hashpointer, intValue = False, return_type="char*"):
         """Retrieves a hash as a list of 2 element lists"""
         if hashpointer == 0:
             return []
 
         hash_iterator = self.util.hash_iter_alloc(hashpointer)
-        self.setTypes("hash_get", return_type, library = self.util)
+        self.prototype("%s hash_get(long)" % (return_type), lib = self.util)
 
         result = []
         while not self.util.hash_iter_is_complete(hash_iterator):
