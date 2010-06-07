@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export QT_EXPERIMENTAL=1 
 export PYTHON_EXPERIMENTAL=1 
@@ -9,7 +9,9 @@ export ERT_HOME=/private/jpb/EnKF/
 
 ORIGINAL_DIRECTORY=$PWD
 
-cd 'dirname $0'
+script_name=$(dirname $0)
+
+cd $script_name
 cd ../code
 
 python ../bin/clean.py
