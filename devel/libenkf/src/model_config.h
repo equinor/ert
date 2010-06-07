@@ -20,6 +20,9 @@ extern "C" {
 #include <fs_types.h>
 
 typedef struct model_config_struct model_config_type;
+
+const char *           model_config_get_case_table_file( const model_config_type * model_config );
+void                   model_config_set_case_table( model_config_type * model_config , int ens_size , const char * case_table_file );
 void                   model_config_set_enspath( model_config_type * model_config , const char * enspath);
 void                   model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string);
 const char           * model_config_get_enspath( const model_config_type * model_config);

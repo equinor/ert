@@ -136,7 +136,7 @@ void enkf_main_initialize_from_existing__(enkf_main_type * enkf_main ,
 const int         * enkf_main_get_ranking_permutation( const enkf_main_type * enkf_main , const char * ranking_key);
 void                enkf_main_set_misfit_table( enkf_main_type * enkf_main , misfit_table_type * misfit);
 misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main );
-
+void                     enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file );
 void                     enkf_main_store_pid(const char * argv0);
 void                     enkf_main_delete_pid( );
 void                     enkf_main_list_users(  set_type * users , const char * executable );

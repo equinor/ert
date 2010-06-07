@@ -51,7 +51,7 @@ def createEclipsePage(configPanel, parent):
     r.initialize = lambda ert : [ert.prototype("char* enkf_main_get_schedule_prediction_file(long)"),
                                  ert.prototype("void enkf_main_set_schedule_prediction_file(long, char*)")]
     r.getter = lambda ert : ert.enkf.enkf_main_get_schedule_prediction_file(ert.main)
-    r.setter = lambda ert, value : ert.nonify(ert.enkf.enkf_main_set_schedule_prediction_file(ert.main, value))
+    r.setter = lambda ert, value : ert.enkf.enkf_main_set_schedule_prediction_file(ert.main, ert.nonify( value ))
 
     r = configPanel.addRow(KeywordTable(parent, "Data keywords", "data_kw"))
     r.initialize = lambda ert : [ert.prototype("long enkf_main_get_data_kw(long)"),

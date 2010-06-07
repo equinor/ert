@@ -2450,7 +2450,8 @@ void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , cons
   */
   if (ensemble_config_has_key( enkf_main->ensemble_config , key))
     enkf_main_del_node( enkf_main , key );
-  {
+
+  if (template_file != NULL) {
     char * target_file;
     enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key );                                                
     {
@@ -3175,6 +3176,10 @@ void enkf_main_init_debug( const char * executable ) {
 
 ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
   return enkf_main->templates;
+}
+
+void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file ) {
+  model_config_set_case_table( enkf_main , enkf_main->ens_size , case_table_file );
 }
 
 /*****************************************************************/

@@ -39,6 +39,7 @@
 
 struct model_config_struct {
   stringlist_type      * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
+  char                 * case_table_file; 
   forward_model_type   * forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
   bool                   use_lsf;             	    /* The forward models need to know whether we are using lsf. */  
   history_type         * history;             	    /* The history object. */
@@ -68,6 +69,45 @@ struct model_config_struct {
  const char * model_config_get_runpath_as_char( const model_config_type * model_config ) {
    return path_fmt_get_fmt( model_config->runpath );
  }
+
+
+const char * model_config_get_case_table_file( const model_config_type * model_config ) {
+  return model_config->case_table_file;
+}
+
+void model_config_set_case_table( model_config_type * model_config , int ens_size , const char * case_table_file ) {
+  if (model_config->case_table_file != NULL) { /* Clear the current selection */
+    free( model_config->case_table_file );
+    stringlist_free( model_config->case_names );
+    
+    model_config->case_table_file = NULL;
+    model_config->case_names      = NULL;
+  }
+
+  if (case_table_file != NULL) {
+    bool atEOF = false;
+    char casename[128];
+    int  case_size = 0;
+    FILE * stream = util_fopen( case_table_file , "r");
+    model_config->case_names = stringlist_alloc_new();
+    while (!atEOF) {
+      if (fscanf( stream , "%s" , casename) == 1) {
+        stringlist_append_copy( model_config->case_names , casename );
+        case_size++;
+      } else
+        atEOF = true;
+    }
+    fclose( stream );
+
+    if (case_size < ens_size) {
+      for (int i = case_size; i < ens_size; i++)
+        stringlist_append_owned_ref( model_config->case_names , util_alloc_sprintf("case_%04d" , i));
+      fprintf(stderr, "** Warning: mismatch between NUM_REALIZATIONS:%d and size of CASE_TABLE:%d - using \'case_nnnn\' for the last cases %d.\n", ens_size , case_size , ens_size - case_size);
+    } else if (case_size > ens_size) 
+      fprintf(stderr, "** Warning: mismatch between NUM_REALIZATIONS:%d and CASE_TABLE:%d - only the %d realizations will be used.\n", ens_size , case_size , ens_size);
+
+  }
+}
 
 
  void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
@@ -202,6 +242,7 @@ model_config_type * model_config_alloc(const config_type * config ,
   model_config->runpath                   = NULL;
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;   
+  model_config->case_table_file           = NULL;
   model_config->forward_model             = forward_model_alloc(  joblist , statoil_mode , model_config->use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
   model_config_set_refcase( model_config , refcase );
   {
@@ -258,29 +299,8 @@ model_config_type * model_config_alloc(const config_type * config ,
     model_config->has_prediction = false;
 
 
-  if (config_item_set(config ,  "CASE_TABLE")) {
-    bool atEOF = false;
-    char casename[128];
-    int  case_size = 0;
-    FILE * stream = util_fopen( config_iget( config , "CASE_TABLE" , 0,0) , "r");
-    model_config->case_names = stringlist_alloc_new();
-    while (!atEOF) {
-      if (fscanf( stream , "%s" , casename) == 1) {
-        stringlist_append_copy( model_config->case_names , casename );
-        case_size++;
-      } else
-        atEOF = true;
-    }
-    fclose( stream );
-
-    if (case_size < ens_size) {
-      for (int i = case_size; i < ens_size; i++)
-        stringlist_append_owned_ref( model_config->case_names , util_alloc_sprintf("case_%04d" , i));
-      fprintf(stderr, "** Warning: mismatch between NUM_REALIZATIONS:%d and size of CASE_TABLE:%d - using \'case_nnnn\' for the last cases %d.\n", ens_size , case_size , ens_size - case_size);
-    } else if (case_size > ens_size) 
-      fprintf(stderr, "** Warning: mismatch between NUM_REALIZATIONS:%d and CASE_TABLE:%d - only the %d realizations will be used.\n", ens_size , case_size , ens_size);
-  }
-    
+  if (config_item_set(config ,  "CASE_TABLE")) 
+    model_config_set_case_table( model_config , ens_size , config_iget( config , "CASE_TABLE" , 0,0));
   
   if (config_item_set( config , "ENSPATH"))
     model_config_set_enspath( model_config , config_get_value(config , "ENSPATH"));
@@ -310,11 +330,12 @@ void model_config_free(model_config_type * model_config) {
     enkf_sched_free( model_config->enkf_sched );
   free( model_config->enspath );
   util_safe_free( model_config->enkf_sched_file );
+  util_safe_free( model_config->case_table_file );
   history_free(model_config->history);
   forward_model_free(model_config->forward_model);
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_state);
-    if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
+  if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
   free(model_config);
 }
 
