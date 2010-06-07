@@ -9,8 +9,7 @@ export ERT_HOME=/private/jpb/EnKF/
 
 ORIGINAL_DIRECTORY=$PWD
 
-SCRIPT_DIR=eval dirname "$0"
-cd $SCRIPT_DIR
+cd 'dirname $0'
 cd ../code
 
 python ../bin/clean.py
