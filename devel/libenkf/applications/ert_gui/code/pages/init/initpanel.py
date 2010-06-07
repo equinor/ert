@@ -58,10 +58,10 @@ class InitPanel(QtGui.QFrame):
         cases.addRemoveWidget.enableRemoveButton(False)  #todo: add support for removal
         cases.list.setMaximumHeight(150)
 
-        cases.initialize = lambda ert : [ert.setTypes("enkf_main_get_fs"),
-                                         ert.setTypes("enkf_fs_alloc_dirlist"),
-                                         ert.setTypes("enkf_fs_has_dir", ertwrapper.c_int),
-                                         ert.setTypes("enkf_fs_select_write_dir", None)]
+        cases.initialize = lambda ert : [ert.prototype("long enkf_main_get_fs(long)"),
+                                         ert.prototype("long enkf_fs_alloc_dirlist(long)"),
+                                         ert.prototype("bool enkf_fs_has_dir(long)"),
+                                         ert.prototype("void enkf_fs_select_write_dir(long, char*, bool)")]
 
         def create_case(ert, cases):
             fs = ert.enkf.enkf_main_get_fs(ert.main)
@@ -87,10 +87,10 @@ class InitPanel(QtGui.QFrame):
         self.currentCase.combo.setMinimumWidth(150)
 
         def initialize_cases(ert):
-            ert.setTypes("enkf_main_get_fs")
-            ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)
-            ert.setTypes("enkf_fs_select_read_dir", None, ertwrapper.c_char_p)
-            ert.setTypes("enkf_fs_select_write_dir", None, ertwrapper.c_char_p)
+            ert.prototype("long enkf_main_get_fs(long)")
+            ert.prototype("char* enkf_fs_get_read_dir(long)")
+            ert.prototype("void enkf_fs_select_read_dir(long, char*)")
+            ert.prototype("void enkf_fs_select_write_dir(long, char*)")
 
             self.currentCase.updateList(self.get_case_list(ert))
 
