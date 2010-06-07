@@ -302,14 +302,14 @@ class SimulationPanelController:
         """Set prototypes for ERT"""
         if not self.initialized:
             ert.prototype("bool job_queue_get_pause(long)", lib = ert.job_queue)
-            ert.setTypes("job_queue_set_pause_on", library = ert.job_queue)
-            ert.setTypes("job_queue_set_pause_off", library = ert.job_queue)
-            ert.setTypes("job_queue_user_exit", library = ert.job_queue)
-            ert.setTypes("enkf_main_iget_state", argtypes=ertwrapper.c_int)
-            ert.setTypes("enkf_state_kill_simulation", None)
-            ert.setTypes("enkf_state_resubmit_simulation", None, ertwrapper.c_int)
-            ert.setTypes("enkf_state_get_run_status", ertwrapper.c_int)
-            ert.setTypes("site_config_get_job_queue")
+            ert.prototype("void job_queue_set_pause_on(long)", lib = ert.job_queue)
+            ert.prototype("void job_queue_set_pause_off(long)", lib = ert.job_queue)
+            ert.prototype("void job_queue_user_exit(long)", lib = ert.job_queue)
+            ert.prototype("long enkf_main_iget_state(long, int)")
+            ert.prototype("void enkf_state_kill_simulation(long)")
+            ert.prototype("void enkf_state_resubmit_simulation(long, int)")
+            ert.prototype("int enkf_state_get_run_status(long)")
+            ert.prototype("long site_config_get_job_queue(long)")
             self.initialized = True
 
     def setModel(self, ert):

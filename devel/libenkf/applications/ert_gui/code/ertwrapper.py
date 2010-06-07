@@ -82,8 +82,9 @@ class ErtWrapper:
 
     def prototype(self, prototype, lib=None):
         """
-        Provides the same functionality as setTypes but in a different way.
-        prototype is a string formatted like this:
+        Defines the return type and arguments for a C-function
+
+        prototype expects a string formatted like this:
 
             "type functionName(type, ... ,type)"
 
@@ -129,38 +130,6 @@ class ErtWrapper:
 
             #print func, func.restype, func.argtyp
             return func
-
-    def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer = True):
-        """
-        Set the return and argument types of a ERT function.
-        Since all methods need a pointer, this is already defined as c_long.
-        library defaults to the enkf library
-        """
-        if library is None:
-            library = self.enkf
-
-        if argtypes is None:
-            argtypes = []
-
-        func = getattr(library, function)
-        func.restype = restype
-
-        if isinstance(argtypes, list):
-            if selfpointer:
-                args = [c_long]
-                args.extend(argtypes)
-            else:
-                args = argtypes
-            func.argtypes = args
-        else:
-            if selfpointer:
-                func.argtypes = [c_long, argtypes]
-            else:
-                func.argtypes = [argtypes]
-
-
-        print "Setting: " + str(func.restype) + " " + function + "( " + str(func.argtypes) + " ) "
-        return func
 
     def initializeTypes(self):
         self.prototype("char* stringlist_iget(long, int)", lib=self.util)

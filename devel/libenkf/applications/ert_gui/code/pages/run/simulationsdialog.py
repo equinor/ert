@@ -146,11 +146,11 @@ class SimulationsDialogController:
     def initialize(self, ert):
         """Protoype ERT functions"""
         if not self.initialized:
-            ert.setTypes("enkf_main_iget_state", ertwrapper.c_long, ertwrapper.c_int)
-            ert.setTypes("enkf_state_get_run_status", ertwrapper.c_int)
-            ert.setTypes("site_config_queue_is_running")
-            ert.setTypes("enkf_state_get_start_time")
-            ert.setTypes("enkf_state_get_submit_time")
+            ert.prototype("long enkf_main_iget_state(long, int)")
+            ert.prototype("int enkf_state_get_run_status(long)")
+            ert.prototype("long site_config_queue_is_running(long)")
+            ert.prototype("long enkf_state_get_start_time(long)")
+            ert.prototype("long enkf_state_get_submit_time(long)")
             self.initialized = True
 
     def start(self, **kwargs):

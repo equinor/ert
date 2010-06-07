@@ -172,11 +172,6 @@ class RunWidget(HelpedWidget):
         ert.prototype("int enkf_main_get_history_length(long)")
         ert.prototype("char* model_config_get_runpath_as_char(long)")
         ert.prototype("bool enkf_main_is_initialized(long)")
-#        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
-#        ert.setTypes("enkf_main_get_history_length", ertwrapper.c_int)
-#        ert.setTypes("model_config_get_runpath_as_char", ertwrapper.c_char_p)
-#        ert.setTypes("enkf_main_is_initialized", ertwrapper.c_int)
-
 
     def getter(self, ert):
         """Fetch data from EnKF. Such as number of realizations, runpath and number of timesteps."""

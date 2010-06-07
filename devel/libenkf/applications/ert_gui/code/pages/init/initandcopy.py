@@ -147,13 +147,13 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def initialize(self, ert):
-        ert.setTypes("ensemble_config_alloc_keylist_from_var_type", ertwrapper.c_long, ertwrapper.c_int)
-        ert.setTypes("enkf_main_initialize_from_scratch", ertwrapper.c_int, [ertwrapper.c_long, ertwrapper.c_int, ertwrapper.c_int])
-        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
-        ert.setTypes("enkf_main_get_fs")
-        ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)
-        ert.setTypes("enkf_fs_alloc_dirlist")
-        ert.setTypes("enkf_main_get_history_length", ertwrapper.c_int)
+        ert.prototype("long ensemble_config_alloc_keylist_from_var_type(long, int)")
+        ert.prototype("int enkf_main_initialize_from_scratch(long, long, int, int)")
+        ert.prototype("int enkf_main_get_ensemble_size(long)")
+        ert.prototype("long enkf_main_get_fs(long)")
+        ert.prototype("char* enkf_fs_get_read_dir(long)")
+        ert.prototype("long enkf_fs_alloc_dirlist(long)")
+        ert.prototype("int enkf_main_get_history_length(long)")
 
 
     def getter(self, ert):
