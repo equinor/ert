@@ -23,7 +23,7 @@ def createEclipsePage(configPanel, parent):
 
     r = configPanel.addRow(PathChooser(parent, "Grid", "grid"))
     r.initialize = lambda ert : [ert.prototype("char* ecl_config_get_gridfile(long)"),
-                                 ert.prototype("void ecl_config_set_grid(long, char)")]
+                                 ert.prototype("void ecl_config_set_grid(long, char*)")]
     r.getter = lambda ert : ert.enkf.ecl_config_get_gridfile(ert.ecl_config)
     r.setter = lambda ert, value : ert.enkf.ecl_config_set_grid(ert.ecl_config, str(value))
 
