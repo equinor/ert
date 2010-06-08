@@ -45,7 +45,7 @@ class PlotPanel(QtGui.QWidget):
 
         plotLayout.addLayout(parameterLayout)
         plotLayout.addWidget(self.plot)
-        self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=150)
+        self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=180)
         plotLayout.addWidget(self.plotViewSettings)
         self.setLayout(plotLayout)
 
@@ -123,7 +123,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
 
         self.errorbarModes = QtGui.QComboBox()
-        errorbarItems = ["Auto", "Errorbar", "Errorline"]
+        errorbarItems = ["Auto", "Errorbar", "Errorline+StDv", "Errorline"]
         self.errorbarModes.addItems(errorbarItems)
         self.errorbar_max = -1
         def errorbar(index):
@@ -131,8 +131,12 @@ class PlotViewSettingsPanel(QtGui.QFrame):
                 self.plotView.setErrorbarLimit(self.errorbar_max)
             elif index == 1: #only show show errorbars
                 self.plotView.setErrorbarLimit(10000)
-            else: #only show error lines
+            elif index == 2: #only show error lines with standard deviation
                 self.plotView.setErrorbarLimit(0)
+                self.plotView.setShowSTDV(True)
+            else: #only show error lines without standard deviation
+                self.plotView.setErrorbarLimit(0)
+                self.plotView.setShowSTDV(False)
 
 
         self.connect(self.errorbarModes, QtCore.SIGNAL("currentIndexChanged(int)"), errorbar)
@@ -162,11 +166,36 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout.addRow(self.xlimitUpper)
 
 
+        layout.addRow(widgets.util.createSeparator())
+
+
         self.saveBtn = QtGui.QPushButton()
         self.saveBtn.setIcon(widgets.util.resourceIcon("disk"))
         self.saveBtn.setIconSize(QtCore.QSize(16, 16))
         layout.addRow("Save:", self.saveBtn)
         self.connect(self.saveBtn, QtCore.SIGNAL('clicked()'), self.plotView.save)
+
+
+        layout.addRow(widgets.util.createSeparator())
+
+        
+        self.selected_member_label = QtGui.QLabel()
+        self.selected_member_label.setWordWrap(True)
+        def plotSelectionChanged(selected_members):
+            text = ""
+            for member in selected_members:
+                text = text + " " + str(member.get_gid())
+            self.selected_member_label.setText(text)
+            
+        self.connect(self.plotView, QtCore.SIGNAL('plotSelectionChanged(array)'), plotSelectionChanged)
+        layout.addRow(QtGui.QLabel("Selected members:"))
+        layout.addRow(self.selected_member_label)
+
+        self.clear_button = QtGui.QPushButton()
+        self.clear_button.setText("Clear selection")
+        layout.addRow(self.clear_button)
+        self.connect(self.clear_button, QtCore.SIGNAL('clicked()'), self.plotView.clearSelection)
+
 
         self.setLayout(layout)
 
