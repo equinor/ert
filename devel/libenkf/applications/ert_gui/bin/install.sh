@@ -25,10 +25,10 @@ cp -rf $ert_gui_dir/bin $destination/bin
 cp -rf $ert_gui_dir/img $destination/img
 cp -rf $ert_gui_dir/help $destination/help
 
-find $destination -name ".svn" -execdir rm -rf {} \;
-find $destination -name "*.pyc" -exec rm -rf {} \;
+find $destination -name ".svn" -type d -exec rm -rf {} +
+find $destination -name "*.pyc" -exec rm -rf {} +
 
 echo
 echo "The GUI for ERT has been installed in: $destination."
-echo "The ERT_HOME environment variable in ertgui.sh must be set before running."
+#echo "The ERT_HOME environment variable in ertgui.sh must be set before running."
 echo
