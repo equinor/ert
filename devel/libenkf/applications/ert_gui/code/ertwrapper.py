@@ -4,6 +4,7 @@ import ctypes.util
 import atexit
 import re
 import sys
+import os
 
 class ErtWrapper:
     """Wraps the functionality of ERT using ctypes"""
@@ -30,7 +31,17 @@ class ErtWrapper:
         self.initializeTypes()
         
         atexit.register(self.cleanup)
-        
+
+
+    def __loadLibrary(self, prefix, name):
+        slib = ("%s/%s/slib/%s.so" % (prefix, name, name))
+        lib = ("%s/%s.so" % (prefix, name))
+        if os.path.exists(slib):
+            return CDLL(slib, RTLD_GLOBAL)
+        elif os.path.exists(lib):
+            return CDLL(lib, RTLD_GLOBAL)
+        else:
+            raise AssertionError("Can not find library: %s" % (name))
 
     def __loadLibraries(self, prefix):
         """Load libraries that are required by ERT and ERT itself"""
@@ -38,14 +49,13 @@ class ErtWrapper:
         CDLL("liblapack.so", RTLD_GLOBAL)
         CDLL("libz.so", RTLD_GLOBAL)
 
-        self.util = CDLL(prefix + "libutil/slib/libutil.so", RTLD_GLOBAL)
-        CDLL(prefix + "libecl/slib/libecl.so", RTLD_GLOBAL)
-        CDLL(prefix + "libsched/slib/libsched.so", RTLD_GLOBAL)
-        CDLL(prefix + "librms/slib/librms.so", RTLD_GLOBAL)
-        CDLL(prefix + "libconfig/slib/libconfig.so", RTLD_GLOBAL)
-        self.job_queue = CDLL(prefix + "libjob_queue/slib/libjob_queue.so", RTLD_GLOBAL)
-
-        self.enkf = CDLL(prefix + "libenkf/slib/libenkf.so", RTLD_GLOBAL)
+        self.util = self.__loadLibrary(prefix, "libutil")
+        self.__loadLibrary(prefix, "libecl")
+        self.__loadLibrary(prefix, "libsched")
+        self.__loadLibrary(prefix, "librms")
+        self.__loadLibrary(prefix, "libconfig")
+        self.job_queue = self.__loadLibrary(prefix, "libjob_queue")
+        self.enkf = self.__loadLibrary(prefix, "libenkf")
 
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug("/usr/bin/python")
