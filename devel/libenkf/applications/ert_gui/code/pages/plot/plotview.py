@@ -10,6 +10,7 @@ from  pages.plot.plotdata import PlotData
 import widgets
 from matplotlib.dates import AutoDateLocator
 from PyQt4.QtCore import SIGNAL
+import os
 
 class PlotView(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -168,9 +169,11 @@ class PlotView(QtGui.QFrame):
     def setData(self, data):
         self.data = data
 
-    def showErrorbar(self, errorbar_visible=False):
+    def showErrorbar(self, errorbar_visible=False, redraw=True):
         self.errorbar_visible = errorbar_visible
-        self.drawPlot()
+
+        if redraw:
+            self.drawPlot()
 
     def getShowErrorbar(self):
         return self.errorbar_visible
@@ -219,6 +222,9 @@ class PlotView(QtGui.QFrame):
         return matplotlib.dates.date2num(datetime.date(*time.localtime(ert_time)[0:3]))
 
     def save(self):
+        if not os.path.exists(self.plot_path):
+            os.makedirs(self.plot_path)
+            
         path = self.plot_path + "/" + self.axes.get_title()
         self.fig.savefig(path + ".png", dpi=300, format="png")
         self.fig.savefig(path + ".pdf", dpi=300, format="pdf")

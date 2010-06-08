@@ -116,31 +116,32 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout = QtGui.QFormLayout()
         layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
 
-        self.showErrorbarChk = QtGui.QCheckBox("")
-        self.showErrorbarChk.setChecked(plotView.getShowErrorbar())
-        self.connect(self.showErrorbarChk, QtCore.SIGNAL("stateChanged(int)"), lambda state : self.plotView.showErrorbar(state == QtCore.Qt.Checked))
-        layout.addRow("Show errorbars:", self.showErrorbarChk)
-
 
         self.errorbarModes = QtGui.QComboBox()
-        errorbarItems = ["Auto", "Errorbar", "Errorline+StDv", "Errorline"]
+        errorbarItems = ["Off", "Auto", "Errorbar", "Errorline", "History"]
         self.errorbarModes.addItems(errorbarItems)
         self.errorbar_max = -1
         def errorbar(index):
-            if index == 0: #auto
+            if index == 0: #off
+                self.plotView.showErrorbar(False)
+            if index == 1: #auto
+                self.plotView.showErrorbar(True, True)
                 self.plotView.setErrorbarLimit(self.errorbar_max)
-            elif index == 1: #only show show errorbars
+            elif index == 2: #only show show errorbars
+                self.plotView.showErrorbar(True, True)
                 self.plotView.setErrorbarLimit(10000)
-            elif index == 2: #only show error lines with standard deviation
+            elif index == 3: #only show error lines with standard deviation
+                self.plotView.showErrorbar(True, True)
                 self.plotView.setErrorbarLimit(0)
                 self.plotView.setShowSTDV(True)
             else: #only show error lines without standard deviation
+                self.plotView.showErrorbar(True, True)
                 self.plotView.setErrorbarLimit(0)
                 self.plotView.setShowSTDV(False)
 
 
         self.connect(self.errorbarModes, QtCore.SIGNAL("currentIndexChanged(int)"), errorbar)
-        layout.addRow("Errorbar:", self.errorbarModes)
+        layout.addRow("Error and history:", self.errorbarModes)
 
 
         self.alphaSpn = QtGui.QDoubleSpinBox(self)
