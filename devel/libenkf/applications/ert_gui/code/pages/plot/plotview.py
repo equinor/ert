@@ -92,7 +92,7 @@ class PlotView(QtGui.QFrame):
     def clearLine(self, line):
         line.set_color(self.blue)
         line.set_alpha(self.alpha)
-        line.set_zorder(line.get_gid())
+        line.set_zorder(100 + line.get_gid())
         self.selected_lines.remove(line)
 
     #@print_timing
@@ -109,6 +109,11 @@ class PlotView(QtGui.QFrame):
 
         self.axes.set_title(name)
 
+        selected_members = []
+
+        for selected_line in self.selected_lines:
+            selected_members.append(selected_line.get_gid())
+
 
         for member in self.data.x_data.keys():
             x = self.data.x_data[member]
@@ -118,7 +123,10 @@ class PlotView(QtGui.QFrame):
             x = numpy.array(x)
             y = numpy.array(y)
 
-            line, = self.axes.plot_date(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
+            if member in selected_members:
+                line, = self.axes.plot_date(x, y, "-", color=self.purple, alpha=0.5, picker=2, zorder=1000) #list of lines returned (we only add one)
+            else:
+                line, = self.axes.plot_date(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
             line.set_gid(member)
             self.lines.append(line)
 
