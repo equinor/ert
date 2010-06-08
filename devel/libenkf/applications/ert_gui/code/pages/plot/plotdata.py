@@ -178,9 +178,13 @@ class PlotContextDataFetcher(ContentModel):
         ert.prototype("int field_config_get_ny(long)")
         ert.prototype("int field_config_get_nz(long)")
 
+        ert.prototype("long enkf_main_get_fs(long)")
+        ert.prototype("char* enkf_fs_get_read_dir(long)")
+
         ert.prototype("int plot_config_get_errorbar_max(long)")
         ert.prototype("char* plot_config_get_path(long)")
 
+        self.modelConnect("casesUpdated()", self.fetchContent)
 
 
     #@print_timing
@@ -224,7 +228,11 @@ class PlotContextDataFetcher(ContentModel):
                 p.setUserData(data.key_index_list[key][0])
 
         data.errorbar_max = ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
-        data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config)
+
+        fs = ert.enkf.enkf_main_get_fs(ert.main)
+        currentCase = ert.enkf.enkf_fs_get_read_dir(fs)
+
+        data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config) + "/" + currentCase
 
         return data
 

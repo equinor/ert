@@ -6,7 +6,7 @@ from widgets.combochoice import ComboChoice
 
 
 from widgets.helpedwidget import HelpedWidget
-from widgets.util import resourceIcon, createSeparator
+from widgets.util import resourceIcon, createSeparator, may_take_a_long_time
 
 from initandcopy import *
 
@@ -104,6 +104,7 @@ class InitPanel(QtGui.QFrame):
 
         self.currentCase.getter = get_current_case
 
+        @may_take_a_long_time
         def select_case(ert, case):
             case = str(case)
             #print "Selecting case: " + case
