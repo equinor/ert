@@ -14,6 +14,7 @@ from pages.config.simulations.runpathpanel import RunpathMemberList, RunpathMemb
 from enums import keep_runpath_type
 from pages.config.simulations.runtemplatepanel import RunTemplatePanel
 import widgets.helpedwidget
+import os
 
 def createSimulationsPage(configPanel, parent):
     configPanel.startPage("Simulations")
@@ -88,12 +89,19 @@ def createSimulationsPage(configPanel, parent):
 
 
     r = configPanel.addRow(PathChooser(parent, "Case table", "case_table"))
-    r.getter = lambda ert : "Missing getter"
+    r.initialize = lambda ert : [ert.prototype("char* model_config_get_case_table_file(long)"),
+                                 ert.prototype("void enkf_main_set_case_table(long, char*)")]
 
-    def setteru(ert, value):
-        print "Missing setter"
-    r.setter = setteru
+    def get_case_table(ert):
+        return ert.enkf.model_config_get_case_table_file(ert.model_config)
+    r.getter = get_case_table
 
+    def set_case_table(ert, value):
+        if os.path.exists(value):
+            ert.enkf.enkf_main_set_case_table(ert.model_config, ert.nonify(value))
+    r.setter = set_case_table
+
+    
     r = configPanel.addRow(PathChooser(parent, "License path", "license_path"))
     r.initialize = lambda ert : [ert.prototype("char* site_config_get_license_root_path__(long)"),
                                  ert.prototype("void site_config_set_license_root_path(long, char*)")]
