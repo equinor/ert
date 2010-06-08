@@ -9,6 +9,7 @@ from widgets.util import print_timing
 from  pages.plot.plotdata import PlotData
 import widgets
 from matplotlib.dates import AutoDateLocator
+from PyQt4.QtCore import SIGNAL
 
 class PlotView(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -44,20 +45,23 @@ class PlotView(QtGui.QFrame):
         self.axes = self.fig.add_subplot(111)
         self.axes.set_xlim()
 
-        def onclick(event):
-            print 'button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(
-                event.button, event.x, event.y, event.xdata, event.ydata)
+        self.selected_lines = []
+
+        def onclick(evnt):
+            #print 'button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(evnt.button, evnt.x, evnt.y, evnt.xdata, evnt.ydata)
+            pass
         self.fig.canvas.mpl_connect('button_press_event', onclick)
+
+
 
         def onpick(event):
             thisline = event.artist
-            thisline.set_color(self.purple)
-            thisline.set_zorder(1000)
-            thisline.set_alpha(0.5)
-            xdata, ydata = thisline.get_data()
-            ind = event.ind
-            print 'on pick line:', zip(xdata[ind], ydata[ind]) , thisline.get_gid()
-            self.canvas.draw()
+
+            self.toggleLine(thisline)
+            #print "index?:", event.ind
+            #print "The selected member is: %s" % (thisline.get_gid())
+
+
 
 
         self.fig.canvas.mpl_connect('pick_event', onpick)
@@ -70,6 +74,25 @@ class PlotView(QtGui.QFrame):
         self.xminf = 0.0
         self.xmaxf = 1.0
         self.plot_path = "."
+        self.show_stdv = True
+
+
+    def toggleLine(self, thisline):
+        if thisline in self.selected_lines:
+            self.clearLine(thisline)
+        else:
+            thisline.set_color(self.purple)
+            thisline.set_zorder(1000)
+            thisline.set_alpha(0.5)
+            self.selected_lines.append(thisline)
+        self.emit(SIGNAL('plotSelectionChanged(array)'), self.selected_lines)
+        self.canvas.draw()
+
+    def clearLine(self, line):
+        line.set_color(self.blue)
+        line.set_alpha(self.alpha)
+        line.set_zorder(line.get_gid())
+        self.selected_lines.remove(line)
 
     #@print_timing
     @widgets.util.may_take_a_long_time
@@ -113,8 +136,9 @@ class PlotView(QtGui.QFrame):
                 self.axes.errorbar(x, y, std, fmt=None, ecolor=self.orange, zorder=10)
             else:
                 self.axes.plot_date(x, y, "-", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
-                self.axes.plot_date(x, y - std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
-                self.axes.plot_date(x, y + std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                if self.show_stdv:
+                    self.axes.plot_date(x, y - std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                    self.axes.plot_date(x, y + std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
 
 
         self.xlimits = self.axes.get_xlim()
@@ -170,6 +194,10 @@ class PlotView(QtGui.QFrame):
     def setErrorbarLimit(self, limit):
         self.errorbar_limit = limit
         self.drawPlot()
+
+    def setShowSTDV(self, show_stdv):
+        self.show_stdv = show_stdv
+        self.drawPlot()
     
     def setXViewFactors(self, xminf, xmaxf, draw=True):
         self.xminf = xminf
@@ -197,4 +225,12 @@ class PlotView(QtGui.QFrame):
 
     def setPlotPath(self, plot_path):
         self.plot_path = plot_path
+
+    def clearSelection(self):
+        lines = [line for line in self.selected_lines]
+        for line in lines:
+            self.clearLine(line)
+
+        self.emit(SIGNAL('plotSelectionChanged(array)'), self.selected_lines)
+        self.canvas.draw()
 
