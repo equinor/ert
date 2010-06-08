@@ -90,7 +90,7 @@ class InitPanel(QtGui.QFrame):
             ert.prototype("long enkf_main_get_fs(long)")
             ert.prototype("char* enkf_fs_get_read_dir(long)")
             ert.prototype("void enkf_fs_select_read_dir(long, char*)")
-            ert.prototype("void enkf_fs_select_write_dir(long, char*)")
+            ert.prototype("void enkf_fs_select_write_dir(long, char*, bool)")
 
             self.currentCase.updateList(self.get_case_list(ert))
 
@@ -110,7 +110,7 @@ class InitPanel(QtGui.QFrame):
             if not case == "":
                 fs = ert.enkf.enkf_main_get_fs(ert.main)
                 ert.enkf.enkf_fs_select_read_dir(fs, case)
-                ert.enkf.enkf_fs_select_write_dir(fs, case)
+                ert.enkf.enkf_fs_select_write_dir(fs, case, False)
                 self.casesUpdated()
 
         self.currentCase.setter = select_case
