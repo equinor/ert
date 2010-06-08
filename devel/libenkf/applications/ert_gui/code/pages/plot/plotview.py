@@ -53,20 +53,20 @@ class PlotView(QtGui.QFrame):
             pass
         self.fig.canvas.mpl_connect('button_press_event', onclick)
 
-
-
         def onpick(event):
             thisline = event.artist
-
             self.toggleLine(thisline)
-            #print "index?:", event.ind
-            #print "The selected member is: %s" % (thisline.get_gid())
-
-
-
 
         self.fig.canvas.mpl_connect('pick_event', onpick)
 
+        def motion_notify_event(event):
+            if not event.xdata is None and not event.ydata is None:
+                date = matplotlib.dates.num2date(event.xdata)
+                self.setToolTip("x: %s y: %04f" % (date.strftime("%d/%m-%Y"), event.ydata))
+            else:
+                self.setToolTip("")
+
+        self.fig.canvas.mpl_connect('motion_notify_event', motion_notify_event)
 
 
         self.errorbar_visible = False
@@ -114,6 +114,7 @@ class PlotView(QtGui.QFrame):
         for selected_line in self.selected_lines:
             selected_members.append(selected_line.get_gid())
 
+        self.selected_lines = []
 
         for member in self.data.x_data.keys():
             x = self.data.x_data[member]
@@ -125,6 +126,7 @@ class PlotView(QtGui.QFrame):
 
             if member in selected_members:
                 line, = self.axes.plot_date(x, y, "-", color=self.purple, alpha=0.5, picker=2, zorder=1000) #list of lines returned (we only add one)
+                self.selected_lines.append(line)
             else:
                 line, = self.axes.plot_date(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
             line.set_gid(member)

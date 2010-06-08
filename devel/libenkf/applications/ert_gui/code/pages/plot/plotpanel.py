@@ -42,9 +42,25 @@ class PlotPanel(QtGui.QWidget):
         self.plotDataFetcher = PlotDataFetcher()
         self.plotContextDataFetcher = PlotContextDataFetcher()
 
+        plot_view_layout = QtGui.QVBoxLayout()
+
+        self.xlimitLower = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.xlimitUpper = QtGui.QSlider(QtCore.Qt.Horizontal)
+
+        self.xlimitUpper.setValue(self.xlimitUpper.maximum())
+
+        self.xlimitUpper.connect(self.xlimitUpper, QtCore.SIGNAL('valueChanged(int)'), self.xlimitLower.setMaximum)
+        self.xlimitUpper.connect(self.xlimitUpper, QtCore.SIGNAL('valueChanged(int)'), self.rangeChanged)
+        self.xlimitUpper.connect(self.xlimitLower, QtCore.SIGNAL('valueChanged(int)'), self.xlimitUpper.setMinimum)
+        self.xlimitUpper.connect(self.xlimitLower, QtCore.SIGNAL('valueChanged(int)'), self.rangeChanged)
+
+        plot_view_layout.addWidget(self.plot)
+        plot_view_layout.addWidget(self.xlimitLower)
+        plot_view_layout.addWidget(self.xlimitUpper)
+
 
         plotLayout.addLayout(parameterLayout)
-        plotLayout.addWidget(self.plot)
+        plotLayout.addLayout(plot_view_layout)
         self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=180)
         plotLayout.addWidget(self.plotViewSettings)
         self.setLayout(plotLayout)
@@ -53,6 +69,12 @@ class PlotPanel(QtGui.QWidget):
     def drawPlot(self):
         self.plot.setData(self.plotDataFetcher.data)
         self.plot.drawPlot()
+
+    def rangeChanged(self):
+        xminf = self.xlimitLower.value() / (self.xlimitUpper.maximum() * 1.0)
+        xmaxf = self.xlimitUpper.value() / (self.xlimitUpper.maximum() * 1.0)
+        self.plot.setXViewFactors(xminf, xmaxf)
+
 
     def select(self, current, previous):
 
@@ -154,17 +176,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout.addRow("Blend factor:", self.alphaSpn)
 
 
-        self.xlimitLower = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.xlimitUpper = QtGui.QSlider(QtCore.Qt.Horizontal)
 
-        self.xlimitUpper.setValue(self.xlimitUpper.maximum())
-
-        self.xlimitUpper.connect(self.xlimitUpper, QtCore.SIGNAL('valueChanged(int)'), self.xlimitLower.setMaximum)
-        self.xlimitUpper.connect(self.xlimitUpper, QtCore.SIGNAL('valueChanged(int)'), self.rangeChanged)
-        self.xlimitUpper.connect(self.xlimitLower, QtCore.SIGNAL('valueChanged(int)'), self.xlimitUpper.setMinimum)
-        self.xlimitUpper.connect(self.xlimitLower, QtCore.SIGNAL('valueChanged(int)'), self.rangeChanged)
-        layout.addRow(self.xlimitLower)
-        layout.addRow(self.xlimitUpper)
 
 
         layout.addRow(widgets.util.createSeparator())
@@ -199,12 +211,6 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
 
         self.setLayout(layout)
-
-
-    def rangeChanged(self):
-        xminf = self.xlimitLower.value() / (self.xlimitUpper.maximum() * 1.0)
-        xmaxf = self.xlimitUpper.value() / (self.xlimitUpper.maximum() * 1.0)
-        self.plotView.setXViewFactors(xminf, xmaxf)
 
 
     def setDefaultErrorbarMaxValue(self, errorbar_max):
