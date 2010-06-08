@@ -1,8 +1,13 @@
 #!/bin/sh
+export script_dir=$(dirname $0)
 
-#This environment variable must be set to the ERT home directory or a lib directory containing all .so files of ERT
-export ERT_HOME=/private/jpb/EnKF/
+#
+# This environment variable must be set to the ERT home directory
+# or a lib directory containing all .so files of ERT
+#
+#export ERT_HOME=/private/jpb/EnKF/
 #export ERT_HOME=/d/proj/bg/enkf/jaskje/ERT_GUI/lib/
+export ERT_HOME=$script_dir/../lib
 
 if [ -z "$ERT_HOME" ]
 then
@@ -27,9 +32,16 @@ then
     exit
 fi
 
+#
+# setup the SDP environment
+#
 export QT_EXPERIMENTAL=1
 export PYTHON_EXPERIMENTAL=1
 source /prog/sdpsoft/environment.sh
+
+#
+# Required by ERT
+#
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/project/res/x86_64_RH_4/lib
 
 
