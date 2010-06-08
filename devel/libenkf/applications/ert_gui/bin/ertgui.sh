@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 export QT_EXPERIMENTAL=1 
 export PYTHON_EXPERIMENTAL=1 

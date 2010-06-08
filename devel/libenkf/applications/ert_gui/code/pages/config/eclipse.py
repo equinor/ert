@@ -15,13 +15,13 @@ def createEclipsePage(configPanel, parent):
     r.getter = lambda ert : ert.enkf.ecl_config_get_eclbase(ert.ecl_config)
     r.setter = lambda ert, value : ert.enkf.ecl_config_set_eclbase(ert.ecl_config, str(value))
 
-    r = configPanel.addRow(PathChooser(parent, "Data file", "data_file"), show_files=True)
+    r = configPanel.addRow(PathChooser(parent, "Data file", "data_file", show_files=True))
     r.initialize = lambda ert : [ert.prototype("char* ecl_config_get_data_file(long)"),
                                  ert.prototype("void ecl_config_set_data_file(long, char*)")]
     r.getter = lambda ert : ert.enkf.ecl_config_get_data_file(ert.ecl_config)
     r.setter = lambda ert, value : ert.enkf.ecl_config_set_data_file(ert.ecl_config, str(value))
 
-    r = configPanel.addRow(PathChooser(parent, "Grid", "grid"), show_files=True)
+    r = configPanel.addRow(PathChooser(parent, "Grid", "grid", show_files=True))
     r.initialize = lambda ert : [ert.prototype("char* ecl_config_get_gridfile(long)"),
                                  ert.prototype("void ecl_config_set_grid(long, char*)")]
     r.getter = lambda ert : ert.enkf.ecl_config_get_gridfile(ert.ecl_config)
@@ -34,7 +34,7 @@ def createEclipsePage(configPanel, parent):
     r.setter = lambda ert, value : ert.enkf.ecl_config_set_schedule_file(ert.ecl_config, str(value))
 
 
-    r = configPanel.addRow(PathChooser(parent, "Init section", "init_section"), show_files=True)
+    r = configPanel.addRow(PathChooser(parent, "Init section", "init_section", show_files=True))
     r.initialize = lambda ert : [ert.prototype("char* ecl_config_get_init_section(long)"),
                                  ert.prototype("void ecl_config_set_init_section(long, char*)")]
     r.getter = lambda ert : ert.enkf.ecl_config_get_init_section(ert.ecl_config)
@@ -47,7 +47,7 @@ def createEclipsePage(configPanel, parent):
     r.getter = lambda ert : ert.enkf.ecl_config_get_refcase_name(ert.ecl_config)
     r.setter = lambda ert, value : ert.enkf.ecl_config_load_refcase(ert.ecl_config, str(value))
 
-    r = configPanel.addRow(PathChooser(parent, "Schedule prediction file", "schedule_prediction_file"), show_files=True)
+    r = configPanel.addRow(PathChooser(parent, "Schedule prediction file", "schedule_prediction_file", show_files=True))
     r.initialize = lambda ert : [ert.prototype("char* enkf_main_get_schedule_prediction_file(long)"),
                                  ert.prototype("void enkf_main_set_schedule_prediction_file(long, char*)")]
     r.getter = lambda ert : ert.enkf.enkf_main_get_schedule_prediction_file(ert.main)
