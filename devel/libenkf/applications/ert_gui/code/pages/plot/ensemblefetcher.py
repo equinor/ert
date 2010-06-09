@@ -88,6 +88,8 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.getObservations(ert, key, key_index, data)
 
         ert.enkf.enkf_node_free(node)
+        
+        data.inverted_y_axis = False
 
     def getObservations(self, ert, key, key_index, data):
         if not key_index is None:

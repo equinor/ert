@@ -8,17 +8,18 @@ import sys
 from enums import obs_impl_type
 from pages.plot.ensemblefetcher import EnsembleFetcher
 from pages.plot.rftfetcher import RFTFetcher
+from PyQt4.QtGui import QFrame
 
 class PlotDataFetcher(ContentModel):
 
     def __init__(self):
         ContentModel.__init__(self)
         self.parameter = None
-        self.state = enums.ert_state_enum.FORECAST
 
         self.ensemble_fetcher = EnsembleFetcher()
         self.handlers = [self.ensemble_fetcher, RFTFetcher()]
-
+        self.current_handler = None
+        self.empty_panel = QFrame()
 
     def initialize(self, ert):
         for handler in self.handlers:
@@ -34,6 +35,7 @@ class PlotDataFetcher(ContentModel):
             for handler in self.handlers:
                 if handler.isHandlerFor(ert, key):
                     handler.fetch(ert, key, self.parameter, data)
+                    self.current_handler = handler
                     break
 
         return data
@@ -50,6 +52,13 @@ class PlotDataFetcher(ContentModel):
 
     def setState(self, state):
         self.ensemble_fetcher.setState(state)
+
+    def getConfigurationWidget(self):
+        if self.current_handler is None:
+            return self.empty_panel
+        else:
+            return self.current_handler.getConfigurationWidget(self.parameter)
+
 
 
 class PlotData:
@@ -68,6 +77,8 @@ class PlotData:
 
         self.y_data_type = "number"
         self.x_data_type = "time"
+
+        self.inverted_y_axis = False
 
     def checkMaxMin(self, value):
         self.x_min = min(value, self.x_min)
@@ -90,6 +101,9 @@ class PlotData:
 
     def getYDataType(self):
         return self.y_data_type
+
+    def hasInvertedYAxis(self):
+        return self.inverted_y_axis
 
 
 class PlotContextDataFetcher(ContentModel):

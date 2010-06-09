@@ -46,9 +46,6 @@ class RFTFetcher(PlotDataFetcherHandler):
         return ert.enkf.enkf_obs_has_key(enkf_obs, key)
 
     def fetch(self, ert, key, parameter, data):
-        #data = pages.plot.plotdata.PlotData()
-        data.x_data_type = "number"
-        
         enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
         obs_vector = ert.enkf.enkf_obs_get_vector(enkf_obs, key)
 
@@ -97,7 +94,8 @@ class RFTFetcher(PlotDataFetcherHandler):
             ert.enkf.field_obs_iget(field_obs, index, value, std)
             x_obs.append(value.value)
             x_std.append(std.value)
-            data.checkMaxMin(value.value)
+            data.checkMaxMin(value.value + std.value)
+            data.checkMaxMin(value.value - std.value)
         data.obs_y = y_obs
         data.obs_x = x_obs
         data.obs_std_x = x_std
@@ -125,3 +123,6 @@ class RFTFetcher(PlotDataFetcherHandler):
                 data.checkMaxMin(value)
 
         ert.enkf.enkf_node_free(node)
+
+        data.x_data_type = "number"
+        data.inverted_y_axis = True

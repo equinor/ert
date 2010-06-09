@@ -48,7 +48,7 @@ class PlotView(QtGui.QFrame):
 
         self.selected_lines = []
 
-        def onclick(evnt):
+        def onclick(event):
             #print 'button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(evnt.button, evnt.x, evnt.y, evnt.xdata, evnt.ydata)
             pass
         self.fig.canvas.mpl_connect('button_press_event', onclick)
@@ -111,6 +111,13 @@ class PlotView(QtGui.QFrame):
             name = "%s (%s)" % (name, key_index)
 
         self.axes.set_title(name)
+
+        if self.data.hasInvertedYAxis():
+            self.axes.invert_yaxis()
+        else:
+            if self.axes.yaxis_inverted():
+                self.axes.invert_yaxis()
+                
 
         selected_members = []
 
@@ -210,6 +217,8 @@ class PlotView(QtGui.QFrame):
             #self.axes.xaxis.set_major_locator(AutoDateLocator())
             #self.axes.xaxis.set_minor_locator(AutoDateLocator())
 
+        number_formatter = matplotlib.ticker.FormatStrFormatter("%4d")
+        self.axes.yaxis.set_major_formatter(number_formatter)
         self.setXViewFactors(self.xminf, self.xmaxf, False)
 
         self.canvas.draw()
