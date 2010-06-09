@@ -2,7 +2,7 @@ from widgets.helpedwidget import HelpedWidget
 import ertwrapper
 from PyQt4 import QtGui, QtCore
 from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, getItemsFromList
-
+from enums import ert_state_enum
 
 class ParametersAndMembers(HelpedWidget):
 
@@ -82,7 +82,7 @@ class ParametersAndMembers(HelpedWidget):
         self.membersList.selectAll()
 
 
-    def initializeCase(self, parameters, members):
+    def initializeCaseFromScratch(self, parameters, members):
         ert = self.getModel()
 
         stringlist = ert.createStringList(parameters)
@@ -92,24 +92,77 @@ class ParametersAndMembers(HelpedWidget):
             ert.enkf.enkf_main_initialize_from_scratch(ert.main, stringlist, m , m)
 
         ert.freeStringList(stringlist)
-        #print parameters
-        #print members
 
+    def initializeCaseFromCase(self, selected_parameters, selected_members):
+        ert = self.getModel()
+
+        selected_parameters = [str(parameter) for parameter in selected_parameters]
+        selected_members = [int(member.strip()) for member in selected_members]
+
+        source_case = str(self.sourceCase.currentText())
+        source_report_step = self.sourceReportStep.getSelectedValue()
+        source_state = ert_state_enum.resolveName(str(self.sourceType.currentText())).value()
+        member_mask = ert.createBoolVector(self.membersList.count(), selected_members)
+        ranking_key = None
+        node_list = ert.createStringList(selected_parameters)
+
+        ert.enkf.enkf_main_initialize_from_existing__(ert.main,
+                                                      source_case,
+                                                      source_report_step,
+                                                      source_state,
+                                                      member_mask,
+                                                      ranking_key,
+                                                      node_list)
+
+        ert.freeStringList(node_list)
+        ert.freeBoolVector(member_mask)
+
+    def copyEnsemble(self, selected_parameters, selected_members):
+        ert = self.getModel()
+
+        selected_parameters = [str(parameter) for parameter in selected_parameters]
+        selected_members = [int(member.strip()) for member in selected_members]
+
+        source_case = str(self.sourceCase.currentText())
+        source_report_step = self.sourceReportStep.getSelectedValue()
+        source_state = ert_state_enum.resolveName(str(self.sourceType.currentText())).value()
+
+        target_case = str(self.targetCaseLabel.text())
+        target_report_step = self.targetReportStep.getSelectedValue()
+        target_state = ert_state_enum.resolveName(str(self.targetType.currentText())).value()
+
+        member_mask = ert.createBoolVector(self.membersList.count(), selected_members)
+        ranking_key = None
+        node_list = ert.createStringList(selected_parameters)
+
+        ert.enkf.enkf_main_copy_ensemble(ert.main,
+                                         source_case,
+                                         source_report_step,
+                                         source_state,
+                                         target_case,
+                                         target_report_step,
+                                         target_state,
+                                         member_mask,
+                                         ranking_key,
+                                         node_list)
+
+        ert.freeStringList(node_list)
+        ert.freeBoolVector(member_mask)
 
     def initializeOrCopy(self):
+        selected_parameters = getItemsFromList(self.parametersList)
+        selected_members = getItemsFromList(self.membersList)
+
+        if len(selected_parameters) == 0 or len(selected_members) == 0:
+            QtGui.QMessageBox.warning(self, "Missing data", "At least one parameter and one member must be selected!")
+            return
+
         if self.toggleScratch.isChecked():
-            selectedParameters = getItemsFromList(self.parametersList)
-            selectedMembers = getItemsFromList(self.membersList)
-
-            if len(selectedParameters) == 0 or len(selectedMembers) == 0:
-                QtGui.QMessageBox.warning(self, "Missing data", "At least one parameter and one member must be selected!")
-            else:
-                self.initializeCase(selectedParameters, selectedMembers)
-
+            self.initializeCaseFromScratch(selected_parameters, selected_members)
         elif self.toggleInitCopy.isChecked():
-            print "initializing from existing case"
+            self.initializeCaseFromCase(selected_parameters, selected_members)
         else:
-            print "copying"
+            self.copyEnsemble(selected_parameters, selected_members)
 
 
     def fetchContent(self):
@@ -154,6 +207,8 @@ class ParametersAndMembers(HelpedWidget):
         ert.prototype("char* enkf_fs_get_read_dir(long)")
         ert.prototype("long enkf_fs_alloc_dirlist(long)")
         ert.prototype("int enkf_main_get_history_length(long)")
+        ert.prototype("void enkf_main_initialize_from_existing__(long, char*, int, int, long, char*, long)")
+        ert.prototype("void enkf_main_copy_ensemble(long, char*, int, int, char*, int, int, long, char*, long)")
 
 
     def getter(self, ert):
@@ -248,9 +303,6 @@ class ParametersAndMembers(HelpedWidget):
         return listLayout
 
 
-    def createValidatedTimestepCombo(self):
-        return ValidatedTimestepCombo(self)
-
     def createActionButton(self):
         self.actionButton = QtGui.QPushButton("Initialize")
 
@@ -302,9 +354,10 @@ class ParametersAndMembers(HelpedWidget):
         self.sourceType = QtGui.QComboBox(self)
         self.sourceType.setMaximumWidth(100)
         self.sourceType.setToolTip("Select source state")
-        self.sourceType.addItem("Analyzed")
-        self.sourceType.addItem("Forecast")
-        self.sourceReportStep = self.createValidatedTimestepCombo()
+        for state in ert_state_enum.INITIALIZATION_STATES:
+            self.sourceType.addItem(str(state))
+
+        self.sourceReportStep = ValidatedTimestepCombo(self)
         self.sourceCompleteEnsembleCheck = QtGui.QCheckBox("Complete Ensemble")
         self.sourceCompleteEnsembleCheck.setChecked(True)
 
@@ -314,6 +367,7 @@ class ParametersAndMembers(HelpedWidget):
         self.targetType = QtGui.QComboBox(self)
         self.targetType.setMaximumWidth(100)
         self.targetType.setToolTip("Select target state")
-        self.targetType.addItem("Analyzed")
-        self.targetType.addItem("Forecast")
-        self.targetReportStep = self.createValidatedTimestepCombo()
+        for state in ert_state_enum.INITIALIZATION_STATES:
+            self.targetType.addItem(str(state))
+
+        self.targetReportStep = ValidatedTimestepCombo(self)

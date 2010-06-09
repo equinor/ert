@@ -114,11 +114,15 @@ class ert_state_enum(enum):
     ANALYZED=None
     BOTH=None
 
+    INITIALIZATION_STATES = None
+
 #ert_state_enum.UNDEFINED = ert_state_enum("Undefined", 0)
 #ert_state_enum.SERIALIZED = ert_state_enum("Serialized", 1)
 ert_state_enum.FORECAST = ert_state_enum("Forecast", 2)
 ert_state_enum.ANALYZED = ert_state_enum("Analyzed", 4)
 ert_state_enum.BOTH = ert_state_enum("Both", 6)
+
+ert_state_enum.INITIALIZATION_STATES = [ert_state_enum.ANALYZED, ert_state_enum.FORECAST]
 
 
 class enkf_impl_type(enum):
