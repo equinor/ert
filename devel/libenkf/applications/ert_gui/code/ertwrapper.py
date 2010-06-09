@@ -50,7 +50,7 @@ class ErtWrapper:
         CDLL("libz.so", RTLD_GLOBAL)
 
         self.util = self.__loadLibrary(prefix, "libutil")
-        self.__loadLibrary(prefix, "libecl")
+        self.ecl = self.__loadLibrary(prefix, "libecl")
         self.__loadLibrary(prefix, "libsched")
         self.__loadLibrary(prefix, "librms")
         self.__loadLibrary(prefix, "libconfig")
@@ -64,6 +64,7 @@ class ErtWrapper:
         """Registers the default available types for prototyping."""
         self.registered_types = {}
         self.registerType("void", None)
+        self.registerType("void*", ctypes.c_void_p)
         self.registerType("int", ctypes.c_int)
         self.registerType("int*", ctypes.POINTER(ctypes.c_int))
         self.registerType("bool", ctypes.c_int)

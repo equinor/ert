@@ -156,8 +156,12 @@ class Parameter(QtGui.QListWidgetItem):
                  SummaryModel.TYPE: util.resourceIcon("summary"),
                  KeywordModel.TYPE: util.resourceIcon("key")}
 
-    def __init__(self, name, type):
-        QtGui.QListWidgetItem.__init__(self, Parameter.typeIcons[type], name)
+
+    def __init__(self, name, type, icon=None):
+        if icon is None:
+            icon = Parameter.typeIcons[type]
+
+        QtGui.QListWidgetItem.__init__(self, icon, name)
         self.type = type
         self.name = name
         self.user_data = None

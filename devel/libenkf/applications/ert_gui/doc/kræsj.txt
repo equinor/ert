@@ -1,6 +1,5 @@
-Schedule Prediction File:
-    * required men tom frå ert
-    * trykk på linje gå vekk frå linje (sette tom schedule prediction file navn)
-
 Refcase <-> history source
     * Kanskje det er ERT som må sjekka om verdien er sett og så utsetta evt. kjøring?
+
+Copy from case:
+    * kræsj.
