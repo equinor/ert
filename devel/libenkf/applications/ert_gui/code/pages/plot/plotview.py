@@ -60,9 +60,12 @@ class PlotView(QtGui.QFrame):
         self.fig.canvas.mpl_connect('pick_event', onpick)
 
         def motion_notify_event(event):
-            if not event.xdata is None and not event.ydata is None:
-                date = matplotlib.dates.num2date(event.xdata)
-                self.setToolTip("x: %s y: %04f" % (date.strftime("%d/%m-%Y"), event.ydata))
+            if not self.data is None and not event.xdata is None and not event.ydata is None:
+                if self.data.getXDataType() == "time":
+                    date = matplotlib.dates.num2date(event.xdata)
+                    self.setToolTip("x: %s y: %04f" % (date.strftime("%d/%m-%Y"), event.ydata))
+                else:
+                    self.setToolTip("x: %04f y: %04f" % (event.xdata, event.ydata))
             else:
                 self.setToolTip("")
 
@@ -118,58 +121,97 @@ class PlotView(QtGui.QFrame):
 
         for member in self.data.x_data.keys():
             x = self.data.x_data[member]
-            x = [datetime.date(*time.localtime(t)[0:3]) for t in x]
+            if self.data.getXDataType() == "time":
+                x = [datetime.date(*time.localtime(t)[0:3]) for t in x]
+
             y = self.data.y_data[member]
 
             x = numpy.array(x)
             y = numpy.array(y)
 
             if member in selected_members:
-                line, = self.axes.plot_date(x, y, "-", color=self.purple, alpha=0.5, picker=2, zorder=1000) #list of lines returned (we only add one)
+                if self.data.getXDataType() == "time":
+                    line, = self.axes.plot_date(x, y, "-", color=self.purple, alpha=0.5, picker=2, zorder=1000) #list of lines returned (we only add one)
+                else:
+                    line, = self.axes.plot(x, y, "-", color=self.purple, alpha=0.5, picker=2, zorder=1000) #list of lines returned (we only add one)
                 self.selected_lines.append(line)
             else:
-                line, = self.axes.plot_date(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
+                if self.data.getXDataType() == "time":
+                    line, = self.axes.plot_date(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
+                else:
+                    line, = self.axes.plot(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
             line.set_gid(member)
             self.lines.append(line)
 
 
-        if self.errorbar_visible and not self.data.obs_x is None:
+        if self.errorbar_visible and not (self.data.obs_x is None and self.data.obs_y is None):
             x = self.data.obs_x
-            x = [datetime.date(*time.localtime(t)[0:3]) for t in x]
+            if self.data.getXDataType() == "time":
+                x = [datetime.date(*time.localtime(t)[0:3]) for t in x]
+                
             y = self.data.obs_y
-            std = self.data.obs_std
+
+            x_std = None
+            y_std = None
+
+            if not self.data.obs_std_x is None:
+                x_std = self.data.obs_std_x
+                x_std = numpy.array(x_std)
+
+            if not self.data.obs_std_y is None:
+                y_std = self.data.obs_std_y
+                y_std = numpy.array(y_std)
 
             x = numpy.array(x)
             y = numpy.array(y)
-            std = numpy.array(std)
+
 
             if len(x) <= self.errorbar_limit:
-                self.axes.errorbar(x, y, std, fmt=None, ecolor=self.orange, zorder=10)
+                self.axes.errorbar(x, y, yerr = y_std, xerr = x_std, fmt=None, ecolor=self.orange, zorder=10)
             else:
-                self.axes.plot_date(x, y, "-", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                if self.data.getXDataType() == "time":
+                    self.axes.plot_date(x, y, "-", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                else:
+                    self.axes.plot(x, y, "-", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+
                 if self.show_stdv:
-                    self.axes.plot_date(x, y - std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
-                    self.axes.plot_date(x, y + std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                    if not y_std is None:
+                        if self.data.getXDataType() == "time":
+                            self.axes.plot_date(x, y - y_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                            self.axes.plot_date(x, y + y_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                        else:
+                            self.axes.plot(x, y - y_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                            self.axes.plot(x, y + y_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+
+                    elif not x_std is None:
+                        if self.data.getXDataType() == "time":
+                            self.axes.plot_date(x, y - x_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                            self.axes.plot_date(x, y + x_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                        else:
+                            self.axes.plot(x, y - x_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                            self.axes.plot(x, y + x_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+
 
 
         self.xlimits = self.axes.get_xlim()
         #self.axes.set_xlim(xlim[0] - 30, xlim[1] + 30)
 
-        #years = matplotlib.dates.YearLocator()   # every year
-#        months = matplotlib.dates.MonthLocator()  # every month
-#        #yearsFmt = matplotlib.dates.DateFormatter('%b %y')
-        yearsFmt = matplotlib.dates.DateFormatter('%b \'%Y')
-        #monthFmt = matplotlib.dates.DateFormatter('%b')
-        #self.axes.xaxis.set_major_locator(years)
-        self.axes.xaxis.set_major_formatter(yearsFmt)
-#        self.axes.xaxis.set_minor_locator(months)
-        #self.axes.xaxis.set_minor_formatter(monthFmt)
-#
-#        self.axes.xaxis.set_major_locator(AutoDateLocator())
-        #self.axes.xaxis.set_minor_locator(AutoDateLocator())
+        if self.data.getXDataType() == "time":
+            #years = matplotlib.dates.YearLocator()   # every year
+            #months = matplotlib.dates.MonthLocator()  # every month
+            #yearsFmt = matplotlib.dates.DateFormatter('%b %y')
+            yearsFmt = matplotlib.dates.DateFormatter('%b \'%Y')
+            #monthFmt = matplotlib.dates.DateFormatter('%b')
+            #self.axes.xaxis.set_major_locator(years)
+            self.axes.xaxis.set_major_formatter(yearsFmt)
+            self.fig.autofmt_xdate()
+            #self.axes.xaxis.set_minor_locator(months)
+            #self.axes.xaxis.set_minor_formatter(monthFmt)
+            #self.axes.xaxis.set_major_locator(AutoDateLocator())
+            #self.axes.xaxis.set_minor_locator(AutoDateLocator())
 
         self.setXViewFactors(self.xminf, self.xmaxf, False)
-        self.fig.autofmt_xdate()
+
         self.canvas.draw()
         
     def resizeEvent(self, event):
@@ -215,10 +257,17 @@ class PlotView(QtGui.QFrame):
     def setXViewFactors(self, xminf, xmaxf, draw=True):
         self.xminf = xminf
         self.xmaxf = xmaxf
-        x_min = self.convertDate(self.data.x_min)
-        x_max = self.convertDate(self.data.x_max)
-        range = x_max - x_min
-        self.axes.set_xlim(x_min + xminf * range - 60, x_min + xmaxf * range + 60)
+
+        if self.data.getXDataType() == "time":
+            x_min = self.convertDate(self.data.x_min)
+            x_max = self.convertDate(self.data.x_max)
+            range = x_max - x_min
+            self.axes.set_xlim(x_min + xminf * range - 60, x_min + xmaxf * range + 60)
+        else:
+            x_min = self.data.x_min
+            x_max = self.data.x_max
+            range = x_max - x_min
+            self.axes.set_xlim(x_min + xminf * range - range*0.05, x_min + xmaxf * range + range*0.05)
 
         if draw:
             self.canvas.draw()

@@ -95,6 +95,9 @@ class enum:
         return not self == other
 
     def __eq__(self, other):
+        if other is None:
+            return False
+            
         if isinstance(other, long) or isinstance(other, int):
             return self.__value == other
         else:
@@ -257,3 +260,13 @@ class history_source_type(enum):
 history_source_type.SCHEDULE = history_source_type("SCHEDULE", 0)
 history_source_type.REFCASE_SIMULATED = history_source_type("REFCASE_SIMULATED", 1)
 history_source_type.REFCASE_HISTORY = history_source_type("REFCASE_HISTORY", 2)
+
+
+class obs_impl_type(enum):
+    GEN_OBS = None
+    SUMMARY_OBS = None
+    FIELD_OBS = None
+
+obs_impl_type.GEN_OBS = obs_impl_type("GEN_OBS", 1)
+obs_impl_type.SUMMARY_OBS = obs_impl_type("SUMMARY_OBS", 2)
+obs_impl_type.FIELD_OBS = obs_impl_type("FIELD_OBS", 3)

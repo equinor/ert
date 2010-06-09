@@ -1,10 +1,13 @@
 from widgets.helpedwidget import ContentModel
-from widgets.util import print_timing
+from widgets.util import print_timing, resourceIcon
 from pages.config.parameters.parametermodels import DataModel, KeywordModel, FieldModel, SummaryModel
 from pages.config.parameters.parameterpanel import Parameter
 import ertwrapper
 import enums
 import sys
+from enums import obs_impl_type
+from pages.plot.ensemblefetcher import EnsembleFetcher
+from pages.plot.rftfetcher import RFTFetcher
 
 class PlotDataFetcher(ContentModel):
 
@@ -13,31 +16,13 @@ class PlotDataFetcher(ContentModel):
         self.parameter = None
         self.state = enums.ert_state_enum.FORECAST
 
+        self.ensemble_fetcher = EnsembleFetcher()
+        self.handlers = [self.ensemble_fetcher, RFTFetcher()]
+
 
     def initialize(self, ert):
-        ert.prototype("long ensemble_config_get_node(long, char*)")
-        ert.prototype("bool ensemble_config_has_key(long, char*)")
-
-        ert.prototype("long enkf_main_get_fs(long)")
-        ert.prototype("int enkf_main_get_ensemble_size(long)")
-        ert.prototype("long enkf_main_iget_member_config(long, int)")
-        ert.prototype("void enkf_main_get_observations(long, char*, int, long*, double*, double*)") #main, user_key, *time, *y, *std
-        ert.prototype("int enkf_main_get_observation_count(long, char*)")
-
-        ert.prototype("bool enkf_fs_has_node(long, long, int, int, int)")
-        ert.prototype("void enkf_fs_fread_node(long, long, int, int, int)")
-
-        ert.prototype("long enkf_node_alloc(long)")
-        ert.prototype("void enkf_node_free(long)")
-        ert.prototype("double enkf_node_user_get(long, char*, bool*)")
-
-        ert.prototype("double member_config_iget_sim_days(long, int, int)")
-        ert.prototype("long member_config_iget_sim_time(long, int, int)")
-        ert.prototype("int member_config_get_last_restart_nr(long)")
-
-        ert.prototype("long enkf_config_node_get_ref(long)")
-        ert.prototype("bool field_config_ijk_active(long, int, int, int)")
-
+        for handler in self.handlers:
+            handler.initialize(ert)
 
     #@print_timing
     def getter(self, ert):
@@ -46,76 +31,13 @@ class PlotDataFetcher(ContentModel):
             key = self.parameter.getName()
             data.setName(key)
 
-            if ert.enkf.ensemble_config_has_key(ert.ensemble_config, key):
-                fs = ert.enkf.enkf_main_get_fs(ert.main)
-                config_node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, key)
-                node = ert.enkf.enkf_node_alloc(config_node)
-                num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
-
-                key_index = self.parameter.getUserData()
-
-                if self.parameter.getType() == FieldModel.TYPE:
-                    field_config = ert.enkf.enkf_config_node_get_ref(config_node)
-                    if ert.enkf.field_config_ijk_active(field_config, key_index[0] - 1, key_index[1] - 1, key_index[2] - 1):
-                        key_index = "%i,%i,%i" % (key_index[0], key_index[1], key_index[2])
-                    else:
-                        return data
-
-                data.setKeyIndex(key_index)
-
-                state_list = [self.state]
-                if self.state == enums.ert_state_enum.BOTH:
-                    state_list = [enums.ert_state_enum.FORECAST, enums.ert_state_enum.ANALYZED]
-
-
-                for member in range(0, num_realizations):
-                    data.x_data[member] = []
-                    data.y_data[member] = []
-                    x_time = data.x_data[member]
-                    y = data.y_data[member]
-
-                    member_config = ert.enkf.enkf_main_iget_member_config(ert.main, member)
-                    stop_time = ert.enkf.member_config_get_last_restart_nr(member_config)
-
-                    for step in range(0, stop_time + 1):
-                        for state in state_list:
-                            if ert.enkf.enkf_fs_has_node(fs, config_node, step, member, state.value()):
-                                sim_time = ert.enkf.member_config_iget_sim_time(member_config, step, fs)
-                                ert.enkf.enkf_fs_fread_node(fs, node, step, member, state.value())
-                                valid = ertwrapper.c_int()
-                                value = ert.enkf.enkf_node_user_get(node, key_index, ertwrapper.byref(valid))
-                                if valid.value == 1:
-                                    data.checkMaxMin(sim_time)
-                                    x_time.append(sim_time)
-                                    y.append(value)
-                                else:
-                                    print "Not valid: ", key, member, step, key_index
-
-                self.getObservations(ert, key, key_index, data)
-
-                ert.enkf.enkf_node_free(node)
-
+            for handler in self.handlers:
+                if handler.isHandlerFor(ert, key):
+                    handler.fetch(ert, key, self.parameter, data)
+                    break
 
         return data
 
-    def getObservations(self, ert, key, key_index, data):
-        if not key_index is None:
-            user_key = "%s:%s" % (key, key_index)
-        else:
-            user_key = key
-
-        obs_count = ert.enkf.enkf_main_get_observation_count(ert.main, user_key)
-        if obs_count > 0:
-            obs_x = (ertwrapper.c_long * obs_count)()
-            obs_y = (ertwrapper.c_double * obs_count)()
-            obs_std = (ertwrapper.c_double * obs_count)()
-            ert.enkf.enkf_main_get_observations(ert.main, user_key, obs_count, obs_x, obs_y, obs_std)
-            data.obs_x = obs_x
-            data.obs_y = obs_y
-            data.obs_std = obs_std
-
-            data.checkMaxMin(max(obs_x))
-            data.checkMaxMin(min(obs_x))
 
     def fetchContent(self):
         self.data = self.getFromModel()
@@ -127,7 +49,7 @@ class PlotDataFetcher(ContentModel):
         return self.parameter
 
     def setState(self, state):
-        self.state = state
+        self.ensemble_fetcher.setState(state)
 
 
 class PlotData:
@@ -138,10 +60,14 @@ class PlotData:
         self.y_data = {}
         self.obs_x = None
         self.obs_y = None
-        self.obs_std = None
+        self.obs_std_x = None
+        self.obs_std_y = None
 
         self.x_min = sys.maxint
         self.x_max = -sys.maxint
+
+        self.y_data_type = "number"
+        self.x_data_type = "time"
 
     def checkMaxMin(self, value):
         self.x_min = min(value, self.x_min)
@@ -159,8 +85,16 @@ class PlotData:
     def getKeyIndex(self):
         return self.key_index
 
+    def getXDataType(self):
+        return self.x_data_type
+
+    def getYDataType(self):
+        return self.y_data_type
+
 
 class PlotContextDataFetcher(ContentModel):
+
+    observation_icon = resourceIcon("observation")
 
     def __init__(self):
         ContentModel.__init__(self)
@@ -183,6 +117,9 @@ class PlotContextDataFetcher(ContentModel):
 
         ert.prototype("int plot_config_get_errorbar_max(long)")
         ert.prototype("char* plot_config_get_path(long)")
+
+        ert.prototype("long enkf_main_get_obs(long)")
+        ert.prototype("long enkf_obs_alloc_typed_keylist(long, int)")
 
         self.modelConnect("casesUpdated()", self.fetchContent)
 
@@ -233,6 +170,14 @@ class PlotContextDataFetcher(ContentModel):
         currentCase = ert.enkf.enkf_fs_get_read_dir(fs)
 
         data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config) + "/" + currentCase
+
+        enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
+        key_list = ert.enkf.enkf_obs_alloc_typed_keylist(enkf_obs, obs_impl_type.FIELD_OBS.value())
+        field_obs = ert.getStringList(key_list, free_after_use=True)
+
+        for obs in field_obs:
+            p = Parameter(obs, obs_impl_type.FIELD_OBS, PlotContextDataFetcher.observation_icon)
+            data.parameters.append(p)
 
         return data
 

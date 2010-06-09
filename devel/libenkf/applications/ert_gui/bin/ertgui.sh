@@ -7,7 +7,10 @@ export script_dir=$(dirname $0)
 #
 #export ERT_HOME=/private/jpb/EnKF/
 #export ERT_HOME=/d/proj/bg/enkf/jaskje/ERT_GUI/lib/
-export ERT_HOME=$script_dir/../lib
+if [ -z "$ERT_HOME" ]
+then
+    export ERT_HOME=$script_dir/../lib
+fi
 
 if [ -z "$ERT_HOME" ]
 then

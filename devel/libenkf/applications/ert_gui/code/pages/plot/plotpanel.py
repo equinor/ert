@@ -89,7 +89,7 @@ class PlotPanel(QtGui.QWidget):
 
         self.plotDataFetcher.setParameter(current)
         self.initParameter()
-        self.plotDataPanel.activatePanel(current.getType().name)
+        self.plotDataPanel.activatePanel(current.getType())
         self.drawPlot()
 
     def updateList(self):
@@ -145,8 +145,8 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.errorbar_max = -1
         def errorbar(index):
             if index == 0: #off
-                self.plotView.showErrorbar(False)
-            if index == 1: #auto
+                self.plotView.showErrorbar(False, True)
+            elif index == 1: #auto
                 self.plotView.showErrorbar(True, True)
                 self.plotView.setErrorbarLimit(self.errorbar_max)
             elif index == 2: #only show show errorbars
@@ -233,34 +233,43 @@ class PlotParameterPanel(QtGui.QFrame):
 
         self.stack = QtGui.QStackedWidget()
 
+        self.empty_panel = QtGui.QFrame()
         self.summaryPanel = self.createSummaryPanel()
         self.keywordPanel = self.createKeywordPanel()
         self.fieldPanel = self.createFieldPanel()
 
+        self.stack.addWidget(self.empty_panel)
         self.stack.addWidget(self.summaryPanel)
         self.stack.addWidget(self.keywordPanel)
         self.stack.addWidget(self.fieldPanel)
 
-        comboLayout, self.stateCombo = self.createStateCombo()
+        self.combo_widget, self.stateCombo = self.createStateCombo()
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.stack)
         layout.addStretch()
-        layout.addLayout(comboLayout)
+        layout.addWidget(self.combo_widget)
         self.setLayout(layout)
+        self.activatePanel(None)
 
-    def activatePanel(self, parameter_type_name):
-        if parameter_type_name == SummaryModel.TYPE.name:
+    def activatePanel(self, parameter_type):
+        self.combo_widget.setHidden(False)
+
+        if parameter_type == SummaryModel.TYPE:
             self.stack.setCurrentWidget(self.summaryPanel)
-        elif parameter_type_name == KeywordModel.TYPE.name:
+        elif parameter_type == KeywordModel.TYPE:
             self.stack.setCurrentWidget(self.keywordPanel)
-        elif parameter_type_name == FieldModel.TYPE.name:
+        elif parameter_type == FieldModel.TYPE:
             self.stack.setCurrentWidget(self.fieldPanel)
         else:
-            print "Unknown parametertype"
+            self.combo_widget.setHidden(True)
+            self.stack.setCurrentWidget(self.empty_panel)
+            print "No panel for this parametertype"
 
     def createStateCombo(self):
+        widget = QtGui.QFrame()
         layout = QtGui.QFormLayout()
+        layout.setMargin(0)
         layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
 
         stateCombo = QtGui.QComboBox()
@@ -271,7 +280,8 @@ class PlotParameterPanel(QtGui.QFrame):
         stateCombo.setCurrentIndex(0)
 
         layout.addRow("State:", stateCombo)
-        return layout, stateCombo
+        widget.setLayout(layout)
+        return widget, stateCombo
 
     def createSummaryPanel(self):
         panel = QtGui.QFrame()
