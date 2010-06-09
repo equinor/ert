@@ -177,8 +177,6 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
 
 
-
-
         layout.addRow(widgets.util.createSeparator())
 
 
@@ -231,6 +229,9 @@ class PlotParameterPanel(QtGui.QFrame):
         self.setMaximumWidth(width)
         self.setMaximumHeight(200)
 
+#        self.layout = QtGui.QGridLayout()
+#        self.setLayout(self.layout)
+
         self.stack = QtGui.QStackedWidget()
 
         self.empty_panel = QtGui.QFrame()
@@ -251,6 +252,9 @@ class PlotParameterPanel(QtGui.QFrame):
         layout.addWidget(self.combo_widget)
         self.setLayout(layout)
         self.activatePanel(None)
+
+    def setWidget(self, widget):
+        self.layout.addWidget(widget, 0, 0)
 
     def activatePanel(self, parameter_type):
         self.combo_widget.setHidden(False)
@@ -276,7 +280,7 @@ class PlotParameterPanel(QtGui.QFrame):
 
         for state in enums.ert_state_enum.values():
             stateCombo.addItem(state.name)
-            
+
         stateCombo.setCurrentIndex(0)
 
         layout.addRow("State:", stateCombo)

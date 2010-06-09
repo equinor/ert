@@ -12,3 +12,6 @@ class PlotDataFetcherHandler:
 
     def fetch(self, ert, key, parameter, data):
         pass
+
+    def getConfigurationWidget(self, parameter):
+        pass
