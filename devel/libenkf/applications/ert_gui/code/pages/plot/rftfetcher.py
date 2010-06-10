@@ -2,9 +2,13 @@ from fetcher import PlotDataFetcherHandler
 import ertwrapper
 import enums
 import pages.plot.plotdata
-from enums import ert_state_enum
+from enums import ert_state_enum, obs_impl_type
 
 class RFTFetcher(PlotDataFetcherHandler):
+
+    def __init__(self):
+        PlotDataFetcherHandler.__init__(self)
+
     def initialize(self, ert):
         ert.prototype("long enkf_main_get_obs(long)")
         ert.prototype("long enkf_main_get_fs(long)")
@@ -16,6 +20,7 @@ class RFTFetcher(PlotDataFetcherHandler):
 
         ert.prototype("bool enkf_obs_has_key(long, char*)")
         ert.prototype("long enkf_obs_get_vector(long, char*)")
+        ert.prototype("long enkf_obs_alloc_typed_keylist(long, int)")
 
         ert.prototype("char* obs_vector_get_state_kw(long)")
         ert.prototype("long obs_vector_iget_node(long, int)")
@@ -43,7 +48,9 @@ class RFTFetcher(PlotDataFetcherHandler):
 
     def isHandlerFor(self, ert, key):
         enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
-        return ert.enkf.enkf_obs_has_key(enkf_obs, key)
+        key_list = ert.enkf.enkf_obs_alloc_typed_keylist(enkf_obs, obs_impl_type.FIELD_OBS.value())
+        field_obs = ert.getStringList(key_list, free_after_use=True)
+        return key in field_obs
 
     def fetch(self, ert, key, parameter, data):
         enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
@@ -126,3 +133,12 @@ class RFTFetcher(PlotDataFetcherHandler):
 
         data.x_data_type = "number"
         data.inverted_y_axis = True
+
+    def getConfigurationWidget(self, context_data):
+        return None
+
+    def configure(self, parameter, context_data):
+        pass #nothing to configure, yet
+
+
+

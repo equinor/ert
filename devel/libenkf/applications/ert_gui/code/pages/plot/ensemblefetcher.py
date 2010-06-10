@@ -1,13 +1,26 @@
 
 from fetcher import PlotDataFetcherHandler
-from pages.config.parameters.parametermodels import FieldModel
+from pages.config.parameters.parametermodels import FieldModel, SummaryModel, KeywordModel, DataModel
 import ertwrapper
 import enums
+from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
+from PyQt4.QtCore import SIGNAL
 
 class EnsembleFetcher(PlotDataFetcherHandler):
 
     def __init__(self):
-        self.state = enums.ert_state_enum.FORECAST
+        PlotDataFetcherHandler.__init__(self)
+        
+        self.field_configuration = FieldConfigurationWidget()
+        self.summary_configuration = SummaryConfigurationWidget()
+        self.keyword_configuration = KeywordConfigurationWidget()
+
+        def emitter():
+            self.emit(SIGNAL('dataChanged()'))
+
+        self.connect(self.field_configuration, SIGNAL('configurationChanged()'), emitter)
+        self.connect(self.summary_configuration, SIGNAL('configurationChanged()'), emitter)
+        self.connect(self.keyword_configuration, SIGNAL('configurationChanged()'), emitter)
 
     def initialize(self, ert):
         ert.prototype("long ensemble_config_get_node(long, char*)")
@@ -46,19 +59,27 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         node = ert.enkf.enkf_node_alloc(config_node)
         num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
 
-        key_index = parameter.getUserData()
+        user_data = parameter.getUserData()
+
+        if user_data is None:
+            return False
+
+        key_index = None
+        if user_data.has_key('key_index'):
+            key_index = user_data['key_index']
 
         if parameter.getType() == FieldModel.TYPE:
+            field_position = user_data['field_position']
             field_config = ert.enkf.enkf_config_node_get_ref(config_node)
-            if ert.enkf.field_config_ijk_active(field_config, key_index[0] - 1, key_index[1] - 1, key_index[2] - 1):
-                key_index = "%i,%i,%i" % (key_index[0], key_index[1], key_index[2])
+            if ert.enkf.field_config_ijk_active(field_config, field_position[0] - 1, field_position[1] - 1, field_position[2] - 1):
+                key_index = "%i,%i,%i" % (field_position[0], field_position[1], field_position[2])
             else:
-                return data
+                return False
 
         data.setKeyIndex(key_index)
 
-        state_list = [self.state]
-        if self.state == enums.ert_state_enum.BOTH:
+        state_list = [user_data['state']]
+        if state_list[0] == enums.ert_state_enum.BOTH:
             state_list = [enums.ert_state_enum.FORECAST, enums.ert_state_enum.ANALYZED]
 
 
@@ -111,5 +132,144 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             data.checkMaxMin(max(obs_x))
             data.checkMaxMin(min(obs_x))
 
-    def setState(self, state):
-        self.state = state
+    def configure(self, parameter, context_data):
+        self.parameter = parameter
+
+        cw = self.getConfigurationWidget(context_data)
+        if not cw is None:
+            cw.setParameter(parameter)
+
+    def getConfigurationWidget(self, context_data):
+        if self.parameter.getType() == SummaryModel.TYPE:
+            return self.summary_configuration
+        elif self.parameter.getType() == KeywordModel.TYPE:
+            key_index_list = context_data.getKeyIndexList(self.parameter.getName())
+            self.keyword_configuration.setKeyIndexList(key_index_list)
+            return self.keyword_configuration
+        elif self.parameter.getType() == FieldModel.TYPE:
+            bounds = context_data.field_bounds
+            self.field_configuration.setFieldBounds(*bounds)
+            return self.field_configuration
+        elif self.parameter.getType() == DataModel.TYPE:
+            return None
+        else:
+            return None
+
+
+class ConfigurationWidget(QWidget):
+    """An abstract configuration widget."""
+    def __init__(self):
+        QWidget.__init__(self)
+        self.layout = QFormLayout()
+        self.layout.setRowWrapPolicy(QFormLayout.WrapLongRows)
+
+        self.stateCombo = QComboBox()
+
+        for state in enums.ert_state_enum.values():
+           self.stateCombo.addItem(state.name)
+
+        self.stateCombo.setCurrentIndex(0)
+
+        self.layout.addRow("State:", self.stateCombo)
+
+        self.setLayout(self.layout)
+
+        self.connect(self.stateCombo, SIGNAL('currentIndexChanged(QString)'), self.applyConfiguration)
+
+    def addRow(self, label, widget):
+        self.layout.addRow(label, widget)
+
+    def setParameter(self, parameter):
+        self.parameter = parameter
+        self.applyConfiguration(False)
+
+    def getState(self):
+        selectedName = str(self.stateCombo.currentText())
+        return enums.ert_state_enum.resolveName(selectedName)
+
+    def emitConfigurationChanged(self, emit=True):
+        if emit:
+            self.emit(SIGNAL('configurationChanged()'))
+
+    def applyConfiguration(self, emit=True):
+        """Override! Set the user_data of self.paramater and optionally: emitConfigurationChanged()"""
+        pass
+
+
+class SummaryConfigurationWidget(ConfigurationWidget):
+    def __init__(self):
+        ConfigurationWidget.__init__(self)
+
+
+    def applyConfiguration(self, emit=True):
+        user_data = {'state': self.getState()}
+        self.parameter.setUserData(user_data)
+        self.emitConfigurationChanged(emit)
+
+        
+class FieldConfigurationWidget(ConfigurationWidget):
+    def __init__(self):
+        ConfigurationWidget.__init__(self)
+
+        self.keyIndexI = QSpinBox()
+        self.keyIndexI.setMinimum(1)
+
+        self.addRow("i:", self.keyIndexI)
+
+        self.keyIndexJ = QSpinBox()
+        self.keyIndexJ.setMinimum(1)
+        self.addRow("j:", self.keyIndexJ)
+
+        self.keyIndexK = QSpinBox()
+        self.keyIndexK.setMinimum(1)
+        self.addRow("k:", self.keyIndexK)
+
+        self.setFieldBounds(1, 1, 1)
+
+        self.connect(self.keyIndexI, SIGNAL('valueChanged(int)'), self.applyConfiguration)
+        self.connect(self.keyIndexJ, SIGNAL('valueChanged(int)'), self.applyConfiguration)
+        self.connect(self.keyIndexK, SIGNAL('valueChanged(int)'), self.applyConfiguration)
+
+    def setFieldBounds(self, i, j, k):
+        self.keyIndexI.setMaximum(i)
+        self.keyIndexJ.setMaximum(j)
+        self.keyIndexK.setMaximum(k)
+
+    def getFieldPosition(self):
+        return (self.keyIndexI.value(), self.keyIndexJ.value(), self.keyIndexK.value())
+
+    def setParameter(self, parameter):
+        self.parameter = parameter
+        self.applyConfiguration(False)
+
+    def applyConfiguration(self, emit=True):
+        user_data = {'state': self.getState(), 'field_position': self.getFieldPosition()}
+        self.parameter.setUserData(user_data)
+        self.emitConfigurationChanged(emit)
+
+
+class KeywordConfigurationWidget(ConfigurationWidget):
+    def __init__(self):
+        ConfigurationWidget.__init__(self)
+        self.keyIndexCombo = QComboBox()
+        self.addRow("Key index:", self.keyIndexCombo)
+
+        self.connect(self.keyIndexCombo, SIGNAL('currentIndexChanged(QString)'), self.applyConfiguration)
+
+    def setKeyIndexList(self, list):
+        self.disconnect(self.keyIndexCombo, SIGNAL('currentIndexChanged(QString)'), self.applyConfiguration)
+        self.keyIndexCombo.clear()
+        self.keyIndexCombo.addItems(list)
+        self.connect(self.keyIndexCombo, SIGNAL('currentIndexChanged(QString)'), self.applyConfiguration)
+
+    def setParameter(self, parameter):
+        self.parameter = parameter
+        self.applyConfiguration(False)
+
+    def applyConfiguration(self, emit=True):
+        user_data = {'state': self.getState(), 'key_index' : self.getKeyIndex()}
+        self.parameter.setUserData(user_data)
+        self.emitConfigurationChanged(emit)
+
+    def getKeyIndex(self):
+        return str(self.keyIndexCombo.currentText())
