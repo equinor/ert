@@ -9,23 +9,28 @@ from enums import obs_impl_type
 from pages.plot.ensemblefetcher import EnsembleFetcher
 from pages.plot.rftfetcher import RFTFetcher
 from PyQt4.QtGui import QFrame
+from PyQt4.QtCore import SIGNAL, QObject
+import widgets
 
-class PlotDataFetcher(ContentModel):
+class PlotDataFetcher(ContentModel, QObject):
 
     def __init__(self):
         ContentModel.__init__(self)
+        QObject.__init__(self)
         self.parameter = None
 
-        self.ensemble_fetcher = EnsembleFetcher()
-        self.handlers = [self.ensemble_fetcher, RFTFetcher()]
+        # the order of these handlers depend on ERT's way of keeping track of the keys
+        self.handlers = [RFTFetcher(), EnsembleFetcher()]
         self.current_handler = None
         self.empty_panel = QFrame()
 
     def initialize(self, ert):
         for handler in self.handlers:
             handler.initialize(ert)
+            self.connect(handler, SIGNAL('dataChanged()'), self.__dataChanged)
 
     #@print_timing
+    @widgets.util.may_take_a_long_time
     def getter(self, ert):
         data = PlotData()
         if not self.parameter is None:
@@ -41,24 +46,38 @@ class PlotDataFetcher(ContentModel):
         return data
 
 
+    def __dataChanged(self):
+        self.fetchContent()
+        self.emit(SIGNAL('dataChanged()'))
+
     def fetchContent(self):
         self.data = self.getFromModel()
 
-    def setParameter(self, parameter):
-        self.parameter = parameter
+    def setParameter(self, parameter, context_data):
+        self.findHandler(parameter.getName())
+        if not self.current_handler is None:
+            self.parameter = parameter
+            self.current_handler.configure(parameter, context_data)
 
     def getParameter(self):
         return self.parameter
 
-    def setState(self, state):
-        self.ensemble_fetcher.setState(state)
-
-    def getConfigurationWidget(self):
+    def getConfigurationWidget(self, context_data):
         if self.current_handler is None:
             return self.empty_panel
         else:
-            return self.current_handler.getConfigurationWidget(self.parameter)
+            cw = self.current_handler.getConfigurationWidget(context_data)
+            if cw is None:
+                cw = self.empty_panel
+            return cw
 
+    def findHandler(self, key):
+        ert = self.getModel()
+        self.current_handler = None
+        for handler in self.handlers:
+            if handler.isHandlerFor(ert, key): #todo: what about multiple hits?
+                self.current_handler = handler
+                break
 
 
 class PlotData:
@@ -153,12 +172,12 @@ class PlotContextDataFetcher(ContentModel):
             if type == SummaryModel.TYPE:
                 p = Parameter(key, SummaryModel.TYPE)
                 data.parameters.append(p)
-                p.setUserData(None)
+                #p.setUserData({})
 
             elif type == FieldModel.TYPE:
                 p = Parameter(key, FieldModel.TYPE)
                 data.parameters.append(p)
-                p.setUserData((0,0,0)) #key_index
+                #p.setUserData((0,0,0)) #key_index
 
                 if data.field_bounds is None:
                     field_config = ert.enkf.enkf_config_node_get_ref(config_node)
@@ -176,7 +195,7 @@ class PlotContextDataFetcher(ContentModel):
                 gen_kw_config = ert.enkf.enkf_config_node_get_ref(config_node)
                 s = ert.enkf.gen_kw_config_alloc_name_list(gen_kw_config)
                 data.key_index_list[key] = ert.getStringList(s, free_after_use=True)
-                p.setUserData(data.key_index_list[key][0])
+                #p.setUserData(data.key_index_list[key][0])
 
         data.errorbar_max = ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
 

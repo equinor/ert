@@ -1,8 +1,9 @@
+from PyQt4.QtCore import QObject
 
-class PlotDataFetcherHandler:
+class PlotDataFetcherHandler(QObject):
 
     def __init__(self):
-        pass
+        QObject.__init__(self)
 
     def isHandlerFor(self, ert, key):
         return False
@@ -13,5 +14,8 @@ class PlotDataFetcherHandler:
     def fetch(self, ert, key, parameter, data):
         pass
 
-    def getConfigurationWidget(self, parameter):
+    def getConfigurationWidget(self, context_data):
+        pass
+
+    def configure(self, parameter, context_data):
         pass
