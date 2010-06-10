@@ -217,7 +217,11 @@ class PlotView(QtGui.QFrame):
             #self.axes.xaxis.set_major_locator(AutoDateLocator())
             #self.axes.xaxis.set_minor_locator(AutoDateLocator())
 
-        number_formatter = matplotlib.ticker.FormatStrFormatter("%4d")
+        #number_formatter = matplotlib.ticker.FormatStrFormatter("%f")
+        number_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
+        number_formatter.set_scientific(True)
+        #number_formatter.set_powerlimits((5, -5))
+
         self.axes.yaxis.set_major_formatter(number_formatter)
         self.setXViewFactors(self.xminf, self.xmaxf, False)
 
