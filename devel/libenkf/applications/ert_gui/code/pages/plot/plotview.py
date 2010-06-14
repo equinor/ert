@@ -54,8 +54,9 @@ class PlotView(QtGui.QFrame):
         self.fig.canvas.mpl_connect('button_press_event', onclick)
 
         def onpick(event):
-            thisline = event.artist
-            self.toggleLine(thisline)
+            if event.mouseevent.button == 1:
+                thisline = event.artist
+                self.toggleLine(thisline)
 
         self.fig.canvas.mpl_connect('pick_event', onpick)
 
@@ -80,13 +81,16 @@ class PlotView(QtGui.QFrame):
         self.plot_path = "."
         self.show_stdv = True
 
+        self.plot_type = "-"
+        self.observation_plot_type = "-"
+
 
     def toggleLine(self, thisline):
         if thisline in self.selected_lines:
             self.clearLine(thisline)
         else:
             thisline.set_color(self.purple)
-            thisline.set_zorder(1000)
+            thisline.set_zorder(9)
             thisline.set_alpha(0.5)
             self.selected_lines.append(thisline)
         self.emit(SIGNAL('plotSelectionChanged(array)'), self.selected_lines)
@@ -112,11 +116,10 @@ class PlotView(QtGui.QFrame):
 
         self.axes.set_title(name)
 
-        if self.data.hasInvertedYAxis():
+        if self.data.hasInvertedYAxis() and not self.axes.yaxis_inverted():
             self.axes.invert_yaxis()
-        else:
-            if self.axes.yaxis_inverted():
-                self.axes.invert_yaxis()
+        elif not self.data.hasInvertedYAxis() and self.axes.yaxis_inverted():
+            self.axes.invert_yaxis()
                 
 
         selected_members = []
@@ -138,15 +141,15 @@ class PlotView(QtGui.QFrame):
 
             if member in selected_members:
                 if self.data.getXDataType() == "time":
-                    line, = self.axes.plot_date(x, y, "-", color=self.purple, alpha=0.5, picker=2, zorder=1000) #list of lines returned (we only add one)
+                    line, = self.axes.plot_date(x, y, self.plot_type, color=self.purple, alpha=0.5, picker=2, zorder=1) #list of lines returned (we only add one)
                 else:
-                    line, = self.axes.plot(x, y, "-", color=self.purple, alpha=0.5, picker=2, zorder=1000) #list of lines returned (we only add one)
+                    line, = self.axes.plot(x, y, self.plot_type, color=self.purple, alpha=0.5, picker=2, zorder=1) #list of lines returned (we only add one)
                 self.selected_lines.append(line)
             else:
                 if self.data.getXDataType() == "time":
-                    line, = self.axes.plot_date(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
+                    line, = self.axes.plot_date(x, y, self.plot_type, color=self.blue, alpha=self.alpha, picker=2, zorder=1) #list of lines returned (we only add one)
                 else:
-                    line, = self.axes.plot(x, y, "-", color=self.blue, alpha=self.alpha, picker=2, zorder=100 + member) #list of lines returned (we only add one)
+                    line, = self.axes.plot(x, y, self.plot_type, color=self.blue, alpha=self.alpha, picker=2, zorder=1) #list of lines returned (we only add one)
             line.set_gid(member)
             self.lines.append(line)
 
@@ -177,26 +180,27 @@ class PlotView(QtGui.QFrame):
                 self.axes.errorbar(x, y, yerr = y_std, xerr = x_std, fmt=None, ecolor=self.orange, zorder=10)
             else:
                 if self.data.getXDataType() == "time":
-                    self.axes.plot_date(x, y, "-", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                    self.axes.plot_date(x, y, self.observation_plot_type, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
                 else:
-                    self.axes.plot(x, y, "-", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                    self.axes.plot(x, y, self.observation_plot_type, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
 
                 if self.show_stdv:
+                    eblt = ":" #error_bar_line_type
                     if not y_std is None:
                         if self.data.getXDataType() == "time":
-                            self.axes.plot_date(x, y - y_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
-                            self.axes.plot_date(x, y + y_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                            self.axes.plot_date(x, y - y_std, eblt, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
+                            self.axes.plot_date(x, y + y_std, eblt, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
                         else:
-                            self.axes.plot(x, y - y_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
-                            self.axes.plot(x, y + y_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                            self.axes.plot(x, y - y_std, eblt, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
+                            self.axes.plot(x, y + y_std, eblt, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
 
                     elif not x_std is None:
                         if self.data.getXDataType() == "time":
-                            self.axes.plot_date(x, y - x_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
-                            self.axes.plot_date(x, y + x_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                            self.axes.plot_date(x, y - x_std, eblt, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
+                            self.axes.plot_date(x, y + x_std, eblt, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
                         else:
-                            self.axes.plot(x, y - x_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
-                            self.axes.plot(x, y + x_std, "--", color=self.orange, alpha=0.75) #list of lines returned (we only add one)
+                            self.axes.plot(x, y - x_std, eblt, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
+                            self.axes.plot(x, y + x_std, eblt, color=self.orange, alpha=0.75, zorder=10) #list of lines returned (we only add one)
 
 
 
@@ -312,3 +316,10 @@ class PlotView(QtGui.QFrame):
         self.emit(SIGNAL('plotSelectionChanged(array)'), self.selected_lines)
         self.canvas.draw()
 
+    def setPlotType(self, plot_type):
+        self.plot_type = str(plot_type)
+        self.drawPlot()
+
+    def setObservationPlotType(self, plot_type):
+        self.observation_plot_type = str(plot_type)
+        self.drawPlot()
