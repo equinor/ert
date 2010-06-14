@@ -33,6 +33,7 @@ class PlotView(QtGui.QFrame):
 
 
         self.data = PlotData()
+        self.data.x_data_type = "number"
 
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
