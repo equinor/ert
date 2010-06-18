@@ -77,6 +77,10 @@
 #define DEFAULT_SUMMARY_JOIN ":"
 
 
+#define CONFIG_KEY_FORMAT      "%16s"
+#define CONFIG_VALUE_FORMAT    " %32s"
+#define CONFIG_ENDVALUE_FORMAT " %32s\n"
+
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"
 #define NUM_STATIC_KW          56
@@ -183,6 +187,8 @@
 #define DEFAULT_CASE_MEMBER_PATH                 "%s/%s/mem%03d/files"
 #define DEFAULT_CASE_TSTEP_PATH                  "%s/%s/%04d/files"
 #define DEFAULT_CASE_TSTEP_MEMBER_PATH           "%s/%s/%04d/mem%03d/files"    
+
+
 
 
 #endif

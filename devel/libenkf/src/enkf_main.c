@@ -61,6 +61,7 @@
 #include <ert_build_info.h>
 #include <bool_vector.h>
 #include "enkf_defaults.h"
+#include "config_keys.h"
 
 /**
    This object should contain **everything** needed to run a enkf
@@ -115,6 +116,7 @@ struct enkf_main_struct {
   int_vector_type      * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
   bool                   pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
 
+  char                 * user_config_file;   
   enkf_obs_type        * obs;
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;         /* The ensemble ... */
@@ -155,6 +157,13 @@ void enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_pa
   model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
 }
 
+void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file ) {
+  enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
+}
+
+const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
+  return enkf_main->user_config_file;
+}
 
 ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
   return enkf_main->ensemble_config;
@@ -250,7 +259,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
 
   subst_func_pool_free( enkf_main->subst_func_pool );
   subst_list_free( enkf_main->subst_list );
-
+  util_safe_free( enkf_main->user_config_file );
   free(enkf_main);
 }
 
@@ -2066,14 +2075,14 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "ECLBASE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
-  item = config_add_item(config , "SCHEDULE_FILE" , true , false);
+  item = config_add_item(config , SCHEDULE_FILE_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   /*
      Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
      GEN_KW is added in ensemble_config.c
   */
 
-  item = config_add_item(config , "DATA_FILE" , true , false);
+  item = config_add_item(config , DATA_FILE_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , "INIT_SECTION" , false , false);
@@ -2244,11 +2253,12 @@ void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
 static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
-  enkf_main->dbase        = NULL;
-  enkf_main->ensemble     = NULL;
-  enkf_main->ens_size     = 0;
-  enkf_main->keep_runpath = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->logh         = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
+  enkf_main->dbase             = NULL;
+  enkf_main->ensemble          = NULL;
+  enkf_main->user_config_file  = NULL;
+  enkf_main->ens_size          = 0;
+  enkf_main->keep_runpath      = int_vector_alloc( 0 , DEFAULT_KEEP );
+  enkf_main->logh              = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
 
   /* Here we add the functions which should be available for string substitution operations. */
   enkf_main->subst_func_pool = subst_func_pool_alloc( );
@@ -2583,9 +2593,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (!util_file_exists(site_config))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
-    config_type * config = enkf_main_alloc_config();
+    config_type * config = enkf_main_alloc_config( );
     config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , false);
     config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , true);
+    enkf_main_set_user_config_file( enkf_main , model_config );
     /*****************************************************************/
     /* OK - now we have parsed everything - and we are ready to start
        populating the enkf_main object.
@@ -3184,4 +3195,11 @@ void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_ta
 
 /*****************************************************************/
 
+//void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
+//  if util_file_exists( enkf_main->user_config_file) {
+//    /** A version of the config file already exist, and we will take
+//        backup. */
+//    
+//  } 
+//}
 

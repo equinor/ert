@@ -169,3 +169,47 @@ get: model_config_get_case_table_file( model_config )
 set: enkf_main_set_case_table( model_config , filename );   <- File must exist
 
 
+
+REFCASE - Plotting:
+------------------
+Get:
+
+ecl_config = enkf_main_get_ecl_config( enkf_main )
+ecl_sum    = ecl_config_get_refcase( ecl_config )
+
+Plotting:
+
+ 1. Sjekk om refcase har variabel:  
+
+        ecl_sum_has_general_var( ecl_sum , key)
+
+    hvor 'key' er en summary key, som for eksempel "WWCT:OP_1". Dersom denne funksjonen returnerer true, maa du
+    sporre ecl_sum som en "oversettelse" fra key til en integer index, og siden bruke den indeksen:
+
+        key_index = ecl_sum_get_general_var_index( ecl_sum , key );
+ 
+
+ 2. Alloker en tidsakse:
+
+      time_vector = ecl_sum_alloc_time_vector( ecl_sum , true /* Report_only kan vre true */);
+
+    Denne kan selvflgelig gjenbrukes mellom flere summary plott.
+
+ 3. Alloker datavektor
+
+      data_vektor1 = ecl_sum_alloc_data_vector( ecl_sum , key_index1 , true );
+
+
+ Da har du x og y i en hhv time_t_vector og double_vector - en av joakims hjemmelade datastrukturer:
+
+ size:  xxx_vector_get_size( ) 
+ get1:  xxx_vector_iget( )
+ get2:  xxx_vector_get_ptr()     <- Returnerer en peker til underliggende data.
+
+
+ 4.  xxx_vector_free  () naar du er ferdi.
+
+
+
+
+ 

@@ -35,6 +35,8 @@ extern "C" {
 
 typedef struct enkf_main_struct enkf_main_type;
 
+void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );
+const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );
 bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
 void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
 void                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);

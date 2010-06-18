@@ -24,8 +24,6 @@ struct forward_model_struct {
   char                      * end_tag;
 };
 
-//#define DEFAULT_START_TAG    "<"
-//#define DEFAULT_END_TAG      ">"
 #define DEFAULT_JOB_MODULE   "jobs.py"
 #define DEFAULT_JOBLIST_NAME "jobList"
 

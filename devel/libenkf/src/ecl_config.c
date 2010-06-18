@@ -13,7 +13,7 @@
 #include <config.h>
 #include <ecl_config.h>
 #include <parser.h>
-
+#include "config_keys.h"
 #include "enkf_defaults.h"
 
 
@@ -323,8 +323,8 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   /*****************************************************************/
   ecl_config_init_static_kw( ecl_config );
   ecl_config_set_eclbase( ecl_config , config_iget(config , "ECLBASE" ,0,0) );
-  ecl_config_set_data_file( ecl_config , config_iget( config , "DATA_FILE" ,0,0));
-  ecl_config_set_schedule_file( ecl_config , config_iget( config , "SCHEDULE_FILE" ,0,0));
+  ecl_config_set_data_file( ecl_config , config_iget( config , DATA_FILE_KEY ,0,0));
+  ecl_config_set_schedule_file( ecl_config , config_iget( config , SCHEDULE_FILE_KEY ,0,0));
   ecl_config_clear_static_kw( ecl_config );
   if (config_item_set(config , "GRID"))
     ecl_config_set_grid( ecl_config , config_iget(config , "GRID" , 0,0) );
@@ -511,3 +511,11 @@ bool ecl_config_get_formatted(const ecl_config_type * ecl_config)        { retur
 bool ecl_config_get_unified_restart(const ecl_config_type * ecl_config)  { return ecl_io_config_get_unified_restart( ecl_config->io_config ); }
 bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)  { return ecl_io_config_get_unified_summary( ecl_config->io_config ); }
 
+
+void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stream ) {
+  fprintf( stream , CONFIG_KEY_FORMAT      , DATA_FILE_KEY );
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config->data_file );
+  
+  fprintf( stream , CONFIG_KEY_FORMAT      , SCHEDULE_FILE_KEY );
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , sched_file_iget_filename( ecl_config->sched_file , 0));
+}
