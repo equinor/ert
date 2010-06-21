@@ -14,6 +14,9 @@
    lsf_system_driver instead - the latter is based on calling bsub and
    bjobs with system calls, using temporary files and parsing the
    output; the former is of course highly preferred.
+
+   Documentation/examples of programming towards the lsf libraries can
+   be found in /prog/LSF/7.0/misc/examples
 */
 
 
@@ -61,7 +64,7 @@ struct lsf_driver_struct {
   QUEUE_DRIVER_FUNCTIONS
   char * queue_name;
   pthread_mutex_t    submit_lock;
-  
+  int                 num_cpu;
 #ifdef LSF_LIBRARY_DRIVER
   struct submit      lsf_request;
   struct submitReply lsf_reply; 
@@ -80,7 +83,7 @@ struct lsf_driver_struct {
 
 /*****************************************************************/
 
-
+static UTIL_SAFE_CAST_FUNCTION_CONST( lsf_driver , LSF_DRIVER_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION( lsf_driver , LSF_DRIVER_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION( lsf_job , LSF_JOB_TYPE_ID)
 
@@ -140,19 +143,24 @@ static int lsf_driver_submit_system_job(lsf_driver_type * driver , const char * 
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   char * lsf_stdout       = util_alloc_filename(run_path , job_name , "LSF-stdout");
 
+  char num_cpu_string[4];
+  sprintf(num_cpu_string , "%d" , driver->num_cpu);
 
   if (resource_request != NULL) 
 #ifdef xStatoil
     {
-       char * cmd = util_alloc_sprintf("%s -o %s -q %s -J %s -R %s %s %s > %s " , driver->bsub_executable , lsf_stdout , lsf_queue , job_name , resource_request , submit_cmd , run_path , tmp_file);
+       char * cmd = util_alloc_sprintf("%s -o %s -q %s -J %s -n %s -R %s %s %s > %s " , driver->bsub_executable , lsf_stdout , lsf_queue , job_name , num_cpu_string , resource_request , submit_cmd , run_path , tmp_file);
        system(cmd);
        free(cmd);
     }
 #else
-  util_fork_exec(driver->bsub_executable , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
+ {
+   util_fork_exec(driver->bsub_executable , 12 , (const char *[12]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-n" , num_cpu_string , 
+                                                                      "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
+ }
 #endif
   else
-    util_fork_exec(driver->bsub_executable , 8 , (const char *[8]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
+    util_fork_exec(driver->bsub_executable , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-n" , num_cpu_string , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
 
 
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
@@ -326,16 +334,27 @@ void lsf_driver_free_job(void * __driver , void * __job) {
 }
 
 
+int lsf_driver_get_num_cpu( const void * __lsf_driver ) {
+  const lsf_driver_type * lsf_driver = lsf_driver_safe_cast_const( __lsf_driver );
+  return lsf_driver->num_cpu;
+}
+
+void lsf_driver_set_num_cpu( void * __lsf_driver , int num_cpu) {
+  lsf_driver_type * lsf_driver = lsf_driver_safe_cast( __lsf_driver );
+  lsf_driver->num_cpu = num_cpu;
+}
 
 
 void lsf_driver_kill_job(void * __driver , void * __job) {
-  lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
   {
 #ifdef LSF_LIBRARY_DRIVER
     lsb_forcekilljob(job->lsf_jobnr);
-#else
-    util_fork_exec(driver->bkill_executable , 1 , (const char **)  &job->lsf_jobnr_char , true , NULL , NULL , NULL , NULL , NULL);
+#else 
+    {
+      lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
+      util_fork_exec(driver->bkill_executable , 1 , (const char **)  &job->lsf_jobnr_char , true , NULL , NULL , NULL , NULL , NULL);
+    }
 #endif
   }
   lsf_job_free( job );
@@ -367,9 +386,10 @@ void * lsf_driver_submit_job(void * __driver ,
       }
       driver->lsf_request.options = options;
     }
-    driver->lsf_request.jobName = (char *) job_name;
-    driver->lsf_request.outFile = lsf_stdout;
-    driver->lsf_request.command = command;
+    driver->lsf_request.jobName       = (char *) job_name;
+    driver->lsf_request.outFile       = lsf_stdout;
+    driver->lsf_request.command       = command;
+    driver->lsf_request.numProcessors = driver->num_cpu;
     job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
 #else
     {
@@ -443,7 +463,7 @@ void lsf_driver_free__(void * __driver ) {
 
 
 
-void * lsf_driver_alloc(const char * queue_name) {
+void * lsf_driver_alloc(const char * queue_name , int num_cpu) {
   lsf_driver_type * lsf_driver 	   = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name       	   = util_alloc_string_copy(queue_name);
   UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
@@ -454,6 +474,7 @@ void * lsf_driver_alloc(const char * queue_name) {
   lsf_driver->free_driver      	   = lsf_driver_free__;
   lsf_driver->display_info         = lsf_driver_display_info;
   lsf_driver->driver_type          = LSF_DRIVER; 
+  lsf_driver->num_cpu              = num_cpu;
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
   
 #ifdef LSF_LIBRARY_DRIVER
