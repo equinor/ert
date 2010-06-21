@@ -2596,7 +2596,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_type * config = enkf_main_alloc_config( );
     config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , false);
     config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , true);
-    enkf_main_set_user_config_file( enkf_main , model_config );
     /*****************************************************************/
     /* OK - now we have parsed everything - and we are ready to start
        populating the enkf_main object.
@@ -2607,7 +2606,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main = enkf_main_alloc_empty( data_kw );
       hash_free( data_kw );
     }
-        
+    enkf_main_set_user_config_file( enkf_main , model_config );
+    
     if (config_item_set( config , "LOG_LEVEL"))
       enkf_main_set_log_level( enkf_main , config_get_value_as_int(config , "LOG_LEVEL"));
     

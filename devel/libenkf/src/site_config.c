@@ -253,7 +253,8 @@ static void site_config_install_RSH_job_queue(site_config_type * site_config) {
 
 
 static void site_config_install_LSF_job_queue(site_config_type * site_config ) {
-  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name );
+  int num_cpu = 4;
+  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name , num_cpu);
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_lsf );
 }

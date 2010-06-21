@@ -7,6 +7,7 @@
 #include <msg.h>
 #include <util.h>
 #include <basic_queue_driver.h>
+#include <lsf_driver.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <arg_pack.h>
@@ -627,7 +628,6 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
   {
     if (node->job_status & JOB_QUEUE_CAN_KILL) {
       basic_queue_driver_type * driver = queue->driver;
-      job_status_type org_status = node->job_status;
       /* 
          Jobs with status JOB_QUEUE_WAITING are killable - in the sense that status should be set to
          JOB_QUEUE_USER_KILLED; but they do not have any driver specific job_data, and the driver->kill_job() function
@@ -994,6 +994,23 @@ void job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * dri
   }
   
   queue->driver = driver;
+}
+
+
+
+/*
+  Is currently a no-op for all other drivers than the lsf driver.
+*/
+void job_queue_set_num_cpu( job_queue_type * queue , int num_cpu) {
+  if (job_queue_get_driver_type( queue ) == LSF_DRIVER)
+    lsf_driver_set_num_cpu( queue->driver , num_cpu);
+}
+
+int job_queue_get_num_cpu( const job_queue_type * queue ) {
+  if (job_queue_get_driver_type( queue ) == LSF_DRIVER)
+    return lsf_driver_get_num_cpu( queue->driver );
+  else
+    return 0;
 }
 
 

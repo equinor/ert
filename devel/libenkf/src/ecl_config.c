@@ -48,6 +48,7 @@ struct ecl_config_struct {
   char               * init_section;               /* Equal to the full path of input_init_section IFF input_init_section points to an existing file - otherwise equal to input_init_section. */
   int                  last_history_restart;
   bool                 can_restart;                /* Have we found the <INIT> tag in the data file? */
+  int                  num_cpu;                    /* We should parse the ECLIPSE data file and determine how many cpus this eclipse file needs. */
 };
 
 
@@ -83,6 +84,8 @@ void ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_
     fclose( stream );
   }
   ecl_config->start_date = ecl_util_get_start_date( ecl_config->data_file );
+  ecl_config->num_cpu    = ecl_util_get_num_cpu( ecl_config->data_file );
+  printf("oK - need:%d cpu \n",ecl_config->num_cpu);
 }
 
 
@@ -90,6 +93,10 @@ const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
   return ecl_config->data_file;
 }
 
+
+int ecl_config_get_num_cpu( const ecl_config_type * ecl_config ) {
+  return ecl_config->num_cpu;
+}
 
 const char * ecl_config_get_schedule_prediction_file( const ecl_config_type * ecl_config ) {
   return ecl_config->schedule_prediction_file;
@@ -310,6 +317,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config->include_all_static_kw    = false;
   ecl_config->static_kw_set            = set_alloc_empty();
   ecl_config->user_static_kw           = stringlist_alloc_new();
+  ecl_config->num_cpu                  = -1;
   ecl_config->data_file                = NULL;
   ecl_config->input_init_section       = NULL; 
   ecl_config->init_section             = NULL;
