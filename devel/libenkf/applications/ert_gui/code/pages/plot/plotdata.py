@@ -1,3 +1,4 @@
+from erttypes import time_t
 from widgets.helpedwidget import ContentModel
 from widgets.util import print_timing, resourceIcon
 from pages.config.parameters.parametermodels import DataModel, KeywordModel, FieldModel, SummaryModel
@@ -6,11 +7,15 @@ import ertwrapper
 import enums
 import sys
 from enums import obs_impl_type
+
 from pages.plot.ensemblefetcher import EnsembleFetcher
 from pages.plot.rftfetcher import RFTFetcher
 from PyQt4.QtGui import QFrame
 from PyQt4.QtCore import SIGNAL, QObject
 import widgets
+
+
+
 
 class PlotDataFetcher(ContentModel, QObject):
 
@@ -91,8 +96,12 @@ class PlotData:
         self.obs_std_x = None
         self.obs_std_y = None
 
-        self.x_min = sys.maxint
-        self.x_max = -sys.maxint
+        self.refcase_x = None
+        self.refcase_y = None
+
+
+        self.x_min = None
+        self.x_max = None
 
         self.y_data_type = "number"
         self.x_data_type = "time"
@@ -100,6 +109,10 @@ class PlotData:
         self.inverted_y_axis = False
 
     def checkMaxMin(self, value):
+        if self.x_min is None or self.x_max is None:
+            self.x_min = value
+            self.x_max = value
+            
         self.x_min = min(value, self.x_min)
         self.x_max = max(value, self.x_max)
 
@@ -232,4 +245,3 @@ class PlotContextData:
             return self.key_index_list[key]
         else:
             return []
-

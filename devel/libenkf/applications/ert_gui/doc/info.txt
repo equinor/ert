@@ -210,6 +210,9 @@ Plotting:
  4.  xxx_vector_free  () naar du er ferdi.
 
 
+5. (Ekstraoppgave:) en ecl_sum instans kan også loades fra filsystemet (helt utenfor ERT sin database) med
+
+    ecl_sum = ecl_sum_fread_alloc_case( "Navn på en ECLIPSE.DATA fil" )
 
 
  
