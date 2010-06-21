@@ -5,6 +5,7 @@ import ertwrapper
 import enums
 from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
 from PyQt4.QtCore import SIGNAL
+from erttypes import time_t
 
 class EnsembleFetcher(PlotDataFetcherHandler):
 
@@ -40,12 +41,18 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         ert.prototype("double enkf_node_user_get(long, char*, bool*)")
 
         ert.prototype("double member_config_iget_sim_days(long, int, int)")
-        ert.prototype("long member_config_iget_sim_time(long, int, int)")
+        ert.prototype("time_t member_config_iget_sim_time(long, int, int)")
         ert.prototype("int member_config_get_last_restart_nr(long)")
 
         ert.prototype("long enkf_config_node_get_ref(long)")
         ert.prototype("bool field_config_ijk_active(long, int, int, int)")
-        
+
+        ert.prototype("bool ecl_sum_has_general_var(long, char*)", lib=ert.ecl)
+        ert.prototype("int ecl_sum_get_general_var_index(long, char*)", lib=ert.ecl)
+
+        ert.prototype("time_vector ecl_sum_alloc_time_vector(long, bool)", lib=ert.ecl)
+        ert.prototype("double_vector ecl_sum_alloc_data_vector(long, int, bool)", lib=ert.ecl)
+
 
     def isHandlerFor(self, ert, key):
         return ert.enkf.ensemble_config_has_key(ert.ensemble_config, key)
@@ -108,8 +115,11 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
         self.getObservations(ert, key, key_index, data)
 
+        self.getRefCase(ert, key, data)
+
+
         ert.enkf.enkf_node_free(node)
-        
+
         data.inverted_y_axis = False
 
     def getObservations(self, ert, key, key_index, data):
@@ -120,7 +130,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
         obs_count = ert.enkf.enkf_main_get_observation_count(ert.main, user_key)
         if obs_count > 0:
-            obs_x = (ertwrapper.c_long * obs_count)()
+            obs_x = (time_t * obs_count)()
             obs_y = (ertwrapper.c_double * obs_count)()
             obs_std = (ertwrapper.c_double * obs_count)()
             ert.enkf.enkf_main_get_observations(ert.main, user_key, obs_count, obs_x, obs_y, obs_std)
@@ -131,6 +141,31 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
             data.checkMaxMin(max(obs_x))
             data.checkMaxMin(min(obs_x))
+
+    def getRefCase(self, ert, key, data):
+        ecl_sum = ert.enkf.ecl_config_get_refcase(ert.ecl_config)
+
+        if(ert.ecl.ecl_sum_has_general_var(ecl_sum, key)):
+            ki = ert.ecl.ecl_sum_get_general_var_index(ecl_sum, key)
+            x_data = ert.ecl.ecl_sum_alloc_time_vector(ecl_sum, True)
+            y_data = ert.ecl.ecl_sum_alloc_data_vector(ecl_sum, ki, True)
+
+            data.refcase_x = []
+            data.refcase_y = []
+            first = True
+            for x in x_data:
+                if not first:
+                    data.refcase_x.append(x)
+                    data.checkMaxMin(x)
+                else:
+                    first = False #skip first element because of eclipse behavior
+
+            first = True
+            for y in y_data:
+                if not first:
+                    data.refcase_y.append(y)
+                else:
+                    first = False #skip first element because of eclipse behavior
 
     def configure(self, parameter, context_data):
         self.parameter = parameter
@@ -273,3 +308,6 @@ class KeywordConfigurationWidget(ConfigurationWidget):
 
     def getKeyIndex(self):
         return str(self.keyIndexCombo.currentText())
+
+
+

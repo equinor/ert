@@ -12,6 +12,11 @@ import datetime
 import time
 import matplotlib.dates
 from pages.plot.zoomslider import ZoomSlider
+from PyQt4.QtGui import QTabWidget
+from widgets.configpanel import ConfigPanel
+from PyQt4.Qt import SIGNAL
+from pages.plot.plotconfig import PlotConfigPanel
+from PyQt4.QtGui import QFormLayout
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -75,7 +80,7 @@ class PlotPanel(QtGui.QWidget):
 
         plotLayout.addLayout(parameterLayout)
         plotLayout.addLayout(plot_view_layout)
-        self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=180)
+        self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=250)
         plotLayout.addWidget(self.plotViewSettings)
         self.setLayout(plotLayout)
 
@@ -105,6 +110,7 @@ class PlotPanel(QtGui.QWidget):
 
 
 class PlotViewSettingsPanel(QtGui.QFrame):
+
     def __init__(self, parent=None, plotView=None, width=100):
         QtGui.QFrame.__init__(self, parent)
         self.setFrameShape(QtGui.QFrame.StyledPanel)
@@ -116,13 +122,18 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         self.plotView = plotView
 
-        layout = QtGui.QFormLayout()
-        layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
+        layout = QtGui.QVBoxLayout()
+        #layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
 
+        plot_configs = self.plotView.plot_configs
+        tabbed_panel = QTabWidget()
+        tabbed_panel.setTabPosition(QTabWidget.West)
+        for plot_config in plot_configs:
+            config_panel = PlotConfigPanel(plot_config)
+            tabbed_panel.addTab(config_panel, plot_config.name)
+            self.connect(config_panel, SIGNAL('plotConfigChanged()'), self.plotView.drawPlot)
 
-        layout.addRow("Line style:", self.createPlotLineStyleLayout(self.plotView.setPlotType))
-
-
+        layout.addWidget(tabbed_panel)
 
         self.errorbarModes = QtGui.QComboBox()
         errorbarItems = ["Off", "Auto", "Errorbar", "Errorline", "History"]
@@ -148,31 +159,44 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
 
         self.connect(self.errorbarModes, QtCore.SIGNAL("currentIndexChanged(int)"), errorbar)
-        layout.addRow("Error and history:", self.errorbarModes)
+        #layout.addRow("Error and history:", self.errorbarModes)
 
-        layout.addRow("Observation line style:", self.createPlotLineStyleLayout(self.plotView.setObservationPlotType))
 
-        self.alphaSpn = QtGui.QDoubleSpinBox(self)
-        self.alphaSpn.setMinimum(0.0)
-        self.alphaSpn.setMaximum(1.0)
-        self.alphaSpn.setDecimals(3)
-        self.alphaSpn.setSingleStep(0.01)
-        self.alphaSpn.setValue(plotView.getAlphaValue())
-        self.connect(self.alphaSpn, QtCore.SIGNAL('valueChanged(double)'), self.plotView.setAlphaValue)
-        layout.addRow("Blend factor:", self.alphaSpn)
 
-        layout.addRow(widgets.util.createSeparator())
+        layout.addLayout(self.createMemberSelectionLayout())
+        layout.addWidget(widgets.util.createSeparator())
 
-        self.saveBtn = QtGui.QPushButton()
-        self.saveBtn.setIcon(widgets.util.resourceIcon("disk"))
-        self.saveBtn.setIconSize(QtCore.QSize(16, 16))
-        layout.addRow("Save:", self.saveBtn)
-        self.connect(self.saveBtn, QtCore.SIGNAL('clicked()'), self.plotView.save)
+        layout.addLayout(self.createSaveButtonLayout())
 
-        layout.addRow(widgets.util.createSeparator())
+        self.setLayout(layout)
+
+
+
+    def setDefaultErrorbarMaxValue(self, errorbar_max):
+        self.errorbar_max = errorbar_max
+        if self.errorbarModes.currentIndex == 0: #auto
+            self.plotView.setErrorbarLimit(errorbar_max)
+
+    def createSaveButtonLayout(self):
+        save_layout = QFormLayout()
+        save_layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
+
+        self.save_button = QtGui.QPushButton()
+        self.save_button.setIcon(widgets.util.resourceIcon("disk"))
+        self.save_button.setIconSize(QtCore.QSize(16, 16))
+
+        save_layout.addRow("Save:", self.save_button)
+        self.connect(self.save_button, QtCore.SIGNAL('clicked()'), self.plotView.save)
+
+        return save_layout
+
+    def createMemberSelectionLayout(self):
+        layout = QFormLayout()
+        layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
 
         self.selected_member_label = QtGui.QLabel()
         self.selected_member_label.setWordWrap(True)
+
         def plotSelectionChanged(selected_members):
             text = ""
             for member in selected_members:
@@ -187,40 +211,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.clear_button.setText("Clear selection")
         layout.addRow(self.clear_button)
         self.connect(self.clear_button, QtCore.SIGNAL('clicked()'), self.plotView.clearSelection)
-
-        self.setLayout(layout)
-
-
-    def setDefaultErrorbarMaxValue(self, errorbar_max):
-        self.errorbar_max = errorbar_max
-        if self.errorbarModes.currentIndex == 0: #auto
-            self.plotView.setErrorbarLimit(errorbar_max)
-
-
-    def createPlotLineStyleLayout(self, func):
-        plot_style_layout = QtGui.QHBoxLayout()
-
-        plot_marker_styles = ["", ".", ",", "o", "*", "s", "+", "x", "p", "h", "H", "D", "d"]
-        plot_line_styles = ["", "-", "--", "-.", ":"]
-
-        plot_marker_type = QtGui.QComboBox()
-        plot_line_type = QtGui.QComboBox()
-
-        plot_marker_type.addItems(plot_marker_styles)
-        plot_line_type.addItems(plot_line_styles)
-
-        def combinePlotTypes():
-            res = str(plot_marker_type.currentText()) + str(plot_line_type.currentText())
-            func(res)
-
-        self.connect(plot_marker_type, QtCore.SIGNAL("currentIndexChanged(QString)"), combinePlotTypes)
-        self.connect(plot_line_type, QtCore.SIGNAL("currentIndexChanged(QString)"), combinePlotTypes)
-
-        plot_style_layout.addWidget(plot_marker_type)
-        plot_style_layout.addWidget(plot_line_type)
-
-        return plot_style_layout
-
+        return layout
 
 class PlotParameterConfigurationPanel(QtGui.QFrame):
     def __init__(self, parent=None, width=100):

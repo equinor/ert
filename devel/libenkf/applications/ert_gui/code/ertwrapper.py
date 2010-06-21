@@ -5,6 +5,7 @@ import atexit
 import re
 import sys
 import os
+import erttypes
 
 class ErtWrapper:
     """Wraps the functionality of ERT using ctypes"""
@@ -137,7 +138,10 @@ class ErtWrapper:
             if len(arguments) == 1 and arguments[0].strip() == "":
                 func.argtypes = []
             else:
-                func.argtypes = [self.__parseType(arg) for arg in arguments]
+                argtypes = [self.__parseType(arg) for arg in arguments]
+                if len(argtypes) == 1 and argtypes[0] is None:
+                    argtypes = []
+                func.argtypes = argtypes
 
             #print func, func.restype, func.argtyp
             return func
@@ -166,6 +170,11 @@ class ErtWrapper:
         self.prototype("void bool_vector_free(long)", lib=self.util)
 
         self.prototype("void enkf_main_free(long)")
+
+        self.registerType("time_t", erttypes.time_t)
+        erttypes.time_vector.initialize(self)
+        erttypes.double_vector.initialize(self)
+
         
     def getStringList(self, stringlist_pointer, free_after_use=False):
         """Retrieve a list of strings"""
@@ -265,4 +274,8 @@ class ErtWrapper:
 
     def nonify(self, s):
         return s or None
+
+
+        
+
 
