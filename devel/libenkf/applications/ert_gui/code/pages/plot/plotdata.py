@@ -103,6 +103,9 @@ class PlotData:
         self.x_min = None
         self.x_max = None
 
+        self.y_min = None
+        self.y_max = None
+
         self.y_data_type = "number"
         self.x_data_type = "time"
 
@@ -115,6 +118,14 @@ class PlotData:
             
         self.x_min = min(value, self.x_min)
         self.x_max = max(value, self.x_max)
+
+    def checkMaxMinY(self, value):
+        if self.y_min is None or self.y_max is None:
+            self.y_min = value
+            self.y_max = value
+
+        self.y_min = min(value, self.y_min)
+        self.y_max = max(value, self.y_max)
 
     def getName(self):
         return self.name

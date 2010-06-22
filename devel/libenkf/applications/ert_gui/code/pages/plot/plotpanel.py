@@ -18,6 +18,8 @@ from PyQt4.Qt import SIGNAL
 from pages.plot.plotconfig import PlotConfigPanel
 from PyQt4.QtGui import QFormLayout, QFrame
 from PyQt4.QtGui import QVBoxLayout
+from PyQt4.QtGui import QHBoxLayout
+from PyQt4.QtGui import QCheckBox
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -46,43 +48,25 @@ class PlotPanel(QtGui.QWidget):
         self.connect(self.plotDataFetcher, QtCore.SIGNAL('dataChanged()'), self.drawPlot)
         self.plotContextDataFetcher = PlotContextDataFetcher()
 
-        plot_view_layout = QtGui.QVBoxLayout()
+        plot_view_layout = QtGui.QGridLayout()
 
-        plot_view_layout.addWidget(self.plot)
+        plot_view_layout.addWidget(self.plot, 0, 0, 1, 1)
 
-        zoom_layout = QtGui.QHBoxLayout()
-        self.zoom_slider = ZoomSlider()
-        self.connect(self.zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), self.plot.setXViewFactors)
+        self.h_zoom_slider = ZoomSlider()
+        self.connect(self.h_zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), self.plot.setXViewFactors)
 
-#        self.min_value = QtGui.QDoubleSpinBox()
-#        self.min_value.setMinimum(0.0)
-#        self.min_value.setMaximum(1.0)
-#        self.min_value.setDecimals(3)
-#        self.min_value.setSingleStep(0.01)
-#        self.min_value.setMaximumWidth(70)
-#        self.connect(self.min_value, QtCore.SIGNAL('valueChanged(double)'), self.zoom_slider.setMinValue)
-#        self.connect(self.zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), lambda min, max: self.min_value.setValue(min))
-#
-#        self.max_value = QtGui.QDoubleSpinBox()
-#        self.max_value.setValue(1.0)
-#        self.max_value.setMinimum(0.0)
-#        self.max_value.setMaximum(1.0)
-#        self.max_value.setDecimals(3)
-#        self.max_value.setSingleStep(0.01)
-#        self.max_value.setMaximumWidth(70)
-#        self.connect(self.max_value, QtCore.SIGNAL('valueChanged(double)'), self.zoom_slider.setMaxValue)
-#        self.connect(self.zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), lambda min, max: self.max_value.setValue(max))
+        self.v_zoom_slider = ZoomSlider(horizontal=False)
+        self.connect(self.v_zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), self.plot.setYViewFactors)
 
-#        zoom_layout.addWidget(self.min_value)
-        zoom_layout.addWidget(self.zoom_slider)
-#        zoom_layout.addWidget(self.max_value)
-
-        plot_view_layout.addLayout(zoom_layout)
+        plot_view_layout.addWidget(self.h_zoom_slider, 1, 0, 1, 1)
+        plot_view_layout.addWidget(self.v_zoom_slider, 0, 1, 1, 1)
 
         plotLayout.addLayout(parameterLayout)
         plotLayout.addLayout(plot_view_layout)
+
         self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=250)
         plotLayout.addWidget(self.plotViewSettings)
+        
         self.setLayout(plotLayout)
 
 
@@ -137,11 +121,66 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout.addWidget(self.createMemberSelectionPanel())
         layout.addWidget(widgets.util.createSeparator())
+        layout.addWidget(self.createPlotRangePanel())
+        layout.addWidget(widgets.util.createSeparator())
 
         layout.addLayout(self.createSaveButtonLayout())
 
         self.setLayout(layout)
 
+    def createDisableableSpinner(self, func):
+        layout = QHBoxLayout()
+
+        check = QCheckBox()
+
+        spinner = QtGui.QDoubleSpinBox()
+        spinner.setDecimals(3)
+        spinner.setSingleStep(1)
+        spinner.setDisabled(True)
+        spinner.setMinimum(-10000000000)
+        spinner.setMaximum(10000000000)
+        spinner.setMaximumWidth(100)
+        self.connect(spinner, QtCore.SIGNAL('valueChanged(double)'), func)
+
+        def disabler(state):
+            disabled = not state == 2
+            spinner.setDisabled(disabled)
+
+            if not disabled:
+                func(spinner.value())
+            else:
+                func(None)
+
+        self.connect(check, SIGNAL('stateChanged(int)'), disabler)
+
+        layout.addWidget(check)
+        layout.addWidget(spinner)
+        return layout, spinner
+
+    def createPlotRangePanel(self):
+        frame = QFrame()
+        #frame.setMinimumHeight(150)
+        frame.setMaximumHeight(150)
+        frame.setFrameShape(QFrame.StyledPanel)
+        frame.setFrameShadow(QFrame.Plain)
+
+        layout = QFormLayout()
+
+        x_min_layout, x_min_spin = self.createDisableableSpinner(self.plotView.setMinXLimit)
+        x_max_layout, x_max_spin = self.createDisableableSpinner(self.plotView.setMaxXLimit)
+
+        layout.addRow("X min:", x_min_layout)
+        layout.addRow("X max:", x_max_layout)
+
+
+        y_min_layout, y_min_spin = self.createDisableableSpinner(self.plotView.setMinYLimit)
+        y_max_layout, y_max_spin = self.createDisableableSpinner(self.plotView.setMaxYLimit)
+
+        layout.addRow("Y min:", y_min_layout)
+        layout.addRow("Y max:", y_max_layout)
+
+        frame.setLayout(layout)
+        return frame
 
     def createSaveButtonLayout(self):
         save_layout = QFormLayout()

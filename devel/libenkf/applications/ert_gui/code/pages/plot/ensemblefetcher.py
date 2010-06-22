@@ -108,6 +108,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                         value = ert.enkf.enkf_node_user_get(node, key_index, ertwrapper.byref(valid))
                         if valid.value == 1:
                             data.checkMaxMin(sim_time)
+                            data.checkMaxMinY(value)
                             x_time.append(sim_time)
                             y.append(value)
                         else:
@@ -142,6 +143,9 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             data.checkMaxMin(max(obs_x))
             data.checkMaxMin(min(obs_x))
 
+            data.checkMaxMinY(max(obs_y))
+            data.checkMaxMinY(min(obs_y))
+
     def getRefCase(self, ert, key, data):
         ecl_sum = ert.enkf.ecl_config_get_refcase(ert.ecl_config)
 
@@ -164,6 +168,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             for y in y_data:
                 if not first:
                     data.refcase_y.append(y)
+                    data.checkMaxMinY(y)
                 else:
                     first = False #skip first element because of eclipse behavior
 

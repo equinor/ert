@@ -34,7 +34,7 @@ chmod a+rwx -R $destination/img
 chmod a+rwx -R $destination/help
 
 
-export ERT_HOME=/private/jpb/EnKF/
+#export ERT_HOME=/private/jpb/EnKF/
 if [ -n "$ERT_HOME" ]
 then
     rm -rf $destination/lib
