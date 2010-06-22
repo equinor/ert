@@ -16,7 +16,8 @@ from PyQt4.QtGui import QTabWidget
 from widgets.configpanel import ConfigPanel
 from PyQt4.Qt import SIGNAL
 from pages.plot.plotconfig import PlotConfigPanel
-from PyQt4.QtGui import QFormLayout
+from PyQt4.QtGui import QFormLayout, QFrame
+from PyQt4.QtGui import QVBoxLayout
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -105,7 +106,7 @@ class PlotPanel(QtGui.QWidget):
 
         self.plotList.sortItems()
 
-        self.plotViewSettings.setDefaultErrorbarMaxValue(self.plotContextDataFetcher.data.errorbar_max)
+        #self.plotViewSettings.setDefaultErrorbarMaxValue(self.plotContextDataFetcher.data.errorbar_max)
         self.plot.setPlotPath(self.plotContextDataFetcher.data.plot_path)
 
 
@@ -123,7 +124,6 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.plotView = plotView
 
         layout = QtGui.QVBoxLayout()
-        #layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
 
         plot_configs = self.plotView.plot_configs
         tabbed_panel = QTabWidget()
@@ -135,47 +135,13 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout.addWidget(tabbed_panel)
 
-        self.errorbarModes = QtGui.QComboBox()
-        errorbarItems = ["Off", "Auto", "Errorbar", "Errorline", "History"]
-        self.errorbarModes.addItems(errorbarItems)
-        self.errorbar_max = -1
-        def errorbar(index):
-            if index == 0: #off
-                self.plotView.showErrorbar(False, True)
-            elif index == 1: #auto
-                self.plotView.showErrorbar(True, True)
-                self.plotView.setErrorbarLimit(self.errorbar_max)
-            elif index == 2: #only show show errorbars
-                self.plotView.showErrorbar(True, True)
-                self.plotView.setErrorbarLimit(10000)
-            elif index == 3: #only show error lines with standard deviation
-                self.plotView.showErrorbar(True, True)
-                self.plotView.setErrorbarLimit(0)
-                self.plotView.setShowSTDV(True)
-            else: #only show error lines without standard deviation
-                self.plotView.showErrorbar(True, True)
-                self.plotView.setErrorbarLimit(0)
-                self.plotView.setShowSTDV(False)
-
-
-        self.connect(self.errorbarModes, QtCore.SIGNAL("currentIndexChanged(int)"), errorbar)
-        #layout.addRow("Error and history:", self.errorbarModes)
-
-
-
-        layout.addLayout(self.createMemberSelectionLayout())
+        layout.addWidget(self.createMemberSelectionPanel())
         layout.addWidget(widgets.util.createSeparator())
 
         layout.addLayout(self.createSaveButtonLayout())
 
         self.setLayout(layout)
 
-
-
-    def setDefaultErrorbarMaxValue(self, errorbar_max):
-        self.errorbar_max = errorbar_max
-        if self.errorbarModes.currentIndex == 0: #auto
-            self.plotView.setErrorbarLimit(errorbar_max)
 
     def createSaveButtonLayout(self):
         save_layout = QFormLayout()
@@ -190,9 +156,14 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         return save_layout
 
-    def createMemberSelectionLayout(self):
-        layout = QFormLayout()
-        layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
+    def createMemberSelectionPanel(self):
+        frame = QFrame()
+        frame.setMinimumHeight(100)
+        frame.setMaximumHeight(100)
+        frame.setFrameShape(QFrame.StyledPanel)
+        frame.setFrameShadow(QFrame.Plain)
+
+        layout = QVBoxLayout()
 
         self.selected_member_label = QtGui.QLabel()
         self.selected_member_label.setWordWrap(True)
@@ -204,14 +175,19 @@ class PlotViewSettingsPanel(QtGui.QFrame):
             self.selected_member_label.setText(text)
 
         self.connect(self.plotView, QtCore.SIGNAL('plotSelectionChanged(array)'), plotSelectionChanged)
-        layout.addRow(QtGui.QLabel("Selected members:"))
-        layout.addRow(self.selected_member_label)
+        
+        layout.addWidget(QtGui.QLabel("Selected members:"))
+        layout.addWidget(self.selected_member_label)
+
+        layout.addStretch(1)
 
         self.clear_button = QtGui.QPushButton()
         self.clear_button.setText("Clear selection")
-        layout.addRow(self.clear_button)
+        layout.addWidget(self.clear_button)
         self.connect(self.clear_button, QtCore.SIGNAL('clicked()'), self.plotView.clearSelection)
-        return layout
+        frame.setLayout(layout)
+
+        return frame
 
 class PlotParameterConfigurationPanel(QtGui.QFrame):
     def __init__(self, parent=None, width=100):

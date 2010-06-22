@@ -33,6 +33,25 @@ chmod a+rwx -R $destination/bin
 chmod a+rwx -R $destination/img
 chmod a+rwx -R $destination/help
 
+
+export ERT_HOME=/private/jpb/EnKF/
+if [ -n "$ERT_HOME" ]
+then
+    rm -rf $destination/lib
+    mkdir $destination/lib
+    cp -f $ERT_HOME/libenkf/slib/libenkf.so $destination/lib
+    cp -f $ERT_HOME/libconfig/slib/libconfig.so $destination/lib
+    cp -f $ERT_HOME/libecl/slib/libecl.so $destination/lib
+    cp -f $ERT_HOME/libsched/slib/libsched.so $destination/lib
+    cp -f $ERT_HOME/libutil/slib/libutil.so $destination/lib
+    cp -f $ERT_HOME/librms/slib/librms.so $destination/lib
+    cp -f $ERT_HOME/libjob_queue/slib/libjob_queue.so $destination/lib
+
+    chmod a+rwx -R $destination/lib
+fi
+
+
+
 echo
 echo "The GUI for ERT has been installed in: $destination."
 #echo "The ERT_HOME environment variable in ertgui.sh must be set before running."

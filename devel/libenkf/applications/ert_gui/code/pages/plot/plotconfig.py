@@ -5,7 +5,7 @@ from PyQt4.QtGui import QCheckBox
 
 class PlotConfig(object):
 
-    def __init__(self, name, linestyle="-", marker="", color=(0.0, 0.0, 0.0), alpha=0.75, zorder=1, picker=None, type="line", visible=True):
+    def __init__(self, name, linestyle="-", marker="", color=(0.0, 0.0, 0.0), alpha=0.75, zorder=1, picker=None, visible=True):
         self._name = name
         self._linestyle = linestyle
         self._marker = marker
@@ -14,7 +14,6 @@ class PlotConfig(object):
         self._is_visible = visible
         self._z_order = zorder
         self._picker = picker
-        self._type = type
 
         self.signal_handler = QObject()
 
@@ -70,6 +69,10 @@ class PlotConfig(object):
 
     def set_is_visible(self, is_visible):
         self._is_visible = is_visible
+
+        if self._linestyle == "" and self._marker == "":
+            self._linestyle = "-"
+
         self.notify()
 
     def is_visible(self):
@@ -95,14 +98,6 @@ class PlotConfig(object):
 
     picker = property(getPicker, setPicker)
 
-    def setType(self, type):
-        self._type = type
-        self.notify()
-
-    def getType(self):
-        return self._type
-
-    type = property(getType, setType)
 
 
 class PlotConfigPanel(QFrame):
@@ -120,7 +115,17 @@ class PlotConfigPanel(QFrame):
         layout.addRow("Visible:", self.chk_visible)
         self.connect(self.chk_visible, SIGNAL('stateChanged(int)'), self.setVisibleState)
 
-        layout.addRow("Line style:", self.createPlotLineStyleLayout())
+        self.plot_linestyle = QComboBox()
+        self.plot_linestyle.addItems(self.plot_line_styles)
+        self.connect(self.plot_linestyle, SIGNAL("currentIndexChanged(QString)"), self.setLineStyle)
+        layout.addRow("Line style:", self.plot_linestyle)
+
+        self.plot_marker_style = QComboBox()
+        self.plot_marker_style.addItems(self.plot_marker_styles)
+        self.connect(self.plot_marker_style, SIGNAL("currentIndexChanged(QString)"), self.setMarker)
+        layout.addRow("Marker style:", self.plot_marker_style)
+
+
 
         self.alpha_spinner = QDoubleSpinBox(self)
         self.alpha_spinner.setMinimum(0.0)
@@ -143,10 +148,10 @@ class PlotConfigPanel(QFrame):
 
     def fetchValues(self):
         linestyle_index = self.plot_line_styles.index(self.plot_config.linestyle)
-        self.plot_line_type.setCurrentIndex(linestyle_index)
+        self.plot_linestyle.setCurrentIndex(linestyle_index)
 
         marker_index = self.plot_marker_styles.index(self.plot_config.marker)
-        self.plot_marker_type.setCurrentIndex(marker_index)
+        self.plot_marker_style.setCurrentIndex(marker_index)
 
         self.alpha_spinner.setValue(self.plot_config.alpha)
         self.chk_visible.setChecked(self.plot_config.is_visible)
@@ -162,23 +167,7 @@ class PlotConfigPanel(QFrame):
 
     def setVisibleState(self, state):
         self.plot_config.is_visible = state == 2
-
-    def createPlotLineStyleLayout(self):
-        plot_style_layout = QHBoxLayout()
-
-        self.plot_marker_type = QComboBox()
-        self.plot_line_type = QComboBox()
-
-        self.plot_marker_type.addItems(self.plot_marker_styles)
-        self.plot_line_type.addItems(self.plot_line_styles)
-
-        self.connect(self.plot_marker_type, SIGNAL("currentIndexChanged(QString)"), self.setMarker)
-        self.connect(self.plot_line_type, SIGNAL("currentIndexChanged(QString)"), self.setLineStyle)
-
-        plot_style_layout.addWidget(self.plot_marker_type)
-        plot_style_layout.addWidget(self.plot_line_type)
-
-        return plot_style_layout
+   
 
 
 class ColorPicker(QWidget):

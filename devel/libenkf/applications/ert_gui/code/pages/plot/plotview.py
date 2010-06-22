@@ -106,15 +106,15 @@ class PlotView(QtGui.QFrame):
 
         self.observation_plot_config = PlotConfig("Observation", color = self.history_color, zorder=10)
         self.refcase_plot_config = PlotConfig("Refcase", visible=False, color = self.refcase_color, zorder=10)
-        self.std_plot_config = PlotConfig("Error", visible=False, color = self.history_color, zorder=10)
+        self.std_plot_config = PlotConfig("Error", linestyle=":", visible=False, color = self.history_color, zorder=10)
         self.plot_config = PlotConfig("Members", color = self.plot_color, alpha=0.125, zorder=1, picker=2)
         self.selected_plot_config = PlotConfig("Selected members", color = self.selected_color, alpha=0.5, zorder=8, picker=2)
         self.errorbar_plot_config = PlotConfig("Errorbars", visible=False, color = self.history_color, alpha=0.5, zorder=10)
 
         self.plot_configs = [self.plot_config,
                              self.selected_plot_config,
-                             self.observation_plot_config,
                              self.refcase_plot_config,
+                             self.observation_plot_config,
                              self.std_plot_config,
                              self.errorbar_plot_config]
 
