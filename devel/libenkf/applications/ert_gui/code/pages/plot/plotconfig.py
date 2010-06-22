@@ -25,6 +25,9 @@ class PlotConfig(object):
 
     name = property(get_name)
 
+    def hasStyle(self):
+        return not self.style == ""
+
     def get_style(self):
         return (str(self._marker) + str(self._linestyle)).strip()
 
@@ -32,6 +35,7 @@ class PlotConfig(object):
 
     def setLinestyle(self, linestyle):
         self._linestyle = linestyle
+
         self.notify()
 
     def getLinestyle(self):
@@ -41,6 +45,7 @@ class PlotConfig(object):
 
     def setMarker(self, marker):
         self._marker = marker
+
         self.notify()
 
     def getMarker(self):
@@ -69,14 +74,10 @@ class PlotConfig(object):
 
     def set_is_visible(self, is_visible):
         self._is_visible = is_visible
-
-        if self._linestyle == "" and self._marker == "":
-            self._linestyle = "-"
-
         self.notify()
 
     def is_visible(self):
-        return not self.style == "" and self._is_visible
+        return self._is_visible
 
     is_visible = property(is_visible, set_is_visible)
 

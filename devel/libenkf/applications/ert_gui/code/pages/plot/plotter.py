@@ -10,7 +10,7 @@ class Plotter:
                          alpha=plot_config.alpha,
                          zorder=plot_config.z_order,
                          picker = plot_config.picker,
-                         visible = plot_config.is_visible)
+                         visible = plot_config.is_visible and plot_config.hasStyle())
 
         return line[0]
 
@@ -22,7 +22,7 @@ class Plotter:
                               alpha=plot_config.alpha,
                               zorder=plot_config.z_order,
                               picker = plot_config.picker,
-                              visible = plot_config.is_visible)
+                              visible = plot_config.is_visible and plot_config.hasStyle())
 
         return line[0]
 

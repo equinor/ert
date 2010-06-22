@@ -12,14 +12,12 @@ import datetime
 import time
 import matplotlib.dates
 from pages.plot.zoomslider import ZoomSlider
-from PyQt4.QtGui import QTabWidget
 from widgets.configpanel import ConfigPanel
 from PyQt4.Qt import SIGNAL
+from PyQt4.QtCore import QDate
 from pages.plot.plotconfig import PlotConfigPanel
-from PyQt4.QtGui import QFormLayout, QFrame
-from PyQt4.QtGui import QVBoxLayout
-from PyQt4.QtGui import QHBoxLayout
-from PyQt4.QtGui import QCheckBox
+from PyQt4.QtGui import QTabWidget, QFormLayout, QFrame, QVBoxLayout, QHBoxLayout, QCheckBox
+from PyQt4.QtGui import QPushButton, QToolButton
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -71,7 +69,8 @@ class PlotPanel(QtGui.QWidget):
 
 
     def drawPlot(self):
-        self.plot.setData(self.plotDataFetcher.data)
+        data = self.plotDataFetcher.data
+        self.plot.setData(data)
         self.plot.drawPlot()
 
     @widgets.util.may_take_a_long_time
@@ -142,9 +141,20 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         spinner.setMaximumWidth(100)
         self.connect(spinner, QtCore.SIGNAL('valueChanged(double)'), func)
 
+        button = QToolButton()
+        button.setIcon(widgets.util.resourceIcon("calendar"))
+        button.setIconSize(QtCore.QSize(16, 16))
+        button.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        button.setAutoRaise(True)
+        button.setDisabled(True)
+
+
+        #TODO:POPUP!!!!
+
         def disabler(state):
             disabled = not state == 2
             spinner.setDisabled(disabled)
+            button.setDisabled(disabled)
 
             if not disabled:
                 func(spinner.value())
@@ -155,7 +165,8 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout.addWidget(check)
         layout.addWidget(spinner)
-        return layout, spinner
+        layout.addWidget(button)
+        return layout
 
     def createPlotRangePanel(self):
         frame = QFrame()
@@ -166,15 +177,14 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout = QFormLayout()
 
-        x_min_layout, x_min_spin = self.createDisableableSpinner(self.plotView.setMinXLimit)
-        x_max_layout, x_max_spin = self.createDisableableSpinner(self.plotView.setMaxXLimit)
+        x_min_layout = self.createDisableableSpinner(self.plotView.setMinXLimit)
+        x_max_layout = self.createDisableableSpinner(self.plotView.setMaxXLimit)
 
         layout.addRow("X min:", x_min_layout)
         layout.addRow("X max:", x_max_layout)
 
-
-        y_min_layout, y_min_spin = self.createDisableableSpinner(self.plotView.setMinYLimit)
-        y_max_layout, y_max_spin = self.createDisableableSpinner(self.plotView.setMaxYLimit)
+        y_min_layout = self.createDisableableSpinner(self.plotView.setMinYLimit)
+        y_max_layout = self.createDisableableSpinner(self.plotView.setMaxYLimit)
 
         layout.addRow("Y min:", y_min_layout)
         layout.addRow("Y max:", y_max_layout)

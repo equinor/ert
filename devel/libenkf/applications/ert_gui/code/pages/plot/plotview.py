@@ -48,7 +48,8 @@ class PlotView(QFrame):
 #
     plot_color = (55/255.0, 126/255.0, 200/255.0)
     selected_color = (152/255.0, 78/255.0, 163/255.0)
-    history_color = (255/255.0, 127/255.0, 0/255.0)
+    #history_color = (255/255.0, 127/255.0, 0/255.0)
+    history_color = (255/255.0, 0/255.0, 0/255.0)
     #refcase_color = (190/255.0, 0/255.0, 0/255.0)
     refcase_color = (0/255.0, 200/255.0, 0/255.0)
 
@@ -298,8 +299,11 @@ class PlotView(QFrame):
     def convertDate(self, ert_time):
         if ert_time is None:
             ert_time = time_t(0)
-            
-        return matplotlib.dates.date2num(ert_time.datetime())
+
+        if isinstance(ert_time, datetime.date):
+            return matplotlib.dates.date2num(ert_time)
+        else:
+            return matplotlib.dates.date2num(ert_time.datetime())
 
     def save(self):
         if not os.path.exists(self.plot_path):
@@ -369,6 +373,7 @@ class PlotView(QFrame):
 
             
     def setMinXLimit(self, value):
+        print value
         self.x_limits = (value, self.x_limits[1])
         self.updateLimits()
 
@@ -378,7 +383,7 @@ class PlotView(QFrame):
         else:
             x_limit = self.x_limits[0]
 
-            if self.data.getXDataType() == "time" and not self.data.x_min is None:
+            if self.data.getXDataType() == "time":
                 x_limit = time_t(long(x_limit * 86400))
 
         if self.data.getXDataType() == "time":
@@ -395,7 +400,7 @@ class PlotView(QFrame):
             x_limit = self.data.x_max
         else:
             x_limit = self.x_limits[1]
-            if self.data.getXDataType() == "time" and not self.data.x_max is None:
+            if self.data.getXDataType() == "time":
                 #x_limit = time_t(self.data.x_max.value + int(x_limit * 86400))
                 x_limit = time_t(long(x_limit * 86400))
 
