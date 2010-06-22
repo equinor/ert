@@ -111,6 +111,7 @@ class PlotConfigPanel(QFrame):
 
         layout = QFormLayout()
         layout.setRowWrapPolicy(QFormLayout.WrapLongRows)
+
         self.chk_visible = QCheckBox()
         layout.addRow("Visible:", self.chk_visible)
         self.connect(self.chk_visible, SIGNAL('stateChanged(int)'), self.setVisibleState)

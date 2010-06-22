@@ -82,6 +82,12 @@ class PlotView(QFrame):
 
         self.xminf = 0.0
         self.xmaxf = 1.0
+        self.x_limits = (None, None)
+
+        self.yminf = 0.0
+        self.ymaxf = 1.0
+        self.y_limits = (None, None)
+
         self.plot_path = "."
 
         self.observation_plot_config = PlotConfig("Observation", color = self.history_color, zorder=10)
@@ -121,19 +127,28 @@ class PlotView(QFrame):
         self.canvas.draw()
 
 
-    #@print_timing
-    @widgets.util.may_take_a_long_time
-    def drawPlot(self):
-        self.axes.cla()
-        self.lines = []
+    def updateLimits(self, draw=True):
+        self.setXViewFactors(self.xminf, self.xmaxf, False)
+        self.setYViewFactors(self.yminf, self.ymaxf, False)
 
+        if draw:
+            self.canvas.draw()
+
+    def createTitle(self):
         name = self.data.getName()
         key_index = self.data.getKeyIndex()
 
         if not key_index is None:
             name = "%s (%s)" % (name, key_index)
 
-        self.axes.set_title(name)
+        return name
+
+    @widgets.util.may_take_a_long_time
+    def drawPlot(self):
+        self.axes.cla()
+        self.lines = []
+
+        self.axes.set_title(self.createTitle())
 
         if self.data.hasInvertedYAxis() and not self.axes.yaxis_inverted():
             self.axes.invert_yaxis()
@@ -141,8 +156,12 @@ class PlotView(QFrame):
             self.axes.invert_yaxis()
                 
 
-        for annotation in self.annotations:
-            self.axes.add_artist(annotation)
+        old_annotations = self.annotations
+        self.annotations = []
+        for annotation in old_annotations:
+            x, y = annotation.xy
+            xt, yt = annotation.xytext
+            self.annotate(annotation.get_text(), x, y, xt, yt)
 
         selected_members = []
 
@@ -210,30 +229,18 @@ class PlotView(QFrame):
                 self.plotter.plot_date(self.axes, self.refcase_plot_config, x, y)
 
                 
-        self.xlimits = self.axes.get_xlim()
-        #self.axes.set_xlim(xlim[0] - 30, xlim[1] + 30)
 
         if self.data.getXDataType() == "time":
-            #years = matplotlib.dates.YearLocator()   # every year
-            #months = matplotlib.dates.MonthLocator()  # every month
-            #yearsFmt = matplotlib.dates.DateFormatter('%b %y')
             yearsFmt = matplotlib.dates.DateFormatter('%b \'%Y')
-            #monthFmt = matplotlib.dates.DateFormatter('%b')
-            #self.axes.xaxis.set_major_locator(years)
             self.axes.xaxis.set_major_formatter(yearsFmt)
             self.fig.autofmt_xdate()
-            #self.axes.xaxis.set_minor_locator(months)
-            #self.axes.xaxis.set_minor_formatter(monthFmt)
-            #self.axes.xaxis.set_major_locator(AutoDateLocator())
-            #self.axes.xaxis.set_minor_locator(AutoDateLocator())
 
-        #number_formatter = matplotlib.ticker.FormatStrFormatter("%f")
         number_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
         number_formatter.set_scientific(True)
-        #number_formatter.set_powerlimits((5, -5))
-
         self.axes.yaxis.set_major_formatter(number_formatter)
-        self.setXViewFactors(self.xminf, self.xmaxf, False)
+
+
+        self.updateLimits(False)
 
         self.canvas.draw()
 
@@ -263,21 +270,27 @@ class PlotView(QFrame):
     def setXViewFactors(self, xminf, xmaxf, draw=True):
         self.xminf = xminf
         self.xmaxf = xmaxf
+        
+        x_min = self.getMinXLimit()
+        x_max = self.getMaxXLimit()
 
-        if self.data.getXDataType() == "time":
-            x_min = self.convertDate(self.data.x_min)
-            x_max = self.convertDate(self.data.x_max)
+        if not x_min is None and not x_max is None:
+            range = x_max - x_min
+            self.axes.set_xlim(x_min + xminf * range - range*0.05, x_min + xmaxf * range + range*0.05)
 
-            if not x_min is None and not x_max is None:
-                range = x_max - x_min
-                self.axes.set_xlim(x_min + xminf * range - 60, x_min + xmaxf * range + 60)
-        else:
-            x_min = self.data.x_min
-            x_max = self.data.x_max
-            
-            if not x_min is None and not x_max is None:
-                range = x_max - x_min
-                self.axes.set_xlim(x_min + xminf * range - range*0.05, x_min + xmaxf * range + range*0.05)
+        if draw:
+            self.canvas.draw()
+
+    def setYViewFactors(self, yminf, ymaxf, draw=True):
+        self.yminf = yminf
+        self.ymaxf = ymaxf
+
+        y_min = self.getMinYLimit()
+        y_max = self.getMaxYLimit()
+
+        if not y_min is None and not y_max is None:
+            range = y_max - y_min
+            self.axes.set_ylim(y_min + yminf * range - range*0.05, y_min + ymaxf * range + range*0.05)
 
         if draw:
             self.canvas.draw()
@@ -318,13 +331,85 @@ class PlotView(QFrame):
         else:
             self.setToolTip("")
 
+    def annotate(self, label, x, y, xt=None, yt=None):
+        coord = (x, y)
+        xytext = None
+        if not xt is None and not yt is None:
+            xytext = (xt, yt)
+        arrow = dict(arrowstyle="->", connectionstyle="arc3,rad=.2")
+        annotation = self.axes.annotate(str(label), coord, xytext=xytext, xycoords='data', textcoords='data', arrowprops=arrow, picker=1)
+        self.annotations.append(annotation)
+
+    def removeAnnotation(self, annotation):
+        self.axes.texts.remove(annotation)
+        self.annotations.remove(annotation)
+
+    def draw(self):
+        self.canvas.draw()
+
+    def setMinYLimit(self, value):
+        self.y_limits = (value, self.y_limits[1])
+        self.updateLimits()
+
+    def getMinYLimit(self):
+        if self.y_limits[0] is None:
+            return self.data.y_min
+        else:
+            return self.y_limits[0]
+
+    def setMaxYLimit(self, value):
+        self.y_limits = (self.y_limits[0], value)
+        self.updateLimits()
+
+    def getMaxYLimit(self):
+        if self.y_limits[1] is None:
+            return self.data.y_max
+        else:
+            return self.y_limits[1]
+
+            
+    def setMinXLimit(self, value):
+        self.x_limits = (value, self.x_limits[1])
+        self.updateLimits()
+
+    def getMinXLimit(self):
+        if self.x_limits[0] is None:
+            x_limit = self.data.x_min
+        else:
+            x_limit = self.x_limits[0]
+
+            if self.data.getXDataType() == "time" and not self.data.x_min is None:
+                x_limit = time_t(long(x_limit * 86400))
+
+        if self.data.getXDataType() == "time":
+            x_limit = self.convertDate(x_limit)
+
+        return x_limit
+
+    def setMaxXLimit(self, value):
+        self.x_limits = (self.x_limits[0], value)
+        self.updateLimits()
+
+    def getMaxXLimit(self):
+        if self.x_limits[1] is None:
+            x_limit = self.data.x_max
+        else:
+            x_limit = self.x_limits[1]
+            if self.data.getXDataType() == "time" and not self.data.x_max is None:
+                #x_limit = time_t(self.data.x_max.value + int(x_limit * 86400))
+                x_limit = time_t(long(x_limit * 86400))
+
+        if self.data.getXDataType() == "time":
+            x_limit = self.convertDate(x_limit)
+
+        return x_limit
+
+
+
 class MouseHandler:
 
     def __init__(self, plot_view):
         self.plot_view = plot_view
-        self.fig = plot_view.fig
-        self.axes = plot_view.axes
-
 
         plot_view.fig.canvas.mpl_connect('button_press_event', self.on_press)
         plot_view.fig.canvas.mpl_connect('button_release_event', self.on_release)
@@ -339,11 +424,8 @@ class MouseHandler:
             label, success = QInputDialog.getText(self.plot_view, "New label", "Enter label:")
 
             if success and not str(label).strip() == "":
-                coord = (event.xdata, event.ydata)
-                arrow = dict(arrowstyle="->", connectionstyle="arc3,rad=.2")
-                annotation = self.axes.annotate(str(label), coord, xytext=None, xycoords='data', textcoords='data', arrowprops=arrow, picker=1)
-                self.plot_view.annotations.append(annotation)
-                self.plot_view.canvas.draw()
+                self.plot_view.annotate(str(label), event.xdata, event.ydata)
+                self.plot_view.draw()
 
     def on_release(self, event):
         self.button_position = None
@@ -355,11 +437,11 @@ class MouseHandler:
         elif isinstance(event.artist, matplotlib.text.Annotation) and event.mouseevent.button == 1:
             self.artist = event.artist
             self.button_position = (event.mouseevent.x, event.mouseevent.y)
+            return True
         elif isinstance(event.artist, matplotlib.text.Annotation) and event.mouseevent.button == 3:
             self.artist = event.artist
-            self.axes.texts.remove(event.artist)
-            self.plot_view.annotations.remove(event.artist)
-            self.plot_view.canvas.draw()
+            self.plot_view.removeAnnotation(self.artist)
+            self.plot_view.draw()
 
     def motion_notify_event(self, event):
         if self.artist is None:
@@ -367,6 +449,6 @@ class MouseHandler:
         elif isinstance(self.artist, matplotlib.text.Annotation):
             if not event.xdata is None and not event.ydata is None:
                 self.artist.xytext = (event.xdata, event.ydata)
-                self.plot_view.canvas.draw()
+                self.plot_view.draw()
 
 

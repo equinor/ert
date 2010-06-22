@@ -3,13 +3,22 @@ from PyQt4.QtCore import QRectF, SIGNAL
 from PyQt4.Qt import QApplication, Qt
 
 class ZoomSlider(QFrame):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, horizontal=True):
         QFrame.__init__(self, parent)
 
-        self.setFrameShape(QFrame.HLine)
+        self.horizontal = horizontal
+        if horizontal:
+            self.setFrameShape(QFrame.HLine)
+            self.setMinimumHeight(21)
+            self.tilt = 90
+        else:
+            self.setFrameShape(QFrame.VLine)
+            self.setMinimumWidth(21)
+            self.tilt = 180
+
         self.setFrameShadow(QFrame.Sunken)
         self.setMidLineWidth(3)
-        self.setMinimumHeight(21)
+
         self.setMouseTracking(True)
 
         self.size = 12
@@ -28,9 +37,14 @@ class ZoomSlider(QFrame):
         painter.setRenderHint(QPainter.Antialiasing)
 
         w = self.width()
+        h = self.height()
 
-        self.min_marker = QRectF(w * self.min_value, 4, self.size, self.size)
-        self.max_marker = QRectF(w * self.max_value - self.size - 1, 4, self.size, self.size)
+        if self.horizontal:
+            self.min_marker = QRectF(w * self.min_value, 4, self.size, self.size)
+            self.max_marker = QRectF(w * self.max_value - self.size - 1, 4, self.size, self.size)
+        else:
+            self.min_marker = QRectF(4, h - h * self.min_value - self.size - 1, self.size, self.size)
+            self.max_marker = QRectF(4, h - h * self.max_value, self.size, self.size)
 
         pen = painter.pen()
         pen.setWidth(0)
@@ -38,26 +52,39 @@ class ZoomSlider(QFrame):
         painter.setPen(pen)
 
         painter.setBrush(self.min_marker_brush)
-        painter.drawPie(self.min_marker, 90 * 16, 180 * 16)
+        painter.drawPie(self.min_marker, self.tilt * 16, 180 * 16)
 
         painter.setBrush(self.max_marker_brush)
-        painter.drawPie(self.max_marker, 90 * 16, -180 * 16)
+        painter.drawPie(self.max_marker, self.tilt * 16, -180 * 16)
 
     def resizeEvent (self, resize_event):
         QFrame.resizeEvent(self, resize_event)
 
 
     def getMinTestMarker(self):
-        return QRectF(self.min_marker.left(),
-                      self.min_marker.top(),
-                      self.min_marker.width() / 2.0,
-                      self.min_marker.height())
+        if self.horizontal:
+            return QRectF(self.min_marker.left(),
+                          self.min_marker.top(),
+                          self.min_marker.width() / 2.0,
+                          self.min_marker.height())
+        else:
+            return QRectF(self.min_marker.left(),
+                          self.min_marker.top() + self.min_marker.height() / 2.0,
+                          self.min_marker.width(),
+                          self.min_marker.height() / 2.0)
 
     def getMaxTestMarker(self):
-        return QRectF(self.max_marker.left() + self.max_marker.width() / 2.0,
-                      self.max_marker.top(),
-                      self.max_marker.width() / 2.0,
-                      self.max_marker.height())
+        if self.horizontal:
+            return QRectF(self.max_marker.left() + self.max_marker.width() / 2.0,
+                          self.max_marker.top(),
+                          self.max_marker.width() / 2.0,
+                          self.max_marker.height())
+
+        else:
+            return QRectF(self.max_marker.left(),
+                          self.max_marker.top(),
+                          self.max_marker.width(),
+                          self.max_marker.height() / 2.0)
 
     def mouseMoveEvent (self, mouse_event):
         self.setDefaultColors()
@@ -66,9 +93,13 @@ class ZoomSlider(QFrame):
 
         if min_test_marker.contains(mouse_event.x(), mouse_event.y()) or self.selected_marker == 'min':
             self.min_marker_brush = self.getDefaultHighlightColor()
-        
+
         if self.selected_marker == 'min':
-            value = mouse_event.x() / float(self.width())
+            if self.horizontal:
+                value = mouse_event.x() / float(self.width())
+            else:
+                value = (self.height() - mouse_event.y()) / float(self.height())
+
             self.setMinValue(value, False)
 
         max_test_marker = self.getMaxTestMarker()
@@ -77,7 +108,11 @@ class ZoomSlider(QFrame):
             self.max_marker_brush = self.getDefaultHighlightColor()
 
         if self.selected_marker == 'max':
-            value = mouse_event.x() / float(self.width())
+            if self.horizontal:
+                value = mouse_event.x() / float(self.width())
+            else:
+                value = (self.height() - mouse_event.y()) / float(self.height())
+                
             self.setMaxValue(value, False)
 
         self.update()
@@ -114,15 +149,21 @@ class ZoomSlider(QFrame):
         self.update()
 
     def setMaxValue(self, max_value, update=True):
-        w = float(self.width())
-        marker_offset = (self.size + 1) / w
+        if self.horizontal:
+            m = float(self.width())
+        else:
+            m = float(self.height())
+
+        marker_offset = (self.size + 1) / m
 
         if not self.max_value == max_value:
             self.max_value = max_value
             if self.max_value - marker_offset <= self.min_value:
-                    self.max_value = self.min_value + marker_offset
+                self.max_value = self.min_value + marker_offset
             if self.max_value > 1.0:
                 self.max_value = 1
+
+            #print "max:", self.min_value, self.max_value
 
             self.emit(SIGNAL('zoomValueChanged(float, float)'), self.min_value, self.max_value)
 
@@ -130,15 +171,21 @@ class ZoomSlider(QFrame):
                 self.update()
 
     def setMinValue(self, min_value, update=True):
-        w = float(self.width())
-        marker_offset = (self.size + 1) / w
+        if self.horizontal:
+            m = float(self.width())
+        else:
+            m = float(self.height())
+
+        marker_offset = (self.size + 1) / m
 
         if not self.min_value == min_value:
             self.min_value = min_value
             if self.min_value + marker_offset >= self.max_value:
-                    self.min_value = self.max_value - marker_offset
+                self.min_value = self.max_value - marker_offset
             if self.min_value < 0.0:
                 self.min_value = 0.0
+
+            #print "min:", self.min_value, self.max_value
 
             self.emit(SIGNAL('zoomValueChanged(float, float)'), self.min_value, self.max_value)
 
