@@ -1,4 +1,3 @@
-from PyQt4 import QtGui, QtCore
 import matplotlib.figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 
@@ -16,10 +15,11 @@ import os
 
 from plotconfig import PlotConfig
 from plotter import Plotter
+import matplotlib.lines
+import matplotlib.text
+from PyQt4.QtGui import QFrame, QInputDialog, QSizePolicy
 
-
-
-class PlotView(QtGui.QFrame):
+class PlotView(QFrame):
     """PlotPanel shows available plot result files and displays them"""
 #    blue = (56/255.0, 108/255.0, 176/255.0)
 #    yellow = (255/255.0, 255/255.0, 153/255.0)
@@ -56,18 +56,18 @@ class PlotView(QtGui.QFrame):
 
     def __init__(self):
         """Create a PlotPanel"""
-        QtGui.QFrame.__init__(self)
+        QFrame.__init__(self)
 
 
         self.data = PlotData()
         self.data.x_data_type = "number"
 
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.fig = matplotlib.figure.Figure(dpi=100)
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setParent(self)
-        self.canvas.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         #self.canvas.draw = print_timing(self.canvas.draw)
 
@@ -75,30 +75,10 @@ class PlotView(QtGui.QFrame):
         self.axes.set_xlim()
 
         self.selected_lines = []
+        self.annotations = []
 
-        def onclick(event):
-            #print 'button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(evnt.button, evnt.x, evnt.y, evnt.xdata, evnt.ydata)
-            pass
-        self.fig.canvas.mpl_connect('button_press_event', onclick)
 
-        def onpick(event):
-            if event.mouseevent.button == 1:
-                self.toggleLine(event.artist)
-
-        self.fig.canvas.mpl_connect('pick_event', onpick)
-
-        def motion_notify_event(event):
-            if not self.data is None and not event.xdata is None and not event.ydata is None:
-                if self.data.getXDataType() == "time":
-                    date = matplotlib.dates.num2date(event.xdata)
-                    self.setToolTip("x: %s y: %04f" % (date.strftime("%d/%m-%Y"), event.ydata))
-                else:
-                    self.setToolTip("x: %04f y: %04f" % (event.xdata, event.ydata))
-            else:
-                self.setToolTip("")
-
-        self.fig.canvas.mpl_connect('motion_notify_event', motion_notify_event)
-
+        self.mousehandler = MouseHandler(self)
 
         self.xminf = 0.0
         self.xmaxf = 1.0
@@ -160,6 +140,9 @@ class PlotView(QtGui.QFrame):
         elif not self.data.hasInvertedYAxis() and self.axes.yaxis_inverted():
             self.axes.invert_yaxis()
                 
+
+        for annotation in self.annotations:
+            self.axes.add_artist(annotation)
 
         selected_members = []
 
@@ -271,7 +254,7 @@ class PlotView(QtGui.QFrame):
 
         
     def resizeEvent(self, event):
-        QtGui.QFrame.resizeEvent(self, event)
+        QFrame.resizeEvent(self, event)
         self.canvas.resize(event.size().width(), event.size().height())
 
     def setData(self, data):
@@ -324,4 +307,66 @@ class PlotView(QtGui.QFrame):
 
         self.emit(SIGNAL('plotSelectionChanged(array)'), self.selected_lines)
         self.canvas.draw()
+
+    def displayToolTip(self, event):
+        if not self.data is None and not event.xdata is None and not event.ydata is None:
+            if self.data.getXDataType() == "time":
+                date = matplotlib.dates.num2date(event.xdata)
+                self.setToolTip("x: %s y: %04f" % (date.strftime("%d/%m-%Y"), event.ydata))
+            else:
+                self.setToolTip("x: %04f y: %04f" % (event.xdata, event.ydata))
+        else:
+            self.setToolTip("")
+
+class MouseHandler:
+
+    def __init__(self, plot_view):
+        self.plot_view = plot_view
+        self.fig = plot_view.fig
+        self.axes = plot_view.axes
+
+
+        plot_view.fig.canvas.mpl_connect('button_press_event', self.on_press)
+        plot_view.fig.canvas.mpl_connect('button_release_event', self.on_release)
+        plot_view.fig.canvas.mpl_connect('pick_event', self.on_pick)
+        plot_view.fig.canvas.mpl_connect('motion_notify_event', self.motion_notify_event)
+
+        self.button_position = None
+        self.artist = None
+
+    def on_press(self, event):
+        if event.button == 3 and self.artist is None and not event.xdata is None and not event.ydata is None:
+            label, success = QInputDialog.getText(self.plot_view, "New label", "Enter label:")
+
+            if success and not str(label).strip() == "":
+                coord = (event.xdata, event.ydata)
+                arrow = dict(arrowstyle="->", connectionstyle="arc3,rad=.2")
+                annotation = self.axes.annotate(str(label), coord, xytext=None, xycoords='data', textcoords='data', arrowprops=arrow, picker=1)
+                self.plot_view.annotations.append(annotation)
+                self.plot_view.canvas.draw()
+
+    def on_release(self, event):
+        self.button_position = None
+        self.artist = None
+
+    def on_pick(self, event):
+        if isinstance(event.artist, matplotlib.lines.Line2D) and event.mouseevent.button == 1:
+            self.plot_view.toggleLine(event.artist)
+        elif isinstance(event.artist, matplotlib.text.Annotation) and event.mouseevent.button == 1:
+            self.artist = event.artist
+            self.button_position = (event.mouseevent.x, event.mouseevent.y)
+        elif isinstance(event.artist, matplotlib.text.Annotation) and event.mouseevent.button == 3:
+            self.artist = event.artist
+            self.axes.texts.remove(event.artist)
+            self.plot_view.annotations.remove(event.artist)
+            self.plot_view.canvas.draw()
+
+    def motion_notify_event(self, event):
+        if self.artist is None:
+            self.plot_view.displayToolTip(event)
+        elif isinstance(self.artist, matplotlib.text.Annotation):
+            if not event.xdata is None and not event.ydata is None:
+                self.artist.xytext = (event.xdata, event.ydata)
+                self.plot_view.canvas.draw()
+
 
