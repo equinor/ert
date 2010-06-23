@@ -113,6 +113,8 @@ class PlotData:
 
         self.inverted_y_axis = False
 
+        self.valid = True
+
     def checkMaxMin(self, value):
         if self.x_min is None or self.x_max is None:
             self.x_min = value
@@ -149,6 +151,22 @@ class PlotData:
 
     def hasInvertedYAxis(self):
         return self.inverted_y_axis
+
+    def getTitle(self):
+        name = self.getName()
+        key_index = self.getKeyIndex()
+
+        title = name
+        if not key_index is None:
+            title = "%s (%s)" % (name, key_index)
+
+        return title
+
+    def isValid(self):
+        return self.valid
+
+    def setValid(self, valid):
+        self.valid = valid
 
 
 class PlotContextDataFetcher(ContentModel):
@@ -228,6 +246,7 @@ class PlotContextDataFetcher(ContentModel):
         fs = ert.enkf.enkf_main_get_fs(ert.main)
         currentCase = ert.enkf.enkf_fs_get_read_dir(fs)
 
+        data.plot_config_path = ert.enkf.plot_config_get_path(ert.plot_config)
         data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config) + "/" + currentCase
 
         enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
@@ -251,6 +270,7 @@ class PlotContextData:
         self.key_index_list = {}
         self.errorbar_max = 0
         self.plot_path = ""
+        self.plot_config_path = ""
         self.field_bounds = None
 
     def getKeyIndexList(self, key):

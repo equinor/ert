@@ -17,9 +17,9 @@ def createEclipsePage(configPanel, parent):
 
     r = configPanel.addRow(PathChooser(parent, "Data file", "data_file", show_files=True))
     r.initialize = lambda ert : [ert.prototype("char* ecl_config_get_data_file(long)"),
-                                 ert.prototype("void enkf_main_set_data_file(long, char*)")]
+                                 ert.prototype("void ecl_config_set_data_file(long, char*)")]
     r.getter = lambda ert : ert.enkf.ecl_config_get_data_file(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.enkf_main_set_data_file(ert , str(value))
+    r.setter = lambda ert, value : ert.enkf.ecl_config_set_data_file(ert.ecl_config, str(value))
 
     r = configPanel.addRow(PathChooser(parent, "Grid", "grid", show_files=True))
     r.initialize = lambda ert : [ert.prototype("char* ecl_config_get_gridfile(long)"),
