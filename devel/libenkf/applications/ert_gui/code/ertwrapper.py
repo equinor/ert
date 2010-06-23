@@ -49,9 +49,9 @@ class ErtWrapper:
         CDLL("libblas.so"   , RTLD_GLOBAL)
         CDLL("liblapack.so" , RTLD_GLOBAL)
         CDLL("libz.so"      , RTLD_GLOBAL)
-        CDLL("libnsl.so"    , RTLD_GLOBAL)
-        CDLL("liblsf.so"    , RTLD_GLOBAL)
-        CDLL("libbat.so"    , RTLD_GLOBAL)
+        #CDLL("libnsl.so"    , RTLD_GLOBAL)
+        #CDLL("liblsf.so"    , RTLD_GLOBAL)
+        #CDLL("libbat.so"    , RTLD_GLOBAL)
 
 
         self.util = self.__loadLibrary(prefix, "libutil")

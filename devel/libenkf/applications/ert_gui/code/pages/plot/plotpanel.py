@@ -70,23 +70,30 @@ class PlotPanel(QtGui.QWidget):
 
     def drawPlot(self):
         data = self.plotDataFetcher.data
+
         self.plot.setData(data)
 
-        x_min = data.x_min
-        x_max = data.x_max
+        x_min = self.plot.plot_settings.getMinXLimit(data.x_min, data.getXDataType())
+        x_max = self.plot.plot_settings.getMaxXLimit(data.x_max, data.getXDataType())
+        y_min = self.plot.plot_settings.getMinYLimit(data.y_min, data.getYDataType())
+        y_max = self.plot.plot_settings.getMaxYLimit(data.y_max, data.getYDataType())
 
-        if data.getXDataType() == "time" and not x_min is None and not x_max is None:
-            x_min = x_min.value / 86400.0
-            x_max = x_max.value / 86400.0
-
-        y_min = data.y_min
-        y_max = data.y_max
-
-        if data.getYDataType() == "time" and not y_min is None and not y_max is None:
-            y_min = y_min.value / 86400.0
-            y_max = y_max.value / 86400.0
+#        x_min = data.x_min
+#        x_max = data.x_max
+#
+#        if data.getXDataType() == "time" and not x_min is None and not x_max is None:
+#            x_min = x_min.value / 86400.0
+#            x_max = x_max.value / 86400.0
+#
+#        y_min = data.y_min
+#        y_max = data.y_max
+#
+#        if data.getYDataType() == "time" and not y_min is None and not y_max is None:
+#            y_min = y_min.value / 86400.0
+#            y_max = y_max.value / 86400.0
 
         self.plotViewSettings.setLimits(x_min, x_max, y_min, y_max)
+        self.plotViewSettings.setLimitStates(*self.plot.plot_settings.getLimitStates())
         self.plot.drawPlot()
 
     @widgets.util.may_take_a_long_time
@@ -106,6 +113,7 @@ class PlotPanel(QtGui.QWidget):
         self.plotList.sortItems()
 
         self.plot.setPlotPath(self.plotContextDataFetcher.data.plot_path)
+        self.plot.setPlotConfigPath(self.plotContextDataFetcher.data.plot_config_path)
 
 
 class PlotViewSettingsPanel(QtGui.QFrame):
@@ -123,7 +131,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout = QtGui.QVBoxLayout()
 
-        plot_configs = self.plotView.plot_configs
+        plot_configs = self.plotView.getPlotConfigList()
         tabbed_panel = QTabWidget()
         tabbed_panel.setTabPosition(QTabWidget.West)
         for plot_config in plot_configs:
@@ -148,8 +156,14 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.updateSpinner(self.y_min_spinner, y_min)
         self.updateSpinner(self.y_max_spinner, y_max)
 
+    def setLimitStates(self, x_min_state, x_max_state, y_min_state, y_max_state):
+        self.x_min_check.setChecked(x_min_state)
+        self.x_max_check.setChecked(x_max_state)
+        self.y_min_check.setChecked(y_min_state)
+        self.y_max_check.setChecked(y_max_state)
+
     def updateSpinner(self, spinner, value):
-        if not spinner.isEnabled() and not value is None:
+        if not value is None:
             state = spinner.blockSignals(True)
             spinner.setValue(value)
             spinner.blockSignals(state)
@@ -179,10 +193,8 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         def popup():
             popup = Popup(popup_button, spinner.value())
             self.connect(popup, QtCore.SIGNAL('dateChanged(double)'), lambda date : spinner.setValue(date))
-            
 
         self.connect(popup_button, QtCore.SIGNAL('clicked()'), popup)
-
 
         def disabler(state):
             disabled = not state == 2
@@ -199,7 +211,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout.addWidget(check)
         layout.addWidget(spinner)
         layout.addWidget(popup_button)
-        return layout, spinner
+        return layout, spinner, check
 
     def createPlotRangePanel(self):
         frame = QFrame()
@@ -209,14 +221,14 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout = QFormLayout()
 
-        x_min_layout, self.x_min_spinner = self.createDisableableSpinner(self.plotView.setMinXLimit)
-        x_max_layout, self.x_max_spinner = self.createDisableableSpinner(self.plotView.setMaxXLimit)
+        x_min_layout, self.x_min_spinner, self.x_min_check = self.createDisableableSpinner(self.plotView.setMinXLimit)
+        x_max_layout, self.x_max_spinner, self.x_max_check  = self.createDisableableSpinner(self.plotView.setMaxXLimit)
 
         layout.addRow("X min:", x_min_layout)
         layout.addRow("X max:", x_max_layout)
 
-        y_min_layout, self.y_min_spinner = self.createDisableableSpinner(self.plotView.setMinYLimit)
-        y_max_layout, self.y_max_spinner = self.createDisableableSpinner(self.plotView.setMaxYLimit)
+        y_min_layout, self.y_min_spinner, self.y_min_check  = self.createDisableableSpinner(self.plotView.setMinYLimit)
+        y_max_layout, self.y_max_spinner, self.y_max_check = self.createDisableableSpinner(self.plotView.setMaxYLimit)
 
         layout.addRow("Y min:", y_min_layout)
         layout.addRow("Y max:", y_max_layout)
@@ -252,7 +264,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         def plotSelectionChanged(selected_members):
             text = ""
             for member in selected_members:
-                text = text + " " + str(member.get_gid())
+                text = text + " " + str(member)
             self.selected_member_label.setText(text)
 
         self.connect(self.plotView, QtCore.SIGNAL('plotSelectionChanged(array)'), plotSelectionChanged)
@@ -269,6 +281,8 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         frame.setLayout(layout)
 
         return frame
+
+
 
 class PlotParameterConfigurationPanel(QtGui.QFrame):
     def __init__(self, parent=None, width=100):
