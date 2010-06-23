@@ -14,10 +14,10 @@ import matplotlib.dates
 from pages.plot.zoomslider import ZoomSlider
 from widgets.configpanel import ConfigPanel
 from PyQt4.Qt import SIGNAL
-from PyQt4.QtCore import QDate
+from PyQt4.QtCore import QDate, Qt, QPoint
 from pages.plot.plotconfig import PlotConfigPanel
-from PyQt4.QtGui import QTabWidget, QFormLayout, QFrame, QVBoxLayout, QHBoxLayout, QCheckBox
-from PyQt4.QtGui import QPushButton, QToolButton
+from PyQt4.QtGui import QTabWidget, QFormLayout, QFrame, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QToolButton, QMainWindow
+from PyQt4.QtGui import QCalendarWidget
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -71,6 +71,22 @@ class PlotPanel(QtGui.QWidget):
     def drawPlot(self):
         data = self.plotDataFetcher.data
         self.plot.setData(data)
+
+        x_min = data.x_min
+        x_max = data.x_max
+
+        if data.getXDataType() == "time" and not x_min is None and not x_max is None:
+            x_min = x_min.value / 86400.0
+            x_max = x_max.value / 86400.0
+
+        y_min = data.y_min
+        y_max = data.y_max
+
+        if data.getYDataType() == "time" and not y_min is None and not y_max is None:
+            y_min = y_min.value / 86400.0
+            y_max = y_max.value / 86400.0
+
+        self.plotViewSettings.setLimits(x_min, x_max, y_min, y_max)
         self.plot.drawPlot()
 
     @widgets.util.may_take_a_long_time
@@ -89,7 +105,6 @@ class PlotPanel(QtGui.QWidget):
 
         self.plotList.sortItems()
 
-        #self.plotViewSettings.setDefaultErrorbarMaxValue(self.plotContextDataFetcher.data.errorbar_max)
         self.plot.setPlotPath(self.plotContextDataFetcher.data.plot_path)
 
 
@@ -127,6 +142,19 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         self.setLayout(layout)
 
+    def setLimits(self, x_min, x_max, y_min, y_max):
+        self.updateSpinner(self.x_min_spinner, x_min)
+        self.updateSpinner(self.x_max_spinner, x_max)
+        self.updateSpinner(self.y_min_spinner, y_min)
+        self.updateSpinner(self.y_max_spinner, y_max)
+
+    def updateSpinner(self, spinner, value):
+        if not spinner.isEnabled() and not value is None:
+            state = spinner.blockSignals(True)
+            spinner.setValue(value)
+            spinner.blockSignals(state)
+
+
     def createDisableableSpinner(self, func):
         layout = QHBoxLayout()
 
@@ -141,20 +169,25 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         spinner.setMaximumWidth(100)
         self.connect(spinner, QtCore.SIGNAL('valueChanged(double)'), func)
 
-        button = QToolButton()
-        button.setIcon(widgets.util.resourceIcon("calendar"))
-        button.setIconSize(QtCore.QSize(16, 16))
-        button.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        button.setAutoRaise(True)
-        button.setDisabled(True)
+        popup_button = QToolButton()
+        popup_button.setIcon(widgets.util.resourceIcon("calendar"))
+        popup_button.setIconSize(QtCore.QSize(16, 16))
+        popup_button.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        popup_button.setAutoRaise(True)
+        popup_button.setDisabled(True)
 
+        def popup():
+            popup = Popup(popup_button, spinner.value())
+            self.connect(popup, QtCore.SIGNAL('dateChanged(double)'), lambda date : spinner.setValue(date))
+            
 
-        #TODO:POPUP!!!!
+        self.connect(popup_button, QtCore.SIGNAL('clicked()'), popup)
+
 
         def disabler(state):
             disabled = not state == 2
             spinner.setDisabled(disabled)
-            button.setDisabled(disabled)
+            popup_button.setDisabled(disabled)
 
             if not disabled:
                 func(spinner.value())
@@ -165,26 +198,25 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout.addWidget(check)
         layout.addWidget(spinner)
-        layout.addWidget(button)
-        return layout
+        layout.addWidget(popup_button)
+        return layout, spinner
 
     def createPlotRangePanel(self):
         frame = QFrame()
-        #frame.setMinimumHeight(150)
         frame.setMaximumHeight(150)
         frame.setFrameShape(QFrame.StyledPanel)
         frame.setFrameShadow(QFrame.Plain)
 
         layout = QFormLayout()
 
-        x_min_layout = self.createDisableableSpinner(self.plotView.setMinXLimit)
-        x_max_layout = self.createDisableableSpinner(self.plotView.setMaxXLimit)
+        x_min_layout, self.x_min_spinner = self.createDisableableSpinner(self.plotView.setMinXLimit)
+        x_max_layout, self.x_max_spinner = self.createDisableableSpinner(self.plotView.setMaxXLimit)
 
         layout.addRow("X min:", x_min_layout)
         layout.addRow("X max:", x_max_layout)
 
-        y_min_layout = self.createDisableableSpinner(self.plotView.setMinYLimit)
-        y_max_layout = self.createDisableableSpinner(self.plotView.setMaxYLimit)
+        y_min_layout, self.y_min_spinner = self.createDisableableSpinner(self.plotView.setMinYLimit)
+        y_max_layout, self.y_max_spinner = self.createDisableableSpinner(self.plotView.setMaxYLimit)
 
         layout.addRow("Y min:", y_min_layout)
         layout.addRow("Y max:", y_max_layout)
@@ -256,3 +288,38 @@ class PlotParameterConfigurationPanel(QtGui.QFrame):
         if self.layout.indexOf(widget) == -1:
             self.layout.addWidget(widget)
         self.layout.setCurrentWidget(widget)
+
+class Popup(QFrame):
+    def __init__(self, parent=None, date_in_days=0):
+        QFrame.__init__(self, parent, Qt.Popup | Qt.Window | Qt.FramelessWindowHint)
+        layout = QVBoxLayout()
+
+        if not parent is None:
+            p = parent.mapToGlobal(QPoint(0,0))
+            self.setGeometry(p.x(), p.y(), 10, 10)
+            
+        self.calendar = QCalendarWidget()
+        layout.addWidget(self.calendar)
+        self.setLayout(layout)
+
+        self.setDateFromDays(date_in_days)
+        self.connect(self.calendar, QtCore.SIGNAL('selectionChanged()'), self.finished)
+        self.show()
+
+    def finished(self):
+        date = self.calendar.selectedDate()
+        self.emit(SIGNAL('dateChanged(double)'), self.qDateToDays(date))
+        self.close()
+
+    def focusOutEvent(self, event):
+        self.finished()
+
+    def setDateFromDays(self, days):
+        t = time.localtime(days * 86400.0)
+        self.calendar.setSelectedDate(QDate(*t[0:3]))
+
+    def qDateToDays(self, qdate):
+        date = qdate.toPyDate()
+        seconds = int(time.mktime(date.timetuple()))
+        return seconds / 86400.0
+
