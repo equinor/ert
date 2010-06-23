@@ -373,7 +373,6 @@ class PlotView(QFrame):
 
             
     def setMinXLimit(self, value):
-        print value
         self.x_limits = (value, self.x_limits[1])
         self.updateLimits()
 

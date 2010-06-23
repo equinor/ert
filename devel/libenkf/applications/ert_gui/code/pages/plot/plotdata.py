@@ -89,8 +89,10 @@ class PlotData:
     def __init__(self, name="undefined"):
         self.name = name
         self.key_index = None
+
         self.x_data = {}
         self.y_data = {}
+
         self.obs_x = None
         self.obs_y = None
         self.obs_std_x = None
