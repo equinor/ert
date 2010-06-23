@@ -5,8 +5,9 @@ export script_dir=$(dirname $0)
 # This environment variable must be set to the ERT home directory
 # or a lib directory containing all .so files of ERT
 #
-export ERT_HOME=/private/jpb/EnKF/
+#export ERT_HOME=/private/jpb/EnKF/
 #export ERT_HOME=/d/proj/bg/enkf/jaskje/ERT_GUI/lib/
+
 if [ -z "$ERT_HOME" ]
 then
     export ERT_HOME=$script_dir/../lib
@@ -29,8 +30,8 @@ then
     echo "  ertgui ert_configuration_file"
     echo
     echo "Options (for debugging):"
-    echo "        ertgui debug ert_configuration_file"
-    echo "        ertgui strace ert_configuration_file"
+    echo "        ertgui.sh debug ert_configuration_file"
+    echo "        ertgui.sh strace ert_configuration_file"
     echo
     exit
 fi
@@ -53,7 +54,7 @@ ORIGINAL_DIRECTORY=$PWD
 export script_dir=$(dirname $0)
 export ert_gui_dir=$script_dir/../code
 
-python $script_dir/clean.py
+python $script_dir/clean.py  
 
 
 if [ "$1" = "debug" ]
