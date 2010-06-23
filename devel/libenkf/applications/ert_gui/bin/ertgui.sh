@@ -1,6 +1,10 @@
 #!/bin/sh
 export script_dir=$(dirname $0)
 
+while [ -L "script_dir" ]; do
+  script_dir=`readlink -e "$script_dir"`
+done
+
 #
 # This environment variable must be set to the ERT home directory
 # or a lib directory containing all .so files of ERT
