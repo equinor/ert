@@ -687,11 +687,12 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 
 void history_realloc_from_summary(history_type * history, const ecl_sum_type * refcase , bool use_h_keywords) {
 
-  history->ecl_sum = refcase;
+  history->ecl_sum = refcase;     /* This function does not really do anthing - it just sets the ecl_sum field of the history instance. */
   if (use_h_keywords)
     history->source = REFCASE_HISTORY;
   else
     history->source = REFCASE_SIMULATED;
+  
   
 }
 
@@ -991,9 +992,11 @@ int history_get_restart_nr_from_days(const history_type * history, double days)
 }
 
 
-/* Uncertain about the first node - offset problems +++ ?? */
+/* Uncertain about the first node - offset problems +++ ?? 
+   Changed to use node_end_time() at svn ~ 2850
+*/
 time_t history_get_time_t_from_restart_nr( const history_type * history , int restart_nr) {
-  return history_iget_node_start_time(history, restart_nr);
+  return history_iget_node_end_time(history, restart_nr);
 }
 
 

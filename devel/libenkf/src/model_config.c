@@ -21,6 +21,7 @@
 #include <bool_vector.h>
 #include <fs_types.h>
 #include <enkf_defaults.h>
+#include "config_keys.h"
 
 /**
    This struct contains configuration which is specific to this
@@ -55,9 +56,9 @@ struct model_config_struct {
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer 
                                                          to the ecl_sum instance owned and held by the ecl_config object. */
    /** The results are always loaded. */
-   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
-   bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
- };
+  bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
+  bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
+};
 
 
 
@@ -246,7 +247,7 @@ model_config_type * model_config_alloc(const config_type * config ,
   model_config->forward_model             = forward_model_alloc(  joblist , statoil_mode , model_config->use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
   model_config_set_refcase( model_config , refcase );
   {
-    char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
+    char * config_string = config_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");
     forward_model_parse_init( model_config->forward_model , config_string );
     free(config_string);
   }
@@ -256,11 +257,11 @@ model_config_type * model_config_alloc(const config_type * config ,
   model_config_set_runpath_fmt( model_config , DEFAULT_RUNPATH);
 
 
-  if (config_item_set( config , "ENKF_SCHED_FILE"))
-    model_config_set_enkf_sched_file(model_config , config_get_value(config , "ENKF_SCHED_FILE" ));
+  if (config_item_set( config , ENKF_SCHED_FILE_KEY))
+    model_config_set_enkf_sched_file(model_config , config_get_value(config , ENKF_SCHED_FILE_KEY ));
   
-  if (config_item_set( config, "RUNPATH"))
-    model_config_set_runpath_fmt( model_config , config_get_value(config , "RUNPATH") );
+  if (config_item_set( config, RUNPATH_KEY))
+    model_config_set_runpath_fmt( model_config , config_get_value(config , RUNPATH_KEY) );
 
   {
     model_config->history              = history_alloc_from_sched_file(sched_file);  
@@ -268,7 +269,7 @@ model_config_type * model_config_alloc(const config_type * config ,
   }
   
   {
-    const char * history_source = config_iget(config , "HISTORY_SOURCE", 0,0);
+    const char * history_source = config_iget(config , HISTORY_SOURCE_KEY, 0,0);
     bool  use_history;
     history_source_type source_type = history_get_source_type( history_source );
     
@@ -293,23 +294,23 @@ model_config_type * model_config_alloc(const config_type * config ,
     present or not.
   */
   
-  if (config_item_set(config ,  "SCHEDULE_PREDICTION_FILE")) 
+  if (config_item_set(config ,  SCHEDULE_PREDICTION_FILE_KEY)) 
     model_config->has_prediction = true;
   else
     model_config->has_prediction = false;
 
 
-  if (config_item_set(config ,  "CASE_TABLE")) 
-    model_config_set_case_table( model_config , ens_size , config_iget( config , "CASE_TABLE" , 0,0));
+  if (config_item_set(config ,  CASE_TABLE_KEY)) 
+    model_config_set_case_table( model_config , ens_size , config_iget( config , CASE_TABLE_KEY , 0,0));
   
-  if (config_item_set( config , "ENSPATH"))
-    model_config_set_enspath( model_config , config_get_value(config , "ENSPATH"));
-
-  if (config_item_set( config , "DBASE_TYPE"))
-    model_config_set_dbase_type( model_config , config_get_value(config , "DBASE_TYPE"));
+  if (config_item_set( config , ENSPATH_KEY))
+    model_config_set_enspath( model_config , config_get_value(config , ENSPATH_KEY));
   
-  if (config_item_set( config , "MAX_RESAMPLE"))
-    model_config_set_max_resample( model_config , config_get_value_as_int( config , "MAX_RESAMPLE" ));
+  if (config_item_set( config , DBASE_TYPE_KEY))
+    model_config_set_dbase_type( model_config , config_get_value(config , DBASE_TYPE_KEY));
+  
+  if (config_item_set( config , MAX_RESAMPLE_KEY))
+    model_config_set_max_resample( model_config , config_get_value_as_int( config , MAX_RESAMPLE_KEY ));
   
   return model_config;
 }
@@ -376,22 +377,6 @@ bool model_config_has_prediction(const model_config_type * config) {
 }
 
 
-void model_config_interactive_set_runpath__(void * arg) {
-  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
-  model_config_type * model_config = arg_pack_iget_ptr(arg_pack , 0);
-  menu_item_type    * item         = arg_pack_iget_ptr(arg_pack , 1);
-  char runpath_fmt[256];
-  printf("Give runpath format ==> ");
-  scanf("%s" , runpath_fmt);
-  model_config_set_runpath_fmt(model_config , runpath_fmt);
-  {
-    char * menu_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , runpath_fmt);
-    menu_item_set_label( item , menu_label );
-    free(menu_label);
-  }
-}
-
-
 forward_model_type * model_config_get_forward_model( const model_config_type * config) {
   return config->forward_model;
 }
@@ -442,3 +427,16 @@ int model_config_get_max_internal_submit( const model_config_type * config ) {
 }
 
 
+void model_config_fprintf_config( const model_config_type * model_config , FILE * stream ) {
+  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
+  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information related to this model.");
+
+  if (model_config->case_table_file != NULL) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , CASE_TABLE_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->case_table_file );
+  }
+  
+  fprintf( stream , CONFIG_KEY_FORMAT      , RUNPATH_KEY );
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( model_config->runpath ));
+  
+}

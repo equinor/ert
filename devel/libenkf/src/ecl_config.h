@@ -51,6 +51,7 @@ void                  ecl_config_load_refcase( ecl_config_type * ecl_config , co
 const char          * ecl_config_get_refcase_name( const ecl_config_type * ecl_config);
 void                  ecl_config_clear_static_kw( ecl_config_type * ecl_config );
 stringlist_type     * ecl_config_get_static_kw_list( const ecl_config_type * ecl_config );
+void                  ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stream );
 
 #ifdef __cplusplus
 }

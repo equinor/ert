@@ -1183,7 +1183,6 @@ static void config_parse__(config_type * config ,
 			   const char * comment_string , 
 			   const char * include_kw ,
 			   const char * define_kw , 
-			   alloc_new_key_ftype * alloc_new_key,
 			   bool auto_add , 
 			   bool validate) {
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
@@ -1252,7 +1251,7 @@ static void config_parse__(config_type * config ,
 		free(tmp_path);
 	      }
 
-	      config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , alloc_new_key , auto_add , false); /* Recursive call */
+	      config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , auto_add , false); /* Recursive call */
 	      util_safe_free(include_file);
 	      util_safe_free(include_path);
 	    }
@@ -1260,29 +1259,15 @@ static void config_parse__(config_type * config ,
 	    if (active_tokens < 3) 
 	      util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
 	    {
-	      char * key ;
+	      char * key   = util_alloc_string_copy( token_list[1] );
 	      char * value = util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ");
-              //printf("Active_tokens:%d  \n",active_tokens);
-              //printf("token0:%s   token1:%s   token2:%s \n",token_list[0] , token_list[1] , token_list[2]);
-
-	      if (alloc_new_key != NULL)
-		key = alloc_new_key( token_list[1] );  
-	      else
-		key = util_alloc_string_copy( token_list[1] );
               
-              //printf("key:%s \n",key);
-              //printf("VALUE:%s\n",value);
-              
-
               {
 		char * filtered_value = subst_list_alloc_filtered_string( config->define_list , value);
                 config_add_define( config , key , filtered_value );
-                //printf("filtered_value:%s \n",filtered_value);
 		free( filtered_value );
 	      }
-              //if (strcmp( key , "<GRID>" ) == 0)
-              //  exit(1);
-	      free(key);
+              free(key);
 	      free(value);
 	    }
 	  } else {
@@ -1316,7 +1301,6 @@ void config_parse(config_type * config ,
 		  const char * comment_string , 
 		  const char * include_kw ,
 		  const char * define_kw , 
-		  alloc_new_key_ftype * alloc_new_key,
 		  bool auto_add , 
 		  bool validate) {
   char * config_path;
@@ -1325,7 +1309,7 @@ void config_parse(config_type * config ,
   char * extension;
   util_alloc_file_components(filename , &config_path , &tmp_file , &extension);
   config_file = util_alloc_filename(NULL , tmp_file , extension);
-  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , alloc_new_key ,  auto_add , validate);
+  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , auto_add , validate);
 
   util_safe_free(tmp_file);
   util_safe_free(extension);

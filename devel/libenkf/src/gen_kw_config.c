@@ -46,11 +46,17 @@ UTIL_SAFE_CAST_FUNCTION_CONST( gen_kw_parameter , GEN_KW_PARAMETER_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION( gen_kw_config , GEN_KW_CONFIG_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION_CONST( gen_kw_config , GEN_KW_CONFIG_TYPE_ID )
 
+static void gen_kw_parameter_update_tagged_name( gen_kw_parameter_type * parameter , const char * tag_fmt) {
+  if (tag_fmt != NULL)
+    parameter->tagged_name = util_realloc_sprintf( parameter->tagged_name , tag_fmt , parameter->name );
+}
+
+
 static gen_kw_parameter_type * gen_kw_parameter_alloc( const char * parameter_name ) {
   gen_kw_parameter_type * parameter = util_malloc( sizeof * parameter , __func__ );
   UTIL_TYPE_ID_INIT( parameter , GEN_KW_PARAMETER_TYPE_ID); 
   parameter->name        = util_alloc_string_copy( parameter_name );
-  parameter->tagged_name = util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , parameter_name , DEFAULT_END_TAG);
+  parameter->tagged_name = NULL;
   parameter->trans_func  = NULL;
   return parameter;
 }
@@ -147,7 +153,10 @@ const char * gen_kw_config_get_parameter_file( const gen_kw_config_type * config
 }
 
 
-
+/**
+   A call to gen_kw_config_update_tag_format() must be called
+   afterwards, otherwise all tagged strings will just be NULL.
+*/
 gen_kw_config_type * gen_kw_config_alloc_empty(const char * key ) {
   gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config , __func__);
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
@@ -223,6 +232,13 @@ const char * gen_kw_config_iget_name(const gen_kw_config_type * config, int kw_n
 const char * gen_kw_config_get_tagged_name(const gen_kw_config_type * config, int kw_nr) {
   const gen_kw_parameter_type * parameter = vector_iget( config->parameters , kw_nr );
   return parameter->tagged_name;
+}
+
+
+void gen_kw_config_update_tag_format(gen_kw_config_type * config , const char * tag_format) {
+  int i;
+  for (i=0; i < vector_get_size( config->parameters ); i++) 
+    gen_kw_parameter_update_tagged_name( vector_iget( config->parameters , i ) , tag_format );
 }
 
 

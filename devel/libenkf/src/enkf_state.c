@@ -356,7 +356,7 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
 
 
 static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value , const char * doc_string) {
-  char * tagged_key = enkf_util_alloc_tagged_string( kw );
+  char * tagged_key = util_alloc_sprintf( INTERNAL_DATA_KW_TAG_FORMAT , kw );
   subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , util_alloc_string_copy(value) , doc_string);
   free(tagged_key);
 }

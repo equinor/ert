@@ -28,6 +28,7 @@
 #include <summary_config.h>
 #include <ext_joblist.h>
 #include <gen_data.h>
+#include <gen_kw_config.h>
 #include <gen_data_config.h>
 #include <stringlist.h>
 #include <ensemble_config.h>
@@ -38,24 +39,78 @@
 #include <subst_func.h>
 #include <enkf_obs.h>
 #include <ecl_config.h>
+#include "config_keys.h"
+#include "enkf_defaults.h"
 
 struct ensemble_config_struct {
   pthread_mutex_t          mutex;
-  hash_type       	 * config_nodes;       /* A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
-  field_trans_table_type * field_trans_table;  /* A table of the transformations which are available to apply on fields. */
-  const ecl_sum_type     * refcase;            /* A ecl_sum reference instance - can be NULL (NOT owned by the ensemble
-                                                  config). Is only used to check that summary keys are valid when adding. */
+  char                   * gen_kw_format_string;   /* Format string used when creating gen_kw search/replace strings. */
+  hash_type       	 * config_nodes;           /* A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  field_trans_table_type * field_trans_table;      /* A table of the transformations which are available to apply on fields. */
+  const ecl_sum_type     * refcase;                /* A ecl_sum reference instance - can be NULL (NOT owned by the ensemble
+                                                      config). Is only used to check that summary keys are valid when adding. */
 };
+
+
+
+/**
+   Setting the format string used to 'mangle' the string in the gen_kw
+   template files. Consider the following example:
+
+      Parameter file
+      --------------
+      MULTPV   LOGUNIF  0.0001 0.10
+
+
+      Template file
+      -------------
+      BOX
+         1  10  1 10  1 5 /
+
+      MULTPV  500*__MULTPV__
+
+   Here the parameter file defines a parameter named 'MULTPV', and the
+   template file uses the marker string '__MULTPV__' which should be
+   replaced with a numerical value. For the current example the
+   gen_kw_format_string should have the value '__%s__'.
+
+   There are no rules for the format string, but it _must_ contain a
+   '%s' placeholder which will be replaced with the parameter name
+   (this is not checked for). The function call creating a search
+   string from a parameter name is:
+
+      tagged_string = util_alloc_sprintf( gen_kw_format_string , parameter_name );
+
+*/
+
+void ensemble_config_set_gen_kw_format( ensemble_config_type * ensemble_config , const char * gen_kw_format_string) {
+  if (!util_string_equal( gen_kw_format_string , ensemble_config->gen_kw_format_string)) {
+    stringlist_type * gen_kw_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , GEN_KW );
+    int i;
+    ensemble_config->gen_kw_format_string = util_realloc_string_copy( ensemble_config->gen_kw_format_string , gen_kw_format_string );
+    for (i=0; i < stringlist_get_size( gen_kw_keys ); i++) {
+      enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( gen_kw_keys , i ));
+      gen_kw_config_update_tag_format( enkf_config_node_get_ref( config_node ) , gen_kw_format_string );
+    }
+    stringlist_free( gen_kw_keys );
+  }
+}
+
+
+const char * ensemble_config_get_gen_kw_format( const ensemble_config_type * ensemble_config ) {
+  return ensemble_config->gen_kw_format_string;
+}
 
 
 
 
 static ensemble_config_type * ensemble_config_alloc_empty( const ecl_sum_type * refcase ) {
   ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config , __func__);
-  ensemble_config->config_nodes = hash_alloc();
-  ensemble_config->refcase = refcase;
+  ensemble_config->config_nodes          = hash_alloc();
+  ensemble_config->refcase               = refcase;
+  ensemble_config->gen_kw_format_string  = util_alloc_string_copy( DEFAULT_GEN_KW_TAG_FORMAT );
   pthread_mutex_init( &ensemble_config->mutex , NULL);
-  
+
   return ensemble_config;
 }
 
@@ -89,9 +144,10 @@ enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_conf
 
 
 void ensemble_config_free(ensemble_config_type * ensemble_config) {
-  hash_free(ensemble_config->config_nodes);
+  hash_free( ensemble_config->config_nodes );
   field_trans_table_free( ensemble_config->field_trans_table );
-  free(ensemble_config);
+  free( ensemble_config->gen_kw_format_string );
+  free( ensemble_config );
 }
 
 
@@ -299,8 +355,8 @@ void ensemble_config_add_config_items(config_type * config) {
   item = config_add_item(config , "GEN_DATA" , false , true);
   config_item_set_argc_minmax(item , 1 , -1 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "SUMMARY" , false , true);
-  config_item_set_argc_minmax(item , 1 , 1 ,  NULL);
+  item = config_add_item(config , SUMMARY_KEY , false , true);   /* Can have several summary keys on each line. */
+  config_item_set_argc_minmax(item , 1 , -1 ,  NULL);
   
 
   /* 
@@ -479,6 +535,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
       hash_type * opt_hash                = hash_alloc_from_options( tokens );
       enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
       enkf_config_node_update_gen_kw( config_node , enkf_outfile , template_file , parameter_file , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
+      gen_kw_config_update_tag_format( enkf_config_node_get_ref( config_node ) , ensemble_config->gen_kw_format_string );
       hash_free( opt_hash );
     }
   
@@ -492,29 +549,30 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
   /* SUMMARY */
   {
     stringlist_type * keys = stringlist_alloc_new ( );
-
     
-    for (i=0; i < config_get_occurences(config , "SUMMARY"); i++) {
-      const char * key = config_iget( config , "SUMMARY" , i , 0 );
-      if (util_string_has_wildcard( key )) {
-        if (refcase != NULL) {
-          int i;
-          ecl_sum_select_matching_general_var_list( refcase , key , keys );
-          for (i=0; i < stringlist_get_size( keys ); i++) 
-            ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , i) );
-        } else
-          util_exit("ERROR: When using SUMMARY wildcards like: \"%s\" you must supply a valid refcase.\n",key);
-      } else
-        ensemble_config_add_summary(ensemble_config , key );
+    for (i=0; i < config_get_occurences(config , SUMMARY_KEY ); i++) {
+      int j,k;
+      const stringlist_type * summary_kw_list = config_iget_stringlist_ref(config , SUMMARY_KEY , i);
+      for (j= 0; j < stringlist_get_size( summary_kw_list ); j++) {
+        const char * key = stringlist_iget( summary_kw_list , j); 
+        
+        if (util_string_has_wildcard( key )) {
+          if (refcase != NULL) {
+            ecl_sum_select_matching_general_var_list( refcase , key , keys );   /* Expanding the wildcard notatition with help of the refcase. */
+            for (k=0; k < stringlist_get_size( keys ); k++) 
+              ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) );
+          } else
+            util_exit("ERROR: When using SUMMARY wildcards like: \"%s\" you must supply a valid refcase.\n",key);
+        } else 
+          ensemble_config_add_summary(ensemble_config , key );
+      }
     }
-
     
     stringlist_free( keys );
   }
   
   /*****************************************************************/
 
-    
   return ensemble_config;
 }
 
@@ -636,7 +694,7 @@ int ensemble_config_get_observations( const ensemble_config_type * config , enkf
     num_obs = enkf_config_node_load_obs( config_node , enkf_obs , index_key , obs_count , obs_time , y , std);
     util_safe_free( index_key );
   } 
-
+  printf("%s: num_obs:%d \n",__func__ , num_obs);
   return num_obs;
 }
 

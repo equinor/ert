@@ -55,12 +55,12 @@ class ErtWrapper:
 
 
         self.util = self.__loadLibrary(prefix, "libutil")
-        self.ecl = self.__loadLibrary(prefix, "libecl")
+        self.ecl  = self.__loadLibrary(prefix, "libecl")
         self.__loadLibrary(prefix, "libsched")
         self.__loadLibrary(prefix, "librms")
         self.__loadLibrary(prefix, "libconfig")
         self.job_queue = self.__loadLibrary(prefix, "libjob_queue")
-        self.enkf = self.__loadLibrary(prefix, "libenkf")
+        self.enkf      = self.__loadLibrary(prefix, "libenkf")
 
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug("/usr/bin/python")

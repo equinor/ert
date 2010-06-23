@@ -99,18 +99,21 @@
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
-  enkf_fs_type         * dbase;            /* The internalized information. */
-  ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/
+  enkf_fs_type         * dbase;              /* The internalized information. */
+  ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
   analysis_config_type * analysis_config;
-  local_config_type    * local_config;     /* Holding all the information about local analysis. */
-  log_type             * logh;             /* Handle to an open log file. */
-  plot_config_type     * plot_config;      /* Information about plotting. */
-  ert_templates_type   * templates;        /* Run time templates */
+  local_config_type    * local_config;       /* Holding all the information about local analysis. */
+  log_type             * logh;               /* Handle to an open log file. */
+  plot_config_type     * plot_config;        /* Information about plotting. */
+  ert_templates_type   * templates;          /* Run time templates */
+
+  /*---------------------------*/            /* Variables related to substitution. */
   subst_func_pool_type * subst_func_pool;
-  subst_list_type      * subst_list;       /* A parent subst_list instance - common to all ensemble members. */
+  subst_list_type      * subst_list;         /* A parent subst_list instance - common to all ensemble members. */
+  
   /*-------------------------*/
   
   int_vector_type      * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
@@ -220,6 +223,33 @@ void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_fi
 }
 
 
+/**
+   This function should be called when a new data_file has been set.
+*/
+
+static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
+  site_config_set_num_cpu( enkf_main->site_config , ecl_config_get_num_cpu( enkf_main->ecl_config ));
+
+  /**
+     This is how the number of CPU's are passed on to the forward models:
+  */
+  {
+    char * num_cpu_key     = enkf_util_alloc_tagged_string( "NUM_CPU" );
+    char * num_cpu_string  = util_alloc_sprintf( "%d" , ecl_config_get_num_cpu( enkf_main->ecl_config ));
+    
+    subst_list_insert_owned_ref( enkf_main->subst_list , num_cpu_key , num_cpu_string , NULL );
+    free( num_cpu_key );
+  }
+}
+
+
+void enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file ) {
+  ecl_config_set_data_file( enkf_main->ecl_config , data_file );
+  enkf_main_update_num_cpu( enkf_main );
+}
+
+
+
 misfit_table_type * enkf_main_get_misfit(const enkf_main_type * enkf_main) {
   return enkf_main->misfit_table;
 }
@@ -256,7 +286,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   int_vector_free( enkf_main->keep_runpath );
   plot_config_free( enkf_main->plot_config );
   ert_templates_free( enkf_main->templates );
-
+  
   subst_func_pool_free( enkf_main->subst_func_pool );
   subst_list_free( enkf_main->subst_list );
   util_safe_free( enkf_main->user_config_file );
@@ -683,7 +713,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 
 
       /**
-	  This is very awkward; the problem is that for the GEN_DATA
+	  This is very awkward; the problem is that for the _DATA
 	  type the config object does not really own the size. Instead
 	  the size is pushed (on load time) from gen_data instances to
 	  the gen_data_config instance. Therefor we have to assert
@@ -1963,11 +1993,11 @@ static config_type * enkf_main_alloc_config() {
   config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
   config_set_arg( config , "HOST_TYPE" , 1 , (const char *[1]) { DEFAULT_HOST_TYPE });
 
-  item = config_add_item(config , "CASE_TABLE" , false , false);
+  item = config_add_item(config , CASE_TABLE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
-  config_add_key_value( config , "LOG_LEVEL" , false , CONFIG_INT);
-  config_add_key_value( config , "LOG_FILE"  , false , CONFIG_STRING);
+  config_add_key_value( config , LOG_LEVEL_KEY , false , CONFIG_INT);
+  config_add_key_value( config , LOG_FILE_KEY  , false , CONFIG_STRING);
 
 
   item = config_add_item(config , "MAX_SUBMIT" , true , false);
@@ -2030,22 +2060,22 @@ static config_type * enkf_main_alloc_config() {
 
 
   /* These must be set IFF QUEUE_SYSTEM == RSH */
-  config_add_item(config , "RSH_HOST_LIST" , false , false);
-  item = config_add_item(config , "RSH_COMMAND" , false , false);
+  config_add_item(config , RSH_HOST_LIST_KEY , false , false);
+  item = config_add_item(config , RSH_COMMAND_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
-  item = config_add_item(config , "MAX_RUNNING_RSH" , false , false);
+  item = config_add_item(config , MAX_RUNNING_RSH_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
   /* These must be set IFF QUEUE_SYSTEM == LOCAL */
-  item = config_add_item(config , "MAX_RUNNING_LOCAL" , false , false);
+  item = config_add_item(config , MAX_RUNNING_LOCAL_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
-  item = config_add_item(config , "JOB_SCRIPT" , true , false);
+  item = config_add_item(config , JOB_SCRIPT_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "INSTALL_JOB" , true , true);
+  item = config_add_item(config , INSTALL_JOB_KEY , true , true);
   config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
 
 
@@ -2062,17 +2092,17 @@ static config_type * enkf_main_alloc_config() {
 
   /*****************************************************************/
   /* Required keywords from the ordinary model_config file */
-  item = config_add_item(config , "NUM_REALIZATIONS" , true , false);
+  item = config_add_item(config , NUM_REALIZATIONS_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-  config_add_alias(config , "NUM_REALIZATIONS" , "SIZE");
-  config_add_alias(config , "NUM_REALIZATIONS" , "NUM_REALISATIONS");
+  config_add_alias(config , NUM_REALIZATIONS_KEY , "SIZE");
+  config_add_alias(config , NUM_REALIZATIONS_KEY , "NUM_REALISATIONS");
   config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
 
 
-  item = config_add_item(config , "GRID" , false , false);
+  item = config_add_item(config , GRID_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "ECLBASE" , true , false);
+  item = config_add_item(config , ECLBASE_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
   item = config_add_item(config , SCHEDULE_FILE_KEY , true , false);
@@ -2085,9 +2115,9 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , DATA_FILE_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "INIT_SECTION" , false , false);
+  item = config_add_item(config , INIT_SECTION_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
-  config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE");
+  config_add_alias(config , INIT_SECTION_KEY , "EQUIL_INIT_FILE");
 
   /*****************************************************************/
   /* Optional keywords from the model config file */
@@ -2095,7 +2125,7 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item( config , "RUN_TEMPLATE" , false , true );
   config_item_set_argc_minmax(item , 2 , -1 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
 
-  config_add_key_value(config , "RUNPATH" , false , CONFIG_STRING);
+  config_add_key_value(config , RUNPATH_KEY , false , CONFIG_STRING);
 
   item = config_add_item(config , "ENSPATH" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
@@ -2112,7 +2142,7 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "FORWARD_MODEL" , true , true);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
-  item = config_add_item(config , "DATA_KW" , false , true);
+  item = config_add_item(config , DATA_KW_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
 
   item = config_add_item(config , "KEEP_RUNPATH" , false , false);
@@ -2123,7 +2153,7 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "DELETE_RUNPATH" , false , false);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
-  item = config_add_item(config , "ADD_STATIC_KW" , false , true);
+  item = config_add_item(config , STATIC_KW_KEY , false , true);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
   item = config_add_item(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , false , true);
@@ -2232,15 +2262,13 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
 }
 
 
+
+/**
+   There is NO tagging anymore - if the user wants tags - the user
+   supplies the key __WITH__ tags.
+*/
 void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
-  subst_list_insert_copy( enkf_main->subst_list , key , value , "Supplied by the user in the configuration file.");
-}
-
-
-static void enkf_main_add_tagged_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
-  char * tagged_key = enkf_util_alloc_tagged_string( key );
-  enkf_main_add_data_kw( enkf_main , tagged_key , value );
-  free( tagged_key );
+  subst_list_insert_copy( enkf_main->subst_list   , key , value , "Supplied by the user in the configuration file.");
 }
 
 
@@ -2250,15 +2278,17 @@ void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
 
 
 
+
+
 static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
-  enkf_main->dbase             = NULL;
-  enkf_main->ensemble          = NULL;
-  enkf_main->user_config_file  = NULL;
-  enkf_main->ens_size          = 0;
-  enkf_main->keep_runpath      = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->logh              = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
+  enkf_main->dbase              = NULL;
+  enkf_main->ensemble           = NULL;
+  enkf_main->user_config_file   = NULL;
+  enkf_main->ens_size           = 0;
+  enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
+  enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
 
   /* Here we add the functions which should be available for string substitution operations. */
   enkf_main->subst_func_pool = subst_func_pool_alloc( );
@@ -2295,8 +2325,6 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   subst_list_insert_func( enkf_main->subst_list , "MUL"         , "__MUL__");
   subst_list_insert_func( enkf_main->subst_list , "RANDINT"     , "__RANDINT__");
   subst_list_insert_func( enkf_main->subst_list , "RANDFLOAT"   , "__RANDFLOAT__");
-
-
   /*
     Installing the DATA_KW keywords supplied by the user - these are
     at the very top level, so they can reuse everything defined later.
@@ -2306,7 +2334,7 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     hash_iter_type * iter = hash_iter_alloc(config_data_kw);
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      enkf_main_add_tagged_data_kw( enkf_main , key , hash_get( config_data_kw , key ));
+      enkf_main_add_data_kw( enkf_main , key , hash_get( config_data_kw , key ));
       key = hash_iter_get_next_key(iter);
     }
     hash_iter_free(iter);
@@ -2322,14 +2350,20 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     char * cwd             = util_alloc_cwd();
     char * date_string     = util_alloc_date_stamp();
 
-    char * cwd_key         = enkf_util_alloc_tagged_string( "CWD" );
-    char * config_path_key = enkf_util_alloc_tagged_string( "CONFIG_PATH" );
-    char * date_key        = enkf_util_alloc_tagged_string( "DATE" );
+    char * cwd_key         = util_alloc_sprintf( INTERNAL_DATA_KW_TAG_FORMAT , "CWD" );
+    char * config_path_key = util_alloc_sprintf( INTERNAL_DATA_KW_TAG_FORMAT , "CONFIG_PATH" );
+    char * date_key        = util_alloc_sprintf( INTERNAL_DATA_KW_TAG_FORMAT , "DATE" );
+    char * num_cpu_key     = util_alloc_sprintf( INTERNAL_DATA_KW_TAG_FORMAT , "NUM_CPU" );
+    char * num_cpu_string  = "1";
+    
 
     subst_list_insert_owned_ref( enkf_main->subst_list , cwd_key         , cwd , "The current working directory we are running from - the location of the config file.");
     subst_list_insert_ref( enkf_main->subst_list , config_path_key , cwd , "The current working directory we are running from - the location of the config file.");
     subst_list_insert_owned_ref( enkf_main->subst_list , date_key        , date_string , "The current date");
-
+    subst_list_insert_ref( enkf_main->subst_list , num_cpu_key     , num_cpu_string , "The number of CPU used for one forward model.");
+    
+    
+    free( num_cpu_key );
     free( cwd_key );
     free( config_path_key );
     free( date_key );
@@ -2552,6 +2586,13 @@ int enkf_main_get_log_level( const enkf_main_type * enkf_main ) {
 
     4. The resulting enkf_main object contains *EVERYTHING*
        (whoaha...)
+
+
+  Observe that the function will start with chdir() to the directory
+  containing the configuration file, so that all subsequent file
+  references are relative to the location of the configuration
+  file. This also applies if the command_line argument given is a
+  symlink.
 */
 
 
@@ -2569,10 +2610,20 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
   printf("site config : %s \n\n",site_config);
   {
+
     char * path;
     char * base;
     char * ext;
-    util_alloc_file_components(_model_config , &path , &base , &ext);
+    if (util_is_link( _model_config )) {   /* The command line argument given is a symlink - we start by chaning to */
+      const  int path_size = 256;          /* the real location of the configuration file. */
+      char   realpath[path_size + 1];
+      
+      readlink( _model_config , realpath , path_size );
+      util_alloc_file_components(realpath , &path , &base , &ext);
+    } else 
+      util_alloc_file_components(_model_config , &path , &base , &ext);
+
+    
     if (path != NULL) {
       if (chdir(path) != 0)
 	util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
@@ -2594,8 +2645,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
     config_type * config = enkf_main_alloc_config( );
-    config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , false);
-    config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , true);
+    config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , false , false);
+    config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , false , true);
     /*****************************************************************/
     /* OK - now we have parsed everything - and we are ready to start
        populating the enkf_main object.
@@ -2608,11 +2659,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     }
     enkf_main_set_user_config_file( enkf_main , model_config );
     
-    if (config_item_set( config , "LOG_LEVEL"))
-      enkf_main_set_log_level( enkf_main , config_get_value_as_int(config , "LOG_LEVEL"));
+    if (config_item_set( config , LOG_LEVEL_KEY))
+      enkf_main_set_log_level( enkf_main , config_get_value_as_int(config , LOG_LEVEL_KEY));
     
-    if (config_item_set( config , "LOG_FILE"))
-      enkf_main_set_log_file( enkf_main , config_get_value(config , "LOG_FILE"));
+    if (config_item_set( config , LOG_FILE_KEY))
+      enkf_main_set_log_file( enkf_main , config_get_value(config , LOG_FILE_KEY));
     else {
       char * log_file = util_alloc_filename(NULL , model_config , DEFAULT_LOG_FILE);
       enkf_main_set_log_file( enkf_main , log_file );
@@ -2651,18 +2702,19 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                                                       ecl_config_get_refcase( enkf_main->ecl_config ) , 
 						      site_config_get_statoil_mode( enkf_main->site_config ),
 						      use_lsf);
+      enkf_main_update_num_cpu( enkf_main ); 
     }
 
     {
-      if (config_item_set( config , "SCHEDULE_PREDICTION_FILE")) {
-        stringlist_type * tokens = config_iget_stringlist_ref(config , "SCHEDULE_PREDICTION_FILE" , 0);
+      if (config_item_set( config , SCHEDULE_PREDICTION_FILE_KEY)) {
+        stringlist_type * tokens = config_iget_stringlist_ref(config , SCHEDULE_PREDICTION_FILE_KEY , 0);
         const char * template_file = stringlist_iget(tokens , 0);
         {
           hash_type * opt_hash                = hash_alloc_from_options( tokens );
           
           const char * parameters = hash_safe_get( opt_hash , "PARAMETERS" );
-          const char * min_std    = hash_safe_get( opt_hash , "MIN_STD" );
-          const char * init_files = hash_safe_get( opt_hash , "INIT_FILES");  
+          const char * min_std    = hash_safe_get( opt_hash , "MIN_STD"    );
+          const char * init_files = hash_safe_get( opt_hash , "INIT_FILES" );  
           
           enkf_main_set_schedule_prediction_file__( enkf_main , template_file , parameters , min_std , init_files );
           hash_free( opt_hash );
@@ -2692,13 +2744,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       {
         char * keep_runpath_string   = NULL;
         char * delete_runpath_string = NULL;
-        int    ens_size              = config_get_value_as_int(config , "NUM_REALIZATIONS");
+        int    ens_size              = config_get_value_as_int(config , NUM_REALIZATIONS_KEY);
         
-        if (config_has_set_item(config , "KEEP_RUNPATH"))
-          keep_runpath_string = config_alloc_joined_string(config , "KEEP_RUNPATH" , "");
+        if (config_has_set_item(config , KEEP_RUNPATH_KEY))
+          keep_runpath_string = config_alloc_joined_string(config , KEEP_RUNPATH_KEY , "");
 
-        if (config_has_set_item(config , "DELETE_RUNPATH"))
-          delete_runpath_string = config_alloc_joined_string(config , "DELETE_RUNPATH" , "");
+        if (config_has_set_item(config , DELETE_RUNPATH_KEY))
+          delete_runpath_string = config_alloc_joined_string(config , DELETE_RUNPATH_KEY , "");
 
         enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string , ens_size );
 
@@ -2708,16 +2760,16 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /* This is really in the wrong place ... */
       {
         enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
-        if (config_has_set_item(config , "PRE_CLEAR_RUNPATH"))
-          enkf_main->pre_clear_runpath = config_get_value_as_bool( config , "PRE_CLEAR_RUNPATH");
+        if (config_has_set_item(config , PRE_CLEAR_RUNPATH_KEY))
+          enkf_main->pre_clear_runpath = config_get_value_as_bool( config , PRE_CLEAR_RUNPATH_KEY);
       }
 
 
 
 
-      if (config_has_set_item(config , "ADD_STATIC_KW")) {
-	for (int i=0; i < config_get_occurences(config , "ADD_STATIC_KW"); i++) {
-	  const stringlist_type * static_kw_list = config_iget_stringlist_ref(config , "ADD_STATIC_KW" , i);
+      if (config_has_set_item(config , STATIC_KW_KEY)) {
+	for (int i=0; i < config_get_occurences(config , STATIC_KW_KEY); i++) {
+	  const stringlist_type * static_kw_list = config_iget_stringlist_ref(config , STATIC_KW_KEY , i);
 	  int k;
 	  for (k = 0; k < stringlist_get_size(static_kw_list); k++)
 	    ecl_config_add_static_kw(enkf_main->ecl_config , stringlist_iget( static_kw_list , k));
@@ -2727,14 +2779,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       
       /* Installing templates */
       {
-        for (int i=0; i < config_get_occurences( config , "RUN_TEMPLATE"); i++) {
-          const char * template_file = config_iget( config , "RUN_TEMPLATE" , i , 0);
-          const char * target_file   = config_iget( config , "RUN_TEMPLATE" , i , 1);
+        for (int i=0; i < config_get_occurences( config , RUN_TEMPLATE_KEY); i++) {
+          const char * template_file = config_iget( config , RUN_TEMPLATE_KEY , i , 0);
+          const char * target_file   = config_iget( config , RUN_TEMPLATE_KEY , i , 1);
           ert_template_type * template = ert_templates_add_template( enkf_main->templates , NULL , template_file , target_file , NULL);
           
-          for (int iarg = 2; iarg < config_get_occurence_size( config , "RUN_TEMPLATE" , i); iarg++) {
+          for (int iarg = 2; iarg < config_get_occurence_size( config , RUN_TEMPLATE_KEY , i); iarg++) {
             char * key , *value;
-            util_binary_split_string( config_iget( config , "RUN_TEMPLATE" , i , iarg ), "=:" , true , &key , &value);
+            util_binary_split_string( config_iget( config , RUN_TEMPLATE_KEY , i , iarg ), "=:" , true , &key , &value);
             
             if (value != NULL) {
               char * tagged_key = enkf_util_alloc_tagged_string( key );
@@ -2752,8 +2804,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       {
 	const char * obs_config_file;
-	if (config_has_set_item(config , "OBS_CONFIG"))
-	  obs_config_file = config_iget(config  , "OBS_CONFIG" , 0,0);
+	if (config_has_set_item(config , OBS_CONFIG_KEY))
+	  obs_config_file = config_iget(config  , OBS_CONFIG_KEY , 0,0);
 	else
 	  obs_config_file = NULL;
 
@@ -2766,14 +2818,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /*****************************************************************/
       {
         const char * select_case = NULL;
-        if (config_item_set( config , "SELECT_CASE"))
-          select_case = config_get_value( config , "SELECT_CASE" );
+        if (config_item_set( config , SELECT_CASE_KEY))
+          select_case = config_get_value( config , SELECT_CASE_KEY );
         
         enkf_main_remount_fs( enkf_main , select_case );
       }
 
       /* Adding ensemble members */
-      enkf_main_resize_ensemble( enkf_main  , config_iget_as_int(config , "NUM_REALIZATIONS" , 0 , 0) );
+      enkf_main_resize_ensemble( enkf_main  , config_iget_as_int(config , NUM_REALIZATIONS_KEY , 0 , 0) );
 	
       /*****************************************************************/
       /*
@@ -2794,8 +2846,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
           /* Install custom local_config - if present.*/
           {
             int i;
-            for (i = 0; i < config_get_occurences( config , "LOCAL_CONFIG"); i++) {
-              const stringlist_type * files = config_iget_stringlist_ref(config , "LOCAL_CONFIG" , i);
+            for (i = 0; i < config_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
+              const stringlist_type * files = config_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
               for (int j=0; j < stringlist_get_size( files ); j++)
                 local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
             }
@@ -2811,6 +2863,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   }
   free(model_config);
   enkf_main->misfit_table = NULL;
+  
   return enkf_main;
 }
 
@@ -3195,11 +3248,55 @@ void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_ta
 
 /*****************************************************************/
 
-//void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
-//  if util_file_exists( enkf_main->user_config_file) {
-//    /** A version of the config file already exist, and we will take
-//        backup. */
-//    
-//  } 
-//}
+void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
+  if (util_file_exists( enkf_main->user_config_file)) {
+    /** A version of the config file already exist, and we will take
+        backup. */
+    char * backup_file = NULL;
+    char * prev_backup = NULL;
+    int backup_nr      = 1;
+    do {
+      backup_file = util_realloc_sprintf( backup_file , "%s.%d" , enkf_main->user_config_file , backup_nr);
+      if (util_file_exists( backup_file )) {
+        prev_backup = util_realloc_string_copy( prev_backup , backup_file );
+        backup_nr++;
+      }
+    } while (util_file_exists( backup_file ));
+    
+    /**
+       When leaving the do { } while loop backup_file will point to
+       the first non-existing backup filename; and prev_backup will
+       point to the last existing (or be NULL if there was no existing
+       backup file).
+
+       1. If prev_backup == NULL there was no previous backup file,
+          and we just backup the current file to backup_file and be
+          done with it.
+
+       2. If prev_backup != NULL we do the following: The latest
+          backup is compared to the current config file, if they are
+          equal no new backup is taken; otherwise a new backup is
+          stored.
+
+    */
+    if (prev_backup == NULL)
+      util_copy_file( enkf_main->user_config_file , backup_file );
+    else {
+      if (!util_files_equal( enkf_main->user_config_file , prev_backup )) 
+        util_copy_file( enkf_main->user_config_file , backup_file );
+    }
+    util_safe_free( prev_backup );
+    util_safe_free( backup_file );
+  }
+  /* Start the proper saving */
+  {
+    FILE * stream = util_fopen( enkf_main->user_config_file , "w");
+    
+    ecl_config_fprintf_config( enkf_main->ecl_config , stream );
+    fprintf(stream , "\n\n");
+    model_config_fprintf_config( enkf_main->model_config , stream );
+
+    fclose( stream );
+  }
+}
 

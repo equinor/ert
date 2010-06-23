@@ -35,6 +35,7 @@ extern "C" {
 
 typedef struct enkf_main_struct enkf_main_type;
 
+void                          enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
 void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );
 const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );
 bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
@@ -146,7 +147,6 @@ matrix_type      *       enkf_main_getA(enkf_main_type * enkf_main , const local
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 
 subst_list_type        * enkf_main_get_data_kw( const enkf_main_type * enkf_main );
-void                     enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value);
 void                     enkf_main_clear_data_kw( enkf_main_type * enkf_main );
 site_config_type       * enkf_main_get_site_config( const enkf_main_type * enkf_main );
 void                     enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size );
@@ -163,7 +163,7 @@ const                char * enkf_main_get_COMPILE_TIME( void );
 void                        enkf_main_init_debug( const char * executable) ;
 bool                        enkf_main_is_initialized( const enkf_main_type * enkf_main ,bool_vector_type * __mask);
 void 			    enkf_main_del_node(enkf_main_type * enkf_main , const char * key);
-
+void                        enkf_main_fprintf_config( const enkf_main_type * enkf_main );
 
 
 UTIL_SAFE_CAST_HEADER(enkf_main);

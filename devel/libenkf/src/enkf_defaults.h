@@ -12,6 +12,51 @@
 #define __ENKF_DEFAULT__
 #include <stdbool.h>
 
+
+
+/**
+   The format string used when creating "search-strings" which should
+   be replaced in the gen_kw template files - MUST contain one %s
+   placeholder which will be replaced with the parameter name.
+*/
+#define DEFAULT_GEN_KW_TAG_FORMAT    "<%s>"
+
+
+/**
+   The format string used when creating search strings from user input
+   with the 'DATA_KW' keyword. The format string must contain one '%s'
+   placeholder which will be replaced with the user supplied key; can
+   be just '%s' which means no ERT induced transformations.
+
+      Example:
+      -------
+      DATA_KW   KEY1   VALUE1
+
+      DATA_KW_FORMAT = [<%s>]
+
+   In this case all occurences of '[<KEY1>]' will be replaced with
+   'VALUE1'. The DATA_KW_TAG_FORMAT used on user supplied tag keys can
+   in principle be different from the internal format, but this can of
+   course be confusing. The internal format is hard linked to job
+   description files, and can not easily be changed.
+*/
+
+//#define DEFAULT_DATA_KW_TAG_FORMAT    "<%s>"
+
+
+/**
+   This is the format used for tagging the internal variables like
+   IENS, and ECLBASE. These values are written into the various job
+   description files, care should therefor be taken before changing
+   the value of this variable. It is not user modifiable, and can only
+   be changed by recompiling.
+
+*/
+#define INTERNAL_DATA_KW_TAG_FORMAT   "<%s>"
+
+
+
+
 #define DEFAULT_HOST_TYPE  "STATOIL"
 #define DEFAULT_DBASE_TYPE "PLAIN"
 
@@ -77,9 +122,11 @@
 #define DEFAULT_SUMMARY_JOIN ":"
 
 
-#define CONFIG_KEY_FORMAT      "%16s"
-#define CONFIG_VALUE_FORMAT    " %32s"
-#define CONFIG_ENDVALUE_FORMAT " %32s\n"
+#define CONFIG_KEY_FORMAT         "%-16s"
+#define CONFIG_VALUE_FORMAT       " %-32s"
+#define CONFIG_ENDVALUE_FORMAT    " %-32s\n"
+#define CONFIG_COMMENT_FORMAT     "-- %s\n"
+#define CONFIG_COMMENTLINE_FORMAT "----------------------------------------------------------------------\n"
 
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"

@@ -208,7 +208,7 @@ static void obs_vector_install_node(obs_vector_type * obs_vector , int index , v
 
 
 /**
-   Observe that @sumamry_key is the key used to look up the
+   Observe that @summary_key is the key used to look up the
    corresponding simulated value in the ensemble, and not the
    observation key - the two can be different.
 */
@@ -407,7 +407,6 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
     
     // Get time series data from history object and allocate
     history_alloc_time_series_from_summary_key(history, sum_key, &size, &value, &default_used);
-    
     
     std = util_malloc(size * sizeof * std, __func__);
     

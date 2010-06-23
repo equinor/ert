@@ -9,6 +9,8 @@
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
+void                     ensemble_config_set_gen_kw_format( ensemble_config_type * ensemble_config , const char * gen_kw_format_string);
+const char             * ensemble_config_get_gen_kw_format( const ensemble_config_type * ensemble_config );
 enkf_config_node_type  * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key );
 enkf_config_node_type  * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key);
 enkf_config_node_type  * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key );

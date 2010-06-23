@@ -85,7 +85,6 @@ void ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_
   }
   ecl_config->start_date = ecl_util_get_start_date( ecl_config->data_file );
   ecl_config->num_cpu    = ecl_util_get_num_cpu( ecl_config->data_file );
-  printf("oK - need:%d cpu \n",ecl_config->num_cpu);
 }
 
 
@@ -330,18 +329,18 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
 
   /*****************************************************************/
   ecl_config_init_static_kw( ecl_config );
-  ecl_config_set_eclbase( ecl_config , config_iget(config , "ECLBASE" ,0,0) );
+  ecl_config_set_eclbase( ecl_config , config_iget(config , ECLBASE_KEY ,0,0) );
   ecl_config_set_data_file( ecl_config , config_iget( config , DATA_FILE_KEY ,0,0));
   ecl_config_set_schedule_file( ecl_config , config_iget( config , SCHEDULE_FILE_KEY ,0,0));
   ecl_config_clear_static_kw( ecl_config );
-  if (config_item_set(config , "GRID"))
-    ecl_config_set_grid( ecl_config , config_iget(config , "GRID" , 0,0) );
+  if (config_item_set(config , GRID_KEY))
+    ecl_config_set_grid( ecl_config , config_iget(config , GRID_KEY , 0,0) );
   
-  if (config_item_set( config , "REFCASE")) 
-    ecl_config_load_refcase( ecl_config , config_get_value( config , "REFCASE" ));
+  if (config_item_set( config , REFCASE_KEY)) 
+    ecl_config_load_refcase( ecl_config , config_get_value( config , REFCASE_KEY ));
 
-  if (config_has_set_item(config , "INIT_SECTION")) 
-    ecl_config_set_init_section( ecl_config , config_get_value( config , "INIT_SECTION" ));
+  if (config_has_set_item(config , INIT_SECTION_KEY)) 
+    ecl_config_set_init_section( ecl_config , config_get_value( config , INIT_SECTION_KEY ));
   else 
     if (ecl_config->can_restart) 
       /** 
@@ -521,9 +520,52 @@ bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)  { retur
 
 
 void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stream ) {
+  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
+  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information related to the ECLIPSE model.");
+
   fprintf( stream , CONFIG_KEY_FORMAT      , DATA_FILE_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config->data_file );
   
   fprintf( stream , CONFIG_KEY_FORMAT      , SCHEDULE_FILE_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , sched_file_iget_filename( ecl_config->sched_file , 0));
+
+  fprintf( stream , CONFIG_KEY_FORMAT      , ECLBASE_KEY );
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( ecl_config->eclbase ));
+
+  if (ecl_config->include_all_static_kw) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , STATIC_KW_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , DEFAULT_ALL_STATIC_KW );
+  }
+  {
+    int size = stringlist_get_size( ecl_config->user_static_kw );
+    if (size > 0) {
+      int i;
+      fprintf( stream , CONFIG_KEY_FORMAT      , STATIC_KW_KEY );
+      for (i=0; i < size; i++)
+        if (i < (size -1 ))
+          fprintf( stream , CONFIG_VALUE_FORMAT      , stringlist_iget( ecl_config->user_static_kw , i));
+        else
+          fprintf( stream , CONFIG_ENDVALUE_FORMAT      , stringlist_iget( ecl_config->user_static_kw , i));
+    }
+  }
+
+  if (ecl_config->refcase != NULL) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , REFCASE_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config_get_refcase_name( ecl_config ));
+  }
+
+  if (ecl_config->grid != NULL) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , GRID_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config_get_gridfile( ecl_config ));
+  }
+
+  if (ecl_config->schedule_prediction_file != NULL) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , SCHEDULE_PREDICTION_FILE_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config_get_schedule_prediction_file( ecl_config ));
+  }
+  
+  if (ecl_config->init_section != NULL) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , INIT_SECTION_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config_get_init_section( ecl_config ));
+  }
 }

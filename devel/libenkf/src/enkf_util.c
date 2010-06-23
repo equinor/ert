@@ -163,33 +163,33 @@ size_t util_copy_strided_vector(const void * _src, size_t src_size , int src_str
    AUTO_MKDIR     = 4
 */
 
-char * enkf_util_scanf_alloc_filename(const char * prompt , int options) {
-  if ((options & EXISTING_FILE) && (options & NEW_FILE))
-    util_abort("%s: internal error - asking for both new and existing file - impossible \n", __func__);
-  {
-    bool OK = true;
-    char * _path;
-    char file[1024];
-    do {
-      printf("%s",prompt);
-      scanf("%s" , file);
-      util_alloc_file_components(file , &_path , NULL ,  NULL);
-      if (_path != NULL) {
-	if (!util_is_directory(_path)) 
-	  if (options & AUTO_MKDIR)
-	    util_make_path(_path);
-	free(_path);
-      }
-      
-      if ((options & EXISTING_FILE) && (!util_file_exists(file)))
-	OK = false;
-      else if ((options & NEW_FILE) && (util_file_exists(file)))
-	OK = false;
-
-    } while (!OK);
-    return util_alloc_string_copy(file);    
-  }
-}
+//char * enkf_util_scanf_alloc_filename(const char * prompt , int options) {
+//  if ((options & EXISTING_FILE) && (options & NEW_FILE))
+//    util_abort("%s: internal error - asking for both new and existing file - impossible \n", __func__);
+//  {
+//    bool OK = true;
+//    char * _path;
+//    char file[1024];
+//    do {
+//      printf("%s",prompt);
+//      scanf("%s" , file);
+//      util_alloc_file_components(file , &_path , NULL ,  NULL);
+//      if (_path != NULL) {
+//	if (!util_is_directory(_path)) 
+//	  if (options & AUTO_MKDIR)
+//	    util_make_path(_path);
+//	free(_path);
+//      }
+//      
+//      if ((options & EXISTING_FILE) && (!util_file_exists(file)))
+//	OK = false;
+//      else if ((options & NEW_FILE) && (util_file_exists(file)))
+//	OK = false;
+//
+//    } while (!OK);
+//    return util_alloc_string_copy(file);    
+//  }
+//}
 
 
 
@@ -296,6 +296,11 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
 
 char * enkf_util_alloc_tagged_string(const char * s) {
   return util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , s , DEFAULT_END_TAG);
+}
+
+char * enkf_util_alloc_detagged_string( const char * tagged_string) {
+  const char * s = &tagged_string[ strlen( DEFAULT_START_TAG ) ];
+  return util_alloc_substring_copy( s , strlen( s ) - strlen( DEFAULT_END_TAG ));
 }
 
 

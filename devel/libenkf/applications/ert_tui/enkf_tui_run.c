@@ -18,6 +18,22 @@
 
 
 
+static void enkf_tui_run_set_runpath(void * arg) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  model_config_type * model_config = arg_pack_iget_ptr(arg_pack , 0);
+  menu_item_type    * item         = arg_pack_iget_ptr(arg_pack , 1);
+  char runpath_fmt[256];
+  printf("Give runpath format ==> ");
+  scanf("%s" , runpath_fmt);
+  model_config_set_runpath_fmt(model_config , runpath_fmt);
+  {
+    char * menu_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , runpath_fmt);
+    menu_item_set_label( item , menu_label );
+    free(menu_label);
+  }
+}
+
+
 
 
 void enkf_tui_run_start__(void * enkf_main) {
@@ -122,9 +138,6 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
 
 
 
-void enkf_main_interactive_set_runpath__(void *arg) {
-  
-}
 
 /**
    Observe that this function will update manually at the report step
@@ -278,7 +291,7 @@ void enkf_tui_run_menu(void * arg) {
     char * runpath_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , path_fmt_get_fmt ( runpath_fmt ));
     
     arg_pack_append_ptr(arg_pack , model_config);
-    arg_pack_append_ptr(arg_pack , menu_add_item(menu , runpath_label , "dD" , model_config_interactive_set_runpath__ , arg_pack , arg_pack_free__));
+    arg_pack_append_ptr(arg_pack , menu_add_item(menu , runpath_label , "dD" , enkf_tui_run_set_runpath , arg_pack , arg_pack_free__));
     
     
     free(runpath_label);

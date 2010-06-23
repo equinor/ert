@@ -198,6 +198,7 @@ time_t enkf_obs_iget_obs_time(enkf_obs_type * enkf_obs , int report_step) {
     obs_time = history_get_time_t_from_restart_nr( enkf_obs->history , report_step );
     time_t_vector_iset( enkf_obs->obs_time , report_step , obs_time );
   }
+  util_fprintf_datetime( obs_time , stdout );
   return obs_time;
 }
 

@@ -47,11 +47,11 @@ const char           * model_config_iget_casename( const model_config_type * mod
 void                   model_config_set_max_resample( model_config_type * model_config , int max_resample );
 int                    model_config_get_max_resample(const model_config_type * model_config );
 void                   model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt);
-void                   model_config_interactive_set_runpath__(void * arg);
 const char           * model_config_get_runpath_as_char( const model_config_type * model_config );
 history_source_type    model_config_get_history_source( const model_config_type * model_config );
 void                   model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase );
 void                   model_config_set_history_source( model_config_type * model_config , history_source_type history_source );
+void                   model_config_fprintf_config( const model_config_type * model_config , FILE * stream );
 
 #ifdef __cplusplus 
 }

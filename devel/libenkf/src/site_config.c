@@ -36,6 +36,7 @@ struct site_config_struct {
   char                  * __license_root_path;    /* The license_root_path value actually used - includes a user/pid subdirectory. */
   mode_t                  umask;
   /*---------------------------------------------------------------*/
+  int                     num_cpu;                /* The number of cpu's used to run the forward model - currently only relevant for ECLIPSE and LSF*/
   int                     max_running_lsf;        /* Need to hold the detailed information about the         */
   char                  * lsf_queue_name;         /* various drivers here to be able to "hot-switch" driver. */
   char                  * lsf_request;  
@@ -52,6 +53,11 @@ struct site_config_struct {
 
 bool site_config_get_statoil_mode(const site_config_type * site_config ) {
   return site_config->statoil_mode;
+}
+
+
+void site_config_set_num_cpu( site_config_type * site_config , int num_cpu ) {
+  job_queue_set_num_cpu( site_config->job_queue , num_cpu );
 }
 
 
@@ -78,6 +84,7 @@ static site_config_type * site_config_alloc_empty() {
   site_config->license_root_path      = NULL;
   site_config->__license_root_path    = NULL;
 
+  site_config->num_cpu                = 0;
   site_config->max_running_local      = 0;
   site_config->max_running_lsf        = 0;
   site_config->max_running_rsh        = 0;
