@@ -46,9 +46,13 @@ class ErtWrapper:
 
     def __loadLibraries(self, prefix):
         """Load libraries that are required by ERT and ERT itself"""
-        CDLL("libblas.so", RTLD_GLOBAL)
-        CDLL("liblapack.so", RTLD_GLOBAL)
-        CDLL("libz.so", RTLD_GLOBAL)
+        CDLL("libblas.so"   , RTLD_GLOBAL)
+        CDLL("liblapack.so" , RTLD_GLOBAL)
+        CDLL("libz.so"      , RTLD_GLOBAL)
+        CDLL("libnsl.so"    , RTLD_GLOBAL)
+        CDLL("liblsf.so"    , RTLD_GLOBAL)
+        CDLL("libbat.so"    , RTLD_GLOBAL)
+
 
         self.util = self.__loadLibrary(prefix, "libutil")
         self.ecl = self.__loadLibrary(prefix, "libecl")
