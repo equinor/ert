@@ -2,7 +2,6 @@ import xml.dom.minidom
 import os
 
 class PlotSettingsSaver:
-
     def __init__(self):
         pass
 
@@ -54,12 +53,27 @@ class PlotSettingsSaver:
         style_element.setAttribute("line", str(plot_config.linestyle))
         style_element.setAttribute("marker", str(plot_config.marker))
 
+    def __addComments(self, limits_element):
+        comment1 = "When limit values represent a date, the date is stored "\
+          "as the number of seconds since 1/1-1970."
+
+        comment2 = "Setting a limit value to None means that the program should "\
+          "use the corresponding value from the dataset as limits."
+
+        comment_element = self.doc.createComment(comment1)
+        limits_element.appendChild(comment_element)
+        comment_element = self.doc.createComment(comment2)
+        limits_element.appendChild(comment_element)
+
     def __addLimits(self, limits, zoom):
         """Add limits and zoom to the xml"""
         element = self.doc.createElement("limits_and_zoom")
         self.root_element.appendChild(element)
 
         limits_element = self.doc.createElement("limits")
+
+        self.__addComments(limits_element)
+        
         element.appendChild(limits_element)
         limits_element.setAttribute("x_min", str(limits[0]))
         limits_element.setAttribute("x_max", str(limits[1]))
@@ -98,9 +112,7 @@ class PlotSettingsSaver:
             annotation_element.setAttribute("yt", str(annotation[4]))
 
 
-
 class PlotSettingsLoader:
-
     def __init__(self):
         self.annotations = None
         self.skip_plot_settings = False
@@ -204,19 +216,19 @@ class PlotSettingsLoader:
         x_max = xml_limits.getAttribute("x_max")
         y_min = xml_limits.getAttribute("y_min")
         y_max = xml_limits.getAttribute("y_max")
-        
+
         plot_settings.setMinXLimit(self.floatify(x_min))
         plot_settings.setMaxXLimit(self.floatify(x_max))
         plot_settings.setMinYLimit(self.floatify(y_min))
         plot_settings.setMaxYLimit(self.floatify(y_max))
-        
+
         xml_zoom = xml_limits_and_zoom.getElementsByTagName("zoom")[0]
-        
+
         x_min = xml_zoom.getAttribute("x_min")
         x_max = xml_zoom.getAttribute("x_max")
         y_min = xml_zoom.getAttribute("y_min")
         y_max = xml_zoom.getAttribute("y_max")
-        
+
         plot_settings.setMinXZoom(self.floatify(x_min))
         plot_settings.setMaxXZoom(self.floatify(x_max))
         plot_settings.setMinYZoom(self.floatify(y_min))
@@ -256,7 +268,6 @@ from PyQt4.QtCore import Qt, SIGNAL
 from widgets.util import createSpace
 
 class PlotSettingsCopyDialog(QDialog):
-
     def __init__(self, plot_settings, parent = None):
         QDialog.__init__(self, parent)
 
@@ -293,7 +304,7 @@ class PlotSettingsCopyDialog(QDialog):
         layout.addRow("Annotations:", self.check_annotations)
 
         layout.addRow(createSpace(10))
-        
+
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
 
         layout.addRow(buttons)
