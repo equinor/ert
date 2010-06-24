@@ -18,7 +18,7 @@ from plotfigure import PlotFigure, matplotlib
 from PyQt4.QtGui import QFrame, QInputDialog, QSizePolicy
 from pages.plot.plotsettingsxml import PlotSettingsSaver, PlotSettingsLoader
 from pages.plot.plotsettings import PlotSettings
-
+from pages.plot.plotsettingsxml import PlotSettingsCopyDialog
 
 class PlotView(QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -72,30 +72,41 @@ class PlotView(QFrame):
 
     @widgets.util.may_take_a_long_time
     def drawPlot(self):
-        self.plot_figure.drawPlot(self.data, self.plot_settings)
+        self.plot_figure.drawPlot(self.data, self.plot_settings)        
         self.canvas.draw()
 
     def resizeEvent(self, event):
         QFrame.resizeEvent(self, event)
         self.canvas.resize(event.size().width(), event.size().height())
 
-    def setData(self, data):
-        if self.data.isValid():
-            plot_config_saver = PlotSettingsSaver(self.plot_config_path)
-            annotations = self.plot_figure.getAnnotations()
-            plot_config_saver.save(self.data.getName(), self.plot_settings, annotations)
-
-        self.data = data
-
-        if self.data.isValid():
-            plot_config_loader = PlotSettingsLoader(self.plot_config_path)
-            plot_config_loader.load(self.data.getName(), self.plot_settings)
-            annotations = plot_config_loader.getAnnotations()
+    def addAnnotations(self, plot_config_loader):
+        annotations = plot_config_loader.getAnnotations()
+        if not annotations is None:
             self.plot_figure.clearAnnotations()
             for annotation in annotations:
                 self.plot_figure.annotate(*annotation)
 
-        self.emit(SIGNAL('plotSelectionChanged(array)'), self.plot_settings.selected_members)
+    def loadSettings(self, name):
+        plot_config_loader = PlotSettingsLoader()
+        plot_config_loader.load(name, self.plot_settings)
+        self.addAnnotations(plot_config_loader)
+
+        self.emit(SIGNAL('plotSettingsChanged(PlotSettings)'), self.plot_settings)
+
+    def setData(self, data):
+        if self.data.isValid():
+            plot_config_saver = PlotSettingsSaver()
+            annotations = self.plot_figure.getAnnotations()
+            plot_config_saver.save(self.data.getName(), self.plot_settings, annotations)
+
+        self.data = data
+        self.plot_settings.setXDataType(data.getXDataType())
+        self.plot_settings.setYDataType(data.getYDataType())
+
+        if self.data.isValid():
+            self.loadSettings(self.data.getName())
+        else:
+            self.emit(SIGNAL('plotSelectionChanged(array)'), self.plot_settings.selected_members)
 
     def setXViewFactors(self, xminf, xmaxf, draw=True):
         self.plot_figure.setXViewFactors(self.plot_settings, xminf, xmaxf, self.data.x_min, self.data.x_max, self.data.getXDataType())
@@ -110,18 +121,28 @@ class PlotView(QFrame):
             self.canvas.draw()
 
     def save(self):
-        if not os.path.exists(self.plot_path):
-            os.makedirs(self.plot_path)
-            
-        path = self.plot_path + "/" + self.data.getTitle()
+        plot_path = self.plot_settings.getPlotPath()
+        if not os.path.exists(plot_path):
+            os.makedirs(plot_path)
+
+        #todo: popup save dialog
+
+        path = plot_path + "/" + self.data.getTitle()
         self.plot_figure.getFigure().savefig(path + ".png", dpi=300, format="png")
         self.plot_figure.getFigure().savefig(path + ".pdf", dpi=300, format="pdf")
 
+    def importPlotSettings(self):
+        plot_config_loader = PlotSettingsLoader()
+        plot_config_loader.copy(self.plot_settings)
+        self.addAnnotations(plot_config_loader)
+
+        self.emit(SIGNAL('plotSettingsChanged(PlotSettings)'), self.plot_settings)
+
     def setPlotPath(self, plot_path):
-        self.plot_path = plot_path
+        self.plot_settings.setPlotPath(plot_path)
 
     def setPlotConfigPath(self, path):
-        self.plot_config_path = path
+        self.plot_settings.setPlotConfigPath(path)
 
     def __memberFinder(self, artist):
         return artist.get_gid() in self.plot_settings.selected_members

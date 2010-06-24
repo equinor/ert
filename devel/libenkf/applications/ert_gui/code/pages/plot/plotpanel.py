@@ -18,6 +18,8 @@ from PyQt4.QtCore import QDate, Qt, QPoint
 from pages.plot.plotconfig import PlotConfigPanel
 from PyQt4.QtGui import QTabWidget, QFormLayout, QFrame, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QToolButton, QMainWindow
 from PyQt4.QtGui import QCalendarWidget
+import pages.plot.plotsettings
+import erttypes
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -26,6 +28,7 @@ class PlotPanel(QtGui.QWidget):
         plotLayout = QtGui.QHBoxLayout()
 
         self.plot = PlotView()
+        self.connect(self.plot, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchLimits)
 
         parameterLayout = QtGui.QVBoxLayout()
         self.plotList = QtGui.QListWidget(self)
@@ -69,32 +72,38 @@ class PlotPanel(QtGui.QWidget):
 
 
     def drawPlot(self):
+        self.plot.setData(self.plotDataFetcher.data)
+
+    def fetchLimits(self, plot_settings):
         data = self.plotDataFetcher.data
+        x_min = plot_settings.getMinXLimit(data.x_min)
+        x_max = plot_settings.getMaxXLimit(data.x_max)
+        y_min = plot_settings.getMinYLimit(data.y_min)
+        y_max = plot_settings.getMaxYLimit(data.y_max)
 
-        self.plot.setData(data)
+        state = self.h_zoom_slider.blockSignals(True)
+        self.h_zoom_slider.setMinValue(plot_settings.xminf)
+        self.h_zoom_slider.setMaxValue(plot_settings.xmaxf)
+        self.h_zoom_slider.blockSignals(state)
 
-        x_min = self.plot.plot_settings.getMinXLimit(data.x_min, data.getXDataType())
-        x_max = self.plot.plot_settings.getMaxXLimit(data.x_max, data.getXDataType())
-        y_min = self.plot.plot_settings.getMinYLimit(data.y_min, data.getYDataType())
-        y_max = self.plot.plot_settings.getMaxYLimit(data.y_max, data.getYDataType())
+        state = self.v_zoom_slider.blockSignals(True)
+        self.v_zoom_slider.setMinValue(plot_settings.yminf)
+        self.v_zoom_slider.setMaxValue(plot_settings.ymaxf)
+        self.v_zoom_slider.blockSignals(state)
 
-#        x_min = data.x_min
-#        x_max = data.x_max
-#
-#        if data.getXDataType() == "time" and not x_min is None and not x_max is None:
-#            x_min = x_min.value / 86400.0
-#            x_max = x_max.value / 86400.0
-#
-#        y_min = data.y_min
-#        y_max = data.y_max
-#
-#        if data.getYDataType() == "time" and not y_min is None and not y_max is None:
-#            y_min = y_min.value / 86400.0
-#            y_max = y_max.value / 86400.0
+        if isinstance(x_min, erttypes.time_t):
+            x_min = x_min.value
 
+        if isinstance(x_max, erttypes.time_t):
+            x_max = x_max.value
+
+        #todo: y
+
+        self.plotViewSettings.setDataTypes(plot_settings.getXDataType(), plot_settings.getYDataType())
         self.plotViewSettings.setLimits(x_min, x_max, y_min, y_max)
-        self.plotViewSettings.setLimitStates(*self.plot.plot_settings.getLimitStates())
+        self.plotViewSettings.setLimitStates(*plot_settings.getLimitStates())
         self.plot.drawPlot()
+
 
     @widgets.util.may_take_a_long_time
     def select(self, current, previous):
@@ -146,72 +155,28 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout.addWidget(self.createPlotRangePanel())
         layout.addWidget(widgets.util.createSeparator())
 
-        layout.addLayout(self.createSaveButtonLayout())
+        layout.addLayout(self.createButtonLayout())
 
         self.setLayout(layout)
 
+    def setDataTypes(self, x_data_type, y_data_type):
+        self.x_min.showDate(x_data_type == "time")
+        self.x_max.showDate(x_data_type == "time")
+        self.y_min.showDate(y_data_type == "time")
+        self.y_max.showDate(y_data_type == "time")
+
+
     def setLimits(self, x_min, x_max, y_min, y_max):
-        self.updateSpinner(self.x_min_spinner, x_min)
-        self.updateSpinner(self.x_max_spinner, x_max)
-        self.updateSpinner(self.y_min_spinner, y_min)
-        self.updateSpinner(self.y_max_spinner, y_max)
+        self.x_min.setValue(x_min)
+        self.x_max.setValue(x_max)
+        self.y_min.setValue(y_min)
+        self.y_max.setValue(y_max)
 
     def setLimitStates(self, x_min_state, x_max_state, y_min_state, y_max_state):
-        self.x_min_check.setChecked(x_min_state)
-        self.x_max_check.setChecked(x_max_state)
-        self.y_min_check.setChecked(y_min_state)
-        self.y_max_check.setChecked(y_max_state)
-
-    def updateSpinner(self, spinner, value):
-        if not value is None:
-            state = spinner.blockSignals(True)
-            spinner.setValue(value)
-            spinner.blockSignals(state)
-
-
-    def createDisableableSpinner(self, func):
-        layout = QHBoxLayout()
-
-        check = QCheckBox()
-
-        spinner = QtGui.QDoubleSpinBox()
-        spinner.setDecimals(3)
-        spinner.setSingleStep(1)
-        spinner.setDisabled(True)
-        spinner.setMinimum(-10000000000)
-        spinner.setMaximum(10000000000)
-        spinner.setMaximumWidth(100)
-        self.connect(spinner, QtCore.SIGNAL('valueChanged(double)'), func)
-
-        popup_button = QToolButton()
-        popup_button.setIcon(widgets.util.resourceIcon("calendar"))
-        popup_button.setIconSize(QtCore.QSize(16, 16))
-        popup_button.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        popup_button.setAutoRaise(True)
-        popup_button.setDisabled(True)
-
-        def popup():
-            popup = Popup(popup_button, spinner.value())
-            self.connect(popup, QtCore.SIGNAL('dateChanged(double)'), lambda date : spinner.setValue(date))
-
-        self.connect(popup_button, QtCore.SIGNAL('clicked()'), popup)
-
-        def disabler(state):
-            disabled = not state == 2
-            spinner.setDisabled(disabled)
-            popup_button.setDisabled(disabled)
-
-            if not disabled:
-                func(spinner.value())
-            else:
-                func(None)
-
-        self.connect(check, SIGNAL('stateChanged(int)'), disabler)
-
-        layout.addWidget(check)
-        layout.addWidget(spinner)
-        layout.addWidget(popup_button)
-        return layout, spinner, check
+        self.x_min.setChecked(x_min_state)
+        self.x_max.setChecked(x_max_state)
+        self.y_min.setChecked(y_min_state)
+        self.y_max.setChecked(y_max_state)
 
     def createPlotRangePanel(self):
         frame = QFrame()
@@ -221,33 +186,41 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout = QFormLayout()
 
-        x_min_layout, self.x_min_spinner, self.x_min_check = self.createDisableableSpinner(self.plotView.setMinXLimit)
-        x_max_layout, self.x_max_spinner, self.x_max_check  = self.createDisableableSpinner(self.plotView.setMaxXLimit)
+        self.x_min = DisableableSpinner(self.plotView.setMinXLimit)
+        self.x_max = DisableableSpinner(self.plotView.setMaxXLimit)
 
-        layout.addRow("X min:", x_min_layout)
-        layout.addRow("X max:", x_max_layout)
+        layout.addRow("X min:", self.x_min)
+        layout.addRow("X max:", self.x_max)
 
-        y_min_layout, self.y_min_spinner, self.y_min_check  = self.createDisableableSpinner(self.plotView.setMinYLimit)
-        y_max_layout, self.y_max_spinner, self.y_max_check = self.createDisableableSpinner(self.plotView.setMaxYLimit)
+        self.y_min = DisableableSpinner(self.plotView.setMinYLimit)
+        self.y_max = DisableableSpinner(self.plotView.setMaxYLimit)
 
-        layout.addRow("Y min:", y_min_layout)
-        layout.addRow("Y max:", y_max_layout)
+        layout.addRow("Y min:", self.y_min)
+        layout.addRow("Y max:", self.y_max)
 
         frame.setLayout(layout)
         return frame
 
-    def createSaveButtonLayout(self):
-        save_layout = QFormLayout()
-        save_layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
+    def createButtonLayout(self):
+        button_layout = QHBoxLayout()
+
+        self.import_button = QtGui.QPushButton()
+        self.import_button.setIcon(widgets.util.resourceIcon("plugin"))
+        self.import_button.setIconSize(QtCore.QSize(16, 16))
+        self.import_button.setToolTip("Copy settings from another plot.")
 
         self.save_button = QtGui.QPushButton()
         self.save_button.setIcon(widgets.util.resourceIcon("disk"))
         self.save_button.setIconSize(QtCore.QSize(16, 16))
+        self.save_button.setToolTip("Save a plot.")           
 
-        save_layout.addRow("Save:", self.save_button)
+        button_layout.addWidget(self.import_button)
+        button_layout.addWidget(self.save_button)
+        
         self.connect(self.save_button, QtCore.SIGNAL('clicked()'), self.plotView.save)
+        self.connect(self.import_button, QtCore.SIGNAL('clicked()'), self.plotView.importPlotSettings)
 
-        return save_layout
+        return button_layout
 
     def createMemberSelectionPanel(self):
         frame = QFrame()
@@ -262,13 +235,16 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.selected_member_label.setWordWrap(True)
 
         def plotSelectionChanged(selected_members):
+            if isinstance(selected_members, pages.plot.plotsettings.PlotSettings):
+                selected_members = selected_members.getSelectedMembers()
             text = ""
             for member in selected_members:
                 text = text + " " + str(member)
             self.selected_member_label.setText(text)
 
         self.connect(self.plotView, QtCore.SIGNAL('plotSelectionChanged(array)'), plotSelectionChanged)
-        
+        self.connect(self.plotView, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), plotSelectionChanged)
+
         layout.addWidget(QtGui.QLabel("Selected members:"))
         layout.addWidget(self.selected_member_label)
 
@@ -282,6 +258,91 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         return frame
 
+class DisableableSpinner(QFrame):
+
+    def __init__(self, func):
+        QFrame.__init__(self)
+        self.func = func
+
+        layout = QHBoxLayout()
+        layout.setMargin(0)
+
+        self.check = QCheckBox()
+
+        self.spinner = QtGui.QDoubleSpinBox()
+        self.spinner.setSingleStep(1)
+        self.spinner.setDisabled(True)
+        self.spinner.setMinimum(-10000000000)
+        self.spinner.setMaximum(10000000000)
+        self.spinner.setMaximumWidth(100)
+        self.connect(self.spinner, QtCore.SIGNAL('valueChanged(double)'), self.update)
+
+        self.date_spinner = QtGui.QDateEdit()
+        self.date_spinner.setDisabled(True)
+        self.date_spinner.setDisplayFormat("dd/MM-yyyy")
+        self.date_spinner.setMaximumWidth(100)
+        self.date_spinner.setCalendarPopup(True)
+        self.connect(self.date_spinner, QtCore.SIGNAL('dateChanged(QDate)'), self.update)
+
+        self.connect(self.check, SIGNAL('stateChanged(int)'), self.disabler)
+
+        layout.addWidget(self.check)
+        layout.addWidget(self.spinner)
+        layout.addWidget(self.date_spinner)
+
+
+        self.setLayout(layout)
+
+        self.showDate(False)
+
+    def update(self, value):
+        if self.show_date:
+            seconds = self.qDateToSeconds(value)
+            self.func(seconds)
+        else:
+            self.func(value)
+
+    def disabler(self, state):
+        disabled = not state == 2
+        self.spinner.setDisabled(disabled)
+        self.date_spinner.setDisabled(disabled)
+
+        if not disabled:
+            if self.show_date:
+                seconds = self.qDateToSeconds(self.date_spinner.date())
+                self.func(seconds)
+            else:
+                self.func(self.spinner.value())
+        else:
+            self.func(None)
+
+    def setChecked(self, state):
+        self.check.setChecked(state)
+
+    def setValue(self, value):
+        if not value is None:
+            if self.show_date:
+                state = self.date_spinner.blockSignals(True)
+                self.date_spinner.setDate(self.qDateFromSeconds(value))
+                self.date_spinner.blockSignals(state)
+            else:
+                state = self.spinner.blockSignals(True)
+                self.spinner.setValue(value)
+                self.spinner.blockSignals(state)
+
+    def showDate(self, bool):
+        self.show_date = bool
+        self.spinner.setHidden(bool)
+        self.date_spinner.setHidden(not bool)
+
+    def qDateFromSeconds(self, seconds):
+        t = time.localtime(seconds)
+        return QDate(*t[0:3])
+
+    def qDateToSeconds(self, qdate):
+        date = qdate.toPyDate()
+        seconds = int(time.mktime(date.timetuple()))
+        return seconds
 
 
 class PlotParameterConfigurationPanel(QtGui.QFrame):
@@ -302,38 +363,3 @@ class PlotParameterConfigurationPanel(QtGui.QFrame):
         if self.layout.indexOf(widget) == -1:
             self.layout.addWidget(widget)
         self.layout.setCurrentWidget(widget)
-
-class Popup(QFrame):
-    def __init__(self, parent=None, date_in_days=0):
-        QFrame.__init__(self, parent, Qt.Popup | Qt.Window | Qt.FramelessWindowHint)
-        layout = QVBoxLayout()
-
-        if not parent is None:
-            p = parent.mapToGlobal(QPoint(0,0))
-            self.setGeometry(p.x(), p.y(), 10, 10)
-            
-        self.calendar = QCalendarWidget()
-        layout.addWidget(self.calendar)
-        self.setLayout(layout)
-
-        self.setDateFromDays(date_in_days)
-        self.connect(self.calendar, QtCore.SIGNAL('selectionChanged()'), self.finished)
-        self.show()
-
-    def finished(self):
-        date = self.calendar.selectedDate()
-        self.emit(SIGNAL('dateChanged(double)'), self.qDateToDays(date))
-        self.close()
-
-    def focusOutEvent(self, event):
-        self.finished()
-
-    def setDateFromDays(self, days):
-        t = time.localtime(days * 86400.0)
-        self.calendar.setSelectedDate(QDate(*t[0:3]))
-
-    def qDateToDays(self, qdate):
-        date = qdate.toPyDate()
-        seconds = int(time.mktime(date.timetuple()))
-        return seconds / 86400.0
-

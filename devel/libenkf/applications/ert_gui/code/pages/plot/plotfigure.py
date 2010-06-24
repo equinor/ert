@@ -1,9 +1,10 @@
 from matplotlib.figure import Figure
 import matplotlib.lines
 import matplotlib.text
-from matplotlib.dates import AutoDateLocator
+from matplotlib.dates import AutoDateLocator, datetime
 from plotter import Plotter
 import numpy
+import erttypes
 
 class PlotFigure:
     def __init__(self):
@@ -44,7 +45,7 @@ class PlotFigure:
             else:
                 plot_config = plot_settings.plot_config
 
-            if data.getXDataType() == "time":
+            if plot_settings.getXDataType() == "time":
                 line = self.plotter.plot_date(self.axes, plot_config, x, y)
             else:
                 line = self.plotter.plot(self.axes, plot_config, x, y)
@@ -55,14 +56,14 @@ class PlotFigure:
         if not data.obs_x is None and not data.obs_y is None:
             x, y, x_std, y_std = self.__setupData(data, data.obs_x, data.obs_y, data.obs_std_x, data.obs_std_y)
 
-            if data.getXDataType() == "time":
+            if plot_settings.getXDataType() == "time":
                 self.plotter.plot_date(self.axes, plot_settings.observation_plot_config, x, y)
             else:
                 self.plotter.plot(self.axes, plot_settings.observation_plot_config, x, y)
 
             if not data.obs_std_x is None or not data.obs_std_y is None:
                 if plot_settings.std_plot_config.is_visible:
-                    if data.getXDataType() == "time":
+                    if plot_settings.getXDataType() == "time":
                         if not y_std is None:
                             self.plotter.plot_date(self.axes, plot_settings.std_plot_config, x, y - y_std)
                             self.plotter.plot_date(self.axes, plot_settings.std_plot_config, x, y + y_std)
@@ -83,10 +84,10 @@ class PlotFigure:
         if not data.refcase_x is None and not data.refcase_y is None and plot_settings.refcase_plot_config.is_visible:
             x, y, x_std, y_std = self.__setupData(data, data.refcase_x, data.refcase_y)
 
-            if data.getXDataType() == "time":
+            if plot_settings.getXDataType() == "time":
                 self.plotter.plot_date(self.axes, plot_settings.refcase_plot_config, x, y)
 
-        if data.getXDataType() == "time":
+        if plot_settings.getXDataType() == "time":
             yearsFmt = matplotlib.dates.DateFormatter('%b \'%Y')
             self.axes.xaxis.set_major_formatter(yearsFmt)
             self.fig.autofmt_xdate()
@@ -113,8 +114,8 @@ class PlotFigure:
         return x, y, std_x, std_y
 
     def updateLimits(self, plot_settings, data):
-        self.setXViewFactors(plot_settings, plot_settings.xminf, plot_settings.xmaxf, data.x_min, data.x_max, data.getXDataType())
-        self.setYViewFactors(plot_settings, plot_settings.yminf, plot_settings.ymaxf, data.y_min, data.y_max, data.getYDataType())
+        self.setXViewFactors(plot_settings, plot_settings.xminf, plot_settings.xmaxf, data.x_min, data.x_max)
+        self.setYViewFactors(plot_settings, plot_settings.yminf, plot_settings.ymaxf, data.y_min, data.y_max)
         
     def annotate(self, label, x, y, xt=None, yt=None):
         coord = (x, y)
@@ -140,27 +141,43 @@ class PlotFigure:
     def setYLimits(self, y_min, y_max):
         self.axes.set_ylim(y_min, y_max)
 
-    def setXViewFactors(self, plot_settings, xminf, xmaxf, x_min, x_max, type):
+    def __convertDate(self, ert_time):
+        if ert_time is None:
+            ert_time = erttypes.time_t(0)
+
+        if isinstance(ert_time, datetime.date):
+            return matplotlib.dates.date2num(ert_time)
+        else:
+            return matplotlib.dates.date2num(ert_time.datetime())
+
+    def setXViewFactors(self, plot_settings, xminf, xmaxf, x_min, x_max):
         plot_settings.xminf = xminf
         plot_settings.xmaxf = xmaxf
 
-        x_min = plot_settings.getMinXLimit(x_min, type)
-        x_max = plot_settings.getMaxXLimit(x_max, type)
+        x_min = plot_settings.getMinXLimit(x_min)
+        x_max = plot_settings.getMaxXLimit(x_max)
+
+        if plot_settings.getXDataType() == "time":
+            x_min = self.__convertDate(x_min)
+
+        if plot_settings.getXDataType() == "time":
+            x_max = self.__convertDate(x_max)
 
         if not x_min is None and not x_max is None:
             range = x_max - x_min
-            self.setXLimits(x_min + xminf * range - range*0.05, x_min + xmaxf * range + range*0.05)
+            self.setXLimits(x_min + xminf * range - range*0.0, x_min + xmaxf * range + range*0.0)
 
-    def setYViewFactors(self, plot_settings, yminf, ymaxf, y_min, y_max, type=""):
+    def setYViewFactors(self, plot_settings, yminf, ymaxf, y_min, y_max):
         plot_settings.yminf = yminf
         plot_settings.ymaxf = ymaxf
 
-        y_min = plot_settings.getMinYLimit(y_min, type)
-        y_max = plot_settings.getMaxYLimit(y_max, type)
+        y_min = plot_settings.getMinYLimit(y_min)
+        y_max = plot_settings.getMaxYLimit(y_max)
+
 
         if not y_min is None and not y_max is None:
             range = y_max - y_min
-            self.setYLimits(y_min + yminf * range - range*0.05, y_min + ymaxf * range + range*0.05)
+            self.setYLimits(y_min + yminf * range - range*0.0, y_min + ymaxf * range + range*0.0)
 
     def getAnnotations(self):
         """Creates a list of tuples describing all annotations. (label, x, y, x_text, y_text)"""
