@@ -7,7 +7,6 @@
 #include <enkf_sched.h>
 #include <stringlist.h>
 #include <ext_joblist.h>
-#include <forward_model.h>
 #include <vector.h>
 #include <parser.h>
 #include <enkf_defaults.h>
@@ -114,7 +113,6 @@ struct enkf_sched_node_struct {
   int    	       report_step1;
   int    	       report_step2;
   bool                 enkf_active;
-  forward_model_type * forward_model;   /* Will be different from NULL only for updates which have a 'special' forward model. */
 };
 
 
@@ -129,27 +127,20 @@ struct enkf_sched_struct {
 
 
 
-static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int report_step2 , bool enkf_active , forward_model_type * forward_model) {
+static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int report_step2 , bool enkf_active) {
   enkf_sched_node_type * node = util_malloc(sizeof * node , __func__);
   node->report_step1  = report_step1;
   node->report_step2  = report_step2;
   node->enkf_active   = enkf_active;
-  /*
-    if (forward_model != NULL) 
-    util_abort("%s : Sorry - support for special forward models has been (temporarily) removed\n",__func__);
-  */
-  
-  node->forward_model = forward_model; 
   return node;
 }
 
 
 
-void enkf_sched_node_get_data(const enkf_sched_node_type * node , int * report_step1 , int * report_step2 , bool * enkf_on , forward_model_type ** forward_model) {
+void enkf_sched_node_get_data(const enkf_sched_node_type * node , int * report_step1 , int * report_step2 , bool * enkf_on) {
   *report_step1    = node->report_step1;
   *report_step2    = node->report_step2;
   *enkf_on         = node->enkf_active;
-  *forward_model   = node->forward_model;
 }
 
 int enkf_sched_node_get_last_step(const enkf_sched_node_type * node) {
@@ -159,9 +150,6 @@ int enkf_sched_node_get_last_step(const enkf_sched_node_type * node) {
 
 
 static void enkf_sched_node_free(enkf_sched_node_type * node) {
-  if (node->forward_model != NULL)
-    forward_model_free( node->forward_model);
-
   free(node);
 }
 
@@ -177,11 +165,6 @@ static void enkf_sched_node_fprintf(const enkf_sched_node_type * node , FILE * s
     fprintf(stream , "%4d   %4d   %s     ",node->report_step1 , node->report_step2 , "ON ");
   else
     fprintf(stream , "%4d   %4d   %s     ",node->report_step1 , node->report_step2 , "OFF");
-  
-  if (node->forward_model != NULL)
-    forward_model_fprintf( node->forward_model  , stream );
-  else
-    fprintf(stream, "*");
   
   fprintf(stream , "\n");
 }
@@ -201,22 +184,16 @@ static void enkf_sched_append_node(enkf_sched_type * enkf_sched , enkf_sched_nod
    This function scans a stream for the info it needs to allocate a
    enkf_sched_node_type instance. The format expected on the stream is as follows:
 
-   REPORT_STEP1   REPORT_STEP2   ON|OFF   <STRIDE>   <FORWARD_MODEL>
+   REPORT_STEP1   REPORT_STEP2   ON|OFF   <STRIDE>   
 
    Observe the following:
 
    * If the list contains four or more items, we try to interpret item
-     number four as a stride. If that succeeds we use it as stride,
-     otherwise it is assumed to be part of the forward model. (i.e if
-     the forward model starts with an element which can be interpreted
-     as an integer - i.e. only containing digits, you *MUST* enter a
-     value for the stride.)
+     number four as a stride. 
 
    * If no stride is found, a default stride is used - the default
      stride is report_step2 - report_step1 (i.e. the whole thing in
      one go.)
-
-   * If no forward_model is found, the default forward model is used.
 
    * If the stream is positioned at an empty line NULL is returned. No
      comments are supported.
@@ -224,7 +201,6 @@ static void enkf_sched_append_node(enkf_sched_type * enkf_sched , enkf_sched_nod
 
 
 static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE * stream , const ext_joblist_type * joblist , bool statoil_mode , bool use_lsf , bool * at_eof) {
-  forward_model_type * forward_model = NULL;
   enkf_sched_node_type * sched_node  = NULL;
   char ** token_list;
   bool enkf_active = false; /* Compiler shut up */
@@ -246,24 +222,12 @@ static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE *
 	else 
 	  util_abort("%s: failed to interpret %s as ON || OFF \n",__func__ , token_list[2]);
 	
-	if (tokens > 3) {
-	  int model_start;
-	  int model_length;
-	  if (util_sscanf_int(token_list[3] , &report_stride)) 
-	    model_start  = 4;
-	  else
-	    model_start = 3;
-
-	  model_length = tokens - model_start;
-	  if (model_length > 0) {
-	    char * input_string = util_alloc_joined_string( (const char **) &token_list[model_start] , model_length , " ");
-	    forward_model = forward_model_alloc( joblist , statoil_mode , use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
-            forward_model_parse_init( forward_model , input_string );
-	    free( input_string );
-	  }
-	}
+	if (tokens > 3) 
+	  if (!util_sscanf_int(token_list[3] , &report_stride))
+            util_abort("%s: failed to interpret:%s as an integer stride \n",__func__ , token_list[3]);
       } else
 	util_abort("%s: failed to parse %s and %s as integers\n",__func__ , token_list[0] , token_list[1]);
+
       {
 	/* Adding node(s): */
 	int step1 = report_step1;
@@ -271,7 +235,7 @@ static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE *
 	
 	do {
 	  step2 = util_int_min(step1 + report_stride , report_step2);
-	  sched_node = enkf_sched_node_alloc(step1 , step2 , enkf_active , forward_model);
+	  sched_node = enkf_sched_node_alloc(step1 , step2 , enkf_active);
 	  step1 = step2;
 	  enkf_sched_append_node( enkf_sched , sched_node);
 	} while (step2 < report_step2);
@@ -354,7 +318,7 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_hist
     /* Have to explicitly add all these nodes. */
     int report_step;
     for (report_step = 0; report_step < last_history_restart; report_step++) {   
-      node = enkf_sched_node_alloc(report_step , report_step + 1, true , NULL);
+      node = enkf_sched_node_alloc(report_step , report_step + 1, true );
       enkf_sched_append_node(enkf_sched , node);
     }
     /* Okay we are doing assimilation and prediction in one go - fair enough. */
@@ -363,7 +327,7 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_hist
        experiment: Do the whole thing in two steps, 
        first the whole history, and then subsequently the prediction part (if there is any).
     */
-    node = enkf_sched_node_alloc(0 , last_history_restart , false , NULL); 
+    node = enkf_sched_node_alloc(0 , last_history_restart , false ); 
     enkf_sched_append_node(enkf_sched , node);
   }
 }

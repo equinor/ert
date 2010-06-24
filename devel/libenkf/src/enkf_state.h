@@ -110,8 +110,8 @@ void enkf_state_init_run(enkf_state_type * state ,
                          state_enum init_state_dynamic , 
                          int load_start , 
                          int step1 , 
-                         int step2 , 
-                         forward_model_type *);
+                         int step2 );
+                         
 
 bool enkf_state_runOK(const enkf_state_type * );
 #ifdef __cplusplus

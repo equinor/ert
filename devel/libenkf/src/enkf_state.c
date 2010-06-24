@@ -125,7 +125,6 @@ struct enkf_state_struct {
   member_config_type    * my_config;         	   /* Private config information for this member; not updated during a simulation. */
   
   forward_model_type    * default_forward_model;   /* The forward model - owned by this enkf_state instance. */
-  forward_model_type    * special_forward_model;   /* A special forward model for a slected report step - explicitly set with enkf_state_set_special_forward_model. */
   forward_model_type    * forward_model;           /* */
 };
 
@@ -198,7 +197,6 @@ static void run_info_set(run_info_type * run_info        ,
                          int load_start                  , 
 			 int step1                       , 
 			 int step2                       ,      
-			 forward_model_type * __forward_model , 
 			 int iens                             , 
 			 path_fmt_type * run_path_fmt ,
                          const subst_list_type * state_subst_list) {
@@ -297,13 +295,6 @@ void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
   free(smspec_file);
 }
 
-
-
-void enkf_state_set_special_forward_model(enkf_state_type * enkf_state , forward_model_type * forward_model) {
-  enkf_state->special_forward_model = forward_model_alloc_copy( forward_model , enkf_state->shared_info->statoil_mode);  /* Discarded again at the end of this run */
-  enkf_state->forward_model = enkf_state->special_forward_model;
-  enkf_state_init_forward_model(enkf_state);
-}
 
 
 
@@ -538,7 +529,6 @@ INCLDUE
   enkf_state_set_static_subst_kw(  enkf_state );
 
 
-  enkf_state->special_forward_model = NULL;
   enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model , site_config_get_statoil_mode(site_config));
   enkf_state->forward_model         = enkf_state->default_forward_model;
   enkf_state_init_forward_model( enkf_state );
@@ -1105,35 +1095,61 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
 }
 
 
-
 /**
-   Which state to load on the next step must be much more
-   fine-grained. This is a fucking hack.
+   This function will load all the nodes listed in the current
+   restart_kw_list; in addition to all other variable of type
+   DYNAMIC_STATE. Observe that for DYNAMIC state nodes it will try
+   firt analyzed state and then forecast state.
 */
 
-static void enkf_state_try_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum load_state) {
-  shared_info_type * shared_info = enkf_state->shared_info;
+
+static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , int report_step , state_enum load_state) {
+  shared_info_type * shared_info       = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
-  const int iens     = member_config_get_iens( my_config );
-  const int num_keys = hash_get_size(enkf_state->node_hash);
-  char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
+  const int iens                       = member_config_get_iens( my_config );
   int ikey;
-  
-  for (ikey = 0; ikey < num_keys; ikey++) {
-    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_include_type(enkf_node , mask)) {
+
+
+  /* First pass - load all the STATIC nodes. It is essential to use
+     the restart_kw_list when loading static nodes, otherwise static
+     nodes which were only present at e.g. step == 0 will create
+     problems: (They are in the enkf_state hash table because they
+     were seen at step == 0, but have not been seen subesquently and
+     the loading fails.)
+  */
+
+  enkf_fs_fread_restart_kw_list(shared_info->fs , report_step , iens , enkf_state->restart_kw_list);
+  for (ikey = 0; ikey < stringlist_get_size( enkf_state->restart_kw_list) ; ikey++) {
+    const char * key = stringlist_iget( enkf_state->restart_kw_list, ikey);
+    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key);
+    enkf_var_type var_type = enkf_node_get_var_type( enkf_node );
+    if (var_type == STATIC_STATE)
+      enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , iens , load_state);
+  }
+
+
+  /* Second pass - DYNAMIC state nodes. */
+  {
+    const int num_keys = hash_get_size(enkf_state->node_hash);
+    char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
+    int ikey;
+    
+    for (ikey = 0; ikey < num_keys; ikey++) {
+      enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       enkf_var_type var_type = enkf_node_get_var_type( enkf_node );
-      if ((var_type == PARAMETER) || (var_type == STATIC_STATE))
-	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , iens , load_state);
-      else {
-	if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , iens , BOTH)) 
-	  util_abort("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , iens  );
+      if (var_type == DYNAMIC_STATE) {
+        /* 
+           Here the xxx_try_fread() function is used NOT because we accept
+           that the node is not present, but because the try_fread()
+           function accepts the BOTH state type.
+        */
+        if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , iens , BOTH)) 
+          util_abort("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , iens  );
       }
     }
+    util_free_stringlist(key_list , num_keys);    
   }
-  util_free_stringlist(key_list , num_keys);
 }
-
 
 
 
@@ -1337,7 +1353,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     const run_info_type * run_info    = enkf_state->run_info;
     if (!run_info->__ready) 
       util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
-
+    
     if (member_config_pre_clear_runpath( my_config )) 
       util_clear_directory( run_info->run_path , true , false );
 
@@ -1364,13 +1380,13 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     /* Loading parameter information: loaded from timestep: run_info->init_step_parameters. */
     enkf_state_fread(enkf_state , PARAMETER , run_info->init_step_parameters , run_info->init_state_parameter);
     
-    
+
     /* Loading state information: loaded from timestep: run_info->step1 */
     if (run_info->step1 == 0)
       enkf_state_fread_initial_state(enkf_state); 
     else
-      enkf_state_try_fread(enkf_state , DYNAMIC_STATE + STATIC_STATE , run_info->step1 , run_info->init_state_dynamic);
-    
+      enkf_state_fread_state_nodes( enkf_state , run_info->step1 , run_info->init_state_dynamic);
+
     enkf_state_set_dynamic_subst_kw(  enkf_state , run_info->run_path , run_info->step1 , run_info->step2);
     ert_templates_instansiate( enkf_state->shared_info->templates , run_info->run_path , enkf_state->subst_list );
     enkf_state_ecl_write( enkf_state );
@@ -1645,16 +1661,6 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
     run_info->runOK   = true;
     run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
     run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
-
-    /* 
-       If we have used a special forward model for this report step we
-       discard that model, and recover the default forward_model.
-    */
-    if (enkf_state->special_forward_model != NULL) {
-      forward_model_free( enkf_state->special_forward_model );
-      enkf_state->special_forward_model = NULL;
-      enkf_state->forward_model = enkf_state->default_forward_model;
-    }
   }
 }
 
@@ -1717,16 +1723,12 @@ void enkf_state_init_run(enkf_state_type * state ,
                          state_enum init_state_dynamic   , 
                          int load_start          , 
                          int step1               , 
-                         int step2               , 
-                         forward_model_type * __forward_model) {
+                         int step2) {
 
   member_config_type * my_config    = state->my_config;
   shared_info_type   * shared_info  = state->shared_info;
 
-  //if (run_mode == ENKF_ASSIMILATION)
-  //max_internal_submit = 1;    /* Resampling makes no sense for a EnKF run. */
-
-
+  
   run_info_set( state->run_info , 
                 run_mode        , 
                 active          , 
@@ -1737,13 +1739,9 @@ void enkf_state_init_run(enkf_state_type * state ,
                 load_start , 
                 step1 , 
                 step2 , 
-                __forward_model , 
                 member_config_get_iens( my_config ), 
                 model_config_get_runpath_fmt( shared_info->model_config ),
                 state->subst_list );
-  
-  if (__forward_model != NULL)
-    enkf_state_set_special_forward_model( state , __forward_model);
 }
 
 

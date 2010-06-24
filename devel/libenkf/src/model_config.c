@@ -438,5 +438,4 @@ void model_config_fprintf_config( const model_config_type * model_config , FILE 
   
   fprintf( stream , CONFIG_KEY_FORMAT      , RUNPATH_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( model_config->runpath ));
-  
 }

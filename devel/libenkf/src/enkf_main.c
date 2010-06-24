@@ -113,7 +113,6 @@ struct enkf_main_struct {
   /*---------------------------*/            /* Variables related to substitution. */
   subst_func_pool_type * subst_func_pool;
   subst_list_type      * subst_list;         /* A parent subst_list instance - common to all ensemble members. */
-  
   /*-------------------------*/
   
   int_vector_type      * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
@@ -1536,8 +1535,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
                                state_enum init_state_dynamic   ,
                                int step1                       ,
                                int step2                       ,      /* Discarded for predictions */
-                               bool enkf_update                ,
-                               forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
+                               bool enkf_update) {
 
   {
     const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
@@ -1594,8 +1592,8 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
                                 init_state_dynamic  ,
                                 load_start ,
                                 step1 ,
-                                step2 ,
-                                forward_model);
+                                step2 );
+                                
             
             thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
           } else
@@ -1718,9 +1716,8 @@ bool enkf_main_run(enkf_main_type * enkf_main            ,
 	  int 	   report_step1;
 	  int 	   report_step2;
 	  bool enkf_on;
-	  forward_model_type * forward_model;
 
-	  enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on , &forward_model);
+	  enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on );
 	  if (inode == start_inode)
 	    report_step1 = start_report;  /* If we are restarting from somewhere. */
 
@@ -1750,7 +1747,7 @@ bool enkf_main_run(enkf_main_type * enkf_main            ,
 
 	  {
             bool runOK = enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter , 
-                                            init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
+                                            init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on);
             if (!runOK)
               return false;   /* If the run did not succed we just return false. */
           }
@@ -1762,11 +1759,10 @@ bool enkf_main_run(enkf_main_type * enkf_main            ,
       /* It is an experiment */
       const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
       const int last_report              = enkf_sched_get_last_report(enkf_sched);
-      /* No possibility to use funky forward model */
       int load_start = start_report;
       state_enum init_state_parameter = start_state;
       state_enum init_state_dynamic   = start_state;
-      enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false , NULL );
+      enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false );
     } 
   }
   return true;
