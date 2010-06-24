@@ -43,6 +43,9 @@ class PlotSettings:
 
         self.selected_members = []
 
+        self.x_data_type = "number"
+        self.y_data_type = "number"
+
     def getPlotConfigList(self):
         return self._plot_configs
 
@@ -63,22 +66,12 @@ class PlotSettings:
         if member in self.selected_members:
             self.selected_members.remove(member)
 
-        print self.selected_members
-
     def clearMemberSelection(self):
         self.selected_members = []
 
     def getSelectedMembers(self):
         return self.selected_members
 
-    def __convertDate(self, ert_time):
-        if ert_time is None:
-            ert_time = time_t(0)
-
-        if isinstance(ert_time, datetime.date):
-            return matplotlib.dates.date2num(ert_time)
-        else:
-            return matplotlib.dates.date2num(ert_time.datetime())
 
     def setMinYLimit(self, value):
         self.y_limits = (value, self.y_limits[1])
@@ -101,34 +94,29 @@ class PlotSettings:
     def setMinXLimit(self, value):
         self.x_limits = (value, self.x_limits[1])
 
-    def getMinXLimit(self, x_min, type):
+    def getMinXLimit(self, x_min):
         """Returns the provided x_min value if the custom x_min value is None. Converts dates to numbers"""
         if self.x_limits[0] is None:
             x_limit = x_min
         else:
             x_limit = self.x_limits[0]
 
-            if type == "time":
-                x_limit = time_t(long(x_limit * 86400))
-
-        if type == "time":
-            x_limit = self.__convertDate(x_limit)
+        if not x_limit is None and self.x_data_type == "time" and not isinstance(x_limit, time_t):
+            x_limit = time_t(long(round(x_limit)))
 
         return x_limit
 
     def setMaxXLimit(self, value):
         self.x_limits = (self.x_limits[0], value)
 
-    def getMaxXLimit(self, x_max, type):
+    def getMaxXLimit(self, x_max):
         if self.x_limits[1] is None:
             x_limit = x_max
         else:
             x_limit = self.x_limits[1]
-            if type == "time":
-                x_limit = time_t(long(x_limit * 86400))
 
-        if type == "time":
-            x_limit = self.__convertDate(x_limit)
+        if not x_limit is None and self.x_data_type == "time" and not isinstance(x_limit, time_t):
+            x_limit = time_t(long(round(x_limit)))
 
         return x_limit
 
@@ -138,6 +126,42 @@ class PlotSettings:
         y_min_state = not self.y_limits[0] is None
         y_max_state = not self.y_limits[1] is None
         return (x_min_state, x_max_state, y_min_state, y_max_state)
+
+    def setPlotPath(self, plot_path):
+        self.plot_path = plot_path
+
+    def setPlotConfigPath(self, plot_config_path):
+        self.plot_config_path = plot_config_path
+
+    def getPlotPath(self):
+        return self.plot_path
+
+    def getPlotConfigPath(self):
+        return self.plot_config_path
+
+    def setMinXZoom(self, value):
+        self.xminf = value
+
+    def setMaxXZoom(self, value):
+        self.xmaxf = value
+
+    def setMinYZoom(self, value):
+        self.yminf = value
+
+    def setMaxYZoom(self, value):
+        self.ymaxf = value
+
+    def getXDataType(self):
+        return self.x_data_type
+
+    def getYDataType(self):
+        return self.y_data_type
+
+    def setXDataType(self, type):
+        self.x_data_type = type
+
+    def setYDataType(self, type):
+        self.y_data_type = type
 
 
 

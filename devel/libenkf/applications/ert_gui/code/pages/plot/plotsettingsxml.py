@@ -3,8 +3,8 @@ import os
 
 class PlotSettingsSaver:
 
-    def __init__(self, directory):
-        self.directory = directory
+    def __init__(self):
+        pass
 
     def save(self, name, plot_settings, annotations):
         """Save plot configuration to a file with the specified name as filename."""
@@ -24,7 +24,7 @@ class PlotSettingsSaver:
 
         self.__addAnnotations(annotations)
 
-        file_object = open("%s/%s.xml" % (self.directory, name), "w")
+        file_object = open("%s/%s.xml" % (plot_settings.getPlotConfigPath(), name), "w")
         file_object.write(self.doc.toprettyxml())
         file_object.close()
 
@@ -101,24 +101,53 @@ class PlotSettingsSaver:
 
 class PlotSettingsLoader:
 
-    def __init__(self, directory):
-        self.directory = directory
-        self.annotations = []
+    def __init__(self):
+        self.annotations = None
+        self.skip_plot_settings = False
+        self.skip_limits_and_zoom = False
+        self.skip_selected_members = False
+        self.skip_annotations = False
+
+    def skipPlotSettings(self, bool=True):
+        self.skip_plot_settings = bool
+
+    def skipLimitsAndZoom(self, bool=True):
+        self.skip_limits_and_zoom = bool
+
+    def skipSelectedMembers(self, bool=True):
+        self.skip_selected_members = bool
+
+    def skipAnnotations(self, bool=True):
+        self.skip_annotations = bool
+
+    def copy(self, plot_settings):
+        pscd = PlotSettingsCopyDialog(plot_settings)
+        success = pscd.exec_()
+        if success:
+            self.skipPlotSettings(not pscd.shouldCopyPlotSettings())
+            self.skipLimitsAndZoom(not pscd.shouldCopyRangeLimits())
+            self.skipSelectedMembers(not pscd.shouldCopySelectedMembers())
+            self.skipAnnotations(not pscd.shouldCopyAnnotations())
+            self.load(pscd.getName(), plot_settings)
+
 
     def load(self, name, plot_settings):
-        filename = "%s/%s.xml" % (self.directory, name)
+        filename = "%s/%s.xml" % (plot_settings.getPlotConfigPath(), name)
 
-        if not os.path.exists(filename):
-            return None
-        else:
+        if os.path.exists(filename):
             self.doc = xml.dom.minidom.parse(filename)
-            return self.__process(plot_settings)
 
-    def __process(self, plot_settings):
-        self.__loadPlotConfigs(plot_settings)
-        self.__loadLimitsAndZoom(plot_settings)
-        self.__loadSelectedMembers(plot_settings)
-        self.__loadAnnotations(plot_settings)
+            if not self.skip_plot_settings:
+                self.__loadPlotConfigs(plot_settings)
+
+            if not self.skip_limits_and_zoom:
+                self.__loadLimitsAndZoom(plot_settings)
+
+            if not self.skip_selected_members:
+                self.__loadSelectedMembers(plot_settings)
+
+            if not self.skip_annotations:
+                self.__loadAnnotations(plot_settings)
 
     def __loadPlotConfigs(self, plot_settings):
         plot_config_dict = plot_settings.getPlotConfigDict()
@@ -188,10 +217,10 @@ class PlotSettingsLoader:
         y_min = xml_zoom.getAttribute("y_min")
         y_max = xml_zoom.getAttribute("y_max")
         
-        #plot_settings.setMinXLimit(self.floatify(x_min))
-        #plot_settings.setMaxXLimit(self.floatify(x_max))
-        #plot_settings.setMinYLimit(self.floatify(y_min))
-        #plot_settings.setMaxYLimit(self.floatify(y_max))
+        plot_settings.setMinXZoom(self.floatify(x_min))
+        plot_settings.setMaxXZoom(self.floatify(x_max))
+        plot_settings.setMinYZoom(self.floatify(y_min))
+        plot_settings.setMaxYZoom(self.floatify(y_max))
 
     def __loadSelectedMembers(self, plot_settings):
         xml_selected_members = self.doc.getElementsByTagName("selected_members")[0]
@@ -208,6 +237,7 @@ class PlotSettingsLoader:
 
         xml_annotations = xml_annotations_element.getElementsByTagName("annotation")
 
+        self.annotations = []
         for annotation in xml_annotations:
             label = annotation.getAttribute("label")
             x = annotation.getAttribute("x")
@@ -221,6 +251,81 @@ class PlotSettingsLoader:
         return self.annotations
 
 
+from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QCheckBox
+from PyQt4.QtCore import Qt, SIGNAL
+from widgets.util import createSpace
+
+class PlotSettingsCopyDialog(QDialog):
+
+    def __init__(self, plot_settings, parent = None):
+        QDialog.__init__(self, parent)
+
+        self.setModal(True)
+        self.setWindowTitle("Copy plot settings")
+        self.setMinimumWidth(250)
+        self.setMinimumHeight(150)
+
+        layout = QFormLayout()
+
+        self.settings_list = QComboBox()
+
+        files = self.listSettings(plot_settings.plot_config_path)
+
+        for file in files:
+            index = file.find(".xml")
+            name = file[0:index]
+            self.settings_list.addItem(name)
+
+        self.check_plot_settings = QCheckBox()
+        self.check_plot_settings.setChecked(True)
+        self.check_range_limits = QCheckBox()
+        self.check_range_limits.setChecked(True)
+        self.check_selected_members = QCheckBox()
+        self.check_selected_members.setChecked(True)
+        self.check_annotations = QCheckBox()
+        self.check_annotations.setChecked(True)
+
+        layout.addRow(createSpace(10))
+        layout.addRow("Copy from:", self.settings_list)
+        layout.addRow("Plot settings:", self.check_plot_settings)
+        layout.addRow("Range limits:", self.check_range_limits)
+        layout.addRow("Selected members:", self.check_selected_members)
+        layout.addRow("Annotations:", self.check_annotations)
+
+        layout.addRow(createSpace(10))
+        
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+
+        layout.addRow(buttons)
+
+        self.connect(buttons, SIGNAL('accepted()'), self.accept)
+        self.connect(buttons, SIGNAL('rejected()'), self.reject)
+
+        self.setLayout(layout)
+
+    def getName(self):
+        return str(self.settings_list.currentText()).strip()
+
+    def shouldCopyPlotSettings(self):
+        return self.check_plot_settings.isChecked()
+
+    def shouldCopyRangeLimits(self):
+        return self.check_range_limits.isChecked()
+
+    def shouldCopySelectedMembers(self):
+        return self.check_selected_members.isChecked()
+
+    def shouldCopyAnnotations(self):
+        return self.check_annotations.isChecked()
+
+    def listSettings(self, path):
+        """Returns a list of settings filenames."""
+        files = os.listdir(path)
+        return sorted(filter(self.xmlFilter, files))
+
+    def xmlFilter(self, file):
+        """Filter .xml files from a list of filenames"""
+        return file.endswith(".xml")
 
         
         
