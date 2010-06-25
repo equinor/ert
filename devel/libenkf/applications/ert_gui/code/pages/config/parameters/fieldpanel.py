@@ -20,33 +20,33 @@ class FieldPanel(QtGui.QFrame):
 
         self.fieldModel = FieldModel("")
 
-        self.fieldType = ComboChoice(self, field_type.values(), "", "field_type")
+        self.fieldType = ComboChoice(self, field_type.values(), "", "config/ensemble/field_type")
         self.fieldType.setter = lambda model, value: self.typeChanged(field_type[str(value)])
         self.fieldType.getter = lambda model: str(self.fieldModel["type"])
         self.fieldType.initialize = ContentModel.emptyInitializer
 
-        self.min = DoubleBox(self, "", "field_min")
+        self.min = DoubleBox(self, "", "config/ensemble/field_min")
         self.modelWrap(self.min, "min")
 
-        self.max = DoubleBox(self, "", "field_max")
+        self.max = DoubleBox(self, "", "config/ensemble/field_max")
         self.modelWrap(self.max, "max")
 
-        self.init = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "field_init")
+        self.init = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "config/ensemble/field_init")
         self.modelWrap(self.init, "init")
 
-        self.output = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "field_output")
+        self.output = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "config/ensemble/field_output")
         self.modelWrap(self.output, "output")
 
-        self.init_files = PathChooser(self, "", "field_init_files", True)
+        self.init_files = PathChooser(self, "", "config/ensemble/field_init_files", True)
         self.modelWrap(self.init_files, "init_files")
 
-        self.file_generated_by_enkf = PathChooser(self, "", "field_file_generated_by_enkf", True)
+        self.file_generated_by_enkf = PathChooser(self, "", "config/ensemble/field_file_generated_by_enkf", True)
         self.modelWrap(self.file_generated_by_enkf, "enkf_outfile")
 
-        self.file_loaded_by_enkf = PathChooser(self, "", "field_file_loaded_by_enkf", True)
+        self.file_loaded_by_enkf = PathChooser(self, "", "config/ensemble/field_file_loaded_by_enkf", True)
         self.modelWrap(self.file_loaded_by_enkf, "enkf_infile")
 
-        self.min_std = PathChooser(self, "", "field_min_std", True, must_be_set=False)
+        self.min_std = PathChooser(self, "", "config/ensemble/field_min_std", True, must_be_set=False)
         self.modelWrap(self.min_std, "min_std")
 
         layout.addRow("Field type:", self.fieldType)

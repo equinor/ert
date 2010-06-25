@@ -20,13 +20,13 @@ def createSimulationsPage(configPanel, parent):
     configPanel.startPage("Simulations")
 
 
-    r = configPanel.addRow(IntegerSpinner(parent, "Max submit", "max_submit", 1, 10000))
+    r = configPanel.addRow(IntegerSpinner(parent, "Max submit", "config/simulation/max_submit", 1, 10000))
     r.initialize = lambda ert : [ert.prototype("int site_config_get_max_submit(long)"),
                                  ert.prototype("void site_config_set_max_submit(long, int)")]
     r.getter = lambda ert : ert.enkf.site_config_get_max_submit(ert.site_config)
     r.setter = lambda ert, value : ert.enkf.site_config_set_max_submit(ert.site_config, value)
 
-    r = configPanel.addRow(IntegerSpinner(parent, "Max resample", "max_resample", 1, 10000))
+    r = configPanel.addRow(IntegerSpinner(parent, "Max resample", "config/simulation/max_resample", 1, 10000))
     r.initialize = lambda ert : [ert.prototype("int model_config_get_max_resample(long)"),
                                  ert.prototype("void model_config_set_max_resample(long, int)")]
     r.getter = lambda ert : ert.enkf.model_config_get_max_resample(ert.model_config)
@@ -88,7 +88,7 @@ def createSimulationsPage(configPanel, parent):
 
 
 
-    r = configPanel.addRow(PathChooser(parent, "Case table", "case_table"))
+    r = configPanel.addRow(PathChooser(parent, "Case table", "config/simulation/case_table"))
     r.initialize = lambda ert : [ert.prototype("char* model_config_get_case_table_file(long)"),
                                  ert.prototype("void enkf_main_set_case_table(long, char*)")]
 
@@ -102,7 +102,7 @@ def createSimulationsPage(configPanel, parent):
     r.setter = set_case_table
 
     
-    r = configPanel.addRow(PathChooser(parent, "License path", "license_path"))
+    r = configPanel.addRow(PathChooser(parent, "License path", "config/simulation/license_path"))
     r.initialize = lambda ert : [ert.prototype("char* site_config_get_license_root_path__(long)"),
                                  ert.prototype("void site_config_set_license_root_path(long, char*)")]
     r.getter = lambda ert : ert.enkf.site_config_get_license_root_path__(ert.site_config)
@@ -121,7 +121,7 @@ def createSimulationsPage(configPanel, parent):
 
     internalPanel.startPage("Runpath")
 
-    r = internalPanel.addRow(PathChooser(parent, "Runpath", "runpath", path_format=True))
+    r = internalPanel.addRow(PathChooser(parent, "Runpath", "config/simulation/runpath", path_format=True))
     r.initialize = lambda ert : [ert.prototype("char* model_config_get_runpath_as_char(long)"),
                                  ert.prototype("void model_config_set_runpath_fmt(long, char*)")]
 
@@ -130,7 +130,7 @@ def createSimulationsPage(configPanel, parent):
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("runpathChanged()"))
 
 
-    r = internalPanel.addRow(CheckBox(parent, "Pre clear", "pre_clear_runpath", "Perform pre clear"))
+    r = internalPanel.addRow(CheckBox(parent, "Pre clear", "config/simulation/pre_clear_runpath", "Perform pre clear"))
     r.initialize = lambda ert : [ert.prototype("bool enkf_main_get_pre_clear_runpath(long)"),
                                  ert.prototype("void enkf_main_set_pre_clear_runpath(long, bool)")]
 
@@ -138,7 +138,7 @@ def createSimulationsPage(configPanel, parent):
     r.setter = lambda ert, value : ert.enkf.enkf_main_set_pre_clear_runpath(ert.main, value)
 
 
-    r = internalPanel.addRow(RunpathMemberPanel(widgetLabel="Retain runpath", helpLabel="runpath_retain"))
+    r = internalPanel.addRow(RunpathMemberPanel(widgetLabel="Retain runpath", helpLabel="config/simulation/runpath_retain"))
     r.initialize = lambda ert : [ert.prototype("int enkf_main_get_ensemble_size(long)"),
                                  ert.prototype("int enkf_main_iget_keep_runpath(long, int)"),
                                  ert.prototype("void enkf_main_iset_keep_runpath(long, int, long)"),]

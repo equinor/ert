@@ -20,29 +20,29 @@ class DataPanel(QtGui.QFrame):
 
         self.dataModel = DataModel("")
 
-        self.input = ComboChoice(self, enums.gen_data_file_format.INPUT_TYPES, "", "gen_data_param_init")
+        self.input = ComboChoice(self, enums.gen_data_file_format.INPUT_TYPES, "", "config/ensemble/gen_data_param_init")
         self.modelWrap(self.input, "input_format")
 
-        self.output = ComboChoice(self, enums.gen_data_file_format.OUTPUT_TYPES, "", "gen_data_param_output")
+        self.output = ComboChoice(self, enums.gen_data_file_format.OUTPUT_TYPES, "", "config/ensemble/gen_data_param_output")
         self.modelWrap(self.output, "output_format")
 
-        self.template_file = PathChooser(self, "", "gen_data_template_file", True , must_be_set=False)
+        self.template_file = PathChooser(self, "", "config/ensemble/gen_data_template_file", True , must_be_set=False)
         self.modelWrap(self.template_file, "template_file")
 
-        self.template_key = PathChooser(self, "", "gen_data_template_key", True , must_be_set=False)
+        self.template_key = PathChooser(self, "", "config/ensemble/gen_data_template_key", True , must_be_set=False)
         self.modelWrap(self.template_key, "template_key")
 
-        self.init_file_fmt = PathChooser(self, "", "gen_data_init_file_fmt", True , must_be_set=False)
+        self.init_file_fmt = PathChooser(self, "", "config/ensemble/gen_data_init_file_fmt", True , must_be_set=False)
         self.modelWrap(self.init_file_fmt, "init_file_fmt")
 
 
-        self.file_generated_by_enkf = PathChooser(self, "", "gen_data_file_generated_by_enkf", True, must_be_set=False)
+        self.file_generated_by_enkf = PathChooser(self, "", "config/ensemble/gen_data_file_generated_by_enkf", True, must_be_set=False)
         self.modelWrap(self.file_generated_by_enkf, "enkf_outfile")
 
-        self.file_loaded_by_enkf = PathChooser(self, "", "gen_data_file_loaded_by_enkf", True, must_be_set=False)
+        self.file_loaded_by_enkf = PathChooser(self, "", "config/ensemble/gen_data_file_loaded_by_enkf", True, must_be_set=False)
         self.modelWrap(self.file_loaded_by_enkf, "enkf_infile")
 
-        self.min_std = PathChooser(self, "", "gen_data_min_std", True, must_be_set=False)
+        self.min_std = PathChooser(self, "", "config/ensemble/gen_data_min_std", True, must_be_set=False)
         self.modelWrap(self.min_std, "min_std")
 
         layout.addRow("Input:", self.input)

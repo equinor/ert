@@ -52,7 +52,7 @@ class InitPanel(QtGui.QFrame):
 
     def createCaseList(self):
         """Creates a list that enables the creation of new cases. Removal has been disabled."""
-        cases = KeywordList(self, "", "case_list")
+        cases = KeywordList(self, "", "init/case_list")
 
         cases.newKeywordPopup = lambda list : ValidatedDialog(cases, "New case", "Enter name of new case:", list).showAndTell()
         cases.addRemoveWidget.enableRemoveButton(False)  #todo: add support for removal
@@ -83,7 +83,7 @@ class InitPanel(QtGui.QFrame):
 
     def createCurrentCaseCombo(self):
         """Creates the combo that enables selection of the current case"""
-        self.currentCase = ComboChoice(self, ["none"], help="current_case_selection")
+        self.currentCase = ComboChoice(self, ["none"], help="init/current_case_selection")
         self.currentCase.combo.setMinimumWidth(150)
 
         def initialize_cases(ert):

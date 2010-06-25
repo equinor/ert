@@ -16,7 +16,7 @@ class JobsPanel(HelpedWidget):
     """
 
     def __init__(self, parent=None):
-        HelpedWidget.__init__(self, parent, "", "install_jobs")
+        HelpedWidget.__init__(self, parent, "", "config/systemenv/install_jobs")
 
         self.job = Job("undefined")
 
@@ -43,7 +43,7 @@ class JobsPanel(HelpedWidget):
         layout = QtGui.QFormLayout()
         layout.setLabelAlignment(QtCore.Qt.AlignRight)
 
-        self.jobpath = PathChooser(self, "", "install_job_path", show_files=True, must_be_set=True)
+        self.jobpath = PathChooser(self, "", "config/systemenv/install_job_path", show_files=True, must_be_set=True)
         self.jobpath.initialize = ContentModel.emptyInitializer
         self.jobpath.setter = self.setPath
         self.jobpath.getter = lambda model: self.job.path

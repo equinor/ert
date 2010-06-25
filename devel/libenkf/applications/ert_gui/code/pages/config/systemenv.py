@@ -13,7 +13,7 @@ import widgets.spinnerwidgets
 def createSystemPage(configPanel, parent):
     configPanel.startPage("System")
 
-    r = configPanel.addRow(PathChooser(parent, "Job script", "job_script", True))
+    r = configPanel.addRow(PathChooser(parent, "Job script", "config/systemenv/job_script", True))
     r.initialize = lambda ert : [ert.prototype("char* site_config_get_job_script(long)"),
                                  ert.prototype("void site_config_set_job_script(long, char*)")]
     r.getter = lambda ert : ert.enkf.site_config_get_job_script(ert.site_config)
@@ -22,7 +22,7 @@ def createSystemPage(configPanel, parent):
     internalPanel = ConfigPanel(parent)
     internalPanel.startPage("setenv")
 
-    r = internalPanel.addRow(KeywordTable(parent, "", "setenv"))
+    r = internalPanel.addRow(KeywordTable(parent, "", "config/systemenv/setenv"))
     r.initialize = lambda ert : [ert.prototype("long site_config_get_env_hash(long)"),
                                  ert.prototype("void site_config_clear_env(long)"),
                                  ert.prototype("void site_config_setenv(long, char*, char*)")]
@@ -39,7 +39,7 @@ def createSystemPage(configPanel, parent):
 
     internalPanel.startPage("Update path")
 
-    r = internalPanel.addRow(KeywordTable(parent, "", "update_path"))
+    r = internalPanel.addRow(KeywordTable(parent, "", "config/systemenv/update_path"))
     r.initialize = lambda ert : [ert.prototype("long site_config_get_path_variables(long)"),
                                  ert.prototype("long site_config_get_path_values(long)"),
                                  ert.prototype("void site_config_clear_pathvar(long)"),
@@ -140,13 +140,13 @@ def createSystemPage(configPanel, parent):
     internalPanel.endPage()
     configPanel.addRow(internalPanel)
 
-    r = configPanel.addRow(PathChooser(parent, "Log file", "log_file", True))
+    r = configPanel.addRow(PathChooser(parent, "Log file", "config/systemenv/log_file", True))
     r.initialize = lambda ert : [ert.prototype("char* log_get_filename(long)", lib=ert.util),
                                  ert.prototype("void log_reset_filename(long, char*)", lib=ert.util)]
     r.getter = lambda ert : ert.util.log_get_filename(ert.logh)
     r.setter = lambda ert, value : ert.util.log_reset_filename(ert.logh, value)
 
-    r = configPanel.addRow(widgets.spinnerwidgets.IntegerSpinner(parent, "Log level", "log_level", 0, 1000))
+    r = configPanel.addRow(widgets.spinnerwidgets.IntegerSpinner(parent, "Log level", "config/systemenv/log_level", 0, 1000))
     r.initialize = lambda ert : [ert.prototype("int log_get_level(long)", lib=ert.util),
                                  ert.prototype("void log_set_level(long, int)", lib=ert.util)]
     r.getter = lambda ert : ert.util.log_get_level(ert.logh)

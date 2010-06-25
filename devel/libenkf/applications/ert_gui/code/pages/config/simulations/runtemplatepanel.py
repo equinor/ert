@@ -16,7 +16,7 @@ class RunTemplatePanel(HelpedWidget):
     """
 
     def __init__(self, parent=None):
-        HelpedWidget.__init__(self, parent, "", "run_template")
+        HelpedWidget.__init__(self, parent, "", "config/simulation/run_template")
 
         self.run_template = RunTemplate("undefined", "", "", "")
 
@@ -45,17 +45,17 @@ class RunTemplatePanel(HelpedWidget):
         layout = QtGui.QFormLayout()
         layout.setLabelAlignment(QtCore.Qt.AlignRight)
 
-        self.run_template_file = PathChooser(self, "", "run_template_file", show_files=True)
+        self.run_template_file = PathChooser(self, "", "config/simulation/run_template_file", show_files=True)
         self.run_template_file.initialize = ContentModel.emptyInitializer
         self.run_template_file.setter = self.setTemplateFile
         self.run_template_file.getter = lambda model: self.run_template.template_file
 
-        self.run_template_target = PathChooser(self, "", "run_template_target", show_files=True)
+        self.run_template_target = PathChooser(self, "", "config/simulation/run_template_target", show_files=True)
         self.run_template_target.initialize = ContentModel.emptyInitializer
         self.run_template_target.setter = self.setTargetFile
         self.run_template_target.getter = lambda model: self.run_template.target_file
 
-        self.run_template_args = StringBox(self, "", "run_template_arguments")
+        self.run_template_args = StringBox(self, "", "config/simulation/run_template_arguments")
         self.run_template_args.initialize = ContentModel.emptyInitializer
         self.run_template_args.setter = self.setArguments
         self.run_template_args.getter = lambda model: self.run_template.arguments

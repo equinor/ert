@@ -8,7 +8,7 @@ from enums import history_source_type
 def createObservationsPage(configPanel, parent):
     configPanel.startPage("Observations")
 
-    r = configPanel.addRow(ComboChoice(parent, history_source_type.values(), "History source", "history_source"))
+    r = configPanel.addRow(ComboChoice(parent, history_source_type.values(), "History source", "config/observations/history_source"))
     r.initialize = lambda ert : [ert.prototype("int model_config_get_history_source(long)"),
                                  ert.prototype("void model_config_set_history_source(long, int)")]
 
@@ -25,7 +25,7 @@ def createObservationsPage(configPanel, parent):
     r.setter = set_history_source
 
     
-    r = configPanel.addRow(PathChooser(parent, "Observations config", "obs_config", True))
+    r = configPanel.addRow(PathChooser(parent, "Observations config", "config/observations/obs_config", True))
     r.initialize = lambda ert : [ert.prototype("long enkf_main_get_obs(long)"),
                                  ert.prototype("char* enkf_obs_get_config_file(long)"),
                                  ert.prototype("void enkf_main_load_obs(long, char*)")]

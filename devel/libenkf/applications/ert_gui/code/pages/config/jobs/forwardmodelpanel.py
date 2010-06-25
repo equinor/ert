@@ -17,7 +17,7 @@ class ForwardModelPanel(HelpedWidget):
     """
 
     def __init__(self, parent=None):
-        HelpedWidget.__init__(self, parent, "Forward Model", "forward_model")
+        HelpedWidget.__init__(self, parent, "Forward Model", "config/simulation/forward_model")
 
         self.forward_model_job = ForwardModelJob("undefined")
 
@@ -48,7 +48,7 @@ class ForwardModelPanel(HelpedWidget):
         layout.setLabelAlignment(QtCore.Qt.AlignRight)
 
 
-        self.forward_model_args = StringBox(self, "", "forward_model_arguments")
+        self.forward_model_args = StringBox(self, "", "config/simulation/forward_model_arguments")
         self.forward_model_args.initialize = ContentModel.emptyInitializer
         self.forward_model_args.setter = self.setArguments
         self.forward_model_args.getter = lambda model: self.forward_model_job.arguments
