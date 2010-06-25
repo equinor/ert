@@ -33,7 +33,7 @@ void                   model_config_set_load_state( model_config_type *  , int )
 int 		       model_config_get_history_length(const model_config_type * );
 bool                   model_config_has_prediction(const model_config_type * );
 int                    model_config_get_last_history_restart(const model_config_type * );
-model_config_type    * model_config_alloc(const config_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase , bool , bool);
+model_config_type    * model_config_alloc(const config_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase , const char * lsf_request);
 void                   model_config_free(model_config_type *);
 path_fmt_type        * model_config_get_runpath_fmt(const model_config_type * );
 enkf_sched_type      * model_config_get_enkf_sched(const model_config_type * );
@@ -41,7 +41,7 @@ history_type         * model_config_get_history(const model_config_type * );
 forward_model_type   * model_config_get_forward_model( const model_config_type * );
 bool                   model_config_internalize_state( const model_config_type *, int );
 bool                   model_config_load_state( const model_config_type *, int );
-void                   model_config_set_enkf_sched(model_config_type *  , const ext_joblist_type * , run_mode_type , bool);
+void                   model_config_set_enkf_sched(model_config_type *  , const ext_joblist_type * , run_mode_type );
 int                    model_config_get_max_internal_submit( const model_config_type * config );
 const char           * model_config_iget_casename( const model_config_type * model_config , int index);
 void                   model_config_set_max_resample( model_config_type * model_config , int max_resample );

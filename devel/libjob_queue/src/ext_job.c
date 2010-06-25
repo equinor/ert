@@ -85,7 +85,6 @@ struct ext_job_struct {
   char 	     	  * stdout_file;
   char 	     	  * stdin_file;
   char 	     	  * stderr_file;
-  char       	  * lsf_resources;  
   char            * license_path;          /* If this is NULL - it will be unrestricted ... */
   char            * license_root_path;     
   char            * config_file; 
@@ -125,7 +124,6 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->stdin_file          = NULL;
   ext_job->stderr_file         = NULL;
   ext_job->argv 	       = NULL;
-  ext_job->lsf_resources       = NULL;
   ext_job->environment         = hash_alloc();
   ext_job->argv                = stringlist_alloc_new();
   ext_job->argv_string         = NULL;
@@ -183,7 +181,6 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   new_job->stdout_file    = util_alloc_string_copy(src_job->stdout_file);
   new_job->stdin_file     = util_alloc_string_copy(src_job->stdin_file);
   new_job->stderr_file    = util_alloc_string_copy(src_job->stderr_file);
-  new_job->lsf_resources  = util_alloc_string_copy(src_job->lsf_resources);  
   new_job->license_path   = util_alloc_string_copy(src_job->license_path);  
   new_job->help_text      = util_alloc_string_copy(src_job->help_text);  
  
@@ -216,7 +213,6 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->stdin_file);
   util_safe_free(ext_job->target_file);
   util_safe_free(ext_job->stderr_file);
-  util_safe_free(ext_job->lsf_resources);
   util_safe_free(ext_job->license_path);
   util_safe_free(ext_job->license_root_path);
   util_safe_free(ext_job->config_file);
@@ -340,15 +336,6 @@ void ext_job_set_name(ext_job_type * ext_job, const char * name) {
 const char * ext_job_get_name(const ext_job_type * ext_job) {
   return ext_job->name;
 }
-
-void ext_job_set_lsf_request(ext_job_type * ext_job, const char * lsf_request) {
-  ext_job->lsf_resources = util_realloc_string_copy(ext_job->lsf_resources , lsf_request);
-}
-
-const char * ext_job_get_lsf_request(const ext_job_type * ext_job) {
-  return ext_job->lsf_resources;
-}
-
 void ext_job_set_stdin_file(ext_job_type * ext_job, const char * stdin_file) {
   ext_job->stdin_file = util_realloc_string_copy(ext_job->stdin_file , stdin_file);
 }
@@ -394,7 +381,7 @@ int ext_job_get_max_running_minutes( const ext_job_type * ext_job ) {
 /*****************************************************************/
 
 void ext_job_set_private_arg(ext_job_type * ext_job, const char * key , const char * value) {
-  subst_list_insert_copy( ext_job->private_args  , key , value , NULL);
+  subst_list_append_copy( ext_job->private_args  , key , value , NULL);
 }
 
 void ext_job_add_environment(ext_job_type *ext_job , const char * key , const char * value) {
@@ -553,7 +540,6 @@ void ext_job_save( const ext_job_type * ext_job ) {
   PRINT_KEY_STRING( stream , "STDERR"           , ext_job->stderr_file);
   PRINT_KEY_STRING( stream , "STDOUT"           , ext_job->stdout_file);
   PRINT_KEY_STRING( stream , "TARGET_FILE"      , ext_job->target_file);
-  PRINT_KEY_STRING( stream , "LSF_RESOURCES"    , ext_job->lsf_resources);
   PRINT_KEY_STRING( stream , "START_FILE"       , ext_job->start_file);
   PRINT_KEY_INT( stream , "MAX_RUNNING"         , ext_job->max_running);
   PRINT_KEY_INT( stream , "MAX_RUNNING_MINUTES" , ext_job->max_running_minutes);
@@ -589,10 +575,6 @@ void ext_job_fprintf(const ext_job_type * ext_job , FILE * stream) {
 
 
 
-const char * ext_job_get_lsf_resources(const ext_job_type * ext_job) {
-  return ext_job->lsf_resources;
-}
- 
 
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_root_path , bool private_job , const char * config_file) {
   {
@@ -616,7 +598,6 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_item(config , "START_FILE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
       item = config_add_item(config , "ENV"                 , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
       item = config_add_item(config , "ARGLIST"             , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
-      item = config_add_item(config , "LSF_RESOURCES"       , false , false); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
       item = config_add_item(config , "MAX_RUNNING_MINUTES" , false , false); config_item_set_argc_minmax(item  , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
@@ -631,12 +612,6 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       if (config_item_set(config , "MAX_RUNNING"))           ext_job_set_max_running(ext_job      , config_iget_as_int(config  , "MAX_RUNNING" , 0,0));
       if (config_item_set(config , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job         , config_iget_as_int(config  , "MAX_RUNNING_MINUTES" , 0,0));
  
-      if (config_item_set(config , "LSF_RESOURCES")) {
-        char * lsf_resources = stringlist_alloc_joined_string(config_get_stringlist_ref(config , "LSF_RESOURCES") , " ");
-        ext_job_set_lsf_request(ext_job   , lsf_resources);
-        free(lsf_resources);
-      }
-
       if (config_item_set(config , "ARGLIST")) 
         ext_job->argv = config_alloc_complete_stringlist(config , "ARGLIST");
         

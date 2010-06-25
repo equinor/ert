@@ -6,7 +6,6 @@
 #include <enkf_types.h>
 #include <enkf_sched.h>
 #include <stringlist.h>
-#include <ext_joblist.h>
 #include <vector.h>
 #include <parser.h>
 #include <enkf_defaults.h>
@@ -200,7 +199,7 @@ static void enkf_sched_append_node(enkf_sched_type * enkf_sched , enkf_sched_nod
 */
 
 
-static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE * stream , const ext_joblist_type * joblist , bool statoil_mode , bool use_lsf , bool * at_eof) {
+static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE * stream , bool * at_eof) {
   enkf_sched_node_type * sched_node  = NULL;
   char ** token_list;
   bool enkf_active = false; /* Compiler shut up */
@@ -341,7 +340,7 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_hist
    enkf_sched_type instance is allocated.
 */
 
-enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int last_history_restart , run_mode_type run_mode, const ext_joblist_type * joblist , bool statoil_mode , bool use_lsf) {
+enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int last_history_restart , run_mode_type run_mode) {
   enkf_sched_type * enkf_sched = enkf_sched_alloc_empty( );
   if (enkf_sched_file == NULL)
     enkf_sched_set_default(enkf_sched , last_history_restart , run_mode);
@@ -349,7 +348,7 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int las
     FILE * stream = util_fopen(enkf_sched_file , "r");
     bool at_eof;
     do { 
-      enkf_sched_fscanf_alloc_nodes(enkf_sched , stream , joblist , statoil_mode , use_lsf , &at_eof);
+      enkf_sched_fscanf_alloc_nodes(enkf_sched , stream , &at_eof);
     } while (!at_eof);
     
     fclose( stream );

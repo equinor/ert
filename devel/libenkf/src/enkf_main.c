@@ -236,7 +236,7 @@ static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
     char * num_cpu_key     = enkf_util_alloc_tagged_string( "NUM_CPU" );
     char * num_cpu_string  = util_alloc_sprintf( "%d" , ecl_config_get_num_cpu( enkf_main->ecl_config ));
     
-    subst_list_insert_owned_ref( enkf_main->subst_list , num_cpu_key , num_cpu_string , NULL );
+    subst_list_append_owned_ref( enkf_main->subst_list , num_cpu_key , num_cpu_string , NULL );
     free( num_cpu_key );
   }
 }
@@ -1669,7 +1669,7 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
   const ext_joblist_type * joblist = site_config_get_installed_jobs( enkf_main->site_config);
 
-  model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode , site_config_get_statoil_mode( enkf_main->site_config ));
+  model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode );
   enkf_main_init_internalization(enkf_main , run_mode);
 }
 
@@ -1984,26 +1984,20 @@ static config_type * enkf_main_alloc_config() {
 
   /*****************************************************************/
   /** Keywords expected normally found in site_config */
-  item = config_add_item(config , "HOST_TYPE" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
-  config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
-  config_set_arg( config , "HOST_TYPE" , 1 , (const char *[1]) { DEFAULT_HOST_TYPE });
-
   item = config_add_item(config , CASE_TABLE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
   config_add_key_value( config , LOG_LEVEL_KEY , false , CONFIG_INT);
-  config_add_key_value( config , LOG_FILE_KEY  , false , CONFIG_STRING);
+  config_add_key_value( config , LOG_FILE_KEY  , false , CONFIG_STRING); 
 
-
-  item = config_add_item(config , "MAX_SUBMIT" , true , false);
+  item = config_add_item(config , MAX_SUBMIT_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-  config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT} );
+  config_set_arg(config , MAX_SUBMIT_KEY , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT} );
 
-  config_add_key_value(config , "MAX_RESAMPLE" , false , CONFIG_INT);
+  config_add_key_value(config , MAX_RESAMPLE_KEY , false , CONFIG_INT);
 
 
-  item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
+  item = config_add_item(config , QUEUE_SYSTEM_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   {
     stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[2]) {"LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 2);
@@ -2026,10 +2020,10 @@ static config_type * enkf_main_alloc_config() {
      run-time environment. Can unfortunately not use constructions
      like PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
   */
-  item = config_add_item(config , "SETENV" , false , true);
+  item = config_add_item(config , SETENV_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
   
-  item = config_add_item(config , "UMASK" , false , false);
+  item = config_add_item(config , UMASK_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
   /**
@@ -2037,10 +2031,10 @@ static config_type * enkf_main_alloc_config() {
 
      Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
   */
-  item = config_add_item(config , "UPDATE_PATH" , false , true);
+  item = config_add_item(config , UPDATE_PATH_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
 
-  item = config_add_item( config , "LICENSE_PATH" , true , false );
+  item = config_add_item( config , LICENSE_PATH_KEY , true , false );
   config_item_set_argc_minmax(item , 1 , 1, NULL );
 
 
@@ -2048,10 +2042,10 @@ static config_type * enkf_main_alloc_config() {
   /* Items related to running jobs with lsf/rsh/local ...          */
 
   /* These must be set IFF QUEUE_SYSTEM == LSF */
-  item = config_add_item(config , "LSF_QUEUE"     , false , false);
+  item = config_add_item(config , LSF_QUEUE_KEY     , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
-  item = config_add_item(config , "MAX_RUNNING_LSF" , false , false);
+  item = config_add_item(config , MAX_RUNNING_LSF_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
@@ -2076,10 +2070,10 @@ static config_type * enkf_main_alloc_config() {
 
 
   /* Plotting stuff */
-  item = config_add_key_value(config , "IMAGE_TYPE" , false , CONFIG_STRING);
+  item = config_add_key_value(config , IMAGE_TYPE_KEY , false , CONFIG_STRING);
   config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
 
-  item = config_add_key_value(config , "PLOT_DRIVER" , false , CONFIG_STRING);
+  item = config_add_key_value(config , PLOT_DRIVER_KEY , false , CONFIG_STRING);
   config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
 
 
@@ -2118,35 +2112,35 @@ static config_type * enkf_main_alloc_config() {
   /*****************************************************************/
   /* Optional keywords from the model config file */
 
-  item = config_add_item( config , "RUN_TEMPLATE" , false , true );
+  item = config_add_item( config , RUN_TEMPLATE_KEY , false , true );
   config_item_set_argc_minmax(item , 2 , -1 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
 
   config_add_key_value(config , RUNPATH_KEY , false , CONFIG_STRING);
 
-  item = config_add_item(config , "ENSPATH" , true , false);
+  item = config_add_item(config , ENSPATH_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
-  config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
+  config_set_arg(config , ENSPATH_KEY , 1 , (const char *[1]) { DEFAULT_ENSPATH });
 
-  item = config_add_item(config , "SELECT_CASE" , false , false);
+  item = config_add_item(config , SELECT_CASE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
-  item = config_add_item(config , "DBASE_TYPE" , true , false);
+  item = config_add_item(config , DBASE_TYPE_KEY , true , false);
   config_item_set_argc_minmax(item , 1, 1 , NULL);
   config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
   config_set_arg(config , "DBASE_TYPE" , 1 , (const char *[1] ) { DEFAULT_DBASE_TYPE });
 
-  item = config_add_item(config , "FORWARD_MODEL" , true , true);
+  item = config_add_item(config , FORWARD_MODEL_KEY , true , true);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
   item = config_add_item(config , DATA_KW_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
 
-  item = config_add_item(config , "KEEP_RUNPATH" , false , false);
+  item = config_add_item(config , KEEP_RUNPATH_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
-  config_add_key_value(config , "PRE_CLEAR_RUNPATH" , false , CONFIG_BOOLEAN);
+  config_add_key_value(config , PRE_CLEAR_RUNPATH_KEY , false , CONFIG_BOOLEAN);
 
-  item = config_add_item(config , "DELETE_RUNPATH" , false , false);
+  item = config_add_item(config , DELETE_RUNPATH_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
   item = config_add_item(config , STATIC_KW_KEY , false , true);
@@ -2155,19 +2149,19 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_INT});
 
-  item = config_add_item(config , "OBS_CONFIG"  , false , false);
+  item = config_add_item(config , OBS_CONFIG_KEY  , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "LOCAL_CONFIG"  , false , true);
+  item = config_add_item(config , LOCAL_CONFIG_KEY  , false , true);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "REFCASE" , false , false);
+  item = config_add_item(config , REFCASE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "ENKF_SCHED_FILE" , false , false);
+  item = config_add_item(config , ENKF_SCHED_FILE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "HISTORY_SOURCE" , false , false);
+  item = config_add_item(config , HISTORY_SOURCE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   {
     stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFCASE"} , 1);
@@ -2178,27 +2172,27 @@ static config_type * enkf_main_alloc_config() {
 
     stringlist_free(refcase_dep);
   }
-  config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
-
+  config_set_arg(config , HISTORY_SOURCE_KEY , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
+  
 
   /*****************************************************************/
   /*
      Keywords for the analysis - all optional. The analysis_config object
      is instantiated with defaults from enkf_defaults.h
   */
-  item = config_add_key_value(config , "ENKF_MODE" , false , CONFIG_STRING );
+  item = config_add_key_value(config , ENKF_MODE_KEY , false , CONFIG_STRING );
   config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
   
-  config_add_key_value( config , "STD_CUTOFF"              , false , CONFIG_FLOAT);
-  config_add_key_value( config , "ENKF_TRUNCATION"         , false , CONFIG_FLOAT);
-  config_add_key_value( config , "ENKF_ALPHA"              , false , CONFIG_FLOAT);
-  config_add_key_value( config , "ENKF_MERGE_OBSERVATIONS" , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , "ENKF_CROSS_VALIDATION" , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , "ENKF_LOCAL_CV" , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , "ENKF_CV_FOLDS" , false , CONFIG_INT);
-  config_add_key_value( config , "ENKF_RERUN" , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , "RERUN_START" , false , CONFIG_INT);
-  config_add_key_value( config , "UPDATE_LOG_PATH"         , false , CONFIG_STRING);
+  config_add_key_value( config , STD_CUTOFF_KEY              , false , CONFIG_FLOAT);
+  config_add_key_value( config , ENKF_TRUNCATION_KEY         , false , CONFIG_FLOAT);
+  config_add_key_value( config , ENKF_ALPHA_KEY              , false , CONFIG_FLOAT);
+  config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_LOCAL_CV_KEY , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_CV_FOLDS_KEY , false , CONFIG_INT);
+  config_add_key_value( config , ENKF_RERUN_KEY , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , RERUN_START_KEY , false , CONFIG_INT);
+  config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
 
   /*****************************************************************/
   /* Keywords for the estimation                                   */
@@ -2264,7 +2258,7 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
    supplies the key __WITH__ tags.
 */
 void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
-  subst_list_insert_copy( enkf_main->subst_list   , key , value , "Supplied by the user in the configuration file.");
+  subst_list_append_copy( enkf_main->subst_list   , key , value , "Supplied by the user in the configuration file.");
 }
 
 
@@ -2353,10 +2347,10 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     char * num_cpu_string  = "1";
     
 
-    subst_list_insert_owned_ref( enkf_main->subst_list , cwd_key         , cwd , "The current working directory we are running from - the location of the config file.");
-    subst_list_insert_ref( enkf_main->subst_list , config_path_key , cwd , "The current working directory we are running from - the location of the config file.");
-    subst_list_insert_owned_ref( enkf_main->subst_list , date_key        , date_string , "The current date");
-    subst_list_insert_ref( enkf_main->subst_list , num_cpu_key     , num_cpu_string , "The number of CPU used for one forward model.");
+    subst_list_append_owned_ref( enkf_main->subst_list , cwd_key         , cwd , "The current working directory we are running from - the location of the config file.");
+    subst_list_append_ref( enkf_main->subst_list , config_path_key , cwd , "The current working directory we are running from - the location of the config file.");
+    subst_list_append_owned_ref( enkf_main->subst_list , date_key        , date_string , "The current date");
+    subst_list_append_ref( enkf_main->subst_list , num_cpu_key     , num_cpu_string , "The number of CPU used for one forward model.");
     
     
     free( num_cpu_key );
@@ -2452,7 +2446,7 @@ void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case
   enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , mount_map , select_case );
   {
     char * case_key = enkf_util_alloc_tagged_string( "SELECTED_CASE" );
-    subst_list_insert_ref( enkf_main->subst_list , case_key , enkf_fs_get_read_dir( enkf_main->dbase ) , "The case currently selected.");
+    subst_list_append_ref( enkf_main->subst_list , case_key , enkf_fs_get_read_dir( enkf_main->dbase ) , "The case currently selected.");
     free( case_key );
   }
 
@@ -2649,7 +2643,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     */
 
     {
-      hash_type      * data_kw   = config_alloc_hash(config , "DATA_KW");
+      hash_type      * data_kw   = config_alloc_hash(config , DATA_KW_KEY);
       enkf_main = enkf_main_alloc_empty( data_kw );
       hash_free( data_kw );
     }
@@ -2686,18 +2680,16 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main->analysis_config = analysis_config_alloc( );
     analysis_config_init_from_config( enkf_main->analysis_config , config );
     {
-      bool use_lsf;
       enkf_main->ecl_config      = ecl_config_alloc( config );
       enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
-      enkf_main->site_config     = site_config_alloc(config , &use_lsf);
+      enkf_main->site_config     = site_config_alloc( config );
       enkf_main->model_config    = model_config_alloc(config ,
                                                       enkf_main_get_ensemble_size( enkf_main ),
 						      site_config_get_installed_jobs(enkf_main->site_config) ,
 						      ecl_config_get_last_history_restart( enkf_main->ecl_config ),
 						      ecl_config_get_sched_file(enkf_main->ecl_config) ,
                                                       ecl_config_get_refcase( enkf_main->ecl_config ) , 
-						      site_config_get_statoil_mode( enkf_main->site_config ),
-						      use_lsf);
+						      site_config_get_lsf_request( enkf_main->site_config) );
       enkf_main_update_num_cpu( enkf_main ); 
     }
 

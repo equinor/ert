@@ -57,7 +57,6 @@
 
 
 
-#define DEFAULT_HOST_TYPE  "STATOIL"
 #define DEFAULT_DBASE_TYPE "PLAIN"
 
 /** 

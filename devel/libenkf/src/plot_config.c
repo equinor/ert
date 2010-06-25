@@ -2,6 +2,7 @@
 #include <util.h>
 #include <plot_config.h>
 #include <enkf_defaults.h>
+#include "config_keys.h"
 
 /** 
     Struct holding basic information used when plotting.
@@ -137,34 +138,34 @@ plot_config_type * plot_config_alloc() {
 
 
 void plot_config_init_from_config(plot_config_type * plot_config , const config_type * config ) {
-  if (config_item_set( config , "PLOT_PATH"))
-    plot_config_set_path( plot_config , config_get_value( config , "PLOT_PATH" ));
+  if (config_item_set( config , PLOT_PATH_KEY))
+    plot_config_set_path( plot_config , config_get_value( config , PLOT_PATH_KEY ));
 
-  if (config_item_set( config , "PLOT_DRIVER"))
-    plot_config_set_driver( plot_config , config_get_value( config , "PLOT_DRIVER" ));
+  if (config_item_set( config , PLOT_DRIVER_KEY))
+    plot_config_set_driver( plot_config , config_get_value( config , PLOT_DRIVER_KEY ));
   
-  if (config_item_set( config , "IMAGE_VIEWER"))
-    plot_config_set_viewer( plot_config , config_get_value( config , "IMAGE_VIEWER" ));
+  if (config_item_set( config , IMAGE_VIEWER_KEY))
+    plot_config_set_viewer( plot_config , config_get_value( config , IMAGE_VIEWER_KEY ));
 
-  if (config_item_set( config , "PLOT_DRIVER"))
-    plot_config_set_driver( plot_config , config_get_value( config , "PLOT_DRIVER" ));
+  if (config_item_set( config , PLOT_DRIVER_KEY))
+    plot_config_set_driver( plot_config , config_get_value( config , PLOT_DRIVER_KEY ));
 
-  if (config_item_set( config , "PLOT_ERRORBAR_MAX"))
-    plot_config_set_errorbar_max( plot_config , config_get_value_as_int( config , "PLOT_ERRORBAR_MAX" ));
+  if (config_item_set( config , PLOT_ERRORBAR_MAX_KEY))
+    plot_config_set_errorbar_max( plot_config , config_get_value_as_int( config , PLOT_ERRORBAR_MAX_KEY ));
   
-  if (config_item_set( config , "PLOT_HEIGHT"))
-    plot_config_set_height( plot_config , config_get_value_as_int( config , "PLOT_HEIGHT" ));
+  if (config_item_set( config , PLOT_HEIGHT_KEY))
+    plot_config_set_height( plot_config , config_get_value_as_int( config , PLOT_HEIGHT_KEY ));
 
-  if (config_item_set( config , "PLOT_WIDTH"))
-    plot_config_set_width( plot_config , config_get_value_as_int( config , "PLOT_WIDTH" ));
+  if (config_item_set( config , PLOT_WIDTH_KEY))
+    plot_config_set_width( plot_config , config_get_value_as_int( config , PLOT_WIDTH_KEY ));
 }
 
 
 void plot_config_add_config_items( config_type * config ) {
-  config_add_key_value(config , "PLOT_HEIGHT"       , false , CONFIG_INT);
-  config_add_key_value(config , "PLOT_WIDTH"        , false , CONFIG_INT);
-  config_add_key_value(config , "PLOT_PATH"         , false , CONFIG_STRING);
-  config_add_key_value(config , "IMAGE_VIEWER"      , false , CONFIG_FILE);
-  config_add_key_value(config , "PLOT_ERRORBAR_MAX" , false , CONFIG_INT);
+  config_add_key_value(config , PLOT_HEIGHT_KEY       , false , CONFIG_INT);
+  config_add_key_value(config , PLOT_WIDTH_KEY        , false , CONFIG_INT);
+  config_add_key_value(config , PLOT_PATH_KEY         , false , CONFIG_STRING);
+  config_add_key_value(config , IMAGE_VIEWER_KEY      , false , CONFIG_FILE);
+  config_add_key_value(config , PLOT_ERRORBAR_MAX_KEY , false , CONFIG_INT);
 }
 

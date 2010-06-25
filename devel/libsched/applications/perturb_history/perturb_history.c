@@ -144,7 +144,7 @@ int main( int argc , char ** argv ) {
   }
 
   config_init( config );
-  config_parse(config , config_file , "--" , NULL , "DEFINE" , NULL , false , true );
+  config_parse(config , config_file , "--" , NULL , "DEFINE" , false , true );
   {
     const char * data_file       = config_iget( config , "DATA_FILE" , 0 , 0 );
     const char * sched_file_name = config_iget( config , "SCHEDULE_FILE" , 0 , 0 );

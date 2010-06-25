@@ -10,7 +10,7 @@ import erttypes
 class ErtWrapper:
     """Wraps the functionality of ERT using ctypes"""
 
-    def __init__(self, site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config", enkf_so="/private/jpb/EnKF/"):
+    def __init__(self , enkf_config , enkf_so , site_config="/project/res/etc/ERT/Config/site-config"):
         self.__loadLibraries(enkf_so)
 
         self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
@@ -49,11 +49,11 @@ class ErtWrapper:
         CDLL("libblas.so"   , RTLD_GLOBAL)
         CDLL("liblapack.so" , RTLD_GLOBAL)
         CDLL("libz.so"      , RTLD_GLOBAL)
-        #CDLL("libnsl.so"    , RTLD_GLOBAL)
-        #CDLL("liblsf.so"    , RTLD_GLOBAL)
-        #CDLL("libbat.so"    , RTLD_GLOBAL)
+        CDLL("libnsl.so"    , RTLD_GLOBAL)
+        CDLL("liblsf.so"    , RTLD_GLOBAL)
+        CDLL("libbat.so"    , RTLD_GLOBAL)
 
-
+        
         self.util = self.__loadLibrary(prefix, "libutil")
         self.ecl  = self.__loadLibrary(prefix, "libecl")
         self.__loadLibrary(prefix, "libsched")

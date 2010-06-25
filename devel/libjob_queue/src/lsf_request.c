@@ -32,7 +32,6 @@
 
 
 struct lsf_request_struct {
-  bool                     statoil_mode;
   bool                     __valid_request; /* Internal variable which keeps track of whether the request string is valid (usable). */
   char                   * request;         /* The current string representation of the complete request. */
   set_type               * select_set;
@@ -45,9 +44,8 @@ struct lsf_request_struct {
 
 
 
-lsf_request_type * lsf_request_alloc(bool statoil_mode) {
+lsf_request_type * lsf_request_alloc() {
   lsf_request_type * lsf_request = util_malloc(sizeof * lsf_request , __func__);
-  lsf_request->statoil_mode    = statoil_mode;
   lsf_request->request         = NULL;
   lsf_request->rusage          = NULL;
   lsf_request->select_set      = NULL;

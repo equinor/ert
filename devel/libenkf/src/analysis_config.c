@@ -6,7 +6,7 @@
 #include <enkf_types.h>
 #include <analysis_config.h>
 #include <enkf_defaults.h>
-
+#include "config_keys.h"
 
 
 struct analysis_config_struct {
@@ -156,25 +156,25 @@ analysis_config_type * analysis_config_alloc() {
  
 
 void analysis_config_init_from_config( analysis_config_type * analysis , const config_type * config ) {
-  if (config_item_set( config , "UPDATE_LOG_PATH" ))
-    analysis_config_set_log_path( analysis , config_get_value( config , "UPDATE_LOG_PATH" ));
+  if (config_item_set( config , UPDATE_LOG_PATH_KEY ))
+    analysis_config_set_log_path( analysis , config_get_value( config , UPDATE_LOG_PATH_KEY ));
   
-  if (config_item_set( config , "STD_CUTOFF" ))
-    analysis_config_set_std_cutoff( analysis , config_get_value_as_double( config , "STD_CUTOFF" ));
+  if (config_item_set( config , STD_CUTOFF_KEY ))
+    analysis_config_set_std_cutoff( analysis , config_get_value_as_double( config , STD_CUTOFF_KEY ));
+  
+  if (config_item_set( config , ENKF_TRUNCATION_KEY ))
+    analysis_config_set_truncation( analysis , config_get_value_as_double( config , ENKF_TRUNCATION_KEY ));
+  
+  if (config_item_set( config , ENKF_ALPHA_KEY ))
+    analysis_config_set_alpha( analysis , config_get_value_as_double( config , ENKF_ALPHA_KEY ));
 
-  if (config_item_set( config , "ENKF_TRUNCATION" ))
-    analysis_config_set_truncation( analysis , config_get_value_as_double( config , "ENKF_TRUNCATION" ));
+  if (config_item_set( config , ENKF_MERGE_OBSERVATIONS_KEY ))
+    analysis_config_set_merge_observations( analysis , config_get_value_as_bool( config , ENKF_MERGE_OBSERVATIONS_KEY ));
 
-  if (config_item_set( config , "ENKF_ALPHA" ))
-    analysis_config_set_alpha( analysis , config_get_value_as_double( config , "ENKF_ALPHA" ));
-
-  if (config_item_set( config , "ENKF_MERGE_OBSERVATIONS" ))
-    analysis_config_set_merge_observations( analysis , config_get_value_as_bool( config , "ENKF_MERGE_OBSERVATIONS" ));
-
-  if (config_item_set( config , "ENKF_MODE" )) {
-    const char * enkf_mode_string = config_get_value(config , "ENKF_MODE");
+  if (config_item_set( config , ENKF_MODE_KEY )) {
+    const char * enkf_mode_string = config_get_value(config , ENKF_MODE_KEY);
     enkf_mode_type enkf_mode      = ENKF_SQRT; /* Compiler shut up */
-  
+    
     if (strcmp(enkf_mode_string,"STANDARD") == 0)
       enkf_mode = ENKF_STANDARD;
     else if (strcmp(enkf_mode_string , "SQRT") == 0)
@@ -185,22 +185,22 @@ void analysis_config_init_from_config( analysis_config_type * analysis , const c
     analysis_config_set_enkf_mode( analysis , enkf_mode );
   }
   
-  if (config_item_set( config , "ENKF_RERUN" ))
-    analysis_config_set_rerun( analysis , config_get_value_as_bool( config , "ENKF_RERUN" ));
+  if (config_item_set( config , ENKF_RERUN_KEY ))
+    analysis_config_set_rerun( analysis , config_get_value_as_bool( config , ENKF_RERUN_KEY ));
 
-  if (config_item_set( config , "RERUN_START" ))
-    analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , "RERUN_START" ));
+  if (config_item_set( config , RERUN_START_KEY ))
+    analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , RERUN_START_KEY ));
 
   /*Check and set CV parameters: */
-  if (config_item_set( config , "ENKF_CROSS_VALIDATION" )) {
-    analysis_config_set_do_cross_validation( analysis , config_get_value_as_bool(config , "ENKF_CROSS_VALIDATION" ));
-    if (config_item_set( config , "ENKF_CV_FOLDS" ))
-      analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , "ENKF_CV_FOLDS" ));
+  if (config_item_set( config , ENKF_CROSS_VALIDATION_KEY )) {
+    analysis_config_set_do_cross_validation( analysis , config_get_value_as_bool(config , ENKF_CROSS_VALIDATION_KEY ));
+    if (config_item_set( config , ENKF_CV_FOLDS_KEY ))
+      analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , ENKF_CV_FOLDS_KEY ));
     else
       analysis_config_set_nfolds_CV( analysis , 10);
 
-    if (config_item_set( config , "ENKF_LOCAL_CV" ))
-      analysis_config_set_do_local_cross_validation( analysis , config_get_value_as_bool(config , "ENKF_LOCAL_CV" ));
+    if (config_item_set( config , ENKF_LOCAL_CV_KEY ))
+      analysis_config_set_do_local_cross_validation( analysis , config_get_value_as_bool(config , ENKF_LOCAL_CV_KEY ));
     else
       analysis_config_set_do_local_cross_validation( analysis , false );
 

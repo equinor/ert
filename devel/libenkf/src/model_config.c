@@ -42,7 +42,6 @@ struct model_config_struct {
   stringlist_type      * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
   char                 * case_table_file; 
   forward_model_type   * forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
-  bool                   use_lsf;             	    /* The forward models need to know whether we are using lsf. */  
   history_type         * history;             	    /* The history object. */
   path_fmt_type        * runpath;             	    /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
   enkf_sched_type      * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
@@ -126,16 +125,15 @@ void model_config_set_case_table( model_config_type * model_config , int ens_siz
  */
 
 
- void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode , bool statoil_mode) {
+ void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode ) {
    if (model_config->enkf_sched != NULL)
      enkf_sched_free( model_config->enkf_sched );
 
    model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file       , 
                                                        model_config->last_history_restart  , 
-                                                       run_mode                            , 
-                                                       joblist                             , 
-                                                       statoil_mode , 
-                                                       model_config->use_lsf );
+                                                       run_mode);
+                                                       
+                                                       
  }
 
 
@@ -225,8 +223,8 @@ model_config_type * model_config_alloc(const config_type * config ,
                                        int last_history_restart , 
                                        const sched_file_type * sched_file , 
                                        const ecl_sum_type * refcase, 
-                                       bool statoil_mode , bool use_lsf) {
-  model_config_type * model_config        = util_malloc(sizeof * model_config , __func__);
+                                       const char * lsf_request ) {
+  model_config_type * model_config  = util_malloc(sizeof * model_config , __func__);
   /**
      There are essentially three levels of initialisation:
 
@@ -236,7 +234,6 @@ model_config_type * model_config_alloc(const config_type * config ,
 
   */
   model_config->case_names                = NULL;
-  model_config->use_lsf                   = use_lsf;
   model_config->max_internal_submit       = DEFAULT_MAX_INTERNAL_SUBMIT;
   model_config->enspath                   = NULL;
   model_config->dbase_type                = INVALID_DRIVER_ID;
@@ -244,7 +241,7 @@ model_config_type * model_config_alloc(const config_type * config ,
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;   
   model_config->case_table_file           = NULL;
-  model_config->forward_model             = forward_model_alloc(  joblist , statoil_mode , model_config->use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
+  model_config->forward_model             = forward_model_alloc(  joblist , lsf_request );
   model_config_set_refcase( model_config , refcase );
   {
     char * config_string = config_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");

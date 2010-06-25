@@ -340,19 +340,21 @@ void ensemble_config_add_config_items(config_type * config) {
 
   item = config_add_item(config , "MULTFLT" , false , true);
   config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
+
+
   /*****************************************************************/
   
-  item = config_add_item(config , "GEN_KW" , false , true);
+  item = config_add_item(config , GEN_KW_KEY , false , true);
   config_item_set_argc_minmax(item , 4 , 6 ,  (const config_item_types [6]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
 
-  item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
+  item = config_add_item(config , SCHEDULE_PREDICTION_FILE_KEY , false , false);
   /* SCEDHULE_PREDICTION_FILE   FILENAME  <PARAMETERS:> <INIT_FILES:> */
   config_item_set_argc_minmax(item , 1 , 3 ,  (const config_item_types [3]) { CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
 
-  item = config_add_item(config , "GEN_PARAM" , false , true);
+  item = config_add_item(config , GEN_PARAM_KEY , false , true);
   config_item_set_argc_minmax(item , 5 , -1 ,  NULL);
   
-  item = config_add_item(config , "GEN_DATA" , false , true);
+  item = config_add_item(config , GEN_DATA_KEY , false , true);
   config_item_set_argc_minmax(item , 1 , -1 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , SUMMARY_KEY , false , true);   /* Can have several summary keys on each line. */
@@ -365,9 +367,9 @@ void ensemble_config_add_config_items(config_type * config) {
      time validation of the input.
   */
   
-  item = config_add_item(config , "FIELD" , false , true);
+  item = config_add_item(config , FIELD_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
-  config_item_add_required_children(item , "GRID");   /* If you are using a FIELD - you must have a grid. */
+  config_item_add_required_children(item , GRID_KEY);   /* If you are using a FIELD - you must have a grid. */
 }
 
 
@@ -401,8 +403,8 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
 
   
   /* GEN_PARAM  - should be unified with the GEN_DATA*/
-  for (i=0; i < config_get_occurences(config , "GEN_PARAM"); i++) {
-    stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
+  for (i=0; i < config_get_occurences(config , GEN_PARAM_KEY); i++) {
+    stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_PARAM_KEY , i);
     const char * key                          = stringlist_iget(tokens , 0);
     const char * ecl_file                     = stringlist_iget(tokens , 1);  /* Only difference from GEN_DATA is that the ECL_FILE is not a ":" keyword. */
     enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
@@ -423,8 +425,8 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
   }
   
   /* GEN_DATA */
-  for (i=0; i < config_get_occurences(config , "GEN_DATA"); i++) {
-    stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
+  for (i=0; i < config_get_occurences(config , GEN_DATA_KEY); i++) {
+    stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_DATA_KEY , i);
     const char * key                          = stringlist_iget(tokens , 0);
     enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
     {
@@ -448,8 +450,8 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
 
   /* FIELD */
   {
-    for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
-      stringlist_type * tokens            = config_iget_stringlist_ref(config , "FIELD" , i);
+    for (i=0; i < config_get_occurences(config , FIELD_KEY); i++) {
+      stringlist_type * tokens            = config_iget_stringlist_ref(config , FIELD_KEY , i);
       const char *  key                   = stringlist_iget(tokens , 0);
       const char *  var_type_string       = stringlist_iget(tokens , 1);
       enkf_config_node_type * config_node = ensemble_config_add_field( ensemble_config , key , grid );
@@ -520,8 +522,8 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
   }
 
   /* GEN_KW */
-  for (i=0; i < config_get_occurences(config , "GEN_KW"); i++) {
-    stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_KW" , i);
+  for (i=0; i < config_get_occurences(config , GEN_KW_KEY); i++) {
+    stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_KW_KEY , i);
     char * key            = stringlist_iget_copy(tokens , 0);
     char * template_file  = stringlist_iget_copy(tokens , 1);
     char * enkf_outfile   = stringlist_iget_copy(tokens , 2);

@@ -17,9 +17,8 @@ void                     site_config_set_license_root_path( site_config_type * s
 
 
 void                     site_config_set_num_cpu( site_config_type * site_config , int num_cpu );
-bool                     site_config_get_statoil_mode(const site_config_type * site_config );
 void                     site_config_update_lsf_request(site_config_type *  , const forward_model_type *);
-site_config_type       * site_config_alloc(const config_type * , bool *);
+site_config_type       * site_config_alloc(const config_type * );
 void                     site_config_free(site_config_type *); 
 ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
 job_queue_type         * site_config_get_job_queue( const site_config_type * );

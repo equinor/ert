@@ -99,7 +99,6 @@ typedef struct shared_info_struct {
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
   log_type                    * logh;              /* The log handle. */
   ert_templates_type          * templates; 
-  bool                          statoil_mode;      /* Fucking hack - should be removed. */
 } shared_info_type;
 
 
@@ -245,7 +244,6 @@ static shared_info_type * shared_info_alloc(const site_config_type * site_config
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
   shared_info->model_config = model_config;
-  shared_info->statoil_mode = site_config_get_statoil_mode( site_config );
   shared_info->logh         = logh;
   shared_info->templates    = templates;
   return shared_info;
@@ -348,7 +346,7 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
 
 static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value , const char * doc_string) {
   char * tagged_key = util_alloc_sprintf( INTERNAL_DATA_KW_TAG_FORMAT , kw );
-  subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , util_alloc_string_copy(value) , doc_string);
+  subst_list_append_owned_ref(enkf_state->subst_list , tagged_key , util_alloc_string_copy(value) , doc_string);
   free(tagged_key);
 }
 
@@ -529,7 +527,7 @@ INCLDUE
   enkf_state_set_static_subst_kw(  enkf_state );
 
 
-  enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model , site_config_get_statoil_mode(site_config));
+  enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model );
   enkf_state->forward_model         = enkf_state->default_forward_model;
   enkf_state_init_forward_model( enkf_state );
   enkf_state_add_nodes( enkf_state , ensemble_config );

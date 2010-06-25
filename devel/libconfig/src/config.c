@@ -1057,7 +1057,7 @@ void config_set_arg(config_type * config , const char * kw, int argc , const cha
 
 
 void config_add_define( config_type * config , const char * key , const char * value ) {
-  subst_list_insert_copy( config->define_list , key , value , NULL );
+  subst_list_append_copy( config->define_list , key , value , NULL );
 }
 
 

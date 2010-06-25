@@ -14,6 +14,7 @@
 #include <basic_queue_driver.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "config_keys.h"
 
 /**
    This struct contains information which is specific to the site
@@ -46,14 +47,9 @@ struct site_config_struct {
   char                  * rsh_command;
 
   int                     max_running_local;
-  /*---------------------------------------------------------------*/
-  bool                    statoil_mode;  /* Quite obtrusive hack to support statoil_mode in the lsf_request. */
 };
 
 
-bool site_config_get_statoil_mode(const site_config_type * site_config ) {
-  return site_config->statoil_mode;
-}
 
 
 void site_config_set_num_cpu( site_config_type * site_config , int num_cpu ) {
@@ -444,15 +440,14 @@ int site_config_get_max_submit(const site_config_type * site_config ) {
 }
 
 
-static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , bool * use_lsf) {
-  const char * job_script   = config_iget(config , "JOB_SCRIPT" , 0,0);
-  int   max_submit          = config_iget_as_int(config , "MAX_SUBMIT" , 0,0);
+static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config) {
+  const char * job_script   = config_iget(config , JOB_SCRIPT_KEY , 0,0);
+  int   max_submit          = config_iget_as_int(config , MAX_SUBMIT_KEY , 0,0);
   int   max_running_local;
   int   max_running_lsf;
   int   max_running_rsh;
   job_driver_type driver_type;
 
-  *use_lsf               = false;
   site_config->job_queue = job_queue_alloc(0 , 0 , max_submit , job_script);
 
   /* 
@@ -462,13 +457,16 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
 
   /* LSF options. */
   {
-    const char * lsf_queue_name = config_iget(config , "LSF_QUEUE" , 0,0);
+    const char * lsf_queue_name = config_iget(config , LSF_QUEUE_KEY , 0,0);
     char * lsf_resource_request = NULL;
-
-    max_running_lsf = config_iget_as_int( config , "MAX_RUNNING_LSF" , 0,0);
-    if (config_has_set_item(config , "LSF_RESOURCES"))
-      lsf_resource_request = config_alloc_joined_string(config , "LSF_RESOURCES" , " ");
     
+    if (config_item_set(config , LSF_RESOURCES_KEY)) {
+      lsf_resource_request = config_alloc_joined_string(config , LSF_RESOURCES_KEY , " ");
+      site_config_set_lsf_request( site_config , lsf_resource_request );
+      free( lsf_resource_request );
+    }
+
+    max_running_lsf = config_iget_as_int( config , MAX_RUNNING_LSF_KEY , 0,0);
     site_config_set_lsf_queue( site_config , lsf_queue_name );
     site_config_set_lsf_request( site_config , lsf_resource_request );  /* Not really in use at the moment ... */
     util_safe_free(lsf_resource_request);
@@ -477,15 +475,15 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
 
   /* RSH options */
   {
-    const char * rsh_command        = config_iget(config , "RSH_COMMAND" , 0,0);
+    const char * rsh_command        = config_iget(config , RSH_COMMAND_KEY , 0,0);
     
     site_config_set_rsh_command( site_config , rsh_command );
-    max_running_rsh = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
+    max_running_rsh = config_iget_as_int( config , MAX_RUNNING_RSH_KEY , 0,0);
 
     /* Parsing the "host1:4" strings. */
     {
       
-      stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
+      stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , RSH_HOST_LIST_KEY);
       int i;
       for (i=0; i < stringlist_get_size( rsh_host_list ); i++) {
         int     host_max_running;
@@ -510,13 +508,12 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
   }
 
   /* Parsing local options */
-  max_running_local = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
+  max_running_local = config_iget_as_int( config , MAX_RUNNING_LOCAL_KEY , 0,0);
   
   
   {
-    const char * queue_system = config_iget(config , "QUEUE_SYSTEM" , 0,0);
+    const char * queue_system = config_iget(config , QUEUE_SYSTEM_KEY , 0,0);
     if (strcmp(queue_system , "LSF") == 0) {
-      *use_lsf = true;
       driver_type = LSF_DRIVER;
     } else if (strcmp(queue_system , "RSH") == 0) 
       driver_type = RSH_DRIVER;
@@ -545,22 +542,21 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
 
 
 
-site_config_type * site_config_alloc(const config_type * config , bool * use_lsf) {
-  const char * host_type         = config_iget(config , "HOST_TYPE" , 0,0);
+site_config_type * site_config_alloc(const config_type * config) {
   site_config_type * site_config = site_config_alloc_empty();
   site_config_install_joblist(site_config , config);
   {
     int i;
-    for (i = 0; i < config_get_occurences( config , "SETENV"); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref(config , "SETENV" , i);
+    for (i = 0; i < config_get_occurences( config , SETENV_KEY); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref(config , SETENV_KEY , i);
       const char * var               = stringlist_iget( tokens , 0);
       const char * value             = stringlist_iget( tokens , 1);
 
       site_config_setenv( site_config , var , value );
     }
     
-    for (i=0; i < config_get_occurences( config, "UPDATE_PATH"); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref(config , "UPDATE_PATH" , i);
+    for (i=0; i < config_get_occurences( config, UPDATE_PATH_KEY); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref(config , UPDATE_PATH_KEY , i);
       const char * path              = stringlist_iget( tokens , 0);
       const char * value             = stringlist_iget( tokens , 1);
       
@@ -578,8 +574,8 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
      The string is supposed to be in OCTAL representation (without any
      prefix characters).
   */
-  if (config_item_set(config , "UMASK")) {
-    const char * string_mask = config_iget( config , "UMASK" , 0 , 0);
+  if (config_item_set(config , UMASK_KEY)) {
+    const char * string_mask = config_iget( config , UMASK_KEY , 0 , 0);
     mode_t umask_value;
     if (util_sscanf_octal_int( string_mask , &umask_value))
       site_config_set_umask( site_config , umask_value);
@@ -587,17 +583,13 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
       util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n",__func__ , string_mask);
   }
 
+  
   /* 
      When LSF is used several enviroment variables must be set - i.e.
      the calls to SETENV must come first. 
   */
-  if (strcmp(host_type , "STATOIL") == 0) 
-    site_config->statoil_mode = true;
-  else
-    site_config->statoil_mode = false;
-
-  site_config_set_license_root_path( site_config , config_iget( config , "LICENSE_PATH" , 0 , 0));
-  site_config_install_job_queue(site_config , config , use_lsf);
+  site_config_set_license_root_path( site_config , config_iget( config , LICENSE_PATH_KEY , 0 , 0));
+  site_config_install_job_queue(site_config , config);
   return site_config;
 }
 
