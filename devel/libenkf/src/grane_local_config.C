@@ -210,6 +210,7 @@ Python end:
 int main (int argc , char ** argv ) {
   const char * command_file = argv[1];  /* The file to generate should be the first argument */
   const char * grid_file    = "/d/proj/bg/enkf/jaskje/iior_hstruct_2009a_r004_local_struct/Refcase/RG09A-ST-PP-PRED-ROO4-1.EGRID";
+  const char * init_file    = "/d/proj/bg/enkf/jaskje/iior_hstruct_2009a_r004_local_struct/Refcase/RG09A-ST-PP-PRED-ROO4-1.INIT";
   const char * surface_file = "/d/proj/bg/enkf/jaskje/iior_hstruct_2009a_r004_local_struct/Realizations/Cohiba/Surface_B/Init/baseHeimdal_0.irap";
   FILE * stream = util_mkdir_fopen( command_file , "w");
 
@@ -358,6 +359,7 @@ int main (int argc , char ** argv ) {
        add_obs(stream , ministep_name , "WGPR:PR06_G28");
        
        Region.select_from_ijkbox(44,55,115,216,0,19 );
+       Region.select
 
        add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
        add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
