@@ -111,10 +111,6 @@ class JobConfigPanel(ConfigPanel):
         self.arglist.setter = lambda ert, value : ert.job_queue.ext_job_set_private_args_from_string(jid(ert), value)
         self.arglist.getter = lambda ert : ert.job_queue.ext_job_get_private_args_as_string(jid(ert))
 
-        self.lsf_resources = StringBox(self, "", "config/systemenv/install_job_lsf_resources")
-        self.lsf_resources.setter = lambda ert, value : ert.job_queue.ext_job_set_lsf_request(jid(ert), value)
-        self.lsf_resources.getter = lambda ert : ert.job_queue.ext_job_get_lsf_request(jid(ert))
-
         self.max_running = IntegerSpinner(self, "", "config/systemenv/install_job_max_running", 0, 10000)
         self.max_running.setter = lambda ert, value : ert.job_queue.ext_job_set_max_running(jid(ert), value)
         self.max_running.getter = lambda ert : ert.job_queue.ext_job_get_max_running(jid(ert))
@@ -138,7 +134,6 @@ class JobConfigPanel(ConfigPanel):
         self.max_running.setInfo("(0=unlimited)")
         self.add("Max running minutes:", self.max_running_minutes)
         self.max_running_minutes.setInfo("(0=unlimited)")
-        self.add("LSF resources:", self.lsf_resources)
         self.add("Env.:", self.env)
         self.endPage()
 
@@ -159,8 +154,6 @@ class JobConfigPanel(ConfigPanel):
             ert.prototype("void ext_job_set_target_file(long, char*)", lib=ert.job_queue)
             ert.prototype("char* ext_job_get_executable(long)", lib=ert.job_queue)
             ert.prototype("void ext_job_set_executable(long, char*)", lib=ert.job_queue)
-            ert.prototype("char* ext_job_get_lsf_request(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_set_lsf_request(long, char*)", lib=ert.job_queue)
             ert.prototype("char* ext_job_get_private_args_as_string(long)", lib=ert.job_queue)
             ert.prototype("void ext_job_set_private_args_from_string(long, char*)", lib=ert.job_queue)
             ert.prototype("int ext_job_get_max_running(long)", lib=ert.job_queue)
@@ -183,7 +176,8 @@ class JobConfigPanel(ConfigPanel):
 
         self.cmproxy = ContentModelProxy() #Since only the last change matters and no insert and remove is done
         self.cmproxy.proxify(self.stdin, self.stdout, self.stderr, self.target_file, self.executable,
-                             self.env, self.arglist, self.lsf_resources, self.max_running, self.max_running_minutes)
+                             self.env, self.arglist, 
+                             self.max_running, self.max_running_minutes)
 
         self.stdin.fetchContent()
         self.stdout.fetchContent()
@@ -192,7 +186,6 @@ class JobConfigPanel(ConfigPanel):
         self.executable.fetchContent()
         self.env.fetchContent()
         self.arglist.fetchContent()
-        self.lsf_resources.fetchContent()
         self.max_running.fetchContent()
         self.max_running_minutes.fetchContent()
 
