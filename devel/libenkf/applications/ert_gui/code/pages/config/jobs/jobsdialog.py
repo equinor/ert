@@ -74,24 +74,24 @@ class JobConfigPanel(ConfigPanel):
             jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
             return ert.job_queue.ext_joblist_get_job(jl, self.job.name)
 
-        self.stdin = PathChooser(self, "", "install_job_stdin", show_files=True, must_be_set=False, must_exist=True)
+        self.stdin = PathChooser(self, "", "config/systemenv/install_job_stdin", show_files=True, must_be_set=False, must_exist=True)
         self.stdin.setter = lambda ert, value : ert.job_queue.ext_job_set_stdin_file(jid(ert), value)
         self.stdin.getter = lambda ert : ert.job_queue.ext_job_get_stdin_file(jid(ert))
 
-        self.stdout = PathChooser(self, "", "install_job_stdout", show_files=True, must_be_set=True, must_exist=False)
+        self.stdout = PathChooser(self, "", "config/systemenv/install_job_stdout", show_files=True, must_be_set=True, must_exist=False)
         self.stdout.setter = lambda ert, value : ert.job_queue.ext_job_set_stdout_file(jid(ert), value)
         self.stdout.getter = lambda ert : ert.job_queue.ext_job_get_stdout_file(jid(ert))
 
-        self.stderr = PathChooser(self, "", "install_job_stderr", show_files=True, must_be_set=True, must_exist=False)
+        self.stderr = PathChooser(self, "", "config/systemenv/install_job_stderr", show_files=True, must_be_set=True, must_exist=False)
         self.stderr.setter = lambda ert, value : ert.job_queue.ext_job_set_stderr_file(jid(ert), value)
         self.stderr.getter = lambda ert : ert.job_queue.ext_job_get_stderr_file(jid(ert))
 
-        self.target_file = PathChooser(self, "", "install_job_target_file", show_files=True, must_be_set=False,
+        self.target_file = PathChooser(self, "", "config/systemenv/install_job_target_file", show_files=True, must_be_set=False,
                                        must_exist=False)
         self.target_file.setter = lambda ert, value : ert.job_queue.ext_job_set_target_file(jid(ert), value)
         self.target_file.getter = lambda ert : ert.job_queue.ext_job_get_target_file(jid(ert))
 
-        self.executable = PathChooser(self, "", "install_job_executable", show_files=True, must_be_set=True,
+        self.executable = PathChooser(self, "", "config/systemenv/install_job_executable", show_files=True, must_be_set=True,
                                       must_exist=True, is_executable_file=True)
         self.executable.setter = lambda ert, value : ert.job_queue.ext_job_set_executable(jid(ert), value)
         self.executable.getter = lambda ert : ert.job_queue.ext_job_get_executable(jid(ert))
@@ -103,23 +103,23 @@ class JobConfigPanel(ConfigPanel):
             for env in value:
                 ert.job_queue.ext_job_add_environment(job, env[0], env[1])
 
-        self.env = KeywordTable(self, "", "install_job_env", colHead1="Variable", colHead2="Value")
+        self.env = KeywordTable(self, "", "config/systemenv/install_job_env", colHead1="Variable", colHead2="Value")
         self.env.setter = setEnv
         self.env.getter = lambda ert : ert.getHash(ert.job_queue.ext_job_get_environment(jid(ert)))
 
-        self.arglist = StringBox(self, "", "install_job_arglist")
+        self.arglist = StringBox(self, "", "config/systemenv/install_job_arglist")
         self.arglist.setter = lambda ert, value : ert.job_queue.ext_job_set_private_args_from_string(jid(ert), value)
         self.arglist.getter = lambda ert : ert.job_queue.ext_job_get_private_args_as_string(jid(ert))
 
-        self.lsf_resources = StringBox(self, "", "install_job_lsf_resources")
+        self.lsf_resources = StringBox(self, "", "config/systemenv/install_job_lsf_resources")
         self.lsf_resources.setter = lambda ert, value : ert.job_queue.ext_job_set_lsf_request(jid(ert), value)
         self.lsf_resources.getter = lambda ert : ert.job_queue.ext_job_get_lsf_request(jid(ert))
 
-        self.max_running = IntegerSpinner(self, "", "install_job_max_running", 0, 10000)
+        self.max_running = IntegerSpinner(self, "", "config/systemenv/install_job_max_running", 0, 10000)
         self.max_running.setter = lambda ert, value : ert.job_queue.ext_job_set_max_running(jid(ert), value)
         self.max_running.getter = lambda ert : ert.job_queue.ext_job_get_max_running(jid(ert))
 
-        self.max_running_minutes = IntegerSpinner(self, "", "install_job_max_running_minutes", 0, 10000)
+        self.max_running_minutes = IntegerSpinner(self, "", "config/systemenv/install_job_max_running_minutes", 0, 10000)
         self.max_running_minutes.setter = lambda ert, value : ert.job_queue.ext_job_set_max_running_minutes(jid(ert), value)
         self.max_running_minutes.getter = lambda ert : ert.job_queue.ext_job_get_max_running_minutes(jid(ert))
 

@@ -7,9 +7,6 @@ import plot
 import ensemble
 import observations
 import simulation
-import dbase
-import action
-import log
 
 class ConfigPages(ConfigPanel):
     
@@ -25,6 +22,3 @@ class ConfigPages(ConfigPanel):
         observations.createObservationsPage(self, parent)
         simulation.createSimulationsPage(self, parent)
         plot.createPlotPage(self, parent)
-        #dbase.createDbasePage(self, parent)
-        #action.createActionPage(self, parent)
-        #log.createLogPage(self, parent)

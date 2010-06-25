@@ -18,19 +18,19 @@ class KeywordPanel(QtGui.QFrame):
 
         self.keywordModel = KeywordModel("")
 
-        self.min_std = PathChooser(self, "", "gen_kw_min_std", True , must_be_set = False)
+        self.min_std = PathChooser(self, "", "config/ensemble/gen_kw_min_std", True , must_be_set = False)
         self.modelWrap(self.min_std, "min_std")
         
-        self.template = PathChooser(self, "", "gen_kw_template", True)
+        self.template = PathChooser(self, "", "config/ensemble/gen_kw_template", True)
         self.modelWrap(self.template, "template")
 
-        self.enkf_outfile = PathChooser(self, "", "gen_kw_enkf_outfile", True, must_be_set=False)
+        self.enkf_outfile = PathChooser(self, "", "config/ensemble/gen_kw_enkf_outfile", True, must_be_set=False)
         self.modelWrap(self.enkf_outfile, "enkf_outfile")
 
-        self.init_files = PathChooser(self, "", "gen_kw_init_files", True, must_be_set=False)
+        self.init_files = PathChooser(self, "", "config/ensemble/gen_kw_init_files", True, must_be_set=False)
         self.modelWrap(self.init_files, "init_files")
 
-        self.parameter_file = PathChooser(self, "", "gen_kw_parameter_file", True, must_be_set=False)
+        self.parameter_file = PathChooser(self, "", "config/ensemble/gen_kw_parameter_file", True, must_be_set=False)
         self.modelWrap(self.parameter_file, "parameter_file")
 
         

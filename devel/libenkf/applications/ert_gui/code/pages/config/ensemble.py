@@ -13,7 +13,7 @@ from enums import gen_data_file_format
 def createEnsemblePage(configPanel, parent):
     configPanel.startPage("Ensemble")
 
-    r = configPanel.addRow(IntegerSpinner(parent, "Number of realizations", "num_realizations", 1, 10000))
+    r = configPanel.addRow(IntegerSpinner(parent, "Number of realizations", "config/ensemble/num_realizations", 1, 10000))
     r.initialize = lambda ert : [ert.prototype("int enkf_main_get_ensemble_size(long)"),
                                  ert.prototype("void enkf_main_resize_ensemble(int)")]
 
@@ -24,7 +24,7 @@ def createEnsemblePage(configPanel, parent):
 
 
     configPanel.startGroup("Parameters")
-    r = configPanel.addRow(ParameterPanel(parent, "", "parameters"))
+    r = configPanel.addRow(ParameterPanel(parent, "", "")) # no help file necessary
 
     def initialize(ert):
         ert.prototype("long ensemble_config_get_node(long, char*)")
