@@ -9,18 +9,16 @@ done
 # This environment variable must be set to the ERT home directory
 # or a lib directory containing all .so files of ERT
 #
-#export ERT_HOME=/private/jpb/EnKF/
-#export ERT_HOME=/d/proj/bg/enkf/jaskje/ERT_GUI/lib/
 
-if [ -z "$ERT_HOME" ]
+if [ -z "$ERT_LD_PATH" ]
 then
-    export ERT_HOME=$script_dir/../lib
+    export ERT_LD_PATH=$script_dir/../lib
 fi
 
-if [ -z "$ERT_HOME" ]
+if [ -z "$ERT_LD_PATH" ]
 then
     echo
-    echo "The ERT_HOME environment variable has not been set."
+    echo "The ERT_LD_PATH environment variable has not been set."
     echo "The GUI for ERT requires the ERT_HOME variable to point to a valid ERT directory."
     echo "A valid ERT directory contains the .so files associated with ERT."
     echo
@@ -50,13 +48,14 @@ source /prog/sdpsoft/environment.sh
 #
 # Required by ERT
 #
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/project/res/x86_64_RH_4/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/project/res/x86_64_RH_4/lib:/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib
 
 
 ORIGINAL_DIRECTORY=$PWD
 
 export script_dir=$(dirname $0)
 export ert_gui_dir=$script_dir/../code
+
 
 python $script_dir/clean.py  
 

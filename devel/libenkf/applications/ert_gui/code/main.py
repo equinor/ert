@@ -39,12 +39,12 @@ app.processEvents()
 site_config = "/project/res/etc/ERT/Config/site-config"
 enkf_config = sys.argv[1]
 
-if os.environ.has_key("ERT_HOME"):
-    enkf_so = os.environ["ERT_HOME"]
+if os.environ.has_key("ERT_LD_PATH"):
+    enkf_so = os.environ["ERT_LD_PATH"]
 else:
-    enkf_so = "."
+    sys.exit("Must set environment variable: 'ERT_LD_PATH' to point directory with ert shared library files.")
     
-ert = ertwrapper.ErtWrapper(site_config = site_config, enkf_config = enkf_config, enkf_so = enkf_so)
+ert = ertwrapper.ErtWrapper(enkf_config , enkf_so , site_config = site_config)
 
 splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
 app.processEvents()

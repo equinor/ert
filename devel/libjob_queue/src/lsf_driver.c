@@ -147,20 +147,20 @@ static int lsf_driver_submit_system_job(lsf_driver_type * driver , const char * 
   sprintf(num_cpu_string , "%d" , driver->num_cpu);
 
   if (resource_request != NULL) 
-#ifdef xStatoil
-    {
-       char * cmd = util_alloc_sprintf("%s -o %s -q %s -J %s -n %s -R %s %s %s > %s " , driver->bsub_executable , lsf_stdout , lsf_queue , job_name , num_cpu_string , resource_request , submit_cmd , run_path , tmp_file);
-       system(cmd);
-       free(cmd);
-    }
-#else
- {
-   util_fork_exec(driver->bsub_executable , 12 , (const char *[12]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-n" , num_cpu_string , 
-                                                                      "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
- }
-#endif
+    util_fork_exec(driver->bsub_executable , 12 , (const char *[12]) {"-o" , lsf_stdout , 
+                                                                      "-q" , lsf_queue  , 
+                                                                      "-J" , job_name   , 
+                                                                      "-n" , num_cpu_string , 
+                                                                        "-R" , resource_request , 
+                                                                      submit_cmd , run_path} 
+                   , true , NULL , NULL , NULL , tmp_file , NULL);
   else
-    util_fork_exec(driver->bsub_executable , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-n" , num_cpu_string , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
+    util_fork_exec(driver->bsub_executable , 10 , (const char *[10]) {"-o" , lsf_stdout , 
+                                                                      "-q" , lsf_queue  , 
+                                                                      "-J" , job_name   ,
+                                                                      "-n" , num_cpu_string ,
+                                                                      submit_cmd , run_path} 
+                   , true , NULL , NULL , NULL , tmp_file , NULL);
 
 
   job_id = lsf_job_parse_bsub_stdout(tmp_file);

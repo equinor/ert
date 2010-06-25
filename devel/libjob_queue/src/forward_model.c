@@ -7,7 +7,6 @@
 #include <ext_joblist.h>
 #include <forward_model.h>
 #include <subst_list.h>
-#include <lsf_request.h>
 #include <vector.h>
 #include <parser.h>
 /**
@@ -19,9 +18,7 @@
 struct forward_model_struct {
   vector_type               * jobs;         /* The actual jobs in this forward model. */
   const ext_joblist_type    * ext_joblist;  /* This is the list of external jobs which have been installed - which we can choose from. */
-  lsf_request_type          * lsf_request;  /* The lsf_requests needed for this forward model == NULL if we are not using lsf. */
-  char                      * start_tag;
-  char                      * end_tag;
+  char                      * lsf_request;  /* The lsf_requests needed for this forward model == NULL if we are not using lsf. */
 };
 
 #define DEFAULT_JOB_MODULE   "jobs.py"
@@ -29,26 +26,19 @@ struct forward_model_struct {
 
 
 
-static char * forward_model_alloc_tagged_string(const forward_model_type * forward_model , const char * s) {
-  return util_alloc_sprintf("%s%s%s" , forward_model->start_tag , s , forward_model->end_tag);
-}
 
 
-/*****************************************************************/
 
-
-forward_model_type * forward_model_alloc(const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf , const char * start_tag , const char * end_tag) {
+forward_model_type * forward_model_alloc(const ext_joblist_type * ext_joblist, const char * lsf_request) {
   forward_model_type * forward_model = util_malloc( sizeof * forward_model , __func__);
   
   forward_model->jobs        = vector_alloc_new();
   forward_model->ext_joblist = ext_joblist;
-  if (use_lsf)
-    forward_model->lsf_request = lsf_request_alloc(statoil_mode);
-  else
-    forward_model->lsf_request = NULL;
+  forward_model->lsf_request = NULL;
   
-  forward_model->start_tag = util_alloc_string_copy( start_tag );
-  forward_model->end_tag = util_alloc_string_copy( end_tag );
+  if (lsf_request != NULL) 
+    forward_model_set_lsf_request( forward_model , lsf_request );
+  
   return forward_model;
 }
 
@@ -95,11 +85,7 @@ ext_job_type * forward_model_add_job(forward_model_type * forward_model , const 
 
 void forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value) {
   ext_job_type * job = vector_iget( forward_model->jobs , job_index );
-  {
-    char * tagged_arg = forward_model_alloc_tagged_string(forward_model , arg);
-    ext_job_set_private_arg(job , tagged_arg , value);
-    free( tagged_arg );
-  }
+  ext_job_set_private_arg(job , arg , value);  
 }
 
 
@@ -111,27 +97,30 @@ void forward_model_clear( forward_model_type * forward_model ) {
 
 void forward_model_free( forward_model_type * forward_model) {
   vector_free( forward_model->jobs );
-  if (forward_model->lsf_request != NULL) 
-    lsf_request_free(forward_model->lsf_request);
+  util_safe_free( forward_model->lsf_request );
   free(forward_model);
 }
 
 
 
 
-static void forward_model_update_lsf_request(forward_model_type * forward_model) {
-  if (forward_model->lsf_request != NULL) {
-    int ijob;
-    lsf_request_reset( forward_model->lsf_request );
-    for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
-      bool last_job = false;
-      const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
-      if (ijob == (vector_get_size(forward_model->jobs) - 1))
-	last_job = true;
-      lsf_request_update(forward_model->lsf_request , job , last_job);
-    }
-  }
+void forward_model_set_lsf_request( forward_model_type * forward_model , const char* lsf_request ) {
+  forward_model->lsf_request = util_realloc_string_copy( forward_model->lsf_request , lsf_request );
 }
+
+//static void forward_model_update_lsf_request(forward_model_type * forward_model) {
+//  if (forward_model->lsf_request != NULL) {
+//    int ijob;
+//    lsf_request_reset( forward_model->lsf_request );
+//    for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
+//      bool last_job = false;
+//      const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
+//      if (ijob == (vector_get_size(forward_model->jobs) - 1))
+//	last_job = true;
+//      lsf_request_update(forward_model->lsf_request , job , last_job);
+//    }
+//  }
+//}
 
 
 
@@ -197,7 +186,6 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
       break;   
     }
   }
-  forward_model_update_lsf_request(forward_model);
 }
 
 
@@ -232,21 +220,15 @@ void forward_model_python_fprintf(const forward_model_type * forward_model , con
 
 
 
-forward_model_type * forward_model_alloc_copy(const forward_model_type * forward_model , bool statoil_mode) {
+forward_model_type * forward_model_alloc_copy(const forward_model_type * forward_model) {
   int ijob;
-  bool use_lsf = false;
   forward_model_type * new;
 
-  if (forward_model->lsf_request != NULL)
-    use_lsf = true;
-  new = forward_model_alloc(forward_model->ext_joblist , statoil_mode , use_lsf , forward_model->start_tag , forward_model->end_tag);
-  
+  new = forward_model_alloc(forward_model->ext_joblist , forward_model->lsf_request );
   for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
     const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
     vector_append_owned_ref( new->jobs , ext_job_alloc_copy( job ) , ext_job_free__);
   }
-
-  forward_model_update_lsf_request(new);
   
   return new;
 }
@@ -273,8 +255,5 @@ const ext_joblist_type * forward_model_get_joblist(const forward_model_type * fo
 
 
 const char * forward_model_get_lsf_request(const forward_model_type * forward_model) {
-  if (forward_model->lsf_request != NULL)
-    return lsf_request_get(forward_model->lsf_request);
-  else
-    return NULL;
+  return forward_model->lsf_request;
 }
