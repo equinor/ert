@@ -218,7 +218,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         button_layout.addWidget(self.save_button)
         
         self.connect(self.save_button, QtCore.SIGNAL('clicked()'), self.plotView.save)
-        self.connect(self.import_button, QtCore.SIGNAL('clicked()'), self.plotView.importPlotSettings)
+        self.connect(self.import_button, QtCore.SIGNAL('clicked()'), self.plotView.copyPlotSettings)
 
         return button_layout
 

@@ -114,6 +114,7 @@ class PlotData:
         self.inverted_y_axis = False
 
         self.valid = True
+        self.key_index_is_index = False
 
     def checkMaxMin(self, value):
         if self.x_min is None or self.x_max is None:
@@ -167,6 +168,16 @@ class PlotData:
 
     def setValid(self, valid):
         self.valid = valid
+
+    def setKeyIndexIsIndex(self, bool):
+        self.key_index_is_index = bool
+
+    def getSaveName(self):
+        if self.key_index_is_index or self.getKeyIndex() is None:
+            return self.getName()
+        else:
+            return ("%s.%s" % (self.getName(), self.getKeyIndex()))
+        
 
 
 class PlotContextDataFetcher(ContentModel):
