@@ -97,25 +97,25 @@ class PlotView(QFrame):
         if self.data.isValid():
             plot_config_saver = PlotSettingsSaver()
             annotations = self.plot_figure.getAnnotations()
-            plot_config_saver.save(self.data.getName(), self.plot_settings, annotations)
+            plot_config_saver.save(self.data.getSaveName(), self.plot_settings, annotations)
 
         self.data = data
         self.plot_settings.setXDataType(data.getXDataType())
         self.plot_settings.setYDataType(data.getYDataType())
 
         if self.data.isValid():
-            self.loadSettings(self.data.getName())
+            self.loadSettings(self.data.getSaveName())
         else:
             self.emit(SIGNAL('plotSelectionChanged(array)'), self.plot_settings.selected_members)
 
     def setXViewFactors(self, xminf, xmaxf, draw=True):
-        self.plot_figure.setXViewFactors(self.plot_settings, xminf, xmaxf, self.data.x_min, self.data.x_max, self.data.getXDataType())
+        self.plot_figure.setXViewFactors(self.plot_settings, xminf, xmaxf, self.data.x_min, self.data.x_max)
 
         if draw:
             self.canvas.draw()
 
     def setYViewFactors(self, yminf, ymaxf, draw=True):
-        self.plot_figure.setYViewFactors(self.plot_settings, yminf, ymaxf, self.data.y_min, self.data.y_max, self.data.getYDataType())
+        self.plot_figure.setYViewFactors(self.plot_settings, yminf, ymaxf, self.data.y_min, self.data.y_max)
 
         if draw:
             self.canvas.draw()
@@ -131,7 +131,7 @@ class PlotView(QFrame):
         self.plot_figure.getFigure().savefig(path + ".png", dpi=300, format="png")
         self.plot_figure.getFigure().savefig(path + ".pdf", dpi=300, format="pdf")
 
-    def importPlotSettings(self):
+    def copyPlotSettings(self):
         plot_config_loader = PlotSettingsLoader()
         plot_config_loader.copy(self.plot_settings)
         self.addAnnotations(plot_config_loader)
