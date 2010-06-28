@@ -70,7 +70,6 @@ enkf_state_type  * enkf_state_alloc(int ,
 				    ensemble_config_type * ,
 				    const site_config_type * ,
 				    const ecl_config_type * ,
-				    const forward_model_type *,
                                     log_type * logh,
                                     ert_templates_type * templates,
                                     subst_list_type    * parent_subst);

@@ -122,8 +122,6 @@ struct enkf_state_struct {
   run_info_type         * run_info;          	   /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
   shared_info_type      * shared_info;       	   /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;         	   /* Private config information for this member; not updated during a simulation. */
-  
-  forward_model_type    * forward_model;           /* */
 };
 
 /*****************************************************************/
@@ -438,7 +436,6 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   ensemble_config_type      * ensemble_config,
 				   const site_config_type    * site_config,
 				   const ecl_config_type     * ecl_config,
-				   const forward_model_type  * forward_model,
                                    log_type                  * logh,
                                    ert_templates_type        * templates,
                                    subst_list_type           * subst_parent) { 
@@ -512,8 +509,6 @@ INCLDUE
   enkf_state->my_config = member_config_alloc( iens , casename , pre_clear_runpath , keep_runpath , ecl_config , ensemble_config , fs);
   enkf_state_set_static_subst_kw( enkf_state );
 
-  enkf_state->forward_model = forward_model_alloc_copy( forward_model );
-  enkf_state->forward_model = forward_model;  /* Shared reference */
   enkf_state_add_nodes( enkf_state , ensemble_config );
 
   return enkf_state;
@@ -1192,7 +1187,6 @@ void enkf_state_free(enkf_state_type *enkf_state) {
   member_config_free(enkf_state->my_config);
   run_info_free(enkf_state->run_info);
   shared_info_free(enkf_state->shared_info);
-  //forward_model_free(enkf_state->forward_model);
   free(enkf_state);
 }
 
@@ -1387,7 +1381,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     }
     
     /* This is where the job script is created */
-    forward_model_python_fprintf( enkf_state->forward_model , run_info->run_path , enkf_state->subst_list);
+    forward_model_python_fprintf( model_config_get_forward_model( enkf_state->shared_info->model_config ) , run_info->run_path , enkf_state->subst_list);
   }
 }
 
@@ -1413,9 +1407,9 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
   run_info_type       * run_info    = enkf_state->run_info;
   if (run_info->active) {  /* if the job is not active we just return .*/
-    const shared_info_type    * shared_info = enkf_state->shared_info;
-    const member_config_type  * my_config   = enkf_state->my_config;
-    
+    const shared_info_type    * shared_info   = enkf_state->shared_info;
+    const member_config_type  * my_config     = enkf_state->my_config;
+    const forward_model_type  * forward_model = model_config_get_forward_model(shared_info->model_config);
     /*
       Prepare the job and submit it to the queue
     */
@@ -1424,7 +1418,7 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
                          run_info->run_path , 
                          member_config_get_eclbase(my_config) , 
                          member_config_get_iens(my_config) , 
-                         forward_model_get_lsf_request(enkf_state->forward_model));
+                         forward_model_get_lsf_request(forward_model));
     run_info->num_internal_submit++;
   }
 }
