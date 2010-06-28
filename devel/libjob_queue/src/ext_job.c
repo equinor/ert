@@ -572,6 +572,16 @@ void ext_job_fprintf(const ext_job_type * ext_job , FILE * stream) {
 }
 
 
+/** 
+    The format variable @fmt should contain two '%s' placeholders -
+    one for the job name, and one for the job description file.
+*/
+
+void ext_job_fprintf_config(const ext_job_type * ext_job , const char * fmt , FILE * stream) {
+  fprintf(stream , fmt , ext_job->name , ext_job->config_file );
+}
+
+
 
 
 

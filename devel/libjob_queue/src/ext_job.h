@@ -14,7 +14,7 @@ typedef struct ext_job_struct ext_job_type;
 const char *            ext_job_get_help_text( const ext_job_type * job );
 void                    ext_job_set_help_text( ext_job_type * job , const char * help_text);
 
-
+void                    ext_job_fprintf_config(const ext_job_type * ext_job , const char * fmt , FILE * stream);
 ext_job_type          * ext_job_alloc_copy(const ext_job_type * );
 ext_job_type          * ext_job_alloc(const char * , const char * license_root_path , bool private_job);
   const char            * ext_job_get_name(const ext_job_type * );
