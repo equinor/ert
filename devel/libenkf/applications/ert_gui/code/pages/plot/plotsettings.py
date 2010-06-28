@@ -49,8 +49,7 @@ class PlotSettings(QObject):
 
         self._selected_members = []
 
-        self._x_data_type = "number"
-        self._y_data_type = "number"
+        self._annotations = []
 
     def notify(self, *args):
         self.emit(SIGNAL('plotSettingsChanged(PlotSettings)'), self)
@@ -90,7 +89,7 @@ class PlotSettings(QObject):
             self._y_limits = (value, self._y_limits[1])
             self.notify()
 
-    def getMinYLimit(self, y_min, type=""):
+    def getMinYLimit(self, y_min, data_type=""):
         if self._y_limits[0] is None:
             return y_min
         else:
@@ -101,7 +100,7 @@ class PlotSettings(QObject):
             self._y_limits = (self._y_limits[0], value)
             self.notify()
 
-    def getMaxYLimit(self, y_max, type=""):
+    def getMaxYLimit(self, y_max, data_type=""):
         if self._y_limits[1] is None:
             return y_max
         else:
@@ -112,14 +111,14 @@ class PlotSettings(QObject):
             self._x_limits = (value, self._x_limits[1])
             self.notify()
 
-    def getMinXLimit(self, x_min):
+    def getMinXLimit(self, x_min, data_type):
         """Returns the provided x_min value if the custom x_min value is None. Converts dates to numbers"""
         if self._x_limits[0] is None:
             x_limit = x_min
         else:
             x_limit = self._x_limits[0]
 
-        if not x_limit is None and self._x_data_type == "time" and not isinstance(x_limit, time_t):
+        if not x_limit is None and data_type == "time" and not isinstance(x_limit, time_t):
             x_limit = time_t(long(round(x_limit)))
 
         return x_limit
@@ -129,13 +128,13 @@ class PlotSettings(QObject):
             self._x_limits = (self._x_limits[0], value)
             self.notify()
 
-    def getMaxXLimit(self, x_max):
+    def getMaxXLimit(self, x_max, data_type):
         if self._x_limits[1] is None:
             x_limit = x_max
         else:
             x_limit = self._x_limits[1]
 
-        if not x_limit is None and self._x_data_type == "time" and not isinstance(x_limit, time_t):
+        if not x_limit is None and data_type == "time" and not isinstance(x_limit, time_t):
             x_limit = time_t(long(round(x_limit)))
 
         return x_limit
@@ -195,21 +194,41 @@ class PlotSettings(QObject):
     def getMaxYZoom(self):
         return self._ymaxf
 
-    def getXDataType(self):
-        return self._x_data_type
+    def getAnnotations(self):
+        return self._annotations
 
-    def getYDataType(self):
-        return self._y_data_type
-
-    def setXDataType(self, type):
-        if not self._x_data_type == type:
-            self._x_data_type = type
+    def clearAnnotations(self):
+        if len(self._annotations) > 0:
+            self._annotations = []
             self.notify()
 
-    def setYDataType(self, type):
-        if not self._y_data_type == type:
-            self._y_data_type = type
+    def addAnnotation(self, label, x, y, xt, yt):
+        annotation = PlotAnnotation(label, x, y, xt, yt)
+        self._annotations.append(annotation)
+        self.notify()
+        return annotation
+
+    def removeAnnotation(self, annotation):
+        if annotation in self._annotations:
+            self._annotations.remove(annotation)
             self.notify()
+
+
+class PlotAnnotation:
+    def __init__(self, label, x, y, xt, yt):
+        self.label = label
+        self.x = x
+        self.y = y
+        self.xt = xt
+        self.yt = yt
+
+    def setUserData(self, user_data):
+        self._user_data = user_data
+
+    def getUserData(self):
+        return self._user_data
+
+
 
 
 

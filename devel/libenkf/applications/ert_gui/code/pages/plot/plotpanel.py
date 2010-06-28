@@ -53,10 +53,10 @@ class PlotPanel(QtGui.QWidget):
         plot_view_layout.addWidget(self.plot, 0, 0, 1, 1)
 
         self.h_zoom_slider = ZoomSlider()
-        self.connect(self.h_zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), self.plot.setXViewFactors)
+        self.connect(self.h_zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), self.plot.setXZoomFactors)
 
         self.v_zoom_slider = ZoomSlider(horizontal=False)
-        self.connect(self.v_zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), self.plot.setYViewFactors)
+        self.connect(self.v_zoom_slider, QtCore.SIGNAL('zoomValueChanged(float, float)'), self.plot.setYZoomFactors)
 
         plot_view_layout.addWidget(self.h_zoom_slider, 1, 0, 1, 1)
         plot_view_layout.addWidget(self.v_zoom_slider, 0, 1, 1, 1)
@@ -77,10 +77,10 @@ class PlotPanel(QtGui.QWidget):
 
     def fetchSettings(self, plot_settings):
         data = self.plotDataFetcher.data
-        x_min = plot_settings.getMinXLimit(data.x_min)
-        x_max = plot_settings.getMaxXLimit(data.x_max)
-        y_min = plot_settings.getMinYLimit(data.y_min)
-        y_max = plot_settings.getMaxYLimit(data.y_max)
+        x_min = plot_settings.getMinXLimit(data.x_min, data.getXDataType())
+        x_max = plot_settings.getMaxXLimit(data.x_max, data.getXDataType())
+        y_min = plot_settings.getMinYLimit(data.y_min, data.getYDataType())
+        y_max = plot_settings.getMaxYLimit(data.y_max, data.getYDataType())
 
         state = self.h_zoom_slider.blockSignals(True)
         self.h_zoom_slider.setMinValue(plot_settings.getMinXZoom())
@@ -102,7 +102,7 @@ class PlotPanel(QtGui.QWidget):
 
         state = plot_settings.blockSignals(True)
 
-        self.plotViewSettings.setDataTypes(plot_settings.getXDataType(), plot_settings.getYDataType())
+        self.plotViewSettings.setDataTypes(data.getXDataType(), data.getYDataType())
         self.plotViewSettings.setLimits(x_min, x_max, y_min, y_max)
         self.plotViewSettings.setLimitStates(*plot_settings.getLimitStates())
         self.plotViewSettings.plotSelectionChanged(plot_settings.getSelectedMembers())
@@ -366,3 +366,6 @@ class PlotParameterConfigurationPanel(QtGui.QFrame):
         if self.layout.indexOf(widget) == -1:
             self.layout.addWidget(widget)
         self.layout.setCurrentWidget(widget)
+
+
+
