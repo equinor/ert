@@ -148,10 +148,10 @@ static int lsf_driver_submit_system_job(lsf_driver_type * driver , const char * 
   sprintf(num_cpu_string , "%d" , driver->num_cpu);
 
   if (resource_request != NULL) 
-    util_fork_exec(driver->bsub_executable , 12 , (const char *[12]) {"-o" , lsf_stdout , 
-                                                                      "-q" , lsf_queue  , 
-                                                                      "-J" , job_name   , 
-                                                                      "-n" , num_cpu_string , 
+    util_fork_exec(driver->bsub_executable , 12 , (const char *[12]) {  "-o" , lsf_stdout , 
+                                                                        "-q" , lsf_queue  , 
+                                                                        "-J" , job_name   , 
+                                                                        "-n" , num_cpu_string , 
                                                                         "-R" , resource_request , 
                                                                       submit_cmd , run_path} 
                    , true , NULL , NULL , NULL , tmp_file , NULL);
@@ -178,7 +178,7 @@ static int lsf_driver_get_status__(lsf_driver_type * driver , const char * statu
   if (hash_has_key( driver->status_map , status))
     return hash_get_int( driver->status_map , status);
   else 
-    util_exit("Sorry: the lsf_status:%s  for job:%s is not recognized; call your LSF administrator. Sorry. \n", status , job_id);
+    util_exit("The lsf_status:%s  for job:%s is not recognized; call your LSF administrator - sorry :-( \n", status , job_id);
 }
 
 
@@ -200,8 +200,11 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 
 	if (sscanf(line , "%d %s %s", &job_id_int , user , status) == 3) {
 	  char * job_id = util_alloc_sprintf("%d" , job_id_int);
-          if (hash_has_key( driver->my_jobs , job_id ))   /* Consider only jobs submitted by this ERT instance. */
+
+          if (hash_has_key( driver->my_jobs , job_id ))   /* Consider only jobs submitted by this ERT instance - not old jobs lying around from the same user. */
             hash_insert_int(driver->bjobs_cache , job_id , lsf_driver_get_status__( driver , status , job_id));
+          else
+            printf("%s: skipping job:%s \n",__func__ , job_id );
 	  free(job_id);
 	}
 	free(line);
@@ -327,7 +330,6 @@ job_status_type lsf_driver_get_job_status(void * __driver , void * __job) {
 
 void lsf_driver_display_info( void * __driver , void * __job) {
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
-
   printf("Executing host: ");
   {
     int i;
@@ -475,6 +477,9 @@ void lsf_driver_free__(void * __driver ) {
 
 
 
+
+
+
 void * lsf_driver_alloc(const char * queue_name , int num_cpu) {
   lsf_driver_type * lsf_driver 	   = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name       	   = util_alloc_string_copy(queue_name);
@@ -484,11 +489,10 @@ void * lsf_driver_alloc(const char * queue_name , int num_cpu) {
   lsf_driver->kill_job             = lsf_driver_kill_job;
   lsf_driver->free_job         	   = lsf_driver_free_job;
   lsf_driver->free_driver      	   = lsf_driver_free__;
-  lsf_driver->display_info         = lsf_driver_display_info;
-  lsf_driver->driver_type          = LSF_DRIVER; 
+  lsf_driver->driver_type          = LSF_DRIVER;
   lsf_driver->num_cpu              = num_cpu;
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
-  
+
 #ifdef LSF_LIBRARY_DRIVER
   memset(&lsf_driver->lsf_request , 0 , sizeof (lsf_driver->lsf_request));
   lsf_driver->lsf_request.queue     	   = lsf_driver->queue_name;
@@ -505,14 +509,16 @@ void * lsf_driver_alloc(const char * queue_name , int num_cpu) {
   if (lsb_init(NULL) != 0) 
     util_abort("%s failed to initialize LSF environment : %s/%d  \n",__func__ , lsb_sysmsg() , lsberrno);
   setenv("BSUB_QUIET" , "yes" , 1);
+  lsf_driver->display_info         = lsf_driver_display_info;
 #else
   lsf_driver->last_bjobs_update   = time( NULL );
   lsf_driver->bjobs_cache 	  = hash_alloc(); 
-  lsf_driver->my_jobs 	  = hash_alloc(); 
+  lsf_driver->my_jobs 	          = hash_alloc(); 
   lsf_driver->status_map   	  = hash_alloc();
   lsf_driver->bjobs_executable    = util_alloc_PATH_executable( "bjobs" );
   lsf_driver->bsub_executable     = util_alloc_PATH_executable( "bsub" );
   lsf_driver->bkill_executable    = util_alloc_PATH_executable( "bkill" );
+  lsf_driver->display_info        = NULL;                                      /* The system driver does not have any display info function. */
   hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
   hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_QUEUE_RUNNING);
   hash_insert_int(lsf_driver->status_map , "PSUSP"  , JOB_QUEUE_PENDING);
