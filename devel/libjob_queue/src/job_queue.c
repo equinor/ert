@@ -648,8 +648,10 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
 
 
 /**
-   The external scope asks the queue to restart the the job. We reset
-   the submit counter to zero.
+   The external scope asks the queue to restart the the job; we reset
+   the submit counter to zero. This function should typically be used
+   in combination with resampling, however that is the responsability
+   of the calling scope.
 */
    
 void job_queue_set_external_restart(job_queue_type * queue , int job_index) {
@@ -660,15 +662,22 @@ void job_queue_set_external_restart(job_queue_type * queue , int job_index) {
 
 
 /**
-   The queue system has said that the job completed OK, hwoever the
+   The queue system has said that the job completed OK, however the
    external scope failed to load all the results and are using this
    function to inform the queue system that the job has indeed
    failed. The queue system will then either retry the job, or switch
    status to JOB_QUEUE_RUN_FAIL.
+   
+
+   This is a bit dangerous beacuse the queue system has said that the
+   job was all hunkadory, and freed the driver related resources
+   attached to the job; it is therefor essential that the
+   JOB_QUEUE_EXIT code explicitly checks the status of the job node's
+   driver specific data before dereferencing.
 */
+
 void job_queue_set_external_fail(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
-  node->submit_attempt       = 0;
   job_queue_change_node_status( queue , node , JOB_QUEUE_EXIT);
 }
 
@@ -687,8 +696,6 @@ time_t job_queue_iget_sim_start( job_queue_type * queue, int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   return node->sim_start;
 }
-
-
 
 time_t job_queue_iget_submit_time( job_queue_type * queue, int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
@@ -892,19 +899,41 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                   }
                   break;
                 case(JOB_QUEUE_EXIT):
-                  if (verbose) {
-                    printf("Job: %s failed | ",node->job_name);
-                    job_queue_display_job_info( queue , node );
+                  /** 
+                      Observe that before a job arrives here it might have been through
+                      the following roundtrip:
+
+                         1. The job simulated OK.
+                         
+                         2. The queue system set the job status to JOB_QUEUE_RUN_OK, and
+                            called job_queue_free_job() to free the driver specific
+                            information about the job.
+
+                         3. The external scope tried to load the data from the job, however
+                            due to misconfiguration not all data could be loaded, and
+                            external scope calls job_queue_set_external_fail() which sets
+                            the status to JOB_QUEUE_EXIT; and we enter thios code block.
+
+                      Now - the important point is that due to 2) above the driver
+                      specific information has already been freed; and we must be careful
+                      not to dereference a NULL pointer, nor call free a second time.
+                  */
+                  
+                  if (node->job_data != NULL) {
+                    if (verbose) 
+                      job_queue_display_job_info( queue , node );
+                    job_queue_free_job(queue , node );                               /* This frees the storage allocated by the driver - 
+                                                                                        the storage allocated by the queue layer is retained. */
                   }
+
                   /* 
                      If the job has failed with status JOB_QUEUE_EXIT it
                      will always go via status JOB_QUEUE_WAITING first. The
-                     job dispatched will then either resubmit, in case there
+                     job dispatcher will then either resubmit, in case there
                      are more attempts to go, or set the status to
                      JOB_QUEUE_FAIL.
                   */
                   job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
-                  job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
                   break;
                 default:
                   break;

@@ -143,6 +143,8 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
   //stringlist_free( tokens );
   //tokenizer_free( tokenizer );
 
+  stringlist_type * arg_list   = stringlist_alloc_new();
+  
   char * p1                          = (char *) input_string;
   while (true) {
     ext_job_type *  current_job;
@@ -162,9 +164,8 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
 	util_abort("%s: paranthesis not terminated for job:%s \n",__func__ , job_name);
       {
 	char  * arg_string          = util_alloc_substring_copy((p1 + 1) , arg_length - 1);
-        ext_job_set_private_args_from_string( current_job , arg_string );
+        stringlist_append_owned_ref( arg_list , arg_string );
 	p1 += (1 + arg_length);
-        free( arg_string );
       }
     } 
     
@@ -186,6 +187,15 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
       break;   
     }
   }
+  {
+    /* 
+       We take care to ensure that the first element in the subst list corresponds to the
+       first argument given by the user.
+    */
+    for (int i = (stringlist_get_size( arg_list ) - 1); i >= 0; i--)
+      ext_job_set_private_args_from_string( current_job , stringlist_iget( arg_string , i));
+  }
+  stringlist_free( arg_list );
 }
 
 
