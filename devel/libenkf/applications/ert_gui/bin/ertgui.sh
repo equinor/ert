@@ -24,6 +24,8 @@ then
     echo
     exit
 fi
+echo "Loading ERT shared libraries from:" $ERT_LD_PATH 
+echo "-----------------------------------------------------------------"
 
 if [ -z "$1" ]
 then
@@ -43,7 +45,7 @@ fi
 #
 export QT_EXPERIMENTAL=1
 export PYTHON_EXPERIMENTAL=1
-source /prog/sdpsoft/environment.sh
+source /prog/sdpsoft/environment.sh > /dev/null
 
 #
 # Required by ERT
