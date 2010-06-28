@@ -14,11 +14,11 @@ typedef struct site_config_struct site_config_type;
 
 const char            *  site_config_get_license_root_path__( const site_config_type * site_config );
 void                     site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path);
-
+void                     site_config_init_user_parse( site_config_type * site_config );
 
 void                     site_config_set_num_cpu( site_config_type * site_config , int num_cpu );
 void                     site_config_update_lsf_request(site_config_type *  , const forward_model_type *);
-site_config_type       * site_config_alloc(const config_type * );
+void                     site_config_init(site_config_type * site_config , const config_type * config, bool user_config);
 void                     site_config_free(site_config_type *); 
 ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
 job_queue_type         * site_config_get_job_queue( const site_config_type * );
@@ -39,7 +39,7 @@ stringlist_type        * site_config_get_path_values( const site_config_type * s
 
 void                     site_config_clear_rsh_host_list( site_config_type * site_config );
 hash_type              * site_config_get_rsh_host_list( const site_config_type * site_config );
-void                     site_config_add_rsh_host( const site_config_type * site_config , const char * rsh_host , int max_running);
+void                     site_config_add_rsh_host( site_config_type * site_config , const char * rsh_host , int max_running);
 
 void                     site_config_set_lsf_queue( site_config_type * site_config , const char * lsf_queue);
 const char             * site_config_get_lsf_queue( const site_config_type * site_config );
@@ -65,9 +65,10 @@ bool                     site_config_del_job( site_config_type * site_config , c
 
 void                     site_config_set_umask( site_config_type * site_config , mode_t umask);
 mode_t                   site_config_get_umask( const site_config_type * site_config );
+void                     site_config_fprintf_config( const site_config_type * site_config , FILE * stream );
 
-
-
+site_config_type       * site_config_alloc_empty();
+void                     site_config_add_config_items( config_type * config , bool site_only);
 #ifdef __cplusplus
 }
 #endif

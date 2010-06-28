@@ -117,7 +117,7 @@ void plot_config_free( plot_config_type * plot_config) {
 /**
    The plot_config object is instantiated with the default values from enkf_defaults.h
 */
-plot_config_type * plot_config_alloc() {
+plot_config_type * plot_config_alloc_default() {
   plot_config_type * info        = util_malloc( sizeof * info , __func__);
   info->plot_path                = NULL;
   info->image_type               = NULL;
@@ -137,7 +137,7 @@ plot_config_type * plot_config_alloc() {
 
 
 
-void plot_config_init_from_config(plot_config_type * plot_config , const config_type * config ) {
+void plot_config_init(plot_config_type * plot_config , const config_type * config ) {
   if (config_item_set( config , PLOT_PATH_KEY))
     plot_config_set_path( plot_config , config_get_value( config , PLOT_PATH_KEY ));
 
@@ -167,5 +167,15 @@ void plot_config_add_config_items( config_type * config ) {
   config_add_key_value(config , PLOT_PATH_KEY         , false , CONFIG_STRING);
   config_add_key_value(config , IMAGE_VIEWER_KEY      , false , CONFIG_FILE);
   config_add_key_value(config , PLOT_ERRORBAR_MAX_KEY , false , CONFIG_INT);
+
+  {
+    config_item_type * item;
+    
+    item = config_add_key_value(config , IMAGE_TYPE_KEY , false , CONFIG_STRING);
+    config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
+
+    item = config_add_key_value(config , PLOT_DRIVER_KEY , false , CONFIG_STRING);
+    config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
+  }
 }
 

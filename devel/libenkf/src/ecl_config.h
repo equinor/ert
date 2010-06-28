@@ -21,7 +21,7 @@ void                  ecl_config_set_schedule_prediction_file( ecl_config_type *
 const char *          ecl_config_get_schedule_file( const ecl_config_type * ecl_config );
 int                   ecl_config_get_num_cpu( const ecl_config_type * ecl_config );
 void                  ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file);
-ecl_config_type     * ecl_config_alloc( const config_type * );
+void                  ecl_config_init( ecl_config_type * ecl_config , const config_type * config);
 void                  ecl_config_free( ecl_config_type *);
 bool                  ecl_config_include_static_kw(const ecl_config_type * , const char * );
 void                  ecl_config_add_static_kw(ecl_config_type *, const char *); 
@@ -52,6 +52,7 @@ const char          * ecl_config_get_refcase_name( const ecl_config_type * ecl_c
 void                  ecl_config_clear_static_kw( ecl_config_type * ecl_config );
 stringlist_type     * ecl_config_get_static_kw_list( const ecl_config_type * ecl_config );
 void                  ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stream );
+ecl_config_type     * ecl_config_alloc_empty( );
 
 #ifdef __cplusplus
 }

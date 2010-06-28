@@ -104,13 +104,14 @@ const char * ensemble_config_get_gen_kw_format( const ensemble_config_type * ens
 
 
 
-static ensemble_config_type * ensemble_config_alloc_empty( const ecl_sum_type * refcase ) {
+ensemble_config_type * ensemble_config_alloc_empty( ) {
+
   ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config , __func__);
   ensemble_config->config_nodes          = hash_alloc();
-  ensemble_config->refcase               = refcase;
+  ensemble_config->refcase               = NULL;
   ensemble_config->gen_kw_format_string  = util_alloc_string_copy( DEFAULT_GEN_KW_TAG_FORMAT );
   pthread_mutex_init( &ensemble_config->mutex , NULL);
-
+  
   return ensemble_config;
 }
 
@@ -379,9 +380,8 @@ void ensemble_config_add_config_items(config_type * config) {
    impossible to use wildcards when expanding summary variables.
 */
 
-ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
+void ensemble_config_init(ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
-  ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( refcase );
   ensemble_config->field_trans_table     = field_trans_table_alloc();    
 
   /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
@@ -574,8 +574,6 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , ecl_gr
   }
   
   /*****************************************************************/
-
-  return ensemble_config;
 }
 
 /**

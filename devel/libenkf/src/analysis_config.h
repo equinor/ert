@@ -8,8 +8,8 @@
 typedef struct analysis_config_struct analysis_config_type;
 
 const char           * analysis_config_get_log_path( const analysis_config_type * config );
-void                   analysis_config_init_from_config( analysis_config_type * analysis , const config_type * config );
-analysis_config_type * analysis_config_alloc(void );
+void                   analysis_config_init( analysis_config_type * analysis , const config_type * config );
+analysis_config_type * analysis_config_alloc_default(void );
 void                   analysis_config_free( analysis_config_type * );
 bool                   analysis_config_get_merge_observations(const analysis_config_type * );
 double 		       analysis_config_get_alpha(const analysis_config_type * config);
@@ -35,4 +35,6 @@ void                   analysis_config_set_nfolds_CV( analysis_config_type * con
 void                   analysis_config_set_log_path(analysis_config_type * config , const char * log_path );
 void                   analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff );
 double                 analysis_config_get_std_cutoff( const analysis_config_type * config );
+void                   analysis_config_add_config_items( config_type * config );
+
 #endif

@@ -308,9 +308,9 @@ static void ecl_config_init_static_kw( ecl_config_type * ecl_config ) {
 }
 
 
-
-ecl_config_type * ecl_config_alloc( const config_type * config ) {
+ecl_config_type * ecl_config_alloc_empty( ) {
   ecl_config_type * ecl_config         = util_malloc(sizeof * ecl_config , __func__);
+
   ecl_config->io_config 	       = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
   ecl_config->eclbase                  = NULL;
   ecl_config->include_all_static_kw    = false;
@@ -326,13 +326,16 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config->start_date               = -1;
   ecl_config->sched_file               = NULL;
   ecl_config->schedule_prediction_file = NULL;
-
-  /*****************************************************************/
   ecl_config_init_static_kw( ecl_config );
+
+  return ecl_config;
+}
+
+
+void ecl_config_init( ecl_config_type * ecl_config , const config_type * config ) {
   ecl_config_set_eclbase( ecl_config , config_iget(config , ECLBASE_KEY ,0,0) );
   ecl_config_set_data_file( ecl_config , config_iget( config , DATA_FILE_KEY ,0,0));
   ecl_config_set_schedule_file( ecl_config , config_iget( config , SCHEDULE_FILE_KEY ,0,0));
-  ecl_config_clear_static_kw( ecl_config );
   if (config_item_set(config , GRID_KEY))
     ecl_config_set_grid( ecl_config , config_iget(config , GRID_KEY , 0,0) );
   
@@ -368,8 +371,6 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
       IFF the user has no intentitions of any form of restart, this is
       perfectly legitemate.
   */
-  
-  return ecl_config;
 }
 
 

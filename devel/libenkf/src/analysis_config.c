@@ -31,14 +31,14 @@ struct analysis_config_struct {
 
 
 
-static analysis_config_type * analysis_config_alloc__() {
+analysis_config_type * analysis_config_alloc_default() {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
 
-  config->inversion_mode     = SVD_SS_N1_R;
-  config->random_rotation    = true;
-  config->log_path           = NULL;
-  config->do_cross_validation = true;
-  config->nfolds_CV          = 10;
+  config->inversion_mode            = SVD_SS_N1_R;
+  config->random_rotation           = true;
+  config->log_path                  = NULL;
+  config->do_cross_validation       = true;
+  config->nfolds_CV                 = 10; 
   config->do_local_cross_validation = false;
   
   analysis_config_set_std_cutoff( config , DEFAULT_ENKF_STD_CUTOFF );
@@ -49,7 +49,6 @@ static analysis_config_type * analysis_config_alloc__() {
   analysis_config_set_enkf_mode ( config , DEFAULT_ENKF_MODE );
   analysis_config_set_rerun( config , DEFAULT_RERUN );
   analysis_config_set_rerun_start( config , DEFAULT_RERUN_START );
-
 
   return config;
 }
@@ -150,12 +149,8 @@ void analysis_config_set_do_local_cross_validation( analysis_config_type * confi
    for enkf_defaults.h
 */
 
-analysis_config_type * analysis_config_alloc() {
-  return analysis_config_alloc__();
-}
- 
 
-void analysis_config_init_from_config( analysis_config_type * analysis , const config_type * config ) {
+void analysis_config_init( analysis_config_type * analysis , const config_type * config ) {
   if (config_item_set( config , UPDATE_LOG_PATH_KEY ))
     analysis_config_set_log_path( analysis , config_get_value( config , UPDATE_LOG_PATH_KEY ));
   
@@ -252,3 +247,28 @@ bool analysis_config_Xbased(const analysis_config_type * config) {
     return false;
 }
 
+
+
+/*****************************************************************/
+/*
+  Keywords for the analysis - all optional. The analysis_config object
+  is instantiated with defaults from enkf_defaults.h
+*/
+
+void analysis_config_add_config_items( config_type * config ) {
+  config_item_type * item;
+  
+  item = config_add_key_value(config , ENKF_MODE_KEY , false , CONFIG_STRING );
+  config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
+  
+  config_add_key_value( config , STD_CUTOFF_KEY              , false , CONFIG_FLOAT);
+  config_add_key_value( config , ENKF_TRUNCATION_KEY         , false , CONFIG_FLOAT);
+  config_add_key_value( config , ENKF_ALPHA_KEY              , false , CONFIG_FLOAT);
+  config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_CV_FOLDS_KEY           , false , CONFIG_INT);
+  config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
+  config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
+}

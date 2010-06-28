@@ -71,13 +71,18 @@
 
 
 
-/* Where the history is coming from - default value for config item: HISTORY_SOURCE */
-#define DEFAULT_HISTORY_SOURCE "SCHEDULE"
+/* Where the history is coming from - default value for config item:
+   HISTORY_SOURCE Observe that the function:
+   model_config_set_history_source() does currently not handle a
+   default value different from SCHEDULE.
+*/
+#define DEFAULT_HISTORY_SOURCE  SCHEDULE
 
 
 
-/* The number of times to resubmit - default value for config item: MAX_SUBMIT */
-#define DEFAULT_MAX_SUBMIT "2"
+
+
+#define DEFAULT_MAX_SUBMIT           2        /* The number of times to resubmit - default value for config item: MAX_SUBMIT */
 #define DEFAULT_MAX_INTERNAL_SUBMIT  1        /** Attached to keyword : MAX_RETRY */
 
 
@@ -121,11 +126,17 @@
 #define DEFAULT_SUMMARY_JOIN ":"
 
 
-#define CONFIG_KEY_FORMAT         "%-16s"
+
+/*
+  Some #define symbols used when saving configuration files.
+*/
+#define CONFIG_KEY_FORMAT         "%-20s"
 #define CONFIG_VALUE_FORMAT       " %-32s"
 #define CONFIG_ENDVALUE_FORMAT    " %-32s\n"
 #define CONFIG_COMMENT_FORMAT     "-- %s\n"
 #define CONFIG_COMMENTLINE_FORMAT "----------------------------------------------------------------------\n"
+
+
 
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"

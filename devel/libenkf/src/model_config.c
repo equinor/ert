@@ -216,14 +216,7 @@ void model_config_set_history_source( model_config_type * model_config , history
 }
 
 
-
-model_config_type * model_config_alloc(const config_type * config , 
-                                       int ens_size , 
-                                       const ext_joblist_type * joblist , 
-                                       int last_history_restart , 
-                                       const sched_file_type * sched_file , 
-                                       const ecl_sum_type * refcase, 
-                                       const char * lsf_request ) {
+model_config_type * model_config_alloc_empty() {
   model_config_type * model_config  = util_malloc(sizeof * model_config , __func__);
   /**
      There are essentially three levels of initialisation:
@@ -241,6 +234,26 @@ model_config_type * model_config_alloc(const config_type * config ,
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;   
   model_config->case_table_file           = NULL;
+
+  model_config_set_history_source( model_config , DEFAULT_HISTORY_SOURCE );
+  model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
+  model_config_set_dbase_type( model_config     , DEFAULT_DBASE_TYPE );
+  model_config_set_runpath_fmt( model_config    , DEFAULT_RUNPATH);
+  
+  return model_config;
+}
+
+
+
+void model_config_init(model_config_type * model_config , 
+                       const config_type * config , 
+                       int ens_size , 
+                       const ext_joblist_type * joblist , 
+                       int last_history_restart , 
+                       const sched_file_type * sched_file , 
+                       const ecl_sum_type * refcase, 
+                       const char * lsf_request ) {
+  
   model_config->forward_model             = forward_model_alloc(  joblist , lsf_request );
   model_config_set_refcase( model_config , refcase );
   {
@@ -249,10 +262,6 @@ model_config_type * model_config_alloc(const config_type * config ,
     free(config_string);
   }
   
-  model_config_set_enspath( model_config , DEFAULT_ENSPATH );
-  model_config_set_dbase_type( model_config , DEFAULT_DBASE_TYPE );
-  model_config_set_runpath_fmt( model_config , DEFAULT_RUNPATH);
-
 
   if (config_item_set( config , ENKF_SCHED_FILE_KEY))
     model_config_set_enkf_sched_file(model_config , config_get_value(config , ENKF_SCHED_FILE_KEY ));
@@ -308,8 +317,6 @@ model_config_type * model_config_alloc(const config_type * config ,
   
   if (config_item_set( config , MAX_RESAMPLE_KEY))
     model_config_set_max_resample( model_config , config_get_value_as_int( config , MAX_RESAMPLE_KEY ));
-  
-  return model_config;
 }
 
 
