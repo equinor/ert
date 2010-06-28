@@ -228,7 +228,6 @@ void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_fi
 
 static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
   site_config_set_num_cpu( enkf_main->site_config , ecl_config_get_num_cpu( enkf_main->ecl_config ));
-
   /**
      This is how the number of CPU's are passed on to the forward models:
   */
@@ -2606,8 +2605,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                        ecl_config_get_sched_file(enkf_main->ecl_config) ,
                        ecl_config_get_refcase( enkf_main->ecl_config ) , 
                        site_config_get_lsf_request( enkf_main->site_config) );
-    
-    
+    enkf_main_update_num_cpu( enkf_main );
     {
       if (config_item_set( config , SCHEDULE_PREDICTION_FILE_KEY)) {
         stringlist_type * tokens = config_iget_stringlist_ref(config , SCHEDULE_PREDICTION_FILE_KEY , 0);
@@ -2764,12 +2762,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     }
     config_free(config);
 
-    enkf_main_set_user_config_file( enkf_main , "/tmp/config" );
-    enkf_main_fprintf_config( enkf_main );
+    //enkf_main_set_user_config_file( enkf_main , "/tmp/config" );
+    //enkf_main_fprintf_config( enkf_main );
   }
-  free(model_config);
+  free( model_config );
   enkf_main->misfit_table = NULL;
-  
   return enkf_main;
 }
 
