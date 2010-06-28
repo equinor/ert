@@ -5,7 +5,7 @@ class PlotSettingsSaver:
     def __init__(self):
         pass
 
-    def save(self, name, plot_settings, annotations):
+    def save(self, name, plot_settings):
         """Save plot configuration to a file with the specified name as filename."""
         self.doc = xml.dom.minidom.Document()
 
@@ -21,7 +21,7 @@ class PlotSettingsSaver:
         self.__addLimits(plot_settings.getLimitsTuple(), plot_settings.getZoomTuple())
         self.__addSelectedMembers(plot_settings.getSelectedMembers())
 
-        self.__addAnnotations(annotations)
+        self.__addAnnotations(plot_settings.getAnnotations())
 
         file_object = open("%s/%s.xml" % (plot_settings.getPlotConfigPath(), name), "w")
         file_object.write(self.doc.toprettyxml())
@@ -113,16 +113,15 @@ class PlotSettingsSaver:
         for annotation in annotations:
             annotation_element = self.doc.createElement("annotation")
             element.appendChild(annotation_element)
-            annotation_element.setAttribute("label", str(annotation[0]))
-            annotation_element.setAttribute("x", str(annotation[1]))
-            annotation_element.setAttribute("y", str(annotation[2]))
-            annotation_element.setAttribute("xt", str(annotation[3]))
-            annotation_element.setAttribute("yt", str(annotation[4]))
+            annotation_element.setAttribute("label", str(annotation.label))
+            annotation_element.setAttribute("x", str(annotation.x))
+            annotation_element.setAttribute("y", str(annotation.y))
+            annotation_element.setAttribute("xt", str(annotation.xt))
+            annotation_element.setAttribute("yt", str(annotation.yt))
 
 
 class PlotSettingsLoader:
     def __init__(self):
-        self.annotations = None
         self.skip_plot_settings = False
         self.skip_limits_and_zoom = False
         self.skip_selected_members = False
@@ -259,7 +258,7 @@ class PlotSettingsLoader:
 
         xml_annotations = xml_annotations_element.getElementsByTagName("annotation")
 
-        self.annotations = []
+        plot_settings.clearAnnotations()
         for annotation in xml_annotations:
             label = annotation.getAttribute("label")
             x = annotation.getAttribute("x")
@@ -267,7 +266,7 @@ class PlotSettingsLoader:
             xt = annotation.getAttribute("xt")
             yt = annotation.getAttribute("yt")
 
-            self.annotations.append((label, float(x), float(y), float(xt), float(yt)))
+            plot_settings.addAnnotation(label, self.floatify(x), self.floatify(y), self.floatify(xt), self.floatify(yt))
 
     def getAnnotations(self):
         return self.annotations

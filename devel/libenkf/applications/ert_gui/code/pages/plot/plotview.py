@@ -19,6 +19,7 @@ from PyQt4.QtGui import QFrame, QInputDialog, QSizePolicy
 from pages.plot.plotsettingsxml import PlotSettingsSaver, PlotSettingsLoader
 from pages.plot.plotsettings import PlotSettings
 from pages.plot.plotsettingsxml import PlotSettingsCopyDialog
+from pages.plot.plotgenerator import PlotGenerator
 
 class PlotView(QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -26,12 +27,12 @@ class PlotView(QFrame):
     def __init__(self):
         """Create a PlotPanel"""
         QFrame.__init__(self)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        # setup some default data values
         self.data = PlotData()
         self.data.x_data_type = "number"
         self.data.setValid(False)
-
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.plot_figure = PlotFigure()
         self.plot_settings = PlotSettings()
@@ -42,23 +43,12 @@ class PlotView(QFrame):
 
         self.mouse_handler = MouseHandler(self)
 
-    def configureLine(self, line, plot_config):
-        line.set_color(plot_config.color)
-        line.set_alpha(plot_config.alpha)
-        line.set_zorder(plot_config.z_order)
-        line.set_linestyle(plot_config.style)
-
-    def toggleLine(self, line):
+    def toggleMember(self, line):
         gid = int(line.get_gid())
         if gid in self.plot_settings.getSelectedMembers():
-            plot_config = self.plot_settings.plot_config
             self.plot_settings.unselectMember(gid)
         else:
-            plot_config = self.plot_settings.selected_plot_config
             self.plot_settings.selectMember(gid)
-
-        self.configureLine(line, plot_config)
-
 
     @widgets.util.may_take_a_long_time
     def drawPlot(self):
@@ -69,64 +59,41 @@ class PlotView(QFrame):
         QFrame.resizeEvent(self, event)
         self.canvas.resize(event.size().width(), event.size().height())
 
-    def addAnnotations(self, plot_config_loader):
-        annotations = plot_config_loader.getAnnotations()
-        if not annotations is None:
-            self.plot_figure.clearAnnotations()
-            for annotation in annotations:
-                self.plot_figure.annotate(*annotation)
-
-    def loadSettings(self):
+    def loadSettings(self, name):
         if self.data.isValid():
-            name = self.data.getSaveName()
             plot_config_loader = PlotSettingsLoader()
             plot_config_loader.load(name, self.plot_settings)
-            self.addAnnotations(plot_config_loader)
 
     def saveSettings(self):
         if self.data.isValid():
             plot_config_saver = PlotSettingsSaver()
-            annotations = self.plot_figure.getAnnotations()
-            plot_config_saver.save(self.data.getSaveName(), self.plot_settings, annotations)
+            plot_config_saver.save(self.data.getSaveName(), self.plot_settings)
 
     def setData(self, data):
         self.saveSettings()
 
         self.data = data
 
-        state = self.plot_settings.blockSignals(True)  #avoid multiple redraws
-        self.plot_settings.setXDataType(data.getXDataType())
-        self.plot_settings.setYDataType(data.getYDataType())
-        self.plot_settings.blockSignals(state)
-
-        self.loadSettings()
+        self.loadSettings(self.data.getSaveName())
 
 
-    def setXViewFactors(self, xminf, xmaxf, draw=True):
+    def setXZoomFactors(self, xminf, xmaxf):
         self.plot_settings.setMinXZoom(xminf)
         self.plot_settings.setMaxXZoom(xmaxf)
 
-    def setYViewFactors(self, yminf, ymaxf, draw=True):
+    def setYZoomFactors(self, yminf, ymaxf):
         self.plot_settings.setMinYZoom(yminf)
         self.plot_settings.setMaxYZoom(ymaxf)
 
     def save(self):
         self.saveSettings()
+
+        plot_generator = PlotGenerator(self.plot_settings.getPlotPath(), self.plot_settings.getPlotConfigPath())
+        plot_generator.save(self.data)
         
-        plot_path = self.plot_settings.getPlotPath()
-        if not os.path.exists(plot_path):
-            os.makedirs(plot_path)
-
-        #todo: popup save dialog
-
-        path = plot_path + "/" + self.data.getTitle()
-        self.plot_figure.getFigure().savefig(path + ".png", dpi=300, format="png")
-        self.plot_figure.getFigure().savefig(path + ".pdf", dpi=300, format="pdf")
-
     def copyPlotSettings(self):
         plot_config_loader = PlotSettingsLoader()
         plot_config_loader.copy(self.plot_settings)
-        self.addAnnotations(plot_config_loader)
 
     def setPlotPath(self, plot_path):
         self.plot_settings.setPlotPath(plot_path)
@@ -155,10 +122,23 @@ class PlotView(QFrame):
             self.setToolTip("")
 
     def annotate(self, label, x, y, xt=None, yt=None):
-        self.plot_figure.annotate(label, x, y, xt, yt)
+        self.plot_settings.addAnnotation(label, x, y, xt, yt)
 
-    def removeAnnotation(self, annotation):
-        self.plot_figure.removeAnnotation(annotation)
+    def removeAnnotation(self, annotation_artist):
+        annotations = self.plot_settings.getAnnotations()
+        for annotation in annotations:
+            if annotation.getUserData() == annotation_artist:
+                self.plot_settings.removeAnnotation(annotation)
+
+    def moveAnnotation(self, annotation_artist, xt, yt):
+        annotations = self.plot_settings.getAnnotations()
+        for annotation in annotations:
+            if annotation.getUserData() == annotation_artist:
+                annotation.xt = xt
+                annotation.yt = yt
+
+        annotation_artist.xytext = (xt, yt)
+
 
     def draw(self):
         self.canvas.draw()
@@ -206,7 +186,7 @@ class MouseHandler:
 
     def on_pick(self, event):
         if isinstance(event.artist, matplotlib.lines.Line2D) and event.mouseevent.button == 1:
-            self.plot_view.toggleLine(event.artist)
+            self.plot_view.toggleMember(event.artist)
         elif isinstance(event.artist, matplotlib.text.Annotation) and event.mouseevent.button == 1:
             self.artist = event.artist
             self.button_position = (event.mouseevent.x, event.mouseevent.y)
@@ -221,7 +201,7 @@ class MouseHandler:
             self.plot_view.displayToolTip(event)
         elif isinstance(self.artist, matplotlib.text.Annotation):
             if not event.xdata is None and not event.ydata is None:
-                self.artist.xytext = (event.xdata, event.ydata)
+                self.plot_view.moveAnnotation(self.artist, event.xdata, event.ydata)
                 self.plot_view.draw()
 
 

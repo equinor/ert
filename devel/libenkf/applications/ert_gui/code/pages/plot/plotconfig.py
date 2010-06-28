@@ -168,10 +168,10 @@ class PlotConfigPanel(QFrame):
         self.color_picker.update()
 
     def setLineStyle(self, linestyle):
-        self.plot_config.linestyle= linestyle
+        self.plot_config.linestyle = linestyle
 
     def setMarker(self, marker):
-        self.plot_config.marker= marker
+        self.plot_config.marker = marker
 
     def setAlpha(self, alpha):
         self.plot_config.alpha = alpha
