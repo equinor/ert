@@ -40,9 +40,6 @@ class time_vector(ctypes.c_long):
     initialized = False
     lib = None
 
-    def __init__(self, value):
-        ctypes.c_long.__init__(self, value)
-
     def __getitem__(self, item):        
         return self.__class__.lib.time_t_vector_iget(self, item)
 
@@ -77,9 +74,6 @@ class time_vector(ctypes.c_long):
 class double_vector(ctypes.c_long):
     initialized = False
     lib = None
-
-    def __init__(self, value):
-        ctypes.c_long.__init__(self, value)
 
     def __getitem__(self, item):
         return self.__class__.lib.double_vector_iget(self, item)
