@@ -157,6 +157,7 @@ void enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clea
 void enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
   ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
   model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
+  ensemble_config_set_refcase( enkf_main->ensemble_config , ecl_config_get_refcase( enkf_main->ecl_config ));
 }
 
 void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file ) {

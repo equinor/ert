@@ -123,7 +123,6 @@ struct enkf_state_struct {
   shared_info_type      * shared_info;       	   /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;         	   /* Private config information for this member; not updated during a simulation. */
   
-  forward_model_type    * default_forward_model;   /* The forward model - owned by this enkf_state instance. */
   forward_model_type    * forward_model;           /* */
 };
 
@@ -279,19 +278,6 @@ void enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type 
 }
 
 
-void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
-  member_config_type * my_config = enkf_state->my_config;
-  const int iens          = member_config_get_iens( my_config );
-  char * iens_s       	  = util_alloc_sprintf("%d"   , iens);
-  char * iens4_s      	  = util_alloc_sprintf("%04d" , iens);
-  char * smspec_file  	  = ecl_util_alloc_filename(NULL , member_config_get_eclbase( my_config ) , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
-  char * cwd              = util_alloc_cwd();
-  
-  free(cwd);
-  free(iens_s);
-  free(iens4_s);
-  free(smspec_file);
-}
 
 
 
@@ -452,7 +438,7 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   ensemble_config_type      * ensemble_config,
 				   const site_config_type    * site_config,
 				   const ecl_config_type     * ecl_config,
-				   const forward_model_type  * default_forward_model,
+				   const forward_model_type  * forward_model,
                                    log_type                  * logh,
                                    ert_templates_type        * templates,
                                    subst_list_type           * subst_parent) { 
@@ -524,12 +510,10 @@ INCLDUE
     enkf_state_add_subst_kw(enkf_state , "CASE" , "---" , "The casename for this realization - similar to ECLBASE.");
   
   enkf_state->my_config = member_config_alloc( iens , casename , pre_clear_runpath , keep_runpath , ecl_config , ensemble_config , fs);
-  enkf_state_set_static_subst_kw(  enkf_state );
+  enkf_state_set_static_subst_kw( enkf_state );
 
-
-  enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model );
-  enkf_state->forward_model         = enkf_state->default_forward_model;
-  enkf_state_init_forward_model( enkf_state );
+  enkf_state->forward_model = forward_model_alloc_copy( forward_model );
+  enkf_state->forward_model = forward_model;  /* Shared reference */
   enkf_state_add_nodes( enkf_state , ensemble_config );
 
   return enkf_state;
@@ -1208,7 +1192,7 @@ void enkf_state_free(enkf_state_type *enkf_state) {
   member_config_free(enkf_state->my_config);
   run_info_free(enkf_state->run_info);
   shared_info_free(enkf_state->shared_info);
-  forward_model_free(enkf_state->default_forward_model);
+  //forward_model_free(enkf_state->forward_model);
   free(enkf_state);
 }
 

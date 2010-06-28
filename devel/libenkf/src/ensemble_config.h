@@ -1,5 +1,10 @@
 #ifndef __ENSEMBLE_CONFIG_H__
 #define __ENSEMBLE_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif 
+
+
 #include <config.h>
 #include <enkf_config_node.h>
 #include <enkf_types.h>
@@ -9,6 +14,7 @@
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
+void                     ensemble_config_set_refcase( ensemble_config_type * ensemble_config , const ecl_sum_type * refcase);
 void                     ensemble_config_set_gen_kw_format( ensemble_config_type * ensemble_config , const char * gen_kw_format_string);
 const char             * ensemble_config_get_gen_kw_format( const ensemble_config_type * ensemble_config );
 enkf_config_node_type  * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key );
@@ -44,4 +50,7 @@ stringlist_type             * ensemble_config_alloc_keylist_from_impl_type(const
 bool                          ensemble_config_iget_keep_runpath(const ensemble_config_type * , int );
 ensemble_config_type        * ensemble_config_alloc_empty( );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

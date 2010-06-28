@@ -102,6 +102,11 @@ const char * ensemble_config_get_gen_kw_format( const ensemble_config_type * ens
 }
 
 
+void ensemble_config_set_refcase( ensemble_config_type * ensemble_config , const ecl_sum_type * refcase) {
+  ensemble_config->refcase = refcase;
+}
+                                                                                                           
+
 
 
 ensemble_config_type * ensemble_config_alloc_empty( ) {
@@ -144,12 +149,16 @@ enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_conf
 
 
 
+
+
 void ensemble_config_free(ensemble_config_type * ensemble_config) {
   hash_free( ensemble_config->config_nodes );
   field_trans_table_free( ensemble_config->field_trans_table );
   free( ensemble_config->gen_kw_format_string );
   free( ensemble_config );
 }
+
+
 
 
 
@@ -383,7 +392,7 @@ void ensemble_config_add_config_items(config_type * config) {
 void ensemble_config_init(ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
   ensemble_config->field_trans_table     = field_trans_table_alloc();    
-
+  ensemble_config_set_refcase( ensemble_config , refcase );
   /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
   if (config_get_occurences(config , "MULTFLT") > 0) {
     printf("******************************************************************\n");
@@ -559,8 +568,8 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
         const char * key = stringlist_iget( summary_kw_list , j); 
         
         if (util_string_has_wildcard( key )) {
-          if (refcase != NULL) {
-            ecl_sum_select_matching_general_var_list( refcase , key , keys );   /* Expanding the wildcard notatition with help of the refcase. */
+          if (ensemble_config->refcase != NULL) {
+            ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* Expanding the wildcard notatition with help of the refcase. */
             for (k=0; k < stringlist_get_size( keys ); k++) 
               ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) );
           } else
