@@ -62,7 +62,7 @@ struct lsf_job_struct {
 struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
   QUEUE_DRIVER_FUNCTIONS
-  char * queue_name;
+  char             * queue_name;
   pthread_mutex_t    submit_lock;
   int                 num_cpu;
 #ifdef LSF_LIBRARY_DRIVER
@@ -70,6 +70,7 @@ struct lsf_driver_struct {
   struct submitReply lsf_reply; 
 #else
   time_t              last_bjobs_update;
+  hash_type         * my_jobs;     /* A hash table of all jobs submitted by this ERT instance - to ensure that we do not check status of old jobs in e.g. ZOMBIE status. */  
   hash_type         * status_map;
   hash_type         * bjobs_cache;     /* The output of calling bjobs is cached in this table. */
   pthread_mutex_t     bjobs_mutex;     /* Only one thread should update the bjobs_chache table. */
@@ -162,7 +163,7 @@ static int lsf_driver_submit_system_job(lsf_driver_type * driver , const char * 
                                                                       submit_cmd , run_path} 
                    , true , NULL , NULL , NULL , tmp_file , NULL);
 
-
+  
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
   util_unlink_existing(tmp_file); 
   free(lsf_stdout);
@@ -170,6 +171,15 @@ static int lsf_driver_submit_system_job(lsf_driver_type * driver , const char * 
   return job_id;
 }
 
+
+
+static int lsf_driver_get_status__(lsf_driver_type * driver , const char * status, const char * job_id) {
+
+  if (hash_has_key( driver->status_map , status))
+    return hash_get_int( driver->status_map , status);
+  else 
+    util_exit("Sorry: the lsf_status:%s  for job:%s is not recognized; call your LSF administrator. Sorry. \n", status , job_id);
+}
 
 
 
@@ -190,10 +200,10 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 
 	if (sscanf(line , "%d %s %s", &job_id_int , user , status) == 3) {
 	  char * job_id = util_alloc_sprintf("%d" , job_id_int);
-	  hash_insert_int(driver->bjobs_cache , job_id , hash_get_int(driver->status_map , status));
+          if (hash_has_key( driver->my_jobs , job_id ))   /* Consider only jobs submitted by this ERT instance. */
+            hash_insert_int(driver->bjobs_cache , job_id , lsf_driver_get_status__( driver , status , job_id));
 	  free(job_id);
 	}
-	
 	free(line);
       }
     }
@@ -284,8 +294,8 @@ static job_status_type lsf_driver_get_job_status_system(void * __driver , void *
         }
       }
       pthread_mutex_unlock( &driver->bjobs_mutex );
-
-
+      
+      
       if (hash_has_key( driver->bjobs_cache , job->lsf_jobnr_char) ) 
 	status = hash_get_int(driver->bjobs_cache , job->lsf_jobnr_char);
       else
@@ -399,6 +409,7 @@ void * lsf_driver_submit_job(void * __driver ,
 
       job->lsf_jobnr      = lsf_driver_submit_system_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd );
       job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
+      hash_insert_ref( driver->my_jobs , job->lsf_jobnr_char , NULL );   
       util_safe_free(quoted_resource_request);
     }
 #endif
@@ -447,6 +458,7 @@ void lsf_driver_free(lsf_driver_type * driver ) {
 #ifdef LSF_SYSTEM_DRIVER
   hash_free(driver->status_map);
   hash_free(driver->bjobs_cache);
+  hash_free(driver->my_jobs);
   free( driver->bjobs_executable );
   free( driver->bsub_executable );
   free( driver->bkill_executable );
@@ -496,6 +508,7 @@ void * lsf_driver_alloc(const char * queue_name , int num_cpu) {
 #else
   lsf_driver->last_bjobs_update   = time( NULL );
   lsf_driver->bjobs_cache 	  = hash_alloc(); 
+  lsf_driver->my_jobs 	  = hash_alloc(); 
   lsf_driver->status_map   	  = hash_alloc();
   lsf_driver->bjobs_executable    = util_alloc_PATH_executable( "bjobs" );
   lsf_driver->bsub_executable     = util_alloc_PATH_executable( "bsub" );
@@ -507,7 +520,7 @@ void * lsf_driver_alloc(const char * queue_name , int num_cpu) {
   hash_insert_int(lsf_driver->status_map , "EXIT"   , JOB_QUEUE_EXIT);
   hash_insert_int(lsf_driver->status_map , "USUSP"  , JOB_QUEUE_RUNNING);
   hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_QUEUE_DONE);
-  hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT); /* Uncertain about this one */
+  hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
 #endif
   return lsf_driver;
