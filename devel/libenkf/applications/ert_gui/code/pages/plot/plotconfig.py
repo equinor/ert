@@ -18,7 +18,7 @@ class PlotConfig(object):
         self.signal_handler = QObject()
 
     def notify(self):
-        self.signal_handler.emit(SIGNAL('plotConfigChanged()'))
+        self.signal_handler.emit(SIGNAL('plotConfigChanged(PlotConfig)'), self)
 
     def get_name(self):
         return self._name
@@ -35,7 +35,6 @@ class PlotConfig(object):
 
     def setLinestyle(self, linestyle):
         self._linestyle = linestyle
-
         self.notify()
 
     def getLinestyle(self):
@@ -45,7 +44,6 @@ class PlotConfig(object):
 
     def setMarker(self, marker):
         self._marker = marker
-
         self.notify()
 
     def getMarker(self):
@@ -108,7 +106,7 @@ class PlotConfigPanel(QFrame):
     def __init__(self, plot_config):
         QFrame.__init__(self)
         self.plot_config = plot_config
-        self.connect(plot_config.signal_handler, SIGNAL('plotConfigChanged()'), self.updated)
+        self.connect(plot_config.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self.fetchValues)
 
         layout = QFormLayout()
         layout.setRowWrapPolicy(QFormLayout.WrapLongRows)
@@ -142,21 +140,32 @@ class PlotConfigPanel(QFrame):
         layout.addRow("Color:", self.color_picker)
 
         self.setLayout(layout)
-        self.fetchValues()
+        self.fetchValues(plot_config)
 
-    def updated(self):
-        self.fetchValues()
-        self.emit(SIGNAL('plotConfigChanged()'))
+    def fetchValues(self, plot_config):
+        self.plot_config = plot_config
 
-    def fetchValues(self):
+        #block signals to avoid updating the incoming plot_config 
+
+        state = self.plot_linestyle.blockSignals(True)
         linestyle_index = self.plot_line_styles.index(self.plot_config.linestyle)
         self.plot_linestyle.setCurrentIndex(linestyle_index)
+        self.plot_linestyle.blockSignals(state)
 
+        state = self.plot_marker_style.blockSignals(True)
         marker_index = self.plot_marker_styles.index(self.plot_config.marker)
         self.plot_marker_style.setCurrentIndex(marker_index)
+        self.plot_marker_style.blockSignals(state)
 
+        state = self.alpha_spinner.blockSignals(True)
         self.alpha_spinner.setValue(self.plot_config.alpha)
+        self.alpha_spinner.blockSignals(state)
+
+        state = self.chk_visible.blockSignals(True)
         self.chk_visible.setChecked(self.plot_config.is_visible)
+        self.chk_visible.blockSignals(state)
+
+        self.color_picker.update()
 
     def setLineStyle(self, linestyle):
         self.plot_config.linestyle= linestyle

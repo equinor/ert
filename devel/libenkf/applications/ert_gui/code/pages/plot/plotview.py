@@ -49,8 +49,8 @@ class PlotView(QFrame):
         line.set_linestyle(plot_config.style)
 
     def toggleLine(self, line):
-        gid = line.get_gid()
-        if gid in self.plot_settings.selected_members:
+        gid = int(line.get_gid())
+        if gid in self.plot_settings.getSelectedMembers():
             plot_config = self.plot_settings.plot_config
             self.plot_settings.unselectMember(gid)
         else:
@@ -58,16 +58,6 @@ class PlotView(QFrame):
             self.plot_settings.selectMember(gid)
 
         self.configureLine(line, plot_config)
-
-        self.emit(SIGNAL('plotSelectionChanged(array)'), self.plot_settings.selected_members)
-        self.canvas.draw()
-
-
-    def updateLimits(self, draw=True):
-        self.plot_figure.updateLimits(self.plot_settings, self.data)
-        
-        if draw:
-            self.canvas.draw()
 
 
     @widgets.util.may_take_a_long_time
@@ -86,41 +76,43 @@ class PlotView(QFrame):
             for annotation in annotations:
                 self.plot_figure.annotate(*annotation)
 
-    def loadSettings(self, name):
-        plot_config_loader = PlotSettingsLoader()
-        plot_config_loader.load(name, self.plot_settings)
-        self.addAnnotations(plot_config_loader)
+    def loadSettings(self):
+        if self.data.isValid():
+            name = self.data.getSaveName()
+            plot_config_loader = PlotSettingsLoader()
+            plot_config_loader.load(name, self.plot_settings)
+            self.addAnnotations(plot_config_loader)
 
-        self.emit(SIGNAL('plotSettingsChanged(PlotSettings)'), self.plot_settings)
-
-    def setData(self, data):
+    def saveSettings(self):
         if self.data.isValid():
             plot_config_saver = PlotSettingsSaver()
             annotations = self.plot_figure.getAnnotations()
             plot_config_saver.save(self.data.getSaveName(), self.plot_settings, annotations)
 
+    def setData(self, data):
+        self.saveSettings()
+
         self.data = data
+
+        state = self.plot_settings.blockSignals(True)  #avoid multiple redraws
         self.plot_settings.setXDataType(data.getXDataType())
         self.plot_settings.setYDataType(data.getYDataType())
+        self.plot_settings.blockSignals(state)
 
-        if self.data.isValid():
-            self.loadSettings(self.data.getSaveName())
-        else:
-            self.emit(SIGNAL('plotSelectionChanged(array)'), self.plot_settings.selected_members)
+        self.loadSettings()
+
 
     def setXViewFactors(self, xminf, xmaxf, draw=True):
-        self.plot_figure.setXViewFactors(self.plot_settings, xminf, xmaxf, self.data.x_min, self.data.x_max)
-
-        if draw:
-            self.canvas.draw()
+        self.plot_settings.setMinXZoom(xminf)
+        self.plot_settings.setMaxXZoom(xmaxf)
 
     def setYViewFactors(self, yminf, ymaxf, draw=True):
-        self.plot_figure.setYViewFactors(self.plot_settings, yminf, ymaxf, self.data.y_min, self.data.y_max)
-
-        if draw:
-            self.canvas.draw()
+        self.plot_settings.setMinYZoom(yminf)
+        self.plot_settings.setMaxYZoom(ymaxf)
 
     def save(self):
+        self.saveSettings()
+        
         plot_path = self.plot_settings.getPlotPath()
         if not os.path.exists(plot_path):
             os.makedirs(plot_path)
@@ -136,26 +128,21 @@ class PlotView(QFrame):
         plot_config_loader.copy(self.plot_settings)
         self.addAnnotations(plot_config_loader)
 
-        self.emit(SIGNAL('plotSettingsChanged(PlotSettings)'), self.plot_settings)
-
     def setPlotPath(self, plot_path):
         self.plot_settings.setPlotPath(plot_path)
 
     def setPlotConfigPath(self, path):
         self.plot_settings.setPlotConfigPath(path)
 
-    def __memberFinder(self, artist):
-        return artist.get_gid() in self.plot_settings.selected_members
+    def _selectedMemberIdentifier(self, artist):
+        return artist.get_gid() in self.plot_settings.getSelectedMembers()
 
     def clearSelection(self):
-        selected_lines = self.plot_figure.fig.findobj(self.__memberFinder)
+        selected_lines = self.plot_figure.fig.findobj(self._selectedMemberIdentifier)
         for line in selected_lines:
             self.configureLine(line, self.plot_settings.plot_config)
             self.plot_settings.unselectMember(line.get_gid())
 
-
-        self.emit(SIGNAL('plotSelectionChanged(array)'), self.plot_settings.selected_members)
-        self.canvas.draw()
 
     def displayToolTip(self, event):
         if not self.data is None and not event.xdata is None and not event.ydata is None:
@@ -178,19 +165,15 @@ class PlotView(QFrame):
 
     def setMinYLimit(self, value):
         self.plot_settings.setMinYLimit(value)
-        self.updateLimits()
 
     def setMaxYLimit(self, value):
         self.plot_settings.setMaxYLimit(value)
-        self.updateLimits()
 
     def setMinXLimit(self, value):
         self.plot_settings.setMinXLimit(value)
-        self.updateLimits()
 
     def setMaxXLimit(self, value):
         self.plot_settings.setMaxXLimit(value)
-        self.updateLimits()
 
     def getPlotConfigList(self):
         return self.plot_settings.getPlotConfigList()

@@ -28,7 +28,6 @@ class PlotPanel(QtGui.QWidget):
         plotLayout = QtGui.QHBoxLayout()
 
         self.plot = PlotView()
-        self.connect(self.plot, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchLimits)
 
         parameterLayout = QtGui.QVBoxLayout()
         self.plotList = QtGui.QListWidget(self)
@@ -70,11 +69,13 @@ class PlotPanel(QtGui.QWidget):
         
         self.setLayout(plotLayout)
 
+        self.connect(self.plot.plot_settings, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchSettings)
+
 
     def drawPlot(self):
         self.plot.setData(self.plotDataFetcher.data)
 
-    def fetchLimits(self, plot_settings):
+    def fetchSettings(self, plot_settings):
         data = self.plotDataFetcher.data
         x_min = plot_settings.getMinXLimit(data.x_min)
         x_max = plot_settings.getMaxXLimit(data.x_max)
@@ -82,13 +83,13 @@ class PlotPanel(QtGui.QWidget):
         y_max = plot_settings.getMaxYLimit(data.y_max)
 
         state = self.h_zoom_slider.blockSignals(True)
-        self.h_zoom_slider.setMinValue(plot_settings.xminf)
-        self.h_zoom_slider.setMaxValue(plot_settings.xmaxf)
+        self.h_zoom_slider.setMinValue(plot_settings.getMinXZoom())
+        self.h_zoom_slider.setMaxValue(plot_settings.getMaxXZoom())
         self.h_zoom_slider.blockSignals(state)
 
         state = self.v_zoom_slider.blockSignals(True)
-        self.v_zoom_slider.setMinValue(plot_settings.yminf)
-        self.v_zoom_slider.setMaxValue(plot_settings.ymaxf)
+        self.v_zoom_slider.setMinValue(plot_settings.getMinYZoom())
+        self.v_zoom_slider.setMaxValue(plot_settings.getMaxYZoom())
         self.v_zoom_slider.blockSignals(state)
 
         if isinstance(x_min, erttypes.time_t):
@@ -97,13 +98,18 @@ class PlotPanel(QtGui.QWidget):
         if isinstance(x_max, erttypes.time_t):
             x_max = x_max.value
 
-        #todo: y
+        #todo: time data on y-axis
+
+        state = plot_settings.blockSignals(True)
 
         self.plotViewSettings.setDataTypes(plot_settings.getXDataType(), plot_settings.getYDataType())
         self.plotViewSettings.setLimits(x_min, x_max, y_min, y_max)
         self.plotViewSettings.setLimitStates(*plot_settings.getLimitStates())
-        self.plot.drawPlot()
+        self.plotViewSettings.plotSelectionChanged(plot_settings.getSelectedMembers())
 
+        plot_settings.blockSignals(state)
+
+        self.plot.drawPlot()
 
     @widgets.util.may_take_a_long_time
     def select(self, current, previous):
@@ -146,7 +152,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         for plot_config in plot_configs:
             config_panel = PlotConfigPanel(plot_config)
             tabbed_panel.addTab(config_panel, plot_config.name)
-            self.connect(config_panel, SIGNAL('plotConfigChanged()'), self.plotView.drawPlot)
+            #self.connect(config_panel, SIGNAL('plotConfigChanged()'), self.plotView.drawPlot)
 
         layout.addWidget(tabbed_panel)
 
@@ -234,17 +240,6 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.selected_member_label = QtGui.QLabel()
         self.selected_member_label.setWordWrap(True)
 
-        def plotSelectionChanged(selected_members):
-            if isinstance(selected_members, pages.plot.plotsettings.PlotSettings):
-                selected_members = selected_members.getSelectedMembers()
-            text = ""
-            for member in selected_members:
-                text = text + " " + str(member)
-            self.selected_member_label.setText(text)
-
-        self.connect(self.plotView, QtCore.SIGNAL('plotSelectionChanged(array)'), plotSelectionChanged)
-        self.connect(self.plotView, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), plotSelectionChanged)
-
         layout.addWidget(QtGui.QLabel("Selected members:"))
         layout.addWidget(self.selected_member_label)
 
@@ -257,6 +252,14 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         frame.setLayout(layout)
 
         return frame
+
+    def plotSelectionChanged(self, selected_members):
+        if isinstance(selected_members, pages.plot.plotsettings.PlotSettings):
+            selected_members = selected_members.getSelectedMembers()
+        text = ""
+        for member in selected_members:
+            text = text + " " + str(member)
+        self.selected_member_label.setText(text)
 
 class DisableableSpinner(QFrame):
 

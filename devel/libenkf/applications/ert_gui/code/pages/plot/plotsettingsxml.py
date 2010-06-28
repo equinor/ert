@@ -53,17 +53,20 @@ class PlotSettingsSaver:
         style_element.setAttribute("line", str(plot_config.linestyle))
         style_element.setAttribute("marker", str(plot_config.marker))
 
+
+    def __addComment(self, element, comment):
+        comment_element = self.doc.createComment(comment)
+        element.appendChild(comment_element)
+
     def __addComments(self, limits_element):
         comment1 = "When limit values represent a date, the date is stored "\
           "as the number of seconds since 1/1-1970."
+        self.__addComment(limits_element, comment1)
+
 
         comment2 = "Setting a limit value to None means that the program should "\
           "use the corresponding value from the dataset as limits."
-
-        comment_element = self.doc.createComment(comment1)
-        limits_element.appendChild(comment_element)
-        comment_element = self.doc.createComment(comment2)
-        limits_element.appendChild(comment_element)
+        self.__addComment(limits_element, comment2)
 
     def __addLimits(self, limits, zoom):
         """Add limits and zoom to the xml"""
@@ -101,6 +104,11 @@ class PlotSettingsSaver:
         """Add list of annotations to the xml"""
         element = self.doc.createElement("annotations")
         self.root_element.appendChild(element)
+
+        comment = "If any of the axis represents time the format is matplotlib specific: "\
+        "A date is a floating point number which represent time in days since 0001-01-01 UTC, plus 1. "\
+        "For example, 0001-01-01, 06:00 is 1.25, not 0.25"
+        self.__addComment(element, comment)
 
         for annotation in annotations:
             annotation_element = self.doc.createElement("annotation")
@@ -149,6 +157,8 @@ class PlotSettingsLoader:
         if os.path.exists(filename):
             self.doc = xml.dom.minidom.parse(filename)
 
+            block_state = plot_settings.blockSignals(True)
+
             if not self.skip_plot_settings:
                 self.__loadPlotConfigs(plot_settings)
 
@@ -161,6 +171,9 @@ class PlotSettingsLoader:
             if not self.skip_annotations:
                 self.__loadAnnotations(plot_settings)
 
+            plot_settings.blockSignals(block_state)
+            plot_settings.notify() # we only want one emit from plot_settings so we only get one redraw
+
     def __loadPlotConfigs(self, plot_settings):
         plot_config_dict = plot_settings.getPlotConfigDict()
         xml_plot_configs = self.doc.getElementsByTagName("plot_config")
@@ -168,7 +181,6 @@ class PlotSettingsLoader:
         for xml_plot_config in xml_plot_configs:
             name = xml_plot_config.getAttribute("name")
             plot_config = plot_config_dict[name]
-            block_state = plot_config.signal_handler.blockSignals(True)
             visible = xml_plot_config.getAttribute("visible")
             z_order = xml_plot_config.getAttribute("z_order")
             picker = xml_plot_config.getAttribute("picker")
@@ -198,8 +210,6 @@ class PlotSettingsLoader:
 
             plot_config.linestyle = linestyle
             plot_config.marker = marker
-
-            plot_config.signal_handler.blockSignals(block_state)
 
 
     def floatify(self, f):

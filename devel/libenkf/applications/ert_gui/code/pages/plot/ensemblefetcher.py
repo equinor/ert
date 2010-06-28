@@ -6,6 +6,7 @@ import enums
 from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
 from PyQt4.QtCore import SIGNAL
 from erttypes import time_t
+import numpy
 
 class EnsembleFetcher(PlotDataFetcherHandler):
 
@@ -90,7 +91,6 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         if state_list[0] == enums.ert_state_enum.BOTH:
             state_list = [enums.ert_state_enum.FORECAST, enums.ert_state_enum.ANALYZED]
 
-
         for member in range(0, num_realizations):
             data.x_data[member] = []
             data.y_data[member] = []
@@ -115,6 +115,10 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                         else:
                             print "Not valid: ", key, member, step, key_index
 
+            data.x_data[member] = numpy.array([t.datetime() for t in x_time])
+            data.y_data[member] = numpy.array(y)
+
+
         self.getObservations(ert, key, key_index, data)
 
         self.getRefCase(ert, key, data)
@@ -136,9 +140,10 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             obs_y = (ertwrapper.c_double * obs_count)()
             obs_std = (ertwrapper.c_double * obs_count)()
             ert.enkf.enkf_main_get_observations(ert.main, user_key, obs_count, obs_x, obs_y, obs_std)
-            data.obs_x = obs_x
-            data.obs_y = obs_y
-            data.obs_std_y = obs_std
+
+            data.obs_x = numpy.array([t.datetime() for t in obs_x])
+            data.obs_y = numpy.array(obs_y)
+            data.obs_std_y = numpy.array(obs_std)
             data.obs_std_x = None
 
             data.checkMaxMin(max(obs_x))
@@ -146,6 +151,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
             data.checkMaxMinY(max(obs_y))
             data.checkMaxMinY(min(obs_y))
+
 
     def getRefCase(self, ert, key, data):
         ecl_sum = ert.enkf.ecl_config_get_refcase(ert.ecl_config)
@@ -172,6 +178,9 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                     data.checkMaxMinY(y)
                 else:
                     first = False #skip first element because of eclipse behavior
+
+            data.refcase_x = numpy.array([t.datetime() for t in data.refcase_x])
+            data.refcase_y = numpy.array(data.refcase_y)
 
     def configure(self, parameter, context_data):
         self.parameter = parameter

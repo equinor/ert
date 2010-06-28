@@ -20,13 +20,13 @@ class ErtWrapper:
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
         print "\nBootstrap complete!"
         
-        self.plot_config = self.getErtPointer("enkf_main_get_plot_config")
-        self.analysis_config = self.getErtPointer("enkf_main_get_analysis_config")
-        self.ecl_config = self.getErtPointer("enkf_main_get_ecl_config")
-        self.site_config = self.getErtPointer("enkf_main_get_site_config")
-        self.ensemble_config = self.getErtPointer("enkf_main_get_ensemble_config")
-        self.model_config = self.getErtPointer("enkf_main_get_model_config")
-        self.logh = self.getErtPointer("enkf_main_get_logh")
+        self.plot_config = self.__getErtPointer("enkf_main_get_plot_config")
+        self.analysis_config = self.__getErtPointer("enkf_main_get_analysis_config")
+        self.ecl_config = self.__getErtPointer("enkf_main_get_ecl_config")
+        self.site_config = self.__getErtPointer("enkf_main_get_site_config")
+        self.ensemble_config = self.__getErtPointer("enkf_main_get_ensemble_config")
+        self.model_config = self.__getErtPointer("enkf_main_get_model_config")
+        self.logh = self.__getErtPointer("enkf_main_get_logh")
 
 
         self.initializeTypes()
@@ -248,7 +248,7 @@ class ErtWrapper:
 
         return result
 
-    def getErtPointer(self, function):
+    def __getErtPointer(self, function):
         """Returns a pointer from ERT as a c_long (64-bit support)"""
         func = getattr(self.enkf, function)
         func.restype = c_long

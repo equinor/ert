@@ -3,6 +3,7 @@ import ertwrapper
 import enums
 import pages.plot.plotdata
 from enums import ert_state_enum, obs_impl_type
+import numpy
 
 class RFTFetcher(PlotDataFetcherHandler):
 
@@ -103,9 +104,9 @@ class RFTFetcher(PlotDataFetcherHandler):
             x_std.append(std.value)
             data.checkMaxMin(value.value + std.value)
             data.checkMaxMin(value.value - std.value)
-        data.obs_y = y_obs
-        data.obs_x = x_obs
-        data.obs_std_x = x_std
+        data.obs_y = numpy.array(y_obs)
+        data.obs_x = numpy.array(x_obs)
+        data.obs_std_x = numpy.array(x_std)
         data.obs_std_y = None
 
 
@@ -128,6 +129,9 @@ class RFTFetcher(PlotDataFetcherHandler):
                 x_data.append(value)
                 y_data.append(y_obs[index])
                 data.checkMaxMin(value)
+
+            data.x_data[member] = numpy.array(x_data)
+            data.y_data[member] = numpy.array(y_data)
 
         ert.enkf.enkf_node_free(node)
 
