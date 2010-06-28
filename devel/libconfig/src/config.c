@@ -1052,6 +1052,19 @@ void config_set_arg(config_type * config , const char * kw, int argc , const cha
   char ** argv = util_alloc_stringlist_copy(__argv , argc);  
   config_item_set_arg__( config , config_get_item(config , kw) , argc , argv , NULL , NULL );
   util_free_stringlist(argv , argc);
+
+  {
+    int i;
+    printf("** Warning using config_set_arg() to set argument:%-20s =  [", kw );
+    for (i=0; i < argc; i++) {
+      printf("%s",__argv[i]);
+      if (i < (argc - 1))
+        printf(", ");
+    }
+    printf("]\n");
+  }
+
+  
 }
 
 
@@ -1093,11 +1106,13 @@ static void config_validate(config_type * config, const char * filename) {
     config_item_validate(config , item);
   }
   util_free_stringlist(key_list , size);
+
   if (stringlist_get_size(config->parse_errors) > 0) {
-    fprintf(stderr,"Parsing errors:\n");
+    fprintf(stderr,"Parsing errors in configuration file \'%s\':\n" , filename);
     stringlist_fprintf(config->parse_errors , "\n", stderr);
     util_exit("");
   }
+  
 }
 
 
