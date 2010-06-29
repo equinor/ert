@@ -214,5 +214,24 @@ Plotting:
 
     ecl_sum = ecl_sum_fread_alloc_case( "Navn på en ECLIPSE.DATA fil" )
 
+---------------------
+
+Gen_data:
+size:
+-----
+ensemble_config = enkf_main_get_ensemble_config( enkf_main )
+config_node     = ensemble_config_get_node( ensemble_config , "KEY")
+gen_data_config = enkf_config_node_get_ref( config_node )
+
+size = gen_date_config_get_initial_size( gen_data_config )
+
+Value:
+-----
+value = enkf_node_user_get( enkf_node , "KEY:tall" , &valid)     <----- NB Det er helt avgjørende å sjekke at valid returnerer true,  
+                                                                        gen_data typen er (altfor) fleksibel, og kan endre størrelse runtime. 
+                                                                        At du har sjekket initiell størrelse er derfor desverre ikke tilstrekkelig 
+                                                                        til å validere input.
+
+
 
  

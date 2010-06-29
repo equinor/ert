@@ -49,7 +49,7 @@ def createSimulationsPage(configPanel, parent):
         site_config = ert.site_config
         installed_jobs_pointer = ert.enkf.site_config_get_installed_jobs(site_config)
         installed_jobs_stringlist_pointer = ert.job_queue.ext_joblist_alloc_list(installed_jobs_pointer)
-        available_jobs = ert.getStringList(installed_jobs_stringlist_pointer, free_after_use=True)
+        available_jobs = ert.getStringList(installed_jobs_stringlist_pointer , free_after_use=True)
 
         result = {'available_jobs': available_jobs}
 

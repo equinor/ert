@@ -708,9 +708,19 @@ const char * ext_job_get_private_args_as_string( ext_job_type * ext_job ) {
 }
 
 
+/**
+   Set the internal arguments of the job based on an input string
+   @arg_string which is of the form:
+
+       key1=value1, key2=value2 , key3=value3
+
+   The internal private argument list is cleared before adding these
+   arguments.
+*/
+
 int ext_job_set_private_args_from_string( ext_job_type * ext_job , const char * arg_string ) {
   subst_list_clear( ext_job->private_args );
-  return subst_list_add_from_string( ext_job->private_args , arg_string );
+  return subst_list_add_from_string( ext_job->private_args , arg_string , true );
 }
 
 

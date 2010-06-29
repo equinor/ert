@@ -108,94 +108,72 @@ void forward_model_set_lsf_request( forward_model_type * forward_model , const c
   forward_model->lsf_request = util_realloc_string_copy( forward_model->lsf_request , lsf_request );
 }
 
-//static void forward_model_update_lsf_request(forward_model_type * forward_model) {
-//  if (forward_model->lsf_request != NULL) {
-//    int ijob;
-//    lsf_request_reset( forward_model->lsf_request );
-//    for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
-//      bool last_job = false;
-//      const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
-//      if (ijob == (vector_get_size(forward_model->jobs) - 1))
-//	last_job = true;
-//      lsf_request_update(forward_model->lsf_request , job , last_job);
-//    }
-//  }
-//}
-
-
 
 /**
-   This function takes an input string of the type:
+   this function takes an input string of the type:
 
-   JOB1  JOB2  JOB3(arg1 = value1, arg2 = value2, arg3= value3)
+   job1  job2  job3(arg1 = value1, arg2 = value2, arg3= value3)
 
-   And creates a forward model of it. Observe the following rules:
+   and creates a forward model of it. observe the following rules:
    
-    * If the function takes private arguments it is NOT allowed with space
+    * if the function takes private arguments it is not allowed with space
       between the end of the function name and the opening parenthesis.
 
 */
 
 
 void forward_model_parse_init(forward_model_type * forward_model , const char * input_string ) {
-  //tokenizer_type * tokenizer_alloc(" " , "\'\"" , ",=()" , NUlL , NULL , NULL);
+  //tokenizer_type * tokenizer_alloc(" " , "\'\"" , ",=()" , null , null , null);
   //stringlist_type * tokens = tokenizer_buffer( tokenizer , input_string , true);
   //stringlist_free( tokens );
   //tokenizer_free( tokenizer );
 
-  stringlist_type * arg_list   = stringlist_alloc_new();
-  
   char * p1                          = (char *) input_string;
   while (true) {
     ext_job_type *  current_job;
     char         * job_name;
     int            job_index;          
     {
-      int job_length  = strcspn(p1 , " (");  /* Scanning until we meet ' ' or '(' */
+      int job_length  = strcspn(p1 , " (");  /* scanning until we meet ' ' or '(' */
       job_name = util_alloc_substring_copy(p1 , job_length);
       p1 += job_length;
     }
     job_index = vector_get_size( forward_model->jobs );
     current_job = forward_model_add_job(forward_model , job_name);
 
-    if (*p1 == '(') {  /* The function has arguments. */
+    if (*p1 == '(') {  /* the function has arguments. */
       int arg_length = strcspn(p1 , ")");
       if (arg_length == strlen(p1))
 	util_abort("%s: paranthesis not terminated for job:%s \n",__func__ , job_name);
       {
 	char  * arg_string          = util_alloc_substring_copy((p1 + 1) , arg_length - 1);
-        stringlist_append_owned_ref( arg_list , arg_string );
+        ext_job_set_private_args_from_string( current_job , arg_string );
 	p1 += (1 + arg_length);
       }
     } 
-    
+    /*****************************************************************/
+    /* At this point we are done with the parsing - the rest of the
+       code in this while { } construct is only to check that the
+       input is well formed. */ 
+
     {
       int space_length = strspn(p1 , " ");
       p1 += space_length;
       if (*p1 == '(') 
-	/* Detected lonesome '(' */
+	/* detected lonesome '(' */
 	util_abort("%s: found space between job:%s and \'(\' - aborting \n",__func__ , job_name);
     }
 
     /* 
-       Now p1 should point at the next character after the job, 
+       now p1 should point at the next character after the job, 
        or after the ')' if the job has arguments.
     */
     
-    if (*p1 == '\0') { /* We have parsed the whole string. */
+    if (*p1 == '\0') { /* we have parsed the whole string. */
       free(job_name);
       break;   
     }
   }
-  {
-    /* 
-       We take care to ensure that the first element in the subst list corresponds to the
-       first argument given by the user.
-    */
-    for (int i = (stringlist_get_size( arg_list ) - 1); i >= 0; i--)
-      ext_job_set_private_args_from_string( current_job , stringlist_iget( arg_string , i));
-  }
-  stringlist_free( arg_list );
 }
 
 
@@ -203,7 +181,7 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
 /*****************************************************************/
 
 /*
-  The name of the pyton module - and the variable in the module,
+  the name of the pyton module - and the variable in the module,
   used when running the remote jobs.
 */
 
