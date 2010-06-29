@@ -3,6 +3,17 @@ import sys
 
 prefix = os.path.dirname(__file__) + "/../help/"
 
+def getTemplate():
+    path = prefix + "template.html"
+    if os.path.exists(path) and os.path.isfile(path):
+        f = open(path, 'r')
+        template = f.read()
+        f.close()
+        return template
+    else:
+        return "<html>%s</html>"
+
+
 def resolveHelpLabel(label):
     """
     Reads a HTML file from the help directory.
@@ -18,7 +29,7 @@ def resolveHelpLabel(label):
         f = open(path, 'r')
         help = f.read()
         f.close()
-        return help
+        return getTemplate() % help
     else:
         # This code automatically creates empty help files
 #        sys.stderr.write("Missing help file: '%s'\n" % label)
