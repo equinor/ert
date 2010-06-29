@@ -703,7 +703,6 @@ int ensemble_config_get_observations( const ensemble_config_type * config , enkf
     num_obs = enkf_config_node_load_obs( config_node , enkf_obs , index_key , obs_count , obs_time , y , std);
     util_safe_free( index_key );
   } 
-  printf("%s: num_obs:%d \n",__func__ , num_obs);
   return num_obs;
 }
 

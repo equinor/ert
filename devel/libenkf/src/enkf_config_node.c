@@ -583,8 +583,6 @@ int enkf_config_node_load_obs( const enkf_config_node_type * config_node , enkf_
     while (true) {
       report_step = obs_vector_get_next_active_step( obs_vector , report_step);
       if (report_step == -1) break;
-      printf("Fetching from report_step:%d \n",report_step);
-      
       {
         bool valid;
         double value , std1;
