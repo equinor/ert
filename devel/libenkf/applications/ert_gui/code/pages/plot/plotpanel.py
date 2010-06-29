@@ -218,12 +218,19 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.save_button = QtGui.QPushButton()
         self.save_button.setIcon(widgets.util.resourceIcon("disk"))
         self.save_button.setIconSize(QtCore.QSize(16, 16))
-        self.save_button.setToolTip("Save a plot.")           
+        self.save_button.setToolTip("Save a plot.")
+
+        self.save_many_button = QtGui.QPushButton()
+        self.save_many_button.setIcon(widgets.util.resourceIcon("save_plots"))
+        self.save_many_button.setIconSize(QtCore.QSize(16, 16))
+        self.save_many_button.setToolTip("Save all plots.")
 
         button_layout.addWidget(self.import_button)
         button_layout.addWidget(self.save_button)
-        
+        button_layout.addWidget(self.save_many_button)
+
         self.connect(self.save_button, QtCore.SIGNAL('clicked()'), self.plotView.save)
+        self.connect(self.save_many_button, QtCore.SIGNAL('clicked()'), self.plotView.saveAll)
         self.connect(self.import_button, QtCore.SIGNAL('clicked()'), self.plotView.copyPlotSettings)
 
         return button_layout

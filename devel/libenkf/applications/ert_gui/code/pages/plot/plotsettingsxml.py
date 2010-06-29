@@ -172,6 +172,9 @@ class PlotSettingsLoader:
 
             plot_settings.blockSignals(block_state)
             plot_settings.notify() # we only want one emit from plot_settings so we only get one redraw
+            return True
+        else:
+            return False
 
     def __loadPlotConfigs(self, plot_settings):
         plot_config_dict = plot_settings.getPlotConfigDict()

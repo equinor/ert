@@ -123,7 +123,6 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
         self.getRefCase(ert, key, data)
 
-
         ert.enkf.enkf_node_free(node)
 
         data.inverted_y_axis = False
