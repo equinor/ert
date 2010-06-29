@@ -2762,8 +2762,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     }
     config_free(config);
 
-    //enkf_main_set_user_config_file( enkf_main , "/tmp/config" );
-    //enkf_main_fprintf_config( enkf_main );
+    enkf_main_set_user_config_file( enkf_main , "/tmp/config" );
+    enkf_main_fprintf_config( enkf_main );
   }
   free( model_config );
   enkf_main->misfit_table = NULL;

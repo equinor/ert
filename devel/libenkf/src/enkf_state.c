@@ -1547,11 +1547,10 @@ bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , bool resampl
 
 
 
-
 /** 
     Observe that if run_info == false, this routine will return with
     job_completeOK == true, that might be a bit misleading.
-
+    
     Observe that if an internal retry is performed, this function will
     be called several times - MUST BE REENTRANT.
 */

@@ -31,6 +31,7 @@ char                  	   * gen_data_config_alloc_initfile(const gen_data_config
 ecl_type_enum         	     gen_data_config_get_internal_type(const gen_data_config_type * );
 gen_data_config_type  	   * gen_data_config_alloc_with_options(const char * key , bool , const stringlist_type *);
 void                         gen_data_config_free(gen_data_config_type * );
+int                          gen_data_config_get_initial_size( const gen_data_config_type * config );
 void                         gen_data_config_assert_size(gen_data_config_type *  , int , int);
 const bool     *             gen_data_config_get_iactive(const gen_data_config_type * );
 void                  	     gen_data_config_ecl_write(const gen_data_config_type *  , const char * , char * );

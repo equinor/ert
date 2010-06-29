@@ -234,7 +234,7 @@ int site_config_install_job(site_config_type * site_config , const char * job_na
   if (new_job != NULL) {
     ext_joblist_add_job(site_config->joblist , job_name , new_job);
     return 0;
-  } else
+  } else 
     return 1; /* Some undocumented error condition - the job is NOT added. */
 }
 
