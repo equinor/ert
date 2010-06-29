@@ -90,6 +90,12 @@ class PlotView(QFrame):
 
         plot_generator = PlotGenerator(self.plot_settings.getPlotPath(), self.plot_settings.getPlotConfigPath())
         plot_generator.save(self.data)
+
+    def saveAll(self):
+        self.saveSettings()
+
+        plot_generator = PlotGenerator(self.plot_settings.getPlotPath(), self.plot_settings.getPlotConfigPath())
+        plot_generator.saveAll()
         
     def copyPlotSettings(self):
         plot_config_loader = PlotSettingsLoader()
