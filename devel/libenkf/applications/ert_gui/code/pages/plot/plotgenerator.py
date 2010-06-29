@@ -46,6 +46,8 @@ class PlotGenerator(QFrame):
         self.popup.progress_bar.setValue(value + progress)
 
     def saveAll(self):
+        self.popup.show()
+
         context_data = self.plot_context_data_fetcher.getFromModel()
 
         save_list = []
@@ -65,55 +67,49 @@ class PlotGenerator(QFrame):
                     count += 1
 
 
-        self.runthread = threading.Thread(name="plot_saving")
         self.popup.progress_bar.setMaximum(count)
 
-        def run():
-            for parameter in save_list:
-                if parameter.type == KeywordModel.TYPE:
-                    for choice in parameter.getUserData()['key_index_choices']:
-                        self.plot_data_fetcher.setParameter(parameter, context_data)
-                        parameter.getUserData()['key_index'] = choice # because setParameter overwrites this value
-                        self.plot_data_fetcher.fetchContent()
-                        self.savePlot(self.plot_data_fetcher.data)
-                else:
+        for parameter in save_list:
+            if parameter.type == KeywordModel.TYPE:
+                for choice in parameter.getUserData()['key_index_choices']:
                     self.plot_data_fetcher.setParameter(parameter, context_data)
+                    parameter.getUserData()['key_index'] = choice # because setParameter overwrites this value
                     self.plot_data_fetcher.fetchContent()
                     self.savePlot(self.plot_data_fetcher.data)
+            else:
+                self.plot_data_fetcher.setParameter(parameter, context_data)
+                self.plot_data_fetcher.fetchContent()
+                self.savePlot(self.plot_data_fetcher.data)
 
-            self.popup.ok_button.setEnabled(True)
+        self.popup.ok_button.setEnabled(True)
 
-        self.runthread.run = run
-        self.runthread.start()
 
-        self.popup.exec_()
 
 
     def save(self, plot_data):
-        self.runthread = threading.Thread(name="plot_saving")
+        self.popup.show()
+
         self.popup.progress_bar.setMaximum(1)
 
-        def run():
-            self.savePlot(plot_data)
-            self.popup.ok_button.setEnabled(True)
-
-        self.runthread.run = run
-        self.runthread.start()
-
-        self.popup.exec_()
+        self.savePlot(plot_data)
+        self.popup.ok_button.setEnabled(True)
 
 
     def savePlot(self, plot_data):
-        self.generatePlot(plot_data)
-        QApplication.processEvents()
-        self.savePlotToFile(plot_data.getSaveName())
+        generated_plot = self.generatePlot(plot_data)
+        if generated_plot:
+            self.savePlotToFile(plot_data.getSaveName())
         self.popup.emit(SIGNAL('updateProgress(int)'), 1)
 
     def generatePlot(self, plot_data):
         name = plot_data.getSaveName()
-        self.plot_config_loader.load(name, self.plot_settings)
-        self.plot_figure.drawPlot(plot_data, self.plot_settings)
-        self.canvas.draw()
+        load_success = self.plot_config_loader.load(name, self.plot_settings)
+
+        if load_success:
+            self.plot_figure.drawPlot(plot_data, self.plot_settings)
+            self.canvas.draw()
+
+        return load_success
 
     def savePlotToFile(self, filename):
         """Save the plot visible in the figure."""
@@ -123,9 +119,7 @@ class PlotGenerator(QFrame):
 
         path = plot_path + "/" + filename
         self.plot_figure.getFigure().savefig(path + ".png", dpi=400, format="png")
-        QApplication.processEvents()
         self.plot_figure.getFigure().savefig(path + ".pdf", dpi=400, format="pdf")
-        QApplication.processEvents()
 
 
 class Popup(QDialog):
