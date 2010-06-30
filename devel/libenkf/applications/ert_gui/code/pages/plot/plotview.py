@@ -12,7 +12,6 @@ from PyQt4.QtCore import SIGNAL
 import os
 
 from plotconfig import PlotConfig
-from plotter import Plotter
 from plotfigure import PlotFigure, matplotlib
 
 from PyQt4.QtGui import QFrame, QInputDialog, QSizePolicy
@@ -22,10 +21,10 @@ from pages.plot.plotsettingsxml import PlotSettingsCopyDialog
 from pages.plot.plotgenerator import PlotGenerator
 
 class PlotView(QFrame):
-    """PlotPanel shows available plot result files and displays them"""
+    """PlotView presents a matplotlib canvas with interaction possibilities. (picking and tooltip)"""
 
     def __init__(self):
-        """Create a PlotPanel"""
+        """Create a PlotView instance"""
         QFrame.__init__(self)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -113,7 +112,6 @@ class PlotView(QFrame):
     def clearSelection(self):
         selected_lines = self.plot_figure.fig.findobj(self._selectedMemberIdentifier)
         for line in selected_lines:
-            self.configureLine(line, self.plot_settings.plot_config)
             self.plot_settings.unselectMember(line.get_gid())
 
 
@@ -144,7 +142,6 @@ class PlotView(QFrame):
                 annotation.yt = yt
 
         annotation_artist.xytext = (xt, yt)
-
 
     def draw(self):
         self.canvas.draw()
