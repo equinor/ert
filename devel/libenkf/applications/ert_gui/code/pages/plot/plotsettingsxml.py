@@ -161,7 +161,7 @@ class PlotSettingsLoader:
         if os.path.exists(filename):
             self.doc = xml.dom.minidom.parse(filename)
 
-            block_state = plot_settings.blockSignals(True)
+            block_state = plot_settings.blockSignals(True) # we only want one emit from plot_settings so we only get one redraw
 
             if not self.skip_plot_settings:
                 self.__loadPlotConfigs(plot_settings)
@@ -176,7 +176,7 @@ class PlotSettingsLoader:
                 self.__loadAnnotations(plot_settings)
 
             plot_settings.blockSignals(block_state)
-            plot_settings.notify() # we only want one emit from plot_settings so we only get one redraw
+            plot_settings.notify()
             return True
         else:
             return False

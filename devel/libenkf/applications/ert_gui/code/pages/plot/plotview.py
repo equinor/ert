@@ -61,7 +61,8 @@ class PlotView(QFrame):
     def loadSettings(self, name):
         if self.data.isValid():
             plot_config_loader = PlotSettingsLoader()
-            plot_config_loader.load(name, self.plot_settings)
+            if not plot_config_loader.load(name, self.plot_settings):
+                self.drawPlot()
 
     def saveSettings(self):
         if self.data.isValid():
