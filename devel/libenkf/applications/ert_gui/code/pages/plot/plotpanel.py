@@ -223,7 +223,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.save_many_button = QtGui.QPushButton()
         self.save_many_button.setIcon(widgets.util.resourceIcon("save_plots"))
         self.save_many_button.setIconSize(QtCore.QSize(16, 16))
-        self.save_many_button.setToolTip("Save all plots.")
+        self.save_many_button.setToolTip("Save all configured plots.")
 
         button_layout.addWidget(self.import_button)
         button_layout.addWidget(self.save_button)
