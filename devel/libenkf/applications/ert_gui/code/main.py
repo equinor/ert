@@ -8,6 +8,7 @@ import sys
 #
 #QtGui.QApplication.setStyle("Plastique")
 import os
+from newconfig import NewConfigurationDialog
 
 app = QtGui.QApplication(sys.argv) #Early so that QT is initialized before other imports
 
@@ -36,15 +37,29 @@ window = Application()
 splash.showMessage("Bootstrapping...", color=QtCore.Qt.white)
 app.processEvents()
 
-site_config = "/project/res/etc/ERT/Config/site-config"
-enkf_config = sys.argv[1]
-
 if os.environ.has_key("ERT_LD_PATH"):
     enkf_so = os.environ["ERT_LD_PATH"]
 else:
-    sys.exit("Must set environment variable: 'ERT_LD_PATH' to point directory with ert shared library files.")
-    
-ert = ertwrapper.ErtWrapper(enkf_config , enkf_so , site_config = site_config)
+    sys.exit("Must set environment variable: 'ERT_LD_PATH' to point to directory with ert shared library files.")
+
+ert = ertwrapper.ErtWrapper(enkf_so)
+
+site_config = "/project/res/etc/ERT/Config/site-config"
+enkf_config = sys.argv[1]
+
+if not os.path.exists(enkf_config):
+    new_configuration_dialog = NewConfigurationDialog(enkf_config)
+    success = new_configuration_dialog.exec_()
+    if not success:
+        print "Can not run without a configuration file."
+        sys.exit(1)
+    else:
+        firste_case_name = new_configuration_dialog.getCaseName()
+        dbase_type = new_configuration_dialog.getDBaseType()
+        print "Creating:", firste_case_name, dbase_type
+        #ert.createNewConfiguration(enkf_config, firste_case_name, dbase_type)
+
+ert.bootstrap(enkf_config, site_config = site_config)
 window.setSaveFunction(ert.save)
 
 splash.showMessage("Creating GUI...", color=QtCore.Qt.white)

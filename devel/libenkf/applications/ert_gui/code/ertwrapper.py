@@ -10,16 +10,18 @@ import erttypes
 class ErtWrapper:
     """Wraps the functionality of ERT using ctypes"""
 
-    def __init__(self , enkf_config , enkf_so , site_config="/project/res/etc/ERT/Config/site-config"):
+    def __init__(self, enkf_so):
         self.__loadLibraries(enkf_so)
 
         self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
         self.__registerDefaultTypes()
-        
+
+
+    def bootstrap(self, enkf_config, site_config="/project/res/etc/ERT/Config/site-config"):
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
         print "\nBootstrap complete!"
-        
+
         self.plot_config = self.__getErtPointer("enkf_main_get_plot_config")
         self.analysis_config = self.__getErtPointer("enkf_main_get_analysis_config")
         self.ecl_config = self.__getErtPointer("enkf_main_get_ecl_config")
@@ -28,11 +30,9 @@ class ErtWrapper:
         self.model_config = self.__getErtPointer("enkf_main_get_model_config")
         self.logh = self.__getErtPointer("enkf_main_get_logh")
 
-
         self.initializeTypes()
-        
-        atexit.register(self.cleanup)
 
+        atexit.register(self.cleanup)
 
     def __loadLibrary(self, prefix, name):
         slib = ("%s/%s/slib/%s.so" % (prefix, name, name))
