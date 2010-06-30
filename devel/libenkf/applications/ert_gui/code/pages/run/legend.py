@@ -24,7 +24,7 @@ class LegendMarker(QtGui.QWidget):
         painter.fillRect(rect, self.color)
 
 class Legend(QtGui.QHBoxLayout):
-    """Combines a LegenMarker with a label"""
+    """Combines a LegendMarker with a label"""
     def __init__(self, legend, color, parent=None):
         QtGui.QHBoxLayout.__init__(self, parent)
 

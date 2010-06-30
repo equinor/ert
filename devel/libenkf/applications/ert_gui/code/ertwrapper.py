@@ -278,9 +278,11 @@ class ErtWrapper:
         self.enkf.enkf_main_free(self.main)
 
     def nonify(self, s):
+        """Convert an empty string to None."""
         return s or None
 
     def save(self):
+        """Save the state of ert to a configuration file."""
         self.enkf.enkf_main_fprintf_config(self.main)
 
 

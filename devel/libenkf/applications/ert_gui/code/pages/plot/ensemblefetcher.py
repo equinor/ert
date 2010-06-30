@@ -9,6 +9,7 @@ from erttypes import time_t
 import numpy
 
 class EnsembleFetcher(PlotDataFetcherHandler):
+    """A data fetcher for ensemble parameters."""
 
     def __init__(self):
         PlotDataFetcherHandler.__init__(self)
@@ -125,15 +126,15 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             data.y_data[member] = numpy.array(y)
 
 
-        self.getObservations(ert, key, key_index, data)
+        self._getObservations(ert, key, key_index, data)
 
-        self.getRefCase(ert, key, data)
+        self._getRefCase(ert, key, data)
 
         ert.enkf.enkf_node_free(node)
 
         data.inverted_y_axis = False
 
-    def getObservations(self, ert, key, key_index, data):
+    def _getObservations(self, ert, key, key_index, data):
         if not key_index is None:
             user_key = "%s:%s" % (key, key_index)
         else:
@@ -158,7 +159,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             data.checkMaxMinY(min(obs_y))
 
 
-    def getRefCase(self, ert, key, data):
+    def _getRefCase(self, ert, key, data):
         ecl_sum = ert.enkf.ecl_config_get_refcase(ert.ecl_config)
 
         if(ert.ecl.ecl_sum_has_general_var(ecl_sum, key)):
@@ -213,6 +214,11 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             return None
 
 
+#---------------------------------------------------------
+# The following widgets are used to configure the
+# different parameter types.
+#---------------------------------------------------------
+
 class ConfigurationWidget(QWidget):
     """An abstract configuration widget."""
     def __init__(self):
@@ -234,17 +240,21 @@ class ConfigurationWidget(QWidget):
         self.connect(self.stateCombo, SIGNAL('currentIndexChanged(QString)'), self.applyConfiguration)
 
     def addRow(self, label, widget):
+        """Add another item to this widget."""
         self.layout.addRow(label, widget)
 
     def setParameter(self, parameter):
+        """Set the parameter to configure."""
         self.parameter = parameter
         self.applyConfiguration(False)
 
     def getState(self):
+        """State is common for all parameters."""
         selectedName = str(self.stateCombo.currentText())
         return enums.ert_state_enum.resolveName(selectedName)
 
     def emitConfigurationChanged(self, emit=True):
+        """Emitted when a sub widget changes the state of the parameter."""
         if emit:
             self.emit(SIGNAL('configurationChanged()'))
 

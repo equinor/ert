@@ -408,7 +408,7 @@ class SimulationPanelController:
 
 
 class Simulation:
-
+    """Container for state information for a single simulation."""
 
     def __init__(self, name, statistics=None):
         self.name = name

@@ -3,6 +3,11 @@ from PyQt4.QtCore import QRectF, SIGNAL
 from PyQt4.Qt import QApplication, Qt
 
 class ZoomSlider(QFrame):
+    """
+    Two way slider representing narrowing of a view.
+    The sliders coorespond to factors: a min value and a max value in the range [0, 1]
+    Emits zoomValueChanged(float, float) whenever the markers are adjusted. (float, float) -> (min, max)
+    """
     def __init__(self, parent=None, horizontal=True):
         QFrame.__init__(self, parent)
 
@@ -61,7 +66,8 @@ class ZoomSlider(QFrame):
         QFrame.resizeEvent(self, resize_event)
 
 
-    def getMinTestMarker(self):
+    def _getMinTestMarker(self):
+        """Returns the "real" marker bounds. Adjusted for the missing part of an arc."""
         if self.horizontal:
             return QRectF(self.min_marker.left(),
                           self.min_marker.top(),
@@ -73,7 +79,8 @@ class ZoomSlider(QFrame):
                           self.min_marker.width(),
                           self.min_marker.height() / 2.0)
 
-    def getMaxTestMarker(self):
+    def _getMaxTestMarker(self):
+        """Returns the "real" marker bounds. Adjusted for the missing part of an arc."""
         if self.horizontal:
             return QRectF(self.max_marker.left() + self.max_marker.width() / 2.0,
                           self.max_marker.top(),
@@ -87,9 +94,10 @@ class ZoomSlider(QFrame):
                           self.max_marker.height() / 2.0)
 
     def mouseMoveEvent (self, mouse_event):
+        """Dragging or highlighting the markers."""
         self.setDefaultColors()
 
-        min_test_marker = self.getMinTestMarker()
+        min_test_marker = self._getMinTestMarker()
 
         if min_test_marker.contains(mouse_event.x(), mouse_event.y()) or self.selected_marker == 'min':
             self.min_marker_brush = self.getDefaultHighlightColor()
@@ -102,7 +110,7 @@ class ZoomSlider(QFrame):
 
             self.setMinValue(value, False)
 
-        max_test_marker = self.getMaxTestMarker()
+        max_test_marker = self._getMaxTestMarker()
 
         if max_test_marker.contains(mouse_event.x(), mouse_event.y()) or self.selected_marker == 'max':
             self.max_marker_brush = self.getDefaultHighlightColor()
@@ -119,13 +127,14 @@ class ZoomSlider(QFrame):
 
 
     def mousePressEvent (self, mouse_event):
+        """Selecting a marker."""
         if mouse_event.button() == Qt.LeftButton:
-            min_test_marker = self.getMinTestMarker()
+            min_test_marker = self._getMinTestMarker()
 
             if min_test_marker.contains(mouse_event.x(), mouse_event.y()):
                 self.selected_marker = 'min'
 
-            max_test_marker = self.getMaxTestMarker()
+            max_test_marker = self._getMaxTestMarker()
 
             if max_test_marker.contains(mouse_event.x(), mouse_event.y()):
                 self.selected_marker = 'max'
@@ -149,6 +158,7 @@ class ZoomSlider(QFrame):
         self.update()
 
     def setMaxValue(self, max_value, update=True):
+        """The the position of the max marker."""
         if self.horizontal:
             m = float(self.width())
         else:
@@ -171,6 +181,7 @@ class ZoomSlider(QFrame):
                 self.update()
 
     def setMinValue(self, min_value, update=True):
+        """The the position of the min marker."""
         if self.horizontal:
             m = float(self.width())
         else:

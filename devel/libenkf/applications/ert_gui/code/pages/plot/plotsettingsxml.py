@@ -2,9 +2,7 @@ import xml.dom.minidom
 import os
 
 class PlotSettingsSaver:
-    def __init__(self):
-        pass
-
+    """Save a PlotSettings instance to a xml-file."""
     def save(self, name, plot_settings):
         """Save plot configuration to a file with the specified name as filename."""
         self.doc = xml.dom.minidom.Document()
@@ -121,6 +119,7 @@ class PlotSettingsSaver:
 
 
 class PlotSettingsLoader:
+    """Load or copy data from a PlotSettings xml-file."""
     def __init__(self):
         self.skip_plot_settings = False
         self.skip_limits_and_zoom = False
@@ -128,18 +127,23 @@ class PlotSettingsLoader:
         self.skip_annotations = False
 
     def skipPlotSettings(self, bool=True):
+        """Tell the loader to skip plot configs."""
         self.skip_plot_settings = bool
 
     def skipLimitsAndZoom(self, bool=True):
+        """Tell the loader to skip limits and zoom factors."""
         self.skip_limits_and_zoom = bool
 
     def skipSelectedMembers(self, bool=True):
+        """Tell the loader to skip selected members."""
         self.skip_selected_members = bool
 
     def skipAnnotations(self, bool=True):
+        """Tell the loader to skip annotations."""
         self.skip_annotations = bool
 
     def copy(self, plot_settings):
+        """Pops up a dialog where the user can choose another settings file to copy settings from."""
         pscd = PlotSettingsCopyDialog(plot_settings)
         success = pscd.exec_()
         if success:
@@ -151,6 +155,7 @@ class PlotSettingsLoader:
 
 
     def load(self, name, plot_settings):
+        """Load settings into the provided settings file from a plot settings file with the specified name."""
         filename = "%s/%s.xml" % (plot_settings.getPlotConfigPath(), name)
 
         if os.path.exists(filename):
@@ -271,15 +276,13 @@ class PlotSettingsLoader:
 
             plot_settings.addAnnotation(label, self.floatify(x), self.floatify(y), self.floatify(xt), self.floatify(yt))
 
-    def getAnnotations(self):
-        return self.annotations
-
 
 from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QCheckBox
 from PyQt4.QtCore import Qt, SIGNAL
 from widgets.util import createSpace
 
 class PlotSettingsCopyDialog(QDialog):
+    """A dialog for selecting what settings to copy from another settings file."""
     def __init__(self, plot_settings, parent = None):
         QDialog.__init__(self, parent)
 
@@ -327,6 +330,7 @@ class PlotSettingsCopyDialog(QDialog):
         self.setLayout(layout)
 
     def getName(self):
+        """Return the name of the source."""
         return str(self.settings_list.currentText()).strip()
 
     def shouldCopyPlotSettings(self):

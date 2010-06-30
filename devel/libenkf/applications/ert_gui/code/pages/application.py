@@ -5,7 +5,6 @@ from PyQt4.QtCore import Qt, QSettings
 class Application(QtGui.QMainWindow):
     """An application (window widget) with a list of "tasks" on the left side and a panel on the right side"""
 
-
     def __init__(self):
         """Constructor"""
         QtGui.QMainWindow.__init__(self)
@@ -24,7 +23,7 @@ class Application(QtGui.QMainWindow):
         self.contentsWidget.setMinimumWidth(128)
         self.contentsWidget.setSpacing(12)
 
-        dock = self.createDock()
+        dock = self._createDock()
 
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 
@@ -35,25 +34,24 @@ class Application(QtGui.QMainWindow):
         horizontalLayout.addWidget(self.pagesWidget, 1)
         widgetLayout.addLayout(horizontalLayout)
 
-        self.createMenu(dock)
+        self._createMenu(dock)
 
         centralWidget.setLayout(widgetLayout)
         self.setCentralWidget(centralWidget)
 
         self.save_function = None
 
-        settings = QSettings("Statoil", "ErtGui")
-        self.restoreGeometry(settings.value("geometry").toByteArray())
-        self.restoreState(settings.value("windowState").toByteArray())
+        self._fetchSettings()
 
     def setSaveFunction(self, save_function):
+        """Set the function to be called when the save menu choice is selected."""
         self.save_function = save_function
 
-    def save(self):
+    def _save(self):
         if not self.save_function is None:
             self.save_function()
 
-    def createDock(self):
+    def _createDock(self):
         dock = QDockWidget("Workflow")
         dock.setObjectName("ERTGUI Workflow")
         dock.setWidget(self.contentsWidget)
@@ -61,9 +59,9 @@ class Application(QtGui.QMainWindow):
         dock.setAllowedAreas(Qt.LeftDockWidgetArea)
         return dock
 
-    def createMenu(self, dock):
+    def _createMenu(self, dock):
         file_menu = self.menuBar().addMenu("&File")
-        file_menu.addAction("Save configuration", self.save)
+        file_menu.addAction("Save configuration", self._save)
         file_menu.addAction("Close", QtGui.qApp.quit)
         
         self.view_menu = self.menuBar().addMenu("&View")
@@ -71,7 +69,7 @@ class Application(QtGui.QMainWindow):
         self.view_menu.addSeparator()
 
     def addPage(self, name, icon, page):
-        """Add another page to the appliation"""
+        """Add another page to the application"""
         button = QtGui.QListWidgetItem(self.contentsWidget)
         button.setIcon(icon)
         button.setText(name)
@@ -84,12 +82,12 @@ class Application(QtGui.QMainWindow):
         self.view_menu.addAction(name, switchPage)
 
         self.pagesWidget.addWidget(page)
-        self.connect(self.contentsWidget, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'), self.changePage)
+        self.connect(self.contentsWidget, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'), self._changePage)
 
         self.contentsWidget.setCurrentRow(0)
         
 
-    def changePage(self, current, previous):
+    def _changePage(self, current, previous):
         """Switch page. Connected to the: currentItemChanged() signal of the list widget on the left side"""
         if current is None:
             current = previous
@@ -97,7 +95,15 @@ class Application(QtGui.QMainWindow):
         self.pagesWidget.setCurrentIndex(self.contentsWidget.row(current))
 
     def closeEvent(self, event):
+        #Use QT settings saving mechanism
+        #settings stored in ~/.config/Statoil/ErtGui.conf
+
         settings = QSettings("Statoil", "ErtGui")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
         QtGui.QMainWindow.closeEvent(self, event)
+
+    def _fetchSettings(self):
+        settings = QSettings("Statoil", "ErtGui")
+        self.restoreGeometry(settings.value("geometry").toByteArray())
+        self.restoreState(settings.value("windowState").toByteArray())
