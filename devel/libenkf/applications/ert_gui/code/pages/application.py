@@ -1,8 +1,11 @@
 from PyQt4 import QtGui, QtCore
-
+from PyQt4.QtGui import QDockWidget
+from PyQt4.QtCore import Qt, QSettings
 
 class Application(QtGui.QMainWindow):
     """An application (window widget) with a list of "tasks" on the left side and a panel on the right side"""
+
+
     def __init__(self):
         """Constructor"""
         QtGui.QMainWindow.__init__(self)
@@ -21,29 +24,51 @@ class Application(QtGui.QMainWindow):
         self.contentsWidget.setMinimumWidth(128)
         self.contentsWidget.setSpacing(12)
 
+        dock = self.createDock()
+
+        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
         self.pagesWidget = QtGui.QStackedWidget()
 
 
         horizontalLayout = QtGui.QHBoxLayout()
-        horizontalLayout.addWidget(self.contentsWidget)
         horizontalLayout.addWidget(self.pagesWidget, 1)
         widgetLayout.addLayout(horizontalLayout)
 
-
-        quitButton = QtGui.QPushButton("Close", self)
-        self.connect(quitButton, QtCore.SIGNAL('clicked()'), QtGui.qApp, QtCore.SLOT('quit()'))
-
-        buttonWidget = QtGui.QWidget(self)
-        buttonLayout = QtGui.QHBoxLayout()
-        buttonLayout.addStretch(1)
-        buttonLayout.addWidget(quitButton)
-
-        buttonWidget.setLayout(buttonLayout)
-        widgetLayout.addWidget(buttonWidget)
+        self.createMenu(dock)
 
         centralWidget.setLayout(widgetLayout)
         self.setCentralWidget(centralWidget)
 
+        self.save_function = None
+
+        settings = QSettings("Statoil", "ErtGui")
+        self.restoreGeometry(settings.value("geometry").toByteArray())
+        self.restoreState(settings.value("windowState").toByteArray())
+
+    def setSaveFunction(self, save_function):
+        self.save_function = save_function
+
+    def save(self):
+        if not self.save_function is None:
+            self.save_function()
+
+    def createDock(self):
+        dock = QDockWidget("Workflow")
+        dock.setObjectName("ERTGUI Workflow")
+        dock.setWidget(self.contentsWidget)
+        dock.setFeatures(QDockWidget.DockWidgetClosable)
+        dock.setAllowedAreas(Qt.LeftDockWidgetArea)
+        return dock
+
+    def createMenu(self, dock):
+        file_menu = self.menuBar().addMenu("&File")
+        file_menu.addAction("Save configuration", self.save)
+        file_menu.addAction("Close", QtGui.qApp.quit)
+        
+        self.view_menu = self.menuBar().addMenu("&View")
+        self.view_menu.addAction(dock.toggleViewAction())
+        self.view_menu.addSeparator()
 
     def addPage(self, name, icon, page):
         """Add another page to the appliation"""
@@ -52,7 +77,12 @@ class Application(QtGui.QMainWindow):
         button.setText(name)
         button.setTextAlignment(QtCore.Qt.AlignHCenter)
         button.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        
+
+        def switchPage():
+            self.contentsWidget.setCurrentRow(self.contentsWidget.row(button))
+
+        self.view_menu.addAction(name, switchPage)
+
         self.pagesWidget.addWidget(page)
         self.connect(self.contentsWidget, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'), self.changePage)
 
@@ -65,3 +95,9 @@ class Application(QtGui.QMainWindow):
             current = previous
 
         self.pagesWidget.setCurrentIndex(self.contentsWidget.row(current))
+
+    def closeEvent(self, event):
+        settings = QSettings("Statoil", "ErtGui")
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("windowState", self.saveState())
+        QtGui.QMainWindow.closeEvent(self, event)

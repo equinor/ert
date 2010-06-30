@@ -174,6 +174,7 @@ class ErtWrapper:
         self.prototype("void bool_vector_free(long)", lib=self.util)
 
         self.prototype("void enkf_main_free(long)")
+        self.prototype("void enkf_main_fprintf_config(long)")
 
         self.registerType("time_t", erttypes.time_t)
         erttypes.time_vector.initialize(self)
@@ -278,6 +279,9 @@ class ErtWrapper:
 
     def nonify(self, s):
         return s or None
+
+    def save(self):
+        self.enkf.enkf_main_fprintf_config(self.main)
 
 
         

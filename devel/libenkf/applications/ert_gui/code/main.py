@@ -45,6 +45,7 @@ else:
     sys.exit("Must set environment variable: 'ERT_LD_PATH' to point directory with ert shared library files.")
     
 ert = ertwrapper.ErtWrapper(enkf_config , enkf_so , site_config = site_config)
+window.setSaveFunction(ert.save)
 
 splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
 app.processEvents()

@@ -196,6 +196,8 @@ class PlotContextDataFetcher(ContentModel):
 
         ert.prototype("long gen_kw_config_alloc_name_list(long)")
 
+        ert.prototype("long gen_data_config_get_initial_size(long)")
+
         ert.prototype("int field_config_get_nx(long)")
         ert.prototype("int field_config_get_ny(long)")
         ert.prototype("int field_config_get_nz(long)")
@@ -223,34 +225,31 @@ class PlotContextDataFetcher(ContentModel):
         for key in keys:
             config_node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, key)
             type = ert.enkf.enkf_config_node_get_impl_type(config_node)
+            node_ref = ert.enkf.enkf_config_node_get_ref(config_node)
 
             if type == SummaryModel.TYPE:
                 p = Parameter(key, SummaryModel.TYPE)
                 data.parameters.append(p)
-                #p.setUserData({})
 
             elif type == FieldModel.TYPE:
                 p = Parameter(key, FieldModel.TYPE)
                 data.parameters.append(p)
-                #p.setUserData((0,0,0)) #key_index
 
                 if data.field_bounds is None:
-                    field_config = ert.enkf.enkf_config_node_get_ref(config_node)
-                    x = ert.enkf.field_config_get_nx(field_config)
-                    y = ert.enkf.field_config_get_ny(field_config)
-                    z = ert.enkf.field_config_get_nz(field_config)
+                    x = ert.enkf.field_config_get_nx(node_ref)
+                    y = ert.enkf.field_config_get_ny(node_ref)
+                    z = ert.enkf.field_config_get_nz(node_ref)
                     data.field_bounds = (x,y,z)
 
             elif type == DataModel.TYPE:
                 data.parameters.append(Parameter(key, DataModel.TYPE))
+                data.gen_data_size = ert.enkf.gen_data_config_get_initial_size(node_ref)
 
             elif type == KeywordModel.TYPE:
                 p = Parameter(key, KeywordModel.TYPE)
                 data.parameters.append(p)
-                gen_kw_config = ert.enkf.enkf_config_node_get_ref(config_node)
-                s = ert.enkf.gen_kw_config_alloc_name_list(gen_kw_config)
+                s = ert.enkf.gen_kw_config_alloc_name_list(node_ref)
                 data.key_index_list[key] = ert.getStringList(s, free_after_use=True)
-                #p.setUserData(data.key_index_list[key][0])
 
         data.errorbar_max = ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
 
@@ -283,6 +282,7 @@ class PlotContextData:
         self.plot_path = ""
         self.plot_config_path = ""
         self.field_bounds = None
+        self.gen_data_size = 0
 
     def getKeyIndexList(self, key):
         if self.key_index_list.has_key(key):

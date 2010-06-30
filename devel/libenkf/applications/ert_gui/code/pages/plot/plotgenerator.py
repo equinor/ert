@@ -83,9 +83,6 @@ class PlotGenerator(QFrame):
 
         self.popup.ok_button.setEnabled(True)
 
-
-
-
     def save(self, plot_data):
         self.popup.show()
 
