@@ -54,9 +54,10 @@ if not os.path.exists(enkf_config):
         print "Can not run without a configuration file."
         sys.exit(1)
     else:
+        enkf_config = new_configuration_dialog.getConfigurationFilename()
         firste_case_name = new_configuration_dialog.getCaseName()
         dbase_type = new_configuration_dialog.getDBaseType()
-        print "Creating:", firste_case_name, dbase_type
+        print "Creating:", enkf_config, firste_case_name, dbase_type
         #ert.createNewConfiguration(enkf_config, firste_case_name, dbase_type)
 
 ert.bootstrap(enkf_config, site_config = site_config)

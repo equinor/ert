@@ -18,6 +18,10 @@ class NewConfigurationDialog(QDialog):
 
         directory, filename = os.path.split(configuration_filename)
 
+        if directory.strip() == "":
+            directory = os.path.abspath(os.curdir)
+            self.configuration_filename = "%s/%s" % (directory, filename)
+
         configuration_location = QLabel()
         configuration_location.setText(directory)
 
@@ -50,6 +54,9 @@ class NewConfigurationDialog(QDialog):
 
 
         self.setLayout(layout)
+
+    def getConfigurationFilename(self):
+        return self.configuration_filename
 
     def getCaseName(self):
         """Return the name of the first case."""
