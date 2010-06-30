@@ -4,6 +4,10 @@ from PyQt4.QtGui import QFormLayout, QFrame, QComboBox, QHBoxLayout, QDoubleSpin
 from PyQt4.QtGui import QCheckBox
 
 class PlotConfig(object):
+    """
+    Plot config represents settings information relating to plot lines.
+    All values are available as properties.
+    """
 
     def __init__(self, name, linestyle="-", marker="", color=(0.0, 0.0, 0.0), alpha=0.75, zorder=1, picker=None, visible=True):
         self._name = name
@@ -18,12 +22,13 @@ class PlotConfig(object):
         self.signal_handler = QObject()
 
     def notify(self):
+        """Tell all listeners that something has changed. Automatically called by setters."""
         self.signal_handler.emit(SIGNAL('plotConfigChanged(PlotConfig)'), self)
 
     def get_name(self):
         return self._name
 
-    name = property(get_name)
+    name = property(get_name, doc="The name of this plot.")
 
     def hasStyle(self):
         return not self.style == ""
@@ -31,7 +36,7 @@ class PlotConfig(object):
     def get_style(self):
         return (str(self._marker) + str(self._linestyle)).strip()
 
-    style = property(get_style)
+    style = property(get_style, doc="Returns the combined style of line style and marker style.")
 
     def setLinestyle(self, linestyle):
         self._linestyle = linestyle
@@ -40,7 +45,7 @@ class PlotConfig(object):
     def getLinestyle(self):
         return self._linestyle
 
-    linestyle = property(getLinestyle, setLinestyle)
+    linestyle = property(getLinestyle, setLinestyle, doc="Line style")
 
     def setMarker(self, marker):
         self._marker = marker
@@ -49,7 +54,7 @@ class PlotConfig(object):
     def getMarker(self):
         return self._marker
 
-    marker = property(getMarker, setMarker)
+    marker = property(getMarker, setMarker, doc="Marker style")
 
     def setAlpha(self, alpha):
         self._alpha = alpha
@@ -58,7 +63,7 @@ class PlotConfig(object):
     def getAlpha(self):
         return self._alpha
 
-    alpha = property(getAlpha, setAlpha)
+    alpha = property(getAlpha, setAlpha, doc="Transparency of the line. 1 = Opaque ... 0 transparent.")
 
     def setColor(self, color):
         self._color = color
@@ -67,7 +72,7 @@ class PlotConfig(object):
     def getColor(self):
         return self._color
 
-    color = property(getColor, setColor)
+    color = property(getColor, setColor, doc="Color of the line.")
 
 
     def set_is_visible(self, is_visible):
@@ -77,7 +82,7 @@ class PlotConfig(object):
     def is_visible(self):
         return self._is_visible
 
-    is_visible = property(is_visible, set_is_visible)
+    is_visible = property(is_visible, set_is_visible, doc="Hide or show the plotline.")
 
     def set_z_order(self, z_order):
         self._z_order = z_order
@@ -86,7 +91,7 @@ class PlotConfig(object):
     def get_z_order(self):
         return self._z_order
 
-    z_order = property(get_z_order, set_z_order)
+    z_order = property(get_z_order, set_z_order, doc="Z drawing order. 10 = top ... 1 = bottom.")
 
     def setPicker(self, picker):
         self._picker = picker
@@ -95,34 +100,35 @@ class PlotConfig(object):
     def getPicker(self):
         return self._picker
 
-    picker = property(getPicker, setPicker)
+    picker = property(getPicker, setPicker, doc="Picker radius")
 
 
 
 class PlotConfigPanel(QFrame):
+    """A panel to interact with PlotConfig instances."""
     plot_marker_styles = ["", ".", ",", "o", "*", "s", "+", "x", "p", "h", "H", "D", "d"]
     plot_line_styles = ["", "-", "--", "-.", ":"]
 
     def __init__(self, plot_config):
         QFrame.__init__(self)
         self.plot_config = plot_config
-        self.connect(plot_config.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self.fetchValues)
+        self.connect(plot_config.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self._fetchValues)
 
         layout = QFormLayout()
         layout.setRowWrapPolicy(QFormLayout.WrapLongRows)
 
         self.chk_visible = QCheckBox()
         layout.addRow("Visible:", self.chk_visible)
-        self.connect(self.chk_visible, SIGNAL('stateChanged(int)'), self.setVisibleState)
+        self.connect(self.chk_visible, SIGNAL('stateChanged(int)'), self._setVisibleState)
 
         self.plot_linestyle = QComboBox()
         self.plot_linestyle.addItems(self.plot_line_styles)
-        self.connect(self.plot_linestyle, SIGNAL("currentIndexChanged(QString)"), self.setLineStyle)
+        self.connect(self.plot_linestyle, SIGNAL("currentIndexChanged(QString)"), self._setLineStyle)
         layout.addRow("Line style:", self.plot_linestyle)
 
         self.plot_marker_style = QComboBox()
         self.plot_marker_style.addItems(self.plot_marker_styles)
-        self.connect(self.plot_marker_style, SIGNAL("currentIndexChanged(QString)"), self.setMarker)
+        self.connect(self.plot_marker_style, SIGNAL("currentIndexChanged(QString)"), self._setMarker)
         layout.addRow("Marker style:", self.plot_marker_style)
 
 
@@ -133,16 +139,17 @@ class PlotConfigPanel(QFrame):
         self.alpha_spinner.setDecimals(3)
         self.alpha_spinner.setSingleStep(0.01)
 
-        self.connect(self.alpha_spinner, SIGNAL('valueChanged(double)'), self.setAlpha)
+        self.connect(self.alpha_spinner, SIGNAL('valueChanged(double)'), self._setAlpha)
         layout.addRow("Blend factor:", self.alpha_spinner)
 
         self.color_picker = ColorPicker(plot_config)
         layout.addRow("Color:", self.color_picker)
 
         self.setLayout(layout)
-        self.fetchValues(plot_config)
+        self._fetchValues(plot_config)
 
-    def fetchValues(self, plot_config):
+    def _fetchValues(self, plot_config):
+        """Fetch values from a PlotConfig and insert into the panel."""
         self.plot_config = plot_config
 
         #block signals to avoid updating the incoming plot_config 
@@ -167,22 +174,25 @@ class PlotConfigPanel(QFrame):
 
         self.color_picker.update()
 
-    def setLineStyle(self, linestyle):
+    #-------------------------------------------
+    # update plot config from widgets
+    #-------------------------------------------
+    def _setLineStyle(self, linestyle):
         self.plot_config.linestyle = linestyle
 
-    def setMarker(self, marker):
+    def _setMarker(self, marker):
         self.plot_config.marker = marker
 
-    def setAlpha(self, alpha):
+    def _setAlpha(self, alpha):
         self.plot_config.alpha = alpha
 
-    def setVisibleState(self, state):
+    def _setVisibleState(self, state):
         self.plot_config.is_visible = state == 2
    
 
 
 class ColorPicker(QWidget):
-    """A widget that shows a colored box"""
+    """A widget that shows a colored box and pops up a color dialog."""
     color_dialog = QColorDialog()
 
     def __init__(self, plot_config):
@@ -206,23 +216,25 @@ class ColorPicker(QWidget):
 
         rect.setX(rect.x() + 1)
         rect.setY(rect.y() + 1)
-        painter.fillRect(rect, self.getColor())
+        painter.fillRect(rect, self._getColor())
 
-    def setColor(self, color):
+    def _setColor(self, color):
+        """Set the color of this picker."""
         self.plot_config.color = (color.redF(), color.greenF(), color.blueF())
         self.update()
 
-    def getColor(self):
+    def _getColor(self):
+        """Return the color of this picker as QColor."""
         color = self.plot_config.color
         return QColor(int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
 
     def mouseDoubleClickEvent(self, event):
-        self.color_dialog.setCurrentColor(self.getColor())
+        self.color_dialog.setCurrentColor(self._getColor())
         self.color_dialog.exec_()
-        self.setColor(self.color_dialog.selectedColor())
+        self._setColor(self.color_dialog.selectedColor())
 
     def mousePressEvent(self, event):
-        self.color_dialog.setCurrentColor(self.getColor())
+        self.color_dialog.setCurrentColor(self._getColor())
         self.color_dialog.exec_()
-        self.setColor(self.color_dialog.selectedColor())
+        self._setColor(self.color_dialog.selectedColor())
 

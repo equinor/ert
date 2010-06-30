@@ -3,6 +3,7 @@ from helpedwidget import *
 
 class CheckBox(HelpedWidget):
     """A checbox widget for booleans. The data structure expected and sent to the getter and setter is a boolean."""
+
     def __init__(self, parent=None, checkLabel="Do this", help="", altLabel="", defaultCheckState=True):
         """Construct a checkbox widget for booleans"""
         HelpedWidget.__init__(self, parent, checkLabel, help)
