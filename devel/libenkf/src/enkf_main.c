@@ -3153,8 +3153,10 @@ void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_ta
 
 void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
   if (util_file_exists( enkf_main->user_config_file)) {
-    /** A version of the config file already exist, and we will take
-        backup. */
+    /** 
+        A version of the config file already exist, and we will take
+        backup. 
+    */
     char * backup_file = NULL;
     char * prev_backup = NULL;
     int backup_nr      = 1;

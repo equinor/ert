@@ -233,5 +233,12 @@ value = enkf_node_user_get( enkf_node , "KEY:tall" , &valid)     <----- NB Det e
                                                                         til å validere input.
 
 
+----------------
+Saving:
+
+1. Sette config file: enkf_main_set_user_config_file( enkf_main , "config_file" )   [Denne trengs for "Save AS"]
+2. enkf_main_fprintf_config( enkf_main );
+
+
 
  
