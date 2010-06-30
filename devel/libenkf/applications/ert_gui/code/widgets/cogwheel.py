@@ -77,3 +77,6 @@ class Cogwheel(QtGui.QWidget):
     def setRunning(self, bool):
         """Set wether it should animat or not"""
         self.running = bool
+
+    def isRunning(self):
+        return self.running

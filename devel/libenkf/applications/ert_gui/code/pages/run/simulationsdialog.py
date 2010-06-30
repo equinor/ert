@@ -8,6 +8,7 @@ import time
 import ertwrapper
 from widgets.util import getItemsFromList
 from enums import ert_job_status_type
+from PyQt4.QtGui import QApplication
 
 class SimulationsDialog(QtGui.QDialog):
     """A dialog that shows the progress of a simulation"""
@@ -81,10 +82,10 @@ class SimulationsDialog(QtGui.QDialog):
         menu = QtGui.QMenu(self.simulationList)
         selectAll = self._createAction("Select all", self.simulationList.selectAll)
         unselectAll = self._createAction("Unselect all", self.simulationList.clearSelection)
-        selectRunning = self._createAction("Select all running", lambda : self.ctrl.select(Simulation.RUNNING))
-        selectFailed = self._createAction("Select all failed", lambda : self.ctrl.select(Simulation.ALL_FAIL))
-        selectUserKilled = self._createAction("Select all user killed", lambda : self.ctrl.select(Simulation.USER_KILLED))
-        selectWaiting = self._createAction("Select all waiting", lambda : self.ctrl.select(Simulation.WAITING, Simulation.PENDING))
+        selectRunning = self._createAction("Select all running", lambda : self.ctrl.select(ert_job_status_type.RUNNING))
+        selectFailed = self._createAction("Select all failed", lambda : self.ctrl.select(ert_job_status_type.ALL_FAIL))
+        selectUserKilled = self._createAction("Select all user killed", lambda : self.ctrl.select(ert_job_status_type.USER_KILLED))
+        selectWaiting = self._createAction("Select all waiting", lambda : self.ctrl.select(ert_job_status_type.WAITING, ert_job_status_type.PENDING))
 
         menu.addAction(selectAll)
         menu.addAction(unselectAll)
@@ -109,7 +110,7 @@ class SimulationsDialog(QtGui.QDialog):
         self.simulationProgress.setValue(value)
 
     def setRunningState(self, state):
-        """Set wehter the cogwheel should spin and the Done button is enabled"""
+        """Set wether the cogwheel should spin and the Done button is enabled"""
         self.cogwheel.setRunning(state)
         self.doneButton.setEnabled(not state)
 
@@ -195,6 +196,8 @@ class SimulationsDialogController:
             while not ert.enkf.site_config_queue_is_running(ert.site_config):
                 time.sleep(0.5)
 
+            job_start_time = int(time.time())
+
             while(self.runthread.isAlive()):
                 for member in selectedMembers:
                     state = ert.enkf.enkf_main_iget_state(ert.main, member)
@@ -224,11 +227,16 @@ class SimulationsDialogController:
                 qmi2 = self.view.simulationList.indexFromItem(simulations[len(simulations) - 1])
                 self.view.simulationList.model().emit(QtCore.SIGNAL("dataChanged(QModelIndex, QModelIndex)"), qmi1, qmi2)
 
-                if self.statistics.jobsPerSecond() > 0:
-                    #with assimilation the number of jobs must be multiplied by timesteps
-                    self.view.estimateLabel.setText("Estimated finished in %d seconds" % (self.statistics.estimate(len(simulations))))
-                else:
-                    self.view.estimateLabel.setText("")
+
+                if self.view.cogwheel.isRunning():
+                    job_running_time = int(time.time()) - job_start_time
+                    self.view.estimateLabel.setText("Total runnning time: %d seconds" % (job_running_time))
+#                if self.statistics.jobsPerSecond() > 0:
+#                    #with assimilation the number of jobs must be multiplied by timesteps
+#                    self.view.estimateLabel.setText("Estimated finished in %d seconds" % (self.statistics.estimate(len(simulations))))
+#                else:
+#                    self.view.estimateLabel.setText("")
+                QApplication.processEvents()
                 time.sleep(0.1)
 
         self.pollthread.setDaemon(True)

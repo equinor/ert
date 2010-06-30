@@ -16,6 +16,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.field_configuration = FieldConfigurationWidget()
         self.summary_configuration = SummaryConfigurationWidget()
         self.keyword_configuration = KeywordConfigurationWidget()
+        self.data_configuration = DataConfigurationWidget()
 
         def emitter():
             self.emit(SIGNAL('dataChanged()'))
@@ -23,6 +24,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.connect(self.field_configuration, SIGNAL('configurationChanged()'), emitter)
         self.connect(self.summary_configuration, SIGNAL('configurationChanged()'), emitter)
         self.connect(self.keyword_configuration, SIGNAL('configurationChanged()'), emitter)
+        self.connect(self.data_configuration, SIGNAL('configurationChanged()'), emitter)
 
     def initialize(self, ert):
         ert.prototype("long ensemble_config_get_node(long, char*)")
@@ -84,6 +86,10 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                 data.setKeyIndexIsIndex(True)
             else:
                 return False
+        elif parameter.getType() == DataModel.TYPE:
+            data_index = user_data['data_index']
+            key_index = "KEY:%d" % data_index
+            data.setKeyIndexIsIndex(True)
 
         data.setKeyIndex(key_index)
 
@@ -200,7 +206,9 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             self.field_configuration.setFieldBounds(*bounds)
             return self.field_configuration
         elif self.parameter.getType() == DataModel.TYPE:
-            return None
+            index = context_data.gen_data_size
+            self.data_configuration.setIndexBounds(index)
+            return self.data_configuration
         else:
             return None
 
@@ -322,6 +330,35 @@ class KeywordConfigurationWidget(ConfigurationWidget):
 
     def getKeyIndex(self):
         return str(self.keyIndexCombo.currentText())
+
+class DataConfigurationWidget(ConfigurationWidget):
+    def __init__(self):
+        ConfigurationWidget.__init__(self)
+
+        self.keyIndex = QSpinBox()
+        self.keyIndex.setMinimum(0)
+
+        self.addRow("index:", self.keyIndex)
+
+        self.setIndexBounds(0)
+
+        self.connect(self.keyIndex, SIGNAL('valueChanged(int)'), self.applyConfiguration)
+
+    def setIndexBounds(self, i):
+        self.keyIndex.setMaximum(i)
+
+    def getIndex(self):
+        return self.keyIndex.value()
+
+    def setParameter(self, parameter):
+        self.parameter = parameter
+        self.applyConfiguration(False)
+
+    def applyConfiguration(self, emit=True):
+        user_data = {'state': self.getState(), 'data_index': self.getIndex()}
+        self.parameter.setUserData(user_data)
+        self.emitConfigurationChanged(emit)
+
 
 
 
