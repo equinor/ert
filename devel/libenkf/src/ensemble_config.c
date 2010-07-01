@@ -42,6 +42,7 @@
 #include "config_keys.h"
 #include "enkf_defaults.h"
 
+
 struct ensemble_config_struct {
   pthread_mutex_t          mutex;
   char                   * gen_kw_format_string;   /* Format string used when creating gen_kw search/replace strings. */
@@ -356,7 +357,9 @@ void ensemble_config_add_config_items(config_type * config) {
   
   item = config_add_item(config , GEN_KW_KEY , false , true);
   config_item_set_argc_minmax(item , 4 , 6 ,  (const config_item_types [6]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
-
+  
+  item = config_add_key_value( config , GEN_KW_TAG_FORMAT_KEY , false , CONFIG_STRING);
+  
   item = config_add_item(config , SCHEDULE_PREDICTION_FILE_KEY , false , false);
   /* SCEDHULE_PREDICTION_FILE   FILENAME  <PARAMETERS:> <INIT_FILES:> */
   config_item_set_argc_minmax(item , 1 , 3 ,  (const config_item_types [3]) { CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
@@ -370,7 +373,6 @@ void ensemble_config_add_config_items(config_type * config) {
   item = config_add_item(config , SUMMARY_KEY , false , true);   /* Can have several summary keys on each line. */
   config_item_set_argc_minmax(item , 1 , -1 ,  NULL);
   
-
   /* 
      The way config info is entered for fields is unfortunate because
      it is difficult/impossible to let the config system handle run
@@ -410,6 +412,8 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     exit(1);
   }
 
+  if (config_item_set( config , GEN_KW_TAG_FORMAT_KEY))
+    ensemble_config_set_gen_kw_format( ensemble_config , config_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
   
   /* GEN_PARAM  - should be unified with the GEN_DATA*/
   for (i=0; i < config_get_occurences(config , GEN_PARAM_KEY); i++) {
@@ -419,13 +423,13 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
     {
       hash_type * options = hash_alloc_from_options( tokens );
-      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , "INPUT_FORMAT"));
-      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , "OUTPUT_FORMAT"));
-      const char * init_file_fmt              = hash_safe_get( options , "INIT_FILES");
-      const char * template                   = hash_safe_get( options , "TEMPLATE");
-      const char * key                        = hash_safe_get( options , "KEY");
-      const char * result_file                = hash_safe_get( options , "RESULT_FILE");
-      const char * min_std_file               = hash_safe_get( options , "MIN_STD");
+      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
+      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
+      const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
+      const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+      const char * key                        = hash_safe_get( options , KEY_KEY);
+      const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
+      const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
       
       enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
       
@@ -440,14 +444,14 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
     {
       hash_type * options = hash_alloc_from_options( tokens );
-      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , "INPUT_FORMAT"));
-      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , "OUTPUT_FORMAT"));
-      const char * init_file_fmt              = hash_safe_get( options , "INIT_FILES");
-      const char * template                   = hash_safe_get( options , "TEMPLATE");
-      const char * key                        = hash_safe_get( options , "KEY");
-      const char * ecl_file                   = hash_safe_get( options , "ECL_FILE");
-      const char * result_file                = hash_safe_get( options , "RESULT_FILE");
-      const char * min_std_file               = hash_safe_get( options , "MIN_STD");
+      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
+      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
+      const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
+      const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+      const char * key                        = hash_safe_get( options , KEY_KEY);
+      const char * ecl_file                   = hash_safe_get( options , ECL_FILE_KEY);
+      const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
+      const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
 
 
       enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
@@ -471,26 +475,26 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
         int    truncation = TRUNCATE_NONE;
         double value_min  = -1;
         double value_max  = -1;
-
-        if (hash_has_key( options , "MIN")) {
+        
+        if (hash_has_key( options , MIN_KEY)) {
           truncation |= TRUNCATE_MIN;
-          value_min   = atof(hash_get( options , "MIN"));
+          value_min   = atof(hash_get( options , MIN_KEY));
         }
 
-        if (hash_has_key( options , "MAX")) {
+        if (hash_has_key( options , MAX_KEY)) {
           truncation |= TRUNCATE_MAX;
-          value_max   = atof(hash_get( options , "MAX"));
+          value_max   = atof(hash_get( options , MAX_KEY));
         }
         
         
-        if (strcmp(var_type_string , "DYNAMIC") == 0) 
+        if (strcmp(var_type_string , DYNAMIC_KEY) == 0) 
           enkf_config_node_update_state_field( config_node , truncation , value_min , value_max );
-        else if (strcmp(var_type_string , "PARAMETER") == 0) {
+        else if (strcmp(var_type_string , PARAMETER_KEY) == 0) {
           const char *  ecl_file          = stringlist_iget(tokens , 2);
-          const char *  init_file_fmt     = hash_safe_get( options , "INIT_FILES" );
-          const char *  init_transform    = hash_safe_get( options , "INIT_TRANSFORM" );
-          const char *  output_transform  = hash_safe_get( options , "OUTPUT_TRANSFORM" );
-          const char *  min_std_file      = hash_safe_get( options , "MIN_STD");
+          const char *  init_file_fmt     = hash_safe_get( options , INIT_FILES_KEY );
+          const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );
+          const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
+          const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY);
           
           enkf_config_node_update_parameter_field( config_node, 
                                                    ecl_file          , 
@@ -501,14 +505,14 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
                                                    value_max         ,    
                                                    init_transform    , 
                                                    output_transform   );
-        } else if (strcmp(var_type_string , "GENERAL") == 0) {
+        } else if (strcmp(var_type_string , GENERAL_KEY) == 0) {
           const char *  ecl_file          = stringlist_iget(tokens , 2);
           const char *  enkf_infile       = stringlist_iget(tokens , 3);
-          const char *  init_file_fmt     = hash_safe_get( options , "INIT_FILES" );
-          const char *  init_transform    = hash_safe_get( options , "INIT_TRANSFORM" );
-          const char *  output_transform  = hash_safe_get( options , "OUTPUT_TRANSFORM" );
-          const char *  input_transform   = hash_safe_get( options , "INPUT_TRANSFORM" );
-          const char *  min_std_file      = hash_safe_get( options , "MIN_STD");
+          const char *  init_file_fmt     = hash_safe_get( options , INIT_FILES_KEY );
+          const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );
+          const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
+          const char *  input_transform   = hash_safe_get( options , INPUT_TRANSFORM_KEY );
+          const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY);
           
 
           enkf_config_node_update_general_field( config_node,
@@ -545,7 +549,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     {
       hash_type * opt_hash                = hash_alloc_from_options( tokens );
       enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
-      enkf_config_node_update_gen_kw( config_node , enkf_outfile , template_file , parameter_file , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
+      enkf_config_node_update_gen_kw( config_node , enkf_outfile , template_file , parameter_file , hash_safe_get( opt_hash , MIN_STD_KEY ) , hash_safe_get( opt_hash , INIT_FILES_KEY));
       gen_kw_config_update_tag_format( enkf_config_node_get_ref( config_node ) , ensemble_config->gen_kw_format_string );
       hash_free( opt_hash );
     }
@@ -766,3 +770,68 @@ enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensem
   return config_node;
 }
 
+
+/*****************************************************************/
+
+void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream ) {
+  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
+  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information about the uncertain parameters and response variables in use.");
+
+  fprintf( stream , CONFIG_KEY_FORMAT      , GEN_KW_TAG_FORMAT_KEY );
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , ensemble_config->gen_kw_format_string);
+
+  /* Writing GEN_KW nodes. */
+  {
+    stringlist_type * gen_kw_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , GEN_KW );
+    stringlist_sort( gen_kw_keys , NULL );
+    for (int i=0; i < stringlist_get_size( gen_kw_keys ); i++) {
+      const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( gen_kw_keys , i));
+      enkf_config_node_fprintf_config( config_node , stream );
+    }
+    stringlist_free( gen_kw_keys );
+  }
+  fprintf(stream , "\n");
+  
+  /* Writing FIELD nodes. */
+  {
+    stringlist_type * field_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , FIELD );
+    stringlist_sort( field_keys , NULL );
+    for (int i=0; i < stringlist_get_size( field_keys ); i++) {
+      const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( field_keys , i));
+      enkf_config_node_fprintf_config( config_node , stream );
+    }
+    stringlist_free( field_keys );
+  }
+  fprintf(stream , "\n");
+
+  /* Writing SUMMARY nodes. */
+  {
+    stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , SUMMARY );
+    stringlist_sort( summary_keys , NULL );
+    for (int i=0; i < stringlist_get_size( summary_keys ); i++) {
+      if (i == 0)
+        fprintf(stream , CONFIG_KEY_FORMAT , SUMMARY_KEY);
+      else if ((i % 8) == 0) {
+        fprintf(stream , "\n");
+        fprintf(stream , CONFIG_KEY_FORMAT , SUMMARY_KEY);
+      }
+      fprintf(stream , CONFIG_SHORT_VALUE_FORMAT , stringlist_iget( summary_keys , i ));
+    }
+    fprintf(stream , "\n");
+    stringlist_free( summary_keys );
+  }
+  fprintf(stream , "\n");
+
+  /* Writing GEN_DATA nodes. */
+  {
+    stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , GEN_DATA );
+    stringlist_sort( gen_data_keys , NULL );
+    for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
+      const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( gen_data_keys , i));
+      enkf_config_node_fprintf_config( config_node , stream );
+    }
+    stringlist_free( gen_data_keys );
+  }
+
+
+}

@@ -5,6 +5,9 @@
 #include <util.h>
 #include <ert_template.h>
 #include <subst_list.h>
+#include "config_keys.h"
+#include "enkf_defaults.h"
+
 
 #define ERT_TEMPLATE_TYPE_ID  7731963
 #define ERT_TEMPLATES_TYPE_ID 6677330
@@ -96,6 +99,20 @@ void ert_template_free__(void * arg) {
 }
 
 
+static void ert_template_fprintf_config( const ert_template_type * template , FILE * stream ) {
+  fprintf(stream , CONFIG_KEY_FORMAT   , RUN_TEMPLATE_KEY );
+  fprintf(stream , CONFIG_VALUE_FORMAT , template_get_template_file( template ));
+  fprintf(stream , CONFIG_VALUE_FORMAT , template->target_file );
+  {
+    const char * arg_string = template_get_args_as_string( template );
+    if (arg_string != NULL)
+      fprintf(stream , CONFIG_ENDVALUE_FORMAT , arg_string );
+    else
+      fprintf(stream , "\n");
+  }
+}
+
+
 /*****************************************************************/
 
 
@@ -175,3 +192,22 @@ stringlist_type * ert_templates_alloc_list( ert_templates_type * ert_templates) 
   return hash_alloc_stringlist( ert_templates->templates );
 }
 
+
+
+
+void ert_templates_fprintf_config( const ert_templates_type * ert_templates , FILE * stream ) {
+  if (hash_get_size( ert_templates->templates ) > 0 ) {
+    fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
+    fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information about RUN-TIME templates instantiated by ERT.");
+    
+    {
+      hash_iter_type * iter = hash_iter_alloc( ert_templates->templates );
+      while( !hash_iter_is_complete( iter )) {
+        const char * key                   = hash_iter_get_next_key( iter );
+        const ert_template_type * template = hash_get( ert_templates->templates , key );
+        ert_template_fprintf_config( template , stream );
+      }
+      hash_iter_free( iter );
+    }
+  }
+}

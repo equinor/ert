@@ -4,6 +4,23 @@
 extern "C" {
 #endif
 
+/* These keys are used as options in KEY:VALUE statements */
+#define  MIN_STD_KEY                       "MIN_STD"
+#define  INIT_FILES_KEY                    "INIT_FILES"
+#define  KEY_KEY                           "KEY"
+#define  TEMPLATE_KEY                      "TEMPLATE"
+#define  RESULT_FILE_KEY                   "RESULT_FILE"
+#define  ECL_FILE_KEY                      "ECL_FILE"
+#define  INPUT_FORMAT_KEY                  "INPUT_FORMAT"
+#define  OUTPUT_FORMAT_KEY                 "OUTPUT_FORMAT"
+#define  MAX_KEY                           "MAX"
+#define  MIN_KEY                           "MIN"
+#define  INPUT_TRANSFORM_KEY               "INPUT_TRANSFORM"
+#define  INIT_TRANSFORM_KEY                "INIT_TRANSFORM"
+#define  OUTPUT_TRANSFORM_KEY              "OUTPUT_TRANSFORM"
+#define  DYNAMIC_KEY                       "DYNAMIC" 
+#define  PARAMETER_KEY                     "PARAMETER"
+#define  GENERAL_KEY                       "GENERAL"
 
 
 #define  CASE_TABLE_KEY                    "CASE_TABLE"
@@ -28,6 +45,7 @@ extern "C" {
 #define  FORWARD_MODEL_KEY                 "FORWARD_MODEL"
 #define  GEN_DATA_KEY                      "GEN_DATA"
 #define  GEN_KW_KEY                        "GEN_KW"
+#define  GEN_KW_TAG_FORMAT_KEY             "GEN_KW_TAG_FORMAT"
 #define  GEN_PARAM_KEY                     "GEN_PARAM"    
 #define  GRID_KEY                          "GRID"
 #define  HISTORY_SOURCE_KEY                "HISTORY_SOURCE"
@@ -80,6 +98,7 @@ extern "C" {
 #define  UPDATE_LOG_PATH_KEY               "UPDATE_LOG_PATH"
 #define  UPDATE_PATH_KEY                   "UPDATE_PATH"
 
+#define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"
 
 
 

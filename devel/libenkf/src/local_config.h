@@ -97,7 +97,7 @@ stringlist_type             * local_config_get_config_files( const local_config_
 void                          local_config_clear_config_files( local_config_type * local_config );
 void                          local_config_add_config_file( local_config_type * local_config , const char * config_file );
 void                          local_config_fprintf( const local_config_type * local_config , const char * config_file);
-
+void                          local_config_fprintf_config( const local_config_type * local_config , FILE * stream);
 
 #ifdef __cplusplus
 }

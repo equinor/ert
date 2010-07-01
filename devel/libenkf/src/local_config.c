@@ -11,6 +11,8 @@
 #include <int_vector.h>
 #include <ensemble_config.h>
 #include <enkf_obs.h>
+#include "config_keys.h"
+#include "enkf_defaults.h"
 /******************************************************************/
 /*
 
@@ -1031,3 +1033,13 @@ void local_config_fprintf( const local_config_type * local_config , const char *
   fclose( stream );
 }
 
+
+
+void local_config_fprintf_config( const local_config_type * local_config , FILE * stream) {
+  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
+  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes the config files used for setting up local analysis.");
+  for (int i=0; i < stringlist_get_size( local_config->config_files ); i++) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , LOCAL_CONFIG_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , stringlist_iget( local_config->config_files , i ));
+  }
+}

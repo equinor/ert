@@ -12,7 +12,7 @@ extern "C" {
 #include <stringlist.h>
 #include <util.h>
 
-
+void                        gen_kw_config_fprintf_config( const gen_kw_config_type * config , const char * outfile , const char * min_std_file , FILE * stream );
 void                        gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char * parameter_file );
 const char                * gen_kw_config_get_parameter_file( const gen_kw_config_type * config );
 char                      * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens );

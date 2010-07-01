@@ -13,7 +13,9 @@
 #include <math.h>
 #include <active_list.h>
 #include <field_trans.h>
-#include <field_common.h>  
+#include <field_common.h>
+#include "config_keys.h"  
+#include "enkf_defaults.h"
 
 /**
    About transformations and truncations
@@ -108,8 +110,8 @@ struct field_config_struct {
   bool  private_grid;
   
   active_list_type      * active_list;
-
-  int             	  truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. */
+  
+  int             	  truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. OR'd combination of truncation_type from enkf_types.h*/
   double   	  	  min_value;            /* The min value used in truncation. */
   double   	  	  max_value;            /* The maximum value used in truncation. */
 
@@ -118,9 +120,9 @@ struct field_config_struct {
   int             	  sizeof_ctype;
   ecl_type_enum           internal_ecl_type;
   ecl_type_enum           export_ecl_type;
-  path_fmt_type         * init_file_fmt; /* The format for loding init_files - if this is NULL the initialization is done by the forward model. */
+  path_fmt_type         * init_file_fmt;        /* The format for loading init_files - if this is NULL the initialization is done by the forward model. */
 
-  bool                    __enkf_mode;                      /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
+  bool                    __enkf_mode;          /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool                    write_compressed;  
 
   field_type_enum           type;
@@ -954,6 +956,44 @@ int field_config_parse_user_key(const field_config_type * config, const char * i
 
 
 const ecl_grid_type *field_config_get_grid(const field_config_type * config) { return config->grid; }
+
+
+void field_config_fprintf_config( const field_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 
+                                  const char * min_std_file , FILE * stream) {
+  if (var_type == PARAMETER) {
+    fprintf( stream , CONFIG_VALUE_FORMAT , PARAMETER_KEY );
+    fprintf( stream , CONFIG_VALUE_FORMAT , outfile );
+  } else {
+    if (config->init_file_fmt == NULL)
+      /* This is an ECLIPSE dynamic field. */
+      fprintf( stream , CONFIG_VALUE_FORMAT , DYNAMIC_KEY );
+    else {
+      fprintf( stream , CONFIG_VALUE_FORMAT , GENERAL_KEY );
+      fprintf( stream , CONFIG_VALUE_FORMAT , outfile );
+      fprintf( stream , CONFIG_VALUE_FORMAT , infile );
+    }
+  }
+  if (config->init_file_fmt != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , INIT_FILES_KEY , path_fmt_get_fmt( config->init_file_fmt ));
+
+  if (config->init_transform != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , INIT_TRANSFORM_KEY , config->init_transform_name );
+
+  if (config->output_transform != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , OUTPUT_TRANSFORM_KEY , config->output_transform_name );
+
+  if (config->input_transform != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , INPUT_TRANSFORM_KEY , config->input_transform_name );
+
+  if (min_std_file != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , MIN_STD_KEY , min_std_file );
+
+  if (config->truncation & TRUNCATE_MIN)
+    fprintf( stream , CONFIG_FLOAT_OPTION_FORMAT , MIN_KEY , config->min_value );
+
+  if (config->truncation & TRUNCATE_MAX)
+    fprintf( stream , CONFIG_FLOAT_OPTION_FORMAT , MAX_KEY , config->max_value );
+}
 
 
 /*****************************************************************/

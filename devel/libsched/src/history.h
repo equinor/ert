@@ -31,7 +31,7 @@ void           history_fwrite(const history_type *, FILE * stream);
 history_type * history_fread_alloc(FILE * stream);
 history_type * history_alloc_from_sched_file(const sched_file_type *);
 void           history_realloc_from_summary(history_type *, const ecl_sum_type * refcase , bool );
-
+const char   * history_get_source_string( history_source_type history_source );
 
 
 // Accessors.

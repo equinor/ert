@@ -15,7 +15,7 @@ extern "C" {
 #include <stdbool.h>
 #include <subst_list.h>
 
-typedef struct member_config_struct member_config_type;
+typedef  struct member_config_struct member_config_type;
 
 int                     member_config_get_sim_length( const member_config_type * member_config );
 void                    member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath);

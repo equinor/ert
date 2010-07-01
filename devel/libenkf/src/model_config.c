@@ -54,7 +54,7 @@ struct model_config_struct {
   history_source_type    history_source;
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer 
                                                          to the ecl_sum instance owned and held by the ecl_config object. */
-   /** The results are always loaded. */
+  /** The results are always loaded. */
   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
   bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
 };
@@ -439,7 +439,27 @@ void model_config_fprintf_config( const model_config_type * model_config , FILE 
     fprintf( stream , CONFIG_KEY_FORMAT      , CASE_TABLE_KEY );
     fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->case_table_file );
   }
-  
+  fprintf( stream , CONFIG_KEY_FORMAT      , FORWARD_MODEL_KEY);  
+  forward_model_fprintf( model_config->forward_model , stream );
+
   fprintf( stream , CONFIG_KEY_FORMAT      , RUNPATH_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( model_config->runpath ));
+
+  if (model_config->enkf_sched_file != NULL) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , ENKF_SCHED_FILE_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->enkf_sched_file );
+  }
+    
+  fprintf( stream , CONFIG_KEY_FORMAT      , ENSPATH_KEY );
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->enspath );
+
+  fprintf( stream , CONFIG_KEY_FORMAT      , MAX_RESAMPLE_KEY ); 
+  {
+    char max_retry_string[16];
+    sprintf( max_retry_string , "%d" ,model_config->max_internal_submit);
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , max_retry_string);
+  }
+  
+  fprintf(stream , CONFIG_KEY_FORMAT      , HISTORY_SOURCE_KEY);
+  fprintf(stream , CONFIG_ENDVALUE_FORMAT , history_get_source_string( model_config->history_source ));
 }

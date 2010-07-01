@@ -49,6 +49,7 @@ stringlist_type             * ensemble_config_alloc_keylist_from_var_type(const 
 stringlist_type             * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *  , enkf_impl_type );
 bool                          ensemble_config_iget_keep_runpath(const ensemble_config_type * , int );
 ensemble_config_type        * ensemble_config_alloc_empty( );
+void                          ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream );
 
 #ifdef __cplusplus
 }

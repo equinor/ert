@@ -12,6 +12,8 @@
 #include <gen_data_common.h>
 #include <active_list.h>
 #include <int_vector.h>
+#include "config_keys.h"
+#include "enkf_defaults.h"
 
 #define GEN_DATA_CONFIG_ID 90051
 struct gen_data_config_struct {
@@ -359,6 +361,60 @@ void gen_data_config_get_template_data( const gen_data_config_type * config ,
 const char * gen_data_config_get_key( const gen_data_config_type * config) {
   return config->key;
 }
+
+static const char * gen_data_config_format_name( gen_data_file_format_type format_type) {
+  switch (format_type ) {
+  case GEN_DATA_UNDEFINED:
+    return "UNDEFINED";
+    break;
+  case ASCII:
+    return "ASCII";
+    break;
+  case ASCII_TEMPLATE:
+    return "ASCII_TEMPLATE";
+    break;
+  case BINARY_FLOAT:
+    return "BINARY_FLOAT";
+    break;
+  case BINARY_DOUBLE:
+    return "BINARY_DOUBLE";
+    break;
+  default:
+    util_abort("%s: What the f.. \n",__func__);
+    return NULL;
+  }
+}
+
+
+void gen_data_config_fprintf_config( const gen_data_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 
+                                     const char * min_std_file , FILE * stream) {
+  if (var_type == PARAMETER) 
+    fprintf( stream , CONFIG_VALUE_FORMAT , outfile );
+  else
+    fprintf( stream , CONFIG_OPTION_FORMAT , ECL_FILE_KEY , outfile );
+  
+  if (config->init_file_fmt != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , INIT_FILES_KEY , path_fmt_get_fmt( config->init_file_fmt ));
+
+  if (min_std_file != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , MIN_STD_KEY , min_std_file );
+
+  if (config->template_file != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , TEMPLATE_KEY , config->template_file );
+
+  if (config->template_key != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , KEY_KEY , config->template_key );
+
+  if (infile != NULL)
+    fprintf( stream , CONFIG_OPTION_FORMAT , RESULT_FILE_KEY , infile );
+
+  if (config->input_format != GEN_DATA_UNDEFINED)
+    fprintf( stream , CONFIG_OPTION_FORMAT , INPUT_FORMAT_KEY , gen_data_config_format_name( config->input_format ));
+
+  if (config->output_format != GEN_DATA_UNDEFINED)
+    fprintf( stream , CONFIG_OPTION_FORMAT , OUTPUT_FORMAT_KEY , gen_data_config_format_name( config->output_format ));
+}
+
 
 
 /*****************************************************************/

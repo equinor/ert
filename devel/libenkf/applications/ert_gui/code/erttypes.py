@@ -30,8 +30,8 @@ class VectorIterator:
     """A simple iterator"""
     def __init__(self, data, size):
         self.index = 0
-        self.data = data
-        self.size = size
+        self.data  = data
+        self.size  = size
     def next(self):
         if self.index == self.size:
             raise StopIteration

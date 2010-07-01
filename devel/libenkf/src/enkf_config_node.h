@@ -10,8 +10,9 @@ extern "C" {
 #include <field_trans.h>
 #include <gen_data_config.h>
 
-typedef void   (config_free_ftype)   (void *);
-typedef int    (get_data_size_ftype) (const void *);
+typedef void   (config_free_ftype)    (void *);
+typedef int    (get_data_size_ftype)  (const void *);
+typedef void   (config_fprintf_ftype) (const void * , enkf_var_type , FILE * );
 
 
 typedef struct enkf_config_node_struct enkf_config_node_type;
@@ -152,6 +153,8 @@ const            char * enkf_config_node_get_enkf_infile( const enkf_config_node
 
 void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step);
 bool enkf_config_node_internalize(const enkf_config_node_type * node, int report_step);
+
+void enkf_config_node_fprintf_config( const enkf_config_node_type * config_node , FILE * stream );
 
 /*
   The enkf_node_free() function declaration is in the enkf_config_node.h header,

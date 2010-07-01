@@ -103,6 +103,7 @@
 #define DEFAULT_RERUN              false
 #define DEFAULT_RERUN_START        0  
 #define DEFAULT_UPDATE_LOG_PATH    "update_log"
+#define DEFAULT_CV_NFOLDS          10
 
 
 /* Default directories. */
@@ -130,11 +131,16 @@
 /*
   Some #define symbols used when saving configuration files.
 */
-#define CONFIG_KEY_FORMAT         "%-20s"
-#define CONFIG_VALUE_FORMAT       " %-32s"
-#define CONFIG_ENDVALUE_FORMAT    " %-32s\n"
-#define CONFIG_COMMENT_FORMAT     "-- %s\n"
-#define CONFIG_COMMENTLINE_FORMAT "----------------------------------------------------------------------\n"
+#define CONFIG_OPTION_FORMAT        " %s:%s"
+#define CONFIG_FLOAT_OPTION_FORMAT  " %s:%g"
+#define CONFIG_KEY_FORMAT           "%-20s"
+#define CONFIG_VALUE_FORMAT         " %-32s"
+#define CONFIG_FLOAT_FORMAT         " %32.4f"  /* One size - fits all :-) */
+#define CONFIG_INT_FORMAT           " %32d"    /* One size - fits all :-) */
+#define CONFIG_SHORT_VALUE_FORMAT   " %-12s"
+#define CONFIG_ENDVALUE_FORMAT      " %-32s\n"
+#define CONFIG_COMMENT_FORMAT       "-- %s\n"
+#define CONFIG_COMMENTLINE_FORMAT   "----------------------------------------------------------------------\n"
 
 
 

@@ -13,14 +13,13 @@ struct analysis_config_struct {
   bool                    merge_observations;  /* When observing from time1 to time2 - should ALL observations in between be used? */
   bool                    rerun;               /* Should we rerun the simulator when the parameters have been updated? */
   int                     rerun_start;         /* When rerunning - from where should we start? */
-  bool                    random_rotation;     /* When using the SQRT scheme - should a random rotation be performed?? */
+  bool                    random_rotation;     /* When using the SQRT scheme - should a random rotation be performed?? Fixed to TRUE*/
   double 	          truncation;
   double 	          overlap_alpha;
   double                  std_cutoff;
   enkf_mode_type          enkf_mode;
-  pseudo_inversion_type   inversion_mode;
+  pseudo_inversion_type   inversion_mode;            /* Fixed to SVD_SS_N1_R */ 
   char                  * log_path;                  /* Points to directory with update logs. */
-  bool                    do_cross_validation;       /* Should we perform CV */
   int                     nfolds_CV;                 /* Number of folds in the CV scheme */
   bool                    do_local_cross_validation; /* Should we do CV for separate state vector matrices? */
 }; 
@@ -33,23 +32,22 @@ struct analysis_config_struct {
 
 analysis_config_type * analysis_config_alloc_default() {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
-
+  
   config->inversion_mode            = SVD_SS_N1_R;
   config->random_rotation           = true;
   config->log_path                  = NULL;
-  config->do_cross_validation       = true;
-  config->nfolds_CV                 = 10; 
   config->do_local_cross_validation = false;
   
-  analysis_config_set_std_cutoff( config , DEFAULT_ENKF_STD_CUTOFF );
-  analysis_config_set_log_path( config , DEFAULT_UPDATE_LOG_PATH );
-  analysis_config_set_truncation( config , DEFAULT_ENKF_TRUNCATION );
-  analysis_config_set_alpha( config , DEFAULT_ENKF_ALPHA );
+  analysis_config_set_std_cutoff( config         , DEFAULT_ENKF_STD_CUTOFF );
+  analysis_config_set_log_path( config           , DEFAULT_UPDATE_LOG_PATH );
+  analysis_config_set_truncation( config         , DEFAULT_ENKF_TRUNCATION );
+  analysis_config_set_alpha( config              , DEFAULT_ENKF_ALPHA );
   analysis_config_set_merge_observations( config , DEFAULT_MERGE_OBSERVATIONS );
-  analysis_config_set_enkf_mode ( config , DEFAULT_ENKF_MODE );
-  analysis_config_set_rerun( config , DEFAULT_RERUN );
-  analysis_config_set_rerun_start( config , DEFAULT_RERUN_START );
-
+  analysis_config_set_enkf_mode ( config         , DEFAULT_ENKF_MODE );
+  analysis_config_set_rerun( config              , DEFAULT_RERUN );
+  analysis_config_set_rerun_start( config        , DEFAULT_RERUN_START );
+  analysis_config_set_nfolds_CV( config          , DEFAULT_CV_NFOLDS );         
+  
   return config;
 }
 
@@ -107,9 +105,6 @@ int analysis_config_get_nfolds_CV(const analysis_config_type * config) {
   return config->nfolds_CV;
 }
 
-bool analysis_config_get_do_cross_validation(const analysis_config_type * config) {
-  return config->do_cross_validation;
-}
 
 bool analysis_config_get_do_local_cross_validation(const analysis_config_type * config) {
   return config->do_local_cross_validation;
@@ -136,12 +131,22 @@ void analysis_config_set_nfolds_CV( analysis_config_type * config , int folds) {
   config->nfolds_CV = folds;
 }
 
-void analysis_config_set_do_cross_validation( analysis_config_type * config , bool do_cv) {
-  config->do_cross_validation = do_cv;
-}
-
 void analysis_config_set_do_local_cross_validation( analysis_config_type * config , bool do_cv) {
   config->do_local_cross_validation = do_cv;
+}
+
+static const char * analysis_config_get_mode_string( enkf_mode_type mode ) {
+  switch( mode ) {
+  case( ENKF_STANDARD ):
+    return "STANDARD";
+    break;
+  case( ENKF_SQRT ):
+    return "SQRT";
+    break;
+  default:
+    util_abort("%s: fallen off the end of a switch ?\n",__func__);
+    return NULL;
+  }
 }
 
 /**
@@ -186,25 +191,14 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   if (config_item_set( config , RERUN_START_KEY ))
     analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , RERUN_START_KEY ));
 
-  /*Check and set CV parameters: */
-  if (config_item_set( config , ENKF_CROSS_VALIDATION_KEY )) {
-    analysis_config_set_do_cross_validation( analysis , config_get_value_as_bool(config , ENKF_CROSS_VALIDATION_KEY ));
+  if (config_item_set( config , ENKF_LOCAL_CV_KEY )) {
+    analysis_config_set_do_local_cross_validation( analysis , config_get_value_as_bool(config , ENKF_LOCAL_CV_KEY ));
+
     if (config_item_set( config , ENKF_CV_FOLDS_KEY ))
       analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , ENKF_CV_FOLDS_KEY ));
-    else
-      analysis_config_set_nfolds_CV( analysis , 10);
-
-    if (config_item_set( config , ENKF_LOCAL_CV_KEY ))
-      analysis_config_set_do_local_cross_validation( analysis , config_get_value_as_bool(config , ENKF_LOCAL_CV_KEY ));
-    else
-      analysis_config_set_do_local_cross_validation( analysis , false );
-
   }
-  else {
-    analysis_config_set_do_cross_validation( analysis , false );
-  }
-  
-  
+  else
+    analysis_config_set_do_local_cross_validation( analysis , false );
 }
 
 
@@ -272,3 +266,64 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
   config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
 }
+
+
+
+void analysis_config_fprintf_config( analysis_config_type * config , FILE * stream) {
+  if (config->std_cutoff != DEFAULT_ENKF_STD_CUTOFF) {
+    fprintf( stream , CONFIG_KEY_FORMAT   , STD_CUTOFF_KEY );
+    fprintf( stream , CONFIG_FLOAT_FORMAT , config->std_cutoff );
+    fprintf( stream , "\n");
+  }
+
+  if (config->truncation != DEFAULT_ENKF_TRUNCATION ) {
+    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_TRUNCATION_KEY );
+    fprintf( stream , CONFIG_FLOAT_FORMAT , config->truncation );
+    fprintf( stream , "\n");
+  }
+
+  if (config->overlap_alpha != DEFAULT_ENKF_ALPHA ) {
+    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_TRUNCATION_KEY );
+    fprintf( stream , CONFIG_FLOAT_FORMAT , config->overlap_alpha );
+    fprintf( stream , "\n");
+  }
+  
+  if (config->merge_observations != DEFAULT_MERGE_OBSERVATIONS) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_MERGE_OBSERVATIONS_KEY);
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->merge_observations ));
+  }
+
+  if (config->rerun) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_RERUN_KEY);
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->rerun ));
+  }
+  
+  if (config->rerun_start != DEFAULT_RERUN_START) {
+    fprintf( stream , CONFIG_KEY_FORMAT   , RERUN_START_KEY);
+    fprintf( stream , CONFIG_INT_FORMAT   , config->rerun_start );
+    fprintf( stream , "\n");
+  }
+
+  if (config->enkf_mode != DEFAULT_ENKF_MODE) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , ENKF_MODE_KEY);
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , analysis_config_get_mode_string( config->enkf_mode ));
+  }
+  
+  if (config->log_path != NULL) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , UPDATE_LOG_PATH_KEY);
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , config->log_path );
+  }
+ 
+  if (config->do_local_cross_validation) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_LOCAL_CV_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->do_local_cross_validation ));
+  }
+
+  if (config->nfolds_CV != DEFAULT_CV_NFOLDS ) {
+    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_CV_FOLDS_KEY );
+    fprintf( stream , CONFIG_INT_FORMAT   , config->nfolds_CV );
+    fprintf( stream , "\n");
+  }
+  
+}
+

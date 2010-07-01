@@ -11,6 +11,7 @@
 #include <ecl_sum.h>
 #include <ecl_smspec.h>
 #include <set.h>
+#include <summary_config.h>
 
 #define SUMMARY_CONFIG_TYPE_ID 63106
 
@@ -73,6 +74,7 @@ void summary_config_free(summary_config_type * config) {
 int summary_config_get_byte_size(const summary_config_type * config) {
   return config->data_size * sizeof(double);
 }
+
 
 
 

@@ -12,6 +12,7 @@
 #include <path_fmt.h>
 #include <trans_func.h>
 #include <vector.h>
+#include "config_keys.h"
 
 #define GEN_KW_CONFIG_TYPE_ID     550761
 #define GEN_KW_PARAMETER_TYPE_ID  886201
@@ -281,6 +282,19 @@ int gen_kw_config_get_index(const gen_kw_config_type * config , const char * key
 }
 
 
+
+void gen_kw_config_fprintf_config( const gen_kw_config_type * config , const char * outfile , const char * min_std_file , FILE * stream ) {
+  fprintf(stream , CONFIG_VALUE_FORMAT , config->template_file );
+  fprintf(stream , CONFIG_VALUE_FORMAT , outfile );
+  fprintf(stream , CONFIG_VALUE_FORMAT , config->parameter_file );
+
+  if (min_std_file != NULL) 
+    fprintf( stream , CONFIG_OPTION_FORMAT , MIN_STD_KEY , min_std_file);
+  
+  if (config->init_file_fmt != NULL) 
+    fprintf( stream , CONFIG_OPTION_FORMAT , MIN_STD_KEY , path_fmt_get_fmt( config->init_file_fmt) );
+  
+}
 
 
 /*****************************************************************/

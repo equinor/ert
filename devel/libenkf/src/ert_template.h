@@ -31,6 +31,7 @@ void                 ert_templates_del_template( ert_templates_type * ert_templa
 const char         * ert_template_get_template_file( const ert_template_type * ert_template);
 const char         * ert_template_get_target_file( const ert_template_type * ert_template);
 const char         * ert_template_get_args_as_string( const ert_template_type * ert_template );
+void                 ert_templates_fprintf_config( const ert_templates_type * ert_templates , FILE * stream );
 
 #ifdef __cplusplus
 }

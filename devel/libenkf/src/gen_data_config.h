@@ -53,6 +53,8 @@ const char * gen_data_config_get_template_file( const gen_data_config_type * con
 const char * gen_data_config_get_template_key( const gen_data_config_type * config );
 const char * gen_data_config_get_init_file_fmt( const gen_data_config_type * config );
 
+void gen_data_config_fprintf_config( const gen_data_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 
+                                     const char * min_std_file , FILE * stream);
 
 UTIL_SAFE_CAST_HEADER(gen_data_config)
 UTIL_SAFE_CAST_HEADER_CONST(gen_data_config)

@@ -49,6 +49,22 @@ history_source_type history_get_source_type( const char * string_source ) {
 }
 
 
+const char * history_get_source_string( history_source_type history_source ) {
+  switch( history_source ) {
+  case( REFCASE_SIMULATED ):
+    return "REFCASE_SIMULATED";
+    break;
+  case(REFCASE_HISTORY ):
+    return "REFCASE_HISTORY";
+    break;
+  case(SCHEDULE ):
+    return "SCHEDULE";
+    break;
+  default:
+    util_abort("%s: internal fuck up \n",__func__);
+  }
+}
+
 
 
 /******************************************************************/

@@ -161,6 +161,10 @@ const char              * field_config_get_input_transform_name( const field_con
 const char              * field_config_get_output_transform_name( const field_config_type * field_config ) ;
 const char              * field_config_get_init_transform_name( const field_config_type * field_config ) ;
 
+void field_config_fprintf_config( const field_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 
+                                  const char * min_std_file , FILE * stream);
+
+
 
 /*Generated headers */
 UTIL_SAFE_CAST_HEADER(field_config);

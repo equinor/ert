@@ -106,9 +106,9 @@ struct enkf_main_struct {
   site_config_type     * site_config;
   analysis_config_type * analysis_config;
   local_config_type    * local_config;       /* Holding all the information about local analysis. */
+  ert_templates_type   * templates;          /* Run time templates */
   log_type             * logh;               /* Handle to an open log file. */
   plot_config_type     * plot_config;        /* Information about plotting. */
-  ert_templates_type   * templates;          /* Run time templates */
 
   /*---------------------------*/            /* Variables related to substitution. */
   subst_func_pool_type * subst_func_pool;
@@ -2522,7 +2522,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   char           * model_config;
   enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
 
-
   if (site_config == NULL)
     site_config = _site_config;
 
@@ -2534,12 +2533,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     char * path;
     char * base;
     char * ext;
-    if (util_is_link( _model_config )) {   /* The command line argument given is a symlink - we start by chaning to */
-      const  int path_size = 256;          /* the real location of the configuration file. */
-      char   realpath[path_size + 1];
-      
-      readlink( _model_config , realpath , path_size );
+    if (util_is_link( _model_config )) {   /* The command line argument given is a symlink - we start by changing to */
+                                           /* the real location of the configuration file. */
+      char  * realpath = util_alloc_link_target( _model_config ); 
       util_alloc_file_components(realpath , &path , &base , &ext);
+      free( realpath );
     } else 
       util_alloc_file_components(_model_config , &path , &base , &ext);
 
@@ -2549,8 +2547,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
 
       printf("Changing to directory ...................: %s \n",path);
+      
       if (ext != NULL) {
-	model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
+        //model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
+
+        model_config = util_alloc_filename( NULL , base , ext );
 	free(base);
       } else
 	model_config = base;
@@ -2560,8 +2561,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     } else
       model_config = util_alloc_string_copy(_model_config);
   }
-  
-
 
 
   if (!util_file_exists(site_config))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
@@ -2761,12 +2760,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
     }
     config_free(config);
-
-    //enkf_main_set_user_config_file( enkf_main , "/tmp/config" );
-    //enkf_main_fprintf_config( enkf_main );
   }
   free( model_config );
   enkf_main->misfit_table = NULL;
+
+  enkf_main_set_user_config_file( enkf_main , "config_test" );
   return enkf_main;
 }
 
@@ -3193,16 +3191,21 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     util_safe_free( prev_backup );
     util_safe_free( backup_file );
   }
+  
+  printf("Saving configuration to:%s \n", enkf_main->user_config_file );
+  
   /* Start the proper saving */
   {
     FILE * stream = util_fopen( enkf_main->user_config_file , "w");
     
-    printf("Storing configuration file:%s \n",enkf_main->user_config_file);
     ecl_config_fprintf_config( enkf_main->ecl_config , stream );
-    fprintf(stream , "\n\n");
     model_config_fprintf_config( enkf_main->model_config , stream );
-    fprintf(stream , "\n\n");
-    site_config_fprintf_config( enkf_main->site_config , stream );
+    enkf_obs_fprintf_config( enkf_main->obs , stream );
+    analysis_config_fprintf_config( enkf_main->analysis_config , stream );
+    ensemble_config_fprintf_config( enkf_main->ensemble_config , stream );
+    site_config_fprintf_config( enkf_main->site_config , stream );    
+    local_config_fprintf_config( enkf_main->local_config , stream );
+    ert_templates_fprintf_config( enkf_main->templates , stream );
     
     fclose( stream );
   }

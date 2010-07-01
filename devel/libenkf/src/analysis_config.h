@@ -20,7 +20,7 @@ pseudo_inversion_type  analysis_config_get_inversion_mode( const analysis_config
 bool                   analysis_config_get_rerun(const analysis_config_type * config);
 bool                   analysis_config_get_random_rotation(const analysis_config_type * config);
 int                    analysis_config_get_rerun_start(const analysis_config_type * config);
-bool                   analysis_config_get_do_cross_validation(const analysis_config_type * config);
+//bool                   analysis_config_get_do_cross_validation(const analysis_config_type * config);
 bool                   analysis_config_get_do_local_cross_validation(const analysis_config_type * config);
 int                    analysis_config_get_nfolds_CV(const analysis_config_type * config);
 void                   analysis_config_set_rerun(analysis_config_type * config , bool rerun);
@@ -36,5 +36,7 @@ void                   analysis_config_set_log_path(analysis_config_type * confi
 void                   analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff );
 double                 analysis_config_get_std_cutoff( const analysis_config_type * config );
 void                   analysis_config_add_config_items( config_type * config );
+void                   analysis_config_fprintf_config( analysis_config_type * config , FILE * stream);
+
 
 #endif

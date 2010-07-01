@@ -15,6 +15,8 @@
 #include <summary_config.h>
 #include <enkf_obs.h>
 #include <gen_obs.h>
+#include "enkf_defaults.h"
+#include "config_keys.h"
 
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 
@@ -633,8 +635,6 @@ int enkf_config_node_load_obs( const enkf_config_node_type * config_node , enkf_
 
 
 
-
-
 void enkf_config_node_add_obs_key(enkf_config_node_type * config_node , const char * obs_key) {
   if (!stringlist_contains(config_node->obs_keys , obs_key))
     stringlist_append_copy(config_node->obs_keys , obs_key);
@@ -643,6 +643,47 @@ void enkf_config_node_add_obs_key(enkf_config_node_type * config_node , const ch
 
 void enkf_config_node_clear_obs_keys(enkf_config_node_type * config_node) {
   stringlist_clear( config_node->obs_keys );
+}
+
+/*****************************************************************/
+
+
+
+void enkf_config_node_fprintf_config( const enkf_config_node_type * config_node , FILE * stream ) {
+  switch( config_node->impl_type) {
+  case(GEN_KW):
+    fprintf( stream , CONFIG_KEY_FORMAT   , GEN_KW_KEY );
+    fprintf( stream , CONFIG_VALUE_FORMAT , config_node->key );
+    gen_kw_config_fprintf_config( config_node->data , path_fmt_get_fmt( config_node->enkf_outfile_fmt ) , config_node->min_std_file , stream );
+    break;
+  case(FIELD):
+    fprintf( stream , CONFIG_KEY_FORMAT   , FIELD_KEY );
+    fprintf( stream , CONFIG_VALUE_FORMAT , config_node->key );
+    field_config_fprintf_config( config_node->data     , 
+                                 config_node->var_type , 
+                                 path_fmt_get_fmt( config_node->enkf_outfile_fmt ) , 
+                                 path_fmt_get_fmt( config_node->enkf_infile_fmt ) , 
+                                 config_node->min_std_file , 
+                                 stream );
+    break;
+  case(GEN_DATA):
+
+    if (config_node->var_type == PARAMETER)
+      fprintf( stream , CONFIG_KEY_FORMAT , GEN_PARAM_KEY );
+    else
+      fprintf( stream , CONFIG_KEY_FORMAT , GEN_DATA_KEY );
+    
+    gen_data_config_fprintf_config( config_node->data     , 
+                                    config_node->var_type ,
+                                    path_fmt_get_fmt( config_node->enkf_outfile_fmt ) , 
+                                    path_fmt_get_fmt( config_node->enkf_infile_fmt ) , 
+                                    config_node->min_std_file , 
+                                    stream );
+    break;
+  default:
+    util_abort("%s: internal error - function can not store configuration for: %s variables. \n",__func__ , enkf_types_get_impl_name( config_node->impl_type) );
+  }
+  fprintf( stream , "\n");
 }
 
 
