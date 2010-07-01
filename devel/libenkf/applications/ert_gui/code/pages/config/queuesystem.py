@@ -22,7 +22,7 @@ def createQueueSystemPage(configPanel, parent):
 
     internalPanel.startPage("LSF")
 
-    r = internalPanel.addRow(ComboChoice(parent, ["NORMAL", "FAST_LOCAL", "SHORT"], "Mode", "config/queue_system/lsf_queue"))
+    r = internalPanel.addRow(ComboChoice(parent, ["NORMAL", "FAST_LOCAL", "SHORT"], "LSF Queue", "config/queue_system/lsf_queue"))
     r.initialize = lambda ert : [ert.prototype("char* site_config_get_lsf_queue(long)"),
                                  ert.prototype("void site_config_set_lsf_queue(long, char*)")]
     r.getter = lambda ert : ert.enkf.site_config_get_lsf_queue(ert.site_config)

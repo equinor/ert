@@ -1,7 +1,6 @@
-from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QCheckBox
+from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QCheckBox , QSpinBox , QLineEdit
 from PyQt4.QtCore import Qt, SIGNAL
 from widgets.util import createSpace
-from PyQt4.QtGui import QLineEdit
 import os
 
 class NewConfigurationDialog(QDialog):
@@ -22,6 +21,7 @@ class NewConfigurationDialog(QDialog):
             directory = os.path.abspath(os.curdir)
             self.configuration_filename = "%s/%s" % (directory, filename)
 
+
         configuration_location = QLabel()
         configuration_location.setText(directory)
 
@@ -29,19 +29,25 @@ class NewConfigurationDialog(QDialog):
         configuration_name.setText(filename)
 
         self.db_type = QComboBox()
-        self.db_type.addItem("PLAIN")
         self.db_type.addItem("BLOCK_FS")
-
+        self.db_type.addItem("PLAIN")
+        
         self.first_case_name = QLineEdit()
         self.first_case_name.setText("default")
         self.connect(self.first_case_name, SIGNAL('textChanged(QString)'), self._validateName)
+
+        self.num_realizations = QSpinBox()
+        self.num_realizations.setMinimum( 1 )
+        self.num_realizations.setMaximum( 1000 )
+        self.num_realizations.setValue( 10 )
 
         layout.addRow(createSpace(10))
         layout.addRow("Configuration name:", configuration_name)
         layout.addRow("Configuration location:", configuration_location)
         layout.addRow("DBase type:", self.db_type)
         layout.addRow("Name of first case:", self.first_case_name)
-
+        layout.addRow("Number of realizations" , self.num_realizations)
+        
         layout.addRow(createSpace(10))
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
@@ -55,6 +61,10 @@ class NewConfigurationDialog(QDialog):
 
         self.setLayout(layout)
 
+
+    def getNumberOfRealizations(self):
+        return self.num_realizations.value()
+    
     def getConfigurationFilename(self):
         return self.configuration_filename
 
