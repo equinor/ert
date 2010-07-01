@@ -36,7 +36,6 @@ void ert_template_set_target_file( ert_template_type * ert_template , const char
 
 
 void ert_template_set_template_file( ert_template_type * ert_template , const char * template_file ) {
-  //template_set_template_file
   template_set_template_file( ert_template->template , template_file );
 }
 
@@ -101,10 +100,10 @@ void ert_template_free__(void * arg) {
 
 static void ert_template_fprintf_config( const ert_template_type * template , FILE * stream ) {
   fprintf(stream , CONFIG_KEY_FORMAT   , RUN_TEMPLATE_KEY );
-  fprintf(stream , CONFIG_VALUE_FORMAT , template_get_template_file( template ));
+  fprintf(stream , CONFIG_VALUE_FORMAT , ert_template_get_template_file( template ));
   fprintf(stream , CONFIG_VALUE_FORMAT , template->target_file );
   {
-    const char * arg_string = template_get_args_as_string( template );
+    const char * arg_string = ert_template_get_args_as_string( template );
     if (arg_string != NULL)
       fprintf(stream , CONFIG_ENDVALUE_FORMAT , arg_string );
     else
