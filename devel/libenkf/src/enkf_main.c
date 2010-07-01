@@ -2688,11 +2688,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
             char * key , *value;
             util_binary_split_string( config_iget( config , RUN_TEMPLATE_KEY , i , iarg ), "=:" , true , &key , &value);
             
-            if (value != NULL) {
-              char * tagged_key = enkf_util_alloc_tagged_string( key );
-              ert_template_add_arg( template , tagged_key , value );
-              free( tagged_key );
-            } else
+            if (value != NULL) 
+              ert_template_add_arg( template ,key , value );
+            else
               fprintf(stderr,"** Warning - failed to parse argument:%s as key:value - ignored \n",config_iget( config , "RUN_TEMPLATE" , i , iarg ));
 
             free( key );
