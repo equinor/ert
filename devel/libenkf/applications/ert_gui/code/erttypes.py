@@ -5,9 +5,6 @@ import ctypes
 class time_t(ctypes.c_long):
     """A convenience class for working with time_t objects."""
 
-    def __init__(self, value):
-        ctypes.c_long.__init__(self, value)
-
     def time(self):
         """Return this time_t as a time.localtime() object"""
         return time.localtime(self.value)

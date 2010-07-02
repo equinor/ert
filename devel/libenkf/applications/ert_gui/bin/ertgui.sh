@@ -30,8 +30,9 @@ echo "-----------------------------------------------------------------"
 if [ -z "$1" ]
 then
     echo
-    echo "A configuration file must be specified."
-    echo "  ertgui ert_configuration_file"
+    echo "A configuration file must be specified, or if you want to create a new"
+    echo "configuration: enter the path to the new (non-existing) configuration file."
+    echo "  ertgui.sh ert_configuration_file"
     echo
     echo "Options (for debugging):"
     echo "        ertgui.sh debug ert_configuration_file"
