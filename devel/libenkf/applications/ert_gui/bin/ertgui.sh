@@ -2,7 +2,7 @@
 
 script_path=$0
 while [ -L "$script_path" ]; do
-    script_path=`readlink -e "$script_path"`
+    script_path=`readlink -f "$script_path"`
 done
 
 export script_dir=$(dirname $script_path)
