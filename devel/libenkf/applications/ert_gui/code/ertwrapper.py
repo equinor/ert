@@ -16,9 +16,6 @@ class ErtWrapper:
         self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
         self.__registerDefaultTypes()
 
-    
-
-
     def bootstrap(self, enkf_config, site_config="/project/res/etc/ERT/Config/site-config"):
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)

@@ -62,7 +62,7 @@ class Application(QtGui.QMainWindow):
     def _createMenu(self, dock):
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction("Save configuration", self._save)
-        file_menu.addAction("Close", QtGui.qApp.quit)
+        file_menu.addAction("Close", self._quit)
         
         self.view_menu = self.menuBar().addMenu("&View")
         self.view_menu.addAction(dock.toggleViewAction())
@@ -94,13 +94,19 @@ class Application(QtGui.QMainWindow):
 
         self.pagesWidget.setCurrentIndex(self.contentsWidget.row(current))
 
-    def closeEvent(self, event):
-        #Use QT settings saving mechanism
-        #settings stored in ~/.config/Statoil/ErtGui.conf
+    def _quit(self):
+        self._saveSettings()
+        QtGui.qApp.quit()
 
+    def _saveSettings(self):
         settings = QSettings("Statoil", "ErtGui")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
+
+    def closeEvent(self, event):
+        #Use QT settings saving mechanism
+        #settings stored in ~/.config/Statoil/ErtGui.conf
+        self._saveSettings()
         QtGui.QMainWindow.closeEvent(self, event)
 
     def _fetchSettings(self):
