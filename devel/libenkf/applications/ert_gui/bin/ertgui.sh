@@ -1,10 +1,11 @@
 #!/bin/sh
-export script_dir=$(dirname $0)
 
-while [ -L "script_dir" ]; do
-  script_dir=`readlink -e "$script_dir"`
+script_path=$0
+while [ -L "$script_path" ]; do
+    script_path=`readlink -e "$script_path"`
 done
 
+export script_dir=$(dirname $script_path)
 #
 # This environment variable must be set to the ERT home directory
 # or a lib directory containing all .so files of ERT
@@ -56,7 +57,6 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/project/res/x86_64_RH_4/lib:/prog/LSF/7
 
 ORIGINAL_DIRECTORY=$PWD
 
-export script_dir=$(dirname $0)
 export ert_gui_dir=$script_dir/../code
 
 
