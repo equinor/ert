@@ -5,7 +5,7 @@ import os
 
 class NewConfigurationDialog(QDialog):
     """A dialog for selecting defaults for a new configuration."""
-    def __init__(self, configuration_filename, parent = None):
+    def __init__(self, configuration_path, parent = None):
         QDialog.__init__(self, parent)
 
         self.setModal(True)
@@ -15,11 +15,13 @@ class NewConfigurationDialog(QDialog):
 
         layout = QFormLayout()
 
-        directory, filename = os.path.split(configuration_filename)
+        directory, filename = os.path.split(configuration_path)
 
         if directory.strip() == "":
             directory = os.path.abspath(os.curdir)
-            self.configuration_filename = "%s/%s" % (directory, filename)
+            self.configuration_path = "%s/%s" % (directory, filename)
+        else:
+            self.configuration_path = configuration_path
 
 
         configuration_location = QLabel()
@@ -65,8 +67,8 @@ class NewConfigurationDialog(QDialog):
     def getNumberOfRealizations(self):
         return self.num_realizations.value()
     
-    def getConfigurationFilename(self):
-        return self.configuration_filename
+    def getConfigurationPath(self):
+        return self.configuration_path
 
     def getCaseName(self):
         """Return the name of the first case."""
