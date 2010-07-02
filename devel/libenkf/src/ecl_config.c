@@ -451,7 +451,10 @@ ecl_grid_type * ecl_config_get_grid(const ecl_config_type * ecl_config) {
 
 
 const char * ecl_config_get_gridfile( const ecl_config_type * ecl_config ) {
-  return ecl_grid_get_name( ecl_config->grid );
+  if (ecl_config->grid == NULL)
+    return NULL;
+  else
+    return ecl_grid_get_name( ecl_config->grid );
 }
 
 
@@ -569,4 +572,6 @@ void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stre
     fprintf( stream , CONFIG_KEY_FORMAT      , INIT_SECTION_KEY );
     fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config_get_init_section( ecl_config ));
   }
+  fprintf(stream , "\n\n");
+  
 }

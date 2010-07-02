@@ -179,3 +179,51 @@ void plot_config_add_config_items( config_type * config ) {
   }
 }
 
+
+
+void plot_config_fprintf_config( const plot_config_type * plot_config , FILE * stream ) {
+  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
+  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information related to plot configuration.");
+  fprintf( stream , CONFIG_COMMENT_FORMAT , "When using the GUI only the PLOT_PATH directive is honored.");
+  
+  if (!util_string_equal( plot_config->plot_path , DEFAULT_PLOT_PATH)) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , PLOT_PATH_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , plot_config->plot_path );
+  }
+
+  if (!util_string_equal( plot_config->image_type , DEFAULT_IMAGE_TYPE)) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , IMAGE_TYPE_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , plot_config->image_type );
+  }
+  
+  if (!util_string_equal( plot_config->driver , DEFAULT_PLOT_DRIVER)) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , PLOT_DRIVER_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , plot_config->driver );
+  }
+
+  if (!util_string_equal( plot_config->viewer , DEFAULT_IMAGE_VIEWER)) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , IMAGE_VIEWER_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , plot_config->viewer );
+  }
+
+  if (plot_config->errorbar_max != DEFAULT_PLOT_ERRORBAR_MAX) {
+    fprintf(stream , CONFIG_KEY_FORMAT , PLOT_ERRORBAR_MAX_KEY);
+    fprintf(stream , CONFIG_INT_FORMAT , plot_config->errorbar_max );
+    fprintf(stream , "\n");
+  }
+
+  if (plot_config->height != DEFAULT_PLOT_HEIGHT) {
+    fprintf(stream , CONFIG_KEY_FORMAT , PLOT_HEIGHT_KEY);
+    fprintf(stream , CONFIG_INT_FORMAT , plot_config->height );
+    fprintf(stream , "\n");
+  }
+
+  if (plot_config->width != DEFAULT_PLOT_HEIGHT) {
+    fprintf(stream , CONFIG_KEY_FORMAT , PLOT_WIDTH_KEY);
+    fprintf(stream , CONFIG_INT_FORMAT , plot_config->width );
+    fprintf(stream , "\n");
+  }
+  
+  fprintf(stream , "\n\n");
+}
+

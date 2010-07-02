@@ -832,6 +832,5 @@ void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FI
     }
     stringlist_free( gen_data_keys );
   }
-
-
+  fprintf(stream , "\n\n");
 }

@@ -270,6 +270,9 @@ void analysis_config_add_config_items( config_type * config ) {
 
 
 void analysis_config_fprintf_config( analysis_config_type * config , FILE * stream) {
+  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
+  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information related to the EnKF analysis.");
+
   if (config->std_cutoff != DEFAULT_ENKF_STD_CUTOFF) {
     fprintf( stream , CONFIG_KEY_FORMAT   , STD_CUTOFF_KEY );
     fprintf( stream , CONFIG_FLOAT_FORMAT , config->std_cutoff );
@@ -324,6 +327,7 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
     fprintf( stream , CONFIG_INT_FORMAT   , config->nfolds_CV );
     fprintf( stream , "\n");
   }
-  
+
+  fprintf(stream , "\n\n");
 }
 

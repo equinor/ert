@@ -109,6 +109,7 @@ static void ert_template_fprintf_config( const ert_template_type * template , FI
     else
       fprintf(stream , "\n");
   }
+  fprintf(stream , "\n\n");
 }
 
 

@@ -2157,6 +2157,15 @@ void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const
 }
 
 
+void enkf_main_data_kw_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
+  for (int i = 0; i < subst_list_get_size( enkf_main->subst_list ); i++) {
+    fprintf(stream , CONFIG_KEY_FORMAT , DATA_KW_KEY );
+    fprintf(stream , CONFIG_VALUE_FORMAT    , subst_list_iget_key( enkf_main->subst_list , i ));
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , subst_list_iget_value( enkf_main->subst_list , i ));
+  }
+}
+
+
 void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
   subst_list_clear( enkf_main->subst_list );
 }
@@ -3115,6 +3124,17 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
 }
 
 
+void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
+  fprintf(stream , CONFIG_KEY_FORMAT      , LOG_FILE_KEY );
+  fprintf(stream , CONFIG_ENDVALUE_FORMAT , enkf_main_get_log_file( enkf_main ));
+  if (enkf_main_get_log_level( enkf_main ) != DEFAULT_LOG_LEVEL) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , LOG_LEVEL_KEY );
+    fprintf(stream , CONFIG_INT_FORMAT , enkf_main_get_log_level( enkf_main ));
+    fprintf(stream , "\n");
+  }
+}
+
+
 void enkf_main_install_SIGNALS(void) {
   signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
   signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. Killing with SIGKILL (-9) will not give a backtrace.*/
@@ -3146,6 +3166,50 @@ void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_ta
 }
 
 /*****************************************************************/
+
+
+void enkf_main_fprintf_runpath_config( const enkf_main_type * enkf_main , FILE * stream ) {
+  fprintf(stream , CONFIG_KEY_FORMAT      , PRE_CLEAR_RUNPATH_KEY );
+  fprintf(stream , CONFIG_ENDVALUE_FORMAT , CONFIG_BOOL_STRING( enkf_state_get_pre_clear_runpath( enkf_main->ensemble[0] )));
+  
+  {
+    bool keep_comma = false;
+    bool del_comma  = false;
+    
+    
+    for (int iens = 0; iens < enkf_main->ens_size; iens++) {
+      keep_runpath_type keep_runpath = enkf_main_iget_keep_runpath( enkf_main , iens );
+      if (keep_runpath == EXPLICIT_KEEP) {
+        if (!keep_comma) {
+          fprintf(stream , CONFIG_KEY_FORMAT , KEEP_RUNPATH_KEY );
+          fprintf(stream , "%d" , iens);
+          keep_comma = true;
+        } else 
+          fprintf(stream , ",%d" , iens);
+      }
+    }
+    fprintf(stream , "\n");
+
+
+    for (int iens = 0; iens < enkf_main->ens_size; iens++) {
+      keep_runpath_type keep_runpath = enkf_main_iget_keep_runpath( enkf_main , iens );
+      if (keep_runpath == EXPLICIT_DELETE) {
+        if (!del_comma) {
+          fprintf(stream , CONFIG_KEY_FORMAT , DELETE_RUNPATH_KEY );
+          fprintf(stream , CONFIG_INT_FORMAT , iens);
+          del_comma = true;
+        } else {
+          fprintf(stream , ",");
+          fprintf(stream , CONFIG_INT_FORMAT , iens);
+        }
+      }
+    }
+    fprintf(stream , "\n");
+  }
+}
+
+
+
 
 void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
   if (util_file_exists( enkf_main->user_config_file)) {
@@ -3197,14 +3261,17 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     FILE * stream = util_fopen( enkf_main->user_config_file , "w");
     
     ecl_config_fprintf_config( enkf_main->ecl_config , stream );
-    model_config_fprintf_config( enkf_main->model_config , stream );
+    model_config_fprintf_config( enkf_main->model_config , enkf_main->ens_size , stream );
+
     enkf_obs_fprintf_config( enkf_main->obs , stream );
     analysis_config_fprintf_config( enkf_main->analysis_config , stream );
     ensemble_config_fprintf_config( enkf_main->ensemble_config , stream );
-    site_config_fprintf_config( enkf_main->site_config , stream );    
     local_config_fprintf_config( enkf_main->local_config , stream );
+    enkf_main_fprintf_runpath_config( enkf_main , stream );
     ert_templates_fprintf_config( enkf_main->templates , stream );
-    
+    enkf_main_log_fprintf_config( enkf_main , stream );
+    site_config_fprintf_config( enkf_main->site_config , stream );    
+
     fclose( stream );
   }
 }

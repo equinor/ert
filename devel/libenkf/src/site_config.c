@@ -828,6 +828,7 @@ void site_config_fprintf_config( const site_config_type * site_config , FILE * s
     }
   }
 
+  fprintf(stream , "\n\n");
 }
 
 /*****************************************************************/

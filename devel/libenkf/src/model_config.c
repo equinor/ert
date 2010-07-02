@@ -274,7 +274,7 @@ void model_config_init(model_config_type * model_config ,
     model_config->last_history_restart = last_history_restart;
   }
   
-  {
+  if (config_item_set( config , HISTORY_SOURCE_KEY)) {
     const char * history_source = config_iget(config , HISTORY_SOURCE_KEY, 0,0);
     bool  use_history;
     history_source_type source_type = history_get_source_type( history_source );
@@ -431,7 +431,7 @@ int model_config_get_max_internal_submit( const model_config_type * config ) {
 }
 
 
-void model_config_fprintf_config( const model_config_type * model_config , FILE * stream ) {
+void model_config_fprintf_config( const model_config_type * model_config , int ens_size , FILE * stream ) {
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
   fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information related to this model.");
 
@@ -462,4 +462,8 @@ void model_config_fprintf_config( const model_config_type * model_config , FILE 
   
   fprintf(stream , CONFIG_KEY_FORMAT      , HISTORY_SOURCE_KEY);
   fprintf(stream , CONFIG_ENDVALUE_FORMAT , history_get_source_string( model_config->history_source ));
+
+  fprintf(stream , CONFIG_KEY_FORMAT , NUM_REALIZATIONS_KEY);
+  fprintf(stream , CONFIG_INT_FORMAT , ens_size);
+  fprintf(stream , "\n\n");
 }

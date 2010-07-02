@@ -51,7 +51,7 @@ const char           * model_config_get_runpath_as_char( const model_config_type
 history_source_type    model_config_get_history_source( const model_config_type * model_config );
 void                   model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase );
 void                   model_config_set_history_source( model_config_type * model_config , history_source_type history_source );
-void                   model_config_fprintf_config( const model_config_type * model_config , FILE * stream );
+void                   model_config_fprintf_config( const model_config_type * model_config , int ens_size ,FILE * stream );
 model_config_type    * model_config_alloc_empty();
 
 #ifdef __cplusplus 
