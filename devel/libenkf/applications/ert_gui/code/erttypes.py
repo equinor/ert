@@ -29,6 +29,7 @@ class VectorIterator:
         self.index = 0
         self.data  = data
         self.size  = size
+        
     def next(self):
         if self.index == self.size:
             raise StopIteration
@@ -42,13 +43,16 @@ class time_vector(ctypes.c_long):
     initialized = False
     lib = None
 
-    def __getitem__(self, item):        
+    def __getitem__(self, item):
+        """Indexing support"""
         return self.__class__.lib.time_t_vector_iget(self, item)
 
     def __iter__(self):
+        """Iterator support"""
         return VectorIterator(self, self.size())
 
     def __del__(self):
+        """Garbage collection"""
         self._free()
 
     def size(self):
@@ -81,12 +85,15 @@ class double_vector(ctypes.c_long):
     lib = None
 
     def __getitem__(self, item):
+        """Indexing support"""
         return self.__class__.lib.double_vector_iget(self, item)
 
     def __iter__(self):
+        """Iterator support"""
         return VectorIterator(self, self.size())
 
     def __del__(self):
+        """Garbage collection"""
         self._free()
 
     def size(self):
