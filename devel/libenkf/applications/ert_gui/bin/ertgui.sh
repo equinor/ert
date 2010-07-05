@@ -26,7 +26,7 @@ then
     exit
 fi
 echo "Loading ERT shared libraries from:" $ERT_LD_PATH 
-echo "-----------------------------------------------------------------"
+
 
 if [ -z "$1" ]
 then
@@ -58,7 +58,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/project/res/x86_64_RH_4/lib:/prog/LSF/7
 ORIGINAL_DIRECTORY=$PWD
 
 export ert_gui_dir=$script_dir/../code
-
+echo "Loading python GUI code from:" $ert_gui_dir
+echo "-----------------------------------------------------------------"
 
 python $script_dir/clean.py  
 
