@@ -11,9 +11,9 @@ def createEclipsePage(configPanel, parent):
 
     r = configPanel.addRow(PathChooser(parent, "Eclipse Base", "config/eclipse/eclbase", path_format=True))
     r.initialize = lambda ert : [ert.prototype("char* ecl_config_get_eclbase(long)"),
-                                 ert.prototype("void ecl_config_set_eclbase(long, char*)")]
+                                 ert.prototype("void enkf_main_set_eclbase(long, char*)")]
     r.getter = lambda ert : ert.enkf.ecl_config_get_eclbase(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.ecl_config_set_eclbase(ert.ecl_config, str(value))
+    r.setter = lambda ert, value : ert.enkf.enkf_main_set_eclbase(ert.main , str(value))
 
     r = configPanel.addRow(PathChooser(parent, "Data file", "config/eclipse/data_file", show_files=True))
     r.initialize = lambda ert : [ert.prototype("char* ecl_config_get_data_file(long)"),

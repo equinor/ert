@@ -194,11 +194,11 @@ class RunWidget(HelpedWidget):
         """Create a toggle between assimilation and experiment."""
         radioLayout = QtGui.QVBoxLayout()
         radioLayout.setSpacing(2)
-        self.rbAssimilation = QtGui.QRadioButton("EnKF assimilation")
-        radioLayout.addWidget(self.rbAssimilation)
         self.rbExperiment = QtGui.QRadioButton("Ensemble experiment")
         radioLayout.addWidget(self.rbExperiment)
-
+        self.rbAssimilation = QtGui.QRadioButton("EnKF assimilation")
+        radioLayout.addWidget(self.rbAssimilation)
+        
         self.connect(self.rbAssimilation, QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
         self.connect(self.rbExperiment, QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
 

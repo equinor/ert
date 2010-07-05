@@ -186,7 +186,7 @@ class DefaultPlotRenderer(PlotRenderer):
     def _plotObservations(self, axes, data, plot_settings):
         x = data.obs_x
         y = data.obs_y
-
+        
         if data.getXDataType() == "time":
             self.plot_date(axes, plot_settings.observation_plot_config, x, y)
         else:
