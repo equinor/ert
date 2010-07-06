@@ -46,27 +46,17 @@
 
    Saving:
    -------
+
    A setting which originates from the site_config file should not be
    stored in the user's config file, but additions/overrides from the
-   user's config file should of course be saved. This is solved as
-   follows:
-
-     1. When parsing the site configuration file the field
-        'user_parse' is set to false; before parsing the user config
-        file this must be set to true with the function
-        site_config_init_user_parse().
-
-     2. The jobs in the joblist have an internal 'private_job' flag
-        which is set according to the 'user_parse' flag of the
-        site_config structure.
-        
-     3. For all other fields the xxxx_set() actions are stored as
-        string items in the vector 'user_action'; and when saving the
-        configuration this vector is played. (This of course can lead
-        to duplicated entries ... - but that should be OK??)
-
-
+   user's config file should of course be saved. This is 'solved' with
+   many fields having a xxx_site duplicate, where the xxx_site is only
+   updated during the initial parsing of the site-config file; when
+   the flag user_mode is set to true the xxx_site fields are not
+   updated. When saving only fields which are different from their
+   xxx_site counterpart are stored.
 */
+
 
 struct site_config_struct {
   ext_joblist_type 	* joblist;                /* The list of external jobs which have been installed. 
@@ -85,8 +75,6 @@ struct site_config_struct {
   hash_type             * path_variables_site;    /* We store this so we can roll back when all user settings are cleared. */
   stringlist_type       * path_variables_user;    /* We can update the same path variable several times - i.e. it can not be a hash table. */
   stringlist_type       * path_values_user;
-
-  
   
   
   int                     max_running_lsf;        
@@ -116,7 +104,6 @@ struct site_config_struct {
   int                     num_cpu;                /* The number of cpu's used to run the forward model - currently only relevant for ECLIPSE and LSF; read automatically from the ECLIPSE data file. */
   job_queue_type   	* job_queue;              /* The queue instance which will run the external jobs. */
   bool                    user_mode;
-  vector_type           * user_action;
 };
 
 
@@ -167,7 +154,6 @@ site_config_type * site_config_alloc_empty() {
   site_config->max_running_local      = 0;
   site_config->max_running_lsf        = 0;
   site_config->max_running_rsh        = 0;
-  site_config->user_action            = vector_alloc_new();
   site_config->driver_type            = NULL_DRIVER;
 
   /* Some hooops to get the current umask. */ 
@@ -795,7 +781,6 @@ void site_config_init(site_config_type * site_config , const config_type * confi
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
-  vector_free( site_config->user_action );
   
   stringlist_free( site_config->path_variables_user );
   stringlist_free( site_config->path_values_user );
@@ -934,10 +919,7 @@ void site_config_fprintf_config( const site_config_type * site_config , FILE * s
     }
   }
 
-
-
-
-  /* Storing RSH settings. */
+    /* Storing RSH settings. */
   {
     if (site_config->max_running_rsh != site_config->max_running_rsh_site) {
       fprintf(stream , CONFIG_KEY_FORMAT      , MAX_RUNNING_RSH_KEY );
@@ -958,18 +940,6 @@ void site_config_fprintf_config( const site_config_type * site_config , FILE * s
         fprintf(stream , "%s;%d\n"  , host_name , hash_get_int( site_config->rsh_host_list , host_name));
       }
       hash_iter_free( iter );
-    }
-  }
-
-
-  /* Storing all the actions stored in user_action. */
-  {
-    for (int i=0; i< vector_get_size( site_config->user_action ); i++) {
-      const stringlist_type * action = vector_iget_const( site_config->user_action , i );
-      fprintf( stream , CONFIG_KEY_FORMAT , stringlist_iget( action , 0 ));
-      for (int iarg = 1; iarg < stringlist_get_size( action ); iarg++)
-        fprintf( stream , CONFIG_VALUE_FORMAT , stringlist_iget( action , iarg ));
-      fprintf( stream , "\n");
     }
   }
 
