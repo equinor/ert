@@ -8,6 +8,8 @@
 #include <time_t_vector.h>
 #include <sched_blob.h>
 #include <sched_kw_dates.h>
+#include <sched_kw_wconhist.h>
+#include <sched_kw_wconinje.h>
 #include <sched_kw_tstep.h>
 #include <sched_kw.h>
 
@@ -926,3 +928,64 @@ bool sched_file_well_open( const sched_file_type * sched_file ,
   } 
   return well_open;
 }
+
+
+
+
+
+double sched_file_well_wconhist_rate( const sched_file_type * sched_file , 
+                                      int restart_nr , 
+                                      const char * well_name) {
+  double rate = -1;
+  bool well_found = false;
+  int block_nr    = restart_nr;
+
+  while (!well_found && (block_nr >= 0)) {
+    sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
+    
+    if (hash_has_key( block->kw_hash , "WCONHIST")) {
+      const vector_type * wconhist_vector = hash_get( block->kw_hash , "WCONHIST");
+      int i;
+      for (i=0; i < vector_get_size( wconhist_vector ); i++) {
+        sched_kw_type * kw = vector_iget( wconhist_vector , i );
+        if (sched_kw_has_well( kw , well_name )) {
+          well_found = true;
+          rate = sched_kw_wconhist_get_orat( sched_kw_get_data( kw ) , well_name );
+        }
+      }
+    }
+    
+    block_nr--;
+  } 
+  return rate;
+}
+
+
+
+double sched_file_well_wconinje_rate( const sched_file_type * sched_file , 
+                                      int restart_nr , 
+                                      const char * well_name) {
+  double rate = -1;
+  bool well_found = false;
+  int block_nr    = restart_nr;
+
+  while (!well_found && (block_nr >= 0)) {
+    sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
+    
+    if (hash_has_key( block->kw_hash , "WCONINJE")) {
+      const vector_type * wconhist_vector = hash_get( block->kw_hash , "WCONINJE");
+      int i;
+      for (i=0; i < vector_get_size( wconhist_vector ); i++) {
+        sched_kw_type * kw = vector_iget( wconhist_vector , i );
+        if (sched_kw_has_well( kw , well_name )) {
+          well_found = true;
+          rate = sched_kw_wconinje_get_surface_flow( sched_kw_get_data( kw ) , well_name );
+        }
+      }
+    }
+    
+    block_nr--;
+  } 
+  return rate;
+}
+

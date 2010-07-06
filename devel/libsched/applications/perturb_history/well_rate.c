@@ -22,6 +22,7 @@ struct well_rate_struct {
   double_vector_type       * std_shift;
   double_vector_type       * rate; 
   bool_vector_type         * well_open;
+  bool_vector_type         * percent_std;
   sched_phase_enum           phase;
   const time_t_vector_type * time_vector;
 };
@@ -50,11 +51,6 @@ void well_rate_update_wconhist( well_rate_type * well_rate , sched_kw_wconhist_t
 void well_rate_update_wconinje( well_rate_type * well_rate , sched_kw_wconinje_type * kw, int restart_nr ) {
   sched_kw_wconinje_shift_surface_flow( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ));
   return;
-
-  if (well_rate->phase == sched_kw_wconinje_get_phase( kw , well_rate->name)) 
-    sched_kw_wconinje_shift_surface_flow( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ));
-  else 
-    util_abort("%s: phase fuckup in well:%s \n",__func__ , well_rate->name);
 }
 
 
@@ -98,7 +94,7 @@ void well_rate_ishift( well_rate_type * well_rate ,  int index, double shift) {
 }
 
 
-well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const sched_file_type * sched_file , const char * name , double corr_length , const char * filename, sched_phase_enum phase) {
+well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const sched_file_type * sched_file , const char * name , double corr_length , const char * filename, sched_phase_enum phase, bool producer) {
   well_rate_type * well_rate = util_malloc( sizeof * well_rate , __func__);
   UTIL_TYPE_ID_INIT( well_rate , WELL_RATE_ID );
   well_rate->name         = util_alloc_string_copy( name );
@@ -110,12 +106,26 @@ well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const 
   well_rate->well_open    = bool_vector_alloc(0 , false );
   well_rate->rate         = double_vector_alloc(0 , 0);
   well_rate->phase        = phase;
-  fscanf_2ts( time_vector , filename , well_rate->mean_shift , well_rate->std_shift );
+  well_rate->percent_std  = bool_vector_alloc( 0 , false );
+  fscanf_2ts( time_vector , filename , well_rate->mean_shift , well_rate->std_shift , well_rate->percent_std);
 
   {
     int i;
-    for (i=0; i < time_t_vector_size( time_vector ); i++) 
-      bool_vector_iset( well_rate->well_open , i , sched_file_well_open( sched_file , i , well_rate->name) );
+    for (i=0; i < time_t_vector_size( time_vector ); i++) {
+      bool well_open = sched_file_well_open( sched_file , i , well_rate->name);
+      bool_vector_iset( well_rate->well_open , i , well_open);
+      if (bool_vector_iget( well_rate->percent_std, i)) {
+        if (well_open) {
+          double rate;
+          if (producer) 
+            rate = sched_file_well_wconhist_rate( sched_file , i ,well_rate->name);
+          else
+            rate = sched_file_well_wconinje_rate( sched_file , i ,well_rate->name);
+          
+          double_vector_imul( well_rate->std_shift , i , rate * 0.01);
+        }
+      }
+    }
   }
 
   return well_rate;
@@ -134,6 +144,7 @@ void well_rate_free( well_rate_type * well_rate ) {
   double_vector_free( well_rate->shift );
   double_vector_free( well_rate->mean_shift );
   double_vector_free( well_rate->std_shift );
+  bool_vector_free( well_rate->percent_std );
   free( well_rate );
 }
 

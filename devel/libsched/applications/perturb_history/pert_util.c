@@ -40,12 +40,16 @@ void rand_stdnormal_vector(int size , double *R) {
 
 /*****************************************************************/
 
-static void set_ts(const time_t_vector_type * time_vector , double_vector_type * values , time_t start_date , time_t end_date , double value) {
+static void set_ts(const time_t_vector_type * time_vector , double_vector_type * values , time_t start_date , time_t end_date , double value, bool_vector_type * tsp , bool percent) {
   int i;
   for (i=0; i < time_t_vector_size( time_vector ); i++) {
     time_t t = time_t_vector_iget( time_vector , i );
-    if ((t >= start_date) && (t < end_date))
+    if ((t >= start_date) && (t < end_date)) {
       double_vector_iset( values , i , value );
+      if (tsp != NULL) {
+        bool_vector_iset( tsp , i , percent );
+      }
+    }
   }
 }
 
@@ -54,6 +58,7 @@ static void set_ts(const time_t_vector_type * time_vector , double_vector_type *
 
    *           -  12/07/2009   500  577 
    12/07/2009  -  16/09/2009   672  666
+   17/09/2009  -      *        100   10%   
    
 
    1. Both dates can be replaced with '*' - which is implied to mean
@@ -65,6 +70,12 @@ static void set_ts(const time_t_vector_type * time_vector , double_vector_type *
    3. The date intervals are half-open, [date1,date2).
 
    4. The date lines can overlap - they are applied in line-order.
+
+   5. The last float value (i.e. 577 and 666 on the liness above) can
+      be a percent value; that should indicated with '%' immediately
+      following the number. The percent number should be in the
+      interval [0,100]. The bool vector tsp is updated to indicate
+      whether the data should be interpreted as percent or not.
       
 */
 
@@ -78,7 +89,7 @@ static void load_exit( FILE * stream , const char * filename) {
 }
 
    
-void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename , double_vector_type * ts1 , double_vector_type * ts2) {
+void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename , double_vector_type * ts1 , double_vector_type * ts2, bool_vector_type * tsp) {
   time_t start_time       = time_t_vector_get_first( time_vector );
   time_t end_time         = time_t_vector_get_last( time_vector ) + 1;
 
@@ -88,13 +99,15 @@ void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename ,
     char datestring2[32];
     char dash;
     double value1 , value2;
+    char value2string[32];
       
     while (true) {
-      int read_count = fscanf(stream , "%s %c %s %lg %lg" , datestring1 , &dash , datestring2, &value1 , &value2);
+      int read_count = fscanf(stream , "%s %c %s %lg %s" , datestring1 , &dash , datestring2, &value1 , value2string);
       if (read_count == 5) {
         bool   OK = true;
-        time_t t1 = -1;
-        time_t t2 = -1;
+        bool   percent = false;
+        time_t t1      = -1;
+        time_t t2      = -1;
         if (util_string_equal( datestring1 , "*"))
           t1 = start_time;
         else
@@ -104,12 +117,24 @@ void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename ,
           t2 = end_time;
         else
           OK = (OK && util_sscanf_date( datestring2 , &t2 ));
+
+        {
+          char * error_ptr;
+          value2 = strtod( value2string , &error_ptr);
+          if (error_ptr[0] == '%') 
+            percent = true;
+          else {
+            if (error_ptr[0] != '\0')
+              OK = false;
+          }
+        }
         
         if (OK) {
-          set_ts( time_vector , ts1 , t1 , t2 , value1 );
-          set_ts( time_vector , ts2 , t1 , t2 , value2 );
+          set_ts( time_vector , ts1 , t1 , t2 , value1  , NULL , false  );
+          set_ts( time_vector , ts2 , t1 , t2 , value2  , tsp  , percent);
         } else 
           load_exit( stream  , filename ); 
+
       } else {
         if (read_count == EOF)
           break;

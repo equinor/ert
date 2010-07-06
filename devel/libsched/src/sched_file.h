@@ -56,6 +56,16 @@ sched_kw_type    * sched_block_iget_kw(sched_block_type * block, int i);
 sched_block_type * sched_file_iget_block(const sched_file_type * sched_file, int i);
 
 
+
+double sched_file_well_wconhist_rate( const sched_file_type * sched_file , 
+                                      int restart_nr , 
+                                      const char * well_name);
+
+double sched_file_well_wconinje_rate( const sched_file_type * sched_file , 
+                                      int restart_nr , 
+                                      const char * well_name);
+
+
 #ifdef __cplusplus
 }
 #endif

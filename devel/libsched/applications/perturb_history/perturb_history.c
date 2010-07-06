@@ -33,6 +33,7 @@ void perturb_wconhist( void * void_kw , int restart_nr , void * arg) {
 }
 
 
+
 void perturb_wconinje( void * void_kw , int restart_nr , void * arg) {
   sched_kw_wconinje_type * kw = sched_kw_wconinje_safe_cast( void_kw );
   {
@@ -60,7 +61,7 @@ void config_init(config_type * config ) {
 
 
   item = config_add_item( config , "GROUP_RATE" , false , true );  /* Group name as part of parsing */
-  config_item_set_argc_minmax(item , 4 , 4 , (const config_item_types[4]) { CONFIG_STRING,             /* Group name */
+  config_item_set_argc_minmax(item , 4 , 4 , (const config_item_types[4]) {   CONFIG_STRING,           /* Group name */
                                                                               CONFIG_STRING ,          /* Phase */
                                                                               CONFIG_STRING ,          /* PRODUCER / INJECTOR */
                                                                               CONFIG_EXISTING_FILE});  /* File with min / max shift */
@@ -100,7 +101,7 @@ void load_groups( const config_type * config , const sched_file_type * sched_fil
     
     well_rate_type * well_rate;
     group_rate_type * group_rate = hash_get( group_rates , group_name );
-    well_rate = well_rate_alloc( time_vector , sched_file ,well_name , corr_length ,  stat_file , group_rate_get_phase( group_rate) );
+    well_rate = well_rate_alloc( time_vector , sched_file ,well_name , corr_length ,  stat_file , group_rate_get_phase( group_rate) , group_rate_is_producer( group_rate ));
     group_rate_add_well_rate( group_rate , well_rate );
   }
   
@@ -142,7 +143,7 @@ int main( int argc , char ** argv ) {
     util_safe_free( config_ext );
     util_safe_free( run_path );
   }
-
+  
   config_init( config );
   config_parse(config , config_file , "--" , NULL , "DEFINE" , false , true );
   {

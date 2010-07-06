@@ -67,7 +67,7 @@ group_rate_type * group_rate_alloc(const time_t_vector_type * time_vector , cons
       group_rate->producer = true;
   }
   
-  fscanf_2ts( time_vector , filename , group_rate->min_shift , group_rate->max_shift );
+  fscanf_2ts( time_vector , filename , group_rate->min_shift , group_rate->max_shift , NULL );
   group_rate->well_rates   = vector_alloc_new();
   return group_rate;
 }
