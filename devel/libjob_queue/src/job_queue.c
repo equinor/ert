@@ -1076,6 +1076,12 @@ job_driver_type job_queue_get_driver_type( const job_queue_type * queue ) {
     return queue->driver->driver_type;
 }
 
+
+void * job_queue_get_driver( job_queue_type * queue ) {
+  return queue->driver;
+}
+
+
 /*****************************************************************/
 
 const char * job_queue_get_driver_name( const job_queue_type * queue ) {
