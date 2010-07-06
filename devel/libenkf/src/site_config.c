@@ -919,7 +919,8 @@ void site_config_fprintf_config( const site_config_type * site_config , FILE * s
     }
   }
 
-    /* Storing RSH settings. */
+  
+  /* Storing RSH settings. */
   {
     if (site_config->max_running_rsh != site_config->max_running_rsh_site) {
       fprintf(stream , CONFIG_KEY_FORMAT      , MAX_RUNNING_RSH_KEY );
