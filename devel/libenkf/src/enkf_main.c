@@ -118,6 +118,7 @@ struct enkf_main_struct {
   int_vector_type      * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
   bool                   pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
 
+  char                 * site_config_file;
   char                 * user_config_file;   
   enkf_obs_type        * obs;
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
@@ -154,6 +155,12 @@ void enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clea
 }
 
 
+void enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt) {
+  ecl_config_set_eclbase( enkf_main->ecl_config , eclbase_fmt);
+  for (int iens = 0; iens < enkf_main->ens_size; iens++) 
+    enkf_state_update_eclbase( enkf_main->ensemble[iens] );
+}
+
 void enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
   ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
   model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
@@ -164,8 +171,16 @@ void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * u
   enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
 }
 
+void enkf_main_set_site_config_file( enkf_main_type * enkf_main , const char * site_config_file ) {
+  enkf_main->site_config_file = util_realloc_string_copy( enkf_main->site_config_file , site_config_file );
+}
+
 const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) {
   return enkf_main->user_config_file;
+}
+
+const char * enkf_main_get_site_config_file( const enkf_main_type * enkf_main ) {
+  return enkf_main->site_config_file;
 }
 
 ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
@@ -289,6 +304,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   subst_func_pool_free( enkf_main->subst_func_pool );
   subst_list_free( enkf_main->subst_list );
   util_safe_free( enkf_main->user_config_file );
+  util_safe_free( enkf_main->site_config_file );
   free(enkf_main);
 }
 
@@ -2076,7 +2092,8 @@ static config_type * enkf_main_alloc_config( bool site_only ) {
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , REFCASE_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  //config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 1 , 1 , NULL );
 
   item = config_add_item(config , ENKF_SCHED_FILE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
@@ -2180,6 +2197,7 @@ static enkf_main_type * enkf_main_alloc_empty( void ) {
   enkf_main->dbase              = NULL;
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
+  enkf_main->site_config_file   = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
@@ -2533,7 +2551,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
   if (site_config == NULL)
     site_config = _site_config;
-
+  
   if (site_config == NULL)
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
   printf("site config : %s \n\n",site_config);
@@ -2585,16 +2603,16 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       config_free( config );
     }
     config = enkf_main_alloc_config( false );
-    site_config_init_user_parse( enkf_main->site_config );
+    site_config_init_user_mode( enkf_main->site_config );
     config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , false , true);
-    site_config_init( enkf_main->site_config , config , true );                                   /*  <---- site_config : second pass. */ 
+    site_config_init( enkf_main->site_config , config , true );                                   /*  <---- model_config : second pass. */ 
 
     /*****************************************************************/
     /* OK - now we have parsed everything - and we are ready to start
        populating the enkf_main object.
     */
 
-        
+    enkf_main_set_site_config_file( enkf_main , site_config );
     enkf_main_set_user_config_file( enkf_main , model_config );
     enkf_main_init_log( enkf_main , config );
     enkf_main_init_data_kw( enkf_main , config );
@@ -2611,8 +2629,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                        site_config_get_installed_jobs(enkf_main->site_config) ,
                        ecl_config_get_last_history_restart( enkf_main->ecl_config ),
                        ecl_config_get_sched_file(enkf_main->ecl_config) ,
-                       ecl_config_get_refcase( enkf_main->ecl_config ) , 
-                       site_config_get_lsf_request( enkf_main->site_config) );
+                       ecl_config_get_refcase( enkf_main->ecl_config ));
     enkf_main_update_num_cpu( enkf_main );
     {
       if (config_item_set( config , SCHEDULE_PREDICTION_FILE_KEY)) {

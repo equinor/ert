@@ -80,7 +80,7 @@ extern "C" {
 #define  REFCASE_KEY                       "REFCASE"
 #define  RERUN_START_KEY                   "RERUN_START"
 #define  RSH_COMMAND_KEY                   "RSH_COMMAND"
-#define  RSH_HOST_LIST_KEY                 "RSH_HOST_LIST"
+#define  RSH_HOST_KEY                      "RSH_HOST"
 #define  RUNPATH_KEY                       "RUNPATH"
 #define  RUNPATH_KEY                       "RUNPATH"
 #define  RUN_TEMPLATE_KEY                  "RUN_TEMPLATE"

@@ -49,7 +49,7 @@ struct member_config_struct {
 
 
 
-const char * member_config_set_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list) {
+const char * member_config_update_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list) {
   util_safe_free( member_config->eclbase );
   {
     char * tmp = path_fmt_alloc_path(ecl_config_get_eclbase_fmt(ecl_config), false , member_config->iens);

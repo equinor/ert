@@ -12,9 +12,9 @@ extern "C" {
 
 typedef struct site_config_struct site_config_type;
 
-const char            *  site_config_get_license_root_path__( const site_config_type * site_config );
+const char            *  site_config_get_license_root_path( const site_config_type * site_config );
 void                     site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path);
-void                     site_config_init_user_parse( site_config_type * site_config );
+void                     site_config_init_user_mode( site_config_type * site_config );
 
 void                     site_config_set_num_cpu( site_config_type * site_config , int num_cpu );
 void                     site_config_update_lsf_request(site_config_type *  , const forward_model_type *);

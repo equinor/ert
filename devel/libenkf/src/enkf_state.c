@@ -346,6 +346,27 @@ int enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state ) {
 }
 
 
+/**
+   This function must be called each time the eclbase_fmt has been
+   updated.
+*/
+
+void enkf_state_update_eclbase( enkf_state_type * enkf_state ) {
+  const char * eclbase  = member_config_update_eclbase( enkf_state->my_config , enkf_state->ecl_config , enkf_state->subst_list);
+  const char * casename = member_config_get_casename( enkf_state->my_config ); /* Mostly NULL */
+  {
+    enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , eclbase , NULL);  
+    enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , eclbase , NULL);  
+    
+    if (casename == NULL)
+      enkf_state_add_subst_kw( enkf_state , "CASE" , eclbase , NULL);      /* No CASE_TABLE loaded - using the eclbase as default. */
+    else
+      enkf_state_add_subst_kw( enkf_state , "CASE" , casename , NULL);
+    
+  }
+}
+
+
 
 /**
    Sets all the static subst keywords which will not change during the simulation.
@@ -363,23 +384,7 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
     free(iens_s);
     free(iens4_s);
   }
-  
-  {
-    const char * eclbase  = member_config_set_eclbase( enkf_state->my_config , enkf_state->ecl_config , enkf_state->subst_list);
-    const char * casename = member_config_get_casename( enkf_state->my_config ); /* Mostly NULL */
-    {
-      char * smspec_file = ecl_util_alloc_filename(NULL  , eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
-      enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , eclbase , NULL);  /* Can not change run_time .. */
-      enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , eclbase , NULL);  /* Can not change run_time .. */
-      enkf_state_add_subst_kw(enkf_state , "SMSPEC"      , smspec_file , NULL);
-      if (casename == NULL)
-        enkf_state_add_subst_kw( enkf_state , "CASE" , eclbase , NULL);  /* No CASE_TABLE loaded - using the eclbase as default. */
-      else
-        enkf_state_add_subst_kw( enkf_state , "CASE" , casename , NULL);
-      
-      free(smspec_file);
-    }
-  }
+  enkf_state_update_eclbase( enkf_state );
 }
 
 /**
@@ -1414,11 +1419,11 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse(enkf_state);
-    job_queue_insert_job(shared_info->job_queue , 
-                         run_info->run_path , 
-                         member_config_get_eclbase(my_config) , 
-                         member_config_get_iens(my_config) , 
-                         forward_model_get_lsf_request(forward_model));
+    job_queue_insert_job( shared_info->job_queue , 
+                          run_info->run_path , 
+                          member_config_get_eclbase(my_config) , 
+                          member_config_get_iens(my_config) , 
+                          NULL );
     run_info->num_internal_submit++;
   }
 }

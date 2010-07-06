@@ -74,6 +74,7 @@ enkf_state_type  * enkf_state_alloc(int ,
                                     ert_templates_type * templates,
                                     subst_list_type    * parent_subst);
 
+void               enkf_state_update_eclbase( enkf_state_type * enkf_state );
 void               enkf_state_invalidate_cache( enkf_state_type * enkf_state );
 int                enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state );
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );

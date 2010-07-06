@@ -251,10 +251,9 @@ void model_config_init(model_config_type * model_config ,
                        const ext_joblist_type * joblist , 
                        int last_history_restart , 
                        const sched_file_type * sched_file , 
-                       const ecl_sum_type * refcase, 
-                       const char * lsf_request ) {
+                       const ecl_sum_type * refcase) {
   
-  model_config->forward_model             = forward_model_alloc(  joblist , lsf_request );
+  model_config->forward_model             = forward_model_alloc(  joblist );
   model_config_set_refcase( model_config , refcase );
   {
     char * config_string = config_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");

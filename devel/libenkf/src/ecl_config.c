@@ -156,6 +156,11 @@ void ecl_config_set_schedule_file( ecl_config_type * ecl_config , const char * s
 }
 
 
+/**
+   The value of eclbase is in addition internalized in each enkf_state
+   object, i.e. the _set routine must be called from enkf_main, and
+   call enkf_state_update_eclbase() afterwards.
+*/
 
 void ecl_config_set_eclbase( ecl_config_type * ecl_config , const char * eclbase_fmt ) {
   if (ecl_config->eclbase != NULL)

@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <vector.h>
 #include <sys/stat.h>
+#include <lsf_driver.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -70,64 +71,53 @@
 struct site_config_struct {
   ext_joblist_type 	* joblist;                /* The list of external jobs which have been installed. 
                    	                             These jobs will be the parts of the forward model. */
-  hash_type             * env_variables;
-  hash_type             * initial_variables;      /* Need to store the initial values so we can roll back. */
-
-  hash_type             * initial_path_variables;
-  stringlist_type       * path_variables;         /* We can update the same path variable several times - i.e. it can not be a hash table. */
-  stringlist_type       * path_values;
-
-  char                  * license_root_path;      /* The license_root_path value set by the user. */
-  char                  * __license_root_path;    /* The license_root_path value actually used - includes a user/pid subdirectory. */
+  hash_type             * env_variables_user;     /* The environment variables set in the user config file. */
+  hash_type             * env_variables_site;     /* The environment variables set in site_config file - not exported. */ 
+  
   mode_t                  umask;
+  mode_t                  umask_site;
+  
+  
+  char                  * license_root_path;      /* The license_root_path value set by the user. */
+  char                  * license_root_path_site; /* The license_root_path value set by the site. */
+  char                  * __license_root_path;    /* The license_root_path value actually used - includes a user/pid subdirectory. */
 
-  int                     max_running_lsf;        /* Need to hold the detailed information about the         */
+  hash_type             * path_variables_site;    /* We store this so we can roll back when all user settings are cleared. */
+  stringlist_type       * path_variables_user;    /* We can update the same path variable several times - i.e. it can not be a hash table. */
+  stringlist_type       * path_values_user;
+
+  
+  
+  
+  int                     max_running_lsf;        
+  int                     max_running_lsf_site;   /* Need to hold the detailed information about the         */
   char                  * lsf_queue_name;         /* various drivers here to be able to "hot-switch" driver. */
   char                  * lsf_request;  
+  char                  * lsf_queue_name_site;         
+  char                  * lsf_request_site;  
   
+                           
+  hash_type             * rsh_host_list;          /* rsh_host_list is NOT updated when parsing the site_config file. */
+  int                     max_running_rsh_site;
   int                     max_running_rsh;
-  hash_type             * rsh_host_list;
   char                  * rsh_command;
+  char                  * rsh_command_site;
 
   int                     max_running_local;
+  int                     max_running_local_site;
 
   job_driver_type         driver_type;
+  job_driver_type         driver_type_site;
   int                     max_submit;             
+  int                     max_submit_site;             
   char                  * job_script;            
-
-
+  char                  * job_script_site;            
+  
   int                     num_cpu;                /* The number of cpu's used to run the forward model - currently only relevant for ECLIPSE and LSF; read automatically from the ECLIPSE data file. */
   job_queue_type   	* job_queue;              /* The queue instance which will run the external jobs. */
-
-  bool                    user_parse;
+  bool                    user_mode;
   vector_type           * user_action;
 };
-
-
-/**
-   Uses variable length argument list - MUST terminate with NULL. All
-   arguments MUST be of type (char *).
-   
-   Example:
-   site_config_user_store( site_config , RSH_HOST_LIST_KEY , "HOST1:2", "HOST3:1" , "OTHER_HOST:8" , NULL);
-*/
-
-static void site_config_user_store( site_config_type * site_config , const char * key , ...) {
-  va_list ap;
-  va_start(ap , key);
-  {
-    char * arg;
-    stringlist_type * args = stringlist_alloc_new();
-    stringlist_append_copy( args , key );
-    do {
-      arg = va_arg( ap , char *);
-      if (arg != NULL)
-        stringlist_append_copy( args , arg);
-    } while (arg != NULL);
-    vector_append_owned_ref( site_config->user_action , args , stringlist_free__);
-  }
-  va_end( ap );
-}
 
 
 void site_config_set_num_cpu( site_config_type * site_config , int num_cpu ) {
@@ -136,14 +126,14 @@ void site_config_set_num_cpu( site_config_type * site_config , int num_cpu ) {
 
 
 void site_config_set_umask( site_config_type * site_config , mode_t new_mask) {
-  site_config->umask = new_mask;
   umask( new_mask );
-  if (site_config->user_parse) {
-    char * umask_string = util_alloc_sprintf("%o" , new_mask);
-    site_config_user_store( site_config , UMASK_KEY , umask_string, NULL);
-    free( umask_string );
-  }
+
+  site_config->umask = new_mask;
+  if (!site_config->user_mode) 
+    site_config->umask_site = new_mask;
+  
 }
+
 
 mode_t site_config_get_umask( const site_config_type * site_config ) {
   return site_config->umask;
@@ -160,14 +150,19 @@ site_config_type * site_config_alloc_empty() {
   site_config->job_queue              = NULL;
 
   site_config->lsf_queue_name         = NULL;
+  site_config->lsf_queue_name_site    = NULL;
   site_config->lsf_request            = NULL;
+  site_config->lsf_request_site       = NULL;
   site_config->rsh_host_list          = hash_alloc();
   site_config->rsh_command            = NULL;
+  site_config->rsh_command_site       = NULL;
   site_config->license_root_path      = NULL;
+  site_config->license_root_path_site = NULL;
   site_config->__license_root_path    = NULL;
   site_config->job_script             = NULL;  
+  site_config->job_script_site        = NULL;  
 
-  site_config->user_parse             = false;
+  site_config->user_mode             = false;
   site_config->num_cpu                = 0;
   site_config->max_running_local      = 0;
   site_config->max_running_lsf        = 0;
@@ -179,18 +174,20 @@ site_config_type * site_config_alloc_empty() {
   site_config->umask                  = umask( 0 );
   site_config_set_umask( site_config , site_config->umask );
 
-  site_config->initial_variables      = hash_alloc();
-  site_config->env_variables          = hash_alloc();
-  site_config->path_variables         = stringlist_alloc_new();
-  site_config->path_values            = stringlist_alloc_new();
-  site_config->initial_path_variables = hash_alloc();
+  site_config->env_variables_user     = hash_alloc();
+  site_config->env_variables_site     = hash_alloc();
+  
+  site_config->path_variables_user    = stringlist_alloc_new();
+  site_config->path_values_user       = stringlist_alloc_new();
+  site_config->path_variables_site    = hash_alloc();
   
   site_config_set_max_submit( site_config , DEFAULT_MAX_SUBMIT );
   return site_config;
 }
 
-const char * site_config_get_license_root_path__( const site_config_type * site_config ) {
-  return site_config->__license_root_path;
+
+const char * site_config_get_license_root_path( const site_config_type * site_config ) {
+  return site_config->license_root_path;
 }
 
 
@@ -209,18 +206,17 @@ void site_config_set_license_root_path( site_config_type * site_config , const c
     
     Dangling license directories after a crash can just be removed.
   */
-  
   site_config->license_root_path   = util_realloc_string_copy( site_config->license_root_path , license_root_path );
   site_config->__license_root_path = util_realloc_sprintf(site_config->__license_root_path , "%s%c%s%c%d" , license_root_path , UTIL_PATH_SEP_CHAR , getenv("USER") , UTIL_PATH_SEP_CHAR , getpid());
-
-  if (site_config->user_parse)
-    site_config_user_store( site_config , LICENSE_PATH_KEY , license_root_path , NULL );
+  
+  if (!site_config->user_mode)
+    site_config->license_root_path_site = util_realloc_string_copy( site_config->license_root_path_site , license_root_path );
 }
 
 
 
-void site_config_init_user_parse( site_config_type * site_config ) {
-  site_config->user_parse = true;
+void site_config_init_user_mode( site_config_type * site_config ) {
+  site_config->user_mode = true;
 }
 
 
@@ -230,7 +226,7 @@ void site_config_init_user_parse( site_config_type * site_config ) {
 */
 
 int site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file) {
-  ext_job_type * new_job = ext_job_fscanf_alloc(job_name , site_config->__license_root_path , site_config->user_parse , install_file) ;
+  ext_job_type * new_job = ext_job_fscanf_alloc(job_name , site_config->__license_root_path , site_config->user_mode , install_file) ;
   if (new_job != NULL) {
     ext_joblist_add_job(site_config->joblist , job_name , new_job);
     return 0;
@@ -261,78 +257,115 @@ static void site_config_add_jobs(site_config_type * site_config , const config_t
 
 
 hash_type * site_config_get_env_hash( const site_config_type * site_config ) {
-  return site_config->env_variables;
+  return site_config->env_variables_user;
 }
 
+
+/**
+   Will only return the user-set variables. The variables set in the
+   site config are hidden.
+*/
+
 stringlist_type * site_config_get_path_variables( const site_config_type * site_config ) {
-  return site_config->path_variables;
+  return site_config->path_variables_user;
 }
 
 stringlist_type * site_config_get_path_values( const site_config_type * site_config ) {
-  return site_config->path_values;
+  return site_config->path_values_user;
+}
+
+/**
+   Observe that the value inserted in the internal hash tables is the
+   interpolated value returned from util_setenv(), where $VAR
+   expressions have been expanded.
+*/
+   
+void site_config_setenv( site_config_type * site_config , const char * variable, const char * __value) {
+  const char * value = util_setenv( variable , __value );
+
+  if (site_config->user_mode) {
+    /* In the table meant for user-export we store the literal $var strings. */
+    hash_insert_hash_owned_ref( site_config->env_variables_user , variable , util_alloc_string_copy( __value ) , free);
+    
+    if (!hash_has_key( site_config->env_variables_site , variable))
+      hash_insert_ref( site_config->env_variables_site , variable , NULL);   /* We insert a NULL so we can recover a unsetenv() in _clear_env(). */
+  } else
+    hash_insert_hash_owned_ref( site_config->env_variables_site , variable , util_alloc_string_copy( value ) , free);
 }
 
 
-void site_config_setenv( site_config_type * site_config , const char * variable, const char * value) {
-  /* Store the current variable, to be able to roll back */
-  if (!hash_has_key( site_config->initial_variables , variable )) 
-    hash_insert_hash_owned_ref( site_config->initial_variables , variable , util_alloc_string_copy( getenv( variable )) , util_safe_free); 
-  
-  hash_insert_hash_owned_ref( site_config->env_variables , variable , util_alloc_string_copy( value ) , free);
-  setenv( variable , value , 1);  /* This will update the environment if the variable has already been set to another value. */
-  if (site_config->user_parse)
-    site_config_user_store( site_config , SETENV_KEY , variable , value , NULL);
-}
+
+/**
+   Clears all the environment variables set by the user. This is done
+   is follows:
+     
+     1. Iterate through the table config->env_variables_user and call
+        unsetenv() on all of them
+   
+     2. Iterate through the table config->env_variables_site and call
+        setenv() on all of them.
+        
+   This way the environment should be identical to what it is after
+   the site parsing is completed.
+*/
 
 
 void site_config_clear_env( site_config_type * site_config ) {
-  hash_clear( site_config->env_variables );
+  /* 1: Clearing the user_set variables. */
   {
-    /* Recover the original values. */
-    hash_iter_type * hash_iter = hash_iter_alloc( site_config->initial_variables );
+    hash_iter_type * hash_iter = hash_iter_alloc( site_config->env_variables_user );
     while (!hash_iter_is_complete( hash_iter )) {
       const char * var       = hash_iter_get_next_key( hash_iter );
-      const char * old_value = hash_get( site_config->initial_variables , var );
-
-      if (old_value == NULL)
-        unsetenv( var );
-      else
-        setenv( var , old_value , 1 );
+      unsetenv( var );
     }
+    hash_iter_free( hash_iter );
+    hash_clear( site_config->env_variables_user );
   }
+  
+
+  /* 2: Recovering the site_set variables. */
+  {
+    hash_iter_type * hash_iter = hash_iter_alloc( site_config->env_variables_site );
+    while (!hash_iter_is_complete( hash_iter )) {
+      const char * var       = hash_iter_get_next_key( hash_iter );
+      const char * value     = hash_get( site_config->env_variables_site , var );
+      util_setenv( var , value );    /* Will call unsetenv if value == NULL */
+    }
+    hash_iter_free( hash_iter );
+  }  
 }
 
 
 void site_config_clear_pathvar( site_config_type * site_config ) {
-  stringlist_clear( site_config->path_variables );
-  stringlist_clear( site_config->path_values );
+  stringlist_clear( site_config->path_variables_user );
+  stringlist_clear( site_config->path_values_user );
   {
     /* Recover the original values. */
-    hash_iter_type * hash_iter = hash_iter_alloc( site_config->initial_path_variables );
+    hash_iter_type * hash_iter = hash_iter_alloc( site_config->path_variables_site );
     while (!hash_iter_is_complete( hash_iter )) {
       const char * var       = hash_iter_get_next_key( hash_iter );
-      const char * old_value = hash_get( site_config->initial_path_variables , var );
-
-      if (old_value == NULL)
+      const char * site_value = hash_get( site_config->path_variables_site , var );
+      
+      if (site_value == NULL)
         unsetenv( var );
       else
-        setenv( var , old_value , 1 );
+        setenv( var , site_value , 1 );
     }
   }
 }
 
 
 void site_config_update_pathvar( site_config_type * site_config , const char * pathvar , const char * value) {
-  /* Store the current variable, to be able to roll back */
-  if (!hash_has_key( site_config->initial_path_variables , pathvar )) 
-    hash_insert_hash_owned_ref( site_config->initial_path_variables , pathvar , util_alloc_string_copy( getenv( pathvar )) , util_safe_free); 
+  if (site_config->user_mode) {
+    stringlist_append_copy( site_config->path_variables_user , pathvar );
+    stringlist_append_copy( site_config->path_values_user    , value   );
     
-  stringlist_append_copy( site_config->path_variables , pathvar );
-  stringlist_append_copy( site_config->path_values    , value   );
-  
+    if (!hash_has_key( site_config->path_variables_site , pathvar )) 
+      hash_insert_ref( site_config->path_variables_site , pathvar , NULL); /* This path variable has not been touched in the
+                                                                              site_config. We store a NULL, so can roll back
+                                                                              (i.e. call unsetenv()). */
+  } 
   util_update_path_var( pathvar , value , false );
-  if (site_config->user_parse)
-    site_config_user_store( site_config , UPDATE_PATH_KEY , pathvar , value , NULL);
 }
 
 
@@ -357,7 +390,7 @@ static void site_config_install_RSH_job_queue(site_config_type * site_config) {
 
 
 static void site_config_install_LSF_job_queue(site_config_type * site_config ) {
-  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name , site_config->num_cpu);
+  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name , site_config->lsf_request , site_config->num_cpu);
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_lsf );
 }
@@ -411,11 +444,8 @@ void site_config_set_max_running_lsf( site_config_type * site_config , int max_r
       job_queue_set_max_running( site_config->job_queue , max_running_lsf );
   }
 
-  if (site_config->user_parse) {
-    char * max_running_lsf_string = util_alloc_sprintf( "%d" , max_running_lsf );
-    site_config_user_store( site_config , MAX_RUNNING_LSF_KEY , max_running_lsf_string , NULL );
-    free( max_running_lsf_string );
-  }
+  if (!site_config->user_mode) 
+    site_config->max_running_lsf_site = max_running_lsf;
 }
 
 int site_config_get_max_running_lsf( const site_config_type * site_config ) {
@@ -428,11 +458,8 @@ void site_config_set_max_running_rsh( site_config_type * site_config , int max_r
     if (job_queue_get_driver_type( site_config->job_queue ) == RSH_DRIVER)
       job_queue_set_max_running( site_config->job_queue , max_running_rsh );
   }
-  if (site_config->user_parse) {
-    char * max_running_rsh_string = util_alloc_sprintf( "%d" , max_running_rsh );
-    site_config_user_store( site_config , MAX_RUNNING_RSH_KEY , max_running_rsh_string , NULL );
-    free( max_running_rsh_string );
-  }
+  if (!site_config->user_mode) 
+    site_config->max_running_rsh_site = max_running_rsh;
 }
 
 int site_config_get_max_running_rsh( const site_config_type * site_config) {
@@ -445,11 +472,8 @@ void site_config_set_max_running_local( site_config_type * site_config , int max
     if (job_queue_get_driver_type( site_config->job_queue ) == LOCAL_DRIVER)
       job_queue_set_max_running( site_config->job_queue , max_running_local );
   }
-  if (site_config->user_parse) {
-    char * max_running_local_string = util_alloc_sprintf( "%d" , max_running_local );
-    site_config_user_store( site_config , MAX_RUNNING_LOCAL_KEY , max_running_local_string , NULL );
-    free( max_running_local_string );
-  }
+  if (!site_config->user_mode) 
+    site_config->max_running_local_site = max_running_local;
 }
 
 int site_config_get_max_running_local( const site_config_type * site_config ) {
@@ -473,12 +497,6 @@ hash_type * site_config_get_rsh_host_list( const site_config_type * site_config 
 
 void site_config_add_rsh_host( site_config_type * site_config , const char * rsh_host , int max_running ) {
   hash_insert_int( site_config->rsh_host_list , rsh_host , max_running );
-
-  if (site_config->user_parse) {
-    char * new_host = util_alloc_sprintf( "%s:%d" , rsh_host , max_running);
-    site_config_user_store( site_config , RSH_HOST_LIST_KEY , new_host , NULL);
-    free( new_host);
-  }
 }
 
 
@@ -486,9 +504,18 @@ void site_config_add_rsh_host( site_config_type * site_config , const char * rsh
 
 void site_config_set_lsf_queue( site_config_type * site_config , const char * lsf_queue) {
   site_config->lsf_queue_name = util_realloc_string_copy( site_config->lsf_queue_name , lsf_queue);
-  if (site_config->user_parse) 
-    site_config_user_store( site_config , LSF_QUEUE_KEY , lsf_queue , NULL);
+  if (!site_config->user_mode) 
+    site_config->lsf_queue_name_site = util_realloc_string_copy( site_config->lsf_queue_name_site , lsf_queue);
+
+  if (site_config->job_queue != NULL) {
+    job_driver_type current_driver = job_queue_get_driver_type( site_config->job_queue );
+    if (current_driver == LSF_DRIVER) {  /* Must push the update down to the driver. */
+      lsf_driver_type * lsf_driver = lsf_driver_safe_cast( job_queue_get_driver( site_config->job_queue ));
+      lsf_driver_set_queue_name( lsf_driver , lsf_queue );
+    }
+  }
 }
+      
 
 
 const char * site_config_get_lsf_queue( const site_config_type * site_config ) {
@@ -496,10 +523,19 @@ const char * site_config_get_lsf_queue( const site_config_type * site_config ) {
 }
 
 
+
 void site_config_set_lsf_request( site_config_type * site_config , const char * lsf_request) {
   site_config->lsf_request = util_realloc_string_copy( site_config->lsf_request , lsf_request);
-  if (site_config->user_parse) 
-    site_config_user_store( site_config , LSF_RESOURCES_KEY , lsf_request , NULL);
+  if (!site_config->user_mode) 
+    site_config->lsf_request_site = util_realloc_string_copy( site_config->lsf_request_site , lsf_request);
+
+  if (site_config->job_queue != NULL) {
+    job_driver_type current_driver = job_queue_get_driver_type( site_config->job_queue );
+    if (current_driver == LSF_DRIVER) {  /* Must push the update down to the driver. */
+      lsf_driver_type * lsf_driver = lsf_driver_safe_cast( job_queue_get_driver( site_config->job_queue ));
+      lsf_driver_set_resource_request( lsf_driver , lsf_request );
+    }
+  }
 }
 
 const char * site_config_get_lsf_request( const site_config_type * site_config ) {
@@ -510,8 +546,8 @@ const char * site_config_get_lsf_request( const site_config_type * site_config )
 
 void site_config_set_rsh_command( site_config_type * site_config , const char * rsh_command) {
   site_config->rsh_command = util_realloc_string_copy( site_config->rsh_command  , rsh_command);
-  if (site_config->user_parse) 
-    site_config_user_store( site_config , RSH_COMMAND_KEY , rsh_command , NULL);
+  if (!site_config->user_mode) 
+    site_config->rsh_command_site = util_realloc_string_copy( site_config->rsh_command_site  , rsh_command);
 }
 
 const char * site_config_get_rsh_command( const site_config_type * site_config ) {
@@ -547,7 +583,10 @@ static void site_config_set_job_queue__( site_config_type * site_config , job_dr
       util_abort("%s: internal error \n",__func__);
     }
   }
+  if (!site_config->user_mode)
+    site_config->driver_type_site = driver_type;
 }
+
 
 
 void site_config_set_job_queue( site_config_type * site_config , const char * queue_name ) {
@@ -565,8 +604,8 @@ void site_config_set_job_script( site_config_type * site_config , const char * j
   if (site_config->job_queue != NULL)
     job_queue_set_run_cmd( site_config->job_queue  , job_script );
 
-  if (site_config->user_parse) 
-    site_config_user_store( site_config , JOB_SCRIPT_KEY , job_script , NULL);
+  if (!site_config->user_mode) 
+    site_config->job_script_site = util_realloc_string_copy( site_config->job_script_site , job_script );
 }
 
 
@@ -577,8 +616,8 @@ const char * site_config_get_job_script( const site_config_type * site_config ) 
 
 void site_config_set_max_submit( site_config_type * site_config , int max_submit ) {
   site_config->max_submit = max_submit;
-  if (site_config->job_queue != NULL)
-    job_queue_set_max_submit(site_config->job_queue , max_submit);
+  if (!site_config->user_mode)
+    site_config->max_submit_site = max_submit;
 }
 
 
@@ -676,16 +715,17 @@ void site_config_init(site_config_type * site_config , const config_type * confi
       site_config_set_max_running_rsh( site_config , config_iget_as_int( config , MAX_RUNNING_RSH_KEY , 0,0));
 
     /* Parsing the "host1:4" strings. */
-    if (config_item_set( config , RSH_HOST_LIST_KEY)) {
-      stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , RSH_HOST_LIST_KEY);
-      int i;
-      for (i=0; i < stringlist_get_size( rsh_host_list ); i++) {
-        int     host_max_running;
-        char ** tmp;
-        char  * host;
-        int     tokens;
-        
-        util_split_string( stringlist_iget( rsh_host_list , i) , ":" , &tokens , &tmp);
+    if (user_config) {
+      if (config_item_set( config , RSH_HOST_KEY)) {
+        stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , RSH_HOST_KEY);
+        int i;
+        for (i=0; i < stringlist_get_size( rsh_host_list ); i++) {
+          int     host_max_running;
+          char ** tmp;
+          char  * host;
+          int     tokens;
+          
+          util_split_string( stringlist_iget( rsh_host_list , i) , ":" , &tokens , &tmp);
           if (tokens > 1) {
             if (!util_sscanf_int( tmp[tokens - 1] , &host_max_running))
               util_abort("%s: failed to parse out integer from: %s \n",__func__ , stringlist_iget( rsh_host_list , i));
@@ -696,8 +736,9 @@ void site_config_init(site_config_type * site_config , const config_type * confi
           site_config_add_rsh_host( site_config , host , host_max_running);
           util_free_stringlist( tmp , tokens );
           free( host );
+        }
+        stringlist_free( rsh_host_list );
       }
-      stringlist_free( rsh_host_list );
     }
   }
 
@@ -756,24 +797,28 @@ void site_config_free(site_config_type * site_config) {
   job_queue_free( site_config->job_queue );
   vector_free( site_config->user_action );
   
-  stringlist_free( site_config->path_variables );
-  stringlist_free( site_config->path_values );
+  stringlist_free( site_config->path_variables_user );
+  stringlist_free( site_config->path_values_user );
 
   hash_free( site_config->rsh_host_list );
-  hash_free( site_config->initial_variables );
-  hash_free( site_config->env_variables );
-  hash_free( site_config->initial_path_variables );
+  hash_free( site_config->env_variables_site );
+  hash_free( site_config->env_variables_user );
 
   if (site_config->__license_root_path != NULL)
     util_clear_directory( site_config->__license_root_path , true , true );
   
   util_safe_free( site_config->license_root_path );
+  util_safe_free( site_config->license_root_path_site );
   util_safe_free( site_config->__license_root_path );
 
   util_safe_free( site_config->job_script );
+  util_safe_free( site_config->job_script_site );
   util_safe_free( site_config->rsh_command );
+  util_safe_free( site_config->rsh_command_site );
   util_safe_free( site_config->lsf_queue_name );
+  util_safe_free( site_config->lsf_queue_name_site );
   util_safe_free( site_config->lsf_request );
+  util_safe_free( site_config->lsf_request_site );
   free(site_config);
 }
 
@@ -817,6 +862,106 @@ void site_config_fprintf_config( const site_config_type * site_config , FILE * s
   }
 
   
+  /* Storing the env variables set with SETENV */
+  {
+    hash_iter_type * iter = hash_iter_alloc( site_config->env_variables_user );
+    while (!hash_iter_is_complete( iter )) {
+      const char * var        = hash_iter_get_next_key( iter );
+      const char * user_value = hash_get( site_config->env_variables_user , var );
+      const char * site_value = hash_safe_get( site_config->env_variables_site , var );
+      
+      if (!util_string_equal( user_value , site_value)) {
+        fprintf(stream , CONFIG_KEY_FORMAT      , SETENV_KEY );
+        fprintf(stream , CONFIG_VALUE_FORMAT    , var );
+        fprintf(stream , CONFIG_ENDVALUE_FORMAT , user_value );
+      }
+    }
+  }
+
+  /* Storing the driver type setting: */
+  if ( site_config->driver_type != site_config->driver_type_site) {
+    fprintf(stream , CONFIG_KEY_FORMAT , QUEUE_SYSTEM_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , site_config_get_queue_name( site_config ));
+  }
+  
+  /* Storing UMASK setting */
+  if ( site_config->umask != site_config->umask_site) {
+    fprintf(stream , CONFIG_KEY_FORMAT , UMASK_KEY );
+    fprintf(stream , "%o\n" , site_config->umask );
+  }
+
+  /* Storing MAX_SUBMIT setting */
+  if ( site_config->max_submit != site_config->max_submit_site) {
+    fprintf(stream , CONFIG_KEY_FORMAT , MAX_SUBMIT_KEY );
+    fprintf(stream , "%d\n" , site_config->max_submit );
+  }
+  
+  /* Storing LICENSE_ROOT_PATH */
+  if (!util_string_equal( site_config->license_root_path , site_config->license_root_path_site)) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , LICENSE_PATH_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , site_config->license_root_path);
+  }
+
+  /* Storing jobscript */
+  if (!util_string_equal( site_config->job_script , site_config->job_script_site)) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , LICENSE_PATH_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , site_config->job_script);
+  }
+
+  /* Storing local settings. */
+  if (site_config->max_running_local != site_config->max_running_local_site) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , MAX_RUNNING_LOCAL_KEY );
+    fprintf(stream , CONFIG_INT_FORMAT , site_config->max_running_local);
+    fprintf( stream , "\n");
+  }
+
+  /* Storing LSF settings. */
+  {
+    if (site_config->max_running_lsf != site_config->max_running_lsf_site) {
+      fprintf(stream , CONFIG_KEY_FORMAT , MAX_RUNNING_LSF_KEY );
+      fprintf(stream , CONFIG_INT_FORMAT , site_config->max_running_lsf);
+      fprintf( stream , "\n");
+    } 
+
+    if (!util_string_equal( site_config->lsf_queue_name , site_config->lsf_queue_name_site)) {
+      fprintf(stream , CONFIG_KEY_FORMAT      , LSF_QUEUE_KEY );
+      fprintf(stream , CONFIG_ENDVALUE_FORMAT , site_config->lsf_queue_name);
+    }
+
+    if (!util_string_equal( site_config->lsf_request , site_config->lsf_request_site)) {
+      fprintf(stream , CONFIG_KEY_FORMAT      , LSF_RESOURCES_KEY );
+      fprintf(stream , CONFIG_ENDVALUE_FORMAT , site_config->lsf_request);
+    }
+  }
+
+
+
+
+  /* Storing RSH settings. */
+  {
+    if (site_config->max_running_rsh != site_config->max_running_rsh_site) {
+      fprintf(stream , CONFIG_KEY_FORMAT      , MAX_RUNNING_RSH_KEY );
+      fprintf(stream , CONFIG_INT_FORMAT , site_config->max_running_rsh);
+      fprintf( stream , "\n");
+    }
+    
+    if (!util_string_equal( site_config->rsh_command , site_config->rsh_command_site)) {
+      fprintf(stream , CONFIG_KEY_FORMAT      , LICENSE_PATH_KEY );
+      fprintf(stream , CONFIG_ENDVALUE_FORMAT , site_config->rsh_command);
+    }
+
+    {
+      hash_iter_type * iter = hash_iter_alloc( site_config->rsh_host_list );
+      while (!hash_iter_is_complete( iter )) {
+        const char * host_name = hash_iter_get_next_key( iter );
+        fprintf(stream , CONFIG_KEY_FORMAT      , RSH_HOST_KEY );
+        fprintf(stream , "%s;%d\n"  , host_name , hash_get_int( site_config->rsh_host_list , host_name));
+      }
+      hash_iter_free( iter );
+    }
+  }
+
+
   /* Storing all the actions stored in user_action. */
   {
     for (int i=0; i< vector_get_size( site_config->user_action ); i++) {
@@ -842,7 +987,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   {
     stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[2]) {"LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 2);
-    stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
+    stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST"  , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
     stringlist_type * local_dep  = stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1);
 
     if (site_only) {
@@ -868,6 +1013,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   */
   item = config_add_item(config , SETENV_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
+  config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_setenv()). */
   
   item = config_add_item(config , UMASK_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
@@ -879,6 +1025,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   */
   item = config_add_item(config , UPDATE_PATH_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
+  config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_setenv()). */
 
   item = config_add_item( config , LICENSE_PATH_KEY , site_only , false );
   config_item_set_argc_minmax(item , 1 , 1, NULL );
@@ -899,7 +1046,8 @@ void site_config_add_config_items( config_type * config , bool site_only) {
 
 
   /* These must be set IFF QUEUE_SYSTEM == RSH */
-  config_add_item(config , RSH_HOST_LIST_KEY , false , false);
+  if (!site_only)
+    config_add_item(config , RSH_HOST_KEY , false , false);  /* Only added when user parse. */
   item = config_add_item(config , RSH_COMMAND_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
   item = config_add_item(config , MAX_RUNNING_RSH_KEY , false , false);

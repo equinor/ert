@@ -33,7 +33,7 @@ void                   model_config_set_load_state( model_config_type *  , int )
 int 		       model_config_get_history_length(const model_config_type * );
 bool                   model_config_has_prediction(const model_config_type * );
 int                    model_config_get_last_history_restart(const model_config_type * );
-void                   model_config_init(model_config_type * model_config , const config_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase , const char * lsf_request);
+void                   model_config_init(model_config_type * model_config , const config_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase);
 void                   model_config_free(model_config_type *);
 path_fmt_type        * model_config_get_runpath_fmt(const model_config_type * );
 enkf_sched_type      * model_config_get_enkf_sched(const model_config_type * );
