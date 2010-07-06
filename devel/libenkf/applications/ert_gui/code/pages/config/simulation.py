@@ -103,9 +103,9 @@ def createSimulationsPage(configPanel, parent):
 
     
     r = configPanel.addRow(PathChooser(parent, "License path", "config/simulation/license_path"))
-    r.initialize = lambda ert : [ert.prototype("char* site_config_get_license_root_path__(long)"),
+    r.initialize = lambda ert : [ert.prototype("char* site_config_get_license_root_path(long)"),
                                  ert.prototype("void site_config_set_license_root_path(long, char*)")]
-    r.getter = lambda ert : ert.enkf.site_config_get_license_root_path__(ert.site_config)
+    r.getter = lambda ert : ert.enkf.site_config_get_license_root_path(ert.site_config)
 
     def ls(string):
         if string is None:
