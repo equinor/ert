@@ -39,7 +39,7 @@ class RunWidget(HelpedWidget):
 
         memberLayout = QtGui.QFormLayout()
         memberLayout.setLabelAlignment(QtCore.Qt.AlignRight)
-
+        
         self.runpathLabel = QtGui.QLabel("")
         font = self.runpathLabel.font()
         font.setWeight(QtGui.QFont.Bold)
@@ -199,8 +199,8 @@ class RunWidget(HelpedWidget):
         self.rbAssimilation = QtGui.QRadioButton("EnKF assimilation")
         radioLayout.addWidget(self.rbAssimilation)
         
-        self.connect(self.rbAssimilation, QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
-        self.connect(self.rbExperiment, QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
+        self.connect(self.rbAssimilation , QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
+        self.connect(self.rbExperiment  , QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
 
         return radioLayout
 

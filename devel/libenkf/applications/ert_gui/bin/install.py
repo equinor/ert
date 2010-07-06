@@ -75,16 +75,22 @@ def install_walk( arg , dirname , entries ):
     src_root    = arg["src_root"]
     target_root = arg["target_root"]
     verbose     = arg["verbose"]
-    
+
     relpath = __relpath( dirname , src_root )
-    for entry in entries:
-        full_entry = "%s/%s" % (dirname , entry)
-        if not exclude_re.search( full_entry ):
-            full_target = "%s/%s/%s" % (target_root , relpath , entry)
-            if os.path.isfile( full_entry ):
-                install_file( full_entry , full_target , verbose)
-            elif os.path.isdir( full_entry ):
-                install_dir( full_target , verbose)
+    if relpath == "bin":
+        # Special case for the bin directory:
+        install_file( "%s/ertgui.sh" % dirname   , "%s/%s/ertgui.sh"   % ( target_root , relpath) , verbose)
+        install_file( "%s/gdbcommands" % dirname , "%s/%s/gdbcommands" % ( target_root , relpath) , verbose)
+        install_file( "%s/clean.py" % dirname    , "%s/%s/clean.py"    % ( target_root , relpath) , verbose)
+    else:
+        for entry in entries:
+            full_entry = "%s/%s" % (dirname , entry)
+            if not exclude_re.search( full_entry ):
+                full_target = "%s/%s/%s" % (target_root , relpath , entry)
+                if os.path.isfile( full_entry ):
+                    install_file( full_entry , full_target , verbose)
+                elif os.path.isdir( full_entry ):
+                    install_dir( full_target , verbose)
 
 
 

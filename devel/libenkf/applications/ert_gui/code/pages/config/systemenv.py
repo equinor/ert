@@ -13,6 +13,18 @@ import widgets.spinnerwidgets
 def createSystemPage(configPanel, parent):
     configPanel.startPage("System")
 
+    siteConfigLabel = QtGui.QLabel("")
+    font = siteConfigLabel.font()
+    font.setWeight(QtGui.QFont.Bold)
+    siteConfigLabel.setFont(font)
+    siteConfigLabel.setText("Site config: /path/to/site/configuration/file")
+    # Should call enkf_main_get_site_config_file() to get the name of
+    # the site configuration file; this should only be a label - not
+    # user editable.
+    r = configPanel.addRow( siteConfigLabel )
+    
+
+
     r = configPanel.addRow(PathChooser(parent, "Job script", "config/systemenv/job_script", True))
     r.initialize = lambda ert : [ert.prototype("char* site_config_get_job_script(long)"),
                                  ert.prototype("void site_config_set_job_script(long, char*)")]
@@ -67,7 +79,7 @@ def createSystemPage(configPanel, parent):
 
     r = internalPanel.addRow(JobsPanel(parent))
     r.initialize = lambda ert : [ert.prototype("long site_config_get_installed_jobs(long)"),
-                                 ert.prototype("char* site_config_get_license_root_path__(long)"),
+                                 ert.prototype("char* site_config_get_license_root_path(long)"),
                                  ert.prototype("int ext_job_is_private(long)", lib=ert.job_queue),
                                  ert.prototype("char* ext_job_get_config_file(long)", lib=ert.job_queue),
                                  ert.prototype("void ext_job_set_config_file(long, char*)", lib=ert.job_queue),
@@ -97,7 +109,7 @@ def createSystemPage(configPanel, parent):
         jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
 
         if os.path.exists(value.path):
-            license = ert.enkf.site_config_get_license_root_path__(ert.site_config)
+            license = ert.enkf.site_config_get_license_root_path(ert.site_config)
             job = ert.job_queue.ext_job_fscanf_alloc(value.name, license, True, value.path)
             ert.job_queue.ext_joblist_add_job(jl, value.name, job)
         else:
@@ -108,7 +120,7 @@ def createSystemPage(configPanel, parent):
     def add_job(ert, value):
         jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
         if not ert.job_queue.ext_joblist_has_job(jl, value.name):
-            license = ert.enkf.site_config_get_license_root_path__(ert.site_config)
+            license = ert.enkf.site_config_get_license_root_path(ert.site_config)
             if os.path.exists(value.path):
                 job = ert.job_queue.ext_job_fscanf_alloc(value.name, license, True, value.path)
                 ert.job_queue.ext_joblist_add_job(jl, value.name, job)
