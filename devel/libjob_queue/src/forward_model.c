@@ -7,7 +7,7 @@
 #include <ext_joblist.h>
 #include <forward_model.h>
 #include <subst_list.h>
-#include <vector.h>
+#include <vector.h> 
 #include <parser.h>
 /**
    This file implements a 'forward-model' object. I
@@ -18,7 +18,6 @@
 struct forward_model_struct {
   vector_type               * jobs;         /* The actual jobs in this forward model. */
   const ext_joblist_type    * ext_joblist;  /* This is the list of external jobs which have been installed - which we can choose from. */
-  char                      * lsf_request;  /* The lsf_requests needed for this forward model == NULL if we are not using lsf. */
 };
 
 #define DEFAULT_JOB_MODULE   "jobs.py"
@@ -29,16 +28,12 @@ struct forward_model_struct {
 
 
 
-forward_model_type * forward_model_alloc(const ext_joblist_type * ext_joblist, const char * lsf_request) {
+forward_model_type * forward_model_alloc(const ext_joblist_type * ext_joblist) {
   forward_model_type * forward_model = util_malloc( sizeof * forward_model , __func__);
   
   forward_model->jobs        = vector_alloc_new();
   forward_model->ext_joblist = ext_joblist;
-  forward_model->lsf_request = NULL;
-  
-  if (lsf_request != NULL) 
-    forward_model_set_lsf_request( forward_model , lsf_request );
-  
+
   return forward_model;
 }
 
@@ -97,16 +92,10 @@ void forward_model_clear( forward_model_type * forward_model ) {
 
 void forward_model_free( forward_model_type * forward_model) {
   vector_free( forward_model->jobs );
-  util_safe_free( forward_model->lsf_request );
   free(forward_model);
 }
 
 
-
-
-void forward_model_set_lsf_request( forward_model_type * forward_model , const char* lsf_request ) {
-  forward_model->lsf_request = util_realloc_string_copy( forward_model->lsf_request , lsf_request );
-}
 
 
 /**
@@ -212,7 +201,7 @@ forward_model_type * forward_model_alloc_copy(const forward_model_type * forward
   int ijob;
   forward_model_type * new;
 
-  new = forward_model_alloc(forward_model->ext_joblist , forward_model->lsf_request );
+  new = forward_model_alloc(forward_model->ext_joblist );
   for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
     const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
     vector_append_owned_ref( new->jobs , ext_job_alloc_copy( job ) , ext_job_free__);
@@ -241,7 +230,3 @@ const ext_joblist_type * forward_model_get_joblist(const forward_model_type * fo
   return forward_model->ext_joblist;
 }
 
-
-const char * forward_model_get_lsf_request(const forward_model_type * forward_model) {
-  return forward_model->lsf_request;
-}
