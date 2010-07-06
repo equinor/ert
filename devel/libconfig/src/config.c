@@ -156,7 +156,7 @@ struct config_struct {
 struct config_item_struct {
   int                         __id;                      /* Used for run-time checking */
   char                        * kw;                      /* The kw which identifies this item· */
-
+  
   int                           alloc_size;              /* The number of nodes which have been allocated. */  
   int                           node_size;               /* The number of active nodes.*/
   config_item_node_type      ** nodes;                   /* A vector of config_item_node_type instances. */
@@ -168,6 +168,7 @@ struct config_item_struct {
   hash_type                   * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
   //config_item_types           * type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
   validate_type               * validate;                /* Information need during validation. */ 
+  bool                          expand_envvar;           /* Should environment variables like $HOME be expanded?*/ 
 };
  
 
@@ -538,6 +539,8 @@ config_item_type * config_item_alloc(const char * kw , bool required , bool appe
   item->required_set            = required;
   item->required_children       = NULL;
   item->required_children_value = NULL;
+  item->expand_envvar           = true;  /* Default is to expand $VAR expressions; can be turned off with
+                                            config_item_set_envvar_expansion( item , false ); */
   //item->type_map                = NULL;
   item->validate                = validate_alloc();
   return item;
@@ -769,7 +772,7 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
 
     
     /* Filtering based on environment variables */
-    {
+    if (item->expand_envvar) {
       int iarg;
       for (iarg = 0; iarg < argc; iarg++) {
         int    env_offset = 0;
@@ -954,6 +957,11 @@ void config_item_set_argc_minmax(config_item_type * item , int argc_min , int ar
   validate_set_argc_minmax(item->validate , argc_min , argc_max , type_map);
 }
   
+
+
+void config_item_set_envvar_expansion( config_item_type * item , bool expand_envvar ) {
+  item->expand_envvar = expand_envvar;
+}
 
 
 #undef __TYPE__
@@ -1202,7 +1210,7 @@ static void config_parse__(config_type * config ,
 			   bool validate) {
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
   char * abs_filename = util_alloc_realpath(config_file);
-  
+
   if (!set_add_key(config->parsed_files , abs_filename)) 
     util_exit("%s: file:%s already parsed - circular include ? \n",__func__ , config_file);
   else {
