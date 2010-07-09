@@ -32,7 +32,8 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
 void              enkf_obs_load(enkf_obs_type * enkf_obs,
                                 const char         * config_file,
                                 ensemble_config_type * ensemble_config);
-                                
+
+void              enkf_obs_reload( enkf_obs_type * enkf_obs , ensemble_config_type * ensemble_config );                                
 
 void enkf_obs_get_obs_and_measure(
         const enkf_obs_type    * enkf_obs,

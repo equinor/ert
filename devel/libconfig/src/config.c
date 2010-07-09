@@ -5,6 +5,7 @@
 #include <util.h>
 #include <config.h>
 #include <hash.h>
+#include <vector.h>
 #include <stringlist.h>
 #include <set.h>
 #include <subst_list.h>
@@ -148,6 +149,7 @@ struct config_struct {
   set_type             * parsed_files;              /* A set of config files whcih have been parsed - to protect against circular includes. */
   hash_type            * messages;                  /* Can print a (warning) message when a keyword is encountered. */
   subst_list_type      * define_list;
+  hash_type            * auto_items;                /* This is a hash of vectors of stringlist instances of items which have been auto-add'ed while parsing. */
 };
 
 
@@ -979,6 +981,7 @@ config_type * config_alloc() {
   config->parsed_files    = set_alloc_empty();
   config->messages        = hash_alloc();
   config->define_list     = subst_list_alloc( NULL );
+  config->auto_items      = hash_alloc( );
   return config;
 }
 
@@ -989,6 +992,7 @@ void config_free(config_type * config) {
   stringlist_free(config->parse_errors);
   set_free(config->parsed_files);
   subst_list_free( config->define_list );
+  hash_free( config->auto_items );
   free(config);
 }
 
@@ -1122,6 +1126,39 @@ static void config_validate(config_type * config, const char * filename) {
   }
   
 }
+
+
+/**
+   If the parser is set up to include unknown items (a bit dangerous
+   because misspellings++ will not be catched) the items which have
+   been auto-added can be retrieved afterwards with the function
+   config_pop_auto_items() which will return a hash table; the calling
+   scope takes ownership of this table (removing it from the config
+   object), and must free it with hash_free(). The hash table is organized as follows:
+
+   
+   auto_items = { "KEY1"      : Vector( Stringlist("Val1","Val2","Val3") , Stringlist("ValX","ValY") ) , 
+                  "Transport" : Vector( Stringlist("Car" , "Boat" , "Plane")),
+                  "Sex"       : Vector( Stringlist("Male" , "Female" , "????") , Stringlist("yes")) }
+
+*/
+
+hash_type * config_pop_auto_items( config_type * config ) {
+  hash_type * auto_items = config->auto_items;              /* If the same config instance is used to parse again - the auto
+                                                               items will from now on have lost their special auto status. */
+  config->auto_items = hash_alloc();
+  return auto_items;
+}
+
+
+static void config_append_auto_item( config_type * config , const char * key , int argc , const char ** argv) {
+  vector_type * v     = hash_get( config->auto_items , key );
+  stringlist_type * s = stringlist_alloc_argv_copy( argv , argc );
+  
+  vector_append_owned_ref( v , s , stringlist_free__);
+}
+
+
 
 
 
@@ -1294,17 +1331,26 @@ static void config_parse__(config_type * config ,
 	      free(value);
 	    }
 	  } else {
+            bool auto_item = false;
 	    if (hash_has_key(config->messages , kw))
 	      printf("%s \n",(char *) hash_get(config->messages , kw));
 	    
-	    if (!config_has_item(config , kw) && auto_add) 
-	      config_add_item(config , kw , true , false);  /* Auto created items get append_arg == false, and required == true (which is trivially satisfied). */
+            if (!config_has_item(config , kw)) {
+              fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s --- \n" , kw , config_file);
+              if (auto_add) {
+                config_add_item(config , kw , true , false);                        /* Auto created items get append_arg == true, and required == true (which is trivially satisfied). */
+                hash_insert_hash_owned_ref( config->auto_items , kw , vector_alloc_new() , vector_free__ );
+              }
+            }
 	    
 	    if (config_has_item(config , kw)) {
 	      config_item_type * item = config_get_item(config , kw);
 	      config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd);
-	    } else 
-	      fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s - ignored \n" , kw , config_file);
+	    } 
+              
+            
+            if (auto_item)
+              config_append_auto_item( config , kw , active_tokens - 1,  (const char **) &token_list[1] );
 	  }
         }
         util_free_stringlist(token_list , tokens);
@@ -1317,6 +1363,7 @@ static void config_parse__(config_type * config ,
   free(abs_filename);
   free(config_file);
 }
+
 
 
 void config_parse(config_type * config , 

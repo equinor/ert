@@ -1137,6 +1137,11 @@ void enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mk
    current default case is selected), if @select_case points to a
    non-existing case a warning will be printed on stderr on no
    selection will be performed.
+   
+   Iff the file-system does not exist; and select_case != NULL
+   select_case will also be used as the default case.
+
+
 */
 
 
@@ -1150,10 +1155,11 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
     util_exit("The ensemble at %s has FILE_SYSTEM_VERSION:%d  -  the current enkf FILE_SYSTEM_VERSION is:%d - UPGRADE enkf \n", root_path , version , CURRENT_FS_VERSION);
   
   util_make_path(root_path);                                    	    	  /* Creating root directory */
-  if (version == -1)
+  if (version == -1) {
+    if (select_case != NULL)
+      default_dir = select_case;
     enkf_fs_fwrite_new_mount_map( config_file , default_dir ,driver_impl);  	  /* Create blank mount map */
-  else if (version < CURRENT_FS_VERSION) {  /* Upgrade file system layout */
-    
+  } else if (version < CURRENT_FS_VERSION) {  /* Upgrade file system layout */
     if (version == 0) {
       enkf_fs_upgrade_100(version , config_file , root_path , default_dir);       /* Upgrade disk information - and create new mount map. */
       version = 100;

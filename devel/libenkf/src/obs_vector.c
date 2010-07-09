@@ -69,6 +69,7 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
 static void obs_vector_resize(obs_vector_type * vector , int new_size) {
   int current_size = vector_get_size( vector->nodes );
   int i;
+  
   for (i=current_size; i < new_size; i++) 
     vector_append_ref( vector->nodes , NULL);
   
@@ -118,7 +119,7 @@ obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key
   vector->num_active         = 0;
   vector->nodes              = vector_alloc_new();
   obs_vector_resize(vector , num_reports); /* +1 here ?? Ohh  - these fucking +/- problems. */
-
+  
   return vector;
 }
 
@@ -286,20 +287,21 @@ void * obs_vector_iget_node(const obs_vector_type * vector, int index) {
 
 
 void obs_vector_user_get(const obs_vector_type * obs_vector , const char * index_key , int report_step , double * value , double * std , bool * valid) {
-  obs_vector->user_get(obs_vector_iget_node(obs_vector , report_step) , index_key , value , std , valid);
+  void * obs_node = obs_vector_iget_node( obs_vector , report_step );
+  obs_vector->user_get(obs_node , index_key , value , std , valid);
 }
 
 /*
-  This function returns the next active report step, starting with
-  'prev_step + 1'. If no more active steps are found, it will return
-  -1.
+  This function returns the next active (i.e. node != NULL) report
+  step, starting with 'prev_step + 1'. If no more active steps are
+  found, it will return -1.
 */
 
 int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int prev_step) {
   if (prev_step >= (vector_get_size(obs_vector->nodes) - 1))
     return -1;
   else {
-    int size = vector_get_size( obs_vector->nodes );
+    int size      = vector_get_size( obs_vector->nodes );
     int next_step = prev_step + 1;
     while (( next_step < size) && (obs_vector_iget_node(obs_vector , next_step) == NULL))
       next_step++;
@@ -407,6 +409,17 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
     
     // Get time series data from history object and allocate
     history_alloc_time_series_from_summary_key(history, sum_key, &size, &value, &default_used);
+    //{
+    //  if (util_string_equal( "WWPT:D-6HP" , obs_vector->obs_key)) {
+    //    printf("WWPT:D-6HP\n");
+    //    printf("-----------------------------------------------------------------\n");
+    //    //for (int i=0; i < size; i++) 
+    //    //  printf("value[%04d] = %g \n",i , value[i]);
+    //    printf("-----------------------------------------------------------------\n");
+    //    exit(1);
+    //  }
+    //}
+
     
     std = util_malloc(size * sizeof * std, __func__);
     

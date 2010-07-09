@@ -233,8 +233,28 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
   return enkf_main->obs;
 }
 
+
+/**
+   Will do a forced reload of the observtaions; if the user has edited
+   the content of the observation file while the ERT instance is
+   running.
+*/
+
+void enkf_main_reload_obs( enkf_main_type * enkf_main) {
+  enkf_obs_reload(enkf_main->obs , enkf_main->ensemble_config );
+}
+
+
+/**
+   Will not reload the observations if the input config file
+   @obs_config_file is equal to the currently set config_file. If you
+   want to force a reload of the observations use the function
+   enkf_main_reload_obs().
+*/
+
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
-  enkf_obs_load(enkf_main->obs , obs_config_file , enkf_main->ensemble_config );
+  if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs )))
+    enkf_obs_load(enkf_main->obs , obs_config_file , enkf_main->ensemble_config );
 }
 
 
@@ -2082,7 +2102,7 @@ static config_type * enkf_main_alloc_config( bool site_only ) {
   item = config_add_item(config , STATIC_KW_KEY , false , true);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
-  item = config_add_item(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , false , true);
+  item = config_add_item(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_INT});
 
   item = config_add_item(config , OBS_CONFIG_KEY  , false , false);
@@ -2371,8 +2391,18 @@ static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
 }
 
 
+void enkf_main_select_case( enkf_main_type * enkf_main , const char * select_case) {
+  enkf_fs_select_read_dir( enkf_main->dbase , select_case );
+  enkf_fs_select_write_dir( enkf_main->dbase , select_case , false);
+  model_config_set_select_case( enkf_main->model_config , select_case);
+}
 
-void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case ) {
+
+/**
+   This is (probably) not reentrant ...
+*/
+
+static void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case ) {
   const model_config_type * model_config = enkf_main->model_config;
   const char * mount_map = "enkf_mount_info";
   enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , mount_map , select_case );
@@ -2386,6 +2416,7 @@ void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case
   if (enkf_main->ensemble != NULL)
     enkf_main_invalidate_cache( enkf_main );
 
+  model_config_set_select_case( enkf_main->model_config , enkf_fs_get_read_dir( enkf_main->dbase ));
 }
 
 
@@ -2598,13 +2629,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     /* Parsing the site_config file first */
     {
       config = enkf_main_alloc_config( true );
-      config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , false , true);
+      config_parse(config , site_config  , "--" , INCLUDE_KEY , DEFINE_KEY , false , true);
       site_config_init( enkf_main->site_config , config , false);                                /*  <---- site_config : first pass. */  
       config_free( config );
     }
     config = enkf_main_alloc_config( false );
     site_config_init_user_mode( enkf_main->site_config );
-    config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , false , true);
+    config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , false , true);
     site_config_init( enkf_main->site_config , config , true );                                   /*  <---- model_config : second pass. */ 
 
     /*****************************************************************/
@@ -2790,6 +2821,40 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
   enkf_main_set_user_config_file( enkf_main , "config_test" );
   return enkf_main;
+}
+
+
+
+
+/**
+   This function creates a minimal configuration file, with a few
+   parameters (a bit arbitrary) parameters read from (typically) a GUI
+   configuration dialog.
+
+   The set of parameters written by this function is _NOT_ a minimum
+   set to generate a valid configuration.
+*/
+
+void enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * case_name , const char * dbase_type , int num_realizations) {
+  
+  FILE * stream = util_mkdir_fopen( config_file , "w" );
+  
+  fprintf(stream , CONFIG_KEY_FORMAT      , ENSPATH_KEY);
+  fprintf(stream , CONFIG_ENDVALUE_FORMAT , storage_path );
+
+  fprintf(stream , CONFIG_KEY_FORMAT      , SELECT_CASE_KEY);
+  fprintf(stream , CONFIG_ENDVALUE_FORMAT , case_name);
+
+  fprintf(stream , CONFIG_KEY_FORMAT      , DBASE_TYPE_KEY);
+  fprintf(stream , CONFIG_ENDVALUE_FORMAT , dbase_type);
+
+  fprintf(stream , CONFIG_KEY_FORMAT      , NUM_REALIZATIONS_KEY);
+  fprintf(stream , CONFIG_INT_FORMAT , num_realizations);
+  fprintf(stream , "\n");
+  
+  fclose( stream );
+
+  printf("Have created configuration file: %s \n",config_file );
 }
 
 

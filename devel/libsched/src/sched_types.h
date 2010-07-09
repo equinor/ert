@@ -20,6 +20,9 @@ typedef enum { DATES_TIME = 1,
 
 
 
+typedef double (sched_history_callback_ftype)    (const void * , int);  
+  
+
 
 
 typedef enum { INJECTOR = 1,
@@ -54,17 +57,21 @@ typedef enum {WATER = 0 ,
    that the enum is used BOTH by the WCONHIST and the WCONINJE
    keywords (only the enum value 'RESV' is actually shared between the
    two keywords.
+
+   The final element in the enum 'CM_SHUT' is only used internally; that
+   will never be in the schedule file.
 */
    
-typedef enum {RESV  = 0, /* Injector || Producer */
-              RATE  = 1, /* Injector */
-              BHP   = 2, /* Injector  */
-              THP   = 3, /* Injector  */ 
-              GRUP  = 4, /* Injector  */
-              ORAT  = 5, /* Producer  */ 
-              WRAT  = 6, /* Producrer */ 
-              GRAT  = 7, /* Producer  */
-              LRAT  = 8} /* Producer  */ well_cm_enum;
+typedef enum {RESV     = 0, /* Injector || Producer */
+              RATE     = 1, /* Injector */
+              BHP      = 2, /* Injector  */
+              THP      = 3, /* Injector  */ 
+              GRUP     = 4, /* Injector  */
+              ORAT     = 5, /* Producer  */ 
+              WRAT     = 6, /* Producrer */ 
+              GRAT     = 7, /* Producer  */
+              LRAT     = 8, /* Producer  */ 
+              CM_SHUT  = 100 } well_cm_enum;
   
 
 #define CM_RATE_STRING "RATE"
@@ -83,21 +90,21 @@ typedef enum {RESV  = 0, /* Injector || Producer */
 
 
 
-typedef enum {NONE     =  0,
-              WCONHIST =  1,
-              DATES    =  2, 
-              COMPDAT  =  3, 
-              TSTEP    =  4, 
-              TIME     =  5,   /* Not implemented support */
-              WELSPECS =  6, 
-              GRUPTREE =  7,
-              INCLUDE  =  8,   
-              UNTYPED  =  9,
-              WCONINJ  = 10,
-              WCONINJE = 11, 
-              WCONINJH = 12,
-              WCONPROD = 13,
-              NUM_SCHED_KW_TYPES = 14} sched_kw_type_enum;
+typedef enum {NONE               =     0,
+              WCONHIST           =     1,
+              DATES              =     2, 
+              COMPDAT            =     4, 
+              TSTEP              =     8, 
+              TIME               =    16,   /* Not implemented support */
+              WELSPECS           =    32, 
+              GRUPTREE           =    64,
+              INCLUDE            =   128,   
+              UNTYPED            =   256,
+              WCONINJ            =   512,
+              WCONINJE           =  1024, 
+              WCONINJH           =  2048,
+              WCONPROD           =  4096,  
+              NUM_SCHED_KW_TYPES =  8192} sched_kw_type_enum;
               
 
 sched_kw_type_enum sched_kw_type_from_string(const char * kw_name);

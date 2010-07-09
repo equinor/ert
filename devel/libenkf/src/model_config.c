@@ -47,13 +47,14 @@ struct model_config_struct {
   enkf_sched_type      * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
   char                 * enkf_sched_file;     	    /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
   char                 * enspath;
+  char                 * select_case;
   fs_driver_impl         dbase_type;
   int                    last_history_restart;       /* The end of the history - this is inclusive.*/
   bool                   has_prediction; 
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
   history_source_type    history_source;
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer 
-                                                         to the ecl_sum instance owned and held by the ecl_config object. */
+                                                        to the ecl_sum instance owned and held by the ecl_config object. */
   /** The results are always loaded. */
   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
   bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
@@ -234,6 +235,7 @@ model_config_type * model_config_alloc_empty() {
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;   
   model_config->case_table_file           = NULL;
+  model_config->select_case               = NULL;    
 
   model_config_set_history_source( model_config , DEFAULT_HISTORY_SOURCE );
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
@@ -316,6 +318,7 @@ void model_config_init(model_config_type * model_config ,
   
   if (config_item_set( config , MAX_RESAMPLE_KEY))
     model_config_set_max_resample( model_config , config_get_value_as_int( config , MAX_RESAMPLE_KEY ));
+
 }
 
 
@@ -334,6 +337,7 @@ void model_config_free(model_config_type * model_config) {
     enkf_sched_free( model_config->enkf_sched );
   free( model_config->enspath );
   util_safe_free( model_config->enkf_sched_file );
+  util_safe_free( model_config->select_case );
   util_safe_free( model_config->case_table_file );
   history_free(model_config->history);
   forward_model_free(model_config->forward_model);
@@ -344,6 +348,9 @@ void model_config_free(model_config_type * model_config) {
 }
 
 
+void model_config_set_select_case( model_config_type * model_config , const char * select_case) {
+  model_config->select_case = util_realloc_string_copy( model_config->select_case , select_case );
+}
 
 
 enkf_sched_type * model_config_get_enkf_sched(const model_config_type * config) {
@@ -451,6 +458,11 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
     
   fprintf( stream , CONFIG_KEY_FORMAT      , ENSPATH_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->enspath );
+  
+  if (model_config->select_case != NULL) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , SELECT_CASE_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->select_case );
+  }
 
   fprintf( stream , CONFIG_KEY_FORMAT      , MAX_RESAMPLE_KEY ); 
   {
@@ -465,4 +477,5 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
   fprintf(stream , CONFIG_KEY_FORMAT , NUM_REALIZATIONS_KEY);
   fprintf(stream , CONFIG_INT_FORMAT , ens_size);
   fprintf(stream , "\n\n");
+
 }

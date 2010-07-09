@@ -10,6 +10,7 @@ extern "C" {
 #include <hash.h>
 #include <stringlist.h>
 #include <sched_types.h>
+#include <time_t_vector.h>
   
 typedef  struct  sched_kw_wconhist_struct sched_kw_wconhist_type;
 typedef  struct  wconhist_state_struct    wconhist_state_type;  
@@ -33,10 +34,22 @@ void                     sched_kw_wconhist_shift_wrat( sched_kw_wconhist_type * 
 void                     sched_kw_wconhist_update_state(const sched_kw_wconhist_type * kw , wconhist_state_type * state , const char * well_name , int report_step );
 
 void                     sched_kw_wconhist_init_well_list( const sched_kw_wconhist_type * kw , stringlist_type * well_list);
-void                     wconhist_state_free__( void * arg );
-wconhist_state_type    * wconhist_state_alloc( );
-void                     wconhist_state_free( wconhist_state_type * wconhist );
 
+
+
+void                     wconhist_state_free__( void * arg );
+wconhist_state_type    * wconhist_state_alloc( const time_t_vector_type * time);
+void                     wconhist_state_free( wconhist_state_type * wconhist );
+double                   wconhist_state_iget_WBHPH( const wconhist_state_type * wconhist_state , int report_step );
+double                   wconhist_state_iget_WOPRH( const void * state , int report_step );
+double                   wconhist_state_iget_WGPRH( const wconhist_state_type * wconhist_state , int report_step );
+double                   wconhist_state_iget_WWPRH( const wconhist_state_type * wconhist_state , int report_step );
+well_status_enum         wconhist_state_iget_status( const wconhist_state_type * wconhist_state , int report_step );
+well_cm_enum             wconhist_state_iget_WMCTLH( const wconhist_state_type * wconhist_state , int report_step );
+double                   wconhist_state_iget_WWCTH(const wconhist_state_type * wconhist_state , int report_step );
+double                   wconhist_state_iget_WGORH(const wconhist_state_type * wconhist_state , int report_step );
+void                     sched_kw_wconhist_close_state(wconhist_state_type * state , int report_step );
+  
 
 UTIL_SAFE_CAST_HEADER( sched_kw_wconhist );
 /*******************************************************************/

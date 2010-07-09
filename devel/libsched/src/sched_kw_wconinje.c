@@ -49,6 +49,7 @@ typedef struct {
 
 struct wconinje_state_struct {
   UTIL_TYPE_ID_DECLARATION;
+  const time_t_vector_type * time; 
   int_vector_type    * phase;                  /* Contains values from sched_phase_enum */
   int_vector_type    * state;                  /* Contains values from the well_status_enum. */ 
   int_vector_type    * cmode;                  /* Contains values from the well_cm_enum. */
@@ -325,7 +326,7 @@ bool sched_kw_wconinje_well_open( const sched_kw_wconinje_type * kw, const char 
 
 /*****************************************************************/
 
-wconinje_state_type * wconinje_state_alloc( ) {
+wconinje_state_type * wconinje_state_alloc( const time_t_vector_type * time) {
   wconinje_state_type * wconinje = util_malloc( sizeof * wconinje , __func__);
   UTIL_TYPE_ID_INIT( wconinje , WCONINJE_TYPE_ID );
 
@@ -338,7 +339,8 @@ wconinje_state_type * wconinje_state_alloc( ) {
   wconinje->thp_limit      = double_vector_alloc( 0 , 0 );
   wconinje->vfp_table_nr   = int_vector_alloc( 0 , 0 );
   wconinje->vapoil         = double_vector_alloc( 0 ,0 );
-
+  wconinje->time           = time;
+  
   return wconinje;
 }
 
@@ -366,7 +368,12 @@ void wconinje_state_free__( void * arg ) {
 
 
 
-static void sched_kw_wconinje_update_state( const sched_kw_wconinje_type * kw , wconinje_state_type * state , const char * well_name , int report_step ) {
+
+
+
+
+
+void sched_kw_wconinje_update_state( const sched_kw_wconinje_type * kw , wconinje_state_type * state , const char * well_name , int report_step ) {
   wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
   if (well != NULL) {
     int_vector_iset_default(state->phase             , report_step , well->injector_type );  
@@ -380,6 +387,9 @@ static void sched_kw_wconinje_update_state( const sched_kw_wconinje_type * kw , 
     double_vector_iset_default(state->vapoil         , report_step , well->vapoil_conc);     
   }
 }
+
+
+
 
 
 

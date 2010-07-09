@@ -75,6 +75,7 @@ bool config_has_keys(const config_type *,
                      int                ,
                      bool               );
 
+hash_type             * config_pop_auto_items( config_type * config );
 const char            * config_safe_iget(const config_type * config , const char *kw, int occurence , int index);
 const char            * config_iget(const config_type * , const char * , int occurence , int index);
 bool                    config_iget_as_bool(const config_type * , const char * , int occurence , int index);

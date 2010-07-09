@@ -107,10 +107,9 @@ typedef struct shared_info_struct {
 
 
 /*****************************************************************/
-/** THE MOST IMPORTANT ENKF OBJECT */
 
 struct enkf_state_struct {
-  int                     __id;              	   /* Funny integer used for run_time type checking. */
+  UTIL_TYPE_ID_DECLARATION;
   stringlist_type       * restart_kw_list;
   hash_type    	   	* node_hash;
   subst_list_type       * subst_list;        	   /* This a list of key - value pairs which are used in a search-replace
@@ -319,12 +318,7 @@ enkf_fs_type * enkf_state_get_fs_ref(const enkf_state_type * state) {
 }
 
 
-static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
-  enkf_state_type * state = (enkf_state_type *) __enkf_state;
-  if (state->__id != ENKF_STATE_TYPE_ID)
-    util_abort("%s: internal error - runtime cast failed - aborting \n",__func__);
-  return state;
-}
+static UTIL_SAFE_CAST_FUNCTION( enkf_state , ENKF_STATE_TYPE_ID )
 
 
 
@@ -446,7 +440,7 @@ enkf_state_type * enkf_state_alloc(int iens,
                                    subst_list_type           * subst_parent) { 
   
   enkf_state_type * enkf_state  = util_malloc(sizeof *enkf_state , __func__);
-  enkf_state->__id              = ENKF_STATE_TYPE_ID; 
+  UTIL_TYPE_ID_INIT( enkf_state , ENKF_STATE_TYPE_ID );
 
   enkf_state->ensemble_config   = ensemble_config;
   enkf_state->ecl_config        = ecl_config;

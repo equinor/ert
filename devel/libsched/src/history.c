@@ -652,7 +652,6 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
   history_type * history = history_alloc_empty( );
 
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
-
   history_node_type * node = NULL;
   for(int block_nr = 0; block_nr < num_restart_files; block_nr++)
   {
@@ -789,7 +788,7 @@ bool history_str_is_group_name(const history_type * history, int restart_nr, con
 double history_get_var_from_summary_key(const history_type * history, int restart_nr, const char * summary_key, bool * default_used)
 {
   double value = 0.0;
-
+  
   if (history->source == SCHEDULE) {
     int argc;
     char ** argv;
@@ -826,16 +825,30 @@ double history_get_var_from_summary_key(const history_type * history, int restar
         gen_key = util_alloc_joined_string( (const char **) argv , argc , ":");
         util_free_stringlist( argv , argc );
       }
-      
+
       if (ecl_sum_has_general_var(history->ecl_sum , gen_key)) 
         value = ecl_sum_get_general_var( history->ecl_sum , ministep , gen_key );
       else 
         *default_used = true;
+        
+      //{
+      //  if (util_string_equal( summary_key , "WWPT:D-6HP")) {
+      //    int day,month,year;
+      //    time_t sim_time = ecl_sum_get_sim_time( history->ecl_sum , ministep );
+      //    util_set_date_values(ecl_sum_get_sim_time(  history->ecl_sum , ministep) , &day , &month, &year);
+      //    printf("%4d   %4d     %18.4f  %02d/%02d/%4d  %12.3f \n",ministep , restart_nr , ecl_sum_get_sim_days( history->ecl_sum , ministep ) , value , day,month,year);
+      //  }
+      //}
+      
       
       if (history->source == REFCASE_HISTORY)
         free( gen_key );
     } else
       *default_used = true;   /* We did not have this ministep. */
+    
+    //if (util_string_equal( summary_key , "WWPT:D-6HP"))
+    //  fprintf(stderr , "%d -> %g [%d]\n",restart_nr , value , *default_used);
+
     return value;
   }
 }
@@ -923,7 +936,7 @@ void   history_alloc_time_series_from_summary_key
 )
 {
   int num_restarts = history_get_num_restarts(history);
-
+  
   double * value        = util_malloc(num_restarts * sizeof * value ,        __func__);
   bool   * default_used = util_malloc(num_restarts * sizeof * default_used , __func__);
 

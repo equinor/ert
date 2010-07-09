@@ -269,10 +269,18 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
 
 
 
+void enkf_obs_reload( enkf_obs_type * enkf_obs , ensemble_config_type * ensemble_config ) {
+  enkf_obs_load( enkf_obs , enkf_obs->config_file , ensemble_config );
+}
+
+
+
 /**
    This function will load an observation configuration from the
-   observation file @config_file. If @config_file is NULL the current
-   content will be cleared.
+   observation file @config_file. 
+
+   If called several times during one invocation the function will
+   start by clearing the current content.
 */
 
 

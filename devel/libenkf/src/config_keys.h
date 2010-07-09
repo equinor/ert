@@ -21,6 +21,8 @@ extern "C" {
 #define  DYNAMIC_KEY                       "DYNAMIC" 
 #define  PARAMETER_KEY                     "PARAMETER"
 #define  GENERAL_KEY                       "GENERAL"
+#define  INCLUDE_KEY                       "INCLUDE"
+#define  DEFINE_KEY                        "DEFINE"  
 
 
 #define  CASE_TABLE_KEY                    "CASE_TABLE"
@@ -39,7 +41,6 @@ extern "C" {
 #define  ENKF_RERUN_KEY                    "ENKF_RERUN"
 #define  ENKF_SCHED_FILE_KEY               "ENKF_SCHED_FILE"
 #define  ENKF_TRUNCATION_KEY               "ENKF_TRUNCATION"
-#define  ENSPATH_KEY                       "ENSPATH"
 #define  ENSPATH_KEY                       "ENSPATH" 
 #define  FIELD_KEY                         "FIELD"
 #define  FORWARD_MODEL_KEY                 "FORWARD_MODEL"
@@ -58,6 +59,7 @@ extern "C" {
 #define  KEEP_RUNPATH_KEY                  "KEEP_RUNPATH"  
 #define  LICENSE_PATH_KEY                  "LICENSE_PATH"
 #define  LOCAL_CONFIG_KEY                  "LOCAL_CONFIG"
+#define  ADD_FIXED_LENGTH_SCHEDULE_KW_KEY  "ADD_FIXED_LENGTH_SCHEDULE_KW"
 #define  LOG_FILE_KEY                      "LOG_FILE"
 #define  LOG_LEVEL_KEY                     "LOG_LEVEL"
 #define  LSF_QUEUE_KEY                     "LSF_QUEUE"

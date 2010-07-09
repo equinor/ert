@@ -328,6 +328,7 @@ void sched_file_add_fixed_length_kw( sched_file_type * sched_file , const char *
 
 
 static void sched_file_init_fixed_length( sched_file_type * sched_file ) {
+  sched_file_add_fixed_length_kw(sched_file , "NEXTSTEP" , 1);
   sched_file_add_fixed_length_kw(sched_file , "RPTSCHED" , 1);
   sched_file_add_fixed_length_kw(sched_file , "DRSDT"    , 1);
   sched_file_add_fixed_length_kw(sched_file , "SKIPREST" , 0);

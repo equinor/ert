@@ -13,6 +13,8 @@ typedef struct sched_history_struct sched_history_type;
 void                  sched_history_update( sched_history_type * sched_history, const sched_file_type * sched_file );
 sched_history_type *  sched_history_alloc( );
 void                  sched_history_free( sched_history_type * sched_history );
+double                sched_history_iget( const sched_history_type * sched_history , const char * key , int report_step);
+
 
 
 #ifdef __cplusplus 

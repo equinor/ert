@@ -42,6 +42,7 @@ const char                  * enkf_main_get_user_config_file( const enkf_main_ty
 bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
 void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
 void                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
+void                          enkf_main_select_case( enkf_main_type * enkf_main , const char * select_case);
 
 ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
 void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
@@ -77,6 +78,7 @@ void                          enkf_main_set_state_run_path(const enkf_main_type 
 void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
 void                          enkf_main_interactive_set_runpath__(void * );
 enkf_main_type              * enkf_main_bootstrap(const char * , const char * );
+void                          enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * case_name , const char * dbase_type , int num_realizations);
 
 enkf_node_type             ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key , int report_step , state_enum load_state);
 void                          enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean );
@@ -98,6 +100,7 @@ local_config_type           * enkf_main_get_local_config( const enkf_main_type *
 plot_config_type            * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
 void                          enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file );
+void                          enkf_main_reload_obs( enkf_main_type * enkf_main);
 enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
 analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );
 

@@ -35,6 +35,7 @@ struct ecl_config_struct {
   ecl_io_config_type * io_config;              	   /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
   path_fmt_type      * eclbase;                	   /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
   sched_file_type    * sched_file;             	   /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
+  hash_type          * fixed_length_kw;            /* Set of user-added SCHEDULE keywords with fixed length. */
   bool                 include_all_static_kw;  	   /* If true all static keywords are stored.*/ 
   set_type           * static_kw_set;          	   /* Minimum set of static keywords which must be included to make valid restart files. */
   stringlist_type    * user_static_kw;
@@ -139,20 +140,28 @@ void ecl_config_set_schedule_file( ecl_config_type * ecl_config , const char * s
   }
   ecl_config->sched_file = sched_file_alloc( ecl_config->start_date );
 
-  /* Fixed length schedule_kw  - not supported at the moment */
-  //{
-  //  if (config_has_set_item( config , "ADD_FIXED_LENGTH_SCHEDULE_KW")) {
-  //    int iocc;
-  //    for (iocc = 0; iocc < config_get_occurences(config , "ADD_FIXED_LENGTH_SCHEDULE_KW"); iocc++) 
-  //      sched_file_add_fixed_length_kw( ecl_config->sched_file , 
-  //                                      config_iget(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , iocc , 0) , 
-  //                                      config_iget_as_int(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , iocc , 1));
-  //    
-  //  }
-  //}
   
   sched_file_parse(ecl_config->sched_file , schedule_file );
   ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the end of history */
+  {
+    hash_iter_type * iter = hash_iter_alloc( ecl_config->fixed_length_kw );
+    while (!hash_iter_is_complete( iter )) {
+      const char * key = hash_iter_get_next_key( iter );
+      int length       = hash_get_int( ecl_config->fixed_length_kw , key );
+      
+      sched_file_add_fixed_length_kw( ecl_config->sched_file , key , length);
+    }
+    hash_iter_free( iter );
+  }
+}
+
+
+
+void ecl_config_add_fixed_length_schedule_kw( ecl_config_type * ecl_config , const char * kw , int length ) {
+  hash_insert_int( ecl_config->fixed_length_kw , kw , length );
+  if (ecl_config->sched_file != NULL) 
+    sched_file_add_fixed_length_kw( ecl_config->sched_file , kw , length);
+  
 }
 
 
@@ -185,6 +194,8 @@ const char * ecl_config_get_eclbase( const ecl_config_type * ecl_config ) {
    current refcase. 
 */
 void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase ){ 
+  printf("Loading refcase:%s \n",refcase);
+
   if (ecl_config->refcase != NULL) {
     if (refcase == NULL) {    /* Clear the refcase */
       ecl_sum_free( ecl_config->refcase );
@@ -195,10 +206,9 @@ void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcas
         ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
       }
     }
-  } else {
+  } else 
     if (refcase != NULL)
       ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
-  }
 }
 
 
@@ -317,6 +327,7 @@ ecl_config_type * ecl_config_alloc_empty( ) {
   ecl_config_type * ecl_config         = util_malloc(sizeof * ecl_config , __func__);
 
   ecl_config->io_config 	       = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
+  ecl_config->fixed_length_kw          = hash_alloc();
   ecl_config->eclbase                  = NULL;
   ecl_config->include_all_static_kw    = false;
   ecl_config->static_kw_set            = set_alloc_empty();
@@ -344,10 +355,18 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
   if (config_item_set(config , GRID_KEY))
     ecl_config_set_grid( ecl_config , config_iget(config , GRID_KEY , 0,0) );
   
+  if (config_item_set( config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY)) {
+    int iocc;
+    for (iocc = 0; iocc < config_get_occurences(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY); iocc++) 
+      ecl_config_add_fixed_length_schedule_kw( ecl_config , 
+                                               config_iget(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , iocc , 0) , 
+                                               config_iget_as_int(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , iocc , 1));
+  }
+
   if (config_item_set( config , REFCASE_KEY)) 
     ecl_config_load_refcase( ecl_config , config_get_value( config , REFCASE_KEY ));
 
-  if (config_has_set_item(config , INIT_SECTION_KEY)) 
+  if (config_item_set(config , INIT_SECTION_KEY)) 
     ecl_config_set_init_section( ecl_config , config_get_value( config , INIT_SECTION_KEY ));
   else 
     if (ecl_config->can_restart) 
@@ -358,7 +377,7 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
           will not be able to initialize an ECLIPSE model, and that is
           broken behaviour. 
       */
-      util_exit("Sorry: when the datafile contains <INIT> the config file MUST have the INIT_SECTIOn keyword. \n");
+      util_exit("Sorry: when the datafile contains <INIT> the config file MUST have the INIT_SECTION keyword. \n");
   
   /*
       The user has not supplied a INIT_SECTION keyword whatsoever, 
@@ -388,6 +407,7 @@ void ecl_config_free(ecl_config_type * ecl_config) {
   free(ecl_config->data_file);
   sched_file_free(ecl_config->sched_file);
   free(ecl_config->schedule_target_file);
+  hash_free( ecl_config->fixed_length_kw );
 
   util_safe_free(ecl_config->input_init_section);
   util_safe_free(ecl_config->init_section);
@@ -577,6 +597,25 @@ void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stre
     fprintf( stream , CONFIG_KEY_FORMAT      , INIT_SECTION_KEY );
     fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config_get_init_section( ecl_config ));
   }
+
+  
+  {
+    hash_iter_type * iter = hash_iter_alloc( ecl_config->fixed_length_kw );
+    while (!hash_iter_is_complete( iter )) {
+      const char  * kw  = hash_iter_get_next_key( iter );
+      int   length      = hash_get_int( ecl_config->fixed_length_kw , kw); 
+
+      fprintf( stream , CONFIG_KEY_FORMAT    , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY );
+      fprintf( stream , CONFIG_VALUE_FORMAT  , kw );
+      fprintf( stream , CONFIG_INT_FORMAT    , length );
+      fprintf( stream , "\n");
+      
+    }
+    hash_iter_free( iter );
+  }
+
+  
+  
   fprintf(stream , "\n\n");
   
 }

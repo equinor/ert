@@ -10,6 +10,7 @@ extern "C" {
 #include <stringlist.h>
 #include <stdbool.h>
 #include <buffer.h>
+#include <time_t_vector.h>
 
 typedef struct sched_kw_wconinje_struct sched_kw_wconinje_type;
 typedef struct wconinje_state_struct    wconinje_state_type;
@@ -28,8 +29,9 @@ void                     sched_kw_wconinje_shift_surface_flow( const sched_kw_wc
 bool                     sched_kw_wconinje_buffer_fwrite( const sched_kw_wconinje_type * kw , const char * well_name , buffer_type * buffer);
 
 
+void                     sched_kw_wconinje_update_state( const sched_kw_wconinje_type * kw , wconinje_state_type * state , const char * well_name , int report_step );
 void                     wconinje_state_free__( void * arg );
-wconinje_state_type    * wconinje_state_alloc( );
+wconinje_state_type    * wconinje_state_alloc( const time_t_vector_type * time);
 void                     wconinje_state_free( wconinje_state_type * wconinje );
 
 /*******************************************************************/
