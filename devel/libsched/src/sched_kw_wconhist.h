@@ -40,16 +40,19 @@ void                     sched_kw_wconhist_init_well_list( const sched_kw_wconhi
 void                     wconhist_state_free__( void * arg );
 wconhist_state_type    * wconhist_state_alloc( const time_t_vector_type * time);
 void                     wconhist_state_free( wconhist_state_type * wconhist );
-double                   wconhist_state_iget_WBHPH( const wconhist_state_type * wconhist_state , int report_step );
+double                   wconhist_state_iget_WBHPH( const void * state , int report_step );
 double                   wconhist_state_iget_WOPRH( const void * state , int report_step );
-double                   wconhist_state_iget_WGPRH( const wconhist_state_type * wconhist_state , int report_step );
-double                   wconhist_state_iget_WWPRH( const wconhist_state_type * wconhist_state , int report_step );
-well_status_enum         wconhist_state_iget_status( const wconhist_state_type * wconhist_state , int report_step );
-well_cm_enum             wconhist_state_iget_WMCTLH( const wconhist_state_type * wconhist_state , int report_step );
-double                   wconhist_state_iget_WWCTH(const wconhist_state_type * wconhist_state , int report_step );
-double                   wconhist_state_iget_WGORH(const wconhist_state_type * wconhist_state , int report_step );
+double                   wconhist_state_iget_WGPRH( const void * state , int report_step );
+double                   wconhist_state_iget_WWPRH( const void * state , int report_step );
+well_status_enum         wconhist_state_iget_status( const void * state , int report_step );
+well_cm_enum             wconhist_state_iget_WMCTLH( const void * state , int report_step );
+double                   wconhist_state_iget_WWCTH(const void * state , int report_step );
+double                   wconhist_state_iget_WGORH(const void * state , int report_step );
 void                     sched_kw_wconhist_close_state(wconhist_state_type * state , int report_step );
-  
+double                   wconhist_state_iget_WOPTH( const void * state , int report_step );
+double                   wconhist_state_iget_WWPTH( const void * state , int report_step );
+double                   wconhist_state_iget_WGPTH( const void * state , int report_step );
+
 
 UTIL_SAFE_CAST_HEADER( sched_kw_wconhist );
 /*******************************************************************/

@@ -92,7 +92,7 @@ void sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type * kw
 {
   *num_pairs = hash_get_size(kw->gruptree_hash);
   char ** children = hash_alloc_keylist(kw->gruptree_hash);
-  char ** parents = util_malloc(*num_pairs * sizeof * parents, __func__);
+  char ** parents  = util_malloc(*num_pairs * sizeof * parents, __func__);
 
   for(int child_nr = 0; child_nr < *num_pairs; child_nr++)
   {

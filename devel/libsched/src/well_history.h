@@ -10,7 +10,7 @@ extern "C" {
 #include <size_t_vector.h>
 #include <well_index.h>
 
-typedef struct well_history_struct well_history_type;
+typedef struct well_history_struct  well_history_type;
 
 
 
@@ -23,7 +23,6 @@ void                  well_history_add_keyword( well_history_type * well_history
 const void          * well_history_get_state_ptr( const well_history_type * well_history , sched_kw_type_enum kw_type );
 
 sched_kw_type_enum    well_history_iget_active_kw( const well_history_type * history , int report_step );
-double                well_history_iget_WOPRH( const well_history_type * well_history , int report_step );
 double                well_history_iget( well_index_type * index , int report_step );
 
 

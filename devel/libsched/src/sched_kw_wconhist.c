@@ -495,44 +495,83 @@ static UTIL_SAFE_CAST_FUNCTION_CONST( wconhist_state , WCONHIST_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION( wconhist_state , WCONHIST_TYPE_ID)
 
 
+
+
+static double well_util_total( const time_t_vector_type * time, const double_vector_type * rate , int report_step ) {
+  double total = 0;
+  for (int index = 1; index <= report_step; index++) {
+    double days = (time_t_vector_iget( time , index ) - time_t_vector_iget( time , index - 1)) / 86400;
+    util_fprintf_date( time_t_vector_iget( time , index - 1) , stdout );
+    printf(" - ");
+    util_fprintf_date( time_t_vector_iget( time , index ) , stdout );
+    printf("   Adding %g x %g \n",days , double_vector_iget( rate , index ));
+
+    total += (time_t_vector_iget( time , index ) - time_t_vector_iget( time , index - 1)) * double_vector_iget( rate , index );
+  }
+  
+  return total / 86400; /* It is a HARD assumption that the rate values in @rate are given as volume / day. */
+}
+
+
+double wconhist_state_iget_WOPTH( const void * state , int report_step ) {
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
+  return well_util_total( wconhist_state->time , wconhist_state->oil_rate , report_step );
+}
+
+
+double wconhist_state_iget_WGPTH( const void * state , int report_step ) {
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
+  return well_util_total( wconhist_state->time , wconhist_state->gas_rate , report_step );
+}
+
+
+double wconhist_state_iget_WWPTH( const void * state , int report_step ) {
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
+  return well_util_total( wconhist_state->time , wconhist_state->water_rate , report_step );
+}
+
+
 /*
   Functions implementing the wconhist state; the naming convention
   here should follow the one used in summary files, i.e. WOPR to get Oil Production Rate.
 */
 
 
-double wconhist_state_iget_WBHPH( const wconhist_state_type * wconhist_state , int report_step ) {
+double wconhist_state_iget_WBHPH( const void * state , int report_step ) {
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
   return double_vector_iget( wconhist_state->bhp , report_step );
 }
 
 
 double wconhist_state_iget_WOPRH( const void * state , int report_step ) {
-  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast( state );
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
   return double_vector_iget( wconhist_state->oil_rate , report_step );
 }
 
 
-double wconhist_state_iget_WGPRH( const wconhist_state_type * wconhist_state , int report_step ) {
+double wconhist_state_iget_WGPRH( const void * state , int report_step ) {
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
   return double_vector_iget( wconhist_state->gas_rate , report_step );
 }
 
 
-double wconhist_state_iget_WWPRH( const wconhist_state_type * wconhist_state , int report_step ) {
+double wconhist_state_iget_WWPRH( const void * state , int report_step ) {
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
   return double_vector_iget( wconhist_state->water_rate , report_step );
 }
 
 
-double wconhist_state_iget_WWCTH( const wconhist_state_type * wconhist_state , int report_step ) {
-  double WWPR = wconhist_state_iget_WWPRH( wconhist_state , report_step );
-  double WOPR = wconhist_state_iget_WOPRH( wconhist_state , report_step );
+double wconhist_state_iget_WWCTH( const void * state , int report_step ) {
+  double WWPR = wconhist_state_iget_WWPRH( state , report_step );
+  double WOPR = wconhist_state_iget_WOPRH( state , report_step );
   
   return WWPR / ( WWPR + WOPR );
 }
 
 
-double wconhist_state_iget_WGORH(const wconhist_state_type * wconhist_state , int report_step ) {
-  double WGPR = wconhist_state_iget_WGPRH( wconhist_state , report_step );
-  double WOPR = wconhist_state_iget_WOPRH( wconhist_state , report_step );
+double wconhist_state_iget_WGORH(const void * state , int report_step ) {
+  double WGPR = wconhist_state_iget_WGPRH( state , report_step );
+  double WOPR = wconhist_state_iget_WOPRH( state , report_step );
   return WGPR / WOPR;
 }
 
@@ -541,14 +580,16 @@ double wconhist_state_iget_WGORH(const wconhist_state_type * wconhist_state , in
   Uncertain about this memnonic?? 
 */
 
-well_cm_enum wconhist_state_iget_WMCTLH( const wconhist_state_type * wconhist_state , int report_step ) {
+well_cm_enum wconhist_state_iget_WMCTLH( const void * state , int report_step ) {
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
   return int_vector_iget( wconhist_state->cmode , report_step );
 }
 
 /**
    Does not seem to be a suitbale summary memnonic for this one. 
 */
-well_status_enum wconhist_state_iget_status( const wconhist_state_type * wconhist_state , int report_step ) {
+well_status_enum wconhist_state_iget_status( const void * state , int report_step ) {
+  const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
   return int_vector_iget( wconhist_state->state , report_step );
 }
 
@@ -635,7 +676,7 @@ void sched_kw_wconhist_update_state(const sched_kw_wconhist_type * kw , wconhist
 
 
 
-void sched_kw_wconhist_close_state(wconhist_state_type * state , int report_step ) {
+void sched_kw_wconhist_close_state( wconhist_state_type * state , int report_step ) {
   int_vector_iset_default( state->state         , report_step  ,  SHUT    );  /* SHUT or STOP ?? */
   int_vector_iset_default( state->cmode         , report_step  ,  CM_SHUT );
   /*

@@ -14,6 +14,7 @@
 
 struct sched_history_struct {
   hash_type           * well_history;   /* Hash table of well_history_type instances. */
+  hash_type           * group_history;   
   time_t_vector_type  * time;            
   hash_type           * index;
   char                * sep_string;
@@ -30,41 +31,98 @@ well_history_type * sched_history_get_well( sched_history_type * sched_history ,
 
 
 
+static void sched_history_install_well_index( sched_history_type * sched_history , well_index_type * well_index , const char ** var_list , const char * well_name) {
+  int          index   = 0;
+  char       * gen_key = NULL;
+  const char * var     = var_list[ index ];
+  bool  first          = true;
+
+  while ( var != NULL ) {
+    gen_key = util_realloc_sprintf( gen_key , "%s%s%s" , var , sched_history->sep_string , well_name );
+    
+    if (first) {
+      first = false;
+      hash_insert_hash_owned_ref( sched_history->index , gen_key , well_index , well_index_free__);
+    } else
+      hash_insert_ref( sched_history->index , gen_key , well_index );
+    
+    index++;
+    var  = var_list[ index ];
+  }
+  
+  if (first)
+    util_abort("%s: internal error - empty var_list \n",__func__);
+  free( gen_key );
+}
+
+
+#define VAR_LIST(...) (const char *[]) { __VA_ARGS__ , NULL  }
 
 void sched_history_install_index( sched_history_type * sched_history ) {
   /*1: Installing well based keys like WOPRH. */
   {
     hash_iter_type * well_iter = hash_iter_alloc( sched_history->well_history );
     while (!hash_iter_is_complete( well_iter )) {
-      char * gen_key = NULL;
-      const char * well_name         = hash_iter_get_next_key( well_name );
+      const char * well_name         = hash_iter_get_next_key( well_iter );
       const well_history_type * well = hash_get( sched_history->well_history , well_name );
       
-
+      /* WOPR */
       {
         well_index_type * well_index = well_index_alloc( well , WCONHIST , wconhist_state_iget_WOPRH );
-
-
-        gen_key = util_realloc_sprintf( gen_key , "WOPRH%s%s" , sched_history->sep_string , well_name );
-
-        hash_insert_hash_owned_ref( sched_history->index , gen_key , well_index , well_index_free__);
-        
-        
-        
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WOPR" , "WOPRH") , well_name);
       }
+      
+      
+      /* WGPR */
+      {
+        well_index_type * well_index = well_index_alloc( well , WCONHIST , wconhist_state_iget_WGPRH );
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WGPR" , "WGPRH") , well_name);
+      }
+      
+      
+      /* WWPR */
+      {
+        well_index_type * well_index = well_index_alloc( well , WCONHIST , wconhist_state_iget_WWPRH );
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WWPR" , "WWPRH") , well_name);
+      }
+      
+      
+      /* WWCT */
+      {
+        well_index_type * well_index = well_index_alloc( well , WCONHIST , wconhist_state_iget_WWCTH );
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WWCT" , "WWCTH") , well_name);
+      }
+
+      /* WGOR */
+      {
+        well_index_type * well_index = well_index_alloc( well , WCONHIST , wconhist_state_iget_WGORH );
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WGOR" , "WGORH") , well_name);
+      }
+
+      /* WGPT */
+      {
+        well_index_type * well_index = well_index_alloc( well , WCONHIST , wconhist_state_iget_WGPTH );
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WGPT" , "WGPTH") , well_name);
+      }
+
+      /* WOPT */
+      {
+        well_index_type * well_index = well_index_alloc( well , WCONHIST , wconhist_state_iget_WOPTH );
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WOPT" , "WOPTH") , well_name);
+      }
+      
+      /* WWPT */
+      {
+        well_index_type * well_index = well_index_alloc( well , WCONHIST , wconhist_state_iget_WWPTH );
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("WWPT" , "WWPTH") , well_name);
+      }
+      
     }
     hash_iter_free( well_iter );
   }
-  
-
-
-  well_history_type * well      = sched_history_get_well( sched_history , "OP_1");
-  well_index_type * index       = well_index_alloc( well , WCONHIST  , wconhist_state_iget_WOPRH );
-  
-  hash_insert_hash_owned_ref( sched_history->index , "WOPRH:OP_1" , index , well_index_free__ );
 }
 
-
+#undef VAR_LIST
 
 
 double sched_history_iget( const sched_history_type * sched_history , const char * key , int report_step) {
@@ -89,12 +147,13 @@ static void sched_history_realloc( sched_history_type * sched_history ) {
 
 
 
-sched_history_type * sched_history_alloc( ) {
+sched_history_type * sched_history_alloc( const char * sep_string ) {
   sched_history_type * sched_history = util_malloc( sizeof * sched_history , __func__ );
 
   sched_history->well_history = NULL;
   sched_history->time         = NULL;
   sched_history->index        = hash_alloc();
+  sched_history->sep_string   = util_alloc_string_copy( sep_string );
   sched_history_realloc( sched_history );
   
   return sched_history;
@@ -106,6 +165,7 @@ void sched_history_free( sched_history_type * sched_history ) {
   time_t_vector_free( sched_history->time );
   hash_free( sched_history->well_history );
   hash_free( sched_history->index );
+  free( sched_history->sep_string );
   free( sched_history );
 }
 
@@ -128,11 +188,13 @@ void sched_history_update( sched_history_type * sched_history, const sched_file_
     int block_nr;
     stringlist_type * well_list = stringlist_alloc_new();    
     for (block_nr = 0; block_nr < sched_file_get_num_restart_files( sched_file ); block_nr++) {
-      const sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
+      sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
       int kw_nr;
       int report_step = block_nr;
+
+      time_t_vector_iset( sched_history->time , block_nr , sched_file_iget_block_end_time( sched_file , block_nr));
       for (kw_nr = 0; kw_nr < sched_block_get_size( block ); kw_nr++) {
-        const sched_kw_type * kw = sched_block_iget_kw( block , kw_nr );
+        sched_kw_type * kw         = sched_block_iget_kw( block , kw_nr );
         sched_kw_type_enum kw_type = sched_kw_get_type( kw );
 
         switch( kw_type ) {

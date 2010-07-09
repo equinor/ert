@@ -1134,12 +1134,16 @@ static void config_validate(config_type * config, const char * filename) {
    been auto-added can be retrieved afterwards with the function
    config_pop_auto_items() which will return a hash table; the calling
    scope takes ownership of this table (removing it from the config
-   object), and must free it with hash_free(). The hash table is organized as follows:
+   object), and must free it with hash_free(). 
+
+   The hash table is organized as follows:
 
    
-   auto_items = { "KEY1"      : Vector( Stringlist("Val1","Val2","Val3") , Stringlist("ValX","ValY") ) , 
-                  "Transport" : Vector( Stringlist("Car" , "Boat" , "Plane")),
-                  "Sex"       : Vector( Stringlist("Male" , "Female" , "????") , Stringlist("yes")) }
+     auto_items = { "KEY1"      : Vector( Stringlist("Val1","Val2","Val3") , Stringlist("ValX","ValY") ) , 
+                   "Transport" : Vector( Stringlist("Car" , "Boat" , "Plane")),
+                   "Sex"       : Vector( Stringlist("Male" , "Female" , "????") , Stringlist("yes")) }
+
+  i.e. each element is a vector stringlist instances.                 
 
 */
 

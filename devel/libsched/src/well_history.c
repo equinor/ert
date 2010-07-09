@@ -78,7 +78,8 @@ struct well_history_struct {
 
 
 
-UTIL_SAFE_CAST_FUNCTION( well_history , WELL_HISTORY_TYPE_ID )
+       UTIL_SAFE_CAST_FUNCTION( well_history , WELL_HISTORY_TYPE_ID )
+static UTIL_SAFE_CAST_FUNCTION_CONST( well_history , WELL_HISTORY_TYPE_ID )
 
 
 well_history_type * well_history_alloc( const char * well_name , const time_t_vector_type * time) {
@@ -182,35 +183,22 @@ const void * well_history_get_state_ptr( const well_history_type * well_history 
     break;
   default:
     util_abort("%s: non-handled enum value \n",__func__);
+    return NULL;
   }
 }
 
-
-
-double well_history_iget_WOPRH( const well_history_type * well_history , int report_step ) {
-  int kw_type = int_vector_safe_iget( well_history->kw_type , report_step );
-
-  if (kw_type == WCONHIST) {
-    //printf("Comparing: %p  %p  \n", well_history->wconhist_state , (void *) size_t_vector_safe_iget( well_history->active_state , report_step ));
-    void * state_ptr = size_t_vector_safe_iget( well_history->active_state , report_step );
-    return wconhist_state_iget_WOPRH( state_ptr , report_step);
-  } else {
-    util_abort("%s - wrong type \n",__func__);
-    return -1;
-  }
-}
 
 
 
 
 
 double well_history_iget( well_index_type * index , int report_step ) {
-  well_history_type * well_history    = well_history_safe_cast( well_index_get_state( index ));
-  sched_kw_type_enum current_type     = int_vector_safe_iget( well_history->kw_type , report_step );
-  sched_history_callback_ftype * func = well_index_get_callback( index , current_type );
+  const well_history_type * well_history  = well_history_safe_cast_const( well_index_get_state( index ));
+  sched_kw_type_enum current_type         = int_vector_safe_iget( well_history->kw_type , report_step );
+  sched_history_callback_ftype * func     = well_index_get_callback( index , current_type );
   
   if (func != NULL) {
-    void * state_ptr = size_t_vector_safe_iget( well_history->active_state , report_step );
+    void * state_ptr = (void *) size_t_vector_safe_iget( well_history->active_state , report_step );
     return func( state_ptr , report_step );
   } else
     return -1;
