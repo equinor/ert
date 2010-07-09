@@ -59,9 +59,8 @@ class InitPanel(QtGui.QFrame):
         cases.list.setMaximumHeight(150)
 
         cases.initialize = lambda ert : [ert.prototype("long enkf_main_get_fs(long)"),
-                                         ert.prototype("long enkf_fs_alloc_dirlist(long)"),
-                                         ert.prototype("bool enkf_fs_has_dir(long)"),
-                                         ert.prototype("void enkf_fs_select_write_dir(long, char*, bool)")]
+                                         ert.prototype("void enkf_main_select_case(long , char*)"), 
+                                         ert.prototype("long enkf_fs_alloc_dirlist(long)")]
 
         def create_case(ert, cases):
             fs = ert.enkf.enkf_main_get_fs(ert.main)
@@ -109,9 +108,10 @@ class InitPanel(QtGui.QFrame):
             case = str(case)
             #print "Selecting case: " + case
             if not case == "":
-                fs = ert.enkf.enkf_main_get_fs(ert.main)
-                ert.enkf.enkf_fs_select_read_dir(fs, case)
-                ert.enkf.enkf_fs_select_write_dir(fs, case, False)
+                ert.enkf.enkf_main_select_case( ert.main , case )
+                #fs = ert.enkf.enkf_main_get_fs(ert.main)
+                #ert.enkf.enkf_fs_select_read_dir(fs, case)
+                #ert.enkf.enkf_fs_select_write_dir(fs, case, False)
                 self.casesUpdated()
 
         self.currentCase.setter = select_case

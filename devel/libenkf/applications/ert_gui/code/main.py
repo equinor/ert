@@ -47,7 +47,9 @@ ert = ertwrapper.ErtWrapper(enkf_so)
 site_config = "/project/res/etc/ERT/Config/site-config"
 enkf_config = sys.argv[1]
 
+print "Looking for:%s" % enkf_config
 if not os.path.exists(enkf_config):
+    print "Trying to start new config"
     new_configuration_dialog = NewConfigurationDialog(enkf_config)
     success = new_configuration_dialog.exec_()
     if not success:
@@ -58,6 +60,7 @@ if not os.path.exists(enkf_config):
         firste_case_name = new_configuration_dialog.getCaseName()
         dbase_type       = new_configuration_dialog.getDBaseType()
         num_realizations = new_configuration_dialog.getNumberOfRealizations()
+        storage_path     = new_configuration_dialog.getStoragePath()
         print "Creating:", enkf_config, firste_case_name, dbase_type , num_realizations
         print "Lykke til  .... "
         #ert.enkf.enkf_main_create_new_config(enkf_config, firste_case_name, dbase_type)

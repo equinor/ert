@@ -129,11 +129,11 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   enkf_obs_type              * enkf_obs     = enkf_main_get_obs( enkf_main );
   const plot_config_type     * plot_config  = enkf_main_get_plot_config( enkf_main );
   
-  bool  plot_dates             = true;
+  bool  plot_dates             = false;
   const int errorbar_max_obsnr = plot_config_get_errorbar_max( plot_config );
   const bool add_observations  = true;
   bool  show_plot              = false;
-  char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , enkf_fs_get_read_dir(fs), user_key );
+  char * plot_file             = enkf_tui_plot_alloc_plot_file( plot_config , enkf_fs_get_read_dir(fs), user_key );
   plot_type * plot ;
   enkf_node_type * node;
   msg_type * msg;
@@ -167,6 +167,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       double_vector_reset( y );
       sprintf(msg_label , "%03d" , iens );
       msg_update( msg , msg_label);
+      
       if (prediction_mode)
         step2 = member_config_get_sim_length( enkf_main_iget_member_config( enkf_main , iens ) ) - 1;
       
@@ -221,7 +222,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
           } 
         }
       }
-
+      
       if (double_vector_size( x ) > 0) {
         show_plot = true;
       
@@ -266,7 +267,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 	int report_step = -1;
 	do {
 	  report_step = obs_vector_get_next_active_step( obs_vector , report_step);
-
           if (report_step != -1) {
 	    if (bool_vector_safe_iget( has_data , report_step)) {   /* Not plotting an observation if we do not have any simulations at the same time. */
 	      bool valid;
@@ -278,13 +278,12 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
                  user_key (as when plotting an observation plot). See more
                  documentation of the function gen_obs_user_get_data_index(). 
               */
-
+              
               if (impl_type == GEN_DATA)
                 gen_obs_user_get_with_data_index( obs_vector_iget_node( obs_vector , report_step ) , key_index , &value , &std , &valid);
               else
                 obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
 	      if (valid) {
-                
                 /**
                    Should get sim_time directly from the observation - and not inderctly thrugh the member_config object.
                 */
@@ -297,15 +296,13 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 		double_vector_append( obs_std , std );
 
                 obs_size += 1;
-	      }
-	    }
+	      } 
+            } 
 	  }
-
 	} while (report_step != -1);
       }
-
+      
       if (double_vector_size( sim_time ) > 0) {
-        printf("Obs_size:%d    errorbar_max_obsnr:%d \n",obs_size , errorbar_max_obsnr);
 	if (obs_size > errorbar_max_obsnr) {
 	  /* 
 	     There are very many observations - to increase

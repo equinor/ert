@@ -43,13 +43,18 @@ class NewConfigurationDialog(QDialog):
         self.num_realizations.setMaximum( 1000 )
         self.num_realizations.setValue( 10 )
 
+        self.storage_path = QLineEdit()
+        self.storage_path.setText("Storage")
+        self.connect(self.storage_path, SIGNAL('textChanged(QString)'), self._validateName)
+
+
         layout.addRow(createSpace(10))
         layout.addRow("Configuration name:", configuration_name)
         layout.addRow("Configuration location:", configuration_location)
+        layout.addRow("Path to store DBase:",self.storage_path)
         layout.addRow("DBase type:", self.db_type)
         layout.addRow("Name of first case:", self.first_case_name)
         layout.addRow("Number of realizations" , self.num_realizations)
-        
         layout.addRow(createSpace(10))
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
@@ -77,6 +82,10 @@ class NewConfigurationDialog(QDialog):
     def getDBaseType(self):
         """Return the DBase type"""
         return str(self.db_type.currentText())
+
+    def getStoragePath(self):
+        """Return the DBase type"""
+        return str(self.storage_path.text()).strip()
 
     def _validateName(self, name):
         name = str(name)
