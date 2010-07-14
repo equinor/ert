@@ -67,7 +67,6 @@ static plot_type * __plot_alloc(const plot_config_type * plot_config , const cha
 
     char * plot_path, *basename;
     char * path;
-    printf("Splitting:%s \n",file);
     util_alloc_file_components( file , &plot_path , &basename , NULL);
     
     path = util_alloc_filename( plot_path , basename , NULL);
@@ -146,7 +145,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   else
     plot =  __plot_alloc(plot_config , "Simulation time (days) ", /* y akse */ "" ,user_key , plot_file);
   
-  plot_set_log( plot , false , true );
+  plot_set_log( plot , false , false );
   
   node = enkf_node_alloc( config_node );
   {
@@ -376,9 +375,9 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 
   enkf_node_free(node);
   msg_free(msg , true);
-  if (show_plot) 
+  if (show_plot) {
     __plot_show(plot , plot_config , plot_file); /* Frees the plot - logical ehhh. */
-  else {
+  } else {
     printf("No data to plot \n");
     plot_free(plot);
   }
