@@ -100,7 +100,7 @@ struct site_config_struct {
   int                     max_submit_site;             
   char                  * job_script;            
   char                  * job_script_site;            
-  
+
   int                     num_cpu;                /* The number of cpu's used to run the forward model - currently only relevant for ECLIPSE and LSF; read automatically from the ECLIPSE data file. */
   job_queue_type   	* job_queue;              /* The queue instance which will run the external jobs. */
   bool                    user_mode;
