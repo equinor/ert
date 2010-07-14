@@ -129,7 +129,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   enkf_obs_type              * enkf_obs     = enkf_main_get_obs( enkf_main );
   const plot_config_type     * plot_config  = enkf_main_get_plot_config( enkf_main );
   
-  bool  plot_dates             = false;
+  bool  plot_dates             = true;
   const int errorbar_max_obsnr = plot_config_get_errorbar_max( plot_config );
   const bool add_observations  = true;
   bool  show_plot              = false;
