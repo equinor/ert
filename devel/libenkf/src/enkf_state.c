@@ -330,14 +330,6 @@ static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * 
 
 
 
-/**
-   With three DATES keywords in the SCHEDULE file this will
-   return "2".
-*/
-
-int enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state ) {
-  return member_config_get_last_restart_nr( enkf_state->my_config );
-}
 
 
 /**
@@ -1342,7 +1334,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       else
         addEND = true;
       
-      sched_file_fprintf_i(member_config_get_sched_file( my_config ) , run_info->step2 , schedule_file , addEND);
+      sched_file_fprintf_i(ecl_config_get_sched_file( my_config ) , run_info->step2 , schedule_file , addEND);
       free(schedule_file);
     }
 
@@ -1721,10 +1713,6 @@ void enkf_state_init_run(enkf_state_type * state ,
 
 
 /*****************************************************************/
-
-const sched_file_type * enkf_state_get_sched_file(const enkf_state_type * enkf_state) {
-  return member_config_get_sched_file(enkf_state->my_config);
-}
 
 
 /**

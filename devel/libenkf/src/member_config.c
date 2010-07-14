@@ -27,8 +27,6 @@ struct member_config_struct {
   keep_runpath_type       keep_runpath;        /* Should the run-path directory be left around (for this member)*/
   bool                    pre_clear_runpath;   /* Should the runpath directory be cleared before starting? */ 
   char 		        * eclbase;             /* The ECLBASE string used for simulations of this member. */
-  const sched_file_type * sched_file;          /* The schedule file - a shared pointer NOT owned bt this object. */ 
-  int                     last_restart_nr;
   time_t_vector_type    * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. */
 };
 
@@ -64,9 +62,6 @@ int member_config_get_iens( const member_config_type * member_config ) {
   return member_config->iens;
 }
 
-int member_config_get_last_restart_nr( const member_config_type * member_config) {
-  return member_config->last_restart_nr;
-}
 				   
 
 void member_config_free(member_config_type * member_config) {
@@ -82,10 +77,6 @@ void member_config_set_keep_runpath(member_config_type * member_config , keep_ru
   member_config->keep_runpath   = keep_runpath;
 }
 
-
-const sched_file_type * member_config_get_sched_file( const member_config_type * member_config) {
-  return member_config->sched_file;
-}
 
 keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config) {
   return member_config->keep_runpath;
@@ -139,19 +130,22 @@ void member_config_iset_sim_time( member_config_type * member_config , int repor
    This is introduced at svn =~ 2300 = 23/11/2009, when this has been
    in place for sufficiently long time, the fallback to schedule
    should be removed.
+
+   ----------------------------------------------------------------
+   
+   At svn ~ 2933 (14/07/2010) the Schedule fallback support was
+   removed. Ensemble directories which have been simulated before this
+   will get problems.
+   
 */
 
 
 time_t member_config_iget_sim_time( member_config_type * member_config , int report_step , enkf_fs_type * fs) {
   time_t sim_time = time_t_vector_safe_iget( member_config->report_time , report_step );
   
-  if (sim_time == -1) {
-    /* Fall back to check with the schedule file. */
-    sim_time = sched_file_get_sim_time( member_config->sched_file , report_step );
-    member_config_iset_sim_time( member_config , report_step , sim_time );
-    if (fs != NULL)
-      member_config_fwrite_sim_time( member_config , fs );
-  }
+  if (sim_time == -1) 
+    util_exit("%s: Sorry - you seem to have a very old ensemble - not longer supported... \n", __func__);
+
   return sim_time;
 }
 
@@ -229,8 +223,6 @@ member_config_type * member_config_alloc(int iens ,
   member_config->eclbase  	     = NULL;
   member_config->pre_clear_runpath   = pre_clear_runpath;
   member_config_set_keep_runpath(member_config , keep_runpath);
-  member_config->sched_file         = ecl_config_get_sched_file( ecl_config );
-  member_config->last_restart_nr    = sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
   member_config->report_time = time_t_vector_alloc( 0 , -1 );
   member_config_fread_sim_time( member_config , fs );
   return member_config;

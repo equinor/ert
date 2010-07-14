@@ -27,11 +27,9 @@ double                  member_config_iget_sim_days( member_config_type * member
 time_t                  member_config_iget_sim_time( member_config_type * member_config , int report_step, enkf_fs_type * fs);
 bool                    member_config_has_report_step( const member_config_type * member_config , int report_step);
 const char *            member_config_update_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list);
-int                     member_config_get_last_restart_nr( const member_config_type * member_config);
 void                    member_config_free(member_config_type * member_config) ;
 const char *            member_config_get_eclbase( const member_config_type * member_config );
 const char *            member_config_get_casename( const member_config_type * member_config );
-const sched_file_type * member_config_get_sched_file( const member_config_type * member_config);
 
 bool                    member_config_pre_clear_runpath(const member_config_type * member_config);
 void                    member_config_set_pre_clear_runpath(member_config_type * member_config , bool pre_clear_runpath);
