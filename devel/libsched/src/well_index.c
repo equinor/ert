@@ -62,10 +62,12 @@ sched_history_callback_ftype * well_index_get_callback( const well_index_type * 
   sched_history_callback_ftype * func = NULL;
   int iindex = 0;
   while (true) {
+    printf("Comparing %d %d \n",kw_type , int_vector_iget( well_index->kw_type , iindex));
     if (int_vector_iget( well_index->kw_type , iindex) == kw_type) {
       func = ( sched_history_callback_ftype *) size_t_vector_iget( well_index->func , iindex );
       break;
     }
+    
     
     iindex++;
     if (iindex == int_vector_size( well_index->kw_type ))

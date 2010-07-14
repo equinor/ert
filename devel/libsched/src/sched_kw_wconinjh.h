@@ -36,12 +36,12 @@ sched_phase_enum         wconinjh_state_iget_phase( const wconinjh_state_type * 
 well_status_enum         wconinjh_state_iget_status( const wconinjh_state_type * state , int report_step );
 
 
-double                   wconinjh_state_iget_WWIRH( const wconinjh_state_type * state , int report_step) ;
-double                   wconinjh_state_iget_WGIRH( const wconinjh_state_type * state , int report_step) ;
-double                   wconinjh_state_iget_WOIRH( const wconinjh_state_type * state , int report_step) ;
-double                   wconinjh_state_iget_WBHPH( const wconinjh_state_type * state , int report_step) ;
-double                   wconinjh_state_iget_WTHPH( const wconinjh_state_type * state , int report_step) ;
-double                   wconinjh_state_iget_WVPRH( const wconinjh_state_type * state , int report_step) ;
+double                   wconinjh_state_iget_WWIRH( const void * __state , int report_step) ;
+double                   wconinjh_state_iget_WGIRH( const void * __state , int report_step) ;
+double                   wconinjh_state_iget_WOIRH( const void * __state , int report_step) ;
+double                   wconinjh_state_iget_WBHPH( const void * __state , int report_step) ;
+double                   wconinjh_state_iget_WTHPH( const void * __state , int report_step) ;
+double                   wconinjh_state_iget_WVPRH( const void * __state , int report_step) ;
 int                      wconinjh_state_iget_vfp_table_nr( const wconinjh_state_type * state , int report_step) ;
 
 /*******************************************************************/

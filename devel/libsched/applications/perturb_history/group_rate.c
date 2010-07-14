@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <util.h>
 #include <time_t_vector.h>
+#include <sched_history.h>
 #include <string.h>
 #include <double_vector.h>
 #include <time.h>
@@ -25,6 +26,7 @@ struct group_rate_struct {
   sched_phase_enum           phase;
   const time_t_vector_type * time_vector;
   vector_type              * well_rates;    
+  const sched_history_type * sched_history;
 };
   
 
@@ -50,7 +52,7 @@ void group_rate_update_wconinje( group_rate_type * group_rate , sched_kw_wconinj
 
 
 
-group_rate_type * group_rate_alloc(const time_t_vector_type * time_vector , const char * name , const char * phase , const char * type_string , const char * filename) {
+group_rate_type * group_rate_alloc(const sched_history_type * sched_history , const time_t_vector_type * time_vector , const char * name , const char * phase , const char * type_string , const char * filename) {
   group_rate_type * group_rate = util_malloc( sizeof * group_rate , __func__);
   UTIL_TYPE_ID_INIT( group_rate , GROUP_RATE_ID );
   group_rate->name         = util_alloc_string_copy( name );
@@ -59,7 +61,7 @@ group_rate_type * group_rate_alloc(const time_t_vector_type * time_vector , cons
   group_rate->min_shift    = double_vector_alloc(0 , 0);
   group_rate->max_shift    = double_vector_alloc(0 , 0);
   group_rate->phase        = sched_phase_type_from_string( phase );  
-
+  group_rate->sched_history = sched_history;
   {
     if (strcmp( type_string , "INJECTOR") == 0)
       group_rate->producer = false;

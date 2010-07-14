@@ -21,7 +21,7 @@ conf = global_config.get_conf(os.getcwd() , package , 3)
 conf.update_env( env , [LIBSCHED , LIBECL , LIBCONFIG , LIBUTIL] , ["m","z","pthread"] , link = True)
 
 
-add_program(env , conf , bin_path , "perturb_history" ,["perturb_history.c" , "well_rate.c" , "group_rate.c" , "pert_util.c"])
+add_program(env , conf , bin_path , "pert_hist" ,["perturb_history.c" , "well_rate.c" , "group_rate.c" , "pert_util.c"])
 (local , SDP_INSTALL) = get_targets( env , conf )
 Default( local )
 

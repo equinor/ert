@@ -5,6 +5,8 @@
 #include <vector.h>
 #include <util.h>
 #include <sched_util.h>
+#include <sched_types.h>
+#include <stringlist.h>
 #include <sched_macros.h>
 #include <stringlist.h>
 
@@ -34,6 +36,7 @@ struct sched_kw_welspecs_struct
 {
   vector_type * welspec_list;
 };
+
 
 /*
   See ECLIPSE Reference Manual, section WELSPECS for an explantion of
@@ -427,6 +430,27 @@ void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type * kw, FILE * stream)
   fprintf(stream,"/\n\n");
 };
   
+
+
+
+void sched_kw_welspecs_init_child_parent_list( const sched_kw_welspecs_type * kw , stringlist_type * child , stringlist_type * parent) {
+  stringlist_clear( child );
+  stringlist_clear( parent );
+  {
+    for (int i=0; i < vector_get_size( kw->welspec_list ); i++) {
+      const welspec_type * well = vector_iget_const(kw->welspec_list , i);
+      stringlist_append_ref( child , well->name );
+
+      if (!well->def[1])
+        stringlist_append_ref( parent , well->group );
+      else
+        stringlist_append_ref( parent , FIELD_GROUP );
+
+    }
+  }
+}
+
+
 
 
 void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw, char *** __children, char *** __parents, int * num_pairs)

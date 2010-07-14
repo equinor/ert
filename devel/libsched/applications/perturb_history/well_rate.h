@@ -6,11 +6,11 @@
 #include <sched_kw_wconhist.h>
 #include <sched_kw_wconinje.h>
 #include <sched_types.h>
-
+#include <sched_history.h>
 
 typedef struct well_rate_struct well_rate_type;
-well_rate_type     * well_rate_alloc(const time_t_vector_type * time_vector , 
-                                     const sched_file_type    * sched_file  , 
+well_rate_type     * well_rate_alloc(const sched_history_type * sched_history , 
+                                     const time_t_vector_type * time_vector , 
                                      const char * name , double corr_length , const char * filename, sched_phase_enum phase, bool producer);
 void                 well_rate_free__( void * arg );
 double_vector_type * well_rate_get_shift( well_rate_type * well_rate );

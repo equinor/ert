@@ -85,6 +85,9 @@ typedef enum {RESV     = 0, /* Injector || Producer */
 #define CM_LRAT_STRING "LRAT"
 
 
+/*****************************************************************/
+
+#define FIELD_GROUP "FIELD"
 
 /*****************************************************************/
 

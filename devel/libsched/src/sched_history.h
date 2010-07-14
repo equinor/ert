@@ -14,7 +14,7 @@ void                  sched_history_update( sched_history_type * sched_history, 
 sched_history_type *  sched_history_alloc( const char * sep_string );
 void                  sched_history_free( sched_history_type * sched_history );
 double                sched_history_iget( const sched_history_type * sched_history , const char * key , int report_step);
-
+void                  sched_history_fprintf_group_structure( sched_history_type * sched_history , int report_step );
 
 
 #ifdef __cplusplus 

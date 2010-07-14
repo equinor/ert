@@ -539,25 +539,25 @@ double wconhist_state_iget_WWPTH( const void * state , int report_step ) {
 
 double wconhist_state_iget_WBHPH( const void * state , int report_step ) {
   const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return double_vector_iget( wconhist_state->bhp , report_step );
+  return double_vector_safe_iget( wconhist_state->bhp , report_step );
 }
 
 
 double wconhist_state_iget_WOPRH( const void * state , int report_step ) {
   const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return double_vector_iget( wconhist_state->oil_rate , report_step );
+  return double_vector_safe_iget( wconhist_state->oil_rate , report_step );
 }
 
 
 double wconhist_state_iget_WGPRH( const void * state , int report_step ) {
   const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return double_vector_iget( wconhist_state->gas_rate , report_step );
+  return double_vector_safe_iget( wconhist_state->gas_rate , report_step );
 }
 
 
 double wconhist_state_iget_WWPRH( const void * state , int report_step ) {
   const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
-  return double_vector_iget( wconhist_state->water_rate , report_step );
+  return double_vector_safe_iget( wconhist_state->water_rate , report_step );
 }
 
 

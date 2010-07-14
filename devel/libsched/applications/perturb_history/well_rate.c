@@ -25,6 +25,7 @@ struct well_rate_struct {
   bool_vector_type         * percent_std;
   sched_phase_enum           phase;
   const time_t_vector_type * time_vector;
+  const sched_history_type * sched_history;
 };
   
 
@@ -94,7 +95,7 @@ void well_rate_ishift( well_rate_type * well_rate ,  int index, double shift) {
 }
 
 
-well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const sched_file_type * sched_file , const char * name , double corr_length , const char * filename, sched_phase_enum phase, bool producer) {
+well_rate_type * well_rate_alloc(const sched_history_type * sched_history , const time_t_vector_type * time_vector , const char * name , double corr_length , const char * filename, sched_phase_enum phase, bool producer) {
   well_rate_type * well_rate = util_malloc( sizeof * well_rate , __func__);
   UTIL_TYPE_ID_INIT( well_rate , WELL_RATE_ID );
   well_rate->name         = util_alloc_string_copy( name );
@@ -106,28 +107,29 @@ well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const 
   well_rate->well_open    = bool_vector_alloc(0 , false );
   well_rate->rate         = double_vector_alloc(0 , 0);
   well_rate->phase        = phase;
+  well_rate->sched_history= sched_history; 
   well_rate->percent_std  = bool_vector_alloc( 0 , false );
   fscanf_2ts( time_vector , filename , well_rate->mean_shift , well_rate->std_shift , well_rate->percent_std);
-
-  {
-    int i;
-    for (i=0; i < time_t_vector_size( time_vector ); i++) {
-      bool well_open = sched_file_well_open( sched_file , i , well_rate->name);
-      bool_vector_iset( well_rate->well_open , i , well_open);
-      if (bool_vector_iget( well_rate->percent_std, i)) {
-        if (well_open) {
-          double rate;
-          if (producer) 
-            rate = sched_file_well_wconhist_rate( sched_file , i ,well_rate->name);
-          else
-            rate = sched_file_well_wconinje_rate( sched_file , i ,well_rate->name);
-          
-          double_vector_imul( well_rate->std_shift , i , rate * 0.01);
-        }
-      }
-    }
-  }
-
+  
+  //{
+  //  int i;
+  //  for (i=0; i < time_t_vector_size( time_vector ); i++) {
+  //    bool well_open = sched_file_well_open( sched_file , i , well_rate->name);
+  //    bool_vector_iset( well_rate->well_open , i , well_open);
+  //    if (bool_vector_iget( well_rate->percent_std, i)) {
+  //      printf("%s is using percent:%d \n",name, i);
+  //      if (well_open) {
+  //        double rate;
+  //        if (producer) 
+  //          rate = sched_file_well_wconhist_rate( sched_file , i ,well_rate->name);
+  //        else
+  //          rate = sched_file_well_wconinje_rate( sched_file , i ,well_rate->name);
+  //        
+  //        double_vector_imul( well_rate->std_shift , i , rate * 0.01);
+  //      }
+  //    } else printf("%s is NOT using percent%d \n",name , i);
+  //  }
+  //}
   return well_rate;
 }
 

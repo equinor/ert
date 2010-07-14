@@ -46,9 +46,8 @@ static void set_ts(const time_t_vector_type * time_vector , double_vector_type *
     time_t t = time_t_vector_iget( time_vector , i );
     if ((t >= start_date) && (t < end_date)) {
       double_vector_iset( values , i , value );
-      if (tsp != NULL) {
+      if (tsp != NULL) 
         bool_vector_iset( tsp , i , percent );
-      }
     }
   }
 }
@@ -105,7 +104,7 @@ void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename ,
       int read_count = fscanf(stream , "%s %c %s %lg %s" , datestring1 , &dash , datestring2, &value1 , value2string);
       if (read_count == 5) {
         bool   OK = true;
-        bool   percent = false;
+        bool   percent;
         time_t t1      = -1;
         time_t t2      = -1;
         if (util_string_equal( datestring1 , "*"))
@@ -118,17 +117,21 @@ void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename ,
         else
           OK = (OK && util_sscanf_date( datestring2 , &t2 ));
 
+        printf("value2String:%s ",value2string);
         {
           char * error_ptr;
           value2 = strtod( value2string , &error_ptr);
           if (error_ptr[0] == '%') 
             percent = true;
           else {
+            percent = false;
             if (error_ptr[0] != '\0')
               OK = false;
           }
+          printf("error_ptr: <%s>   percent:%d \n",error_ptr , percent);
         }
         
+
         if (OK) {
           set_ts( time_vector , ts1 , t1 , t2 , value1  , NULL , false  );
           set_ts( time_vector , ts2 , t1 , t2 , value2  , tsp  , percent);

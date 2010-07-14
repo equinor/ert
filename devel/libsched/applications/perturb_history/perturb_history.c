@@ -1,4 +1,5 @@
 #include <sched_file.h>
+#include <sched_history.h>
 #include <sched_kw.h>
 #include <sched_kw_wconhist.h>
 #include <ecl_util.h>
@@ -79,7 +80,7 @@ void config_init(config_type * config ) {
 
 
 
-void load_groups( const config_type * config , const sched_file_type * sched_file , hash_type * group_rates , const time_t_vector_type * time_vector ) {
+void load_groups( const config_type * config , const sched_file_type * sched_file , hash_type * group_rates , const sched_history_type * sched_history , const time_t_vector_type * time_vector ) {
   int i;
   for (i=0; i < config_get_occurences( config , "GROUP_RATE" ); i++) {
     const char * group_name   = config_iget( config , "GROUP_RATE" , i , 0 );
@@ -87,7 +88,7 @@ void load_groups( const config_type * config , const sched_file_type * sched_fil
     const char * type_string  = config_iget( config , "GROUP_RATE" , i , 2 );
     const char * min_max_file = config_iget( config , "GROUP_RATE" , i , 3 );
     
-    group_rate_type * group_rate = group_rate_alloc( time_vector , group_name , phase_string , type_string , min_max_file );
+    group_rate_type * group_rate = group_rate_alloc( sched_history , time_vector , group_name , phase_string , type_string , min_max_file );
     hash_insert_hash_owned_ref( group_rates , group_name , group_rate , group_rate_free__);
   }
 
@@ -101,11 +102,9 @@ void load_groups( const config_type * config , const sched_file_type * sched_fil
     
     well_rate_type * well_rate;
     group_rate_type * group_rate = hash_get( group_rates , group_name );
-    well_rate = well_rate_alloc( time_vector , sched_file ,well_name , corr_length ,  stat_file , group_rate_get_phase( group_rate) , group_rate_is_producer( group_rate ));
+    well_rate = well_rate_alloc( sched_history , time_vector , well_name , corr_length ,  stat_file , group_rate_get_phase( group_rate) , group_rate_is_producer( group_rate ));
     group_rate_add_well_rate( group_rate , well_rate );
   }
-  
-
 }
 
 
@@ -156,9 +155,13 @@ int main( int argc , char ** argv ) {
     time_t start_date = ecl_util_get_start_date( data_file );
     time_t_vector_type * time_vector;
     {
-      sched_file_type * sched_file = sched_file_parse_alloc( sched_file_name , start_date );
+      sched_file_type * sched_file       = sched_file_parse_alloc( sched_file_name , start_date );
+      sched_history_type * sched_history = sched_history_alloc(":");
+      sched_history_update( sched_history , sched_file );
+      
       time_vector = sched_file_alloc_time_t_vector( sched_file );
-      load_groups( config , sched_file ,group_rates , time_vector );
+      load_groups( config , sched_file ,group_rates , sched_history , time_vector );
+      sched_history_free( sched_history );
       sched_file_free( sched_file );
     }
     

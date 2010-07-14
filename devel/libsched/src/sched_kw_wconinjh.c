@@ -285,6 +285,7 @@ wconinjh_state_type * wconinjh_state_alloc( const time_t_vector_type* time) {
 }
 
 UTIL_SAFE_CAST_FUNCTION( wconinjh_state , WCONINJH_TYPE_ID )
+UTIL_SAFE_CAST_FUNCTION_CONST( wconinjh_state , WCONINJH_TYPE_ID )
 
 void wconinjh_state_free( wconinjh_state_type * wconinjh ) {
   
@@ -324,7 +325,8 @@ well_status_enum wconinjh_state_iget_status( const wconinjh_state_type * state ,
    Water injection rate - will return 0.0 if inj_phase == GAS.
 */
 
-double wconinjh_state_iget_WWIRH( const wconinjh_state_type * state , int report_step) {
+double wconinjh_state_iget_WWIRH( const void * __state , int report_step) {
+  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
   if (wconinjh_state_iget_phase( state , report_step ) == WATER)
     return double_vector_safe_iget( state->injection_rate , report_step);
   else
@@ -336,7 +338,8 @@ double wconinjh_state_iget_WWIRH( const wconinjh_state_type * state , int report
    Gas injection rate - will return 0.0 if inj_phase == WATER.
 */
 
-double wconinjh_state_iget_WGIRH( const wconinjh_state_type * state , int report_step) {
+double wconinjh_state_iget_WGIRH( const void * __state , int report_step) {
+  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
   if (wconinjh_state_iget_phase( state , report_step ) == GAS)
     return double_vector_safe_iget( state->injection_rate , report_step);
   else
@@ -348,7 +351,8 @@ double wconinjh_state_iget_WGIRH( const wconinjh_state_type * state , int report
    OIL injection rate - will return 0.0 if inj_phase == WATER|GAS
 */
 
-double wconinjh_state_iget_WOIRH( const wconinjh_state_type * state , int report_step) {
+double wconinjh_state_iget_WOIRH( const void * __state , int report_step) {
+  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
   if (wconinjh_state_iget_phase( state , report_step ) == OIL)
     return double_vector_safe_iget( state->injection_rate , report_step);
   else
@@ -357,17 +361,20 @@ double wconinjh_state_iget_WOIRH( const wconinjh_state_type * state , int report
 
 
 
-double wconinjh_state_iget_WBHPH( const wconinjh_state_type * state , int report_step) {
+double wconinjh_state_iget_WBHPH( const void * __state , int report_step) {
+  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
   return double_vector_safe_iget( state->bhp , report_step );
 }
 
 
-double wconinjh_state_iget_WTHPH( const wconinjh_state_type * state , int report_step) {
+double wconinjh_state_iget_WTHPH( const void * __state , int report_step) {
+  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
   return double_vector_safe_iget( state->thp , report_step );
 }
 
 /** Memnonic ??*/
-double wconinjh_state_iget_WVPRH( const wconinjh_state_type * state , int report_step) {
+double wconinjh_state_iget_WVPRH( const void * __state , int report_step) {
+  const wconinjh_state_type * state = wconinjh_state_safe_cast_const( __state );
   return double_vector_safe_iget( state->vapoil , report_step );
 }
 
