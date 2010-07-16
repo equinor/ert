@@ -16,9 +16,9 @@ class ErtWrapper:
         self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
         self.__registerDefaultTypes()
 
-    def bootstrap(self, enkf_config, site_config="/project/res/etc/ERT/Config/site-config"):
+    def bootstrap(self, enkf_config, site_config="/project/res/etc/ERT/Config/site-config", strict = True):
         #bootstrap
-        self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
+        self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config,strict)
         print "\nBootstrap complete!"
 
         self.plot_config = self.__getErtPointer("enkf_main_get_plot_config")
@@ -174,6 +174,8 @@ class ErtWrapper:
 
         self.prototype("void enkf_main_free(long)")
         self.prototype("void enkf_main_fprintf_config(long)")
+        self.prototype("void enkf_main_create_new_config(long , char*, char* , char* , int)")
+        
 
         self.registerType("time_t", erttypes.time_t)
         erttypes.time_vector.initialize(self)
@@ -251,7 +253,7 @@ class ErtWrapper:
     def __getErtPointer(self, function):
         """Returns a pointer from ERT as a c_long (64-bit support)"""
         func = getattr(self.enkf, function)
-        func.restype = c_long
+        func.restype = c_long   # Should be c_size_t - if that exists.
         return func(self.main)
 
     def createBoolVector(self, size, list):
