@@ -231,11 +231,11 @@ def createEnsemblePage(configPanel, parent):
             min_std_file = parameter_model["min_std"]
             init_file_fmt = parameter_model["init_files"]
             ert.enkf.enkf_config_node_update_gen_kw(node,
-                                                    enkf_outfile_fmt,
-                                                    template_file,
-                                                    parameter_file,
-                                                    min_std_file,
-                                                    init_file_fmt)
+                                                    ert.nonify(enkf_outfile_fmt),
+                                                    ert.nonify(template_file),
+                                                    ert.nonify(parameter_file),
+                                                    ert.nonify(min_std_file),
+                                                    ert.nonify(init_file_fmt))
             parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
         elif isinstance(parameter_model, SummaryModel):
             #should never be called from SummaryModel...
