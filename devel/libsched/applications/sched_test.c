@@ -19,9 +19,11 @@ int main(int argc, char **argv)
   sched_history_install_index( sched_history );
   
   sched_history_fprintf_group_structure( sched_history , 300 );
-  printf("FOPRH     %g \n",sched_history_iget( sched_history , "FOPRH"     , 139));
-  printf("GWPRH:AN  %g \n",sched_history_iget( sched_history , "GOPRH:AN"  , 139));
-  printf("WWIRH:C-1 %g\n",sched_history_iget( sched_history , "WWIRH:C-1"  , 139));
+  printf("FOPRH       %g \n",sched_history_iget( sched_history , "FOPRH"     , 139));
+  //printf("GWPRH:AN    %g \n",sched_history_iget( sched_history , "GOPRH:AN"  , 139));
+  //printf("WWIRH:C-1   %g \n",sched_history_iget( sched_history , "WWIRH:C-1"  , 139));
+  //printf("WOPRH:C-15C %g \n",sched_history_iget( sched_history , "WOPRH:B-6A"  , 300));
+  //printf("WOPRH:C-15C %g \n",sched_history_iget( sched_history , "WOPRH:B-6A"  , 400));
   
   sched_history_free( sched_history );
   sched_file_free( sched_file );

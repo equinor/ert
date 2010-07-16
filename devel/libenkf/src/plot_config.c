@@ -180,6 +180,13 @@ void plot_config_add_config_items( config_type * config ) {
 }
 
 
+/**
+   It would be natural to set the plot settings in the site config
+   file; however that is (mainly for reasons of laziness) not
+   possible. The plot settings are therefor either the compiled in
+   default settings; or what is set by the user in the user config
+   file.
+*/
 
 void plot_config_fprintf_config( const plot_config_type * plot_config , FILE * stream ) {
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );

@@ -269,8 +269,8 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
 
 
 
-void enkf_obs_reload( enkf_obs_type * enkf_obs , ensemble_config_type * ensemble_config ) {
-  enkf_obs_load( enkf_obs , enkf_obs->config_file , ensemble_config );
+void enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_file , ensemble_config_type * ensemble_config ) {
+  enkf_obs_load( enkf_obs , enkf_obs->config_file , sched_file , ensemble_config );
 }
 
 
@@ -285,7 +285,7 @@ void enkf_obs_reload( enkf_obs_type * enkf_obs , ensemble_config_type * ensemble
 
 
 
-void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensemble_config_type * ensemble_config) {
+void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const sched_file_type * sched_file , ensemble_config_type * ensemble_config) {
   if (config_file == NULL)
     hash_clear( enkf_obs->obs_hash );
   else {
@@ -313,8 +313,10 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensembl
           
           ensemble_config_add_summary( ensemble_config , obs_key );
           obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ) , num_reports);
-          obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff);
-          enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          if (obs_vector != NULL) {
+            obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , sched_file , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff);
+            enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          }
         }
       
       stringlist_free(hist_obs_keys);
@@ -336,8 +338,10 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensembl
           ensemble_config_add_summary( ensemble_config , sum_key );
 
           obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , sum_key ) , num_reports);
-          obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector , sum_obs_conf , enkf_obs->history , ensemble_config);
-          enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          if (obs_vector != NULL) {
+            obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector , sum_obs_conf , sched_file , enkf_obs->history , ensemble_config);
+            enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          }
         }
       
       stringlist_free(sum_obs_keys);
@@ -355,8 +359,9 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensembl
           const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
           const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
           
-          obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , enkf_obs->history ,   ensemble_config);
-          enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , sched_file , enkf_obs->history ,   ensemble_config);
+          if (obs_vector != NULL)
+            enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
         }
       stringlist_free(block_obs_keys);
     }
@@ -372,8 +377,9 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  ensembl
           const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
           const conf_instance_type * gen_obs_conf   = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
           
-          obs_vector_type * obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(gen_obs_conf , enkf_obs->history  , ensemble_config);
-          enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          obs_vector_type * obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(gen_obs_conf ,sched_file ,  enkf_obs->history  , ensemble_config);
+          if (obs_vector != NULL) 
+            enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
         }
       stringlist_free(block_obs_keys);
     }

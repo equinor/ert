@@ -113,8 +113,10 @@ const char * gen_kw_config_get_template_file(const gen_kw_config_type * config) 
   The input template file must point to an existing file. 
 */
 void gen_kw_config_set_template_file( gen_kw_config_type * config , const char * template_file ) {
-  if (!util_file_exists(template_file))
-    util_abort("%s: the template_file:%s does not exist - aborting.\n",__func__ , template_file);
+  if (template_file != NULL) {
+    if (!util_file_exists(template_file))
+      util_abort("%s: the template_file:%s does not exist - aborting.\n",__func__ , template_file);
+  }
 
   config->template_file = util_realloc_string_copy( config->template_file , template_file );
 }

@@ -14,7 +14,7 @@ extern "C" {
 #include <local_ministep.h>
 #include <enkf_types.h>
 #include <time.h>
-
+#include <sched_file.h>
 
 
 const char    * enkf_obs_get_config_file( const enkf_obs_type * enkf_obs);
@@ -31,9 +31,10 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
 
 void              enkf_obs_load(enkf_obs_type * enkf_obs,
                                 const char         * config_file,
+                                const sched_file_type * sched_file, 
                                 ensemble_config_type * ensemble_config);
 
-void              enkf_obs_reload( enkf_obs_type * enkf_obs , ensemble_config_type * ensemble_config );                                
+void              enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_file , ensemble_config_type * ensemble_config );                                
 
 void enkf_obs_get_obs_and_measure(
         const enkf_obs_type    * enkf_obs,

@@ -5,12 +5,14 @@
 extern "C" {
 #endif
 
+#include <time.h>
 #include <double_vector.h>
 #include <sched_file.h>
 
 typedef struct sched_history_struct sched_history_type;
 
 
+time_t                sched_history_iget_time_t( const sched_history_type * sched_history , int restart_nr );
 void                  sched_history_update( sched_history_type * sched_history, const sched_file_type * sched_file );
 sched_history_type *  sched_history_alloc( const char * sep_string );
 void                  sched_history_free( sched_history_type * sched_history );

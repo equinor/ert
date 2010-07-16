@@ -241,7 +241,7 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
 */
 
 void enkf_main_reload_obs( enkf_main_type * enkf_main) {
-  enkf_obs_reload(enkf_main->obs , enkf_main->ensemble_config );
+  enkf_obs_reload(enkf_main->obs , ecl_config_get_sched_file( enkf_main->ecl_config ) , enkf_main->ensemble_config );
 }
 
 
@@ -254,7 +254,7 @@ void enkf_main_reload_obs( enkf_main_type * enkf_main) {
 
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
   if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs )))
-    enkf_obs_load(enkf_main->obs , obs_config_file , enkf_main->ensemble_config );
+    enkf_obs_load(enkf_main->obs , obs_config_file , ecl_config_get_sched_file( enkf_main->ecl_config ), enkf_main->ensemble_config );
 }
 
 
@@ -2007,7 +2007,7 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
 
 
 
-static config_type * enkf_main_alloc_config( bool site_only ) {
+static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_type * config = config_alloc();
   config_item_type * item;
 
@@ -2027,7 +2027,9 @@ static config_type * enkf_main_alloc_config( bool site_only ) {
   plot_config_add_config_items( config );
   analysis_config_add_config_items( config );
   ensemble_config_add_config_items(config);
-  
+  ecl_config_add_config_items( config , strict );
+
+
   /*****************************************************************/
   /* Required keywords from the ordinary model_config file */
 
@@ -2039,33 +2041,13 @@ static config_type * enkf_main_alloc_config( bool site_only ) {
 
   config_add_key_value(config , MAX_RESAMPLE_KEY , false , CONFIG_INT);
 
-
+  
   item = config_add_item(config , NUM_REALIZATIONS_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
   config_add_alias(config , NUM_REALIZATIONS_KEY , "SIZE");
   config_add_alias(config , NUM_REALIZATIONS_KEY , "NUM_REALISATIONS");
   config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
 
-
-  item = config_add_item(config , GRID_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-  item = config_add_item(config , ECLBASE_KEY , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
-
-  item = config_add_item(config , SCHEDULE_FILE_KEY , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-  /*
-     Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
-     GEN_KW is added in ensemble_config.c
-  */
-
-  item = config_add_item(config , DATA_FILE_KEY , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-  item = config_add_item(config , INIT_SECTION_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
-  config_add_alias(config , INIT_SECTION_KEY , "EQUIL_INIT_FILE");
 
   /*****************************************************************/
   /* Optional keywords from the model config file */
@@ -2085,7 +2067,7 @@ static config_type * enkf_main_alloc_config( bool site_only ) {
   config_item_set_argc_minmax(item , 1, 1 , NULL);
   config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
 
-  item = config_add_item(config , FORWARD_MODEL_KEY , true , true);
+  item = config_add_item(config , FORWARD_MODEL_KEY , strict , true);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
   item = config_add_item(config , DATA_KW_KEY , false , true);
@@ -2099,21 +2081,11 @@ static config_type * enkf_main_alloc_config( bool site_only ) {
   item = config_add_item(config , DELETE_RUNPATH_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
-  item = config_add_item(config , STATIC_KW_KEY , false , true);
-  config_item_set_argc_minmax(item , 1 , -1 , NULL);
-
-  item = config_add_item(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_INT});
-
   item = config_add_item(config , OBS_CONFIG_KEY  , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , LOCAL_CONFIG_KEY  , false , true);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-
-  item = config_add_item(config , REFCASE_KEY , false , false);
-  //config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-  config_item_set_argc_minmax(item , 1 , 1 , NULL );
 
   item = config_add_item(config , ENKF_SCHED_FILE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
@@ -2571,11 +2543,23 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * c
   references are relative to the location of the configuration
   file. This also applies if the command_line argument given is a
   symlink.
+
+
+  If the parameter @strict is set to false a configuration with some
+  missing parameters will validate; this is to support bootstrapping
+  from a minimal configuration created by the GUI. The parameters
+  which become optional in a non-strict mode are:
+
+    FORWARD_MODEL
+    DATA_FILE
+    SCHEDULE_FILE
+    ECLBASE 
+
 */
 
 
 
-enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _model_config) {
+enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _model_config, bool strict) {
   const char     * site_config  = getenv("ENKF_SITE_CONFIG");
   char           * model_config;
   enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
@@ -2628,12 +2612,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_type * config;
     /* Parsing the site_config file first */
     {
-      config = enkf_main_alloc_config( true );
+      config = enkf_main_alloc_config( true , strict );
       config_parse(config , site_config  , "--" , INCLUDE_KEY , DEFINE_KEY , false , true);
       site_config_init( enkf_main->site_config , config , false);                                /*  <---- site_config : first pass. */  
       config_free( config );
     }
-    config = enkf_main_alloc_config( false );
+    
+    config = enkf_main_alloc_config( false , strict );
     site_config_init_user_mode( enkf_main->site_config );
     config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , false , true);
     site_config_init( enkf_main->site_config , config , true );                                   /*  <---- model_config : second pass. */ 
@@ -2818,8 +2803,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   }
   free( model_config );
   enkf_main->misfit_table = NULL;
-
-  enkf_main_set_user_config_file( enkf_main , "config_test" );
   return enkf_main;
 }
 

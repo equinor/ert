@@ -236,6 +236,10 @@ model_config_type * model_config_alloc_empty() {
   model_config->enkf_sched_file           = NULL;   
   model_config->case_table_file           = NULL;
   model_config->select_case               = NULL;    
+  model_config->history                   = NULL;
+  model_config->last_history_restart      = 0;
+  model_config->internalize_state         = bool_vector_alloc( 0 , false );
+  model_config->__load_state              = bool_vector_alloc( 0 , false ); 
 
   model_config_set_history_source( model_config , DEFAULT_HISTORY_SOURCE );
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
@@ -257,7 +261,8 @@ void model_config_init(model_config_type * model_config ,
   
   model_config->forward_model             = forward_model_alloc(  joblist );
   model_config_set_refcase( model_config , refcase );
-  {
+
+  if (config_item_set( config , FORWARD_MODEL_KEY )) {
     char * config_string = config_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");
     forward_model_parse_init( model_config->forward_model , config_string );
     free(config_string);
@@ -269,9 +274,9 @@ void model_config_init(model_config_type * model_config ,
   
   if (config_item_set( config, RUNPATH_KEY))
     model_config_set_runpath_fmt( model_config , config_get_value(config , RUNPATH_KEY) );
-
-  {
-    model_config->history              = history_alloc_from_sched_file(sched_file);  
+  
+  if (sched_file != NULL) {
+    model_config->history              = history_alloc_from_sched_file( DEFAULT_KEY_JOIN_STRING , sched_file);  
     model_config->last_history_restart = last_history_restart;
   }
   
@@ -288,10 +293,10 @@ void model_config_init(model_config_type * model_config ,
     model_config_set_history_source( model_config , source_type );
   }
 
-  {
+  if (model_config->history != NULL) {
     int num_restart = history_get_num_restarts(model_config->history);
-    model_config->internalize_state   = bool_vector_alloc( num_restart , false );
-    model_config->__load_state        = bool_vector_alloc( num_restart , false ); 
+    bool_vector_iset( model_config->internalize_state , num_restart - 1 , false );
+    bool_vector_iset( model_config->__load_state      , num_restart - 1 , false );
   }
 
   /*
@@ -339,7 +344,8 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->enkf_sched_file );
   util_safe_free( model_config->select_case );
   util_safe_free( model_config->case_table_file );
-  history_free(model_config->history);
+  if (model_config->history != NULL)
+    history_free(model_config->history);
   forward_model_free(model_config->forward_model);
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_state);

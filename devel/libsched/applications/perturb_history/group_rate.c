@@ -20,9 +20,12 @@ struct group_rate_struct {
   UTIL_TYPE_ID_DECLARATION;
   char * name;
   bool                       producer;
+  double_vector_type       * base_rate; 
   double_vector_type       * shift;
   double_vector_type       * min_shift;
   double_vector_type       * max_shift;
+  stringlist_type          * min_shift_string;
+  stringlist_type          * max_shift_string;
   sched_phase_enum           phase;
   const time_t_vector_type * time_vector;
   vector_type              * well_rates;    
@@ -55,13 +58,16 @@ void group_rate_update_wconinje( group_rate_type * group_rate , sched_kw_wconinj
 group_rate_type * group_rate_alloc(const sched_history_type * sched_history , const time_t_vector_type * time_vector , const char * name , const char * phase , const char * type_string , const char * filename) {
   group_rate_type * group_rate = util_malloc( sizeof * group_rate , __func__);
   UTIL_TYPE_ID_INIT( group_rate , GROUP_RATE_ID );
-  group_rate->name         = util_alloc_string_copy( name );
-  group_rate->time_vector  = time_vector;
-  group_rate->shift        = double_vector_alloc(0,0);
-  group_rate->min_shift    = double_vector_alloc(0 , 0);
-  group_rate->max_shift    = double_vector_alloc(0 , 0);
-  group_rate->phase        = sched_phase_type_from_string( phase );  
-  group_rate->sched_history = sched_history;
+  group_rate->name             = util_alloc_string_copy( name );
+  group_rate->time_vector      = time_vector;
+  group_rate->shift            = double_vector_alloc(0,0);
+  group_rate->base_rate        = double_vector_alloc(0,0);
+  group_rate->min_shift        = double_vector_alloc(0 , 0);
+  group_rate->max_shift        = double_vector_alloc(0 , 0);
+  group_rate->min_shift_string = stringlist_alloc_new();
+  group_rate->max_shift_string = stringlist_alloc_new();
+  group_rate->phase            = sched_phase_type_from_string( phase );  
+  group_rate->sched_history    = sched_history;
   {
     if (strcmp( type_string , "INJECTOR") == 0)
       group_rate->producer = false;
@@ -69,10 +75,29 @@ group_rate_type * group_rate_alloc(const sched_history_type * sched_history , co
       group_rate->producer = true;
   }
   
-  fscanf_2ts( time_vector , filename , group_rate->min_shift , group_rate->max_shift , NULL );
+  fscanf_2ts( time_vector , filename , group_rate->min_shift_string , group_rate->max_shift_string );
   group_rate->well_rates   = vector_alloc_new();
   return group_rate;
 }
+
+
+void group_rate_init( group_rate_type * group_rate ) {
+  
+  for (int iw = 0; iw < vector_get_size( group_rate->well_rates ); iw++) {
+    const well_rate_type * well_rate = vector_iget( group_rate->well_rates , iw );
+    for (int tstep = 0; tstep < well_rate_get_length( well_rate ); tstep++) 
+      double_vector_iadd( group_rate->base_rate , tstep , well_rate_iget_rate( well_rate , tstep ));
+  }
+  
+  for (int i = 0; i < stringlist_get_size( group_rate->min_shift_string ); i++) {
+    double_vector_iset( group_rate->min_shift , i , sscanfp( double_vector_safe_iget( group_rate->base_rate , i ) , stringlist_iget( group_rate->min_shift_string , i)));
+    double_vector_iset( group_rate->max_shift  , i , sscanfp( double_vector_safe_iget( group_rate->base_rate , i ) , stringlist_iget( group_rate->max_shift_string , i)));
+  }
+
+}
+
+
+
 
 
 
@@ -81,6 +106,7 @@ static UTIL_SAFE_CAST_FUNCTION( group_rate , GROUP_RATE_ID );
 void group_rate_free( group_rate_type * group_rate ) {
   free( group_rate->name );
   double_vector_free( group_rate->shift );
+  double_vector_free( group_rate->base_rate );
   double_vector_free( group_rate->min_shift );
   double_vector_free( group_rate->max_shift );
   vector_free( group_rate->well_rates );

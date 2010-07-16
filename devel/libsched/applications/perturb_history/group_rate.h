@@ -15,6 +15,6 @@ void                  group_rate_sample( group_rate_type * group_rate );
 void                  group_rate_update_wconhist( group_rate_type * group_rate , sched_kw_wconhist_type * kw, int restart_nr );
 void                  group_rate_update_wconinje( group_rate_type * group_rate , sched_kw_wconinje_type * kw, int restart_nr );
 bool                  group_rate_is_producer( const group_rate_type * group_rate );
-
+void                  group_rate_init( group_rate_type * group_rate );
 
 #endif

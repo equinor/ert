@@ -594,9 +594,10 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
               break;
           }
         }  
-        
+
+
         if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
-          summary = ecl_sum_fread_alloc(header_file , data_files , DEFAULT_SUMMARY_JOIN);
+          summary = ecl_sum_fread_alloc(header_file , data_files , DEFAULT_KEY_JOIN_STRING );
         
         stringlist_free( data_files );
         util_safe_free( header_file );
@@ -1327,14 +1328,14 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     util_make_path(run_info->run_path);
     {
   
-      char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config) , NULL);
+      char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target( enkf_state->ecl_config ) , NULL);
       bool   addEND;
       if (run_info->run_mode == ENSEMBLE_PREDICTION)
         addEND = false;
       else
         addEND = true;
       
-      sched_file_fprintf_i(ecl_config_get_sched_file( my_config ) , run_info->step2 , schedule_file , addEND);
+      sched_file_fprintf_i( ecl_config_get_sched_file( enkf_state->ecl_config ) , run_info->step2 , schedule_file , addEND);
       free(schedule_file);
     }
 

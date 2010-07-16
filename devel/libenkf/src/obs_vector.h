@@ -48,10 +48,10 @@ int                  obs_vector_get_active_report_step(const obs_vector_type * )
 void                 obs_vector_user_get(const obs_vector_type * obs_vector , const char * index_key , int report_step , double * value , double * std , bool * valid);
 int                  obs_vector_get_next_active_step(const obs_vector_type * , int );
 void               * obs_vector_iget_node(const obs_vector_type * , int );
-obs_vector_type    * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type *  , const history_type * , const ensemble_config_type * );
-void                 obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type *  , const history_type * , ensemble_config_type * );
-void                 obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type *  , const history_type * , ensemble_config_type * , double std_cutoff);
-obs_vector_type    * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *  , const history_type *   , const ensemble_config_type * );
+obs_vector_type    * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type *  , const sched_file_type * , const history_type * , const ensemble_config_type * );
+void                 obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type *  , const sched_file_type * , const history_type * , ensemble_config_type * );
+void                 obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type *  , const sched_file_type * , const history_type * , ensemble_config_type * , double std_cutoff);
+obs_vector_type    * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *    , const sched_file_type * , const history_type *   , const ensemble_config_type * );
 void                 obs_vector_set_config_node(obs_vector_type *  , const enkf_config_node_type * );
 obs_vector_type    * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node , int num_reports);
 

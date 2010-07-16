@@ -613,9 +613,9 @@ const enkf_config_node_type * ensemble_config_user_get_node(const ensemble_confi
   int offset;
   
   *index_key = NULL;
-  util_split_string(full_key , ":" , &keys , &key_list);
+  util_split_string(full_key , USER_KEY_JOIN_STRING , &keys , &key_list);
   while (node == NULL && key_length <= keys) {
-    char * current_key = util_alloc_joined_string( (const char **) key_list , key_length , ":");
+    char * current_key = util_alloc_joined_string( (const char **) key_list , key_length , USER_KEY_JOIN_STRING );
     if (ensemble_config_has_key(config , current_key))
       node = ensemble_config_get_node(config , current_key);
     else

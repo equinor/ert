@@ -1,8 +1,10 @@
 #include <stdlib.h>
+#include <string.h>
 #include <util.h>
 #include <time_t_vector.h>
 #include <double_vector.h>
 #include <bool_vector.h>
+#include <stringlist.h>
 #include <time.h>
 #include <math.h>
 #include <pert_util.h>
@@ -15,13 +17,16 @@
 
 struct well_rate_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char * name;
+  char                     * name;
   double                     corr_length;
+  bool                       producer;
   double_vector_type       * shift;
   double_vector_type       * mean_shift;
   double_vector_type       * std_shift;
+  stringlist_type          * mean_shift_string;
+  stringlist_type          * std_shift_string;
   double_vector_type       * rate; 
-  bool_vector_type         * well_open;
+  double_vector_type       * base_value;
   bool_vector_type         * percent_std;
   sched_phase_enum           phase;
   const time_t_vector_type * time_vector;
@@ -74,25 +79,50 @@ void well_rate_sample_shift( well_rate_type * well_rate ) {
   double_vector_iset( well_rate->shift , 0 , R[0]);
   
   for (i=1; i < size; i++) {
-    double dt    = 1.0 * (time_t_vector_iget( well_rate->time_vector , i ) - time_t_vector_iget( well_rate->time_vector , i - 1)) / (24 * 3600);  /* Days */
-    double a     = exp(-dt / well_rate->corr_length );
-    double shift = a * double_vector_iget( well_rate->shift , i - 1 ) + (1 - a) * R[i];
+    double dt        = 1.0 * (time_t_vector_iget( well_rate->time_vector , i ) - time_t_vector_iget( well_rate->time_vector , i - 1)) / (24 * 3600);  /* Days */
+    double a         = exp(-dt / well_rate->corr_length );
+    double shift     = a * double_vector_iget( well_rate->shift , i - 1 ) + (1 - a) * R[i];
+    double base_rate = double_vector_safe_iget( well_rate->base_value , i);
+    
     /* The time series is sampled - irrespective of whether the well is open or not. */
-
-    if (bool_vector_iget( well_rate->well_open , i))
+    
+    if ((shift + base_rate) < 0)
+      shift = -base_rate;
+    
+    if (sched_history_well_open( well_rate->sched_history , well_rate->name , i)) 
       double_vector_iset( well_rate->shift , i , shift );
-    else
+    else 
       double_vector_iset( well_rate->shift , i , 0);
-      
+    
   }
   free( R );
 }
 
+/*
+  Ensures that the final rate is >= 0; this might lead to a minor
+  violation of the parent-groups constraints.
+*/
 
-void well_rate_ishift( well_rate_type * well_rate ,  int index, double shift) {
-  if (bool_vector_iget(well_rate->well_open , index))
-    double_vector_iadd( well_rate->shift , index , shift );
+void well_rate_ishift( well_rate_type * well_rate ,  int index, double new_shift) {
+  if (sched_history_well_open( well_rate->sched_history , well_rate->name , index)) {
+    double base_rate = double_vector_safe_iget( well_rate->base_value , index);
+    double shift     = double_vector_safe_iget( well_rate->shift , index) + new_shift;
+
+    if ((base_rate + shift) < 0)
+      shift = -base_rate;
+    double_vector_iset( well_rate->shift , index , shift );
+  }
 }
+
+
+double well_rate_iget_rate( const well_rate_type * well_rate , int report_step ) {
+  return double_vector_safe_iget( well_rate->base_value , report_step );
+}
+
+int well_rate_get_length( const well_rate_type * well_rate ) {
+  return double_vector_size( well_rate->base_value );
+}
+
 
 
 well_rate_type * well_rate_alloc(const sched_history_type * sched_history , const time_t_vector_type * time_vector , const char * name , double corr_length , const char * filename, sched_phase_enum phase, bool producer) {
@@ -104,48 +134,87 @@ well_rate_type * well_rate_alloc(const sched_history_type * sched_history , cons
   well_rate->shift        = double_vector_alloc(0,0);
   well_rate->mean_shift   = double_vector_alloc(0 , 0);
   well_rate->std_shift    = double_vector_alloc(0 , 0);
-  well_rate->well_open    = bool_vector_alloc(0 , false );
+  well_rate->mean_shift_string   = stringlist_alloc_new();
+  well_rate->std_shift_string    = stringlist_alloc_new();
+  well_rate->base_value   = double_vector_alloc(0 , 0);
   well_rate->rate         = double_vector_alloc(0 , 0);
   well_rate->phase        = phase;
   well_rate->sched_history= sched_history; 
   well_rate->percent_std  = bool_vector_alloc( 0 , false );
-  fscanf_2ts( time_vector , filename , well_rate->mean_shift , well_rate->std_shift , well_rate->percent_std);
+  well_rate->producer     = producer;
+  fscanf_2ts( time_vector , filename , well_rate->mean_shift_string , well_rate->std_shift_string);
   
-  //{
-  //  int i;
-  //  for (i=0; i < time_t_vector_size( time_vector ); i++) {
-  //    bool well_open = sched_file_well_open( sched_file , i , well_rate->name);
-  //    bool_vector_iset( well_rate->well_open , i , well_open);
-  //    if (bool_vector_iget( well_rate->percent_std, i)) {
-  //      printf("%s is using percent:%d \n",name, i);
-  //      if (well_open) {
-  //        double rate;
-  //        if (producer) 
-  //          rate = sched_file_well_wconhist_rate( sched_file , i ,well_rate->name);
-  //        else
-  //          rate = sched_file_well_wconinje_rate( sched_file , i ,well_rate->name);
-  //        
-  //        double_vector_imul( well_rate->std_shift , i , rate * 0.01);
-  //      }
-  //    } else printf("%s is NOT using percent%d \n",name , i);
-  //  }
-  //}
+  {
+    char * key;
+    if (well_rate->producer) {
+      switch(well_rate->phase) {
+      case (WATER):
+        key = util_alloc_sprintf("WWPRH%s%s" , sched_history_get_join_string( sched_history ) , well_rate->name );
+        break;
+      case( GAS ):
+        key = util_alloc_sprintf("WGPRH%s%s" , sched_history_get_join_string( sched_history ) , well_rate->name );
+        break;
+      case( OIL ):
+        key = util_alloc_sprintf("WOPRH%s%s" , sched_history_get_join_string( sched_history ) , well_rate->name );
+        break;
+      default:
+        key = NULL;
+        util_abort("%s: unknown phase identitifier: %d \n",__func__ , well_rate->phase);
+      }
+    } else {
+      switch(well_rate->phase) {
+      case (WATER):
+        key = util_alloc_sprintf("WWIRH%s%s" , sched_history_get_join_string( sched_history ) , well_rate->name );
+        break;
+      case( GAS ):
+        key = util_alloc_sprintf("WGIRH%s%s" , sched_history_get_join_string( sched_history ) , well_rate->name );
+        break;
+      case( OIL ):
+        key = util_alloc_sprintf("WOIRH%s%s" , sched_history_get_join_string( sched_history ) , well_rate->name );
+        break;
+      default:
+        util_abort("%s: unknown phase identitifier: %d \n",__func__ , well_rate->phase);
+        key = NULL;
+      }
+    }
+    
+    if (sched_history_has_key( sched_history , key)) {
+      sched_history_init_vector( sched_history , key , well_rate->base_value );
+      well_rate_eval_stat( well_rate );
+    } else 
+      fprintf(stderr,"** Warning - schedule history does not have key:%s - suspicious?\n", key );
+    
+    free( key );
+  }
   return well_rate;
 }
 
 
 bool well_rate_well_open( const well_rate_type * well_rate , int index ) {
-  return bool_vector_iget( well_rate->well_open , index );
+  return sched_history_well_open( well_rate->sched_history , well_rate->name , index );
+}
+
+
+void well_rate_eval_stat( well_rate_type * well_rate ) {
+  for (int i = 0; i < stringlist_get_size( well_rate->mean_shift_string ); i++) {
+    double mean_shift = sscanfp( double_vector_safe_iget( well_rate->base_value , i ) , stringlist_iget( well_rate->mean_shift_string , i));
+    double std_shift  = sscanfp( double_vector_safe_iget( well_rate->base_value , i ) , stringlist_iget( well_rate->std_shift_string , i));
+    
+    double_vector_iset( well_rate->mean_shift , i , mean_shift );
+    double_vector_iset( well_rate->std_shift  , i , std_shift);
+  }
 }
 
 
 static UTIL_SAFE_CAST_FUNCTION( well_rate , WELL_RATE_ID );
+
 
 void well_rate_free( well_rate_type * well_rate ) {
   free( well_rate->name );
   double_vector_free( well_rate->shift );
   double_vector_free( well_rate->mean_shift );
   double_vector_free( well_rate->std_shift );
+  double_vector_free( well_rate->base_value );
   bool_vector_free( well_rate->percent_std );
   free( well_rate );
 }

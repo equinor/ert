@@ -566,9 +566,13 @@ void ext_job_save( const ext_job_type * ext_job ) {
 
 
 void ext_job_fprintf(const ext_job_type * ext_job , FILE * stream) {
-  fprintf(stream , "%s(", ext_job->name);
-  subst_list_fprintf(ext_job->private_args , stream);
-  fprintf(stream , ")  ");
+  fprintf(stream , "%s", ext_job->name);
+  if (subst_list_get_size( ext_job->private_args ) > 0) {
+    fprintf(stream , "(");
+    subst_list_fprintf(ext_job->private_args , stream);
+    fprintf(stream , ")");
+  }
+  fprintf(stream , "  ");
 }
 
 

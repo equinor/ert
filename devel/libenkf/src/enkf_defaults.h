@@ -124,7 +124,8 @@
 #define DEFAULT_IMAGE_VIEWER       "/usr/bin/display"
 
 
-#define DEFAULT_SUMMARY_JOIN ":"
+#define DEFAULT_KEY_JOIN_STRING ":"
+#define USER_KEY_JOIN_STRING    ":"
 
 
 

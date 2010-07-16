@@ -37,18 +37,14 @@ void rand_stdnormal_vector(int size , double *R) {
 
 
 
-
 /*****************************************************************/
 
-static void set_ts(const time_t_vector_type * time_vector , double_vector_type * values , time_t start_date , time_t end_date , double value, bool_vector_type * tsp , bool percent) {
+static void set_ts(const time_t_vector_type * time_vector , stringlist_type * stringlist , time_t start_date , time_t end_date , const char * string_value) {
   int i;
   for (i=0; i < time_t_vector_size( time_vector ); i++) {
     time_t t = time_t_vector_iget( time_vector , i );
-    if ((t >= start_date) && (t < end_date)) {
-      double_vector_iset( values , i , value );
-      if (tsp != NULL) 
-        bool_vector_iset( tsp , i , percent );
-    }
+    if ((t >= start_date) && (t < end_date)) 
+      stringlist_iset_copy( stringlist , i , string_value );
   }
 }
 
@@ -88,23 +84,31 @@ static void load_exit( FILE * stream , const char * filename) {
 }
 
    
-void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename , double_vector_type * ts1 , double_vector_type * ts2, bool_vector_type * tsp) {
+void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename , stringlist_type * s1 , stringlist_type * s2) {
   time_t start_time       = time_t_vector_get_first( time_vector );
   time_t end_time         = time_t_vector_get_last( time_vector ) + 1;
-
+  
+  {
+    stringlist_clear( s1 );
+    stringlist_clear( s2 );
+    for (int i=0; i < time_t_vector_size( time_vector ); i++) { 
+      stringlist_append_ref( s1 , NULL );
+      stringlist_append_ref( s2 , NULL );
+    }
+  }
+  
   {
     FILE * stream = util_fopen( filename , "r");
     char datestring1[32];
     char datestring2[32];
     char dash;
-    double value1 , value2;
+    char value1string[32];
     char value2string[32];
       
     while (true) {
-      int read_count = fscanf(stream , "%s %c %s %lg %s" , datestring1 , &dash , datestring2, &value1 , value2string);
+      int read_count = fscanf(stream , "%s %c %s %s %s" , datestring1 , &dash , datestring2, value1string , value2string);
       if (read_count == 5) {
         bool   OK = true;
-        bool   percent;
         time_t t1      = -1;
         time_t t2      = -1;
         if (util_string_equal( datestring1 , "*"))
@@ -117,24 +121,9 @@ void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename ,
         else
           OK = (OK && util_sscanf_date( datestring2 , &t2 ));
 
-        printf("value2String:%s ",value2string);
-        {
-          char * error_ptr;
-          value2 = strtod( value2string , &error_ptr);
-          if (error_ptr[0] == '%') 
-            percent = true;
-          else {
-            percent = false;
-            if (error_ptr[0] != '\0')
-              OK = false;
-          }
-          printf("error_ptr: <%s>   percent:%d \n",error_ptr , percent);
-        }
-        
-
         if (OK) {
-          set_ts( time_vector , ts1 , t1 , t2 , value1  , NULL , false  );
-          set_ts( time_vector , ts2 , t1 , t2 , value2  , tsp  , percent);
+          set_ts( time_vector , s1 , t1 , t2 , value1string );
+          set_ts( time_vector , s2 , t1 , t2 , value2string );
         } else 
           load_exit( stream  , filename ); 
 
@@ -149,6 +138,28 @@ void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename ,
   }
 }
 
+
+double sscanfp( double base_value , const char * value_string ) {
+  double value , parse_value;
+  char * error_ptr;
+  
+  if (value_string == NULL)
+    return 0;
+
+  parse_value = strtod( value_string , &error_ptr);
+  if (error_ptr[0] == '%') 
+    value = base_value * parse_value * 0.01;
+  else {
+    if (error_ptr[0] == '\0')
+      value = parse_value;
+    else {
+      value = 0;
+      util_exit("Failed to parse \'%s\' as valid number. \n",value_string );
+    }
+  }
+  
+  return value; 
+}
 
 
 /*****************************************************************/

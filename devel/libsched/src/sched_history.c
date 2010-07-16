@@ -364,6 +364,11 @@ static void sched_history_realloc( sched_history_type * sched_history ) {
 
 
 
+time_t sched_history_iget_time_t( const sched_history_type * sched_history , int restart_nr ) {
+  return time_t_vector_iget( sched_history->time , restart_nr );
+}
+
+
 sched_history_type * sched_history_alloc( const char * sep_string ) {
   sched_history_type * sched_history = util_malloc( sizeof * sched_history , __func__ );
 

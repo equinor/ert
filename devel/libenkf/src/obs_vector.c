@@ -19,6 +19,9 @@
 #include <active_list.h>
 #include <ecl_sum.h>
 #include <vector.h>
+#include <double_vector.h>
+#include <bool_vector.h>
+#include <sched_file.h>
 
 #define OBS_VECTOR_TYPE_ID 120086
 
@@ -42,7 +45,7 @@ struct obs_vector_struct {
 /*****************************************************************/
 
 
-static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , const history_type * history, int size) {
+static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , const sched_file_type * sched_file , int size) {
   int obs_restart_nr = -1;  /* To shut up compiler warning. */
   
   if(conf_instance_has_item(conf_instance, "RESTART")) {
@@ -51,10 +54,12 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
       util_abort("%s: Observation %s occurs at restart %i, but history file has only %i restarts.\n", __func__, obs_key, obs_restart_nr, size);
   } else if(conf_instance_has_item(conf_instance, "DATE")) {
     time_t obs_date = conf_instance_get_item_value_time_t(conf_instance, "DATE"  );
-    obs_restart_nr  = history_get_restart_nr_from_time_t(history, obs_date);
+    obs_restart_nr  = sched_file_get_restart_nr_from_time_t( sched_file , obs_date );
+    //obs_restart_nr  = history_get_restart_nr_from_time_t(history, obs_date);
   } else if (conf_instance_has_item(conf_instance, "DAYS")) {
     double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
-    obs_restart_nr = history_get_restart_nr_from_days(history, days);
+    //obs_restart_nr = history_get_restart_nr_from_days(history, days);
+    obs_restart_nr = sched_file_get_restart_nr_from_days( sched_file , days );
   }  else
     util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
   
@@ -315,9 +320,14 @@ int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int pre
 
 
 /*****************************************************************/
+/**
+   All the obs_vector_load_from_XXXX() functions can safely return
+   NULL, in which case no observation is added to enkf_obs observation
+   hash table.
+*/
 
 
-void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , const history_type * history, ensemble_config_type * ensemble_config) {
+void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , const sched_file_type * sched_file , const history_type * history, ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
     util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
@@ -328,8 +338,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
     const char * sum_key         = conf_instance_get_item_value_ref(   conf_instance, "KEY"   );
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
     int          size            = history_get_num_restarts(          history          );
-    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
-    summary_obs_type * sum_obs;
+    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , sched_file , size);
 
     obs_vector_add_summary_obs( obs_vector , obs_restart_nr , sum_key , obs_value , obs_error );
   }
@@ -338,17 +347,17 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
 
 
 
-obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history, const ensemble_config_type * ensemble_config) {
+obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type * conf_instance , const sched_file_type * sched_file , const history_type * history, const ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "GENERAL_OBSERVATION"))
     util_abort("%s: internal error. expected \"GENERAL_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
-  
-  {
+  const char * obs_key         = conf_instance_get_name_ref(conf_instance);
+  const char * state_kw        = conf_instance_get_item_value_ref(   conf_instance, "DATA" );              
+  if (ensemble_config_has_key( ensemble_config , state_kw )) {
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
-    const char * state_kw        = conf_instance_get_item_value_ref(   conf_instance, "DATA" );              
     int          size            = history_get_num_restarts( history );
     obs_vector_type * obs_vector = obs_vector_alloc( GEN_OBS , obs_key , ensemble_config_get_node(ensemble_config , state_kw ) , size );
-    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
+    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , sched_file , size);
     const char * index_file      = NULL;
     const char * index_list      = NULL;
     const char * obs_file        = NULL;
@@ -362,6 +371,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
     if (conf_instance_has_item(conf_instance , "OBS_FILE"))
       obs_file = conf_instance_get_item_value_ref(   conf_instance, "OBS_FILE" );              
     
+
     
     {
       const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , state_kw);
@@ -383,8 +393,10 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 	util_abort("%s: %s has implementation type:\'%s\' - expected:\'%s\'.\n",__func__ , state_kw , enkf_types_get_impl_name(impl_type) , enkf_types_get_impl_name(GEN_DATA));
       }
     }
-    
     return obs_vector;
+  } else {
+    fprintf(stderr,"** Warning the ensemble key:%s does not exist - observation:%s not added \n", state_kw , obs_key);
+    return NULL;
   }
 }
 
@@ -392,140 +404,133 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 
 // Should check the refcase for key - if it is != NULL.
 
- void obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff) {
+void obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , const sched_file_type * sched_file , 
+                                              const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff) {
   if(!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
     util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" instance, got \"%s\".\n",__func__, conf_instance_get_class_name_ref(conf_instance) );
   
   {
     int          size , restart_nr;
-    double     * value;
-    double     * std;
-    bool       * default_used;
+    double_vector_type * value = double_vector_alloc(0,0);
+    double_vector_type * std   = double_vector_alloc(0,0);
+    bool_vector_type   * valid = bool_vector_alloc(0 , false); 
+ 
     
+
     double         error      = conf_instance_get_item_value_double(conf_instance, "ERROR"     );
     double         error_min  = conf_instance_get_item_value_double(conf_instance, "ERROR_MIN" );
     const char *   error_mode = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
     const char *   sum_key    = conf_instance_get_name_ref(         conf_instance              );
     
     // Get time series data from history object and allocate
-    history_alloc_time_series_from_summary_key(history, sum_key, &size, &value, &default_used);
-    //{
-    //  if (util_string_equal( "WWPT:D-6HP" , obs_vector->obs_key)) {
-    //    printf("WWPT:D-6HP\n");
-    //    printf("-----------------------------------------------------------------\n");
-    //    //for (int i=0; i < size; i++) 
-    //    //  printf("value[%04d] = %g \n",i , value[i]);
-    //    printf("-----------------------------------------------------------------\n");
-    //    exit(1);
-    //  }
-    //}
+    size = history_get_num_restarts(history);
+    history_init_ts( history , sum_key , value , valid );
 
-    
-    std = util_malloc(size * sizeof * std, __func__);
-    
     // Create  the standard deviation vector
     if(strcmp(error_mode, "ABS") == 0) {
       for( restart_nr = 0; restart_nr < size; restart_nr++)
-       std[restart_nr] = error;
+        double_vector_iset( std , restart_nr , error );
     } else if(strcmp(error_mode, "REL") == 0) {
       for( restart_nr = 0; restart_nr < size; restart_nr++)
-       std[restart_nr] = error * abs(value[restart_nr]);
-    } 
-    else if(strcmp(error_mode, "RELMIN") == 0) {
+        double_vector_iset( std , restart_nr , error * abs( double_vector_iget( value , restart_nr )));
+    } else if(strcmp(error_mode, "RELMIN") == 0) {
       for(restart_nr = 0; restart_nr < size; restart_nr++) {
-       std[restart_nr] = error * abs(value[restart_nr]);
-       if(std[restart_nr] < error_min)
-         std[restart_nr] = error_min;
+        double tmp_std = util_double_max( error_min , error * abs( double_vector_iget( value , restart_nr )));
+        double_vector_iset( std , restart_nr , tmp_std);
       }
     } else
       util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, error_mode);
+        
     
-    // Handle SEGMENTs that can customize the observation error.
-    stringlist_type * segment_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "SEGMENT");
-    stringlist_sort( segment_keys , NULL );
-
-    int num_segments = stringlist_get_size(segment_keys);
-
-    for(int segment_nr = 0; segment_nr < num_segments; segment_nr++)
+    // Handle SEGMENTs which can be used to customize the observation error. */
     {
-      const char * segment_name = stringlist_iget(segment_keys, segment_nr);
-      const conf_instance_type * segment_conf = conf_instance_get_sub_instance_ref(conf_instance, segment_name);
-
-      int start                         = conf_instance_get_item_value_int(   segment_conf, "START"     );
-      int stop                          = conf_instance_get_item_value_int(   segment_conf, "STOP"      );
-      double         error_segment      = conf_instance_get_item_value_double(segment_conf, "ERROR"     );
-      double         error_min_segment  = conf_instance_get_item_value_double(segment_conf, "ERROR_MIN" );
-      const char *   error_mode_segment = conf_instance_get_item_value_ref(   segment_conf, "ERROR_MODE");
-
-      if(start < 0)
-      {
-        printf("%s: WARNING - Segment out of bounds. Truncating start of segment to 0.\n", __func__);
-        start = 0;
-      }
-
-      if(stop >= size)
-      {
-        printf("%s: WARNING - Segment out of bounds. Truncating end of segment to %d.\n", __func__, size - 1);
-        stop = size -1;
-      }
-
-      if(start > stop)
-      {
-        printf("%s: WARNING - Segment start after stop. Truncating end of segment to %d.\n", __func__, start );
-        stop = start;
-      }
-
-      // Create  the standard deviation vector
-      if(strcmp(error_mode_segment, "ABS") == 0) {
-        for( restart_nr = start; restart_nr <= stop; restart_nr++)
-         std[restart_nr] = error_segment;
-      } else if(strcmp(error_mode_segment, "REL") == 0) {
-        for( restart_nr = start; restart_nr <= stop; restart_nr++)
-         std[restart_nr] = error_segment * abs(value[restart_nr]);
-      } 
-      else if(strcmp(error_mode_segment, "RELMIN") == 0) {
-        for(restart_nr = start; restart_nr <= stop ; restart_nr++) {
-          std[restart_nr] = error_segment * abs(value[restart_nr]);
-          if(std[restart_nr] < error_min_segment)
-            std[restart_nr] = error_min_segment;
+      stringlist_type * segment_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "SEGMENT");
+      stringlist_sort( segment_keys , NULL );
+      
+      int num_segments = stringlist_get_size(segment_keys);
+      
+      for(int segment_nr = 0; segment_nr < num_segments; segment_nr++)
+        {
+          const char * segment_name = stringlist_iget(segment_keys, segment_nr);
+          const conf_instance_type * segment_conf = conf_instance_get_sub_instance_ref(conf_instance, segment_name);
+          
+          int start                         = conf_instance_get_item_value_int(   segment_conf, "START"     );
+          int stop                          = conf_instance_get_item_value_int(   segment_conf, "STOP"      );
+          double         error_segment      = conf_instance_get_item_value_double(segment_conf, "ERROR"     );
+          double         error_min_segment  = conf_instance_get_item_value_double(segment_conf, "ERROR_MIN" );
+          const char *   error_mode_segment = conf_instance_get_item_value_ref(   segment_conf, "ERROR_MODE");
+          
+          if(start < 0)
+            {
+              printf("%s: WARNING - Segment out of bounds. Truncating start of segment to 0.\n", __func__);
+              start = 0;
+            }
+          
+          if(stop >= size)
+            {
+              printf("%s: WARNING - Segment out of bounds. Truncating end of segment to %d.\n", __func__, size - 1);
+              stop = size -1;
+            }
+          
+          if(start > stop)
+            {
+              printf("%s: WARNING - Segment start after stop. Truncating end of segment to %d.\n", __func__, start );
+              stop = start;
+            }
+          
+          // Create  the standard deviation vector
+          if(strcmp(error_mode_segment, "ABS") == 0) {
+            for( restart_nr = start; restart_nr <= stop; restart_nr++)
+              double_vector_iset( std , restart_nr , error_segment) ;
+          } else if(strcmp(error_mode_segment, "REL") == 0) {
+            for( restart_nr = start; restart_nr <= stop; restart_nr++)
+              double_vector_iset( std , restart_nr , error_segment * abs(double_vector_iget( value , restart_nr)));
+          } else if(strcmp(error_mode_segment, "RELMIN") == 0) {
+            for(restart_nr = start; restart_nr <= stop ; restart_nr++) {
+              double tmp_std = util_double_max( error_min_segment , error_segment * abs( double_vector_iget( value , restart_nr )));
+              double_vector_iset( std , restart_nr , tmp_std);
+            }
+          } else
+            util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, error_mode);
         }
-      } else
-        util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, error_mode);
+      stringlist_free(segment_keys);
     }
 
-    stringlist_free(segment_keys);
     
-
+    /*
+      This is where the summary observations are finally added.
+    */
     for (restart_nr = 0; restart_nr < size; restart_nr++) {
-      if (!default_used[restart_nr]) {
-        if (std[restart_nr] > std_cutoff) 
-          obs_vector_add_summary_obs( obs_vector , restart_nr , sum_key , value[restart_nr] , std[restart_nr]);
+      if (bool_vector_iget( valid , restart_nr)) {
+        if (double_vector_iget( std , restart_nr) > std_cutoff)
+          obs_vector_add_summary_obs( obs_vector , restart_nr , sum_key , double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ));
         else 
           fprintf(stderr,"** Warning: to small observation error in observation %s:%d - ignored. \n", sum_key , restart_nr);
-      } 
-    }
-    
-    free(std);
-    free(value);
-    free(default_used);
+      }
+    } 
+  
+    double_vector_free(std);
+    double_vector_free(value);
+    bool_vector_free(valid);
   }
 }
 
 
 
 
-obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance,const history_type * history, const ensemble_config_type * ensemble_config) {
+
+
+obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance , const sched_file_type * sched_file , const history_type * history, const ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "BLOCK_OBSERVATION"))
     util_abort("%s: internal error. expected \"BLOCK_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
-
-  {
+  const char * obs_label      = conf_instance_get_name_ref(conf_instance);
+  const char * field_name     = conf_instance_get_item_value_ref(conf_instance, "FIELD");
+  if (ensemble_config_has_key( ensemble_config , field_name )) {
     obs_vector_type * obs_vector;
     
     int          size            = history_get_num_restarts( history );
     int          obs_restart_nr ;
-    const char * obs_label      = conf_instance_get_name_ref(conf_instance);
-    const char * field_name     = conf_instance_get_item_value_ref(conf_instance, "FIELD");
     
     stringlist_type * obs_pt_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "OBS");
     int               num_obs_pts = stringlist_get_size(obs_pt_keys);
@@ -536,7 +541,7 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     int    * obs_j     = util_malloc(num_obs_pts * sizeof * obs_j    , __func__);
     int    * obs_k     = util_malloc(num_obs_pts * sizeof * obs_k    , __func__);
 
-    obs_restart_nr = __conf_instance_get_restart_nr(conf_instance , obs_label , history , size);  
+    obs_restart_nr = __conf_instance_get_restart_nr(conf_instance , obs_label , sched_file , size);  
     
     /** Build the observation. */
     for(int obs_pt_nr = 0; obs_pt_nr < num_obs_pts; obs_pt_nr++) {
@@ -573,6 +578,9 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     stringlist_free(obs_pt_keys);
   
     return obs_vector;
+  }  else {
+    fprintf(stderr,"** Warning the ensemble key:%s does not exist - observation:%s not added \n", field_name , obs_label);
+    return NULL;
   }
 }
 /*****************************************************************/

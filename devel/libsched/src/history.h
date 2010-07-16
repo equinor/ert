@@ -34,7 +34,6 @@ const char   * history_get_source_string( history_source_type history_source );
 void           history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid);
 
 // Accessors.
-void           history_fprintf(const history_type *  , FILE * );
 int    	       history_get_num_restarts(const history_type *);
 double         history_get_var_from_sum_key(const history_type *, int, const char *, bool *);
 double 	       history_get_well_var(const history_type * , int, const char *, const char *, bool *);
@@ -45,7 +44,6 @@ time_t         history_iget_node_end_time(const history_type *, int);
 int            history_get_restart_nr_from_time_t(const history_type *, time_t);
 int            history_get_restart_nr_from_days(const history_type *, double days);
 time_t         history_get_time_t_from_restart_nr( const history_type * history , int restart_nr);
-char **        history_alloc_well_list(const history_type * , int * );
 #ifdef __cplusplus
 }
 #endif

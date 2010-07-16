@@ -105,6 +105,15 @@ void load_groups( const config_type * config , const sched_file_type * sched_fil
     well_rate = well_rate_alloc( sched_history , time_vector , well_name , corr_length ,  stat_file , group_rate_get_phase( group_rate) , group_rate_is_producer( group_rate ));
     group_rate_add_well_rate( group_rate , well_rate );
   }
+  
+  {
+    hash_iter_type * group_iter = hash_iter_alloc( group_rates );
+    while (!hash_iter_is_complete( group_iter )) {
+      group_rate_type * group_rate = hash_iter_get_next_value( group_iter );
+      group_rate_init( group_rate );
+    }
+    hash_iter_free( group_iter );
+  }
 }
 
 
@@ -121,6 +130,17 @@ void sample( hash_type * group_rates ) {
   hash_iter_free( group_iter );
 }
 
+void debug (const time_t_vector_type * time_vector ) {
+  stringlist_type * s1 = stringlist_alloc_new();
+  stringlist_type * s2 = stringlist_alloc_new();
+  fscanf_2ts( time_vector , "/d/proj/bg/oseberg2/ressim/aoreln2/2001b/pert_hist/stat/test5/OSB/B-29_OIL.stat" , s1 , s2 );
+
+  for (int i = 0; i < stringlist_get_size( s1 ); i++) {
+    util_fprintf_date( time_t_vector_iget( time_vector , i ) , stdout);
+    printf("  %7s -> %7s  \n",stringlist_iget(s1 , i) , stringlist_iget(s2,i));
+  }
+  exit(1);
+}
 
 
 int main( int argc , char ** argv ) {
@@ -131,7 +151,15 @@ int main( int argc , char ** argv ) {
     char * config_base;
     char * config_ext;
     char * run_path;
-    util_alloc_file_components( argv[1] , &run_path , &config_base , &config_ext);
+    
+    if (util_is_link( argv[1] )) {   /* The command line argument given is a symlink - we start by changing to */
+                                     /* the real location of the configuration file. */
+      char  * realpath = util_alloc_link_target( argv[1] ); 
+      util_alloc_file_components(realpath , &run_path , &config_base , &config_ext);
+      free( realpath );
+    } else 
+      util_alloc_file_components( argv[1] , &run_path , &config_base , &config_ext);
+    
     if (run_path != NULL) {
       printf("Changing to directory: %s \n",run_path);
       if (chdir( run_path) != 0)
@@ -146,6 +174,7 @@ int main( int argc , char ** argv ) {
   config_init( config );
   config_parse(config , config_file , "--" , NULL , "DEFINE" , false , true );
   {
+    sched_history_type * sched_history = sched_history_alloc(":");
     const char * data_file       = config_iget( config , "DATA_FILE" , 0 , 0 );
     const char * sched_file_name = config_iget( config , "SCHEDULE_FILE" , 0 , 0 );
     path_fmt_type * sched_fmt    = path_fmt_alloc_path_fmt( config_iget( config , "TARGET" , 0 , 0) );
@@ -154,19 +183,19 @@ int main( int argc , char ** argv ) {
     
     time_t start_date = ecl_util_get_start_date( data_file );
     time_t_vector_type * time_vector;
+    /* Loading input and creating well/group objects. */
     {
       sched_file_type * sched_file       = sched_file_parse_alloc( sched_file_name , start_date );
-      sched_history_type * sched_history = sched_history_alloc(":");
       sched_history_update( sched_history , sched_file );
       
       time_vector = sched_file_alloc_time_t_vector( sched_file );
       load_groups( config , sched_file ,group_rates , sched_history , time_vector );
-      sched_history_free( sched_history );
       sched_file_free( sched_file );
     }
+
     
+    /* Sampling and creating output */
     {
-      
       int i;
       msg_show( msg );
       for (i = 0; i < num_realizations; i++) {
@@ -186,6 +215,7 @@ int main( int argc , char ** argv ) {
       }
     }
     msg_free( msg , true );
+    sched_history_free( sched_history );
   }
   config_free( config );
   hash_free( group_rates );

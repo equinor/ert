@@ -194,8 +194,6 @@ const char * ecl_config_get_eclbase( const ecl_config_type * ecl_config ) {
    current refcase. 
 */
 void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase ){ 
-  printf("Loading refcase:%s \n",refcase);
-
   if (ecl_config->refcase != NULL) {
     if (refcase == NULL) {    /* Clear the refcase */
       ecl_sum_free( ecl_config->refcase );
@@ -203,12 +201,12 @@ void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcas
     } else {                  /* Check if the currently loaded case is the same as refcase */
       if (!ecl_sum_same_case( ecl_config->refcase , refcase )) {
         ecl_sum_free( ecl_config->refcase );
-        ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
+        ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_KEY_JOIN_STRING );
       }
     }
   } else 
     if (refcase != NULL)
-      ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
+      ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_KEY_JOIN_STRING );
 }
 
 
@@ -342,6 +340,8 @@ ecl_config_type * ecl_config_alloc_empty( ) {
   ecl_config->start_date               = -1;
   ecl_config->sched_file               = NULL;
   ecl_config->schedule_prediction_file = NULL;
+  ecl_config->schedule_target_file     = NULL;
+  
   ecl_config_init_static_kw( ecl_config );
 
   return ecl_config;
@@ -349,9 +349,16 @@ ecl_config_type * ecl_config_alloc_empty( ) {
 
 
 void ecl_config_init( ecl_config_type * ecl_config , const config_type * config ) {
-  ecl_config_set_eclbase( ecl_config , config_iget(config , ECLBASE_KEY ,0,0) );
-  ecl_config_set_data_file( ecl_config , config_iget( config , DATA_FILE_KEY ,0,0));
-  ecl_config_set_schedule_file( ecl_config , config_iget( config , SCHEDULE_FILE_KEY ,0,0));
+  if (config_item_set( config , ECLBASE_KEY ))
+    ecl_config_set_eclbase( ecl_config , config_iget(config , ECLBASE_KEY ,0,0) );
+  
+  if (config_item_set( config , DATA_FILE_KEY ))
+    ecl_config_set_data_file( ecl_config , config_iget( config , DATA_FILE_KEY ,0,0));
+  
+  if (config_item_set( config , SCHEDULE_FILE_KEY ))
+    ecl_config_set_schedule_file( ecl_config , config_iget( config , SCHEDULE_FILE_KEY ,0,0));
+
+  
   if (config_item_set(config , GRID_KEY))
     ecl_config_set_grid( ecl_config , config_iget(config , GRID_KEY , 0,0) );
   
@@ -362,6 +369,7 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
                                                config_iget(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , iocc , 0) , 
                                                config_iget_as_int(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , iocc , 1));
   }
+  
 
   if (config_item_set( config , REFCASE_KEY)) 
     ecl_config_load_refcase( ecl_config , config_get_value( config , REFCASE_KEY ));
@@ -401,12 +409,17 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
 
 void ecl_config_free(ecl_config_type * ecl_config) {
   ecl_io_config_free( ecl_config->io_config );
-  path_fmt_free( ecl_config->eclbase );
+  if (ecl_config->eclbase != NULL) 
+    path_fmt_free( ecl_config->eclbase );
+
   set_free( ecl_config->static_kw_set );
   stringlist_free( ecl_config->user_static_kw );
-  free(ecl_config->data_file);
-  sched_file_free(ecl_config->sched_file);
-  free(ecl_config->schedule_target_file);
+  util_safe_free(ecl_config->data_file);
+  if (ecl_config->sched_file != NULL)
+    sched_file_free(ecl_config->sched_file);
+
+
+  util_safe_free(ecl_config->schedule_target_file);
   hash_free( ecl_config->fixed_length_kw );
 
   util_safe_free(ecl_config->input_init_section);
@@ -534,7 +547,6 @@ const char * ecl_config_get_equil_init_file(const ecl_config_type * ecl_config) 
   return ecl_config->init_section;
 }
 
-
 const char * ecl_config_get_schedule_target(const ecl_config_type * ecl_config) {
   return ecl_config->schedule_target_file;
 }
@@ -546,6 +558,44 @@ int ecl_config_get_num_restart_files(const ecl_config_type * ecl_config) {
 bool ecl_config_get_formatted(const ecl_config_type * ecl_config)        { return ecl_io_config_get_formatted(ecl_config->io_config); }
 bool ecl_config_get_unified_restart(const ecl_config_type * ecl_config)  { return ecl_io_config_get_unified_restart( ecl_config->io_config ); }
 bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)  { return ecl_io_config_get_unified_summary( ecl_config->io_config ); }
+
+
+
+void ecl_config_add_config_items( config_type * config , bool strict ) {
+  config_item_type * item;
+
+  item = config_add_item(config , SCHEDULE_FILE_KEY , strict , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  /*
+    Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
+     GEN_KW is added in ensemble_config.c
+  */
+
+  item = config_add_item(config , ECLBASE_KEY , strict , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+  item = config_add_item(config , DATA_FILE_KEY , strict , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
+  item = config_add_item(config , STATIC_KW_KEY , false , true);
+  config_item_set_argc_minmax(item , 1 , -1 , NULL);
+
+  item = config_add_item(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , false , true);
+  config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_INT});
+
+  item = config_add_item(config , REFCASE_KEY , false , false);
+  //config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 1 , 1 , NULL );
+  
+  item = config_add_item(config , GRID_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  
+  item = config_add_item(config , INIT_SECTION_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
+  config_add_alias(config , INIT_SECTION_KEY , "EQUIL_INIT_FILE");
+
+  
+}
 
 
 void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stream ) {

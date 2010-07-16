@@ -331,8 +331,8 @@ char * enkf_util_alloc_detagged_string( const char * tagged_string) {
 int enkf_util_compare_keys( const char * key1 , const char * key2 ) {
   int cmp;
   {
-    stringlist_type * items1 = stringlist_alloc_from_split( key1 , DEFAULT_SUMMARY_JOIN );
-    stringlist_type * items2 = stringlist_alloc_from_split( key2 , DEFAULT_SUMMARY_JOIN );
+    stringlist_type * items1 = stringlist_alloc_from_split( key1 , DEFAULT_KEY_JOIN_STRING );
+    stringlist_type * items2 = stringlist_alloc_from_split( key2 , DEFAULT_KEY_JOIN_STRING );
 
     /* 1: Compare number of items. */
     cmp = stringlist_get_size( items1 ) - stringlist_get_size( items2 );

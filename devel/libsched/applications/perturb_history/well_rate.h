@@ -18,8 +18,11 @@ sched_phase_enum     well_rate_get_phase( const well_rate_type * well_rate );
 const char         * well_rate_get_name( const well_rate_type * well_rate );
 void                 well_rate_sample_shift( well_rate_type * well_rate );
 bool                 well_rate_well_open( const well_rate_type * well_rate , int index );
-void                 well_rate_ishift( well_rate_type * well_rate  ,int index, double shift);
+void                 well_rate_ishift( well_rate_type * well_rate  ,int index, double new_shift);
 void                 well_rate_update_wconhist( well_rate_type * well_rate , sched_kw_wconhist_type * kw, int restart_nr );
 void                 well_rate_update_wconinje( well_rate_type * well_rate , sched_kw_wconinje_type * kw, int restart_nr );
+double               well_rate_iget_rate( const well_rate_type * well_rate , int report_step );
+int                  well_rate_get_length( const well_rate_type * well_rate );
+void                 well_rate_eval_stat( well_rate_type * well_rate );
 
 #endif
