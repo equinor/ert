@@ -21,7 +21,11 @@ class PlotSettingsSaver:
 
         self.__addAnnotations(plot_settings.getAnnotations())
 
-        file_object = open("%s/%s.xml" % (plot_settings.getPlotConfigPath(), name), "w")
+        path = "%s/config" % plot_settings.getPlotConfigPath()
+        if not os.path.exists( path ):
+            os.mkdir( path )
+
+        file_object = open("%s/%s.xml" % (path, name), "w")
         file_object.write(self.doc.toprettyxml())
         file_object.close()
 
@@ -156,7 +160,7 @@ class PlotSettingsLoader:
 
     def load(self, name, plot_settings):
         """Load settings into the provided settings file from a plot settings file with the specified name."""
-        filename = "%s/%s.xml" % (plot_settings.getPlotConfigPath(), name)
+        filename = "%s/config/%s.xml" % (plot_settings.getPlotConfigPath(), name)
 
         if os.path.exists(filename):
             self.doc = xml.dom.minidom.parse(filename)

@@ -46,7 +46,8 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
         ert.prototype("double member_config_iget_sim_days(long, int, int)")
         ert.prototype("time_t member_config_iget_sim_time(long, int, int)")
-        ert.prototype("int member_config_get_last_restart_nr(long)")
+        ert.prototype("int  enkf_main_get_history_length(long)")
+
 
         ert.prototype("long enkf_config_node_get_ref(long)")
         ert.prototype("bool field_config_ijk_active(long, int, int, int)")
@@ -105,7 +106,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             y = data.y_data[member]
 
             member_config = ert.enkf.enkf_main_iget_member_config(ert.main, member)
-            stop_time = ert.enkf.member_config_get_last_restart_nr(member_config)
+            stop_time = ert.enkf.enkf_main_get_history_length( ert.main )
 
             for step in range(0, stop_time + 1):
                 for state in state_list:
