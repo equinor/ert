@@ -29,7 +29,7 @@ double                well_history_iget( well_index_type * index , int report_st
 void                  well_history_set_parent( well_history_type * child_well , int report_step , const group_history_type * parent_group);
 group_history_type  * well_history_get_parent( well_history_type * child_well , int report_step );
 
-
+bool                  well_history_well_open( const well_history_type * well_history , int report_step );
 double                well_history_iget_WGPRH( const well_history_type * well_history , int report_step );
 double                well_history_iget_WOPRH( const well_history_type * well_history , int report_step );
 double                well_history_iget_WWPRH( const well_history_type * well_history , int report_step );

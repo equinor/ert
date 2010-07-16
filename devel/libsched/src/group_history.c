@@ -17,7 +17,7 @@ struct group_history_struct {
   char                     * group_name;
   bool                       well_group;       /* If true this group contains wells, otehrwise it contains other groups. */  
   const time_t_vector_type * time;
-
+  int                        start_time;       /* At which report step was this group first defined? */
   size_t_vector_type       * parent;
   size_t_vector_type       * children;
   vector_type              * children_storage;
@@ -28,7 +28,7 @@ UTIL_SAFE_CAST_FUNCTION( group_history , GROUP_HISTORY_TYPE_ID )
 UTIL_SAFE_CAST_FUNCTION_CONST( group_history , GROUP_HISTORY_TYPE_ID )
 UTIL_IS_INSTANCE_FUNCTION( group_history , GROUP_HISTORY_TYPE_ID)
 
-group_history_type * group_history_alloc( const char * group_name , const time_t_vector_type * time ) {
+group_history_type * group_history_alloc( const char * group_name , const time_t_vector_type * time , int report_step) {
   group_history_type * group_history = util_malloc( sizeof * group_history , __func__ );
 
   UTIL_TYPE_ID_INIT( group_history , GROUP_HISTORY_TYPE_ID );
@@ -37,7 +37,7 @@ group_history_type * group_history_alloc( const char * group_name , const time_t
   group_history->group_name       = util_alloc_string_copy( group_name );
   group_history->children_storage = vector_alloc_new();
   group_history->children         = size_t_vector_alloc(0,0);
-
+  group_history->start_time       = report_step;
   /* 
      We install an empty child hash immediately - so the children
      table will never contain NULL.
@@ -63,6 +63,14 @@ void group_history_free( group_history_type * group_history ) {
   
   free( group_history->group_name );
   free( group_history );
+}
+
+
+bool group_history_group_exists( const group_history_type * group_history , int report_step) {
+  if ( report_step >= group_history->start_time)
+    return true;
+  else
+    return false;
 }
 
 
@@ -241,7 +249,6 @@ double group_history_iget_GOPRH( const void * __group_history , int report_step 
       else {
         double WOPRH = well_history_iget_WOPRH( child , report_step );
         GOPRH += WOPRH;
-        printf("%8s  WOPRH:%g  GOPRH:%g \n",child_name , WOPRH , GOPRH);
       }
     }
     hash_iter_free( child_iter );
@@ -295,6 +302,61 @@ double group_history_iget_GGPRH( const void * __group_history , int report_step 
     
     return GGPRH;
   }
+}
+
+
+double group_history_iget_GGPTH( const void * __group_history , int report_step ) {
+  const group_history_type * group_history = group_history_safe_cast_const( __group_history );
+  double GGPTH = 0;
+  for (int tstep = 1; tstep <= report_step; tstep++) {
+    double days = (time_t_vector_iget( group_history->time , tstep ) - time_t_vector_iget( group_history->time , tstep - 1)) * 1.0 / 86400 ;
+    double rate = group_history_iget_GGPRH( __group_history , tstep );
+    GGPTH += rate * days;
+  }
+  return GGPTH;
+}
+
+
+double group_history_iget_GOPTH( const void * __group_history , int report_step ) {
+  const group_history_type * group_history = group_history_safe_cast_const( __group_history );
+  double GOPTH = 0;
+  for (int tstep = 1; tstep <= report_step; tstep++) {
+    double days = (time_t_vector_iget( group_history->time , tstep ) - time_t_vector_iget( group_history->time , tstep - 1)) * 1.0 / 86400 ;
+    double rate = group_history_iget_GOPRH( __group_history , tstep );
+    GOPTH += rate * days;
+  }
+  return GOPTH;
+}
+
+
+double group_history_iget_GWPTH( const void * __group_history , int report_step ) {
+  const group_history_type * group_history = group_history_safe_cast_const( __group_history );
+  double GWPTH = 0;
+  for (int tstep = 1; tstep <= report_step; tstep++) {
+    double days = (time_t_vector_iget( group_history->time , tstep ) - time_t_vector_iget( group_history->time , tstep - 1)) * 1.0 / 86400 ;
+    double rate = group_history_iget_GWPRH( __group_history , tstep );
+    GWPTH += rate * days;
+  }
+  return GWPTH;
+}
+
+
+
+
+double group_history_iget_GGORH( const void * __group_history , int report_step ) {
+  double GGPRH = group_history_iget_GGPRH( __group_history , report_step );
+  double GOPRH = group_history_iget_GOPRH( __group_history , report_step );
+  
+  return GGPRH / GOPRH;
+}
+
+
+
+double group_history_iget_GWCTH( const void * __group_history , int report_step ) {
+  double GWPRH = group_history_iget_GWPRH( __group_history , report_step );
+  double GOPRH = group_history_iget_GOPRH( __group_history , report_step );
+  
+  return GWPRH / GOPRH;
 }
 
 

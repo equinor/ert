@@ -155,7 +155,7 @@ static void comp_sched_fprintf(const comp_type * comp , FILE *stream) {
   sched_util_fprintf_dbl(comp->def[11], comp->D_factor        		     , 9  , 3 , stream);
   sched_util_fprintf_qst(comp->def[12], comp_get_dir_string( comp->well_dir) , 2  , stream);
   sched_util_fprintf_dbl(comp->def[13], comp->r0              		     , 9  , 3 , stream);
-  fprintf(stream , " / -- Internal COMPDAT\n");
+  fprintf(stream , " /\n");
 }
 
 
@@ -171,9 +171,9 @@ static comp_type * comp_alloc_empty( ) {
 static comp_type * comp_alloc_from_tokens( const stringlist_type * line_tokens ) {
   comp_type * comp = comp_alloc_empty();
   sched_util_init_default( line_tokens , comp->def );
-
   
-  comp->well         = util_alloc_string_copy(stringlist_iget( line_tokens , 0));
+  
+  comp->well         = util_alloc_string_copy(stringlist_iget( line_tokens , 0)); 
   comp->i            = sched_util_atoi(stringlist_iget( line_tokens , 1));
   comp->j            = sched_util_atoi(stringlist_iget( line_tokens , 2));
   comp->k1           = sched_util_atoi(stringlist_iget( line_tokens , 3));

@@ -5,11 +5,14 @@
 #include <list.h>
 #include <ecl_sum.h>
 #include <ecl_util.h>
-#include <gruptree.h>
-#include <history.h>
 #include <stringlist.h>
+#include <bool_vector.h>
+#include <gruptree.h>
+#include <sched_history.h>
+#include <history.h>
 
 typedef struct history_node_struct history_node_type;
+
 
 struct history_node_struct{
   /* Remember to fix history_node_copyc etc. if you add stuff here. */
@@ -27,9 +30,10 @@ struct history_node_struct{
 
 
 struct history_struct{
-  list_type           * nodes;
-  const ecl_sum_type  * ecl_sum;        /* ecl_sum instance used when the data are taken from a summary instance. Observe that this is NOT owned by history instance.*/
-  history_source_type   source;
+  list_type             * nodes;
+  const ecl_sum_type    * ecl_sum;        /* ecl_sum instance used when the data are taken from a summary instance. Observe that this is NOT owned by history instance.*/
+  sched_history_type    * sched_history;
+  history_source_type     source;
 };
 
 
@@ -60,8 +64,9 @@ const char * history_get_source_string( history_source_type history_source ) {
   case(SCHEDULE ):
     return "SCHEDULE";
     break;
-  default:
+  default: 
     util_abort("%s: internal fuck up \n",__func__);
+    return NULL;
   }
 }
 
@@ -71,62 +76,6 @@ const char * history_get_source_string( history_source_type history_source ) {
 // Functions for manipulating well_hash_type.
 
 
-static void well_hash_fwrite(hash_type * well_hash, FILE * stream)
-{
-  int num_wells = hash_get_size(well_hash);
-  char ** well_list = hash_alloc_keylist(well_hash);
-
-  util_fwrite(&num_wells, sizeof num_wells, 1, stream, __func__);
-  for(int well_nr = 0; well_nr < num_wells; well_nr++)
-  {
-    util_fwrite_string(well_list[well_nr], stream);
-    hash_type * well_obs_hash = hash_get(well_hash, well_list[well_nr]);
-
-    int num_obs = hash_get_size(well_obs_hash);
-    char ** var_list = hash_alloc_keylist(well_obs_hash);
-
-    util_fwrite(&num_obs, sizeof num_obs, 1, stream, __func__);
-    for(int obs_nr = 0; obs_nr < num_obs; obs_nr++)
-    {
-      double obs = hash_get_double(well_obs_hash, var_list[obs_nr]);
-      util_fwrite_string(var_list[obs_nr], stream);
-      util_fwrite(&obs, sizeof obs, 1, stream, __func__);
-    }
-    util_free_stringlist(var_list, num_obs);
-  }
-  util_free_stringlist(well_list, num_wells);
-}
-
-
-
-static hash_type * well_hash_fread_alloc(FILE * stream)
-{
-  hash_type * well_hash = hash_alloc();
-  int num_wells;
-
-  util_fread(&num_wells, sizeof num_wells, 1, stream, __func__);
-  for(int well_nr = 0; well_nr < num_wells; well_nr++)
-  {
-    hash_type * well_obs_hash = hash_alloc();
-    char * well_name = util_fread_alloc_string(stream);
-
-    int num_obs;
-    util_fread(&num_obs, sizeof num_obs, 1, stream, __func__);
-    for(int obs_nr = 0; obs_nr < num_obs; obs_nr++)
-    {
-      double obs;
-      char * obs_name = util_fread_alloc_string(stream);
-      util_fread(&obs, sizeof obs, 1, stream, __func__);
-      hash_insert_double(well_obs_hash, obs_name, obs);
-      free(obs_name);
-    }
-
-    hash_insert_hash_owned_ref(well_hash, well_name, well_obs_hash, hash_free__);
-    free(well_name);
-  }
-
-  return well_hash;
-}
 
 
 
@@ -325,28 +274,28 @@ static void history_node_free__(void * node)
 }
 
 
-static void history_node_fwrite(const history_node_type * node, FILE * stream)
-{
-  util_fwrite(&node->node_start_time, sizeof node->node_start_time, 1, stream, __func__);
-  util_fwrite(&node->node_end_time,   sizeof node->node_end_time,   1, stream, __func__);
-  well_hash_fwrite(node->well_hash, stream);
-  gruptree_fwrite(node->gruptree, stream);
-}
-
-
-
-static history_node_type * history_node_fread_alloc(FILE * stream)
-{
-  history_node_type * node = util_malloc(sizeof * node, __func__);
-
-  util_fread(&node->node_start_time, sizeof node->node_start_time, 1, stream, __func__);
-  util_fread(&node->node_end_time,   sizeof node->node_end_time,   1, stream, __func__);
-
-  node->well_hash = well_hash_fread_alloc(stream);
-  node->gruptree  = gruptree_fread_alloc(stream);
-
-  return node;
-}
+//static void history_node_fwrite(const history_node_type * node, FILE * stream)
+//{
+//  util_fwrite(&node->node_start_time, sizeof node->node_start_time, 1, stream, __func__);
+//  util_fwrite(&node->node_end_time,   sizeof node->node_end_time,   1, stream, __func__);
+//  well_hash_fwrite(node->well_hash, stream);
+//  gruptree_fwrite(node->gruptree, stream);
+//}
+//
+//
+//
+//static history_node_type * history_node_fread_alloc(FILE * stream)
+//{
+//  history_node_type * node = util_malloc(sizeof * node, __func__);
+//
+//  util_fread(&node->node_start_time, sizeof node->node_start_time, 1, stream, __func__);
+//  util_fread(&node->node_end_time,   sizeof node->node_end_time,   1, stream, __func__);
+//
+//  node->well_hash = well_hash_fread_alloc(stream);
+//  node->gruptree  = gruptree_fread_alloc(stream);
+//
+//  return node;
+//}
 
 
 
@@ -625,7 +574,8 @@ static history_node_type * history_iget_node_ref(const history_type * history, i
 
 void history_free(history_type * history)
 {
-  list_free(history->nodes);
+  list_free( history->nodes );
+  sched_history_free( history->sched_history );
   free(history);
 }
 
@@ -647,9 +597,13 @@ void history_free(history_type * history)
   Thus, to create a history_type object from a sched_file_type object,
   we must accumulate the changes in the sched_file_type object.
 */
-history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
+history_type * history_alloc_from_sched_file(const char * sep_string , const sched_file_type * sched_file)
 {
   history_type * history = history_alloc_empty( );
+  history->sched_history = sched_history_alloc( sep_string );
+  sched_history_update( history->sched_history , sched_file );
+
+  
 
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   history_node_type * node = NULL;
@@ -675,6 +629,8 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
     history_add_node(history, node);
   }
   history->source = SCHEDULE;
+  
+  
   return history;
 }
 
@@ -713,37 +669,6 @@ void history_realloc_from_summary(history_type * history, const ecl_sum_type * r
 
 
 
-void history_fwrite(const history_type * history, FILE * stream)
-{
-  int size = list_get_size(history->nodes);  
-  util_fwrite(&size, sizeof size, 1, stream, __func__);
-
-  for(int i=0; i<size; i++)
-  {
-    history_node_type * node = list_iget_node_value_ptr(history->nodes, i);
-    history_node_fwrite(node, stream);
-  }
-}
-
-
-
-history_type * history_fread_alloc(FILE * stream)
-{
-  history_type * history = history_alloc_empty();
-
-  int size;
-  util_fread(&size, sizeof size, 1, stream, __func__);
-
-  for(int i=0; i<size; i++)
-  {
-    history_node_type * node = history_node_fread_alloc(stream);
-    list_append_list_owned_ref(history->nodes, node, history_node_free__);
-  }
-
-  return history;
-}
-
-
 
 /******************************************************************/
 // Exported functions for accessing history_type.
@@ -758,7 +683,6 @@ int history_get_num_restarts(const history_type * history)
 {
   return list_get_size(history->nodes);
 }
-
 
 
 /**
@@ -781,15 +705,27 @@ bool history_str_is_group_name(const history_type * history, int restart_nr, con
 }
 
 
+
 /**
   This function takes a key in the same format as the summary.x program, e.g. GOPR:GROUPA, 
   and tries to return the observed value for that key.
 */
-double history_get_var_from_summary_key(const history_type * history, int restart_nr, const char * summary_key, bool * default_used)
+double history_get(const history_type * history, int restart_nr, const char * summary_key, bool * default_used)
 {
   double value = 0.0;
   
   if (history->source == SCHEDULE) {
+
+    if (sched_history_has_key( history->sched_history , summary_key)) {
+      *default_used = false;
+      return sched_history_iget( history->sched_history , summary_key , restart_nr);
+    } else {
+      *default_used = true;
+      return 0;
+    }
+    
+      
+      /*
     int argc;
     char ** argv;
     
@@ -803,10 +739,13 @@ double history_get_var_from_summary_key(const history_type * history, int restar
     else if(history_str_is_well_name(history, restart_nr, argv[1]))
       value = history_get_well_var(history, restart_nr, argv[1], argv[0], default_used);
     else
-    *default_used = true;
+      *default_used = true;
     
     util_free_stringlist(argv, argc);
     return value;
+    */
+
+
   } else {
 
     /** 100% plain ecl_sum_get... */
@@ -817,13 +756,10 @@ double history_get_var_from_summary_key(const history_type * history, int restar
       char * gen_key = (char *) summary_key;
       if (history->source == REFCASE_HISTORY) {
         /* Must add H to make keywords into history version: */
-        int argc;
-        char ** argv;
+        const ecl_smspec_type * smspec = ecl_sum_get_smspec( history->ecl_sum );
+        const char            * join_string = ecl_smspec_get_join_string( smspec ); 
         
-        util_split_string(summary_key, ":", &argc, &argv); 
-        argv[0] = util_strcat_realloc(argv[0] , "H");
-        gen_key = util_alloc_joined_string( (const char **) argv , argc , ":");
-        util_free_stringlist( argv , argc );
+        gen_key = util_alloc_sprintf( "%sH%s%s" , ecl_sum_get_keyword( history->ecl_sum , summary_key ) , join_string , ecl_sum_get_wgname( history->ecl_sum , summary_key ));
       }
 
       if (ecl_sum_has_general_var(history->ecl_sum , gen_key)) 
@@ -831,24 +767,11 @@ double history_get_var_from_summary_key(const history_type * history, int restar
       else 
         *default_used = true;
         
-      //{
-      //  if (util_string_equal( summary_key , "WWPT:D-6HP")) {
-      //    int day,month,year;
-      //    time_t sim_time = ecl_sum_get_sim_time( history->ecl_sum , ministep );
-      //    util_set_date_values(ecl_sum_get_sim_time(  history->ecl_sum , ministep) , &day , &month, &year);
-      //    printf("%4d   %4d     %18.4f  %02d/%02d/%4d  %12.3f \n",ministep , restart_nr , ecl_sum_get_sim_days( history->ecl_sum , ministep ) , value , day,month,year);
-      //  }
-      //}
-      
-      
       if (history->source == REFCASE_HISTORY)
         free( gen_key );
     } else
       *default_used = true;   /* We did not have this ministep. */
     
-    //if (util_string_equal( summary_key , "WWPT:D-6HP"))
-    //  fprintf(stderr , "%d -> %g [%d]\n",restart_nr , value , *default_used);
-
     return value;
   }
 }
@@ -918,6 +841,69 @@ double history_get_group_var(const history_type * history, int restart_nr, const
   return obs;
 }
 
+bool history_valid_key( const history_type * history , const char * summary_key ) {
+  if (history->source == SCHEDULE) 
+    return sched_history_has_key( history->sched_history , summary_key);
+  else {
+    bool valid;
+    char * local_key;
+    if (history->source == REFCASE_HISTORY) {
+      /* Must create a new key with 'H' for historical values. */
+      const ecl_smspec_type * smspec      = ecl_sum_get_smspec( history->ecl_sum );
+      const char            * join_string = ecl_smspec_get_join_string( smspec ); 
+      
+      local_key = util_alloc_sprintf( "%sH%s%s" , ecl_sum_get_keyword( history->ecl_sum , summary_key ) , join_string , ecl_sum_get_wgname( history->ecl_sum , summary_key ));
+    } else
+      local_key = (char *) summary_key;
+    
+    valid = ecl_sum_has_general_var( history->ecl_sum , local_key);
+    if (history->source == REFCASE_HISTORY) 
+      free( local_key );
+
+    return valid;      
+  }
+}
+
+
+
+void history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid) {
+  double_vector_reset( value );
+  bool_vector_reset( valid );
+  bool_vector_set_default( valid , false);
+  if (history->source == SCHEDULE) {
+    for (int tstep = 0; tstep <= sched_history_get_last_history(history->sched_history); tstep++) {
+      if (sched_history_open( history->sched_history , summary_key , tstep)) {
+        bool_vector_iset( valid , tstep , true );
+        double_vector_iset( value , tstep , sched_history_iget( history->sched_history , summary_key , tstep));
+      } else
+        bool_vector_iset( valid , tstep , false );
+    }
+  } else {
+    char * local_key;
+    if (history->source == REFCASE_HISTORY) {
+      /* Must create a new key with 'H' for historical values. */
+      const ecl_smspec_type * smspec      = ecl_sum_get_smspec( history->ecl_sum );
+      const char            * join_string = ecl_smspec_get_join_string( smspec ); 
+        
+      local_key = util_alloc_sprintf( "%sH%s%s" , ecl_sum_get_keyword( history->ecl_sum , summary_key ) , join_string , ecl_sum_get_wgname( history->ecl_sum , summary_key ));
+    } else
+      local_key = (char *) summary_key;
+  
+    {
+      for (int tstep = 0; tstep <= sched_history_get_last_history(history->sched_history); tstep++) {
+        int ministep   = ecl_sum_get_report_ministep_end( history->ecl_sum , tstep );
+        if (ministep >= 0) {
+          double_vector_iset( value , tstep , ecl_sum_get_general_var( history->ecl_sum , ministep , local_key ));
+          bool_vector_iset( valid , tstep , true );
+        } else
+          bool_vector_iset( valid , tstep , false );    /* Did not have this report step */
+      }
+    }
+    
+    if (history->source == REFCASE_HISTORY) 
+      free( local_key );
+  }
+}
 
 
 /**
@@ -930,7 +916,6 @@ void   history_alloc_time_series_from_summary_key
 (
                     const history_type * history,
                     const char         * summary_key,
-                    int                * __num_restarts,
                     double            ** __value,
                     bool              ** __default_used
 )
@@ -949,17 +934,10 @@ void   history_alloc_time_series_from_summary_key
   for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
   {
 
-    value[restart_nr] = history_get_var_from_summary_key( history , restart_nr , summary_key , &default_used[restart_nr]);
-    //if(history_str_is_group_name(history, restart_nr, argv[1]))
-    //  value[restart_nr] = history_get_group_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
-    //else if(history_str_is_well_name(history, restart_nr, argv[1]))
-    //  value[restart_nr] = history_get_well_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
-    //else
-    //  default_used[restart_nr] = true;
+    value[restart_nr] = history_get( history , restart_nr , summary_key , &default_used[restart_nr]);
   }
 
   util_free_stringlist(argv, argc);
-  *__num_restarts = num_restarts;
   *__value        = value;
   *__default_used = default_used;
 }
@@ -1068,5 +1046,6 @@ char ** history_alloc_well_list(const history_type * history, int * num_wells)
   hash_free(wells);
   return well_list;
 }
+
 
 

@@ -76,6 +76,7 @@ struct well_history_struct {
   wconinje_state_type * wconinje_state;       
   wconinjh_state_type * wconinjh_state;
   size_t_vector_type  * parent; 
+  bool_vector_type    * well_open;
 };
 
 
@@ -95,6 +96,7 @@ well_history_type * well_history_alloc( const char * well_name , const time_t_ve
    well_history->wconinjh_state  = wconinjh_state_alloc( time );
    well_history->active_state    = size_t_vector_alloc(0 , 0);
    well_history->parent          = size_t_vector_alloc(0 , 0);
+   well_history->well_open       = bool_vector_alloc( 0 , false );
    return well_history;
  }
 
@@ -115,6 +117,7 @@ void well_history_free( well_history_type * well_history ) {
    wconinjh_state_free( well_history->wconinjh_state );
    wconinje_state_free( well_history->wconinje_state );
    size_t_vector_free( well_history->active_state );
+   bool_vector_free( well_history->well_open );
    size_t_vector_free( well_history->parent );
    free( well_history );
 }
@@ -145,17 +148,20 @@ void well_history_free__( void * arg ) {
        break;
      case( WCONINJH):
        sched_kw_wconinjh_close_state( well_history->wconinjh_state , report_step );
+       break;
      case( WCONINJE):
-       sched_kw_wconinje_close_state( well_history->wconinjh_state , report_step );
+       sched_kw_wconinje_close_state( well_history->wconinje_state , report_step );
        break;
      default:
        break;
      }
    }
+   
    int_vector_iset_default( well_history->kw_type , report_step , new_type );
    switch( new_type ) {
    case(WCONHIST):
      size_t_vector_iset_default( well_history->active_state , report_step , ( long ) well_history->wconhist_state );
+     bool_vector_iset_default( well_history->well_open , report_step , sched_kw_wconhist_well_open( sched_kw_get_const_data( sched_kw ) , well_history->well_name ));
      sched_kw_wconhist_update_state(sched_kw_get_const_data( sched_kw ) , well_history->wconhist_state , well_history->well_name , report_step );
      break;
    case(WCONINJH):
@@ -164,6 +170,7 @@ void well_history_free__( void * arg ) {
      break;
    case(WCONINJE):
      size_t_vector_iset_default( well_history->active_state , report_step , ( long ) well_history->wconinje_state );
+     bool_vector_iset_default( well_history->well_open , report_step , sched_kw_wconinje_well_open( sched_kw_get_const_data( sched_kw ) , well_history->well_name ));
      sched_kw_wconinje_update_state(sched_kw_get_const_data( sched_kw ) , well_history->wconinje_state , well_history->well_name , report_step );
      break;
    default:
@@ -209,7 +216,9 @@ const char * well_history_get_name( const well_history_type * well_history ) {
 }
 
 
-
+bool well_history_well_open( const well_history_type * well_history , int report_step ) {
+  return bool_vector_safe_iget( well_history->well_open , report_step );
+}
 
 
 
@@ -224,7 +233,7 @@ double well_history_iget( well_index_type * index , int report_step ) {
     void * state_ptr = (void *) size_t_vector_safe_iget( well_history->active_state , report_step );
     return func( state_ptr , report_step );
   } else
-    return -1;
+    return 0;   /* Quite polite - just returning 0 for funny requests. */
 }
 
 

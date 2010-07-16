@@ -11,7 +11,8 @@ extern "C" {
 typedef struct group_history_struct group_history_type;
 
 
-group_history_type * group_history_alloc( const char * group_name , const time_t_vector_type * time );
+bool                 group_history_group_exists( const group_history_type * group_history , int report_step);
+group_history_type * group_history_alloc( const char * group_name , const time_t_vector_type * time , int report_step );
 void                 group_history_free( group_history_type * group_history ); 
 void                 group_history_free__( void * arg );
 void                 group_history_add_child(group_history_type * group_history , void * child_history , const char * child_name , int report_step );
@@ -23,6 +24,12 @@ void                 group_history_fprintf( const group_history_type * group_his
 double               group_history_iget_GOPRH( const void * __group_history , int report_step );
 double               group_history_iget_GGPRH( const void * __group_history , int report_step );
 double               group_history_iget_GWPRH( const void * __group_history , int report_step );
+double               group_history_iget_GWCTH( const void * __group_history , int report_step );
+double               group_history_iget_GGORH( const void * __group_history , int report_step );
+
+double               group_history_iget_GWPTH( const void * __group_history , int report_step );
+double               group_history_iget_GOPTH( const void * __group_history , int report_step );
+double               group_history_iget_GGPTH( const void * __group_history , int report_step );
 
 double               group_history_iget( const void * index , int report_step );
 

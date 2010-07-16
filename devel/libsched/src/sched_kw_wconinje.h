@@ -27,7 +27,7 @@ bool                     sched_kw_wconinje_has_well( const sched_kw_wconinje_typ
 sched_kw_wconinje_type * sched_kw_wconinje_safe_cast( void * arg );
 void                     sched_kw_wconinje_shift_surface_flow( const sched_kw_wconinje_type * kw , const char * well_name , double delta_surface_flow);
 bool                     sched_kw_wconinje_buffer_fwrite( const sched_kw_wconinje_type * kw , const char * well_name , buffer_type * buffer);
-
+bool                     sched_kw_wconinje_historical( const sched_kw_wconinje_type * kw );
 
 void                     sched_kw_wconinje_close_state(wconinje_state_type * state , int report_step );
 void                     sched_kw_wconinje_update_state( const sched_kw_wconinje_type * kw , wconinje_state_type * state , const char * well_name , int report_step );

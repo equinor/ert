@@ -418,10 +418,10 @@ double wconinje_state_iget_WGIRH( const void * __state , int report_step ) {
     return double_vector_safe_iget( state->surface_flow , report_step);
   else {
     if ( phase != GAS ) 
-      fprintf(stderr,"** Warning you have asked for historical gas injection rate in well:%s which is not a gas injector.\n", state->well_name);
+      fprintf(stderr,"** Warning you have asked for historical gas injection rate in well:%s(%d) which is not a gas injector.\n", state->well_name, report_step);
     
     if ( cmode != RATE ) 
-      fprintf(stderr,"** Warning you have asked for historical gas injection rate in well:%s which is not rate controlled - I have no clue?! \n" , state->well_name);
+      fprintf(stderr,"** Warning you have asked for historical gas injection rate in well:%s(%d) which is not rate controlled - I have no clue?! \n" , state->well_name, report_step);
     
     return 0;
   }
@@ -442,6 +442,35 @@ void sched_kw_wconinje_init_well_list( const sched_kw_wconinje_type * kw , strin
     }
   }
 }
+
+
+/**
+   For production the WCONHIST keyword will (typically) be used for
+   the historical period, and WCONPROD for the predicton. This can be
+   used to differentiate between hisorical period and prediction
+   period. When it comes to injection things are not so clear;
+   typically the WCONINJE keyword is used both for prediction and
+   historical period.
+
+   This function will check if all the wells (at least one) in the
+   WCONINJE keyword are rate-controlled, if so it is interpreted as
+   beeing in the historical period.
+*/
+
+bool sched_kw_wconinje_historical( const sched_kw_wconinje_type * kw ) {
+  bool historical = false;
+  int iw;
+  for (iw = 0; iw < vector_get_size( kw->wells ); iw++) {
+    const wconinje_well_type * well = vector_iget_const( kw->wells , iw );
+    if (well->cmode == RATE) {
+      historical = true;
+      break;
+    }
+  }
+  return historical;
+}
+
+
 
 
 
