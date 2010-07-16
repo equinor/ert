@@ -218,6 +218,7 @@ ext_job_type * forward_model_iget_job( forward_model_type * forward_model , int 
 
 void forward_model_fprintf(const forward_model_type * forward_model , FILE * stream) {
   int ijob;
+  fprintf(stream , " ");
   for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
     ext_job_fprintf( vector_iget(forward_model->jobs , ijob) , stream);
     fprintf(stream , "  ");
