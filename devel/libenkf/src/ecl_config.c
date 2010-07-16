@@ -201,12 +201,12 @@ void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcas
     } else {                  /* Check if the currently loaded case is the same as refcase */
       if (!ecl_sum_same_case( ecl_config->refcase , refcase )) {
         ecl_sum_free( ecl_config->refcase );
-        ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_KEY_JOIN_STRING );
+        ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , SUMMARY_KEY_JOIN_STRING );
       }
     }
   } else 
     if (refcase != NULL)
-      ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_KEY_JOIN_STRING );
+      ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , SUMMARY_KEY_JOIN_STRING );
 }
 
 

@@ -276,7 +276,7 @@ void model_config_init(model_config_type * model_config ,
     model_config_set_runpath_fmt( model_config , config_get_value(config , RUNPATH_KEY) );
   
   if (sched_file != NULL) {
-    model_config->history              = history_alloc_from_sched_file( DEFAULT_KEY_JOIN_STRING , sched_file);  
+    model_config->history              = history_alloc_from_sched_file( SUMMARY_KEY_JOIN_STRING , sched_file);  
     model_config->last_history_restart = last_history_restart;
   }
   
