@@ -131,10 +131,10 @@ class ContentModel:
             except Exception:
                 sys.stderr.write("Caught an exception during initialization!\n")
 
-            try:
-                o.fetchContent()
-            except Exception:
-                sys.stderr.write("Caught an exception while fetching!\n")
+            #try:
+            o.fetchContent()
+            #except Exception:
+            #    sys.stderr.write("Caught an exception while fetching!\n")
 
         ContentModel.modelEmit('initialized()')
 

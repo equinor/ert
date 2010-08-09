@@ -4,6 +4,7 @@
 from widgets.combochoice import ComboChoice
 from widgets.pathchooser import PathChooser
 from enums import history_source_type
+from widgets.reloadbutton import ReloadButton
 
 def createObservationsPage(configPanel, parent):
     configPanel.startPage("Observations")
@@ -40,5 +41,11 @@ def createObservationsPage(configPanel, parent):
     def set_obs(ert, value):
         ert.enkf.enkf_main_load_obs(ert.main, str(value))
     r.setter = set_obs
+
+
+    r = configPanel.addRow(ReloadButton(parent, "Reload Observations", "config/observations/reload_observation", "Reload"))
+    r.initialize = lambda ert : [ert.prototype("void enkf_main_reload_obs(long)")]
+    r.getter = lambda ert : ert.enkf.enkf_main_reload_obs(ert.main)
+    
 
     configPanel.endPage()
