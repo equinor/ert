@@ -9,19 +9,18 @@ from PyQt4 import QtGui, QtCore
 from pages.config.jobs.jobspanel import JobsPanel, Job
 import os
 import widgets.spinnerwidgets
+from widgets.activelabel import ActiveLabel
 
 def createSystemPage(configPanel, parent):
     configPanel.startPage("System")
 
-    siteConfigLabel = QtGui.QLabel("")
-    font = siteConfigLabel.font()
-    font.setWeight(QtGui.QFont.Bold)
-    siteConfigLabel.setFont(font)
-    siteConfigLabel.setText("Site config: /path/to/site/configuration/file")
     # Should call enkf_main_get_site_config_file() to get the name of
     # the site configuration file; this should only be a label - not
     # user editable.
-    r = configPanel.addRow( siteConfigLabel )
+    r = configPanel.addRow(ActiveLabel(None, "Site Config", "", "Not specified."))
+    r.initialize = lambda ert: [ert.prototype("char* enkf_main_get_site_config_file(long)")]
+    r.getter = lambda ert : ert.enkf.enkf_main_get_site_config_file(ert.main)
+    r.modelConnect("casesUpdated()", r.fetchContent)
     
 
 

@@ -106,12 +106,8 @@ class InitPanel(QtGui.QFrame):
         @may_take_a_long_time
         def select_case(ert, case):
             case = str(case)
-            #print "Selecting case: " + case
             if not case == "":
                 ert.enkf.enkf_main_select_case( ert.main , case )
-                #fs = ert.enkf.enkf_main_get_fs(ert.main)
-                #ert.enkf.enkf_fs_select_read_dir(fs, case)
-                #ert.enkf.enkf_fs_select_write_dir(fs, case, False)
                 self.casesUpdated()
 
         self.currentCase.setter = select_case

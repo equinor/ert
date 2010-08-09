@@ -30,7 +30,7 @@ class ParametersAndMembers(HelpedWidget):
 
         self.addLayout(layout)
 
-            
+        self.initialized = False     
         self.modelConnect("casesUpdated()", self.fetchContent)
         self.modelConnect("ensembleResized()", self.fetchContent)
 
@@ -209,14 +209,18 @@ class ParametersAndMembers(HelpedWidget):
         ert.prototype("int enkf_main_get_history_length(long)")
         ert.prototype("void enkf_main_initialize_from_existing__(long, char*, int, int, long, char*, long)")
         ert.prototype("void enkf_main_copy_ensemble(long, char*, int, int, char*, int, int, long, char*, long)")
+        self.initialized = True
 
 
     def getter(self, ert):
+        if not self.initialized:
+            self.initialize(ert)
+            
         #enums from enkf_types.h
         PARAMETER = 1
         DYNAMIC_STATE = 2
-
         keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER )
+        
         parameters = ert.getStringList(keylist)
         ert.freeStringList(keylist)
 

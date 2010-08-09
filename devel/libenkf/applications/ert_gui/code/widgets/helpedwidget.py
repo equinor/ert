@@ -128,8 +128,14 @@ class ContentModel:
                 o.initialize(ContentModel.contentModel)
             except NotImplementedError:
                 sys.stderr.write("Missing initializer: " + o.helpLabel + "\n")
+            except Exception:
+                sys.stderr.write("Caught an exception during initialization!\n")
 
-            o.fetchContent()
+            try:
+                o.fetchContent()
+            except Exception:
+                sys.stderr.write("Caught an exception while fetching!\n")
+
         ContentModel.modelEmit('initialized()')
 
     @classmethod
