@@ -68,13 +68,12 @@ class ErtWrapper:
         """Registers the default available types for prototyping."""
         self.registered_types = {}
         self.registerType("void", None)
-        self.registerType("void*", ctypes.c_void_p)
         self.registerType("int", ctypes.c_int)
         self.registerType("int*", ctypes.POINTER(ctypes.c_int))
         self.registerType("bool", ctypes.c_int)
         self.registerType("bool*", ctypes.POINTER(ctypes.c_int))
-        self.registerType("long", ctypes.c_long)
-        self.registerType("long*", ctypes.POINTER(ctypes.c_long))
+        self.registerType("long", ctypes.c_ulong)
+        self.registerType("long*", ctypes.POINTER(ctypes.c_ulong))
         self.registerType("char", ctypes.c_char)
         self.registerType("char*", ctypes.c_char_p)
         self.registerType("float", ctypes.c_float)

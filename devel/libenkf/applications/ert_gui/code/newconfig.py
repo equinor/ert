@@ -84,7 +84,7 @@ class NewConfigurationDialog(QDialog):
         return str(self.db_type.currentText())
 
     def getStoragePath(self):
-        """Return the DBase type"""
+        """Return the DBase storage path"""
         return str(self.storage_path.text()).strip()
 
     def _validateName(self, name):
