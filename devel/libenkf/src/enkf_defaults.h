@@ -134,7 +134,7 @@
 */
 #define CONFIG_OPTION_FORMAT        " %s:%s"
 #define CONFIG_FLOAT_OPTION_FORMAT  " %s:%g"
-#define CONFIG_KEY_FORMAT           "%-20s"
+#define CONFIG_KEY_FORMAT           "%-24s"
 #define CONFIG_VALUE_FORMAT         " %-32s"
 #define CONFIG_FLOAT_FORMAT         " %32.4f"  /* One size - fits all :-) */
 #define CONFIG_INT_FORMAT           " %32d"    /* One size - fits all :-) */

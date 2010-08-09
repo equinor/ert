@@ -1789,8 +1789,11 @@ bool enkf_main_run(enkf_main_type * enkf_main            ,
           }
 	  prev_enkf_on = enkf_on;
 	}
-      } else
-	fprintf(stderr , "\n** Error: when running EnKF read and write directories must be equal.\n\n");
+      } else {
+	fprintf(stderr , "\n** Error: when running EnKF read and write cases must be equal.\n\n");
+        fprintf(stderr , "Current read case....: %s \n",enkf_fs_get_read_dir( fs ));
+        fprintf(stderr , "Current write case...: %s \n",enkf_fs_get_write_dir( fs ));
+      }
     } else {
       /* It is an experiment */
       const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
@@ -3190,6 +3193,8 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
 
 
 void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
+  fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
+  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information about the ERT logging.");
   fprintf(stream , CONFIG_KEY_FORMAT      , LOG_FILE_KEY );
   fprintf(stream , CONFIG_ENDVALUE_FORMAT , enkf_main_get_log_file( enkf_main ));
   if (enkf_main_get_log_level( enkf_main ) != DEFAULT_LOG_LEVEL) {
@@ -3197,6 +3202,8 @@ void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * str
     fprintf(stream , CONFIG_INT_FORMAT , enkf_main_get_log_level( enkf_main ));
     fprintf(stream , "\n");
   }
+  fprintf(stream , "\n");
+  fprintf(stream , "\n");
 }
 
 

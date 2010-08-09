@@ -193,7 +193,6 @@ stringlist_type * ert_templates_alloc_list( ert_templates_type * ert_templates) 
 
 
 
-
 void ert_templates_fprintf_config( const ert_templates_type * ert_templates , FILE * stream ) {
   if (hash_get_size( ert_templates->templates ) > 0 ) {
     fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
@@ -208,5 +207,6 @@ void ert_templates_fprintf_config( const ert_templates_type * ert_templates , FI
       }
       hash_iter_free( iter );
     }
+    fprintf( stream , "\n\n" );
   }
 }

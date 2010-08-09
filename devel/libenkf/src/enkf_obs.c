@@ -387,6 +387,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
     
     conf_instance_free(enkf_conf      );
     conf_class_free(   enkf_conf_class);
+    printf("Have loaded observations from: %s \n",config_file );
   }
   enkf_obs->config_file = util_realloc_string_copy( enkf_obs->config_file , config_file );
 }

@@ -644,18 +644,19 @@ stringlist_type * ensemble_config_alloc_keylist(const ensemble_config_type * con
    sum of enkf_var_type values:
 
      ensemble_config_alloc_keylist_from_var_type( config , PARAMETER + DYNAMIC_STATE);
+
 */
    
-stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type * config , int var_type) {
+stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type * config , int var_mask) {
   stringlist_type * key_list = stringlist_alloc_new();
   hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
 
   while (!hash_iter_is_complete( iter )) {
-    const char * key = hash_iter_get_next_key(iter);
-    if (enkf_config_node_get_var_type( hash_get(config->config_nodes , key)) & var_type)
-      stringlist_append_copy( key_list , key );
+    const char * key       = hash_iter_get_next_key(iter);
+    enkf_var_type var_type = enkf_config_node_get_var_type( hash_get(config->config_nodes , key));
     
-    key = hash_iter_get_next_key(iter);
+    if (var_type & var_type)
+      stringlist_append_copy( key_list , key );
   }
   hash_iter_free(iter);
 
@@ -671,8 +672,7 @@ stringlist_type * ensemble_config_alloc_keylist_from_impl_type(const ensemble_co
     const char * key = hash_iter_get_next_key(iter);
     if (enkf_config_node_get_impl_type( hash_get(config->config_nodes , key)) == impl_type)
       stringlist_append_copy( key_list , key );
-    
-    key = hash_iter_get_next_key(iter);
+
   }
   hash_iter_free(iter);
   return key_list;
@@ -782,6 +782,7 @@ void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FI
   fprintf( stream , CONFIG_KEY_FORMAT      , GEN_KW_TAG_FORMAT_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , ensemble_config->gen_kw_format_string);
 
+
   /* Writing GEN_KW nodes. */
   {
     stringlist_type * gen_kw_keys = ensemble_config_alloc_keylist_from_impl_type( ensemble_config , GEN_KW );
@@ -790,9 +791,11 @@ void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FI
       const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( gen_kw_keys , i));
       enkf_config_node_fprintf_config( config_node , stream );
     }
+    if (stringlist_get_size( gen_kw_keys ) > 0)
+      fprintf(stream , "\n");
     stringlist_free( gen_kw_keys );
   }
-  fprintf(stream , "\n");
+
   
   /* Writing FIELD nodes. */
   {
@@ -802,9 +805,11 @@ void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FI
       const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , stringlist_iget( field_keys , i));
       enkf_config_node_fprintf_config( config_node , stream );
     }
+    if (stringlist_get_size( field_keys ) > 0)
+      fprintf(stream , "\n");
     stringlist_free( field_keys );
   }
-  fprintf(stream , "\n");
+
 
   /* Writing SUMMARY nodes. */
   {
@@ -823,6 +828,7 @@ void ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FI
     stringlist_free( summary_keys );
   }
   fprintf(stream , "\n");
+  
 
   /* Writing GEN_DATA nodes. */
   {

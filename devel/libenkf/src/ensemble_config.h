@@ -45,7 +45,7 @@ void 			      ensemble_config_del_node(ensemble_config_type * , const char * );
 void                          ensemble_config_add_config_items(config_type * );
 enkf_config_node_type       * ensemble_config_get_node(const ensemble_config_type * , const char * );
 stringlist_type             * ensemble_config_alloc_keylist(const ensemble_config_type *);
-stringlist_type             * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type *  , int );
+stringlist_type             * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type *  , int var_mask);
 stringlist_type             * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *  , enkf_impl_type );
 bool                          ensemble_config_iget_keep_runpath(const ensemble_config_type * , int );
 ensemble_config_type        * ensemble_config_alloc_empty( );

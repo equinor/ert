@@ -938,7 +938,7 @@ void site_config_fprintf_config( const site_config_type * site_config , FILE * s
       while (!hash_iter_is_complete( iter )) {
         const char * host_name = hash_iter_get_next_key( iter );
         fprintf(stream , CONFIG_KEY_FORMAT      , RSH_HOST_KEY );
-        fprintf(stream , "%s;%d\n"  , host_name , hash_get_int( site_config->rsh_host_list , host_name));
+        fprintf(stream , "%s:%d\n"  , host_name , hash_get_int( site_config->rsh_host_list , host_name));
       }
       hash_iter_free( iter );
     }
