@@ -94,6 +94,11 @@ const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
 }
 
 
+time_t ecl_config_get_start_date( const ecl_config_type * ecl_config ) {
+  return ecl_config->start_date;
+}
+
+
 int ecl_config_get_num_cpu( const ecl_config_type * ecl_config ) {
   return ecl_config->num_cpu;
 }

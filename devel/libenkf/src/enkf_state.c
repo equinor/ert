@@ -643,7 +643,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
    The ECLIPSE restart files can contain several instances of the same
    keyword, e.g. AQUIFER info can come several times with identical
    headers, also when LGR is in use the same header for
-   e.g. PRESSURE/SWAT/INTEHEAD/... wilkl occur several times. The
+   e.g. PRESSURE/SWAT/INTEHEAD/... will occur several times. The
    enkf_state/ensembl_config objects require unique keys.
 
    This function takes keyword string and an occurence number, and

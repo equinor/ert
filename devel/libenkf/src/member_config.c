@@ -50,7 +50,7 @@ struct member_config_struct {
 const char * member_config_update_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list) {
   util_safe_free( member_config->eclbase );
   {
-    path_fmt_type * eclbase_fmt = ecl_config_get_eclbase_fmt(ecl_config);
+    const path_fmt_type * eclbase_fmt = ecl_config_get_eclbase_fmt(ecl_config);
     if (eclbase_fmt != NULL) {
       char * tmp = path_fmt_alloc_path(eclbase_fmt , false , member_config->iens);
       member_config->eclbase = subst_list_alloc_filtered_string( subst_list , tmp );
@@ -227,6 +227,8 @@ member_config_type * member_config_alloc(int iens ,
   member_config->pre_clear_runpath   = pre_clear_runpath;
   member_config_set_keep_runpath(member_config , keep_runpath);
   member_config->report_time = time_t_vector_alloc( 0 , -1 );
+
   member_config_fread_sim_time( member_config , fs );
+  time_t_vector_iset( member_config->report_time , 0 , ecl_config_get_start_date( ecl_config ));  /* Must be after the fread because of faulty files around. 09.08.2010. */
   return member_config;
 }
