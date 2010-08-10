@@ -33,6 +33,7 @@ class ParametersAndMembers(HelpedWidget):
         self.initialized = False     
         self.modelConnect("casesUpdated()", self.fetchContent)
         self.modelConnect("ensembleResized()", self.fetchContent)
+        self.modelConnect("ensembleUpdated()", self.fetchContent)
 
         self.toggleScratch.toggle()
 

@@ -24,7 +24,8 @@ class RunWidget(HelpedWidget):
 
         self.modelConnect("ensembleResized()", self.fetchContent)
         self.modelConnect("runpathChanged()", self.fetchContent)
-        self.rbAssimilation.toggle()
+        #self.rbAssimilation.toggle()
+        self.rbExperiment.toggle()    
 
     def createPanel(self, parent):
         """Creates the panel with the simulation parameters."""
@@ -198,7 +199,9 @@ class RunWidget(HelpedWidget):
         radioLayout.addWidget(self.rbExperiment)
         self.rbAssimilation = QtGui.QRadioButton("EnKF assimilation")
         radioLayout.addWidget(self.rbAssimilation)
-        
+
+
+
         self.connect(self.rbAssimilation , QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
         self.connect(self.rbExperiment  , QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
 
