@@ -35,6 +35,7 @@ struct gen_kw_config_struct {
   char                 * template_file;
   char                 * parameter_file;
   path_fmt_type        * init_file_fmt;    /* The format for loading init_files - if this is NULL the initialization is done by sampling N(0,1) numbers. */
+  const char           * tag_fmt;          /* Pointer to the tag_format owned by the ensemble config object. */ 
 };
 
 
@@ -53,12 +54,13 @@ static void gen_kw_parameter_update_tagged_name( gen_kw_parameter_type * paramet
 }
 
 
-static gen_kw_parameter_type * gen_kw_parameter_alloc( const char * parameter_name ) {
+static gen_kw_parameter_type * gen_kw_parameter_alloc( const char * parameter_name , const char * tag_fmt ) {
   gen_kw_parameter_type * parameter = util_malloc( sizeof * parameter , __func__ );
   UTIL_TYPE_ID_INIT( parameter , GEN_KW_PARAMETER_TYPE_ID); 
   parameter->name        = util_alloc_string_copy( parameter_name );
   parameter->tagged_name = NULL;
   parameter->trans_func  = NULL;
+  gen_kw_parameter_update_tagged_name( parameter , tag_fmt );
   return parameter;
 }
 
@@ -126,6 +128,7 @@ void gen_kw_config_set_template_file( gen_kw_config_type * config , const char *
 void gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char * parameter_file ) {
   config->parameter_file = util_realloc_string_copy( config->parameter_file , parameter_file );
   vector_clear( config->parameters );
+  printf("Loading parameters from:%s \n",parameter_file);
   if (parameter_file != NULL) {
     FILE * stream = util_fopen(parameter_file , "r");
     
@@ -135,7 +138,7 @@ void gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char 
       
       fscanf_return = fscanf(stream , "%s" , parameter_name);
       if (fscanf_return == 1) {
-        gen_kw_parameter_type * parameter  = gen_kw_parameter_alloc( parameter_name );
+        gen_kw_parameter_type * parameter  = gen_kw_parameter_alloc( parameter_name , config->tag_fmt);
         trans_func_type       * trans_func = trans_func_fscanf_alloc( stream );
         gen_kw_parameter_set_trans_func( parameter , trans_func );
 
@@ -157,10 +160,34 @@ const char * gen_kw_config_get_parameter_file( const gen_kw_config_type * config
 
 
 /**
+   Unfortunately the GUI makes it necessary(??) to be able to create
+   halfways initialized gen_kw_config objects; and we then have to be
+   able to query the gen_kw_config object if it is valid. Observe that
+   some of the required config information will be owned by the
+   enkf_config_node itself, this function should therefor NOT be
+   called directly, only through the enkf_config_node_is_valid()
+   function.
+
+   Requirements:
+   -------------
+    * template_file  != NULL
+    * parameter_file != NULL  (this means that the special schedule_prediction_file keyword will be invalid).
+    
+*/
+
+bool gen_kw_config_is_valid( const gen_kw_config_type * config ) {
+  if (config->template_file != NULL && config->parameter_file != NULL)
+    return true;
+  else
+    return false;
+}
+
+
+/**
    A call to gen_kw_config_update_tag_format() must be called
    afterwards, otherwise all tagged strings will just be NULL.
 */
-gen_kw_config_type * gen_kw_config_alloc_empty(const char * key ) {
+gen_kw_config_type * gen_kw_config_alloc_empty( const char * key , const char * tag_fmt ) {
   gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config , __func__);
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
 
@@ -171,6 +198,7 @@ gen_kw_config_type * gen_kw_config_alloc_empty(const char * key ) {
   gen_kw_config->parameter_file     = NULL;
   gen_kw_config->parameters         = vector_alloc_new();
   gen_kw_config->init_file_fmt      = NULL;
+  gen_kw_config->tag_fmt            = tag_fmt;
   gen_kw_config->key                = util_alloc_string_copy( key );  
 
   return gen_kw_config;
@@ -240,8 +268,10 @@ const char * gen_kw_config_get_tagged_name(const gen_kw_config_type * config, in
 
 void gen_kw_config_update_tag_format(gen_kw_config_type * config , const char * tag_format) {
   int i;
+  
+  config->tag_fmt = tag_format;
   for (i=0; i < vector_get_size( config->parameters ); i++) 
-    gen_kw_parameter_update_tagged_name( vector_iget( config->parameters , i ) , tag_format );
+    gen_kw_parameter_update_tagged_name( vector_iget( config->parameters , i ) , config->tag_fmt);
 }
 
 

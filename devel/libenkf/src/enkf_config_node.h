@@ -33,13 +33,6 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
 
 
 
-  enkf_config_node_type * enkf_config_node_alloc_gen_kw( const char * key              , 
-                                                         const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
-                                                         const char * template_file    , 
-                                                         const char * parameter_file   ,
-                                                         const char * min_std_file     ,
-                                                         const char * init_file_fmt );
-
 
   void enkf_config_node_update_gen_kw( enkf_config_node_type * config_node ,
                                        const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
@@ -62,13 +55,6 @@ enkf_config_node_type * enkf_config_node_alloc_summary( const char * key );
 
 void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max );
 
-enkf_config_node_type * enkf_config_node_alloc_state_field( const char * key              ,
-                                                            ecl_grid_type * ecl_grid      , 
-                                                            int truncation                ,
-                                                            double value_min              , 
-                                                            double value_max              ,
-                                                            field_trans_table_type * trans_table );
-
 
 void enkf_config_node_update_parameter_field( enkf_config_node_type * config_node , 
                                               const char * enkf_outfile_fmt , 
@@ -78,18 +64,6 @@ void enkf_config_node_update_parameter_field( enkf_config_node_type * config_nod
                                               const char * init_transform , 
                                               const char * output_transform );
 
-
-enkf_config_node_type * enkf_config_node_alloc_parameter_field( const char * key                     ,
-                                                                ecl_grid_type * ecl_grid             , 
-                                                                const char * enkf_outfile_fmt        , 
-                                                                const char * init_file_fmt           , 
-                                                                const char * min_std_file            , 
-                                                                int truncation                       ,
-                                                                double value_min                     , 
-                                                                double value_max                     ,            
-                                                                field_trans_table_type * trans_table ,
-                                                                const char * init_transform          ,
-                                                                const char * output_transform );
 
 
 
@@ -108,25 +82,10 @@ void enkf_config_node_update_general_field( enkf_config_node_type * config_node 
                                             const char * output_transform );
 
 
-enkf_config_node_type * enkf_config_node_alloc_general_field( const char * key                     ,
-                                                              ecl_grid_type * ecl_grid             , 
-                                                              const char * enkf_outfile_fmt        , 
-                                                              const char * enkf_infile_fmt         , 
-                                                              const char * init_file_fmt           , 
-                                                              const char * min_std_file            , 
-                                                              int truncation                       ,
-                                                              double value_min                     , 
-                                                              double value_max                     ,            
-                                                              field_trans_table_type * trans_table ,
-                                                              const char * init_transform          ,
-                                                              const char * input_transform         ,
-                                                              const char * output_transform );
-
-
 
 /*****************************************************************/
 
-enkf_config_node_type * enkf_config_node_new_gen_kw( const char * key );
+enkf_config_node_type * enkf_config_node_new_gen_kw( const char * key , const char * tag_fmt );
 enkf_config_node_type * enkf_config_node_new_field( const char * key , ecl_grid_type * ecl_grid, field_trans_table_type * trans_table);
 bool                    enkf_config_node_is_valid( const enkf_config_node_type * config_node );
 int                     enkf_config_node_get_data_size( const enkf_config_node_type * node , int report_step);					

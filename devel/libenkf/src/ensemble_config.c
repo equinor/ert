@@ -166,7 +166,7 @@ void ensemble_config_free(ensemble_config_type * ensemble_config) {
 
 bool ensemble_config_has_key(const ensemble_config_type * ensemble_config , const char * key) {
   return hash_has_key( ensemble_config->config_nodes , key);
-}
+} 
 
 
 
@@ -549,8 +549,12 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     {
       hash_type * opt_hash                = hash_alloc_from_options( tokens );
       enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
-      enkf_config_node_update_gen_kw( config_node , enkf_outfile , template_file , parameter_file , hash_safe_get( opt_hash , MIN_STD_KEY ) , hash_safe_get( opt_hash , INIT_FILES_KEY));
-      gen_kw_config_update_tag_format( enkf_config_node_get_ref( config_node ) , ensemble_config->gen_kw_format_string );
+      enkf_config_node_update_gen_kw( config_node , 
+                                      enkf_outfile , 
+                                      template_file , 
+                                      parameter_file , 
+                                      hash_safe_get( opt_hash , MIN_STD_KEY ) , 
+                                      hash_safe_get( opt_hash , INIT_FILES_KEY));
       hash_free( opt_hash );
     }
   
@@ -655,7 +659,7 @@ stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_con
     const char * key       = hash_iter_get_next_key(iter);
     enkf_var_type var_type = enkf_config_node_get_var_type( hash_get(config->config_nodes , key));
     
-    if (var_type & var_type)
+    if (var_type & var_mask)
       stringlist_append_copy( key_list , key );
   }
   hash_iter_free(iter);
@@ -734,8 +738,8 @@ enkf_config_node_type * ensemble_config_add_field( ensemble_config_type * config
 
 
 enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key ) {
-  enkf_config_node_type * config_node = enkf_config_node_new_gen_kw( key );
-   ensemble_config_add_node__( config , config_node );
+  enkf_config_node_type * config_node = enkf_config_node_new_gen_kw( key , config->gen_kw_format_string );
+  ensemble_config_add_node__( config , config_node );
   return config_node;
 }
 

@@ -531,6 +531,38 @@ void field_config_update_general_field( field_config_type * config , int truncat
 }
 
 
+/**
+   Requirements:
+
+   ECLIPSE_PARAMETER: export_format != UNDEFINED_FORMAT
+                      init_file_fmt != NULL
+
+   ECLIPSE_RESTART  : Validation can be finalized at the enkf_config_node level.
+   
+   GENERAL          : export_format != UNDEFINED_FORMAT
+                      init_file_fmt != NULL
+*/
+
+bool field_config_is_valid( const field_config_type * field_config ) {
+  bool valid = true;
+
+  switch( field_config->type ) {
+  case ECLIPSE_PARAMETER:
+    if ((field_config->export_format == UNDEFINED_FORMAT) || (field_config->init_file_fmt == NULL))
+      valid = false;
+    break;
+  case ECLIPSE_RESTART:
+    break;
+  case GENERAL:
+    if ((field_config->export_format == UNDEFINED_FORMAT) || (field_config->init_file_fmt == NULL))
+      valid = false;
+    break;
+  default:
+    util_abort("%s: internal fuckup \n",__func__);
+  }
+  return valid;
+
+}
 
 
 

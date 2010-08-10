@@ -32,6 +32,7 @@ struct gen_data_config_struct {
   active_list_type             * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
   int_vector_type              * data_size_vector;      /* Data size, i.e. number of elements , indexed with report_step */
+  bool                           update_valid; 
 };
 
 /*****************************************************************/
@@ -94,6 +95,7 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   config->input_format      = GEN_DATA_UNDEFINED;
   config->output_format     = GEN_DATA_UNDEFINED;
   config->data_size_vector  = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
+  config->update_valid      = false;
   pthread_mutex_init( &config->update_lock , NULL );
 
   return config;
@@ -118,15 +120,22 @@ static void gen_data_config_set_template( gen_data_config_type * config , const 
   if (template_ecl_file != NULL) {
     char *data_ptr;
     config->template_buffer = util_fread_alloc_file_content( template_ecl_file , &config->template_buffer_size);
-    data_ptr = strstr(config->template_buffer , template_data_key);
-    if (data_ptr == NULL) 
-      util_abort("%s: template:%s can not be used - could not find data key:%s \n",__func__ , template_ecl_file , template_data_key);
-    else {
-      config->template_data_offset = data_ptr - config->template_buffer;
-      config->template_data_skip   = strlen( template_data_key );
+    if (template_data_key != NULL) {
+      data_ptr = strstr(config->template_buffer , template_data_key);
+      if (data_ptr == NULL) 
+        util_abort("%s: template:%s can not be used - could not find data key:%s \n",__func__ , template_ecl_file , template_data_key);
+      else {
+        config->template_data_offset = data_ptr - config->template_buffer;
+        config->template_data_skip   = strlen( template_data_key );
+      }
+    } else { /* We are using a template without a template_data_key - the
+                data is assumed to come at the end of the template. */
+      config->template_data_offset = strlen( config->template_buffer );
+      config->template_data_skip   = 0;
     }
   } else 
     config->template_buffer = NULL;
+  
   config->template_file = util_realloc_string_copy( config->template_file , template_ecl_file );
   config->template_key  = util_realloc_string_copy( config->template_key , template_data_key );
 }
@@ -137,7 +146,7 @@ const char * gen_data_config_get_template_file( const gen_data_config_type * con
 }
 
 const char * gen_data_config_get_template_key( const gen_data_config_type * config ) {
-  return config->template_key;
+  return config->template_key;   
 }
 
 
@@ -148,18 +157,26 @@ static void gen_data_config_set_io_format( gen_data_config_type * config , gen_d
 }
 
 
+bool gen_data_config_is_valid( const gen_data_config_type * gen_data_config) {
+  if (gen_data_config->init_file_fmt == NULL)
+    return false;
+  
+  return gen_data_config->update_valid;
+}
+
+
 
 /**
-   Observe that all the consistency checks are in thise functions, and not in
-   the various small static functions called by this function, it is therefor
-   important that only this full function is used, and not the small individual
-   (static for a reason ...) functions.
+   Observe that all the consistency checks are in this functions, and
+   not in the various small static functions called by this function,
+   it is therefor important that only this full function is used, and
+   not the small individual (static for a reason ...) functions.
 
    Observe that the checks on == NULL and != NULL for the various parameters
    should already have been performed (in enkf_config_node_update_gen_data).
 */
 
-bool gen_data_config_update(gen_data_config_type * config           , 
+void gen_data_config_update(gen_data_config_type * config           , 
                             enkf_var_type var_type                  , /* This is ONLY included too be able to do a sensible consistency check. */
                             gen_data_file_format_type input_format  ,
                             gen_data_file_format_type output_format ,
@@ -194,9 +211,9 @@ bool gen_data_config_update(gen_data_config_type * config           ,
     
     if ((output_format == ASCII_TEMPLATE) && (config->template_buffer == NULL))
       valid = false;
-      //util_abort("%s: When specifying output_format == ASCII_TEMPLATE you must also supply a template_ecl_file\n",__func__);
+    //util_abort("%s: When specifying output_format == ASCII_TEMPLATE you must also supply a template_ecl_file\n",__func__);
   }
-  return valid;
+  config->update_valid = valid;
 }
 
 

@@ -2352,6 +2352,18 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
 
 
 
+
+
+void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
+  int iens;
+  for (iens = 0; iens < enkf_main->ens_size; iens++) 
+    enkf_state_update_node( enkf_main->ensemble[iens] , key );
+}
+
+
+
+
+
 /**
    When the case has changed it is essential to invalidate the meta
    information in the enkf_nodes, otherwise the nodes might reuse old

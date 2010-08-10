@@ -12,6 +12,8 @@ extern "C" {
 #include <stringlist.h>
 #include <util.h>
 
+
+bool                        gen_kw_config_is_valid( const gen_kw_config_type * config );
 void                        gen_kw_config_fprintf_config( const gen_kw_config_type * config , const char * outfile , const char * min_std_file , FILE * stream );
 void                        gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char * parameter_file );
 const char                * gen_kw_config_get_parameter_file( const gen_kw_config_type * config );
@@ -29,7 +31,7 @@ int                         gen_kw_config_get_index(const gen_kw_config_type *  
 char                      * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , int kw_nr);
 const char                * gen_kw_config_get_init_file_fmt( const gen_kw_config_type * config );
 void                        gen_kw_config_set_template_file( gen_kw_config_type * config , const char * template_file );
-gen_kw_config_type        * gen_kw_config_alloc_empty( const char * key );
+gen_kw_config_type        * gen_kw_config_alloc_empty( const char * key , const char * tag_fmt );
 void                        gen_kw_config_update( gen_kw_config_type * config , const char * template_file , const char * parameter_file , const char * init_file_fmt);
 void                        gen_kw_config_update_tag_format(gen_kw_config_type * config , const char * tag_format);
 

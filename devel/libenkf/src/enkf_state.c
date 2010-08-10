@@ -546,6 +546,19 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 }
 
 
+void enkf_state_update_node( enkf_state_type * enkf_state , const char * node_key ) {
+  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_state->ensemble_config , node_key );
+  if (!enkf_state_has_node( enkf_state , node_key))
+    enkf_state_add_node( enkf_state , node_key , config_node );  /* Add a new node */
+  else {
+    bool modified = true;   /* ehhhh? */
+
+    if (modified)
+      enkf_state_add_node( enkf_state , node_key , config_node );  
+  }
+}
+
+
 
 static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , const model_config_type * model_config , bool * loadOK) {
   /* IFF reservoir_simulator == ECLIPSE ... */
