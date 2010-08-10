@@ -25,6 +25,7 @@ def createEnsemblePage(configPanel, parent):
 
     configPanel.startGroup("Parameters")
     r = configPanel.addRow(ParameterPanel(parent, "", "")) # no help file necessary
+    parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("ensembleUpdated()"))
 
     def initialize(ert):
         ert.prototype("long ensemble_config_get_node(long, char*)")
