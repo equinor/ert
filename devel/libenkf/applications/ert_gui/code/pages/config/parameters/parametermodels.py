@@ -15,7 +15,8 @@ class Model(QObject):
 
     def __setitem__(self, attr, value):        
         self.data[attr] = value
-        self.emit(SIGNAL("modelChanged(Model)"), self)
+        self.emitUpdate()
+        
 
     def __getitem__(self, item):
         return self.data[item]
@@ -26,7 +27,10 @@ class Model(QObject):
     def setValid(self, valid):
         if not self.valid == valid:
             self.valid = valid
-            self.emit(SIGNAL("modelChanged(Model)"), self)
+            self.emitUpdate()
+
+    def emitUpdate(self):
+        self.emit(SIGNAL("modelChanged(Model)"), self)
 
 
     def getName(self):

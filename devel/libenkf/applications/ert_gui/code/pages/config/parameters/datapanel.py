@@ -54,6 +54,13 @@ class DataPanel(QtGui.QFrame):
         layout.addRow("Min. std.:", self.min_std)
         layout.addRow("File loaded by EnKF:", self.file_loaded_by_enkf)
 
+        button = QtGui.QPushButton()
+        button.setText("Reload")
+        button.setMaximumWidth(70)
+        self.connect(button, QtCore.SIGNAL('clicked()'), self.dataModel.emitUpdate)
+
+        layout.addRow("Reload template:", button)
+
         self.setLayout(layout)
 
 

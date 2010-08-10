@@ -39,6 +39,13 @@ class KeywordPanel(QtGui.QFrame):
         layout.addRow("Minimum std:"      , self.min_std)
         layout.addRow("Init files:"       , self.init_files)
 
+        button = QtGui.QPushButton()
+        button.setText("Reload")
+        button.setMaximumWidth(70)
+        self.connect(button, QtCore.SIGNAL('clicked()'), self.keywordModel.emitUpdate)
+
+        layout.addRow("Reload files:", button)
+
         self.setLayout(layout)
 
     def setKeywordModel(self, keywordModel):
