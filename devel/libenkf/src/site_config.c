@@ -186,17 +186,24 @@ const char * site_config_get_license_root_path( const site_config_type * site_co
 */
 
 void site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path) {
-  /**
-    Appending /user/pid to the license root path. Everything
-    including the pid is removed when exiting (gracefully ...).
-    
-    Dangling license directories after a crash can just be removed.
-  */
-  site_config->license_root_path   = util_realloc_string_copy( site_config->license_root_path , license_root_path );
-  site_config->__license_root_path = util_realloc_sprintf(site_config->__license_root_path , "%s%c%s%c%d" , license_root_path , UTIL_PATH_SEP_CHAR , getenv("USER") , UTIL_PATH_SEP_CHAR , getpid());
-  
-  if (!site_config->user_mode)
-    site_config->license_root_path_site = util_realloc_string_copy( site_config->license_root_path_site , license_root_path );
+  util_make_path( license_root_path );
+  {
+    char * full_license_root_path = util_alloc_realpath( license_root_path );
+    {
+      /**
+         Appending /user/pid to the license root path. Everything
+         including the pid is removed when exiting (gracefully ...).
+         
+         Dangling license directories after a crash can just be removed.
+      */
+      site_config->license_root_path   = util_realloc_string_copy( site_config->license_root_path , full_license_root_path );
+      site_config->__license_root_path = util_realloc_sprintf(site_config->__license_root_path , "%s%c%s%c%d" , full_license_root_path , UTIL_PATH_SEP_CHAR , getenv("USER") , UTIL_PATH_SEP_CHAR , getpid());
+      
+      if (!site_config->user_mode)
+        site_config->license_root_path_site = util_realloc_string_copy( site_config->license_root_path_site , full_license_root_path );
+    }
+    free( full_license_root_path );
+  }
 }
 
 
@@ -584,14 +591,22 @@ bool site_config_queue_is_running( const site_config_type * site_config ) {
   return job_queue_is_running( site_config->job_queue );
 }
 
+/**
+   The job_script might be a relative path, and the cwd changes during
+   execution, i.e. it is essential to get hold of the full path.
+*/
 
 void site_config_set_job_script( site_config_type * site_config , const char * job_script ) {
-  site_config->job_script = util_realloc_string_copy( site_config->job_script , job_script );
-  if (site_config->job_queue != NULL)
-    job_queue_set_run_cmd( site_config->job_queue  , job_script );
-
-  if (!site_config->user_mode) 
-    site_config->job_script_site = util_realloc_string_copy( site_config->job_script_site , job_script );
+  char * job_script_full_path = util_alloc_realpath( job_script );
+  {
+    site_config->job_script = util_realloc_string_copy( site_config->job_script , job_script_full_path );
+    if (site_config->job_queue != NULL)
+      job_queue_set_run_cmd( site_config->job_queue  , site_config->job_script );
+    
+    if (!site_config->user_mode) 
+      site_config->job_script_site = util_realloc_string_copy( site_config->job_script_site , site_config->job_script );
+  }
+  free( job_script_full_path );
 }
 
 

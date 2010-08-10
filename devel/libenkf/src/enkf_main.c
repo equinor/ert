@@ -2538,6 +2538,40 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * c
 /*****************************************************************/
 
 /**
+   Observe that the site-config initializations starts with chdir() to
+   the location of the site_config_file; this ensures that the
+   site_config can contain relative paths to job description files and
+   scripts.
+*/
+
+
+static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * site_config_file , bool strict) {
+  char * cwd = util_alloc_cwd();
+  {
+
+    {
+      char * site_config_path;
+      util_alloc_file_components( site_config_file , &site_config_path , NULL , NULL );
+      if (site_config_path != NULL) {
+        if (chdir( site_config_path ) != 0) 
+          util_abort("s: holy diver - could not chdir() to directory:%s containing the site configuration. \n",__func__ , site_config_path);
+      }
+      util_safe_free( site_config_path );
+    }
+    
+    {
+      config_type * config = enkf_main_alloc_config( true , strict );
+      config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , false , true);
+      site_config_init( enkf_main->site_config , config , false);                                /*  <---- site_config : first pass. */  
+      config_free( config );
+    }
+
+  }
+  chdir( cwd );
+}
+
+
+/**
    This function boots everything needed for running a EnKF
    application. Very briefly it can be summarized as follows:
 
@@ -2626,12 +2660,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main            = enkf_main_alloc_empty( );
     config_type * config;
     /* Parsing the site_config file first */
-    {
-      config = enkf_main_alloc_config( true , strict );
-      config_parse(config , site_config  , "--" , INCLUDE_KEY , DEFINE_KEY , false , true);
-      site_config_init( enkf_main->site_config , config , false);                                /*  <---- site_config : first pass. */  
-      config_free( config );
-    }
+    enkf_main_bootstrap_site( enkf_main , site_config , strict );
+    
     
     config = enkf_main_alloc_config( false , strict );
     site_config_init_user_mode( enkf_main->site_config );

@@ -292,6 +292,7 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
   /* We take the chance that user will supply a valid subst key for this later. */
 }
 
+
 /**
    Observe that this does NOT reread the ext_job instance from the new
    config_file.
