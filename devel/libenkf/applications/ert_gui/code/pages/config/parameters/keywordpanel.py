@@ -33,12 +33,11 @@ class KeywordPanel(QtGui.QFrame):
         self.parameter_file = PathChooser(self, "", "config/ensemble/gen_kw_parameter_file", True, must_be_set=False)
         self.modelWrap(self.parameter_file, "parameter_file")
 
-        
-        layout.addRow("Template:"     , self.template)
-        layout.addRow("Include file:" , self.enkf_outfile)
-        layout.addRow("Minimum std:"  , self.min_std)
-        layout.addRow("Init files:"   , self.init_files)
         layout.addRow("Parameter file:"   , self.parameter_file)
+        layout.addRow("Include file:"     , self.enkf_outfile)
+        layout.addRow("Template:"         , self.template)
+        layout.addRow("Minimum std:"      , self.min_std)
+        layout.addRow("Init files:"       , self.init_files)
 
         self.setLayout(layout)
 
