@@ -179,7 +179,7 @@ def createEnsemblePage(configPanel, parent):
         return True
 
     def updateParameter(ert, parameter_model):
-        key = parameter_model.getName()
+        key  = parameter_model.getName()
         node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, key)
         
         if isinstance(parameter_model, FieldModel):
@@ -256,7 +256,9 @@ def createEnsemblePage(configPanel, parent):
             parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
         else:
             raise AssertionError("Type is not supported: %s" % (parameter_model.__class__))
-
+        
+        if ert.enkf.enkf_config_node_is_valid(node):
+            ert.enkf.enkf_main_update_node( ert.main , key )
 
 
 
