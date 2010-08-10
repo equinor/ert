@@ -47,7 +47,7 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       const char          * ,
 					       const char          * , 
 					       const char          * , 
-					       const void          * );
+                                               void                * );
 
 
 enkf_config_node_type * enkf_config_node_alloc_summary( const char * key );

@@ -127,7 +127,7 @@ class conf:
         self.SVN_VERSION      = commands.getoutput("svnversion ./")
         self.TIME_STAMP       = commands.getoutput("date")#.replace(" " , "_")
         
-        self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/Config/site-config"
+        self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/site-config"
         (self.SDP_ROOT , self.RH) = get_SDP_ROOT()
         self.SDP_BIN              = "%s/bin"             %  self.SDP_ROOT
         self.SDP_BIN_TARGET       = "%s/bin"             %  self.SDP_ROOT

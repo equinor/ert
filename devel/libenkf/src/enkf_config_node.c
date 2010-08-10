@@ -30,7 +30,7 @@ struct enkf_config_node_struct {
   char               	* key;
   path_fmt_type         * enkf_infile_fmt;  /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */
   path_fmt_type	     	* enkf_outfile_fmt; /* Name of file which is written by EnKF, and read by the forward model. */
-  void               	* data;             /* This points to the config object of the actual implementation.        */
+  void                  * data;             /* This points to the config object of the actual implementation.        */
   enkf_node_type        * min_std;
   char                  * min_std_file; 
   /*****************************************************************/
@@ -182,11 +182,11 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
 					       const char               * key , 
 					       const char               * enkf_outfile_fmt , 
 					       const char               * enkf_infile_fmt  , 
-					       const void               * data) {
+					       void                     * data) {
 
   enkf_config_node_type * node = enkf_config_node_alloc__( var_type , impl_type , key );
   enkf_config_node_update( node , enkf_outfile_fmt , enkf_infile_fmt , NULL );
-  node->data = (char *) data;
+  node->data = data;
   return node;
 }
 
