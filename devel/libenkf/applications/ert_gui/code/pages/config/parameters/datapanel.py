@@ -57,12 +57,14 @@ class DataPanel(QtGui.QFrame):
         button = QtGui.QPushButton()
         button.setText("Reload")
         button.setMaximumWidth(70)
-        self.connect(button, QtCore.SIGNAL('clicked()'), self.dataModel.emitUpdate)
+        self.connect(button, QtCore.SIGNAL('clicked()'), self._reload)
 
         layout.addRow("Reload template:", button)
 
         self.setLayout(layout)
 
+    def _reload(self):
+        self.dataModel.emitUpdate()
 
     def modelWrap(self, widget, attribute):
         widget.initialize = widgets.helpedwidget.ContentModel.emptyInitializer
