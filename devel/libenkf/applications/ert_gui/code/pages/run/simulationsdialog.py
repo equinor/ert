@@ -237,6 +237,7 @@ class SimulationsDialogController:
 #                else:
 #                    self.view.estimateLabel.setText("")
                 QApplication.processEvents()
+                self.view.update()
                 time.sleep(0.1)
 
         self.pollthread.setDaemon(True)
