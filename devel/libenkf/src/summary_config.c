@@ -17,7 +17,6 @@
 
 struct summary_config_struct {
   int                   __type_id;
-  int                   data_size;
   ecl_smspec_var_type   var_type;    /* The type of the variable - according to ecl_summary nomenclature. */
   char * var;                        /* This is ONE variable of summary.x format - i.e. WOPR:OP_2, RPR:4, ... */
   active_list_type * active_list;    /* overkill with a list here but ... */ 
@@ -46,7 +45,6 @@ ecl_smspec_var_type summary_config_get_var_type(summary_config_type * config , c
 
 summary_config_type * summary_config_alloc(const char * var) {
   summary_config_type * config = util_malloc(sizeof *config , __func__);
-  config->data_size   	       = 1;
   config->active_list          = active_list_alloc( ALL_ACTIVE );
   config->var                  = util_alloc_string_copy( var );
   config->var_type             = ECL_SMSPEC_INVALID_VAR;
@@ -72,9 +70,13 @@ void summary_config_free(summary_config_type * config) {
 
 
 int summary_config_get_byte_size(const summary_config_type * config) {
-  return config->data_size * sizeof(double);
+  return sizeof(double);
 }
 
+
+int summary_config_get_data_size( const summary_config_type * config) {
+  return 1;
+}
 
 
 
@@ -84,7 +86,6 @@ int summary_config_get_byte_size(const summary_config_type * config) {
 /*****************************************************************/
 UTIL_SAFE_CAST_FUNCTION(summary_config , SUMMARY_CONFIG_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION_CONST(summary_config , SUMMARY_CONFIG_TYPE_ID)
-GET_DATA_SIZE(summary)
 VOID_GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)
 GET_ACTIVE_LIST(summary)
