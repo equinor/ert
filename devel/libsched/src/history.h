@@ -29,7 +29,7 @@ history_source_type history_get_source_type( const char * string_source );
 // Manipulators.
 void           history_free(history_type *);
 history_type * history_alloc_from_sched_file(const char * sep_string , const sched_file_type *);
-void           history_realloc_from_summary(history_type *, const ecl_sum_type * refcase , bool );
+void           history_use_summary(history_type *, const ecl_sum_type * refcase , bool );
 const char   * history_get_source_string( history_source_type history_source );
 void           history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid);
 
