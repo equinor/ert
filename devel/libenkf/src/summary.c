@@ -13,24 +13,25 @@
 #include <enkf_util.h>
 #include <enkf_serialize.h>
 #include <log.h>
+#include <double_vector.h>
 
 /*****************************************************************/
 
 struct summary_struct {
-  int                          __type_id;    /* Only used for run_time checking. */
-  summary_config_type        * config;       /* Can not be NULL - var_type is set on first load. */
-  double                     * data;         /* Size is always one - but what the fuck ... */
-  summary_type               * min_variance;
+  int                          __type_id;     /* Only used for run_time checking. */
+  summary_config_type        * config;        /* Can not be NULL - var_type is set on first load. */
+  double                     * data;          /* Size is always one - but what the fuck ... */
+  double_vector_type         * data_ts;       /* Time series of the summary data - NOT in use. */ 
 };
 
 
 
 
 void summary_clear(summary_type * summary) {
-  const int size = summary_config_get_data_size(summary->config );   
-  int k;
-  for (k = 0; k < size; k++)
-    summary->data[k] = 0.0;
+  const int data_size = summary_config_get_data_size( summary->config );
+  for (int k=0; k < data_size; k++)
+    summary->data[k] = 0;
+  //double_vector_clear( summary->data_ts );
 }
 
 
@@ -38,8 +39,12 @@ void summary_clear(summary_type * summary) {
 summary_type * summary_alloc(const summary_config_type * summary_config) {
   summary_type * summary  = util_malloc(sizeof *summary , __func__);
   summary->__type_id      = SUMMARY;
-  summary->config = (summary_config_type *) summary_config;
-  summary->data   = util_malloc(summary_config_get_data_size(summary->config ) * sizeof *summary->data , __func__);
+  summary->config         = (summary_config_type *) summary_config;
+  summary->data_ts        = double_vector_alloc(0 , 0);
+  {
+    const int data_size = summary_config_get_data_size( summary_config );
+    summary->data       = util_malloc( data_size * sizeof * summary->data , __func__ );
+  }
   return summary;
 }
 
@@ -48,9 +53,11 @@ summary_type * summary_alloc(const summary_config_type * summary_config) {
 
 void summary_copy(const summary_type *src , summary_type * target) {
   if (src->config == target->config) {
-    const int size = summary_config_get_data_size(src->config );   
+    const int data_size = summary_config_get_data_size( src->config );
+    for (int k=0; k < data_size; k++)
+      target->data[k] = src->data[k];
     
-    memcpy(target->data , src->data , size * sizeof * src->data);
+    double_vector_memcpy( src->data_ts , target->data_ts );
   } else
     util_abort("%s: do not share config objects \n",__func__);
 }
@@ -98,6 +105,7 @@ bool summary_store(const summary_type * summary , buffer_type * buffer, int repo
 
 
 void summary_free(summary_type *summary) {
+  double_vector_free( summary->data_ts );
   free(summary->data);
   free(summary);
 }
