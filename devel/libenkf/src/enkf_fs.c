@@ -325,13 +325,6 @@ long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * defau
     plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , DEFAULT_PLAIN_DYNAMIC_FORECAST_PATH);
     plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , DEFAULT_PLAIN_DYNAMIC_ANALYZED_PATH);
     plain_driver_index_fwrite_mount_info( stream ,                     DEFAULT_PLAIN_INDEX_PATH);
-  } else if (driver_impl == SQLITE_DRIVER_ID) {
-    /* Writing a new mount map for a SQLite based approach. */
-    sqlite3_driver_fwrite_mount_info( stream , DRIVER_PARAMETER        , DEFAULT_SQLITE_PARAMETER_DBFILE);
-    sqlite3_driver_fwrite_mount_info( stream , DRIVER_STATIC           , DEFAULT_SQLITE_STATIC_DBFILE);
-    sqlite3_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , DEFAULT_SQLITE_DYNAMIC_FORECAST_DBFILE);
-    sqlite3_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , DEFAULT_SQLITE_DYNAMIC_ANALYZED_DBFILE);
-    plain_driver_index_fwrite_mount_info( stream ,                       DEFAULT_PLAIN_INDEX_PATH);   /* Using the plain index driver. */
   } else if (driver_impl == BLOCK_FS_DRIVER_ID) {
     block_fs_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	, num_block_fs_drivers);
     block_fs_driver_fwrite_mount_info( stream , DRIVER_STATIC    	, num_block_fs_drivers);
@@ -979,9 +972,6 @@ static void enkf_fs_upgrade_104(const char * config_file, const char * root_path
       case(PLAIN_DRIVER_ID):
         driver = plain_driver_fread_alloc( root_path , read_stream );
         break;
-      case(SQLITE_DRIVER_ID):
-        driver = sqlite3_driver_fread_alloc( root_path , read_stream );
-        break;
       default:
         util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized. Driver nr:%d \n",__func__ , config_file , driver_id , i);
       }
@@ -1226,9 +1216,6 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
 	  break;
 	case(PLAIN_DRIVER_ID):
 	  driver = plain_driver_fread_alloc( root_path , stream );
-	  break;
-	case(SQLITE_DRIVER_ID):
-	  driver = sqlite3_driver_fread_alloc( root_path , stream );
 	  break;
 	case(BLOCK_FS_DRIVER_ID):
 	  driver = block_fs_driver_fread_alloc( root_path , stream );

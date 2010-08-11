@@ -1378,8 +1378,8 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
   arg_pack_type ** arg_list       = util_malloc( ens_size * sizeof * arg_list , __func__);
   job_status_type * status_list   = util_malloc( ens_size * sizeof * status_list , __func__);
   thread_pool_type * load_threads = thread_pool_alloc( num_load_threads , true);
-  const int usleep_time           = 2500000; //100000; /* 1/10 of a second */
-  const int load_start_usleep     = 10000;
+  const int usleep_time           = 2500000; 
+  const int load_start_usleep     =   10000;
   int jobs_remaining;
   int iens;
 

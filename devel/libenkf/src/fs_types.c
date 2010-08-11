@@ -7,8 +7,6 @@
 fs_driver_impl fs_types_lookup_string_name(const char * driver_name) {
   if (strcmp(driver_name , "PLAIN") == 0)
     return PLAIN_DRIVER_ID;
-  else if (strcmp(driver_name , "SQLITE") == 0)
-    return SQLITE_DRIVER_ID;
   else if (strcmp(driver_name , "BLOCK_FS") == 0)
     return BLOCK_FS_DRIVER_ID;
   else {

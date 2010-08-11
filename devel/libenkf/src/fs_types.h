@@ -9,6 +9,7 @@
   driver is added the switch statement in the enkf_fs_mount() function
   must be updated.
 */
+
 typedef enum {
   INVALID_DRIVER_ID          = 0,
   PLAIN_DRIVER_INDEX_ID      = 1001,
@@ -16,10 +17,12 @@ typedef enum {
   PLAIN_DRIVER_DYNAMIC_ID    = 1003,  /* Depreceated */
   PLAIN_DRIVER_PARAMETER_ID  = 1004,  /* Depreceated */
   PLAIN_DRIVER_ID            = 1005,
-  SQLITE_DRIVER_ID           = 2001,
   BLOCK_FS_DRIVER_ID         = 3001,
   BLOCK_FS_DRIVER_INDEX_ID   = 3002 } fs_driver_impl;
 
+/*
+  SQLITE_DRIVER_ID           = 2001,    Removed 11.08.2010 (svn: 2957)
+*/
 
 
 
