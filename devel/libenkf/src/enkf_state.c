@@ -1092,7 +1092,8 @@ static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , int repo
   int ikey;
 
 
-  /* First pass - load all the STATIC nodes. It is essential to use
+  /* 
+     First pass - load all the STATIC nodes. It is essential to use
      the restart_kw_list when loading static nodes, otherwise static
      nodes which were only present at e.g. step == 0 will create
      problems: (They are in the enkf_state hash table because they
@@ -1103,8 +1104,41 @@ static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , int repo
   enkf_fs_fread_restart_kw_list(shared_info->fs , report_step , iens , enkf_state->restart_kw_list);
   for (ikey = 0; ikey < stringlist_get_size( enkf_state->restart_kw_list) ; ikey++) {
     const char * key = stringlist_iget( enkf_state->restart_kw_list, ikey);
-    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key);
-    enkf_var_type var_type = enkf_node_get_var_type( enkf_node );
+    enkf_node_type * enkf_node;
+    enkf_var_type    var_type;
+
+    /*
+      The restart_kw_list mentions a keyword which is (not yet) part
+      of the enkf_state object. This is assumed to be a static keyword
+      and added as such.
+      
+      This will break hard for the following situation:
+
+        1. Someone has simulated with a dynamic keyword (i.e. field
+           FIELD1).
+
+        2. the fellow decides to remove field1 from the configuraton
+           and restart a simulation.
+
+      In this case the code will find FIELD1 in the restart_kw_list,
+      it will then be automatically added as a static keyword; and
+      then final fread_node() function will fail with a type mismatch
+      (or node not found).
+    */
+    
+    /* add the config node. */
+    if (!ensemble_config_has_key( enkf_state->ensemble_config , key))
+      ensemble_config_ensure_static_key( enkf_state->ensemble_config , key);
+
+    /* Add the state node */
+    if (!enkf_state_has_node( enkf_state , key )) {
+      const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , key);
+      enkf_state_add_node(enkf_state , key , config_node); 
+    }
+    
+    enkf_node = hash_get(enkf_state->node_hash , key);
+    var_type  = enkf_node_get_var_type( enkf_node );
+    
     if (var_type == STATIC_STATE)
       enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , iens , load_state);
   }

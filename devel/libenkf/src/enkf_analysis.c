@@ -800,24 +800,23 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 
 /*****************************************************************/
 
-
 void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int start_step, int end_step , const char * ministep_name , FILE * stream ) {
   const char * float_fmt = "%15.3f";
   int iobs;
-  fprintf(stream , "======================================================================================================================\n");
+  fprintf(stream , "===============================================================================================================================\n");
   if (start_step == end_step)
     fprintf(stream , "Report step...: %04d \n",start_step);
   else
     fprintf(stream , "Report step...: %04d - %04d \n",start_step , end_step);
   
   fprintf(stream , "Ministep......: %s   \n",ministep_name);  
-  fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
+  fprintf(stream , "-------------------------------------------------------------------------------------------------------------------------------\n");
   if (obs_data_get_nrobs( obs_data ) > 0) {
     char * obs_fmt = util_alloc_sprintf("  %%-3d : %%-32s %s +/-  %s" , float_fmt , float_fmt);
     char * sim_fmt = util_alloc_sprintf("   %s +/- %s  \n"            , float_fmt , float_fmt);
 
-    fprintf(stream , "                                                   Observed history               |             Simulated data        \n");  
-    fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
+    fprintf(stream , "                                                         Observed history               |             Simulated data        \n");  
+    fprintf(stream , "-------------------------------------------------------------------------------------------------------------------------------\n");
     for (iobs = 0; iobs < obs_data_get_nrobs(obs_data); iobs++) {
       obs_data_node_type * node = obs_data_iget_node( obs_data , iobs);
       
@@ -844,7 +843,7 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
   } else
     fprintf(stream , "No observations for this ministep / report_step. \n");
     
-  fprintf(stream , "======================================================================================================================\n");
+  fprintf(stream , "===============================================================================================================================\n");
   fprintf(stream , "\n\n\n");
 }
 
