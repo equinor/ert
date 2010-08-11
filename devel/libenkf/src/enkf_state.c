@@ -1123,7 +1123,8 @@ static void enkf_state_fread_state_nodes(enkf_state_type * enkf_state , int repo
       In this case the code will find FIELD1 in the restart_kw_list,
       it will then be automatically added as a static keyword; and
       then final fread_node() function will fail with a type mismatch
-      (or node not found).
+      (or node not found); hopefully this scenario is not very
+      probable.
     */
     
     /* add the config node. */

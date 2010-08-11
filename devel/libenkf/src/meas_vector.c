@@ -1,40 +1,31 @@
 /**
-See the file README.obs for ducumentation of the varios datatypes
-involved with observations/measurement/+++.
+   See the file README.obs for ducumentation of the varios datatypes
+   involved with observations/measurement/+++.
 */
 #include <stdlib.h>
 #include <stdio.h>
 #include <enkf_util.h>
 #include <meas_vector.h>
 #include <util.h>
+#include <double_vector.h>
 
 struct meas_vector_struct {
-  int      size;            /* The number of active measurements currently in the vector instance. */
-  int      alloc_size;      /* The current length of the memory buffer owned by the vector instance. */ 
-  int      target_size;     /* If the current size of the buffer exceeds this length - it will be shrinked on reset. */ 
-  double  *data;            /* The actual stoarge vector. */
+  int      target_size;        /* The size of the buffer will be reset to this size when use is finished. */
+  double_vector_type * data;
 }; 
-
-
-static void meas_vector_realloc_data(meas_vector_type * meas_vector, int new_alloc_size) {
-  meas_vector->alloc_size = new_alloc_size;
-  meas_vector->data       = util_realloc(meas_vector->data , new_alloc_size * sizeof * meas_vector->data , __func__);
-}
 
 
 
 void meas_vector_reset(meas_vector_type * meas_vector) {
-  meas_vector->size = 0;
-  if (meas_vector->alloc_size > meas_vector->target_size)
-    meas_vector_realloc_data(meas_vector , meas_vector->target_size);
+  double_vector_reset( meas_vector->data );
+  double_vector_resize( meas_vector->data , meas_vector->target_size );
 }
 
 
 meas_vector_type * meas_vector_alloc() {
-  meas_vector_type * meas_vector = malloc(sizeof * meas_vector);
-  meas_vector->data = NULL;
+  meas_vector_type * meas_vector = util_malloc(sizeof * meas_vector, __func__);
   meas_vector->target_size = 32;
-  meas_vector->alloc_size  = 0;
+  meas_vector->data = double_vector_alloc(0 ,0);
   meas_vector_reset(meas_vector);
   return meas_vector;
 }
@@ -42,36 +33,25 @@ meas_vector_type * meas_vector_alloc() {
 
 
 void meas_vector_add(meas_vector_type * meas_vector, double value) {
-  if (meas_vector->size == meas_vector->alloc_size)
-    meas_vector_realloc_data(meas_vector , 2*meas_vector->alloc_size + 2);
-  meas_vector->data[meas_vector->size] = value;
-  meas_vector->size++;
+  double_vector_append( meas_vector->data , value );
 }
 
 
 int meas_vector_get_nrobs(const meas_vector_type * vector) {
-  return vector->size;
+  return double_vector_size( vector->data );
 }
 
 
-void meas_vector_fprintf(const meas_vector_type * meas_vector , FILE *stream) {
-  int i;
-  for (i = 0; i < meas_vector->size; i++)
-    fprintf(stream , "%-3d : %12.3f\n", i+1 , meas_vector->data[i]);
-}
 
 
 void meas_vector_free(meas_vector_type * meas_vector) {
-  free(meas_vector->data);
+  double_vector_free( meas_vector->data );
   free(meas_vector);
 }
 
 
 const double * meas_vector_get_data_ref(const meas_vector_type * vector) {
-  return vector->data;
+  return double_vector_get_const_ptr( vector->data );
 }
 
 
-int meas_vector_get_size( const meas_vector_type * vector ) {
-  return vector->size;
-}

@@ -121,6 +121,7 @@ void summary_serialize(const summary_type * summary , const active_list_type * a
 }
 
 
+
 void summary_deserialize(summary_type * summary , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const summary_config_type *config  = summary->config;
   const int                data_size = summary_config_get_data_size(config );
@@ -199,6 +200,8 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
       */
     } 
   } 
+  if (loadOK)
+    double_vector_iset( summary->data_ts , report_step , summary->data[0] );
   return loadOK;
 }
 

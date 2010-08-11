@@ -135,7 +135,7 @@ void fwrite_matrix(const char * filename, const double *M , int ny , int nx , in
 */
 
 void meas_matrix_calculate_ens_stats(meas_matrix_type * matrix) {
-  int nrobs            = meas_vector_get_size( matrix->meas_vectors[0] );
+  int nrobs            = meas_vector_get_nrobs( matrix->meas_vectors[0] );
   matrix->active       = util_realloc( matrix->active   , sizeof * matrix->active   * nrobs , __func__);
   matrix->ens_std      = util_realloc( matrix->ens_std  , sizeof * matrix->ens_std  * nrobs , __func__);
   matrix->ens_mean     = util_realloc( matrix->ens_mean , sizeof * matrix->ens_mean * nrobs , __func__);
