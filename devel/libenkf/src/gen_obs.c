@@ -207,7 +207,7 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
 
 
 
-void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , meas_vector_type * meas_vector, const active_list_type * __active_list) {
+void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , int report_step , meas_vector_type * meas_vector, const active_list_type * __active_list) {
   gen_obs_assert_data_size(gen_obs , gen_data);
   {
     active_mode_type active_mode = active_list_get_mode( __active_list );

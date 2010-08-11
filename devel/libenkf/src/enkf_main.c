@@ -93,8 +93,6 @@
 */
 
 #define ENKF_MAIN_ID              8301
-#define ENKF_ENSEMBLE_TYPE_ID   776098
-
 
 
 struct enkf_main_struct {
@@ -3367,8 +3365,6 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     util_safe_free( prev_backup );
     util_safe_free( backup_file );
   }
-  
-  printf("Saving configuration to:%s \n", enkf_main->user_config_file );
   
   /* Start the proper saving */
   {

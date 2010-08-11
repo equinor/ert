@@ -97,7 +97,7 @@ void summary_obs_get_observations(const summary_obs_type * summary_obs,
 
 
 
-void summary_obs_measure(const summary_obs_type * obs, const summary_type * summary, meas_vector_type * meas_vector , const active_list_type * __active_list) {
+void summary_obs_measure(const summary_obs_type * obs, const summary_type * summary, int report_step , meas_vector_type * meas_vector , const active_list_type * __active_list) {
 
   active_mode_type active_mode = active_list_get_mode( __active_list );
   if (active_mode == ALL_ACTIVE) 

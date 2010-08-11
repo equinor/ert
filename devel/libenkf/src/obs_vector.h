@@ -22,7 +22,7 @@ extern "C" {
 
 typedef void   (obs_free_ftype)                (void *);
 typedef void   (obs_get_ftype)                 (const void * , int , obs_data_type * , const active_list_type * );
-typedef void   (obs_meas_ftype)                (const void * , const void *, meas_vector_type * , const active_list_type * );
+typedef void   (obs_meas_ftype)                (const void * , const void *, int , meas_vector_type * , const active_list_type * );
 typedef void   (obs_user_get_ftype)            (void * , const char * , double * , double * , bool *); 
 typedef double (obs_chi2_ftype)                (const void * , const void *);
 

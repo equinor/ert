@@ -249,9 +249,9 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
   while ( !hash_iter_is_complete(iter) ) {
     const char * obs_key         = hash_iter_get_next_key( iter );
     obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , obs_key );
-    if (obs_vector_iget_active(obs_vector , report_step)) {                            /* The observation is active for this report step.     */
+    if (obs_vector_iget_active(obs_vector , report_step)) {                                         /* The observation is active for this report step.     */
       const active_list_type * active_list = local_ministep_get_obs_active_list( mstep , obs_key );
-      obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list); /* Collect the observed data in the obs_data instance. */
+      obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list);              /* Collect the observed data in the obs_data instance. */
       {
 	int iens;
 	for (iens = 0; iens < ens_size; iens++) {

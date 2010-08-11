@@ -180,7 +180,7 @@ void field_obs_get_observations(const field_obs_type * field_obs,  int  restart_
 
 
 
-void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, meas_vector_type * meas_vector , const active_list_type * __active_list) {
+void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, int report_step , meas_vector_type * meas_vector , const active_list_type * __active_list) {
   int iobs;
   
   active_mode_type active_mode = active_list_get_mode( __active_list );
