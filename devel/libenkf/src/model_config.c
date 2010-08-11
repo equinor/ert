@@ -209,7 +209,7 @@ void model_config_set_history_source( model_config_type * model_config , history
       /* We want to use the REFCASE */
       
       if (model_config->refcase != NULL) 
-        history_realloc_from_summary( model_config->history , model_config->refcase , use_history);        
+        history_use_summary( model_config->history , model_config->refcase , use_history);        
       else
         util_exit("%s: Invalid configuration. When using HISTORY_SOURCE != SCHEDULE you must supply a REFCASE.\n",__func__);
     }
