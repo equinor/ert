@@ -2,13 +2,11 @@
 #include <stdlib.h>
 #include <util.h>
 #include <string.h>
-#include <lsf_request.h>
 #include <hash.h>
 #include <vector.h>
 
-#define BLOCK_COMMAND "/d/proj/bg/enkf/bin/block_node.py"
-
-
+#define BLOCK_COMMAND        "/d/proj/bg/enkf/bin/block_node.py"
+#define STATOIL_LSF_REQUEST  "select[cs && x86_64Linux]"
 
 
 typedef struct {
