@@ -115,18 +115,27 @@ void active_list_add_index(active_list_type * active_list, int new_index) {
 
 
 /**
-   Observe that this function should **ONLY** be called when mode ==
-   PARTLY_ACTIVE, otherwise either all or none of the node's elements
-   are active; and it is the responsability of the calling scope to
-   infer that size.
+   When mode == PARTLY_ACTIVE the active_list instance knows the size
+   of the active set; if the mode is INACTIVE 0 will be returned and
+   if the mode is ALL_ACTIVE the input parameter @total_size will be
+   passed back to calling scope.
 */
 
-int active_list_get_active_size(const active_list_type * active_list) {
-  if (active_list->mode == PARTLY_ACTIVE)
-    return int_vector_size( active_list->index_list );
-  else {
-    util_abort("%s: internal error - asked for active size for object which is not PARTLY_ACTIVE \n");
-    return 0;
+
+int active_list_get_active_size(const active_list_type * active_list, int total_size) {
+  int active_size;
+  switch( active_list->mode ) {
+  case PARTLY_ACTIVE:
+    active_size = int_vector_size( active_list->index_list );
+    break;
+  case INACTIVE:
+    active_size = 0;
+    break;
+  case ALL_ACTIVE:
+    active_size = total_size;
+    break;
+  default:
+    util_abort("%s: internal fuckup \n",__func__);
   }
 }
 

@@ -14,7 +14,7 @@ void               active_list_reset(active_list_type * );
 void               active_list_add_index(active_list_type * , int);
 void               active_list_free( active_list_type *);
 const int        * active_list_get_active(const active_list_type * );
-int                active_list_get_active_size(const active_list_type * );
+int                active_list_get_active_size(const active_list_type * , int total_size );
 void               active_list_set_all_active(active_list_type * );
 void               active_list_set_data_size(active_list_type *  , int );
 void               active_list_free( active_list_type * );

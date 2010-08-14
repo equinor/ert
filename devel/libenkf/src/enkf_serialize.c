@@ -174,11 +174,7 @@ void enkf_matrix_serialize(const void * __node_data 	   	  ,
   
   int active_size;
   const int   * active_list    = active_list_get_active( __active_list ); 
-  active_mode_type active_mode = active_list_get_mode( __active_list );
-  if (active_mode == ALL_ACTIVE)
-    active_size = node_size;
-  else
-    active_size = active_list_get_active_size( __active_list );
+  active_size = active_list_get_active_size( __active_list , node_size);
 
   if (node_type == ECL_DOUBLE_TYPE) {
     const double * node_data = (const double *) __node_data;
@@ -221,11 +217,7 @@ void enkf_matrix_deserialize(void * __node_data 	   	,
   
   int active_size;
   const int   * active_list    = active_list_get_active( __active_list ); 
-  active_mode_type active_mode = active_list_get_mode( __active_list );
-  if (active_mode == ALL_ACTIVE)
-    active_size = node_size;
-  else
-    active_size = active_list_get_active_size( __active_list );
+  active_size = active_list_get_active_size( __active_list , node_size );
     
   if (node_type == ECL_DOUBLE_TYPE) {
     double * node_data = (double *) __node_data;
