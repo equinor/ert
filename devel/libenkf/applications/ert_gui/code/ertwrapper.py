@@ -21,6 +21,7 @@ class ErtWrapper:
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config,strict)
         print "\nBootstrap complete!"
 
+
         self.plot_config = self.__getErtPointer("enkf_main_get_plot_config")
         self.analysis_config = self.__getErtPointer("enkf_main_get_analysis_config")
         self.ecl_config = self.__getErtPointer("enkf_main_get_ecl_config")
@@ -255,6 +256,7 @@ class ErtWrapper:
         func.restype = c_long   # Should be c_size_t - if that exists.
         return func(self.main)
 
+    
     def createBoolVector(self, size, list):
         """Allocates a bool vector"""
         mask = self.util.bool_vector_alloc(size , False)

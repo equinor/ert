@@ -57,6 +57,10 @@ const char * member_config_update_eclbase(member_config_type * member_config , c
       free( tmp );
     }
   }
+
+  if (!ecl_util_valid_basename( member_config->eclbase )) 
+    util_exit("Sorry - the basename:%s is invalid. ECLIPSE does not handle mixed case :-( \n" , member_config->eclbase);
+  
   return member_config->eclbase;
 }
 

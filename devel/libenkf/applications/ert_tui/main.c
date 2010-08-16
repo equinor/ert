@@ -70,9 +70,9 @@ void enkf_usage() {
   printf(" **                                                                 **\n");
   printf(" **-----------------------------------------------------------------**\n");
   printf(" ** You have sucessfully started the ert program developed at       **\n");
-  printf(" ** StatoilHydro. Before you can actually start using the program,  **\n");
-  printf(" ** you must create a configuration file. When the configuration    **\n");
-  printf(" ** file has been created, you can start the ert application with:  **\n");
+  printf(" ** Statoil. Before you can actually start using the program, you   **\n");
+  printf(" ** must create a configuration file. When the configuration file   **\n");
+  printf(" ** has been created, you can start the ert application with:       **\n");
   printf(" **                                                                 **\n");
   printf(" **   bash> ert config_file                                         **\n");
   printf(" **                                                                 **\n");
@@ -92,7 +92,7 @@ int main (int argc , char ** argv) {
   printf("svn version : %s \n",SVN_VERSION);
   printf("compile time: %s \n",COMPILE_TIME_STAMP);
   enkf_main_install_SIGNALS();                     /* Signals common to both tui and gui. */
-  signal(SIGINT  , util_abort_signal);             /* Control C - tui only.*/
+  signal(SIGINT  , util_abort_signal);             /* Control C - tui only.               */
   enkf_main_init_debug( NULL );
   if (argc != 2) {
     enkf_usage();
