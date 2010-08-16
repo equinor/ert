@@ -88,7 +88,7 @@ static void svdS(const matrix_type * S , matrix_type * U0 , matrix_type * V0T , 
     int i;
     for (i=0; i < num_singular_values; i++)
       total_sigma2 += sig0[i] * sig0[i];
-
+    
     for (i=0; i < num_singular_values; i++) {
       if (running_sigma2 / total_sigma2 < truncation) {  /* Include one more singular value ? */
 	num_significant++;
@@ -802,7 +802,6 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int start_step, int end_step , const char * ministep_name , FILE * stream ) {
   const char * float_fmt = "%15.3f";
-  int iobs;
   fprintf(stream , "===============================================================================================================================\n");
   if (start_step == end_step)
     fprintf(stream , "Report step...: %04d \n",start_step);
@@ -811,38 +810,46 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
   
   fprintf(stream , "Ministep......: %s   \n",ministep_name);  
   fprintf(stream , "-------------------------------------------------------------------------------------------------------------------------------\n");
-  if (obs_data_get_nrobs( obs_data ) > 0) {
+  {
     char * obs_fmt = util_alloc_sprintf("  %%-3d : %%-32s %s +/-  %s" , float_fmt , float_fmt);
     char * sim_fmt = util_alloc_sprintf("   %s +/- %s  \n"            , float_fmt , float_fmt);
 
     fprintf(stream , "                                                         Observed history               |             Simulated data        \n");  
     fprintf(stream , "-------------------------------------------------------------------------------------------------------------------------------\n");
-    for (iobs = 0; iobs < obs_data_get_nrobs(obs_data); iobs++) {
-      obs_data_node_type * node = obs_data_iget_node( obs_data , iobs);
-      
-      
-      
-      fprintf(stream , obs_fmt ,iobs + 1 , 
-              obs_data_node_get_keyword(node),
-              obs_data_node_get_value(node),
-              obs_data_node_get_std(node));
-      
-      if (obs_data_node_active( node )) 
-        fprintf(stream , "  Active   |");
-      else
-        fprintf(stream , "  Inactive |");
-      {
-        double mean,std;
-        meas_matrix_iget_ens_mean_std( meas_matrix , iobs , &mean , &std);
-        fprintf(stream , sim_fmt, mean , std);
+    
+    {
+      int obs_count = 1;  /* Only for printing */
+      hash_iter_type * obs_iter = obs_data_alloc_hash_iter( obs_data );
+      while (!hash_iter_is_complete( obs_iter )) {
+        const char * obs_key = hash_iter_get_next_key( obs_iter );
+        const obs_block_type  * obs_block  = obs_data_get_block_const( obs_data , obs_key );
+        const meas_block_type * meas_block = meas_matrix_get_block_const( meas_matrix , obs_key );
+        
+        for (int iobs = 0; iobs < obs_block_get_size( obs_block ); iobs++) {
+          const char * print_key;
+          if (iobs == 0)
+            print_key = obs_key;
+          else
+            print_key = "  ...";
+          
+          fprintf(stream , obs_fmt , obs_count , print_key , obs_block_iget_value( obs_block , iobs ) , obs_block_iget_std( obs_block , iobs ));
+          {
+            active_type active_mode = obs_block_iget_active_mode( obs_block , iobs );
+            if (active_mode == ACTIVE)
+              fprintf(stream , "  Active   |");
+            else if (active_mode == DEACTIVATED)
+              fprintf(stream , "  Inactive |");
+          }
+          fprintf(stream , sim_fmt, meas_block_iget_ens_mean( meas_block , iobs ) , meas_block_iget_ens_std( meas_block , iobs ));
+          obs_count++;
+        }
       }
+      hash_iter_free( obs_iter );
     }
     
     free( obs_fmt );
     free( sim_fmt );
-  } else
-    fprintf(stream , "No observations for this ministep / report_step. \n");
-    
+  } 
   fprintf(stream , "===============================================================================================================================\n");
   fprintf(stream , "\n\n\n");
 }
@@ -851,38 +858,49 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
 
 
 void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_type * meas_matrix , double std_cutoff , double alpha) {
-  int nrobs = obs_data_get_nrobs( obs_data );
-  int iobs;
-  
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    if (meas_matrix_iget_ens_std( meas_matrix , iobs) < std_cutoff) {
-      /*
-	De activated because the ensemble has to small variation for
-	this particular measurement.
-      */
+  hash_iter_type * obs_iter = obs_data_alloc_hash_iter( obs_data );
+  {
+    while (!hash_iter_is_complete( obs_iter )) {
+      const char * obs_key = hash_iter_get_next_key( obs_iter );
+      obs_block_type * obs_block = obs_data_get_block( obs_data , obs_key );
+      meas_block_type * meas_block = meas_matrix_get_block( meas_matrix , obs_key );
       
-      obs_data_deactivate_obs(obs_data , iobs , "No ensemble variation");
-      meas_matrix_deactivate( meas_matrix , iobs );
-    } else {
-      double obs_value , obs_std;
-      double ens_value , ens_std;
-      double innov     ;
-      
-      obs_data_iget_value_std( obs_data , iobs , &obs_value , &obs_std);
-      meas_matrix_iget_ens_mean_std( meas_matrix , iobs , &ens_value , &ens_std);
-      innov = obs_value - ens_value;
-      
-      /* 
-	 Deactivated because the distance between the observed data
-	 and the ensemble prediction is to large. Keeping these
-	 outliers will lead to numerical problems.
-      */
-      if (fabs( innov ) > alpha * (ens_std + obs_std)) {
-	obs_data_deactivate_obs(obs_data , iobs , "No overlap");
-	meas_matrix_deactivate(meas_matrix , iobs);
+      meas_block_calculate_ens_stats( meas_block );
+      {
+        int iobs;
+        for (iobs =0; iobs < meas_block_get_total_size( meas_block ); iobs++) {
+          if (meas_block_iget_active( meas_block , iobs )) {
+            double ens_std  = meas_block_iget_ens_std( meas_block , iobs );
+            if (ens_std < std_cutoff) {
+              /*
+                De activated because the ensemble has to small
+                variation for this particular measurement.
+              */
+              obs_block_deactivate( obs_block , iobs , "No ensemble variation");
+              meas_block_deactivate( meas_block , iobs );
+            } else {
+              double ens_mean  = meas_block_iget_ens_mean( meas_block , iobs );
+              double obs_std   = obs_block_iget_std( obs_block , iobs );
+              double obs_value = obs_block_iget_value( obs_block , iobs );
+              double innov     = obs_value - ens_mean;
+
+              /* 
+                 Deactivated because the distance between the observed data
+                 and the ensemble prediction is to large. Keeping these
+                 outliers will lead to numerical problems.
+              */
+
+              if (fabs( innov ) > alpha * (ens_std + obs_std)) {
+                obs_block_deactivate(obs_block , iobs , "No overlap");
+                meas_block_deactivate(meas_block , iobs);
+              }
+            }
+          }
+        }
       }
     }
   }
+  hash_iter_free( obs_iter );
 }
 
 
@@ -890,35 +908,37 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_ty
 /*
   This function will allocate and initialize the matrices S,R,D and E
   and also the innovation. The matrices will be scaled with the
-  observation error and the mean will be subtracted from the S
-  matrix. 
+  observation error and the mean will be subtracted from the S matrix.
 */
 
-static void enkf_analysis_alloc_matrices( const meas_matrix_type * meas_matrix , const obs_data_type * obs_data , enkf_mode_type enkf_mode , 
+static void enkf_analysis_alloc_matrices( const meas_matrix_type * meas_matrix , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
                                           matrix_type ** S , 
                                           matrix_type ** R , 
                                           double      ** innov,
                                           matrix_type ** E ,
                                           matrix_type ** D ) {
-  int ens_size = meas_matrix_get_ens_size( meas_matrix );     
-  *S           = meas_matrix_allocS( meas_matrix );
-  *R           = obs_data_allocR(obs_data);
-  *innov       = obs_data_alloc_innov(obs_data , meas_matrix);
+  int ens_size              = meas_matrix_get_ens_size( meas_matrix );
+  int active_size           = obs_data_get_active_size( obs_data );
+  hash_iter_type * obs_iter = obs_data_alloc_hash_iter( obs_data );
+  *S                        = meas_matrix_allocS( meas_matrix , active_size , obs_iter );
+  *R                        = obs_data_allocR( obs_data , active_size , obs_iter);
+  *innov                    = obs_data_alloc_innov(obs_data , meas_matrix , active_size , obs_iter );
   
   if (enkf_mode == ENKF_STANDARD) {
     /* 
        We are using standard EnKF and need to perturbe the measurements,
        if we are using the SQRT scheme the E & D matrices are not used.
     */
-    *E = obs_data_allocE(obs_data , ens_size);
-    *D = obs_data_allocD(obs_data , *E , *S);
+    *E = obs_data_allocE(obs_data , ens_size, active_size , obs_iter);
+    *D = obs_data_allocD(obs_data , *E , *S , obs_iter);
   } else {
     *E          = NULL;
     *D          = NULL;
   }
   
-  obs_data_scale(obs_data , *S , *E , *D , *R , *innov );
+  obs_data_scale(obs_data , obs_iter , *S , *E , *D , *R , *innov );
   matrix_subtract_row_mean( *S );  /* Subtracting the ensemble mean */
+  hash_iter_free( obs_iter );
 }
 
 

@@ -10,7 +10,7 @@
 #include <field_obs.h> 
 #include <field_config.h>
 #include <obs_data.h>
-#include <meas_vector.h>
+#include <meas_matrix.h>
 #include <field_config.h>
 #include <field.h>
 #include <active_list.h>
@@ -35,7 +35,7 @@ typedef struct  {
 struct field_obs_struct {
   UTIL_TYPE_ID_DECLARATION;
   char   * field_name;   		  /** The state keyword for the observed field - PRESSURE / SWAT / PORO /...   */
-  char   * obs_label;    		  /** A user provided label for the observation.      */
+  char   * obs_key;    		  /** A user provided label for the observation.      */
   int      size;         		  /** The number of field cells observed.             */
   int    * index_list;   		  /** The list indices which are observed - (active indices). */
   int    * i;            		  /** The vector of indices i,j,k are equivalent to those in index_list - i,j,k are only retained for RFT plotting. */
@@ -87,7 +87,7 @@ static void point_obs_free( point_obs_type * point_obs ) {
    The input vectors i,j,k should contain offset zero values.
 */
 field_obs_type * field_obs_alloc(
-  const char   * obs_label,
+  const char   * obs_key,
   const field_config_type * field_config , 
   const char   * field_name,
   int            size,
@@ -102,7 +102,7 @@ field_obs_type * field_obs_alloc(
   UTIL_TYPE_ID_INIT( field_obs , FIELD_OBS_TYPE_ID );
   field_obs->size            = size;
   field_obs->field_name      = util_alloc_string_copy(field_name);
-  field_obs->obs_label       = util_alloc_string_copy(obs_label);
+  field_obs->obs_key       = util_alloc_string_copy(obs_key);
   field_obs->index_list      = util_malloc( size * sizeof * field_obs->index_list , __func__);
   field_obs->field_config    = field_config;
   field_obs->keylist         = stringlist_alloc_new();
@@ -113,7 +113,7 @@ field_obs_type * field_obs_alloc(
 	int active_index = field_config_active_index(field_config , i[l] , j[l] , k[l]);
 	if (active_index >= 0) {
 	  field_obs->index_list[l] = active_index;
-          stringlist_append_owned_ref( field_obs->keylist , util_alloc_sprintf("%s:%d,%d,%d" , obs_label , i[l]+1 , j[l]+1 , k[l]+1));
+          stringlist_append_owned_ref( field_obs->keylist , util_alloc_sprintf("%s:%d,%d,%d" , obs_key , i[l]+1 , j[l]+1 , k[l]+1));
         } else
 	  util_abort("%s: sorry: cell:(%d,%d,%d) is not active - can not observe it. \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
       } else
@@ -139,7 +139,7 @@ void field_obs_free(
   free(field_obs->obs_value);
   free(field_obs->obs_std);
   free(field_obs->field_name);
-  free(field_obs->obs_label);
+  free(field_obs->obs_key);
   free(field_obs->i);
   free(field_obs->j);
   free(field_obs->k);
@@ -162,17 +162,19 @@ const char * field_obs_get_field_name(
 
 void field_obs_get_observations(const field_obs_type * field_obs,  int  restart_nr,  obs_data_type * obs_data,  const active_list_type * __active_list) {
   int i;
+  int active_size              = active_list_get_active_size( __active_list , field_obs->size );
   active_mode_type active_mode = active_list_get_mode( __active_list );
+  obs_block_type * obs_block   = obs_data_add_block( obs_data , field_obs->obs_key , field_obs->size );
+  
   if (active_mode == ALL_ACTIVE) {
     for (i=0; i < field_obs->size; i++) 
-      obs_data_add(obs_data , field_obs->obs_value[i] , field_obs->obs_std[i] , stringlist_iget(field_obs->keylist , i) );
+      obs_block_iset(obs_block , i , field_obs->obs_value[i] , field_obs->obs_std[i] );
     
   } else if (active_mode == PARTLY_ACTIVE) {
     const int   * active_list    = active_list_get_active( __active_list ); 
-    int active_size              = active_list_get_active_size( __active_list );
     for (i =0 ; i < active_size; i++) {
       int iobs = active_list[i];
-      obs_data_add(obs_data , field_obs->obs_value[iobs] , field_obs->obs_std[iobs] , stringlist_iget(field_obs->keylist , iobs) );
+      obs_block_iset(obs_block , iobs , field_obs->obs_value[iobs] , field_obs->obs_std[iobs] );
     }
   }
 }
@@ -180,22 +182,23 @@ void field_obs_get_observations(const field_obs_type * field_obs,  int  restart_
 
 
 
-void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, int report_step , meas_vector_type * meas_vector , const active_list_type * __active_list) {
+void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, int report_step , int iens , meas_matrix_type * meas_matrix , const active_list_type * __active_list) {
+  int active_size = active_list_get_active_size( __active_list , field_obs->size );
+  meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , field_obs->obs_key , field_obs->size );
   int iobs;
-  
+
   active_mode_type active_mode = active_list_get_mode( __active_list );
   if (active_mode == ALL_ACTIVE) {
     for (iobs=0; iobs < field_obs->size; iobs++) {
       double value = field_iget_double(field_state , field_obs->index_list[iobs]);
-      meas_vector_add(meas_vector , value);
+      meas_block_iset( meas_block , iens , iobs , value );
     }
   } else if (active_mode == PARTLY_ACTIVE) {
     const int   * active_list    = active_list_get_active( __active_list ); 
-    int active_size              = active_list_get_active_size( __active_list );
     for (int i =0 ; i < active_size; i++) {
       iobs = active_list[i];
       double value = field_iget_double(field_state , field_obs->index_list[iobs]);
-      meas_vector_add(meas_vector , value);
+      meas_block_iset( meas_block , iens , field_obs->index_list[ iobs ] , value );
     }
   }
 }

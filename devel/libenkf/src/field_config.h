@@ -172,7 +172,6 @@ UTIL_SAFE_CAST_HEADER(field_config);
 UTIL_SAFE_CAST_HEADER_CONST(field_config);
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
 VOID_FREE_HEADER(field_config);
-GET_ACTIVE_LIST_HEADER(field);
 VOID_GET_DATA_SIZE_HEADER(field);
 #ifdef __cplusplus
 }

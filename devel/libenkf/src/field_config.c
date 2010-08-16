@@ -11,7 +11,6 @@
 #include <rms_util.h>
 #include <path_fmt.h>
 #include <math.h>
-#include <active_list.h>
 #include <field_trans.h>
 #include <field_common.h>
 #include "config_keys.h"  
@@ -108,8 +107,6 @@ struct field_config_struct {
   int data_size , nx,ny,nz;              /* The number of elements in the three directions. */
   ecl_grid_type * grid;                  /* A shared reference to the grid this field is defined on. */
   bool  private_grid;
-  
-  active_list_type      * active_list;
   
   int             	  truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. OR'd combination of truncation_type from enkf_types.h*/
   double   	  	  min_value;            /* The min value used in truncation. */
@@ -400,7 +397,6 @@ field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_gri
   
   config->ecl_kw_name      = util_alloc_string_copy( ecl_kw_name );
   config->private_grid     = false;
-  config->active_list      = active_list_alloc( ALL_ACTIVE );
   config->__enkf_mode      = true;
   config->grid             = NULL;
   config->write_compressed = true;
@@ -665,7 +661,6 @@ void field_config_free(field_config_type * config) {
   util_safe_free(config->input_transform_name);
   util_safe_free(config->output_transform_name);
   util_safe_free(config->init_transform_name);
-  active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
   if ((config->private_grid) && (config->grid != NULL)) ecl_grid_free( config->grid );
   free(config);
@@ -1035,5 +1030,5 @@ CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_GET_DATA_SIZE(field)
 VOID_FREE(field_config)
-GET_ACTIVE_LIST(field);
+
 

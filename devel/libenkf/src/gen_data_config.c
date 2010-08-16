@@ -10,7 +10,6 @@
 #include <pthread.h>
 #include <path_fmt.h>
 #include <gen_data_common.h>
-#include <active_list.h>
 #include <int_vector.h>
 #include "config_keys.h"
 #include "enkf_defaults.h"
@@ -29,10 +28,9 @@ struct gen_data_config_struct {
   path_fmt_type  	       * init_file_fmt;         /* file format for the file used to load the inital values - NULL if the instance is initialized from the forward model. */
   gen_data_file_format_type    	 input_format;          /* The format used for loading gen_data instances when the forward model has completed *AND* for loading the initial files.*/
   gen_data_file_format_type    	 output_format;         /* The format used when gen_data instances are written to disk for the forward model. */
-  active_list_type             * active_list;           /* List of (EnKF) active indices. */
-  pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
   int_vector_type              * data_size_vector;      /* Data size, i.e. number of elements , indexed with report_step */
   bool                           update_valid; 
+  pthread_mutex_t                update_lock;  
 };
 
 /*****************************************************************/
@@ -91,7 +89,6 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   config->template_key      = NULL;
   config->data_size  	    = 0;
   config->internal_type     = ECL_DOUBLE_TYPE;
-  config->active_list       = active_list_alloc( ALL_ACTIVE );
   config->input_format      = GEN_DATA_UNDEFINED;
   config->output_format     = GEN_DATA_UNDEFINED;
   config->data_size_vector  = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
@@ -268,7 +265,6 @@ gen_data_file_format_type gen_data_config_check_format( const void * format_stri
 
 
 void gen_data_config_free(gen_data_config_type * config) {
-  active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free(config->init_file_fmt);
   int_vector_free( config->data_size_vector );
   
@@ -416,4 +412,3 @@ void gen_data_config_fprintf_config( const gen_data_config_type * config , enkf_
 /*****************************************************************/
 
 VOID_FREE(gen_data_config)
-GET_ACTIVE_LIST(gen_data)

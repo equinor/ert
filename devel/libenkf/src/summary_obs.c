@@ -14,12 +14,13 @@
 
 
 #define SUMMARY_OBS_TYPE_ID 66103
-
+#define OBS_SIZE 1
 
 struct summary_obs_struct {
   UTIL_TYPE_ID_DECLARATION;
   char    * summary_key;    /** The observation, in summary.x syntax, e.g. GOPR:FIELD.    */
-
+  char    * obs_key;
+  
   double    value;          /** Observation value. */
   double    std;            /** Standard deviation of observation. */
 };
@@ -39,15 +40,16 @@ struct summary_obs_struct {
   TODO
   Should check summary_key on alloc.
 */
-summary_obs_type * summary_obs_alloc(  
-  const char   * summary_key,
-  double value ,
-  double std)
+summary_obs_type * summary_obs_alloc(const char   * summary_key,
+                                     const char   * obs_key , 
+                                     double value ,
+                                     double std)
 {
   summary_obs_type * obs = util_malloc(sizeof * obs , __func__);
   UTIL_TYPE_ID_INIT( obs , SUMMARY_OBS_TYPE_ID )
 
-  obs->summary_key   = util_alloc_string_copy(summary_key);
+    obs->summary_key   = util_alloc_string_copy( summary_key );
+  obs->obs_key       = util_alloc_string_copy( obs_key );
   obs->value         = value;
   obs->std           = std;
   
@@ -87,28 +89,22 @@ void summary_obs_get_observations(const summary_obs_type * summary_obs,
 				  obs_data_type          * obs_data,
 				  const active_list_type * __active_list) {
 
-  active_mode_type active_mode = active_list_get_mode( __active_list );
-  if ((active_mode == ALL_ACTIVE) || (active_mode == PARTLY_ACTIVE)) {
-    char * key = util_alloc_sprintf( "%s (%d)" , summary_obs->summary_key, restart_nr);
-    obs_data_add(obs_data , summary_obs->value , summary_obs->std , key);
-    free( key );
+  int active_size              = active_list_get_active_size( __active_list , OBS_SIZE );
+  if (active_size == 1) {
+    obs_block_type * obs_block   = obs_data_add_block( obs_data , summary_obs->obs_key , OBS_SIZE );
+    obs_block_iset( obs_block , 0 , summary_obs->value , summary_obs->std );
   }
 }
 
 
 
-void summary_obs_measure(const summary_obs_type * obs, const summary_type * summary, int report_step , meas_vector_type * meas_vector , const active_list_type * __active_list) {
-
-  active_mode_type active_mode = active_list_get_mode( __active_list );
-  if (active_mode == ALL_ACTIVE) 
-    meas_vector_add(meas_vector , summary_get(summary));
-  else if (active_mode == PARTLY_ACTIVE) {
-    int active_size = active_list_get_active_size( __active_list );
-    if (active_size == 1)
-      meas_vector_add(meas_vector , summary_get(summary));
+void summary_obs_measure(const summary_obs_type * obs, const summary_type * summary, int report_step , int iens , meas_matrix_type * meas_matrix , const active_list_type * __active_list) {
+  int active_size = active_list_get_active_size( __active_list , OBS_SIZE );
+  if (active_size == 1) {
+    meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , obs->obs_key , active_size );
+    meas_block_iset( meas_block , iens , 0 , summary_get(summary));
   }
 }
-
 
  
 
@@ -117,9 +113,6 @@ double summary_obs_chi2(const summary_obs_type * obs,
   double x = (summary_get(summary) - obs->value) / obs->std;
   return x*x;
 }
-
-
-
 
 
 

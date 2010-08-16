@@ -24,6 +24,7 @@ void summary_obs_free(
 
 summary_obs_type * summary_obs_alloc(
   const char   * summary_key,
+  const char * obs_key , 
   double  value ,
   double  std);
 

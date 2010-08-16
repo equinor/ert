@@ -56,6 +56,8 @@ UTIL_SAFE_CAST_FUNCTION(active_list , ACTIVE_LIST_TYPE_ID)
 
 
 
+
+
 /**
    The newly created active_list default to setting all indices actiove.
 */
@@ -114,6 +116,7 @@ void active_list_add_index(active_list_type * active_list, int new_index) {
 
 
 
+
 /**
    When mode == PARTLY_ACTIVE the active_list instance knows the size
    of the active set; if the mode is INACTIVE 0 will be returned and
@@ -136,7 +139,9 @@ int active_list_get_active_size(const active_list_type * active_list, int total_
     break;
   default:
     util_abort("%s: internal fuckup \n",__func__);
+    active_size = -1;
   }
+  return active_size;
 }
 
 

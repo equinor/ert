@@ -5,7 +5,6 @@
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <trans_func.h>
-#include <active_list.h>
 #include <enkf_defaults.h>
 #include <gen_kw_common.h>
 #include <gen_kw_config.h>
@@ -31,7 +30,6 @@ struct gen_kw_config_struct {
   UTIL_TYPE_ID_DECLARATION;
   char                 * key;
   vector_type          * parameters;       /* Vector of gen_kw_parameter_type instances. */
-  active_list_type     * active_list;
   char                 * template_file;
   char                 * parameter_file;
   path_fmt_type        * init_file_fmt;    /* The format for loading init_files - if this is NULL the initialization is done by sampling N(0,1) numbers. */
@@ -128,7 +126,6 @@ void gen_kw_config_set_template_file( gen_kw_config_type * config , const char *
 void gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char * parameter_file ) {
   config->parameter_file = util_realloc_string_copy( config->parameter_file , parameter_file );
   vector_clear( config->parameters );
-  printf("Loading parameters from:%s \n",parameter_file);
   if (parameter_file != NULL) {
     FILE * stream = util_fopen(parameter_file , "r");
     
@@ -191,7 +188,6 @@ gen_kw_config_type * gen_kw_config_alloc_empty( const char * key , const char * 
   gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config , __func__);
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
 
-  gen_kw_config->active_list        = active_list_alloc( ALL_ACTIVE );
   gen_kw_config->key                = NULL; 
   gen_kw_config->init_file_fmt      = NULL;
   gen_kw_config->template_file      = NULL;
@@ -226,7 +222,6 @@ void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
   util_safe_free( gen_kw_config->template_file );
   util_safe_free( gen_kw_config->parameter_file );
 
-  active_list_free( gen_kw_config->active_list );
   vector_free( gen_kw_config->parameters );
   if (gen_kw_config->init_file_fmt != NULL)
     path_fmt_free( gen_kw_config->init_file_fmt );

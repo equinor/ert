@@ -13,6 +13,7 @@ extern "C" {
 #include <active_list.h>
 #include <matrix.h>
 #include <log.h>
+#include <meas_matrix.h>
 
 #define CONFIG_STD_FIELDS \
 int __type_id;            \
@@ -21,11 +22,7 @@ int data_size;
 
 
 /*****************************************************************/
-#define GET_ACTIVE_LIST(prefix)        const active_list_type * prefix ## _config_get_active_list(const prefix ## _config_type * config) { return config->active_list; } 
-#define GET_ACTIVE_LIST_HEADER(prefix) const active_list_type * prefix ## _config_get_active_list(const prefix ## _config_type * );
 
-
-/*****************************************************************/
 #define IS_INSTANCE(prefix,ID) \
 bool prefix ## _is_instance__(const void * __arg) {             	   \
   prefix ## _type * arg = (prefix ## _type *) __arg;         	   \
@@ -238,13 +235,13 @@ void prefix ## _get_observations__(const void * void_arg , int report_step, obs_
 /*****************************************************************/
 
 #define VOID_MEASURE(obs_prefix, state_prefix) \
-void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state , int report_step , meas_vector_type * meas_vector, const active_list_type * __active_list) { \
+void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state , int report_step , int iens , meas_matrix_type * meas_matrix , const active_list_type * __active_list) { \
    const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast_const( void_obs );     \
    const state_prefix ## _type * state = state_prefix ## _safe_cast_const( void_state );       \
-   obs_prefix ## _measure(obs , state , report_step , meas_vector , __active_list);                    \
+   obs_prefix ## _measure(obs , state , report_step , iens , meas_matrix , __active_list);                    \
 }
 
-#define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , int , meas_vector_type * , const active_list_type *)
+#define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , int , int , meas_matrix_type * , const active_list_type *)
 
 
 /*****************************************************************/

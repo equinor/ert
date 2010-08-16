@@ -615,7 +615,7 @@ static int __get_active_size(const enkf_config_node_type * config_node , int rep
   else if (active_mode == ALL_ACTIVE)
     active_size = enkf_config_node_get_data_size( config_node , report_step );
   else if (active_mode == PARTLY_ACTIVE)
-    active_size = active_list_get_active_size( active_list );
+    active_size = active_list_get_active_size( active_list , -1 );
   else {
     util_abort("%s: internal error .. \n",__func__);
     active_size = -1; /* Compiler shut up */
@@ -1147,9 +1147,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
 				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
       }
 
-      meas_matrix_calculate_ens_stats( meas_forecast );
       enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
-
+      
       /* How the fuck does dup() work?? */
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , start_step , end_step , local_ministep_get_name( ministep ) , stdout );
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , start_step , end_step , local_ministep_get_name( ministep ) , log_stream );

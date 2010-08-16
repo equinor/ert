@@ -219,8 +219,8 @@ static void obs_vector_install_node(obs_vector_type * obs_vector , int index , v
    observation key - the two can be different.
 */
 
-void obs_vector_add_summary_obs( obs_vector_type * obs_vector , int obs_index , const char * summary_key , double value , double std) {
-  summary_obs_type * summary_obs = summary_obs_alloc( summary_key , value , std );
+static void obs_vector_add_summary_obs( obs_vector_type * obs_vector , int obs_index , const char * summary_key , const char * obs_key , double value , double std) {
+  summary_obs_type * summary_obs = summary_obs_alloc( summary_key , obs_key , value , std );
   obs_vector_install_node( obs_vector , obs_index , summary_obs );
 }
 
@@ -340,7 +340,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
     int          size            = history_get_num_restarts(          history          );
     int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , sched_file , size);
 
-    obs_vector_add_summary_obs( obs_vector , obs_restart_nr , sum_key , obs_value , obs_error );
+    obs_vector_add_summary_obs( obs_vector , obs_restart_nr , sum_key , obs_key , obs_value , obs_error );
   }
 }
 
@@ -503,7 +503,7 @@ void obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , con
     for (restart_nr = 0; restart_nr < size; restart_nr++) {
       if (bool_vector_iget( valid , restart_nr)) {
         if (double_vector_iget( std , restart_nr) > std_cutoff)
-          obs_vector_add_summary_obs( obs_vector , restart_nr , sum_key , double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ));
+          obs_vector_add_summary_obs( obs_vector , restart_nr , sum_key , sum_key , double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ));
         else 
           fprintf(stderr,"** Warning: to small observation error in observation %s:%d - ignored. \n", sum_key , restart_nr);
       }
@@ -592,10 +592,10 @@ void obs_vector_iget_observations(const obs_vector_type * obs_vector , int repor
 }
 
 
-void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,const enkf_node_type * enkf_node ,  meas_vector_type * meas_vector, const active_list_type * active_list) {
+void obs_vector_measure(const obs_vector_type * obs_vector , int report_step , int iens , const enkf_node_type * enkf_node ,  meas_matrix_type * meas_matrix , const active_list_type * active_list) {
   void * obs_node = vector_iget( obs_vector->nodes , report_step );
   if ( obs_node != NULL) 
-    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , report_step , meas_vector, active_list);
+    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , report_step , iens , meas_matrix , active_list);
 }
 
 

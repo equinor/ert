@@ -60,7 +60,6 @@ void gen_data_config_fprintf_config( const gen_data_config_type * config , enkf_
 
 UTIL_SAFE_CAST_HEADER(gen_data_config)
 UTIL_SAFE_CAST_HEADER_CONST(gen_data_config)
-GET_ACTIVE_LIST_HEADER(gen_data)
 VOID_FREE_HEADER(gen_data_config)
 
 #ifdef __cplusplus

@@ -8,7 +8,7 @@
 #include <enkf_macros.h>
 #include <util.h>
 #include <gen_obs.h>
-#include <meas_vector.h>
+#include <meas_matrix.h>
 #include <obs_data.h>
 #include <gen_data.h>
 #include <gen_obs.h>
@@ -207,22 +207,24 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
 
 
 
-void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , int report_step , meas_vector_type * meas_vector, const active_list_type * __active_list) {
+void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , int report_step , int iens , meas_matrix_type * meas_matrix, const active_list_type * __active_list) {
   gen_obs_assert_data_size(gen_obs , gen_data);
   {
+    int active_size              = active_list_get_active_size( __active_list , gen_obs->obs_size );
+    meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , gen_obs->obs_key , active_size );
     active_mode_type active_mode = active_list_get_mode( __active_list );
+
     int iobs;
     if (active_mode == ALL_ACTIVE) {
       for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 
-        meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
+        meas_block_iset( meas_block , iens , iobs , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
     } else if ( active_mode == PARTLY_ACTIVE) {
       const int   * active_list    = active_list_get_active( __active_list ); 
-      int active_size              = active_list_get_active_size( __active_list );
       int index;
       
       for (index = 0; index < active_size; index++) {
-        iobs = active_list[index];
-        meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
+        iobs = active_list[ index ];
+        meas_block_iset( meas_block , iens , iobs , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
       }
     }
   }
@@ -233,18 +235,19 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data, const active_list_type * __active_list) {
   int iobs;
   active_mode_type active_mode = active_list_get_mode( __active_list );
-  
+  obs_block_type * obs_block   = obs_data_add_block( obs_data , gen_obs->obs_key , gen_obs->obs_size );
+
   if (active_mode == ALL_ACTIVE) {
     for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 
-      obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , stringlist_iget(gen_obs->keylist, iobs));
+      obs_block_iset( obs_block , iobs , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs]);
   } else if (active_mode == PARTLY_ACTIVE) {
     const int   * active_list    = active_list_get_active( __active_list ); 
-    int active_size              = active_list_get_active_size( __active_list );
+    int active_size              = active_list_get_active_size( __active_list , gen_obs->obs_size);
     int index;
     
     for (index = 0; index < active_size; index++) {
       iobs = active_list[index];
-      obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , stringlist_iget(gen_obs->keylist, iobs));
+      obs_block_iset( obs_block , iobs  , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] );
     }
   }
 }

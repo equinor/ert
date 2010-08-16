@@ -940,6 +940,7 @@ int field_get_active_index(const field_type * field , int i , int j  , int k) {
 
 
 
+
 /**
    Copying data from a (PACKED) ecl_kw instance down to a fields data.
 */

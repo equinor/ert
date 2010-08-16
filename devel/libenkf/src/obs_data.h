@@ -7,32 +7,42 @@ extern "C" {
 #include <stdbool.h>
 #include <matrix.h>
 #include <meas_matrix.h>
+#include <hash.h>
+#include <enkf_types.h>
 
-typedef struct obs_data_struct      obs_data_type;
-typedef struct obs_data_node_struct obs_data_node_type;
+typedef struct obs_data_struct   obs_data_type;
+typedef struct obs_block_struct  obs_block_type;
 
-const char *  obs_data_node_get_keyword( const obs_data_node_type * node );
-double 	      obs_data_node_get_std( const obs_data_node_type * node );
-double 	      obs_data_node_get_value( const obs_data_node_type * node );
-bool          obs_data_node_active(const obs_data_node_type * node);
+const char * obs_data_iget_keyword( const obs_data_type * obs_data , int index );
+double       obs_data_iget_value( const obs_data_type * obs_data , int index );
+double       obs_data_iget_std( const obs_data_type * obs_data , int index );
+active_type  obs_data_iget_active_mode( const obs_data_type * obs_data , int index );
+void         obs_block_deactivate( obs_block_type * obs_block , int iobs , const char * msg);
+int          obs_block_get_size( const obs_block_type * obs_block );
+void         obs_block_iset( obs_block_type * obs_block , int iobs , double value , double std);
 
+double obs_block_iget_std( const obs_block_type * obs_block , int iobs);
+double obs_block_iget_value( const obs_block_type * obs_block , int iobs);
+bool   obs_block_iget_active( const obs_block_type * obs_block , int iobs);
+
+
+
+const obs_block_type *     obs_data_get_block_const( const obs_data_type * obs_data , const char * obs_key );
+obs_block_type *     obs_data_get_block( obs_data_type * obs_data , const char * obs_key );
+obs_block_type *     obs_data_add_block( obs_data_type * obs_data , const char * obs_key , int obs_size );
 
 obs_data_type      * obs_data_alloc();
-obs_data_node_type * obs_data_iget_node( const obs_data_type * obs_data , int index );
 void          	     obs_data_free(obs_data_type *);
-void          	     obs_data_add(obs_data_type * , double , double , const char * );
 void          	     obs_data_reset(obs_data_type * obs_data);
-matrix_type   	   * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S);
-matrix_type   	   * obs_data_allocR(const obs_data_type * obs_data);
-double             * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix);
-matrix_type   	   * obs_data_allocE(const obs_data_type * obs_data , int ens_size);
-void                 obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov);
-int           	     obs_data_get_nrobs(const obs_data_type * );
-void          	     obs_data_deactivate_outliers(obs_data_type * , const double * , const double *, double , double , int * , bool **);
-void          	     obs_data_fprintf(const obs_data_type * , FILE * , const double * , const double *);
+matrix_type   	   * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S, hash_iter_type * obs_iter);
+matrix_type   	   * obs_data_allocR(const obs_data_type * obs_data , int active_size , hash_iter_type * obs_iter);
+double             * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int active_size , hash_iter_type * obs_iter);
+matrix_type        * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int active_size , hash_iter_type * obs_iter );
+  void                 obs_data_scale(const obs_data_type * obs_data , hash_iter_type * obs_iter , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov);
+void          	     obs_data_fprintf(const obs_data_type * , const meas_matrix_type * meas_matrix , FILE *);
 void          	     obs_data_iget_value_std(const obs_data_type * obs_data , int index , double * value ,  double * std);
-void          	     obs_data_deactivate_obs(obs_data_type * obs_data , int iobs,const char * msg);
-int                  obs_data_get_active_size( const obs_data_type  * obs_data );
+hash_iter_type     * obs_data_alloc_hash_iter( const obs_data_type * obs_data );
+int                  obs_data_get_active_size(  obs_data_type * obs_data );
 
 #ifdef __cplusplus
 }

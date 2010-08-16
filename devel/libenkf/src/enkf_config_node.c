@@ -198,7 +198,6 @@ void enkf_config_node_update_gen_kw( enkf_config_node_type * config_node ,
                                      const char * parameter_file   ,
                                      const char * min_std_file     ,
                                      const char * init_file_fmt ) {
-  printf("Running: %s \n",__func__);
 
   /* 1: Update the low level gen_kw_config stuff. */
   gen_kw_config_update( config_node->data , template_file , parameter_file , init_file_fmt );    

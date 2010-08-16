@@ -9,6 +9,26 @@ extern "C" {
 
 
 /*
+  This enum signals the three different states a "cell" in
+  observation/data node can be in:
+
+  ACTIVE: The cell is active ans should be used/updated in EnKF
+    analysis.
+
+  LOCAL_INACTIVE: The cell is not included in the current local
+    analysis ministep
+
+  DEACTIVATED: The cell has been deactivated by the functionality
+    deactivating outliers.
+
+*/
+
+typedef enum { ACTIVE         = 1,
+               LOCAL_INACTIVE = 2,
+               DEACTIVATED    = 3 } active_type;
+
+
+/*
   The enkf_var_type enum defines logical groups of variables. All
   variables in the same group, i.e. 'parameter' are typically treated
   in the same manner. So the reason for creating this type is to be

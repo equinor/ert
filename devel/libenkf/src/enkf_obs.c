@@ -253,13 +253,14 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
       const active_list_type * active_list = local_ministep_get_obs_active_list( mstep , obs_key );
       obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list);              /* Collect the observed data in the obs_data instance. */
       {
+
+        /* Could be multithreaded */
 	int iens;
-	for (iens = 0; iens < ens_size; iens++) {
+        for (iens = 0; iens < ens_size; iens++) {
 	  enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
-	  meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
 
 	  enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
-	  obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector , active_list);
+	  obs_vector_measure(obs_vector , report_step , iens , enkf_node , meas_matrix , active_list);
 	}
       }
     } 
