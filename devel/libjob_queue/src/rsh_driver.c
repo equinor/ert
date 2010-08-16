@@ -215,7 +215,7 @@ void * rsh_driver_submit_job(void  * __driver,
                              const char * submit_cmd  	  , 
                              const char * run_path    	  ,
                              const char * job_name        ,
-                             const void * job_arg) {
+                             const char ** arg_list ) {
   
   rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
   rsh_job_type  * job      = NULL; 

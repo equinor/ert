@@ -380,8 +380,8 @@ void * lsf_driver_submit_job(void * __driver ,
                              int   queue_index , 
                              const char * submit_cmd  	  , 
                              const char * run_path    	  , 
-                             const char * job_name,
-                             const void * job_arg ) {
+                             const char * job_name ,
+                             const char ** arg_list ) {
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   {
     lsf_job_type * job 		  = lsf_job_alloc();

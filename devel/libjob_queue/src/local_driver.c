@@ -106,7 +106,7 @@ void * local_driver_submit_job(void * __driver,
                                const char * submit_cmd  	  , 
                                const char * run_path    	  , 
                                const char * job_name              ,
-                               const void * job_arg) {
+                               const char ** arg_list ) {
   local_driver_type * driver = local_driver_safe_cast( __driver );
   {
     local_job_type * job    = local_job_alloc();
