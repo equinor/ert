@@ -14,7 +14,6 @@
 
 struct rsh_job_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int          node_index;
   bool         active;       /* Means that it allocated - not really in use */ 
   job_status_type status;        
   pthread_t    run_thread;
@@ -167,13 +166,12 @@ static void * rsh_host_submit_job__(void * __arg_pack) {
 
 
 
-rsh_job_type * rsh_job_alloc(int node_index , const char * run_path) {
+rsh_job_type * rsh_job_alloc(const char * run_path) {
   rsh_job_type * job;
   job = util_malloc(sizeof * job , __func__);
   job->active     = false;
   job->status     = JOB_QUEUE_WAITING;
   job->run_path   = util_alloc_string_copy(run_path);
-  job->node_index = node_index;
   UTIL_TYPE_ID_INIT( job , RSH_JOB_TYPE_ID );
   return job;
 }
@@ -206,7 +204,7 @@ job_status_type rsh_driver_get_job_status(void * __driver , void * __job) {
 
 
 
-void rsh_driver_free_job(void * __driver , void * __job) {
+void rsh_driver_free_job( void * __job ) {
   rsh_job_type    * job    = rsh_job_safe_cast( __job );
   rsh_job_free(job);
 }
@@ -223,7 +221,6 @@ void rsh_driver_kill_job(void * __driver ,void  * __job) {
 
 
 void * rsh_driver_submit_job(void  * __driver, 
-                             int   node_index , 
                              const char  * submit_cmd  	  , 
                              const char  * run_path    	  ,
                              const char  * job_name        ,
@@ -255,7 +252,7 @@ void * rsh_driver_submit_job(void  * __driver,
                                                         freeing it here is dangerous, because we might free it before the 
                                                         thread-called function is finished with it. */
 
-      job = rsh_job_alloc(node_index , run_path);
+      job = rsh_job_alloc(run_path);
 
       arg_pack_append_ptr(arg_pack ,  driver->rsh_command);
       arg_pack_append_ptr(arg_pack ,  host);
