@@ -248,7 +248,8 @@ typedef struct {
   char                 	*job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
   void           	*job_data;        /* Driver specific data about this job - fully handled by the driver. */
-  const char           **arg_list;  
+  int                    argc;            /* The number of commandline arguments to pass when starting the job. */ 
+  char                 **argv;            /* The commandline arguments. */
   time_t                 submit_time;     /* When was the job added to job_queue - the FIRST TIME. */
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
   pthread_rwlock_t       job_lock;        /* This lock provides read/write locking of the job_data field. */ 
@@ -315,6 +316,8 @@ static void job_queue_node_clear(job_queue_node_type * node) {
   node->job_data       = NULL;
   node->exit_file      = NULL;
   node->ok_file        = NULL;
+  node->argc           = 0;
+  node->argv           = NULL;
 }
 
 
@@ -335,6 +338,7 @@ static void job_queue_node_free_data(job_queue_node_type * node) {
   util_safe_free(node->job_name);  
   util_safe_free(node->exit_file); 
   util_safe_free(node->ok_file);   
+  util_free_stringlist( node->argv , node->argc );
   if (node->job_data != NULL) 
     util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }
@@ -365,12 +369,14 @@ static void job_queue_node_finalize(job_queue_node_type * node) {
 static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , job_status_type );
 
 
-static void job_queue_initialize_node(job_queue_type * queue , const char * run_path , const char * job_name , int job_index , const void * job_arg) {
+static void job_queue_initialize_node(job_queue_type * queue , const char * run_path , const char * job_name , int job_index , int argc , const char ** argv) {
   job_queue_node_type * node = queue->jobs[job_index];
   node->submit_attempt = 0;
   node->job_name       = util_alloc_string_copy( job_name );
   node->job_data       = NULL;                                    /* The allocation is run in single thread mode - we assume. */
-  
+  node->argc           = argc;
+  node->argv           = util_alloc_stringlist_copy( argv , argc );
+
   if (util_is_abs_path(run_path)) 
     node->run_path = util_alloc_string_copy( run_path );
   else
@@ -517,7 +523,8 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
                                           queue->run_cmd , 
                                           node->run_path , 
                                           node->job_name , 
-                                          node->arg_list );
+                                          node->argc     , 
+                                          (const char **) node->argv );
         
         if (job_data != NULL) {
           pthread_rwlock_wrlock( &node->job_lock );
@@ -1003,9 +1010,9 @@ void * job_queue_run_jobs__(void * __arg_pack) {
 */
 
 
-void job_queue_insert_job(job_queue_type * queue , const char * run_path , const char * job_name , int job_index , const char ** arg_list) {
+void job_queue_insert_job(job_queue_type * queue , const char * run_path , const char * job_name , int job_index , int argc , const char ** argv) {
   if (!queue->user_exit) /* We do not accept new jobs if a user-shutdown has been iniated. */
-    job_queue_initialize_node(queue , run_path , job_name , job_index , arg_list);
+    job_queue_initialize_node(queue , run_path , job_name , job_index , argc , argv);
 }
 
 

@@ -109,18 +109,29 @@ static bool rsh_host_available(rsh_host_type * rsh_host) {
 
 
 
-static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, const char * rsh_cmd , const char * submit_cmd , const char * run_path) {
+static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, const char * rsh_cmd , const char * submit_cmd , int job_argc , const char ** job_argv) {
   /* 
      Observe that this job has already been added to the running jobs
      in the rsh_host_available function.
   */
+  int argc           = job_argc + 2;
+  const char ** argv = util_malloc( argc * sizeof * argv , __func__);
   
-  util_fork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL , NULL);
+  argv[0] = rsh_host->host_name;
+  argv[1] = submit_cmd;
+  {
+    int iarg;
+    for (iarg = 0; iarg < job_argc; iarg++)
+      argv[iarg + 2] = job_argv[iarg];
+  }
+  
+  util_fork_exec(rsh_cmd , argc , argv , true , NULL , NULL , NULL , NULL , NULL);
   job->status = JOB_QUEUE_DONE;
 
   pthread_mutex_lock( &rsh_host->host_mutex );
   rsh_host->running--;
   pthread_mutex_unlock( &rsh_host->host_mutex );  
+  free( argv );
 }
 
 
@@ -135,10 +146,11 @@ static void * rsh_host_submit_job__(void * __arg_pack) {
   char * rsh_cmd 	   = arg_pack_iget_ptr(arg_pack , 0); 
   rsh_host_type * rsh_host = arg_pack_iget_ptr(arg_pack , 1);
   char * submit_cmd 	   = arg_pack_iget_ptr(arg_pack , 2); 
-  char * run_path          = arg_pack_iget_ptr(arg_pack , 3); 
-  rsh_job_type * job       = arg_pack_iget_ptr(arg_pack , 4);
-
-  rsh_host_submit_job(rsh_host , job , rsh_cmd , submit_cmd , run_path);
+  int argc                 = arg_pack_iget_int(arg_pack , 3); 
+  const char ** argv       = arg_pack_iget_ptr(arg_pack , 4); 
+  rsh_job_type * job       = arg_pack_iget_ptr(arg_pack , 5);
+  
+  rsh_host_submit_job(rsh_host , job , rsh_cmd , submit_cmd , argc , argv);
   pthread_exit( NULL );
   arg_pack_free( arg_pack );
 }
@@ -212,10 +224,11 @@ void rsh_driver_kill_job(void * __driver ,void  * __job) {
 
 void * rsh_driver_submit_job(void  * __driver, 
                              int   node_index , 
-                             const char * submit_cmd  	  , 
-                             const char * run_path    	  ,
-                             const char * job_name        ,
-                             const char ** arg_list ) {
+                             const char  * submit_cmd  	  , 
+                             const char  * run_path    	  ,
+                             const char  * job_name        ,
+                             int           argc, 
+                             const char ** argv ) {
   
   rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
   rsh_job_type  * job      = NULL; 
@@ -243,10 +256,12 @@ void * rsh_driver_submit_job(void  * __driver,
                                                         thread-called function is finished with it. */
 
       job = rsh_job_alloc(node_index , run_path);
+
       arg_pack_append_ptr(arg_pack ,  driver->rsh_command);
       arg_pack_append_ptr(arg_pack ,  host);
       arg_pack_append_ptr(arg_pack , (char *) submit_cmd);
-      arg_pack_append_ptr(arg_pack , (char *) run_path);
+      arg_pack_append_int(arg_pack , argc );
+      arg_pack_append_ptr(arg_pack , argv );
       arg_pack_append_ptr(arg_pack , job);  
       
       {

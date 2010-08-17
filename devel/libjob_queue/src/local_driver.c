@@ -90,10 +90,11 @@ void local_driver_kill_job(void * __driver , void * __job) {
 void * submit_job_thread__(void * __arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg);
   const char * executable  = arg_pack_iget_ptr(arg_pack , 0);
-  const char * run_path    = arg_pack_iget_ptr(arg_pack , 1);
-  local_job_type * job     = arg_pack_iget_ptr(arg_pack , 2);
+  int          argc        = arg_pack_iget_int(arg_pack , 1);
+  const char ** argv       = arg_pack_iget_ptr(arg_pack , 2);
+  local_job_type * job     = arg_pack_iget_ptr(arg_pack , 3);
   
-  util_fork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL , NULL); 
+  util_fork_exec(executable , argc , argv , true , NULL , NULL , NULL , NULL , NULL); 
   job->status = JOB_QUEUE_DONE;
   pthread_exit(NULL);
   return NULL;
@@ -103,17 +104,20 @@ void * submit_job_thread__(void * __arg) {
 
 void * local_driver_submit_job(void * __driver, 
                                int   node_index                   , 
-                               const char * submit_cmd  	  , 
-                               const char * run_path    	  , 
-                               const char * job_name              ,
-                               const char ** arg_list ) {
+                               const char *  submit_cmd  	  , 
+                               const char *  run_path    	  , 
+                               const char *  job_name              ,
+                               int           argc,
+                               const char ** argv ) {
   local_driver_type * driver = local_driver_safe_cast( __driver );
   {
     local_job_type * job    = local_job_alloc();
     arg_pack_type  * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , (char *) submit_cmd);
-    arg_pack_append_ptr( arg_pack , (char *) run_path);
+    arg_pack_append_int( arg_pack , argc );
+    arg_pack_append_ptr( arg_pack , argv );
     arg_pack_append_ptr( arg_pack , job );
+    
     pthread_mutex_lock( &driver->submit_lock );
     job->active = true;
     job->status = JOB_QUEUE_RUNNING;

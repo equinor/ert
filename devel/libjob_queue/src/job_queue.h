@@ -17,7 +17,7 @@ void                job_queue_set_size( job_queue_type * job_queue , int size );
 void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
 job_queue_type   *  job_queue_alloc(int  , int , int  , const char * );
 void                job_queue_free(job_queue_type *);
-void                job_queue_insert_job(job_queue_type * , const char * , const char * , int , const char ** );
+void                job_queue_insert_job(job_queue_type * , const char * , const char * , int , int argc , const char ** argv );
 void                job_queue_run_jobs(job_queue_type * , int , bool verbose);
 void *              job_queue_run_jobs__(void * );
 job_status_type     job_queue_get_job_status(job_queue_type * , int );
