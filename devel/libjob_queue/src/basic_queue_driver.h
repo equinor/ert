@@ -62,7 +62,7 @@ typedef enum {JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in extern
 
 typedef struct basic_queue_driver_struct basic_queue_driver_type;
 
-typedef void                 * (submit_job_ftype)  	    (void * , int , const char * , const char * , const char * , const char **);
+typedef void                 * (submit_job_ftype)  	    (void * , int , const char * , const char * , const char * , int argc , const char **);
 typedef void                   (kill_job_ftype)   	    (void * , void * );
 typedef job_status_type        (get_status_ftype)  	    (void * , void * );
 typedef void                   (free_job_ftype)    	    (void * , void * );

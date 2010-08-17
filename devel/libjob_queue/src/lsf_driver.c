@@ -140,7 +140,16 @@ static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
 */
 
 
-static int lsf_driver_submit_system_job(lsf_driver_type * driver , const char * run_path , const char * job_name , const char * lsf_queue , const char * resource_request , const char * submit_cmd) {
+static int lsf_driver_submit_system_job(lsf_driver_type * driver , 
+                                        const char *  run_path , 
+                                        const char *  job_name , 
+                                        const char *  lsf_queue , 
+                                        const char *  resource_request , 
+                                        const char *  submit_cmd,
+                                        int           job_argc,
+                                        const char ** job_argv) {
+  int argc;
+  char ** argv;
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   char * lsf_stdout       = util_alloc_filename(run_path , job_name , "LSF-stdout");
@@ -149,26 +158,43 @@ static int lsf_driver_submit_system_job(lsf_driver_type * driver , const char * 
   sprintf(num_cpu_string , "%d" , driver->num_cpu);
 
   if (resource_request != NULL) 
-    util_fork_exec(driver->bsub_executable , 12 , (const char *[12]) {  "-o" , lsf_stdout , 
-                                                                        "-q" , lsf_queue  , 
-                                                                        "-J" , job_name   , 
-                                                                        "-n" , num_cpu_string , 
-                                                                        "-R" , resource_request , 
-                                                                      submit_cmd , run_path} 
-                   , true , NULL , NULL , NULL , tmp_file , NULL);
+    argc = job_argc + 11;
   else
-    util_fork_exec(driver->bsub_executable , 10 , (const char *[10]) {"-o" , lsf_stdout , 
-                                                                      "-q" , lsf_queue  , 
-                                                                      "-J" , job_name   ,
-                                                                      "-n" , num_cpu_string ,
-                                                                      submit_cmd , run_path} 
-                   , true , NULL , NULL , NULL , tmp_file , NULL);
+    argc = job_argc + 9;
 
+  argv = util_malloc( argc * sizeof * argv , __func__ ); /* This argv structure only contains pointers to string storage;
+                                                            does not alloacte anything to itself. */
+
+  {
+    int offset = 8;
+    argv[0] = "-o";  
+    argv[1] = lsf_stdout;
+    argv[2] = "-q";  
+    argv[3] = lsf_queue;
+    argv[4] = "-J";  
+    argv[5] = job_name;
+    argv[6] = "-n";  
+    argv[7] = num_cpu_string;
+    if (resource_request != NULL) {
+      argv[8] = "-R";
+      argv[9] = resource_request;
+      offset  = 10;
+    }
+    argv[offset] = submit_cmd;
+    {
+      int iarg;
+      for (iarg = 0; iarg < argc; iarg++)
+        argv[iarg + offset + 1] = job_argv[ iarg ];
+    }
+  }
+  
+  util_fork_exec(driver->bsub_executable , 12 , argv , true , NULL , NULL , NULL , tmp_file , NULL);
   
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
   util_unlink_existing(tmp_file); 
   free(lsf_stdout);
   free(tmp_file);
+  free(argv);
   return job_id;
 }
 
@@ -378,18 +404,30 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
 
 void * lsf_driver_submit_job(void * __driver , 
                              int   queue_index , 
-                             const char * submit_cmd  	  , 
-                             const char * run_path    	  , 
-                             const char * job_name ,
-                             const char ** arg_list ) {
+                             const char  * submit_cmd  	  , 
+                             const char  * run_path    	  , 
+                             const char  * job_name ,
+                             int           argc,     
+                             const char ** argv ) {
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   {
     lsf_job_type * job 		  = lsf_job_alloc();
-    char * lsf_stdout  		  = util_alloc_joined_string((const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
-    char * command     		  = util_alloc_joined_string( (const char*[2]) {submit_cmd , run_path} , 2 , " "); 
-
+    char * lsf_stdout  		  = util_alloc_joined_string( (const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
     pthread_mutex_lock( &driver->submit_lock );
 #ifdef LSF_LIBRARY_DRIVER
+    char * command;
+    {
+      buffer_type * command_buffer = buffer_alloc( 256 );
+      buffer_fwrite_char_ptr( command_buffer , submit_cmd );
+      for (int iarg = 0; iarg < argc; iarg++) {
+        buffer_fwrite_char( command_buffer , ' ');
+        buffer_fwrite_char_ptr( command_buffer , argv[ iarg ]);
+      }
+      buffer_terminate_char_ptr( command_buffer );
+      command = buffer_get_data( command_buffer );
+      buffer_free_container( command_buffer );
+    }
+    
     {
       int options = SUB_QUEUE + SUB_JOB_NAME + SUB_OUT_FILE;
       if (driver->resource_request != NULL) {
@@ -403,23 +441,21 @@ void * lsf_driver_submit_job(void * __driver ,
     driver->lsf_request.command       = command;
     driver->lsf_request.numProcessors = driver->num_cpu;
     job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
+    free( command );  /* I trust the lsf layer is finished with the command? */
 #else
     {
       char * quoted_resource_request = NULL;
       if (driver->resource_request != NULL)
 	quoted_resource_request = util_alloc_sprintf("\"%s\"" , driver->resource_request);
 
-      job->lsf_jobnr      = lsf_driver_submit_system_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd );
+      job->lsf_jobnr      = lsf_driver_submit_system_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd , argc, argv);
       job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
       hash_insert_ref( driver->my_jobs , job->lsf_jobnr_char , NULL );   
       util_safe_free(quoted_resource_request);
     }
 #endif
     pthread_mutex_unlock( &driver->submit_lock );
-    
     free(lsf_stdout);
-    free(command);
-
     
     if (job->lsf_jobnr > 0) 
       return job;
