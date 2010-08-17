@@ -367,7 +367,7 @@ void lsf_driver_display_info( void * __driver , void * __job) {
 
 
 
-void lsf_driver_free_job(void * __driver , void * __job) {
+void lsf_driver_free_job(void * __job) {
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
   lsf_job_free(job);
 }
@@ -403,13 +403,13 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
 
 
 void * lsf_driver_submit_job(void * __driver , 
-                             int   queue_index , 
                              const char  * submit_cmd  	  , 
                              const char  * run_path    	  , 
                              const char  * job_name ,
                              int           argc,     
                              const char ** argv ) {
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
+  printf("Hei - skal submitte en job .. \n");
   {
     lsf_job_type * job 		  = lsf_job_alloc();
     char * lsf_stdout  		  = util_alloc_joined_string( (const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
@@ -441,6 +441,7 @@ void * lsf_driver_submit_job(void * __driver ,
     driver->lsf_request.command       = command;
     driver->lsf_request.numProcessors = driver->num_cpu;
     job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
+    printf("Job: \"%s\" submitted ??? \n" , command);
     free( command );  /* I trust the lsf layer is finished with the command? */
 #else
     {

@@ -443,7 +443,7 @@ static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * no
   
   pthread_rwlock_wrlock( &node->job_lock );
   {
-    driver->free_job(driver , node->job_data);
+    driver->free_job( node->job_data );
     node->job_data = NULL;
   }
   pthread_rwlock_unlock( &node->job_lock );
@@ -519,7 +519,6 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
       
       if (node->submit_attempt < queue->max_submit) {
         void * job_data = driver->submit( queue->driver  , 
-                                          queue_index    , 
                                           queue->run_cmd , 
                                           node->run_path , 
                                           node->job_name , 
