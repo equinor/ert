@@ -10,7 +10,6 @@ typedef struct local_job_struct    local_job_type;
 
 void 	  * local_driver_alloc();
 
-
 #ifdef __cplusplus
 }
 #endif

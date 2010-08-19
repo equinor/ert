@@ -43,7 +43,6 @@
 #include <lsf/lsbatch.h>
 #endif
 
-
 #define LSF_DRIVER_TYPE_ID 10078365
 #define LSF_JOB_TYPE_ID    99639007
 
@@ -384,6 +383,7 @@ void lsf_driver_set_num_cpu( void * __lsf_driver , int num_cpu) {
 }
 
 
+
 void lsf_driver_kill_job(void * __driver , void * __job) {
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
   {
@@ -396,8 +396,8 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
     }
 #endif
   }
-  lsf_job_free( job );
 }
+
 
 
 
