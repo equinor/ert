@@ -614,11 +614,10 @@ void job_queue_set_all_fail(job_queue_type * queue , int job_index) {
    (i.e. LSF jobnr), and the driver->kill() function will fail if presented with
    such a job.
 
-   Observe that the driver->kill() function is responsible for freeing
-   the driver specific data. Only jobs which have a status matching
-   "JOB_QUEUE_CAN_KILL" can be killed; if the job is not in a killable
-   state the function will do nothing. This includes trying to kill a
-   job which is not even found.
+   Only jobs which have a status matching "JOB_QUEUE_CAN_KILL" can be
+   killed; if the job is not in a killable state the function will do
+   nothing. This includes trying to kill a job which is not even
+   found.
 
    Observe that jobs (slots) with status JOB_QUEUE_NOT_ACTIVE can NOT be
    meaningfully killed; that is because these jobs have not yet been submitted
@@ -640,6 +639,7 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
       */
       if (node->job_status != JOB_QUEUE_WAITING) { 
         driver->kill_job( driver , node->job_data );
+        driver->free_job( node->job_data );
         node->job_data = NULL;
       }
       job_queue_change_node_status( queue , node , JOB_QUEUE_USER_KILLED );

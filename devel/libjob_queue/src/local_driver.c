@@ -1,3 +1,4 @@
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
@@ -14,6 +15,7 @@ struct local_job_struct {
   bool       	  active;
   job_status_type status;
   pthread_t       run_thread;
+  pid_t           child_process;
 };
 
 
@@ -76,13 +78,18 @@ void local_driver_free_job( void * __job ) {
 }
 
 
-
-void local_driver_kill_job(void * __driver , void * __job) {
-  local_job_type    * job    = local_job_safe_cast( __job );
-  if (job->active)
+void local_driver_kill_job( void * __driver , void * __job) {
+  local_job_type    * job  = local_job_safe_cast( __job );
+  
+  kill( job->child_process , SIGSTOP );
+  if (job->active) 
     pthread_cancel( job->run_thread );
-  local_job_free( job );
+  
 }
+
+
+
+
 
 
 
@@ -91,12 +98,14 @@ void * submit_job_thread__(void * __arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg);
   const char * executable  = arg_pack_iget_ptr(arg_pack , 0);
   int          argc        = arg_pack_iget_int(arg_pack , 1);
-  const char ** argv       = arg_pack_iget_ptr(arg_pack , 2);
+  char ** argv             = arg_pack_iget_ptr(arg_pack , 2);
   local_job_type * job     = arg_pack_iget_ptr(arg_pack , 3);
   
-  util_fork_exec(executable , argc , argv , true , NULL , NULL , NULL , NULL , NULL); 
+  job->child_process = util_fork_exec(executable , argc , (const char **) argv , false , NULL , NULL , NULL , NULL , NULL); 
+  waitpid(job->child_process , NULL , 0);
   job->status = JOB_QUEUE_DONE;
   pthread_exit(NULL);
+  util_free_stringlist( argv , argc );
   return NULL;
 }
 
@@ -114,7 +123,7 @@ void * local_driver_submit_job(void * __driver,
     arg_pack_type  * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , (char *) submit_cmd);
     arg_pack_append_int( arg_pack , argc );
-    arg_pack_append_ptr( arg_pack , argv );
+    arg_pack_append_ptr( arg_pack , util_alloc_stringlist_copy( argv , argc ));   /* Due to conflict with threads and python GC we take a local copy. */
     arg_pack_append_ptr( arg_pack , job );
     
     pthread_mutex_lock( &driver->submit_lock );
