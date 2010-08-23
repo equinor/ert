@@ -11,13 +11,16 @@
 #include <hash.h>
 #include <matrix.h>
 #include <pthread.h>
+#include <set.h>
+#include <vector.h>
 
 #define MEAS_BLOCK_TYPE_ID 661936407
 
 struct meas_matrix_struct {
   int                 ens_size;
-  hash_type         * data; 
+  vector_type       * data; 
   pthread_mutex_t     data_mutex;
+  set_type          * lookup_keys;  /* Mangled obs_key and report_step */ 
 };
 
 
@@ -30,7 +33,6 @@ struct meas_block_struct {
   double     * data;
   char       * obs_key;
   bool       * active;
-  int          active_size;
 };
 
 
@@ -54,11 +56,10 @@ static meas_block_type * meas_block_alloc( const char * obs_key , int ens_size ,
   meas_block->ens_size    = ens_size;
   meas_block->obs_size    = obs_size;
   meas_block->obs_key     = util_alloc_string_copy( obs_key );
-  meas_block->data        = util_malloc( (ens_size + 2) * obs_size * sizeof * meas_block->data , __func__);
-  meas_block->active      = util_malloc( obs_size * sizeof * meas_block->active , __func__);
+  meas_block->data        = util_malloc( (ens_size + 2)     * obs_size * sizeof * meas_block->data , __func__);
+  meas_block->active      = util_malloc(  obs_size * sizeof * meas_block->active , __func__);
   meas_block->ens_stride  = 1;
   meas_block->obs_stride  = ens_size + 2; 
-  meas_block->active_size = 0;
   {
     int i;
     for (i=0; i  <obs_size; i++)
@@ -100,9 +101,10 @@ static void meas_block_initS( const meas_block_type * meas_block , matrix_type *
 
 
 void meas_block_calculate_ens_stats( meas_block_type * meas_block ) {
+  bool include_inactive = true;
   int iobs , iens;
   for (iobs =0; iobs < meas_block->obs_size; iobs++) {
-    if (meas_block->active[iobs]) {
+    if (meas_block->active[iobs] || include_inactive) { 
       double M1 = 0;
       double M2 = 0;
       for (iens =0; iens < meas_block->ens_size; iens++) {
@@ -127,10 +129,9 @@ void meas_block_calculate_ens_stats( meas_block_type * meas_block ) {
 void meas_block_iset( meas_block_type * meas_block , int iens , int iobs , double value) {
   int index = iens * meas_block->ens_stride + iobs * meas_block->obs_stride;
   meas_block->data[ index ] = value;
-  if (!meas_block->active[ iobs ]) {
+  if (!meas_block->active[ iobs ]) 
     meas_block->active[ iobs ] = true;
-    meas_block->active_size++;
-  }
+
 }
 
 
@@ -152,21 +153,14 @@ bool meas_block_iget_active( const meas_block_type * meas_block , int iobs) {
 
 
 void meas_block_deactivate( meas_block_type * meas_block , int iobs ) {
-  if (meas_block->active[ iobs ]) {
+  if (meas_block->active[ iobs ]) 
     meas_block->active[ iobs ] = false;
-    meas_block->active_size--;
-  }
 }
 
 
 int meas_block_get_total_size( const meas_block_type * meas_block ) {
   return meas_block->obs_size;
 }
-
-int meas_block_get_active_size( const meas_block_type * meas_block ) {
-  return meas_block->active_size;
-}
-
 
 
 
@@ -179,7 +173,8 @@ meas_matrix_type * meas_matrix_alloc(int ens_size) {
     util_abort("%s: ens_size must be > 0 - aborting \n",__func__);
 
   meas->ens_size     = ens_size;
-  meas->data         = hash_alloc();
+  meas->data         = vector_alloc_new();
+  meas->lookup_keys  = set_alloc_empty();
   pthread_mutex_init( &meas->data_mutex , NULL );
 
   return meas;
@@ -188,52 +183,58 @@ meas_matrix_type * meas_matrix_alloc(int ens_size) {
 
 
 void meas_matrix_free(meas_matrix_type * matrix) {
-  hash_free( matrix->data );
+  vector_free( matrix->data );
+  set_free( matrix->lookup_keys );
   free( matrix );
 }
 
 
 
 void meas_matrix_reset(meas_matrix_type * matrix) {
-  hash_clear( matrix->data );
+  set_clear( matrix->lookup_keys );
+  vector_clear( matrix->data );
 }
 
 
+/**
+   The code actually adding new blocks to the vector must be run in single-thread mode. 
+*/
 
-meas_block_type * meas_matrix_add_block( meas_matrix_type * matrix , const char * obs_key , int obs_size) {
+meas_block_type * meas_matrix_add_block( meas_matrix_type * matrix , const char * obs_key , int report_step , int obs_size) {
+  char * lookup_key = util_alloc_sprintf( "%s-%d" , obs_key , report_step );  /* The obs_key is not alone unique over different report steps. */
   pthread_mutex_lock( &matrix->data_mutex );
   {
-    if (!hash_has_key( matrix->data , obs_key ))
-      hash_insert_hash_owned_ref( matrix->data , obs_key , meas_block_alloc(obs_key , matrix->ens_size , obs_size) , meas_block_free__);
-    
+    if (!set_has_key( matrix->lookup_keys , lookup_key )) {
+      meas_block_type  * new_block = meas_block_alloc(obs_key , matrix->ens_size , obs_size);
+      vector_append_owned_ref( matrix->data , new_block , meas_block_free__ );
+      set_add_key( matrix->lookup_keys , lookup_key );
+    }
   }
   pthread_mutex_unlock( &matrix->data_mutex );
-  return hash_get( matrix->data , obs_key );
+  free( lookup_key );
+  return vector_get_last( matrix->data );
 }
 
 
 
-meas_block_type * meas_matrix_get_block( meas_matrix_type * matrix , const char * obs_key ) {
-  return hash_get( matrix->data , obs_key );
+meas_block_type * meas_matrix_iget_block( meas_matrix_type * matrix , int block_nr) {
+  return vector_iget( matrix->data , block_nr);
 }
 
 
-const meas_block_type * meas_matrix_get_block_const( const meas_matrix_type * matrix , const char * obs_key ) {
-  return hash_get( matrix->data , obs_key );
+const meas_block_type * meas_matrix_iget_block_const( const meas_matrix_type * matrix , int block_nr) {
+  return vector_iget_const( matrix->data , block_nr);
 }
 
 
 
-matrix_type * meas_matrix_allocS(const meas_matrix_type * matrix, int active_size, hash_iter_type * obs_iter ) {
+matrix_type * meas_matrix_allocS(const meas_matrix_type * matrix, int active_size) {
   int obs_offset = 0;
   matrix_type * S  = matrix_alloc( active_size , matrix->ens_size );
-  hash_iter_restart(obs_iter );
 
-  while (!hash_iter_is_complete(obs_iter)) {
-    const char * obs_key = hash_iter_get_next_key( obs_iter );
-     const meas_block_type * meas_block = hash_get( matrix->data , obs_key );
-     
-     meas_block_initS( meas_block , S , &obs_offset);
+  for (int block_nr = 0; block_nr < vector_get_size( matrix->data ); block_nr++) {
+    const meas_block_type * meas_block = vector_iget_const( matrix->data , block_nr);
+    meas_block_initS( meas_block , S , &obs_offset);
   }
   return S;
 }

@@ -409,7 +409,6 @@ void * lsf_driver_submit_job(void * __driver ,
                              int           argc,     
                              const char ** argv ) {
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
-  printf("Hei - skal submitte en job .. \n");
   {
     lsf_job_type * job 		  = lsf_job_alloc();
     char * lsf_stdout  		  = util_alloc_joined_string( (const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
@@ -441,7 +440,6 @@ void * lsf_driver_submit_job(void * __driver ,
     driver->lsf_request.command       = command;
     driver->lsf_request.numProcessors = driver->num_cpu;
     job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
-    printf("Job: \"%s\" submitted ??? \n" , command);
     free( command );  /* I trust the lsf layer is finished with the command? */
 #else
     {
@@ -479,6 +477,7 @@ void * lsf_driver_submit_job(void * __driver ,
 void lsf_driver_free(lsf_driver_type * driver ) {
   free(driver->queue_name);
   util_safe_free(driver->resource_request );
+  
 #ifdef LSF_SYSTEM_DRIVER
   hash_free(driver->status_map);
   hash_free(driver->bjobs_cache);
@@ -517,7 +516,6 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   lsf_driver->resource_request     = NULL;
   lsf_driver_set_queue_name( lsf_driver , queue_name );
   lsf_driver_set_resource_request( lsf_driver , resource_request );
-  lsf_driver->queue_name       	   = util_alloc_string_copy(queue_name);
   UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
   lsf_driver->submit           	   = lsf_driver_submit_job;
   lsf_driver->get_status       	   = lsf_driver_get_job_status;

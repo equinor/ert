@@ -207,6 +207,7 @@ typedef enum {
 
 
 
+
 /*****************************************************************/
 
 typedef struct enkf_obs_struct enkf_obs_type;

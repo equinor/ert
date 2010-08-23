@@ -1455,10 +1455,11 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
     */
     enkf_state_init_eclipse(enkf_state);
     job_queue_insert_job( shared_info->job_queue , 
-                          run_info->run_path , 
+                          run_info->run_path     , 
                           member_config_get_eclbase(my_config) , 
                           member_config_get_iens(my_config) , 
-                          NULL );
+                          1, 
+                          (const char *[1]) { run_info->run_path });
     run_info->num_internal_submit++;
   }
 }

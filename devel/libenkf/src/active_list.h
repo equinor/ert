@@ -22,6 +22,7 @@ active_mode_type   active_list_get_mode(const active_list_type * );
 void               active_list_free__( void * arg );
 active_list_type * active_list_alloc_copy( const active_list_type * src);
 void               active_list_fprintf( const active_list_type * active_list , bool obs , const char * key , FILE * stream );
+bool               active_list_iget( const active_list_type * active_list , int index );
 
 #ifdef __cplusplus
 }

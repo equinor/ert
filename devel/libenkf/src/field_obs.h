@@ -32,11 +32,11 @@ void field_obs_free(
 const char * field_obs_get_field_name(
   const field_obs_type * field_obs);
 
-void field_obs_get_observations(
-  const field_obs_type   * field_obs,
-  int                      restart_nr,
-  obs_data_type          * obs_data,
-  const active_list_type * active_list);
+//void field_obs_get_observations(
+//  const field_obs_type   * field_obs,
+//  int                      restart_nr,
+//  obs_data_type          * obs_data,
+//  const active_list_type * active_list);
 
 field_obs_type * field_obs_alloc_from_BLOCK_OBSERVATION(
   const conf_instance_type * conf_instance,

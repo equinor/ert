@@ -17,7 +17,14 @@ extern "C" {
 #include <active_list.h>
 #include <util.h>
 
+#define AUTO_CORRF_EXP     "EXP"
+#define AUTO_CORRF_GAUSS   "GAUSSIAN"
+
+
 typedef struct summary_obs_struct summary_obs_type;
+
+typedef double (auto_corrf_ftype) ( double , double );
+
 
 void summary_obs_free(
   summary_obs_type * summary_obs);
@@ -26,8 +33,16 @@ summary_obs_type * summary_obs_alloc(
   const char   * summary_key,
   const char * obs_key , 
   double  value ,
-  double  std);
+  double  std,
+  const char * auto_corrf_name , 
+  double auto_corrf_param);
 
+
+double summary_obs_get_value( const summary_obs_type * summary_obs );
+double summary_obs_get_std( const summary_obs_type * summary_obs );
+
+auto_corrf_ftype * summary_obs_get_auto_corrf( const summary_obs_type * summary_obs );
+double             summary_obs_get_auto_corrf_param( const summary_obs_type * summary_obs );
 
 bool summary_obs_default_used(
   const summary_obs_type * summary_obs,

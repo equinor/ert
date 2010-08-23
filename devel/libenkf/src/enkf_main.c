@@ -135,8 +135,6 @@ void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
-
-
 analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
   return enkf_main->analysis_config;
 }
@@ -1141,11 +1139,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
       local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
       obs_data_reset( obs_data );
       meas_matrix_reset( meas_forecast );
-      for(int report_step = start_step; report_step <= end_step; report_step++)  {                              /* Looping over normal report steps.    */ 
-        
-        enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size,
-				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
-      }
+      enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), start_step , end_step , FORECAST, ens_size,
+                                   (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
 
       enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
       
@@ -2565,6 +2560,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
 
   }
   chdir( cwd );
+  free( cwd );
 }
 
 
@@ -3249,6 +3245,7 @@ void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * str
 void enkf_main_install_SIGNALS(void) {
   signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
   signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. Killing with SIGKILL (-9) will not give a backtrace.*/
+  //  signal(SIGABRT , util_abort_signal);    /* Signal abort. */ COnfilct with abort() in util_abort(). 
 }
 
 

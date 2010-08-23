@@ -41,7 +41,7 @@ struct gen_obs_struct {
   char                       * obs_key;          /* The key this observation is held by - in the enkf_obs structur (only for debug messages). */  
   char                       * obs_file;         /* The file holding the observation. */ 
   gen_data_file_format_type    obs_format;       /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
-  stringlist_type            * keylist;
+  matrix_type                * error_covar;
 };
 
 /******************************************************************/
@@ -56,7 +56,9 @@ void gen_obs_free(gen_obs_type * gen_obs) {
   util_safe_free(gen_obs->obs_file);
   util_safe_free(gen_obs->data_index_list);
   util_safe_free(gen_obs->obs_key);
-  stringlist_free( gen_obs->keylist );
+  if (gen_obs->error_covar != NULL)
+    matrix_free( gen_obs->error_covar );
+  
   free(gen_obs);
 }
 
@@ -127,10 +129,19 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
    "1,2,3,4-10, 17,19,22-100" string. Only one of these items can be
    != NULL. If both are NULL it is assumed that all the indices of the
    gen_data instance should be observed.
+
+   @error_covar_file is the name of file which contains a matrix of
+   error-covariance. The file data will be read with the function
+   matrix_fscanf_data(), i.e. it should consist of formatted
+   numbers. Since the matrix is symmetric it does not matter whether
+   it is represented in row-major or column-major order; newlines for
+   pretty reading can be inserted but are not necessary.
+
+   The error_covar_file should contain NO header information.
 */
 
 
-gen_obs_type * gen_obs_alloc(const char * obs_key , const char * obs_file , double scalar_value , double scalar_error , const char * data_index_file , const char * data_index_string) {
+gen_obs_type * gen_obs_alloc(const char * obs_key , const char * obs_file , double scalar_value , double scalar_error , const char * data_index_file , const char * data_index_string , const char * error_covar_file) {
   gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
   UTIL_TYPE_ID_INIT( obs , GEN_OBS_TYPE_ID );
@@ -164,15 +175,17 @@ gen_obs_type * gen_obs_alloc(const char * obs_key , const char * obs_file , doub
       /* Parsing a string of the type "1,3,5,9-100,200,202,300-1000" */
       obs->data_index_list = util_sscanf_alloc_active_list(data_index_string , &obs->obs_size);
   }
-  obs->keylist = stringlist_alloc_new();
+  
+  if (error_covar_file != NULL) {
+    FILE * stream = util_fopen( error_covar_file , "r");
+    
+    obs->error_covar = matrix_alloc( obs->obs_size , obs->obs_size );
+    matrix_fscanf_data( obs->error_covar , false , stream );
 
-  /* A bit wasteful on memory - should have a low memory alternative
-     for very large observation vectors.*/
-  {
-    int i;
-    for (i=0; i < obs->obs_size; i++)
-      stringlist_append_owned_ref( obs->keylist , util_alloc_sprintf("%s:%d" , obs->obs_key , i) );
-  }
+    fclose( stream );
+  } else
+    obs->error_covar = NULL;
+
   return obs;
 }
 
@@ -211,7 +224,7 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
   gen_obs_assert_data_size(gen_obs , gen_data);
   {
     int active_size              = active_list_get_active_size( __active_list , gen_obs->obs_size );
-    meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , gen_obs->obs_key , active_size );
+    meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , gen_obs->obs_key , report_step , active_size );
     active_mode_type active_mode = active_list_get_mode( __active_list );
 
     int iobs;
@@ -232,10 +245,10 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 
 
 
-void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data, const active_list_type * __active_list) {
+void gen_obs_get_observations(gen_obs_type * gen_obs , obs_data_type * obs_data, const active_list_type * __active_list) {
   int iobs;
   active_mode_type active_mode = active_list_get_mode( __active_list );
-  obs_block_type * obs_block   = obs_data_add_block( obs_data , gen_obs->obs_key , gen_obs->obs_size );
+  obs_block_type * obs_block   = obs_data_add_block( obs_data , gen_obs->obs_key , gen_obs->obs_size , NULL , false);
 
   if (active_mode == ALL_ACTIVE) {
     for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 

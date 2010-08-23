@@ -65,14 +65,15 @@ struct obs_block_struct {
   double             * value;
   double             * std;
   int                * active_mode;   
-  matrix_type        * error_covar;
   int                  active_size;
+  matrix_type        * error_covar;
+  bool                 error_covar_owner;   /* If true the error_covar matrix is free'd when construction of the R matrix is complete. */
 };
 
 
 
 struct obs_data_struct {
-  hash_type   * data;            /* Hash table with obs_block instances. */
+  vector_type   * data;            /* Hash table with obs_block instances. */
   int           __active_size;   
 }; 
 
@@ -80,7 +81,7 @@ struct obs_data_struct {
 
 static UTIL_SAFE_CAST_FUNCTION(obs_block , OBS_BLOCK_TYPE_ID )
 
-static obs_block_type * obs_block_alloc( const char * obs_key , int obs_size ) {
+static obs_block_type * obs_block_alloc( const char * obs_key , int obs_size , matrix_type * error_covar , bool error_covar_owner) {
   obs_block_type * obs_block = util_malloc( sizeof * obs_block , __func__);
 
   UTIL_TYPE_ID_INIT( obs_block , OBS_BLOCK_TYPE_ID );
@@ -89,7 +90,8 @@ static obs_block_type * obs_block_alloc( const char * obs_key , int obs_size ) {
   obs_block->value       = util_malloc( sizeof * obs_block->value * obs_size , __func__);
   obs_block->std         = util_malloc( sizeof * obs_block->std * obs_size , __func__);
   obs_block->active_mode = util_malloc( sizeof * obs_block->active_mode * obs_size , __func__);
-  obs_block->error_covar = NULL;
+  obs_block->error_covar = error_covar;
+  obs_block->error_covar_owner = error_covar_owner;
   {
     for (int iobs = 0; iobs < obs_size; iobs++)
       obs_block->active_mode[iobs] = LOCAL_INACTIVE;
@@ -122,6 +124,8 @@ void obs_block_deactivate( obs_block_type * obs_block , int iobs , const char * 
   }
 }
 
+
+const char * obs_block_get_key( const obs_block_type * obs_block) { return obs_block->obs_key; }
 
 void obs_block_iset( obs_block_type * obs_block , int iobs , double value , double std) {
   obs_block->value[ iobs ] = value;
@@ -182,17 +186,33 @@ static void obs_block_initR( const obs_block_type * obs_block , matrix_type * R,
   int obs_offset = *__obs_offset;
   if (obs_block->error_covar == NULL) {
     int iobs;
+    int iactive = 0;
     for (iobs =0; iobs < obs_block->size; iobs++) {
       if (obs_block->active_mode[iobs] == ACTIVE) {
         double var = obs_block->std[iobs] * obs_block->std[iobs];
-        matrix_iset(R , obs_offset , obs_offset , var);
-        obs_offset++;
+        matrix_iset_safe(R , obs_offset + iactive, obs_offset + iactive, var);
+        iactive++;
+      } 
+    }
+  } else {
+    int row_active = 0;   /* We have a covar matrix */
+    for (int row = 0; row < obs_block->size; row++) {
+      if (obs_block->active_mode[row] == ACTIVE) {
+        int col_active = 0;
+        for (int col = 0; col < obs_block->size; col++) {
+          if (obs_block->active_mode[col] == ACTIVE) {
+            matrix_iset_safe(R , obs_offset + row_active , obs_offset + col_active , matrix_iget( obs_block->error_covar , row , col ));
+            col_active++;
+          }
+        }
+        row_active++;
       }
     }
-  } else 
-    util_abort("%s: sorry - code for using error covariance matrix is not yet implemented ...key:%s \n",__func__ , obs_block->obs_key);
+  }
   
-  *__obs_offset = obs_offset;
+  *__obs_offset = obs_offset + obs_block->active_size;
+  if ((obs_block->error_covar_owner) && (obs_block->error_covar != NULL))
+    matrix_free( obs_block->error_covar );
 }
 
 
@@ -235,7 +255,7 @@ static void obs_block_initD( const obs_block_type * obs_block , matrix_type * D,
 
 obs_data_type * obs_data_alloc() {
   obs_data_type * obs_data = util_malloc(sizeof * obs_data, __func__);
-  obs_data->data = hash_alloc();
+  obs_data->data = vector_alloc_new();
   obs_data_reset(obs_data);
   return obs_data;
 }
@@ -243,37 +263,36 @@ obs_data_type * obs_data_alloc() {
 
 
 void obs_data_reset(obs_data_type * obs_data) { 
-  hash_clear( obs_data->data );
+  vector_clear( obs_data->data );
   obs_data->__active_size = -1;
 }
 
 
-obs_block_type * obs_data_add_block( obs_data_type * obs_data , const char * obs_key , int obs_size ) {
-  if (!hash_has_key( obs_data->data , obs_key ))
-    hash_insert_hash_owned_ref( obs_data->data , obs_key , obs_block_alloc( obs_key , obs_size ) , obs_block_free__);
-  
-  return hash_get( obs_data->data , obs_key );
+obs_block_type * obs_data_add_block( obs_data_type * obs_data , const char * obs_key , int obs_size , matrix_type * error_covar, bool error_covar_owner) {
+  obs_block_type * new_block = obs_block_alloc( obs_key , obs_size , error_covar , error_covar_owner);
+  vector_append_owned_ref( obs_data->data , new_block , obs_block_free__ );
+  return new_block;
 }
 
 
-obs_block_type * obs_data_get_block( obs_data_type * obs_data , const char * obs_key ) {
-  return hash_get( obs_data->data , obs_key );
+obs_block_type * obs_data_iget_block( obs_data_type * obs_data , int index ) {
+  return vector_iget( obs_data->data , index);
 }
 
 
-const obs_block_type * obs_data_get_block_const( const obs_data_type * obs_data , const char * obs_key ) {
-  return hash_get( obs_data->data , obs_key );
+const obs_block_type * obs_data_iget_block_const( const obs_data_type * obs_data , int index ) {
+  return vector_iget_const( obs_data->data , index );
 }
 
 
 void obs_data_free(obs_data_type * obs_data) {
-  hash_free( obs_data->data );
+  vector_free( obs_data->data );
   free(obs_data);
 }
 
 
 
-matrix_type * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int active_size , hash_iter_type * obs_iter ) {
+matrix_type * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int active_size ) {
   double *pert_mean , *pert_var;
   matrix_type * E;
   int iens, iobs_active;
@@ -322,14 +341,10 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int
     The actual observed data are not accessed before this last block. 
   */
   {
-    hash_iter_restart( obs_iter );
-    {
-      int obs_offset = 0;
-      while (!hash_iter_is_complete( obs_iter )) {
-        const char * obs_key = hash_iter_get_next_key( obs_iter );
-        const obs_block_type * obs_block = hash_get( obs_data->data , obs_key );
-        obs_block_initE( obs_block , E , pert_var , &obs_offset);
-      }
+    int obs_offset = 0;
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block = vector_iget_const( obs_data->data , block_nr);
+      obs_block_initE( obs_block , E , pert_var , &obs_offset);
     }
   }
 
@@ -344,19 +359,15 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int
 
 
 
-matrix_type * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S, hash_iter_type * obs_iter) {
+matrix_type * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S) {
   matrix_type * D = matrix_alloc_copy( E );
   matrix_inplace_sub( D , S );
-  
+
   {
-    hash_iter_restart( obs_iter );
-    {
-      int obs_offset = 0;
-      while (!hash_iter_is_complete( obs_iter )) {
-        const char * obs_key = hash_iter_get_next_key( obs_iter );
-        const obs_block_type * obs_block = hash_get( obs_data->data , obs_key );
-        obs_block_initD( obs_block , D , &obs_offset);
-      }
+    int obs_offset = 0;
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block = vector_iget_const( obs_data->data , block_nr);
+      obs_block_initD( obs_block , D , &obs_offset);
     }
   }
   
@@ -368,17 +379,17 @@ matrix_type * obs_data_allocD(const obs_data_type * obs_data , const matrix_type
 
 
 
-matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size , hash_iter_type * obs_iter) {
-  hash_iter_restart( obs_iter );
+matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size) {
   matrix_type * R = matrix_alloc( active_size , active_size );
+  
   {
     int obs_offset = 0;
-    while (!hash_iter_is_complete( obs_iter )) {
-      const char * obs_key = hash_iter_get_next_key( obs_iter );
-      const obs_block_type * obs_block = hash_get( obs_data->data , obs_key );
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block = vector_iget_const( obs_data->data , block_nr);
       obs_block_initR( obs_block , R , &obs_offset);
     }
   }
+  
   return R;
 }
 
@@ -386,15 +397,13 @@ matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size ,
 
 
 
-double * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int active_size , hash_iter_type * obs_iter) {
-  hash_iter_restart( obs_iter );
+double * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int active_size) {
   double *innov = util_malloc( active_size * sizeof * innov , __func__);
   {
     int obs_offset = 0;
-    while (!hash_iter_is_complete( obs_iter )) {
-      const char * obs_key = hash_iter_get_next_key( obs_iter );
-      const obs_block_type * obs_block   = hash_get( obs_data->data , obs_key );
-      const meas_block_type * meas_block = meas_matrix_get_block_const( meas_matrix , obs_key );
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
+      const meas_block_type * meas_block = meas_matrix_iget_block_const( meas_matrix , block_nr );
       
       obs_block_init_innov( obs_block , meas_block , innov , &obs_offset);
     }
@@ -403,18 +412,17 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_matrix
 }
 
 
-void obs_data_scale(const obs_data_type * obs_data , hash_iter_type * obs_iter , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov) {
+
+void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov) {
   const int nrobs_active = matrix_get_rows( S );
   const int ens_size     = matrix_get_columns( S );
   double * scale_factor  = util_malloc(nrobs_active * sizeof * scale_factor , __func__);
   int iens, iobs_active;
   
   {
-    hash_iter_restart( obs_iter );
     int obs_offset = 0;
-    while (!hash_iter_is_complete( obs_iter )) {
-      const char * obs_key = hash_iter_get_next_key( obs_iter );
-      const obs_block_type * obs_block   = hash_get( obs_data->data , obs_key );
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
       
       obs_block_init_scaling( obs_block , scale_factor  , &obs_offset);
     }
@@ -447,25 +455,22 @@ void obs_data_scale(const obs_data_type * obs_data , hash_iter_type * obs_iter ,
 
 
 
-hash_iter_type * obs_data_alloc_hash_iter( const obs_data_type * obs_data ) {
-  return hash_iter_alloc( obs_data->data );
+
+int obs_data_get_active_size(  obs_data_type * obs_data ) {
+  
+  if (obs_data->__active_size < 0) {
+    int active_size = 0;
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
+      active_size += obs_block->active_size; 
+    }
+    obs_data->__active_size = active_size;
+  }
+  
+  return obs_data->__active_size;
 }
 
 
-
-int obs_data_get_active_size(  obs_data_type * obs_data ) {
-  if (obs_data->__active_size < 0) {
-    hash_iter_type * obs_iter = hash_iter_alloc( obs_data->data );
-    int active_size = 0;
-
-    while (!hash_iter_is_complete(obs_iter)) {
-      const char * obs_key = hash_iter_get_next_key( obs_iter );
-      const obs_block_type * obs_block = hash_get( obs_data->data , obs_key );
-      active_size += obs_block->active_size; 
-    }
-    hash_iter_free( obs_iter );
-    obs_data->__active_size = active_size;
-  }
-
-  return obs_data->__active_size;
+int obs_data_get_num_blocks( const obs_data_type * obs_data ) {
+  return vector_get_size( obs_data->data );
 }

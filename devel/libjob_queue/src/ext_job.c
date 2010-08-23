@@ -123,7 +123,6 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->start_file          = NULL;
   ext_job->stdin_file          = NULL;
   ext_job->stderr_file         = NULL;
-  ext_job->argv 	       = NULL;
   ext_job->environment         = hash_alloc();
   ext_job->argv                = stringlist_alloc_new();
   ext_job->argv_string         = NULL;
@@ -140,14 +139,17 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
      ext_job->private_args is set explicitly in the ext_job_alloc() 
      and ext_job_alloc_copy() functions. 
   */
-  ext_job_set_help_text( ext_job , "Hjelp deg selv - sier <b>herren</b>.<br/> Thouh shall use HTML: <ol> <li> Do this </li> <li> Do that </li> </ol>\n");
   return ext_job;
 }
 
 
 const char * ext_job_get_help_text( const ext_job_type * job ) {
-  return job->help_text;
+  if (job->help_text != NULL)
+    return job->help_text;
+  else
+    return "No help text installed for this job.";
 }
+
 
 void ext_job_set_help_text( ext_job_type * job , const char * help_text) {
   job->help_text = util_realloc_string_copy( job->help_text , help_text  );
@@ -182,9 +184,9 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   new_job->stdin_file     = util_alloc_string_copy(src_job->stdin_file);
   new_job->stderr_file    = util_alloc_string_copy(src_job->stderr_file);
   new_job->license_path   = util_alloc_string_copy(src_job->license_path);  
-  new_job->help_text      = util_alloc_string_copy(src_job->help_text);  
- 
-  new_job->argv                  = stringlist_alloc_deep_copy( src_job->argv );
+
+  ext_job_set_help_text( new_job , src_job->help_text );
+
   new_job->max_running_minutes   = src_job->max_running_minutes;
   new_job->max_running           = src_job->max_running;
   new_job->private_args          = subst_list_alloc_deep_copy( src_job->private_args );
@@ -199,6 +201,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     }
     hash_iter_free(iter); 
   }
+  stringlist_deep_copy( new_job->argv , src_job->argv );
   
   return new_job;
 }
@@ -222,7 +225,6 @@ void ext_job_free(ext_job_type * ext_job) {
   
   hash_free( ext_job->environment );
   stringlist_free(ext_job->argv);
-  
   subst_list_free( ext_job->private_args );
   free(ext_job);
 }

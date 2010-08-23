@@ -17,6 +17,8 @@
 
 /*****************************************************************/
 
+#define SUMMARY_UNDEF -9999
+
 struct summary_struct {
   int                          __type_id;     /* Only used for run_time checking. */
   summary_config_type        * config;        /* Can not be NULL - var_type is set on first load. */
@@ -31,7 +33,6 @@ void summary_clear(summary_type * summary) {
   const int data_size = summary_config_get_data_size( summary->config );
   for (int k=0; k < data_size; k++)
     summary->data[k] = 0;
-  //double_vector_clear( summary->data_ts );
 }
 
 
@@ -40,7 +41,7 @@ summary_type * summary_alloc(const summary_config_type * summary_config) {
   summary_type * summary  = util_malloc(sizeof *summary , __func__);
   summary->__type_id      = SUMMARY;
   summary->config         = (summary_config_type *) summary_config;
-  summary->data_ts        = double_vector_alloc(0 , 0);
+  summary->data_ts        = double_vector_alloc(0 , SUMMARY_UNDEF);  
   {
     const int data_size = summary_config_get_data_size( summary_config );
     summary->data       = util_malloc( data_size * sizeof * summary->data , __func__ );
@@ -69,6 +70,7 @@ void summary_load(summary_type * summary , buffer_type * buffer, int report_step
   int  size = summary_config_get_data_size( summary->config );
   enkf_util_assert_buffer_type( buffer , SUMMARY );
   buffer_fread( buffer , summary->data , sizeof * summary->data , size);
+  double_vector_iset( summary->data_ts , report_step , summary->data[0] );
 }
 
 
@@ -165,13 +167,12 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
     
     /* Check if the ecl_sum instance has this report step. */
     if (ecl_sum_has_report_step( ecl_sum , report_step )) {
-      int ministep2;
-      ecl_sum_report2ministep_range(ecl_sum , report_step , NULL , &ministep2);
+      int last_report_index = ecl_sum_iget_report_end( ecl_sum , report_step );
 
       if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR)) {
         /* .. check if the/group well is defined in the smspec file (i.e. if it is open). */
         if (ecl_sum_has_general_var(ecl_sum , var_key)) 
-          summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  , var_key);
+          summary->data[0] = ecl_sum_iget_general_var(ecl_sum , last_report_index  , var_key);
         else 
           /* 
 	   The summary object does not have this well/group - probably
@@ -184,7 +185,7 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
           summary->data[0] = 0;
         loadOK = true;   
       } else if (ecl_sum_has_general_var(ecl_sum , var_key)) {
-        summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  ,var_key );
+        summary->data[0] = ecl_sum_iget_general_var(ecl_sum , last_report_index  ,var_key );
         loadOK = true;
       }
     } else if (report_step == 0) {

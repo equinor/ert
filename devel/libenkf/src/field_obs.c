@@ -43,7 +43,6 @@ struct field_obs_struct {
   int    * k;
   double * obs_value;    		  /** The observed values.                            */
   double * obs_std;      		  /** The standard deviation of the observations.     */
-  stringlist_type * keylist;
   
   const field_config_type * field_config; /* The config object of the field we are observing - shared reference. */
 };
@@ -102,19 +101,17 @@ field_obs_type * field_obs_alloc(
   UTIL_TYPE_ID_INIT( field_obs , FIELD_OBS_TYPE_ID );
   field_obs->size            = size;
   field_obs->field_name      = util_alloc_string_copy(field_name);
-  field_obs->obs_key       = util_alloc_string_copy(obs_key);
+  field_obs->obs_key         = util_alloc_string_copy(obs_key);
   field_obs->index_list      = util_malloc( size * sizeof * field_obs->index_list , __func__);
   field_obs->field_config    = field_config;
-  field_obs->keylist         = stringlist_alloc_new();
   {
     int l;
     for (l = 0; l < size; l++) {
       if (field_config_ijk_valid(field_config , i[l] , j[l] , k[l])) {
 	int active_index = field_config_active_index(field_config , i[l] , j[l] , k[l]);
-	if (active_index >= 0) {
+	if (active_index >= 0) 
 	  field_obs->index_list[l] = active_index;
-          stringlist_append_owned_ref( field_obs->keylist , util_alloc_sprintf("%s:%d,%d,%d" , obs_key , i[l]+1 , j[l]+1 , k[l]+1));
-        } else
+        else
 	  util_abort("%s: sorry: cell:(%d,%d,%d) is not active - can not observe it. \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
       } else
 	util_abort("%s: sorry: cell (%d,%d,%d) is outside valid range:  \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
@@ -134,7 +131,6 @@ field_obs_type * field_obs_alloc(
 void field_obs_free(
   field_obs_type * field_obs)
 {
-  stringlist_free( field_obs->keylist );
   free(field_obs->index_list);
   free(field_obs->obs_value);
   free(field_obs->obs_std);
@@ -160,11 +156,11 @@ const char * field_obs_get_field_name(
 
 
 
-void field_obs_get_observations(const field_obs_type * field_obs,  int  restart_nr,  obs_data_type * obs_data,  const active_list_type * __active_list) {
+void field_obs_get_observations(const field_obs_type * field_obs,  obs_data_type * obs_data,  const active_list_type * __active_list) {
   int i;
   int active_size              = active_list_get_active_size( __active_list , field_obs->size );
   active_mode_type active_mode = active_list_get_mode( __active_list );
-  obs_block_type * obs_block   = obs_data_add_block( obs_data , field_obs->obs_key , field_obs->size );
+  obs_block_type * obs_block   = obs_data_add_block( obs_data , field_obs->obs_key , field_obs->size , NULL , false );
   
   if (active_mode == ALL_ACTIVE) {
     for (i=0; i < field_obs->size; i++) 
@@ -184,7 +180,7 @@ void field_obs_get_observations(const field_obs_type * field_obs,  int  restart_
 
 void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, int report_step , int iens , meas_matrix_type * meas_matrix , const active_list_type * __active_list) {
   int active_size = active_list_get_active_size( __active_list , field_obs->size );
-  meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , field_obs->obs_key , field_obs->size );
+  meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , field_obs->obs_key , report_step , field_obs->size );
   int iobs;
 
   active_mode_type active_mode = active_list_get_mode( __active_list );

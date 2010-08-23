@@ -617,7 +617,6 @@ void conf_item_spec_add_restriction(
   const char          * restriction)
 {
   set_add_key(conf_item_spec->restriction, restriction);
-
 }
 
 

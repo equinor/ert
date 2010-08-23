@@ -3,6 +3,7 @@
 */
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #include <string.h>
 #include <util.h>
 #include <stdio.h>
@@ -23,8 +24,36 @@ struct summary_obs_struct {
   
   double    value;          /** Observation value. */
   double    std;            /** Standard deviation of observation. */
+
+  auto_corrf_ftype   * auto_corrf;
+  double               auto_corrf_param;  
 };
 
+
+
+static double auto_corrf_exp( double tlag , double param ) {
+  return exp(-fabs(tlag) / param );
+}
+
+static double auto_corrf_gauss( double tlag , double param ) {
+  double x = tlag / param;
+  return exp(-0.5 * x * x);
+}
+
+
+
+static auto_corrf_ftype * summary_obs_lookup_auto_corrf( const char * fname ) {
+  if (fname == NULL)
+    return NULL;
+  else {
+    if (strcmp( fname , AUTO_CORRF_EXP) == 0)
+      return auto_corrf_exp;
+    else if (strcmp( fname , AUTO_CORRF_GAUSS) == 0)
+      return auto_corrf_gauss;
+    else
+      util_abort("%s: correlation function:%s not recognized \n",__func__ , fname);
+  }
+}
 
 
 
@@ -43,15 +72,19 @@ struct summary_obs_struct {
 summary_obs_type * summary_obs_alloc(const char   * summary_key,
                                      const char   * obs_key , 
                                      double value ,
-                                     double std)
-{
+                                     double std   ,
+                                     const char * auto_corrf_name , 
+                                     double auto_corrf_param) {
+  
   summary_obs_type * obs = util_malloc(sizeof * obs , __func__);
   UTIL_TYPE_ID_INIT( obs , SUMMARY_OBS_TYPE_ID )
 
-    obs->summary_key   = util_alloc_string_copy( summary_key );
-  obs->obs_key       = util_alloc_string_copy( obs_key );
-  obs->value         = value;
-  obs->std           = std;
+  obs->summary_key      = util_alloc_string_copy( summary_key );
+  obs->obs_key          = util_alloc_string_copy( obs_key );
+  obs->value            = value;
+  obs->std              = std;
+  obs->auto_corrf       = summary_obs_lookup_auto_corrf( auto_corrf_name );
+  obs->auto_corrf_param = auto_corrf_param;
   
   return obs;
 }
@@ -71,6 +104,16 @@ void summary_obs_free(summary_obs_type * summary_obs) {
 
 
 
+auto_corrf_ftype * summary_obs_get_auto_corrf( const summary_obs_type * summary_obs ) {
+  return summary_obs->auto_corrf;
+}
+
+double summary_obs_get_auto_corrf_param( const summary_obs_type * summary_obs ) {
+  return summary_obs->auto_corrf_param;
+}
+
+
+
 
 
 const char * summary_obs_get_summary_key(const summary_obs_type * summary_obs)
@@ -85,13 +128,12 @@ const char * summary_obs_get_summary_key(const summary_obs_type * summary_obs)
    same manner.
 */
 void summary_obs_get_observations(const summary_obs_type * summary_obs,
-				  int                      restart_nr,
 				  obs_data_type          * obs_data,
 				  const active_list_type * __active_list) {
 
   int active_size              = active_list_get_active_size( __active_list , OBS_SIZE );
   if (active_size == 1) {
-    obs_block_type * obs_block   = obs_data_add_block( obs_data , summary_obs->obs_key , OBS_SIZE );
+    obs_block_type * obs_block   = obs_data_add_block( obs_data , summary_obs->obs_key , OBS_SIZE , NULL , false);
     obs_block_iset( obs_block , 0 , summary_obs->value , summary_obs->std );
   }
 }
@@ -101,7 +143,7 @@ void summary_obs_get_observations(const summary_obs_type * summary_obs,
 void summary_obs_measure(const summary_obs_type * obs, const summary_type * summary, int report_step , int iens , meas_matrix_type * meas_matrix , const active_list_type * __active_list) {
   int active_size = active_list_get_active_size( __active_list , OBS_SIZE );
   if (active_size == 1) {
-    meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , obs->obs_key , active_size );
+    meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , obs->obs_key , report_step , active_size );
     meas_block_iset( meas_block , iens , 0 , summary_get(summary));
   }
 }
@@ -122,6 +164,15 @@ void summary_obs_user_get(const summary_obs_type * summary_obs , const char * in
   *std   = summary_obs->std;
 }
 
+
+
+double summary_obs_get_value( const summary_obs_type * summary_obs ) {
+  return summary_obs->value;
+}
+
+double summary_obs_get_std( const summary_obs_type * summary_obs ) {
+  return summary_obs->std;
+}
 
 
 /*****************************************************************/

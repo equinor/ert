@@ -149,9 +149,9 @@ void history_init_ts( const history_type * history , const char * summary_key , 
   
     {
       for (int tstep = 0; tstep <= sched_history_get_last_history(history->sched_history); tstep++) {
-        int ministep   = ecl_sum_get_report_ministep_end( history->ecl_sum , tstep );
-        if (ministep >= 0) {
-          double_vector_iset( value , tstep , ecl_sum_get_general_var( history->ecl_sum , ministep , local_key ));
+        int time_index = ecl_sum_iget_report_end( history->ecl_sum , tstep );
+        if (time_index >= 0) {
+          double_vector_iset( value , tstep , ecl_sum_iget_general_var( history->ecl_sum , time_index , local_key ));
           bool_vector_iset( valid , tstep , true );
         } else
           bool_vector_iset( valid , tstep , false );    /* Did not have this report step */

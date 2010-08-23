@@ -226,11 +226,11 @@ void prefix ## _set_inflation__( void * void_inflation , const void * void_std ,
 /*****************************************************************/
 
 #define VOID_GET_OBS(prefix)   \
-void prefix ## _get_observations__(const void * void_arg , int report_step, obs_data_type * obs_data, const active_list_type * __active_list) {   \
-   prefix ## _get_observations((prefix ## _type *) void_arg , report_step , obs_data , __active_list); \
+void prefix ## _get_observations__(const void * void_arg , obs_data_type * obs_data, const active_list_type * __active_list) {   \
+   prefix ## _get_observations((prefix ## _type *) void_arg , obs_data , __active_list); \
 }
 
-#define VOID_GET_OBS_HEADER(prefix) void prefix ## _get_observations__(const void * , int , obs_data_type * , const active_list_type * )
+#define VOID_GET_OBS_HEADER(prefix) void prefix ## _get_observations__(const void * , obs_data_type * , const active_list_type * )
 
 /*****************************************************************/
 

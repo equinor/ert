@@ -799,6 +799,7 @@ void site_config_free(site_config_type * site_config) {
   
   stringlist_free( site_config->path_variables_user );
   stringlist_free( site_config->path_values_user );
+  hash_free( site_config->path_variables_site );
 
   hash_free( site_config->rsh_host_list );
   hash_free( site_config->env_variables_site );
