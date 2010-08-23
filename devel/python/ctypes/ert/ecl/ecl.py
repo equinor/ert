@@ -15,7 +15,11 @@ default_version   = "2009.1"
 class Ecl:
     __initialized = False
 
-    sum = CWrapperNameSpace( "ecl_sum" )
+    sum      = CWrapperNameSpace( "ecl_sum" )
+    grid     = CWrapperNameSpace( "ecl_grid" )
+    region   = CWrapperNameSpace( "ecl_region" ) 
+    ecl_kw   = CWrapperNameSpace( "ecl_kw" )
+    ecl_file = CWrapperNameSpace( "ecl_file" )
     
     @classmethod
     def __initialize__(cls):
@@ -56,7 +60,46 @@ class Ecl:
         cls.sum.test1                         = cwrapper.prototype("void test1(int , char**)")
         cls.sum.test2                         = cwrapper.prototype("void test2(char**)")
 
+        ##################################################################
 
+        cwrapper.registerType( "ecl_grid" , EclGrid )
+        cls.grid.fread_alloc                  = cwrapper.prototype("long ecl_grid_alloc( char* )")
+        cls.grid.free                         = cwrapper.prototype("void ecl_grid_free( ecl_grid )")     
+
+        #################################################################
+
+        cwrapper.registerType( "ecl_kw" , EclKW )
+
+        #################################################################
+
+        cwrapper.registerType( "ecl_file" , EclFile )
+        cls.ecl_file.fread_alloc               = cwrapper.prototype("long   ecl_file_fread_alloc( char* )")
+        cls.ecl_file.free                      = cwrapper.prototype("void   ecl_file_free( ecl_file )")
+        cls.ecl_file.iget_kw                   = cwrapper.prototype("ecl_kw ecl_file_iget_kw( ecl_file , int)")
+        cls.ecl_file.iget_named_kw             = cwrapper.prototype("ecl_kw ecl_file_iget_named_kw( ecl_file , char* , int)")
+                
+        #################################################################
+
+        cwrapper.registerType( "ecl_region" , EclRegion )
+        cls.region.alloc                      = cwrapper.prototype("long ecl_region_alloc( ecl_grid , bool )")
+        cls.region.free                       = cwrapper.prototype("void ecl_region_free( ecl_region )")     
+        cls.region.select_all                 = cwrapper.prototype("void ecl_region_select_all( ecl_region )")
+        cls.region.deselect_all               = cwrapper.prototype("void ecl_region_deselect_all( ecl_region )")
+        cls.region.select_equal               = cwrapper.prototype("void ecl_region_select_all( ecl_region , ecl_kw , int )")
+        cls.region.deselect_equal             = cwrapper.prototype("void ecl_region_deselect_all( ecl_region , ecl_kw , int)")
+
+        cls.region.select_less                = cwrapper.prototype("void ecl_region_select_smaller( ecl_region , ecl_kw , float )")
+        cls.region.deselect_less              = cwrapper.prototype("void ecl_region_deselect_smaller( ecl_region , ecl_kw , float )")
+
+        cls.region.select_more                = cwrapper.prototype("void ecl_region_select_larger( ecl_region , ecl_kw , float )")
+        cls.region.deselect_more              = cwrapper.prototype("void ecl_region_deselect_larger( ecl_region , ecl_kw , float )")
+
+        cls.region.active_size                = cwrapper.prototype("int ecl_region_get_active_size( ecl_region )")
+        cls.region.global_size                = cwrapper.prototype("int ecl_region_get_global_size( ecl_region )")
+        
+
+
+#################################################################
 
 
 class EclSumNode:
@@ -85,6 +128,7 @@ def test2( L ):
     arr[:-1] = L
     arr[ len(L) ] = None
     Ecl.sum.test2(  arr )
+
 
 
 
@@ -184,7 +228,70 @@ class EclSum:
         return Ecl.sum.get_first_gt( self , key_index , limit )
 
 
+#################################################################
+class EclKW:
+    def __init__(self , c_ptr):
+        self.c_ptr = c_ptr
 
+    def from_param(self):
+        return self.c_ptr
+
+
+class EclFile:
+    def __init__(self , filename):
+        self.c_ptr = Ecl.ecl_file.fread_alloc( filename )
+
+    def __del__(self):
+        Ecl.ecl_file.free( self )
+
+    def iget_kw( self , index ):
+        return Ecl.ecl_file.iget_kw( self , index )
+
+    def iget_named_kw( self , kw_name , index ):
+        return Ecl.ecl_file.iget_named_kw( self , kw_name , index )
+        
+    def from_param(self):
+        return self.c_ptr
+
+
+class EclGrid:
+    def __init__(self , filename):
+        self.c_ptr = Ecl.grid.fread_alloc( filename )
+
+    def __del__(self):
+        Ecl.grid.free( self )
+
+    def from_param(self):
+        return self.c_ptr
+
+
+
+class EclRegion:
+    def __init__(self , grid , preselect):
+        self.grid  = grid
+        self.c_ptr = Ecl.region.alloc( grid , preselect )
+        
+    def __del__( self ):
+        Ecl.region.free( self )
+
+    def from_param(self):
+        return self.c_ptr
+
+    def select_more( self , ecl_kw , limit):
+        Ecl.region.select_more( self , ecl_kw , limit )
+
+    def select_less( self , ecl_kw , limit):
+        Ecl.region.select_less( self , ecl_kw , limit )
+
+    def active_size( self ):
+        return Ecl.region.active_size( self )
+
+    def global_size( self ):
+        return Ecl.region.global_size( self )
+    
+    
+
+#################################################################
 class EclCase:
     def __init__(self , input_case):
         self.case = input_case
@@ -194,7 +301,7 @@ class EclCase:
         else:
             self.path = os.getwcwd()
         (self.base , self.ext) = os.path.splitext( tmp )
-        self.LSFDriver = None
+        self.LSFDriver   = None
         self.LocalDriver = None
         
         
