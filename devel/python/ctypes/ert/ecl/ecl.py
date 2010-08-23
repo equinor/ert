@@ -20,6 +20,7 @@ class Ecl:
     region   = CWrapperNameSpace( "ecl_region" ) 
     ecl_kw   = CWrapperNameSpace( "ecl_kw" )
     ecl_file = CWrapperNameSpace( "ecl_file" )
+    ecl_util = CWrapperNameSpace( "ecl_util" )
     
     @classmethod
     def __initialize__(cls):
@@ -31,7 +32,7 @@ class Ecl:
         ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
         ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
         cls.libecl = ctypes.CDLL("libecl.so" , ctypes.RTLD_GLOBAL)
-
+        
         cwrapper = CWrapper( cls.libecl )
         cwrapper.registerType( "ecl_sum" , EclSum )
         cls.sum.fread_alloc                   = cwrapper.prototype("long ecl_sum_fread_alloc_case__( char* , char* , bool)") 
@@ -96,6 +97,11 @@ class Ecl:
 
         cls.region.active_size                = cwrapper.prototype("int ecl_region_get_active_size( ecl_region )")
         cls.region.global_size                = cwrapper.prototype("int ecl_region_get_global_size( ecl_region )")
+
+        #################################################################
+
+        cls.ecl_util.get_num_cpu              = cwrapper.prototype("int ecl_util_get_num_cpu( char* )")
+
         
 
 
@@ -120,9 +126,9 @@ class EclSum:
         self.case            = case
         self.join_string     = join_string
         self.include_restart = include_restart
-        self.c_ptr = None
+        self.c_ptr           = None
         self.reload( )
-        
+
 
     def reload(self ):
 
@@ -134,12 +140,14 @@ class EclSum:
         """
         if self.c_ptr != None:
             Ecl.sum.free( self )
-        self.c_ptr = Ecl.sum.fread_alloc( self.case , self.join_string , self.include_restart)
-        
+        print "Calling the constructor"
+        c_ptr = Ecl.sum.fread_alloc( self.case , self.join_string , self.include_restart )
+        if c_ptr:
+            self.c_ptr = c_ptr
+            
         
     def __del__( self ):
         Ecl.sum.free( self )
-
 
     def from_param(self):
         return self.c_ptr
@@ -165,11 +173,9 @@ class EclSum:
     def get_from_days( self , key , days ):
         return Ecl.sum.get_general_var_from_sim_days( self , days , key )
 
-
     def get_from_report( self , key , report_step ):
         time_index = Ecl.sum.get_report_end( self , report_step )
         return Ecl.sum.iget_general_var( self , time_index , key )
-
     
     def get_vector(self , key):
         vector = []
@@ -178,13 +184,6 @@ class EclSum:
             vector.append( self.__iiget_node( key_index , internal_index ) )
                 
         return vector
-
-
-    def length(self):
-        """
-        Returns the length of the dataset in terms of many ministeps it contains.
-        """
-        return Ecl.sum.data_length( self )
 
     
     def iget_days(self , internal_index):
@@ -197,15 +196,27 @@ class EclSum:
     def iget_report( self , internal_index ):
         return Ecl.sum.iget_report_step( self , internal_index )
 
+    @property
+    def length(self):
+        """
+        Returns the length of the dataset in terms of many ministeps it contains.
+        """
+        return Ecl.sum.data_length( self )
+
+
+    @property
     def start_date(self):
         return Ecl.sum.get_start_date( self )
 
+    @property
     def end_date(self):
         return Ecl.sum.get_end_date( self )
 
+    @property
     def last_report(self):
         return Ecl.sum.get_last_report_step( self )
 
+    @property
     def first_report(self):
         return Ecl.sum.get_first_report_step( self )
 
@@ -303,27 +314,39 @@ class EclCase:
         (self.base , self.ext) = os.path.splitext( tmp )
 
 
-        self.LSFDriver   = None
-        self.LocalDriver = None
+        self.LSFDriver     = None
+        self.LocalDriver   = None
         self.__sum         = None
         self.__grid        = None
+        self.__data_file   = None
+    
+
+    @property
+    def datafile( self ):
+        if not self.__data_file:
+            if self.path:
+                self.__data_file = "%s/%s.DATA" % ( self.path , self.base )
+            else:
+                self.__data_file = "%s.DATA" % self.base
+        return self.__data_file
 
 
-    #@property
+    @property
     def sum( self ):
         if not self.__sum:
             self.__sum = EclSum( self.case )
         return self.__sum
     
 
-    #@property
+    @property
     def grid( self ):
         if not self.__grid:
             self.__grid = EclGrid( self.case )
         return self.__grid
 
         
-    def run( self , version = default_version , num_cpu = 1 , blocking = False , run_script = run_script , use_LSF = True ):
+    def run( self , version = default_version , blocking = False , run_script = run_script , use_LSF = True ):
+        num_cpu = Ecl.ecl_util.get_num_cpu( self.datafile )
         if use_LSF:
             if not self.LSFDriver:
                 self.LSFDriver = LSFDriver( )
