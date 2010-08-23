@@ -254,6 +254,7 @@ class EclFile:
         return self.c_ptr
 
 
+
 class EclGrid:
     def __init__(self , filename):
         self.c_ptr = Ecl.grid.fread_alloc( filename )
