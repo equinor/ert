@@ -57,13 +57,10 @@ class Ecl:
         cls.sum.get_first_report_step         = cwrapper.prototype("int ecl_sum_get_first_report_step( ecl_sum )")
         cls.sum.iget_report_step              = cwrapper.prototype("int ecl_sum_iget_report_step( ecl_sum , int )")
         
-        cls.sum.test1                         = cwrapper.prototype("void test1(int , char**)")
-        cls.sum.test2                         = cwrapper.prototype("void test2(char**)")
-
         ##################################################################
 
         cwrapper.registerType( "ecl_grid" , EclGrid )
-        cls.grid.fread_alloc                  = cwrapper.prototype("long ecl_grid_alloc( char* )")
+        cls.grid.fread_alloc                  = cwrapper.prototype("long ecl_grid_load_case( char* )")
         cls.grid.free                         = cwrapper.prototype("void ecl_grid_free( ecl_grid )")     
 
         #################################################################
@@ -83,8 +80,11 @@ class Ecl:
         cwrapper.registerType( "ecl_region" , EclRegion )
         cls.region.alloc                      = cwrapper.prototype("long ecl_region_alloc( ecl_grid , bool )")
         cls.region.free                       = cwrapper.prototype("void ecl_region_free( ecl_region )")     
+        cls.region.reset                      = cwrapper.prototype("void ecl_region_reset( ecl_region )")
+
         cls.region.select_all                 = cwrapper.prototype("void ecl_region_select_all( ecl_region )")
         cls.region.deselect_all               = cwrapper.prototype("void ecl_region_deselect_all( ecl_region )")
+
         cls.region.select_equal               = cwrapper.prototype("void ecl_region_select_all( ecl_region , ecl_kw , int )")
         cls.region.deselect_equal             = cwrapper.prototype("void ecl_region_deselect_all( ecl_region , ecl_kw , int)")
 
@@ -115,33 +115,23 @@ class EclSumNode:
 
     
 
-def test1( *L ):
-    arr = (ctypes.c_char_p * len(L))()
-    for i in (range(len(L))):
-        arr[i] = L[i]
-
-    Ecl.sum.test1( len(L) , arr )
-
-
-def test2( L ):
-    arr = (ctypes.c_char_p * (len(L) + 1))()
-    arr[:-1] = L
-    arr[ len(L) ] = None
-    Ecl.sum.test2(  arr )
-
-
-
-
 class EclSum:
     def __init__(self , case , join_string = ":" ,include_restart = False):
-        self.case      = case
-        self.join_string = join_string
+        self.case            = case
+        self.join_string     = join_string
         self.include_restart = include_restart
         self.c_ptr = None
         self.reload( )
         
 
     def reload(self ):
+
+        """
+        Observe that agressive reload() on a running ECLIPSE
+        simulation is asking for trouble; the change of finding an
+        temporarily incomplete/malformed summary or header file is
+        quite large. This will most probably bring the whole thing down.
+        """
         if self.c_ptr != None:
             Ecl.sum.free( self )
         self.c_ptr = Ecl.sum.fread_alloc( self.case , self.join_string , self.include_restart)
@@ -278,11 +268,20 @@ class EclRegion:
     def from_param(self):
         return self.c_ptr
 
+    def reset(self):
+        Ecl.region.reset( self )
+
     def select_more( self , ecl_kw , limit):
         Ecl.region.select_more( self , ecl_kw , limit )
 
     def select_less( self , ecl_kw , limit):
         Ecl.region.select_less( self , ecl_kw , limit )
+
+    def select_equal( self , ecl_kw , value ):
+        Ecl.region.select_equal( self , ecl_kw , value )
+
+    def select_all( self ):
+        Ecl.region.select_all( self )
 
     def active_size( self ):
         return Ecl.region.active_size( self )
@@ -302,10 +301,27 @@ class EclCase:
         else:
             self.path = os.getwcwd()
         (self.base , self.ext) = os.path.splitext( tmp )
+
+
         self.LSFDriver   = None
         self.LocalDriver = None
-        
-        
+        self.__sum         = None
+        self.__grid        = None
+
+
+    #@property
+    def sum( self ):
+        if not self.__sum:
+            self.__sum = EclSum( self.case )
+        return self.__sum
+    
+
+    #@property
+    def grid( self ):
+        if not self.__grid:
+            self.__grid = EclGrid( self.case )
+        return self.__grid
+
         
     def run( self , version = default_version , num_cpu = 1 , blocking = False , run_script = run_script , use_LSF = True ):
         if use_LSF:
