@@ -9,8 +9,17 @@ data_mode   = 0664
 dir_mode    = 0775
 
 
+def get_SDP_ROOT():
+    cpu = os.uname()[4]
+    RH  = open('/etc/redhat-release').read().split()[6]
+    res_target = "%s_RH_%s" % (cpu , RH)
+    sdp_root = "/project/res/%s_RH_%s" % (cpu , RH)
+    return (sdp_root , float(RH))
 
-target = "/d/proj/bg/enkf/python"
+
+
+(SDP_ROOT , RH) = get_SDP_ROOT()
+target = "%s/lib/python" % SDP_ROOT
 res_guid    = os.stat("/project/res")[stat.ST_GID]
 
 
@@ -66,9 +75,8 @@ def install_path( src_path , target_root ):
     
 
 os.umask( 2 )
-os.chdir( "/private/joaho/EnKF/devel/EnKF/python/ctypes" )
 install_path( "ert" , target )
-install_file( "/private/joaho/EnKF/devel/EnKF/libutil/slib/libutil.so"           , "/d/proj/bg/enkf/python/lib/libutil.so")
-install_file( "/private/joaho/EnKF/devel/EnKF/libconfig/slib/libconfig.so"           , "/d/proj/bg/enkf/python/lib/libconfig.so")
-install_file( "/private/joaho/EnKF/devel/EnKF/libecl/slib/libecl.so"             , "/d/proj/bg/enkf/python/lib/libecl.so")
-install_file( "/private/joaho/EnKF/devel/EnKF/libjob_queue/slib/libjob_queue.so" , "/d/proj/bg/enkf/python/lib/libjob_queue.so")
+install_file( "../../libutil/slib/libutil.so"           , "%s/python/lib/libutil.so"      % SDP_ROOT)
+install_file( "../../libconfig/slib/libconfig.so"       , "%s/python/lib/libconfig.so"    % SDP_ROOT)
+install_file( "../../libecl/slib/libecl.so"             , "%s/python/lib/libecl.so"       % SDP_ROOT)
+install_file( "../../libjob_queue/slib/libjob_queue.so" , "%s/python/lib/libjob_queue.so" % SDP_ROOT)
