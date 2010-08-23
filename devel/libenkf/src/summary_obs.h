@@ -18,7 +18,7 @@ extern "C" {
 #include <util.h>
 
 #define AUTO_CORRF_EXP     "EXP"
-#define AUTO_CORRF_GAUSS   "GAUSSIAN"
+#define AUTO_CORRF_GAUSS   "GAUSS"
 
 
 typedef struct summary_obs_struct summary_obs_type;
