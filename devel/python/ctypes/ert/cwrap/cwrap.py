@@ -2,7 +2,7 @@ import ctypes
 import re
 import datetime
 import time
-
+import sys
 
 
 class ctime(ctypes.c_long):
@@ -50,12 +50,14 @@ class CWrapper:
         self.registerType("long*", ctypes.POINTER(ctypes.c_long))
         self.registerType("char", ctypes.c_char)
         self.registerType("char*", ctypes.c_char_p)
+        self.registerType("char**", ctypes.POINTER(ctypes.c_char_p))
         self.registerType("float", ctypes.c_float)
         self.registerType("float*", ctypes.POINTER(ctypes.c_float))
         self.registerType("double", ctypes.c_double)
         self.registerType("double*", ctypes.POINTER(ctypes.c_double))
         self.registerType("time_t", ctime)
         self.registerType("time_t*", ctypes.POINTER(ctime))
+
 
 
     def registerType(self, type, value):
