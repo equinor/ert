@@ -63,6 +63,11 @@ class Ecl:
         cwrapper.registerType( "ecl_grid" , EclGrid )
         cls.grid.fread_alloc                  = cwrapper.prototype("long ecl_grid_load_case( char* )")
         cls.grid.free                         = cwrapper.prototype("void ecl_grid_free( ecl_grid )")     
+        cls.grid.get_nx                       = cwrapper.prototype("int ecl_grid_get_nx( ecl_grid )")
+        cls.grid.get_ny                       = cwrapper.prototype("int ecl_grid_get_ny( ecl_grid )")
+        cls.grid.get_nz                       = cwrapper.prototype("int ecl_grid_get_nz( ecl_grid )")
+        cls.grid.get_active                   = cwrapper.prototype("int ecl_grid_get_active_size( ecl_grid )")
+        cls.grid.get_name                     = cwrapper.prototype("char* ecl_grid_get_name( ecl_grid )") 
 
         #################################################################
 
@@ -126,8 +131,12 @@ class EclSum:
         self.case            = case
         self.join_string     = join_string
         self.include_restart = include_restart
-        self.c_ptr           = None
+        self.c_ptr           = 0
         self.reload( )
+
+
+    def is_valid( self ):
+        return not (self.c_ptr == 0)
 
 
     def reload(self ):
@@ -138,16 +147,16 @@ class EclSum:
         temporarily incomplete/malformed summary or header file is
         quite large. This will most probably bring the whole thing down.
         """
-        if self.c_ptr != None:
-            Ecl.sum.free( self )
-        print "Calling the constructor"
         c_ptr = Ecl.sum.fread_alloc( self.case , self.join_string , self.include_restart )
         if c_ptr:
+            if not self.c_ptr == 0:
+                Ecl.sum.free( self )
             self.c_ptr = c_ptr
             
         
     def __del__( self ):
-        Ecl.sum.free( self )
+        if self.c_ptr:
+            Ecl.sum.free( self )
 
     def from_param(self):
         return self.c_ptr
@@ -266,6 +275,33 @@ class EclGrid:
     def from_param(self):
         return self.c_ptr
 
+    @property
+    def nx( self ):
+        return Ecl.grid.get_nx( self )
+
+    @property
+    def ny( self ):
+        return Ecl.grid.get_ny( self )
+
+    @property
+    def nz( self ):
+        return Ecl.grid.get_nz( self )
+
+    @property
+    def active( self ):
+        return Ecl.grid.get_active( self )
+
+    @property
+    def dims( self ):
+        return ( Ecl.grid.get_nx( self ) ,
+                 Ecl.grid.get_ny( self ) ,
+                 Ecl.grid.get_nz( self ) ,
+                 Ecl.grid.get_active( self ) )
+
+    @property
+    def name( self ):
+        return Ecl.grid.get_name( self )
+                 
 
 
 class EclRegion:
