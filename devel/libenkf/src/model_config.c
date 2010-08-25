@@ -295,6 +295,7 @@ void model_config_init(model_config_type * model_config ,
 
   if (model_config->history != NULL) {
     int num_restart = history_get_num_restarts(model_config->history);
+    printf("%s:  num_restart:%d \n",__func__ , num_restart);
     bool_vector_iset( model_config->internalize_state , num_restart - 1 , false );
     bool_vector_iset( model_config->__load_state      , num_restart - 1 , false );
   }
