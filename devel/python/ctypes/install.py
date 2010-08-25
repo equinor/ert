@@ -29,6 +29,8 @@ def chgrp(path , guid ):
 
 
 def install_file( src_file , target_file):
+    if not os.path.exists( src_file ):
+        sys.exit("The source file:%s does not exist?? " % src_file )
     shutil.copyfile( src_file , target_file )
     print "Updating file: %s" % target_file
     chgrp( target_file , res_guid )
@@ -39,15 +41,18 @@ def install_file( src_file , target_file):
         os.chmod( target_file , data_mode )
 
 
-
-def install_path( src_path , target_root ):
-    target_dir = "%s/%s" % (target_root , src_path)
+def make_dir( target_dir ):
     if not os.path.exists( target_dir ):
         os.makedirs( target_dir )
         print "Creating directory: %s" % target_dir
     chgrp( target_dir , res_guid )
     os.chmod( target_dir , dir_mode )
 
+
+def install_path( src_path , target_root ):
+    target_dir = "%s/%s" % (target_root , src_path)
+    
+    make_dir( target_dir )
     dir_entries  = []
     file_entries = []
 
@@ -75,8 +80,11 @@ def install_path( src_path , target_root ):
     
 
 os.umask( 2 )
+make_dir("%s/lib/python"  % SDP_ROOT)
+make_dir("%s/lib/python/lib"  % SDP_ROOT)
+
 install_path( "ert" , target )
-install_file( "../../libutil/slib/libutil.so"           , "%s/python/lib/libutil.so"      % SDP_ROOT)
-install_file( "../../libconfig/slib/libconfig.so"       , "%s/python/lib/libconfig.so"    % SDP_ROOT)
-install_file( "../../libecl/slib/libecl.so"             , "%s/python/lib/libecl.so"       % SDP_ROOT)
-install_file( "../../libjob_queue/slib/libjob_queue.so" , "%s/python/lib/libjob_queue.so" % SDP_ROOT)
+install_file( "../../libutil/slib/libutil.so"           , "%s/lib/python/lib/libutil.so"      % SDP_ROOT)
+install_file( "../../libconfig/slib/libconfig.so"       , "%s/lib/python/lib/libconfig.so"    % SDP_ROOT)
+install_file( "../../libecl/slib/libecl.so"             , "%s/lib/python/lib/libecl.so"       % SDP_ROOT)
+install_file( "../../libjob_queue/slib/libjob_queue.so" , "%s/lib/python/lib/libjob_queue.so" % SDP_ROOT)
