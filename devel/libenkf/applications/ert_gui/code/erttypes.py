@@ -7,7 +7,7 @@ class time_t(ctypes.c_long):
 
     def time(self):
         """Return this time_t as a time.localtime() object"""
-        return time.localtime(selfvalue).
+        return time.localtime(self.value)
 
     def datetime(self):
         """Return this time_t as a datetime.date([year, month, day])"""
