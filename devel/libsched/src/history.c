@@ -112,8 +112,12 @@ void history_use_summary(history_type * history, const ecl_sum_type * refcase , 
 */
 int history_get_num_restarts(const history_type * history)
 {
-  return sched_history_get_last_history( history->sched_history );
+  if (history->source != SCHEDULE) 
+    return ecl_sum_get_last_report_step( history->ecl_sum);
+  else
+    return sched_history_get_last_history( history->sched_history );
 }
+
 
 
 
