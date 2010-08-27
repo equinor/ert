@@ -4,7 +4,18 @@ import os
 import commands
 import stat
 
-os.umask(2)
+# These are the modes we want - assuming umask( 0 );
+# and then comes the fxxxing umask into play.
+exe_mode  = 0775
+file_mode = 0664
+
+umask = os.umask( 0 )
+os.umask( umask )
+
+
+
+
+
 res_guid = os.stat("/project/res")[stat.ST_GID]
 
 def mkdir_gid( path ):
@@ -33,16 +44,17 @@ def InstallPerm(env , dest , files , mode):
     return dest
 
 
+
 def InstallProgram(env , dest , files):
-    return InstallPerm( env , dest , files , 0775)
+    return InstallPerm( env , dest , files , exe_mode)
 
 
 def InstallHeader(env , dest , files):
-    return InstallPerm( env , dest , files , 0553)
+    return InstallPerm( env , dest , files , file_mode)
 
 
 def InstallLibrary(env , dest , files ):
-    return InstallPerm( env , dest , files , 0553)
+    return InstallPerm( env , dest , files , file_mode)
 
 
 SConsEnvironment.InstallPerm    = InstallPerm
@@ -115,7 +127,6 @@ LIBCONF      = 8
 def get_SDP_ROOT():
     cpu = os.uname()[4]
     RH  = open('/etc/redhat-release').read().split()[6]
-    res_target = "%s_RH_%s" % (cpu , RH)
     sdp_root = "/project/res/%s_RH_%s" % (cpu , RH)
     return (sdp_root , float(RH))
 

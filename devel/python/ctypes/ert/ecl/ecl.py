@@ -21,6 +21,8 @@ class Ecl:
     ecl_kw   = CWrapperNameSpace( "ecl_kw" )
     ecl_file = CWrapperNameSpace( "ecl_file" )
     ecl_util = CWrapperNameSpace( "ecl_util" )
+    rft_file = CWrapperNameSpace(" ecl_rft_file ")
+    rft      = CWrapperNameSpace(" ecl_rft_node ")
     
     @classmethod
     def __initialize__(cls):
@@ -67,7 +69,11 @@ class Ecl:
         cls.grid.get_ny                       = cwrapper.prototype("int ecl_grid_get_ny( ecl_grid )")
         cls.grid.get_nz                       = cwrapper.prototype("int ecl_grid_get_nz( ecl_grid )")
         cls.grid.get_active                   = cwrapper.prototype("int ecl_grid_get_active_size( ecl_grid )")
-        cls.grid.get_name                     = cwrapper.prototype("char* ecl_grid_get_name( ecl_grid )") 
+        cls.grid.get_name                     = cwrapper.prototype("char* ecl_grid_get_name( ecl_grid )")
+        cls.grid.get_active_index3            = cwrapper.prototype("int ecl_grid_get_active_index3( ecl_grid , int , int , int)")
+        cls.grid.get_global_index3            = cwrapper.prototype("int ecl_grid_get_global_index3( ecl_grid , int , int , int)") 
+        cls.grid.get_ijk1                     = cwrapper.prototype("void ecl_grid_get_ijk1( ecl_grid , int , int* , int* , int*)")
+        cls.grid.get_ijk1A                    = cwrapper.prototype("void ecl_grid_get_ijk1A( ecl_grid , int , int* , int* , int*)") 
 
         #################################################################
 
@@ -107,8 +113,19 @@ class Ecl:
 
         cls.ecl_util.get_num_cpu              = cwrapper.prototype("int ecl_util_get_num_cpu( char* )")
 
+        #################################################################
+        cwrapper.registerType( "ecl_rft_file" , EclRFTFile )
+        cwrapper.registerType( "ecl_rft" , EclRFT )
         
+        cls.rft_file.load                     = cwrapper.prototype("long ecl_rft_file_alloc_case( char* )")
+        cls.rft_file.has_rft                  = cwrapper.prototype("bool ecl_rft_file_case_has_rft( char* )")
+        cls.rft_file.free                     = cwrapper.prototype("void ecl_rft_file_free( ecl_rft_file )")
+        cls.rft_file.get_size                 = cwrapper.prototype("int ecl_rft_file_get_size__( ecl_rft_file , char* , time_t)")
+        cls.rft_file.iget                     = cwrapper.prototype("ecl_rft ecl_rft_file_iget_node( ecl_rft_file , int )")
 
+        cls.rft.get_well                      = cwrapper.prototype("char*  ecl_rft_node_get_well_name( ecl_rft )")
+        cls.rft.get_date                      = cwrapper.prototype("time_t ecl_rft_node_get_date( ecl_rft )")
+        
 
 #################################################################
 
@@ -247,6 +264,7 @@ class EclKW:
         return self.c_ptr
 
 
+
 class EclFile:
     def __init__(self , filename):
         self.c_ptr = Ecl.ecl_file.fread_alloc( filename )
@@ -265,6 +283,46 @@ class EclFile:
 
 
 
+class EclRFT:
+    def __init__(self , c_ptr ):
+        self.c_ptr = c_ptr
+
+    def from_param( self ):
+        return self.c_ptr
+
+    @property
+    def well(self):
+        return Ecl.rft.get_well( self )
+
+    @property
+    def date(self):
+        return Ecl.rft.get_date( self )
+
+
+
+class EclRFTFile:
+    def __init__(self , case):
+        self.c_ptr = Ecl.rft_file.load( case )
+
+
+    def __del__(self):
+        Ecl.rft_file.free( self )
+
+    def from_param( self ):
+        return self.c_ptr
+
+    def size( self , well = None , date = None):
+        return Ecl.rft_file.get_size( self , well , -1)
+
+    def headers(self):
+        header_list = []
+        for i in (range(Ecl.rft_file.get_size( self , None , -1))):
+            rft = Ecl.rft_file.iget( self , i )
+            header_list.append( (rft.well , rft.date ))
+        return header_list
+            
+
+    
 class EclGrid:
     def __init__(self , filename):
         self.c_ptr = Ecl.grid.fread_alloc( filename )
@@ -302,6 +360,29 @@ class EclGrid:
     def name( self ):
         return Ecl.grid.get_name( self )
                  
+    def active_index( self , i , j , k ):
+        return Ecl.grid.get_active_index3( self , i , j , k )
+
+
+    def global_index( self , i , j , k ):
+        return Ecl.grid.get_global_index3( self , i , j , k )
+
+    def get_ijk( self, active_index = None , global_index = None):
+        i = ctypes.c_int()
+        j = ctypes.c_int()
+        k = ctypes.c_int()
+        
+        if active_index and global_index:
+            raise Exception("Can only supply _one_ argument active_index or global_index.")
+        if not (active_index or global_index):
+            raise Exception("Must supply _one_ argument active_index or global_index.")
+
+        if active_index:
+            Ecl.grid.get_ijk1A( self , active_index , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))
+        else:
+            Ecl.grid.get_ijk1( self , global_index , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))
+
+        return (i.value , j.value , k.value)
 
 
 class EclRegion:
@@ -355,6 +436,7 @@ class EclCase:
         self.__sum         = None
         self.__grid        = None
         self.__data_file   = None
+        self.__rft         = None
     
 
     @property
@@ -379,6 +461,15 @@ class EclCase:
         if not self.__grid:
             self.__grid = EclGrid( self.case )
         return self.__grid
+
+
+    @property
+    def rft_file( self ):
+        if not self.__rft:
+            if Ecl.rft_file.has_rft( self.case ):
+                self.__rft = EclRFTFile( self.case )
+        return self.__rft
+
 
         
     def run( self , version = default_version , blocking = False , run_script = run_script , use_LSF = True ):
