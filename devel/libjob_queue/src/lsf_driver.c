@@ -7,78 +7,116 @@
 #include <hash.h>
 #include <pthread.h>
 #include <stringlist.h>
+#include <lsf/lsbatch.h>
+#include <dlfcn.h>
 
 /**
-   the LSF_LIBRARY_DRIVER uses the lsb/lsf libraries directly; if the
-   librarie/headers .... are not available for linking we can use the
-   lsf_system_driver instead - the latter is based on calling bsub and
-   bjobs with system calls, using temporary files and parsing the
-   output; the former is of course highly preferred.
-
    Documentation/examples of programming towards the lsf libraries can
    be found in /prog/LSF/7.0/misc/examples
 */
 
 
-/* 
-   Check the #defines - one-and-only-one - of the symbols
-   LSF_LIBRARY_DRIVER and LSF_SYSTEM_DRIVER must be defined.
+/*
+  How to call the lsf commands bsub/bjobs/bkill:
+  ----------------------------------------------
+  
+  To commands to submit, monitor and modify LSF jobs are available
+  through library calls through the lsf library. This is a good
+  solution which works well.
+
+  Unfortunately only quite few of the workstations in Statoil are
+  "designated LSF machines", meaning that they are allowed to talk to
+  the LIM servers, to be able to use the low-level lsb_xxx() function
+  calls the host making the calls must configured to be a LSF client -
+  this is unfortunately a quite scarce resource.
+
+  From Statoil-administration this has been solved by creating small
+  wrapper-scripts for (at least) the important executables 'bsub',
+  'bjobs' and 'bkill' which invoke the binary on a remote machine. To
+  make use of these shell based solutions the lsf_driver must call up
+  external programs, instead of simple library calls. 
+
+  Both the capabilities to issue library calls, and the ability to
+  spawn external functions is compiled into the same binary. WHich
+  method is used in the end is determined like this:
+
+    1. If the environment variable "ERT_LINK_LSF" is set (to any
+       value), the program will use the library routines.
+
+    2. If "ERT_LINK_LSF" is not set the program will use the external
+       bsub/bjobs/bkill binaries:
+
+        a) If the environment variable "LSF_COMMAND_HOME" is set the
+           program will search for for bsub/bkill/bjobs in this directory.
+
+        b) Else bsub/bkill/bjobs will be searched for in the normal
+           PATH variable.
+   
+       The problem is that the library calls need several ENV
+       variables set by themselves, among other this will affect the
+       PATH variable, which will result that the external approach
+       finds the proper bsub/bjobs/bkill binaries instead of the
+       wrappers. What a mess.
+
+  All the functions with 'library' in the name are based on library
+  calls, and the functions with 'shell' in the name are based on
+  external functions (the actual calls are through the
+  util_fork_exec() function).
 */
 
-#ifdef LSF_LIBRARY_DRIVER
-#ifdef LSF_SYSTEM_DRIVER
-#error: Both symbols LSF_LIBRARY_DRIVER and LSF_SYSTEM_DRIVER are defined; invalid configuration.
-#endif
-#endif
 
-#ifndef  LSF_LIBRARY_DRIVER
-#ifndef  LSF_SYSTEM_DRIVER
-#error: Neither LSF_LIBRARY_DRIVER nor LSF_SYSTEM_DRIVER are defined; invalid configuration.
-#endif
-#endif
 
-/*****************************************************************/
 
-#ifdef  LSF_LIBRARY_DRIVER
-#include <lsf/lsbatch.h>
-#endif
+
+
 
 #define LSF_DRIVER_TYPE_ID 10078365
-#define LSF_JOB_TYPE_ID    99639007
+#define LSF_JOB_TYPE_ID    9963900
+#define BJOBS_REFRESH_TIME 10
 
 struct lsf_job_struct {
   UTIL_TYPE_ID_DECLARATION;
-  long int  lsf_jobnr;
-  int       num_exec_host;
-  char    **exec_host;
-#ifdef LSF_SYSTEM_DRIVER
-  char     * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_cache hash table */
-#endif
+  long int    lsf_jobnr;
+  int         num_exec_host;
+  char      **exec_host;
+  char       * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_cache hash table */
 };
 
-#define BJOBS_REFRESH_TIME 5
+
 
 struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
   QUEUE_DRIVER_FUNCTIONS
-  char             * queue_name;
-  char             * resource_request;
-  pthread_mutex_t    submit_lock;
+  char              * queue_name;
+  char              * resource_request;
+  pthread_mutex_t     submit_lock;
   int                 num_cpu;
-#ifdef LSF_LIBRARY_DRIVER
+  
+  bool                use_library_calls;
+  
+  /*-----------------------------------------------------------------*/
+  /* Fields used by the lsf library functions */
   struct submit      lsf_request;
   struct submitReply lsf_reply; 
-#else
+
+  /*-----------------------------------------------------------------*/
+  /* Fields used by the shell() based functions */
+  
   time_t              last_bjobs_update;
-  hash_type         * my_jobs;     /* A hash table of all jobs submitted by this ERT instance - to ensure that we do not check status of old jobs in e.g. ZOMBIE status. */  
+  hash_type         * my_jobs;            /* A hash table of all jobs submitted by this ERT instance - to ensure that we do not check status of old jobs in e.g. ZOMBIE status. */  
   hash_type         * status_map;
-  hash_type         * bjobs_cache;     /* The output of calling bjobs is cached in this table. */
-  pthread_mutex_t     bjobs_mutex;     /* Only one thread should update the bjobs_chache table. */
+  hash_type         * bjobs_cache;        /* The output of calling bjobs is cached in this table. */
+  pthread_mutex_t     bjobs_mutex;        /* Only one thread should update the bjobs_chache table. */
   char              * bjobs_executable;
   char              * bsub_executable;
   char              * bkill_executable;
-#endif
 };
+
+
+void init_lsf_driver() {
+  
+}
+
 
 
 
@@ -90,13 +128,11 @@ static UTIL_SAFE_CAST_FUNCTION( lsf_job , LSF_JOB_TYPE_ID)
 
 lsf_job_type * lsf_job_alloc() {
   lsf_job_type * job;
-  job = util_malloc(sizeof * job , __func__);
+  job                = util_malloc(sizeof * job , __func__);
   job->num_exec_host = 0;
   job->exec_host     = NULL;
 
-#ifdef LSF_SYSTEM_DRIVER
   job->lsf_jobnr_char = NULL;
-#endif
   UTIL_TYPE_ID_INIT( job , LSF_JOB_TYPE_ID);
   return job;
 }
@@ -104,15 +140,12 @@ lsf_job_type * lsf_job_alloc() {
 
 
 void lsf_job_free(lsf_job_type * job) {
-#ifdef LSF_SYSTEM_DRIVER
   util_safe_free(job->lsf_jobnr_char);
-#endif
   util_free_stringlist(job->exec_host , job->num_exec_host);
   free(job);
 }
 
 
-#ifdef LSF_SYSTEM_DRIVER
 static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
   int     jobid = -1;
   FILE * stream = util_fopen(stdout_file , "r");
@@ -139,7 +172,7 @@ static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
 */
 
 
-static int lsf_driver_submit_system_job(lsf_driver_type * driver , 
+static int lsf_driver_submit_shell_job(lsf_driver_type * driver , 
                                         const char *  run_path , 
                                         const char *  job_name , 
                                         const char *  lsf_queue , 
@@ -169,28 +202,25 @@ static int lsf_driver_submit_system_job(lsf_driver_type * driver ,
     argv[0] = "-o";  
     argv[1] = lsf_stdout;
     argv[2] = "-q";  
-    argv[3] = lsf_queue;
+    argv[3] = (char *) lsf_queue;
     argv[4] = "-J";  
-    argv[5] = job_name;
+    argv[5] = (char *) job_name;
     argv[6] = "-n";  
     argv[7] = num_cpu_string;
     if (resource_request != NULL) {
       argv[8] = "-R";
-      argv[9] = resource_request;
+      argv[9] = (char *) resource_request;
       offset  = 10;
     }
-    argv[offset] = submit_cmd;
+    argv[offset] = (char *) submit_cmd;
     {
       int iarg;
-      for (iarg = 0; iarg < argc; iarg++)
-        argv[iarg + offset + 1] = job_argv[ iarg ];
+      for (iarg = 0; iarg < job_argc; iarg++) 
+        argv[iarg + offset + 1] = (char *) job_argv[ iarg ];
     }
   }
-  
-  util_fork_exec(driver->bsub_executable , 12 , argv , true , NULL , NULL , NULL , tmp_file , NULL);
-  
+  util_fork_exec(driver->bsub_executable , argc , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
-  util_unlink_existing(tmp_file); 
   free(lsf_stdout);
   free(tmp_file);
   free(argv);
@@ -229,8 +259,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 
           if (hash_has_key( driver->my_jobs , job_id ))   /* Consider only jobs submitted by this ERT instance - not old jobs lying around from the same user. */
             hash_insert_int(driver->bjobs_cache , job_id , lsf_driver_get_status__( driver , status , job_id));
-          else
-            printf("%s: skipping job:%s \n",__func__ , job_id );
+          
 	  free(job_id);
 	}
 	free(line);
@@ -241,11 +270,9 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   util_unlink_existing(tmp_file); 
   free(tmp_file);
 }
-#endif
 
 
 
-#ifdef LSF_LIBRARY_DRIVER
 #define CASE_SET(s1,s2) case(s1):  status = s2; break;
 static job_status_type lsf_driver_get_job_status_libary(void * __driver , void * __job) {
   if (__job == NULL) 
@@ -297,11 +324,8 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , void *
     }
   }
 }
-#undef case
 
-#else
-
-static job_status_type lsf_driver_get_job_status_system(void * __driver , void * __job) {
+static job_status_type lsf_driver_get_job_status_shell(void * __driver , void * __job) {
   job_status_type status = JOB_QUEUE_NOT_ACTIVE;
   
   if (__job != NULL) {
@@ -339,17 +363,16 @@ static job_status_type lsf_driver_get_job_status_system(void * __driver , void *
   return status;
 }
 
-#endif
 
 
 
 job_status_type lsf_driver_get_job_status(void * __driver , void * __job) {
   job_status_type status;
-#ifdef LSF_LIBRARY_DRIVER
-  status = lsf_driver_get_job_status_libary(__driver , __job);
-#else
-  status = lsf_driver_get_job_status_system(__driver , __job);
-#endif
+  lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
+  if (driver->use_library_calls) 
+    status = lsf_driver_get_job_status_libary(__driver , __job);
+  else
+    status = lsf_driver_get_job_status_shell(__driver , __job);
   return status;
 }
 
@@ -385,16 +408,13 @@ void lsf_driver_set_num_cpu( void * __lsf_driver , int num_cpu) {
 
 
 void lsf_driver_kill_job(void * __driver , void * __job) {
+  lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
   {
-#ifdef LSF_LIBRARY_DRIVER
-    lsb_forcekilljob(job->lsf_jobnr);
-#else 
-    {
-      lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
+    if (driver->use_library_calls)
+      lsb_forcekilljob(job->lsf_jobnr);
+    else
       util_fork_exec(driver->bkill_executable , 1 , (const char **)  &job->lsf_jobnr_char , true , NULL , NULL , NULL , NULL , NULL);
-    }
-#endif
   }
 }
 
@@ -413,46 +433,47 @@ void * lsf_driver_submit_job(void * __driver ,
     lsf_job_type * job 		  = lsf_job_alloc();
     char * lsf_stdout  		  = util_alloc_joined_string( (const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
     pthread_mutex_lock( &driver->submit_lock );
-#ifdef LSF_LIBRARY_DRIVER
-    char * command;
-    {
-      buffer_type * command_buffer = buffer_alloc( 256 );
-      buffer_fwrite_char_ptr( command_buffer , submit_cmd );
-      for (int iarg = 0; iarg < argc; iarg++) {
-        buffer_fwrite_char( command_buffer , ' ');
-        buffer_fwrite_char_ptr( command_buffer , argv[ iarg ]);
+
+
+    if (driver->use_library_calls) {
+      char * command;
+      {
+        buffer_type * command_buffer = buffer_alloc( 256 );
+        buffer_fwrite_char_ptr( command_buffer , submit_cmd );
+        for (int iarg = 0; iarg < argc; iarg++) {
+          buffer_fwrite_char( command_buffer , ' ');
+          buffer_fwrite_char_ptr( command_buffer , argv[ iarg ]);
+        }
+        buffer_terminate_char_ptr( command_buffer );
+        command = buffer_get_data( command_buffer );
+        buffer_free_container( command_buffer );
       }
-      buffer_terminate_char_ptr( command_buffer );
-      command = buffer_get_data( command_buffer );
-      buffer_free_container( command_buffer );
-    }
-    
-    {
-      int options = SUB_QUEUE + SUB_JOB_NAME + SUB_OUT_FILE;
-      if (driver->resource_request != NULL) {
-	options += SUB_RES_REQ;
-	driver->lsf_request.resReq = driver->resource_request;
+      
+      {
+        int options = SUB_QUEUE + SUB_JOB_NAME + SUB_OUT_FILE;
+        if (driver->resource_request != NULL) {
+          options += SUB_RES_REQ;
+          driver->lsf_request.resReq = driver->resource_request;
+        }
+        driver->lsf_request.options = options;
       }
-      driver->lsf_request.options = options;
-    }
-    driver->lsf_request.jobName       = (char *) job_name;
-    driver->lsf_request.outFile       = lsf_stdout;
-    driver->lsf_request.command       = command;
-    driver->lsf_request.numProcessors = driver->num_cpu;
-    job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
-    free( command );  /* I trust the lsf layer is finished with the command? */
-#else
-    {
+      driver->lsf_request.jobName       = (char *) job_name;
+      driver->lsf_request.outFile       = lsf_stdout;
+      driver->lsf_request.command       = command;
+      driver->lsf_request.numProcessors = driver->num_cpu;
+      job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
+      free( command );  /* I trust the lsf layer is finished with the command? */
+    } else {
       char * quoted_resource_request = NULL;
       if (driver->resource_request != NULL)
 	quoted_resource_request = util_alloc_sprintf("\"%s\"" , driver->resource_request);
-
-      job->lsf_jobnr      = lsf_driver_submit_system_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd , argc, argv);
+      
+      job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd , argc, argv);
       job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
       hash_insert_ref( driver->my_jobs , job->lsf_jobnr_char , NULL );   
       util_safe_free(quoted_resource_request);
     }
-#endif
+
     pthread_mutex_unlock( &driver->submit_lock );
     free(lsf_stdout);
     
@@ -463,9 +484,8 @@ void * lsf_driver_submit_job(void * __driver ,
 	The submit failed - the queue system shall handle
 	NULL return values.
       */
-#ifdef LSF_LIBRARY_DRIVER
-      fprintf(stderr,"%s: ** Warning: lsb_submit() failed: %s/%d \n",__func__ , lsb_sysmsg() , lsberrno);
-#endif
+      if (driver->use_library_calls) 
+        fprintf(stderr,"%s: ** Warning: lsb_submit() failed: %s/%d \n",__func__ , lsb_sysmsg() , lsberrno);
       lsf_job_free(job);
       return NULL;
     }
@@ -478,14 +498,13 @@ void lsf_driver_free(lsf_driver_type * driver ) {
   free(driver->queue_name);
   util_safe_free(driver->resource_request );
   
-#ifdef LSF_SYSTEM_DRIVER
   hash_free(driver->status_map);
   hash_free(driver->bjobs_cache);
   hash_free(driver->my_jobs);
   free( driver->bjobs_executable );
   free( driver->bsub_executable );
   free( driver->bkill_executable );
-#endif
+
   free(driver);
   driver = NULL;
 }
@@ -506,7 +525,13 @@ void lsf_driver_set_resource_request( lsf_driver_type * driver, const char * res
   driver->resource_request = util_realloc_string_copy( driver->resource_request , resource_request );
 }
 
-
+static bool lsf_driver_assert_executable( const char * executable , const char * name) {
+  if ((executable == NULL) || (!util_file_exists( executable ))) {
+    fprintf(stderr,"** Warning could not find lsf executable: \"%s\" - lsf shell commands not available\n" , name);
+    return false;
+  } else
+    return true;
+}
 
 
 
@@ -526,7 +551,8 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   lsf_driver->num_cpu              = num_cpu;
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
 
-#ifdef LSF_LIBRARY_DRIVER
+  /* Library initialisation */
+  /*****************************************************************/
   memset(&lsf_driver->lsf_request , 0 , sizeof (lsf_driver->lsf_request));
   lsf_driver->lsf_request.queue     	   = lsf_driver->queue_name;
   lsf_driver->lsf_request.beginTime 	   = 0;
@@ -541,17 +567,41 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   lsf_driver->lsf_request.options2 = 0;
   if (lsb_init(NULL) != 0) 
     util_abort("%s failed to initialize LSF environment : %s/%d  \n",__func__ , lsb_sysmsg() , lsberrno);
-  setenv("BSUB_QUIET" , "yes" , 1);
-  lsf_driver->display_info         = lsf_driver_display_info;
-#else
+
+  
+  /*****************************************************************/
+  /* Shell initialization */
   lsf_driver->last_bjobs_update   = time( NULL );
   lsf_driver->bjobs_cache 	  = hash_alloc(); 
   lsf_driver->my_jobs 	          = hash_alloc(); 
   lsf_driver->status_map   	  = hash_alloc();
-  lsf_driver->bjobs_executable    = util_alloc_PATH_executable( "bjobs" );
-  lsf_driver->bsub_executable     = util_alloc_PATH_executable( "bsub" );
-  lsf_driver->bkill_executable    = util_alloc_PATH_executable( "bkill" );
-  lsf_driver->display_info        = NULL;                                      /* The system driver does not have any display info function. */
+
+  if (getenv("LSF_COMMAND_HOME") != NULL) {
+    const char * bjobs_home = getenv("LSF_COMMAND_HOME");
+    lsf_driver->bjobs_executable = util_alloc_filename( bjobs_home , "bjobs"  , NULL);
+    lsf_driver->bsub_executable  = util_alloc_filename( bjobs_home , "bsub"   , NULL);
+    lsf_driver->bkill_executable = util_alloc_filename( bjobs_home , "bkill"  , NULL);
+  } else {
+    lsf_driver->bjobs_executable    = util_alloc_PATH_executable( "bjobs" );
+    lsf_driver->bsub_executable     = util_alloc_PATH_executable( "bsub" );
+    lsf_driver->bkill_executable    = util_alloc_PATH_executable( "bkill" );
+  }
+
+  if (!lsf_driver_assert_executable( lsf_driver->bjobs_executable , "bjobs")) {
+    util_safe_free(lsf_driver->bjobs_executable);
+    lsf_driver->bjobs_executable = NULL;
+  }
+
+  if (!lsf_driver_assert_executable( lsf_driver->bsub_executable , "busb")) {
+    util_safe_free(lsf_driver->bsub_executable);
+    lsf_driver->bsub_executable = NULL;
+  }
+  
+  if (!lsf_driver_assert_executable( lsf_driver->bkill_executable , "bkill")) {
+    util_safe_free(lsf_driver->bkill_executable);
+    lsf_driver->bkill_executable = NULL;
+  }
+    
   hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
   hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_QUEUE_RUNNING);
   hash_insert_int(lsf_driver->status_map , "PSUSP"  , JOB_QUEUE_PENDING);
@@ -561,7 +611,20 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_QUEUE_DONE);
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
-#endif
+
+  setenv( "ERT_LINK_LSF" , "TRUE" , 1);   /* The shell() based approach does not work properly yet. */
+  if (getenv("ERT_LINK_LSF")) {
+    setenv("BSUB_QUIET" , "yes" , 1);     /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
+    lsf_driver->use_library_calls = true;
+    lsf_driver->display_info      = lsf_driver_display_info;
+  }  else {
+    lsf_driver->use_library_calls = false;
+    lsf_driver->display_info = NULL;                                      /* The shell driver does not have any display info function. */
+  }
+
+  
+  
+
   return lsf_driver;
 }
 
