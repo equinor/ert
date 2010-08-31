@@ -3,11 +3,12 @@ import os
 import os.path
 import stat
 import shutil
+import sys
 
 script_mode = 0775
 data_mode   = 0664
 dir_mode    = 0775
-
+uid         = os.getuid()
 
 def get_SDP_ROOT():
     cpu = os.uname()[4]
@@ -25,6 +26,7 @@ res_guid    = os.stat("/project/res")[stat.ST_GID]
 
 
 def chgrp(path , guid ):
+    
     os.chown( path , -1 , guid )
 
 
@@ -33,20 +35,24 @@ def install_file( src_file , target_file):
         sys.exit("The source file:%s does not exist?? " % src_file )
     shutil.copyfile( src_file , target_file )
     print "Updating file: %s" % target_file
-    chgrp( target_file , res_guid )
-    st = os.stat( src_file )
-    if st[stat.ST_MODE] & stat.S_IXUSR: 
-        os.chmod( target_file , script_mode )
-    else:
-        os.chmod( target_file , data_mode )
+    if os.stat( target_file )[stat.ST_UID] == uid:
+        chgrp( target_file , res_guid )
+
+        st = os.stat( src_file )
+        if st[stat.ST_MODE] & stat.S_IXUSR: 
+            os.chmod( target_file , script_mode )
+        else:
+            os.chmod( target_file , data_mode )
 
 
 def make_dir( target_dir ):
     if not os.path.exists( target_dir ):
         os.makedirs( target_dir )
         print "Creating directory: %s" % target_dir
-    chgrp( target_dir , res_guid )
-    os.chmod( target_dir , dir_mode )
+
+    if os.stat( target_dir )[stat.ST_UID] == uid:
+        chgrp( target_dir , res_guid )
+        os.chmod( target_dir , dir_mode )
 
 
 def install_path( src_path , target_root ):
@@ -61,6 +67,9 @@ def install_path( src_path , target_root ):
             continue
 
         if entry[-1] == "~":
+            continue
+
+        if entry[-3:] == "pyc":
             continue
 
         full_path = "%s/%s" % (src_path , entry)

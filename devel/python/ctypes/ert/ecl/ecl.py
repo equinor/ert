@@ -7,6 +7,11 @@ from   ert.cwrap.cwrap       import *
 from   ert.job_queue.driver  import LSFDriver , LocalDriver
 from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DONE , STATUS_EXIT
 
+
+RFT = 1
+PLT = 2
+
+
 run_script        = "/project/res/etc/ERT/Scripts/run_eclipse.py"
 default_version   = "2009.1"
 
@@ -115,18 +120,27 @@ class Ecl:
 
         #################################################################
         cwrapper.registerType( "ecl_rft_file" , EclRFTFile )
-        cwrapper.registerType( "ecl_rft" , EclRFT )
+        cwrapper.registerType( "ecl_rft"      , EclRFT )
         
         cls.rft_file.load                     = cwrapper.prototype("long ecl_rft_file_alloc_case( char* )")
         cls.rft_file.has_rft                  = cwrapper.prototype("bool ecl_rft_file_case_has_rft( char* )")
         cls.rft_file.free                     = cwrapper.prototype("void ecl_rft_file_free( ecl_rft_file )")
         cls.rft_file.get_size                 = cwrapper.prototype("int ecl_rft_file_get_size__( ecl_rft_file , char* , time_t)")
-        cls.rft_file.iget                     = cwrapper.prototype("ecl_rft ecl_rft_file_iget_node( ecl_rft_file , int )")
+        cls.rft_file.iget                     = cwrapper.prototype("long ecl_rft_file_iget_node( ecl_rft_file , int )")
 
+        cls.rft.get_type                      = cwrapper.prototype("int    ecl_rft_node_get_type( ecl_rft )")
         cls.rft.get_well                      = cwrapper.prototype("char*  ecl_rft_node_get_well_name( ecl_rft )")
         cls.rft.get_date                      = cwrapper.prototype("time_t ecl_rft_node_get_date( ecl_rft )")
+        cls.rft.get_size                      = cwrapper.prototype("int ecl_rft_node_get_size( ecl_rft )")
+        cls.rft.iget_depth                    = cwrapper.prototype("double ecl_rft_node_iget_depth( ecl_rft )")
+        cls.rft.iget_pressure                 = cwrapper.prototype("double ecl_rft_node_iget_pressure(ecl_rft)")
+        cls.rft.iget_ijk                      = cwrapper.prototype("void ecl_rft_node_iget_ijk( ecl_rft , int , int*, int*, int*)") 
+        cls.rft.iget_swat                     = cwrapper.prototype("double ecl_rft_node_iget_swat(ecl_rft)")
+        cls.rft.iget_sgas                     = cwrapper.prototype("double ecl_rft_node_iget_sgas(ecl_rft)")
+        cls.rft.iget_orat                     = cwrapper.prototype("double ecl_rft_node_iget_orat(ecl_rft)")
+        cls.rft.iget_wrat                     = cwrapper.prototype("double ecl_rft_node_iget_wrat(ecl_rft)")
+        cls.rft.iget_grat                     = cwrapper.prototype("double ecl_rft_node_iget_grat(ecl_rft)")
         
-
 #################################################################
 
 
@@ -282,13 +296,65 @@ class EclFile:
         return self.c_ptr
 
 
+class EclRFTCell:
+    def __init__(self , type , i , j , k , depth , pressure):
+        self.type = type
+        self.__i = i
+        self.__j = j
+        self.__k = k
+        self.__depth    = depth
+        self.__pressure = pressure
+
+        self.__sgas     = None 
+        self.__swat     = None
+        self.__orat     = None
+        self.__wrat     = None
+        self.__grat     = None
+
+    @classmethod
+    def RFTCell( cls , i,j,k,depth,pressure,swat,sgas):
+        cell = cls(RFT , i,j,k,pressure,depth)
+        cell.__swat = swat
+        cell.__sgas = sgas
+        return cell
+
+    @classmethod
+    def PLTCell(cls , i,j,k,pressure,orat,grat,wrat):
+        cell = cls(PLT , i,j,k,pressure,depth)
+        cell.__orat = orat
+        cell.__wrat = wrat
+        cell.__grat = grat
+        return cell
+        
+    @property
+    def i(self):
+        return self.__i.value
+
+    @property
+    def j(self):
+        return self.__j.value
+
+    @property
+    def k(self):
+        return self.__k.value
+
 
 class EclRFT:
     def __init__(self , c_ptr ):
         self.c_ptr = c_ptr
+        print "Har initializert med c_ptr:%s" % c_ptr
 
     def from_param( self ):
+        print "Running from_param"
         return self.c_ptr
+
+    @property
+    def type(self):
+        # Enum: ecl_rft_enum from ecl_rft_node.h
+        # RFT     = 1
+        # PLT     = 2
+        # Segment = 3  -- Not properly implemented
+        return Ecl.rft.get_type( self )
 
     @property
     def well(self):
@@ -298,6 +364,29 @@ class EclRFT:
     def date(self):
         return Ecl.rft.get_date( self )
 
+    @property
+    def size(self):
+        return Ecl.rft.get_size( self )
+
+
+    def iget( self, index):
+        i = ctypes.c_int()
+        j = ctypes.c_int()
+        k = ctypes.c_int()
+        pressure = Ecl.rft.iget_pressure( self, index )
+        depth    = Ecl.rft.iget_depth( self, index )
+        Ecl.rft.iget_ijk( self, index , ctypes.byref(i), ctypes.byref(j) , ctypes.byref(k))
+
+        
+        if self.type == RFT:
+            swat = Ecl.rft.iget_swat( self, index )
+            sgas = Ecl.rft.iget_sgas( self, index )
+            return EclRFTCell.RFTCell( i,j,k,depth , pressure,swat,sgas)
+        else:
+            orat = Ecl.rft.iget_orat( self, index )
+            wrat = Ecl.rft.iget_wrat( self, index )
+            grat = Ecl.rft.iget_grat( self, index )
+            return EclRFTCell.PLTCell( i,j,k,depth , pressure,orat,grat,wrat)
 
 
 class EclRFTFile:
@@ -320,7 +409,9 @@ class EclRFTFile:
             rft = Ecl.rft_file.iget( self , i )
             header_list.append( (rft.well , rft.date ))
         return header_list
-            
+
+    def iget(self , index):
+        return EclRFT( Ecl.rft_file.iget( self, index ))
 
     
 class EclGrid:
@@ -468,6 +559,9 @@ class EclCase:
         if not self.__rft:
             if Ecl.rft_file.has_rft( self.case ):
                 self.__rft = EclRFTFile( self.case )
+            else:
+                print "Does not have RFT??"
+                
         return self.__rft
 
 
