@@ -885,7 +885,7 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_ty
                and the ensemble prediction is to large. Keeping these
                outliers will lead to numerical problems.
             */
-            
+
             if (fabs( innov ) > alpha * (ens_std + obs_std)) {
               obs_block_deactivate(obs_block , iobs , "No overlap");
               meas_block_deactivate(meas_block , iobs);

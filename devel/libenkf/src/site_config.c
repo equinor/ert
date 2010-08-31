@@ -83,6 +83,7 @@ struct site_config_struct {
   char                  * lsf_request;  
   char                  * lsf_queue_name_site;         
   char                  * lsf_request_site;  
+  char                  * remote_lsf_server;      /* Not in use */
   
                            
   hash_type             * rsh_host_list;          /* rsh_host_list is NOT updated when parsing the site_config file. */
@@ -135,7 +136,8 @@ site_config_type * site_config_alloc_empty() {
   
   site_config->joblist                = ext_joblist_alloc( );
   site_config->job_queue              = NULL;
-
+  
+  site_config->remote_lsf_server      = NULL;
   site_config->lsf_queue_name         = NULL;
   site_config->lsf_queue_name_site    = NULL;
   site_config->lsf_request            = NULL;
@@ -382,8 +384,8 @@ static void site_config_install_RSH_job_queue(site_config_type * site_config) {
 }
 
 
-static void site_config_install_LSF_job_queue(site_config_type * site_config ) {
-  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name , site_config->lsf_request , site_config->num_cpu);
+static void site_config_install_LSF_job_queue(site_config_type * site_config ) { 
+  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name , site_config->lsf_request , /* site_config->remote_lsf_server ,*/ site_config->num_cpu);
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_lsf );
 }
@@ -811,6 +813,8 @@ void site_config_free(site_config_type * site_config) {
   util_safe_free( site_config->license_root_path );
   util_safe_free( site_config->license_root_path_site );
   util_safe_free( site_config->__license_root_path );
+
+  util_safe_free( site_config->remote_lsf_server );
 
   util_safe_free( site_config->job_script );
   util_safe_free( site_config->job_script_site );

@@ -267,6 +267,7 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
     }
   }
   
+  
   if (active_count > 0) {
     /*2: Estimate a covariance matrix. */
     auto_corrf_ftype * auto_corrf ;
@@ -306,7 +307,7 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
     {
       obs_block_type  * obs_block  = obs_data_add_block( obs_data , obs_vector_get_obs_key( obs_vector ) , active_count , error_covar , true);
       meas_block_type * meas_block = meas_matrix_add_block( meas_matrix, obs_vector_get_obs_key( obs_vector ) , end_step , active_count );
-
+      
       for (int i=0; i < active_count; i++) 
         obs_block_iset( obs_block , i , double_vector_iget( obs_value , i) , double_vector_iget( obs_std , i ));
       
@@ -356,7 +357,8 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
     const char * obs_key         = hash_iter_get_next_key( iter );
     obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , obs_key );
     obs_impl_type obs_type       = obs_vector_get_impl_type( obs_vector );
-    if (obs_type == SUMMARY_OBS)
+    if ((obs_type == SUMMARY_OBS)) //&& ((end_step - start_step) > 1))
+      /* The measure_summary() function fails for normal non-merged EnKF updates. */
       enkf_obs_get_obs_and_measure_summary( enkf_obs , 
                                             obs_vector , 
                                             fs , 

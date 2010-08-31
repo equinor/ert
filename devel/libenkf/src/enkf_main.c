@@ -1095,6 +1095,10 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
 
 
   /* Observe that end_step is inclusive. */
+
+  /* For god-damn-normal EnKF start_step should be equal to step2 even
+     if merge_observations is set to true. 
+  */
   if (merge_observations) {
     start_step = step1;
     end_step   = step2;
@@ -1664,8 +1668,14 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
       if (runOK) {
         log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
         
-        if (enkf_update)
-          enkf_main_UPDATE(enkf_main , analysis_config_get_merge_observations( enkf_main->analysis_config ) , load_start , step2);
+        if (enkf_update) {
+          bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
+          if (step1 == 0) 
+            /* To ensure that we do not get 0-1 when updating at the first step. */
+            enkf_main_UPDATE(enkf_main , merge_observations , util_int_max(1 , load_start) , step2);
+          else
+            enkf_main_UPDATE(enkf_main , merge_observations , load_start, step2);
+        }
       }
       enkf_fs_fsync( enkf_main->dbase );
       

@@ -101,6 +101,7 @@ static obs_block_type * obs_block_alloc( const char * obs_key , int obs_size , m
 }
 
 
+
 static void obs_block_free( obs_block_type * obs_block ) {
   free( obs_block->obs_key );
   free( obs_block->value );
@@ -118,9 +119,9 @@ static void obs_block_free__( void * arg ) {
 
 void obs_block_deactivate( obs_block_type * obs_block , int iobs , const char * msg) {
   if (obs_block->active_mode[ iobs ] == ACTIVE) {
+    printf("Deactivating: %s(%d) : %s \n",obs_block->obs_key , iobs , msg);
     obs_block->active_mode[ iobs ] = DEACTIVATED;
     obs_block->active_size--;
-    printf("Deactivating: %s(%d) : %s \n",obs_block->obs_key , iobs , msg);
   }
 }
 

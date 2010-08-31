@@ -612,7 +612,6 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
 
-  setenv( "ERT_LINK_LSF" , "TRUE" , 1);   /* The shell() based approach does not work properly yet. */
   if (getenv("ERT_LINK_LSF")) {
     setenv("BSUB_QUIET" , "yes" , 1);     /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
     lsf_driver->use_library_calls = true;
