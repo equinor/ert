@@ -83,7 +83,7 @@ struct site_config_struct {
   char                  * lsf_request;  
   char                  * lsf_queue_name_site;         
   char                  * lsf_request_site;  
-  char                  * remote_lsf_server;      /* Not in use */
+  char                  * remote_lsf_server;      
   
                            
   hash_type             * rsh_host_list;          /* rsh_host_list is NOT updated when parsing the site_config file. */
@@ -385,7 +385,7 @@ static void site_config_install_RSH_job_queue(site_config_type * site_config) {
 
 
 static void site_config_install_LSF_job_queue(site_config_type * site_config ) { 
-  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name , site_config->lsf_request , /* site_config->remote_lsf_server ,*/ site_config->num_cpu);
+  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name , site_config->lsf_request ,  site_config->remote_lsf_server , site_config->num_cpu);
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_lsf );
 }
@@ -515,6 +515,20 @@ void site_config_set_lsf_queue( site_config_type * site_config , const char * ls
 
 const char * site_config_get_lsf_queue( const site_config_type * site_config ) {
   return site_config->lsf_queue_name;
+}
+
+
+
+void site_config_set_lsf_server( site_config_type * site_config , const char * lsf_server) {
+  site_config->remote_lsf_server = util_realloc_string_copy( site_config->remote_lsf_server , lsf_server);
+
+  if (site_config->job_queue != NULL) {
+    job_driver_type current_driver = job_queue_get_driver_type( site_config->job_queue );
+    if (current_driver == LSF_DRIVER) {  /* Must push the update down to the driver. */
+      lsf_driver_type * lsf_driver = lsf_driver_safe_cast( job_queue_get_driver( site_config->job_queue ));
+      lsf_driver_set_remote_server( lsf_driver , lsf_server);
+    }
+  }
 }
 
 
@@ -706,6 +720,9 @@ void site_config_init(site_config_type * site_config , const config_type * confi
     
     if (config_item_set(config , MAX_RUNNING_LSF_KEY))
       site_config_set_max_running_lsf( site_config , config_iget_as_int( config , MAX_RUNNING_LSF_KEY , 0 , 0));
+
+    if (config_item_set(config , LSF_SERVER_KEY))
+      site_config_set_lsf_server( site_config , config_iget( config , LSF_SERVER_KEY , 0 , 0));
   }
 
 
@@ -824,6 +841,7 @@ void site_config_free(site_config_type * site_config) {
   util_safe_free( site_config->lsf_queue_name_site );
   util_safe_free( site_config->lsf_request );
   util_safe_free( site_config->lsf_request_site );
+  util_safe_free( site_config->remote_lsf_server );
   free(site_config);
 }
 
@@ -1035,7 +1053,9 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   item = config_add_item(config , MAX_RUNNING_LSF_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
-
+  item = config_add_item(config , LSF_SERVER_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_STRING});
+  
   /* These must be set IFF QUEUE_SYSTEM == RSH */
   if (!site_only)
     config_add_item(config , RSH_HOST_KEY , false , false);  /* Only added when user parse. */
