@@ -107,9 +107,7 @@ struct lsf_driver_struct {
   hash_type         * status_map;
   hash_type         * bjobs_cache;        /* The output of calling bjobs is cached in this table. */
   pthread_mutex_t     bjobs_mutex;        /* Only one thread should update the bjobs_chache table. */
-  char              * bjobs_executable;
-  char              * bsub_executable;
-  char              * bkill_executable;
+  char              * remote_lsf_server;
 };
 
 
@@ -180,50 +178,56 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
                                         const char *  submit_cmd,
                                         int           job_argc,
                                         const char ** job_argv) {
-  int argc;
-  char ** argv;
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   char * lsf_stdout       = util_alloc_filename(run_path , job_name , "LSF-stdout");
 
   char num_cpu_string[4];
   sprintf(num_cpu_string , "%d" , driver->num_cpu);
+  if (driver->remote_lsf_server != NULL) {
+    /**
+       Command is:
+       
+          ssh lsf_server remote_bsub_cmd
 
-  if (resource_request != NULL) 
-    argc = job_argc + 11;
-  else
-    argc = job_argc + 9;
-
-  argv = util_malloc( argc * sizeof * argv , __func__ ); /* This argv structure only contains pointers to string storage;
-                                                            does not alloacte anything to itself. */
-
-  {
-    int offset = 8;
-    argv[0] = "-o";  
-    argv[1] = lsf_stdout;
-    argv[2] = "-q";  
-    argv[3] = (char *) lsf_queue;
-    argv[4] = "-J";  
-    argv[5] = (char *) job_name;
-    argv[6] = "-n";  
-    argv[7] = num_cpu_string;
+       where remote_bsub_cmd  
+    */
+    buffer_type * remote_cmd = buffer_alloc(256);
+    buffer_fwrite_char_ptr( remote_cmd , "bsub -o " );
+    buffer_fwrite_char_ptr( remote_cmd , lsf_stdout );
+    buffer_fwrite_char_ptr( remote_cmd , " -q " );
+    buffer_fwrite_char_ptr( remote_cmd , lsf_queue );
+    buffer_fwrite_char_ptr( remote_cmd , " -J " );
+    buffer_fwrite_char_ptr( remote_cmd , job_name );
+    buffer_fwrite_char_ptr( remote_cmd , " -n " );
+    buffer_fwrite_char_ptr( remote_cmd , num_cpu_string );
     if (resource_request != NULL) {
-      argv[8] = "-R";
-      argv[9] = (char *) resource_request;
-      offset  = 10;
+      buffer_fwrite_char_ptr( remote_cmd , " -R ");
+      buffer_fwrite_char_ptr( remote_cmd , resource_request );
     }
-    argv[offset] = (char *) submit_cmd;
+    buffer_fwrite_char( remote_cmd , ' ');
+    buffer_fwrite_char_ptr( remote_cmd , submit_cmd);
     {
       int iarg;
-      for (iarg = 0; iarg < job_argc; iarg++) 
-        argv[iarg + offset + 1] = (char *) job_argv[ iarg ];
+      for (iarg = 0; iarg < job_argc; iarg++) {
+        buffer_fwrite_char( remote_cmd , ' ');
+        buffer_fwrite_char_ptr( remote_cmd , job_argv[ iarg ]);
+      }
     }
+    buffer_terminate_char_ptr( remote_cmd );
+    {
+      char ** argv = util_malloc( 2 * sizeof * argv , __func__ );
+      argv[0] = driver->remote_lsf_server;
+      argv[1] = buffer_get_data( remote_cmd );
+      util_fork_exec("ssh" , 2 , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
+      free( argv );
+    }
+    buffer_free( remote_cmd );
   }
-  util_fork_exec(driver->bsub_executable , argc , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
+  
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
   free(lsf_stdout);
   free(tmp_file);
-  free(argv);
   return job_id;
 }
 
@@ -241,7 +245,14 @@ static int lsf_driver_get_status__(lsf_driver_type * driver , const char * statu
 
 static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
-  util_fork_exec(driver->bjobs_executable , 1 , (const char *[1]) {"-a"} , true , NULL , NULL , NULL , tmp_file , NULL);
+  {
+    char ** argv = util_malloc( sizeof * argv * 2 , __func__ );
+    argv[0] = driver->remote_lsf_server;
+    argv[1] = "bjobs -a";
+    util_fork_exec("ssh" , 2 , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
+    free( argv );
+  }
+  
   {
     char user[32];
     char status[16];
@@ -413,8 +424,16 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
   {
     if (driver->use_library_calls)
       lsb_forcekilljob(job->lsf_jobnr);
-    else
-      util_fork_exec(driver->bkill_executable , 1 , (const char **)  &job->lsf_jobnr_char , true , NULL , NULL , NULL , NULL , NULL);
+    else {
+      char ** argv = util_malloc( sizeof * argv * 2 , __func__ );
+      argv[0] = driver->remote_lsf_server;
+      argv[1] = util_alloc_sprintf("bkill %s" , job->lsf_jobnr_char);
+      
+      util_fork_exec("ssh" , 1 , (const char **)  &job->lsf_jobnr_char , true , NULL , NULL , NULL , NULL , NULL);
+
+      free( argv[1] );
+      free( argv );
+    }
   }
 }
 
@@ -497,14 +516,12 @@ void * lsf_driver_submit_job(void * __driver ,
 void lsf_driver_free(lsf_driver_type * driver ) {
   free(driver->queue_name);
   util_safe_free(driver->resource_request );
+  util_safe_free(driver->remote_lsf_server );
   
   hash_free(driver->status_map);
   hash_free(driver->bjobs_cache);
   hash_free(driver->my_jobs);
-  free( driver->bjobs_executable );
-  free( driver->bsub_executable );
-  free( driver->bkill_executable );
-
+  
   free(driver);
   driver = NULL;
 }
@@ -525,22 +542,20 @@ void lsf_driver_set_resource_request( lsf_driver_type * driver, const char * res
   driver->resource_request = util_realloc_string_copy( driver->resource_request , resource_request );
 }
 
-static bool lsf_driver_assert_executable( const char * executable , const char * name) {
-  if ((executable == NULL) || (!util_file_exists( executable ))) {
-    fprintf(stderr,"** Warning could not find lsf executable: \"%s\" - lsf shell commands not available\n" , name);
-    return false;
-  } else
-    return true;
+void lsf_driver_set_remote_server( lsf_driver_type * driver, const char * remote_lsf_server) {
+  driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_lsf_server );
 }
 
 
 
-void * lsf_driver_alloc(const char * queue_name , const char * resource_request , int num_cpu) {
+void * lsf_driver_alloc(const char * queue_name , const char * resource_request , const char * remote_lsf_server , int num_cpu) {
   lsf_driver_type * lsf_driver 	   = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name           = NULL;
+  lsf_driver->remote_lsf_server    = NULL; 
   lsf_driver->resource_request     = NULL;
   lsf_driver_set_queue_name( lsf_driver , queue_name );
   lsf_driver_set_resource_request( lsf_driver , resource_request );
+  lsf_driver_set_remote_server( lsf_driver  , remote_lsf_server );
   UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
   lsf_driver->submit           	   = lsf_driver_submit_job;
   lsf_driver->get_status       	   = lsf_driver_get_job_status;
@@ -576,32 +591,6 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   lsf_driver->my_jobs 	          = hash_alloc(); 
   lsf_driver->status_map   	  = hash_alloc();
 
-  if (getenv("LSF_COMMAND_HOME") != NULL) {
-    const char * bjobs_home = getenv("LSF_COMMAND_HOME");
-    lsf_driver->bjobs_executable = util_alloc_filename( bjobs_home , "bjobs"  , NULL);
-    lsf_driver->bsub_executable  = util_alloc_filename( bjobs_home , "bsub"   , NULL);
-    lsf_driver->bkill_executable = util_alloc_filename( bjobs_home , "bkill"  , NULL);
-  } else {
-    lsf_driver->bjobs_executable    = util_alloc_PATH_executable( "bjobs" );
-    lsf_driver->bsub_executable     = util_alloc_PATH_executable( "bsub" );
-    lsf_driver->bkill_executable    = util_alloc_PATH_executable( "bkill" );
-  }
-
-  if (!lsf_driver_assert_executable( lsf_driver->bjobs_executable , "bjobs")) {
-    util_safe_free(lsf_driver->bjobs_executable);
-    lsf_driver->bjobs_executable = NULL;
-  }
-
-  if (!lsf_driver_assert_executable( lsf_driver->bsub_executable , "busb")) {
-    util_safe_free(lsf_driver->bsub_executable);
-    lsf_driver->bsub_executable = NULL;
-  }
-  
-  if (!lsf_driver_assert_executable( lsf_driver->bkill_executable , "bkill")) {
-    util_safe_free(lsf_driver->bkill_executable);
-    lsf_driver->bkill_executable = NULL;
-  }
-    
   hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
   hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_QUEUE_RUNNING);
   hash_insert_int(lsf_driver->status_map , "PSUSP"  , JOB_QUEUE_PENDING);
@@ -613,17 +602,20 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
 
   if (getenv("ERT_LINK_LSF")) {
-    setenv("BSUB_QUIET" , "yes" , 1);     /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
+    setenv("BSUB_QUIET" , "yes" , 1);                                     /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
     lsf_driver->use_library_calls = true;
     lsf_driver->display_info      = lsf_driver_display_info;
-  }  else {
-    lsf_driver->use_library_calls = false;
-    lsf_driver->display_info = NULL;                                      /* The shell driver does not have any display info function. */
+  } else {
+    if (lsf_driver->remote_lsf_server != NULL) {
+      lsf_driver->use_library_calls = false;
+      lsf_driver->display_info = NULL;                                      /* The shell driver does not have any display info function. */
+    } else {
+      fprintf(stderr,"When using the LSF driver you must either:\n");
+      fprintf(stderr,"   1. Set the enviornment variables ERT_LINK_LSF - if you have access to a machine with proper LSF installation.\n");
+      fprintf(stderr,"   2. Set the ERT configuration variable LSF_SERVER - this also requires passwordless ssh");
+      util_exit("Exiting ...");
+    }
   }
-
-  
-  
-
   return lsf_driver;
 }
 
