@@ -69,6 +69,7 @@ class Ecl:
 
         cwrapper.registerType( "ecl_grid" , EclGrid )
         cls.grid.fread_alloc                  = cwrapper.prototype("long ecl_grid_load_case( char* )")
+        cls.grid.exists                       = cwrapper.prototype("bool ecl_grid_exists( char* )")
         cls.grid.free                         = cwrapper.prototype("void ecl_grid_free( ecl_grid )")     
         cls.grid.get_nx                       = cwrapper.prototype("int ecl_grid_get_nx( ecl_grid )")
         cls.grid.get_ny                       = cwrapper.prototype("int ecl_grid_get_ny( ecl_grid )")
@@ -79,6 +80,10 @@ class Ecl:
         cls.grid.get_global_index3            = cwrapper.prototype("int ecl_grid_get_global_index3( ecl_grid , int , int , int)") 
         cls.grid.get_ijk1                     = cwrapper.prototype("void ecl_grid_get_ijk1( ecl_grid , int , int* , int* , int*)")
         cls.grid.get_ijk1A                    = cwrapper.prototype("void ecl_grid_get_ijk1A( ecl_grid , int , int* , int* , int*)") 
+        cls.grid.get_xyz3                     = cwrapper.prototype("void ecl_grid_get_xyz3( ecl_grid , int , int , int , double* , double* , double*)")
+        cls.grid.get_xyz1                     = cwrapper.prototype("void ecl_grid_get_xyz1( ecl_grid , int , double* , double* , double*)")
+        cls.grid.get_xyz1A                    = cwrapper.prototype("void ecl_grid_get_xyz1A( ecl_grid , int , double* , double* , double*)")
+        
 
         #################################################################
 
@@ -91,7 +96,14 @@ class Ecl:
         cls.ecl_file.free                      = cwrapper.prototype("void   ecl_file_free( ecl_file )")
         cls.ecl_file.iget_kw                   = cwrapper.prototype("ecl_kw ecl_file_iget_kw( ecl_file , int)")
         cls.ecl_file.iget_named_kw             = cwrapper.prototype("ecl_kw ecl_file_iget_named_kw( ecl_file , char* , int)")
-                
+        cls.ecl_file.get_size                  = cwrapper.prototype("int    ecl_file_get_num_kw( ecl_file )")
+        cls.ecl_file.get_unique_size           = cwrapper.prototype("int    ecl_file_get_num_distinct_kw( ecl_file )")
+        cls.ecl_file.get_num_named_kw          = cwrapper.prototype("int    ecl_file_get_num_named_kw( ecl_file , char* )")
+        cls.ecl_file.iget_restart_time         = cwrapper.prototype("time_t ecl_file_iget_restart_sim_date( ecl_file , int )")
+                                                                    
+                                                                    
+                                                                    
+        
         #################################################################
 
         cwrapper.registerType( "ecl_region" , EclRegion )
@@ -128,6 +140,7 @@ class Ecl:
         cls.rft_file.get_size                 = cwrapper.prototype("int ecl_rft_file_get_size__( ecl_rft_file , char* , time_t)")
         cls.rft_file.iget                     = cwrapper.prototype("long ecl_rft_file_iget_node( ecl_rft_file , int )")
 
+
         cls.rft.get_type                      = cwrapper.prototype("int    ecl_rft_node_get_type( ecl_rft )")
         cls.rft.get_well                      = cwrapper.prototype("char*  ecl_rft_node_get_well_name( ecl_rft )")
         cls.rft.get_date                      = cwrapper.prototype("time_t ecl_rft_node_get_date( ecl_rft )")
@@ -141,6 +154,17 @@ class Ecl:
         cls.rft.iget_wrat                     = cwrapper.prototype("double ecl_rft_node_iget_wrat(ecl_rft)")
         cls.rft.iget_grat                     = cwrapper.prototype("double ecl_rft_node_iget_grat(ecl_rft)")
         
+        #################################################################
+        
+        cls.ecl_kw.get_size                   = cwrapper.prototype("int ecl_kw_get_size( ecl_kw )")
+        cls.ecl_kw.get_type                   = cwrapper.prototype("int ecl_kw_get_type( ecl_kw )")
+        cls.ecl_kw.iget_char_ptr              = cwrapper.prototype("char* ecl_kw_iget_char_ptr( ecl_kw , int )")
+        cls.ecl_kw.iget_bool                  = cwrapper.prototype("bool ecl_kw_iget_bool( ecl_kw , int)")
+        cls.ecl_kw.iget_int                   = cwrapper.prototype("int ecl_kw_iget_int( ecl_kw , int )")
+        cls.ecl_kw.iget_double                = cwrapper.prototype("double ecl_kw_iget_double( ecl_kw , int )")
+        cls.ecl_kw.iget_float                 = cwrapper.prototype("float ecl_kw_iget_float( ecl_kw , int)")
+
+
 #################################################################
 
 
@@ -277,12 +301,55 @@ class EclKW:
     def from_param(self):
         return self.c_ptr
 
+    @property
+    def size(self):
+        return Ecl.ecl_kw.get_size( self )
 
+    @property
+    def type( self ):
+        __type = Ecl.ecl_kw.get_type( self )
+        # enum ecl_type_enum from ecl_util.h
+        if __type == 0:
+            return "CHAR"
+        if __type == 1:
+            return "REAL"
+        if __type == 2:
+            return "DOUB"
+        if __type == 3:
+            return "INTE"
+        if __type == 4:
+            return "BOOL"
+        if __type == 5:
+            return "MESS"
+
+        
+    def iget( self , index ):
+        __type = Ecl.ecl_kw.get_type( self )
+        if __type == 0:
+            value = Ecl.ecl_kw.iget_char_ptr( self , index )
+
+        if __type == 1:
+            value = Ecl.ecl_kw.iget_float( self , index )
+
+        if __type == 2:
+            value = Ecl.ecl_kw.iget_double( self , index )
+
+        if __type == 3:
+            value = Ecl.ecl_kw.iget_int( self , index )
+
+        if __type == 4:
+            value = Ecl.ecl_kw.iget_bool( self , index )
+            
+        return value
+
+
+
+        
 
 class EclFile:
     def __init__(self , filename):
         self.c_ptr = Ecl.ecl_file.fread_alloc( filename )
-
+        
     def __del__(self):
         Ecl.ecl_file.free( self )
 
@@ -295,6 +362,23 @@ class EclFile:
     def from_param(self):
         return self.c_ptr
 
+    @property
+    def size(self):
+        return Ecl.ecl_file.get_num_kw( self )
+
+    @property
+    def unique_size( self ):
+        return Ecl.ecl_file.get_unique_size( self )
+
+    def num_named_kw( self , kw):
+        return Ecl.ecl_file.get_num_named_kw( self , kw )
+
+    def iget_restart_time( self , index ):
+        return Ecl.ecl_file.iget_restart_time( self , index )
+    
+    
+
+    
 
 class EclRFTCell:
     def __init__(self , type , i , j , k , depth , pressure):
@@ -338,6 +422,46 @@ class EclRFTCell:
     def k(self):
         return self.__k.value
 
+    @property
+    def ijk(self):
+        return (self.__i.value , self.__j.value , self.__k.value)
+
+    @property
+    def pressure(self):
+        return self.__pressure
+    
+    @property
+    def depth(self):
+        return self.__depth
+
+    @property
+    def PLT(self):
+        if self.type == PLT:
+            return True
+        else:
+            return False
+
+    @property
+    def sgas(self):
+        return self.__sgas
+
+    @property
+    def swat(self):
+        return self.__swat
+
+    @property
+    def orat(self):
+        return self.__orat
+
+    @property
+    def grat(self):
+        return self.__grat
+
+    @property
+    def wrat(self):
+        return self.__wrat
+    
+        
 
 class EclRFT:
     def __init__(self , c_ptr ):
@@ -476,6 +600,33 @@ class EclGrid:
         return (i.value , j.value , k.value)
 
 
+    def get_xyz( self, active_index = None , global_index = None , ijk = None):
+        set_count = 0
+        if active_index:
+            set_count += 1
+        if global_index:
+            set_count += 1
+        if ijk:
+            set_count += 1
+
+        if not set_count == 1:
+            sys.exit("The function get_xyz() requires that exactly one of the kewyord arguments active_index, global_index, ijk be set")
+
+        x = ctypes.c_double()
+        y = ctypes.c_double()
+        z = ctypes.c_double()
+
+
+        if active_index:
+            Ecl.grid.get_xyz1A( self , active_index , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
+        elif global_index:
+            Ecl.grid.get_xyz1( self , global_index , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
+        else:
+            Ecl.grid.get_xyz3( self , ijk[0] , ijk[1] , ijk[2] , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
+
+        return (x.value , y.value , z.value)
+
+
 class EclRegion:
     def __init__(self , grid , preselect):
         self.grid  = grid
@@ -516,10 +667,10 @@ class EclCase:
         self.case = input_case
         (path , tmp) = os.path.split( input_case )
         if path:
-            self.path = os.path.abspath( path )
+            self.__path = os.path.abspath( path )
         else:
-            self.path = os.getwcwd()
-        (self.base , self.ext) = os.path.splitext( tmp )
+            self.__path = os.getwcwd()
+        (self.__base , self.ext) = os.path.splitext( tmp )
 
 
         self.LSFDriver     = None
@@ -534,9 +685,9 @@ class EclCase:
     def datafile( self ):
         if not self.__data_file:
             if self.path:
-                self.__data_file = "%s/%s.DATA" % ( self.path , self.base )
+                self.__data_file = "%s/%s.DATA" % ( self.__path , self.__base )
             else:
-                self.__data_file = "%s.DATA" % self.base
+                self.__data_file = "%s.DATA" % self.__base
         return self.__data_file
 
 
@@ -550,7 +701,8 @@ class EclCase:
     @property
     def grid( self ):
         if not self.__grid:
-            self.__grid = EclGrid( self.case )
+            if Ecl.grid.exists( self.case ):
+                self.__grid = EclGrid( self.case )
         return self.__grid
 
 
@@ -564,6 +716,16 @@ class EclCase:
                 
         return self.__rft
 
+
+    @property
+    def base( self ):
+        return self.__base
+
+
+    @property
+    def path( self ):
+        return self.__path
+    
 
         
     def run( self , version = default_version , blocking = False , run_script = run_script , use_LSF = True ):
