@@ -1,7 +1,7 @@
 from PyQt4.QtCore import QObject, QSize
 from PyQt4.Qt import SIGNAL
 from PyQt4.QtGui import QFormLayout, QFrame, QComboBox, QHBoxLayout, QDoubleSpinBox, QWidget, QPainter, QColor, QColorDialog
-from PyQt4.QtGui import QCheckBox
+from PyQt4.QtGui import QCheckBox, QDialog
 
 class PlotConfig(object):
     """
@@ -230,11 +230,13 @@ class ColorPicker(QWidget):
 
     def mouseDoubleClickEvent(self, event):
         self.color_dialog.setCurrentColor(self._getColor())
-        self.color_dialog.exec_()
-        self._setColor(self.color_dialog.selectedColor())
+        status = self.color_dialog.exec_()
+        if status == QDialog.Accepted:
+            self._setColor(self.color_dialog.selectedColor())
 
     def mousePressEvent(self, event):
         self.color_dialog.setCurrentColor(self._getColor())
-        self.color_dialog.exec_()
-        self._setColor(self.color_dialog.selectedColor())
+        status = self.color_dialog.exec_()
+        if status == QDialog.Accepted:
+            self._setColor(self.color_dialog.selectedColor())
 

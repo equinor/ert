@@ -63,12 +63,13 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         return ert.enkf.ensemble_config_has_key(ert.ensemble_config, key)
 
 
-    def fetch(self, ert, key, parameter, data):
+    def fetch(self, ert, key, parameter, data, comparison_fs):
         data.x_data_type = "time"
 
         fs = ert.enkf.enkf_main_get_fs(ert.main)
         config_node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, key)
         node = ert.enkf.enkf_node_alloc(config_node)
+        comp_node = ert.enkf.enkf_node_alloc(config_node)
         num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
 
         user_data = parameter.getUserData()
@@ -104,6 +105,12 @@ class EnsembleFetcher(PlotDataFetcherHandler):
             data.y_data[member] = []
             x_time = data.x_data[member]
             y = data.y_data[member]
+            
+            if not comparison_fs is None:
+                data.x_comp_data[member] = []
+                data.y_comp_data[member] = []
+                x_comp_time = data.x_comp_data[member]
+                y_comp = data.y_comp_data[member]
 
             member_config = ert.enkf.enkf_main_iget_member_config(ert.main, member)
             stop_time = ert.enkf.enkf_main_get_history_length( ert.main )
@@ -123,8 +130,26 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                         else:
                             print "Not valid: ", key, member, step, key_index
 
+                    if not comparison_fs is None:
+                        if ert.enkf.enkf_fs_has_node(comparison_fs, config_node, step, member, state.value()):
+                            sim_time = ert.enkf.member_config_iget_sim_time(member_config, step, comparison_fs)
+                            ert.enkf.enkf_fs_fread_node(comparison_fs, comp_node, step, member, state.value())
+                            valid = ertwrapper.c_int()
+                            value = ert.enkf.enkf_node_user_get(comp_node, key_index, ertwrapper.byref(valid))
+                            if valid.value == 1:
+                                #data.checkMaxMin(sim_time)
+                                #data.checkMaxMinY(value)
+                                x_comp_time.append(sim_time)
+                                y_comp.append(value)
+                            else:
+                                print "Not valid: ", key, member, step, key_index
+
             data.x_data[member] = numpy.array([t.datetime() for t in x_time])
             data.y_data[member] = numpy.array(y)
+
+            if not comparison_fs is None:
+                data.x_comp_data[member] = numpy.array([t.datetime() for t in x_comp_time])
+                data.y_comp_data[member] = numpy.array(y_comp)
 
 
         self._getObservations(ert, key, key_index, data)

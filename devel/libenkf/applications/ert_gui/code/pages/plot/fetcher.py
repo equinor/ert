@@ -14,10 +14,11 @@ class PlotDataFetcherHandler(QObject):
         """Prototype functions and types."""
         pass
 
-    def fetch(self, ert, key, parameter, data):
+    def fetch(self, ert, key, parameter, data, comparison_fs):
         """
         Fetch data from ert by key. Key has already been tested with isHandlerFor()
         Parameter contains configuration data. data is the target.
+        comparison_fs is the fs to the case which the plotter should use for comparison plot data
         """
         pass
 

@@ -14,6 +14,7 @@ class PlotSettings(QObject):
     selected_color = (152/255.0, 78/255.0, 163/255.0) # purple
     history_color = (255/255.0, 0/255.0, 0/255.0) # red
     refcase_color = (0/255.0, 200/255.0, 0/255.0) # green
+    comparison_color = (199/255.0, 63/255.0, 0/255.0) # orange
 
     def __init__(self):
         QObject.__init__(self)
@@ -32,18 +33,20 @@ class PlotSettings(QObject):
         self.observation_plot_config = PlotConfig("Observation", color = self.history_color, zorder=10)
         self.refcase_plot_config = PlotConfig("Refcase", visible=False, color = self.refcase_color, zorder=10)
         self.std_plot_config = PlotConfig("Error", linestyle=":", visible=False, color = self.history_color, zorder=10)
-        self.plot_config = PlotConfig("Members", color = self.plot_color, alpha=0.125, zorder=1, picker=2)
+        self.plot_config = PlotConfig("Members", color = self.plot_color, alpha=0.125, zorder=2, picker=2)
         self.selected_plot_config = PlotConfig("Selected members", color = self.selected_color, alpha=0.5, zorder=8,
                                                picker=2)
         self.errorbar_plot_config = PlotConfig("Errorbars", visible=False, color = self.history_color, alpha=0.5,
                                                zorder=10)
+        self.comparison_plot_config = PlotConfig("Comparison", color = self.comparison_color, alpha=0.125, zorder=1, visible=True, linestyle="-")
 
         self._plot_configs = [self.plot_config,
                               self.selected_plot_config,
                               self.refcase_plot_config,
                               self.observation_plot_config,
                               self.std_plot_config,
-                              self.errorbar_plot_config]
+                              self.errorbar_plot_config,
+                              self.comparison_plot_config]
 
         for pc in self._plot_configs:
             self.connect(pc.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self.notify)

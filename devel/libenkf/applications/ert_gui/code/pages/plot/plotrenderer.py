@@ -117,6 +117,7 @@ class DefaultPlotRenderer(PlotRenderer):
             annotation.setUserData(annotation_artist)
 
         self._plotMembers(axes, data, plot_settings)
+        self._plotComparisonData(axes, data, plot_settings)
 
         if not data.obs_x is None and not data.obs_y is None:
             self._plotObservations(axes, data, plot_settings)
@@ -157,6 +158,22 @@ class DefaultPlotRenderer(PlotRenderer):
             else:
                 line = self.plot(axes, plot_config, x, y)
             line.set_gid(member) # to more easily identify the line later (i.e.: picking)
+
+    def _plotComparisonData(self, axes, data, plot_settings):
+        #selected_members = plot_settings.getSelectedMembers()
+        for member in data.x_comp_data.keys():
+            x = data.x_comp_data[member]
+            y = data.y_comp_data[member]
+            #if member in selected_members:
+            #    plot_config = plot_settings.selected_plot_config
+            #else:
+            plot_config = plot_settings.comparison_plot_config
+            if data.getXDataType() == "time":
+                line = self.plot_date(axes, plot_config, x, y)
+            else:
+                line = self.plot(axes, plot_config, x, y)
+            line.set_gid(member + 10000) # to more easily identify the line later (i.e.: picking)
+
 
     def _plotError(self, axes, data, plot_settings):
         x = data.obs_x
