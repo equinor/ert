@@ -93,7 +93,7 @@
 */
 
 #define ENKF_MAIN_ID              8301
-
+#define ENKF_MOUNT_MAP           "enkf_mount_info"
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -1836,8 +1836,8 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
     char * user_read_dir  = util_alloc_string_copy(enkf_fs_get_read_dir( enkf_main->dbase));
     char * user_write_dir = util_alloc_string_copy(enkf_fs_get_write_dir(enkf_main->dbase));
     
-    enkf_fs_select_write_dir(enkf_main->dbase , target_case, true );
-    enkf_fs_select_read_dir( enkf_main->dbase , source_case       );
+    enkf_fs_select_write_dir(enkf_main->dbase , target_case, true , true);
+    enkf_fs_select_read_dir( enkf_main->dbase , source_case       , true);
 
     {
       int * ranking_permutation;
@@ -1867,8 +1867,8 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
         free( ranking_permutation );
     }
     /* Recover initial selections. */
-    enkf_fs_select_write_dir(enkf_main->dbase , user_write_dir, false);
-    enkf_fs_select_read_dir( enkf_main->dbase , user_read_dir        );
+    enkf_fs_select_write_dir(enkf_main->dbase , user_write_dir, false , true);
+    enkf_fs_select_read_dir( enkf_main->dbase , user_read_dir         , true);
     free(user_read_dir);
     free(user_write_dir);
   }
@@ -2381,10 +2381,12 @@ static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
 
 
 void enkf_main_select_case( enkf_main_type * enkf_main , const char * select_case) {
-  enkf_fs_select_read_dir( enkf_main->dbase , select_case );
-  enkf_fs_select_write_dir( enkf_main->dbase , select_case , false);
+  enkf_fs_select_read_dir( enkf_main->dbase , select_case , true );
+  enkf_fs_select_write_dir( enkf_main->dbase , select_case , false , true);
   model_config_set_select_case( enkf_main->model_config , select_case);
 }
+
+
 
 
 /**
@@ -2393,21 +2395,25 @@ void enkf_main_select_case( enkf_main_type * enkf_main , const char * select_cas
 
 static void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case ) {
   const model_config_type * model_config = enkf_main->model_config;
-  const char * mount_map = "enkf_mount_info";
-  enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , mount_map , select_case );
+  enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , ENKF_MOUNT_MAP , select_case , true , false);
   {
     char * case_key = enkf_util_alloc_tagged_string( "SELECTED_CASE" );
     subst_list_append_ref( enkf_main->subst_list , case_key , enkf_fs_get_read_dir( enkf_main->dbase ) , "The case currently selected.");
     free( case_key );
   }
-
-
+  
   if (enkf_main->ensemble != NULL)
     enkf_main_invalidate_cache( enkf_main );
 
   model_config_set_select_case( enkf_main->model_config , enkf_fs_get_read_dir( enkf_main->dbase ));
 }
 
+
+enkf_fs_type * enkf_main_mount_extra_fs( const enkf_main_type * enkf_main , const char * select_case ) {
+  const model_config_type * model_config = enkf_main->model_config;
+  enkf_fs_type * fs = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , ENKF_MOUNT_MAP , select_case , false , true );
+  return fs;
+}
 
 
 

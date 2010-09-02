@@ -1055,17 +1055,17 @@ bool enkf_fs_has_dir(const enkf_fs_type * fs, const char * dir) {
 }
 
 
-static void enkf_fs_select_dir(enkf_fs_type * fs, const char * dir, bool read , bool store_map) {
+static void enkf_fs_select_dir(enkf_fs_type * fs, const char * dir, bool read_only , bool read , bool store_map) {
   if (read) 
     fs->current_read_dir = util_realloc_string_copy( fs->current_read_dir , dir );
   else
     fs->current_write_dir = util_realloc_string_copy( fs->current_write_dir , dir );
 
-  fs->dynamic_forecast->select_dir(fs->dynamic_forecast , dir , read);
-  fs->dynamic_analyzed->select_dir(fs->dynamic_analyzed , dir , read);
-  fs->parameter->select_dir(fs->parameter , dir , read);
-  fs->eclipse_static->select_dir(fs->eclipse_static , dir , read);
-  fs->index->select_dir(fs->index , dir , read);    
+  fs->dynamic_forecast->select_dir(fs->dynamic_forecast , dir , read_only , read);
+  fs->dynamic_analyzed->select_dir(fs->dynamic_analyzed , dir , read_only , read);
+  fs->parameter->select_dir(fs->parameter , dir , read_only , read);
+  fs->eclipse_static->select_dir(fs->eclipse_static , dir , read_only , read);
+  fs->index->select_dir(fs->index , dir , read_only , read);    
   
   if (store_map)
     enkf_fs_update_map(fs);
@@ -1073,14 +1073,17 @@ static void enkf_fs_select_dir(enkf_fs_type * fs, const char * dir, bool read , 
 
 
 
-void enkf_fs_select_read_dir(enkf_fs_type * fs, const char * dir) {
+void enkf_fs_select_read_dir(enkf_fs_type * fs, const char * dir, bool update_map) {
+  bool read_only = false;
   if (!util_string_equal(fs->current_read_dir , dir)) {
-    if (set_has_key( fs->dir_set , dir))
-      enkf_fs_select_dir(fs , dir , true , (fs->current_read_dir != NULL));   /* If the current_read_dir == NULL this is part of the mount process, and no need to write a (not) updated mount map. */
+    if (set_has_key( fs->dir_set , dir)) 
+      /* If the current_read_dir == NULL this is part of the mount process, and no need to write a (not) updated mount map. */
+      enkf_fs_select_dir(fs , dir , read_only , true , (update_map && (fs->current_read_dir != NULL)));   
     else {
-      /* To avoid util_abort() on not existing dir the calling scope
-         should check existence prior to calling this function. */
-      
+      /* 
+         To avoid util_abort() on not existing dir the calling scope
+         should check existence prior to calling this function. 
+      */
       fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
       fprintf(stderr,"Available: directories: ");
       set_fprintf(fs->dir_set , " " , stderr);
@@ -1100,14 +1103,15 @@ void enkf_fs_select_read_dir(enkf_fs_type * fs, const char * dir) {
    the directory does not exist.
 */
 
-void enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mkdir) {
+void enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mkdir , bool update_map) {
+  bool read_only = false;
   if (!util_string_equal(fs->current_write_dir , dir)) {
     if (!set_has_key( fs->dir_set , dir))
       if (auto_mkdir)
         enkf_fs_add_dir__( fs , dir , false); /* Add a dir instance - without storing a new mount map. */
     
     if (set_has_key( fs->dir_set , dir))
-      enkf_fs_select_dir(fs , dir , false , (fs->current_write_dir != NULL));
+      enkf_fs_select_dir(fs , dir , read_only , false , (update_map && (fs->current_write_dir != NULL)));
     else {
       fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
       fprintf(stderr,"Available: directories: ");
@@ -1130,12 +1134,10 @@ void enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mk
    
    Iff the file-system does not exist; and select_case != NULL
    select_case will also be used as the default case.
-
-
 */
 
 
-enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl, const char *mount_info , const char * select_case) {
+enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl, const char *mount_info , const char * select_case , bool update_map , bool read_only) {
   const char * default_dir = DEFAULT_CASE;
   char * config_file       = util_alloc_filename(root_path , mount_info , NULL);  /* This file should be protected - at all costs. */
   int    version           = enkf_fs_get_fs_version( config_file );
@@ -1198,6 +1200,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
     fs->dir_set             = set_alloc_empty();
     fs->current_read_dir    = NULL; 
     fs->current_write_dir   = NULL;
+    fs->read_only           = read_only;
     {
       fs->mount_map      = util_alloc_string_copy( config_file );
       FILE * stream      = util_fopen(fs->mount_map , "r");
@@ -1284,8 +1287,8 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
           */
           if (select_case != NULL) {
             if (enkf_fs_has_dir( fs , select_case )) {
-              enkf_fs_select_read_dir( fs , select_case );
-              enkf_fs_select_write_dir( fs , select_case , false );
+              enkf_fs_select_read_dir( fs , select_case , update_map);
+              enkf_fs_select_write_dir( fs , select_case , false , update_map);
               case_selected = true;
             } else
               fprintf(stderr,"** Warning: case:%s does not exist \n", select_case );
@@ -1304,12 +1307,12 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
               fprintf(stderr," ** just select the default case.                           **\n"); 
               fprintf(stderr," *************************************************************\n");
               
-              enkf_fs_select_read_dir(fs , "default");
-              enkf_fs_select_write_dir(fs , "default" , false );
+              enkf_fs_select_read_dir(fs , "default" , true);
+              enkf_fs_select_write_dir(fs , "default" , false , true);
               store_map = true;
             } else {
-              enkf_fs_select_read_dir(fs , current_read_dir);
-              enkf_fs_select_write_dir(fs , current_write_dir , false);
+              enkf_fs_select_read_dir(fs , current_read_dir , true);
+              enkf_fs_select_write_dir(fs , current_write_dir , false , true);
             }
           }
           
@@ -1329,7 +1332,6 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
     basic_driver_assert_cast(fs->parameter);
     basic_driver_index_assert_cast(fs->index);
     
-    fs->read_only = false;
     free( config_file );
     {
       /*

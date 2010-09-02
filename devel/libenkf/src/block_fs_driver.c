@@ -97,7 +97,7 @@ static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type drive
    different from the current.
 */
 
-static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char * directory , bool read ) {
+static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char * directory , bool read , bool read_only) {
   const int fsync_interval      =  10;     /* An fsync() call is issued for every 10'th write. */
   const int fragmentation_limit = 1.0;     /* 1.0 => NO defrag is run. */
   if (read) {
@@ -111,7 +111,7 @@ static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char
       util_make_path( bfs->read_path );
       {
         char * mount_file = util_alloc_filename( bfs->read_path , bfs->mount_basefile , "mnt" );
-        bfs->read_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , fsync_interval , bfs->preload , false );
+        bfs->read_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , fsync_interval , bfs->preload , read_only );
         free( mount_file );
       }
     } else {
@@ -170,8 +170,9 @@ static void * bfs_select_dir__(void * arg) {
   const char * root_path = arg_pack_iget_ptr( arg_pack , 1 );
   const char * directory = arg_pack_iget_ptr( arg_pack , 2 );
   bool  read             = arg_pack_iget_bool( arg_pack , 3 );
+  bool  read_only        = arg_pack_iget_bool( arg_pack , 4 );
 
-  bfs_select_dir( bfs , root_path , directory , read );
+  bfs_select_dir( bfs , root_path , directory , read , read_only );
   return NULL;
 }
 
@@ -315,7 +316,7 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
    from the current. 
 */
 
-void block_fs_driver_select_dir(void *_driver , const char * directory, bool read) {
+void block_fs_driver_select_dir(void *_driver , const char * directory, bool read_only , bool read) {
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
   thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers , true ); /* Maaany threads .... */
   arg_pack_type ** arglist      = util_malloc( sizeof * arglist * driver->num_drivers , __func__);
@@ -331,6 +332,7 @@ void block_fs_driver_select_dir(void *_driver , const char * directory, bool rea
     arg_pack_append_ptr( arglist[driver_nr] , driver->root_path );
     arg_pack_append_owned_ptr( arglist[driver_nr] , path , free);
     arg_pack_append_bool( arglist[driver_nr] , read );
+    arg_pack_append_bool( arglist[driver_nr] , read_only );
 
     msg_update( msg , path );
     thread_pool_add_job( tp , bfs_select_dir__ , arglist[driver_nr] );

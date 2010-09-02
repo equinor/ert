@@ -60,6 +60,7 @@ bool                          enkf_main_get_endian_swap(const enkf_main_type * )
 bool                          enkf_main_get_fmt_file(const enkf_main_type * );
 bool                          enkf_main_has_key(const enkf_main_type * , const char *);
 
+
 void                          enkf_main_add_gen_kw(enkf_main_type * , const char * );
 void                          enkf_main_add_type(enkf_main_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);
 void                          enkf_main_add_type0(enkf_main_type * , const char * , int , enkf_var_type , enkf_impl_type );
