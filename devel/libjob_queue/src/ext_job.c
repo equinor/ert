@@ -642,10 +642,10 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       */
       if (config_item_set(config , "ENV")) {
         stringlist_type *key_value = config_iget_stringlist_ref( config , "ENV" , 0);
-        for (int i=0; i < stringlist_get_size( key_value ); i++) 
+        for (int i=0; i < stringlist_get_size( key_value ); i+= 2) 
           hash_insert_hash_owned_ref( ext_job->environment, 
-                                      stringlist_iget( key_value , 2*i ) , 
-                                      util_alloc_string_copy( stringlist_iget( key_value , 2*i + 1)) , free);
+                                      stringlist_iget( key_value , i ) , 
+                                      util_alloc_string_copy( stringlist_iget( key_value , i + 1)) , free);
       }
     }
     config_free(config);
