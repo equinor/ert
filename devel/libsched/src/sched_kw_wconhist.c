@@ -501,11 +501,6 @@ static double well_util_total( const time_t_vector_type * time, const double_vec
   double total = 0;
   for (int index = 1; index <= report_step; index++) {
     double days = (time_t_vector_iget( time , index ) - time_t_vector_iget( time , index - 1)) / 86400;
-    util_fprintf_date( time_t_vector_iget( time , index - 1) , stdout );
-    printf(" - ");
-    util_fprintf_date( time_t_vector_iget( time , index ) , stdout );
-    printf("   Adding %g x %g \n",days , double_vector_iget( rate , index ));
-
     total += (time_t_vector_iget( time , index ) - time_t_vector_iget( time , index - 1)) * double_vector_iget( rate , index );
   }
   
