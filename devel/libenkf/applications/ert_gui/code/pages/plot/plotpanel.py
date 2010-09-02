@@ -65,6 +65,7 @@ class PlotPanel(QtGui.QWidget):
         plotLayout.addLayout(plot_view_layout)
 
         self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=250)
+        self.connect(self.plotViewSettings, QtCore.SIGNAL('comparisonCaseSelected(String)'), self.plotDataFetcher.updateComparisonFS)
         plotLayout.addWidget(self.plotViewSettings)
         
         self.setLayout(plotLayout)
@@ -130,6 +131,8 @@ class PlotPanel(QtGui.QWidget):
         self.plot.setPlotPath(self.plotContextDataFetcher.data.plot_path)
         self.plot.setPlotConfigPath(self.plotContextDataFetcher.data.plot_config_path)
 
+        self.plotViewSettings.setCases(self.plotContextDataFetcher.data.getComparableCases())
+
 
 class PlotViewSettingsPanel(QtGui.QFrame):
 
@@ -159,6 +162,9 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout.addWidget(self.createMemberSelectionPanel())
         layout.addWidget(widgets.util.createSeparator())
         layout.addWidget(self.createPlotRangePanel())
+        layout.addWidget(widgets.util.createSeparator())
+        #layout.addWidget(self.createCaseComparisonPanel())
+        layout.addLayout(self.createCaseComparisonPanel())
         layout.addWidget(widgets.util.createSeparator())
 
         layout.addLayout(self.createButtonLayout())
@@ -260,6 +266,30 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         return frame
 
+    def createCaseComparisonPanel(self):
+        frame = QFrame()
+        frame.setMinimumHeight(25)
+        frame.setMaximumHeight(25)
+        frame.setFrameShape(QFrame.StyledPanel)
+        frame.setFrameShadow(QFrame.Plain)
+
+        layout = QHBoxLayout()
+        layout.setMargin(0)
+
+        self.plot_compare_to_case = QtGui.QComboBox()
+        self.plot_compare_to_case.setToolTip("Select case to compare members against.")
+
+        def pikk(case):
+            self.emit(SIGNAL('comparisonCaseSelected(String)'), str(case))
+
+        self.connect(self.plot_compare_to_case, SIGNAL("currentIndexChanged(QString)"), pikk)
+        layout.addWidget(QtGui.QLabel("Case:"))
+        layout.addWidget(self.plot_compare_to_case)
+
+        #frame.setLayout(layout)
+        return layout
+
+
     def plotSelectionChanged(self, selected_members):
         if isinstance(selected_members, pages.plot.plotsettings.PlotSettings):
             selected_members = selected_members.getSelectedMembers()
@@ -267,6 +297,10 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         for member in selected_members:
             text = text + " " + str(member)
         self.selected_member_label.setText(text)
+
+    def setCases(self, cases):
+        self.plot_compare_to_case.clear()
+        self.plot_compare_to_case.addItems(cases)
 
 class DisableableSpinner(QFrame):
 

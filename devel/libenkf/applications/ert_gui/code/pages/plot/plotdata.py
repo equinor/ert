@@ -29,10 +29,16 @@ class PlotDataFetcher(ContentModel, QObject):
         self.current_handler = None
         self.empty_panel = QFrame()
 
+        self.fs_for_comparison_plots = None
+
     def initialize(self, ert):
         for handler in self.handlers:
             handler.initialize(ert)
             self.connect(handler, SIGNAL('dataChanged()'), self.__dataChanged)
+
+        ert.prototype("long enkf_main_mount_extra_fs(long, char*)")
+        ert.prototype("void enkf_fs_free(long)")
+
 
     #@print_timing
     @widgets.util.may_take_a_long_time
@@ -44,7 +50,7 @@ class PlotDataFetcher(ContentModel, QObject):
 
             for handler in self.handlers:
                 if handler.isHandlerFor(ert, key):
-                    handler.fetch(ert, key, self.parameter, data)
+                    handler.fetch(ert, key, self.parameter, data, self.fs_for_comparison_plots)
                     self.current_handler = handler
                     break
 
@@ -84,6 +90,17 @@ class PlotDataFetcher(ContentModel, QObject):
                 self.current_handler = handler
                 break
 
+    def updateComparisonFS(self, new_fs):
+        ert = self.getModel()
+        if self.fs_for_comparison_plots:
+            ert.enkf.enkf_fs_free(self.fs_for_comparison_plots)
+            self.fs_for_comparison_plots = None
+
+        if not new_fs == "None":
+            self.fs_for_comparison_plots = ert.enkf.enkf_main_mount_extra_fs(ert.main, new_fs)
+            self.__dataChanged()
+
+
 
 class PlotData:
     def __init__(self, name="undefined"):
@@ -92,6 +109,9 @@ class PlotData:
 
         self.x_data = {}
         self.y_data = {}
+
+        self.x_comp_data = {}
+        self.y_comp_data = {}
 
         self.obs_x = None
         self.obs_y = None
@@ -204,6 +224,7 @@ class PlotContextDataFetcher(ContentModel):
 
         ert.prototype("long enkf_main_get_fs(long)")
         ert.prototype("char* enkf_fs_get_read_dir(long)")
+        ert.prototype("long enkf_fs_alloc_dirlist(long)")
 
         ert.prototype("int plot_config_get_errorbar_max(long)")
         ert.prototype("char* plot_config_get_path(long)")
@@ -254,10 +275,10 @@ class PlotContextDataFetcher(ContentModel):
         data.errorbar_max = ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
 
         fs = ert.enkf.enkf_main_get_fs(ert.main)
-        currentCase = ert.enkf.enkf_fs_get_read_dir(fs)
+        current_case = ert.enkf.enkf_fs_get_read_dir(fs)
 
         data.plot_config_path = ert.enkf.plot_config_get_path(ert.plot_config)
-        data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config) + "/" + currentCase
+        data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config) + "/" + current_case
 
         enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
         key_list = ert.enkf.enkf_obs_alloc_typed_keylist(enkf_obs, obs_impl_type.FIELD_OBS.value())
@@ -266,6 +287,15 @@ class PlotContextDataFetcher(ContentModel):
         for obs in field_obs:
             p = Parameter(obs, obs_impl_type.FIELD_OBS, PlotContextDataFetcher.observation_icon)
             data.parameters.append(p)
+
+
+        case_list_pointer = ert.enkf.enkf_fs_alloc_dirlist(fs)
+        case_list = ert.getStringList(case_list_pointer)
+        data.current_case = current_case
+        ert.freeStringList(case_list_pointer)
+
+        for case in case_list:
+            data.case_list.append(case)
 
         return data
 
@@ -283,9 +313,21 @@ class PlotContextData:
         self.plot_config_path = ""
         self.field_bounds = None
         self.gen_data_size = 0
+        self.case_list = ["None"]
+        self.current_case = None
 
     def getKeyIndexList(self, key):
         if self.key_index_list.has_key(key):
             return self.key_index_list[key]
         else:
             return []
+
+    def getComparableCases(self):
+        cases = []
+
+        for case in self.case_list:
+            if not case == self.current_case:
+                cases.append(case)
+
+        return cases
+

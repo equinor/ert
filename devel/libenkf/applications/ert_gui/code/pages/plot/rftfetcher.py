@@ -53,7 +53,7 @@ class RFTFetcher(PlotDataFetcherHandler):
         field_obs = ert.getStringList(key_list, free_after_use=True)
         return key in field_obs
 
-    def fetch(self, ert, key, parameter, data):
+    def fetch(self, ert, key, parameter, data, comparison_fs):
         enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
         obs_vector = ert.enkf.enkf_obs_get_vector(enkf_obs, key)
 
@@ -118,6 +118,7 @@ class RFTFetcher(PlotDataFetcherHandler):
             else:
                 print "No data found for member %d/%d." % (member, report_step)
                 continue
+                
             data.x_data[member] = []
             data.y_data[member] = []
             x_data = data.x_data[member]
