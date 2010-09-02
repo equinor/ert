@@ -41,8 +41,8 @@ void enkf_tui_fs_create_case(void * arg)
   if(enkf_fs_has_dir(enkf_fs, dir))
     printf("** WARNING **: Case \"%s\" already exists, will only select it.\n", dir);
 
-  enkf_fs_select_write_dir(enkf_fs, dir, true);
-  enkf_fs_select_read_dir( enkf_fs, dir      );
+  enkf_fs_select_write_dir(enkf_fs, dir, true , true);
+  enkf_fs_select_read_dir( enkf_fs, dir       , true);
 
   menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_fs_get_read_dir(enkf_fs));
   menu_set_title(menu, menu_title);
@@ -89,8 +89,8 @@ void enkf_tui_fs_select_case(void * arg)
   menu_type      * menu     = arg_pack_iget_ptr(arg_pack, 1);
   new_case = enkf_tui_fs_alloc_existing_case( enkf_fs , "Name of case" , prompt_len);
   if (new_case != NULL) {
-    enkf_fs_select_write_dir(enkf_fs, new_case, false);
-    enkf_fs_select_read_dir( enkf_fs, new_case      );
+    enkf_fs_select_write_dir(enkf_fs, new_case, false , true);
+    enkf_fs_select_read_dir( enkf_fs, new_case        , true);
     
     menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_fs_get_read_dir(enkf_fs));
     menu_set_title(menu, menu_title);
@@ -154,8 +154,8 @@ static void enkf_tui_fs_copy_ensemble__(
     if( !enkf_fs_has_dir(fs, target_case)) 
       printf("Creating new case: %s \n",target_case);  
     
-    enkf_fs_select_write_dir(fs, target_case, true );
-    enkf_fs_select_read_dir( fs, source_case       );
+    enkf_fs_select_write_dir(fs, target_case, true , true);
+    enkf_fs_select_read_dir( fs, source_case       , true);
 
     
     stringlist_type * nodes;
@@ -195,8 +195,8 @@ static void enkf_tui_fs_copy_ensemble__(
     stringlist_free(nodes);
     
     /* Recover initial selections. */
-    enkf_fs_select_write_dir(fs, user_write_dir, false);
-    enkf_fs_select_read_dir( fs, user_read_dir        );
+    enkf_fs_select_write_dir(fs, user_write_dir, false , true);
+    enkf_fs_select_read_dir( fs, user_read_dir         , true);
     free(user_read_dir);
     free(user_write_dir);
   }
