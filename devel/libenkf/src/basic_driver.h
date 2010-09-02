@@ -16,7 +16,7 @@ typedef struct basic_index_driver_struct   basic_driver_index_type;
 typedef void (save_kwlist_ftype)  (void * , int , int , buffer_type * buffer);  /* Functions used to load/store restart_kw_list instances. */
 typedef void (load_kwlist_ftype)  (void * , int , int , buffer_type * buffer);          
 
-typedef void (select_dir_ftype)   (void * driver, const char * dir , bool read_only , bool read);
+typedef void (select_dir_ftype)   (void * driver, const char * dir , bool read , bool read_only);
 typedef void (load_node_ftype) 	  (void * driver, const enkf_config_node_type * , int , int , buffer_type * );
 typedef void (save_node_ftype) 	  (void * driver, const enkf_config_node_type * , int , int , buffer_type * );
 typedef void (unlink_node_ftype)  (void * driver, const enkf_config_node_type * , int , int );

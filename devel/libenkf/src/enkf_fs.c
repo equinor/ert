@@ -1055,17 +1055,17 @@ bool enkf_fs_has_dir(const enkf_fs_type * fs, const char * dir) {
 }
 
 
-static void enkf_fs_select_dir(enkf_fs_type * fs, const char * dir, bool read_only , bool read , bool store_map) {
+static void enkf_fs_select_dir(enkf_fs_type * fs, const char * dir, bool read , bool read_only , bool store_map) {
   if (read) 
     fs->current_read_dir = util_realloc_string_copy( fs->current_read_dir , dir );
   else
     fs->current_write_dir = util_realloc_string_copy( fs->current_write_dir , dir );
 
-  fs->dynamic_forecast->select_dir(fs->dynamic_forecast , dir , read_only , read);
-  fs->dynamic_analyzed->select_dir(fs->dynamic_analyzed , dir , read_only , read);
-  fs->parameter->select_dir(fs->parameter , dir , read_only , read);
-  fs->eclipse_static->select_dir(fs->eclipse_static , dir , read_only , read);
-  fs->index->select_dir(fs->index , dir , read_only , read);    
+  fs->dynamic_forecast->select_dir(fs->dynamic_forecast , dir , read , read_only);
+  fs->dynamic_analyzed->select_dir(fs->dynamic_analyzed , dir , read, read_only);
+  fs->parameter->select_dir(fs->parameter , dir , read , read_only);
+  fs->eclipse_static->select_dir(fs->eclipse_static , dir , read, read_only);
+  fs->index->select_dir(fs->index , dir , read , read_only);    
   
   if (store_map)
     enkf_fs_update_map(fs);
@@ -1078,7 +1078,7 @@ void enkf_fs_select_read_dir(enkf_fs_type * fs, const char * dir, bool update_ma
   if (!util_string_equal(fs->current_read_dir , dir)) {
     if (set_has_key( fs->dir_set , dir)) 
       /* If the current_read_dir == NULL this is part of the mount process, and no need to write a (not) updated mount map. */
-      enkf_fs_select_dir(fs , dir , read_only , true , (update_map && (fs->current_read_dir != NULL)));   
+      enkf_fs_select_dir(fs , dir , true , read_only , (update_map && (fs->current_read_dir != NULL)));   
     else {
       /* 
          To avoid util_abort() on not existing dir the calling scope
@@ -1111,7 +1111,7 @@ void enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mk
         enkf_fs_add_dir__( fs , dir , false); /* Add a dir instance - without storing a new mount map. */
     
     if (set_has_key( fs->dir_set , dir))
-      enkf_fs_select_dir(fs , dir , read_only , false , (update_map && (fs->current_write_dir != NULL)));
+      enkf_fs_select_dir(fs , dir , false , read_only , (update_map && (fs->current_write_dir != NULL)));
     else {
       fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
       fprintf(stderr,"Available: directories: ");
@@ -1361,6 +1361,7 @@ static void enkf_fs_free_index_driver(basic_driver_index_type * driver) {
 
 
 void enkf_fs_free(enkf_fs_type * fs) {
+  
   enkf_fs_free_driver(fs->dynamic_forecast);
   enkf_fs_free_driver(fs->dynamic_analyzed);
   enkf_fs_free_driver(fs->parameter);

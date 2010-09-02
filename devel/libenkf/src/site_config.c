@@ -830,9 +830,6 @@ void site_config_free(site_config_type * site_config) {
   util_safe_free( site_config->license_root_path );
   util_safe_free( site_config->license_root_path_site );
   util_safe_free( site_config->__license_root_path );
-
-  util_safe_free( site_config->remote_lsf_server );
-
   util_safe_free( site_config->job_script );
   util_safe_free( site_config->job_script_site );
   util_safe_free( site_config->rsh_command );

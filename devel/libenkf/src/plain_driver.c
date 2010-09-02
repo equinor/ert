@@ -145,7 +145,7 @@ void plain_driver_free(void *_driver) {
    The enkf_fs layer has already made certain that this directory is different
    from the current. 
 */
-void plain_driver_select_dir(void *_driver , const char * directory, bool read_only , bool read) {
+void plain_driver_select_dir(void *_driver , const char * directory, bool read, bool read_only) {
   plain_driver_type * driver = plain_driver_safe_cast(_driver);
   if (read)
     driver->read_path      = plain_driver_common_realloc_path_fmt(driver->read_path , driver->root_path , directory , driver->fmt_string);

@@ -316,7 +316,7 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
    from the current. 
 */
 
-void block_fs_driver_select_dir(void *_driver , const char * directory, bool read_only , bool read) {
+void block_fs_driver_select_dir(void *_driver , const char * directory, bool read , bool read_only) {
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
   thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers , true ); /* Maaany threads .... */
   arg_pack_type ** arglist      = util_malloc( sizeof * arglist * driver->num_drivers , __func__);

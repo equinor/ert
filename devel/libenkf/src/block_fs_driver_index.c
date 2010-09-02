@@ -38,7 +38,7 @@ static block_fs_driver_index_type * block_fs_driver_index_safe_cast(void * __ind
   return index_driver;
 }
 
-static void block_fs_driver_index_single_mount( block_fs_driver_index_type * driver , bool read) {
+static void block_fs_driver_index_single_mount( block_fs_driver_index_type * driver , bool read, bool read_only) {
   const float fragmentation_limit = 1.0;
   const int  blocksize            = driver->block_size;
   const int  fsync_interval       = 100;
@@ -46,10 +46,10 @@ static void block_fs_driver_index_single_mount( block_fs_driver_index_type * dri
   char * mount_file;
   if (read) {
     mount_file = util_alloc_filename( driver->read_path , "INDEX" , "mnt");
-    driver->read_fs = block_fs_mount( mount_file , blocksize , 0 , fragmentation_limit , fsync_interval , false , false);
+    driver->read_fs = block_fs_mount( mount_file , blocksize , 0 , fragmentation_limit , fsync_interval , false , read_only);
   } else {
     mount_file = util_alloc_filename( driver->write_path , "INDEX" , "mnt");
-    driver->write_fs = block_fs_mount( mount_file , blocksize , 0 , fragmentation_limit , fsync_interval , false , false);
+    driver->write_fs = block_fs_mount( mount_file , blocksize , 0 , fragmentation_limit , fsync_interval , false , read_only);
   }
   free( mount_file );
 }
@@ -65,10 +65,9 @@ static void block_fs_driver_index_fsync( void * _driver ) {
 
 
   
-void block_fs_driver_index_select_dir(void *_driver , const char * directory, bool read) {
-
+void block_fs_driver_index_select_dir(void *_driver , const char * directory, bool read, bool read_only) {
   block_fs_driver_index_type * driver = block_fs_driver_index_safe_cast(_driver);
-
+  
   if (read) {
     if (util_string_equal( driver->write_path , driver->read_path)) {
       /* 
@@ -77,7 +76,7 @@ void block_fs_driver_index_select_dir(void *_driver , const char * directory, bo
       */
       driver->read_path = util_realloc_filename( driver->read_path , driver->root_path , directory , NULL);
       util_make_path( driver->read_path );
-      block_fs_driver_index_single_mount( driver , read );
+      block_fs_driver_index_single_mount( driver , read , read_only);
     } else {
       /*
         Close the existing read driver. 
@@ -88,7 +87,7 @@ void block_fs_driver_index_select_dir(void *_driver , const char * directory, bo
       if (util_string_equal( driver->read_path , driver->write_path)) 
         driver->read_fs = driver->write_fs;
       else 
-        block_fs_driver_index_single_mount( driver , read );
+        block_fs_driver_index_single_mount( driver , read , read_only);
     }
   } else {
     if (util_string_equal( driver->write_path , driver->read_path)) {
@@ -98,7 +97,7 @@ void block_fs_driver_index_select_dir(void *_driver , const char * directory, bo
       */
       driver->write_path = util_realloc_filename( driver->write_path , driver->root_path , directory , NULL);
       util_make_path( driver->write_path );
-      block_fs_driver_index_single_mount( driver , read );
+      block_fs_driver_index_single_mount( driver , read , read_only);
     } else {
       /*
         Close the existing read driver. 
@@ -109,7 +108,7 @@ void block_fs_driver_index_select_dir(void *_driver , const char * directory, bo
       if (util_string_equal( driver->read_path , driver->write_path)) 
         driver->write_fs = driver->read_fs;
       else 
-        block_fs_driver_index_single_mount( driver , read );
+        block_fs_driver_index_single_mount( driver , read , read_only);
     }
   }
 }

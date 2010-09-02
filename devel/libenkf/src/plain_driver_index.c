@@ -35,7 +35,7 @@ static plain_driver_index_type * plain_driver_index_safe_cast(void * __index_dri
 }
 
   
-void plain_driver_index_select_dir(void *_driver , const char * directory, bool read) {
+void plain_driver_index_select_dir(void *_driver , const char * directory, bool read , bool read_only) {
   plain_driver_index_type * driver = plain_driver_index_safe_cast(_driver);
   if (read)
     driver->read_path_fmt = plain_driver_common_realloc_path_fmt(driver->read_path_fmt , driver->root_path , directory , driver->fmt_string);
