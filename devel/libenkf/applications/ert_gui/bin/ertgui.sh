@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 script_path=$0
 while [ -L "$script_path" ]; do
