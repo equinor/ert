@@ -30,6 +30,7 @@ class PlotDataFetcher(ContentModel, QObject):
         self.empty_panel = QFrame()
 
         self.fs_for_comparison_plots = None
+        self.comparison_fs_name = "None"
 
     def initialize(self, ert):
         for handler in self.handlers:
@@ -91,15 +92,19 @@ class PlotDataFetcher(ContentModel, QObject):
                 break
 
     def updateComparisonFS(self, new_fs):
-        ert = self.getModel()
-        if self.fs_for_comparison_plots:
-            ert.enkf.enkf_fs_free(self.fs_for_comparison_plots)
-            self.fs_for_comparison_plots = None
+        if not new_fs == self.comparison_fs_name:
+            ert = self.getModel()
 
-        if not new_fs == "None":
-            self.fs_for_comparison_plots = ert.enkf.enkf_main_mount_extra_fs(ert.main, new_fs)
+            if self.fs_for_comparison_plots:
+                ert.enkf.enkf_fs_free(self.fs_for_comparison_plots)
+                self.fs_for_comparison_plots = None
+                self.comparison_fs_name = "None"
 
-        self.__dataChanged()
+            if not new_fs == "None":
+                self.fs_for_comparison_plots = ert.enkf.enkf_main_mount_extra_fs(ert.main, new_fs)
+                self.comparison_fs_name = new_fs
+
+            self.__dataChanged()
 
 
 

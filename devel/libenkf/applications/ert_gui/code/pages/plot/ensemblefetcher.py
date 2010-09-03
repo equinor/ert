@@ -127,8 +127,8 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                             data.checkMaxMinY(value)
                             x_time.append(sim_time)
                             y.append(value)
-                        else:
-                            print "Not valid: ", key, member, step, key_index
+                        #else:
+                        #    print "Not valid: ", key, member, step, key_index
 
                     if not comparison_fs is None:
                         if ert.enkf.enkf_fs_has_node(comparison_fs, config_node, step, member, state.value()):
@@ -141,8 +141,8 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                                 #data.checkMaxMinY(value)
                                 x_comp_time.append(sim_time)
                                 y_comp.append(value)
-                            else:
-                                print "Not valid: ", key, member, step, key_index
+                            #else:
+                            #    print "Not valid: ", key, member, step, key_index
 
             data.x_data[member] = numpy.array([t.datetime() for t in x_time])
             data.y_data[member] = numpy.array(y)
@@ -157,6 +157,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self._getRefCase(ert, key, data)
 
         ert.enkf.enkf_node_free(node)
+        ert.enkf.enkf_node_free(comp_node)
 
         data.inverted_y_axis = False
 
