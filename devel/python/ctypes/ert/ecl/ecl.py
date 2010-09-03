@@ -42,6 +42,7 @@ class Ecl:
         
         cwrapper = CWrapper( cls.libecl )
         cwrapper.registerType( "ecl_sum" , EclSum )
+        cwrapper.registerType( "ecl_kw"  , EclKW )
         cls.sum.fread_alloc                   = cwrapper.prototype("long ecl_sum_fread_alloc_case__( char* , char* , bool)") 
         cls.sum.iiget                         = cwrapper.prototype("double ecl_sum_iiget( ecl_sum , int , int)")
         cls.sum.free                          = cwrapper.prototype("void ecl_sum_free( ecl_sum )")
@@ -83,12 +84,17 @@ class Ecl:
         cls.grid.get_xyz3                     = cwrapper.prototype("void ecl_grid_get_xyz3( ecl_grid , int , int , int , double* , double* , double*)")
         cls.grid.get_xyz1                     = cwrapper.prototype("void ecl_grid_get_xyz1( ecl_grid , int , double* , double* , double*)")
         cls.grid.get_xyz1A                    = cwrapper.prototype("void ecl_grid_get_xyz1A( ecl_grid , int , double* , double* , double*)")
-        
+        cls.grid.num_lgr                      = cwrapper.prototype("int  ecl_grid_get_num_lgr( ecl_grid )")
+        cls.grid.has_lgr                      = cwrapper.prototype("bool ecl_grid_has_lgr( ecl_grid , char* )")
+        cls.grid.get_lgr                      = cwrapper.prototype("long ecl_grid_get_lgr( ecl_grid , char* )")
+        cls.grid.get_cell_lgr                 = cwrapper.prototype("long ecl_grid_get_cell_lgr1( ecl_grid , int )")
+        cls.grid.grid_value                   = cwrapper.prototype("double ecl_grid_get_property( ecl_grid , ecl_kw , int , int , int)")
+
 
         #################################################################
 
         cwrapper.registerType( "ecl_kw" , EclKW )
-
+        
         #################################################################
 
         cwrapper.registerType( "ecl_file" , EclFile )
@@ -123,8 +129,12 @@ class Ecl:
         cls.region.select_more                = cwrapper.prototype("void ecl_region_select_larger( ecl_region , ecl_kw , float )")
         cls.region.deselect_more              = cwrapper.prototype("void ecl_region_deselect_larger( ecl_region , ecl_kw , float )")
 
-        cls.region.active_size                = cwrapper.prototype("int ecl_region_get_active_size( ecl_region )")
-        cls.region.global_size                = cwrapper.prototype("int ecl_region_get_global_size( ecl_region )")
+        cls.region.invert_selection           = cwrapper.prototype("void ecl_region_invert_selection( ecl_region )")
+
+        cls.region.active_size                = cwrapper.prototype("int  ecl_region_get_active_size( ecl_region )")
+        cls.region.global_size                = cwrapper.prototype("int  ecl_region_get_global_size( ecl_region )")
+        cls.region.active_set                 = cwrapper.prototype("int* ecl_region_get_active_list( ecl_region )")
+        cls.region.global_set                 = cwrapper.prototype("int* ecl_region_get_global_list( ecl_region )")
 
         #################################################################
 
@@ -539,11 +549,19 @@ class EclRFTFile:
 
     
 class EclGrid:
-    def __init__(self , filename):
-        self.c_ptr = Ecl.grid.fread_alloc( filename )
+    def __init__(self , filename , lgr = None):
+        if lgr:
+            self.c_ptr      = lgr
+            self.data_owner = False
+        else:
+            self.c_ptr = Ecl.grid.fread_alloc( filename )
+            self.data_owner = True
 
+            
     def __del__(self):
-        Ecl.grid.free( self )
+        if self.data_owner:
+            Ecl.grid.free( self )
+
 
     def from_param(self):
         return self.c_ptr
@@ -577,7 +595,6 @@ class EclGrid:
                  
     def active_index( self , i , j , k ):
         return Ecl.grid.get_active_index3( self , i , j , k )
-
 
     def global_index( self , i , j , k ):
         return Ecl.grid.get_global_index3( self , i , j , k )
@@ -627,6 +644,55 @@ class EclGrid:
         return (x.value , y.value , z.value)
 
 
+    @property
+    def num_lgr( self ):
+        return Ecl.grid.num_lgr( self )
+
+
+    def has_lgr( self , lgr_name ):
+        if Ecl.grid.has_lgr( self , lgr_name ):
+            return True
+        else:
+            return False
+
+
+    def get_lgr( self , lgr_name ):
+        if Ecl.grid.has_lgr(self , lgr_name ):
+            lgr = EclGrid( None , lgr = Ecl.grid.get_lgr( self , lgr_name ))
+            return lgr
+        else:
+            return None
+        
+
+    def get_cell_lgr( self, active_index = None , global_index = None , ijk = None):
+        set_count = 0
+        if active_index:
+            set_count += 1
+        if global_index:
+            set_count += 1
+        if ijk:
+            set_count += 1
+
+        if not set_count == 1:
+            sys.exit("The function get_xyz() requires that exactly one of the kewyord arguments active_index, global_index, ijk be set")
+
+        if active_index:
+            global_index = Ecl.grid.get_global_index1A( self , active_index )
+        elif ijk:
+            global_index = Ecl.grid.get_global_index3( self , ijk[0] , ijk[1] , ijk[2])
+        
+        lgr = Ecl.grid.get_cell_lgr( self , global_index )
+        if lgr:
+            return EclGrid( None , lgr = lgr )
+        else:
+            return None
+
+
+    def grid_value( self , ecl_kw , i,j,k):
+        return Ecl.grid.property( self , ecl_kw , i , j , k)
+
+
+    
 class EclRegion:
     def __init__(self , grid , preselect):
         self.grid  = grid
@@ -653,11 +719,27 @@ class EclRegion:
     def select_all( self ):
         Ecl.region.select_all( self )
 
+    def invert( self ):
+        Ecl.region.invert_selection( self )
+
     def active_size( self ):
         return Ecl.region.active_size( self )
 
     def global_size( self ):
         return Ecl.region.global_size( self )
+    
+    
+    def active_set( self ):
+        list = Ecl.region.active_set( self )
+        list.size = Ecl.region.active_size( self )
+        return list
+
+    
+    def global_set( self ):
+        list = Ecl.region.global_set( self )
+        list.size = Ecl.region.global_size( self )
+        return list
+        
     
     
 
