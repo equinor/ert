@@ -2627,6 +2627,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   char           * model_config;
   enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
 
+  printf("%s  site_config :%p   site_config :%s \n",__func__ , _site_config , _site_config );
+  printf("%s  model_config:%p   model_config:%s \n",__func__ , _model_config , _model_config );
   if (site_config == NULL)
     site_config = _site_config;
   
@@ -2642,10 +2644,12 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                                            /* the real location of the configuration file. */
       char  * realpath = util_alloc_link_target( _model_config ); 
       util_alloc_file_components(realpath , &path , &base , &ext);
+      printf("Realpath:%s \n", realpath );
       free( realpath );
     } else 
       util_alloc_file_components(_model_config , &path , &base , &ext);
 
+    printf("path:%s   base:%s   ext:%s \n",path , base, ext);
     
     if (path != NULL) {
       if (chdir(path) != 0)
@@ -2653,15 +2657,15 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       printf("Changing to directory ...................: %s \n",path);
       
-      if (ext != NULL) {
-        //model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
-
+      if (ext != NULL) 
         model_config = util_alloc_filename( NULL , base , ext );
-      } else
+      else
         model_config = base;
 
     } else
       model_config = util_alloc_string_copy(_model_config);
+    
+    printf("Looking for:%s \n",model_config);
     util_safe_free( path );
     util_safe_free( base );
     util_safe_free( ext );
