@@ -299,7 +299,7 @@ class PlotSettingsCopyDialog(QDialog):
 
         self.settings_list = QComboBox()
 
-        files = self.listSettings(plot_settings.getPlotConfigPath())
+        files = self.listSettings(plot_settings.getPlotConfigPath() + "/config")
 
         for file in files:
             index = file.find(".xml")

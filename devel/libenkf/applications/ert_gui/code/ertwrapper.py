@@ -18,7 +18,8 @@ class ErtWrapper:
         
     def bootstrap(self, enkf_config , site_config="/project/res/etc/ERT/site-config", strict = True):
         #bootstrap
-        self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config,strict)
+        self.prototype("long enkf_main_bootstrap(char*, char*, bool)")
+        self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config, strict)
         print "\nBootstrap complete!"
 
 

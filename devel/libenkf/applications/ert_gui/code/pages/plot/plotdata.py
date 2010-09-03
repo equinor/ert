@@ -98,7 +98,8 @@ class PlotDataFetcher(ContentModel, QObject):
 
         if not new_fs == "None":
             self.fs_for_comparison_plots = ert.enkf.enkf_main_mount_extra_fs(ert.main, new_fs)
-            self.__dataChanged()
+
+        self.__dataChanged()
 
 
 

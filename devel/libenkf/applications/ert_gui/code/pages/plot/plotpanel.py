@@ -159,15 +159,15 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
         layout.addWidget(tabbed_panel)
 
-        layout.addWidget(self.createMemberSelectionPanel())
-        layout.addWidget(widgets.util.createSeparator())
-        layout.addWidget(self.createPlotRangePanel())
-        layout.addWidget(widgets.util.createSeparator())
-        #layout.addWidget(self.createCaseComparisonPanel())
-        layout.addLayout(self.createCaseComparisonPanel())
-        layout.addWidget(widgets.util.createSeparator())
+        tabbed_panel = QTabWidget()
+        #tabbed_panel.setTabPosition(QTabWidget.West)
 
-        layout.addLayout(self.createButtonLayout())
+        tabbed_panel.addTab(self.createMemberSelectionPanel(), "Members")
+        tabbed_panel.addTab(self.createPlotRangePanel(), "Plot")
+        tabbed_panel.addTab(self.createButtonLayout(), "Production")
+        tabbed_panel.setMaximumHeight(250)
+
+        layout.addWidget(tabbed_panel)
 
         self.setLayout(layout)
 
@@ -192,9 +192,9 @@ class PlotViewSettingsPanel(QtGui.QFrame):
 
     def createPlotRangePanel(self):
         frame = QFrame()
-        frame.setMaximumHeight(150)
-        frame.setFrameShape(QFrame.StyledPanel)
-        frame.setFrameShadow(QFrame.Plain)
+        #frame.setMaximumHeight(150)
+        #frame.setFrameShape(QFrame.StyledPanel)
+        #frame.setFrameShadow(QFrame.Plain)
 
         layout = QFormLayout()
 
@@ -210,10 +210,27 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout.addRow("Y min:", self.y_min)
         layout.addRow("Y max:", self.y_max)
 
+
+        layout.addWidget(widgets.util.createSeparator())
+
+        self.plot_compare_to_case = QtGui.QComboBox()
+        self.plot_compare_to_case.setToolTip("Select case to compare members against.")
+
+        def select_case(case):
+            self.emit(SIGNAL('comparisonCaseSelected(String)'), str(case))
+
+        self.connect(self.plot_compare_to_case, SIGNAL("currentIndexChanged(QString)"), select_case)
+        layout.addRow("Case:", self.plot_compare_to_case)
+
         frame.setLayout(layout)
         return frame
 
     def createButtonLayout(self):
+        frame = QFrame()
+        #frame.setMaximumHeight(150)
+        #frame.setFrameShape(QFrame.StyledPanel)
+        #frame.setFrameShadow(QFrame.Plain)
+
         button_layout = QHBoxLayout()
 
         self.import_button = QtGui.QPushButton()
@@ -239,14 +256,19 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.connect(self.save_many_button, QtCore.SIGNAL('clicked()'), self.plotView.saveAll)
         self.connect(self.import_button, QtCore.SIGNAL('clicked()'), self.plotView.copyPlotSettings)
 
-        return button_layout
+        vertical_layout = QVBoxLayout()
+        vertical_layout.addLayout(button_layout)
+        vertical_layout.addStretch(1)
+        frame.setLayout(vertical_layout)
+
+        return frame
 
     def createMemberSelectionPanel(self):
         frame = QFrame()
-        frame.setMinimumHeight(100)
-        frame.setMaximumHeight(100)
-        frame.setFrameShape(QFrame.StyledPanel)
-        frame.setFrameShadow(QFrame.Plain)
+        #frame.setMinimumHeight(100)
+        #frame.setMaximumHeight(100)
+        #frame.setFrameShape(QFrame.StyledPanel)
+        #frame.setFrameShadow(QFrame.Plain)
 
         layout = QVBoxLayout()
 
@@ -262,32 +284,13 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.clear_button.setText("Clear selection")
         layout.addWidget(self.clear_button)
         self.connect(self.clear_button, QtCore.SIGNAL('clicked()'), self.plotView.clearSelection)
+
+
+        layout.addStretch(1)
         frame.setLayout(layout)
 
         return frame
 
-    def createCaseComparisonPanel(self):
-        frame = QFrame()
-        frame.setMinimumHeight(25)
-        frame.setMaximumHeight(25)
-        frame.setFrameShape(QFrame.StyledPanel)
-        frame.setFrameShadow(QFrame.Plain)
-
-        layout = QHBoxLayout()
-        layout.setMargin(0)
-
-        self.plot_compare_to_case = QtGui.QComboBox()
-        self.plot_compare_to_case.setToolTip("Select case to compare members against.")
-
-        def pikk(case):
-            self.emit(SIGNAL('comparisonCaseSelected(String)'), str(case))
-
-        self.connect(self.plot_compare_to_case, SIGNAL("currentIndexChanged(QString)"), pikk)
-        layout.addWidget(QtGui.QLabel("Case:"))
-        layout.addWidget(self.plot_compare_to_case)
-
-        #frame.setLayout(layout)
-        return layout
 
 
     def plotSelectionChanged(self, selected_members):
