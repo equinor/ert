@@ -1266,8 +1266,15 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const
   char * step2_s04 	   = util_alloc_sprintf("%04d" , step2);
   char * restart_file1     = ecl_util_alloc_filename(NULL , eclbase , ECL_RESTART_FILE , fmt_file , step1);
   char * restart_file2     = ecl_util_alloc_filename(NULL , eclbase , ECL_RESTART_FILE , fmt_file , step2);
-  
-  enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , run_path      , NULL);
+
+
+  if (run_path != NULL) {
+    /** Make absolutely sure the path available as <RUNPATH> is absolute. */
+    char abs_runpath[1024];
+    realpath( run_path , abs_runpath );
+    enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , abs_runpath      , NULL);
+  }
+
   enkf_state_add_subst_kw(enkf_state , "TSTEP1"        , step1_s       , NULL);
   enkf_state_add_subst_kw(enkf_state , "TSTEP2"        , step2_s       , NULL);
   enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , step1_s04     , NULL);
