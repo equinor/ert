@@ -87,7 +87,6 @@ class RFTFetcher(PlotDataFetcherHandler):
 
         node = ert.enkf.enkf_node_alloc(config_node)
 
-
         y_obs = []
         x_obs = []
         x_std = []
@@ -133,6 +132,34 @@ class RFTFetcher(PlotDataFetcherHandler):
 
             data.x_data[member] = numpy.array(x_data)
             data.y_data[member] = numpy.array(y_data)
+
+        if not comparison_fs is None:
+            comp_node = ert.enkf.enkf_node_alloc(config_node)
+            for member in range(ens_size):
+                if ert.enkf.enkf_fs_has_node(comparison_fs, config_node, report_step, member, ert_state_enum.ANALYZED.value()):
+                    ert.enkf.enkf_fs_fread_node(comparison_fs, comp_node, report_step, member, ert_state_enum.ANALYZED.value())
+                elif ert.enkf.enkf_fs_has_node(comparison_fs, config_node, report_step, member, ert_state_enum.FORECAST.value()):
+                    ert.enkf.enkf_fs_fread_node(comparison_fs, comp_node, report_step, member, ert_state_enum.FORECAST.value())
+                else:
+                    print "No data found for member %d/%d." % (member, report_step)
+                    continue
+
+                data.x_comp_data[member] = []
+                data.y_comp_data[member] = []
+                x_data = data.x_comp_data[member]
+                y_data = data.y_comp_data[member]
+
+                field = ert.enkf.enkf_node_value_ptr(comp_node)
+                for index in range(obs_size):
+                    value = ert.enkf.field_ijk_get_double(field, i[index] , j[index] , k[index])
+                    x_data.append(value)
+                    y_data.append(y_obs[index])
+                    data.checkMaxMin(value)
+
+                data.x_comp_data[member] = numpy.array(x_data)
+                data.y_comp_data[member] = numpy.array(y_data)
+
+            ert.enkf.enkf_node_free(comp_node)
 
         ert.enkf.enkf_node_free(node)
 

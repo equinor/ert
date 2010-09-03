@@ -41,6 +41,7 @@ class PlotPanel(QtGui.QWidget):
         self.connect(self.plotList, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'),
                      self.select)
         ContentModel.modelConnect('initialized()', self.updateList)
+
         #todo: listen to ensemble changes!
 
 
@@ -72,7 +73,8 @@ class PlotPanel(QtGui.QWidget):
 
         self.connect(self.plot.plot_settings, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchSettings)
 
-
+        ContentModel.modelConnect('casesUpdated()', self.updateList)
+        
     def drawPlot(self):
         self.plot.setData(self.plotDataFetcher.data)
 
@@ -114,11 +116,12 @@ class PlotPanel(QtGui.QWidget):
 
     @widgets.util.may_take_a_long_time
     def select(self, current, previous):
-        self.plotDataFetcher.setParameter(current, self.plotContextDataFetcher.data)
-        cw = self.plotDataFetcher.getConfigurationWidget(self.plotContextDataFetcher.data)
-        self.plotDataPanel.setConfigurationWidget(cw)
-        self.plotDataFetcher.fetchContent()
-        self.drawPlot()
+        if current:
+            self.plotDataFetcher.setParameter(current, self.plotContextDataFetcher.data)
+            cw = self.plotDataFetcher.getConfigurationWidget(self.plotContextDataFetcher.data)
+            self.plotDataPanel.setConfigurationWidget(cw)
+            self.plotDataFetcher.fetchContent()
+            self.drawPlot()
 
     def updateList(self):
         self.plotContextDataFetcher.fetchContent()
@@ -216,14 +219,15 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.plot_compare_to_case = QtGui.QComboBox()
         self.plot_compare_to_case.setToolTip("Select case to compare members against.")
 
-        def select_case(case):
-            self.emit(SIGNAL('comparisonCaseSelected(String)'), str(case))
 
-        self.connect(self.plot_compare_to_case, SIGNAL("currentIndexChanged(QString)"), select_case)
+        self.connect(self.plot_compare_to_case, SIGNAL("currentIndexChanged(QString)"), self.select_case)
         layout.addRow("Case:", self.plot_compare_to_case)
 
         frame.setLayout(layout)
         return frame
+
+    def select_case(self, case):
+        self.emit(SIGNAL('comparisonCaseSelected(String)'), str(case))
 
     def createButtonLayout(self):
         frame = QFrame()
@@ -285,13 +289,10 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout.addWidget(self.clear_button)
         self.connect(self.clear_button, QtCore.SIGNAL('clicked()'), self.plotView.clearSelection)
 
-
         layout.addStretch(1)
         frame.setLayout(layout)
 
         return frame
-
-
 
     def plotSelectionChanged(self, selected_members):
         if isinstance(selected_members, pages.plot.plotsettings.PlotSettings):
@@ -302,8 +303,11 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         self.selected_member_label.setText(text)
 
     def setCases(self, cases):
+        state = self.plot_compare_to_case.blockSignals(True)
         self.plot_compare_to_case.clear()
         self.plot_compare_to_case.addItems(cases)
+        self.plot_compare_to_case.blockSignals(state)
+        self.select_case("None")
 
 class DisableableSpinner(QFrame):
 
