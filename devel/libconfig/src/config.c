@@ -133,8 +133,8 @@ typedef struct validate_struct validate_type;
 */
     
 struct validate_struct {
-  int 		       argc_min;                /* The minimum number of arguments: -1 means no lower limit. */
-  int 		       argc_max;                /* The maximum number of arguments: -1 means no upper limit. */ 
+  int                  argc_min;                /* The minimum number of arguments: -1 means no lower limit. */
+  int                  argc_max;                /* The maximum number of arguments: -1 means no upper limit. */ 
   set_type          *  common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */ 
   set_type          ** indexed_selection_set;   /* A selection set which will apply for specifi (indexed) arguments. */
   config_item_types *  type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
@@ -204,7 +204,7 @@ static void validate_free(validate_type * validate) {
   if (validate->indexed_selection_set != NULL) {
     for (int i = 0; i < validate->argc_max; i++)
       if (validate->indexed_selection_set[i] != NULL)
-	set_free(validate->indexed_selection_set[i]);
+        set_free(validate->indexed_selection_set[i]);
     free(validate->indexed_selection_set);
   }
   if (validate->type_map != NULL) free(validate->type_map);
@@ -602,9 +602,9 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
     if (argc < item->validate->argc_min) {
       OK = false;
       if (config_file != NULL)
-	config_add_and_free_error(config , util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have at least %d arguments.",config_file , item->kw , item->validate->argc_min));
+        config_add_and_free_error(config , util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have at least %d arguments.",config_file , item->kw , item->validate->argc_min));
       else
-	config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have at least %d arguments.",item->kw , item->validate->argc_min));
+        config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have at least %d arguments.",item->kw , item->validate->argc_min));
     }
   }
 
@@ -612,9 +612,9 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
     if (argc > item->validate->argc_max) {
       OK = false;
       if (config_file != NULL)
-	config_add_and_free_error(config , util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have maximum %d arguments.",config_file , item->kw , item->validate->argc_max));
+        config_add_and_free_error(config , util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have maximum %d arguments.",config_file , item->kw , item->validate->argc_max));
       else
-	config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have maximum %d arguments.",item->kw , item->validate->argc_max));
+        config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have maximum %d arguments.",item->kw , item->validate->argc_max));
     }
   }
 
@@ -627,19 +627,19 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
     /* Validating selection set - first common, then indexed */
     if (item->validate->common_selection_set) {
       for (int iarg = 0; iarg < argc; iarg++) {
-	if (!set_has_key(item->validate->common_selection_set , argv[iarg])) {
-	  config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
-	  OK = false;
-	}
+        if (!set_has_key(item->validate->common_selection_set , argv[iarg])) {
+          config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
+          OK = false;
+        }
       }
     } else if (item->validate->indexed_selection_set != NULL) {
       for (int iarg = 0; iarg < argc; iarg++) {
-	if (item->validate->indexed_selection_set[iarg] != NULL) {
-	  if (!set_has_key(item->validate->indexed_selection_set[iarg] , argv[iarg])) {
-	    config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
-	    OK = false;
-	  }
-	}
+        if (item->validate->indexed_selection_set[iarg] != NULL) {
+          if (!set_has_key(item->validate->indexed_selection_set[iarg] , argv[iarg])) {
+            config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
+            OK = false;
+          }
+        }
       }
     }
 
@@ -652,84 +652,84 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
     /* Validate the TYPE of the various argumnents */
     if (item->validate->type_map != NULL) {
       for (int iarg = 0; iarg < argc; iarg++) {
-	const char * value = argv[iarg];
-	switch (item->validate->type_map[iarg]) {
-	case(CONFIG_STRING): /* This never fails ... */
-	  break;
-	case(CONFIG_EXECUTABLE):
-	  {
-	    /*
-	      1. If the supplied value is an abolute path - do nothing.
-	      2. If the supplied is _not_ an absolute path:
+        const char * value = argv[iarg];
+        switch (item->validate->type_map[iarg]) {
+        case(CONFIG_STRING): /* This never fails ... */
+          break;
+        case(CONFIG_EXECUTABLE):
+          {
+            /*
+              1. If the supplied value is an abolute path - do nothing.
+              2. If the supplied is _not_ an absolute path:
 
-	         a. Try if the relocated exists - then use that.
+                 a. Try if the relocated exists - then use that.
                  b. Else - try if the util_alloc_PATH_executable() exists.
-	    */
-	    if (!util_is_abs_path( value )) {
-	      char * relocated  = __alloc_relocated__(config_cwd , value);
-	      char * path_exe   = util_alloc_PATH_executable( value );
+            */
+            if (!util_is_abs_path( value )) {
+              char * relocated  = __alloc_relocated__(config_cwd , value);
+              char * path_exe   = util_alloc_PATH_executable( value );
 
-	      if (util_file_exists(relocated)) {
-		if (util_is_executable(relocated))
-		  argv[iarg] = util_realloc_string_copy(argv[iarg] , relocated);
-	      } else if (path_exe != NULL)
-		argv[iarg] = util_realloc_string_copy(argv[iarg] , path_exe);
-	      else
-		config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
-	      
-	      free(relocated);
-	      util_safe_free(path_exe);
-	    } else {
-	      if (!util_is_executable( value ))
-		config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
-	    }
-	  }
-	  break;
-	case(CONFIG_INT):
-	  if (!util_sscanf_int( value , NULL ))
-	    config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
-	  break;
-	case(CONFIG_FLOAT):
-	  if (!util_sscanf_double( value , NULL ))
-	    config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
-	  break;
-	case(CONFIG_EXISTING_FILE):
-	  {
-	    char * file = __alloc_relocated__(config_cwd , value);
-	    if (!util_file_exists(file))
-	      config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
-	    else
-	      argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
-	    free( file );
-	  }
-	  break;
-	case(CONFIG_FILE):
-	  {
-	    char * file = __alloc_relocated__(config_cwd , value);
-	    argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
-	    free( file );
-	  }
-	  break;
-	case(CONFIG_EXISTING_DIR):
-	  {
-	    char * dir = __alloc_relocated__(config_cwd , value);
-	    if (!util_is_directory(value))
-	      config_add_and_free_error(config , util_alloc_sprintf("Can not find directory: %s. ",value));
-	    else
-	      argv[iarg] = util_realloc_string_copy(argv[iarg] , dir);
-	  }
-	  break;
-	case(CONFIG_BOOLEAN):
-	  if (!util_sscanf_bool( value , NULL ))
-	    config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
-	  break;
-	case(CONFIG_BYTESIZE):
-	  if (!util_sscanf_bytesize( value , NULL))
-	    config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
-	  break;
-	default:
-	  util_abort("%s: config_item_type:%d not recognized \n",__func__ , item->validate->type_map[iarg]);
-	}
+              if (util_file_exists(relocated)) {
+                if (util_is_executable(relocated))
+                  argv[iarg] = util_realloc_string_copy(argv[iarg] , relocated);
+              } else if (path_exe != NULL)
+                argv[iarg] = util_realloc_string_copy(argv[iarg] , path_exe);
+              else
+                config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+              
+              free(relocated);
+              util_safe_free(path_exe);
+            } else {
+              if (!util_is_executable( value ))
+                config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+            }
+          }
+          break;
+        case(CONFIG_INT):
+          if (!util_sscanf_int( value , NULL ))
+            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
+          break;
+        case(CONFIG_FLOAT):
+          if (!util_sscanf_double( value , NULL ))
+            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
+          break;
+        case(CONFIG_EXISTING_FILE):
+          {
+            char * file = __alloc_relocated__(config_cwd , value);
+            if (!util_file_exists(file))
+              config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
+            else
+              argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
+            free( file );
+          }
+          break;
+        case(CONFIG_FILE):
+          {
+            char * file = __alloc_relocated__(config_cwd , value);
+            argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
+            free( file );
+          }
+          break;
+        case(CONFIG_EXISTING_DIR):
+          {
+            char * dir = __alloc_relocated__(config_cwd , value);
+            if (!util_is_directory(value))
+              config_add_and_free_error(config , util_alloc_sprintf("Can not find directory: %s. ",value));
+            else
+              argv[iarg] = util_realloc_string_copy(argv[iarg] , dir);
+          }
+          break;
+        case(CONFIG_BOOLEAN):
+          if (!util_sscanf_bool( value , NULL ))
+            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
+          break;
+        case(CONFIG_BYTESIZE):
+          if (!util_sscanf_bytesize( value , NULL))
+            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
+          break;
+        default:
+          util_abort("%s: config_item_type:%d not recognized \n",__func__ , item->validate->type_map[iarg]);
+        }
       }
     }
   }
@@ -766,9 +766,9 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
     if (subst_list_get_size( config->define_list ) > 0) {
       int iarg;
       for (iarg = 0; iarg < argc; iarg++) {
-	char * filtered_copy = subst_list_alloc_filtered_string( config->define_list , argv[iarg] );
-	free( argv[iarg] );
-	argv[iarg] = filtered_copy;
+        char * filtered_copy = subst_list_alloc_filtered_string( config->define_list , argv[iarg] );
+        free( argv[iarg] );
+        argv[iarg] = filtered_copy;
       }
     }
 
@@ -799,9 +799,9 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
       item->currently_set = true;
       
       if (config_cwd != NULL)
-	node->config_cwd = util_alloc_string_copy( config_cwd );
+        node->config_cwd = util_alloc_string_copy( config_cwd );
       else
-	node->config_cwd = util_alloc_cwd(  );  /* For use from external scope. */
+        node->config_cwd = util_alloc_cwd(  );  /* For use from external scope. */
     }
   }
 }
@@ -1242,13 +1242,13 @@ static void config_append_auto_item( config_type * config , const char * key , i
 
 
 static void config_parse__(config_type * config , 
-			   const char * config_cwd , 
-			   const char * _config_file, 
-			   const char * comment_string , 
-			   const char * include_kw ,
-			   const char * define_kw , 
-			   bool auto_add , 
-			   bool validate) {
+                           const char * config_cwd , 
+                           const char * _config_file, 
+                           const char * comment_string , 
+                           const char * include_kw ,
+                           const char * define_kw , 
+                           bool auto_add , 
+                           bool validate) {
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
   char * abs_filename = util_alloc_realpath(config_file);
 
@@ -1266,7 +1266,7 @@ static void config_parse__(config_type * config ,
     
       line  = util_fscanf_alloc_line(stream , &at_eof);
       if (line != NULL) {
-	util_split_string(line , " \t" , &tokens , &token_list);
+        util_split_string(line , " \t" , &tokens , &token_list);
       
         active_tokens = tokens;
         for (i = 0; i < tokens; i++) {
@@ -1286,21 +1286,21 @@ static void config_parse__(config_type * config ,
         if (active_tokens > 0) {
           const char * kw = token_list[0];
 
-	  /*Treating the include keyword. */
-	  if (include_kw != NULL && (strcmp(include_kw , kw) == 0)) {
-	    if (active_tokens != 2) 
-	      util_abort("%s: keyword:%s must have exactly one argument. \n",__func__ ,include_kw);
-	    {
-	      char *include_path  = NULL;
-	      char *extension     = NULL;
-	      char *include_file  = NULL;
+          /*Treating the include keyword. */
+          if (include_kw != NULL && (strcmp(include_kw , kw) == 0)) {
+            if (active_tokens != 2) 
+              util_abort("%s: keyword:%s must have exactly one argument. \n",__func__ ,include_kw);
+            {
+              char *include_path  = NULL;
+              char *extension     = NULL;
+              char *include_file  = NULL;
 
-	      {
-		char * tmp_path;
-		char * tmp_file;
-		util_alloc_file_components(token_list[1] , &tmp_path , &tmp_file , &extension);
+              {
+                char * tmp_path;
+                char * tmp_file;
+                util_alloc_file_components(token_list[1] , &tmp_path , &tmp_file , &extension);
 
-		/* Allocating a new path with current config_cwd and the (relative) path to the new config_file */
+                /* Allocating a new path with current config_cwd and the (relative) path to the new config_file */
                 if (tmp_path == NULL)
                   include_path = util_alloc_string_copy( config_cwd );
                 else {
@@ -1309,36 +1309,36 @@ static void config_parse__(config_type * config ,
                   else
                     include_path = util_alloc_string_copy(tmp_path);
                 }
-		
+                
                 include_file = util_alloc_filename(NULL , tmp_file , extension);
-		free(tmp_file);
-		free(tmp_path);
-	      }
+                free(tmp_file);
+                free(tmp_path);
+              }
 
-	      config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , auto_add , false); /* Recursive call */
-	      util_safe_free(include_file);
-	      util_safe_free(include_path);
-	    }
-	  } else if ((define_kw != NULL) && (strcmp(define_kw , kw) == 0)) {
-	    if (active_tokens < 3) 
-	      util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
-	    {
-	      char * key   = util_alloc_string_copy( token_list[1] );
-	      char * value = util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ");
+              config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , auto_add , false); /* Recursive call */
+              util_safe_free(include_file);
+              util_safe_free(include_path);
+            }
+          } else if ((define_kw != NULL) && (strcmp(define_kw , kw) == 0)) {
+            if (active_tokens < 3) 
+              util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
+            {
+              char * key   = util_alloc_string_copy( token_list[1] );
+              char * value = util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ");
               
               {
-		char * filtered_value = subst_list_alloc_filtered_string( config->define_list , value);
+                char * filtered_value = subst_list_alloc_filtered_string( config->define_list , value);
                 config_add_define( config , key , filtered_value );
-		free( filtered_value );
-	      }
+                free( filtered_value );
+              }
               free(key);
-	      free(value);
-	    }
-	  } else {
+              free(value);
+            }
+          } else {
             bool auto_item = false;
-	    if (hash_has_key(config->messages , kw))
-	      printf("%s \n",(char *) hash_get(config->messages , kw));
-	    
+            if (hash_has_key(config->messages , kw))
+              printf("%s \n",(char *) hash_get(config->messages , kw));
+            
             if (!config_has_item(config , kw)) {
               fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s --- \n" , kw , config_file);
               if (auto_add) {
@@ -1346,16 +1346,16 @@ static void config_parse__(config_type * config ,
                 hash_insert_hash_owned_ref( config->auto_items , kw , vector_alloc_new() , vector_free__ );
               }
             }
-	    
-	    if (config_has_item(config , kw)) {
-	      config_item_type * item = config_get_item(config , kw);
-	      config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd);
-	    } 
+            
+            if (config_has_item(config , kw)) {
+              config_item_type * item = config_get_item(config , kw);
+              config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd);
+            } 
               
             
             if (auto_item)
               config_append_auto_item( config , kw , active_tokens - 1,  (const char **) &token_list[1] );
-	  }
+          }
         }
         util_free_stringlist(token_list , tokens);
         free(line);
@@ -1371,12 +1371,12 @@ static void config_parse__(config_type * config ,
 
 
 void config_parse(config_type * config , 
-		  const char * filename, 
-		  const char * comment_string , 
-		  const char * include_kw ,
-		  const char * define_kw , 
-		  bool auto_add , 
-		  bool validate) {
+                  const char * filename, 
+                  const char * comment_string , 
+                  const char * include_kw ,
+                  const char * define_kw , 
+                  bool auto_add , 
+                  bool validate) {
   char * config_path;
   char * config_file;
   char * tmp_file;
