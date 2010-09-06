@@ -827,11 +827,12 @@ class EclCase:
     
 
         
-    def run( self , version = default_version , blocking = False , run_script = run_script , use_LSF = True ):
+    def run( self , version = default_version , blocking = False , run_script = run_script , use_LSF = True , LSF_server = None , LSF_queue = "normal"):
         num_cpu = Ecl.ecl_util.get_num_cpu( self.datafile )
         if use_LSF:
             if not self.LSFDriver:
-                self.LSFDriver = LSFDriver( )
+                self.LSFDriver = LSFDriver( queue      = LSF_queue , 
+                                            lsf_server = LSF_server )
 
             submit_func = self.LSFDriver.submit
             
