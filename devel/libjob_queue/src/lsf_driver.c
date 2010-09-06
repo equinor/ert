@@ -263,17 +263,17 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
     while (!at_eof) {
       char * line = util_fscanf_alloc_line(stream , &at_eof);
       if (line != NULL) {
-	int  job_id_int;
+        int  job_id_int;
 
-	if (sscanf(line , "%d %s %s", &job_id_int , user , status) == 3) {
-	  char * job_id = util_alloc_sprintf("%d" , job_id_int);
+        if (sscanf(line , "%d %s %s", &job_id_int , user , status) == 3) {
+          char * job_id = util_alloc_sprintf("%d" , job_id_int);
 
           if (hash_has_key( driver->my_jobs , job_id ))   /* Consider only jobs submitted by this ERT instance - not old jobs lying around from the same user. */
             hash_insert_int(driver->bjobs_cache , job_id , lsf_driver_get_status__( driver , status , job_id));
           
-	  free(job_id);
-	}
-	free(line);
+          free(job_id);
+        }
+        free(line);
       }
     }
     fclose(stream);
@@ -295,40 +295,40 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , void *
       job_status_type status;
       struct jobInfoEnt *job_info;
       if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) {
-	/* 
-	   Failed to get information about the job - we boldly assume
-	   the following situation has occured:
+        /* 
+           Failed to get information about the job - we boldly assume
+           the following situation has occured:
            
              1. The job is running happily along.
-	     2. The lsf deamon is not responding for a long time.
-	     3. The job finishes, and is eventually expired from the LSF job database.
-	     4. The lsf deamon answers again - but can not find the job...
-	     
-	*/
-	fprintf(stderr,"Warning: failed to get status information for job:%ld - assuming it is finished. \n", job->lsf_jobnr);
-	status = JOB_QUEUE_DONE;
+             2. The lsf deamon is not responding for a long time.
+             3. The job finishes, and is eventually expired from the LSF job database.
+             4. The lsf deamon answers again - but can not find the job...
+             
+        */
+        fprintf(stderr,"Warning: failed to get status information for job:%ld - assuming it is finished. \n", job->lsf_jobnr);
+        status = JOB_QUEUE_DONE;
       } else {
-	job_info = lsb_readjobinfo( NULL );
-	lsb_closejobinfo();
-	if (job->num_exec_host == 0) {
-	  job->num_exec_host = job_info->numExHosts;
-	  job->exec_host     = util_alloc_stringlist_copy( (const char **) job_info->exHosts , job->num_exec_host);
-	}
-	
-	switch (job_info->status) {
-	  CASE_SET(JOB_STAT_PEND  , JOB_QUEUE_PENDING);
-	  CASE_SET(JOB_STAT_SSUSP , JOB_QUEUE_RUNNING);
-	  CASE_SET(JOB_STAT_RUN   , JOB_QUEUE_RUNNING);
-	  CASE_SET(JOB_STAT_EXIT  , JOB_QUEUE_EXIT);
-	  CASE_SET(JOB_STAT_DONE  , JOB_QUEUE_DONE);
-	  CASE_SET(JOB_STAT_PDONE , JOB_QUEUE_DONE);
-	  CASE_SET(JOB_STAT_PERR  , JOB_QUEUE_EXIT);
-	  CASE_SET(192            , JOB_QUEUE_DONE); /* this 192 seems to pop up - where the fuck 
+        job_info = lsb_readjobinfo( NULL );
+        lsb_closejobinfo();
+        if (job->num_exec_host == 0) {
+          job->num_exec_host = job_info->numExHosts;
+          job->exec_host     = util_alloc_stringlist_copy( (const char **) job_info->exHosts , job->num_exec_host);
+        }
+        
+        switch (job_info->status) {
+          CASE_SET(JOB_STAT_PEND  , JOB_QUEUE_PENDING);
+          CASE_SET(JOB_STAT_SSUSP , JOB_QUEUE_RUNNING);
+          CASE_SET(JOB_STAT_RUN   , JOB_QUEUE_RUNNING);
+          CASE_SET(JOB_STAT_EXIT  , JOB_QUEUE_EXIT);
+          CASE_SET(JOB_STAT_DONE  , JOB_QUEUE_DONE);
+          CASE_SET(JOB_STAT_PDONE , JOB_QUEUE_DONE);
+          CASE_SET(JOB_STAT_PERR  , JOB_QUEUE_EXIT);
+          CASE_SET(192            , JOB_QUEUE_DONE); /* this 192 seems to pop up - where the fuck 
                                                         does it come frome ??  _pdone + _ususp ??? */
-	default:
+        default:
           util_abort("%s: job:%ld lsf_status:%d not recognized - internal LSF fuck up - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
-	  status = JOB_QUEUE_DONE; /* ????  */
-	}
+          status = JOB_QUEUE_DONE; /* ????  */
+        }
       }
       
       return status;
@@ -361,12 +361,12 @@ static job_status_type lsf_driver_get_job_status_shell(void * __driver , void * 
       
       
       if (hash_has_key( driver->bjobs_cache , job->lsf_jobnr_char) ) 
-	status = hash_get_int(driver->bjobs_cache , job->lsf_jobnr_char);
+        status = hash_get_int(driver->bjobs_cache , job->lsf_jobnr_char);
       else
-	/* 
-	   It might be running - but since job != NULL it is at least in the queue system.
-	*/
-	status = JOB_QUEUE_PENDING;
+        /* 
+           It might be running - but since job != NULL it is at least in the queue system.
+        */
+        status = JOB_QUEUE_PENDING;
 
     }
   }
@@ -442,15 +442,15 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
 
 
 void * lsf_driver_submit_job(void * __driver , 
-                             const char  * submit_cmd  	  , 
-                             const char  * run_path    	  , 
+                             const char  * submit_cmd     , 
+                             const char  * run_path       , 
                              const char  * job_name ,
                              int           argc,     
                              const char ** argv ) {
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   {
-    lsf_job_type * job 		  = lsf_job_alloc();
-    char * lsf_stdout  		  = util_alloc_joined_string( (const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
+    lsf_job_type * job            = lsf_job_alloc();
+    char * lsf_stdout             = util_alloc_joined_string( (const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
     pthread_mutex_lock( &driver->submit_lock );
 
 
@@ -485,7 +485,7 @@ void * lsf_driver_submit_job(void * __driver ,
     } else {
       char * quoted_resource_request = NULL;
       if (driver->resource_request != NULL)
-	quoted_resource_request = util_alloc_sprintf("\"%s\"" , driver->resource_request);
+        quoted_resource_request = util_alloc_sprintf("\"%s\"" , driver->resource_request);
       
       job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd , argc, argv);
       job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
@@ -500,8 +500,8 @@ void * lsf_driver_submit_job(void * __driver ,
       return job;
     else {
       /*
-	The submit failed - the queue system shall handle
-	NULL return values.
+        The submit failed - the queue system shall handle
+        NULL return values.
       */
       if (driver->use_library_calls) 
         fprintf(stderr,"%s: ** Warning: lsb_submit() failed: %s/%d \n",__func__ , lsb_sysmsg() , lsberrno);
@@ -549,7 +549,7 @@ void lsf_driver_set_remote_server( lsf_driver_type * driver, const char * remote
 
 
 void * lsf_driver_alloc(const char * queue_name , const char * resource_request , const char * remote_lsf_server , int num_cpu) {
-  lsf_driver_type * lsf_driver 	   = util_malloc(sizeof * lsf_driver , __func__);
+  lsf_driver_type * lsf_driver     = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name           = NULL;
   lsf_driver->remote_lsf_server    = NULL; 
   lsf_driver->resource_request     = NULL;
@@ -557,11 +557,11 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   lsf_driver_set_resource_request( lsf_driver , resource_request );
   lsf_driver_set_remote_server( lsf_driver  , remote_lsf_server );
   UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
-  lsf_driver->submit           	   = lsf_driver_submit_job;
-  lsf_driver->get_status       	   = lsf_driver_get_job_status;
+  lsf_driver->submit               = lsf_driver_submit_job;
+  lsf_driver->get_status           = lsf_driver_get_job_status;
   lsf_driver->kill_job             = lsf_driver_kill_job;
-  lsf_driver->free_job         	   = lsf_driver_free_job;
-  lsf_driver->free_driver      	   = lsf_driver_free__;
+  lsf_driver->free_job             = lsf_driver_free_job;
+  lsf_driver->free_driver          = lsf_driver_free__;
   lsf_driver->driver_type          = LSF_DRIVER;
   lsf_driver->num_cpu              = num_cpu;
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
@@ -569,9 +569,9 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   /* Library initialisation */
   /*****************************************************************/
   memset(&lsf_driver->lsf_request , 0 , sizeof (lsf_driver->lsf_request));
-  lsf_driver->lsf_request.queue     	   = lsf_driver->queue_name;
-  lsf_driver->lsf_request.beginTime 	   = 0;
-  lsf_driver->lsf_request.termTime   	   = 0;   
+  lsf_driver->lsf_request.queue            = lsf_driver->queue_name;
+  lsf_driver->lsf_request.beginTime        = 0;
+  lsf_driver->lsf_request.termTime         = 0;   
   lsf_driver->lsf_request.numProcessors    = 1;
   lsf_driver->lsf_request.maxNumProcessors = 1;
   {
@@ -587,9 +587,9 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   /*****************************************************************/
   /* Shell initialization */
   lsf_driver->last_bjobs_update   = time( NULL );
-  lsf_driver->bjobs_cache 	  = hash_alloc(); 
-  lsf_driver->my_jobs 	          = hash_alloc(); 
-  lsf_driver->status_map   	  = hash_alloc();
+  lsf_driver->bjobs_cache         = hash_alloc(); 
+  lsf_driver->my_jobs             = hash_alloc(); 
+  lsf_driver->status_map          = hash_alloc();
 
   hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
   hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_QUEUE_RUNNING);
@@ -601,21 +601,16 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
 
-  if (getenv("ERT_LINK_LSF")) {
-    setenv("BSUB_QUIET" , "yes" , 1);                                     /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
+  if (lsf_driver->remote_lsf_server != NULL) {
+    lsf_driver->use_library_calls = false;
+    lsf_driver->display_info = NULL;             /* The shell driver does not have any display info function. */
+  } else {
+    /* No remote server has been set - assuming we can issue proper library calls. */
+    setenv("BSUB_QUIET" , "yes" , 1);            /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
     lsf_driver->use_library_calls = true;
     lsf_driver->display_info      = lsf_driver_display_info;
-  } else {
-    if (lsf_driver->remote_lsf_server != NULL) {
-      lsf_driver->use_library_calls = false;
-      lsf_driver->display_info = NULL;                                      /* The shell driver does not have any display info function. */
-    } else {
-      fprintf(stderr,"When using the LSF driver you must either:\n");
-      fprintf(stderr,"   1. Set the enviornment variables ERT_LINK_LSF - if you have access to a machine with proper LSF installation.\n");
-      fprintf(stderr,"   2. Set the ERT configuration variable LSF_SERVER - this also requires passwordless ssh");
-      util_exit("Exiting ...");
-    }
   }
+  
   return lsf_driver;
 }
 

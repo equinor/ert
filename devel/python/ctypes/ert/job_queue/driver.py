@@ -66,10 +66,8 @@ class LSFDriver:
     def __init__(self ,
                  queue = "normal" ,
                  resource_request = "select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]" ,
-                 remote_server = None ):
-        if not remote_server:
-            os.environ["ERT_LINK_LSF"] = "True"
-        self.c_ptr = self.lsf.alloc_driver( queue , resource_request , remote_server , 1)
+                 lsf_server = None ):
+        self.c_ptr = self.lsf.alloc_driver( queue , resource_request , lsf_server , 1)
 
 
     def __del__( self ):
