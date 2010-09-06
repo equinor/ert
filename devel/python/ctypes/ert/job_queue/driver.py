@@ -11,8 +11,8 @@ STATUS_RUNNING =  32
 STATUS_DONE    =  64
 STATUS_EXIT    = 128 
 
-LSF_HOME = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"
-
+LSF_HOME    = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"
+LAPACK_HOME = "/project/res/x86_64_RH_4/lib"
 
 class DriverContext:
     __initialized = False
@@ -21,13 +21,13 @@ class DriverContext:
         if cls.__initialized:
             return
         
-        ctypes.CDLL("libnsl.so"                , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("%s/liblsf.so" % LSF_HOME  , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("%s/libbat.so" % LSF_HOME  , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libz.so"                  , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("liblapack.so"             , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libutil.so"               , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libconfig.so"             , ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("libnsl.so"                     , ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("%s/liblsf.so" % LSF_HOME       , ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("%s/libbat.so" % LSF_HOME       , ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("libz.so"                       , ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("%s/liblapack.so" % LAPACK_HOME , ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("libutil.so"                    , ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("libconfig.so"                  , ctypes.RTLD_GLOBAL)
         cls.__libjob_queue = ctypes.CDLL("libjob_queue.so" , ctypes.RTLD_GLOBAL)
 
         cls.cwrapper = CWrapper( cls.__libjob_queue )
