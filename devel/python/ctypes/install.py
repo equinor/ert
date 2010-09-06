@@ -93,6 +93,7 @@ make_dir("%s/lib/python"  % SDP_ROOT)
 make_dir("%s/lib/python/lib"  % SDP_ROOT)
 
 install_path( "ert" , target )
+install_file( "../../libutil/slib/liblsf.so"            , "%s/lib/python/lib/liblsf.so"       % SDP_ROOT)
 install_file( "../../libutil/slib/libutil.so"           , "%s/lib/python/lib/libutil.so"      % SDP_ROOT)
 install_file( "../../libconfig/slib/libconfig.so"       , "%s/lib/python/lib/libconfig.so"    % SDP_ROOT)
 install_file( "../../libecl/slib/libecl.so"             , "%s/lib/python/lib/libecl.so"       % SDP_ROOT)
