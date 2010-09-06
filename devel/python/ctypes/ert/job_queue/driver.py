@@ -12,7 +12,6 @@ STATUS_DONE    =  64
 STATUS_EXIT    = 128 
 
 LSF_HOME    = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"
-LAPACK_HOME = "/project/res/x86_64_RH_4/lib"
 
 class DriverContext:
     __initialized = False
