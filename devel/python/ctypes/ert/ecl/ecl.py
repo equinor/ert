@@ -84,6 +84,7 @@ class Ecl:
         cls.grid.get_xyz3                     = cwrapper.prototype("void ecl_grid_get_xyz3( ecl_grid , int , int , int , double* , double* , double*)")
         cls.grid.get_xyz1                     = cwrapper.prototype("void ecl_grid_get_xyz1( ecl_grid , int , double* , double* , double*)")
         cls.grid.get_xyz1A                    = cwrapper.prototype("void ecl_grid_get_xyz1A( ecl_grid , int , double* , double* , double*)")
+        cls.grid.get_ijk_xyz                  = cwrapper.prototype("int  ecl_grid_get_global_index_from_xyz( ecl_grid , double , double , double , int)")
         cls.grid.num_lgr                      = cwrapper.prototype("int  ecl_grid_get_num_lgr( ecl_grid )")
         cls.grid.has_lgr                      = cwrapper.prototype("bool ecl_grid_has_lgr( ecl_grid , char* )")
         cls.grid.get_lgr                      = cwrapper.prototype("long ecl_grid_get_lgr( ecl_grid , char* )")
@@ -642,6 +643,22 @@ class EclGrid:
             Ecl.grid.get_xyz3( self , ijk[0] , ijk[1] , ijk[2] , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
 
         return (x.value , y.value , z.value)
+
+
+
+    def find_cell( self , x , y , z , start_ijk = None):
+        if start_ijk:
+            start_index = self.global_index( start_ijk[0] , start_ijk[1] , start_ijk[2])
+        else:
+            start_index = 0
+        global_index = Ecl.grid.get_ijk_xyz( self , x , y , z , start_index)
+
+        i = ctypes.c_int()
+        j = ctypes.c_int()
+        k = ctypes.c_int()
+        Ecl.grid.get_ijk1( self , global_index , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))        
+        return (i.value , j.value , k.value)
+
 
 
     @property
