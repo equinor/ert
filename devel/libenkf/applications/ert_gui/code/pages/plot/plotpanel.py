@@ -79,40 +79,41 @@ class PlotPanel(QtGui.QWidget):
         self.plot.setData(self.plotDataFetcher.data)
 
     def fetchSettings(self, plot_settings):
-        data = self.plotDataFetcher.data
-        x_min = plot_settings.getMinXLimit(data.x_min, data.getXDataType())
-        x_max = plot_settings.getMaxXLimit(data.x_max, data.getXDataType())
-        y_min = plot_settings.getMinYLimit(data.y_min, data.getYDataType())
-        y_max = plot_settings.getMaxYLimit(data.y_max, data.getYDataType())
+        if self.plotDataFetcher.data:
+            data = self.plotDataFetcher.data
+            x_min = plot_settings.getMinXLimit(data.x_min, data.getXDataType())
+            x_max = plot_settings.getMaxXLimit(data.x_max, data.getXDataType())
+            y_min = plot_settings.getMinYLimit(data.y_min, data.getYDataType())
+            y_max = plot_settings.getMaxYLimit(data.y_max, data.getYDataType())
 
-        state = self.h_zoom_slider.blockSignals(True)
-        self.h_zoom_slider.setMinValue(plot_settings.getMinXZoom())
-        self.h_zoom_slider.setMaxValue(plot_settings.getMaxXZoom())
-        self.h_zoom_slider.blockSignals(state)
+            state = self.h_zoom_slider.blockSignals(True)
+            self.h_zoom_slider.setMinValue(plot_settings.getMinXZoom())
+            self.h_zoom_slider.setMaxValue(plot_settings.getMaxXZoom())
+            self.h_zoom_slider.blockSignals(state)
 
-        state = self.v_zoom_slider.blockSignals(True)
-        self.v_zoom_slider.setMinValue(plot_settings.getMinYZoom())
-        self.v_zoom_slider.setMaxValue(plot_settings.getMaxYZoom())
-        self.v_zoom_slider.blockSignals(state)
+            state = self.v_zoom_slider.blockSignals(True)
+            self.v_zoom_slider.setMinValue(plot_settings.getMinYZoom())
+            self.v_zoom_slider.setMaxValue(plot_settings.getMaxYZoom())
+            self.v_zoom_slider.blockSignals(state)
 
-        if isinstance(x_min, erttypes.time_t):
-            x_min = x_min.value
+            if isinstance(x_min, erttypes.time_t):
+                x_min = x_min.value
 
-        if isinstance(x_max, erttypes.time_t):
-            x_max = x_max.value
+            if isinstance(x_max, erttypes.time_t):
+                x_max = x_max.value
 
-        #todo: time data on y-axis
+            #todo: time data on y-axis
 
-        state = plot_settings.blockSignals(True)
+            state = plot_settings.blockSignals(True)
 
-        self.plotViewSettings.setDataTypes(data.getXDataType(), data.getYDataType())
-        self.plotViewSettings.setLimits(x_min, x_max, y_min, y_max)
-        self.plotViewSettings.setLimitStates(*plot_settings.getLimitStates())
-        self.plotViewSettings.plotSelectionChanged(plot_settings.getSelectedMembers())
+            self.plotViewSettings.setDataTypes(data.getXDataType(), data.getYDataType())
+            self.plotViewSettings.setLimits(x_min, x_max, y_min, y_max)
+            self.plotViewSettings.setLimitStates(*plot_settings.getLimitStates())
+            self.plotViewSettings.plotSelectionChanged(plot_settings.getSelectedMembers())
 
-        plot_settings.blockSignals(state)
+            plot_settings.blockSignals(state)
 
-        self.plot.drawPlot()
+            self.plot.drawPlot()
 
     @widgets.util.may_take_a_long_time
     def select(self, current, previous):
