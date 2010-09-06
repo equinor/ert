@@ -31,6 +31,7 @@ class PlotDataFetcher(ContentModel, QObject):
 
         self.fs_for_comparison_plots = None
         self.comparison_fs_name = "None"
+        self.data = None
 
     def initialize(self, ert):
         for handler in self.handlers:
