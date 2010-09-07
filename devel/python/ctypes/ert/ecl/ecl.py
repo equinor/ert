@@ -11,6 +11,15 @@ from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DON
 RFT = 1
 PLT = 2
 
+# Enum defintion from ecl_util.h
+ECL_CHAR_TYPE   = 0
+ECL_REAL_TYPE   = 1
+ECL_DOUBLE_TYPE = 2
+ECL_INT_TYPE    = 3
+ECL_BOOL_TYPE   = 4
+ECL_MESS_TYPE   = 5
+
+
 
 run_script        = "/project/res/etc/ERT/Scripts/run_eclipse.py"
 default_version   = "2009.1"
@@ -90,6 +99,7 @@ class Ecl:
         cls.grid.get_lgr                      = cwrapper.prototype("long ecl_grid_get_lgr( ecl_grid , char* )")
         cls.grid.get_cell_lgr                 = cwrapper.prototype("long ecl_grid_get_cell_lgr1( ecl_grid , int )")
         cls.grid.grid_value                   = cwrapper.prototype("double ecl_grid_get_property( ecl_grid , ecl_kw , int , int , int)")
+        cls.grid.get_cell_volume              = cwrapper.prototype("double ecl_grid_get_cell_volume1( ecl_grid , int )")
 
 
         #################################################################
@@ -101,8 +111,8 @@ class Ecl:
         cwrapper.registerType( "ecl_file" , EclFile )
         cls.ecl_file.fread_alloc               = cwrapper.prototype("long   ecl_file_fread_alloc( char* )")
         cls.ecl_file.free                      = cwrapper.prototype("void   ecl_file_free( ecl_file )")
-        cls.ecl_file.iget_kw                   = cwrapper.prototype("ecl_kw ecl_file_iget_kw( ecl_file , int)")
-        cls.ecl_file.iget_named_kw             = cwrapper.prototype("ecl_kw ecl_file_iget_named_kw( ecl_file , char* , int)")
+        cls.ecl_file.iget_kw                   = cwrapper.prototype("long   ecl_file_iget_kw( ecl_file , int)")
+        cls.ecl_file.iget_named_kw             = cwrapper.prototype("long   ecl_file_iget_named_kw( ecl_file , char* , int)")
         cls.ecl_file.get_size                  = cwrapper.prototype("int    ecl_file_get_num_kw( ecl_file )")
         cls.ecl_file.get_unique_size           = cwrapper.prototype("int    ecl_file_get_num_distinct_kw( ecl_file )")
         cls.ecl_file.get_num_named_kw          = cwrapper.prototype("int    ecl_file_get_num_named_kw( ecl_file , char* )")
@@ -174,6 +184,7 @@ class Ecl:
         cls.ecl_kw.iget_int                   = cwrapper.prototype("int ecl_kw_iget_int( ecl_kw , int )")
         cls.ecl_kw.iget_double                = cwrapper.prototype("double ecl_kw_iget_double( ecl_kw , int )")
         cls.ecl_kw.iget_float                 = cwrapper.prototype("float ecl_kw_iget_float( ecl_kw , int)")
+        cls.ecl_kw.float_ptr                  = cwrapper.prototype("float* ecl_kw_get_float_ptr( ecl_kw )")
 
 
 #################################################################
@@ -306,9 +317,10 @@ class EclSum:
 
 #################################################################
 class EclKW:
-    def __init__(self , c_ptr):
-        self.c_ptr = c_ptr
-
+    def __init__(self , parent , c_ptr):
+        self.__parent = parent   # Hold on to the parent to inhibit GC
+        self.c_ptr    = c_ptr
+        
     def from_param(self):
         return self.c_ptr
 
@@ -320,55 +332,73 @@ class EclKW:
     def type( self ):
         __type = Ecl.ecl_kw.get_type( self )
         # enum ecl_type_enum from ecl_util.h
-        if __type == 0:
+        if __type == ECL_CHAR_TYPE:
             return "CHAR"
-        if __type == 1:
+        if __type == ECL_REAL_TYPE:
             return "REAL"
-        if __type == 2:
+        if __type == ECL_DOUBLE_TYPE:
             return "DOUB"
-        if __type == 3:
+        if __type == ECL_INT_TYPE:
             return "INTE"
-        if __type == 4:
+        if __type == ECL_BOOL_TYPE:
             return "BOOL"
-        if __type == 5:
+        if __type == ECL_MESS_TYPE:
             return "MESS"
 
         
     def iget( self , index ):
         __type = Ecl.ecl_kw.get_type( self )
-        if __type == 0:
+        if __type == ECL_CHAR_TYPE:
             value = Ecl.ecl_kw.iget_char_ptr( self , index )
 
-        if __type == 1:
+        if __type == ECL_REAL_TYPE:
             value = Ecl.ecl_kw.iget_float( self , index )
 
-        if __type == 2:
+        if __type == ECL_FLOAT_TYPE:
             value = Ecl.ecl_kw.iget_double( self , index )
 
-        if __type == 3:
+        if __type == ECL_INT_TYPE:
             value = Ecl.ecl_kw.iget_int( self , index )
 
-        if __type == 4:
+        if __type == ECL_BOOL_TYPE:
             value = Ecl.ecl_kw.iget_bool( self , index )
             
         return value
+    
+    @property
+    def array(self):
+        type = Ecl.ecl_kw.get_type( self )
+        if type == ECL_INT_TYPE:
+            a = Ecl.ecl_kw.int_ptr( self )
+        elif type == ECL_REAL_TYPE:
+            a = Ecl.ecl_kw.float_ptr( self )
+        elif type == ECL_DOUBLE_TYPE:
+            a = Ecl.ecl_kw.double_ptr( self )
+        else:
+            a = None
 
-
-
+        if not a == None:
+            a.size       = Ecl.ecl_kw.get_size( self )
+            a.__parent__ = self  # Inhibit GC
+        return a
         
 
 class EclFile:
     def __init__(self , filename):
-        self.c_ptr = Ecl.ecl_file.fread_alloc( filename )
+        self.c_ptr    = Ecl.ecl_file.fread_alloc( filename )
+        self.filename = filename
         
     def __del__(self):
         Ecl.ecl_file.free( self )
 
     def iget_kw( self , index ):
-        return Ecl.ecl_file.iget_kw( self , index )
-
+        kw_c_ptr = Ecl.ecl_file.iget_kw( self , index )
+        return EclKW( self , kw_c_ptr)
+    
     def iget_named_kw( self , kw_name , index ):
-        return Ecl.ecl_file.iget_named_kw( self , kw_name , index )
+        kw_c_ptr = Ecl.ecl_file.iget_named_kw( self , kw_name , index )
+        return EclKW( self , kw_c_ptr)
+
         
     def from_param(self):
         return self.c_ptr
@@ -550,10 +580,11 @@ class EclRFTFile:
 
     
 class EclGrid:
-    def __init__(self , filename , lgr = None):
+    def __init__(self , filename , lgr = None, parent = None):
         if lgr:
             self.c_ptr      = lgr
             self.data_owner = False
+            self.parent     = parent     # Inhibit GC
         else:
             self.c_ptr = Ecl.grid.fread_alloc( filename )
             self.data_owner = True
@@ -593,32 +624,8 @@ class EclGrid:
     @property
     def name( self ):
         return Ecl.grid.get_name( self )
-                 
-    def active_index( self , i , j , k ):
-        return Ecl.grid.get_active_index3( self , i , j , k )
 
-    def global_index( self , i , j , k ):
-        return Ecl.grid.get_global_index3( self , i , j , k )
-
-    def get_ijk( self, active_index = None , global_index = None):
-        i = ctypes.c_int()
-        j = ctypes.c_int()
-        k = ctypes.c_int()
-        
-        if active_index and global_index:
-            raise Exception("Can only supply _one_ argument active_index or global_index.")
-        if not (active_index or global_index):
-            raise Exception("Must supply _one_ argument active_index or global_index.")
-
-        if active_index:
-            Ecl.grid.get_ijk1A( self , active_index , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))
-        else:
-            Ecl.grid.get_ijk1( self , global_index , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))
-
-        return (i.value , j.value , k.value)
-
-
-    def get_xyz( self, active_index = None , global_index = None , ijk = None):
+    def __global_index( self , active_index = None , global_index = None , ijk = None):
         set_count = 0
         if active_index:
             set_count += 1
@@ -626,22 +633,45 @@ class EclGrid:
             set_count += 1
         if ijk:
             set_count += 1
-
+            
         if not set_count == 1:
             sys.exit("The function get_xyz() requires that exactly one of the kewyord arguments active_index, global_index, ijk be set")
+        
+        if active_index:
+            global_index = Ecl.grid.get_global_index1A( self , active_index )
+        elif ijk:
+            global_index = Ecl.grid.get_global_index3( self , ijk[0] , ijk[1] , ijk[2])
+        
+        return global_index
+                 
+    def get_active_index( self , ijk = None , global_index = None):
+        gi = __global_index( global_index = global_index , ijk = ijk)
+        return Ecl.grid.get_active_index1( self , gi)
+
+    def get_global_index( self , ijk = None , active_index = None):
+        gi = __global_index( global_index = global_index , ijk = ijk)
+        return gi
+
+    def get_ijk( self, active_index = None , global_index = None):
+        i = ctypes.c_int()
+        j = ctypes.c_int()
+        k = ctypes.c_int()
+
+        gi = __global_index( active_index = active_index , global_index = global_index)
+        Ecl.grid.get_ijk1( self , gi , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))
+
+        return (i.value , j.value , k.value)
+
+
+    def get_xyz( self, active_index = None , global_index = None , ijk = None):
+        gi = __global_index( ijk = ijk , active_index = active_index , global_index = global_index)
 
         x = ctypes.c_double()
         y = ctypes.c_double()
         z = ctypes.c_double()
 
-
-        if active_index:
-            Ecl.grid.get_xyz1A( self , active_index , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
-        elif global_index:
-            Ecl.grid.get_xyz1( self , global_index , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
-        else:
-            Ecl.grid.get_xyz3( self , ijk[0] , ijk[1] , ijk[2] , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
-
+        Ecl.grid.get_xyz1( self , gi , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
+        
         return (x.value , y.value , z.value)
 
 
@@ -659,7 +689,12 @@ class EclGrid:
         Ecl.grid.get_ijk1( self , global_index , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))        
         return (i.value , j.value , k.value)
 
-
+    
+    
+    def cell_volume( self, active_index = None , global_index = None , ijk = None):
+        gi = __global_index( ijk = ijk , active_index = active_index , global_index = global_index)
+        return Ecl.grid.get_cell_volume( self , gi)
+            
 
     @property
     def num_lgr( self ):
@@ -675,32 +710,17 @@ class EclGrid:
 
     def get_lgr( self , lgr_name ):
         if Ecl.grid.has_lgr(self , lgr_name ):
-            lgr = EclGrid( None , lgr = Ecl.grid.get_lgr( self , lgr_name ))
+            lgr = EclGrid( None , lgr = Ecl.grid.get_lgr( self , lgr_name ) , parent = self)
             return lgr
         else:
             return None
         
 
     def get_cell_lgr( self, active_index = None , global_index = None , ijk = None):
-        set_count = 0
-        if active_index:
-            set_count += 1
-        if global_index:
-            set_count += 1
-        if ijk:
-            set_count += 1
-
-        if not set_count == 1:
-            sys.exit("The function get_xyz() requires that exactly one of the kewyord arguments active_index, global_index, ijk be set")
-
-        if active_index:
-            global_index = Ecl.grid.get_global_index1A( self , active_index )
-        elif ijk:
-            global_index = Ecl.grid.get_global_index3( self , ijk[0] , ijk[1] , ijk[2])
-        
-        lgr = Ecl.grid.get_cell_lgr( self , global_index )
+        gi  = __global_index( ijk = ijk , active_index = active_index , global_index = global_index)
+        lgr = Ecl.grid.get_cell_lgr( self , gi )
         if lgr:
-            return EclGrid( None , lgr = lgr )
+            return EclGrid( None , lgr = lgr , parent = self)
         else:
             return None
 
