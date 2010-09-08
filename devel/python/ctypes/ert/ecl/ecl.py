@@ -645,11 +645,11 @@ class EclGrid:
         return global_index
                  
     def get_active_index( self , ijk = None , global_index = None):
-        gi = __global_index( global_index = global_index , ijk = ijk)
+        gi = self.__global_index( global_index = global_index , ijk = ijk)
         return Ecl.grid.get_active_index1( self , gi)
 
     def get_global_index( self , ijk = None , active_index = None):
-        gi = __global_index( global_index = global_index , ijk = ijk)
+        gi = self.__global_index( global_index = global_index , ijk = ijk)
         return gi
 
     def get_ijk( self, active_index = None , global_index = None):
@@ -657,14 +657,14 @@ class EclGrid:
         j = ctypes.c_int()
         k = ctypes.c_int()
 
-        gi = __global_index( active_index = active_index , global_index = global_index)
+        gi = self.__global_index( active_index = active_index , global_index = global_index)
         Ecl.grid.get_ijk1( self , gi , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))
 
         return (i.value , j.value , k.value)
 
 
     def get_xyz( self, active_index = None , global_index = None , ijk = None):
-        gi = __global_index( ijk = ijk , active_index = active_index , global_index = global_index)
+        gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
 
         x = ctypes.c_double()
         y = ctypes.c_double()
@@ -692,7 +692,7 @@ class EclGrid:
     
     
     def cell_volume( self, active_index = None , global_index = None , ijk = None):
-        gi = __global_index( ijk = ijk , active_index = active_index , global_index = global_index)
+        gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
         return Ecl.grid.get_cell_volume( self , gi)
             
 
@@ -717,7 +717,7 @@ class EclGrid:
         
 
     def get_cell_lgr( self, active_index = None , global_index = None , ijk = None):
-        gi  = __global_index( ijk = ijk , active_index = active_index , global_index = global_index)
+        gi  = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
         lgr = Ecl.grid.get_cell_lgr( self , gi )
         if lgr:
             return EclGrid( None , lgr = lgr , parent = self)
