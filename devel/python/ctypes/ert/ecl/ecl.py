@@ -689,7 +689,7 @@ class EclGrid:
 
     def find_cell( self , x , y , z , start_ijk = None):
         if start_ijk:
-            start_index = self.__global_index( ijk = start_ijk[0] )
+            start_index = self.__global_index( ijk = start_ijk )
         else:
             start_index = 0
         global_index = Ecl.grid.get_ijk_xyz( self , x , y , z , start_index)
