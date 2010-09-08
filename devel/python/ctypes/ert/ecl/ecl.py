@@ -160,7 +160,7 @@ class Ecl:
         cls.rft_file.free                     = cwrapper.prototype("void ecl_rft_file_free( ecl_rft_file )")
         cls.rft_file.get_size                 = cwrapper.prototype("int ecl_rft_file_get_size__( ecl_rft_file , char* , time_t)")
         cls.rft_file.iget                     = cwrapper.prototype("long ecl_rft_file_iget_node( ecl_rft_file , int )")
-
+        cls.rft_file.get_num_wells            = cwrapper.prototype("int  ecl_rft_file_get_num_wells( ecl_rft_file )")
 
         cls.rft.get_type                      = cwrapper.prototype("int    ecl_rft_node_get_type( ecl_rft )")
         cls.rft.get_well                      = cwrapper.prototype("char*  ecl_rft_node_get_well_name( ecl_rft )")
@@ -419,7 +419,91 @@ class EclFile:
     
     
 
+#################################################################
+
+
+class EclRFTFile:
+    def __init__(self , case):
+        self.c_ptr = Ecl.rft_file.load( case )
+
+    def __del__(self):
+        Ecl.rft_file.free( self )
+
+    def from_param( self ):
+        return self.c_ptr
     
+    @property
+    def size( self , well = None , date = None):
+        return Ecl.rft_file.get_size( self , well , -1)
+
+    @property
+    def num_wells( self ):
+        return Ecl.rft_file.get_num_wells( self )
+
+    @property
+    def headers(self):
+        header_list = []
+        for i in (range(Ecl.rft_file.get_size( self , None , -1))):
+            rft = self.iget( i )
+            print rft
+            header_list.append( (rft.well , rft.date) )
+        return header_list
+
+    def iget(self , index):
+        return EclRFT( Ecl.rft_file.iget( self , index ) , self )
+
+
+
+class EclRFT:
+    def __init__(self , c_ptr , parent):
+        self.c_ptr  = c_ptr
+        self.parent = parent    # Inhibit GC
+
+    def from_param( self ):
+        return self.c_ptr
+
+    @property
+    def type(self):
+        # Enum: ecl_rft_enum from ecl_rft_node.h
+        # RFT     = 1
+        # PLT     = 2
+        # Segment = 3  -- Not properly implemented
+        return Ecl.rft.get_type( self )
+
+    @property
+    def well(self):
+        return Ecl.rft.get_well( self )
+
+    @property
+    def date(self):
+        return Ecl.rft.get_date( self )
+
+    @property
+    def size(self):
+        return Ecl.rft.get_size( self )
+
+
+    def iget( self, index):
+        i = ctypes.c_int()
+        j = ctypes.c_int()
+        k = ctypes.c_int()
+        pressure = Ecl.rft.iget_pressure( self, index )
+        depth    = Ecl.rft.iget_depth( self, index )
+        Ecl.rft.iget_ijk( self, index , ctypes.byref(i), ctypes.byref(j) , ctypes.byref(k))
+
+        
+        if self.type == RFT:
+            swat = Ecl.rft.iget_swat( self, index )
+            sgas = Ecl.rft.iget_sgas( self, index )
+            return EclRFTCell.RFTCell( i,j,k,depth , pressure,swat,sgas)
+        else:
+            orat = Ecl.rft.iget_orat( self, index )
+            wrat = Ecl.rft.iget_wrat( self, index )
+            grat = Ecl.rft.iget_grat( self, index )
+            return EclRFTCell.PLTCell( i,j,k,depth , pressure,orat,grat,wrat)
+
+
+
 
 class EclRFTCell:
     def __init__(self , type , i , j , k , depth , pressure):
@@ -501,82 +585,9 @@ class EclRFTCell:
     @property
     def wrat(self):
         return self.__wrat
-    
-        
-
-class EclRFT:
-    def __init__(self , c_ptr ):
-        self.c_ptr = c_ptr
-        print "Har initializert med c_ptr:%s" % c_ptr
-
-    def from_param( self ):
-        print "Running from_param"
-        return self.c_ptr
-
-    @property
-    def type(self):
-        # Enum: ecl_rft_enum from ecl_rft_node.h
-        # RFT     = 1
-        # PLT     = 2
-        # Segment = 3  -- Not properly implemented
-        return Ecl.rft.get_type( self )
-
-    @property
-    def well(self):
-        return Ecl.rft.get_well( self )
-
-    @property
-    def date(self):
-        return Ecl.rft.get_date( self )
-
-    @property
-    def size(self):
-        return Ecl.rft.get_size( self )
 
 
-    def iget( self, index):
-        i = ctypes.c_int()
-        j = ctypes.c_int()
-        k = ctypes.c_int()
-        pressure = Ecl.rft.iget_pressure( self, index )
-        depth    = Ecl.rft.iget_depth( self, index )
-        Ecl.rft.iget_ijk( self, index , ctypes.byref(i), ctypes.byref(j) , ctypes.byref(k))
 
-        
-        if self.type == RFT:
-            swat = Ecl.rft.iget_swat( self, index )
-            sgas = Ecl.rft.iget_sgas( self, index )
-            return EclRFTCell.RFTCell( i,j,k,depth , pressure,swat,sgas)
-        else:
-            orat = Ecl.rft.iget_orat( self, index )
-            wrat = Ecl.rft.iget_wrat( self, index )
-            grat = Ecl.rft.iget_grat( self, index )
-            return EclRFTCell.PLTCell( i,j,k,depth , pressure,orat,grat,wrat)
-
-
-class EclRFTFile:
-    def __init__(self , case):
-        self.c_ptr = Ecl.rft_file.load( case )
-
-
-    def __del__(self):
-        Ecl.rft_file.free( self )
-
-    def from_param( self ):
-        return self.c_ptr
-
-    def size( self , well = None , date = None):
-        return Ecl.rft_file.get_size( self , well , -1)
-
-    def headers(self):
-        header_list = []
-        for i in (range(Ecl.rft_file.get_size( self , None , -1))):
-            rft = Ecl.rft_file.iget( self , i )
-            header_list.append( (rft.well , rft.date ))
-        return header_list
-
-    def iget(self , index):
-        return EclRFT( Ecl.rft_file.iget( self, index ))
 
     
 class EclGrid:
@@ -649,7 +660,7 @@ class EclGrid:
         return Ecl.grid.get_active_index1( self , gi)
 
     def get_global_index( self , ijk = None , active_index = None):
-        gi = self.__global_index( global_index = global_index , ijk = ijk)
+        gi = self.__global_index( active_index = active_index , ijk = ijk)
         return gi
 
     def get_ijk( self, active_index = None , global_index = None):
@@ -678,7 +689,7 @@ class EclGrid:
 
     def find_cell( self , x , y , z , start_ijk = None):
         if start_ijk:
-            start_index = self.global_index( start_ijk[0] , start_ijk[1] , start_ijk[2])
+            start_index = self.__global_index( ijk = start_ijk[0] )
         else:
             start_index = 0
         global_index = Ecl.grid.get_ijk_xyz( self , x , y , z , start_index)
