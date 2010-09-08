@@ -737,7 +737,7 @@ class EclGrid:
 
 
     def grid_value( self , ecl_kw , i,j,k):
-        return Ecl.grid.property( self , ecl_kw , i , j , k)
+        return Ecl.grid.grid_value( self , ecl_kw , i , j , k)
 
 
     
