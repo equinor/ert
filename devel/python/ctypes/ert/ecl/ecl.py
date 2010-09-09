@@ -117,7 +117,7 @@ class Ecl:
         cls.ecl_file.get_unique_size           = cwrapper.prototype("int    ecl_file_get_num_distinct_kw( ecl_file )")
         cls.ecl_file.get_num_named_kw          = cwrapper.prototype("int    ecl_file_get_num_named_kw( ecl_file , char* )")
         cls.ecl_file.iget_restart_time         = cwrapper.prototype("time_t ecl_file_iget_restart_sim_date( ecl_file , int )")
-                                                                    
+        cls.ecl_file.get_restart_index         = cwrapper.prototype("int    ecl_file_get_restart_index( ecl_file , time_t)")
                                                                     
                                                                     
         
@@ -390,6 +390,9 @@ class EclFile:
         
     def __del__(self):
         Ecl.ecl_file.free( self )
+            
+    def from_param(self):
+        return self.c_ptr
 
     def iget_kw( self , index ):
         kw_c_ptr = Ecl.ecl_file.iget_kw( self , index )
@@ -399,9 +402,12 @@ class EclFile:
         kw_c_ptr = Ecl.ecl_file.iget_named_kw( self , kw_name , index )
         return EclKW( self , kw_c_ptr)
 
-        
-    def from_param(self):
-        return self.c_ptr
+    def restart_get( self , kw_name , ctime ):
+        index = Ecl.ecl_file.get_restart_index( self , ctime )
+        if index >= 0:
+            return self.iget_named_kw( kw_name , index )
+        else:
+            return None
 
     @property
     def size(self):
