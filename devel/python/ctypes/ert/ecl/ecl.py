@@ -402,7 +402,7 @@ class EclFile:
         kw_c_ptr = Ecl.ecl_file.iget_named_kw( self , kw_name , index )
         return EclKW( self , kw_c_ptr)
 
-    def restart_get( self , kw_name , dtime ):
+    def restart_get_kw( self , kw_name , dtime ):
         """
         Will lookup keyword @kw_name in the restart_file, exactly at
         time @dtime; @dtime is supposed to be a datetime.date() instance.
