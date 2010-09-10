@@ -548,14 +548,14 @@ class EclRFTCell:
 
     @classmethod
     def RFTCell( cls , i,j,k,depth,pressure,swat,sgas):
-        cell = cls(RFT , i,j,k,pressure,depth)
+        cell = cls(RFT , i,j,k,depth,pressure)
         cell.__swat = swat
         cell.__sgas = sgas
         return cell
 
     @classmethod
-    def PLTCell(cls , i,j,k,pressure,orat,grat,wrat):
-        cell = cls(PLT , i,j,k,pressure,depth)
+    def PLTCell(cls , i,j,k,depth,pressure,orat,grat,wrat):
+        cell = cls(PLT , i,j,k,depth,pressure)
         cell.__orat = orat
         cell.__wrat = wrat
         cell.__grat = grat
