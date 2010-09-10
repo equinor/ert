@@ -175,7 +175,7 @@ class Ecl:
         cls.rft.iget_orat                     = cwrapper.prototype("double ecl_rft_node_iget_orat(ecl_rft)")
         cls.rft.iget_wrat                     = cwrapper.prototype("double ecl_rft_node_iget_wrat(ecl_rft)")
         cls.rft.iget_grat                     = cwrapper.prototype("double ecl_rft_node_iget_grat(ecl_rft)")
-        cls.rft.lookup_ijk                    = cwrapper.prototype("int    ecl_rft_lookup_ijk( ecl_rft , int , int , int)")
+        cls.rft.lookup_ijk                    = cwrapper.prototype("int    ecl_rft_node_lookup_ijk( ecl_rft , int , int , int)")
         
         #################################################################
         
