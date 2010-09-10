@@ -161,6 +161,7 @@ class Ecl:
         cls.rft_file.get_size                 = cwrapper.prototype("int ecl_rft_file_get_size__( ecl_rft_file , char* , time_t)")
         cls.rft_file.iget                     = cwrapper.prototype("long ecl_rft_file_iget_node( ecl_rft_file , int )")
         cls.rft_file.get_num_wells            = cwrapper.prototype("int  ecl_rft_file_get_num_wells( ecl_rft_file )")
+        cls.rft_file.get_rft                  = cwrapper.prototype("long ecl_rft_file_get_well_time_rft( ecl_rft_file , char* , time_t)")
 
         cls.rft.get_type                      = cwrapper.prototype("int    ecl_rft_node_get_type( ecl_rft )")
         cls.rft.get_well                      = cwrapper.prototype("char*  ecl_rft_node_get_well_name( ecl_rft )")
@@ -174,6 +175,7 @@ class Ecl:
         cls.rft.iget_orat                     = cwrapper.prototype("double ecl_rft_node_iget_orat(ecl_rft)")
         cls.rft.iget_wrat                     = cwrapper.prototype("double ecl_rft_node_iget_wrat(ecl_rft)")
         cls.rft.iget_grat                     = cwrapper.prototype("double ecl_rft_node_iget_grat(ecl_rft)")
+        cls.rft.lookup_ijk                    = cwrapper.prototype("int    ecl_rft_lookup_ijk( ecl_rft , int , int , int)")
         
         #################################################################
         
@@ -463,6 +465,12 @@ class EclRFTFile:
     def iget(self , index):
         return EclRFT( Ecl.rft_file.iget( self , index ) , self )
 
+    def get(self , well_name , date ):
+        c_ptr = Ecl.rft_file.get_rft( self , well_name , ctime( date )) 
+        if c_ptr:
+            return EclRFT( c_ptr , self)
+        else:
+            return None
 
 
 class EclRFT:
@@ -513,6 +521,13 @@ class EclRFT:
             grat = Ecl.rft.iget_grat( self, index )
             return EclRFTCell.PLTCell( i,j,k,depth , pressure,orat,grat,wrat)
 
+    # ijk are zero offset
+    def ijkget( self , ijk ):
+        index = Ecl.rft.lookup_ijk( self , ijk[0] , ijk[1] , ijk[2])
+        if index >= 0:
+            return self.iget( index )
+        else:
+            return None
 
 
 
