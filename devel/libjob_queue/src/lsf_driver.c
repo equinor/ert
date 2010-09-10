@@ -226,6 +226,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
   }
   
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
+  util_unlink_existing( tmp_file );
   free(lsf_stdout);
   free(tmp_file);
   return job_id;
