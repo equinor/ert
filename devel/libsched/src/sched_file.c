@@ -333,6 +333,7 @@ static void sched_file_init_fixed_length( sched_file_type * sched_file ) {
   sched_file_add_fixed_length_kw(sched_file , "DRSDT"    , 1);
   sched_file_add_fixed_length_kw(sched_file , "SKIPREST" , 0);
   sched_file_add_fixed_length_kw(sched_file , "NOECHO"   , 0);
+  sched_file_add_fixed_length_kw(sched_file , "ECHO"     , 0);
   sched_file_add_fixed_length_kw(sched_file , "RPTRST"   , 1);
   sched_file_add_fixed_length_kw(sched_file , "TUNING"   , 3);
   sched_file_add_fixed_length_kw(sched_file , "WHISTCTL" , 1);
@@ -353,7 +354,7 @@ sched_file_type * sched_file_alloc(time_t start_time)
   sched_file->kw_list            = vector_alloc_new();
   sched_file->kw_list_by_type    = NULL;
   sched_file->blocks             = vector_alloc_new();
-  sched_file->files    	         = stringlist_alloc_new();
+  sched_file->files              = stringlist_alloc_new();
   sched_file->start_time         = start_time;
   sched_file->fixed_length_table = hash_alloc();
   sched_file_init_fixed_length( sched_file );
@@ -706,10 +707,10 @@ sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_
 
 
 static void sched_file_update_block(sched_block_type * block , 
-				    int restart_nr, 
-				    sched_kw_type_enum          kw_type , 
-				    sched_file_callback_ftype * callback,
-				    void * arg) {
+                                    int restart_nr, 
+                                    sched_kw_type_enum          kw_type , 
+                                    sched_file_callback_ftype * callback,
+                                    void * arg) {
   int ikw;
   for (ikw = 0; ikw < vector_get_size(block->kw_list); ikw++) {
     sched_kw_type * sched_kw = sched_block_iget_kw( block , ikw);
@@ -731,11 +732,11 @@ static void sched_file_update_block(sched_block_type * block ,
 
 
 void sched_file_update_blocks(sched_file_type * sched_file, 
-			      int restart1 , 
-			      int restart2 , 
-			      sched_kw_type_enum kw_type,
-			      sched_file_callback_ftype * callback,
-			      void * callback_arg) {
+                              int restart1 , 
+                              int restart2 , 
+                              sched_kw_type_enum kw_type,
+                              sched_file_callback_ftype * callback,
+                              void * callback_arg) {
 
   int restart_nr;
   if (restart2 > sched_file_get_num_restart_files(sched_file))
@@ -758,7 +759,7 @@ void sched_file_update_blocks(sched_file_type * sched_file,
 
        void increase_orat_callback(void * void_kw , int restart_nr , void * arg) {
           double scale_factor  = *(( double * ) arg);
-	  sched_kw_wconhist_type * kw = sched_kw_wconhist_safe_cast( void_kw );
+          sched_kw_wconhist_type * kw = sched_kw_wconhist_safe_cast( void_kw );
           sched_kw_wconhist_scale_orat( wconhist_kw , "P1" , scale_factor);
        }
 
@@ -775,18 +776,18 @@ void sched_file_update_blocks(sched_file_type * sched_file,
 
       * The user-space level does *NOT* have access to the internals
         of the sched_kw_xxxx type, so the library must provide
-       	functions for the relevant state modifications.
+        functions for the relevant state modifications.
 
-      *	The last argumnt (void * arg) - can of course be anything and
+      * The last argumnt (void * arg) - can of course be anything and
         his brother.
 
 */
 
 
 void sched_file_update(sched_file_type * sched_file, 
-		       sched_kw_type_enum kw_type,
-		       sched_file_callback_ftype * callback,
-		       void * callback_arg) {
+                       sched_kw_type_enum kw_type,
+                       sched_file_callback_ftype * callback,
+                       void * callback_arg) {
 
   sched_file_update_blocks(sched_file , 1 , sched_file_get_num_restart_files(sched_file) - 1 , kw_type , callback , callback_arg);
 

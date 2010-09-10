@@ -70,7 +70,6 @@ void sched_kw_gruptree_fprintf(const sched_kw_gruptree_type * kw, FILE * stream)
 {
 
   fprintf(stream, "GRUPTREE\n");
-  
   {
     const int   num_keys = hash_get_size(kw->gruptree_hash);
     char ** child_list   = hash_alloc_keylist(kw->gruptree_hash);
@@ -82,7 +81,6 @@ void sched_kw_gruptree_fprintf(const sched_kw_gruptree_type * kw, FILE * stream)
     }
     util_free_stringlist( child_list , num_keys );
   }
-
   fprintf(stream,"/\n\n");
 };
 
