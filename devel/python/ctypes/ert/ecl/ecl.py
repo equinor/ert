@@ -719,12 +719,14 @@ class EclGrid:
         else:
             start_index = 0
         global_index = Ecl.grid.get_ijk_xyz( self , x , y , z , start_index)
-
-        i = ctypes.c_int()
-        j = ctypes.c_int()
-        k = ctypes.c_int()
-        Ecl.grid.get_ijk1( self , global_index , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))        
-        return (i.value , j.value , k.value)
+        if global_index >= 0:
+            i = ctypes.c_int()
+            j = ctypes.c_int()
+            k = ctypes.c_int()
+            Ecl.grid.get_ijk1( self , global_index , ctypes.byref(i) , ctypes.byref(j) , ctypes.byref(k))        
+            return (i.value , j.value , k.value)
+        else:
+            return None
 
     
     
