@@ -7,6 +7,7 @@ import time
 import sys
 
 
+
 class ctime(ctypes.c_long):
     def __init__(self , value):
         if isinstance(value , types.IntType):
@@ -70,11 +71,10 @@ class CWrapper:
         self.registerType("time_t*", ctypes.POINTER(ctime))
 
 
-
     def registerType(self, type, value):
         """Register a type against a legal ctypes type"""
         self.registered_types[type] = value
-        
+
 
     def __parseType(self, type):
         """Convert a prototype definition type from string to a ctypes legal type."""
@@ -133,6 +133,7 @@ class CWrapper:
                 func.argtypes = argtypes
 
             return func
+
 
 
     

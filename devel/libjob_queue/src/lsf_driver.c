@@ -604,7 +604,7 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
 
   if (lsf_driver->remote_lsf_server != NULL) {
     lsf_driver->use_library_calls = false;
-    lsf_driver->display_info = NULL;             /* The shell driver does not have any display info function. */
+    lsf_driver->display_info      = NULL;             /* The shell driver does not have any display info function. */
   } else {
     /* No remote server has been set - assuming we can issue proper library calls. */
     setenv("BSUB_QUIET" , "yes" , 1);            /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
