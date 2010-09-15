@@ -109,13 +109,19 @@ void history_use_summary(history_type * history, const ecl_sum_type * refcase , 
 
 /**
   Get the number of restart files the underlying schedule file would produce.
+  
+  Changed to always produce the schedule value at svn:3059. God I
+  haaaaaaate this stuff.  
+
 */
 int history_get_num_restarts(const history_type * history)
 {
-  if (history->source != SCHEDULE) 
-    return ecl_sum_get_last_report_step( history->ecl_sum);
-  else
-    return sched_history_get_last_history( history->sched_history );
+  return sched_history_get_last_history( history->sched_history );
+
+  //if (history->source != SCHEDULE) 
+  //  return ecl_sum_get_last_report_step( history->ecl_sum);
+  //else 
+  //  return sched_history_get_last_history( history->sched_history );
 }
 
 

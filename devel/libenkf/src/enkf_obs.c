@@ -67,70 +67,70 @@ In the following example we have two observations
 
 
       _____________________           _____________________
-     / 		       	     enkf_obs                      \
-     |							   |
-     |							   |
+     /                       enkf_obs                      \
+     |                                                     |
+     |                                                     |
      | obs_hash: {"WWCT:OP1" , "RFT_P2"}                   |
-     |   	      |	          |                        |
-     |  	      |	   	  |			   |
+     |                |           |                        |
+     |                |           |                        |
      \________________|___________|________________________/
-		      |		  |
-		      |		  |
-		      |		  |
-		      |		  \--------------------------------------------------------------\
-		      |		  								 |
-		      |										 |
-		     \|/									 |
- |--- obs_vector: WWCT:OP1 -----------------------------------------------------|		 |
- | Function pointers:	    --------  --------	--------  --------  --------	|		 |
- | Pointing to the          |      |  |      |	|      |  |      |  |      |	|		 |
- | underlying               | NULL |  |  X   |	|  X   |  | NULL |  |  X   |	|		 |
- | implementation in the    |      |  |  |   |	|  |   |  |      |  |  |   |	|		 |
- | summary_obs object.      --------  ---|----	---|----  --------  ---|----	|		 |
- |---------------------------------------|---------|-------------------|--------|		 |
-			       		 |	   |		       |			 |
-			       		\|/	   |		       |			 |
-                                |-- summary_obs -| |		      \|/			 |
-                                | Value: 0.56..	 | |	       |-- summary_obs -|		 |
-			       	| std  : 0.15..	 | |	       | Value: 0.70..  |		 |
-			       	|----------------| |	       | std  : 0.25..  |		 |
-			   			   |	       |----------------|		 |
-  			   			  \|/						 |
-                                          |-- summary_obs -|					 |
-			   		  | Value: 0.62..  |					 |
-			   		  | std  : 0.12..  |					 |
-			   		  |----------------|					 |
-												 |
-												 |
-												 |
-  The observation WWCT:OP1 is an observation of summary type, and the				 |
-  obs_vector contains pointers to summary_obs instances; along with				 |
-  function pointers to manipulate the summary_obs instances. The				 |
-  observation is not active for report steps 0 and 3, so for these				 |
-  report steps the obse vector has a NULL pointer.						 |
-												 |
-												 |
-												 |
-												 |
-												 |
-												 |
- |--- obs_vector: RFT_P2 -------------------------------------------------------|		 |
- | Function pointers:	    --------  --------	--------  --------  --------	|		 |
- | Pointing to the          |      |  |      |	|      |  |      |  |      |	|<---------------/
- | underlying               | NULL |  | NULL | 	| NULL |  |  X   |  | NULL |	|
- | implementation in the    |      |  |      | 	|      |  |  |   |  |      |   	|
- | field_obs object.        --------  --------	--------  ---|----  --------	|
+                      |           |
+                      |           |
+                      |           |
+                      |           \--------------------------------------------------------------\
+                      |                                                                          |
+                      |                                                                          |
+                     \|/                                                                         |
+ |--- obs_vector: WWCT:OP1 -----------------------------------------------------|                |
+ | Function pointers:       --------  --------  --------  --------  --------    |                |
+ | Pointing to the          |      |  |      |  |      |  |      |  |      |    |                |
+ | underlying               | NULL |  |  X   |  |  X   |  | NULL |  |  X   |    |                |
+ | implementation in the    |      |  |  |   |  |  |   |  |      |  |  |   |    |                |
+ | summary_obs object.      --------  ---|----  ---|----  --------  ---|----    |                |
+ |---------------------------------------|---------|-------------------|--------|                |
+                                         |         |                   |                         |
+                                        \|/        |                   |                         |
+                                |-- summary_obs -| |                  \|/                        |
+                                | Value: 0.56..  | |           |-- summary_obs -|                |
+                                | std  : 0.15..  | |           | Value: 0.70..  |                |
+                                |----------------| |           | std  : 0.25..  |                |
+                                                   |           |----------------|                |
+                                                  \|/                                            |
+                                          |-- summary_obs -|                                     |
+                                          | Value: 0.62..  |                                     |
+                                          | std  : 0.12..  |                                     |
+                                          |----------------|                                     |
+                                                                                                 |
+                                                                                                 |
+                                                                                                 |
+  The observation WWCT:OP1 is an observation of summary type, and the                            |
+  obs_vector contains pointers to summary_obs instances; along with                              |
+  function pointers to manipulate the summary_obs instances. The                                 |
+  observation is not active for report steps 0 and 3, so for these                               |
+  report steps the obse vector has a NULL pointer.                                               |
+                                                                                                 |
+                                                                                                 |
+                                                                                                 |
+                                                                                                 |
+                                                                                                 |
+                                                                                                 |
+ |--- obs_vector: RFT_P2 -------------------------------------------------------|                |
+ | Function pointers:       --------  --------  --------  --------  --------    |                |
+ | Pointing to the          |      |  |      |  |      |  |      |  |      |    |<---------------/
+ | underlying               | NULL |  | NULL |  | NULL |  |  X   |  | NULL |    |
+ | implementation in the    |      |  |      |  |      |  |  |   |  |      |    |
+ | field_obs object.        --------  --------  --------  ---|----  --------    |
  |-----------------------------------------------------------|------------------|
-			 				     |
-			 				     |                                       
-							    \|/
+                                                             |
+                                                             |                                       
+                                                            \|/
                                         |-- field_obs -----------------------------------|
                                         | i = 25 , j = 16, k = 10, value = 278, std = 10 |
                                         | i = 25 , j = 16, k = 11, value = 279, std = 10 |
                                         | i = 25 , j = 16, k = 12, value = 279, std = 10 |
                                         | i = 25 , j = 17, k = 12, value = 281, std = 10 |
                                         | i = 25 , j = 18, k = 12, value = 282, std = 10 |
-				       	|------------------------------------------------|
+                                        |------------------------------------------------|
 
 
  The observation RFT_P2 is an RFT observation which is only active at
@@ -516,7 +516,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
     /* Initializing obs_time */
     {
       int step;
-      for (step =0; step <= num_reports; step++) {
+      for (step =0; step < num_reports; step++) {
         time_t obs_time = history_get_time_t_from_restart_nr( enkf_obs->history , step );
         time_t_vector_iset( enkf_obs->obs_time , step , obs_time );
       }
@@ -755,8 +755,8 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
 
 
       /* If the observation is in terms of VALUE - we must also have ERROR.
-	 The conf system does not (currently ??) enforce this dependency. */
-	 
+         The conf system does not (currently ??) enforce this dependency. */
+         
       conf_item_mutex_add_item_spec( value_mutex , item_spec_value);
       conf_item_mutex_add_item_spec( value_mutex , item_spec_obs_file);
 
@@ -816,8 +816,8 @@ stringlist_type * enkf_obs_alloc_typed_keylist(enkf_obs_type * enkf_obs , obs_im
 stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string) {
   stringlist_type  *  matching_keys = stringlist_alloc_new();
   stringlist_type  *  obs_keys      = hash_alloc_stringlist( enkf_obs->obs_hash );
-  char 		   ** input_keys;
-  int  		      num_keys;
+  char             ** input_keys;
+  int                 num_keys;
   
   
   util_split_string( input_string , " " , &num_keys , &input_keys);
@@ -829,9 +829,9 @@ stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs
       const char * obs_key = stringlist_iget( obs_keys , j);
       
       if (util_string_match( obs_key , input_key)) {
-	if (!stringlist_contains( matching_keys , obs_key ))
-	  stringlist_append_copy( matching_keys , obs_key);
-	key_found = true;
+        if (!stringlist_contains( matching_keys , obs_key ))
+          stringlist_append_copy( matching_keys , obs_key);
+        key_found = true;
       }
     }
   }

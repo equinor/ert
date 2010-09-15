@@ -37,8 +37,8 @@ struct obs_vector_struct {
   vector_type                    * nodes; 
   char                           * obs_key;     /* The key this observation vector has in the enkf_obs layer. */ 
   enkf_config_node_type          * config_node; /* The config_node of the node type we are observing - shared reference */
-  obs_impl_type    	           obs_type; 
-  int              	           num_active;  /* The total number of timesteps where this observation is active (i.e. nodes[ ] != NULL) */
+  obs_impl_type                    obs_type; 
+  int                              num_active;  /* The total number of timesteps where this observation is active (i.e. nodes[ ] != NULL) */
 };
 
 
@@ -254,9 +254,9 @@ int obs_vector_get_active_report_step(const obs_vector_type * vector) {
     for (i=0; i < vector_get_size(vector->nodes); i++) {
       void * obs_node = vector_iget( vector->nodes , i);
       if (obs_node != NULL) {
-	if (active_step >= 0)
-	  util_abort("%s: internal error - mismatch in obs_vector->nodes and obs_vector->num_active \n",__func__);
-	active_step = i;
+        if (active_step >= 0)
+          util_abort("%s: internal error - mismatch in obs_vector->nodes and obs_vector->num_active \n",__func__);
+        active_step = i;
       }
     }
     if (active_step < 0)
@@ -381,21 +381,21 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
     {
       const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , state_kw);
       if (enkf_config_node_get_impl_type(config_node) == GEN_DATA) {
-	double scalar_error = -1;
-	double scalar_value = -1;
-	gen_obs_type * gen_obs ;
+        double scalar_error = -1;
+        double scalar_value = -1;
+        gen_obs_type * gen_obs ;
 
-	if (conf_instance_has_item(conf_instance , "VALUE")) {
-	  scalar_value = conf_instance_get_item_value_double(conf_instance , "VALUE");
-	  scalar_error = conf_instance_get_item_value_double(conf_instance , "ERROR");
-	}
+        if (conf_instance_has_item(conf_instance , "VALUE")) {
+          scalar_value = conf_instance_get_item_value_double(conf_instance , "VALUE");
+          scalar_error = conf_instance_get_item_value_double(conf_instance , "ERROR");
+        }
 
-	/** The config system has ensured that we have either OBS_FILE or (VALUE and ERROR). */
-	gen_obs = gen_obs_alloc(obs_key , obs_file , scalar_value , scalar_error , index_file , index_list , error_covar_file);	
-	obs_vector_install_node( obs_vector , obs_restart_nr , gen_obs );
+        /** The config system has ensured that we have either OBS_FILE or (VALUE and ERROR). */
+        gen_obs = gen_obs_alloc(obs_key , obs_file , scalar_value , scalar_error , index_file , index_list , error_covar_file); 
+        obs_vector_install_node( obs_vector , obs_restart_nr , gen_obs );
       } else {
-	enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
-	util_abort("%s: %s has implementation type:\'%s\' - expected:\'%s\'.\n",__func__ , state_kw , enkf_types_get_impl_name(impl_type) , enkf_types_get_impl_name(GEN_DATA));
+        enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
+        util_abort("%s: %s has implementation type:\'%s\' - expected:\'%s\'.\n",__func__ , state_kw , enkf_types_get_impl_name(impl_type) , enkf_types_get_impl_name(GEN_DATA));
       }
     }
     return obs_vector;
@@ -438,7 +438,7 @@ void obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , con
       if(conf_instance_has_item(conf_instance, "AUTO_CORRF_PARAM")) 
         auto_corrf_param = conf_instance_get_item_value_double(conf_instance, "AUTO_CORRF_PARAM");
       else
-        util_abort("%s: Wehn specifying AUTO_CORRF you must also give a vlaue for AUTO_CORRF_PARAM",__func__);
+        util_abort("%s: When specifying AUTO_CORRF you must also give a vlaue for AUTO_CORRF_PARAM",__func__);
     }
     
     
@@ -521,11 +521,10 @@ void obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , con
       This is where the summary observations are finally added.
     */
     for (restart_nr = 0; restart_nr < size; restart_nr++) {
-      if (bool_vector_iget( valid , restart_nr)) {
+      if (bool_vector_safe_iget( valid , restart_nr)) {
         if (double_vector_iget( std , restart_nr) > std_cutoff) {
           obs_vector_add_summary_obs( obs_vector , restart_nr , sum_key , sum_key , double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ) , auto_corrf_name , auto_corrf_param);
-        }
-        else 
+        } else 
           fprintf(stderr,"** Warning: to small observation error in observation %s:%d - ignored. \n", sum_key , restart_nr);
       }
     } 
@@ -573,8 +572,8 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
       obs_std  [obs_pt_nr] = conf_instance_get_item_value_double(obs_instance, "ERROR");
       
       /**
-	 The input values i,j,k come from the user, and are offset 1. They
-	 are immediately shifted with -1 to become C-based offset zero.
+         The input values i,j,k come from the user, and are offset 1. They
+         are immediately shifted with -1 to become C-based offset zero.
       */
       obs_i    [obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "I") - 1;
       obs_j    [obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "J") - 1;
@@ -723,14 +722,14 @@ void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type 
     int iens;
     if (vector_iget( obs_vector->nodes , step) != NULL) {
       for (iens = iens1; iens < iens2; iens++) {
-	if (obs_vector_load_node__(fs , enkf_node , load_state ,step , iens) != UNDEFINED) 
-	  chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node);
-	else
-	  chi2[step][iens] = 0;
+        if (obs_vector_load_node__(fs , enkf_node , load_state ,step , iens) != UNDEFINED) 
+          chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node);
+        else
+          chi2[step][iens] = 0;
       }
     } else {
       for (iens = iens1; iens < iens2; iens++) 
-	chi2[step][iens] = 0;
+        chi2[step][iens] = 0;
     }
   }
   enkf_node_free( enkf_node );
@@ -751,7 +750,7 @@ double obs_vector_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type *
   for (report_step = 0; report_step < vector_get_size( obs_vector->nodes ); report_step++) {
     if (vector_iget(obs_vector->nodes , report_step) != NULL) {
       if (obs_vector_load_node__(fs , enkf_node , load_state , report_step , iens) != UNDEFINED) 
-	sum_chi2 += obs_vector_chi2__(obs_vector , report_step , enkf_node);
+        sum_chi2 += obs_vector_chi2__(obs_vector , report_step , enkf_node);
     }
   }
   enkf_node_free( enkf_node );
@@ -785,8 +784,8 @@ void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs
     }
     if (vector_iget(obs_vector->nodes , report_step) != NULL) {
       for (iens = 0; iens < ens_size; iens++) {
-	if (obs_vector_load_node__(fs , enkf_node , load_state , report_step , iens) != UNDEFINED) 
-	  sum_chi2[iens] += obs_vector_chi2__(obs_vector , report_step , enkf_node);
+        if (obs_vector_load_node__(fs , enkf_node , load_state , report_step , iens) != UNDEFINED) 
+          sum_chi2[iens] += obs_vector_chi2__(obs_vector , report_step , enkf_node);
       }
     }
   }

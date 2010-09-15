@@ -847,9 +847,8 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
               enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , iens , FORECAST);
             else {
               *loadOK = false;
-              log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
+              log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
             }
-
           }
         } 
       } 
@@ -881,7 +880,7 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , bool *
   run_info_type             * run_info   = enkf_state->run_info;
   const model_config_type * model_config = enkf_state->shared_info->model_config;
   int report_step;
-
+  
   for (report_step = run_info->load_start; report_step <= run_info->step2; report_step++) {
     if (model_config_load_state( model_config , report_step)) 
       enkf_state_internalize_state(enkf_state , model_config , report_step , loadOK);
@@ -890,6 +889,10 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , bool *
   enkf_state_internalize_dynamic_results(enkf_state , model_config , loadOK);
 }
 
+/**
+   Observe that this does not return the loadOK flag; it will load as
+   good as it can all the data it should, and be done with it. 
+*/
 
 void * enkf_state_internalize_results_mt( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
