@@ -26,6 +26,7 @@ default_version   = "2009.1"
 
 
 
+
 class Ecl:
     __initialized = False
 
@@ -46,12 +47,13 @@ class Ecl:
         ctypes.CDLL("libz.so"      , ctypes.RTLD_GLOBAL)
         ctypes.CDLL("libblas.so"   , ctypes.RTLD_GLOBAL)
         ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
-        cls.libecl = ctypes.CDLL("libecl.so" , ctypes.RTLD_GLOBAL)
-        
+        cls.libutil = ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
+        cls.libecl =  ctypes.CDLL("libecl.so" , ctypes.RTLD_GLOBAL)
+
         cwrapper = CWrapper( cls.libecl )
         cwrapper.registerType( "ecl_sum" , EclSum )
         cwrapper.registerType( "ecl_kw"  , EclKW )
+
         cls.sum.fread_alloc                   = cwrapper.prototype("long ecl_sum_fread_alloc_case__( char* , char* , bool)") 
         cls.sum.iiget                         = cwrapper.prototype("double ecl_sum_iiget( ecl_sum , int , int)")
         cls.sum.free                          = cwrapper.prototype("void ecl_sum_free( ecl_sum )")
@@ -73,8 +75,8 @@ class Ecl:
         cls.sum.get_end_date                  = cwrapper.prototype("time_t ecl_sum_get_end_time( ecl_sum )")
         cls.sum.get_last_report_step          = cwrapper.prototype("int ecl_sum_get_last_report_step( ecl_sum )")
         cls.sum.get_first_report_step         = cwrapper.prototype("int ecl_sum_get_first_report_step( ecl_sum )")
-        cls.sum.iget_report_step              = cwrapper.prototype("int ecl_sum_iget_report_step( ecl_sum , int )")
-        
+        cls.sum.iget_report_step              = cwrapper.prototype("int  ecl_sum_iget_report_step( ecl_sum , int )")
+
         ##################################################################
 
         cwrapper.registerType( "ecl_grid" , EclGrid )
@@ -827,7 +829,7 @@ class EclCase:
         if path:
             self.__path = os.path.abspath( path )
         else:
-            self.__path = os.getwcwd()
+            self.__path = os.getcwd()
         (self.__base , self.ext) = os.path.splitext( tmp )
 
 
@@ -911,6 +913,8 @@ class EclCase:
         return job
 
         
+
+
 
 
 Ecl.__initialize__() # Run once
