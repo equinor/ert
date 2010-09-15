@@ -3,6 +3,9 @@ import datetime
 import ctypes
 import sys
 import os.path
+import numpy
+import matplotlib.dates
+
 from   ert.cwrap.cwrap       import *
 from   ert.job_queue.driver  import LSFDriver , LocalDriver
 from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DONE , STATUS_EXIT
@@ -243,7 +246,12 @@ class EclSum:
         return self.c_ptr
 
     def get_key_index( self , key ):
-        return Ecl.sum.get_general_var_index( self , key )
+        index = Ecl.sum.get_general_var_index( self , key )
+        if index >= 0:
+            return index
+        else:
+            return None
+
 
     def __iiget_node(self , key_index , internal_index):
         return EclSumNode( Ecl.sum.iiget( self , internal_index , key_index ) ,
@@ -259,7 +267,6 @@ class EclSum:
     def iget(self , key , internal_index):
         return Ecl.sum.iget_general_var( self , key , internal_index )
 
-
     def get_from_days( self , key , days ):
         return Ecl.sum.get_general_var_from_sim_days( self , days , key )
 
@@ -268,14 +275,45 @@ class EclSum:
         return Ecl.sum.iget_general_var( self , time_index , key )
     
     def get_vector(self , key):
-        vector = []
         key_index   = Ecl.sum.get_general_var_index( self , key )
-        for internal_index in (range(Ecl.sum.data_length( self ))):
-            vector.append( self.__iiget_node( key_index , internal_index ) )
-                
-        return vector
+        if key_index:
+            vector = []
+            for internal_index in (range(Ecl.sum.data_length( self ))):
+                vector.append( self.__iiget_node( key_index , internal_index ) )
+            return vector
+        else:
+            return None
 
-    
+
+    def numpy_value( self , key ):
+        key_index = Ecl.sum.get_general_var_index( self , key )
+        if key_index:
+            length = Ecl.sum.data_length( self )
+            value = numpy.zeros( length )
+            for i in range(length ):
+                value[i] = Ecl.sum.iiget( self , i , key_index )
+            return value
+        else:
+            return None
+
+    @property
+    def numpy_days( self ):
+        length = Ecl.sum.data_length( self )
+        days = numpy.zeros( length )
+        for i in range( length ):
+            days[i] = Ecl.sum.iget_sim_days( self , i)
+        return days
+
+    @property
+    def numpy_mpl_time( self ):
+        length = Ecl.sum.data_length( self )
+        time   = numpy.zeros( length )
+        for i in range( length ):
+            ctime = Ecl.sum.iget_sim_time( self , i)
+            time[i] = matplotlib.dates.date2num( ctime.datetime() )
+        return time
+
+
     def iget_days(self , internal_index):
         return Ecl.sum.iget_sim_days( self , internal_index )
 
@@ -386,6 +424,9 @@ class EclKW:
             a.__parent__ = self  # Inhibit GC
         return a
         
+    def numpy_array(self):
+        pass
+
 
 class EclFile:
     def __init__(self , filename):
