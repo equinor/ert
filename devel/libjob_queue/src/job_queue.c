@@ -241,13 +241,13 @@ typedef enum {SUBMIT_OK           = 0 ,
 */
 
 typedef struct {
-  job_status_type  	 job_status;      /* The current status of the job. */
-  int                  	 submit_attempt;  /* Which attempt is this ... */
+  job_status_type        job_status;      /* The current status of the job. */
+  int                    submit_attempt;  /* Which attempt is this ... */
   char                  *exit_file;       /* The queue will look for the occurence of this file to detect a failure. */
   char                  *ok_file;         /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
-  char                 	*job_name;        /* The name of the job. */
+  char                  *job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
-  void           	*job_data;        /* Driver specific data about this job - fully handled by the driver. */
+  void                  *job_data;        /* Driver specific data about this job - fully handled by the driver. */
   int                    argc;            /* The number of commandline arguments to pass when starting the job. */ 
   char                 **argv;            /* The commandline arguments. */
   time_t                 submit_time;     /* When was the job added to job_queue - the FIRST TIME. */
@@ -274,13 +274,14 @@ typedef struct {
 */
 
 struct job_queue_struct {
-  int                        size;          			/* The total number of job slots in the queue. */
-  int                        max_submit;    			/* The maximum number of submit attempts for one job. */
-  int                        max_running;   			/* The maximum number of concurrently running jobs. */
-  char                     * run_cmd;       			/* The command which is run (i.e. path to an executable with arguments). */
-  job_queue_node_type     ** jobs;          			/* A vector of job nodes .*/
-  basic_queue_driver_type  * driver;        			/* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
+  int                        size;                              /* The total number of job slots in the queue. */
+  int                        max_submit;                        /* The maximum number of submit attempts for one job. */
+  int                        max_running;                       /* The maximum number of concurrently running jobs. */
+  char                     * run_cmd;                           /* The command which is run (i.e. path to an executable with arguments). */
+  job_queue_node_type     ** jobs;                              /* A vector of job nodes .*/
+  basic_queue_driver_type  * driver;                            /* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
   int                        status_list[JOB_QUEUE_MAX_STATE];  /* The number of jobs in the different states. */
+  int                        old_status_list[JOB_QUEUE_MAX_STATE]; /* Should the display be updated ?? */
 
   bool                       user_exit;                         /* If there comes an external signal to abondond the whole thing user_exit will be set to true, and things start to dwindle down. */ 
   bool                       running;
@@ -459,6 +460,7 @@ static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * no
 
    The other state transitions are handled by the job_queue itself,
    without consulting the driver functions.
+
 */
 
 /* 
@@ -466,17 +468,11 @@ static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * no
 */
 
 static bool job_queue_update_status(job_queue_type * queue ) {
+  bool update = false;
   basic_queue_driver_type *driver  = queue->driver;
-  int old_status[JOB_QUEUE_MAX_STATE];  
   int ijob;
 
-  /* Caching the old status */
-  {
-    int istat;
-    for (istat = 0; istat  < JOB_QUEUE_MAX_STATE; istat++)
-      old_status[istat] = queue->status_list[istat];
-  }
-
+  
   for (ijob = 0; ijob < queue->size; ijob++) {
     job_queue_node_type * node = queue->jobs[ijob];
 
@@ -497,12 +493,13 @@ static bool job_queue_update_status(job_queue_type * queue ) {
   /* Has the net status changed? */
   {
     int istat;
-    for (istat = 0; istat  < JOB_QUEUE_MAX_STATE; istat++)
-      if (old_status[istat] != queue->status_list[istat]) 
-        return true;
-    
+    for (istat = 0; istat  < JOB_QUEUE_MAX_STATE; istat++) {
+      if (queue->old_status_list[istat] != queue->status_list[istat]) 
+        update = true;
+      queue->old_status_list[istat] = queue->status_list[istat];
+    }
   }
-  return false; /* Nothing changed. */
+  return update;
 }
 
 
@@ -823,12 +820,11 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           if ((verbose) & update_status || new_jobs) 
             job_queue_print_summary(queue , update_status , phase);
         
-        
           if ((queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_OK)    ] + 
                queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_FAIL)  ] +
-               queue->status_list[ STATUS_INDEX(JOB_QUEUE_USER_EXIT) ]) == num_total_run)
+               queue->status_list[ STATUS_INDEX(JOB_QUEUE_USER_EXIT) ]) == num_total_run) 
             cont = false;
-        
+
           if (cont) {
             /* Submitting new jobs */
             int max_submit     = 5; /* This is the maximum number of jobs submitted in one while() { ... } below. 
@@ -1191,8 +1187,8 @@ int job_queue_get_max_submit(const job_queue_type * job_queue ) {
 job_queue_type * job_queue_alloc(int size , 
                                  int max_running , 
                                  int max_submit , 
-				 const char * run_cmd) {
-				 
+                                 const char * run_cmd) {
+                                 
 
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
   queue->jobs            = NULL;
