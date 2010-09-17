@@ -211,12 +211,14 @@ class EclSumNode:
     
 
 class EclSum:
-    def __init__(self , case , join_string = ":" ,include_restart = False):
+    def __init__(self , case , join_string = ":" ,include_restart = False , c_ptr = None):
         self.case            = case
         self.join_string     = join_string
         self.include_restart = include_restart
-        self.c_ptr           = 0
-        self.reload( )
+        if c_ptr:
+            self.c_ptr = c_ptr
+        else:
+            self.c_ptr = Ecl.sum.fread_alloc( self.case , self.join_string , self.include_restart )
 
 
     def is_valid( self ):
@@ -227,7 +229,7 @@ class EclSum:
 
         """
         Observe that agressive reload() on a running ECLIPSE
-        simulation is asking for trouble; the change of finding an
+        simulation is asking for trouble; the chanse of finding a
         temporarily incomplete/malformed summary or header file is
         quite large. This will most probably bring the whole thing down.
         """
@@ -895,7 +897,9 @@ class EclCase:
     @property
     def sum( self ):
         if not self.__sum:
-            self.__sum = EclSum( self.case )
+            sum_c_ptr = Ecl.sum.fread_alloc( self.case , ":" , True)
+            if sum_c_ptr:
+                self.__sum = EclSum( self.case , c_ptr = sum_c_ptr )
         return self.__sum
     
 
