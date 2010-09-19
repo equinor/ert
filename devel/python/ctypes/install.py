@@ -1,9 +1,10 @@
-#!/usr/bin/python
+#!/prog/sdpsoft/python2.4/bin/python
 import os
 import os.path
 import stat
 import shutil
 import sys
+import py_compile
 
 script_mode = 0775
 data_mode   = 0664
@@ -26,7 +27,6 @@ res_guid    = os.stat("/project/res")[stat.ST_GID]
 
 
 def chgrp(path , guid ):
-    
     os.chown( path , -1 , guid )
 
 
@@ -82,7 +82,14 @@ def install_path( src_path , target_root ):
     for file in file_entries:
         target_file = "%s/%s" % (target_root , file )
         install_file( file , target_file )
+        (base, ext) = os.path.splitext( file )
+        if ext == ".py":
+            py_compile.compile( file )
+            pyc_file = "%sc" % file
+            pyc_target = "%sc" % target_file
+            install_file( pyc_file , pyc_target )
             
+    
     #Recursive"
     for dir in dir_entries:
         install_path( dir , target_root )

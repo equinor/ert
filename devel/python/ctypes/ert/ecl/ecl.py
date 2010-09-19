@@ -7,6 +7,7 @@ import numpy
 import matplotlib.dates
 
 from   ert.cwrap.cwrap       import *
+import ert.util.stringlist   as stringlist
 from   ert.job_queue.driver  import LSFDriver , LocalDriver
 from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DONE , STATUS_EXIT
 
@@ -56,6 +57,7 @@ class Ecl:
         cwrapper = CWrapper( cls.libecl )
         cwrapper.registerType( "ecl_sum" , EclSum )
         cwrapper.registerType( "ecl_kw"  , EclKW )
+        cwrapper.add_types( stringlist.type_map )
 
         cls.sum.fread_alloc                   = cwrapper.prototype("long ecl_sum_fread_alloc_case__( char* , char* , bool)") 
         cls.sum.iiget                         = cwrapper.prototype("double ecl_sum_iiget( ecl_sum , int , int)")
@@ -79,6 +81,7 @@ class Ecl:
         cls.sum.get_last_report_step          = cwrapper.prototype("int ecl_sum_get_last_report_step( ecl_sum )")
         cls.sum.get_first_report_step         = cwrapper.prototype("int ecl_sum_get_first_report_step( ecl_sum )")
         cls.sum.iget_report_step              = cwrapper.prototype("int  ecl_sum_iget_report_step( ecl_sum , int )")
+        cls.sum.select_matching_keys          = cwrapper.prototype("void ecl_sum_select_matching_general_var_list( ecl_sum , char* , stringlist )")
 
         ##################################################################
 
@@ -210,36 +213,28 @@ class EclSumNode:
 
     
 
-class EclSum:
+class EclSum(object):
+    
+    def __new__( cls , case , join_string = ":" , include_restart = True):
+        """
+        The constructor loads a summary case, if no summary can be loaded the constructor will
+        return None.
+        """
+        c_ptr = Ecl.sum.fread_alloc( case , join_string , include_restart)
+        if c_ptr:
+            obj = object.__new__( cls )
+            obj.c_ptr = c_ptr
+            return obj
+        else:
+            return None
+
+
     def __init__(self , case , join_string = ":" ,include_restart = False , c_ptr = None):
         self.case            = case
         self.join_string     = join_string
         self.include_restart = include_restart
-        if c_ptr:
-            self.c_ptr = c_ptr
-        else:
-            self.c_ptr = Ecl.sum.fread_alloc( self.case , self.join_string , self.include_restart )
 
 
-    def is_valid( self ):
-        return not (self.c_ptr == 0)
-
-
-    def reload(self ):
-
-        """
-        Observe that agressive reload() on a running ECLIPSE
-        simulation is asking for trouble; the chanse of finding a
-        temporarily incomplete/malformed summary or header file is
-        quite large. This will most probably bring the whole thing down.
-        """
-        c_ptr = Ecl.sum.fread_alloc( self.case , self.join_string , self.include_restart )
-        if c_ptr:
-            if not self.c_ptr == 0:
-                Ecl.sum.free( self )
-            self.c_ptr = c_ptr
-            
-        
     def __del__( self ):
         if self.c_ptr:
             Ecl.sum.free( self )
@@ -334,6 +329,12 @@ class EclSum:
         return Ecl.sum.data_length( self )
 
 
+    def select_matching( self , pattern ):
+        s = stringlist.StringList()
+        Ecl.sum.select_matching_keys( self , pattern , s )
+        return s
+
+
     @property
     def start_date(self):
         return Ecl.sum.get_start_date( self )
@@ -364,7 +365,10 @@ class EclKW:
     def __init__(self , parent , c_ptr):
         self.__parent = parent   # Hold on to the parent to inhibit GC
         self.c_ptr    = c_ptr
-        
+
+    def __len__( self ):
+        return Ecl.ecl_kw.get_size( self )
+    
     def from_param(self):
         return self.c_ptr
 
@@ -430,10 +434,18 @@ class EclKW:
         pass
 
 
-class EclFile:
-    def __init__(self , filename):
-        self.c_ptr    = Ecl.ecl_file.fread_alloc( filename )
-        self.filename = filename
+class EclFile(object):
+    def __new__(cls, filename):
+        if os.path.exists( filename ):
+            c_ptr = Ecl.ecl_file.fread_alloc( filename )
+            if c_ptr:
+                obj = object.__new__( cls )
+                obj.c_ptr = c_ptr
+                return obj
+
+        # Loading failed for some reason"    
+        return None
+        
         
     def __del__(self):
         Ecl.ecl_file.free( self )
@@ -480,9 +492,15 @@ class EclFile:
 #################################################################
 
 
-class EclRFTFile:
-    def __init__(self , case):
-        self.c_ptr = Ecl.rft_file.load( case )
+class EclRFTFile(object):
+    def __new__( cls , case ):
+        c_ptr = Ecl.rft_file.load( case )
+        if c_ptr:
+            obj = object.__new__( cls )
+            obj.c_ptr = c_ptr
+            return obj
+        else:
+            return None
 
     def __del__(self):
         Ecl.rft_file.free( self )
@@ -661,16 +679,27 @@ class EclRFTCell:
 
 
     
-class EclGrid:
-    def __init__(self , filename , lgr = None, parent = None):
-        if lgr:
-            self.c_ptr      = lgr
-            self.data_owner = False
-            self.parent     = parent     # Inhibit GC
-        else:
-            self.c_ptr = Ecl.grid.fread_alloc( filename )
-            self.data_owner = True
+class EclGrid(object):
 
+    def __new__(cls , filename, lgr = None , parent = None):
+        if filename:
+            c_ptr = Ecl.grid.fread_alloc( filename )
+        elif lgr:
+            c_ptr = lgr
+            
+        if c_ptr:
+            obj = object.__new__( cls )
+            obj.c_ptr = c_ptr
+            if lgr:
+                obj.data_owner = False
+                obj.parent     = parent    # Keep a reference to the parent to inhibit GC.
+            else:
+                obj.data_owner = True
+                obj.parent     = None
+            return obj
+        else:
+            return None
+            
             
     def __del__(self):
         if self.data_owner:
@@ -726,13 +755,16 @@ class EclGrid:
         
         return global_index
                  
+
     def get_active_index( self , ijk = None , global_index = None):
         gi = self.__global_index( global_index = global_index , ijk = ijk)
         return Ecl.grid.get_active_index1( self , gi)
 
+
     def get_global_index( self , ijk = None , active_index = None):
         gi = self.__global_index( active_index = active_index , ijk = ijk)
         return gi
+
 
     def get_ijk( self, active_index = None , global_index = None):
         i = ctypes.c_int()
@@ -897,17 +929,14 @@ class EclCase:
     @property
     def sum( self ):
         if not self.__sum:
-            sum_c_ptr = Ecl.sum.fread_alloc( self.case , ":" , True)
-            if sum_c_ptr:
-                self.__sum = EclSum( self.case , c_ptr = sum_c_ptr )
+            self.__sum = EclSum( self.case )
         return self.__sum
     
 
     @property
     def grid( self ):
         if not self.__grid:
-            if Ecl.grid.exists( self.case ):
-                self.__grid = EclGrid( self.case )
+            self.__grid = EclGrid( self.case )
         return self.__grid
 
 
