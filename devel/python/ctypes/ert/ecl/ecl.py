@@ -118,6 +118,7 @@ class Ecl:
 
         cwrapper.registerType( "ecl_file" , EclFile )
         cls.ecl_file.fread_alloc               = cwrapper.prototype("long   ecl_file_fread_alloc( char* )")
+        cls.ecl_file.new                       = cwrapper.prototype("long   ecl_file_alloc_empty(  )")
         cls.ecl_file.free                      = cwrapper.prototype("void   ecl_file_free( ecl_file )")
         cls.ecl_file.iget_kw                   = cwrapper.prototype("long   ecl_file_iget_kw( ecl_file , int)")
         cls.ecl_file.iget_named_kw             = cwrapper.prototype("long   ecl_file_iget_named_kw( ecl_file , char* , int)")
@@ -369,6 +370,8 @@ class EclKW:
     def __len__( self ):
         return Ecl.ecl_kw.get_size( self )
     
+
+
     def from_param(self):
         return self.c_ptr
 
@@ -436,15 +439,21 @@ class EclKW:
 
 class EclFile(object):
     def __new__(cls, filename):
-        if os.path.exists( filename ):
-            c_ptr = Ecl.ecl_file.fread_alloc( filename )
-            if c_ptr:
-                obj = object.__new__( cls )
-                obj.c_ptr = c_ptr
-                return obj
-
-        # Loading failed for some reason"    
-        return None
+        if filename:
+            if os.path.exists( filename ):
+                c_ptr = Ecl.ecl_file.fread_alloc( filename )
+                if c_ptr:
+                    obj = object.__new__( cls )
+                    obj.c_ptr = c_ptr
+                    return obj
+        
+            return None
+        else:
+            # If called with NOne - create an empty
+            c_ptr = Ecl.ecl_file.new()
+            obj = object.__new__( cls )
+            obj.c_ptr = c_ptr
+            return obj
         
         
     def __del__(self):
