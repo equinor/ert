@@ -47,12 +47,14 @@ class CWrapper:
     def __init__( self , lib ):
         self.lib = lib
         self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
+
+        self.registered_types = {}
+        self.export_types     = {}
         self.__registerDefaultTypes()
 
 
     def __registerDefaultTypes(self):
         """Registers the default available types for prototyping."""
-        self.registered_types = {}
         self.registerType("void", None)
         self.registerType("int", ctypes.c_int)
         self.registerType("int*", ctypes.POINTER(ctypes.c_int))
@@ -71,9 +73,11 @@ class CWrapper:
         self.registerType("time_t*", ctypes.POINTER(ctime))
 
 
-    def registerType(self, type, value):
+    def registerType(self, type, value , export = False):
         """Register a type against a legal ctypes type"""
         self.registered_types[type] = value
+        if export:
+            self.export_types[type] = value
 
 
     def __parseType(self, type):
@@ -86,7 +90,7 @@ class CWrapper:
             return getattr(ctypes, type)
 
         
-    def prototype(self, prototype):
+    def prototype(self, prototype , lib = None):
         """
         Defines the return type and arguments for a C-function
 
@@ -134,6 +138,14 @@ class CWrapper:
 
             return func
 
+
+    def add_types( self , type_map):
+        for ctype , py_type in type_map.iteritems():
+            self.registerType( ctype , py_type )
+
+    
+    def export_map( self ):
+        return self.export_types
 
 
     
