@@ -1,2 +1,4 @@
-#/bin/bash
-exit 1
+#!/bin/bash
+
+scons
+
