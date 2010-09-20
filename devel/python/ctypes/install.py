@@ -89,6 +89,7 @@ def install_path( src_path , target_root , extensions = None):
         install_file( file , target_file )
         (base, ext) = os.path.splitext( file )
         if ext == ".py":
+            print "Byte compiling: %s" % file
             py_compile.compile( file )
             pyc_file = "%sc" % file
             pyc_target = "%sc" % target_file

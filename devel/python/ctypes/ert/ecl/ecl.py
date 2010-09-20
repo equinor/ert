@@ -7,6 +7,13 @@ import numpy
 import matplotlib.dates
 
 from   ert.cwrap.cwrap       import *
+
+from   ecl_kw                import EclKW
+import ecl_kw
+
+
+
+
 import ert.util.stringlist   as stringlist
 from   ert.job_queue.driver  import LSFDriver , LocalDriver
 from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DONE , STATUS_EXIT
@@ -14,16 +21,6 @@ from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DON
 
 RFT = 1
 PLT = 2
-
-# Enum defintion from ecl_util.h
-ECL_CHAR_TYPE   = 0
-ECL_REAL_TYPE   = 1
-ECL_DOUBLE_TYPE = 2
-ECL_INT_TYPE    = 3
-ECL_BOOL_TYPE   = 4
-ECL_MESS_TYPE   = 5
-
-
 
 run_script        = "/project/res/etc/ERT/Scripts/run_eclipse.py"
 default_version   = "2009.1"
@@ -37,7 +34,6 @@ class Ecl:
     sum      = CWrapperNameSpace( "ecl_sum" )
     grid     = CWrapperNameSpace( "ecl_grid" )
     region   = CWrapperNameSpace( "ecl_region" ) 
-    ecl_kw   = CWrapperNameSpace( "ecl_kw" )
     ecl_file = CWrapperNameSpace( "ecl_file" )
     ecl_util = CWrapperNameSpace( "ecl_util" )
     rft_file = CWrapperNameSpace(" ecl_rft_file ")
@@ -53,11 +49,11 @@ class Ecl:
         ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
         cls.libutil = ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
         cls.libecl =  ctypes.CDLL("libecl.so" , ctypes.RTLD_GLOBAL)
-
+        
         cwrapper = CWrapper( cls.libecl )
         cwrapper.registerType( "ecl_sum" , EclSum )
-        cwrapper.registerType( "ecl_kw"  , EclKW )
         cwrapper.add_types( stringlist.type_map )
+        cwrapper.add_types( ecl_kw.type_map )
 
         cls.sum.fread_alloc                   = cwrapper.prototype("long ecl_sum_fread_alloc_case__( char* , char* , bool)") 
         cls.sum.iiget                         = cwrapper.prototype("double ecl_sum_iiget( ecl_sum , int , int)")
@@ -96,6 +92,8 @@ class Ecl:
         cls.grid.get_name                     = cwrapper.prototype("char* ecl_grid_get_name( ecl_grid )")
         cls.grid.get_active_index3            = cwrapper.prototype("int ecl_grid_get_active_index3( ecl_grid , int , int , int)")
         cls.grid.get_global_index3            = cwrapper.prototype("int ecl_grid_get_global_index3( ecl_grid , int , int , int)") 
+        cls.grid.get_active_index1            = cwrapper.prototype("int ecl_grid_get_active_index1( ecl_grid , int )") 
+        cls.grid.get_global_index1A           = cwrapper.prototype("int ecl_grid_get_global_index1A( ecl_grid , int )") 
         cls.grid.get_ijk1                     = cwrapper.prototype("void ecl_grid_get_ijk1( ecl_grid , int , int* , int* , int*)")
         cls.grid.get_ijk1A                    = cwrapper.prototype("void ecl_grid_get_ijk1A( ecl_grid , int , int* , int* , int*)") 
         cls.grid.get_xyz3                     = cwrapper.prototype("void ecl_grid_get_xyz3( ecl_grid , int , int , int , double* , double* , double*)")
@@ -112,9 +110,6 @@ class Ecl:
 
         #################################################################
 
-        cwrapper.registerType( "ecl_kw" , EclKW )
-        
-        #################################################################
 
         cwrapper.registerType( "ecl_file" , EclFile )
         cls.ecl_file.fread_alloc               = cwrapper.prototype("long   ecl_file_fread_alloc( char* )")
@@ -188,16 +183,7 @@ class Ecl:
         
         #################################################################
         
-        cls.ecl_kw.get_size                   = cwrapper.prototype("int ecl_kw_get_size( ecl_kw )")
-        cls.ecl_kw.get_type                   = cwrapper.prototype("int ecl_kw_get_type( ecl_kw )")
-        cls.ecl_kw.iget_char_ptr              = cwrapper.prototype("char* ecl_kw_iget_char_ptr( ecl_kw , int )")
-        cls.ecl_kw.iget_bool                  = cwrapper.prototype("bool ecl_kw_iget_bool( ecl_kw , int)")
-        cls.ecl_kw.iget_int                   = cwrapper.prototype("int ecl_kw_iget_int( ecl_kw , int )")
-        cls.ecl_kw.iget_double                = cwrapper.prototype("double ecl_kw_iget_double( ecl_kw , int )")
-        cls.ecl_kw.iget_float                 = cwrapper.prototype("float ecl_kw_iget_float( ecl_kw , int)")
-        cls.ecl_kw.float_ptr                  = cwrapper.prototype("float* ecl_kw_get_float_ptr( ecl_kw )")
-
-
+        
 #################################################################
 
 
@@ -362,80 +348,6 @@ class EclSum(object):
 
 
 #################################################################
-class EclKW:
-    def __init__(self , parent , c_ptr):
-        self.__parent = parent   # Hold on to the parent to inhibit GC
-        self.c_ptr    = c_ptr
-
-    def __len__( self ):
-        return Ecl.ecl_kw.get_size( self )
-    
-
-
-    def from_param(self):
-        return self.c_ptr
-
-    @property
-    def size(self):
-        return Ecl.ecl_kw.get_size( self )
-
-    @property
-    def type( self ):
-        __type = Ecl.ecl_kw.get_type( self )
-        # enum ecl_type_enum from ecl_util.h
-        if __type == ECL_CHAR_TYPE:
-            return "CHAR"
-        if __type == ECL_REAL_TYPE:
-            return "REAL"
-        if __type == ECL_DOUBLE_TYPE:
-            return "DOUB"
-        if __type == ECL_INT_TYPE:
-            return "INTE"
-        if __type == ECL_BOOL_TYPE:
-            return "BOOL"
-        if __type == ECL_MESS_TYPE:
-            return "MESS"
-
-        
-    def iget( self , index ):
-        __type = Ecl.ecl_kw.get_type( self )
-        if __type == ECL_CHAR_TYPE:
-            value = Ecl.ecl_kw.iget_char_ptr( self , index )
-
-        if __type == ECL_REAL_TYPE:
-            value = Ecl.ecl_kw.iget_float( self , index )
-
-        if __type == ECL_FLOAT_TYPE:
-            value = Ecl.ecl_kw.iget_double( self , index )
-
-        if __type == ECL_INT_TYPE:
-            value = Ecl.ecl_kw.iget_int( self , index )
-
-        if __type == ECL_BOOL_TYPE:
-            value = Ecl.ecl_kw.iget_bool( self , index )
-            
-        return value
-    
-    @property
-    def array(self):
-        type = Ecl.ecl_kw.get_type( self )
-        if type == ECL_INT_TYPE:
-            a = Ecl.ecl_kw.int_ptr( self )
-        elif type == ECL_REAL_TYPE:
-            a = Ecl.ecl_kw.float_ptr( self )
-        elif type == ECL_DOUBLE_TYPE:
-            a = Ecl.ecl_kw.double_ptr( self )
-        else:
-            a = None
-
-        if not a == None:
-            a.size       = Ecl.ecl_kw.get_size( self )
-            a.__parent__ = self  # Inhibit GC
-        return a
-        
-    def numpy_array(self):
-        pass
-
 
 class EclFile(object):
     def __new__(cls, filename):
@@ -464,7 +376,7 @@ class EclFile(object):
 
     def iget_kw( self , index ):
         kw_c_ptr = Ecl.ecl_file.iget_kw( self , index )
-        return EclKW( self , kw_c_ptr)
+        return EclKW( self , kw_c_ptr )
     
     def iget_named_kw( self , kw_name , index ):
         kw_c_ptr = Ecl.ecl_file.iget_named_kw( self , kw_name , index )
@@ -773,7 +685,6 @@ class EclGrid(object):
     def get_global_index( self , ijk = None , active_index = None):
         gi = self.__global_index( active_index = active_index , ijk = ijk)
         return gi
-
 
     def get_ijk( self, active_index = None , global_index = None):
         i = ctypes.c_int()
