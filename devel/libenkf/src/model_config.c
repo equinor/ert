@@ -41,11 +41,11 @@
 struct model_config_struct {
   stringlist_type      * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
   char                 * case_table_file; 
-  forward_model_type   * forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
-  history_type         * history;             	    /* The history object. */
-  path_fmt_type        * runpath;             	    /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
-  enkf_sched_type      * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
-  char                 * enkf_sched_file;     	    /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
+  forward_model_type   * forward_model;             /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
+  history_type         * history;                   /* The history object. */
+  path_fmt_type        * runpath;                   /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  enkf_sched_type      * enkf_sched;                /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
+  char                 * enkf_sched_file;           /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
   char                 * enspath;
   char                 * select_case;
   fs_driver_impl         dbase_type;
@@ -56,8 +56,8 @@ struct model_config_struct {
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer 
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
   /** The results are always loaded. */
-  bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
-  bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
+  bool_vector_type    * internalize_state;          /* Should the (full) state be internalized (at this report_step). */
+  bool_vector_type    * __load_state;               /* Internal variable: is it necessary to load the state? */
 };
 
 
@@ -289,7 +289,7 @@ void model_config_init(model_config_type * model_config ,
       use_history = false;
     else if (source_type == REFCASE_HISTORY)
       use_history = true;
-
+    
     model_config_set_history_source( model_config , source_type );
   }
 
