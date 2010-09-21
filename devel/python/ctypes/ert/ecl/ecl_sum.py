@@ -69,8 +69,11 @@ class EclSum(object):
     def iget(self , key , internal_index):
         return cfunc.iget_general_var( self , key , internal_index )
 
-    def get_from_days( self , key , days ):
-        return cfunc.get_general_var_from_sim_days( self , days , key )
+    def get_interp( self , key , days = None , time = None):
+        if days:
+            return cfunc.get_general_var_from_sim_days( self , days , key )
+        else:
+            return cfunc.get_general_var_from_sim_time( self , time , key )
 
     def get_from_report( self , key , report_step ):
         time_index = cfunc.get_report_end( self , report_step )
@@ -201,10 +204,8 @@ cfunc.get_general_var               = cwrapper.prototype("double ecl_sum_iget_ge
 cfunc.get_general_var_index         = cwrapper.prototype("int ecl_sum_get_general_var_index( ecl_sum , char*)")
 cfunc.get_general_var_from_sim_days = cwrapper.prototype("double ecl_sum_get_general_var_from_sim_days( ecl_sum , double , char*)")
 cfunc.get_general_var_from_sim_time = cwrapper.prototype("double ecl_sum_get_general_var_from_sim_time( ecl_sum , time_t , char*)")
-cfunc
 cfunc.get_first_gt                  = cwrapper.prototype("int ecl_sum_get_first_gt( ecl_sum , int , double )")
 cfunc.get_first_lt                  = cwrapper.prototype("int ecl_sum_get_first_lt( ecl_sum , int , double )")
-cfunc
 cfunc.get_start_date                = cwrapper.prototype("time_t ecl_sum_get_start_time( ecl_sum )")
 cfunc.get_end_date                  = cwrapper.prototype("time_t ecl_sum_get_end_time( ecl_sum )")
 cfunc.get_last_report_step          = cwrapper.prototype("int ecl_sum_get_last_report_step( ecl_sum )")

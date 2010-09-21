@@ -69,6 +69,9 @@ class EclFile(object):
     def iget_restart_time( self , index ):
         return cfunc.iget_restart_time( self , index )
     
+    @property
+    def name(self):
+        return cfunc.get_src_file( self )
     
 
 
@@ -100,4 +103,5 @@ cfunc.get_num_named_kw          = cwrapper.prototype("int    ecl_file_get_num_na
 cfunc.iget_restart_time         = cwrapper.prototype("time_t ecl_file_iget_restart_sim_date( ecl_file , int )")
 cfunc.get_restart_index         = cwrapper.prototype("int    ecl_file_get_restart_index( ecl_file , time_t)")
 cfunc.insert_kw                 = cwrapper.prototype("void   ecl_file_insert_kw( ecl_file , ecl_kw , bool , char* , int )")
-
+cfunc.del_kw                    = cwrapper.prototype("void   ecl_file_delete_kw( ecl_file , char* , int)")
+cfunc.get_src_file              = cwrapper.prototype("char*  ecl_file_get_src_file( ecl_file )")
