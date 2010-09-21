@@ -24,7 +24,7 @@ extern "C" {
 #define  INCLUDE_KEY                       "INCLUDE"
 #define  DEFINE_KEY                        "DEFINE"  
 
-
+#define  ENKF_BOOTSTRAP_KEY                "ENKF_BOOTSTRAP"
 #define  CASE_TABLE_KEY                    "CASE_TABLE"
 #define  DATA_FILE_KEY                     "DATA_FILE"
 #define  DATA_KW_KEY                       "DATA_KW"  

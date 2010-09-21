@@ -27,7 +27,7 @@ static void genX3(matrix_type * X3 , const matrix_type * W , const matrix_type *
     for (j=0; j < nrobs; j++)
       matrix_iset(X1 , i , j , eig[i] * matrix_iget(W , j , i));
   
-  matrix_matmul(X2 , X1 , D); /* X2 = X1 * D (Eq. 14.31) */
+  matrix_matmul(X2 , X1 , D); /*   X2 = X1 * D           (Eq. 14.31) */
   matrix_matmul(X3 , W  , X2); /*  X3 = W * X2 = X1 * X2 (Eq. 14.31) */  
   
   matrix_free( X1 );
@@ -44,7 +44,7 @@ static void genX2(matrix_type * X2 , const matrix_type * S , const matrix_type *
     int i,j;
     for (j=0; j < nrens; j++)
       for (i=0; i < idim; i++)
-	matrix_imul(X2 , i,j , sqrt(eig[i]));
+        matrix_imul(X2 , i,j , sqrt(eig[i]));
   }
 }
 
@@ -91,10 +91,10 @@ static void svdS(const matrix_type * S , matrix_type * U0 , matrix_type * V0T , 
     
     for (i=0; i < num_singular_values; i++) {
       if (running_sigma2 / total_sigma2 < truncation) {  /* Include one more singular value ? */
-	num_significant++;
-	running_sigma2 += sig0[i] * sig0[i];
+        num_significant++;
+        running_sigma2 += sig0[i] * sig0[i];
       } else 
-	break;
+        break;
     }
 
     /* Explicitly setting the insignificant singular values to zero. */
@@ -127,11 +127,11 @@ static void lowrankCee(matrix_type * B, int nrens , const matrix_type * R , cons
     */
     for (j=0; j < matrix_get_columns( B ) ; j++)
       for (i=0; i < matrix_get_rows( B ); i++)
-	matrix_imul(B , i , j , sig0[i]);
+        matrix_imul(B , i , j , sig0[i]);
 
     for (j=0; j < matrix_get_columns( B ) ; j++)
       for (i=0; i < matrix_get_rows( B ); i++)
-	matrix_imul(B , i , j , sig0[j]);
+        matrix_imul(B , i , j , sig0[j]);
   }
   
   matrix_scale(B , nrens - 1.0);
@@ -239,7 +239,7 @@ void enkf_analysis_get_cv_error(double * cvErr , const matrix_type * A , const m
     /*Multiply W with the diagonal matrix eig[1:p,1:p] from the left */
     for (j=0; j < nTest; j++)
       for (i=0; i < p; i++)
-	matrix_imul(W , i , j , eig[i]);
+        matrix_imul(W , i , j , eig[i]);
     
     for (i = 0; i < p; i++) {
       for (j = 0; j < nTest; j++) {
@@ -304,7 +304,12 @@ void enkf_analysis_get_cv_error(double * cvErr , const matrix_type * A , const m
 
 
 
-static void lowrankCinv(const matrix_type * S , const matrix_type * R , matrix_type * W , double * eig , double truncation) {
+static void lowrankCinv(const matrix_type * S , 
+                        const matrix_type * R , 
+                        matrix_type * W       , /* Corresponding to X1 from Eq. 14.29 */
+                        double * eig          , /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
+                        double truncation) {
+
   const int nrobs = matrix_get_rows( S );
   const int nrens = matrix_get_columns( S );
   const int nrmin = util_int_min( nrobs , nrens );
@@ -315,7 +320,7 @@ static void lowrankCinv(const matrix_type * S , const matrix_type * R , matrix_t
   double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
 
   svdS(S , U0 , NULL /* V0T */ , DGESVD_NONE , sig0, truncation );
-  lowrankCee( B , nrens , R , U0 , sig0);            /*B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
+  lowrankCee( B , nrens , R , U0 , sig0);            /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
   matrix_dsyevx_all( DSYEVX_AUPPER , B , eig , Z);   /*(Eq. 14.27, Evensen, 2007)*/                       
 
   /*****************************************************************/
@@ -327,7 +332,7 @@ static void lowrankCinv(const matrix_type * S , const matrix_type * R , matrix_t
     
     for (j=0; j < nrmin; j++)
       for (i=0; i < nrmin; i++)
-	matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
+        matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
   }
   /******************************************************************/
 
@@ -361,7 +366,7 @@ static void lowrankCinv_pre_cv(const matrix_type * S , const matrix_type * R , m
     
     for (j=0; j < nrmin; j++)
       for (i=0; i < nrmin; i++)
-	matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
+        matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
   }
 }
 
@@ -762,7 +767,7 @@ void enkf_analysis_invertS_pre_cv(const analysis_config_type * config , const ma
 */
 
 
-static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , const matrix_type * D , const matrix_type * W , const double * eig) {
+static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , const matrix_type * D , const matrix_type * W , const double * eig, bool bootstrap) {
   const int nrobs   = matrix_get_rows( S );
   const int nrens   = matrix_get_columns( S );
   matrix_type * X3  = matrix_alloc(nrobs , nrens);
@@ -770,8 +775,8 @@ static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , co
   genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
                             /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
 
-  matrix_dgemm( X5 , S , X3 , true , false , 1.0 , 0.0);  /* X5 = T(S) * X3 */
-  {
+  matrix_dgemm( X5 , S , X3 , true , false , 1.0 , 0.0);  /* X5 = S' * X3 */
+  if (!bootstrap) {
     for (int i = 0; i < nrens; i++)
       matrix_iadd( X5 , i , i , 1.0); /*X5 = I + X5 */
   }
@@ -780,14 +785,16 @@ static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , co
 }
 
 
-
-static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const matrix_type * randrot , const double * innov , const matrix_type * W , const double * eig) {
+static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const matrix_type * randrot , const double * innov , const matrix_type * W , const double * eig , bool bootstrap) {
   const int nrobs   = matrix_get_rows( S );
   const int nrens   = matrix_get_columns( S );
   const int nrmin   = util_int_min( nrobs , nrens );
   
   matrix_type * X2    = matrix_alloc(nrmin , nrens);
   
+  if (bootstrap)
+    util_exit("%s: Sorry bootstrap support not fully implemented for SQRT scheme\n",__func__);
+
   meanX5( S , W , eig , innov , X5 );
   genX2(X2 , S , W , eig);
   X5sqrt(X2 , X5 , randrot , nrobs);
@@ -940,17 +947,24 @@ static void enkf_analysis_alloc_matrices( const meas_matrix_type * meas_matrix ,
    Checking that the sum through one row in the X matrix is one.
 */
 
-static void enkf_analysis_checkX(const matrix_type * X) {
+static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
   if ( !matrix_is_finite(X))
     util_abort("%s: The X matrix is not finite - internal meltdown. \n",__func__);
   {
+    int target_sum;
+    if (bootstrap)
+      target_sum = 0;
+    else
+      target_sum = 1;
+    
     for (int icol = 0; icol < matrix_get_columns( X ); icol++) {
       double col_sum = matrix_get_column_sum(X , icol);
-      if (fabs(col_sum - 1.0) > 0.0001) 
+      if (fabs(col_sum - target_sum) > 0.0001) 
         util_abort("%s: something is seriously broken. col:%d  col_sum = %g != 1.0 - ABORTING\n",__func__ , icol , col_sum);
     }
   }
 }
+
 
 
 /**
@@ -978,7 +992,7 @@ static void enkf_analysis_checkX(const matrix_type * X) {
 
 */
    
-matrix_type * enkf_analysis_allocX( const analysis_config_type * config , meas_matrix_type * meas_matrix , obs_data_type * obs_data , const matrix_type * randrot) {
+matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const meas_matrix_type * meas_matrix , obs_data_type * obs_data , const matrix_type * randrot) {
   int ens_size          = meas_matrix_get_ens_size( meas_matrix );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   {
@@ -986,12 +1000,12 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , meas_m
     double      * innov;
     int nrobs                = obs_data_get_active_size(obs_data);
     int nrmin                = util_int_min( ens_size , nrobs); 
-
+    
     matrix_type * W          = matrix_alloc(nrobs , nrmin);                      
     double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
+    bool bootstrap           = analysis_config_get_bootstrap( config );
     enkf_analysis_alloc_matrices( meas_matrix , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
-    
         
     /* 
        2: Diagonalize the S matrix; singular vectors are stored in W
@@ -1006,10 +1020,10 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , meas_m
     */
     switch (enkf_mode) {
     case(ENKF_STANDARD):
-      enkf_analysis_standard(X , S , D , W , eig);
+      enkf_analysis_standard(X , S , D , W , eig , bootstrap);
       break;
     case(ENKF_SQRT):
-      enkf_analysis_SQRT(X , S , randrot , innov , W , eig );
+      enkf_analysis_SQRT(X , S , randrot , innov , W , eig , bootstrap);
       break;
     default:
       util_abort("%s: INTERNAL ERROR \n",__func__);
@@ -1025,8 +1039,9 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , meas_m
       matrix_free( E );
       matrix_free( D );
     }
+
+    enkf_analysis_checkX(X , bootstrap);
   }
-  enkf_analysis_checkX(X);
   return X;
 }
 
@@ -1050,6 +1065,7 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     
     matrix_type * W          = matrix_alloc(nrobs , nrmin);                      
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
+    bool bootstrap           = analysis_config_get_bootstrap( config );    
     
     double * workeig    = util_malloc( sizeof * workeig * nrmin , __func__);
 
@@ -1078,10 +1094,10 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     */
     switch (enkf_mode) {
     case(ENKF_STANDARD):
-      enkf_analysis_standard(X , S , D , W , workeig);
+      enkf_analysis_standard(X , S , D , W , workeig , bootstrap);
       break;
     case(ENKF_SQRT):
-      enkf_analysis_SQRT(X , S , randrot , innov , W , workeig );
+      enkf_analysis_SQRT(X , S , randrot , innov , W , workeig , bootstrap );
       break;
     default:
       util_abort("%s: INTERNAL ERROR \n",__func__);
@@ -1098,10 +1114,16 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
       matrix_free( E );
       matrix_free( D );
     }
+    
+    enkf_analysis_checkX(X , bootstrap);
   }
-  enkf_analysis_checkX(X);
   return X;
 }
+
+
+
+
+
 
 
 

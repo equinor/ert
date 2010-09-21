@@ -23,6 +23,7 @@ int                    analysis_config_get_rerun_start(const analysis_config_typ
 //bool                   analysis_config_get_do_cross_validation(const analysis_config_type * config);
 bool                   analysis_config_get_do_local_cross_validation(const analysis_config_type * config);
 int                    analysis_config_get_nfolds_CV(const analysis_config_type * config);
+bool                   analysis_config_get_do_bootstrap(const analysis_config_type * config);
 void                   analysis_config_set_rerun(analysis_config_type * config , bool rerun);
 void                   analysis_config_set_rerun_start( analysis_config_type * config , int rerun_start );
 void                   analysis_config_set_truncation( analysis_config_type * config , double truncation);
@@ -32,6 +33,7 @@ void                   analysis_config_set_enkf_mode( analysis_config_type * con
 void                   analysis_config_set_do_cross_validation( analysis_config_type * config , bool do_cv);
 void                   analysis_config_set_do_local_cross_validation( analysis_config_type * config , bool do_cv);
 void                   analysis_config_set_nfolds_CV( analysis_config_type * config , int folds);
+void                   analysis_config_set_do_bootstrap( analysis_config_type * config , bool do_bootstrap);
 void                   analysis_config_set_log_path(analysis_config_type * config , const char * log_path );
 void                   analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff );
 double                 analysis_config_get_std_cutoff( const analysis_config_type * config );

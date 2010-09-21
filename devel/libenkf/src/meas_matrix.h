@@ -15,6 +15,7 @@ double             meas_block_iget_ens_mean( const meas_block_type * meas_block 
 double             meas_block_iget_ens_std( const meas_block_type * meas_block , int iobs);
 void               meas_block_deactivate( meas_block_type * meas_block , int iobs );                               
 
+void meas_matrix_fprintf( const meas_matrix_type * matrix , FILE * stream);
 
 void               meas_matrix_reset(meas_matrix_type * );
 meas_matrix_type * meas_matrix_alloc( int );
@@ -33,6 +34,9 @@ const meas_block_type  * meas_matrix_iget_block_const( const meas_matrix_type * 
 void               meas_block_calculate_ens_stats( meas_block_type * meas_block );
 int                meas_block_get_total_size( const meas_block_type * meas_block );
 bool               meas_block_iget_active( const meas_block_type * meas_block , int iobs);
+void               meas_matrix_assign_vector(meas_matrix_type * target_matrix, const meas_matrix_type * src_matrix , int target_index , int src_index);
+meas_matrix_type * meas_matrix_alloc_copy( const meas_matrix_type * src );
+
 #ifdef __cplusplus
 }
 #endif
