@@ -1,11 +1,7 @@
-import time
-import datetime
 import ctypes
-import sys
-import os.path
-
 from   ert.cwrap.cwrap       import *
-import ert.util.stringlist   as stringlist
+import fortio
+
 
 
 # Enum defintion from ecl_util.h
@@ -107,6 +103,10 @@ class EclKW:
         pass
 
 
+    def fwrite( self , fortio ):
+        cfunc.fwrite( self , fortio )
+
+
 
 #################################################################
 
@@ -121,8 +121,7 @@ libecl  = ctypes.CDLL("libecl.so"  , ctypes.RTLD_GLOBAL)
 # 2. Creating a wrapper object around the libecl library, 
 #    registering the type map : ecl_kw <-> EclKW
 cwrapper = CWrapper( libecl )
-cwrapper.registerType("ecl_kw" , EclKW , export = True)
-
+cwrapper.registerType( "ecl_kw" , EclKW )
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
 #    These functions are used when implementing the EclKW class, not
@@ -138,14 +137,4 @@ cfunc.iget_float                 = cwrapper.prototype("float ecl_kw_iget_float( 
 cfunc.float_ptr                  = cwrapper.prototype("float* ecl_kw_get_float_ptr( ecl_kw )")
 cfunc.free                       = cwrapper.prototype("void ecl_kw_free( ecl_kw )")
 cfunc.copyc                      = cwrapper.prototype("long ecl_kw_alloc_copy( ecl_kw )")
-
-
-# 4. The type map created by this scope, to be used by other units as follows:
-#
-# import ecl_kw
-# ....
-# cwrapper = CWrapper( ...)
-# cwrapper.add_types( ecl_kw.type_map )
-
-type_map = cwrapper.export_map()
-
+cfunc.fwrite                     = cwrapper.prototype("void ecl_kw_fwrite( ecl_kw , fortio )")

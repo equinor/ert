@@ -44,50 +44,49 @@ class ctime(ctypes.c_long):
 
 
 class CWrapper:
+    registered_types = {}
+    pattern          = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
+
     def __init__( self , lib ):
         self.lib = lib
-        self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
-
-        self.registered_types = {}
-        self.export_types     = {}
-        self.__registerDefaultTypes()
 
 
-    def __registerDefaultTypes(self):
+    @classmethod
+    def registerDefaultTypes(cls):
         """Registers the default available types for prototyping."""
-        self.registerType("void", None)
-        self.registerType("int", ctypes.c_int)
-        self.registerType("int*", ctypes.POINTER(ctypes.c_int))
-        self.registerType("bool", ctypes.c_int)
-        self.registerType("bool*", ctypes.POINTER(ctypes.c_int))
-        self.registerType("long", ctypes.c_long)
-        self.registerType("long*", ctypes.POINTER(ctypes.c_long))
-        self.registerType("char", ctypes.c_char)
-        self.registerType("char*", ctypes.c_char_p)
-        self.registerType("char**", ctypes.POINTER(ctypes.c_char_p))
-        self.registerType("float", ctypes.c_float)
-        self.registerType("float*", ctypes.POINTER(ctypes.c_float))
-        self.registerType("double", ctypes.c_double)
-        self.registerType("double*", ctypes.POINTER(ctypes.c_double))
-        self.registerType("time_t", ctime)
-        self.registerType("time_t*", ctypes.POINTER(ctime))
+        cls.registerType("void", None)
+        cls.registerType("int", ctypes.c_int)
+        cls.registerType("int*", ctypes.POINTER(ctypes.c_int))
+        cls.registerType("bool", ctypes.c_int)
+        cls.registerType("bool*", ctypes.POINTER(ctypes.c_int))
+        cls.registerType("long", ctypes.c_long)
+        cls.registerType("long*", ctypes.POINTER(ctypes.c_long))
+        cls.registerType("char", ctypes.c_char)
+        cls.registerType("char*", ctypes.c_char_p)
+        cls.registerType("char**", ctypes.POINTER(ctypes.c_char_p))
+        cls.registerType("float", ctypes.c_float)
+        cls.registerType("float*", ctypes.POINTER(ctypes.c_float))
+        cls.registerType("double", ctypes.c_double)
+        cls.registerType("double*", ctypes.POINTER(ctypes.c_double))
+        cls.registerType("time_t", ctime)
+        cls.registerType("time_t*", ctypes.POINTER(ctime))
 
 
-    def registerType(self, type, value , export = False):
+    @classmethod
+    def registerType(cls, type, value ):
         """Register a type against a legal ctypes type"""
-        self.registered_types[type] = value
-        if export:
-            self.export_types[type] = value
+        cls.registered_types[type] = value
+
 
 
     def __parseType(self, type):
         """Convert a prototype definition type from string to a ctypes legal type."""
         type = type.strip()
 
-        if self.registered_types.has_key(type):
-            return self.registered_types[type]
+        if CWrapper.registered_types.has_key(type):
+            return CWrapper.registered_types[type]
         else:
-            return getattr(ctypes, type)
+            return getattr(ctypes , type)
 
         
     def prototype(self, prototype , lib = None):
@@ -116,7 +115,7 @@ class CWrapper:
             ...
         """
 
-        match = re.match(self.pattern, prototype)
+        match = re.match(CWrapper.pattern, prototype)
         if not match:
             sys.stderr.write("Illegal prototype definition: %s\n" % (prototype))
             return None
@@ -139,16 +138,7 @@ class CWrapper:
             return func
 
 
-    def add_types( self , type_map):
-        for ctype , py_type in type_map.iteritems():
-            self.registerType( ctype , py_type )
 
-    
-    def export_map( self ):
-        return self.export_types
-
-
-    
 class CWrapperNameSpace:
     def __init__( self , name ):
         self.name = name
@@ -156,3 +146,4 @@ class CWrapperNameSpace:
     def __str__(self):
         return "%s wrapper" % self.name
 
+CWrapper.registerDefaultTypes()
