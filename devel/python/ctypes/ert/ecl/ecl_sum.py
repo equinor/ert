@@ -1,7 +1,6 @@
 import ctypes
 from   ert.cwrap.cwrap       import *
 import ert.util.stringlist
-import fortio
 
 
 class EclSumNode:
