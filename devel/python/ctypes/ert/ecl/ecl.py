@@ -13,6 +13,7 @@ from   ecl_file              import EclFile
 from   fortio                import FortIO
 from   ecl_sum               import EclSum
 from   ecl_grid              import EclGrid
+from   ert.util.tvector      import DoubleVector   
 from   ert.util.stringlist   import StringList
 
 
