@@ -19,7 +19,7 @@
 #include <ecl_static_kw.h>
 #include <plain_driver_index.h>
 #include <plain_driver.h>
-#include <sqlite3_driver.h>
+// #include <sqlite3_driver.h>
 #include <block_fs_driver.h>
 #include <block_fs_driver_index.h>
 #include <stringlist.h>

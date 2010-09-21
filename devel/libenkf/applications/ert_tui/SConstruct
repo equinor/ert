@@ -22,7 +22,7 @@ bin_path     = "../bin"
 conf = global_config.get_conf(os.getcwd() , package , 3)
 env  = Environment()
 lib_list = ["bat"  ,"lsf" , "nsl" , "lapack" , "plplotd" , "m" , "z" , "pthread"]
-if conf.RH == 4:
+if conf.RH == 4 or conf.RH == 3 :
    lib_list.append( "g2c" )
    
 

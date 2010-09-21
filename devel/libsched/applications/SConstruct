@@ -18,7 +18,11 @@ bin_path     = "../bin"
 
 conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
-conf.update_env( env , [ LIBSCHED , LIBECL , LIBUTIL ] ,  ["lapack" , "m" , "z" , "pthread"] , link = True)
+lib_list =  ["lapack" , "m" , "z" , "pthread"]
+if conf.RH == 3 :
+   lib_list.append( "g2c" )
+
+conf.update_env( env , [ LIBSCHED , LIBECL , LIBUTIL ] ,  lib_list , link = True)
 
 ##################################################################
 
