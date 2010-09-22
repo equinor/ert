@@ -1,6 +1,8 @@
 import ctypes
+import numpy
+import matplotlib.dates
 from   ert.cwrap.cwrap       import *
-import ert.util.stringlist
+from   ert.util.stringlist   import StringList
 
 
 class EclSumNode:

@@ -718,7 +718,8 @@ void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type 
   int step;
 
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
-  for (step = step1; step < step2; step++) {
+  printf("** Warning: desperate fix \n");
+  for (step = step1; step < (step2 - 1); step++) {
     int iens;
     if (vector_iget( obs_vector->nodes , step) != NULL) {
       for (iens = iens1; iens < iens2; iens++) {
