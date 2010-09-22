@@ -3,8 +3,7 @@ import datetime
 import ctypes
 import sys
 import os.path
-import numpy
-import matplotlib.dates
+
 
 from   ert.cwrap.cwrap       import *
 
