@@ -3,6 +3,7 @@ import datetime
 import ctypes
 import sys
 import os
+import libjob_queue
 from   ert.cwrap.cwrap import *
 
 # Enum values nicked from libjob_queue/src/basic_queue_driver.h
@@ -13,51 +14,9 @@ STATUS_EXIT    = 128
 
 LSF_HOME    = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"
 
-class DriverContext:
-    __initialized = False
-    @classmethod
-    def __initialize__(cls):
-        if cls.__initialized:
-            return
-        
-        ctypes.CDLL("libnsl.so"                     , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("%s/liblsf.so" % LSF_HOME       , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("%s/libbat.so" % LSF_HOME       , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libz.so"                       , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("liblapack.so"                  , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libutil.so"                    , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libconfig.so"                  , ctypes.RTLD_GLOBAL)
-        cls.__libjob_queue = ctypes.CDLL("libjob_queue.so" , ctypes.RTLD_GLOBAL)
-
-        cls.cwrapper = CWrapper( cls.__libjob_queue )
-        cls.cwrapper.registerType( "job"   , Job )
-    
-
-    @classmethod
-    def get_cwrapper( cls ):
-        if not cls.__initialized:
-            cls.__initialize__()
-        return cls.cwrapper
-
-                
 
 
 class LSFDriver:
-
-    lsf = CWrapperNameSpace("LSF")
-
-    @classmethod
-    def __initialize__( cls ):
-        cwrapper = DriverContext.get_cwrapper()
-        cwrapper.registerType( "lsf_driver" , LSFDriver )
-        
-        cls.lsf.alloc_driver = cwrapper.prototype("long    lsf_driver_alloc( char* , char* , char* , int )")
-        cls.lsf.free_driver  = cwrapper.prototype("void    lsf_driver_free( lsf_driver )")
-        cls.lsf.submit       = cwrapper.prototype("long    lsf_driver_submit_job( lsf_driver , char* , char* , char* , int , char**)")
-        cls.lsf.free_job     = cwrapper.prototype("void    lsf_driver_free_job( job )")
-        cls.lsf.get_status   = cwrapper.prototype("int     lsf_driver_get_job_status( lsf_driver , job)")
-        cls.lsf.kill_job     = cwrapper.prototype("void    lsf_driver_kill_job( lsf_driver , job )")
-        
 
     def from_param(self):
         return self.c_ptr
@@ -67,58 +26,44 @@ class LSFDriver:
                  queue = "normal" ,
                  resource_request = "select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]" ,
                  lsf_server = None ):
-        self.c_ptr = self.lsf.alloc_driver( queue , resource_request , lsf_server , 1)
+        self.c_ptr = cfunc_lsf.alloc_driver( queue , resource_request , lsf_server , 1)
 
 
     def __del__( self ):
-        self.lsf.free_driver( self )
+        cfunc_lsf.free_driver( self )
 
 
     def submit( self , name , cmd , run_path , argList , blocking = False):
         argc = len( argList )
         argv = (ctypes.c_char_p * argc)()
         argv[:] = map( str , argList )
-        job_c_ptr = self.lsf.submit( self , cmd , run_path , name , argc , argv )
+        job_c_ptr = cfunc_lsf.submit( self , cmd , run_path , name , argc , argv )
         job = Job( self , job_c_ptr , blocking )
 
         return job
         
 
     def free_job( self , job ):
-        self.lsf.free_job( job )
+        cfunc_lsf.free_job( job )
     
 
     def get_status( self , job ):
-        return self.lsf.get_status( self , job )
+        return cfunc_lsf.get_status( self , job )
     
 
     def kill_job( self , job ):
-        self.lsf.kill_job( self , job )
+        cfunc_lsf.kill_job( self , job )
 
 
         
 
 class LocalDriver:
-    local = CWrapperNameSpace("Local")
-    @classmethod
-    def __initialize__( cls ):
-        cwrapper = DriverContext.get_cwrapper()
-        cwrapper.registerType( "local_driver" , LocalDriver )
-
-        cls.local.alloc_driver     = cwrapper.prototype("long    local_driver_alloc( )")
-        cls.local.free_driver      = cwrapper.prototype("void    local_driver_free( local_driver )")
-        cls.local.submit           = cwrapper.prototype("long    local_driver_submit_job( local_driver , char* , char* , char* , int , char**)")
-        cls.local.free_job         = cwrapper.prototype("void    local_driver_free_job( job )")
-        cls.local.kill_job         = cwrapper.prototype("void    local_driver_kill_job( local_driver , job )")
-        cls.local.get_status       = cwrapper.prototype("int     local_driver_get_job_status( local_driver , job)")
-
-
     def __init__( self ):
-        self.c_ptr = self.local.alloc_driver( )
+        self.c_ptr = cfunc_local.alloc_driver( )
 
 
     def __del__( self ):
-        self.local.free_driver( self )
+        cfunc_local.free_driver( self )
 
     def from_param(self):
         return self.c_ptr
@@ -128,21 +73,21 @@ class LocalDriver:
         argc = len( argList )
         argv = (ctypes.c_char_p * argc)()
         argv[:] = map( str , argList )
-        c_ptr = self.local.submit( self , cmd , run_path , name , argc , argv )
+        c_ptr = cfunc_local.submit( self , cmd , run_path , name , argc , argv )
         job = Job( self , c_ptr , blocking)
         return job
         
 
     def free_job( self , job ):
-        self.local.free_job( job )
+        cfunc_local.free_job( job )
     
 
     def get_status( self , job ):
-        return self.local.get_status( self , job )
+        return cfunc_local.get_status( self , job )
     
 
     def kill_job( self , job ):
-        self.local.kill_job( self , job )
+        cfunc_local.kill_job( self , job )
     
         
         
@@ -178,6 +123,26 @@ class Job:
         return self.c_ptr
 
 
+#################################################################
+cwrapper = CWrapper( libjob_queue.lib )
+cwrapper.registerType( "lsf_driver" , LSFDriver )
+cwrapper.registerType( "local_driver" , LocalDriver )
+cwrapper.registerType( "job" , Job )
+cfunc_lsf   = CWrapperNameSpace( "driver" )
+cfunc_local = CWrapperNameSpace( "driver" )
 
-LSFDriver.__initialize__()
-LocalDriver.__initialize__()
+cfunc_lsf.alloc_driver = cwrapper.prototype("long    lsf_driver_alloc( char* , char* , char* , int )")
+cfunc_lsf.free_driver  = cwrapper.prototype("void    lsf_driver_free( lsf_driver )")
+cfunc_lsf.submit       = cwrapper.prototype("long    lsf_driver_submit_job( lsf_driver , char* , char* , char* , int , char**)")
+cfunc_lsf.free_job     = cwrapper.prototype("void    lsf_driver_free_job( job )")
+cfunc_lsf.get_status   = cwrapper.prototype("int     lsf_driver_get_job_status( lsf_driver , job)")
+cfunc_lsf.kill_job     = cwrapper.prototype("void    lsf_driver_kill_job( lsf_driver , job )")
+
+
+cfunc_local.alloc_driver     = cwrapper.prototype("long    local_driver_alloc( )")
+cfunc_local.free_driver      = cwrapper.prototype("void    local_driver_free( local_driver )")
+cfunc_local.submit           = cwrapper.prototype("long    local_driver_submit_job( local_driver , char* , char* , char* , int , char**)")
+cfunc_local.free_job         = cwrapper.prototype("void    local_driver_free_job( job )")
+cfunc_local.kill_job         = cwrapper.prototype("void    local_driver_kill_job( local_driver , job )")
+cfunc_local.get_status       = cwrapper.prototype("int     local_driver_get_job_status( local_driver , job)")
+

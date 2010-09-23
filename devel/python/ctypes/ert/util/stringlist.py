@@ -1,4 +1,5 @@
 import unittest
+import libutil
 from   ert.cwrap.cwrap import *
 
 
@@ -71,14 +72,9 @@ class StringList:
 
 
 
-ctypes.CDLL("libz.so"      , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libblas.so"   , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
-libutil = ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
-
 CWrapper.registerType( "stringlist" , StringList )
 
-cwrapper = CWrapper( libutil )
+cwrapper = CWrapper( libutil.lib )
 cfunc    = CWrapperNameSpace("StringList")
 cfunc.stringlist_alloc      = cwrapper.prototype("long stringlist_alloc_new( )")
 cfunc.stringlist_free       = cwrapper.prototype("void stringlist_free( stringlist )")

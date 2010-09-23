@@ -1,4 +1,4 @@
-import ctypes
+import libecl
 from   ert.cwrap.cwrap       import *
 
 
@@ -225,17 +225,10 @@ class EclRFTCell:
 
 
 
-# 1. Loading the necessary C-libraries.
-ctypes.CDLL("libz.so"      , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libblas.so"   , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
-libecl  = ctypes.CDLL("libecl.so"  , ctypes.RTLD_GLOBAL)
-
 
 # 2. Creating a wrapper object around the libecl library, 
 #    registering the type map : ecl_kw <-> EclKW
-cwrapper = CWrapper( libecl )
+cwrapper = CWrapper( libecl.lib )
 cwrapper.registerType( "ecl_rft_file" , EclRFTFile )
 cwrapper.registerType( "ecl_rft"      , EclRFT )
 

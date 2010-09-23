@@ -1,4 +1,5 @@
 import ctypes
+import libutil
 from   ert.cwrap.cwrap       import *
 
 
@@ -22,28 +23,30 @@ class DoubleVector:
         else:
             raise TypeError("Index should be integer type")
 
+
     def __setitem__( self , index , value ):
-        cfunc.double_vector_iset( self, index , value )
+        if isinstance( index , types.IntType):
+            cfunc.double_vector_iset( self, index , value )
+        else:
+            raise TypeError("Index should be integer type")
+
 
     def __len__(self):
         return cfunc.double_vector_size( self )
 
+
     @property
     def size( self ):
-        return cfunc.double_vector_size( self )
+        return self.__len__()
+
     
     def append( self , value ):
         cfunc.double_vector_append( self , value )
+
     
-
-ctypes.CDLL("libz.so"      , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libblas.so"   , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
-libutil = ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
-
 CWrapper.registerType( "double_vector" , DoubleVector )
 
-cwrapper = CWrapper( libutil )
+cwrapper = CWrapper( libutil.lib )
 cfunc    = CWrapperNameSpace("tvector")
 cfunc.double_vector_alloc   = cwrapper.prototype("long double_vector_alloc( int , double )")
 cfunc.double_vector_free    = cwrapper.prototype("void double_vector_free( double_vector )")
