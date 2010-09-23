@@ -14,6 +14,7 @@ from   ecl_sum               import EclSum
 from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
 from   ecl_grid              import EclGrid
 from   ecl_region            import EclRegion
+import ecl_util
 from   ert.util.tvector      import DoubleVector   
 from   ert.util.stringlist   import StringList
 
@@ -27,29 +28,6 @@ default_version   = "2009.1"
 
 
 
-
-class Ecl:
-    __initialized = False
-
-    ecl_util = CWrapperNameSpace( "ecl_util" )
-    
-    @classmethod
-    def __initialize__(cls):
-        if cls.__initialized:
-            return
-
-        ctypes.CDLL("libz.so"      , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libblas.so"   , ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
-        cls.libutil = ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
-        cls.libecl =  ctypes.CDLL("libecl.so" , ctypes.RTLD_GLOBAL)
-        
-        cwrapper = CWrapper( cls.libecl )
-        cls.ecl_util.get_num_cpu              = cwrapper.prototype("int ecl_util_get_num_cpu( char* )")
-    
-
-
-#################################################################
 class EclCase:
     def __init__(self , input_case):
         self.case = input_case
@@ -112,7 +90,7 @@ class EclCase:
 
         
     def run( self , version = default_version , blocking = False , run_script = run_script , use_LSF = True , LSF_server = None , LSF_queue = "normal"):
-        num_cpu = Ecl.ecl_util.get_num_cpu( self.datafile )
+        num_cpu = ecl_util.get_num_cpu( self.datafile )
         if use_LSF:
             if not self.LSFDriver:
                 self.LSFDriver = LSFDriver( queue      = LSF_queue , 
@@ -137,10 +115,6 @@ class EclCase:
 
         
 
-
-
-
-Ecl.__initialize__() # Run once
 
 
 

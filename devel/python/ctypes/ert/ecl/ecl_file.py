@@ -3,6 +3,7 @@ import datetime
 import ctypes
 import sys
 import os.path
+import libecl
 
 from   ert.cwrap.cwrap       import *
 from   fortio                import FortIO
@@ -75,16 +76,8 @@ class EclFile(object):
     
 
 
-# 1. Loading the necessary C-libraries.
-ctypes.CDLL("libz.so"      , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libblas.so"   , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
-libecl  = ctypes.CDLL("libecl.so"  , ctypes.RTLD_GLOBAL)
-
-
 # 2. Creating a wrapper object around the libecl library, 
-cwrapper = CWrapper( libecl )
+cwrapper = CWrapper( libecl.lib )
 cwrapper.registerType( "ecl_file" , EclFile )
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.

@@ -1,6 +1,7 @@
 import ctypes
 import numpy
 import matplotlib.dates
+import libecl
 from   ert.cwrap.cwrap       import *
 from   ert.util.stringlist   import StringList
 
@@ -173,17 +174,9 @@ class EclSum(object):
 
 #################################################################
 
-# 1. Loading the necessary C-libraries.
-ctypes.CDLL("libz.so"      , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libblas.so"   , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
-libecl  = ctypes.CDLL("libecl.so"  , ctypes.RTLD_GLOBAL)
-
-
 # 2. Creating a wrapper object around the libecl library, 
 #    registering the type map : ecl_kw <-> EclKW
-cwrapper = CWrapper( libecl )
+cwrapper = CWrapper( libecl.lib )
 cwrapper.registerType( "ecl_sum" , EclSum )
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
