@@ -7,7 +7,7 @@ import libecl
 
 class EclGrid(object):
 
-    def __new__(cls , filename, lgr = None , parent = None):
+    def __new__(cls , filename , lgr = None , parent = None):
         if filename:
             c_ptr = cfunc.fread_alloc( filename )
         elif lgr:
