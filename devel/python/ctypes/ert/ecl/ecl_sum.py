@@ -91,6 +91,8 @@ class EclSum(object):
         else:
             return None
 
+    def has_key( self , key):
+        return cfunc.has_key( self, key )
 
     def numpy_value( self , key ):
         key_index = cfunc.get_general_var_index( self , key )
@@ -120,7 +122,6 @@ class EclSum(object):
             time[i] = matplotlib.dates.date2num( ctime.datetime() )
         return time
 
-
     def iget_days(self , internal_index):
         return cfunc.iget_sim_days( self , internal_index )
 
@@ -139,7 +140,7 @@ class EclSum(object):
         return cfunc.data_length( self )
 
 
-    def select_matching( self , pattern ):
+    def matching_keys( self , pattern ):
         s = StringList()
         cfunc.select_matching_keys( self , pattern , s )
         return s.strings
@@ -206,3 +207,4 @@ cfunc.get_last_report_step          = cwrapper.prototype("int ecl_sum_get_last_r
 cfunc.get_first_report_step         = cwrapper.prototype("int ecl_sum_get_first_report_step( ecl_sum )")
 cfunc.iget_report_step              = cwrapper.prototype("int  ecl_sum_iget_report_step( ecl_sum , int )")
 cfunc.select_matching_keys          = cwrapper.prototype("void ecl_sum_select_matching_general_var_list( ecl_sum , char* , stringlist )")
+cfunc.has_key                       = cwrapper.prototype("bool ecl_sum_has_general_var( ecl_sum , char* )")

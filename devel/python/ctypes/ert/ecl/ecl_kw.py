@@ -1,6 +1,9 @@
 from    ert.cwrap.cwrap       import *
+import  numpy
 import  fortio
 import  libecl
+from    ert.util.cfile   import CFILE
+
 
 
 # Enum defintion from ecl_util.h
@@ -18,18 +21,19 @@ class EclKW:
         self.c_ptr      = c_ptr
         self.data_owner = False
         self.data_ptr   = None
-        self.type = cfunc.get_type( self )
-        if self.type == ECL_INT_TYPE:
+        self.__type = cfunc.get_type( self )
+        if self.__type == ECL_INT_TYPE:
             self.data_ptr = cfunc.int_ptr( self )
-        elif self.type == ECL_REAL_TYPE:
+            self.dtype    = int        
+        elif self.__type == ECL_REAL_TYPE:
             self.data_ptr = cfunc.float_ptr( self )
-        elif self.type == ECL_DOUBLE_TYPE:
+            self.dtype    = float
+        elif self.__type == ECL_DOUBLE_TYPE:
             self.data_ptr = cfunc.double_ptr( self )
+            self.dtype    = double        
         else:
             # Iteration not supported ...
             self.data_ptr = None
-
-
 
 
     def from_param(self):
@@ -58,9 +62,9 @@ class EclKW:
                 if self.data_ptr:
                     return self.data_ptr[ index ]
                 else:
-                    if self.type == ECL_BOOL_TYPE:
+                    if self.__type == ECL_BOOL_TYPE:
                         return cfunc.iget_bool( self, index)
-                    elif self.type == ECL_CHAR_TYPE:
+                    elif self.__type == ECL_CHAR_TYPE:
                         return cfunc.iget_char_ptr( self , index )
                     else:
                         raise TypeError("Internal implementation error ...")
@@ -77,9 +81,9 @@ class EclKW:
                 if self.data_ptr:
                     self.data_ptr[ index ] = value
                 else:
-                    if self.type == ECL_BOOL_TYPE:
+                    if self.__type == ECL_BOOL_TYPE:
                         cfunc.iset_bool( self , index , value)
-                    elif self.type == ECL_CHAR_TYPE:
+                    elif self.__type == ECL_CHAR_TYPE:
                         return cfunc.iset_char_ptr( self , index , value)
                     else:
                         raise SystemError("Internal implementation error ...")
@@ -118,7 +122,6 @@ class EclKW:
 
     @property
     def header( self ):
-        print "Hei ..."
         return (self.name , self.size , self.type)
 
 
@@ -130,17 +133,26 @@ class EclKW:
     def array(self):
         a = self.data_ptr
         if not a == None:
-            a.size       = cfunc.get_size( self )
-            a.__parent__ = self  # Inhibit GC
+            a.size        = cfunc.get_size( self )
+            a.__parent__  = self  # Inhibit GC
         return a
-        
-    def numpy_array(self):
-        pass
 
+
+    @property
+    def numpy_array( self ):
+        if self.data_ptr:
+            a = self.array
+            value = numpy.zeros( a.size , dtype = self.dtype)
+            for i in range( a.size ):
+                value[i] = a[i]
 
     def fwrite( self , fortio ):
         cfunc.fwrite( self , fortio )
 
+    def write_grdecl( self , file ):
+        cfile = CFILE( file )
+        cfunc.fprintf_grdecl( self , cfile )
+        cfile.flush()
 
 
 #################################################################
@@ -166,9 +178,10 @@ cfunc.iget_int                   = cwrapper.prototype("int ecl_kw_iget_int( ecl_
 cfunc.iget_double                = cwrapper.prototype("double ecl_kw_iget_double( ecl_kw , int )")
 cfunc.iget_float                 = cwrapper.prototype("float ecl_kw_iget_float( ecl_kw , int)")
 cfunc.float_ptr                  = cwrapper.prototype("float* ecl_kw_get_float_ptr( ecl_kw )")
-cfunc.int_ptr                  = cwrapper.prototype("int* ecl_kw_get_int_ptr( ecl_kw )")
-cfunc.double_ptr                  = cwrapper.prototype("double* ecl_kw_get_double_ptr( ecl_kw )")
+cfunc.int_ptr                    = cwrapper.prototype("int* ecl_kw_get_int_ptr( ecl_kw )")
+cfunc.double_ptr                 = cwrapper.prototype("double* ecl_kw_get_double_ptr( ecl_kw )")
 cfunc.free                       = cwrapper.prototype("void ecl_kw_free( ecl_kw )")
 cfunc.copyc                      = cwrapper.prototype("long ecl_kw_alloc_copy( ecl_kw )")
 cfunc.fwrite                     = cwrapper.prototype("void ecl_kw_fwrite( ecl_kw , fortio )")
 cfunc.get_header                 = cwrapper.prototype("char* ecl_kw_get_header ( ecl_kw )")
+cfunc.fprintf_grdecl             = cwrapper.prototype("void ecl_kw_fprintf_grdecl( ecl_kw , FILE )")

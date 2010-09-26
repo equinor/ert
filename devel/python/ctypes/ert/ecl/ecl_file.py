@@ -33,12 +33,23 @@ class EclFile(object):
     def __del__(self):
         cfunc.free( self )
             
+    def __getitem__(self , index):
+        if isinstance( index , types.IntType):
+            if index < 0 or index >= cfunc.get_size( self ):
+                raise IndexError
+            else:
+                kw_c_ptr = cfunc.iget_kw( self , index )
+                return EclKW( self , kw_c_ptr )
+        else:
+            raise TypeError
+
+
     def from_param(self):
         return self.c_ptr
 
+
     def iget_kw( self , index ):
-        kw_c_ptr = cfunc.iget_kw( self , index )
-        return EclKW( self , kw_c_ptr )
+        return self.__getitem__( index )
     
     def iget_named_kw( self , kw_name , index ):
         kw_c_ptr = cfunc.iget_named_kw( self , kw_name , index )
@@ -58,7 +69,7 @@ class EclFile(object):
 
     @property
     def size(self):
-        return cfunc.get_num_kw( self )
+        return cfunc.get_size( self )
 
     @property
     def unique_size( self ):
@@ -67,6 +78,14 @@ class EclFile(object):
     def num_named_kw( self , kw):
         return cfunc.get_num_named_kw( self , kw )
 
+    def has_kw( self , kw , num = 0):
+        num_named_kw = self.num_named_kw( kw , num )
+        if num_named_kw > num:
+            return True
+        else:
+            return False
+
+    
     def iget_restart_time( self , index ):
         return cfunc.iget_restart_time( self , index )
     
