@@ -16,7 +16,7 @@ from   ecl_region            import EclRegion
 import ecl_util
 from   ert.util.tvector      import DoubleVector   
 from   ert.util.stringlist   import StringList
-from   ert.util.cfile        import CFILE
+#from   ert.util.cfile        import CFILE
 
 from   ert.job_queue.driver  import LSFDriver , LocalDriver
 from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DONE , STATUS_EXIT

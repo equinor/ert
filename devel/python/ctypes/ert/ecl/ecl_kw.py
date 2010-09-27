@@ -34,7 +34,8 @@ class EclKW:
         else:
             # Iteration not supported ...
             self.data_ptr = None
-
+            self.dtype = None
+            
 
     def from_param(self):
         return self.c_ptr
@@ -152,8 +153,7 @@ class EclKW:
     def write_grdecl( self , file ):
         cfile = CFILE( file )
         cfunc.fprintf_grdecl( self , cfile )
-        cfile.flush()
-
+        
 
 #################################################################
 
@@ -185,3 +185,4 @@ cfunc.copyc                      = cwrapper.prototype("long ecl_kw_alloc_copy( e
 cfunc.fwrite                     = cwrapper.prototype("void ecl_kw_fwrite( ecl_kw , fortio )")
 cfunc.get_header                 = cwrapper.prototype("char* ecl_kw_get_header ( ecl_kw )")
 cfunc.fprintf_grdecl             = cwrapper.prototype("void ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
+
