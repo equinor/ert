@@ -1,6 +1,7 @@
 import ctypes
 from   ert.cwrap.cwrap       import *
 import ert.util.stringlist
+import numpy
 import fortio
 import libecl
 
@@ -48,7 +49,11 @@ class EclGrid(object):
         return cfunc.get_nz( self )
 
     @property
-    def active( self ):
+    def size( self ):
+        return cfunc.get_nx( self ) * cfunc.get_ny( self ) * cfunc.get_nz( self )
+
+    @property
+    def nactive( self ):
         return cfunc.get_active( self )
 
     @property
@@ -64,15 +69,15 @@ class EclGrid(object):
 
     def __global_index( self , active_index = None , global_index = None , ijk = None):
         set_count = 0
-        if active_index:
+        if not active_index == None:
             set_count += 1
-        if global_index:
+        if not global_index == None:
             set_count += 1
         if ijk:
             set_count += 1
             
         if not set_count == 1:
-            sys.exit("The function get_xyz() requires that exactly one of the kewyord arguments active_index, global_index, ijk be set")
+            raise ValueError("Exactly one of the kewyord arguments active_index, global_index or ijk must be set")
         
         if active_index:
             global_index = cfunc.get_global_index1A( self , active_index )
@@ -85,6 +90,15 @@ class EclGrid(object):
     def get_active_index( self , ijk = None , global_index = None):
         gi = self.__global_index( global_index = global_index , ijk = ijk)
         return cfunc.get_active_index1( self , gi)
+
+
+    def active( self , ijk = None , global_index = None):
+        gi = self.__global_index( global_index = global_index , ijk = ijk)
+        active_index = cfunc.get_active_index1( self , gi)
+        if active_index >= 0:
+            return True
+        else:
+            return False
 
 
     def get_global_index( self , ijk = None , active_index = None):
@@ -169,6 +183,27 @@ class EclGrid(object):
     def grid_value( self , ecl_kw , i,j,k):
         return cfunc.grid_value( self , ecl_kw , i , j , k)
 
+
+    def create3D( self , ecl_kw , default = 0):
+        if ecl_kw.size == self.nactive or ecl_kw.size == self.size:
+            array = numpy.ones( [ self.nx , self.ny , self.nz] , dtype = ecl_kw.dtype) * default
+            array = numpy.ones( [ self.size ] , dtype = ecl_kw.dtype) * default
+            kwa = ecl_kw.array
+            if ecl_kw.size == self.size:
+                for i in range(kwa.size):
+                    array[i] = kwa[i]
+            else:
+                data_index = 0
+                for global_index in range(self.size):
+                    if self.active( global_index = global_index ):
+                        array[global_index] = kwa[data_index]
+                        data_index += 1
+                        
+            array = array.reshape( [self.nx , self.ny , self.nz] , order = 'F')
+            return array
+        else:
+            raise ValueError("Keyword: %s has invalid size(%d), must be either nactive:%d  or nx*ny*nz:%d" % (ecl_kw.name , ecl_kw.size , self.nactive ,self.size))
+        
 
 # 2. Creating a wrapper object around the libecl library, 
 #    registering the type map : ecl_kw <-> EclKW
