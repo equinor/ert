@@ -71,11 +71,44 @@ class EclSum(object):
     def iget(self , key , internal_index):
         return cfunc.iget_general_var( self , key , internal_index )
 
-    def get_interp( self , key , days = None , time = None):
+    def get_interp( self , key , days = None , date = None):
         if days:
-            return cfunc.get_general_var_from_sim_days( self , days , key )
+            if cfunc.check_sim_days( self , days ):
+                return cfunc.get_general_var_from_sim_days( self , days , key )
+            else:
+                return None
+        elif date:
+            if cfunc.check_sim_time( self , ctime(date) ):
+                return cfunc.get_general_var_from_sim_time( self , ctime(date) , key )
+            else:
+                return None
         else:
-            return cfunc.get_general_var_from_sim_time( self , time , key )
+            raise ValueError("Must supply either days or time")
+
+
+    def get_interp_vector( self , key , days_list = None , date_list = None):
+        vector = []
+        if days_list:
+            sim_length = self.sim_length
+            for days in days_list:
+                if days >= 0 and days < sim_length:
+                    vector.append( cfunc.get_general_var_from_sim_days( self , days , key) )
+                else:
+                    vector.append( None )
+        elif date_list:
+            start_time = self.start_date
+            end_time   = self.end_date
+            for date in date_list:
+                if date >= start_time and date <= end_time:
+                    vector.append( cfunc.get_general_var_from_sim_time( self , ctime(date) , key) )
+                else:
+                    vector.append( None )
+                
+        else:
+            raise ValueError("Must supply either days_list or date_list")
+        return vector
+                
+
 
     def get_from_report( self , key , report_step ):
         time_index = cfunc.get_report_end( self , report_step )
@@ -139,6 +172,10 @@ class EclSum(object):
         """
         return cfunc.data_length( self )
 
+    @property 
+    def sim_length( self ):
+        return cfunc.sim_length( self )
+
 
     def matching_keys( self , pattern ):
         s = StringList()
@@ -148,12 +185,24 @@ class EclSum(object):
 
     @property
     def start_date(self):
-        return cfunc.get_start_date( self )
+        ctime = cfunc.get_start_date( self ) 
+        return ctime.date()
 
     @property
     def end_date(self):
-        return cfunc.get_end_date( self )
+        ctime = cfunc.get_end_date( self )
+        return ctime.date()
 
+    @property
+    def start_time(self):
+        ctime = cfunc.get_start_date( self ) 
+        return ctime.datetime()
+
+    @property
+    def end_time(self):
+        ctime = cfunc.get_end_date( self )
+        return ctime.datetime()
+    
     @property
     def last_report(self):
         return cfunc.get_last_report_step( self )
@@ -208,3 +257,6 @@ cfunc.get_first_report_step         = cwrapper.prototype("int ecl_sum_get_first_
 cfunc.iget_report_step              = cwrapper.prototype("int  ecl_sum_iget_report_step( ecl_sum , int )")
 cfunc.select_matching_keys          = cwrapper.prototype("void ecl_sum_select_matching_general_var_list( ecl_sum , char* , stringlist )")
 cfunc.has_key                       = cwrapper.prototype("bool ecl_sum_has_general_var( ecl_sum , char* )")
+cfunc.check_sim_time                = cwrapper.prototype("bool ecl_sum_check_sim_time( ecl_sum , time_t )") 
+cfunc.check_sim_days                = cwrapper.prototype("bool ecl_sum_check_sim_days( ecl_sum , double )") 
+cfunc.sim_length                    = cwrapper.prototype("double ecl_sum_get_sim_length( ecl_sum )")
