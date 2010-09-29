@@ -15,22 +15,50 @@ ECL_BOOL_TYPE   = 4
 ECL_MESS_TYPE   = 5
 
 
-class EclKW:
-    def __init__(self , parent , c_ptr):
-        self.__parent   = parent   # Hold on to the parent to inhibit GC
-        self.c_ptr      = c_ptr
-        self.data_owner = False
+class EclKW(object):
+    
+    @classmethod
+    def new( cls , name, size , type):
+        obj = cls()
+        obj.c_ptr      = cfunc.alloc_new( name , size , type )
+        obj.data_owner = True
+        obj.parent     = None
+        obj.__init( )
+        return obj
+
+
+    @classmethod
+    def ref( cls , c_ptr , parent ):
+        obj = cls( )
+        obj.c_ptr      = c_ptr
+        obj.data_owner = False
+        obj.parent     = parent
+        obj.__init( )
+        return obj
+
+
+    @classmethod
+    def copy( cls , src ):
+        obj = cls( )
+        obj.c_ptr = cfunc.copyc( src )
+        obj.parent = None
+        obj.data_owner = True
+        obj.__init( )
+        return obj
+
+
+    def __init(self):
         self.data_ptr   = None
         self.__type = cfunc.get_type( self )
         if self.__type == ECL_INT_TYPE:
             self.data_ptr = cfunc.int_ptr( self )
-            self.dtype    = int        
+            self.dtype    = numpy.int32        
         elif self.__type == ECL_REAL_TYPE:
             self.data_ptr = cfunc.float_ptr( self )
-            self.dtype    = float
+            self.dtype    = numpy.float32
         elif self.__type == ECL_DOUBLE_TYPE:
             self.data_ptr = cfunc.double_ptr( self )
-            self.dtype    = double        
+            self.dtype    = numpy.float64        
         else:
             # Iteration not supported ...
             self.data_ptr = None
@@ -42,15 +70,15 @@ class EclKW:
 
     def __len__( self ):
         return cfunc.get_size( self )
+
     
     def __del__(self):
         if self.data_owner:
-            print "Calling ecl_kw_free()"
             cfunc.free( self )
 
+
     def __deep_copy__(self , memo):
-        c_ptr  = cfunc.copyc( self )
-        ecl_kw = EclKW( None , c_ptr )
+        ecl_kw = EclKW.copy( self )
         ecl_kw.data_owner = True
         return ecl_kw
 
@@ -185,4 +213,4 @@ cfunc.copyc                      = cwrapper.prototype("long ecl_kw_alloc_copy( e
 cfunc.fwrite                     = cwrapper.prototype("void ecl_kw_fwrite( ecl_kw , fortio )")
 cfunc.get_header                 = cwrapper.prototype("char* ecl_kw_get_header ( ecl_kw )")
 cfunc.fprintf_grdecl             = cwrapper.prototype("void ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
-
+cfunc.alloc_new                  = cwrapper.prototype("long ecl_kw_alloc( char* , int , int )")

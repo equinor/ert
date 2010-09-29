@@ -174,7 +174,7 @@ class conf:
 
 
 
-    def update_env( self , env , liblist , ext_liblist = None , link = False):
+    def update_env( self , env , liblist , ext_liblist = None , ext_headerlist = None , link = False):
         self.SDP_INSTALL   = {}
         self.local_install = {}
         CPPPATH = ["./"]
@@ -192,6 +192,10 @@ class conf:
         CPPPATH.append( self.SDP_INCLUDE )
         LIBPATH.append( self.SDP_LIB )
         env.Replace( CC = "gcc" )
+
+        if ext_headerlist:
+            for path in ext_headerlist:
+                CPPPATH.append( path )
 
         if ext_liblist:
             LIBS += ext_liblist
