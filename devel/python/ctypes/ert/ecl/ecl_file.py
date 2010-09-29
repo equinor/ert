@@ -39,7 +39,7 @@ class EclFile(object):
                 raise IndexError
             else:
                 kw_c_ptr = cfunc.iget_kw( self , index )
-                return EclKW( self , kw_c_ptr )
+                return EclKW.ref( kw_c_ptr , self )
         else:
             raise TypeError
 
@@ -53,7 +53,7 @@ class EclFile(object):
     
     def iget_named_kw( self , kw_name , index ):
         kw_c_ptr = cfunc.iget_named_kw( self , kw_name , index )
-        return EclKW( self , kw_c_ptr)
+        return EclKW.ref( kw_c_ptr , self )
 
     def restart_get_kw( self , kw_name , dtime ):
         """

@@ -4,7 +4,7 @@ import ert.util.stringlist
 import numpy
 import fortio
 import libecl
-
+import ecl_kw
 
 class EclGrid(object):
 
@@ -180,8 +180,47 @@ class EclGrid(object):
             return None
 
 
-    def grid_value( self , ecl_kw , i,j,k):
-        return cfunc.grid_value( self , ecl_kw , i , j , k)
+    def grid_value( self , kw , i,j,k):
+        return cfunc.grid_value( self , kw , i , j , k)
+
+
+    def createKW( self , array , kw_name , pack):
+        if array.ndim == 3:
+            dims = array.shape
+            if dims[0] == self.nx and dims[1] == self.ny and dims[2] == self.nz:
+                dtype = array.dtype
+                print dtype
+                if dtype == numpy.int32:
+                    type = ecl_kw.ECL_INT_TYPE
+                elif dtype == numpy.float32:
+                    type = ecl_kw.ECL_REAL_TYPE
+                elif dtype == numpy.float64:
+                    type = ecl_kw.ECL_DOUBLE_TYPE
+                else:
+                    sys.exit("Do not know how to create ecl_kw from type:%s" % dtype)
+  
+                if pack:
+                    size = self.nactive
+                else:
+                    size = self.size
+
+                kw = ecl_kw.EclKW.new( kw_name , size , type )
+                active_index = 0
+                global_index = 0
+                for k in range( self.nz ):
+                    for j in range( self.ny ):
+                        for i in range( self.nx ):
+                            if pack:
+                                if self.active( global_index = global_index ):
+                                    kw[active_index] = array[i,j,k]
+                                    active_index += 1
+                            else:
+                                kw[global_index] = array[i,j,k]
+                            global_index += 1
+                return kw
+        raise ValueError("Wrong size / dimension on array")
+
+
 
 
     def create3D( self , ecl_kw , default = 0):

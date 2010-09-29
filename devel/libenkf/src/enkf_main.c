@@ -1236,7 +1236,7 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
       /* The updates are performed one at a time when using bootstrap. Hence the followin loop*/
       { 
         int ensemble_members_loop;
-        const matrix_type * work_A               = matrix_alloc_copy( A ); // Huge memory requirement. Is needed such that we do not resample updated ensemble members from A
+        matrix_type * work_A                     = matrix_alloc_copy( A ); // Huge memory requirement. Is needed such that we do not resample updated ensemble members from A
         meas_matrix_type * meas_matrix_resampled = meas_matrix_alloc_copy( meas_matrix );
         matrix_type      * A_resampled           = matrix_alloc( matrix_get_rows(work_A) , matrix_get_columns( work_A ));
         for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
@@ -1814,7 +1814,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
 static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
                                run_mode_type    run_mode       ,
                                const bool * iactive            ,
-                               int load_start                  ,      /* For internalizing results. */
+                               int load_start                  ,      /* For internalizing results, and the first step in the update when merging. */
                                int init_step_parameter         ,
                                state_enum init_state_parameter ,
                                state_enum init_state_dynamic   ,
@@ -1927,7 +1927,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
             /* To ensure that we do not get 0-1 when updating at the first step. */
             enkf_main_UPDATE(enkf_main , merge_observations , util_int_max(1 , load_start) , step2);
           else
-            enkf_main_UPDATE(enkf_main , merge_observations , load_start, step2);
+            enkf_main_UPDATE(enkf_main , merge_observations , load_start , step2);
         }
       }
       enkf_fs_fsync( enkf_main->dbase );
