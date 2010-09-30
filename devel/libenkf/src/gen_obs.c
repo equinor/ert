@@ -145,10 +145,10 @@ gen_obs_type * gen_obs_alloc(const char * obs_key , const char * obs_file , doub
   gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
   UTIL_TYPE_ID_INIT( obs , GEN_OBS_TYPE_ID );
-  obs->obs_data    	= NULL;
-  obs->obs_std    	= NULL;
-  obs->obs_file        	= util_alloc_string_copy( obs_file );
-  obs->obs_format      	= ASCII;  /* Hardcoded for now. */
+  obs->obs_data         = NULL;
+  obs->obs_std          = NULL;
+  obs->obs_file         = util_alloc_string_copy( obs_file );
+  obs->obs_format       = ASCII;  /* Hardcoded for now. */
   obs->obs_key          = util_alloc_string_copy( obs_key );   
 
   gen_obs_load_observation(obs , scalar_value , scalar_error); /* The observation data is loaded - and internalized at boot time - even though it might not be needed for a long time. */
@@ -223,9 +223,10 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
 void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , int report_step , int iens , meas_matrix_type * meas_matrix, const active_list_type * __active_list) {
   gen_obs_assert_data_size(gen_obs , gen_data);
   {
-    int active_size              = active_list_get_active_size( __active_list , gen_obs->obs_size );
-    meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , gen_obs->obs_key , report_step , active_size );
-    active_mode_type active_mode = active_list_get_mode( __active_list );
+    int active_size                       = active_list_get_active_size( __active_list , gen_obs->obs_size );
+    meas_block_type * meas_block          = meas_matrix_add_block( meas_matrix , gen_obs->obs_key , report_step , active_size );
+    active_mode_type active_mode          = active_list_get_mode( __active_list );
+    const bool_vector_type * forward_mask = gen_data_get_forward_mask( gen_data );
 
     int iobs;
     if (active_mode == ALL_ACTIVE) {

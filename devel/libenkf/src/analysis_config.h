@@ -12,8 +12,8 @@ void                   analysis_config_init( analysis_config_type * analysis , c
 analysis_config_type * analysis_config_alloc_default(void );
 void                   analysis_config_free( analysis_config_type * );
 bool                   analysis_config_get_merge_observations(const analysis_config_type * );
-double 		       analysis_config_get_alpha(const analysis_config_type * config);
-double 		       analysis_config_get_truncation(const analysis_config_type * config);
+double                 analysis_config_get_alpha(const analysis_config_type * config);
+double                 analysis_config_get_truncation(const analysis_config_type * config);
 bool                   analysis_config_Xbased(const analysis_config_type * config);
 enkf_mode_type         analysis_config_get_enkf_mode( const analysis_config_type * config );
 pseudo_inversion_type  analysis_config_get_inversion_mode( const analysis_config_type * config );
@@ -23,7 +23,7 @@ int                    analysis_config_get_rerun_start(const analysis_config_typ
 //bool                   analysis_config_get_do_cross_validation(const analysis_config_type * config);
 bool                   analysis_config_get_do_local_cross_validation(const analysis_config_type * config);
 int                    analysis_config_get_nfolds_CV(const analysis_config_type * config);
-bool                   analysis_config_get_do_bootstrap(const analysis_config_type * config);
+bool                   analysis_config_get_bootstrap(const analysis_config_type * config);
 void                   analysis_config_set_rerun(analysis_config_type * config , bool rerun);
 void                   analysis_config_set_rerun_start( analysis_config_type * config , int rerun_start );
 void                   analysis_config_set_truncation( analysis_config_type * config , double truncation);

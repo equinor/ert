@@ -3,7 +3,7 @@
 #include <matrix.h>
 #include <matrix_lapack.h>
 #include <matrix_blas.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <obs_data.h>
 #include <analysis_config.h>
 #include <enkf_util.h>
@@ -807,7 +807,7 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 
 /*****************************************************************/
 
-void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int start_step, int end_step , const char * ministep_name , FILE * stream ) {
+void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_data_type * meas_data , int start_step, int end_step , const char * ministep_name , FILE * stream ) {
   const char * float_fmt = "%15.3f";
   fprintf(stream , "===============================================================================================================================\n");
   if (start_step == end_step)
@@ -829,7 +829,7 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
       int obs_count = 1;  /* Only for printing */
       for (block_nr =0; block_nr < obs_data_get_num_blocks( obs_data ); block_nr++) {
         const obs_block_type  * obs_block  = obs_data_iget_block_const( obs_data , block_nr);
-        const meas_block_type * meas_block = meas_matrix_iget_block_const( meas_matrix , block_nr );
+        const meas_block_type * meas_block = meas_data_iget_block_const( meas_data , block_nr );
         const char * obs_key = obs_block_get_key( obs_block );
         
         for (int iobs = 0; iobs < obs_block_get_size( obs_block ); iobs++) {
@@ -863,10 +863,10 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
 
 
 
-void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_type * meas_matrix , double std_cutoff , double alpha) {
+void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type * meas_data , double std_cutoff , double alpha) {
   for (int block_nr =0; block_nr < obs_data_get_num_blocks( obs_data ); block_nr++) {
     obs_block_type  * obs_block  = obs_data_iget_block( obs_data , block_nr);
-    meas_block_type * meas_block = meas_matrix_iget_block( meas_matrix , block_nr );
+    meas_block_type * meas_block = meas_data_iget_block( meas_data , block_nr );
     
     meas_block_calculate_ens_stats( meas_block );
     {
@@ -912,17 +912,17 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_ty
   observation error and the mean will be subtracted from the S matrix.
 */
 
-static void enkf_analysis_alloc_matrices( const meas_matrix_type * meas_matrix , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
+static void enkf_analysis_alloc_matrices( const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
                                           matrix_type ** S , 
                                           matrix_type ** R , 
                                           double      ** innov,
                                           matrix_type ** E ,
                                           matrix_type ** D ) {
-  int ens_size              = meas_matrix_get_ens_size( meas_matrix );
+  int ens_size              = meas_data_get_ens_size( meas_data );
   int active_size           = obs_data_get_active_size( obs_data );
-  *S                        = meas_matrix_allocS( meas_matrix , active_size );
+  *S                        = meas_data_allocS( meas_data , active_size );
   *R                        = obs_data_allocR( obs_data , active_size );
-  *innov                    = obs_data_alloc_innov(obs_data , meas_matrix , active_size );
+  *innov                    = obs_data_alloc_innov(obs_data , meas_data , active_size );
   
   if (enkf_mode == ENKF_STANDARD) {
     /* 
@@ -972,7 +972,7 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
 
       A' = AX
 
-   EnKF update. It takes as input a meas_matrix - where all the
+   EnKF update. It takes as input a meas_data - where all the
    measurements have been collected, and a obs_data instance where the
    corresponding observations have been assembled. In addition it
    takes as input a random rotation matrix which will be used IFF the
@@ -992,8 +992,8 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
 
 */
    
-matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const meas_matrix_type * meas_matrix , obs_data_type * obs_data , const matrix_type * randrot) {
-  int ens_size          = meas_matrix_get_ens_size( meas_matrix );
+matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot) {
+  int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   {
     matrix_type * S , *R , *E , *D;
@@ -1005,7 +1005,7 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const 
     double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
     bool bootstrap           = analysis_config_get_bootstrap( config );
-    enkf_analysis_alloc_matrices( meas_matrix , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
+    enkf_analysis_alloc_matrices( meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
         
     /* 
        2: Diagonalize the S matrix; singular vectors are stored in W
@@ -1047,8 +1047,8 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const 
 
 
 
-matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , meas_matrix_type * meas_matrix , obs_data_type * obs_data , const matrix_type * randrot , matrix_type * A , matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0) {
-  int ens_size          = meas_matrix_get_ens_size( meas_matrix );
+matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , matrix_type * A , matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0) {
+  int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   {
     int nrobs                = obs_data_get_active_size(obs_data);
@@ -1069,7 +1069,7 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     
     double * workeig    = util_malloc( sizeof * workeig * nrmin , __func__);
 
-    enkf_analysis_alloc_matrices( meas_matrix , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
+    enkf_analysis_alloc_matrices( meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
 
     /*copy entries in eig:*/
     {
@@ -1133,13 +1133,13 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     in U0, V0T and eig respectively.
 */
 
-void enkf_analysis_local_pre_cv( const analysis_config_type * config , meas_matrix_type * meas_matrix , obs_data_type * obs_data ,  matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0) {
+void enkf_analysis_local_pre_cv( const analysis_config_type * config , meas_data_type * meas_data , obs_data_type * obs_data ,  matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0) {
   {
     matrix_type * S , *R , *E , *D;
     double      * innov;
 
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
-    enkf_analysis_alloc_matrices( meas_matrix , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
+    enkf_analysis_alloc_matrices( meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
     
     /* 
        2: Diagonalize the S matrix; singular vectors etc. needed later in the local CV:

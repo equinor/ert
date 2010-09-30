@@ -13,6 +13,7 @@
 #include <local_ministep.h>
 #include <local_config.h>
 #include <math.h>
+#include <meas_data.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -237,9 +238,9 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
                                           int                      end_step , 
                                           state_enum               state,
                                           int                      ens_size,
-                                          const enkf_state_type ** ensemble ,
-                                          meas_matrix_type       * meas_matrix,
-                                          obs_data_type          * obs_data,
+                                          const enkf_state_type     ** ensemble ,
+                                          meas_data_type           * meas_data,
+                                          obs_data_type              * obs_data,
                                           const local_ministep_type  * mstep , 
                                           double_vector_type         * obs_value , 
                                           double_vector_type         * obs_std) {
@@ -251,7 +252,6 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
   int step;
 
   /*1: Determine which report_steps have active observations; and collect the observed values. */
-  
   double_vector_reset( obs_std );
   double_vector_reset( obs_value );
   
@@ -259,8 +259,8 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
     if (obs_vector_iget_active( obs_vector , step ) && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
       {
         const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , step );
-        double_vector_iset( obs_std   , active_count ,  summary_obs_get_std( summary_obs ));
-        double_vector_iset( obs_value , active_count ,  summary_obs_get_value( summary_obs ));
+        double_vector_iset( obs_std   , active_count , summary_obs_get_std( summary_obs ));
+        double_vector_iset( obs_value , active_count , summary_obs_get_value( summary_obs ));
         last_step = step;
       }
       active_count++;
@@ -306,7 +306,7 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
     /*3: Fill up the obs_block and meas_block structures with this time-aggregated summary observation. */
     {
       obs_block_type  * obs_block  = obs_data_add_block( obs_data , obs_vector_get_obs_key( obs_vector ) , active_count , error_covar , true);
-      meas_block_type * meas_block = meas_matrix_add_block( meas_matrix, obs_vector_get_obs_key( obs_vector ) , end_step , active_count );
+      meas_block_type * meas_block = meas_data_add_block( meas_data, obs_vector_get_obs_key( obs_vector ) , end_step , active_count );
       
       for (int i=0; i < active_count; i++) 
         obs_block_iset( obs_block , i , double_vector_iget( obs_value , i) , double_vector_iget( obs_std , i ));
@@ -334,8 +334,8 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
 
 /*
   This will append observations and simulated responses from
-  report_step to obs_data and meas_matrix.  
-  Call obs_data_reset and meas_matrix_reset on obs_data and meas_matrix
+  report_step to obs_data and meas_data.  
+  Call obs_data_reset and meas_data_reset on obs_data and meas_data
   if you want to use fresh instances.
 */
 void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
@@ -345,7 +345,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   state_enum               state,
                                   int                      ens_size,
                                   const enkf_state_type ** ensemble ,
-                                  meas_matrix_type       * meas_matrix,
+                                  meas_data_type       * meas_data,
                                   obs_data_type          * obs_data,
                                   const local_ministep_type  * mstep) {
 
@@ -367,7 +367,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                             state , 
                                             ens_size , 
                                             ensemble , 
-                                            meas_matrix , 
+                                            meas_data , 
                                             obs_data , 
                                             mstep , 
                                             work_value, 
@@ -384,7 +384,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
               enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
               
               enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
-              obs_vector_measure(obs_vector , report_step , iens , enkf_node , meas_matrix , active_list);
+              obs_vector_measure(obs_vector , report_step , iens , enkf_node , meas_data , active_list);
             }
           }
         } 

@@ -853,8 +853,6 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
           }
         }
       }
-      
-
     }
 
     if (ikw2 == num_kw)
@@ -1408,7 +1406,12 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
           /*LOCAL CV: */
 
           // Should ONLY support CV + Local
-          if (analysis_config_get_do_bootstrap( enkf_main->analysis_config )) {
+          if (analysis_config_get_bootstrap( enkf_main->analysis_config )) {
+            /*
+              Think there is a memory bug in this update code, when
+              the allocated A matrix is not large enough to hold all
+              data.
+            */
             enkf_main_update_mulX_cv_bootstrap_update(enkf_main , ministep, start_step, end_step , use_count , meas_forecast , obs_data, std_cutoff, alpha);
           }
           else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
@@ -3494,14 +3497,16 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
 
 void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
   fprintf( stream , CONFIG_COMMENTLINE_FORMAT );
-  fprintf( stream , CONFIG_COMMENT_FORMAT , "Here comes configuration information about the ERT logging.");
-  fprintf(stream , CONFIG_KEY_FORMAT      , LOG_FILE_KEY );
-  fprintf(stream , CONFIG_ENDVALUE_FORMAT , enkf_main_get_log_file( enkf_main ));
+  fprintf( stream , CONFIG_COMMENT_FORMAT  , "Here comes configuration information about the ERT logging.");
+  fprintf( stream , CONFIG_KEY_FORMAT      , LOG_FILE_KEY );
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , enkf_main_get_log_file( enkf_main ));
+
   if (enkf_main_get_log_level( enkf_main ) != DEFAULT_LOG_LEVEL) {
     fprintf(stream , CONFIG_KEY_FORMAT      , LOG_LEVEL_KEY );
     fprintf(stream , CONFIG_INT_FORMAT , enkf_main_get_log_level( enkf_main ));
     fprintf(stream , "\n");
   }
+  
   fprintf(stream , "\n");
   fprintf(stream , "\n");
 }
@@ -3509,8 +3514,9 @@ void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * str
 
 void enkf_main_install_SIGNALS(void) {
   signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
-  signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. Killing with SIGKILL (-9) will not give a backtrace.*/
-  //  signal(SIGABRT , util_abort_signal);    /* Signal abort. */ COnfilct with abort() in util_abort(). 
+  signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. 
+                                             Killing with SIGKILL (-9) will not give a backtrace.*/
+  signal(SIGABRT , util_abort_signal);    /* Signal abort. */ 
 }
 
 

@@ -11,6 +11,7 @@
 #include <path_fmt.h>
 #include <gen_data_common.h>
 #include <int_vector.h>
+#include <bool_vector.h>
 #include "config_keys.h"
 #include "enkf_defaults.h"
 
@@ -18,19 +19,21 @@
 struct gen_data_config_struct {
   CONFIG_STD_FIELDS;
   char                         * key;                   /* The key this gen_data instance is known under - needed for debugging. */
-  ecl_type_enum  	         internal_type;         /* The underlying type (float | double) of the data in the corresponding gen_data instances. */
+  ecl_type_enum                  internal_type;         /* The underlying type (float | double) of the data in the corresponding gen_data instances. */
   char                         * template_file;        
-  char           	       * template_buffer;       /* Buffer containing the content of the template - read and internalized at boot time. */
+  char                         * template_buffer;       /* Buffer containing the content of the template - read and internalized at boot time. */
   char                         * template_key;
-  int            	         template_data_offset;  /* The offset into the template buffer before the data should come. */
-  int            	         template_data_skip;    /* The length of data identifier in the template.*/ 
-  int            	         template_buffer_size;  /* The total size (bytes) of the template buffer .*/
-  path_fmt_type  	       * init_file_fmt;         /* file format for the file used to load the inital values - NULL if the instance is initialized from the forward model. */
-  gen_data_file_format_type    	 input_format;          /* The format used for loading gen_data instances when the forward model has completed *AND* for loading the initial files.*/
-  gen_data_file_format_type    	 output_format;         /* The format used when gen_data instances are written to disk for the forward model. */
+  int                            template_data_offset;  /* The offset into the template buffer before the data should come. */
+  int                            template_data_skip;    /* The length of data identifier in the template.*/ 
+  int                            template_buffer_size;  /* The total size (bytes) of the template buffer .*/
+  path_fmt_type                * init_file_fmt;         /* file format for the file used to load the inital values - NULL if the instance is initialized from the forward model. */
+  gen_data_file_format_type      input_format;          /* The format used for loading gen_data instances when the forward model has completed *AND* for loading the initial files.*/
+  gen_data_file_format_type      output_format;         /* The format used when gen_data instances are written to disk for the forward model. */
   int_vector_type              * data_size_vector;      /* Data size, i.e. number of elements , indexed with report_step */
   bool                           update_valid; 
   pthread_mutex_t                update_lock;  
+  bool_vector_type             * active_mask;
+  int                            active_report_step;
 };
 
 /*****************************************************************/
@@ -87,12 +90,13 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   config->template_file     = NULL;
   config->template_buffer   = NULL;
   config->template_key      = NULL;
-  config->data_size  	    = 0;
+  config->data_size         = 0;
   config->internal_type     = ECL_DOUBLE_TYPE;
   config->input_format      = GEN_DATA_UNDEFINED;
   config->output_format     = GEN_DATA_UNDEFINED;
   config->data_size_vector  = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
   config->update_valid      = false;
+  config->active_mask       = bool_vector_alloc(0 , false );
   pthread_mutex_init( &config->update_lock , NULL );
 
   return config;
@@ -108,6 +112,10 @@ const char * gen_data_config_get_init_file_fmt( const gen_data_config_type * con
   return path_fmt_get_fmt( config->init_file_fmt );
 }
 
+
+const bool_vector_type * gen_data_config_get_active_mask( const gen_data_config_type * config ) {
+  return NULL;
+}
 
 
 static void gen_data_config_set_template( gen_data_config_type * config , const char * template_ecl_file , const char * template_data_key ) {
@@ -272,7 +280,8 @@ void gen_data_config_free(gen_data_config_type * config) {
   util_safe_free( config->template_buffer );
   util_safe_free( config->template_file );
   util_safe_free( config->template_key );
-
+  bool_vector_free( config->active_mask );
+  
   free(config);
 }
 
@@ -282,8 +291,8 @@ void gen_data_config_free(gen_data_config_type * config) {
 /**
    This function gets a size (from a gen_data) instance, and verifies
    that the size agrees with the currently stored size and
-   report_step. If the report_step is new we just recordthe new info,
-   otherwise it will break hard.
+   report_step. If the report_step is new we just record the new info,
+   otherwise it will break hard.  
 */
 
 
@@ -307,16 +316,47 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
 
     if (current_size != data_size) {
       util_abort("%s: Size mismatch when loading:%s from file - got %d elements - expected:%d [report_step:%d] \n",
-		 __func__ , 
+                 __func__ , 
                  gen_data_config_get_key( config ),
-		 data_size , 
-		 current_size , 
-		 report_step);
+                 data_size , 
+                 current_size , 
+                 report_step);
     }
   }
   pthread_mutex_unlock( &config->update_lock );
 }
 
+/**
+   When the forward model is creating results for GEN_DATA instances,
+   it can optionally signal that not all elements in the gen_data
+   should be active (i.e. the forward model failed in some way); that
+   is handled through this function. When all ensemble members have
+   called this function the mask config->active_mask should be true
+   ONLY for the elements which are true for all members.
+   
+   This MUST be called after gen_data_config_assert_size(). 
+*/
+
+void gen_data_config_update_active(gen_data_config_type * config , int report_step , const bool_vector_type * data_mask) {
+  pthread_mutex_lock( &config->update_lock );
+  {
+    if (config->active_report_step != report_step) {
+      /* This will ensure that the vector is filled with true values. */
+      bool_vector_reset( config->active_mask );
+      bool_vector_iset( config->active_mask , int_vector_iget( config->data_size_vector , report_step ) - 1 , true );
+    }
+    config->active_report_step = report_step;
+
+    if (data_mask != NULL) {
+      int i;
+      for (i=0; i < bool_vector_size( data_mask ); i++) {
+        if (!bool_vector_iget( data_mask , i ))
+          bool_vector_iset( config->active_mask , i , false );
+      }
+    }
+  }
+  pthread_mutex_unlock( &config->update_lock );
+}
 
 
 
@@ -333,10 +373,10 @@ char * gen_data_config_alloc_initfile(const gen_data_config_type * config , int 
 
 
 void gen_data_config_get_template_data( const gen_data_config_type * config , 
-					char ** template_buffer    , 
-					int * template_data_offset , 
-					int * template_buffer_size , 
-					int * template_data_skip) {
+                                        char ** template_buffer    , 
+                                        int * template_data_offset , 
+                                        int * template_buffer_size , 
+                                        int * template_data_skip) {
   
   *template_buffer      = config->template_buffer;
   *template_data_offset = config->template_data_offset;

@@ -5,7 +5,7 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <string.h>
 #include <util.h>
 #include <hash.h>
@@ -16,7 +16,7 @@
 
 #define MEAS_BLOCK_TYPE_ID 661936407
 
-struct meas_matrix_struct {
+struct meas_data_struct {
   int                 ens_size;
   vector_type       * data; 
   pthread_mutex_t     data_mutex;
@@ -116,7 +116,7 @@ static void meas_block_initS( const meas_block_type * meas_block , matrix_type *
 }
 
 
-static void meas_matrix_assign_block( meas_block_type * target_block , const meas_block_type * src_block , int target_iens , int src_iens ) {
+static void meas_data_assign_block( meas_block_type * target_block , const meas_block_type * src_block , int target_iens , int src_iens ) {
   int iobs;
   for (iobs =0; iobs < target_block->obs_size; iobs++) {  
     int target_index = target_iens * target_block->ens_stride + iobs * target_block->obs_stride;
@@ -202,8 +202,8 @@ int meas_block_get_total_size( const meas_block_type * meas_block ) {
 /*****************************************************************/
 
 
-meas_matrix_type * meas_matrix_alloc(int ens_size) {
-  meas_matrix_type * meas = util_malloc(sizeof * meas , __func__);
+meas_data_type * meas_data_alloc(int ens_size) {
+  meas_data_type * meas = util_malloc(sizeof * meas , __func__);
   if (ens_size <= 0) 
     util_abort("%s: ens_size must be > 0 - aborting \n",__func__);
 
@@ -217,7 +217,7 @@ meas_matrix_type * meas_matrix_alloc(int ens_size) {
 
 
 
-void meas_matrix_free(meas_matrix_type * matrix) {
+void meas_data_free(meas_data_type * matrix) {
   vector_free( matrix->data );
   set_free( matrix->lookup_keys );
   free( matrix );
@@ -225,7 +225,7 @@ void meas_matrix_free(meas_matrix_type * matrix) {
 
 
 
-void meas_matrix_reset(meas_matrix_type * matrix) {
+void meas_data_reset(meas_data_type * matrix) {
   set_clear( matrix->lookup_keys );
   vector_clear( matrix->data );
 }
@@ -235,7 +235,7 @@ void meas_matrix_reset(meas_matrix_type * matrix) {
    The code actually adding new blocks to the vector must be run in single-thread mode. 
 */
 
-meas_block_type * meas_matrix_add_block( meas_matrix_type * matrix , const char * obs_key , int report_step , int obs_size) {
+meas_block_type * meas_data_add_block( meas_data_type * matrix , const char * obs_key , int report_step , int obs_size) {
   char * lookup_key = util_alloc_sprintf( "%s-%d" , obs_key , report_step );  /* The obs_key is not alone unique over different report steps. */
   pthread_mutex_lock( &matrix->data_mutex );
   {
@@ -252,18 +252,18 @@ meas_block_type * meas_matrix_add_block( meas_matrix_type * matrix , const char 
 
 
 
-meas_block_type * meas_matrix_iget_block( meas_matrix_type * matrix , int block_nr) {
+meas_block_type * meas_data_iget_block( meas_data_type * matrix , int block_nr) {
   return vector_iget( matrix->data , block_nr);
 }
 
 
-const meas_block_type * meas_matrix_iget_block_const( const meas_matrix_type * matrix , int block_nr) {
+const meas_block_type * meas_data_iget_block_const( const meas_data_type * matrix , int block_nr) {
   return vector_iget_const( matrix->data , block_nr);
 }
 
 
 
-matrix_type * meas_matrix_allocS(const meas_matrix_type * matrix, int active_size) {
+matrix_type * meas_data_allocS(const meas_data_type * matrix, int active_size) {
   int obs_offset = 0;
   matrix_type * S  = matrix_alloc( active_size , matrix->ens_size );
 
@@ -276,37 +276,37 @@ matrix_type * meas_matrix_allocS(const meas_matrix_type * matrix, int active_siz
 
 
 
-int meas_matrix_get_nrobs( const meas_matrix_type * meas_matrix ) {
+int meas_data_get_nrobs( const meas_data_type * meas_data ) {
   return -1;
 }
 
 
-int meas_matrix_get_ens_size( const meas_matrix_type * meas_matrix ) {
-  return meas_matrix->ens_size;
+int meas_data_get_ens_size( const meas_data_type * meas_data ) {
+  return meas_data->ens_size;
 }
 
 
-void meas_matrix_assign_vector(meas_matrix_type * target_matrix, const meas_matrix_type * src_matrix , int target_index , int src_index) {
+void meas_data_assign_vector(meas_data_type * target_matrix, const meas_data_type * src_matrix , int target_index , int src_index) {
   if (target_matrix->ens_size != src_matrix->ens_size)
     util_abort("%s: size mismatch \n",__func__);
     
   for (int block_nr = 0; block_nr < vector_get_size( target_matrix->data ); block_nr++) {
-    meas_block_type * target_block    = meas_matrix_iget_block( target_matrix , block_nr );
-    const meas_block_type * src_block = meas_matrix_iget_block_const( src_matrix , block_nr );
+    meas_block_type * target_block    = meas_data_iget_block( target_matrix , block_nr );
+    const meas_block_type * src_block = meas_data_iget_block_const( src_matrix , block_nr );
     
-    meas_matrix_assign_block( target_block , src_block , target_index , src_index );
+    meas_data_assign_block( target_block , src_block , target_index , src_index );
   }
 }
 
 
-meas_matrix_type * meas_matrix_alloc_copy( const meas_matrix_type * src_matrix ) {
-  meas_matrix_type * copy_matrix = meas_matrix_alloc( src_matrix->ens_size );
+meas_data_type * meas_data_alloc_copy( const meas_data_type * src_matrix ) {
+  meas_data_type * copy_matrix = meas_data_alloc( src_matrix->ens_size );
 
   for (int block_nr = 0; block_nr < vector_get_size( src_matrix->data ); block_nr++) {
-    const meas_block_type * src_block = meas_matrix_iget_block_const( src_matrix , block_nr );
-    meas_matrix_add_block( copy_matrix , src_block->obs_key , src_block->report_step , src_block->obs_size );
+    const meas_block_type * src_block = meas_data_iget_block_const( src_matrix , block_nr );
+    meas_data_add_block( copy_matrix , src_block->obs_key , src_block->report_step , src_block->obs_size );
     {
-      meas_block_type * copy_block = meas_matrix_iget_block( copy_matrix , block_nr );
+      meas_block_type * copy_block = meas_data_iget_block( copy_matrix , block_nr );
       meas_block_memcpy( copy_block , src_block );
     }
   }
@@ -316,10 +316,10 @@ meas_matrix_type * meas_matrix_alloc_copy( const meas_matrix_type * src_matrix )
 
 
 
-void meas_matrix_fprintf( const meas_matrix_type * matrix , FILE * stream ) {
+void meas_data_fprintf( const meas_data_type * matrix , FILE * stream ) {
   fprintf(stream , "-----------------------------------------------------------------\n");
   for (int block_nr = 0; block_nr < vector_get_size( matrix->data ); block_nr++) {
-    const meas_block_type * block = meas_matrix_iget_block_const( matrix , block_nr );
+    const meas_block_type * block = meas_data_iget_block_const( matrix , block_nr );
     meas_block_fprintf( block , stream );
     fprintf(stream , "\n");
   }

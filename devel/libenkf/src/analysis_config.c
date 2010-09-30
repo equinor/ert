@@ -22,7 +22,7 @@ struct analysis_config_struct {
   char                  * log_path;                  /* Points to directory with update logs. */
   int                     nfolds_CV;                 /* Number of folds in the CV scheme */
   bool                    do_local_cross_validation; /* Should we do CV for separate state vector matrices? */
-  bool                    do_bootstrap;              /* Should we do bootstrapping?*/
+  bool                    bootstrap;              /* Should we do bootstrapping?*/
 }; 
 
 
@@ -31,27 +31,6 @@ struct analysis_config_struct {
 
 
 
-analysis_config_type * analysis_config_alloc_default() {
-  analysis_config_type * config = util_malloc( sizeof * config , __func__);
-  
-  config->inversion_mode            = SVD_SS_N1_R;
-  config->random_rotation           = true;
-  config->log_path                  = NULL;
-  config->do_local_cross_validation = false;
-  config->do_bootstrap = true;
-  
-  analysis_config_set_std_cutoff( config         , DEFAULT_ENKF_STD_CUTOFF );
-  analysis_config_set_log_path( config           , DEFAULT_UPDATE_LOG_PATH );
-  analysis_config_set_truncation( config         , DEFAULT_ENKF_TRUNCATION );
-  analysis_config_set_alpha( config              , DEFAULT_ENKF_ALPHA );
-  analysis_config_set_merge_observations( config , DEFAULT_MERGE_OBSERVATIONS );
-  analysis_config_set_enkf_mode ( config         , DEFAULT_ENKF_MODE );
-  analysis_config_set_rerun( config              , DEFAULT_RERUN );
-  analysis_config_set_rerun_start( config        , DEFAULT_RERUN_START );
-  analysis_config_set_nfolds_CV( config          , DEFAULT_CV_NFOLDS );         
-  
-  return config;
-}
 
 
 void analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff ) {
@@ -112,8 +91,16 @@ bool analysis_config_get_do_local_cross_validation(const analysis_config_type * 
   return config->do_local_cross_validation;
 }
 
-bool analysis_config_get_do_bootstrap(const analysis_config_type * config) {
-  return config->do_bootstrap;
+bool analysis_config_get_bootstrap(const analysis_config_type * config) {
+  return config->bootstrap;
+}
+
+static void analysis_config_set_bootstrap(analysis_config_type * config , bool bootstrap) {
+  config->bootstrap = bootstrap;
+}
+
+static void analysis_config_set_CV(analysis_config_type * config , bool CV) {
+  config->do_local_cross_validation = CV;
 }
 
 void analysis_config_set_truncation( analysis_config_type * config , double truncation) {
@@ -136,13 +123,6 @@ void analysis_config_set_nfolds_CV( analysis_config_type * config , int folds) {
   config->nfolds_CV = folds;
 }
 
-void analysis_config_set_do_local_cross_validation( analysis_config_type * config , bool do_cv) {
-  config->do_local_cross_validation = do_cv;
-}
-
-void analysis_config_set_do_bootstrap( analysis_config_type * config , bool do_bootstrapping) {
-  config->do_bootstrap = do_bootstrapping;
-}
 
 static const char * analysis_config_get_mode_string( enkf_mode_type mode ) {
   switch( mode ) {
@@ -199,9 +179,9 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
 
   if (config_item_set( config , RERUN_START_KEY ))
     analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , RERUN_START_KEY ));
-
+  
   if (config_item_set( config , ENKF_LOCAL_CV_KEY )) {
-    analysis_config_set_do_local_cross_validation( analysis , config_get_value_as_bool(config , ENKF_LOCAL_CV_KEY ));
+    analysis_config_set_CV( analysis , config_get_value_as_bool(config , ENKF_LOCAL_CV_KEY ));
 
     if (config_item_set( config , ENKF_CV_FOLDS_KEY ))
       analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , ENKF_CV_FOLDS_KEY ));
@@ -209,7 +189,7 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   
   /*Bootstrap parameters: */  
   if (config_item_set( config , ENKF_BOOTSTRAP_KEY)) 
-    analysis_config_set_do_bootstrap( analysis , config_get_value_as_bool( config , ENKF_BOOTSTRAP_KEY ));
+    analysis_config_set_bootstrap( analysis , config_get_value_as_bool( config , ENKF_BOOTSTRAP_KEY ));
 
 }
 
@@ -220,9 +200,6 @@ bool analysis_config_get_merge_observations(const analysis_config_type * config)
 }
 
 
-bool analysis_config_get_bootstrap(const analysis_config_type * config) {
-  return config->do_bootstrap;
-}
 
 double analysis_config_get_alpha(const analysis_config_type * config) {
   return config->overlap_alpha;
@@ -256,6 +233,29 @@ bool analysis_config_Xbased(const analysis_config_type * config) {
     return true;
   else
     return false;
+}
+
+
+analysis_config_type * analysis_config_alloc_default() {
+  analysis_config_type * config = util_malloc( sizeof * config , __func__);
+  
+  config->inversion_mode            = SVD_SS_N1_R;
+  config->random_rotation           = true;
+  config->log_path                  = NULL;
+
+  analysis_config_set_CV( config                 , DEFAULT_ENKF_CV);
+  analysis_config_set_bootstrap( config          , DEFAULT_ENKF_BOOTSTRAP );
+  analysis_config_set_std_cutoff( config         , DEFAULT_ENKF_STD_CUTOFF );
+  analysis_config_set_log_path( config           , DEFAULT_UPDATE_LOG_PATH );
+  analysis_config_set_truncation( config         , DEFAULT_ENKF_TRUNCATION );
+  analysis_config_set_alpha( config              , DEFAULT_ENKF_ALPHA );
+  analysis_config_set_merge_observations( config , DEFAULT_MERGE_OBSERVATIONS );
+  analysis_config_set_enkf_mode ( config         , DEFAULT_ENKF_MODE );
+  analysis_config_set_rerun( config              , DEFAULT_RERUN );
+  analysis_config_set_rerun_start( config        , DEFAULT_RERUN_START );
+  analysis_config_set_nfolds_CV( config          , DEFAULT_CV_NFOLDS );         
+  
+  return config;
 }
 
 
@@ -348,4 +348,6 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
 
   fprintf(stream , "\n\n");
 }
+
+
 

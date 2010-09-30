@@ -6,7 +6,7 @@ extern "C" {
 #include <history.h>
 #include <enkf_fs.h>
 #include <enkf_state.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <ecl_sum.h>
 #include <obs_data.h>
 #include <obs_vector.h>
@@ -44,16 +44,16 @@ void enkf_obs_get_obs_and_measure(
         state_enum               state,
         int                      ens_size,
         const enkf_state_type ** ensemble ,
-        meas_matrix_type       * meas_matrix,
+        meas_data_type         * meas_data,
         obs_data_type          * obs_data,
-	const local_ministep_type * ministep);
+        const local_ministep_type * ministep);
 
 
 stringlist_type * enkf_obs_alloc_typed_keylist( enkf_obs_type * enkf_obs , obs_impl_type );
 hash_type * enkf_obs_alloc_data_map(enkf_obs_type * enkf_obs);
 
 const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key );
-bool 	  enkf_obs_has_key(const enkf_obs_type * , const char * );
+bool      enkf_obs_has_key(const enkf_obs_type * , const char * );
 
 hash_iter_type  * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs );
 

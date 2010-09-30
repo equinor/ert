@@ -104,6 +104,8 @@
 #define DEFAULT_RERUN_START        0  
 #define DEFAULT_UPDATE_LOG_PATH    "update_log"
 #define DEFAULT_CV_NFOLDS          10
+#define DEFAULT_ENKF_CV            false
+#define DEFAULT_ENKF_BOOTSTRAP     false
 
 
 /* Default directories. */
@@ -154,42 +156,42 @@
    understand C-linkage.
 */
 #define DEFAULT_STATIC_KW (const char *[NUM_STATIC_KW]) { \
-  "ACAQ",   	\
+  "ACAQ",       \
   "ACAQNUM",    \
   "DOUBHEAD",   \
   "ENDSOL",     \
   "HIDDEN",     \
-  "IAAQ",   	\
-  "ICAQ",   	\
+  "IAAQ",       \
+  "ICAQ",       \
   "ICAQNUM",    \
-  "ICON",   	\
-  "IGRP",   	\
-  "ILBR",   	\
-  "ILBS",   	\
+  "ICON",       \
+  "IGRP",       \
+  "ILBR",       \
+  "ILBS",       \
   "INTEHEAD",   \
-  "ISEG",   	\
+  "ISEG",       \
   "ISTHG",      \
-  "ISTHW",   	\
-  "IWEL",   	\
+  "ISTHW",      \
+  "IWEL",       \
   "LOGIHEAD",   \
   "PRESSURE",   \
-  "RS",   	\
-  "RSEG",   	\
-  "RV",   	\
-  "SAAQ",   	\
-  "SCAQ",   	\
+  "RS",         \
+  "RSEG",       \
+  "RV",         \
+  "SAAQ",       \
+  "SCAQ",       \
   "SCAQNUM",    \
-  "SCON",   	\
-  "SGAS",   	\
-  "SGRP",   	\
+  "SCON",       \
+  "SGAS",       \
+  "SGRP",       \
   "STARTSOL",   \
-  "SWAT",   	\
-  "SWEL",   	\
-  "XAAQ",   	\
-  "XCON",   	\
-  "XGRP",   	\
-  "XWEL",   	\
-  "ZGRP",   	\
+  "SWAT",       \
+  "SWEL",       \
+  "XAAQ",       \
+  "XCON",       \
+  "XGRP",       \
+  "XWEL",       \
+  "ZGRP",       \
   "ZWEL",       \
   "ENDLGR",     \
   "LGR",        \
@@ -235,15 +237,15 @@
 
 #define DEFAULT_CASE "default"
 
-#define DEFAULT_PLAIN_PARAMETER_PATH 	       "%04d/mem%03d/Parameter"
-#define DEFAULT_PLAIN_STATIC_PATH    	       "%04d/mem%03d/Static"
+#define DEFAULT_PLAIN_PARAMETER_PATH           "%04d/mem%03d/Parameter"
+#define DEFAULT_PLAIN_STATIC_PATH              "%04d/mem%03d/Static"
 #define DEFAULT_PLAIN_DYNAMIC_FORECAST_PATH    "%04d/mem%03d/Forecast"
 #define DEFAULT_PLAIN_DYNAMIC_ANALYZED_PATH    "%04d/mem%03d/Analyzed"
 #define DEFAULT_PLAIN_INDEX_PATH               "%04d/mem%03d/INDEX"
 
 
-#define DEFAULT_SQLITE_PARAMETER_DBFILE  	 "Parameter.sqlite_db"
-#define DEFAULT_SQLITE_STATIC_DBFILE     	 "Static.sqlite_db"
+#define DEFAULT_SQLITE_PARAMETER_DBFILE          "Parameter.sqlite_db"
+#define DEFAULT_SQLITE_STATIC_DBFILE             "Static.sqlite_db"
 #define DEFAULT_SQLITE_DYNAMIC_FORECAST_DBFILE   "Forecast.sqlite_db"
 #define DEFAULT_SQLITE_DYNAMIC_ANALYZED_DBFILE   "Analyzed.sqlite_db"
 

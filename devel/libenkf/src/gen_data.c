@@ -18,6 +18,7 @@
 #include <matrix.h>
 #include <math.h>
 #include <log.h>
+#include <bool_vector.h>
 
 /**
    The file implements a general data type which can be used to update
@@ -136,6 +137,7 @@ bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , int 
 
 
 void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_step) {
+  bool_vector_type * active_mask = NULL;
   int size;
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
   size = buffer_fread_int(buffer);
@@ -147,6 +149,7 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
   }
   gen_data_assert_size( gen_data , size , report_step );
+  gen_data_config_update_active( gen_data->config , report_step , active_mask );
 }
 
 
@@ -155,10 +158,10 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_
 void gen_data_upgrade_103(const char * filename) {
   FILE * stream               = util_fopen(filename , "r");
   enkf_impl_type impl_type    = util_fread_int( stream );
-  int 		 size         = util_fread_int( stream );
-  int 		 report_step  = util_fread_int( stream );
+  int            size         = util_fread_int( stream );
+  int            report_step  = util_fread_int( stream );
   size_t byte_size            = util_fread_sizeof_compressed( stream );
-  void		  * data      = util_fread_alloc_compressed( stream );
+  void            * data      = util_fread_alloc_compressed( stream );
   fclose(stream);
   {
     buffer_type * buffer = buffer_alloc( 100 );
@@ -217,9 +220,9 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
       memcpy(gen_data->data , data , byte_size );
     else {
       if (load_type == ECL_FLOAT_TYPE)
-	util_float_to_double((double *) gen_data->data , data , size);
+        util_float_to_double((double *) gen_data->data , data , size);
       else
-	util_double_to_float((float *) gen_data->data , data , size);
+        util_double_to_float((float *) gen_data->data , data , size);
     }
   }
 
@@ -340,11 +343,11 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
     if (internal_type == ECL_FLOAT_TYPE) {
       float * float_data = (float *) gen_data->data;
       for (i=0; i < size; i++)
-	fprintf(stream , "%g\n",float_data[i]);
+        fprintf(stream , "%g\n",float_data[i]);
     } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * double_data = (double *) gen_data->data;
       for (i=0; i < size; i++)
-	fprintf(stream , "%lg\n",double_data[i]);
+        fprintf(stream , "%lg\n",double_data[i]);
     } else 
       util_abort("%s: internal error - wrong type \n",__func__);
   }
@@ -502,12 +505,12 @@ void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += data2[i];
+        data1[i] += data2[i];
     } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++) {
-	data1[i] += data2[i];
+        data1[i] += data2[i];
       }
     }
   }
@@ -525,12 +528,12 @@ void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] *= data2[i];
+        data1[i] *= data2[i];
     } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++) 
-	data1[i] *= data2[i];
+        data1[i] *= data2[i];
     }
   }
 }
@@ -547,12 +550,12 @@ void gen_data_iaddsqr(gen_data_type * gen_data1, const gen_data_type * gen_data2
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += data2[i] * data2[i];
+        data1[i] += data2[i] * data2[i];
     } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += data2[i] * data2[i];
+        data1[i] += data2[i] * data2[i];
     }
   }
 }
@@ -568,11 +571,11 @@ void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
     if (internal_type == ECL_FLOAT_TYPE) {
       float * data       = (float *) gen_data->data;
       for (i = 0; i < data_size; i++)
-	data[i] *= scale_factor;
+        data[i] *= scale_factor;
     } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data       = (double *) gen_data->data;
       for (i = 0; i < data_size; i++)
-	data[i] *= scale_factor;
+        data[i] *= scale_factor;
     }
   }
 }
