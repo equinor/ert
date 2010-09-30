@@ -31,9 +31,11 @@ def chgrp(path , guid ):
 
 
 def install_link( target_file , link_name):
-    os.link( target_file , link_name )
+    if os.path.exists( link_name ):
+        os.unlink( link_name )
     print "Linking: %s -> %s" % (link_name , target_file )
-
+    os.link( target_file , link_name )
+    
 
 def install_file( src_file , target_file):
     if not os.path.exists( src_file ):
