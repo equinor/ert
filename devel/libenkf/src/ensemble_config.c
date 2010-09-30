@@ -13,7 +13,7 @@
 #include <field_config.h>
 #include <gen_data_config.h>
 #include <thread_pool.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <enkf_types.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
@@ -46,7 +46,7 @@
 struct ensemble_config_struct {
   pthread_mutex_t          mutex;
   char                   * gen_kw_format_string;   /* Format string used when creating gen_kw search/replace strings. */
-  hash_type       	 * config_nodes;           /* A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  hash_type              * config_nodes;           /* A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
   field_trans_table_type * field_trans_table;      /* A table of the transformations which are available to apply on fields. */
   const ecl_sum_type     * refcase;                /* A ecl_sum reference instance - can be NULL (NOT owned by the ensemble
                                                       config). Is only used to check that summary keys are valid when adding. */
@@ -208,9 +208,9 @@ void ensemble_config_add_node__( ensemble_config_type * ensemble_config , enkf_c
 
 
 enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensemble_config , 
-                                                  const char    * key      	   , 
-                                                  enkf_var_type  enkf_type  	   , 
-                                                  enkf_impl_type impl_type 	   ,
+                                                  const char    * key              , 
+                                                  enkf_var_type  enkf_type         , 
+                                                  enkf_impl_type impl_type         ,
                                                   const char   * enkf_outfile      , /* Written by EnKF and read by forward model */
                                                   const char   * enkf_infile       , /* Written by forward model and read by EnKF */ 
                                                   const void   * data ) {
@@ -247,7 +247,7 @@ void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , 
 //   * INPUT_FILES
 //   * INIT_FILES
 //   * OUTPUT_FORMAT
-//	 
+//       
 //   Optional:
 //   * TEMPLATE
 //   * KEY

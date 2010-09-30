@@ -7,7 +7,6 @@ extern "C" {
 #include <history.h>
 #include <enkf_macros.h>
 #include <obs_data.h>
-#include <meas_vector.h>
 #include <field_config.h>
 #include <field.h>
 #include <active_list.h>

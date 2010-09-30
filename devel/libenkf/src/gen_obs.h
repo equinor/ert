@@ -2,7 +2,6 @@
 #define __GEN_OBS_H__
 #include <gen_data_config.h>
 #include <enkf_macros.h>
-#include <meas_vector.h>
 #include <gen_data_config.h>
 #include <obs_data.h>
 

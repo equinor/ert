@@ -10,7 +10,7 @@
 #include <field_obs.h> 
 #include <field_config.h>
 #include <obs_data.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <field_config.h>
 #include <field.h>
 #include <active_list.h>
@@ -34,15 +34,15 @@ typedef struct  {
 
 struct field_obs_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char   * field_name;   		  /** The state keyword for the observed field - PRESSURE / SWAT / PORO /...   */
-  char   * obs_key;    		  /** A user provided label for the observation.      */
-  int      size;         		  /** The number of field cells observed.             */
-  int    * index_list;   		  /** The list indices which are observed - (active indices). */
-  int    * i;            		  /** The vector of indices i,j,k are equivalent to those in index_list - i,j,k are only retained for RFT plotting. */
+  char   * field_name;                    /** The state keyword for the observed field - PRESSURE / SWAT / PORO /...   */
+  char   * obs_key;               /** A user provided label for the observation.      */
+  int      size;                          /** The number of field cells observed.             */
+  int    * index_list;                    /** The list indices which are observed - (active indices). */
+  int    * i;                             /** The vector of indices i,j,k are equivalent to those in index_list - i,j,k are only retained for RFT plotting. */
   int    * j;
   int    * k;
-  double * obs_value;    		  /** The observed values.                            */
-  double * obs_std;      		  /** The standard deviation of the observations.     */
+  double * obs_value;                     /** The observed values.                            */
+  double * obs_std;                       /** The standard deviation of the observations.     */
   
   const field_config_type * field_config; /* The config object of the field we are observing - shared reference. */
 };
@@ -108,13 +108,13 @@ field_obs_type * field_obs_alloc(
     int l;
     for (l = 0; l < size; l++) {
       if (field_config_ijk_valid(field_config , i[l] , j[l] , k[l])) {
-	int active_index = field_config_active_index(field_config , i[l] , j[l] , k[l]);
-	if (active_index >= 0) 
-	  field_obs->index_list[l] = active_index;
+        int active_index = field_config_active_index(field_config , i[l] , j[l] , k[l]);
+        if (active_index >= 0) 
+          field_obs->index_list[l] = active_index;
         else
-	  util_abort("%s: sorry: cell:(%d,%d,%d) is not active - can not observe it. \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
+          util_abort("%s: sorry: cell:(%d,%d,%d) is not active - can not observe it. \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
       } else
-	util_abort("%s: sorry: cell (%d,%d,%d) is outside valid range:  \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
+        util_abort("%s: sorry: cell (%d,%d,%d) is outside valid range:  \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
     }
   }
   field_obs->i               = util_alloc_copy(i         , size * sizeof * i                    , __func__);
@@ -178,9 +178,9 @@ void field_obs_get_observations(const field_obs_type * field_obs,  obs_data_type
 
 
 
-void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, int report_step , int iens , meas_matrix_type * meas_matrix , const active_list_type * __active_list) {
+void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, int report_step , int iens , meas_data_type * meas_data , const active_list_type * __active_list) {
   int active_size = active_list_get_active_size( __active_list , field_obs->size );
-  meas_block_type * meas_block = meas_matrix_add_block( meas_matrix , field_obs->obs_key , report_step , field_obs->size );
+  meas_block_type * meas_block = meas_data_add_block( meas_data , field_obs->obs_key , report_step , field_obs->size );
   int iobs;
 
   active_mode_type active_mode = active_list_get_mode( __active_list );
@@ -235,9 +235,9 @@ void field_obs_user_get(const field_obs_type * field_obs , const char * index_ke
     /* iterating through all the cells the observation is observing. */
     while (!(*valid) && l < field_obs->size) {
       if (field_obs->index_list[l] == active_index) {
-	*value = field_obs->obs_value[l];
-	*std   = field_obs->obs_std[l];
-	*valid = true;
+        *value = field_obs->obs_value[l];
+        *std   = field_obs->obs_std[l];
+        *valid = true;
       }
       l++;
     }

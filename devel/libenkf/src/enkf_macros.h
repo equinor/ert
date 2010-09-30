@@ -13,7 +13,7 @@ extern "C" {
 #include <active_list.h>
 #include <matrix.h>
 #include <log.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 
 #define CONFIG_STD_FIELDS \
 int __type_id;            \
@@ -24,8 +24,8 @@ int data_size;
 /*****************************************************************/
 
 #define IS_INSTANCE(prefix,ID) \
-bool prefix ## _is_instance__(const void * __arg) {             	   \
-  prefix ## _type * arg = (prefix ## _type *) __arg;         	   \
+bool prefix ## _is_instance__(const void * __arg) {                        \
+  prefix ## _type * arg = (prefix ## _type *) __arg;               \
   if (arg->__type_id != ID)                                        \
      return false;                                                 \
   else                                                             \
@@ -128,8 +128,8 @@ void prefix ## _free__(void * void_arg) {         \
 
 #define VOID_USER_GET(prefix)                                                     \
 double prefix ## _user_get__(void * void_arg , const char * key , bool * valid) { \
-   prefix ## _type * arg = prefix ## _safe_cast( void_arg );    		  \
-   return prefix ## _user_get(arg , key , valid);               		  \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );                      \
+   return prefix ## _user_get(arg , key , valid);                                 \
 }
 
 #define VOID_USER_GET_HEADER(prefix) double prefix ## _user_get__(void * , const char * , bool *);
@@ -148,8 +148,8 @@ void prefix ## _user_get__(void * void_arg , const char * key , double * value, 
 
 /*****************************************************************/
 
-#define VOID_FREE_DATA(prefix)                         	     \
-void prefix ## _free_data__(void * void_arg) {         	     \
+#define VOID_FREE_DATA(prefix)                               \
+void prefix ## _free_data__(void * void_arg) {               \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
    prefix ## _free_data( arg );                              \
 }
@@ -189,16 +189,16 @@ void prefix ## _copy__(const void * void_src, void * void_target) {   \
 
 #define VOID_SERIALIZE(prefix)     \
 void prefix ## _serialize__(const void *void_arg, const active_list_type * active_list , matrix_type * A , int row_offset , int column) {\
-   const prefix ## _type  *arg = prefix ## _safe_cast_const( void_arg );                         				      \
-   prefix ## _serialize (arg , active_list , A , row_offset , column);                 				      \
+   const prefix ## _type  *arg = prefix ## _safe_cast_const( void_arg );                                                              \
+   prefix ## _serialize (arg , active_list , A , row_offset , column);                                                \
 }
 #define VOID_SERIALIZE_HEADER(prefix) void prefix ## _serialize__(const void * , const active_list_type * , matrix_type *  , int , int);
 
 
 #define VOID_DESERIALIZE(prefix)     \
 void prefix ## _deserialize__(void *void_arg, const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {\
-   prefix ## _type  *arg = prefix ## _safe_cast( void_arg );                         				      \
-   prefix ## _deserialize (arg , active_list , A , row_offset , column);                 				      \
+   prefix ## _type  *arg = prefix ## _safe_cast( void_arg );                                                          \
+   prefix ## _deserialize (arg , active_list , A , row_offset , column);                                                      \
 }
 #define VOID_DESERIALIZE_HEADER(prefix) void prefix ## _deserialize__(void * , const active_list_type * , const matrix_type *  , int , int);
 
@@ -235,13 +235,13 @@ void prefix ## _get_observations__(const void * void_arg , obs_data_type * obs_d
 /*****************************************************************/
 
 #define VOID_MEASURE(obs_prefix, state_prefix) \
-void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state , int report_step , int iens , meas_matrix_type * meas_matrix , const active_list_type * __active_list) { \
+void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state , int report_step , int iens , meas_data_type * meas_data , const active_list_type * __active_list) { \
    const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast_const( void_obs );     \
    const state_prefix ## _type * state = state_prefix ## _safe_cast_const( void_state );       \
-   obs_prefix ## _measure(obs , state , report_step , iens , meas_matrix , __active_list);                    \
+   obs_prefix ## _measure(obs , state , report_step , iens , meas_data , __active_list);                    \
 }
 
-#define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , int , int , meas_matrix_type * , const active_list_type *)
+#define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , int , int , meas_data_type * , const active_list_type *)
 
 
 /*****************************************************************/
@@ -302,8 +302,8 @@ double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {
 
 /*****************************************************************/
 
-#define CONFIG_GET_ENSFILE(prefix)       	     const char * prefix ## _config_get_ensfile_ref(const prefix ## _config_type * config) { return config->ensfile; }
-#define CONFIG_GET_ECLFILE(prefix)       	     const char * prefix ## _config_get_eclfile_ref(const prefix ## _config_type * config) { return config->eclfile; }
+#define CONFIG_GET_ENSFILE(prefix)                   const char * prefix ## _config_get_ensfile_ref(const prefix ## _config_type * config) { return config->ensfile; }
+#define CONFIG_GET_ECLFILE(prefix)                   const char * prefix ## _config_get_eclfile_ref(const prefix ## _config_type * config) { return config->eclfile; }
 #define CONFIG_GET_ENSFILE_HEADER(prefix)       const char * prefix ## _config_get_ensfile_ref(const prefix ## _config_type * )
 #define CONFIG_GET_ECLFILE_HEADER(prefix)       const char * prefix ## _config_get_eclfile_ref(const prefix ## _config_type * )
 

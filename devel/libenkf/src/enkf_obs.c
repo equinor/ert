@@ -3,7 +3,6 @@
 #include <hash.h>
 #include <util.h>
 #include <conf.h>
-#include <enkf_obs.h>
 #include <summary_obs.h>
 #include <field_obs.h>
 #include <enkf_fs.h>
@@ -14,6 +13,7 @@
 #include <local_config.h>
 #include <math.h>
 #include <meas_data.h>
+#include <enkf_obs.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 

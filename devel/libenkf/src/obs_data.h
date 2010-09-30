@@ -6,7 +6,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 #include <matrix.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <hash.h>
 #include <enkf_types.h>
 
@@ -33,15 +33,15 @@ obs_block_type *     obs_data_get_block( obs_data_type * obs_data , const char *
 obs_block_type *     obs_data_add_block( obs_data_type * obs_data , const char * obs_key , int obs_size , matrix_type * error_covar , bool error_covar_owner);
 
 obs_data_type      * obs_data_alloc();
-void          	     obs_data_free(obs_data_type *);
-void          	     obs_data_reset(obs_data_type * obs_data);
-matrix_type   	   * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S);
-matrix_type   	   * obs_data_allocR(const obs_data_type * obs_data , int active_size );
-double             * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int active_size);
+void                 obs_data_free(obs_data_type *);
+void                 obs_data_reset(obs_data_type * obs_data);
+matrix_type        * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S);
+matrix_type        * obs_data_allocR(const obs_data_type * obs_data , int active_size );
+double             * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_data_type * meas_data , int active_size);
 matrix_type        * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int active_size);
 void                 obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov);
-void          	     obs_data_fprintf(const obs_data_type * , const meas_matrix_type * meas_matrix , FILE *);
-void          	     obs_data_iget_value_std(const obs_data_type * obs_data , int index , double * value ,  double * std);
+void                 obs_data_fprintf(const obs_data_type * , const meas_data_type * meas_data , FILE *);
+void                 obs_data_iget_value_std(const obs_data_type * obs_data , int index , double * value ,  double * std);
 int                  obs_data_get_active_size(  obs_data_type * obs_data );
 int                  obs_data_get_num_blocks( const obs_data_type * obs_data );
 const char * obs_block_get_key( const obs_block_type * obs_block) ;

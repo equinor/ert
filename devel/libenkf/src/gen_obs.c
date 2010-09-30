@@ -8,7 +8,7 @@
 #include <enkf_macros.h>
 #include <util.h>
 #include <gen_obs.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <obs_data.h>
 #include <gen_data.h>
 #include <gen_obs.h>
@@ -220,11 +220,11 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
 
 
 
-void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , int report_step , int iens , meas_matrix_type * meas_matrix, const active_list_type * __active_list) {
+void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , int report_step , int iens , meas_data_type * meas_data, const active_list_type * __active_list) {
   gen_obs_assert_data_size(gen_obs , gen_data);
   {
     int active_size                       = active_list_get_active_size( __active_list , gen_obs->obs_size );
-    meas_block_type * meas_block          = meas_matrix_add_block( meas_matrix , gen_obs->obs_key , report_step , active_size );
+    meas_block_type * meas_block          = meas_data_add_block( meas_data , gen_obs->obs_key , report_step , active_size );
     active_mode_type active_mode          = active_list_get_mode( __active_list );
     const bool_vector_type * forward_mask = gen_data_get_forward_mask( gen_data );
 

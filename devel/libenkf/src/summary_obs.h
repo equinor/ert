@@ -11,7 +11,7 @@ extern "C" {
 #include <history.h>
 #include <enkf_macros.h>
 #include <obs_data.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <summary_config.h>
 #include <summary.h>
 #include <active_list.h>

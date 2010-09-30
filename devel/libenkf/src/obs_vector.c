@@ -612,10 +612,10 @@ void obs_vector_iget_observations(const obs_vector_type * obs_vector , int repor
 }
 
 
-void obs_vector_measure(const obs_vector_type * obs_vector , int report_step , int iens , const enkf_node_type * enkf_node ,  meas_matrix_type * meas_matrix , const active_list_type * active_list) {
+void obs_vector_measure(const obs_vector_type * obs_vector , int report_step , int iens , const enkf_node_type * enkf_node ,  meas_data_type * meas_data , const active_list_type * active_list) {
   void * obs_node = vector_iget( obs_vector->nodes , report_step );
   if ( obs_node != NULL) 
-    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , report_step , iens , meas_matrix , active_list);
+    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , report_step , iens , meas_data , active_list);
 }
 
 

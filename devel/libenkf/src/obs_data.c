@@ -14,9 +14,9 @@ The flow is as follows:
 
  1. All the observations have been collected in an obs_data instance,
     and all the corresponding measurements of the state have been
-    collected in a meas_matrix instance - we are ready for analysis.
+    collected in a meas_data instance - we are ready for analysis.
 
- 2. The functions meas_matrix_alloc_stats() is called to calculate
+ 2. The functions meas_data_alloc_stats() is called to calculate
     the ensemble mean and std of all the measurements.
 
  3. The function obs_data_deactivate_outliers() is called to compare
@@ -49,7 +49,7 @@ Matrices: S, D, E and various internal variables.
 #include <enkf_util.h>
 #include <obs_data.h>
 #include <util.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <matrix.h>
 #include <vector.h>
 #include <pthread.h>
@@ -309,8 +309,8 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int
     enkf_util_rand_stdnormal_vector(active_size * ens_size , tmp);
     for (j=0; j < ens_size; j++) {
       for (i=0; i < active_size; i++) {
-	matrix_iset( E , i , j , tmp[k]);
-	k++;
+        matrix_iset( E , i , j , tmp[k]);
+        k++;
       }
     }
     free(tmp);
@@ -398,13 +398,13 @@ matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size) 
 
 
 
-double * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int active_size) {
+double * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_data_type * meas_data , int active_size) {
   double *innov = util_malloc( active_size * sizeof * innov , __func__);
   {
     int obs_offset = 0;
     for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
       const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
-      const meas_block_type * meas_block = meas_matrix_iget_block_const( meas_matrix , block_nr );
+      const meas_block_type * meas_block = meas_data_iget_block_const( meas_data , block_nr );
       
       obs_block_init_innov( obs_block , meas_block , innov , &obs_offset);
     }
@@ -438,7 +438,7 @@ void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_typ
         matrix_imul(D , iobs_active , iens , scale_factor[iobs_active]);
 
       if (E != NULL)
-	matrix_imul(E , iobs_active , iens , scale_factor[iobs_active]);
+        matrix_imul(E , iobs_active , iens , scale_factor[iobs_active]);
     }
   }
   
@@ -449,7 +449,7 @@ void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_typ
   {
     for (int i=0; i < nrobs_active; i++)
       for (int j=0; j < nrobs_active; j++)
-	matrix_imul(R , i , j , scale_factor[i] * scale_factor[j]);
+        matrix_imul(R , i , j , scale_factor[i] * scale_factor[j]);
   }
   free(scale_factor);
 }

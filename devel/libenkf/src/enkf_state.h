@@ -10,7 +10,6 @@ extern "C" {
 #include <enkf_node.h>
 #include <enkf_util.h>
 #include <ecl_file.h>
-#include <meas_vector.h>
 #include <enkf_fs.h>
 #include <sched_file.h>
 #include <hash.h>
@@ -53,7 +52,6 @@ bool               enkf_state_get_analyzed(const enkf_state_type * );
 void               enkf_state_set_analyzed(enkf_state_type * , bool );
 void               enkf_state_swapout_node(const enkf_state_type * , const char *);
 void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
-meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *);
 enkf_state_type  * enkf_state_copyc(const enkf_state_type * );
 void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
 enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
@@ -65,11 +63,11 @@ enkf_state_type  * enkf_state_alloc(int ,
                                     enkf_fs_type   * fs, 
                                     const char * casename , 
                                     bool         pre_clear_runpath, 
-				    keep_runpath_type , 
-				    const model_config_type * ,
-				    ensemble_config_type * ,
-				    const site_config_type * ,
-				    const ecl_config_type * ,
+                                    keep_runpath_type , 
+                                    const model_config_type * ,
+                                    ensemble_config_type * ,
+                                    const site_config_type * ,
+                                    const ecl_config_type * ,
                                     log_type * logh,
                                     ert_templates_type * templates,
                                     subst_list_type    * parent_subst);

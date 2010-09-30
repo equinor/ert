@@ -13,7 +13,7 @@
 #include <thread_pool.h>
 #include <obs_data.h>
 #include <history.h>
-#include <meas_matrix.h>
+#include <meas_data.h>
 #include <enkf_state.h>
 #include <enkf_obs.h>
 #include <sched_file.h>
@@ -873,7 +873,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
    sending it as an input.
 */
 
-void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_type * ministep, int report_step , hash_type * use_count , meas_matrix_type * meas_matrix , obs_data_type * obs_data) {
+void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_type * ministep, int report_step , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data) {
   const int num_cpu_threads          = 4;
 
   int       matrix_size              = 1000;  /* Starting with this */
@@ -907,7 +907,7 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
     ministep, whereas the the update code below (can) go in several
     steps if memory is tight.
   */
-  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_matrix , obs_data ,  V0T , Z , eig , U0 );
+  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data , obs_data ,  V0T , Z , eig , U0 );
     
   if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
     randrot = enkf_analysis_alloc_mp_randrot( ens_size );
@@ -1024,7 +1024,7 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
 
       /*Get the optimal update matrix - observe that the A matrix is input.*/
       {
-        matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_matrix , obs_data , randrot, A , V0T , Z , eig, U0);   
+        matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_data , obs_data , randrot, A , V0T , Z , eig, U0);   
         
         msg_update(msg , " matrix multiplication");
         matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
@@ -1082,7 +1082,7 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
    the function, rather than sending it as an input.
 */
 
-void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , const local_ministep_type * ministep, int start_step , int end_step , hash_type * use_count , meas_matrix_type * meas_matrix , obs_data_type * obs_data, double std_cutoff, double alpha) {
+void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , const local_ministep_type * ministep, int start_step , int end_step , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data, double std_cutoff, double alpha) {
   const int num_cpu_threads          = 4;
 
   int       matrix_size              = 1000;  /* Starting with this */
@@ -1116,7 +1116,7 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
     ministep, whereas the the update code below (can) go in several
     steps if memory is tight.
   
-  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_matrix , obs_data ,  V0T , Z , eig , U0 );
+  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data , obs_data ,  V0T , Z , eig , U0 );
   */
   if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
     randrot = enkf_analysis_alloc_mp_randrot( ens_size );
@@ -1235,12 +1235,12 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
       { 
         int ensemble_members_loop;
         matrix_type * work_A                     = matrix_alloc_copy( A ); // Huge memory requirement. Is needed such that we do not resample updated ensemble members from A
-        meas_matrix_type * meas_matrix_resampled = meas_matrix_alloc_copy( meas_matrix );
+        meas_data_type * meas_data_resampled = meas_data_alloc_copy( meas_data );
         matrix_type      * A_resampled           = matrix_alloc( matrix_get_rows(work_A) , matrix_get_columns( work_A ));
         for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
           int ensemble_counter;
           obs_data_type    * obs_data_resampled      = obs_data_alloc();
-          /* Resample A and meas_matrix. Here we are careful to resample the working copy.*/
+          /* Resample A and meas_data. Here we are careful to resample the working copy.*/
 
 
           for (ensemble_counter  = 0; ensemble_counter < ens_size; ensemble_counter++) {
@@ -1248,20 +1248,20 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
             int random_column = (int) r;
             
             matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column);
-            meas_matrix_assign_vector( meas_matrix_resampled, meas_matrix , ensemble_counter , random_column);
+            meas_data_assign_vector( meas_data_resampled, meas_data , ensemble_counter , random_column);
           }
           
 
           if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
-            enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_matrix_resampled , obs_data_resampled ,  V0T , Z , eig , U0 );
-            matrix_type * X5_boot = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_matrix_resampled , obs_data_resampled , randrot, A_resampled , V0T , Z , eig, U0);
+            enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data_resampled , obs_data_resampled ,  V0T , Z , eig , U0 );
+            matrix_type * X5_boot = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_data_resampled , obs_data_resampled , randrot, A_resampled , V0T , Z , eig, U0);
             msg_update(msg , " matrix multiplication");
             matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
             matrix_free( X5_boot );
             matrix_inplace_add( A_resampled , work_A ); 
             matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
           } else {
-            matrix_type * X5_boot = enkf_analysis_allocX( enkf_main->analysis_config , meas_matrix_resampled , obs_data , randrot);
+            matrix_type * X5_boot = enkf_analysis_allocX( enkf_main->analysis_config , meas_data_resampled , obs_data , randrot);
 
             msg_update(msg , " matrix multiplication");
             matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
@@ -1269,12 +1269,12 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
             matrix_inplace_add( A_resampled , work_A );
             matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
           }
-          //meas_matrix_fprintf( meas_matrix , stdout );
-          //meas_matrix_fprintf( meas_matrix_resampled , stdout);
+          //meas_data_fprintf( meas_data , stdout );
+          //meas_data_fprintf( meas_data_resampled , stdout);
 
         }
         matrix_free( A_resampled );
-        meas_matrix_free(meas_matrix_resampled);
+        meas_data_free(meas_data_resampled);
         matrix_free(work_A);
       }
 
@@ -1367,8 +1367,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
       process.
     */
     obs_data_type               * obs_data      = obs_data_alloc();
-    meas_matrix_type            * meas_forecast = meas_matrix_alloc( ens_size );
-    meas_matrix_type            * meas_analyzed = meas_matrix_alloc( ens_size );
+    meas_data_type            * meas_forecast = meas_data_alloc( ens_size );
+    meas_data_type            * meas_analyzed = meas_data_alloc( ens_size );
     local_config_type           * local_config  = enkf_main->local_config;
     const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , step2 );  /* Only step2 considered */
     hash_type                   * use_count     = hash_alloc();
@@ -1390,7 +1390,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
       local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
       obs_data_reset( obs_data );
-      meas_matrix_reset( meas_forecast );
+      meas_data_reset( meas_forecast );
       enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), start_step , end_step , FORECAST, ens_size,
                                    (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
 
@@ -1433,8 +1433,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
       matrix_free( randrot );
 
     obs_data_free( obs_data );
-    meas_matrix_free( meas_forecast );
-    meas_matrix_free( meas_analyzed );
+    meas_data_free( meas_forecast );
+    meas_data_free( meas_analyzed );
     enkf_main_inflate( enkf_main , step2 , use_count);
     hash_free( use_count );
   }

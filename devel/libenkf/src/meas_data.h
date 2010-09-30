@@ -1,13 +1,15 @@
 #ifndef __MEAS_DATA_H__
 #define __MEAS_DATA_H__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include <stdbool.h>
 #include <matrix.h>
 #include <hash.h>
 
-typedef struct meas_data_struct meas_data_type;
+typedef struct meas_data_struct   meas_data_type;
 typedef struct meas_block_struct  meas_block_type;  
 
 void               meas_block_iset( meas_block_type * meas_block , int iens , int iobs , double value);
@@ -18,7 +20,7 @@ void               meas_block_deactivate( meas_block_type * meas_block , int iob
 void meas_data_fprintf( const meas_data_type * matrix , FILE * stream);
 
 void               meas_data_reset(meas_data_type * );
-meas_data_type * meas_data_alloc( int );
+meas_data_type *   meas_data_alloc( int );
 void               meas_data_free(meas_data_type * );
 void               meas_data_add(meas_data_type * , int , double );
 matrix_type      * meas_data_allocS(const meas_data_type * matrix , int active_size);
@@ -40,4 +42,5 @@ meas_data_type   * meas_data_alloc_copy( const meas_data_type * src );
 #ifdef __cplusplus
 }
 #endif
+
 #endif
