@@ -98,8 +98,9 @@ def install_path( src_path , target_root , extensions = None):
         if ext == ".py":
             print "Byte compiling: %s" % target_file
             py_compile.compile( target_file )
-            chgrp( target_file , res_guid )
-            os.chmod( target_file , data_mode )
+            pyc_file = target_file + "c"
+            chgrp( pyc_file , res_guid )
+            os.chmod( pyc_file , data_mode )
     
     #Recursive"
     for dir in dir_entries:
