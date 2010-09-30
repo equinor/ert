@@ -203,6 +203,10 @@ class EclGrid(object):
                     size = self.nactive
                 else:
                     size = self.size
+                    
+                if len(kw_name) > 8:
+                    # Silently truncate to length 8 - ECLIPSE has it's challengese.
+                    kw_name = kw_name[0:8]  
 
                 kw = ecl_kw.EclKW.new( kw_name , size , type )
                 active_index = 0
