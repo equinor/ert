@@ -30,9 +30,10 @@ def chgrp(path , guid ):
     os.chown( path , -1 , guid )
 
 
-def install_link( src_file , target_file):
-    os.link( src_file , target_file )
-    
+def install_link( target_file , link_name):
+    os.link( target_file , link_name )
+    print "Linking: %s -> %s" % (link_name , target_file )
+
 
 def install_file( src_file , target_file):
     if not os.path.exists( src_file ):
