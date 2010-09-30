@@ -30,6 +30,10 @@ def chgrp(path , guid ):
     os.chown( path , -1 , guid )
 
 
+def install_link( src_file , target_file):
+    os.link( src_file , target_file )
+    
+
 def install_file( src_file , target_file):
     if not os.path.exists( src_file ):
         sys.exit("The source file:%s does not exist?? " % src_file )
@@ -106,8 +110,9 @@ make_dir("%s/lib/python"  % SDP_ROOT)
 make_dir("%s/lib/python/lib"  % SDP_ROOT)
 
 install_path( "ert" , target , extensions = ["py"])
-install_file( "C/libpycfile/slib/libpycfile.so"             , "%s/lib/python/lib/libpycfile.so"       % SDP_ROOT)
+install_file( "C/libpycfile/slib/libpycfile.so"         , "%s/lib/python/lib/libpycfile.so"       % SDP_ROOT)
 install_file( "../../libutil/slib/libutil.so"           , "%s/lib/python/lib/libutil.so"      % SDP_ROOT)
 install_file( "../../libconfig/slib/libconfig.so"       , "%s/lib/python/lib/libconfig.so"    % SDP_ROOT)
 install_file( "../../libecl/slib/libecl.so"             , "%s/lib/python/lib/libecl.so"       % SDP_ROOT)
 install_file( "../../libjob_queue/slib/libjob_queue.so" , "%s/lib/python/lib/libjob_queue.so" % SDP_ROOT)
+install_link( "%s/lib/python/lib/libpycfile.so" % SDP_ROOT , "%s/lib/python/ert/util/pycfile.so" % SDP_ROOT)
