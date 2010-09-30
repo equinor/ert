@@ -93,15 +93,13 @@ def install_path( src_path , target_root , extensions = None):
 
     for file in file_entries:
         target_file = "%s/%s" % (target_root , file )
-        install_file( file , target_file )
         (base, ext) = os.path.splitext( file )
+        install_file( file , target_file )
         if ext == ".py":
-            print "Byte compiling: %s" % file
-            py_compile.compile( file )
-            pyc_file = "%sc" % file
-            pyc_target = "%sc" % target_file
-            install_file( pyc_file , pyc_target )
-            
+            print "Byte compiling: %s" % target_file
+            py_compile.compile( target_file )
+            chgrp( target_file , res_guid )
+            os.chmod( target_file , data_mode )
     
     #Recursive"
     for dir in dir_entries:
