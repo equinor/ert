@@ -118,3 +118,4 @@ install_file( "../../libconfig/slib/libconfig.so"       , "%s/lib/python/lib/lib
 install_file( "../../libecl/slib/libecl.so"             , "%s/lib/python/lib/libecl.so"       % SDP_ROOT)
 install_file( "../../libjob_queue/slib/libjob_queue.so" , "%s/lib/python/lib/libjob_queue.so" % SDP_ROOT)
 install_link( "%s/lib/python/lib/libpycfile.so" % SDP_ROOT , "%s/lib/python/ert/util/pycfile.so" % SDP_ROOT)
+install_link( "C/libpycfile/slib/libpycfile.so"         , "ert/util/pycfile.so")
