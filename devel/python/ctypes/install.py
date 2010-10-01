@@ -71,14 +71,9 @@ def install_path( src_path , target_root , extensions = None):
     file_entries = []
 
     for entry in os.listdir( src_path ):
-        if entry == ".svn":
+        if not entry[:-2] == "py":
             continue
-
-        if entry[-1] == "~":
-            continue
-
-        if entry[-3:] == "pyc":
-            continue
+        
 
         full_path = "%s/%s" % (src_path , entry)
         
@@ -111,7 +106,7 @@ def install_path( src_path , target_root , extensions = None):
 os.umask( 2 )
 make_dir("%s/lib/python"  % SDP_ROOT)
 make_dir("%s/lib/python/lib"  % SDP_ROOT)
-
+cwd = os.getcwd()
 install_path( "ert" , target , extensions = ["py"])
 install_file( "C/libpycfile/slib/libpycfile.so"         , "%s/lib/python/lib/libpycfile.so"       % SDP_ROOT)
 install_file( "../../libutil/slib/libutil.so"           , "%s/lib/python/lib/libutil.so"      % SDP_ROOT)
@@ -119,4 +114,4 @@ install_file( "../../libconfig/slib/libconfig.so"       , "%s/lib/python/lib/lib
 install_file( "../../libecl/slib/libecl.so"             , "%s/lib/python/lib/libecl.so"       % SDP_ROOT)
 install_file( "../../libjob_queue/slib/libjob_queue.so" , "%s/lib/python/lib/libjob_queue.so" % SDP_ROOT)
 install_link( "%s/lib/python/lib/libpycfile.so" % SDP_ROOT , "%s/lib/python/ert/util/pycfile.so" % SDP_ROOT)
-install_link( "C/libpycfile/slib/libpycfile.so"         , "ert/util/pycfile.so")
+install_link( "%s/C/libpycfile/slib/libpycfile.so"  % cwd       , "%s/ert/util/pycfile.so" % cwd)
