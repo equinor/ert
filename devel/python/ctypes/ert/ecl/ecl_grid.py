@@ -189,7 +189,6 @@ class EclGrid(object):
             dims = array.shape
             if dims[0] == self.nx and dims[1] == self.ny and dims[2] == self.nz:
                 dtype = array.dtype
-                print dtype
                 if dtype == numpy.int32:
                     type = ecl_kw.ECL_INT_TYPE
                 elif dtype == numpy.float32:
@@ -205,7 +204,7 @@ class EclGrid(object):
                     size = self.size
                     
                 if len(kw_name) > 8:
-                    # Silently truncate to length 8 - ECLIPSE has it's challengese.
+                    # Silently truncate to length 8 - ECLIPSE has it's challenges.
                     kw_name = kw_name[0:8]  
 
                 kw = ecl_kw.EclKW.new( kw_name , size , type )
@@ -219,7 +218,11 @@ class EclGrid(object):
                                     kw[active_index] = array[i,j,k]
                                     active_index += 1
                             else:
-                                kw[global_index] = array[i,j,k]
+                                if dtype == numpy.int32:
+                                    kw[global_index] = int( array[i,j,k] )
+                                else:
+                                    kw[global_index] = array[i,j,k]
+                                
                             global_index += 1
                 return kw
         raise ValueError("Wrong size / dimension on array")

@@ -1,5 +1,6 @@
 import ctypes
 from   ert.cwrap.cwrap       import *
+from   ecl_kw                import ECL_INT_TYPE , ECL_REAL_TYPE , ECL_DOUBLE_TYPE
 import libecl
 
 
@@ -51,6 +52,17 @@ class EclRegion:
         return list
 
 
+    def set_kw( self , ecl_kw , value):
+        type = ecl_kw.type
+        if type == ECL_INT_TYPE:
+            cfunc.set_kw_int( ecl_kw , value )
+        elif type == ECL_FLOAT_TYPE:
+            cfunc.set_kw_float( ecl_kw , value )
+        elif type == ECL_DOUBLE_TYPE:
+            cfunc.set_kw_double( ecl_kw , value )
+        raise Exception("set_kw() only supported for INT/FLOAT/DOUBLE")
+
+
 
 # 2. Creating a wrapper object around the libecl library.
 cwrapper = CWrapper( libecl.lib )
@@ -81,4 +93,8 @@ cfunc.active_size                = cwrapper.prototype("int  ecl_region_get_activ
 cfunc.global_size                = cwrapper.prototype("int  ecl_region_get_global_size( ecl_region )")
 cfunc.active_set                 = cwrapper.prototype("int* ecl_region_get_active_list( ecl_region )")
 cfunc.global_set                 = cwrapper.prototype("int* ecl_region_get_global_list( ecl_region )")
+
+cfunc.set_kw_int                 = cwrapper.prototype("void ecl_region_set_kw_int( ecl_region , ecl_kw , int) ")
+cfunc.set_kw_float               = cwrapper.prototype("void ecl_region_set_kw_float( ecl_region , ecl_kw , float) ")
+cfunc.set_kw_double              = cwrapper.prototype("void ecl_region_set_kw_double( ecl_region , ecl_kw , double) ")
 
