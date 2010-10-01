@@ -71,12 +71,9 @@ def install_path( src_path , target_root , extensions = None):
     file_entries = []
 
     for entry in os.listdir( src_path ):
-        if not entry[:-2] == "py":
+        if entry == ".svn":
             continue
-        
-
         full_path = "%s/%s" % (src_path , entry)
-        
         if os.path.isdir( full_path ):
             dir_entries.append( full_path )
         else:
