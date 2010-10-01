@@ -39,6 +39,7 @@ def install_link( target_file , link_name):
 
 def install_file( src_file , target_file):
     if not os.path.exists( src_file ):
+        raise Exception()
         sys.exit("The source file:%s does not exist?? " % src_file )
     shutil.copyfile( src_file , target_file )
     print "Updating file: %s" % target_file
