@@ -12,10 +12,6 @@ STATUS_RUNNING =  32
 STATUS_DONE    =  64
 STATUS_EXIT    = 128 
 
-LSF_HOME    = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"
-
-
-
 class LSFDriver:
 
     def from_param(self):
