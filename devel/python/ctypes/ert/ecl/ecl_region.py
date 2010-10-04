@@ -29,6 +29,9 @@ class EclRegion:
 
     def select_all( self ):
         cfunc.select_all( self )
+        
+    def select_box( self , ijk1 , ijk2 ):
+        cfunc.select_box( self , ijk1[0] , ijk2[0] , ijk1[1] , ijk2[1] , ijk1[2] , ijk2[2])
 
     def invert( self ):
         cfunc.invert_selection( self )
@@ -39,18 +42,15 @@ class EclRegion:
     def global_size( self ):
         return cfunc.global_size( self )
     
-    
     def active_set( self ):
         list = cfunc.active_set( self )
         list.size = cfunc.active_size( self )
         return list
-
     
     def global_set( self ):
         list = cfunc.global_set( self )
         list.size = cfunc.global_size( self )
         return list
-
 
     def set_kw( self , ecl_kw , value):
         type = ecl_kw.type
@@ -61,6 +61,20 @@ class EclRegion:
         elif type == ECL_DOUBLE_TYPE:
             cfunc.set_kw_double( ecl_kw , value )
         raise Exception("set_kw() only supported for INT/FLOAT/DOUBLE")
+
+    @property
+    def active_list(self):
+        a             = cfunc.get_active_list( self )
+        a.size        = cfunc.get_active_size( self )
+        a.__parent__  = self  # Inhibit GC
+        return a
+
+    @property
+    def global_list(self):
+        a             = cfunc.get_global_list( self )
+        a.size        = cfunc.get_global_size( self )
+        a.__parent__  = self  # Inhibit GC
+        return a
 
 
 
@@ -87,6 +101,9 @@ cfunc.deselect_less              = cwrapper.prototype("void ecl_region_deselect_
 cfunc.select_more                = cwrapper.prototype("void ecl_region_select_larger( ecl_region , ecl_kw , float )")
 cfunc.deselect_more              = cwrapper.prototype("void ecl_region_deselect_larger( ecl_region , ecl_kw , float )")
 
+cfunc.select_in_interval         = cwrapper.prototype("void ecl_region_select_in_interval( ecl_region, ecl_kw , float , float )")
+cfunc.deselect_in_interval       = cwrapper.prototype("void ecl_region_deselect_in_interval( ecl_region, ecl_kw, float , float )")
+
 cfunc.invert_selection           = cwrapper.prototype("void ecl_region_invert_selection( ecl_region )")
 
 cfunc.active_size                = cwrapper.prototype("int  ecl_region_get_active_size( ecl_region )")
@@ -97,4 +114,11 @@ cfunc.global_set                 = cwrapper.prototype("int* ecl_region_get_globa
 cfunc.set_kw_int                 = cwrapper.prototype("void ecl_region_set_kw_int( ecl_region , ecl_kw , int) ")
 cfunc.set_kw_float               = cwrapper.prototype("void ecl_region_set_kw_float( ecl_region , ecl_kw , float) ")
 cfunc.set_kw_double              = cwrapper.prototype("void ecl_region_set_kw_double( ecl_region , ecl_kw , double) ")
+cfunc.select_box                 = cwrapper.prototype("void ecl_region_select_from_ijkbox(ecl_region , int , int , int , int , int , int)")     
+
+cfunc.get_active_list            = cwrapper.prototype("int* ecl_region_get_active_list( ecl_region )")
+cfunc.get_global_list            = cwrapper.prototype("int* ecl_region_get_global_list( ecl_region )")
+cfunc.get_active_size            = cwrapper.prototype("int   ecl_region_get_active_size( ecl_region )")
+cfunc.get_global_size            = cwrapper.prototype("int   ecl_region_get_global_size( ecl_region )")
+
 

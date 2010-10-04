@@ -35,7 +35,7 @@ class EclKW(object):
         obj.parent     = parent
         obj.__init( )
         return obj
-
+        
 
     @classmethod
     def copy( cls , src ):
@@ -45,6 +45,21 @@ class EclKW(object):
         obj.data_owner = True
         obj.__init( )
         return obj
+
+
+    @classmethod
+    def grdecl_load( cls , file , kw , ecl_type = ECL_REAL_TYPE):
+        cfile  = CFILE( file )
+        c_ptr  = cfunc.load_grdecl( cfile , kw , ecl_type )
+        if c_ptr:
+            obj = cls( )
+            obj.c_ptr = c_ptr
+            obj.data_owner = True
+            obj.parent = None
+            obj.__init()
+            return obj
+        else:
+            return None
 
 
     def __init(self):
@@ -81,6 +96,7 @@ class EclKW(object):
         ecl_kw = EclKW.copy( self )
         ecl_kw.data_owner = True
         return ecl_kw
+
 
     def __getitem__(self, index ):
         if isinstance( index , types.IntType):
@@ -166,7 +182,6 @@ class EclKW(object):
             a.__parent__  = self  # Inhibit GC
         return a
 
-
     @property
     def numpy_array( self ):
         if self.data_ptr:
@@ -178,10 +193,13 @@ class EclKW(object):
     def fwrite( self , fortio ):
         cfunc.fwrite( self , fortio )
 
+        
     def write_grdecl( self , file ):
         cfile = CFILE( file )
         cfunc.fprintf_grdecl( self , cfile )
-        
+
+
+
 
 #################################################################
 
@@ -214,3 +232,5 @@ cfunc.fwrite                     = cwrapper.prototype("void ecl_kw_fwrite( ecl_k
 cfunc.get_header                 = cwrapper.prototype("char* ecl_kw_get_header ( ecl_kw )")
 cfunc.fprintf_grdecl             = cwrapper.prototype("void ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
 cfunc.alloc_new                  = cwrapper.prototype("long ecl_kw_alloc( char* , int , int )")
+cfunc.load_grdecl                = cwrapper.prototype("long ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
+cfunc.fseek_grdecl               = cwrapper.prototype("bool ecl_kw_grdecl_fseek_kw(char* , bool, bool , FILE )")

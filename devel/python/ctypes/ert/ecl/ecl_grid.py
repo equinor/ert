@@ -6,7 +6,21 @@ import fortio
 import libecl
 import ecl_kw
 
-class EclGrid(object):
+class EclGrid:
+    
+    @classmethod
+    def create(cls , specgrid , zcorn , coord , actnum , mapaxes = None ):
+        obj = cls( )
+        gridhead = ecl_kw.EclKW.new( "GRIDHEAD" , 4 , 3 )
+        gridhead[0] = 1
+        for i in (range(3)):
+            gridhead[i+1] = specgrid[i]
+
+        obj.c_ptr = cfunc.grdecl_create( gridhead , zcorn , coord , actnum , None) # , mapaxes) 
+        obj.data_owner = True
+        obj.parent     = None
+        return obj
+
 
     def __new__(cls , filename , lgr = None , parent = None):
         if filename:
@@ -15,7 +29,7 @@ class EclGrid(object):
             c_ptr = lgr
             
         if c_ptr:
-            obj = object.__new__( cls )
+            obj = cls()
             obj.c_ptr = c_ptr
             if lgr:
                 obj.data_owner = False
@@ -26,8 +40,8 @@ class EclGrid(object):
             return obj
         else:
             return None
-            
-            
+
+        
     def __del__(self):
         if self.data_owner:
             cfunc.free( self )
@@ -263,6 +277,7 @@ cfunc = CWrapperNameSpace("ecl_grid")
 
 
 cfunc.fread_alloc                  = cwrapper.prototype("long ecl_grid_load_case( char* )")
+cfunc.grdecl_create                = cwrapper.prototype("long ecl_grid_alloc_GRDECL_kw( ecl_kw , ecl_kw , ecl_kw , ecl_kw )") # MAPAXES not supported yet
 cfunc.exists                       = cwrapper.prototype("bool ecl_grid_exists( char* )")
 cfunc.free                         = cwrapper.prototype("void ecl_grid_free( ecl_grid )")     
 cfunc.get_nx                       = cwrapper.prototype("int ecl_grid_get_nx( ecl_grid )")
