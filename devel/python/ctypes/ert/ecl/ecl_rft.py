@@ -19,7 +19,6 @@ class EclRFTFile(object):
     def __del__(self):
         cfunc_file.free( self )
 
-
     def __len__(self):
         return cfunc_file.get_size( self , None , -1)
 
