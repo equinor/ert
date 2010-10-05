@@ -6,7 +6,7 @@ import fortio
 import libecl
 import ecl_kw
 
-class EclGrid:
+class EclGrid(object):
     
     @classmethod
     def create(cls , specgrid , zcorn , coord , actnum , mapaxes = None ):
@@ -29,7 +29,7 @@ class EclGrid:
             c_ptr = lgr
             
         if c_ptr:
-            obj = cls()
+            obj = object.__new__( cls )
             obj.c_ptr = c_ptr
             if lgr:
                 obj.data_owner = False
@@ -141,7 +141,9 @@ class EclGrid:
         
         return (x.value , y.value , z.value)
 
-
+    def depth( self , active_index = None , global_index = None , ijk = None):
+        gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
+        return cfunc.get_depth1( self , gi )
 
     def find_cell( self , x , y , z , start_ijk = None):
         if start_ijk:
@@ -158,8 +160,6 @@ class EclGrid:
         else:
             return None
 
-    
-    
     def cell_volume( self, active_index = None , global_index = None , ijk = None):
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
         return cfunc.get_cell_volume( self , gi)
@@ -301,3 +301,4 @@ cfunc.get_lgr                      = cwrapper.prototype("long ecl_grid_get_lgr( 
 cfunc.get_cell_lgr                 = cwrapper.prototype("long ecl_grid_get_cell_lgr1( ecl_grid , int )")
 cfunc.grid_value                   = cwrapper.prototype("double ecl_grid_get_property( ecl_grid , ecl_kw , int , int , int)")
 cfunc.get_cell_volume              = cwrapper.prototype("double ecl_grid_get_cell_volume1( ecl_grid , int )")
+cfunc.get_depth1                   = cwrapper.prototype("double ecl_grid_get_cell_cdepth1( ecl_grid , int )")
