@@ -301,4 +301,4 @@ cfunc.get_lgr                      = cwrapper.prototype("long ecl_grid_get_lgr( 
 cfunc.get_cell_lgr                 = cwrapper.prototype("long ecl_grid_get_cell_lgr1( ecl_grid , int )")
 cfunc.grid_value                   = cwrapper.prototype("double ecl_grid_get_property( ecl_grid , ecl_kw , int , int , int)")
 cfunc.get_cell_volume              = cwrapper.prototype("double ecl_grid_get_cell_volume1( ecl_grid , int )")
-cfunc.get_depth1                   = cwrapper.prototype("double ecl_grid_get_cell_cdepth1( ecl_grid , int )")
+cfunc.get_depth1                   = cwrapper.prototype("double ecl_grid_get_cdepth1( ecl_grid , int )")
