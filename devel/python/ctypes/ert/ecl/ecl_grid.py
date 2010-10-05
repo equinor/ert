@@ -10,7 +10,7 @@ class EclGrid(object):
     
     @classmethod
     def create(cls , specgrid , zcorn , coord , actnum , mapaxes = None ):
-        obj = cls( )
+        obj = object.__new__( cls )
         gridhead = ecl_kw.EclKW.new( "GRIDHEAD" , 4 , 3 )
         gridhead[0] = 1
         for i in (range(3)):
