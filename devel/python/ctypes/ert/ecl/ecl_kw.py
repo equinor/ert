@@ -92,10 +92,13 @@ class EclKW(object):
             cfunc.free( self )
 
 
+
     def __deep_copy__(self , memo):
         ecl_kw = EclKW.copy( self )
         ecl_kw.data_owner = True
         return ecl_kw
+
+    
 
 
     def __getitem__(self, index ):

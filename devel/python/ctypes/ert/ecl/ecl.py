@@ -6,7 +6,7 @@ import os.path
 
 
 from   ert.cwrap.cwrap       import *
-from   ecl_kw                import EclKW
+from   ecl_kw                import EclKW , ECL_CHAR_TYPE , ECL_REAL_TYPE , ECL_DOUBLE_TYPE , ECL_INT_TYPE , ECL_BOOL_TYPE , ECL_MESS_TYPE
 from   ecl_file              import EclFile
 from   fortio                import FortIO
 from   ecl_sum               import EclSum
