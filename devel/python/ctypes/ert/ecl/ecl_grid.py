@@ -114,7 +114,6 @@ class EclGrid(object):
         else:
             return False
 
-
     def get_global_index( self , ijk = None , active_index = None):
         gi = self.__global_index( active_index = active_index , ijk = ijk)
         return gi
@@ -143,7 +142,7 @@ class EclGrid(object):
 
     def depth( self , active_index = None , global_index = None , ijk = None):
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
-        return cfunc.get_depth1( self , gi )
+        return cfunc.get_depth( self , gi )
 
     def find_cell( self , x , y , z , start_ijk = None):
         if start_ijk:
@@ -164,6 +163,10 @@ class EclGrid(object):
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
         return cfunc.get_cell_volume( self , gi)
             
+
+    def cell_dz( self , active_index = None , global_index = None , ijk = None):
+        gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index )
+        return cfunc.get_cell_thickness( self , gi )
 
     @property
     def num_lgr( self ):
@@ -301,4 +304,5 @@ cfunc.get_lgr                      = cwrapper.prototype("long ecl_grid_get_lgr( 
 cfunc.get_cell_lgr                 = cwrapper.prototype("long ecl_grid_get_cell_lgr1( ecl_grid , int )")
 cfunc.grid_value                   = cwrapper.prototype("double ecl_grid_get_property( ecl_grid , ecl_kw , int , int , int)")
 cfunc.get_cell_volume              = cwrapper.prototype("double ecl_grid_get_cell_volume1( ecl_grid , int )")
-cfunc.get_depth1                   = cwrapper.prototype("double ecl_grid_get_cdepth1( ecl_grid , int )")
+cfunc.get_cell_thickness           = cwrapper.prototype("double ecl_grid_get_cell_thickness1( ecl_grid , int )")
+cfunc.get_depth                    = cwrapper.prototype("double ecl_grid_get_cdepth1( ecl_grid , int )")
