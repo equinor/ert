@@ -12,8 +12,26 @@
 #include <gen_data_common.h>
 #include <int_vector.h>
 #include <bool_vector.h>
+#include <enkf_fs.h>
 #include "config_keys.h"
 #include "enkf_defaults.h"
+
+/**
+   About deactivating by the forward model
+   ---------------------------------------
+
+   For the gen_data instances the forward model has the capability to
+   deactivate elements in a gen_data vector. This is implemented in
+   the function gen_data_ecl_load which will look for a file with
+   extension "_data" and then activate / deactivate elements
+   accordingly.
+
+   
+
+*/
+
+
+
 
 #define GEN_DATA_CONFIG_ID 90051
 struct gen_data_config_struct {
@@ -32,9 +50,19 @@ struct gen_data_config_struct {
   int_vector_type              * data_size_vector;      /* Data size, i.e. number of elements , indexed with report_step */
   bool                           update_valid; 
   pthread_mutex_t                update_lock;  
+  /*****************************************************************/
+  /* All the fields below this line are related to the capability of
+     the forward model to deactivate elements in a gen_data
+     instance. See documentation above.
+  */
+  bool                           dynamic;
+  enkf_fs_type                 * fs;   
+  int                            ens_size;     
+  int                            load_count;   
   bool_vector_type             * active_mask;
   int                            active_report_step;
 };
+
 
 /*****************************************************************/
 
@@ -96,7 +124,12 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   config->output_format     = GEN_DATA_UNDEFINED;
   config->data_size_vector  = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
   config->update_valid      = false;
-  config->active_mask       = bool_vector_alloc(0 , false );
+  config->active_mask       = bool_vector_alloc(0 , true ); /* Elements are explicitly set to FALSE - this MUST default to true. */ 
+  config->active_report_step= -1;
+  config->ens_size          = -1;
+  config->load_count        = -1;
+  config->fs                = NULL;
+  config->dynamic           = false;
   pthread_mutex_init( &config->update_lock , NULL );
 
   return config;
@@ -114,7 +147,10 @@ const char * gen_data_config_get_init_file_fmt( const gen_data_config_type * con
 
 
 const bool_vector_type * gen_data_config_get_active_mask( const gen_data_config_type * config ) {
-  return NULL;
+  if (config->dynamic)
+    return config->active_mask;
+  else
+    return NULL;     /* GEN_PARAM instance will never be deactivated by the forward model. */
 }
 
 
@@ -340,25 +376,82 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
 void gen_data_config_update_active(gen_data_config_type * config , int report_step , const bool_vector_type * data_mask) {
   pthread_mutex_lock( &config->update_lock );
   {
-    if (config->active_report_step != report_step) {
-      /* This will ensure that the vector is filled with true values. */
-      bool_vector_reset( config->active_mask );
-      bool_vector_iset( config->active_mask , int_vector_iget( config->data_size_vector , report_step ) - 1 , true );
-    }
-    config->active_report_step = report_step;
+    if ( int_vector_iget( config->data_size_vector , report_step ) > 0) {
+      
+      if (config->active_report_step != report_step) {
+        /* This is the first enesmeble member loading for this particular report_step */
+        bool_vector_reset( config->active_mask );
+        bool_vector_iset( config->active_mask , int_vector_iget( config->data_size_vector , report_step ) - 1 , true );
+        config->load_count = 0;
+      }
+      
+      {
+        int i;
+        for (i=0; i < bool_vector_size( data_mask ); i++) {
+          if (!bool_vector_iget( data_mask , i ))
+            bool_vector_iset( config->active_mask , i , false );
+        }
+      } 
+      
+      config->load_count++;
+      if (config->load_count == config->ens_size) {
+        /**
+           All ensemble members have been loaded, we save the current active_mask to disk.
+        */
+        char * filename = util_alloc_sprintf("%s_active" , config->key );
+        FILE * stream = enkf_fs_open_case_tstep_file( config->fs , filename , report_step , "w");
+        
+        bool_vector_fwrite( config->active_mask , stream );
 
-    if (data_mask != NULL) {
-      int i;
-      for (i=0; i < bool_vector_size( data_mask ); i++) {
-        if (!bool_vector_iget( data_mask , i ))
-          bool_vector_iset( config->active_mask , i , false );
+        fclose( stream );
+        free( filename );
       }
     }
+    config->active_report_step = report_step;
   }
   pthread_mutex_unlock( &config->update_lock );
 }
 
 
+
+/**
+   This function will load an active map from the enkf_fs filesystem.
+*/
+void gen_data_config_load_active( gen_data_config_type * config , int report_step , bool force_load) {
+  if (config->fs == NULL)
+    return;                /* This is used as a GEN_PARAM instance - and the loading of mask is not an option. */
+  
+  
+  pthread_mutex_lock( &config->update_lock );
+  {
+    if ( force_load || (int_vector_iget( config->data_size_vector , report_step ) > 0)) {
+      if (config->active_report_step != report_step) {
+        char * filename = util_alloc_sprintf("%s_active" , config->key );
+        FILE * stream   = enkf_fs_open_excase_tstep_file( config->fs , filename , report_step);
+        if (stream != NULL) {
+          bool_vector_fread( config->active_mask , stream );
+          fclose( stream );
+        } else 
+          fprintf(stderr,"** Warning: could not find file:%s \n",filename);
+        free( filename );
+      }
+    }
+    config->active_report_step = report_step;
+  }
+  pthread_mutex_unlock( &config->update_lock );
+}
+
+
+
+void gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size) {
+  config->ens_size = ens_size;
+}
+
+
+void gen_data_config_set_dynamic( gen_data_config_type * config , enkf_fs_type * fs) {
+  config->dynamic = true;
+  config->fs      = fs;
+}
 
 
 char * gen_data_config_alloc_initfile(const gen_data_config_type * config , int iens) {

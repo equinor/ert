@@ -12,6 +12,7 @@ extern "C" {
 #include <ecl_sum.h>
 #include <stringlist.h>
 
+
 typedef struct ensemble_config_struct ensemble_config_type;
 
 void                     ensemble_config_set_refcase( ensemble_config_type * ensemble_config , const ecl_sum_type * refcase);
@@ -33,15 +34,15 @@ void                     ensemble_config_init(ensemble_config_type * ensemble_co
 void                     ensemble_config_free(ensemble_config_type * );
 bool                     ensemble_config_has_key(const ensemble_config_type * , const char * );
 enkf_config_node_type  * ensemble_config_add_node(ensemble_config_type * ,
-						const char    * ,
-						enkf_var_type ,
-						enkf_impl_type ,
-						const char   * ,
-						const char   * ,
-						const void   * );
+                                                const char    * ,
+                                                enkf_var_type ,
+                                                enkf_impl_type ,
+                                                const char   * ,
+                                                const char   * ,
+                                                const void   * );
 
 void                          ensemble_config_init_internalization( ensemble_config_type * );
-void 			      ensemble_config_del_node(ensemble_config_type * , const char * );
+void                          ensemble_config_del_node(ensemble_config_type * , const char * );
 void                          ensemble_config_add_config_items(config_type * );
 enkf_config_node_type       * ensemble_config_get_node(const ensemble_config_type * , const char * );
 stringlist_type             * ensemble_config_alloc_keylist(const ensemble_config_type *);

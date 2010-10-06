@@ -21,6 +21,7 @@ active_type  obs_data_iget_active_mode( const obs_data_type * obs_data , int ind
 void         obs_block_deactivate( obs_block_type * obs_block , int iobs , const char * msg);
 int          obs_block_get_size( const obs_block_type * obs_block );
 void         obs_block_iset( obs_block_type * obs_block , int iobs , double value , double std);
+void         obs_block_iset_missing( obs_block_type * obs_block , int iobs );
 
 double obs_block_iget_std( const obs_block_type * obs_block , int iobs);
 double obs_block_iget_value( const obs_block_type * obs_block , int iobs);

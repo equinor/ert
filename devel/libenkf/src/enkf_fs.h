@@ -11,26 +11,26 @@ extern "C" {
 #include <stdbool.h>
 #include <stringlist.h>
 #include <fs_types.h>
+#include <enkf_fs_type.h>
 
-typedef struct enkf_fs_struct enkf_fs_type;
 
 void              enkf_fs_fsync( enkf_fs_type * fs );
 bool              enkf_fs_rw_equal(const enkf_fs_type * );
 stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * );
 const char     *  enkf_fs_get_read_dir(const enkf_fs_type * );
 const char     *  enkf_fs_get_write_dir(const enkf_fs_type * );
-void 		  enkf_fs_add_dir(enkf_fs_type * , const char * );
-bool 		  enkf_fs_has_dir(const enkf_fs_type * , const char * );
+void              enkf_fs_add_dir(enkf_fs_type * , const char * );
+bool              enkf_fs_has_dir(const enkf_fs_type * , const char * );
 void              enkf_fs_select_write_dir(enkf_fs_type * , const char * , bool , bool);
 void              enkf_fs_select_read_dir(enkf_fs_type * , const char * , bool);
 enkf_fs_type *    enkf_fs_mount(const char * , fs_driver_impl , const char * , const char * select_case, bool update_map, bool read_only);
-void           	  enkf_fs_free(enkf_fs_type *);
-void           	  enkf_fs_add_index_node(enkf_fs_type *  , int , int , const char * , enkf_var_type, enkf_impl_type);
-void 	       	  enkf_fs_fwrite_node(enkf_fs_type * , enkf_node_type * , int , int , state_enum );
-void 	       	  enkf_fs_fread_node(enkf_fs_type  * , enkf_node_type * , int , int , state_enum );
-bool 	       	  enkf_fs_has_node(enkf_fs_type  * , const enkf_config_node_type * , int , int , state_enum );
-void           	  enkf_fs_fwrite_restart_kw_list(enkf_fs_type * , int , int , const stringlist_type *);
-void           	  enkf_fs_fread_restart_kw_list(enkf_fs_type * , int , int , stringlist_type *);
+void              enkf_fs_free(enkf_fs_type *);
+void              enkf_fs_add_index_node(enkf_fs_type *  , int , int , const char * , enkf_var_type, enkf_impl_type);
+void              enkf_fs_fwrite_node(enkf_fs_type * , enkf_node_type * , int , int , state_enum );
+void              enkf_fs_fread_node(enkf_fs_type  * , enkf_node_type * , int , int , state_enum );
+bool              enkf_fs_has_node(enkf_fs_type  * , const enkf_config_node_type * , int , int , state_enum );
+void              enkf_fs_fwrite_restart_kw_list(enkf_fs_type * , int , int , const stringlist_type *);
+void              enkf_fs_fread_restart_kw_list(enkf_fs_type * , int , int , stringlist_type *);
 enkf_node_type  * enkf_fs_fread_alloc_node(enkf_fs_type *  , const enkf_config_node_type * , int  , int , state_enum );
 enkf_node_type ** enkf_fs_fread_alloc_ensemble( enkf_fs_type * fs , const enkf_config_node_type * config_node , int report_step , int iens1 , int iens2 , state_enum state);
 void              enkf_fs_copy_node(enkf_fs_type *, enkf_config_node_type *, int, int, state_enum, int, int, state_enum);

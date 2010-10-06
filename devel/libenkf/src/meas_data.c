@@ -227,7 +227,7 @@ void meas_data_free(meas_data_type * matrix) {
 
 void meas_data_reset(meas_data_type * matrix) {
   set_clear( matrix->lookup_keys );
-  vector_clear( matrix->data );
+  vector_clear( matrix->data );  /* Will dump and discard all the meas_block instances. */
 }
 
 
@@ -271,6 +271,10 @@ matrix_type * meas_data_allocS(const meas_data_type * matrix, int active_size) {
     const meas_block_type * meas_block = vector_iget_const( matrix->data , block_nr);
     meas_block_initS( meas_block , S , &obs_offset);
   }
+
+  matrix_set_name( S , "S");
+  matrix_assert_finite( S );
+
   return S;
 }
 

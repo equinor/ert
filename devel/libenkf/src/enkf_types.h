@@ -24,8 +24,10 @@ extern "C" {
 */
 
 typedef enum { ACTIVE         = 1,
-               LOCAL_INACTIVE = 2,
-               DEACTIVATED    = 3 } active_type;
+               LOCAL_INACTIVE = 2,                   /* Not active in current local update scheme. */
+               DEACTIVATED    = 3,                   /* Deactivaed due to to small overlap, or... */ 
+               MISSING        = 4} active_type;      /* Set as missing by the forward model. */
+
 
 
 /*
@@ -40,16 +42,16 @@ typedef enum { ACTIVE         = 1,
 
 typedef enum {INVALID_VAR      =  0  , /**/
               PARAMETER        =  1  , /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
-	      DYNAMIC_STATE    =  2  , /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
-	      DYNAMIC_RESULT   =  4  , /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
-	      STATIC_STATE     =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
+              DYNAMIC_STATE    =  2  , /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
+              DYNAMIC_RESULT   =  4  , /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
+              STATIC_STATE     =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
 enkf_var_type; 
   
   
 
 typedef enum { DEFAULT_KEEP    = 0,    /* Remove for enkf assimilation - keep for ensemble experiments. */
-	       EXPLICIT_DELETE = 1,    /* Remove unconditionally */
-	       EXPLICIT_KEEP   = 2}    /* keep unconditionally */
+               EXPLICIT_DELETE = 1,    /* Remove unconditionally */
+               EXPLICIT_KEEP   = 2}    /* keep unconditionally */
 keep_runpath_type;
 
 
@@ -73,12 +75,12 @@ keep_runpath_type;
 
   
 /** HAVANA_FAULT = 109 - has been removed. */
-typedef enum {INVALID 	       = 0   , 
+typedef enum {INVALID          = 0   , 
               IMPL_TYPE_OFFSET = 100,
-	      STATIC  	       = 100 ,       /* MULTZ has been removed & MULTFLT */ 
-	      FIELD   	       = 104 ,       /* WELL has been removed  */
-	      GEN_KW  	       = 107 ,       /* RELPERM has been removed & HAVANA_FAULT */
-	      SUMMARY          = 110 ,       /* TPGZONE has been removed */
+              STATIC           = 100 ,       /* MULTZ has been removed & MULTFLT */ 
+              FIELD            = 104 ,       /* WELL has been removed  */
+              GEN_KW           = 107 ,       /* RELPERM has been removed & HAVANA_FAULT */
+              SUMMARY          = 110 ,       /* TPGZONE has been removed */
               GEN_DATA         = 113 ,       /* PILOT_POINT has been removed */
               MAX_IMPL_TYPE    = 113 } enkf_impl_type;
 
@@ -92,10 +94,10 @@ typedef enum {INVALID 	       = 0   ,
 
 
 typedef enum   {UNDEFINED   = 0 , 
-		SERIALIZED  = 1,
-		FORECAST    = 2, 
-		ANALYZED    = 4,
-		BOTH        = 6} state_enum;  /* It is important that both == (forecast + analyzed) */
+                SERIALIZED  = 1,
+                FORECAST    = 2, 
+                ANALYZED    = 4,
+                BOTH        = 6} state_enum;  /* It is important that both == (forecast + analyzed) */
   /**
      The state == both is used for output purposes (getting both forecast and analyzed).
   */
@@ -108,8 +110,8 @@ typedef enum   {UNDEFINED   = 0 ,
   */
 
 typedef enum { TRUNCATE_NONE   = 0,
-	       TRUNCATE_MIN    = 1,
-	       TRUNCATE_MAX    = 2 } truncation_type;
+               TRUNCATE_MIN    = 1,
+               TRUNCATE_MAX    = 2 } truncation_type;
 
 
 
@@ -141,10 +143,10 @@ typedef enum { TRUNCATE_NONE   = 0,
 */
 
 typedef enum { ENKF_ASSIMILATION       = 1, 
-	       ENSEMBLE_EXPERIMENT     = 2,
+               ENSEMBLE_EXPERIMENT     = 2,
                ENSEMBLE_PREDICTION     = 3,
                INIT_ONLY               = 4} run_mode_type;
-	       
+               
 
  
 
@@ -179,7 +181,7 @@ typedef enum {
   ENKF_SQRT        = 20,
   ENKF_KALMAN_GAIN = 30   /* No support for this yet ... */
 } enkf_mode_type ;
-	       
+               
 
 typedef enum {
   EIGEN_SS_N1_R = 1,
@@ -200,8 +202,8 @@ typedef enum {
 */
 
 typedef enum {
-  ALL_ACTIVE 	= 1,       /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
-  INACTIVE   	= 2,       /* Fully inactive */
+  ALL_ACTIVE    = 1,       /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
+  INACTIVE      = 2,       /* Fully inactive */
   PARTLY_ACTIVE = 3        /* Partly active - must supply additonal type spesific information on what is active.*/
 } active_mode_type; 
 

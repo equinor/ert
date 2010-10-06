@@ -846,8 +846,15 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
               fprintf(stream , "  Active   |");
             else if (active_mode == DEACTIVATED)
               fprintf(stream , "  Inactive |");
+            else if (active_mode == MISSING)
+              fprintf(stream , "           |");
+            else
+              util_abort("%s: enum_value:%d not handled - internal error\n" , __func__ , active_mode);
+            if (active_mode == MISSING)
+              fprintf(stream , "                  Missing\n");
+            else
+              fprintf(stream , sim_fmt, meas_block_iget_ens_mean( meas_block , iobs ) , meas_block_iget_ens_std( meas_block , iobs ));
           }
-          fprintf(stream , sim_fmt, meas_block_iget_ens_mean( meas_block , iobs ) , meas_block_iget_ens_std( meas_block , iobs ));
           obs_count++;
         }
       }
@@ -935,7 +942,7 @@ static void enkf_analysis_alloc_matrices( const meas_data_type * meas_data , obs
     *E          = NULL;
     *D          = NULL;
   }
-  
+
   obs_data_scale(obs_data ,  *S , *E , *D , *R , *innov );
   matrix_subtract_row_mean( *S );  /* Subtracting the ensemble mean */
 }
@@ -948,8 +955,7 @@ static void enkf_analysis_alloc_matrices( const meas_data_type * meas_data , obs
 */
 
 static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
-  if ( !matrix_is_finite(X))
-    util_abort("%s: The X matrix is not finite - internal meltdown. \n",__func__);
+  matrix_assert_finite( X );
   {
     int target_sum;
     if (bootstrap)
@@ -963,6 +969,7 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
         util_abort("%s: something is seriously broken. col:%d  col_sum = %g != 1.0 - ABORTING\n",__func__ , icol , col_sum);
     }
   }
+  printf("X er OK \n");
 }
 
 
@@ -981,7 +988,7 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
 
    The function consists of three different parts:
 
-    1. The function starts with several function call allocating the
+   1.  The function starts with several function call allocating the
        ordinary matrices S, D, R, E and innov.
 
     2. The S matrix is 'diagonalized', and singular vectors and
@@ -995,6 +1002,7 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
 matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot) {
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
+  matrix_set_name( X , "X");
   {
     matrix_type * S , *R , *E , *D;
     double      * innov;
@@ -1119,9 +1127,6 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
   }
   return X;
 }
-
-
-
 
 
 

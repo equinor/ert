@@ -50,7 +50,6 @@ Matrices: S, D, E and various internal variables.
 #include <obs_data.h>
 #include <util.h>
 #include <meas_data.h>
-#include <matrix.h>
 #include <vector.h>
 #include <pthread.h>
 #include <matrix.h>
@@ -64,6 +63,7 @@ struct obs_block_struct {
   int                  size;
   double             * value;
   double             * std;
+
   int                * active_mode;   
   int                  active_size;
   matrix_type        * error_covar;
@@ -73,7 +73,7 @@ struct obs_block_struct {
 
 
 struct obs_data_struct {
-  vector_type   * data;            /* Hash table with obs_block instances. */
+  vector_type   * data;            /* vector with obs_block instances. */
   int           __active_size;   
 }; 
 
@@ -136,6 +136,13 @@ void obs_block_iset( obs_block_type * obs_block , int iobs , double value , doub
     obs_block->active_size++;
   }
 }
+
+void obs_block_iset_missing( obs_block_type * obs_block , int iobs ) {
+  if (obs_block->active_mode[ iobs ] == ACTIVE) 
+    obs_block->active_size--;
+  obs_block->active_mode[iobs] = MISSING;
+}
+
 
 double obs_block_iget_std( const obs_block_type * obs_block , int iobs) {
   return obs_block->std[ iobs ];
@@ -351,6 +358,9 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int
 
   free(pert_mean);
   free(pert_var);
+
+  matrix_set_name( E , "E");
+  matrix_assert_finite( E );
   return E;
 }
 
@@ -372,6 +382,8 @@ matrix_type * obs_data_allocD(const obs_data_type * obs_data , const matrix_type
     }
   }
   
+  matrix_set_name( D , "D");
+  matrix_assert_finite( D );
   return D;
 }
 
@@ -391,6 +403,8 @@ matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size) 
     }
   }
   
+  matrix_set_name( R , "R");
+  matrix_assert_finite( R );
   return R;
 }
 

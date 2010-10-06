@@ -156,7 +156,7 @@ const char * field_obs_get_field_name(
 
 
 
-void field_obs_get_observations(const field_obs_type * field_obs,  obs_data_type * obs_data,  const active_list_type * __active_list) {
+void field_obs_get_observations(const field_obs_type * field_obs,  obs_data_type * obs_data,  int report_step , const active_list_type * __active_list) {
   int i;
   int active_size              = active_list_get_active_size( __active_list , field_obs->size );
   active_mode_type active_mode = active_list_get_mode( __active_list );

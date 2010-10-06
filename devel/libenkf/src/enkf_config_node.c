@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stringlist.h>
 #include <enkf_macros.h>
-#include <enkf_config_node.h> 
 #include <enkf_node.h>
 #include <util.h>
 #include <path_fmt.h>
@@ -15,6 +14,7 @@
 #include <summary_config.h>
 #include <enkf_obs.h>
 #include <gen_obs.h>
+#include <enkf_config_node.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -22,14 +22,14 @@
 
 struct enkf_config_node_struct {
   UTIL_TYPE_ID_DECLARATION;
-  enkf_impl_type     	  impl_type;
-  enkf_var_type      	  var_type; 
+  enkf_impl_type          impl_type;
+  enkf_var_type           var_type; 
 
   bool_vector_type      * internalize;      /* Should this node be internalized - observe that question of what to internalize is MOSTLY handled at a higher level - without consulting this variable. Can be NULL. */ 
   stringlist_type       * obs_keys;         /* Keys of observations which observe this node. */
-  char               	* key;
+  char                  * key;
   path_fmt_type         * enkf_infile_fmt;  /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */
-  path_fmt_type	     	* enkf_outfile_fmt; /* Name of file which is written by EnKF, and read by the forward model. */
+  path_fmt_type         * enkf_outfile_fmt; /* Name of file which is written by EnKF, and read by the forward model. */
   void                  * data;             /* This points to the config object of the actual implementation.        */
   enkf_node_type        * min_std;
   char                  * min_std_file; 
@@ -46,15 +46,15 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
                                                          const char * key) {
   enkf_config_node_type * node = util_malloc( sizeof *node , __func__);
   UTIL_TYPE_ID_INIT( node , ENKF_CONFIG_NODE_TYPE_ID );
-  node->var_type   	= var_type;
-  node->impl_type  	= impl_type;
-  node->key        	= util_alloc_string_copy( key );
+  node->var_type        = var_type;
+  node->impl_type       = impl_type;
+  node->key             = util_alloc_string_copy( key );
 
 
   node->enkf_infile_fmt  = NULL;
   node->enkf_outfile_fmt = NULL;
   node->internalize      = NULL;
-  node->data       	 = NULL;
+  node->data             = NULL;
   node->obs_keys         = stringlist_alloc_new(); 
   node->min_std          = NULL;
   node->min_std_file     = NULL;
@@ -178,11 +178,11 @@ static void enkf_config_node_update( enkf_config_node_type * config_node ,
 
 
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_type,
-					       enkf_impl_type             impl_type,
-					       const char               * key , 
-					       const char               * enkf_outfile_fmt , 
-					       const char               * enkf_infile_fmt  , 
-					       void                     * data) {
+                                               enkf_impl_type             impl_type,
+                                               const char               * key , 
+                                               const char               * enkf_outfile_fmt , 
+                                               const char               * enkf_infile_fmt  , 
+                                               void                     * data) {
 
   enkf_config_node_type * node = enkf_config_node_alloc__( var_type , impl_type , key );
   enkf_config_node_update( node , enkf_outfile_fmt , enkf_infile_fmt , NULL );

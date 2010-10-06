@@ -719,7 +719,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
   bool complete     = false;
   serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info * num_cpu_threads , __func__);
   thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
-
+  matrix_set_name( A , "A" );
   {
     int icpu;
     int iens_offset = 0;
@@ -747,15 +747,15 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
 
-
+      
       /**
-          This is very awkward; the problem is that for the _DATA
-          type the config object does not really own the size. Instead
-          the size is pushed (on load time) from gen_data instances to
-          the gen_data_config instance. Therefor we have to assert
-          that at least one gen_data instance has been loaded (and
-          consequently updated the gen_data_config instance) before we
-          query for the size.
+         This is very awkward; the problem is that for the _DATA
+         type the config object does not really own the size. Instead
+         the size is pushed (on load time) from gen_data instances to
+         the gen_data_config instance. Therefor we have to assert
+         that at least one gen_data instance has been loaded (and
+         consequently updated the gen_data_config instance) before we
+         query for the size.
       */
       {
         if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
@@ -778,7 +778,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
           add_more_kw = false;
       }
 
-
+      
       if (add_more_kw) {
         if (active_size[ikw] > 0) {
           state_enum load_state;
@@ -825,6 +825,8 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       
       msg_update(msg , " matrix multiplication");
       matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
+      matrix_assert_finite( A );
+          
       /* Deserialize */
       {
         for (int i = ikw1; i < ikw2; i++) {
@@ -1269,9 +1271,6 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
             matrix_inplace_add( A_resampled , work_A );
             matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
           }
-          //meas_data_fprintf( meas_data , stdout );
-          //meas_data_fprintf( meas_data_resampled , stdout);
-
         }
         matrix_free( A_resampled );
         meas_data_free(meas_data_resampled);
@@ -1404,7 +1403,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
         if (analysis_config_Xbased( enkf_main->analysis_config )) {
           
           /*LOCAL CV: */
-
+          
           // Should ONLY support CV + Local
           if (analysis_config_get_bootstrap( enkf_main->analysis_config )) {
             /*
@@ -1419,6 +1418,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
             enkf_main_update_mulX_cv(enkf_main , ministep, end_step , use_count , meas_forecast , obs_data);
           } 
           else {
+            /* Nothing fancy */
             X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
             enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
             matrix_free( X );
@@ -2183,22 +2183,53 @@ void enkf_main_initialize_from_existing(enkf_main_type * enkf_main ,
 
 
 
+static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
+  arg_pack_type * arg_pack     = arg_pack_safe_cast( void_arg );
+  enkf_main_type * enkf_main   = arg_pack_iget_ptr( arg_pack , 0);
+  stringlist_type * param_list = arg_pack_iget_ptr( arg_pack , 1 );
+  int iens1                    = arg_pack_iget_int( arg_pack , 2 );
+  int iens2                    = arg_pack_iget_int( arg_pack , 3 );
+  int iens;
+  
+  for (iens = iens1; iens < iens2; iens++) {
+    enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
+    enkf_state_initialize( state , param_list );
+  }
+
+  return NULL;
+}
+
 
 void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2) {
-  int iens;
-  msg_type * msg = msg_alloc("Initializing...: " );
-  msg_show(msg);
-  for (iens = iens1; iens <= iens2; iens++) {
-    enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
+  int num_cpu               = 4;
+  thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
+  int ens_sub_size          = (iens2 - iens1 + 1) / num_cpu;
+  arg_pack_type ** arg_list = util_malloc( num_cpu * sizeof * arg_list , __func__ );
+  int i;
+  
+  printf("Initializing .... "); fflush( stdout );
+  for (i = 0; i < num_cpu;  i++) {
+    arg_list[i] = arg_pack_alloc();
+    arg_pack_append_ptr( arg_list[i] , enkf_main );
+    arg_pack_append_ptr( arg_list[i] , param_list );
     {
-      char * iens_string = util_alloc_sprintf("%04d" , iens);
-      msg_update(msg , iens_string);
-      free(iens_string);
+      int start_iens = i * ens_sub_size;
+      int end_iens   = start_iens + ens_sub_size;
+      
+      if (i == (num_cpu - 1))
+        end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
+
+      arg_pack_append_int( arg_list[i] , start_iens );
+      arg_pack_append_int( arg_list[i] , end_iens );
     }
-    enkf_state_initialize( state , param_list );
-    msg_update(msg , "Done");
+    thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[i]);
   }
-  msg_free(msg , false);
+  thread_pool_join( tp );
+  for (i = 0; i < num_cpu; i++)
+    arg_pack_free( arg_list[i] ); 
+  free( arg_list );
+  thread_pool_free( tp );
+  printf("\n");
 }
 
 
@@ -2796,6 +2827,21 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * c
 
     
 
+void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
+  stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( enkf_main->ensemble_config , GEN_DATA);
+  for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
+    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( gen_data_keys , i));
+    enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
+    if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
+      gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+      gen_data_config_set_dynamic( gen_data_config , enkf_main->dbase );
+      gen_data_config_set_ens_size( gen_data_config , enkf_main->ens_size );
+    }
+  }
+  stringlist_free( gen_data_keys );
+}
+
+
 /*****************************************************************/
 
 /**
@@ -2933,6 +2979,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     /* OK - now we have parsed everything - and we are ready to start
        populating the enkf_main object.
     */
+
 
     enkf_main_set_site_config_file( enkf_main , site_config );
     enkf_main_set_user_config_file( enkf_main , model_config );
@@ -3107,6 +3154,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     }
     config_free(config);
   }
+  enkf_main_gen_data_special( enkf_main );
   free( model_config );
   enkf_main->misfit_table = NULL;
   return enkf_main;

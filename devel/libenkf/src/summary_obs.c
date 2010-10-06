@@ -129,6 +129,7 @@ const char * summary_obs_get_summary_key(const summary_obs_type * summary_obs)
 */
 void summary_obs_get_observations(const summary_obs_type * summary_obs,
                                   obs_data_type          * obs_data,
+                                  int report_step , 
                                   const active_list_type * __active_list) {
 
   int active_size              = active_list_get_active_size( __active_list , OBS_SIZE );

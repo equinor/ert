@@ -16,7 +16,6 @@
 #include <meas_data.h>
 #include <enkf_types.h>
 #include <sched_file.h>
-#include <enkf_fs.h>
 #include <gen_kw_config.h>
 #include <ecl_grid.h>
 #include <time.h>
@@ -395,6 +394,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   int i;
   ensemble_config->field_trans_table     = field_trans_table_alloc();    
   ensemble_config_set_refcase( ensemble_config , refcase );
+
   /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
   if (config_get_occurences(config , "MULTFLT") > 0) {
     printf("******************************************************************\n");
@@ -455,7 +455,6 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
 
 
       enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
-      
       hash_free( options );
     }
   }
