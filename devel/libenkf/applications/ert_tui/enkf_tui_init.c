@@ -40,7 +40,7 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
     int num_keys = stringlist_get_size(tmp_key_list);
     for (int i = 0; i < num_keys; i++) {
       if (ensemble_config_var_type(ensemble_config , stringlist_iget(tmp_key_list,i)) != STATIC_STATE)
-	stringlist_append_copy(param_list , stringlist_iget(tmp_key_list,i ));
+        stringlist_append_copy(param_list , stringlist_iget(tmp_key_list,i ));
     }
     stringlist_free(tmp_key_list);
   } else 

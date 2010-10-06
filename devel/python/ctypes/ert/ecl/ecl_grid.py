@@ -168,6 +168,7 @@ class EclGrid(object):
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index )
         return cfunc.get_cell_thickness( self , gi )
 
+
     @property
     def num_lgr( self ):
         return cfunc.num_lgr( self )
