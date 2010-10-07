@@ -26,10 +26,10 @@ float        field_ijk_get_float(const field_type * field, int  , int  , int );
 void         field_ijk_get(const field_type * , int , int  , int , void *);
 bool         field_ijk_valid(const field_type * , int , int , int );
 void         field_ijk_get_if_valid(const field_type * , int  , int  , int , void * , bool *);
-void 	     field_ecl_write1D_fortio(const field_type * , fortio_type *);
-void 	     field_ecl_write3D_fortio(const field_type * , fortio_type *);
+void         field_ecl_write1D_fortio(const field_type * , fortio_type *);
+void         field_ecl_write3D_fortio(const field_type * , fortio_type *);
 void         field_ROFF_export(const field_type * , const char * );
-void 	     field_copy_ecl_kw_data(field_type * , const ecl_kw_type * );
+void         field_copy_ecl_kw_data(field_type * , const ecl_kw_type * );
 field_type * field_alloc_shared(const field_config_type * , void * , int );
 void         field_free(field_type *);
 void         field_get_dims(const field_type *, int *, int *, int *);
@@ -40,7 +40,6 @@ field_type * field_copyc(const field_type *);
 bool         field_cmp(const field_type *  , const field_type * );
 
 double     * field_indexed_get_alloc(const field_type *, int, const int *);
-void         field_apply(field_type *  , field_func_type * );
 void         field_inplace_output_transform(field_type * field);
 
 void          field_iscale(field_type * , double );

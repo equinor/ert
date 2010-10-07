@@ -29,9 +29,9 @@ typedef struct misfit_ranking_struct misfit_ranking_type;
 
 
 
-#define MISFIT_TABLE_TYPE_ID  	    441066
-#define MISFIT_NODE_TYPE_ID   	    541066
-#define MISFIT_VECTOR_TYPE_ID 	    641066
+#define MISFIT_TABLE_TYPE_ID        441066
+#define MISFIT_NODE_TYPE_ID         541066
+#define MISFIT_VECTOR_TYPE_ID       641066
 #define MISFIT_RANKING_TYPE_ID      671108
 
 
@@ -53,9 +53,9 @@ struct misfit_ranking_struct {
 
 struct misfit_table_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int         	        history_length;  
-  vector_type 	      * ensemble;           /* Vector of misfit_node_type instances - one for each ensemble member. */
-  hash_type   	      * ranking_list;       /* A hash table of stored permutation vectors. */
+  int                   history_length;  
+  vector_type         * ensemble;           /* Vector of misfit_node_type instances - one for each ensemble member. */
+  hash_type           * ranking_list;       /* A hash table of stored permutation vectors. */
   const enkf_obs_type * enkf_obs;           /* A pointer to the active enkf_obs instance - NOT owned by the misfit_table. */
   char                * current_case;       /* The (filesystem) case which was used when building the misfit table. */
 
@@ -67,9 +67,9 @@ struct misfit_table_struct {
 struct misfit_node_struct {
   UTIL_TYPE_ID_DECLARATION;
   int          my_iens;
-  hash_type   *obs; 	      /* hash table of misfit_vector_type instances - indexed by observation keys. The structure
-		    	         of this hash table is duplicated for each ensemble member; that feels like a violation
-		    	         of the DRY principle ... */
+  hash_type   *obs;           /* hash table of misfit_vector_type instances - indexed by observation keys. The structure
+                                 of this hash table is duplicated for each ensemble member; that feels like a violation
+                                 of the DRY principle ... */
 };
 
 
@@ -259,8 +259,8 @@ static void  __2d_free(double ** d , int rows) {
 
 
 static void misfit_table_update( misfit_table_type * misfit_table , const ensemble_config_type * config , enkf_fs_type * fs ) {
-  msg_type * msg            = msg_alloc("Evaluating misfit for observation: ");
-  const int ens_size 	    = vector_get_size( misfit_table->ensemble );
+  msg_type * msg            = msg_alloc("Evaluating misfit for observation: " , false);
+  const int ens_size        = vector_get_size( misfit_table->ensemble );
   double ** chi2_work       = __2d_malloc( misfit_table->history_length + 1 , ens_size );
   hash_iter_type * obs_iter = enkf_obs_alloc_iter( misfit_table->enkf_obs );
   const char * obs_key      = hash_iter_get_next_key( obs_iter );
@@ -274,7 +274,7 @@ static void misfit_table_update( misfit_table_type * misfit_table , const ensemb
     
     
     /** 
-	Internalizing the results from the chi2_work table into the misfit structure.
+        Internalizing the results from the chi2_work table into the misfit structure.
     */
     for (int iens = 0; iens < ens_size; iens++) {
       misfit_node_type * node = vector_iget( misfit_table->ensemble , iens);

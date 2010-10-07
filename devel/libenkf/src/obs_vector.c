@@ -773,7 +773,7 @@ void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs
     sum_chi2[iens] = 0;
 
   if (verbose) {
-    msg = msg_alloc("Observation: ");
+    msg = msg_alloc("Observation: " , false);
     msg_show(msg);
   }
 

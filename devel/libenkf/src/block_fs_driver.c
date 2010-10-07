@@ -320,7 +320,7 @@ void block_fs_driver_select_dir(void *_driver , const char * directory, bool rea
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
   thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers , true ); /* Maaany threads .... */
   arg_pack_type ** arglist      = util_malloc( sizeof * arglist * driver->num_drivers , __func__);
-  msg_type * msg = msg_alloc("Mounting: ");
+  msg_type * msg = msg_alloc("Mounting: " , false);
   int driver_nr;
   
   msg_show( msg );
@@ -392,11 +392,11 @@ static void block_fs_driver_fsync( void * _driver ) {
 static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driver_type , int num_drivers ) {
   block_fs_driver_type * driver = util_malloc(sizeof * driver , __func__);
 
-  driver->load        	= block_fs_driver_load_node;
-  driver->save        	= block_fs_driver_save_node;
-  driver->free_driver 	= block_fs_driver_free;
-  driver->unlink_node 	= block_fs_driver_unlink_node;
-  driver->has_node    	= block_fs_driver_has_node;
+  driver->load          = block_fs_driver_load_node;
+  driver->save          = block_fs_driver_save_node;
+  driver->free_driver   = block_fs_driver_free;
+  driver->unlink_node   = block_fs_driver_unlink_node;
+  driver->has_node      = block_fs_driver_has_node;
   driver->select_dir    = block_fs_driver_select_dir;
   driver->fsync_driver  = block_fs_driver_fsync;
 

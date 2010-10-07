@@ -545,6 +545,48 @@ ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * field) {
 }
 
 
+static void field_apply(field_type * field , field_func_type * func) {
+  field_config_assert_unary(field->config , __func__);
+  {
+    const int data_size          = field_config_get_data_size( field->config );   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+    
+    if (ecl_type == ECL_FLOAT_TYPE) {
+      float * data = (float *) field->data;
+      for (int i=0; i < data_size; i++)
+        data[i] = func(data[i]);
+    } else if (ecl_type == ECL_DOUBLE_TYPE) {
+      double * data = (double *) field->data;
+      for (int i=0; i < data_size; i++)
+        data[i] = func(data[i]);
+    } 
+  }
+}
+
+
+static bool field_check_finite( const field_type * field) {
+  const int data_size          = field_config_get_data_size( field->config );   
+  const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+  bool  ok = true;
+  
+  if (ecl_type == ECL_FLOAT_TYPE) {
+    float * data = (float *) field->data;
+    for (int i=0; i < data_size; i++)
+      if (!isfinite( data[i] ))
+        ok = false;
+  } else if (ecl_type == ECL_DOUBLE_TYPE) {
+    double * data = (double *) field->data;
+    for (int i=0; i < data_size; i++)
+      if (!isfinite( data[i] ))
+        ok = false;
+  } 
+  return ok;
+}
+
+
+
+
+
 void  field_inplace_output_transform(field_type * field ) {
   field_func_type * output_transform = field_config_get_output_transform(field->config);
   if (output_transform != NULL) 
@@ -704,8 +746,11 @@ bool field_initialize(field_type *field , int iens) {
          the data, not as the output transform which is done on a copy of
          prior to export.
       */
-      if (init_transform != NULL) 
+      if (init_transform != NULL) {
         field_apply(field , init_transform);
+        if (!field_check_finite( field ))
+          util_exit("Sorry: after applying the init transform field:%s contains nan/inf or similar malformed values.\n" , field_config_get_key( field->config ));
+      }
     }
     return true; 
   } else 
@@ -1153,8 +1198,8 @@ bool field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_
     /* The input transform is done in-place. */
     if (input_transform != NULL) 
       field_apply(field , input_transform);
-  }
 
+  }
   return loadOK;
 }
 
@@ -1167,23 +1212,6 @@ void field_get_dims(const field_type * field, int *nx, int *ny , int *nz) {
 
 
 
-void field_apply(field_type * field , field_func_type * func) {
-  field_config_assert_unary(field->config , __func__);
-  {
-    const int data_size          = field_config_get_data_size( field->config );   
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-    
-    if (ecl_type == ECL_FLOAT_TYPE) {
-      float * data = (float *) field->data;
-      for (int i=0; i < data_size; i++)
-        data[i] = func(data[i]);
-    } else if (ecl_type == ECL_DOUBLE_TYPE) {
-      double * data = (double *) field->data;
-      for (int i=0; i < data_size; i++)
-        data[i] = func(data[i]);
-    } 
-  }
-}
 
 
 

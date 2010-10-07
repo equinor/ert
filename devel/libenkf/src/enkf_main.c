@@ -588,7 +588,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
 
 void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , hash_type * use_count) {
   stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE);
-  msg_type * msg = msg_alloc("Inflating:");
+  msg_type * msg = msg_alloc("Inflating:" , false);
 
   msg_show( msg );
   for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++) {
@@ -671,6 +671,7 @@ static void * serialize_nodes_mt( void * arg ) {
   for (iens = info->iens1; iens < info->iens2; iens++) 
     serialize_node( info->fs , info->ensemble , iens , info->key , info->report_step , info->load_state , info->row_offset , info->active_list , info->A );
   
+  printf("%s: A(0,0):%g \n",__func__ , matrix_iget(info->A , 0 , 0 ));
   return NULL;
 }
 
@@ -710,7 +711,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
   const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
   enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
   matrix_type * A = matrix_alloc(matrix_size , ens_size);
-  msg_type  * msg = msg_alloc("Updating: ");
+  msg_type  * msg = msg_alloc("Updating: " , true );
   stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
   const int num_kw  = stringlist_get_size( update_keys );
   int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
@@ -732,6 +733,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       serialize_info[icpu].iens2       = iens_offset + (ens_size - iens_offset) / (num_cpu_threads - icpu);
       iens_offset = serialize_info[icpu].iens2;
     }
+    serialize_info[num_cpu_threads - 1].iens2 = ens_size;
   }
 
   msg_show( msg );
@@ -800,9 +802,14 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
               
               thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
             }
+            {
+              char * label = util_alloc_sprintf("serializing: %s" , key);
+              msg_update( msg , label);
+              free(label);
+            }
             thread_pool_join( work_pool );
-
             current_row_offset += active_size[ikw];
+            
           }
         }
 
@@ -812,14 +819,15 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       }
       //add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
       first_kw = false;
-      {
-        char * label = util_alloc_sprintf("serializing: %s" , key);
-        msg_update( msg , label);
-        free(label);
-      }
     } while (add_more_kw);
     ikw2 = ikw;
+    printf("\n");
+    printf("Serializing ferdig  I : A(0,0):%g \n",matrix_iget( A , 0 , 0));
     matrix_shrink_header( A , current_row_offset , ens_size );
+    printf("Serializing ferdig II : A(0,0):%g \n",matrix_iget( A , 0 , 0));
+    matrix_assert_finite( A );
+    printf("A er OK\n\n");
+    
     if (current_row_offset > 0) {
       /* The actual update */
       
@@ -882,7 +890,7 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
   const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
   enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
   matrix_type * A = matrix_alloc(matrix_size , ens_size);
-  msg_type  * msg = msg_alloc("Updating: ");
+  msg_type  * msg = msg_alloc("Updating: " , false);
   stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
   const int num_kw  = stringlist_get_size( update_keys );
   int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
@@ -1091,7 +1099,7 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
   const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
   enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
   matrix_type * A = matrix_alloc(matrix_size , ens_size);
-  msg_type  * msg = msg_alloc("Updating: ");
+  msg_type  * msg = msg_alloc("Updating: " , false);
   stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
   const int num_kw  = stringlist_get_size( update_keys );
   int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
@@ -1454,7 +1462,7 @@ matrix_type * enkf_main_getA(enkf_main_type * enkf_main , const local_ministep_t
   const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
   enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
   matrix_type * A = matrix_alloc(matrix_size , ens_size);
-  msg_type  * msg = msg_alloc("\nSTARTING getA...\n ");
+  msg_type  * msg = msg_alloc("\nSTARTING getA...\n " , false);
   stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
   const int num_kw  = stringlist_get_size( update_keys );
   int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);

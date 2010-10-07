@@ -480,7 +480,7 @@ static void enkf_fs_upgrade_103(const char * config_file , const char * root_pat
   printf("**                                                             **\n");       
   printf("*****************************************************************\n");
   {
-    msg_type * msg = msg_alloc("Upgrading: ");
+    msg_type * msg = msg_alloc("Upgrading: " , false);
     int file_count__ = 0;
     arg_pack_type * arg_pack = arg_pack_alloc();
     msg_show( msg );
@@ -866,7 +866,7 @@ static void enkf_fs_upgrade_101(const char * config_file, const char * root_path
   {
     char     * current_case = NULL;
     set_type * cases        = set_alloc_empty();
-    msg_type * msg          = msg_alloc("Upgrading: ");
+    msg_type * msg          = msg_alloc("Upgrading: " , false);
     DIR * dirH              = opendir( root_path );
     struct dirent * dp;
     msg_show(msg);

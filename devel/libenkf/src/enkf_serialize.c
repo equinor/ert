@@ -164,13 +164,13 @@ vector (marked with X2 above)). Now - that was clear ehhh?
 */
    
 
-void enkf_matrix_serialize(const void * __node_data 	   	  , 
-			   int node_size    	   	          ,      
-			   ecl_type_enum node_type 	          ,           
-			   const active_list_type * __active_list , 
-			   matrix_type * A                        ,
-			   int row_offset,
-			   int column) {
+void enkf_matrix_serialize(const void * __node_data               , 
+                           int node_size                          ,      
+                           ecl_type_enum node_type                ,           
+                           const active_list_type * __active_list , 
+                           matrix_type * A                        ,
+                           int row_offset,
+                           int column) {
   
   int active_size;
   const int   * active_list    = active_list_get_active( __active_list ); 
@@ -184,8 +184,8 @@ void enkf_matrix_serialize(const void * __node_data 	   	  ,
       int row_index;
       int node_index;
       for (row_index = 0; row_index < active_size; row_index++) {
-	node_index = active_list[ row_index ];
-	matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
+        node_index = active_list[ row_index ];
+        matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
       }
     }
   } else if (node_type == ECL_FLOAT_TYPE) {
@@ -193,13 +193,13 @@ void enkf_matrix_serialize(const void * __node_data 	   	  ,
     int row_index;
     if (active_size == node_size) {/** All elements active */
       for (row_index = 0; row_index < node_size; row_index++)
-	matrix_iset( A , row_index + row_offset , column , node_data[ row_index ]);  /* Must have float -> double conversion; can not use memcpy() based approach */
+        matrix_iset( A , row_index + row_offset , column , node_data[ row_index ]);  /* Must have float -> double conversion; can not use memcpy() based approach */
     } else {
       int row_index;
       int node_index;
       for (row_index = 0; row_index < active_size; row_index++) {
-	node_index = active_list[ row_index ];
-	matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
+        node_index = active_list[ row_index ];
+        matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
       }
     }      
   } else 
@@ -207,13 +207,13 @@ void enkf_matrix_serialize(const void * __node_data 	   	  ,
 }
 
 
-void enkf_matrix_deserialize(void * __node_data 	   	, 
-			     int node_size    	   	        ,      
-			     ecl_type_enum node_type 	        ,           
-			     const active_list_type * __active_list , 
-			     const matrix_type * A,
-			     int row_offset,
-			     int column) {
+void enkf_matrix_deserialize(void * __node_data                 , 
+                             int node_size                      ,      
+                             ecl_type_enum node_type            ,           
+                             const active_list_type * __active_list , 
+                             const matrix_type * A,
+                             int row_offset,
+                             int column) {
   
   int active_size;
   const int   * active_list    = active_list_get_active( __active_list ); 
@@ -225,13 +225,13 @@ void enkf_matrix_deserialize(void * __node_data 	   	,
     if (active_size == node_size) { /** All elements active */
       int row_index;
       for (row_index = 0; row_index < active_size; row_index++) 
-	node_data[row_index] = matrix_iget( A , row_index + row_offset , column);
+        node_data[row_index] = matrix_iget( A , row_index + row_offset , column);
     } else {
       int row_index;
       int node_index;
       for (row_index = 0; row_index < active_size; row_index++) {
-	node_index = active_list[ row_index ];
-	node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
+        node_index = active_list[ row_index ];
+        node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
       }
     }
     
@@ -241,16 +241,16 @@ void enkf_matrix_deserialize(void * __node_data 	   	,
     if (active_size == node_size) { /** All elements active */
       int row_index;
       for (row_index = 0; row_index < active_size; row_index++) 
-	node_data[row_index] = matrix_iget( A , row_index + row_offset , column);
+        node_data[row_index] = matrix_iget( A , row_index + row_offset , column);
     } else {
       int row_index;
       int node_index;
       for (row_index = 0; row_index < active_size; row_index++) {
-	node_index = active_list[ row_index ];
-	node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
+        node_index = active_list[ row_index ];
+        node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
       }
     }
   } else 
     util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_get_type_name( node_type ));
 }
-			   
+                           

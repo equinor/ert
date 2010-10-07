@@ -27,8 +27,8 @@ struct field_trans_table_struct {
 
 
 typedef struct {
-  char 		  * key;
-  char 		  * description;
+  char            * key;
+  char            * description;
   field_func_type * func;
 } field_func_node_type;
 
@@ -85,7 +85,6 @@ void field_trans_table_add(field_trans_table_type * table , const char * _key , 
   }
   free(key);
 }
-
 
 
 void field_trans_table_fprintf(const field_trans_table_type * table , FILE * stream) {

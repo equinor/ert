@@ -98,7 +98,7 @@ int main(int argc, char ** argv) {
       char * src_case    = util_alloc_sprintf("%s/%s" , src_path , dir );
       char * target_case = util_alloc_sprintf("%s/%s" , target_path , dir );
 
-      msg_type * msg = msg_alloc("Copying from: ");
+      msg_type * msg = msg_alloc("Copying from: " , false);
       msg_show( msg );
       migrate_file(src_case , num_src_drivers , target_case , num_target_drivers , "ANALYZED" , 32 , msg);
       migrate_file(src_case , num_src_drivers , target_case , num_target_drivers , "FORECAST" , 32 , msg);

@@ -40,50 +40,50 @@
 
 
 
- 							    _______________________________         ___
-							   /   	       	 		   \	    /|\
-                                                           | Forward model (i.e. ECLIPSE)  |	     |
-                                                           | generates dynamic fields like |	     |
-                                                           | PRESSURE and SATURATIONS	   |	     |
-							   \_______________________________/	     |	   This code is run
-							   		  |		   	     |	   every time a field
-									  |			     |	   is loaded FROM the
-									 \|/			     |	   forward model into
-									  | 			     |	   EnKF.
-								  ________|_________		     |
-								 /     	       	    \		     |
-								 | Input transform  |		     |
-								 \__________________/		     |
-								    	  |			     |
-								    	  |			     |
-								    	 \|/			     |
-								    	  |			     |
-                            	                          ________________|__________________	   _\|/_
-_______________                       ___________	 /                                   \
-               \                     /         	 \	 |  The internal representation      |
- Geo Modelling |                     | init-     |	 |  of the field. This (should)      |
+                                                            _______________________________         ___
+                                                           /                               \        /|\
+                                                           | Forward model (i.e. ECLIPSE)  |         |
+                                                           | generates dynamic fields like |         |
+                                                           | PRESSURE and SATURATIONS      |         |
+                                                           \_______________________________/         |     This code is run
+                                                                          |                          |     every time a field
+                                                                          |                          |     is loaded FROM the
+                                                                         \|/                         |     forward model into
+                                                                          |                          |     EnKF.
+                                                                  ________|_________                 |
+                                                                 /                  \                |
+                                                                 | Input transform  |                |
+                                                                 \__________________/                |
+                                                                          |                          |
+                                                                          |                          |
+                                                                         \|/                         |
+                                                                          |                          |
+                                                          ________________|__________________      _\|/_
+_______________                       ___________        /                                   \
+               \                     /           \       |  The internal representation      |
+ Geo Modelling |                     | init-     |       |  of the field. This (should)      |
  creates a     |==>===============>==| transform |===>===|  be a normally distributed        |
- realization   |                     | 	     	 |	 |  variable suitable for updates    |
-_______________/                     \___________/	 |  with EnKF.                       |
-                               	              		 \___________________________________/   ___
+ realization   |                     |           |       |  variable suitable for updates    |
+_______________/                     \___________/       |  with EnKF.                       |
+                                                         \___________________________________/   ___
 |<----   This path is ONLY executed during INIT ------->|                  |                     /|\
          Observe that there is no truncation                              \|/                     |
-         on load.					          _________|__________		  |
-                                                                 /                    \		  |   This code is run
-                                                                 |  Output transform  |		  |   every time a field
-                                                                 \____________________/		  |   is exported from
-                                                                           |			  |   enkf to the forward
-                                                                          \|/			  |   model - i.e. ECLIPSE.
-							          _________|__________		  |
-                                                                 /                    \		  |
-                                                                 | Truncate min/max   | 	  |
-                                                                 \____________________/		  |
-                                                                           |			  |
-                                                                          \|/			  |
-							          _________|__________		  |
-                                                                 /                    \		  |
-                                                                 |    FORWARD MODEL   | 	  |
-                                                                 \____________________/		_\|/_
+         on load.                                                 _________|__________            |
+                                                                 /                    \           |   This code is run
+                                                                 |  Output transform  |           |   every time a field
+                                                                 \____________________/           |   is exported from
+                                                                           |                      |   enkf to the forward
+                                                                          \|/                     |   model - i.e. ECLIPSE.
+                                                                  _________|__________            |
+                                                                 /                    \           |
+                                                                 | Truncate min/max   |           |
+                                                                 \____________________/           |
+                                                                           |                      |
+                                                                          \|/                     |
+                                                                  _________|__________            |
+                                                                 /                    \           |
+                                                                 |    FORWARD MODEL   |           |
+                                                                 \____________________/         _\|/_
 
 
 
@@ -108,13 +108,13 @@ struct field_config_struct {
   ecl_grid_type * grid;                  /* A shared reference to the grid this field is defined on. */
   bool  private_grid;
   
-  int             	  truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. OR'd combination of truncation_type from enkf_types.h*/
-  double   	  	  min_value;            /* The min value used in truncation. */
-  double   	  	  max_value;            /* The maximum value used in truncation. */
+  int                     truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. OR'd combination of truncation_type from enkf_types.h*/
+  double                  min_value;            /* The min value used in truncation. */
+  double                  max_value;            /* The maximum value used in truncation. */
 
   field_file_format_type  export_format;
   field_file_format_type  import_format;
-  int             	  sizeof_ctype;
+  int                     sizeof_ctype;
   ecl_type_enum           internal_ecl_type;
   ecl_type_enum           export_ecl_type;
   path_fmt_type         * init_file_fmt;        /* The format for loading init_files - if this is NULL the initialization is done by the forward model. */
@@ -820,10 +820,10 @@ void field_config_scanf_ijk(const field_config_type * config , bool active_only 
     if (OK) {
       global_index = field_config_active_index(config , i,j,k);
       if (active_only) {
-	if (global_index < 0) {
-	  OK = false;
-	  printf("Sorry the point: (%d,%d,%d) corresponds to an inactive cell\n" , i + 1 , j+ 1 , k + 1);
-	}
+        if (global_index < 0) {
+          OK = false;
+          printf("Sorry the point: (%d,%d,%d) corresponds to an inactive cell\n" , i + 1 , j+ 1 , k + 1);
+        }
       }
     }
     free(input);
@@ -968,7 +968,7 @@ int field_config_parse_user_key(const field_config_type * config, const char * i
     if(field_config_ijk_valid(config, i, j, k)) {
       int active_index = field_config_active_index(config , i,j,k);
       if (active_index < 0)
-	return_value = 3;  	/* ijk corresponds to an inactive cell. */
+        return_value = 3;       /* ijk corresponds to an inactive cell. */
     }  else 
       return_value = 2;         /* ijk is outside the grid. */
 
