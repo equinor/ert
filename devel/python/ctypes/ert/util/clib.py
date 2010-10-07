@@ -1,6 +1,5 @@
 import ctypes
 
-
 # The libraries can be given in alternative forms like this:
 #
 #    load("libz.so" , "libz.so.1" , "libz.so.1.2.1.2" , "libZ-fucker.so")

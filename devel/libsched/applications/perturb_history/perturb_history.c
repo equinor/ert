@@ -179,7 +179,7 @@ int main( int argc , char ** argv ) {
     const char * sched_file_name = config_iget( config , "SCHEDULE_FILE" , 0 , 0 );
     path_fmt_type * sched_fmt    = path_fmt_alloc_path_fmt( config_iget( config , "TARGET" , 0 , 0) );
     const int num_realizations   = config_iget_as_int(config , "NUM_REALIZATIONS" , 0 , 0 );
-    msg_type * msg               = msg_alloc("Creating file: ");
+    msg_type * msg               = msg_alloc("Creating file: ", false);
     
     time_t start_date = ecl_util_get_start_date( data_file );
     time_t_vector_type * time_vector;

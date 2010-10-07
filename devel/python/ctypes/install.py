@@ -73,6 +73,10 @@ def install_path( src_path , target_root , extensions = None):
     for entry in os.listdir( src_path ):
         if entry == ".svn":
             continue
+        
+        if entry[-1] == "~":
+            continue
+
         full_path = "%s/%s" % (src_path , entry)
         if os.path.isdir( full_path ):
             dir_entries.append( full_path )

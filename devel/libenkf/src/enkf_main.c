@@ -671,7 +671,6 @@ static void * serialize_nodes_mt( void * arg ) {
   for (iens = info->iens1; iens < info->iens2; iens++) 
     serialize_node( info->fs , info->ensemble , iens , info->key , info->report_step , info->load_state , info->row_offset , info->active_list , info->A );
   
-  printf("%s: A(0,0):%g \n",__func__ , matrix_iget(info->A , 0 , 0 ));
   return NULL;
 }
 
@@ -711,7 +710,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
   const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
   enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
   matrix_type * A = matrix_alloc(matrix_size , ens_size);
-  msg_type  * msg = msg_alloc("Updating: " , true );
+  msg_type  * msg = msg_alloc("Updating: " , false);
   stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
   const int num_kw  = stringlist_get_size( update_keys );
   int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
@@ -809,7 +808,6 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
             }
             thread_pool_join( work_pool );
             current_row_offset += active_size[ikw];
-            
           }
         }
 
@@ -821,13 +819,8 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       first_kw = false;
     } while (add_more_kw);
     ikw2 = ikw;
-    printf("\n");
-    printf("Serializing ferdig  I : A(0,0):%g \n",matrix_iget( A , 0 , 0));
+
     matrix_shrink_header( A , current_row_offset , ens_size );
-    printf("Serializing ferdig II : A(0,0):%g \n",matrix_iget( A , 0 , 0));
-    matrix_assert_finite( A );
-    printf("A er OK\n\n");
-    
     if (current_row_offset > 0) {
       /* The actual update */
       
