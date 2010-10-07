@@ -182,6 +182,17 @@ static float trunc_pow10f(float x) {
   return util_float_max(powf(10.0 , x) , 0.001);
 }
 
+#define LN_SHIFT 0.0000001
+static float field_trans_ln0( float x ) {
+  return log( x + LN_SHIFT );
+}
+
+static float field_trans_exp0( float x ) {
+  return exp( x ) - LN_SHIFT;
+}
+#undef LN_SHIFT
+
+
 
 field_trans_table_type * field_trans_table_alloc() {
   field_trans_table_type * table = util_malloc( sizeof * table , __func__);
@@ -192,6 +203,8 @@ field_trans_table_type * field_trans_table_alloc() {
   field_trans_table_add( table , "LN"          , "This function will take the NATURAL logarithm of x: y = ln(x)" , logf);
   field_trans_table_add( table , "LOG10"       , "This function will take the log10 logarithm of x: y = log10(x)" , log10f);
   field_trans_table_add( table , "EXP"         , "This function will calculate y = exp(x) " , expf);
+  field_trans_table_add( table , "LN0"         , "This function will calculate y = ln(x + 0.000001)" , field_trans_ln0);
+  field_trans_table_add( table , "EXP0"        , "This function will calculate y = exp(x) - 0.000001" , field_trans_exp0);
   table->case_sensitive = false;
   return table;
 }

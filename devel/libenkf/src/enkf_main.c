@@ -801,11 +801,6 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
               
               thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
             }
-            {
-              char * label = util_alloc_sprintf("serializing: %s" , key);
-              msg_update( msg , label);
-              free(label);
-            }
             thread_pool_join( work_pool );
             current_row_offset += active_size[ikw];
           }
@@ -814,9 +809,17 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
         ikw++;
         if (ikw == num_kw)
           add_more_kw = false;
+
+        if (add_more_kw) {
+          char * label = util_alloc_sprintf("serializing: %s" , key);
+          msg_update( msg , label);
+          free(label);
+        }
       }
       //add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
       first_kw = false;
+      
+
     } while (add_more_kw);
     ikw2 = ikw;
 
@@ -824,7 +827,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
     if (current_row_offset > 0) {
       /* The actual update */
       
-      msg_update(msg , " matrix multiplication");
+      msg_update(msg , "matrix multiplication");
       matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
       matrix_assert_finite( A );
           

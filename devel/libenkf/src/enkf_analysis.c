@@ -969,8 +969,8 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
         util_abort("%s: something is seriously broken. col:%d  col_sum = %g != 1.0 - ABORTING\n",__func__ , icol , col_sum);
     }
   }
-  printf("X er OK \n");
 }
+
 
 
 
