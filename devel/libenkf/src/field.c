@@ -52,26 +52,26 @@ struct field_struct {
 
 
 
-#define EXPORT_MACRO                                                                           	  	  \
-{                                                                                                 	  \
+#define EXPORT_MACRO                                                                                      \
+{                                                                                                         \
   int nx,ny,nz;                                                                                           \
   field_config_get_dims(field->config , &nx , &ny , &nz);                                                 \
-  int i,j,k;                                                                                      	  \
-   for (k=0; k < nz; k++) {                                                               	  	  \
-     for (j=0; j < ny; j++) {                                                             	  	  \
-       for (i=0; i < nx; i++) {                                                           	  	  \
-         int index1D = field_config_active_index(config , i , j , k);                             	  \
-         int index3D;                                                                             	  \
-         if (rms_index_order)                                               		     	       	  \
+  int i,j,k;                                                                                              \
+   for (k=0; k < nz; k++) {                                                                               \
+     for (j=0; j < ny; j++) {                                                                             \
+       for (i=0; i < nx; i++) {                                                                           \
+         int index1D = field_config_active_index(config , i , j , k);                                     \
+         int index3D;                                                                                     \
+         if (rms_index_order)                                                                             \
            index3D = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);                              \
-         else                                                                       	       	          \
-           index3D = i + j * nx + k* nx*ny;           	               	                                  \
-         if (index1D >= 0)                                                                        	  \
-   	   target_data[index3D] = src_data[index1D];                               	       	          \
-         else                                                                                     	  \
-           memcpy(&target_data[index3D] , fill_value , sizeof_ctype_target);                      	  \
-        }                                                                                         	  \
-     }                                                                                            	  \
+         else                                                                                             \
+           index3D = i + j * nx + k* nx*ny;                                                               \
+         if (index1D >= 0)                                                                                \
+           target_data[index3D] = src_data[index1D];                                                      \
+         else                                                                                             \
+           memcpy(&target_data[index3D] , fill_value , sizeof_ctype_target);                              \
+        }                                                                                                 \
+     }                                                                                                    \
    }                                                                                                      \
 }                                                                                                         
 
@@ -86,14 +86,14 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
     {
       const double * src_data = (const double *) field->data;
       if (target_type == ECL_FLOAT_TYPE) {
-	float *target_data = (float *) _target_data;
-	EXPORT_MACRO;
+        float *target_data = (float *) _target_data;
+        EXPORT_MACRO;
       } else if (target_type == ECL_DOUBLE_TYPE) {
-	double *target_data = (double *) _target_data;
-	EXPORT_MACRO;
+        double *target_data = (double *) _target_data;
+        EXPORT_MACRO;
       } else {
-	fprintf(stderr,"%s: double field can only export to double/float\n",__func__);
-	abort();
+        fprintf(stderr,"%s: double field can only export to double/float\n",__func__);
+        abort();
       }
     }
     break;
@@ -101,14 +101,14 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
     {
       const float * src_data = (const float *) field->data;
       if (target_type == ECL_FLOAT_TYPE) {
-	float *target_data = (float *) _target_data;
-	EXPORT_MACRO;
+        float *target_data = (float *) _target_data;
+        EXPORT_MACRO;
       } else if (target_type == ECL_DOUBLE_TYPE) {
-	double *target_data = (double *) _target_data;
-	EXPORT_MACRO;
+        double *target_data = (double *) _target_data;
+        EXPORT_MACRO;
       } else {
-	fprintf(stderr,"%s: float field can only export to double/float\n",__func__);
-	abort();
+        fprintf(stderr,"%s: float field can only export to double/float\n",__func__);
+        abort();
       }
     }
     break;
@@ -116,17 +116,17 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
     {
       const int * src_data = (const int *) field->data;
       if (target_type == ECL_FLOAT_TYPE) {
-	float *target_data = (float *) _target_data;
-	EXPORT_MACRO;
+        float *target_data = (float *) _target_data;
+        EXPORT_MACRO;
       } else if (target_type == ECL_DOUBLE_TYPE) {
-	double *target_data = (double *) _target_data;
-	EXPORT_MACRO;
+        double *target_data = (double *) _target_data;
+        EXPORT_MACRO;
       } else if (target_type == ECL_INT_TYPE) {
-	int *target_data = (int *) _target_data;
-	EXPORT_MACRO;
+        int *target_data = (int *) _target_data;
+        EXPORT_MACRO;
       }  else {
-	fprintf(stderr,"%s: int field can only export to int/double/float\n",__func__);
-	abort();
+        fprintf(stderr,"%s: int field can only export to int/double/float\n",__func__);
+        abort();
       }
     }
     break;
@@ -139,25 +139,25 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
   
 
 /*****************************************************************/
-#define IMPORT_MACRO                                                                           	            \
+#define IMPORT_MACRO                                                                                        \
 {                                                                                                           \
   int i,j,k;                                                                                                \
   int nx,ny,nz;                                                                                             \
   field_config_get_dims(field->config , &nx , &ny , &nz);                                                   \
-  for (k=0; k < nz; k++) {                                                               	    	    \
-     for (j=0; j < ny; j++) {                                                             	    	    \
-       for (i=0; i < nx; i++) {                                                           	    	    \
-         int index1D = field_config_active_index(config , i , j , k);                             	    \
-         int index3D;                                                                             	    \
-         if (index1D >= 0) {                                                                      	    \
-   	   if (rms_index_order)                                               		     	       	    \
-   	     index3D = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k); 	                            \
-   	   else                                                                       	       	    	    \
-   	     index3D = i + j * nx + k* nx*ny;           	               	                            \
-           target_data[index1D] = src_data[index3D] ;                               	       	    	    \
-         }                                                                                         	    \
-      }                                                                                           	    \
-     }                                                                                            	    \
+  for (k=0; k < nz; k++) {                                                                                  \
+     for (j=0; j < ny; j++) {                                                                               \
+       for (i=0; i < nx; i++) {                                                                             \
+         int index1D = field_config_active_index(config , i , j , k);                                       \
+         int index3D;                                                                                       \
+         if (index1D >= 0) {                                                                                \
+           if (rms_index_order)                                                                             \
+             index3D = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);                              \
+           else                                                                                             \
+             index3D = i + j * nx + k* nx*ny;                                                               \
+           target_data[index1D] = src_data[index3D] ;                                                       \
+         }                                                                                                  \
+      }                                                                                                     \
+     }                                                                                                      \
    }                                                                                                        \
 }
 
@@ -184,17 +184,17 @@ static void field_import3D(field_type * field , const void *_src_data , bool rms
     {
       double * target_data = (double *) field->data;
       if (src_type == ECL_FLOAT_TYPE) {
-	float *src_data = (float *) _src_data;
-	IMPORT_MACRO;
+        float *src_data = (float *) _src_data;
+        IMPORT_MACRO;
       } else if (src_type == ECL_DOUBLE_TYPE) {
-	double *src_data = (double *) _src_data;
-	IMPORT_MACRO;
+        double *src_data = (double *) _src_data;
+        IMPORT_MACRO;
       } else if (src_type == ECL_INT_TYPE) {
-	int *src_data = (int *) _src_data;
-	IMPORT_MACRO;
+        int *src_data = (int *) _src_data;
+        IMPORT_MACRO;
       } else {
-	fprintf(stderr,"%s: double field can only import from int/double/float\n",__func__);
-	abort();
+        fprintf(stderr,"%s: double field can only import from int/double/float\n",__func__);
+        abort();
       }
     }
     break;
@@ -202,17 +202,17 @@ static void field_import3D(field_type * field , const void *_src_data , bool rms
     {
       float * target_data = (float *) field->data;
       if (src_type == ECL_FLOAT_TYPE) {
-	float *src_data = (float *) _src_data;
-	IMPORT_MACRO;
+        float *src_data = (float *) _src_data;
+        IMPORT_MACRO;
       } else if (src_type == ECL_DOUBLE_TYPE) {
-	double *src_data = (double *) _src_data;
-	IMPORT_MACRO;
+        double *src_data = (double *) _src_data;
+        IMPORT_MACRO;
       } else if (src_type == ECL_INT_TYPE) {
-	int *src_data = (int *) _src_data;
-	IMPORT_MACRO;
+        int *src_data = (int *) _src_data;
+        IMPORT_MACRO;
       } else {
-	fprintf(stderr,"%s: double field can only import from int/double/float\n",__func__);
-	abort();
+        fprintf(stderr,"%s: double field can only import from int/double/float\n",__func__);
+        abort();
       }
     }
     break;
@@ -220,11 +220,11 @@ static void field_import3D(field_type * field , const void *_src_data , bool rms
     {
       int * target_data = (int *) field->data;
       if (src_type == ECL_INT_TYPE) {
-	int *src_data = (int *) _src_data;
-	IMPORT_MACRO;
+        int *src_data = (int *) _src_data;
+        IMPORT_MACRO;
       }  else {
-	fprintf(stderr,"%s: int field can only import from int\n",__func__);
-	abort();
+        fprintf(stderr,"%s: int field can only import from int\n",__func__);
+        abort();
       }
     }
     break;
@@ -554,13 +554,13 @@ void  field_inplace_output_transform(field_type * field ) {
 
 
 #define TRUNCATE_MACRO(s , d , t , min , max)  \
-for (int i=0; i < s; i++) {  		       \
-  if ( t & TRUNCATE_MIN )    		       \
-    if (d[i] < min)          		       \
-      d[i] = min;            		       \
-  if ( t & TRUNCATE_MAX )    		       \
-    if (d[i] > max)          		       \
-      d[i] = max;            		       \
+for (int i=0; i < s; i++) {                    \
+  if ( t & TRUNCATE_MIN )                      \
+    if (d[i] < min)                            \
+      d[i] = min;                              \
+  if ( t & TRUNCATE_MAX )                      \
+    if (d[i] > max)                            \
+      d[i] = max;                              \
 }
     
 
@@ -641,9 +641,9 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
       fortio = fortio_fopen(file , "w" , ECL_ENDIAN_FLIP , fmt_file);
 
       if (file_type == ECL_KW_FILE_ALL_CELLS)
-	field_ecl_write3D_fortio(field , fortio);
+        field_ecl_write3D_fortio(field , fortio);
       else
-	field_ecl_write1D_fortio(field , fortio);
+        field_ecl_write1D_fortio(field , fortio);
       
       fortio_fclose(fortio);
     } else if (file_type == ECL_GRDECL_FILE) {
@@ -700,12 +700,12 @@ bool field_initialize(field_type *field , int iens) {
     {
       field_func_type * init_transform   = field_config_get_init_transform(field->config);
       /* 
-	 Doing the input transform - observe that this is done inplace on
-	 the data, not as the output transform which is done on a copy of
-	 prior to export.
+         Doing the input transform - observe that this is done inplace on
+         the data, not as the output transform which is done on a copy of
+         prior to export.
       */
       if (init_transform != NULL) 
-	field_apply(field , init_transform);
+        field_apply(field , init_transform);
     }
     return true; 
   } else 
@@ -771,7 +771,7 @@ float field_ijk_get_float(const field_type * field, int i , int j , int k) {
 */
 double field_iget_double(const field_type * field , int active_index) {
   ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-  int sizeof_ctype 	 = field_config_get_sizeof_ctype(field->config);
+  int sizeof_ctype       = field_config_get_sizeof_ctype(field->config);
   char buffer[8]; /* Enough to hold one double */
   memcpy(buffer , &field->data[active_index * sizeof_ctype] , sizeof_ctype);
   if ( ecl_type == ECL_DOUBLE_TYPE ) 
@@ -796,7 +796,7 @@ double field_iget_double(const field_type * field , int active_index) {
 */
 float field_iget_float(const field_type * field , int active_index) {
   ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-  int sizeof_ctype 	 = field_config_get_sizeof_ctype(field->config);
+  int sizeof_ctype       = field_config_get_sizeof_ctype(field->config);
   char buffer[8];          /* Enough to hold one double */
   memcpy(buffer , &field->data[active_index * sizeof_ctype] , sizeof_ctype);
   if ( ecl_type == ECL_FLOAT_TYPE ) 
@@ -833,8 +833,8 @@ void field_ijk_set(field_type * field , int i , int j , int k , const void * val
 
 
 #define INDEXED_UPDATE_MACRO(t,s,n,index,add) \
-{                                      	      \
-   int i;                              	      \
+{                                             \
+   int i;                                     \
    if (add)                                   \
       for (i=0; i < (n); i++)                 \
           (t)[index[i]] += (s)[i];            \
@@ -853,26 +853,26 @@ static void field_indexed_update(field_type * field, ecl_type_enum src_type , in
     {
       float * field_data = (float *) field->data;
       if (src_type == ECL_DOUBLE_TYPE) {
-	double * src_data = (double *) value;
-	INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
+        double * src_data = (double *) value;
+        INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
       } else if (src_type == ECL_FLOAT_TYPE) {
-	float * src_data = (float *) value;
-	INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
+        float * src_data = (float *) value;
+        INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
       } else 
-	util_abort("%s both existing field - and indexed values must be float / double - aborting\n",__func__);
+        util_abort("%s both existing field - and indexed values must be float / double - aborting\n",__func__);
     }
     break;
   case(ECL_DOUBLE_TYPE):
     {
       double * field_data = (double *) field->data;
       if (src_type == ECL_DOUBLE_TYPE) {
-	double * src_data = (double *) value;
-	INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
+        double * src_data = (double *) value;
+        INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
       } else if (src_type == ECL_FLOAT_TYPE) {
-	float * src_data = (float *) value;
-	INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
+        float * src_data = (float *) value;
+        INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
       } else 
-	util_abort("%s both existing field - and indexed values must be float / double - aborting\n",__func__);
+        util_abort("%s both existing field - and indexed values must be float / double - aborting\n",__func__);
     }
     break;
   default:
@@ -947,8 +947,8 @@ int field_get_active_index(const field_type * field , int i , int j  , int k) {
 
 void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
   const field_config_type * config = field->config;
-  const int data_size      	   = field_config_get_data_size(config );
-  ecl_type_enum field_type 	   = field_config_get_ecl_type(field->config);
+  const int data_size              = field_config_get_data_size(config );
+  ecl_type_enum field_type         = field_config_get_ecl_type(field->config);
   ecl_type_enum kw_type            = ecl_kw_get_type(ecl_kw);
 
   if (data_size != ecl_kw_get_size(ecl_kw)) {
@@ -976,9 +976,9 @@ void field_fload_rms(field_type * field , const char * filename) {
     data_tag = rms_file_fread_alloc_data_tagkey(rms_file , "parameter" , "name" , key);
   else {
     /** 
-	Setting the key - purely to support converting between
-	different types of files, without knowing the key. A usable
-	feature - but not really well defined.
+        Setting the key - purely to support converting between
+        different types of files, without knowing the key. A usable
+        feature - but not really well defined.
     */
 
     rms_tag_type * rms_tag = rms_file_fread_alloc_tag(rms_file , "parameter" , NULL , NULL);
@@ -1029,16 +1029,16 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename ) {
   const char * key = field_config_get_ecl_kw_name(field->config);
   int size = field_config_get_volume(field->config);
   ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-  ecl_kw_type * ecl_kw;
+  ecl_kw_type * ecl_kw   = NULL;
   {
     FILE * stream = util_fopen(filename , "r");
-    ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , ecl_type);
+    if (ecl_kw_grdecl_fseek_kw(key , false , false , stream))
+      ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , ecl_type);
+    else 
+      util_exit("%s: Can not locate %s keyword in %s \n",__func__ , key , filename);
     fclose(stream);
   }
 
-  if (strncmp(key , ecl_kw_get_header8(ecl_kw) , strlen(key)) != 0) 
-    util_abort("%s: did not load keyword:%s from file:%s - seek() is not implemented for grdecl files - aborting \n",__func__ , key , filename);
-  
   field_import3D(field , ecl_kw_get_void_ptr(ecl_kw) , false , ecl_kw_get_type(ecl_kw));
   ecl_kw_free(ecl_kw);
 }
@@ -1176,11 +1176,11 @@ void field_apply(field_type * field , field_func_type * func) {
     if (ecl_type == ECL_FLOAT_TYPE) {
       float * data = (float *) field->data;
       for (int i=0; i < data_size; i++)
-	data[i] = func(data[i]);
+        data[i] = func(data[i]);
     } else if (ecl_type == ECL_DOUBLE_TYPE) {
       double * data = (double *) field->data;
       for (int i=0; i < data_size; i++)
-	data[i] = func(data[i]);
+        data[i] = func(data[i]);
     } 
   }
 }
@@ -1199,12 +1199,12 @@ void field_iadd(field_type * field1, const field_type * field2) {
       float * data1       = (float *) field1->data;
       const float * data2 = (const float *) field2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += data2[i];
+        data1[i] += data2[i];
     } else if (ecl_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) field1->data;
       const double * data2 = (const double *) field2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += data2[i];
+        data1[i] += data2[i];
     }
   }
 }
@@ -1221,12 +1221,12 @@ void field_imul(field_type * field1, const field_type * field2) {
       float * data1       = (float *) field1->data;
       const float * data2 = (const float *) field2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] *= data2[i];
+        data1[i] *= data2[i];
     } else if (ecl_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) field1->data;
       const double * data2 = (const double *) field2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] *= data2[i];
+        data1[i] *= data2[i];
     }
   }
 }
@@ -1243,12 +1243,12 @@ void field_iaddsqr(field_type * field1, const field_type * field2) {
       float * data1       = (float *) field1->data;
       const float * data2 = (const float *) field2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += data2[i] * data2[i];
+        data1[i] += data2[i] * data2[i];
     } else if (ecl_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) field1->data;
       const double * data2 = (const double *) field2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += data2[i] * data2[i];
+        data1[i] += data2[i] * data2[i];
     }
   }
 }
@@ -1264,11 +1264,11 @@ void field_scale(field_type * field, double scale_factor) {
     if (ecl_type == ECL_FLOAT_TYPE) {
       float * data       = (float *) field->data;
       for (i = 0; i < data_size; i++)
-	data[i] *= scale_factor;
+        data[i] *= scale_factor;
     } else if (ecl_type == ECL_DOUBLE_TYPE) {
       double * data       = (double *) field->data;
       for (i = 0; i < data_size; i++)
-	data[i] *= scale_factor;
+        data[i] *= scale_factor;
     }
   }
 }
@@ -1296,12 +1296,12 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
       float * data1       = (float *) field1->data;
       const float * data2 = (const float *) field2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += factor * data2[i];
+        data1[i] += factor * data2[i];
     } else if (ecl_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) field1->data;
       const double * data2 = (const double *) field2->data;
       for (i = 0; i < data_size; i++)
-	data1[i] += factor * data2[i];
+        data1[i] += factor * data2[i];
     }
   }
 }
@@ -1318,18 +1318,18 @@ void field_update_sum(field_type * sum , const field_type * field , double lower
       float * data       = (float *) field->data;
       float * sum_data   = (float *) sum->data;
       for (i = 0; i < data_size; i++) {
-	if (data[i] >= lower_limit)
-	  if (data[i] < upper_limit)
-	    sum_data[i] += 1;
+        if (data[i] >= lower_limit)
+          if (data[i] < upper_limit)
+            sum_data[i] += 1;
       } 
     } else if (ecl_type == ECL_DOUBLE_TYPE) {
-	double * data       = (double *) field->data;
-	float * sum_data    = (double *) sum->data;
-	for (i = 0; i < data_size; i++) {
-	  if (data[i] >= lower_limit)
-	    if (data[i] < upper_limit)
-	      sum_data[i] += 1;
-	}
+        double * data       = (double *) field->data;
+        float * sum_data    = (double *) sum->data;
+        for (i = 0; i < data_size; i++) {
+          if (data[i] >= lower_limit)
+            if (data[i] < upper_limit)
+              sum_data[i] += 1;
+        }
     }
   } 
   field_revert_output_transform( field );
