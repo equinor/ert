@@ -1,6 +1,7 @@
 import ctypes
+import ert.util.clib as clib
 
-ctypes.CDLL("libz.so"      , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("libblas.so"   , ctypes.RTLD_GLOBAL)
-ctypes.CDLL("liblapack.so" , ctypes.RTLD_GLOBAL)
-lib = ctypes.CDLL("libutil.so" , ctypes.RTLD_GLOBAL)
+clib.load("libz" , "libz.so.1")
+clib.load("libblas.so")
+clib.load("liblapack.so")
+lib = clib.load("libutil.so")
