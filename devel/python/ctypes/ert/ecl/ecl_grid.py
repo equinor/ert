@@ -5,6 +5,7 @@ import numpy
 import fortio
 import libecl
 import ecl_kw
+from   ert.util.cfile   import CFILE
 
 class EclGrid(object):
     
@@ -245,8 +246,8 @@ class EclGrid(object):
                 return kw
         raise ValueError("Wrong size / dimension on array")
 
-
-
+    
+    
 
     def create3D( self , ecl_kw , default = 0):
         if ecl_kw.size == self.nactive or ecl_kw.size == self.size:
@@ -268,6 +269,12 @@ class EclGrid(object):
         else:
             raise ValueError("Keyword: %s has invalid size(%d), must be either nactive:%d  or nx*ny*nz:%d" % (ecl_kw.name , ecl_kw.size , self.nactive ,self.size))
         
+        
+    def write_grdecl( self , ecl_kw , pyfile , default_value = 0):
+        cfile = CFILE( pyfile )
+        cfunc.fwrite_grdecl( self , ecl_kw , cfile , default_value )
+
+
 
 # 2. Creating a wrapper object around the libecl library, 
 #    registering the type map : ecl_kw <-> EclKW
@@ -307,3 +314,5 @@ cfunc.grid_value                   = cwrapper.prototype("double ecl_grid_get_pro
 cfunc.get_cell_volume              = cwrapper.prototype("double ecl_grid_get_cell_volume1( ecl_grid , int )")
 cfunc.get_cell_thickness           = cwrapper.prototype("double ecl_grid_get_cell_thickness1( ecl_grid , int )")
 cfunc.get_depth                    = cwrapper.prototype("double ecl_grid_get_cdepth1( ecl_grid , int )")
+cfunc.fwrite_grdecl                = cwrapper.prototype("void   ecl_grid_grdecl_fprintf_kw( ecl_grid , ecl_kw , FILE , double)") 
+
