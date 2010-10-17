@@ -4,18 +4,14 @@ import ctypes
 import sys
 import os.path
 
-
 from   ert.cwrap.cwrap       import *
-from   ecl_kw                import EclKW , ECL_CHAR_TYPE , ECL_REAL_TYPE , ECL_DOUBLE_TYPE , ECL_INT_TYPE , ECL_BOOL_TYPE , ECL_MESS_TYPE
+from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_CHAR_TYPE , ECL_BOOL_TYPE , ECL_DOUBLE_TYPE, EclKW
 from   ecl_file              import EclFile
-from   fortio                import FortIO
 from   ecl_sum               import EclSum
 from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
 from   ecl_grid              import EclGrid
 from   ecl_region            import EclRegion
 import ecl_util
-from   ert.util.tvector      import DoubleVector   
-from   ert.util.stringlist   import StringList
 
 from   ert.job_queue.driver  import LSFDriver , LocalDriver
 from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DONE , STATUS_EXIT

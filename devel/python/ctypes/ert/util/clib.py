@@ -1,4 +1,5 @@
 import ctypes
+import os
 
 # The libraries can be given in alternative forms like this:
 #
@@ -17,4 +18,9 @@ def load( *lib_list ):
         except:
             pass
     
-    raise ImportError("Sorry - failed to load shared library:%s." % lib)
+    error_msg = "Sorry - failed to load shared library:%s\n\nTried in: " % lib_list[0]
+    path_list = os.getenv("LD_LIBRARY_PATH").split(":")
+    for path in path_list:
+        error_msg += path + "\n          "
+
+    raise ImportError( error_msg )
