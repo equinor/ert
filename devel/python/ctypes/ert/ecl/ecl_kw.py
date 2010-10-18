@@ -103,6 +103,8 @@ class EclKW(object):
 
 
 
+
+
     def __getitem__(self, index ):
         if isinstance( index , types.IntType):
             length = self.__len__()
@@ -144,18 +146,30 @@ class EclKW(object):
     #################################################################
     
 
-    def __imul__(self , factor):
+    def __IMUL__(self , factor , mul = True):
         if cfunc.assert_numeric( self ):
-            if self.__type == ECL_INT_TYPE:
-                if isinstance( factor , int ):
-                    cfunc.scale_int( self , factor )
+            if hasattr( factor , "ecl_kw_instance"):
+                if cfunc.assert_binary( self, factor ):
+                    if mul:
+                        cfunc.imul( self , factor )
+                    else:
+                        cfunc.idiv( self , factor )
                 else:
                     raise TypeError("Type mismatch")
             else:
-                if isinstance( factor , int ) or isinstance( factor , float):
-                    cfunc.scale_float( self , factor )
+                if not mul:
+                    factor = 1.0 / factor
+                    
+                if self.__type == ECL_INT_TYPE:
+                    if isinstance( factor , int ):
+                        cfunc.scale_int( self , factor )
+                    else:
+                        raise TypeError("Type mismatch")
                 else:
-                    raise TypeError("Only muliplication with scalar supported")
+                    if isinstance( factor , int ) or isinstance( factor , float):
+                        cfunc.scale_float( self , factor )
+                    else:
+                        raise TypeError("Only muliplication with scalar supported")
         else:
             raise TypeError("Not numeric type")
         
@@ -199,6 +213,12 @@ class EclKW(object):
     def __isub__(self , delta):
         return self.__IADD__(delta , False )
 
+    def __imul__(self , delta):
+        return self.__IMUL__(delta , True )
+
+    def __idiv__(self , delta):
+        return self.__IMUL__(delta , False )
+
 
     #################################################################
     
@@ -224,13 +244,22 @@ class EclKW(object):
         copy *= factor
         return copy
 
+    def __rmul__(self , factor):
+        return self.__mul__( factor )
+    
+    def __div__(self , factor):
+        copy = self.deep_copy()
+        copy /= factor
+        return copy
+    
+    # No __rdiv__()
 
     def assert_binary( self , other ):
         return cfunc.assert_binary( self , other )
 
     #################################################################
         
-    def set(self , value , mask = None , force_active = False):
+    def assign(self , value , mask = None , force_active = False):
         if cfunc.assert_numeric( self ):
             if hasattr( value , "ecl_kw_instance"):
                 if mask:
@@ -255,6 +284,69 @@ class EclKW(object):
                         else:
                             raise TypeError("Only muliplication with scalar supported")
 
+                        
+    def add( self , other , mask = None , force_active = False):
+        if mask:
+            mask.iadd_kw( self , other , force_active )
+        else:
+            return self.__iadd__( other )
+        
+    def sub(self , other , mask = None , force_active = False):
+        if mask:
+            mask.isub_kw(  self , other , force_active )
+        else:
+            return self.__isub__( other )
+
+    def mul(self , other , mask = None , force_active = False):
+        if mask:
+            mask.imul_kw(  self , other , force_active )
+        else:
+            return self.__imul__( other )
+
+    def div(self , other , mask = None , force_active = False):
+        if mask:
+            mask.idiv_kw(  self , other , force_active )
+        else:
+            return self.__idiv__( other )
+
+    def apply( self , func , arg = None , mask = None , force_active = False):
+        """Will apply the function @func on the keyword - inplace.
+
+        The function @func should take a scalar value from the ecl_kw
+        vector as input, and return a scalar value of the same type;
+        optionally you can supply a second argument with the @arg
+        attribute:
+
+          def cutoff( x , limit):
+              if x > limit:
+                 return x
+              else:
+                 return 0
+
+
+          kw.apply( math.sin )
+          kw.apply( cutoff , arg = 0.10 )
+
+        
+        It is possible to supply a EclRegion instance via the @mask
+        attribute.
+        """
+        if mask:
+            active_list = mask.kw_list( self , force_active )
+            if arg:
+                for i in range(active_list.size):
+                    self.data_ptr[i] = func( self.data_ptr[i] , arg)
+            else:
+                for i in range(active_list.size):
+                    self.data_ptr[i] = func( self.data_ptr[i] )
+        else:
+            if arg:
+                for i in range(self.size):
+                    self.data_ptr[i] = func( self.data_ptr[i] , arg)
+            else:
+                for i in range(self.size):
+                    self.data_ptr[i] = func( self.data_ptr[i] )
+                    
 
 
 
@@ -375,8 +467,12 @@ cfunc.fprintf_grdecl             = cwrapper.prototype("void ecl_kw_fprintf_grdec
 cfunc.alloc_new                  = cwrapper.prototype("long ecl_kw_alloc( char* , int , int )")
 cfunc.load_grdecl                = cwrapper.prototype("long ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
 cfunc.fseek_grdecl               = cwrapper.prototype("bool ecl_kw_grdecl_fseek_kw(char* , bool, bool , FILE )")
+
 cfunc.iadd                       = cwrapper.prototype("void ecl_kw_inplace_add( ecl_kw , ecl_kw )")
+cfunc.imul                       = cwrapper.prototype("void ecl_kw_inplace_mul( ecl_kw , ecl_kw )")
+cfunc.idiv                       = cwrapper.prototype("void ecl_kw_inplace_div( ecl_kw , ecl_kw )")
 cfunc.isub                       = cwrapper.prototype("void ecl_kw_inplace_sub( ecl_kw , ecl_kw )")
+
 cfunc.assert_binary              = cwrapper.prototype("bool ecl_kw_assert_binary_numeric( ecl_kw , ecl_kw )")
 cfunc.scale_int                  = cwrapper.prototype("void ecl_kw_scale_int( ecl_kw , int )")
 cfunc.scale_float                = cwrapper.prototype("void ecl_kw_scale_float_or_double( ecl_kw , double )")

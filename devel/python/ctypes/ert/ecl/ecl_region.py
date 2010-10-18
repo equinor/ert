@@ -12,9 +12,9 @@ class EclRegion:
         else:
             self.c_ptr = cfunc.alloc( grid , preselect )
             
-
     def __deep_copy__(self , memo):
         return EclRegion( self.grid , False , c_ptr = cfunc.alloc_copy( self ))
+
 
     def __iand__(self , other):
         if hasattr( other , "ecl_region_instance"):
@@ -27,7 +27,6 @@ class EclRegion:
     def __isub__(self , other):
         return self.__iand__( other )
 
-
     def __ior__(self , other):
         if hasattr( other , "ecl_region_instance"):
             cfunc.combine( self, other)
@@ -36,10 +35,8 @@ class EclRegion:
             
         return self
 
-    
     def __iadd__(self , other):
         return self.__ior__( other )
-
 
     def __or__(self , other):
         new_region = self.copy()
@@ -60,6 +57,12 @@ class EclRegion:
     def __del__( self ):
         cfunc.free( self )
 
+    def union_with( self, other):
+        return self.__ior__( other )
+
+    def intersect_with( self, other):
+        return self.__iand__( other )
+    
     def from_param(self):
         return self.c_ptr
 
@@ -151,6 +154,12 @@ class EclRegion:
         a.__parent__  = self  # Inhibit GC
         return a
 
+    def kw_list(self , ecl_kw , force_active):
+        a             = cfunc.get_kw_list( self , ecl_kw , force_active)
+        a.size        = cfunc.get_kw_size( self , ecl_kw , force_active)
+        a.__parent__  = self  # Inhibit GC
+        return a
+
     @property
     def active_size( self ):
         return cfunc.active_size( self )
@@ -158,6 +167,9 @@ class EclRegion:
     @property
     def global_size( self ):
         return cfunc.global_size( self )
+    
+    def kw_size(self , ecl_kw , force_active):
+        return cfunc.get_kw_size( self , ecl_kw , force_active)
 
     
 
@@ -214,8 +226,12 @@ cfunc.get_global_list            = cwrapper.prototype("int* ecl_region_get_globa
 cfunc.get_active_size            = cwrapper.prototype("int   ecl_region_get_active_size( ecl_region )")
 cfunc.get_global_size            = cwrapper.prototype("int   ecl_region_get_global_size( ecl_region )")
 cfunc.iadd_kw                    = cwrapper.prototype("void  ecl_region_kw_iadd( ecl_region , ecl_kw , ecl_kw , bool)")
+cfunc.isub_kw                    = cwrapper.prototype("void  ecl_region_kw_isub( ecl_region , ecl_kw , ecl_kw , bool)")
 cfunc.copy_kw                    = cwrapper.prototype("void  ecl_region_kw_copy( ecl_region , ecl_kw , ecl_kw , bool)")
 
 cfunc.alloc_copy                 = cwrapper.prototype("long ecl_region_alloc_copy( ecl_region )")
-cfunc.intersect                  = cwrapper.prototype("void ecl_region_select_intersection( ecl_region , ecl_region )")
-cfunc.combine                    = cwrapper.prototype("void ecl_region_select_union( ecl_region , ecl_region )")
+cfunc.intersect                  = cwrapper.prototype("void ecl_region_intersection( ecl_region , ecl_region )")
+cfunc.combine                    = cwrapper.prototype("void ecl_region_union( ecl_region , ecl_region )")
+
+cfunc.get_kw_list                = cwrapper.prototype("int* ecl_region_get_kw_index_list( ecl_region , ecl_kw , bool )")
+cfunc.get_kw_size                = cwrapper.prototype("int  ecl_region_get_kw_size( ecl_region , ecl_kw , bool )")
