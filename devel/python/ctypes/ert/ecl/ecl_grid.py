@@ -211,7 +211,7 @@ class EclGrid(object):
                 if dtype == numpy.int32:
                     type = ecl_kw.ECL_INT_TYPE
                 elif dtype == numpy.float32:
-                    type = ecl_kw.ECL_REAL_TYPE
+                    type = ecl_kw.ECL_FLOAT_TYPE
                 elif dtype == numpy.float64:
                     type = ecl_kw.ECL_DOUBLE_TYPE
                 else:
