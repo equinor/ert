@@ -1,7 +1,22 @@
 Developer documentation
 -----------------------
 
-Summary
+  1 Summary
+  2 About ctypes
+    2.1 Loading the shared library
+    2.2 Type mappings
+      2.2.1 Fundamental types
+      2.2.2 User defined types and classes
+  3 The C code
+  4 Common structure of the wrapping
+    4.1 Loading the shared library
+    4.2 Prototyping
+    4.3 The pure python code 
+  5 Caveats 
+    5.1 Garbage collection
+
+
+1 Summary
 
 The ert Python classes are based on wrapping (some) of the C libraries
 which constitute the ERT application. The wrapping is based on the
@@ -11,16 +26,54 @@ user of the ert Python should NOT need to know that there is some C
 code deep down.
 
 
-About ctypes
+2 About ctypes
 
-ctypes is a standard Python module. 
+ctypes is a standard Python module for dynamic wrapping of C code. The
+C code should compiled into a shared library. The ctypes library works
+by loading the shared library with dlopen(). In addition there is a
+quite good system for transparently mapping between Python types and C
+types.
+
+2.1 Loading the shared library 
+
+In the ert Python wrapping loading the shared library is handled by
+the ert.util.clib function load(). When the shared library has been
+loaded, all the symbols of the shared library are available ass
+attributes of the ctypes load handle, as illustrated in the following
+example base on libc:
+
+    clib_handle = ctypes.CDLL( "libc" )
+    print clib_handle.getenv
+
+Now clib_handle.getenve will be a pointer to a Python function
+object. Before this is really usable we have to "tell" the function
+object input and out arguments, this is done with the restype
+attribute and the argtypes attribute.. For the getenv() function which
+takes (char *) input and also returns a (char *) pointer this would be:
+
+    clib_handle.getenv.restype  =   ctypes.c_char_p
+    clib_handle.getenv.argtypes = [ ctypes.c_char_p ] 
+    
+2.2 Type mappings 
+
+The ctypes library automagically handles conversion between common
+C-types and Python types, so for the example above we would be able to
+write:
+
+    PATH = clib_handle.getenv( "PATH" )
+
+And the conversion between Python strings and NULL based char* in C is
+handled transparently. In the ert wrapping setting the type of return
+values and input values is handled by the function prototype() in
+ert.cwrap.cwrap.
+
+2.2.1 Fundamental types
 
 
+2.2.2 User defined types and classes
 
 
-
-
-
+3 The C code
 
 The C libraries are to a large extent developed with abstract types
 like:
@@ -38,4 +91,20 @@ and "methods" like:
   void       abs_type_set_an_int( abs_type * at , int value) {}
 
 it has therefor been relatively easy to map this onto Python classes
-and give a pythonic feel to the whole thing.
+and give a pythonic feel to the whole thing. As a ground rule each C
+file implements one struct; this struct is wrapped in a Python module
+with the same name and a Python class with CamelCaps naming:
+
+    C                                  Python
+    ecl_kw.c implements ecl_kw_type    ecl_kw.py implements EclKW
+
+
+
+4 Common structure of the wrapping
+
+4.1 Loading the shared library
+4.2 Prototyping
+4.3 Pure Python code
+
+
+5 Caveats
