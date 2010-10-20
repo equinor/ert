@@ -1,0 +1,41 @@
+Developer documentation
+-----------------------
+
+Summary
+
+The ert Python classes are based on wrapping (some) of the C libraries
+which constitute the ERT application. The wrapping is based on the
+python ctypes module which does the wrapping dynamically. The python
+classes are quite thin, most of the actual code is in C, however a
+user of the ert Python should NOT need to know that there is some C
+code deep down.
+
+
+About ctypes
+
+ctypes is a standard Python module. 
+
+
+
+
+
+
+
+
+The C libraries are to a large extent developed with abstract types
+like:
+
+  typedef struct {
+     .....
+     .....
+  } abs_type; 
+
+and "methods" like:
+
+  abs_type * abs_type_alloc( ) { }
+  void       abs_type_free( abs_type * at ) {} 
+  int        abs_type_get_an_int( const abs_type * at) {}  
+  void       abs_type_set_an_int( abs_type * at , int value) {}
+
+it has therefor been relatively easy to map this onto Python classes
+and give a pythonic feel to the whole thing.
