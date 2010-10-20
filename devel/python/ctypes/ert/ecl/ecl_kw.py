@@ -482,3 +482,5 @@ cfunc.assert_numeric             = cwrapper.prototype("bool ecl_kw_assert_numeri
 cfunc.copy_data                  = cwrapper.prototype("void ecl_kw_memcpy_data( ecl_kw , ecl_kw )")
 cfunc.set_int                    = cwrapper.prototype("void ecl_kw_scalar_set_int( ecl_kw , int )")
 cfunc.set_float                  = cwrapper.prototype("void ecl_kw_scalar_set_float_or_double( ecl_kw , double )")
+
+
