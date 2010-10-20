@@ -32,7 +32,8 @@ ctypes is a standard Python module for dynamic wrapping of C code. The
 C code should compiled into a shared library. The ctypes library works
 by loading the shared library with dlopen(). In addition there is a
 quite good system for transparently mapping between Python types and C
-types.
+types. More extensive documentation of ctypes is available at:
+http://www.python.org/org/library/ctypes.html
 
 2.1 Loading the shared library 
 
@@ -67,10 +68,60 @@ handled transparently. In the ert wrapping setting the type of return
 values and input values is handled by the function prototype() in
 ert.cwrap.cwrap.
 
+The type mappings necessary to get prototype() function to work is
+maintained in the CWrapper class in ert.cwrap.cwrap.py. During
+initialization of the ert Python code there are many calls
+associating the name of a C type you whish to use in the prototype
+process (as a string) and the corresponding Python type:
+   
+   CWrapper.registerType( "int"    , ctypes.c_int )
+   CWrapper.registerType( "double" , ctypes.c_double ) 
+   CWrapper.registerType( "char*"  , ctypes.c_char_p )                          
+   CWrapper.registerType( "int*"   , ctypes.POINTER( ctypes.c_int ))
+   
+
 2.2.1 Fundamental types
+
+All the fundamental C types are known to the ctypes library, and
+transparently converted <-> the correct Python type. 
+
+  C type                    ctypes             Python type 
+  --------------------------------------------------------
+  int                       c_int              int
+  float                     c_float            float
+  double                    c_double           double      
+  .....
+  char * (NULL terminated)  c_char_p           string
+  --------------------------------------------------------   
+
+All these types can be created by calling them with an optional
+initializer of the correct type and value:
+
+  cint = ctypes.c_int( 42 )
+
+With the function ctypes.POINTER() you can create pointers to the
+fundamental types - but this is approaching dangerous territory!
 
 
 2.2.2 User defined types and classes
+
+Let us say you have a C function which expects a pointer to an
+abstract data type as input:
+
+   void abstract_method( abstract_type * at );
+
+And that you have implemented the Python class AT which wraps a
+pointer to a at instance in a "c_ptr" attribute. If the AT class
+contains a method:
+
+  def from_param( self ):
+      return self.c_ptr 
+
+The AT class can then be used as a Python type in the restype and
+argtypes attributes. To make it available in the prototyping as well
+you must register the type:
+
+   CWrapper.registerType( "at" , AT )
 
 
 3 The C code
@@ -102,9 +153,30 @@ with the same name and a Python class with CamelCaps naming:
 
 4 Common structure of the wrapping
 
+The wrapping of the libraries (currently only libecl is anything close
+to complete) follow roughly the same structure:
+
+  1. Load the shared library
+
+  2. For each C "class" you wish to wrap {
+
+       2.1. Prototype the C functions you wish to use by creating Python
+            function objects with correct restype and argtypes
+            attributes for the functions you are interested in, using
+            the CWrapper.prototype() function.
+
+       2.2. Create the Python class - based on the prototype functions
+            from 2.1 above.
+
+     }     
+     
+These three steps are described in more detail in 4.1 - 4.3 below.
+
+
 4.1 Loading the shared library
 4.2 Prototyping
-4.3 Pure Python code
-
+4.3 Python classes
+    
+The c_ptr
 
 5 Caveats
