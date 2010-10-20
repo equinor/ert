@@ -91,6 +91,7 @@ def install_path( src_path , target_root , extensions = None):
     for file in file_entries:
         target_file = "%s/%s" % (target_root , file )
         (base, ext) = os.path.splitext( file )
+        install_file( file , target_file )
         if ext == ".py":
             print "Byte compiling: %s" % target_file
             py_compile.compile( target_file )
