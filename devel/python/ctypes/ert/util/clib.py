@@ -1,7 +1,11 @@
 import ctypes
 import os
 
-# The libraries can be given in alternative forms like this:
+# The shared libraries typically exist under several different names,
+# with different level of version detail. Unfortunately the same
+# library can exist under different names on the different Statoil
+# computers, to support this the load function can get several
+# arguments like:
 #
 #    load("libz.so" , "libz.so.1" , "libz.so.1.2.1.2" , "libZ-fucker.so")
 #
