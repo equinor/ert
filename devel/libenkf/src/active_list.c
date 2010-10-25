@@ -117,6 +117,10 @@ void active_list_add_index(active_list_type * active_list, int new_index) {
 
 
 
+
+
+
+
 /**
    When mode == PARTLY_ACTIVE the active_list instance knows the size
    of the active set; if the mode is INACTIVE 0 will be returned and

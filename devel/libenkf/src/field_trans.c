@@ -184,11 +184,11 @@ static float trunc_pow10f(float x) {
 
 #define LN_SHIFT 0.0000001
 static float field_trans_ln0( float x ) {
-  return log( x + LN_SHIFT );
+  return logf( x + LN_SHIFT );
 }
 
 static float field_trans_exp0( float x ) {
-  return exp( x ) - LN_SHIFT;
+  return expf( x ) - LN_SHIFT;
 }
 #undef LN_SHIFT
 

@@ -59,8 +59,8 @@
 
 
 struct site_config_struct {
-  ext_joblist_type 	* joblist;                /* The list of external jobs which have been installed. 
-                   	                             These jobs will be the parts of the forward model. */
+  ext_joblist_type      * joblist;                /* The list of external jobs which have been installed. 
+                                                     These jobs will be the parts of the forward model. */
   hash_type             * env_variables_user;     /* The environment variables set in the user config file. */
   hash_type             * env_variables_site;     /* The environment variables set in site_config file - not exported. */ 
   
@@ -103,8 +103,9 @@ struct site_config_struct {
   char                  * job_script_site;            
 
   int                     num_cpu;                /* The number of cpu's used to run the forward model - currently only relevant for ECLIPSE and LSF; read automatically from the ECLIPSE data file. */
-  job_queue_type   	* job_queue;              /* The queue instance which will run the external jobs. */
-  bool                    user_mode;
+  basic_queue_driver_type * queue_driver;
+  job_queue_type          * job_queue;              /* The queue instance which will run the external jobs. */
+  bool                      user_mode;
 };
 
 
@@ -136,7 +137,8 @@ site_config_type * site_config_alloc_empty() {
   
   site_config->joblist                = ext_joblist_alloc( );
   site_config->job_queue              = NULL;
-  
+  site_config->queue_driver           = NULL;
+
   site_config->remote_lsf_server      = NULL;
   site_config->lsf_queue_name         = NULL;
   site_config->lsf_queue_name_site    = NULL;
@@ -365,6 +367,12 @@ void site_config_update_pathvar( site_config_type * site_config , const char * p
 
 
 
+static void site_config_set_driver( site_config_type * site_config , basic_queue_driver_type * driver) {
+  if (site_config->queue_driver != NULL)
+    basic_queue_driver_free( site_config->queue_driver );
+  site_config->queue_driver = driver;
+}
+
 /**
    These functions can be called repeatedly if you should want to
    change driver characteristics run-time. The job_queue will discard
@@ -372,6 +380,7 @@ void site_config_update_pathvar( site_config_type * site_config , const char * p
 */
 static void site_config_install_LOCAL_job_queue(site_config_type * site_config ) {
   basic_queue_driver_type * driver = local_driver_alloc();
+  site_config_set_driver(site_config , driver );
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_local );
 }
@@ -379,6 +388,7 @@ static void site_config_install_LOCAL_job_queue(site_config_type * site_config )
 
 static void site_config_install_RSH_job_queue(site_config_type * site_config) {
   basic_queue_driver_type * driver = rsh_driver_alloc(site_config->rsh_command , site_config->rsh_host_list);
+  site_config_set_driver(site_config , driver );
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_rsh );
 }
@@ -386,6 +396,7 @@ static void site_config_install_RSH_job_queue(site_config_type * site_config) {
 
 static void site_config_install_LSF_job_queue(site_config_type * site_config ) { 
   basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name , site_config->lsf_request ,  site_config->remote_lsf_server , site_config->num_cpu);
+  site_config_set_driver(site_config , driver );
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_lsf );
 }
@@ -647,7 +658,7 @@ static void site_config_install_job_queue(site_config_type  * site_config ) {
   if (site_config->job_script == NULL)
     util_exit("Must set the path to the job script with the %s key in the site_config / config file\n",JOB_SCRIPT_KEY);
   
-  site_config->job_queue = job_queue_alloc(0 , 0 , site_config->max_submit , site_config->job_script);
+  site_config->job_queue = job_queue_alloc(0 , 0 , site_config->max_submit , true , "OK" , "EXIT" , site_config->job_script);
 
   /* 
      All the various driver options are set, unconditionally of which
@@ -815,6 +826,8 @@ void site_config_init(site_config_type * site_config , const config_type * confi
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
+  if (site_config->queue_driver != NULL)
+    basic_queue_driver_free( site_config->queue_driver );     
   
   stringlist_free( site_config->path_variables_user );
   stringlist_free( site_config->path_values_user );
