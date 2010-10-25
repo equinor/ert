@@ -15,7 +15,7 @@ job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
 void                job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver);
 void                job_queue_set_size( job_queue_type * job_queue , int size );
 void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-job_queue_type   *  job_queue_alloc(int  , int , int  , const char * );
+  job_queue_type   *  job_queue_alloc(int  , int , int  , bool , const char * ok_file , const char * exit_file , const char * cmd);
 void                job_queue_free(job_queue_type *);
 void                job_queue_insert_job(job_queue_type * , const char * , const char * , int , int argc , const char ** argv );
 void                job_queue_run_jobs(job_queue_type * , int , bool verbose);
@@ -47,6 +47,14 @@ bool                job_queue_get_pause( const job_queue_type * job_queue );
 void                job_queue_set_pause_on( job_queue_type * job_queue);
 void                job_queue_set_pause_off( job_queue_type * job_queue);
 void                job_queue_user_exit( job_queue_type * queue);
+void              * job_queue_iget_job_data( job_queue_type * job_queue , int job_nr );
+
+int                 job_queue_get_num_running( const job_queue_type * queue);
+int                 job_queue_get_num_pending( const job_queue_type * queue);
+int                 job_queue_get_num_waiting( const job_queue_type * queue);
+int                 job_queue_get_num_complete( const job_queue_type * queue);
+int                 job_queue_get_num_failed( const job_queue_type * queue);
+
 
 
 #ifdef __cplusplus
