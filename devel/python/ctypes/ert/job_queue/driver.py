@@ -4,119 +4,109 @@ import ctypes
 import sys
 import os
 import libjob_queue
+import ert.util.SDP    as     SDP
 from   ert.cwrap.cwrap import *
+from   job             import Job 
 
-# Enum values nicked from libjob_queue/src/basic_queue_driver.h
-STATUS_PENDING =  16
-STATUS_RUNNING =  32
-STATUS_DONE    =  64
-STATUS_EXIT    = 128 
 
-class LSFDriver:
+
+LSF_TYPE   = 1
+LOCAL_TYPE = 2
+
+
+
+
+def init_LSF_env():
+    os.environ["LSF_BINDIR"]    = "%s/bin" % libjob_queue.LSF_HOME
+    os.environ["LSF_LIBDIR"]    = "%s/lib" % libjob_queue.LSF_HOME
+    os.environ["XLSF_UIDDIR"]   = "%s/lib/uid" % libjob_queue.LSF_HOME
+    os.environ["LSF_SERVERDIR"] = "%s/etc" % libjob_queue.LSF_HOME
+    os.environ["LSF_ENVDIR"]    = "/prog/LSF/conf"
+
+    os.environ["PATH"] += ":%s" % os.environ["LSF_BINDIR"]
+    
+
+
+class Driver:
+    
+    def is_driver_instance( self ):
+        return True
+
 
     def from_param(self):
         return self.c_ptr
 
 
+    def __init__(self , type):
+        if type == LSF_TYPE:
+            self.free         = cfunc_lsf.free_driver
+            self.csubmit      = cfunc_lsf.submit
+            self.cget_status  = cfunc_lsf.get_status
+            self.free_driver  = cfunc_lsf.free_driver
+            self.ckill_job    = cfunc_lsf.kill_job
+            self.free_job     = cfunc_lsf.free_job
+        elif type == LOCAL_TYPE:
+            self.free         = cfunc_local.free_driver
+            self.csubmit      = cfunc_local.submit
+            self.free_driver  = cfunc_local.free_driver
+            self.cget_status  = cfunc_local.get_status
+            self.ckill_job    = cfunc_local.kill_job
+            self.free_job     = cfunc_local.free_job
+        else:
+            sys.exit("Error")
+        
+        
+    def __del__( self ):
+        self.free_driver( self )
+
+
+    def submit( self , name , cmd , run_path , argList , blocking = False):
+        argc = len( argList )
+        argv = (ctypes.c_char_p * argc)()
+        argv[:] = map( str , argList )
+        job_c_ptr = self.csubmit( self , cmd , run_path , name , argc , argv )
+        job = Job( self , job_c_ptr , blocking )
+        if blocking:
+            pass
+        
+        return job
+        
+
+    def free_job( self , job ):
+        self.free_job( job )
+    
+        
+    def get_status( self , job ):
+        return self.cget_status( self , job )
+    
+
+    def kill_job( self , job ):
+        self.ckill_job( self , job )
+        
+
+
+
+class LSFDriver(Driver):
+    __initialized = False
+
     def __init__(self ,
+                 lsf_server = None,
                  queue = "normal" ,
-                 resource_request = "select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]" ,
-                 lsf_server = None ):
+                 resource_request = "select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]"):
+        Driver.__init__( self , LSF_TYPE )
+        if not self.__initialized:
+            init_LSF_env()
+            LSFDriver.__initialized = True
+
         self.c_ptr = cfunc_lsf.alloc_driver( queue , resource_request , lsf_server , 1)
 
 
-    def __del__( self ):
-        cfunc_lsf.free_driver( self )
+class LocalDriver(Driver):
 
-
-    def submit( self , name , cmd , run_path , argList , blocking = False):
-        argc = len( argList )
-        argv = (ctypes.c_char_p * argc)()
-        argv[:] = map( str , argList )
-        job_c_ptr = cfunc_lsf.submit( self , cmd , run_path , name , argc , argv )
-        job = Job( self , job_c_ptr , blocking )
-
-        return job
-        
-
-    def free_job( self , job ):
-        cfunc_lsf.free_job( job )
-    
-
-    def get_status( self , job ):
-        return cfunc_lsf.get_status( self , job )
-    
-
-    def kill_job( self , job ):
-        cfunc_lsf.kill_job( self , job )
-
-
-        
-
-class LocalDriver:
     def __init__( self ):
+        Driver.__init__( self , LOCAL_TYPE )
         self.c_ptr = cfunc_local.alloc_driver( )
-
-
-    def __del__( self ):
-        cfunc_local.free_driver( self )
-
-    def from_param(self):
-        return self.c_ptr
-
-
-    def submit( self , name , cmd , run_path , argList , blocking = False):
-        argc = len( argList )
-        argv = (ctypes.c_char_p * argc)()
-        argv[:] = map( str , argList )
-        c_ptr = cfunc_local.submit( self , cmd , run_path , name , argc , argv )
-        job = Job( self , c_ptr , blocking)
-        return job
         
-
-    def free_job( self , job ):
-        cfunc_local.free_job( job )
-    
-
-    def get_status( self , job ):
-        return cfunc_local.get_status( self , job )
-    
-
-    def kill_job( self , job ):
-        cfunc_local.kill_job( self , job )
-    
-        
-        
-
-class Job:
-    def __init__(self , driver , c_ptr , blocking = False):
-        self.driver      = driver
-        self.c_ptr       = c_ptr
-        self.submit_time = datetime.datetime.now()
-        if blocking:
-            while True:
-                status = self.status()
-                if status == STATUS_DONE or status == STATUS_EXIT:
-                    break
-                else:
-                    time.sleep( 2 )
-
-
-    def __del__(self):
-        self.driver.free_job( self )
-
-    def run_time( self ):
-        td = datetime.datetime.now() - self.submit_time
-        return td.seconds + td.days * 24 * 3600
-
-    def status( self ):
-        return self.driver.get_status( self )
-    
-    def kill( self ):
-        self.driver.kill_job( self )
-    
-    def from_param(self):
-        return self.c_ptr
 
 
 #################################################################
