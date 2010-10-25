@@ -42,7 +42,7 @@ def install_file( src_file , target_file):
         raise Exception("Copying %s -> %s" % (src_file , target_file))
         sys.exit("The source file:%s does not exist?? " % src_file )
     shutil.copyfile( src_file , target_file )
-    print "Updating file: %s" % target_file
+    print "Installing file: %s" % target_file
     if os.stat( target_file )[stat.ST_UID] == uid:
         chgrp( target_file , res_guid )
 

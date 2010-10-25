@@ -13,9 +13,6 @@ from   ecl_grid              import EclGrid
 from   ecl_region            import EclRegion
 import ecl_util
 
-from   ert.job_queue.driver  import LSFDriver , LocalDriver
-from   ert.job_queue.driver  import STATUS_PENDING , STATUS_RUNNING , STATUS_DONE , STATUS_EXIT
-
 
 run_script        = "/project/res/etc/ERT/Scripts/run_eclipse.py"
 default_version   = "2009.1"
@@ -33,8 +30,6 @@ class EclCase:
         (self.__base , self.ext) = os.path.splitext( tmp )
 
 
-        self.LSFDriver     = None
-        self.LocalDriver   = None
         self.__sum         = None
         self.__grid        = None
         self.__data_file   = None
@@ -80,31 +75,15 @@ class EclCase:
     @property
     def path( self ):
         return self.__path
-    
 
         
-    def run( self , version = default_version , blocking = False , run_script = run_script , use_LSF = True , LSF_server = None , LSF_queue = "normal"):
+    def run( self , driver , version = default_version , blocking = False , run_script = run_script):
         num_cpu = ecl_util.get_num_cpu( self.datafile )
-        if use_LSF:
-            if not self.LSFDriver:
-                self.LSFDriver = LSFDriver( queue      = LSF_queue , 
-                                            lsf_server = LSF_server )
-
-            submit_func = self.LSFDriver.submit
-            
-        else:
-            if not self.LocalDriver:
-                self.LocalDriver = LocalDriver( )
-                
-            submit_func = self.LocalDriver.submit
-            
-
-        job = submit_func( self.base,
-                           run_script , 
-                           self.path ,
-                           [version , "%s/%s" % (self.path , self.base) , num_cpu ] ,
-                           blocking = blocking )
-
+        job = driver.submit( self.base  ,
+                             run_script , 
+                             self.path ,
+                             [version , "%s/%s" % (self.path , self.base) , num_cpu ] ,
+                             blocking = blocking )
         return job
 
         
