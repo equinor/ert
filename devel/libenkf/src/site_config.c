@@ -368,8 +368,11 @@ void site_config_update_pathvar( site_config_type * site_config , const char * p
 
 
 static void site_config_set_driver( site_config_type * site_config , basic_queue_driver_type * driver) {
-  if (site_config->queue_driver != NULL)
-    basic_queue_driver_free( site_config->queue_driver );
+  if (site_config->queue_driver != NULL) { 
+    basic_queue_driver_type * old_driver = site_config->queue_driver;
+    old_driver->free_driver( old_driver );
+  }
+  
   site_config->queue_driver = driver;
 }
 
@@ -826,8 +829,9 @@ void site_config_init(site_config_type * site_config , const config_type * confi
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
-  if (site_config->queue_driver != NULL)
-    basic_queue_driver_free( site_config->queue_driver );     
+  if (site_config->queue_driver != NULL) 
+    site_config->queue_driver->free_driver( site_config->queue_driver );    /* Ohhh - this breaks aaaalll conventions. */
+  
   
   stringlist_free( site_config->path_variables_user );
   stringlist_free( site_config->path_values_user );

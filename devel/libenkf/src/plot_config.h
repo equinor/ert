@@ -26,4 +26,9 @@ void               plot_config_init(plot_config_type * plot_config , const confi
 void               plot_config_add_config_items( config_type * config );
 void               plot_config_show_viewer_warning( plot_config_type * plot_config );
 
+void               plot_config_toggle_logy( plot_config_type * plot_config );
+void               plot_config_set_logy( plot_config_type * plot_config , bool logy);
+bool               plot_config_get_logy( const plot_config_type * plot_config );
+
+
 #endif

@@ -124,6 +124,7 @@
 #define DEFAULT_IMAGE_TYPE         "png"
 #define DEFAULT_PLOT_DRIVER        "PLPLOT"
 #define DEFAULT_IMAGE_VIEWER       "/usr/bin/display"
+#define DEFAULT_PLOT_LOGY          false  
 
 
 #define SUMMARY_KEY_JOIN_STRING ":"

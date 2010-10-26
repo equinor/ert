@@ -16,6 +16,7 @@ struct plot_config_struct {
   int    errorbar_max;  /* If the number of observations is less than this it is plotted with errorbars - otherwise with lines. */
   int    height;   
   int    width;
+  bool   logy;
 };
 
 
@@ -72,6 +73,24 @@ void plot_config_set_driver(plot_config_type * plot_config , const char * plot_d
 
 
 /*****************************************************************/
+
+void plot_config_set_logy( plot_config_type * plot_config , bool logy) {
+  plot_config->logy = logy;
+}
+
+
+void plot_config_toggle_logy( plot_config_type * plot_config ) {
+  if (plot_config->logy)
+    plot_config->logy = false;
+  else
+    plot_config->logy = true;
+}
+
+
+bool plot_config_get_logy( const plot_config_type * plot_config ) {
+  return plot_config->logy;
+}
+
 
 const char *  plot_config_get_path(const plot_config_type * plot_config ) {
   return plot_config->plot_path;
@@ -131,7 +150,7 @@ plot_config_type * plot_config_alloc_default() {
   plot_config_set_width(info        , DEFAULT_PLOT_WIDTH );
   plot_config_set_height(info       , DEFAULT_PLOT_HEIGHT );
   plot_config_set_errorbar_max(info , DEFAULT_PLOT_ERRORBAR_MAX);
-
+  plot_config_set_logy( info        , DEFAULT_PLOT_LOGY );
   return info;
 }
 
