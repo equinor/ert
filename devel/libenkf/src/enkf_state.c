@@ -605,7 +605,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
               stringlist_append_owned_ref( data_files , summary_file);
             
             report_step++;
-            if (run_info->run_mode != ENSEMBLE_PREDICTION && report_step > run_info->step2)
+            if ((run_info->run_mode != ENSEMBLE_PREDICTION) && (report_step > run_info->step2))
               break;
           }
         }  
@@ -614,6 +614,8 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
         if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
           summary = ecl_sum_fread_alloc(header_file , data_files , SUMMARY_KEY_JOIN_STRING );
         
+        //stringlist_fprintf( data_files , " " , stdout );
+
         stringlist_free( data_files );
         util_safe_free( header_file );
 
@@ -643,7 +645,6 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
             hash_iter_free(iter);
             member_config_iset_sim_time( my_config , report_step , ecl_sum_get_report_time( summary , report_step ));
           }
-          
           ecl_sum_free( summary ); 
           member_config_fwrite_sim_time( my_config , shared_info->fs );
         } 
