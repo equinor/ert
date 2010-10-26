@@ -5,14 +5,14 @@ import sys
 import os
 import libjob_queue
 import ert.util.SDP    as     SDP
-from   ert.cwrap.cwrap import *
 from   job             import Job 
+from   ert.cwrap.cwrap import *
 
 
 
 LSF_TYPE   = 1
 LOCAL_TYPE = 2
-
+RSH_TYPE   = 3 
 
 
 
@@ -52,9 +52,17 @@ class Driver:
             self.cget_status  = cfunc_local.get_status
             self.ckill_job    = cfunc_local.kill_job
             self.free_job     = cfunc_local.free_job
+        elif type == RSH_TYPE:
+            self.free         = cfunc_rsh.free_driver
+            self.csubmit      = cfunc_rsh.submit
+            self.free_driver  = cfunc_rsh.free_driver
+            self.cget_status  = cfunc_rsh.get_status
+            self.ckill_job    = cfunc_rsh.kill_job
+            self.free_job     = cfunc_rsh.free_job
         else:
-            sys.exit("Error")
-        
+            sys.exit()
+            
+            
         
     def __del__( self ):
         self.free_driver( self )
@@ -106,16 +114,34 @@ class LocalDriver(Driver):
     def __init__( self ):
         Driver.__init__( self , LOCAL_TYPE )
         self.c_ptr = cfunc_local.alloc_driver( )
+
+
+class RSHDriver(Driver):
+
+    # Changing shell to bash can come in conflict with running ssh
+    # commands.
+
+    def __init__( self , rsh_host_list):
+        """@rsh_host_list should be a list of tuples like: (hostname , max_running) 
+        """
+
+        Driver.__init__( self , RSH_TYPE )
+        self.c_ptr = cfunc_rsh.alloc_driver( "/usr/bin/ssh" , None )
         
+        for (host,max_running) in rsh_host_list:
+            cfunc_rsh.add_host( self , host , max_running)
+            
 
 
 #################################################################
 cwrapper = CWrapper( libjob_queue.lib )
 cwrapper.registerType( "lsf_driver" , LSFDriver )
 cwrapper.registerType( "local_driver" , LocalDriver )
+cwrapper.registerType( "rsh_driver" , RSHDriver )
 cwrapper.registerType( "job" , Job )
 cfunc_lsf   = CWrapperNameSpace( "driver" )
 cfunc_local = CWrapperNameSpace( "driver" )
+cfunc_rsh   = CWrapperNameSpace( "driver" )
 
 cfunc_lsf.alloc_driver = cwrapper.prototype("long    lsf_driver_alloc( char* , char* , char* , int )")
 cfunc_lsf.free_driver  = cwrapper.prototype("void    lsf_driver_free( lsf_driver )")
@@ -131,4 +157,13 @@ cfunc_local.submit           = cwrapper.prototype("long    local_driver_submit_j
 cfunc_local.free_job         = cwrapper.prototype("void    local_driver_free_job( job )")
 cfunc_local.kill_job         = cwrapper.prototype("void    local_driver_kill_job( local_driver , job )")
 cfunc_local.get_status       = cwrapper.prototype("int     local_driver_get_job_status( local_driver , job)")
+
+
+cfunc_rsh.alloc_driver     = cwrapper.prototype("long    rsh_driver_alloc( char* , char* )")
+cfunc_rsh.free_driver      = cwrapper.prototype("void    rsh_driver_free( rsh_driver )")
+cfunc_rsh.submit           = cwrapper.prototype("long    rsh_driver_submit_job( rsh_driver , char* , char* , char* , int , char**)")
+cfunc_rsh.free_job         = cwrapper.prototype("void    rsh_driver_free_job( job )")
+cfunc_rsh.kill_job         = cwrapper.prototype("void    rsh_driver_kill_job( rsh_driver , job )")
+cfunc_rsh.add_host         = cwrapper.prototype("void    rsh_driver_add_host( rsh_driver , char* , int)")
+cfunc_rsh.get_status       = cwrapper.prototype("int     rsh_driver_get_job_status( rsh_driver , job)")
 

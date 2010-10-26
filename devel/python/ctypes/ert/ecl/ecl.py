@@ -5,14 +5,14 @@ import sys
 import os.path
 
 from   ert.cwrap.cwrap       import *
+import ert.util.ctime        
+import ecl_util
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_CHAR_TYPE , ECL_BOOL_TYPE , ECL_DOUBLE_TYPE, EclKW
 from   ecl_file              import EclFile
 from   ecl_sum               import EclSum
 from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
 from   ecl_grid              import EclGrid
 from   ecl_region            import EclRegion
-import ecl_util
-
 
 run_script        = "/project/res/etc/ERT/Scripts/run_eclipse.py"
 default_version   = "2009.1"
