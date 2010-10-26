@@ -131,6 +131,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   bool  plot_dates             = true;
   const int errorbar_max_obsnr = plot_config_get_errorbar_max( plot_config );
   const bool add_observations  = true;
+  const bool            logy   = plot_config_get_logy( plot_config );
   bool  show_plot              = false;
   char * plot_file             = enkf_tui_plot_alloc_plot_file( plot_config , enkf_fs_get_read_dir(fs), user_key );
   plot_type * plot ;
@@ -186,9 +187,11 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 
             enkf_fs_fread_node(fs , node , step , iens , FORECAST);
             value = enkf_node_user_get( node , key_index , &valid);
-
-
-
+            
+            if (valid) {
+              if (logy && (value <= 0))
+                valid = false;
+            }
             
             if (valid) {
               double_vector_append(y , value);
@@ -209,6 +212,11 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
             double value;
             enkf_fs_fread_node(fs , node , step , iens , ANALYZED);
             value = enkf_node_user_get( node , key_index , &valid);
+
+            if (valid) {
+              if (logy && (value <= 0))
+                valid = false;
+            }
 
             if (valid) {
               double_vector_append(y , value);
@@ -282,6 +290,13 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
                 gen_obs_user_get_with_data_index( obs_vector_iget_node( obs_vector , report_step ) , key_index , &value , &std , &valid);
               else
                 obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
+
+              if (valid) {
+                if (logy && ((value - std) <= 0.0))
+                  valid = false;
+              }
+
+
               if (valid) {
                 /**
                    Should get sim_time directly from the observation - and not inderctly thrugh the member_config object.
@@ -292,7 +307,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
                   double_vector_append( sim_time  , member_config_iget_sim_days(enkf_main_iget_member_config( enkf_main , iens1 ) , report_step , fs));  
                 
                 double_vector_append( obs_value , value );
-                double_vector_append( obs_std , std );
+                double_vector_append( obs_std   , std );
 
                 obs_size += 1;
               } 
