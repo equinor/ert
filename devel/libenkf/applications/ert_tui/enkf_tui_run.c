@@ -87,7 +87,7 @@ void enkf_tui_run_exp__(void * enkf_main) {
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   state_enum init_state    = ANALYZED; 
-  int start_report   	   = 0;
+  int start_report         = 0;
   int init_step_parameters = 0;
   {
     char * prompt = util_alloc_sprintf("Which realizations to simulate <default:all> : " , ens_size);
@@ -118,7 +118,7 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   state_enum init_state    = ANALYZED; 
-  int start_report   	   = 0;
+  int start_report         = 0;
   int init_step_parameters = 0;
   {
     char * prompt = util_alloc_sprintf("Which realizations to create[ensemble size:%d] : " , ens_size);
@@ -166,14 +166,14 @@ void enkf_tui_run_smooth__(void * enkf_main) {
 void enkf_tui_run_predictions__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   if (enkf_main_has_prediction( enkf_main )) {
-    const int ens_size     			 = enkf_main_get_ensemble_size( enkf_main );
-    bool * iactive         			 = util_malloc(ens_size * sizeof * iactive , __func__);
-    int        history_end 			 = enkf_main_get_history_length( enkf_main );
-    state_enum start_state 			 = ANALYZED;           
+    const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
+    bool * iactive                               = util_malloc(ens_size * sizeof * iactive , __func__);
+    int        history_end                       = enkf_main_get_history_length( enkf_main );
+    state_enum start_state                       = ANALYZED;           
     {
       int iens;
       for (iens= 0; iens < ens_size; iens++)
-	iactive[iens] = true;
+        iactive[iens] = true;
     }
     enkf_main_run(enkf_main , ENSEMBLE_PREDICTION , iactive , history_end , history_end  , start_state);
     free( iactive );
@@ -189,15 +189,15 @@ void enkf_tui_run_predictions__(void * __enkf_main) {
 void enkf_tui_run_full__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   if (enkf_main_has_prediction( enkf_main )) {
-    const int ens_size     			 = enkf_main_get_ensemble_size( enkf_main );
-    bool * iactive         			 = util_malloc(ens_size * sizeof * iactive , __func__);
+    const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
+    bool * iactive                               = util_malloc(ens_size * sizeof * iactive , __func__);
     state_enum init_state                        = ANALYZED; 
     int start_report                             = 0;
     int init_step_parameters                     = 0;                
     {
       int iens;
       for (iens= 0; iens < ens_size; iens++)
-	iactive[iens] = true;
+        iactive[iens] = true;
     }
     enkf_main_run(enkf_main , ENSEMBLE_PREDICTION , iactive , init_step_parameters , start_report , init_state);
     free( iactive );

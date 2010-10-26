@@ -145,7 +145,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   else
     plot =  __plot_alloc(plot_config , "Simulation time (days) ", /* y akse */ "" ,user_key , plot_file);
   
-  plot_set_log( plot , false , false );
+  plot_set_log( plot , false , plot_config_get_logy( plot_config ) );
   
   node = enkf_node_alloc( config_node );
   {
@@ -1141,13 +1141,26 @@ void enkf_tui_plot_sensitivity(void * arg) {
 
 
 
+static void enkf_tui_toggle_logy(void * arg) {
+  arg_pack_type * arg_pack       = arg_pack_safe_cast( arg );
+  plot_config_type * plot_config = arg_pack_iget_ptr( arg_pack , 0 );
+  menu_item_type * menu_item     = arg_pack_iget_ptr( arg_pack , 1 );
+
+  plot_config_toggle_logy( plot_config );
+  if (plot_config_get_logy( plot_config ))
+    menu_item_set_label(menu_item , "Use normal Y-axis");
+  else
+    menu_item_set_label(menu_item , "Use logarithmic Y-axis");
+}
+
+
 
 
 void enkf_tui_plot_menu(void * arg) {
   
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
   {
-    const plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
     const char * plot_path  =  plot_config_get_path( plot_config );
     util_make_path( plot_path );
   }
@@ -1169,6 +1182,16 @@ void enkf_tui_plot_menu(void * arg) {
     menu_add_item(menu , "RFT plot of all RFT"  , "fF"                       , enkf_tui_plot_all_RFT     , enkf_main , NULL);
     menu_add_item(menu , "Sensitivity plot"     , "sS"                       , enkf_tui_plot_sensitivity , enkf_main , NULL); 
     menu_add_item(menu , "Histogram"        , "hH"                           , enkf_tui_plot_histogram   , enkf_main , NULL);
+    menu_add_separator(menu);
+    {
+      menu_item_type * menu_item;
+      arg_pack_type * arg_pack = arg_pack_alloc();
+      menu_item = menu_add_item(menu , "" , "lL" , enkf_tui_toggle_logy , arg_pack , arg_pack_free__);
+      arg_pack_append_ptr( arg_pack , plot_config );
+      arg_pack_append_ptr( arg_pack , menu_item );
+      plot_config_toggle_logy( plot_config );
+      enkf_tui_toggle_logy( arg_pack );   /* This sets the label */
+    }
     menu_run(menu);
     menu_free(menu);
   }
