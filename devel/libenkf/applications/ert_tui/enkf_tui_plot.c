@@ -77,7 +77,7 @@ static plot_type * __plot_alloc(const plot_config_type * plot_config , const cha
   } else 
     util_abort("%s: unrecognized driver type: %s \n",__func__ , plot_config_get_driver( plot_config ));
   
-  plot = plot_alloc(plot_config_get_driver( plot_config ) , arg_pack);
+  plot = plot_alloc(plot_config_get_driver( plot_config ) , arg_pack , false , plot_config_get_logy( plot_config ));
   
   plot_set_window_size(plot , plot_config_get_width( plot_config ) , plot_config_get_height( plot_config ));
   plot_set_labels(plot, x_label , y_label , title);
@@ -145,8 +145,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
     plot =  __plot_alloc(plot_config , "" , /* y akse */ "" ,user_key,plot_file);
   else
     plot =  __plot_alloc(plot_config , "Simulation time (days) ", /* y akse */ "" ,user_key , plot_file);
-  
-  plot_set_log( plot , false , plot_config_get_logy( plot_config ) );
   
   node = enkf_node_alloc( config_node );
   {

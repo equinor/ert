@@ -22,20 +22,26 @@ typedef struct {
 
 
 static void plplot_state_set_log( plplot_state_type * state , bool logx , bool logy) {
-  state->logx = logx;
-  state->logy = logy;
+  return;
   
-  if (logx)
-    state->plbox_xopt = util_realloc_string_copy( state->plbox_xopt , PLOT_DEFAULT_LOG_PLBOX_XOPT );
-  else                                                
-    state->plbox_xopt = util_realloc_string_copy( state->plbox_xopt , PLOT_DEFAULT_PLBOX_XOPT );
-  
-  
-  
-  if (logy)
-    state->plbox_yopt = util_realloc_string_copy( state->plbox_yopt , PLOT_DEFAULT_LOG_PLBOX_YOPT );
-  else
-    state->plbox_yopt = util_realloc_string_copy( state->plbox_yopt , PLOT_DEFAULT_PLBOX_YOPT );
+  /**
+     Have been much trouble with the log mode of the plplot driver; currently just taking 
+     log in the dataset layer, and ignoring everything with log internally in the plplot driver.
+  */
+
+  //state->logx = logx;
+  //state->logy = logy;
+  //
+  //if (logx)
+  //  state->plbox_xopt = util_realloc_string_copy( state->plbox_xopt , PLOT_DEFAULT_LOG_PLBOX_XOPT );
+  //else                                                
+  //  state->plbox_xopt = util_realloc_string_copy( state->plbox_xopt , PLOT_DEFAULT_PLBOX_XOPT );
+  //
+  //
+  //if (logy)
+  //  state->plbox_yopt = util_realloc_string_copy( state->plbox_yopt , PLOT_DEFAULT_LOG_PLBOX_YOPT );
+  //else
+  //  state->plbox_yopt = util_realloc_string_copy( state->plbox_yopt , PLOT_DEFAULT_PLBOX_YOPT );
 }
 
 
@@ -340,7 +346,7 @@ plot_driver_type * plplot_driver_alloc(void * init_arg) {
   plot_driver_type * driver = plot_driver_alloc_empty("PLPLOT");
   driver->state           = plplot_state_alloc( init_arg );
   
-  driver->close_driver 	  = plplot_close_driver;
+  driver->close_driver    = plplot_close_driver;
   driver->set_window_size = plplot_set_window_size;
   driver->set_labels      = plplot_set_labels; 
   driver->set_axis        = plplot_set_axis;

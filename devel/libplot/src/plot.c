@@ -39,16 +39,18 @@ struct plot_struct {
   hash_type          * dataset_hash;     /* Hash table of the datasets - indexed by label. */
   bool                 is_histogram;     /* If this is true it can only contain histogram datasets. */
   
-  char               * xlabel;	         /* Label for the x-axis */
-  char               * ylabel;	         /* Label for the y-axis */
-  char               * title;	         /* Plot title */      
+  char               * xlabel;           /* Label for the x-axis */
+  char               * ylabel;           /* Label for the y-axis */
+  char               * title;            /* Plot title */      
 
   plot_color_type      label_color;      /* Color for the labels */
   plot_color_type      box_color;        /* Color for the axis / box surrounding the plot. */
   double               axis_font_size;   /* Scale factor for the font used on the axes. */
   double               label_font_size;  /* Scale factor for label font size. */ 
-  int 	               height;	         /* The height of your plot window */
-  int 	               width;            /* The width of your plot window */
+  int                  height;           /* The height of your plot window */
+  int                  width;            /* The width of your plot window */
+  bool                 logy;
+  bool                 logx;
   
   plot_range_type    * range;            /* Range instance - keeping control over the min/max values on the x and y axis.*/
   /*****************************************************************/
@@ -116,6 +118,21 @@ const char * plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) 
 }
 
 
+
+/**
+   Observe that there has been lots of trouble with the PLPLOT driver
+   aborting because of two small tick distance when using the log plot
+   option. The current implementation (i.e. hack) is just to apply the
+   log10 operation directly on the data in plot_dataset scope.  
+*/
+
+static void plot_set_log( plot_type * plot , bool logx , bool logy) {
+  plot_driver_set_log(plot->driver , logx , logy);  /* The driver can ignore this. */
+  plot->logx            = logx;
+  plot->logy            = logy;
+}
+
+
 /**
    This function allocates the plot handle. The first argument is a
    string, which identifies the driver, the second argument is passed
@@ -124,7 +141,7 @@ const char * plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) 
    what init_arg should be like.
 */
 
-plot_type * plot_alloc(const char * __driver_type , void * init_arg)
+plot_type * plot_alloc(const char * __driver_type , void * init_arg , bool logx , bool logy)
 {
   plot_type * plot = util_malloc(sizeof *plot , __func__);
   {
@@ -147,7 +164,7 @@ plot_type * plot_alloc(const char * __driver_type , void * init_arg)
   }
 
   /* Initializing plot data which is common to all drivers. */
-  plot->is_histogram 	= false;
+  plot->is_histogram    = false;
   plot->dataset         = vector_alloc_new();
   plot->dataset_hash    = hash_alloc();
   plot->range           = plot_range_alloc();
@@ -166,19 +183,16 @@ plot_type * plot_alloc(const char * __driver_type , void * init_arg)
   plot_set_label_fontsize(plot , 1.0);
   plot_set_axis_fontsize(plot , 1.0);
   plot_set_labels(plot , "" , "" , ""); /* Initializeing with empty labels. */
-  plot_set_log( plot , false , false ); /* Default - no log on the axis. */
+  plot_set_log( plot , logx , logy); /* Default - no log on the axis. */
   return plot;
 }
 
 
-void plot_set_log( plot_type * plot , bool logx , bool logy) {
-  plot_driver_set_log(plot->driver , logx , logy);  /* The driver can ignore this. */
-}
 
 
 /**
    Allocates a new dataset, and attaches it to the plot. When adding
-   data to the datset, setting attributes+++ you should use
+   data to the dataset, setting attributes+++ you should use
    plot_dataset_xxx functions with the return value from this
    function.
 */
@@ -201,11 +215,11 @@ plot_dataset_type * plot_alloc_new_dataset(plot_type * plot , const char * __lab
     if (hash_has_key( plot->dataset_hash , label))
       util_abort("%s: sorry - the label %s is already in use - must be unique \n",__func__ , label);
     {
-      plot_dataset_type * dataset = plot_dataset_alloc(data_type, label );
+      plot_dataset_type * dataset = plot_dataset_alloc(data_type, label , plot->logx , plot->logy);
       vector_append_owned_ref(plot->dataset , dataset , plot_dataset_free__);
       hash_insert_ref( plot->dataset_hash , label , dataset);
       if (__label == NULL)
-	free(label);
+        free(label);
       return dataset;
     }
   }
