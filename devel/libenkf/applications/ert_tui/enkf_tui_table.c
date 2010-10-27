@@ -22,8 +22,8 @@
 
 
 
-	
-	   
+        
+           
 
 static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bool ens_plot) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
@@ -136,10 +136,10 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
     
     for (iens = iens1; iens < iens2; iens ++) {
       for (step = step1; step < step2; step++) {
-	int line_count = 0;
-	bool valid;
-	
-	for (ikey = 0; ikey < num_keys; ikey++) {
+        int line_count = 0;
+        bool valid;
+        
+        for (ikey = 0; ikey < num_keys; ikey++) {
           if (active[ikey]) {
             if (enkf_fs_has_node(fs , config_nodes[ikey] , step , iens , state)) {
               enkf_fs_fread_node(fs , nodes[ikey] , step , iens , state);
@@ -151,15 +151,15 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
             } 
           }
         }
-	
-	if (line_count > 0) {
-	  for (ikey=0; ikey < num_keys; ikey++) 
-	    data[ikey][active_length] = line[ikey];
-	  index[active_length] = total_line_count;
-	  active_length++;
-	}
-	
-	total_line_count++;
+        
+        if (line_count > 0) {
+          for (ikey=0; ikey < num_keys; ikey++) 
+            data[ikey][active_length] = line[ikey];
+          index[active_length] = total_line_count;
+          active_length++;
+        }
+        
+        total_line_count++;
       }
     }
     
