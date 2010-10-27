@@ -77,7 +77,7 @@
    default value different from SCHEDULE.
 */
 #define DEFAULT_HISTORY_SOURCE  SCHEDULE
-
+#define DEFAULT_IGNORE_SCHEDULE false   /* Should probably become true, on the way fuck Schedule out. */
 
 
 

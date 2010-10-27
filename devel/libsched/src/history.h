@@ -28,16 +28,16 @@ history_source_type history_get_source_type( const char * string_source );
 
 // Manipulators.
 void           history_free(history_type *);
-history_type * history_alloc_from_sched_file(const char * sep_string , const sched_file_type *);
+  history_type * history_alloc_from_sched_file(const char * sep_string , const sched_file_type *, bool ignore_schedule);
 void           history_use_summary(history_type *, const ecl_sum_type * refcase , bool );
 const char   * history_get_source_string( history_source_type history_source );
 void           history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid);
 
 // Accessors.
-int    	       history_get_num_restarts(const history_type *);
+int            history_get_num_restarts(const history_type *);
 double         history_get_var_from_sum_key(const history_type *, int, const char *, bool *);
-double 	       history_get_well_var(const history_type * , int, const char *, const char *, bool *);
-double 	       history_get_group_var(const history_type *, int, const char *, const char *, bool *);
+double         history_get_well_var(const history_type * , int, const char *, const char *, bool *);
+double         history_get_group_var(const history_type *, int, const char *, const char *, bool *);
 void           history_alloc_time_series_from_summary_key(const history_type *, const char *, double **, bool **);
 time_t         history_iget_node_start_time(const history_type *, int);
 time_t         history_iget_node_end_time(const history_type *, int);

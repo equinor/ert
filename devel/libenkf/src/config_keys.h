@@ -87,6 +87,7 @@ extern "C" {
 #define  RUNPATH_KEY                       "RUNPATH"
 #define  RUNPATH_KEY                       "RUNPATH"
 #define  RUN_TEMPLATE_KEY                  "RUN_TEMPLATE"
+#define  IGNORE_SCHEDULE_KEY               "IGNORE_SCHEDULE"        
 #define  SCHEDULE_FILE_KEY                 "SCHEDULE_FILE"
 #define  SCHEDULE_PREDICTION_FILE_KEY      "SCHEDULE_PREDICTION_FILE"
 #define  SCHEDULE_PREDICTION_FILE_KEY      "SCHEDULE_PREDICTION_FILE"

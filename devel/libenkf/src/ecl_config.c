@@ -32,19 +32,19 @@
 
 
 struct ecl_config_struct {
-  ecl_io_config_type * io_config;              	   /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
-  path_fmt_type      * eclbase;                	   /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
-  sched_file_type    * sched_file;             	   /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
+  ecl_io_config_type * io_config;                  /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
+  path_fmt_type      * eclbase;                    /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
+  sched_file_type    * sched_file;                 /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
   hash_type          * fixed_length_kw;            /* Set of user-added SCHEDULE keywords with fixed length. */
-  bool                 include_all_static_kw;  	   /* If true all static keywords are stored.*/ 
-  set_type           * static_kw_set;          	   /* Minimum set of static keywords which must be included to make valid restart files. */
+  bool                 include_all_static_kw;      /* If true all static keywords are stored.*/ 
+  set_type           * static_kw_set;              /* Minimum set of static keywords which must be included to make valid restart files. */
   stringlist_type    * user_static_kw;
-  char               * data_file;              	   /* Eclipse data file. */
+  char               * data_file;                  /* Eclipse data file. */
   time_t               start_date;                 /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   ecl_sum_type       * refcase;                    /* Refcase - can be NULL. */
-  ecl_grid_type      * grid;                   	   /* The grid which is active for this model. */
+  ecl_grid_type      * grid;                       /* The grid which is active for this model. */
   char               * schedule_prediction_file;   /* Name of schedule prediction file - observe that this is internally handled as a gen_kw node. */
-  char               * schedule_target_file;   	   /* File name to write schedule info to */
+  char               * schedule_target_file;       /* File name to write schedule info to */
   char               * input_init_section;         /* File name for ECLIPSE (EQUIL) initialisation - can be NULL if the user has not supplied INIT_SECTION. */
   char               * init_section;               /* Equal to the full path of input_init_section IFF input_init_section points to an existing file - otherwise equal to input_init_section. */
   int                  last_history_restart;
@@ -329,7 +329,7 @@ static void ecl_config_init_static_kw( ecl_config_type * ecl_config ) {
 ecl_config_type * ecl_config_alloc_empty( ) {
   ecl_config_type * ecl_config         = util_malloc(sizeof * ecl_config , __func__);
 
-  ecl_config->io_config 	       = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
+  ecl_config->io_config                = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
   ecl_config->fixed_length_kw          = hash_alloc();
   ecl_config->eclbase                  = NULL;
   ecl_config->include_all_static_kw    = false;
@@ -573,8 +573,11 @@ void ecl_config_add_config_items( config_type * config , bool strict ) {
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   /*
     Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
-     GEN_KW is added in ensemble_config.c
+    GEN_KW is added in ensemble_config.c
   */
+
+  item = config_add_item( config , IGNORE_SCHEDULE_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_BOOLEAN });
 
   item = config_add_item(config , ECLBASE_KEY , strict , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);

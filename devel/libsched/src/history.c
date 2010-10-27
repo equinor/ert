@@ -15,6 +15,7 @@ struct history_struct{
   const ecl_sum_type    * ecl_sum;        /* ecl_sum instance used when the data are taken from a summary instance. Observe that this is NOT owned by history instance.*/
   sched_history_type    * sched_history;
   history_source_type     source;
+  bool                    ignore_schedule;  /* I HATE SCHEDULE */
 };
 
 
@@ -56,10 +57,11 @@ const char * history_get_source_string( history_source_type history_source ) {
 
 
 
-static history_type * history_alloc_empty()
+static history_type * history_alloc_empty( bool ignore_schedule )
 {
-  history_type * history = util_malloc(sizeof * history, __func__);
-  history->ecl_sum       = NULL; 
+  history_type * history   = util_malloc(sizeof * history, __func__);
+  history->ecl_sum         = NULL; 
+  history->ignore_schedule = ignore_schedule;
   return history;
 }
 
@@ -76,9 +78,9 @@ void history_free(history_type * history)
 }
 
 
-history_type * history_alloc_from_sched_file(const char * sep_string , const sched_file_type * sched_file)
+history_type * history_alloc_from_sched_file(const char * sep_string , const sched_file_type * sched_file, bool ignore_schedule)
 {
-  history_type * history = history_alloc_empty( );
+  history_type * history = history_alloc_empty( ignore_schedule );
   history->sched_history = sched_history_alloc( sep_string );
   sched_history_update( history->sched_history , sched_file );
   history->source = SCHEDULE;
@@ -113,11 +115,19 @@ void history_use_summary(history_type * history, const ecl_sum_type * refcase , 
   Changed to always produce the schedule value at svn:3059. God I
   haaaaaaate this stuff.  
 
+  Added the ignore_schedule switch at svn ~ 3170. GOD I HATE THIS STUFF.
+  
 */
+
 int history_get_num_restarts(const history_type * history)
 {
-  return sched_history_get_last_history( history->sched_history );
-
+  if (history->ignore_schedule) {
+    if (history->ecl_sum == NULL)
+      util_abort("%s: Need refcase \n",__func__);
+    return ecl_sum_get_last_report_step( history->ecl_sum);
+  } else
+    return sched_history_get_last_history( history->sched_history );
+  
   //if (history->source != SCHEDULE) 
   //  return ecl_sum_get_last_report_step( history->ecl_sum);
   //else 

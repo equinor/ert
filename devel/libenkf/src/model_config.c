@@ -53,6 +53,7 @@ struct model_config_struct {
   bool                   has_prediction; 
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
   history_source_type    history_source;
+  bool                   ignore_schedule; 
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer 
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
   /** The results are always loaded. */
@@ -240,6 +241,7 @@ model_config_type * model_config_alloc_empty() {
   model_config->last_history_restart      = 0;
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
   model_config->__load_state              = bool_vector_alloc( 0 , false ); 
+  model_config->ignore_schedule           = DEFAULT_IGNORE_SCHEDULE;
 
   model_config_set_history_source( model_config , DEFAULT_HISTORY_SOURCE );
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
@@ -274,9 +276,12 @@ void model_config_init(model_config_type * model_config ,
   
   if (config_item_set( config, RUNPATH_KEY))
     model_config_set_runpath_fmt( model_config , config_get_value(config , RUNPATH_KEY) );
+
+  if (config_item_set( config, IGNORE_SCHEDULE_KEY))
+    model_config->ignore_schedule = config_get_value_as_bool(config , IGNORE_SCHEDULE_KEY);
   
   if (sched_file != NULL) {
-    model_config->history              = history_alloc_from_sched_file( SUMMARY_KEY_JOIN_STRING , sched_file);  
+    model_config->history              = history_alloc_from_sched_file( SUMMARY_KEY_JOIN_STRING , sched_file , model_config->ignore_schedule);  
     model_config->last_history_restart = last_history_restart;
   }
   
@@ -294,7 +299,7 @@ void model_config_init(model_config_type * model_config ,
   }
 
   if (model_config->history != NULL) {
-    int num_restart = history_get_num_restarts(model_config->history);
+    int num_restart = history_get_num_restarts( model_config->history );
     bool_vector_iset( model_config->internalize_state , num_restart - 1 , false );
     bool_vector_iset( model_config->__load_state      , num_restart - 1 , false );
   }
@@ -453,6 +458,11 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
   }
   fprintf( stream , CONFIG_KEY_FORMAT      , FORWARD_MODEL_KEY);  
   forward_model_fprintf( model_config->forward_model , stream );
+
+  if (model_config->ignore_schedule != DEFAULT_IGNORE_SCHEDULE) {
+    fprintf( stream , CONFIG_KEY_FORMAT      , IGNORE_SCHEDULE_KEY);  
+    fprintf(stream  , CONFIG_ENDVALUE_FORMAT , CONFIG_BOOL_STRING( model_config->ignore_schedule ));
+  }
 
   fprintf( stream , CONFIG_KEY_FORMAT      , RUNPATH_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( model_config->runpath ));
