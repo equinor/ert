@@ -30,12 +30,12 @@ extern "C" {
    2^n values (apart from the composite values plot_data_stdy and plot_data_stdx).
 */
 typedef enum {
-  PLOT_DATA_X  	 =  1,
-  PLOT_DATA_Y  	 =  2,
-  PLOT_DATA_X1 	 =  4,
-  PLOT_DATA_X2 	 =  8,
-  PLOT_DATA_Y1 	 = 16,
-  PLOT_DATA_Y2 	 = 32,
+  PLOT_DATA_X    =  1,
+  PLOT_DATA_Y    =  2,
+  PLOT_DATA_X1   =  4,
+  PLOT_DATA_X2   =  8,
+  PLOT_DATA_Y1   = 16,
+  PLOT_DATA_Y2   = 32,
   PLOT_DATA_HIST = 1     /* == plot_data_x */
 } plot_data_types;
 
@@ -80,12 +80,12 @@ bool plot_dataset_is_finished(plot_dataset_type * d);
 void plot_dataset_update_range(plot_dataset_type * , bool * , plot_range_type * );
 void plot_dataset_update_range_histogram(plot_dataset_type * d, plot_range_type * range);
 
-plot_dataset_type *plot_dataset_alloc( plot_data_type , const char * label );
+plot_dataset_type *plot_dataset_alloc( plot_data_type , const char * label , bool logx , bool logy);
 void plot_dataset_free__(void * d); 
 void plot_dataset_free(plot_dataset_type * d);
 void plot_dataset_set_data(plot_dataset_type * d, const double * x,
-				  const double * y, int len,
-				  plot_color_type c, plot_style_type s);
+                                  const double * y, int len,
+                                  plot_color_type c, plot_style_type s);
 
 void     plot_dataset_draw(plot_dataset_type * d , plot_driver_type * driver, const plot_range_type * range);
 double * plot_dataset_get_vector_x(const plot_dataset_type * d);

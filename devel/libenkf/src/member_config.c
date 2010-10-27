@@ -22,11 +22,11 @@
 
 
 struct member_config_struct {
-  int  		          iens;                /* The ensemble member number of this member. */
+  int                     iens;                /* The ensemble member number of this member. */
   char                  * casename;            /* The name of this case - will mosttly be NULL. */
   keep_runpath_type       keep_runpath;        /* Should the run-path directory be left around (for this member)*/
   bool                    pre_clear_runpath;   /* Should the runpath directory be cleared before starting? */ 
-  char 		        * eclbase;             /* The ECLBASE string used for simulations of this member. */
+  char                  * eclbase;             /* The ECLBASE string used for simulations of this member. */
   time_t_vector_type    * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. */
 };
 
@@ -69,7 +69,7 @@ int member_config_get_iens( const member_config_type * member_config ) {
   return member_config->iens;
 }
 
-				   
+                                   
 
 void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
@@ -196,8 +196,16 @@ static void member_config_fread_sim_time( member_config_type * member_config , e
   if (stream != NULL) {
     time_t_vector_fread( member_config->report_time , stream );
     fclose( stream );
+  } else {
+    /** Try loading the initial member - desp hack. */
+    stream = enkf_fs_open_excase_member_file( enkf_fs , "sim_time" , 0 );
+    if (stream != NULL) {
+      time_t_vector_fread( member_config->report_time , stream );
+      fclose( stream );
+    }
   }
 }
+
 
 void member_config_fwrite_sim_time( const member_config_type * member_config , enkf_fs_type * enkf_fs ) {
   FILE * stream = enkf_fs_open_case_member_file( enkf_fs , "sim_time" , member_config->iens , "w");
@@ -223,11 +231,11 @@ member_config_type * member_config_alloc(int iens ,
                                          const ecl_config_type      * ecl_config , 
                                          const ensemble_config_type * ensemble_config,
                                          enkf_fs_type               * fs) { 
-						
+                                                
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
   member_config->casename            = util_alloc_string_copy( casename );
   member_config->iens                = iens; /* Can only be changed in the allocater. */
-  member_config->eclbase  	     = NULL;
+  member_config->eclbase             = NULL;
   member_config->pre_clear_runpath   = pre_clear_runpath;
   member_config_set_keep_runpath(member_config , keep_runpath);
   member_config->report_time = time_t_vector_alloc( 0 , -1 );

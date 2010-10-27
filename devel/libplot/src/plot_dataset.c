@@ -21,19 +21,21 @@
 struct plot_dataset_struct {
   UTIL_TYPE_ID_DECLARATION;
   char                *label;             /* Label for the dataset - used as hash key in the plot instance. */ 
-  double_vector_type  *x; 	   	   /**< Vector containing x-axis data */
-  double_vector_type  *y; 	   	   /**< Vector containing y-axis data */
+  double_vector_type  *x;                  /**< Vector containing x-axis data */
+  double_vector_type  *y;                  /**< Vector containing y-axis data */
   double_vector_type  *y1;              
   double_vector_type  *y2;
   double_vector_type  *x1;
   double_vector_type  *x2;
-  int     	      data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
+  int                 data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
   plot_data_type      data_type;       /**< One of the types: plot_xy, plot_xy1y2, plot_x1x2y , plot_xline , plot_yline */      
 
   plot_style_type       style;         /**< The graph style: line|points|line_points */
 
   line_attribute_type   line_attr;
   point_attribute_type  point_attr;
+  bool                  logx;
+  bool                  logy;
 };
 
 
@@ -137,12 +139,12 @@ void plot_dataset_fprintf(const plot_dataset_type * dataset , FILE * stream) {
   fprintf(stream , "----------------------------------------------------------------------------\n");
   for (int i = 0; i < plot_dataset_get_size(dataset); i++) {
     fprintf(stream , "%12.7f  %12.7f  %12.7f  %12.7f  %12.7f  %12.7f\n",
-	    double_vector_safe_iget(dataset->x , i ),
-	    double_vector_safe_iget(dataset->y , i ),
-	    double_vector_safe_iget(dataset->x1 , i),
-	    double_vector_safe_iget(dataset->x2 , i),
-	    double_vector_safe_iget(dataset->y1 , i ),
-	    double_vector_safe_iget(dataset->y2 , i));
+            double_vector_safe_iget(dataset->x , i ),
+            double_vector_safe_iget(dataset->y , i ),
+            double_vector_safe_iget(dataset->x1 , i),
+            double_vector_safe_iget(dataset->x2 , i),
+            double_vector_safe_iget(dataset->y1 , i ),
+            double_vector_safe_iget(dataset->y2 , i));
   }
   fprintf(stream , "----------------------------------------------------------------------------\n");
 }
@@ -156,20 +158,22 @@ void plot_dataset_fprintf(const plot_dataset_type * dataset , FILE * stream) {
  *
  * Create a new dataset - allocates the memory.
  */
-plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , const char* label) {
+plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , const char* label , bool logx , bool logy) {
   plot_dataset_type *d;
   
   d                = util_malloc(sizeof *d , __func__);
   UTIL_TYPE_ID_INIT(d , PLOT_DATASET_TYPE_ID);
   d->data_type     = data_type;
   d->data_mask     = __make_data_mask(data_type);
-  d->x   	   = double_vector_alloc( 0 , -1 );
-  d->y   	   = double_vector_alloc( 0 , -1 );
-  d->x1 	   = double_vector_alloc( 0 , -1 );
-  d->x2 	   = double_vector_alloc( 0 , -1 );
-  d->y1 	   = double_vector_alloc( 0 , -1 );
-  d->y2 	   = double_vector_alloc( 0 , -1 );
+  d->x             = double_vector_alloc( 0 , -1 );
+  d->y             = double_vector_alloc( 0 , -1 );
+  d->x1            = double_vector_alloc( 0 , -1 );
+  d->x2            = double_vector_alloc( 0 , -1 );
+  d->y1            = double_vector_alloc( 0 , -1 );
+  d->y2            = double_vector_alloc( 0 , -1 );
   d->label         = util_alloc_string_copy( label );
+  d->logx          = logx;
+  d->logy          = logy;
   /******************************************************************/
   /* Defaults                                                       */
   d->style       = LINE;
@@ -214,14 +218,19 @@ void plot_dataset_free__(void * d) {
 
 
 
-static void __append_vector(double_vector_type * target, const double * src , const bool_vector_type * mask) {
+static void __append_vector(double_vector_type * target, const double * src , const bool_vector_type * mask , bool log_data) {
   if (src == NULL)
     util_abort("%s: trying to extract data from NULL pointer\n",__func__);
   
   
-  for (int index = 0; index < bool_vector_size( mask ); index++) 
-    if (bool_vector_iget(mask , index)) 
-      double_vector_append( target , src[index] );
+  for (int index = 0; index < bool_vector_size( mask ); index++) {
+    if (bool_vector_iget(mask , index)) {
+      if (log_data)
+        double_vector_append( target , log10( src[index] ) );
+      else
+        double_vector_append( target , src[index] );
+    }
+  }
 }
 
 
@@ -234,12 +243,17 @@ static void __append_vector(double_vector_type * target, const double * src , co
    This functionality is implemented with the boolean vector 'mask'.
 */
 
-void __update_mask( bool_vector_type * mask , const double * data) {
+void __update_mask( bool_vector_type * mask , const double * data , bool log_data) {
   if (data != NULL) {
-    for (int index = 0; index < bool_vector_size( mask ); index++)
-      if (!isfinite(data[index])) 
-	/* This datapoint is marked as invalid - and not added to the proper datavectors. */
-	bool_vector_iset( mask , index , false );  
+    for (int index = 0; index < bool_vector_size( mask ); index++) {
+      bool value = data[index];
+      if (log_data)
+        value = log( value );
+
+      if (!isfinite( value )) 
+        /* This datapoint is marked as invalid - and not added to the proper datavectors. */
+        bool_vector_iset( mask , index , false );  
+    }
   }
 }
 
@@ -247,19 +261,19 @@ void __update_mask( bool_vector_type * mask , const double * data) {
 static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * y1 , const double * y2 , const double *x1 , const double *x2) {
   bool_vector_type * mask = bool_vector_alloc( size , true );   /* Initialize to all true */
   
-  __update_mask(mask , x);
-  __update_mask(mask , y);
-  __update_mask(mask , y1);
-  __update_mask(mask , y2);
-  __update_mask(mask , x1);
-  __update_mask(mask , x2);
+  __update_mask(mask , x  , d->logx);
+  __update_mask(mask , y  , d->logy);
+  __update_mask(mask , y1 , d->logy);
+  __update_mask(mask , y2 , d->logy);
+  __update_mask(mask , x1 , d->logx);
+  __update_mask(mask , x2 , d->logx);
     
-  if (d->data_mask & PLOT_DATA_X)  __append_vector(d->x  , x  ,  mask);
-  if (d->data_mask & PLOT_DATA_X1) __append_vector(d->x1 , x1 ,  mask);
-  if (d->data_mask & PLOT_DATA_X2) __append_vector(d->x2 , x2 ,  mask);
-  if (d->data_mask & PLOT_DATA_Y)  __append_vector(d->y  , y  ,  mask);
-  if (d->data_mask & PLOT_DATA_Y1) __append_vector(d->y1 , y1 ,  mask);
-  if (d->data_mask & PLOT_DATA_Y2) __append_vector(d->y2 , y2 ,  mask);
+  if (d->data_mask & PLOT_DATA_X)  __append_vector(d->x  , x  ,  mask , d->logx);
+  if (d->data_mask & PLOT_DATA_X1) __append_vector(d->x1 , x1 ,  mask , d->logx);
+  if (d->data_mask & PLOT_DATA_X2) __append_vector(d->x2 , x2 ,  mask , d->logx);
+  if (d->data_mask & PLOT_DATA_Y)  __append_vector(d->y  , y  ,  mask , d->logy);
+  if (d->data_mask & PLOT_DATA_Y1) __append_vector(d->y1 , y1 ,  mask , d->logy);
+  if (d->data_mask & PLOT_DATA_Y2) __append_vector(d->y2 , y2 ,  mask , d->logy);
 
   bool_vector_free(mask);
 }
@@ -424,9 +438,9 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
     y1 = NULL;
     y2 = NULL;
     
-    if (d->data_mask & PLOT_DATA_X)  	{x1 = double_vector_get_ptr(d->x);  x2 = double_vector_get_ptr(d->x); }
-    if (d->data_mask & PLOT_DATA_X1) 	 x1 = double_vector_get_ptr(d->x1);
-    if (d->data_mask & PLOT_DATA_X2) 	 x2 = double_vector_get_ptr(d->x2);
+    if (d->data_mask & PLOT_DATA_X)     {x1 = double_vector_get_ptr(d->x);  x2 = double_vector_get_ptr(d->x); }
+    if (d->data_mask & PLOT_DATA_X1)     x1 = double_vector_get_ptr(d->x1);
+    if (d->data_mask & PLOT_DATA_X2)     x2 = double_vector_get_ptr(d->x2);
 
 
     if (d->data_mask & PLOT_DATA_Y)  {y1 = double_vector_get_ptr(d->y) ;  y2 = double_vector_get_ptr(d->y) ; }
@@ -435,33 +449,33 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
 
     if (x1 != NULL) {
       if (*first_pass) {
-	/* To ensure sensible initialisation */
-	tmp_x_min = x1[0];
-	tmp_x_max = x2[0];
+        /* To ensure sensible initialisation */
+        tmp_x_min = x1[0];
+        tmp_x_max = x2[0];
       }
       
       for (i=0; i < size; i++) {
-	if (x1[i] < tmp_x_min)
-	  tmp_x_min = x1[i];
-	
-	if (x2[i] > tmp_x_max)
-	  tmp_x_max = x2[i];
+        if (x1[i] < tmp_x_min)
+          tmp_x_min = x1[i];
+        
+        if (x2[i] > tmp_x_max)
+          tmp_x_max = x2[i];
       }
     }
 
 
     if (y1 != NULL) {
       if (*first_pass) {
-	tmp_y_min = y1[0];
-	tmp_y_max = y2[0];
+        tmp_y_min = y1[0];
+        tmp_y_max = y2[0];
       }
       
       for (i=0; i < size; i++) {
-	if (y1[i] < tmp_y_min)
-	  tmp_y_min = y1[i];
-	
-	if (y2[i] > tmp_y_max)
-	  tmp_y_max = y2[i];
+        if (y1[i] < tmp_y_min)
+          tmp_y_min = y1[i];
+        
+        if (y2[i] > tmp_y_max)
+          tmp_y_max = y2[i];
       }
     }
     

@@ -131,8 +131,8 @@ static double trans_normal(double x , const arg_pack_type * arg) {
 
 static double trans_lognormal(double x, const arg_pack_type * arg) {
   double mu, std;
-  mu  = arg_pack_iget_double(arg , 0 );
-  std = arg_pack_iget_double(arg , 1 );
+  mu  = arg_pack_iget_double(arg , 0 );   /* The expectation of log( y ) */
+  std = arg_pack_iget_double(arg , 1 );   
   return exp(x * std + mu);
 }
 
@@ -274,7 +274,6 @@ trans_func_type * trans_func_alloc( const char * func_name ) {
       trans_func->func = trans_lognormal;
     }
     
-
     if (util_string_equal( func_name , "UNIFORM")) {
       stringlist_append_ref( trans_func->param_names , "MIN");
       stringlist_append_ref( trans_func->param_names , "MAX" );
@@ -305,11 +304,10 @@ trans_func_type * trans_func_alloc( const char * func_name ) {
       arg_pack_append_double( trans_func->params , 0 );
       arg_pack_append_double( trans_func->params , 0 );
       arg_pack_append_double( trans_func->params , 0 );
-      
-      
+
       trans_func->func = trans_errf;
     }
-
+    
 
     if (util_string_equal( func_name , "DERRF")) {
       stringlist_append_ref( trans_func->param_names , "STEPS");
@@ -342,6 +340,9 @@ trans_func_type * trans_func_alloc( const char * func_name ) {
       arg_pack_append_double( trans_func->params , 0 );
       trans_func->func = trans_const;
     }
+
+    if (trans_func->func == NULL) 
+      util_exit("%s: Sorry: function name:%s not recognized \n",__func__ , func_name);
   }
   return trans_func;
 }
@@ -349,7 +350,8 @@ trans_func_type * trans_func_alloc( const char * func_name ) {
 
 
 double trans_func_eval( const trans_func_type * trans_func , double x) {
-  return trans_func->func( x , trans_func->params );
+  double y = trans_func->func( x , trans_func->params );
+  return y;
 }
 
 
@@ -369,7 +371,7 @@ trans_func_type * trans_func_fscanf_alloc( FILE * stream ) {
   trans_func = trans_func_alloc( func_name );
   arg_pack_fscanf( trans_func->params , stream );
   
-  free( func_name);
+  free( func_name );
   return trans_func;
 }
 
