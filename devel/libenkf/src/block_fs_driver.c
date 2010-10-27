@@ -10,6 +10,7 @@
 #include <block_fs.h>
 #include <enkf_types.h>
 #include <thread_pool.h>
+#include <timer.h>
 
 typedef struct bfs_struct bfs_type;
 
@@ -171,7 +172,7 @@ static void * bfs_select_dir__(void * arg) {
   const char * directory = arg_pack_iget_ptr( arg_pack , 2 );
   bool  read             = arg_pack_iget_bool( arg_pack , 3 );
   bool  read_only        = arg_pack_iget_bool( arg_pack , 4 );
-
+  
   bfs_select_dir( bfs , root_path , directory , read , read_only );
   return NULL;
 }
@@ -312,34 +313,35 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
 
 
 /**
-   The enkf_fs layer has already made certain that this directory is different
-   from the current. 
+   The enkf_fs layer has already made certain that this directory is
+   different from the current. 
 */
 
 void block_fs_driver_select_dir(void *_driver , const char * directory, bool read , bool read_only) {
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
-  thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers , true ); /* Maaany threads .... */
+  thread_pool_type * tp         = thread_pool_alloc( 4 , true ); 
   arg_pack_type ** arglist      = util_malloc( sizeof * arglist * driver->num_drivers , __func__);
   msg_type * msg = msg_alloc("Mounting: " , false);
   int driver_nr;
   
   msg_show( msg );
+
   for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) {
     char * path = util_alloc_sprintf("%s%cmod_%d" , directory , UTIL_PATH_SEP_CHAR , driver_nr);
     arglist[driver_nr] = arg_pack_alloc();
-
+    
     arg_pack_append_ptr( arglist[driver_nr] , driver->fs_list[driver_nr] );
     arg_pack_append_ptr( arglist[driver_nr] , driver->root_path );
     arg_pack_append_owned_ptr( arglist[driver_nr] , path , free);
     arg_pack_append_bool( arglist[driver_nr] , read );
     arg_pack_append_bool( arglist[driver_nr] , read_only );
-
+    
     msg_update( msg , path );
     thread_pool_add_job( tp , bfs_select_dir__ , arglist[driver_nr] );
   }
   thread_pool_join( tp );
+  
   msg_free( msg , true );
-
   for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) 
     arg_pack_free( arglist[driver_nr] );
   free( arglist );
@@ -355,7 +357,7 @@ void block_fs_driver_free(void *_driver) {
   block_fs_driver_type * driver = block_fs_driver_safe_cast( _driver );
   {
     int driver_nr;
-    thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers , true);
+    thread_pool_type * tp         = thread_pool_alloc( 4 , true);
     for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) 
       thread_pool_add_job( tp , bfs_close__ , driver->fs_list[driver_nr] );
 
