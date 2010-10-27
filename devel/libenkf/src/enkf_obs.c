@@ -231,14 +231,13 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * ke
 
 
 
-void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
-                                          obs_vector_type        * obs_vector , 
-                                          enkf_fs_type           * fs,
-                                          int                      start_step,
-                                          int                      end_step , 
-                                          state_enum               state,
-                                          int                      ens_size,
-                                          const enkf_state_type     ** ensemble ,
+void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
+                                          obs_vector_type          * obs_vector , 
+                                          enkf_fs_type             * fs,
+                                          const int_vector_type    * step_list , 
+                                          state_enum                 state,
+                                          int                        ens_size,
+                                          const enkf_state_type   ** ensemble ,
                                           meas_data_type           * meas_data,
                                           obs_data_type              * obs_data,
                                           const local_ministep_type  * mstep , 
@@ -255,7 +254,8 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
   double_vector_reset( obs_std );
   double_vector_reset( obs_value );
   
-  for (step = start_step; step <= end_step; step++) {
+  for (int i = 0; i < int_vector_size( step_list ); i++) {
+    step = int_vector_iget( step_list , i );
     if (obs_vector_iget_active( obs_vector , step ) && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
       {
         const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , step );
@@ -292,7 +292,9 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
         }
       }
       {
-        char * filename = util_alloc_sprintf( "/tmp/covar/%s_%04d-%04d" , obs_vector_get_obs_key( obs_vector ), start_step , end_step);
+        char * filename = util_alloc_sprintf( "/tmp/covar/%s_%04d-%04d" , obs_vector_get_obs_key( obs_vector ), 
+                                              int_vector_iget( step_list , 0 ),
+                                              int_vector_get_last( step_list ));
         FILE * stream = util_mkdir_fopen( filename , "w");
 
         matrix_fprintf(error_covar , "%7.3f " , stream );
@@ -303,16 +305,22 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
     }
     
     
-    /*3: Fill up the obs_block and meas_block structures with this time-aggregated summary observation. */
+    /*3: Fill up the obs_block and meas_block structures with this
+         time-aggregated summary observation.  Passing in the
+         error_covar matrix (which can be NULL) to the obs_block
+         instance. 
+    */
+
     {
       obs_block_type  * obs_block  = obs_data_add_block( obs_data , obs_vector_get_obs_key( obs_vector ) , active_count , error_covar , true);
-      meas_block_type * meas_block = meas_data_add_block( meas_data, obs_vector_get_obs_key( obs_vector ) , end_step , active_count );
+      meas_block_type * meas_block = meas_data_add_block( meas_data, obs_vector_get_obs_key( obs_vector ) , int_vector_get_last( step_list ) , active_count );
       
       for (int i=0; i < active_count; i++) 
         obs_block_iset( obs_block , i , double_vector_iget( obs_value , i) , double_vector_iget( obs_std , i ));
       
       active_count = 0;
-      for (int step = start_step; step <= end_step; step++) {
+      for (int i = 0; i < int_vector_size( step_list ); i++) {
+        int step = int_vector_iget( step_list , i );
         if (obs_vector_iget_active( obs_vector , step ) && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
           
           int iens;
@@ -340,8 +348,7 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type    * enkf_obs,
 */
 void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   enkf_fs_type           * fs,
-                                  int                      start_step,
-                                  int                      end_step , 
+                                  const int_vector_type  * step_list , 
                                   state_enum               state,
                                   int                      ens_size,
                                   const enkf_state_type ** ensemble ,
@@ -362,8 +369,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
       enkf_obs_get_obs_and_measure_summary( enkf_obs , 
                                             obs_vector , 
                                             fs , 
-                                            start_step , 
-                                            end_step , 
+                                            step_list , 
                                             state , 
                                             ens_size , 
                                             ensemble , 
@@ -373,7 +379,8 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                             work_value, 
                                             work_std);
     else {
-      for (int report_step = start_step; report_step <= end_step; report_step++) {
+      for (int i=0; i < int_vector_size( step_list ); i++) {
+        int report_step = int_vector_iget( step_list , i );
         if (obs_vector_iget_active(obs_vector , report_step)) {                                         /* The observation is active for this report step.     */
           const active_list_type * active_list = local_ministep_get_obs_active_list( mstep , obs_key );
           obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list);              /* Collect the observed data in the obs_data instance. */

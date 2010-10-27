@@ -1088,7 +1088,7 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
    the function, rather than sending it as an input.
 */
 
-void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , const local_ministep_type * ministep, int start_step , int end_step , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data, double std_cutoff, double alpha) {
+void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , const local_ministep_type * ministep, const int_vector_type * step_list , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data, double std_cutoff, double alpha) {
   const int num_cpu_threads          = 4;
 
   int       matrix_size              = 1000;  /* Starting with this */
@@ -1107,7 +1107,7 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
   
   int nrobs                = obs_data_get_active_size(obs_data);
   int nrmin                = util_int_min( ens_size , nrobs);
-  int report_step          = end_step;
+  int report_step          = int_vector_get_last( step_list );
   
   matrix_type * randrot       = NULL;
   matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
@@ -1331,7 +1331,7 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
    This is  T H E  EnKF update routine.
 **/
 
-void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int step1 , int step2) {
+void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list) {
   /*
      If merge_observations is true all observations in the time
      interval [step1+1,step2] will be used, otherwise only the last
@@ -1340,25 +1340,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
   double alpha                       = analysis_config_get_alpha( enkf_main->analysis_config );
   double std_cutoff                  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
   const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
-  int start_step , end_step;
   matrix_type * X;
-
-
-
-  /* Observe that end_step is inclusive. */
-
-  /* For god-damn-normal EnKF start_step should be equal to step2 even
-     if merge_observations is set to true. 
-  */
-  if (merge_observations) {
-    start_step = step1;
-    end_step   = step2;
-  } else {
-    start_step = step2;
-    end_step   = step2;
-  }
-
-
+  
   {
     /*
       Observations and measurements are collected in these temporary
@@ -1370,38 +1353,43 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
       process.
     */
     obs_data_type               * obs_data      = obs_data_alloc();
-    meas_data_type            * meas_forecast = meas_data_alloc( ens_size );
-    meas_data_type            * meas_analyzed = meas_data_alloc( ens_size );
+    meas_data_type              * meas_forecast = meas_data_alloc( ens_size );
+    meas_data_type              * meas_analyzed = meas_data_alloc( ens_size );
     local_config_type           * local_config  = enkf_main->local_config;
-    const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , step2 );  /* Only step2 considered */
+    const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , int_vector_get_last( step_list ));  /* Only last step considered when forming local update */
     hash_type                   * use_count     = hash_alloc();
     matrix_type                 * randrot       = NULL;
     const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
     FILE                        * log_stream;
-    char                        * log_file;
 
 
     if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
       randrot = enkf_analysis_alloc_mp_randrot( ens_size );
-
-    if (start_step == end_step)
-      log_file = util_alloc_sprintf("%s%c%04d" , log_path , UTIL_PATH_SEP_CHAR , end_step);
-    else
-      log_file = util_alloc_sprintf("%s%c%04d-%04d" , log_path , UTIL_PATH_SEP_CHAR , start_step , end_step);
-    log_stream = util_fopen( log_file , "w" );
+    
+    {
+      char * log_file;
+      if (int_vector_size( step_list ) == 1) 
+        log_file = util_alloc_sprintf("%s%c%04d" , log_path , UTIL_PATH_SEP_CHAR , int_vector_iget( step_list , 0));
+      else 
+        log_file = util_alloc_sprintf("%s%c%04d-%04d" , log_path , UTIL_PATH_SEP_CHAR , int_vector_iget( step_list , 0) , int_vector_get_last( step_list ));
+      log_stream = util_fopen( log_file , "w" );
+      
+      free( log_file );
+    }
+    
 
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
       local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
       obs_data_reset( obs_data );
       meas_data_reset( meas_forecast );
-      enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), start_step , end_step , FORECAST, ens_size,
+      enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), step_list , FORECAST, ens_size,
                                    (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
-
+      
       enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
       
       /* How the fuck does dup() work?? */
-      enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , start_step , end_step , local_ministep_get_name( ministep ) , stdout );
-      enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , start_step , end_step , local_ministep_get_name( ministep ) , log_stream );
+      enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , stdout );
+      enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , log_stream );
 
       if (obs_data_get_active_size(obs_data) > 0) {
         if (analysis_config_Xbased( enkf_main->analysis_config )) {
@@ -1415,23 +1403,20 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
               the allocated A matrix is not large enough to hold all
               data.
             */
-            enkf_main_update_mulX_cv_bootstrap_update(enkf_main , ministep, start_step, end_step , use_count , meas_forecast , obs_data, std_cutoff, alpha);
-          }
-          else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
+            enkf_main_update_mulX_cv_bootstrap_update(enkf_main , ministep, step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
+          } else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
             /* Update based on Cross validation AND local analysis. */
-            enkf_main_update_mulX_cv(enkf_main , ministep, end_step , use_count , meas_forecast , obs_data);
-          } 
-          else {
+            enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);
+          } else {
             /* Nothing fancy */
             X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
-            enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
+            enkf_main_update_mulX( enkf_main , X , ministep , int_vector_get_last( step_list ) , use_count);
             matrix_free( X );
           }
         }
       }
     }
     fclose( log_stream );
-    free( log_file );
 
     if (randrot != NULL)
       matrix_free( randrot );
@@ -1439,7 +1424,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
     obs_data_free( obs_data );
     meas_data_free( meas_forecast );
     meas_data_free( meas_analyzed );
-    enkf_main_inflate( enkf_main , step2 , use_count);
+    enkf_main_inflate( enkf_main , int_vector_get_last( step_list ) , use_count);
     hash_free( use_count );
   }
 }
@@ -1929,12 +1914,9 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
         log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
         
         if (enkf_update) {
-          bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
-          if (step1 == 0) 
-            /* To ensure that we do not get 0-1 when updating at the first step. */
-            enkf_main_UPDATE(enkf_main , merge_observations , util_int_max(1 , load_start) , step2);
-          else
-            enkf_main_UPDATE(enkf_main , merge_observations , load_start , step2);
+          int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , step2 );
+          enkf_main_UPDATE(enkf_main , step_list );
+          int_vector_free( step_list );
         }
       }
       enkf_fs_fsync( enkf_main->dbase );
@@ -1942,6 +1924,20 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
       return runOK;
     }
   }
+}
+
+
+int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 ) {
+  bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
+  int_vector_type * step_list = int_vector_alloc( 0 , 0 );
+  
+  if (merge_observations) {
+    for (int step = util_int_max( 1 , load_start ); step <= step2; step++)
+      int_vector_append( step_list , step );
+  } else
+    int_vector_append( step_list , step2 );
+  
+  return step_list;
 }
 
 

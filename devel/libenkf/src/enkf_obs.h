@@ -39,8 +39,7 @@ void              enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_t
 void enkf_obs_get_obs_and_measure(
         const enkf_obs_type    * enkf_obs,
         enkf_fs_type           * fs,
-        int                      start_step,
-        int                      end_step,
+        const int_vector_type  * step_list , 
         state_enum               state,
         int                      ens_size,
         const enkf_state_type ** ensemble ,

@@ -807,13 +807,15 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 
 /*****************************************************************/
 
-void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_data_type * meas_data , int start_step, int end_step , const char * ministep_name , FILE * stream ) {
+void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_data_type * meas_data , const int_vector_type * step_list , const char * ministep_name , FILE * stream ) {
   const char * float_fmt = "%15.3f";
   fprintf(stream , "===============================================================================================================================\n");
-  if (start_step == end_step)
-    fprintf(stream , "Report step...: %04d \n",start_step);
+  fprintf(stream , "Report step...: %04d",int_vector_iget( step_list , 0));
+  if (int_vector_size( step_list ) == 1)
+    fprintf(stream , "\n");
   else
-    fprintf(stream , "Report step...: %04d - %04d \n",start_step , end_step);
+    fprintf(stream , " - %04d \n",int_vector_get_last( step_list ));
+  
   
   fprintf(stream , "Ministep......: %s   \n",ministep_name);  
   fprintf(stream , "-------------------------------------------------------------------------------------------------------------------------------\n");

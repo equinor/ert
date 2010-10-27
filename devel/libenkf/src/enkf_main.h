@@ -28,6 +28,7 @@ extern "C" {
 #include <log.h>  
 #include <bool_vector.h>
 #include <ert_template.h>
+#include <int_vector.h>
 
 /*****************************************************************/
 
@@ -93,8 +94,8 @@ const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
 ecl_config_type             * enkf_main_get_ecl_config(const enkf_main_type * enkf_main);
 ensemble_config_type        * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main);
 int                           enkf_main_get_ensemble_size( const enkf_main_type * enkf_main );
-int   			      enkf_main_get_history_length( const enkf_main_type * );
-bool  			      enkf_main_has_prediction( const enkf_main_type *  );
+int                           enkf_main_get_history_length( const enkf_main_type * );
+bool                          enkf_main_has_prediction( const enkf_main_type *  );
 //const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
 model_config_type           * enkf_main_get_model_config( const enkf_main_type * );
 local_config_type           * enkf_main_get_local_config( const enkf_main_type * enkf_main );
@@ -106,12 +107,12 @@ enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
 analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );
 
 void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
-void 	     enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
+void         enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
 const char * enkf_main_get_image_viewer(const enkf_main_type * );
 const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main );
 void         enkf_main_analysis_update(enkf_main_type * , int , int );
 const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
-void         enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int step1 , int step2);
+void         enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list);
 void         enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2);
 
 void enkf_main_initialize_from_existing(enkf_main_type * enkf_main , 
@@ -167,10 +168,10 @@ const                char * enkf_main_get_SVN_VERSION( void );
 const                char * enkf_main_get_COMPILE_TIME( void );
 void                        enkf_main_init_debug( const char * executable) ;
 bool                        enkf_main_is_initialized( const enkf_main_type * enkf_main ,bool_vector_type * __mask);
-void 			    enkf_main_del_node(enkf_main_type * enkf_main , const char * key);
+void                        enkf_main_del_node(enkf_main_type * enkf_main , const char * key);
 void                        enkf_main_update_node( enkf_main_type * enkf_main , const char * key );
 void                        enkf_main_fprintf_config( const enkf_main_type * enkf_main );
-
+int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 );
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 

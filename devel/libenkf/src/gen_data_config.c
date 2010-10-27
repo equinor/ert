@@ -394,16 +394,18 @@ void gen_data_config_update_active(gen_data_config_type * config , int report_st
       } 
       
       config->load_count++;
+      printf("config->load_count:%d \n",config->load_count);
       if (config->load_count == config->ens_size) {
         /**
            All ensemble members have been loaded, we save the current active_mask to disk.
         */
         char * filename = util_alloc_sprintf("%s_active" , config->key );
         FILE * stream = enkf_fs_open_case_tstep_file( config->fs , filename , report_step , "w");
-        
+      
         bool_vector_fwrite( config->active_mask , stream );
-
+        
         fclose( stream );
+        printf("Mask saved to: %s \n",filename);
         free( filename );
       }
     }
