@@ -272,9 +272,9 @@ ADD_FIELD    MSTEP    NTG     MIDDLE
         2. local_updatestep_type - what should be updated and which
            observations to use at one report step.
   
-	3. local_ministep_type - what should be updated and which
+        3. local_ministep_type - what should be updated and which
            observations to use at one enkf update.
-	   
+           
 */
 
 
@@ -282,8 +282,8 @@ ADD_FIELD    MSTEP    NTG     MIDDLE
 struct local_config_struct {
   vector_type           * updatestep;            /* This is an indexed vector with (pointers to) local_reportsstep instances. */
   local_updatestep_type * default_updatestep;    /* A default report step returned if no particular report step has been installed for this time index. */
-  hash_type 		* updatestep_storage;    /* These two hash tables are the 'holding area' for the local_updatestep */
-  hash_type 		* ministep_storage;      /* and local_ministep instances. */
+  hash_type             * updatestep_storage;    /* These two hash tables are the 'holding area' for the local_updatestep */
+  hash_type             * ministep_storage;      /* and local_ministep instances. */
   stringlist_type       * config_files;
   int                     history_length;
 };
@@ -841,7 +841,7 @@ static void local_config_load_file( local_config_type * local_config , const ecl
           int j2          = read_int( stream , binary ) - 1;
           int k1          = read_int( stream , binary ) - 1;
           int k2          = read_int( stream , binary ) - 1;
-          bool     select = read_bool( stream , binary );
+          bool select     = read_bool( stream , binary );
           
           ecl_region_type * region = hash_get( regions , region_name );
           
