@@ -8,8 +8,8 @@ import libjob_queue
 import threading
 from   driver import *
 from   job    import Job
-import ert.ecl.ecl_util as ecl_util  
-
+import ert.ecl.ecl_util    as ecl_util  
+import ert.ecl.ecl_default as ecl_default
 
 
 
@@ -171,16 +171,14 @@ class JobQueue:
 
 
 class EclQueue( JobQueue ):
-    default_eclipse_cmd  = "/project/res/etc/ERT/Scripts/run_eclipse.py"
-    default_version      = "2009.2"
-
-
+    default_eclipse_cmd  = ecl_default.cmd
+    default_version      = ecl_default.version
+    
     def __init__(self , driver , size , max_running , ecl_version = default_version , eclipse_cmd = default_eclipse_cmd):
         JobQueue.__init__( self , driver , size , max_running , eclipse_cmd )
         self.ecl_version = ecl_version
 
-
-    
+        
     def add_job( self , data_file):
         (path_base , ext) = os.path.splitext( data_file )
         (run_path , base) = os.path.split( path_base )
