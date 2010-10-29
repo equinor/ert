@@ -7,16 +7,13 @@ import os.path
 from   ert.cwrap.cwrap       import *
 import ert.util.ctime        
 import ecl_util
+import ecl_default
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_CHAR_TYPE , ECL_BOOL_TYPE , ECL_DOUBLE_TYPE, EclKW
 from   ecl_file              import EclFile
 from   ecl_sum               import EclSum
 from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
 from   ecl_grid              import EclGrid
 from   ecl_region            import EclRegion
-
-run_script        = "/project/res/etc/ERT/Scripts/run_eclipse.py"
-default_version   = "2009.1"
-
 
 
 class EclCase:
@@ -77,15 +74,9 @@ class EclCase:
         return self.__path
 
         
-    def run( self , driver , version = default_version , blocking = False , run_script = run_script):
-        num_cpu = ecl_util.get_num_cpu( self.datafile )
-        job = driver.submit( self.base  ,
-                             run_script , 
-                             self.path ,
-                             [version , "%s/%s" % (self.path , self.base) , num_cpu ] ,
-                             blocking = blocking )
+    def run( self , driver , ecl_version = ecl_default.version , blocking = False ):
+        job = driver.submit_ecl( self.datafile , blocking = blocking)
         return job
-
         
 
 

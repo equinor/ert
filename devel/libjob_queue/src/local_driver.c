@@ -12,7 +12,7 @@
 
 struct local_job_struct {
   UTIL_TYPE_ID_DECLARATION
-  bool       	  active;
+  bool            active;
   job_status_type status;
   pthread_t       run_thread;
   pid_t           child_process;
@@ -62,10 +62,10 @@ job_status_type local_driver_get_job_status(void * __driver, void * __job) {
     local_job_type * job = local_job_safe_cast( __job );
     {
       if (job->active == false) {
-	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
-	return JOB_QUEUE_NOT_ACTIVE; /* Dummy */
+        util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
+        return JOB_QUEUE_NOT_ACTIVE; /* Dummy */
       } else 
-	return job->status;
+        return job->status;
     }
   }
 }
@@ -97,11 +97,12 @@ void local_driver_kill_job( void * __driver , void * __job) {
 void * submit_job_thread__(void * __arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg);
   const char * executable  = arg_pack_iget_ptr(arg_pack , 0);
-  int          argc        = arg_pack_iget_int(arg_pack , 1);
-  char ** argv             = arg_pack_iget_ptr(arg_pack , 2);
-  local_job_type * job     = arg_pack_iget_ptr(arg_pack , 3);
+  const char * run_path    = arg_pack_iget_ptr(arg_pack , 1);
+  int          argc        = arg_pack_iget_int(arg_pack , 2);
+  char ** argv             = arg_pack_iget_ptr(arg_pack , 3);
+  local_job_type * job     = arg_pack_iget_ptr(arg_pack , 4);
   
-  job->child_process = util_fork_exec(executable , argc , (const char **) argv , false , NULL , NULL , NULL , NULL , NULL); 
+  job->child_process = util_fork_exec(executable , argc , (const char **) argv , false , NULL , NULL /* run_path */ , NULL , NULL , NULL); 
   waitpid(job->child_process , NULL , 0);
   job->status = JOB_QUEUE_DONE;
   pthread_exit(NULL);
@@ -112,8 +113,8 @@ void * submit_job_thread__(void * __arg) {
 
 
 void * local_driver_submit_job(void * __driver, 
-                               const char *  submit_cmd  	  , 
-                               const char *  run_path    	  , 
+                               const char *  submit_cmd           , 
+                               const char *  run_path             , 
                                const char *  job_name              ,
                                int           argc,
                                const char ** argv ) {
@@ -122,10 +123,11 @@ void * local_driver_submit_job(void * __driver,
     local_job_type * job    = local_job_alloc();
     arg_pack_type  * arg_pack = arg_pack_alloc();
     arg_pack_append_ptr( arg_pack , (char *) submit_cmd);
+    arg_pack_append_ptr( arg_pack , run_path );
     arg_pack_append_int( arg_pack , argc );
     arg_pack_append_ptr( arg_pack , util_alloc_stringlist_copy( argv , argc ));   /* Due to conflict with threads and python GC we take a local copy. */
     arg_pack_append_ptr( arg_pack , job );
-    
+
     pthread_mutex_lock( &driver->submit_lock );
     job->active = true;
     job->status = JOB_QUEUE_RUNNING;
@@ -160,11 +162,11 @@ void * local_driver_alloc() {
   pthread_attr_init( &local_driver->thread_attr );
   pthread_attr_setdetachstate( &local_driver->thread_attr , PTHREAD_CREATE_DETACHED );
   
-  local_driver->submit      	     = local_driver_submit_job;
-  local_driver->get_status  	     = local_driver_get_job_status;
-  local_driver->kill_job     	     = local_driver_kill_job;
-  local_driver->free_job    	     = local_driver_free_job;
-  local_driver->free_driver 	     = local_driver_free__;
+  local_driver->submit               = local_driver_submit_job;
+  local_driver->get_status           = local_driver_get_job_status;
+  local_driver->kill_job             = local_driver_kill_job;
+  local_driver->free_job             = local_driver_free_job;
+  local_driver->free_driver          = local_driver_free__;
   local_driver->display_info         = NULL;
   local_driver->driver_type          = LOCAL_DRIVER; 
   

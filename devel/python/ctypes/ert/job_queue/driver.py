@@ -4,10 +4,11 @@ import ctypes
 import sys
 import os
 import libjob_queue
-import ert.util.SDP    as     SDP
-from   job             import Job 
-from   ert.cwrap.cwrap import *
-
+import ert.util.SDP     as     SDP
+from   job              import Job 
+from   ert.cwrap.cwrap  import *
+import ert.ecl.ecl_util    as ecl_util  
+import ert.ecl.ecl_default as ecl_default  
 
 
 LSF_TYPE   = 1
@@ -75,10 +76,18 @@ class Driver:
         job_c_ptr = self.csubmit( self , cmd , run_path , name , argc , argv )
         job = Job( self , job_c_ptr , blocking )
         if blocking:
-            pass
+            job.block()
+            job = None
         
         return job
         
+
+    def submit_ecl( self , data_file , eclipse_cmd = ecl_default.cmd , eclipse_version = ecl_default.version , blocking = False):
+        (path_base , ext) = os.path.splitext( data_file )
+        (run_path , base) = os.path.split( path_base )
+        num_cpu = "%s" % ecl_util.get_num_cpu( data_file )
+        return self.submit( base , eclipse_cmd , run_path , [ eclipse_version , num_cpu ], blocking = blocking)
+    
 
     def free_job( self , job ):
         self.free_job( job )
@@ -93,14 +102,13 @@ class Driver:
         
 
 
-
 class LSFDriver(Driver):
     __initialized = False
 
     def __init__(self ,
                  lsf_server = None,
                  queue = "normal" ,
-                 resource_request = "select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]"):
+                 resource_request = ecl_default.lsf_resource_request):
         Driver.__init__( self , LSF_TYPE )
         if not self.__initialized:
             init_LSF_env()

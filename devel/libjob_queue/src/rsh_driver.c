@@ -25,8 +25,8 @@ struct rsh_job_struct {
 
 typedef struct {
   char            * host_name;
-  int               max_running;
-  int               running;
+  int               max_running;  /* How many can the host handle. */
+  int               running;      /* How many are currently running on the host (goverened by this driver that is). */
   pthread_mutex_t   host_mutex;
 } rsh_host_type;
 
@@ -123,14 +123,8 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
     for (iarg = 0; iarg < job_argc; iarg++)
       argv[iarg + 2] = job_argv[iarg];
   }
-  {
-    printf("%s ",rsh_cmd);
-    for (int i=0; i < argc; i++)
-      printf("%s ",argv[i]);
-    printf("\n");
-  }
-
-  util_fork_exec(rsh_cmd , argc , argv , true , NULL , NULL , NULL , NULL , NULL);
+  
+  util_fork_exec(rsh_cmd , argc , argv , true , NULL , NULL , NULL , NULL , NULL);   /* This call is blocking. */
   job->status = JOB_QUEUE_DONE;
 
   pthread_mutex_lock( &rsh_host->host_mutex );
@@ -277,7 +271,6 @@ void * rsh_driver_submit_job(void  * __driver,
       job->active = true;
     }else printf("No available host\n");
     pthread_mutex_unlock( &driver->submit_lock );
-
   }
   return job;
 }

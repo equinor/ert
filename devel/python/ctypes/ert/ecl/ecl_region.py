@@ -81,6 +81,15 @@ class EclRegion:
     def select_equal( self , ecl_kw , value ):
         cfunc.select_equal( self , ecl_kw , value )
 
+    def select_in_range( self , ecl_kw , lower_limit , upper_limit):
+        cfunc.select_in_interval( self , ecl_kw , lower_limit , upper_limit)
+
+    def select_cmp_less( self , kw1 , kw2):
+        cfunc.select_cmp_less( self , kw1 , kw2 )
+
+    def select_cmp_more( self , kw1 , kw2):
+        cfunc.select_cmp_more( self , kw1 , kw2 )
+
     def select_all( self ):
         cfunc.select_all( self )
         
@@ -235,3 +244,8 @@ cfunc.combine                    = cwrapper.prototype("void ecl_region_union( ec
 
 cfunc.get_kw_list                = cwrapper.prototype("int* ecl_region_get_kw_index_list( ecl_region , ecl_kw , bool )")
 cfunc.get_kw_size                = cwrapper.prototype("int  ecl_region_get_kw_size( ecl_region , ecl_kw , bool )")
+
+cfunc.select_cmp_less            = cwrapper.prototype("void ecl_region_cmp_select_less( ecl_region , ecl_kw , ecl_kw)")
+cfunc.select_cmp_more            = cwrapper.prototype("void ecl_region_cmp_select_more( ecl_region , ecl_kw , ecl_kw)")
+cfunc.deselect_cmp_less          = cwrapper.prototype("void ecl_region_cmp_deselect_less( ecl_region , ecl_kw , ecl_kw)")
+cfunc.deselect_cmp_more          = cwrapper.prototype("void ecl_region_cmp_deselect_more( ecl_region , ecl_kw , ecl_kw)")
