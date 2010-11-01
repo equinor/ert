@@ -16,15 +16,15 @@ extern "C" {
 /** 
     Types used for validation of config items.
 */
-typedef enum {CONFIG_STRING 	   = 0,
-	      CONFIG_INT    	   = 1,
-	      CONFIG_FLOAT  	   = 2,   
-	      CONFIG_FILE          = 9,  /* These file does not need to exist - but includes are handled. */
-	      CONFIG_EXISTING_FILE = 3,
-	      CONFIG_EXISTING_DIR  = 4,
+typedef enum {CONFIG_STRING        = 0,
+              CONFIG_INT           = 1,
+              CONFIG_FLOAT         = 2,   
+              CONFIG_FILE          = 9,  /* These file does not need to exist - but includes are handled. */
+              CONFIG_EXISTING_FILE = 3,
+              CONFIG_EXISTING_DIR  = 4,
               CONFIG_BOOLEAN       = 5,
-	      CONFIG_CONFIG        = 6,
-	      CONFIG_BYTESIZE      = 7,
+              CONFIG_CONFIG        = 6,
+              CONFIG_BYTESIZE      = 7,
               CONFIG_EXECUTABLE    = 8 } config_item_types;
 
 typedef struct config_struct           config_type;
@@ -33,13 +33,13 @@ typedef struct config_item_node_struct config_item_node_type;
 
 
 config_item_node_type * config_iget_item_node( const config_type * config , const char * kw , int item_index);
-char       ** 	  config_alloc_active_list(const config_type *, int *);
-void          	  config_free(config_type *);
-config_type * 	  config_alloc( );
-char       ** 	  config_alloc_active_list(const config_type * , int * );
-void          	  config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool );
-bool          	  config_has_item(const config_type * config , const char * kw);
-void    	  config_set_arg(config_type * config , const char * , int , const char **);
+char       **     config_alloc_active_list(const config_type *, int *);
+void              config_free(config_type *);
+config_type *     config_alloc( );
+char       **     config_alloc_active_list(const config_type * , int * );
+void              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool );
+bool              config_has_item(const config_type * config , const char * kw);
+void              config_set_arg(config_type * config , const char * , int , const char **);
 
 /*****************************************************************/
 
@@ -56,18 +56,18 @@ char             * config_alloc_joined_string(const config_type * , const char *
 
 void               config_add_define( config_type * config , const char * key , const char * value );
 
-bool 	     	   config_item_is_set(const config_item_type * );
-void         	   config_item_set_argc_minmax(config_item_type * , int  , int , const config_item_types * );
-void         	   config_item_set_common_selection_set(config_item_type * , int argc , const char ** argv);
-void         	   config_item_set_indexed_selection_set(config_item_type * item , int  , int  , const char ** );
-void         	   config_item_set_required_children(config_item_type * , stringlist_type * );
-void         	   config_item_set_required_children_on_value(config_item_type * , const char * , stringlist_type * );
-void         	   config_item_add_required_children(config_item_type * item , const char * child_key);
+bool               config_item_is_set(const config_item_type * );
+void             config_item_set_argc_minmax(config_item_type * , int  , int , int type_map_size , const config_item_types * );
+void               config_item_set_common_selection_set(config_item_type * , int argc , const char ** argv);
+void               config_item_set_indexed_selection_set(config_item_type * item , int  , int  , const char ** );
+void               config_item_set_required_children(config_item_type * , stringlist_type * );
+void               config_item_set_required_children_on_value(config_item_type * , const char * , stringlist_type * );
+void               config_item_add_required_children(config_item_type * item , const char * child_key);
 
 config_item_type * config_add_item(config_type *, 
-				   const char * ,
-				   bool         ,
-				   bool);
+                                   const char * ,
+                                   bool         ,
+                                   bool);
 
 
 bool config_has_keys(const config_type *,

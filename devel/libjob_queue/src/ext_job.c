@@ -78,13 +78,13 @@ jobList = [
 
 struct ext_job_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char       	  * name;
-  char 	     	  * executable;
-  char 	     	  * target_file;
-  char       	  * start_file;            /* Will not start if not this file is present */
-  char 	     	  * stdout_file;
-  char 	     	  * stdin_file;
-  char 	     	  * stderr_file;
+  char            * name;
+  char            * executable;
+  char            * target_file;
+  char            * start_file;            /* Will not start if not this file is present */
+  char            * stdout_file;
+  char            * stdin_file;
+  char            * stderr_file;
   char            * license_path;          /* If this is NULL - it will be unrestricted ... */
   char            * license_root_path;     
   char            * config_file; 
@@ -95,7 +95,7 @@ struct ext_job_struct {
   char            * private_args_string;
   char            * argv_string;
   stringlist_type * argv;                  /* This should *NOT* start with the executable */
-  hash_type  	  * environment;
+  hash_type       * environment;
   char            * help_text;
   
   bool              private_job;           /* Can the current user/delete this job? (private_job == true) means the user can edit it. */
@@ -464,7 +464,7 @@ static void __fprintf_python_hash(FILE * stream , const char * id , hash_type * 
       __fprintf_string(stream , value , private_args , global_args);
       
       if (counter < (hash_size - 1))
-	fprintf(stream,",");
+        fprintf(stream,",");
       
       key = hash_iter_get_next_key(iter);
     }
@@ -498,15 +498,15 @@ static void __indent(FILE * stream, int indent) {
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
   fprintf(stream," {");
 
-  __indent(stream, 0); __fprintf_python_string(stream , "name"  	      , ext_job->name                , ext_job->private_args , NULL);        __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "executable" 	      , ext_job->executable          , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	      , ext_job->target_file         , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "start_file"  	      , ext_job->start_file          , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	      , ext_job->stdout_file         , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stderr"    	      , ext_job->stderr_file         , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stdin"     	      , ext_job->stdin_file          , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	      , ext_job->argv                , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_hash(stream   , "environment"  	      , ext_job->environment         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 0); __fprintf_python_string(stream , "name"                , ext_job->name                , ext_job->private_args , NULL);        __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "executable"          , ext_job->executable          , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "target_file"         , ext_job->target_file         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "start_file"          , ext_job->start_file          , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stdout"              , ext_job->stdout_file         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stderr"              , ext_job->stderr_file         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stdin"               , ext_job->stdin_file          , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_list(stream   , "argList"             , ext_job->argv                , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_hash(stream   , "environment"         , ext_job->environment         , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "license_path"        , ext_job->license_path        , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_int( stream   , "max_running_minutes" , ext_job->max_running_minutes );                                      __end_line(stream);
   __indent(stream, 2); __fprintf_python_int( stream   , "max_running"         , ext_job->max_running );                                              __end_line(stream);
@@ -608,23 +608,23 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
     ext_job_set_config_file( ext_job , config_file );
     {
       config_item_type * item;
-      item = config_add_item(config , "MAX_RUNNING"         , false , false); config_item_set_argc_minmax(item  , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-      item = config_add_item(config , "STDIN"  	            , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "STDOUT" 	            , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "STDERR" 	            , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "EXECUTABLE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "TARGET_FILE"         , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "START_FILE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "ENV"                 , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
-      item = config_add_item(config , "ARGLIST"             , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
-      item = config_add_item(config , "MAX_RUNNING_MINUTES" , false , false); config_item_set_argc_minmax(item  , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+      item = config_add_item(config , "MAX_RUNNING"         , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+      item = config_add_item(config , "STDIN"               , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
+      item = config_add_item(config , "STDOUT"              , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
+      item = config_add_item(config , "STDERR"              , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
+      item = config_add_item(config , "EXECUTABLE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
+      item = config_add_item(config , "TARGET_FILE"         , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
+      item = config_add_item(config , "START_FILE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
+      item = config_add_item(config , "ENV"                 , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , 0 , NULL);
+      item = config_add_item(config , "ARGLIST"             , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , 0 , NULL);
+      item = config_add_item(config , "MAX_RUNNING_MINUTES" , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
     config_parse(config , config_file , "--" , NULL , NULL , false , true);
     {
-      if (config_item_set(config , "STDIN"))  	             ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
-      if (config_item_set(config , "STDOUT")) 	             ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
-      if (config_item_set(config , "STDERR")) 	             ext_job_set_stderr_file(ext_job      , config_iget(config  , "STDERR" , 0,0));
+      if (config_item_set(config , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
+      if (config_item_set(config , "STDOUT"))                ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
+      if (config_item_set(config , "STDERR"))                ext_job_set_stderr_file(ext_job      , config_iget(config  , "STDERR" , 0,0));
       if (config_item_set(config , "TARGET_FILE"))           ext_job_set_target_file(ext_job      , config_iget(config  , "TARGET_FILE" , 0,0));
       if (config_item_set(config , "START_FILE"))            ext_job_set_start_file(ext_job       , config_iget(config  , "START_FILE" , 0,0));
       if (config_item_set(config , "EXECUTABLE"))            ext_job_set_executable(ext_job       , config_iget(config  , "EXECUTABLE" , 0,0));

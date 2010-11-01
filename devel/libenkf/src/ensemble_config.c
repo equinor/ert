@@ -212,7 +212,7 @@ enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensembl
                                                   enkf_impl_type impl_type         ,
                                                   const char   * enkf_outfile      , /* Written by EnKF and read by forward model */
                                                   const char   * enkf_infile       , /* Written by forward model and read by EnKF */ 
-                                                  const void   * data ) {
+                                                  void         * data ) {
 
     if (ensemble_config_has_key(ensemble_config , key)) 
     util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
@@ -346,31 +346,31 @@ void ensemble_config_add_config_items(config_type * config) {
   */
       
   item = config_add_item(config , "HAVANA_FAULT" , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 2 , 2 ,  0 , NULL );
 
   item = config_add_item(config , "MULTFLT" , false , true);
-  config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 3 , 3 ,  3 , (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
 
 
   /*****************************************************************/
   
   item = config_add_item(config , GEN_KW_KEY , false , true);
-  config_item_set_argc_minmax(item , 4 , 6 ,  (const config_item_types [6]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
+  config_item_set_argc_minmax(item , 4 , 6 ,  6 , (const config_item_types [6]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
   
   item = config_add_key_value( config , GEN_KW_TAG_FORMAT_KEY , false , CONFIG_STRING);
   
   item = config_add_item(config , SCHEDULE_PREDICTION_FILE_KEY , false , false);
   /* SCEDHULE_PREDICTION_FILE   FILENAME  <PARAMETERS:> <INIT_FILES:> */
-  config_item_set_argc_minmax(item , 1 , 3 ,  (const config_item_types [3]) { CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
+  config_item_set_argc_minmax(item , 1 , 3 ,  3 , (const config_item_types [3]) { CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
 
   item = config_add_item(config , GEN_PARAM_KEY , false , true);
-  config_item_set_argc_minmax(item , 5 , -1 ,  NULL);
+  config_item_set_argc_minmax(item , 5 , -1 ,  0 , NULL);
   
   item = config_add_item(config , GEN_DATA_KEY , false , true);
-  config_item_set_argc_minmax(item , 1 , -1 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 1 , -1 ,  2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , SUMMARY_KEY , false , true);   /* Can have several summary keys on each line. */
-  config_item_set_argc_minmax(item , 1 , -1 ,  NULL);
+  config_item_set_argc_minmax(item , 1 , -1 ,  0 , NULL);
   
   /* 
      The way config info is entered for fields is unfortunate because
@@ -379,7 +379,7 @@ void ensemble_config_add_config_items(config_type * config) {
   */
   
   item = config_add_item(config , FIELD_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
+  config_item_set_argc_minmax(item , 2 , -1 ,  0 , NULL);
   config_item_add_required_children(item , GRID_KEY);   /* If you are using a FIELD - you must have a grid. */
 }
 

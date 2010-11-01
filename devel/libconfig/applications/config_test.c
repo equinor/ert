@@ -11,7 +11,7 @@ int main(void) {
   
   item = config_add_item(config , "KEY1" , true  , true);
   item = config_add_item(config , "KEY2" , true  , false);
-  config_item_set_argc_minmax(item , 1 , 4 , (const config_item_types [4]) {CONFIG_EXECUTABLE , CONFIG_EXISTING_FILE , CONFIG_BOOLEAN , CONFIG_BOOLEAN});
+  config_item_set_argc_minmax(item , 1 , 4 , 4 , (const config_item_types [4]) {CONFIG_EXECUTABLE , CONFIG_EXISTING_FILE , CONFIG_BOOLEAN , CONFIG_BOOLEAN});
 
 
   item = config_add_item(config , "FATHER"  , false , false);
@@ -21,7 +21,7 @@ int main(void) {
     stringlist_free(children);
   }
   item = config_add_item(config , "CHILD1"  , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
   
   config_parse(config , config_file , "--" , "INCLUDE" , NULL , true , true);
   

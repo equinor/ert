@@ -138,6 +138,7 @@ struct validate_struct {
   set_type          *  common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */ 
   set_type          ** indexed_selection_set;   /* A selection set which will apply for specifi (indexed) arguments. */
   config_item_types *  type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
+  int                  type_map_size;
   stringlist_type   *  required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
   hash_type         *  required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
 };
@@ -167,8 +168,7 @@ struct config_item_struct {
   bool                          currently_set;           /* Has a value been assigned to this keyword. */
   bool                          required_set;            
   stringlist_type             * required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
-  hash_type                   * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
-  //config_item_types           * type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
+  hash_type                   * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) */
   validate_type               * validate;                /* Information need during validation. */ 
   bool                          expand_envvar;           /* Should environment variables like $HOME be expanded?*/ 
 };
@@ -192,9 +192,10 @@ static validate_type * validate_alloc() {
   validate->common_selection_set    = NULL;
   validate->indexed_selection_set   = NULL;
   validate->type_map                = NULL;
+  validate->type_map_size           = 0;
   validate->required_children       = NULL;
   validate->required_children_value = NULL;
-  
+
   return validate;
 }
 
@@ -213,24 +214,36 @@ static void validate_free(validate_type * validate) {
   free(validate);
 }
 
-static void validate_set_argc_minmax(validate_type * validate , int argc_min , int argc_max, const config_item_types * type_map) {
+static void validate_set_argc_minmax(validate_type * validate , int argc_min , int argc_max, int type_map_size , const config_item_types * type_map) {
   if (validate->argc_min != -1)
     util_abort("%s: sorry - current implementation does not allow repeated calls to: %s \n",__func__ , __func__);
   
   if (argc_min == -1)
     argc_min = 0;
 
-  
   validate->argc_min = argc_min;
   validate->argc_max = argc_max;
   
-  if (argc_max > 0) {
-    if (type_map != NULL)
-      validate->type_map = util_alloc_copy(type_map , argc_max * sizeof * type_map , __func__);
-    validate->indexed_selection_set = util_malloc( argc_max * sizeof * validate->indexed_selection_set , __func__);
-    for (int iarg=0; iarg < argc_max; iarg++)
-      validate->indexed_selection_set[iarg] = NULL;
+  {
+    int internal_type_size = 0;  /* Should end up in the range [argc_min,argc_max] */
+
+    if (argc_max > 0) 
+      internal_type_size = argc_max;
+    else
+      internal_type_size = argc_min;
+
+    if (internal_type_size > 0) {
+      validate->indexed_selection_set = util_malloc( internal_type_size * sizeof * validate->indexed_selection_set , __func__);
+      for (int iarg=0; iarg < argc_max; iarg++)
+        validate->indexed_selection_set[iarg] = NULL;
+    }
   }
+  
+  if (type_map != NULL) {
+    validate->type_map_size = type_map_size;
+    validate->type_map = util_alloc_copy(type_map , type_map_size * sizeof * type_map , __func__);
+  }
+
 }
 
 
@@ -246,6 +259,9 @@ static void validate_set_indexed_selection_set(validate_type * validate , int in
   
   if (validate->indexed_selection_set == NULL)
     util_abort("%s: must call xxx_set_argc_minmax() first - aborting \n",__func__);
+  
+  if (index >= validate->argc_min)
+    util_abort("%s: When not not setting argc_max selection set can only be applied to indices up to argc_min\n",__func__);
   
   if (validate->indexed_selection_set[index] != NULL)
     set_free(validate->indexed_selection_set[index]);
@@ -373,14 +389,16 @@ const char * config_item_iget(const config_item_type * item , int occurence , in
 
 
 void config_item_assure_type(const config_item_type * item , int index , config_item_types item_type) {
-  bool OK = false;
-
-  if (item->validate->type_map != NULL)
-    if (item->validate->type_map[index] == item_type)
-      OK = true;
-
-  if (!OK)
-    util_abort("%s: failed - wrong installed type \n" , __func__);
+  if (index < item->validate->type_map_size) {
+    bool OK = false;
+    
+    if (item->validate->type_map != NULL)
+      if (item->validate->type_map[index] == item_type)
+        OK = true;
+    
+    if (!OK)
+      util_abort("%s: failed - wrong installed type \n" , __func__);
+  }
 }
 
 
@@ -543,7 +561,6 @@ config_item_type * config_item_alloc(const char * kw , bool required , bool appe
   item->required_children_value = NULL;
   item->expand_envvar           = true;  /* Default is to expand $VAR expressions; can be turned off with
                                             config_item_set_envvar_expansion( item , false ); */
-  //item->type_map                = NULL;
   item->validate                = validate_alloc();
   return item;
 }
@@ -634,10 +651,12 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
       }
     } else if (item->validate->indexed_selection_set != NULL) {
       for (int iarg = 0; iarg < argc; iarg++) {
-        if (item->validate->indexed_selection_set[iarg] != NULL) {
-          if (!set_has_key(item->validate->indexed_selection_set[iarg] , argv[iarg])) {
-            config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
-            OK = false;
+        if ((item->validate->argc_max > 0) || (iarg < item->validate->argc_min)) {  /* Without this test we might go out of range on the indexed selection set. */
+          if (item->validate->indexed_selection_set[iarg] != NULL) {
+            if (!set_has_key(item->validate->indexed_selection_set[iarg] , argv[iarg])) {
+              config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
+              OK = false;
+            }
           }
         }
       }
@@ -652,83 +671,85 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
     /* Validate the TYPE of the various argumnents */
     if (item->validate->type_map != NULL) {
       for (int iarg = 0; iarg < argc; iarg++) {
-        const char * value = argv[iarg];
-        switch (item->validate->type_map[iarg]) {
-        case(CONFIG_STRING): /* This never fails ... */
-          break;
-        case(CONFIG_EXECUTABLE):
-          {
-            /*
-              1. If the supplied value is an abolute path - do nothing.
-              2. If the supplied is _not_ an absolute path:
-
-                 a. Try if the relocated exists - then use that.
-                 b. Else - try if the util_alloc_PATH_executable() exists.
-            */
-            if (!util_is_abs_path( value )) {
-              char * relocated  = __alloc_relocated__(config_cwd , value);
-              char * path_exe   = util_alloc_PATH_executable( value );
-
-              if (util_file_exists(relocated)) {
-                if (util_is_executable(relocated))
-                  argv[iarg] = util_realloc_string_copy(argv[iarg] , relocated);
-              } else if (path_exe != NULL)
-                argv[iarg] = util_realloc_string_copy(argv[iarg] , path_exe);
-              else
-                config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
-              
-              free(relocated);
-              util_safe_free(path_exe);
-            } else {
-              if (!util_is_executable( value ))
-                config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+        if (iarg < item->validate->type_map_size) {
+          const char * value = argv[iarg];
+          switch (item->validate->type_map[iarg]) {
+          case(CONFIG_STRING): /* This never fails ... */
+            break;
+          case(CONFIG_EXECUTABLE):
+            {
+              /*
+                1. If the supplied value is an abolute path - do nothing.
+                2. If the supplied is _not_ an absolute path:
+                
+                a. Try if the relocated exists - then use that.
+                b. Else - try if the util_alloc_PATH_executable() exists.
+              */
+              if (!util_is_abs_path( value )) {
+                char * relocated  = __alloc_relocated__(config_cwd , value);
+                char * path_exe   = util_alloc_PATH_executable( value );
+                
+                if (util_file_exists(relocated)) {
+                  if (util_is_executable(relocated))
+                    argv[iarg] = util_realloc_string_copy(argv[iarg] , relocated);
+                } else if (path_exe != NULL)
+                  argv[iarg] = util_realloc_string_copy(argv[iarg] , path_exe);
+                else
+                  config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+                
+                free(relocated);
+                util_safe_free(path_exe);
+              } else {
+                if (!util_is_executable( value ))
+                  config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+              }
             }
-          }
-          break;
-        case(CONFIG_INT):
-          if (!util_sscanf_int( value , NULL ))
-            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
-          break;
-        case(CONFIG_FLOAT):
-          if (!util_sscanf_double( value , NULL ))
-            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
-          break;
-        case(CONFIG_EXISTING_FILE):
-          {
-            char * file = __alloc_relocated__(config_cwd , value);
-            if (!util_file_exists(file))
-              config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
-            else
+            break;
+          case(CONFIG_INT):
+            if (!util_sscanf_int( value , NULL ))
+              config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
+            break;
+          case(CONFIG_FLOAT):
+            if (!util_sscanf_double( value , NULL ))
+              config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
+            break;
+          case(CONFIG_EXISTING_FILE):
+            {
+              char * file = __alloc_relocated__(config_cwd , value);
+              if (!util_file_exists(file))
+                config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
+              else
+                argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
+              free( file );
+            }
+            break;
+          case(CONFIG_FILE):
+            {
+              char * file = __alloc_relocated__(config_cwd , value);
               argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
-            free( file );
+              free( file );
+            }
+            break;
+          case(CONFIG_EXISTING_DIR):
+            {
+              char * dir = __alloc_relocated__(config_cwd , value);
+              if (!util_is_directory(value))
+                config_add_and_free_error(config , util_alloc_sprintf("Can not find directory: %s. ",value));
+              else
+                argv[iarg] = util_realloc_string_copy(argv[iarg] , dir);
+            }
+            break;
+          case(CONFIG_BOOLEAN):
+            if (!util_sscanf_bool( value , NULL ))
+              config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
+            break;
+          case(CONFIG_BYTESIZE):
+            if (!util_sscanf_bytesize( value , NULL))
+              config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
+            break;
+          default:
+            util_abort("%s: config_item_type:%d not recognized \n",__func__ , item->validate->type_map[iarg]);
           }
-          break;
-        case(CONFIG_FILE):
-          {
-            char * file = __alloc_relocated__(config_cwd , value);
-            argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
-            free( file );
-          }
-          break;
-        case(CONFIG_EXISTING_DIR):
-          {
-            char * dir = __alloc_relocated__(config_cwd , value);
-            if (!util_is_directory(value))
-              config_add_and_free_error(config , util_alloc_sprintf("Can not find directory: %s. ",value));
-            else
-              argv[iarg] = util_realloc_string_copy(argv[iarg] , dir);
-          }
-          break;
-        case(CONFIG_BOOLEAN):
-          if (!util_sscanf_bool( value , NULL ))
-            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
-          break;
-        case(CONFIG_BYTESIZE):
-          if (!util_sscanf_bytesize( value , NULL))
-            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
-          break;
-        default:
-          util_abort("%s: config_item_type:%d not recognized \n",__func__ , item->validate->type_map[iarg]);
         }
       }
     }
@@ -955,8 +976,8 @@ void config_item_set_required_children_on_value(config_item_type * item , const 
 */
 
 
-void config_item_set_argc_minmax(config_item_type * item , int argc_min , int argc_max, const config_item_types * type_map) {
-  validate_set_argc_minmax(item->validate , argc_min , argc_max , type_map);
+void config_item_set_argc_minmax(config_item_type * item , int argc_min , int argc_max, int type_map_size , const config_item_types * type_map) {
+  validate_set_argc_minmax(item->validate , argc_min , argc_max , type_map_size , type_map);
 }
   
 
@@ -1039,7 +1060,7 @@ config_item_type * config_add_item(config_type * config ,
 
 config_item_type * config_add_key_value( config_type * config , const char * key , bool required , config_item_types item_type) {
   config_item_type * item = config_add_item( config , key , required , false );
-  config_item_set_argc_minmax( item , 1 , 1 , (const config_item_types  [1]) { item_type });
+  config_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types  [1]) { item_type });
   return item;
 }
 

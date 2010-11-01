@@ -1007,7 +1007,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   config_item_type * item;
 
   item = config_add_item(config , QUEUE_SYSTEM_KEY , site_only , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
   {
     stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[2]) {"LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 2);
     stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST"  , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
@@ -1026,7 +1026,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   }
 
   item = config_add_item(config , MAX_SUBMIT_KEY , false , false);   
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
   /*
@@ -1035,11 +1035,11 @@ void site_config_add_config_items( config_type * config , bool site_only) {
      like PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
   */
   item = config_add_item(config , SETENV_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , NULL);
+  config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
   config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_setenv()). */
   
   item = config_add_item(config , UMASK_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
   /**
      UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
@@ -1047,11 +1047,11 @@ void site_config_add_config_items( config_type * config , bool site_only) {
      Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
   */
   item = config_add_item(config , UPDATE_PATH_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , NULL);
+  config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
   config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_setenv()). */
 
   item = config_add_item( config , LICENSE_PATH_KEY , site_only , false );
-  config_item_set_argc_minmax(item , 1 , 1, NULL );
+  config_item_set_argc_minmax(item , 1 , 1, 0 , NULL );
 
 
   /*****************************************************************/
@@ -1059,34 +1059,34 @@ void site_config_add_config_items( config_type * config , bool site_only) {
 
   /* These must be set IFF QUEUE_SYSTEM == LSF */
   item = config_add_item(config , LSF_QUEUE_KEY     , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
   item = config_add_item(config , LSF_RESOURCES_KEY  , false , false);
-  config_item_set_argc_minmax(item , 1 , -1 , NULL);
+  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 
   item = config_add_item(config , MAX_RUNNING_LSF_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
   item = config_add_item(config , LSF_SERVER_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_STRING});
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_STRING});
   
   /* These must be set IFF QUEUE_SYSTEM == RSH */
   if (!site_only)
     config_add_item(config , RSH_HOST_KEY , false , false);  /* Only added when user parse. */
   item = config_add_item(config , RSH_COMMAND_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
   item = config_add_item(config , MAX_RUNNING_RSH_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
   /* These must be set IFF QUEUE_SYSTEM == LOCAL */
   item = config_add_item(config , MAX_RUNNING_LOCAL_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
   item = config_add_item(config , JOB_SCRIPT_KEY , site_only , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , INSTALL_JOB_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 2 , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
 }

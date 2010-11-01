@@ -39,7 +39,7 @@ enkf_config_node_type  * ensemble_config_add_node(ensemble_config_type * ,
                                                 enkf_impl_type ,
                                                 const char   * ,
                                                 const char   * ,
-                                                const void   * );
+                                                void         * );
 
 void                          ensemble_config_init_internalization( ensemble_config_type * );
 void                          ensemble_config_del_node(ensemble_config_type * , const char * );
