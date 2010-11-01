@@ -367,7 +367,7 @@ void ensemble_config_add_config_items(config_type * config) {
   config_item_set_argc_minmax(item , 5 , -1 ,  0 , NULL);
   
   item = config_add_item(config , GEN_DATA_KEY , false , true);
-  config_item_set_argc_minmax(item , 1 , -1 ,  2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 1 , -1 ,  0 , NULL);
 
   item = config_add_item(config , SUMMARY_KEY , false , true);   /* Can have several summary keys on each line. */
   config_item_set_argc_minmax(item , 1 , -1 ,  0 , NULL);

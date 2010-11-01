@@ -234,7 +234,7 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
 
     if (internal_type_size > 0) {
       validate->indexed_selection_set = util_malloc( internal_type_size * sizeof * validate->indexed_selection_set , __func__);
-      for (int iarg=0; iarg < argc_max; iarg++)
+      for (int iarg=0; iarg < internal_type_size; iarg++)
         validate->indexed_selection_set[iarg] = NULL;
     }
   }
