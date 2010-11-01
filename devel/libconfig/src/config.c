@@ -654,7 +654,7 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
         if ((item->validate->argc_max > 0) || (iarg < item->validate->argc_min)) {  /* Without this test we might go out of range on the indexed selection set. */
           if (item->validate->indexed_selection_set[iarg] != NULL) {
             if (!set_has_key(item->validate->indexed_selection_set[iarg] , argv[iarg])) {
-              config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
+              config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for item %d of \'%s\'.",argv[iarg] , iarg + 1 , item->kw));
               OK = false;
             }
           }
