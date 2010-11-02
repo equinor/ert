@@ -16,12 +16,10 @@ def load( *lib_list ):
     dll = None
     
     for lib in lib_list:
-        print "Trying:%s" % lib
         try:
             dll = ctypes.CDLL( lib , ctypes.RTLD_GLOBAL )
             return dll
-        except Exception, msg:
-            print "msg:%s" % msg
+        except 
             pass
     
     error_msg = "Sorry - failed to load shared library:%s\n\nTried in: " % lib_list[0]
