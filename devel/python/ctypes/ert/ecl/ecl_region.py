@@ -78,59 +78,116 @@ class EclRegion:
     def select_more( self , ecl_kw , limit):
         cfunc.select_more( self , ecl_kw , limit )
 
+    def deselect_more( self , ecl_kw , limit):
+        cfunc.deselect_more( self , ecl_kw , limit )
+
     def select_less( self , ecl_kw , limit):
         cfunc.select_less( self , ecl_kw , limit )
+
+    def deselect_less( self , ecl_kw , limit):
+        cfunc.deselect_less( self , ecl_kw , limit )
 
     def select_equal( self , ecl_kw , value ):
         cfunc.select_equal( self , ecl_kw , value )
 
+    def deselect_equal( self , ecl_kw , value ):
+        cfunc.deselect_equal( self , ecl_kw , value )
+
     def select_in_range( self , ecl_kw , lower_limit , upper_limit):
         cfunc.select_in_interval( self , ecl_kw , lower_limit , upper_limit)
+
+    def deselect_in_range( self , ecl_kw , lower_limit , upper_limit):
+        cfunc.deselect_in_interval( self , ecl_kw , lower_limit , upper_limit)
 
     def select_cmp_less( self , kw1 , kw2):
         cfunc.select_cmp_less( self , kw1 , kw2 )
 
+    def deselect_cmp_less( self , kw1 , kw2):
+        cfunc.deselect_cmp_less( self , kw1 , kw2 )
+
     def select_cmp_more( self , kw1 , kw2):
         cfunc.select_cmp_more( self , kw1 , kw2 )
+
+    def deselect_cmp_more( self , kw1 , kw2):
+        cfunc.deselect_cmp_more( self , kw1 , kw2 )
 
     def select_active( self ):
         cfunc.select_active( self )
 
+    def deselect_active( self ):
+        cfunc.deselect_active( self )
+
     def select_inactive( self ):
         cfunc.select_inactive( self )
+
+    def deselect_inactive( self ):
+        cfunc.deselect_inactive( self )
 
     def select_all( self ):
         cfunc.select_all( self )
 
+    def deselect_all( self ):
+        cfunc.deselect_all( self )
+
     def select_deep( self, depth):
         cfunc.select_deep_cells(self , depth)
 
+    def deselect_deep( self, depth):
+        cfunc.deselect_deep_cells(self , depth)
+
     def select_shallow( self, depth):
         cfunc.select_shallow_cells(self , depth)
+
+    def deselect_shallow( self, depth):
+        cfunc.deselect_shallow_cells(self , depth)
         
     def select_small( self , size_limit ):
         cfunc.select_small( self , size_limit )
 
+    def deselect_small( self , size_limit ):
+        cfunc.deselect_small( self , size_limit )
+
     def select_large( self , size_limit ):
         cfunc.select_large( self , size_limit )
+
+    def deselect_large( self , size_limit ):
+        cfunc.deselect_large( self , size_limit )
 
     def select_thin( self , size_limit ):
         cfunc.select_thin( self , size_limit )
 
+    def deselect_thin( self , size_limit ):
+        cfunc.deselect_thin( self , size_limit )
+
     def select_thick( self , size_limit ):
         cfunc.select_thick( self , size_limit )
+
+    def deselect_thick( self , size_limit ):
+        cfunc.deselect_thick( self , size_limit )
 
     def select_box( self , ijk1 , ijk2 ):
         cfunc.select_box( self , ijk1[0] , ijk2[0] , ijk1[1] , ijk2[1] , ijk1[2] , ijk2[2])
 
+    def deselect_box( self , ijk1 , ijk2 ):
+        cfunc.deselect_box( self , ijk1[0] , ijk2[0] , ijk1[1] , ijk2[1] , ijk1[2] , ijk2[2])
+
     def select_islice( self , i1 , i2):
         cfunc.select_islice( self , i1,i2)
+
+    def deselect_islice( self , i1 , i2):
+        cfunc.deselect_islice( self , i1,i2)
 
     def select_jslice( self , j1 , j2):
         cfunc.select_islice( self , j1,j2)
 
+    def deselect_jslice( self , j1 , j2):
+        cfunc.deselect_islice( self , j1,j2)
+
     def select_kslice( self , k1 , k2):
         cfunc.select_islice( self , k1,k2)
+
+    def deselect_kslice( self , k1 , k2):
+        cfunc.deselect_islice( self , k1,k2)
 
     def invert( self ):
         cfunc.invert_selection( self )
@@ -290,10 +347,10 @@ cfunc.deselect_cmp_more          = cwrapper.prototype("void ecl_region_cmp_desel
 
 cfunc.select_islice              = cwrapper.prototype("void ecl_region_select_i1i2( ecl_region , int , int )")
 cfunc.deselect_islice            = cwrapper.prototype("void ecl_region_deselect_i1i2( ecl_region , int , int )")
-cfunc.select_jslice              = cwrapper.prototype("void ecl_region_select_j1i2( ecl_region , int , int )")
-cfunc.deselect_jslice            = cwrapper.prototype("void ecl_region_deselect_j1i2( ecl_region , int , int )")
-cfunc.select_kslice              = cwrapper.prototype("void ecl_region_select_k1i2( ecl_region , int , int )")
-cfunc.deselect_kslice            = cwrapper.prototype("void ecl_region_deselect_k1i2( ecl_region , int , int )")
+cfunc.select_jslice              = cwrapper.prototype("void ecl_region_select_j1j2( ecl_region , int , int )")
+cfunc.deselect_jslice            = cwrapper.prototype("void ecl_region_deselect_j1j2( ecl_region , int , int )")
+cfunc.select_kslice              = cwrapper.prototype("void ecl_region_select_k1k2( ecl_region , int , int )")
+cfunc.deselect_kslice            = cwrapper.prototype("void ecl_region_deselect_k1k2( ecl_region , int , int )")
 
 cfunc.select_deep_cells          = cwrapper.prototype("void ecl_region_select_deep_cells( ecl_region , double )")
 cfunc.deselect_deep_cells        = cwrapper.prototype("void ecl_region_select_deep_cells( ecl_region , double )")
