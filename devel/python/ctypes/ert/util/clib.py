@@ -16,6 +16,7 @@ def load( *lib_list ):
     dll = None
     
     for lib in lib_list:
+        print "Trying:%s" % lib
         try:
             dll = ctypes.CDLL( lib , ctypes.RTLD_GLOBAL )
             return dll
