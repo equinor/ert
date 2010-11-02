@@ -46,8 +46,8 @@ class EclKW(object):
         obj.data_owner = True
         obj.__init( )
         return obj
-
-
+    
+    
     @classmethod
     def grdecl_load( cls , file , kw , ecl_type = ECL_FLOAT_TYPE):
         cfile  = CFILE( file )

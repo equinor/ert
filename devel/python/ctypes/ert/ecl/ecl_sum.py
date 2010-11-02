@@ -4,7 +4,7 @@ import matplotlib.dates
 import libecl
 from   ert.cwrap.cwrap       import *
 from   ert.util.stringlist   import StringList
-
+from   ert.util.ctime        import ctime 
 
 class EclSumNode:
     def __init__(self , value , report_step , days , time_t):
