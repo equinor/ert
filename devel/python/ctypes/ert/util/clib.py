@@ -19,7 +19,7 @@ def load( *lib_list ):
         try:
             dll = ctypes.CDLL( lib , ctypes.RTLD_GLOBAL )
             return dll
-        except 
+        except:
             pass
     
     error_msg = "Sorry - failed to load shared library:%s\n\nTried in: " % lib_list[0]
