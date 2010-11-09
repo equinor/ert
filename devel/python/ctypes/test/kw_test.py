@@ -19,6 +19,9 @@ grid      = ecl.EclGrid( "data/eclipse/case/ECLIPSE.EGRID" )
 poro3d = grid.create3D( poro   , default = -100)
 poro   = grid.createKW( poro3d , "XXPORO" , False )
 
+print "max:%g" % poro.max
+print "min:%g" % poro.min
+
 poro.assign( 25 , mask = ecl.EclRegion( grid , True ) , force_active = True )
 poro.write_grdecl( open("/tmp/poro_cos.grdecl" , "w") )
 sys.exit(1)
