@@ -10,7 +10,11 @@ class StringList:
         if arg:
             if isinstance( arg , types.ListType ) or isinstance( arg , types.TupleType ):
                 for s in arg:
-                    self.append( s )
+                    if isinstance( s , types.StringType):
+                        self.append( s )
+                    else:
+                        raise TypeError("Item:%s not a string" % s)
+                    
             else:
                 raise TypeError("Stringlist( arg ) arg: must be list or tuple")
 
