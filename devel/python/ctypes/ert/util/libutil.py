@@ -1,10 +1,10 @@
 import ctypes
 import ert.util.clib as clib
-from   ert.util.SDP  import RH_version
+import ert.util.SDP  as SDP
 
 clib.load("libz" , "libz.so.1")
 
-if RH_version() < 4:
+if SDP.RH_version() < 4:
     clib.load("libg2c.so.0")
 
 clib.load("libblas.so")
