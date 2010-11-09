@@ -386,8 +386,8 @@ class EclKW(object):
             return "MESS"
 
 
-
-    def max_min( self ):
+    @property    
+    def min_max( self ):
         if self.__type == ECL_FLOAT_TYPE:
             min = ctypes.c_float()
             max = ctypes.c_float()
@@ -400,19 +400,23 @@ class EclKW(object):
             min = ctypes.c_int()
             max = ctypes.c_int()
             cfunc.max_min_int( self , ctypes.byref( max ) , ctypes.byref( min ))
-        return (max.value , min.value)
+        else:
+            return None
+        return (min.value , max.value)
 
 
     @property
     def max( self ):
-        (max , min) = self.max_min()
-        return max
+        max_min = self.max_min()
+        if max_min:
+            return max_min[1]
 
     
     @property
     def min( self ):
-        (max , min) = self.max_min()
-        return min
+        max_min = self.max_min()
+        if max_min:
+            return max_min[0]
 
     
     @property
