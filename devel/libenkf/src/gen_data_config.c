@@ -123,18 +123,18 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   config->template_buffer_size = 0;
   config->template_data_skip   = 0;
 
-  config->data_size         = 0;
-  config->internal_type     = ECL_DOUBLE_TYPE;
-  config->input_format      = GEN_DATA_UNDEFINED;
-  config->output_format     = GEN_DATA_UNDEFINED;
-  config->data_size_vector  = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
-  config->update_valid      = false;
-  config->active_mask       = bool_vector_alloc(0 , true ); /* Elements are explicitly set to FALSE - this MUST default to true. */ 
-  config->active_report_step= -1;
-  config->ens_size          = -1;
-  config->load_count        = -1;
-  config->fs                = NULL;
-  config->dynamic           = false;
+  config->data_size          = 0;
+  config->internal_type      = ECL_DOUBLE_TYPE;
+  config->input_format       = GEN_DATA_UNDEFINED;
+  config->output_format      = GEN_DATA_UNDEFINED;
+  config->data_size_vector   = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
+  config->update_valid       = false;
+  config->active_mask        = bool_vector_alloc(0 , true ); /* Elements are explicitly set to FALSE - this MUST default to true. */ 
+  config->active_report_step = -1;
+  config->ens_size           = -1;
+  config->load_count         = -1;
+  config->fs                 = NULL;
+  config->dynamic            = false;
   pthread_mutex_init( &config->update_lock , NULL );
 
   return config;
@@ -386,7 +386,8 @@ void gen_data_config_update_active(gen_data_config_type * config , int report_st
     if ( int_vector_iget( config->data_size_vector , report_step ) > 0) {
       
       if (config->active_report_step != report_step) {
-        /* This is the first enesmeble member loading for this particular report_step */
+        /* This is the first ensemeble member loading for this
+           particular report_step. */
         bool_vector_reset( config->active_mask );
         bool_vector_iset( config->active_mask , int_vector_iget( config->data_size_vector , report_step ) - 1 , true );
         config->load_count = 0;
@@ -401,7 +402,6 @@ void gen_data_config_update_active(gen_data_config_type * config , int report_st
       } 
       
       config->load_count++;
-      printf("config->load_count:%d \n",config->load_count);
       if (config->load_count == config->ens_size) {
         /**
            All ensemble members have been loaded, we save the current active_mask to disk.
@@ -412,7 +412,6 @@ void gen_data_config_update_active(gen_data_config_type * config , int report_st
         bool_vector_fwrite( config->active_mask , stream );
         
         fclose( stream );
-        printf("Mask saved to: %s \n",filename);
         free( filename );
       }
     }
