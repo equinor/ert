@@ -57,7 +57,7 @@
 
 
 
-#define DEFAULT_DBASE_TYPE "PLAIN"
+#define DEFAULT_DBASE_TYPE "BLOCK_FS"
 
 /** 
     The default number of block_fs instances allocated. 
@@ -245,15 +245,11 @@
 #define DEFAULT_PLAIN_INDEX_PATH               "%04d/mem%03d/INDEX"
 
 
-#define DEFAULT_SQLITE_PARAMETER_DBFILE          "Parameter.sqlite_db"
-#define DEFAULT_SQLITE_STATIC_DBFILE             "Static.sqlite_db"
-#define DEFAULT_SQLITE_DYNAMIC_FORECAST_DBFILE   "Forecast.sqlite_db"
-#define DEFAULT_SQLITE_DYNAMIC_ANALYZED_DBFILE   "Analyzed.sqlite_db"
 
-#define DEFAULT_CASE_PATH                        "%s/%s/files"             
-#define DEFAULT_CASE_MEMBER_PATH                 "%s/%s/mem%03d/files"
-#define DEFAULT_CASE_TSTEP_PATH                  "%s/%s/%04d/files"
-#define DEFAULT_CASE_TSTEP_MEMBER_PATH           "%s/%s/%04d/mem%03d/files"    
+#define DEFAULT_CASE_PATH                        "%s/%s/files"              // ENSPATH/case
+#define DEFAULT_CASE_MEMBER_PATH                 "%s/%s/mem%03d/files"      // ENSPATH/case/member
+#define DEFAULT_CASE_TSTEP_PATH                  "%s/%s/%04d/files"         // ENSPATH/case/tstep
+#define DEFAULT_CASE_TSTEP_MEMBER_PATH           "%s/%s/%04d/mem%03d/files" // ENSPATH/case/tstep/member   
 
 
 

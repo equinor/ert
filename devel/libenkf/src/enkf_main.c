@@ -1403,6 +1403,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
               the allocated A matrix is not large enough to hold all
               data.
             */
+	    printf("Doing bootstrap\n");
             enkf_main_update_mulX_cv_bootstrap_update(enkf_main , ministep, step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
           } else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
             /* Update based on Cross validation AND local analysis. */
