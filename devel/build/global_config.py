@@ -16,7 +16,7 @@ os.umask( umask )
 
 
 
-res_guid = os.stat("/project/res")[stat.ST_GID]
+res_guid = os.stat("/private/inmyr")[stat.ST_GID]
 
 def mkdir_gid( path ):
     mkdir( path )
