@@ -385,6 +385,26 @@ class EclKW(object):
         if self.__type == ECL_MESS_TYPE:
             return "MESS"
 
+
+    def max_min( self ):
+        if self.__type == ECL_FLOAT_TYPE:
+            min = ctypes.c_float()
+            max = ctypes.c_float()
+            cfunc.max_min_float( self , ctypes.byref( max ) , ctypes.byref( min ))
+        if self.__type == ECL_DOUBLE_TYPE:
+            min = ctypes.c_double()
+            max = ctypes.c_double()
+            cfunc.max_min_double( self , ctypes.byref( max ) , ctypes.byref( min ))
+        if self.__type == ECL_INT_TYPE:
+            min = ctypes.c_int()
+            max = ctypes.c_int()
+            cfunc.max_min_int( self , ctypes.byref( max ) , ctypes.byref( min ))
+        return (max , min)
+
+
+        
+    
+
     @property
     def numeric(self):
         if self.__type == ECL_FLOAT_TYPE:
@@ -483,4 +503,7 @@ cfunc.copy_data                  = cwrapper.prototype("void ecl_kw_memcpy_data( 
 cfunc.set_int                    = cwrapper.prototype("void ecl_kw_scalar_set_int( ecl_kw , int )")
 cfunc.set_float                  = cwrapper.prototype("void ecl_kw_scalar_set_float_or_double( ecl_kw , double )")
 
+cfunc.max_min_int                = cwrapper.prototype("void ecl_kw_max_min_int( ecl_kw , int* , int*")
+cfunc.max_min_float              = cwrapper.prototype("void ecl_kw_max_min_float( ecl_kw , float* , float*")
+cfunc.max_min_double             = cwrapper.prototype("void ecl_kw_max_min_double( ecl_kw , double* , double*")
 
