@@ -129,7 +129,7 @@ static void meas_block_memcpy( meas_block_type * target_block , const meas_block
   if (target_block->data_size != src_block->data_size) 
     util_abort("%s: size mismatch. target:%d  src:%d \n",__func__ , target_block->data_size , src_block->data_size );
 
-  memcpy( target_block->data   , src_block->data   , src_block->data_size * sizeof * src_block->data_size );
+  memcpy( target_block->data   , src_block->data   , src_block->data_size * sizeof * src_block->data );
   memcpy( target_block->active , src_block->active , src_block->obs_size * sizeof * src_block->active ); 
 }
 
