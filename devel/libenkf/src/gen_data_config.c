@@ -115,9 +115,14 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
 
   config->key               = util_alloc_string_copy( key );
   config->init_file_fmt     = NULL;
-  config->template_file     = NULL;
-  config->template_buffer   = NULL;
-  config->template_key      = NULL;
+
+  config->template_file        = NULL;
+  config->template_key         = NULL;
+  config->template_buffer      = NULL;
+  config->template_data_offset = 0;
+  config->template_buffer_size = 0;
+  config->template_data_skip   = 0;
+
   config->data_size         = 0;
   config->internal_type     = ECL_DOUBLE_TYPE;
   config->input_format      = GEN_DATA_UNDEFINED;
@@ -242,7 +247,9 @@ void gen_data_config_update(gen_data_config_type * config           ,
     valid = false;
     //util_abort("%s: When using a template you MUST also set a template_key \n",__func__);
 
-  
+  if ((output_format == ASCII_TEMPLATE) && (template_ecl_file == NULL))
+    valid = false;
+  // When using format ASCII_TEMPLATE you also must set a template file. 
 
   /*****************************************************************/
   if (valid) {

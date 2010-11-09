@@ -432,7 +432,11 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
       const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
       
       enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
-      
+      {
+        const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+        if (!gen_data_config_is_valid( gen_data_config ))
+          util_abort("%s: sorry the GEN_PARAM key:%s is not valid \n",__func__ , key);
+      }
       hash_free( options );
     }
   }
@@ -453,8 +457,12 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
       const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
       const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
 
-
       enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+      {
+        const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+        if (!gen_data_config_is_valid( gen_data_config ))
+          util_abort("%s: sorry the GEN_DATA key:%s is not valid \n",__func__ , key);
+      }
       hash_free( options );
     }
   }
@@ -763,8 +771,9 @@ enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * con
 enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key) {
   enkf_config_node_type * config_node = NULL;
   if (hash_has_key(ensemble_config->config_nodes, key)) {
-    if (ensemble_config_impl_type(ensemble_config , key) != SUMMARY)
-      util_abort("%s: ensemble key:%s already existst - but it is not of summary type\n",__func__ , key);
+    config_node = hash_get(ensemble_config->config_nodes, key);
+    if (enkf_config_node_get_impl_type( config_node ) != SUMMARY)
+      util_abort("%s: ensemble key:%s already exists - but it is not of summary type\n",__func__ , key);
   } else {
     if ((ensemble_config->refcase == NULL) || (ecl_sum_has_general_var( ensemble_config->refcase , key ))) {
       config_node = enkf_config_node_alloc_summary( key );

@@ -143,7 +143,7 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_
   int size;
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
   size = buffer_fread_int(buffer);
-  buffer_fskip_int( buffer );  /* Skipping this from the buffer - was a mistake to store it - I think ... */
+  buffer_fskip_int( buffer );  /* Skipping report_step from the buffer - was a mistake to store it - I think ... */
   {
     size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
     size_t compressed_size = buffer_get_remaining_size( buffer ); 
