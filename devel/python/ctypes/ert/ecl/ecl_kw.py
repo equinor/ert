@@ -407,14 +407,14 @@ class EclKW(object):
 
     @property
     def max( self ):
-        max_min = self.max_min()
+        max_min = self.min_max()
         if max_min:
             return max_min[1]
 
     
     @property
     def min( self ):
-        max_min = self.max_min()
+        max_min = self.min_max()
         if max_min:
             return max_min[0]
 
