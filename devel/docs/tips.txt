@@ -5,7 +5,7 @@ The ert application is based on the internal libraries
 libutil,libecl,librms,libsched,libconfig,libplot,libjob_queue and
 libenkf. When creating a final ert executable this is done by linking
 in static versions of all these libraries. The consistent use of
-statis libraries makes the system much more robust for updates, and
+static libraries makes the system much more robust for updates, and
 also easier to have several versions of ERT installed side-by-side.
 
 The gcc linker will by default link with the shared version of a
@@ -54,13 +54,13 @@ and
 
 for the Python bindings and the GUI respectively. These shared
 libraries are of of course the same both the Python bindings and the
-GUI, and should be assembled in the same point. Observe thet GUI is
+GUI, and should be assembled in the same point. Observe that GUI is
 only installed in the Bergen location /d/proj/bg/enkf and should of
 course be moved to /project/res.
 
 It is not entirely clear to me how to achieve the goals:
 
-  * The main ert location links with the static version of the
+  * The main ert application links with the static version of the
     internal libraries.
 
   * The shared and static version of the internal libraries can
@@ -72,7 +72,7 @@ the linker, i.e. instead of the normal link command:
    gcc -o exe object1.o object2.o -L/path/to/lib1 -L/path/to/lib2 -l1 -l2
 
 where you tell gcc where to search and which libraries to use, you can
-alterantively specify the link command fully like:
+alteranatively specify the link command fully like:
 
    gcc -o exe object1.o object2.o /path/to/lib1/lib1.a /path/to/lib2/lib2.a
 
