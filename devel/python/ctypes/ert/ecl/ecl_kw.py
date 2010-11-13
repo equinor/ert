@@ -1,9 +1,10 @@
-from    ert.cwrap.cwrap       import *
 import  types
 import  numpy
+from    ert.cwrap.cwrap       import *
+from    ert.util.cfile        import CFILE
 import  fortio
 import  libecl
-from    ert.util.cfile   import CFILE
+
 
 
 
@@ -87,10 +88,12 @@ class EclKW(object):
     def from_param(self):
         return self.c_ptr
 
+
     def __len__( self ):
         return cfunc.get_size( self )
 
     
+
     def __del__(self):
         if self.data_owner:
             cfunc.free( self )
@@ -100,9 +103,6 @@ class EclKW(object):
         ecl_kw = EclKW.copy( self )
         ecl_kw.data_owner = True
         return ecl_kw
-
-
-
 
 
     def __getitem__(self, index ):
@@ -422,7 +422,7 @@ class EclKW(object):
             return min_max[0]
         else:
             return None
-
+        
     
     @property
     def numeric(self):
@@ -439,7 +439,7 @@ class EclKW(object):
     def __type__( self ):
         return self.__type
 
-
+    
     @property
     def header( self ):
         return (self.name , self.size , self.type)

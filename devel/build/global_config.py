@@ -185,7 +185,7 @@ class conf:
             home = lib["home"]
             CPPPATH.append("%s/include" % home )
             LIBPATH.append("%s/lib"     % home )
-
+            
             if lib.has_key("name"):
                 name = lib["name"]
                 LIBS.append( name )

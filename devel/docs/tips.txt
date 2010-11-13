@@ -10,12 +10,12 @@ also easier to have several versions of ERT installed side-by-side.
 
 The gcc linker will by default link with the shared version of a
 library, so if both libXXX.a and libXXX.so are found the shared
-version libXXX.so will be used. When linking ert the linker is tould
+version libXXX.so will be used. When linking ert the linker is told
 where to locate the internal libraries, but no further -dynamic /
 -static options are given. Since only static versions of the internal
 libraries can be found the resulting linking will be:
 
-   * All the internal libraries are linked statically
+   * All the internal libraries are linked statically.
    
    * All standard libraries like libz, libpthread and liblapack are
      linked dynamically.
@@ -23,8 +23,9 @@ libraries can be found the resulting linking will be:
 This has worked quite OK for a long time, but the advent of Python
 bindings, both for the Python wrapper and for the gui have increased
 the complexity, the Python bindings require shared
-libraries. Currently the shared libaries are just installed in a slib/
-subdirectory beside the lib/ directory, i.e. for e.g. libecl we have:
+libraries. Currently the shared libraries are just installed in a
+slib/ subdirectory beside the lib/ directory, i.e. for e.g. libecl we
+have:
 
    libecl/src/...
    libecl/include/...
@@ -53,10 +54,10 @@ and
    /d/proj/bg/enkf/ERT_GUI/lib/libXXX.so
 
 for the Python bindings and the GUI respectively. These shared
-libraries are of of course the same both the Python bindings and the
-GUI, and should be assembled in the same point. Observe that GUI is
-only installed in the Bergen location /d/proj/bg/enkf and should of
-course be moved to /project/res.
+libraries are of of course the same for both the Python bindings and
+the GUI, and should be assembled at the same location in the
+filesystem. Observe that the GUI is only installed in the Bergen
+location /d/proj/bg/enkf and should be moved to /project/res.
 
 It is not entirely clear to me how to achieve the goals:
 
@@ -72,8 +73,98 @@ the linker, i.e. instead of the normal link command:
    gcc -o exe object1.o object2.o -L/path/to/lib1 -L/path/to/lib2 -l1 -l2
 
 where you tell gcc where to search and which libraries to use, you can
-alteranatively specify the link command fully like:
+alteranatively specify the library files fully on the link command like:
 
    gcc -o exe object1.o object2.o /path/to/lib1/lib1.a /path/to/lib2/lib2.a
 
 But how to tell SCons this?
+
+
+2. About gen_data / gen_param and gen_obs.
+-----------------------------------------
+
+The most general datatype in ert is the GEN_DATA type. ERT will just
+treat this as a vector of numbers, with no structure assigned to
+it. In the configuration file both GEN_DATA and GEN_PARAM can be used:
+
+   GEN_PARAM: For parameters which are not changed by the forward
+      model, i.e. like porosity and permeability.
+
+   GEN_DATA: Data which is changed by the forward model, and therefor
+      must be loaded at the end of each timestep. The arch-typical
+      example of a GEN_DATA instance would be seismic data.
+
+Internally in the ert everything is implemented as gen_data. The
+flexibility of the gen_data implementation is a  good thing, however
+there are some significant disdvantages:
+
+  * Since the gen_data_config object contains very limited meta-data
+    information it is difficult to capture user error. Typically what
+    happens is that:
+
+     - The user is is not discovered before long out in the
+       simulation, and when discovered possibly only as a a
+       util-abort().
+    
+     - User eerror is not discovered at all - the user just gets other
+       results than anticipated.
+
+  * The implementation is quite complex, and "different" from the
+    other datatypes. This has led to numerous bugs in the past; and
+    there are probably still bugs and inconsistenceis buried in the
+    gen_data implementation.
+
+When configuring a gen_data instance you tell ert which file to look
+for when loading the results from the forward model. When the forward
+model is complete and loading of results starts the following
+happens:
+
+  1. The gen_data instance will look for the specified filename; if
+     the file is found it will be loaded.
+
+  2. If the file is not found, we will just assume size == 0 and
+     continue. That the file is not found is perfectly OK.
+
+  3. When the size of the gen_data instance has been verified the
+     gen_data will call the functions gen_data_config_assert_size()
+     which will assert that all ensemble members have the same size -
+     if not things will go belly up with util_abort().
+
+Potential problems with this (the strict mapping between size and
+report_step can be fucked up):
+
+  1. If you have problems with your forward model and are "trying
+     again" old files left lying around can create problems.
+
+  2. If your forward model is a mult step model, where several steps
+     have gen_data content there will be a conflict.
+
+Both of the problems can be reduced by using a gen_data result file
+with an embedded %d format specifier, this will be replaced with the
+report_step when looking for a result file.
+
+
+The final complexity twist is the ability for the forward model to
+signal that some datapoints are missing - for whatever reason. If for
+instance the forward model should produce the file "DATA" it can
+optionally also prouce the file "DATA_active" which should be a
+formatted file with 0 and 1 to denote inactive and active elements
+respectively. Before the gen_data instance can be used in EnKF
+updating the active/inactive statis must be the same for all ensemble
+members, this is achieved by calling the function
+gen_data_config_update_active() which will collect active/inactive
+statistics according to AND:
+
+     activ[index] = AND( active[index,iens=0] , active[index,iens=1] ,
+     ...)
+
+The final active mask is stored with an enkf_fs_case_tstep() call, so
+that it can be recovered for a later manual analysis step. This code
+is from september/october 2010 - and there are rumors to be a bug or
+two here, my first suspect is with save/restore functionality in the
+functions gen_data_config_update_active() and
+gen_data_config_load_active().
+ 
+
+
+  
