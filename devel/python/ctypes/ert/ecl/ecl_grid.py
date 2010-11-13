@@ -271,8 +271,11 @@ class EclGrid(object):
         
         
     def write_grdecl( self , ecl_kw , pyfile , default_value = 0):
-        cfile = CFILE( pyfile )
-        cfunc.fwrite_grdecl( self , ecl_kw , cfile , default_value )
+        if ecl_kw.size == self.nactive or ecl_kw.size == self.size:
+            cfile = CFILE( pyfile )
+            cfunc.fwrite_grdecl( self , ecl_kw , cfile , default_value )
+        else:
+            raise ValueError("Keyword: %s has invalid size(%d), must be either nactive:%d  or nx*ny*nz:%d" % (ecl_kw.name , ecl_kw.size , self.nactive ,self.size))
 
 
 
