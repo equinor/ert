@@ -23,6 +23,7 @@ class TVector(object):
 
         new_obj = TVector.__new__( cls )
         new_obj.c_ptr = cls.cstrided_copy( obj  , start , stop , stride )
+        new_obj.data_owner = True
         return new_obj
     
 
@@ -30,12 +31,22 @@ class TVector(object):
     def __copy__( cls , obj ):
         new_obj = TVector.__new__( cls )
         new_obj.c_ptr = cls.alloc_copy( obj )
+        new_obj.data_owner = True
         return new_obj
-
+    
 
     def __new__( cls ):
         obj = object.__new__( cls )
         obj.c_ptr = None
+        return obj
+
+
+    @classmethod
+    def ref( cls , c_ptr , parent ):
+        obj = cls( )
+        obj.c_ptr      = c_ptr
+        obj.data_owner = False
+        obj.parent     = parent
         return obj
 
     
@@ -52,12 +63,15 @@ class TVector(object):
         # Default initializer allocates a new instance from the C layer.
         init_size  = 0
         self.c_ptr = self.alloc( init_size , default_value )
-    
+        self.data_owner = True
+
     def from_param( self ):
         return self.c_ptr
 
+
     def __del__(self):
-        self.free( self )
+        if self.data_owner:
+            self.free( self )
 
     def __getitem__(self, index ):
         if isinstance( index , types.IntType):
@@ -108,6 +122,16 @@ class TVector(object):
     def safe_iget( self , index):
         return self.csafe_iget( self , index )
 
+    def set_read_only( self , read_only ):
+        self.set_read_only( self , read_only )
+
+    def get_read_only( self ):
+        return self.get_read_only( self )
+        
+    read_only = property( get_read_only , set_read_only )
+
+
+
 #################################################################
 
 
@@ -130,6 +154,8 @@ class DoubleVector(TVector):
             cls.cclear        = cfunc.double_vector_reset
             cls.cstrided_copy = cfunc.double_vector_strided_copy
             cls.csafe_iget    = cfunc.double_vector_safe_iget
+            cls.set_read_only = cfunc.double_vector_set_read_only
+            cls.get_read_only = cfunc.double_vector_get_read_only
             cls.def_fmt       = "%g"
             cls.initialized = True
 
@@ -157,6 +183,8 @@ class IntVector(TVector):
             cls.cclear        = cfunc.int_vector_reset
             cls.cstrided_copy = cfunc.int_vector_strided_copy
             cls.csafe_iget    = cfunc.int_vector_safe_iget
+            cls.set_read_only = cfunc.int_vector_set_read_only
+            cls.get_read_only = cfunc.int_vector_get_read_only
             cls.def_fmt       = "%d"
             cls.initialized = True
 
@@ -185,7 +213,8 @@ cfunc.double_vector_fprintf          = cwrapper.prototype("void   double_vector_
 cfunc.double_vector_sort             = cwrapper.prototype("void   double_vector_sort( double_vector )") 
 cfunc.double_vector_rsort            = cwrapper.prototype("void   double_vector_rsort( double_vector )") 
 cfunc.double_vector_reset            = cwrapper.prototype("void   double_vector_reset( double_vector )") 
-
+cfunc.double_vector_get_read_only    = cwrapper.prototype("bool   double_vector_set_read_only( double_vector )") 
+cfunc.double_vector_set_read_only    = cwrapper.prototype("void   double_vector_set_read_only( double_vector , bool )") 
 
 cfunc.int_vector_alloc_copy          = cwrapper.prototype("long int_vector_alloc_copy( int_vector )")
 cfunc.int_vector_alloc               = cwrapper.prototype("long   int_vector_alloc( int , int )")
@@ -199,5 +228,7 @@ cfunc.int_vector_append              = cwrapper.prototype("void   int_vector_app
 cfunc.int_vector_idel_block          = cwrapper.prototype("void   int_vector_idel_block( int_vector , int , int )") 
 cfunc.int_vector_fprintf             = cwrapper.prototype("void   int_vector_fprintf( int_vector , FILE , char* , char*)")
 cfunc.int_vector_sort                = cwrapper.prototype("void   int_vector_sort( int_vector )") 
-cfunc.int_vector_rsort                = cwrapper.prototype("void   int_vector_rsort( int_vector )") 
+cfunc.int_vector_rsort               = cwrapper.prototype("void   int_vector_rsort( int_vector )") 
 cfunc.int_vector_reset               = cwrapper.prototype("void   int_vector_reset( int_vector )") 
+cfunc.int_vector_set_read_only       = cwrapper.prototype("void   int_vector_set_read_only( int_vector , bool )") 
+cfunc.int_vector_get_read_only       = cwrapper.prototype("bool   int_vector_get_read_only( int_vector )") 
