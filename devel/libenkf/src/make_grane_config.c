@@ -4,31 +4,33 @@
 #include <util.h>
 #include <local_config.h>
 #include <ecl_region.h>
+#include <int_vector.h>
 
 
 static void add_box_or_region( const char * ministep , const char * key , void * box_or_region , FILE * stream) {
   /* Add the data node: */
-  int         active_size = -1;
-  const int * active_list = NULL;
-  if (ecl_box_is_instance( box_or_region )) {
-    active_size = ecl_box_get_active_size( box_or_region );
+  const int_vector_type * active_list = NULL;
+  if (ecl_box_is_instance( box_or_region )) 
     active_list = ecl_box_get_active_list( box_or_region );
-  } else if (ecl_region_is_instance( box_or_region )) {
-    active_size = ecl_region_get_active_size( box_or_region );
+  else if (ecl_region_is_instance( box_or_region )) 
     active_list = ecl_region_get_active_list( box_or_region );
-  } else 
+  else 
     util_abort("%s: could not determine type of arg 3 \n",__func__);
 
-  fprintf(stream , "%-32s %s %s\n" , local_config_get_cmd_string( ADD_DATA ) , ministep , key);
-  fprintf(stream , "%-32s %s %s %d\n" , local_config_get_cmd_string( ACTIVE_LIST_ADD_MANY_DATA_INDEX ) , ministep , key , active_size);
   {
-    int i;
-    for (i=0; i < active_size; i++) {
-      fprintf(stream ,"%6d ",active_list[i]);
-      if ((i % 10) == 9)
-        fprintf(stream , "\n");
+    int active_size = int_vector_size( active_list );
+
+    fprintf(stream , "%-32s %s %s\n" , local_config_get_cmd_string( ADD_DATA ) , ministep , key);
+    fprintf(stream , "%-32s %s %s %d\n" , local_config_get_cmd_string( ACTIVE_LIST_ADD_MANY_DATA_INDEX ) , ministep , key , active_size);
+    {
+      int i;
+      for (i=0; i < active_size; i++) {
+        fprintf(stream ,"%6d ",int_vector_iget( active_list , i));
+        if ((i % 10) == 9)
+          fprintf(stream , "\n");
+      }
+      fprintf(stream , "\n");
     }
-    fprintf(stream , "\n");
   }
 }
 
@@ -89,7 +91,7 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid ,  0,32,115,216,0,19);
         
-	/* Add the field data which is updated. */
+        /* Add the field data which is updated. */
         
         /*ecl_region_type * ecl_region = ecl_region_alloc( ecl_grid , false );*/  /* Create empty region instance with nothing selected */
         /*ecl_region_select_equal( ecl_region , eqlnum_kw , 5 ); */               /* Lager en region basert på alle celler som har eqlnum == 5 */
@@ -97,17 +99,17 @@ int main(int argc, char ** argv) {
         /**
         add_box_or_region(ministep_name , "PORO"     , ecl_region , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_region , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_region , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_region , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_region , stream );
-	*/
+        */
 
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
 
         
-	/* ecl_region_free( ecl_region );*/
+        /* ecl_region_free( ecl_region );*/
         ecl_box_free( ecl_box );
       }
       
@@ -132,7 +134,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
@@ -158,7 +160,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
@@ -188,7 +190,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
@@ -234,7 +236,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
@@ -270,7 +272,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
@@ -298,7 +300,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
@@ -344,7 +346,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
@@ -383,7 +385,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
@@ -410,7 +412,7 @@ int main(int argc, char ** argv) {
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
-	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );

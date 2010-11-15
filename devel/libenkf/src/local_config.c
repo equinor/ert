@@ -803,10 +803,11 @@ static void local_config_load_file( local_config_type * local_config , const ecl
           local_ministep_type * ministep = local_config_get_ministep( local_config , mini_name );
           local_ministep_add_node( ministep , field_name );
           {
-            active_list_type * active_list = local_ministep_get_node_active_list( ministep , field_name );
-            const int * region_active      = ecl_region_get_active_list( region );
-            for (int i=0; i < ecl_region_get_active_size( region ); i++)
-              active_list_add_index( active_list , region_active[i]);
+            active_list_type * active_list        = local_ministep_get_node_active_list( ministep , field_name );
+            const int_vector_type * region_active = ecl_region_get_active_list( region );
+            
+            for (int i=0; i < int_vector_size( region_active ); i++)
+              active_list_add_index( active_list , int_vector_iget( region_active , i ) );
           }
         }
         free( field_name );

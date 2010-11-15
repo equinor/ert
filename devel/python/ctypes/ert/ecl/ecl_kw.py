@@ -255,6 +255,8 @@ class EclKW(object):
     # No __rdiv__()
 
     def assert_binary( self , other ):
+        print self.header 
+        print other.header
         return cfunc.assert_binary( self , other )
 
     #################################################################
@@ -332,7 +334,7 @@ class EclKW(object):
         attribute.
         """
         if mask:
-            active_list = mask.kw_list( self , force_active )
+            active_list = mask.kw_index_list( self , force_active )
             if arg:
                 for i in range(active_list.size):
                     self.data_ptr[i] = func( self.data_ptr[i] , arg)

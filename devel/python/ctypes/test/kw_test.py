@@ -17,14 +17,9 @@ poro      = init_file.iget_named_kw("PORO" , 0 )
 grid      = ecl.EclGrid( "data/eclipse/case/ECLIPSE.EGRID" )
 
 poro3d = grid.create3D( poro   , default = -100)
-poro   = grid.createKW( poro3d , "XXPORO" , False )
 
 print "max:%g" % poro.max
 print "min:%g" % poro.min
-
-poro.assign( 25 , mask = ecl.EclRegion( grid , True ) , force_active = True )
-poro.write_grdecl( open("/tmp/poro_cos.grdecl" , "w") )
-sys.exit(1)
 
 mask1 = ecl.EclRegion( grid , False )
 mask2 = ecl.EclRegion( grid , False )
@@ -33,6 +28,7 @@ mask2.select_more( poro , 0.30 )
 
 mask3  = mask1.copy()
 mask3 |= mask2
+
 
 print mask1.active_size
 print mask2.active_size
@@ -43,7 +39,7 @@ poro.apply( cutoff , mask = mask1 , arg = 0.05)
 
 poro.write_grdecl( open("/tmp/poro_cos.grdecl" , "w") )
 
-poro.add( permx , mask = mask1 )
+poro.add( permx , mask = mask1)
 poro.sub( 1 )
 poro.mul( poro )
 poro.assign( 14.0 )

@@ -1,8 +1,8 @@
 import ctypes
 from   ert.cwrap.cwrap       import *
+from   ert.util.tvector      import IntVector
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_DOUBLE_TYPE
 import libecl
-
 
 class EclRegion:
     def __init__(self , grid , preselect , c_ptr = None):
@@ -246,36 +246,28 @@ class EclRegion:
 
     @property
     def active_list(self):
-        a             = cfunc.get_active_list( self )
-        a.size        = cfunc.get_active_size( self )
-        a.__parent__  = self  # Inhibit GC
-        return a
+        c_ptr = cfunc.get_active_list( self )
+        active_list = IntVector.ref( c_ptr , self )
+        return active_list
 
     @property
     def global_list(self):
-        a             = cfunc.get_global_list( self )
-        a.size        = cfunc.get_global_size( self )
-        a.__parent__  = self  # Inhibit GC
-        return a
-
-    def kw_list(self , ecl_kw , force_active):
-        a             = cfunc.get_kw_list( self , ecl_kw , force_active)
-        a.size        = cfunc.get_kw_size( self , ecl_kw , force_active)
-        a.__parent__  = self  # Inhibit GC
-        return a
+        c_ptr = cfunc.get_global_list( self )
+        global_list = IntVector.ref( c_ptr , self )    
+        return global_list
 
     @property
     def active_size( self ):
-        return cfunc.active_size( self )
+        return self.active_list.size
 
     @property
     def global_size( self ):
-        return cfunc.global_size( self )
+        return self.global_list.size    
     
-    def kw_size(self , ecl_kw , force_active):
-        return cfunc.get_kw_size( self , ecl_kw , force_active)
-
-    
+    def kw_index_list(self , ecl_kw , force_active):
+        c_ptr = cfunc.get_kw_index_list( self , ecl_kw , force_active)
+        index_list = IntVector.ref( c_ptr , self )
+        return index_list
 
 
 # 2. Creating a wrapper object around the libecl library.
@@ -306,11 +298,6 @@ cfunc.deselect_in_interval       = cwrapper.prototype("void ecl_region_deselect_
 
 cfunc.invert_selection           = cwrapper.prototype("void ecl_region_invert_selection( ecl_region )")
 
-cfunc.active_size                = cwrapper.prototype("int  ecl_region_get_active_size( ecl_region )")
-cfunc.global_size                = cwrapper.prototype("int  ecl_region_get_global_size( ecl_region )")
-cfunc.active_set                 = cwrapper.prototype("int* ecl_region_get_active_list( ecl_region )")
-cfunc.global_set                 = cwrapper.prototype("int* ecl_region_get_global_list( ecl_region )")
-
 cfunc.set_kw_int                 = cwrapper.prototype("void ecl_region_set_kw_int( ecl_region , ecl_kw , int, bool) ")
 cfunc.set_kw_float               = cwrapper.prototype("void ecl_region_set_kw_float( ecl_region , ecl_kw , float, bool ) ")
 cfunc.set_kw_double              = cwrapper.prototype("void ecl_region_set_kw_double( ecl_region , ecl_kw , double , bool) ")
@@ -325,10 +312,6 @@ cfunc.scale_kw_double              = cwrapper.prototype("void ecl_region_scale_k
 
 cfunc.select_box                 = cwrapper.prototype("void ecl_region_select_from_ijkbox(ecl_region , int , int , int , int , int , int)")     
 
-cfunc.get_active_list            = cwrapper.prototype("int* ecl_region_get_active_list( ecl_region )")
-cfunc.get_global_list            = cwrapper.prototype("int* ecl_region_get_global_list( ecl_region )")
-cfunc.get_active_size            = cwrapper.prototype("int   ecl_region_get_active_size( ecl_region )")
-cfunc.get_global_size            = cwrapper.prototype("int   ecl_region_get_global_size( ecl_region )")
 cfunc.iadd_kw                    = cwrapper.prototype("void  ecl_region_kw_iadd( ecl_region , ecl_kw , ecl_kw , bool)")
 cfunc.isub_kw                    = cwrapper.prototype("void  ecl_region_kw_isub( ecl_region , ecl_kw , ecl_kw , bool)")
 cfunc.copy_kw                    = cwrapper.prototype("void  ecl_region_kw_copy( ecl_region , ecl_kw , ecl_kw , bool)")
@@ -337,8 +320,10 @@ cfunc.alloc_copy                 = cwrapper.prototype("long ecl_region_alloc_cop
 cfunc.intersect                  = cwrapper.prototype("void ecl_region_intersection( ecl_region , ecl_region )")
 cfunc.combine                    = cwrapper.prototype("void ecl_region_union( ecl_region , ecl_region )")
 
-cfunc.get_kw_list                = cwrapper.prototype("int* ecl_region_get_kw_index_list( ecl_region , ecl_kw , bool )")
-cfunc.get_kw_size                = cwrapper.prototype("int  ecl_region_get_kw_size( ecl_region , ecl_kw , bool )")
+cfunc.get_kw_index_list          = cwrapper.prototype("long ecl_region_get_kw_index_list( ecl_region , ecl_kw , bool )")
+cfunc.get_active_list            = cwrapper.prototype("long ecl_region_get_active_list( ecl_region )")
+cfunc.get_global_list            = cwrapper.prototype("long ecl_region_get_global_list( ecl_region )")
+cfunc.get_active_global          = cwrapper.prototype("long ecl_region_get_global_active_list( ecl_region )")
 
 cfunc.select_cmp_less            = cwrapper.prototype("void ecl_region_cmp_select_less( ecl_region , ecl_kw , ecl_kw)")
 cfunc.select_cmp_more            = cwrapper.prototype("void ecl_region_cmp_select_more( ecl_region , ecl_kw , ecl_kw)")
@@ -371,3 +356,4 @@ cfunc.select_active              = cwrapper.prototype("void ecl_region_select_ac
 cfunc.select_inactive            = cwrapper.prototype("void ecl_region_select_inactive_cells( ecl_region )")
 cfunc.deselect_active            = cwrapper.prototype("void ecl_region_deselect_active_cells( ecl_region )")
 cfunc.deselect_inactive          = cwrapper.prototype("void ecl_region_deselect_inactive_cells( ecl_region )")
+
