@@ -10,6 +10,72 @@ script_mode = 0775
 data_mode   = 0664
 dir_mode    = 0775
 uid         = os.getuid()
+res_guid    = os.stat("/project/res")[stat.ST_GID]
+
+lib_root    = "%s/lib/python/lib"        
+python_root = "%s/lib/python"
+
+#################################################################
+#
+# This file is an installation script for the ert python code at
+# Statoil. The script will perform several different tasks:
+# 
+#  1. The directory tree rooted starting with ert/ in the current
+#     directory will be copied plainly to the directory given by
+#     @python_root.
+# 
+#  2. All python files will be byte-compiled in place at the
+#     installation directory immediately after installation.
+# 
+#  3. Everything which is created in the /project/res filesystem
+#     should be owned by the group 'res' and have mode according to
+#     the variables script_mode / data_mode / dir_mode above (there
+#     have been numerous bugs with this ...).
+# 
+#  ----------------------------------------------------------------
+#  
+#  4. The shared ert libraries which the ert py library is based on
+#     will be copied to the directory given by @lib_root.
+# 
+#  5. The special shared library C/libpycfile/slib/libpycfile.so will
+#     be installed as @lib_root/libpycfile.so and a symlink:
+#     
+#         @python_root/ert/util/pycfile.so -> @lib_root/libpycfile.so
+# 
+#     will be installed.
+#        
+# ----------------------------------------------------------------- 
+# 
+# Observe that the installation script is NOT coupled to the build
+# system used to build the C based shared libraries. This implies
+# that:
+# 
+#  a) If you want to install the shared libraries in addition to the
+#     python code you must use scons and compile all C code prior to
+#     running this installation script:
+# 
+#        cd ../../
+#        scons -j 4
+#        cd -
+#        cd C/libpycfile/src
+#        scons
+#        cd -
+#        
+#  b) The installation steps 4 & 5 above are optional, in the sense
+#     that if the shared libraries in question are not found in the
+#     local filesystem a warning is issued and the installation
+#     continues. This implies that:
+# 
+#      i) If you have only updated the Python code you can forget
+#         about the C code and still run the installation script.
+# 
+#      ii) If you have at one stage compiled and built the shared
+#          libraries you must sure that you do not inadvertly install
+#          old versions on a subsequent later install!
+#
+#################################################################
+
+
 
 def get_SDP_ROOT():
     cpu = os.uname()[4]
@@ -19,28 +85,29 @@ def get_SDP_ROOT():
     return (sdp_root , float(RH))
 
 
-
-(SDP_ROOT , RH) = get_SDP_ROOT()
-target = "%s/lib/python" % SDP_ROOT
-res_guid    = os.stat("/project/res")[stat.ST_GID]
-
-
-
 def chgrp(path , guid ):
     os.chown( path , -1 , guid )
 
 
 def install_link( target_file , link_name):
-    if os.path.exists( link_name ):
-        os.unlink( link_name )
-    print "Linking: %s -> %s" % (link_name , target_file )
-    os.symlink( target_file , link_name )
-    
+    if os.path.exists( target_file ):
+        if os.path.exists( link_name ):
+            os.unlink( link_name )
+            print "Linking: %s -> %s" % (link_name , target_file )
+        os.symlink( target_file , link_name )
+        chgrp( link_name , res_guid )
+    else:
+        print "Warning: file: %s does not exist - skipping: %s -> %s." % ( target_file , link_name , target_file )
 
-def install_file( src_file , target_file):
+
+
+def install_file( src_file , target_file , strict_exists = True):
     if not os.path.exists( src_file ):
-        raise Exception("Copying %s -> %s" % (src_file , target_file))
-        sys.exit("The source file:%s does not exist?? " % src_file )
+        if strict_exists:
+            raise Exception("Copying %s -> %s" % (src_file , target_file))
+        else:
+            print "Warning: file: %s does not exist - skipping"
+
     shutil.copyfile( src_file , target_file )
     print "Installing file: %s" % target_file
     if os.stat( target_file )[stat.ST_UID] == uid:
@@ -61,6 +128,7 @@ def make_dir( target_dir ):
     if os.stat( target_dir )[stat.ST_UID] == uid:
         chgrp( target_dir , res_guid )
         os.chmod( target_dir , dir_mode )
+
 
 
 def install_path( src_path , target_root , extensions = None):
@@ -105,14 +173,21 @@ def install_path( src_path , target_root , extensions = None):
     
 
 os.umask( 2 )
-make_dir("%s/lib/python"  % SDP_ROOT)
-make_dir("%s/lib/python/lib"  % SDP_ROOT)
+(SDP_ROOT , RH) = get_SDP_ROOT()
+python_root = python_root % SDP_ROOT
+lib_root    = lib_root % SDP_ROOT
+
+make_dir( python_root )
+make_dir( lib_root )
+
 cwd = os.getcwd()
-install_path( "ert" , target , extensions = ["py"])
-install_file( "C/libpycfile/slib/libpycfile.so"         , "%s/lib/python/lib/libpycfile.so"       % SDP_ROOT)
-install_file( "../../libutil/slib/libutil.so"           , "%s/lib/python/lib/libutil.so"      % SDP_ROOT)
-install_file( "../../libconfig/slib/libconfig.so"       , "%s/lib/python/lib/libconfig.so"    % SDP_ROOT)
-install_file( "../../libecl/slib/libecl.so"             , "%s/lib/python/lib/libecl.so"       % SDP_ROOT)
-install_file( "../../libjob_queue/slib/libjob_queue.so" , "%s/lib/python/lib/libjob_queue.so" % SDP_ROOT)
-install_link( "%s/lib/python/lib/libpycfile.so" % SDP_ROOT , "%s/lib/python/ert/util/pycfile.so" % SDP_ROOT)
-install_link( "%s/C/libpycfile/slib/libpycfile.so"  % cwd       , "%s/ert/util/pycfile.so" % cwd)
+install_path( "ert" , python_root , extensions = ["py"])
+
+install_file( "C/libpycfile/slib/libpycfile.so"            , "%s/libpycfile.so"   % lib_root , strict_exists = False)
+install_file( "../../libutil/slib/libutil.so"              , "%s/libutil.so"      % lib_root , strict_exists = False)
+install_file( "../../libconfig/slib/libconfig.so"          , "%s/libpconfig.so"   % lib_root , strict_exists = False)
+install_file( "../../libecl/slib/libecl.so"                , "%s/libpecl.so"      % lib_root , strict_exists = False)
+install_file( "../../libjob_queue/slib/libjob_queue.so"    , "%s/libjob_queue.so" % lib_root , strict_exists = False)
+
+install_link( "%s/lib/python/lib/libpycfile.so" % SDP_ROOT , "%s/ert/util/pycfile.so" % python_root)
+install_link( "%s/C/libpycfile/slib/libpycfile.so"  % cwd  , "%s/ert/util/pycfile.so" % cwd)
