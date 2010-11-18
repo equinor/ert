@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <util.h>
+#include <errno.h>
 #include <string.h>
 #include <math.h>
 #include <plplot/plplot.h>
@@ -118,12 +119,20 @@ static void plplot_logtransform_y( plot_driver_type * driver , double_vector_typ
 static void plplot_set_window_size( plot_driver_type * driver , int width , int height) {
   char * geometry = util_alloc_sprintf("%dx%d", width, height);
   plsetopt("geometry", geometry);
-  free(geometry);
+  free( geometry );
 
   {
     plplot_state_type * state = driver->state;
-    plsstrm(state->stream);  
+    plsstrm( state->stream );  
+    //{
+    //  printf("---------- Calling plinit()\n");
+    //  errno = 0;
+    //  pllib_init();
+    //  printf("%s: after plinit(): errno:%d  / strerror:%s\n",__func__ , errno , strerror( errno ));
+    //}
     plinit();
+
+
     pladv(0);  /* And what does this do ... */
     plvsta();
   }
