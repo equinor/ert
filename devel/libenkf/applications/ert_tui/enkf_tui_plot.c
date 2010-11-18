@@ -1167,6 +1167,33 @@ static void enkf_tui_toggle_logy(void * arg) {
 }
 
 
+static void plot_test( void * arg ) {
+  const int length = 100;
+  const double xmin = 0;
+  const double xmax = 3.14159265 * 2.0;
+
+  double x[length];
+  double y[length];
+  const int num_plot = 2048;
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+  const plot_config_type    * plot_config      = enkf_main_get_plot_config( enkf_main );
+  plot_config_set_viewer( plot_config , NULL );
+  for (int plot_nr = 0; plot_nr < num_plot; plot_nr++) {
+    char * filename = util_alloc_sprintf("/tmp/plot_%d.png" , plot_nr);
+    plot_type * plot = __plot_alloc(plot_config , "X" , "Y" , "Tittel" , filename );
+    
+    for (int ix=0; ix < length; ix++) {
+      x[ix] = xmin + ix*(xmax - xmin) / ( length - 1);
+      y[ix] = cos( x[ix] );
+
+      __plot_add_data( plot , NULL , length , x , y );
+    }
+    
+    __plot_show( plot , plot_config , filename );
+    free( filename );
+  }
+}
+
 
 
 void enkf_tui_plot_menu(void * arg) {
@@ -1205,6 +1232,7 @@ void enkf_tui_plot_menu(void * arg) {
       plot_config_toggle_logy( plot_config );
       enkf_tui_toggle_logy( arg_pack );   /* This sets the label */
     }
+    menu_add_item( menu , "Test" , "xX" , plot_test , enkf_main , NULL);
     menu_run(menu);
     menu_free(menu);
   }

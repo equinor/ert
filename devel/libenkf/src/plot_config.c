@@ -46,7 +46,7 @@ void plot_config_set_image_type(plot_config_type * plot_config , const char * im
 
 
 void plot_config_set_viewer(plot_config_type * plot_config , const char * plot_viewer) {
-  if (util_file_exists( plot_viewer) && util_is_executable( plot_viewer ))
+  if (plot_viewer != NULL && util_file_exists( plot_viewer) && util_is_executable( plot_viewer ))
     plot_config->viewer = util_realloc_string_copy(plot_config->viewer , plot_viewer);
   else {
     plot_config->viewer = util_realloc_string_copy(plot_config->viewer , NULL );

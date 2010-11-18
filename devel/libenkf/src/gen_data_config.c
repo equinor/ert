@@ -204,9 +204,11 @@ static void gen_data_config_set_io_format( gen_data_config_type * config , gen_d
 
 
 bool gen_data_config_is_valid( const gen_data_config_type * gen_data_config) {
-  if (gen_data_config->init_file_fmt == NULL)
-    return false;
+  // This is to strict?
+  //if (gen_data_config->init_file_fmt == NULL)
+  //return false;
   
+
   return gen_data_config->update_valid;
 }
 

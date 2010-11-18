@@ -236,7 +236,7 @@ static void plot_free_all_datasets(plot_type * plot) {
    This function will close all pending/halfopen plot operations and
    free all resources used by the plot.
 */
-void plot_free(plot_type * plot)
+void plot_free( plot_type * plot )
 {
   plot_driver_free( plot->driver );
   plot_free_all_datasets(plot);
