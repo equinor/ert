@@ -86,7 +86,7 @@ class Driver:
         (path_base , ext) = os.path.splitext( data_file )
         (run_path , base) = os.path.split( path_base )
         num_cpu = "%s" % ecl_util.get_num_cpu( data_file )
-        return self.submit( base , eclipse_cmd , run_path , [ eclipse_version , num_cpu ], blocking = blocking)
+        return self.submit( base , eclipse_cmd , run_path , [ eclipse_version , data_file , num_cpu ], blocking = blocking)
     
 
     def free_job( self , job ):
