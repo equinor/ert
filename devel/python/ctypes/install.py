@@ -109,7 +109,7 @@ def install_file( src_file , target_file , strict_exists = True):
             print "Warning: file: %s does not exist - skipping"
 
     shutil.copyfile( src_file , target_file )
-    print "Installing file: %s" % target_file
+    print "Copying %s->%s" % (src_file , target_file)
     if os.stat( target_file )[stat.ST_UID] == uid:
         chgrp( target_file , res_guid )
 
