@@ -27,9 +27,9 @@ src_files     = ["data/eclipse/case/ECLIPSE.DATA" , "data/eclipse/case/include"]
 run_path_fmt  = "tmp/simulations/run%d"
 
 
-print "Starting ..."
-
 for case_nr in range( 10 ):
     copy_case( run_path_fmt % case_nr , src_files )
+
+driver = job_queue.LocalDriver()
 
 
