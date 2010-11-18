@@ -25,8 +25,8 @@ class EclCase:
         else:
             self.__path = os.getcwd()
         (self.__base , self.ext) = os.path.splitext( tmp )
-
-
+        
+        
         self.__sum         = None
         self.__grid        = None
         self.__data_file   = None
@@ -79,6 +79,9 @@ class EclCase:
         return job
         
 
+    def submit( self , queue ):
+        queue.add_job( self.datafile )
+        
 
 
 
