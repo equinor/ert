@@ -185,8 +185,8 @@ install_path( "ert" , python_root , extensions = ["py"])
 
 install_file( "C/libpycfile/slib/libpycfile.so"            , "%s/libpycfile.so"   % lib_root , strict_exists = False)
 install_file( "../../libutil/slib/libutil.so"              , "%s/libutil.so"      % lib_root , strict_exists = False)
-install_file( "../../libconfig/slib/libconfig.so"          , "%s/libpconfig.so"   % lib_root , strict_exists = False)
-install_file( "../../libecl/slib/libecl.so"                , "%s/libpecl.so"      % lib_root , strict_exists = False)
+install_file( "../../libconfig/slib/libconfig.so"          , "%s/libconfig.so"   % lib_root , strict_exists = False)
+install_file( "../../libecl/slib/libecl.so"                , "%s/libecl.so"      % lib_root , strict_exists = False)
 install_file( "../../libjob_queue/slib/libjob_queue.so"    , "%s/libjob_queue.so" % lib_root , strict_exists = False)
 
 install_link( "%s/lib/python/lib/libpycfile.so" % SDP_ROOT , "%s/ert/util/pycfile.so" % python_root)
