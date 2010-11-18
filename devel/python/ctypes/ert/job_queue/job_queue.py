@@ -139,6 +139,7 @@ class JobQueue:
         job = Job( self.driver , cfunc.get_job_ptr( self , job_index ) , False )
         
         self.jobs.add_job( job , job_name )
+        return job
 
 
     def clear( self ):
@@ -149,15 +150,19 @@ class JobQueue:
     def running(self):
         return cfunc.is_running( self )
 
+    @property
     def num_running( self ):
         return cfunc.num_running( self )
 
+    @property
     def num_pending( self ):
         return cfunc.num_pending( self )
 
+    @property
     def num_waiting( self ):
         return cfunc.num_waiting( self )
 
+    @property
     def num_complete( self ):
         return cfunc.num_complete( self )
 
@@ -184,8 +189,8 @@ class EclQueue( JobQueue ):
         (run_path , base) = os.path.split( path_base )
         
         argv = [ self.ecl_version , path_base , "%s" % ecl_util.get_num_cpu( data_file )]
-        JobQueue.add_job( self , run_path , base , argv)
-
+        return JobQueue.add_job( self , run_path , base , argv)
+        
 
 #################################################################
 
