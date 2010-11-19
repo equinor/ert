@@ -8,7 +8,7 @@ import libecl
 from   ert.cwrap.cwrap       import *
 from   fortio                import FortIO
 from   ecl_kw                import EclKW
-
+from   ert.util.ctime        import ctime 
 
 
 class EclFile(object):

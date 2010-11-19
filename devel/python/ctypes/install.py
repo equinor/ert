@@ -86,14 +86,29 @@ def get_SDP_ROOT():
 
 
 def chgrp(path , guid ):
-    os.chown( path , -1 , guid )
+    if not os.stat( path )[stat.ST_GID] == guid:
+        if os.stat( path )[stat.ST_UID] == uid:
+            os.chown( path , -1 , guid )
+        else:
+            print "Warning: could not update group ownership on:%s (not owner)." % path
+
+
+def chmod(path , mode):
+    if not os.stat( path )[stat.ST_MODE] == mode:
+        if os.stat( path )[stat.ST_UID] == uid:
+            os.chmod( path , mode)
+        else:
+            print "Warning: could not update mode on:%s (not owner)." % path
 
 
 def install_link( target_file , link_name):
     if os.path.exists( target_file ):
         if os.path.exists( link_name ):
-            os.unlink( link_name )
-            print "Linking: %s -> %s" % (link_name , target_file )
+            if os.stat( path )[stat.ST_UID] == uid:
+                os.unlink( link_name )
+                print "Linking: %s -> %s" % (link_name , target_file )
+            else:
+                return
         os.symlink( target_file , link_name )
         chgrp( link_name , res_guid )
     else:
@@ -109,15 +124,15 @@ def install_file( src_file , target_file , strict_exists = True):
             print "Warning: file: %s does not exist - skipping"
 
     shutil.copyfile( src_file , target_file )
-    print "Copying %s->%s" % (src_file , target_file)
-    if os.stat( target_file )[stat.ST_UID] == uid:
-        chgrp( target_file , res_guid )
+    print "Installing: %s" % target_file
 
-        st = os.stat( src_file )
-        if st[stat.ST_MODE] & stat.S_IXUSR: 
-            os.chmod( target_file , script_mode )
-        else:
-            os.chmod( target_file , data_mode )
+    chgrp( target_file , res_guid )
+
+    st = os.stat( src_file )
+    if st[stat.ST_MODE] & stat.S_IXUSR: 
+        chmod( target_file , script_mode )
+    else:
+        chmod( target_file , data_mode )
 
 
 def make_dir( target_dir ):
@@ -125,9 +140,8 @@ def make_dir( target_dir ):
         os.makedirs( target_dir )
         print "Creating directory: %s" % target_dir
 
-    if os.stat( target_dir )[stat.ST_UID] == uid:
-        chgrp( target_dir , res_guid )
-        os.chmod( target_dir , dir_mode )
+    chgrp( target_dir , res_guid )
+    chmod( target_dir , dir_mode )
 
 
 
@@ -165,7 +179,7 @@ def install_path( src_path , target_root , extensions = None):
             py_compile.compile( target_file )
             pyc_file = target_file + "c"
             chgrp( pyc_file , res_guid )
-            os.chmod( pyc_file , data_mode )
+            chmod( pyc_file , data_mode )
     
     #Recursive"
     for dir in dir_entries:
