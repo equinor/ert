@@ -94,7 +94,8 @@ def chgrp(path , guid ):
 
 
 def chmod(path , mode):
-    if not os.stat( path )[stat.ST_MODE] == mode:
+    path_mode = os.stat( path )[stat.ST_MODE]
+    if not stat.S_IMODE( path_mode )  == mode:
         if os.stat( path )[stat.ST_UID] == uid:
             os.chmod( path , mode)
         else:
