@@ -121,7 +121,8 @@ def install_file( src_file , target_file , strict_exists = True):
         if strict_exists:
             raise Exception("Copying %s -> %s" % (src_file , target_file))
         else:
-            print "Warning: file: %s does not exist - skipping"
+            print "Warning: file: %s does not exist - skipping" % src_file
+            return 
 
     shutil.copyfile( src_file , target_file )
     print "Installing: %s" % target_file
