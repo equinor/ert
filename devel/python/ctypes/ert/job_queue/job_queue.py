@@ -135,8 +135,11 @@ class JobQueue:
         c_argv = (ctypes.c_char_p * len(argv))()
         c_argv[:] = argv
         job_index = self.jobs.size
+        print "Calling insert_job"
         cfunc.insert_job( self , run_path , job_name , job_index , len(argv) , c_argv)
+        print "Returning from insert_job"
         job = Job( self.driver , cfunc.get_job_ptr( self , job_index ) , False )
+        print "Return OK"
         
         self.jobs.add_job( job , job_name )
         return job
@@ -189,6 +192,7 @@ class EclQueue( JobQueue ):
         (run_path , base) = os.path.split( path_base )
         
         argv = [ self.ecl_version , path_base , "%s" % ecl_util.get_num_cpu( data_file )]
+        print "Running add_job"
         return JobQueue.add_job( self , run_path , base , argv)
         
 
