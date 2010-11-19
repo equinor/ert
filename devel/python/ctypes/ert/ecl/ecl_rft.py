@@ -1,5 +1,6 @@
 import libecl
 from   ert.cwrap.cwrap       import *
+from   ert.util.ctime        import ctime
 
 
 RFT = 1
