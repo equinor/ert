@@ -104,7 +104,7 @@ def chmod(path , mode):
 def install_link( target_file , link_name):
     if os.path.exists( target_file ):
         if os.path.exists( link_name ):
-            if os.stat( path )[stat.ST_UID] == uid:
+            if os.stat( link_name )[stat.ST_UID] == uid:
                 os.unlink( link_name )
                 print "Linking: %s -> %s" % (link_name , target_file )
             else:
