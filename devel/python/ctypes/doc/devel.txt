@@ -43,21 +43,52 @@ http://www.python.org/org/library/ctypes.html
 In the ert Python wrapping loading the shared library is handled by
 the ert.util.clib function load(). When the shared library has been
 loaded, all the symbols of the shared library are available ass
-attributes of the ctypes load handle, as illustrated in the following
-example base on libc:
+attributes of the ctypes load handle. At the lowest level the loading
+of shared libraried is through the ctypes.CDLL() call like:
 
-    clib_handle = ctypes.CDLL( "libc" )
-    print clib_handle.getenv
+    lib_handle = ctypes.CDLL( "libname" )
 
-Now clib_handle.getenve will be a pointer to a Python function
-object. Before this is really usable we have to "tell" the function
-object input and out arguments, this is done with the restype
-attribute and the argtypes attribute.. For the getenv() function which
-takes (char *) input and also returns a (char *) pointer this would be:
+however in the ert py library this is wrapped by the function load()
+in the ert.util.clib module:
+ 
+    import ert.util.clib as clib   
+    lib_handle = clib.load("name1" , "name2" , "name3")
+
+The clib.load() function will only load one library, but it can take
+several names to that library and will try loading until one of them
+succeeds. This is quite useful because several of the standard
+libraries are identified with different names on the different RedHat
+releases, for instance zlib is loaded like this:
+
+    zlib_handle = clib.load("libz", "libz.so.1")
+
+When the library has been loaded, all functions of the shared library
+will be available as python function attributes of the library
+handle. I.e. if loading the standard library like:
+
+    clib_handle = clib.load( "libc" )
+    
+The attribute clib_handle.getenv will be a pointer to a Python
+function object which wraps the standard library getenv()
+function. Before this is really usable we have to "tell" the function
+object which input arguments and return to expect, this is done with
+the restype attribute and the argtypes attribute of the function
+object. For the getenv() function which takes one (char *) input and
+returns a (char *) pointer this would be:
 
     clib_handle.getenv.restype  =   ctypes.c_char_p
     clib_handle.getenv.argtypes = [ ctypes.c_char_p ] 
     
+In the ert python code this is achieved with the helper class CWrapper
+implemented in the module ert.cwrap.cwrap:
+
+    from ert.cwrap.cwrap import CWrapper
+
+    lib = clib.load( "libc" ) 
+    wrapper = CWRapper( lib )
+    getenv = wrapper.prototype("char*  getenv( char* )")
+
+
 2.2 Type mappings 
 
 The ctypes library automagically handles conversion between common
@@ -82,6 +113,17 @@ process (as a string) and the corresponding Python type:
    CWrapper.registerType( "char*"  , ctypes.c_char_p )                          
    CWrapper.registerType( "int*"   , ctypes.POINTER( ctypes.c_int ))
    
+
+  /-- Warning: ----------------------------------------------\
+  | The mapping of types generally works quite well, however |
+  | observe that the return type of C functions which return |
+  | an instance pointer is NOT the current class, but long,  |
+  | that is because this return value is internalized  in    | 
+  | the c_ptr attribute of the object.                       |
+  \----------------------------------------------------------/
+
+
+
 
 2.2.1 Fundamental types
 
@@ -246,6 +288,84 @@ essential to understand these points.
 
 
 5.1 Garbage collection and container types
+
+The Python language has garbage collection, and as a user of the ert
+python code you should just assume that the garbage collection works
+just as well for the ert py types. However, if you want to wrap new
+types (or maybe fix a bug) you should understand how the the ert py
+classes interact with garbage collection.
+
+When the Python interpreter decides that an object will be collected,
+the __del__() method of that object is called, and whatever
+non-standard cleanup code can be called here. In the case of ert py,
+this is where the C based destructor can be called. The important
+point is that it differs from case to case whether the C based
+constructor should indeed be called.
+
+The EclKW class illustrates this quite well. Broadly speaking you can
+instantiate an EclKW instance in two ways:
+
+  * Through the EclwKW.new() function 
+  * As a reference to an existing ecl_kw through an EclFile instance.
+
+In the first case the c_ptr of the EclKW instance will point to fresh
+storage dedicated to this EclKW, and when the EclKW instance goes out
+of scope the memory should be freed with a call to the C function
+ecl_kw_free(). 
+
+   EclKW (Python)       ecl_kw (C) 
+      c_ptr               
+       |                ---------
+       \--------------->| PORO  |
+                        | REAL  |
+                        | 10000 |
+                        |-------|
+                        | 0.15  |
+                        | 0.19  |
+                        | ...   |   
+                        ---------
+
+
+In the second case an EclFile instance has been created, and this
+object points to ecl_file C struct which is essentially a container
+containing many ecl_kw instances. We can then query the EclFile
+instance to get reference to the various ecl_kw keywords, i.e. for a
+small restart file:
+
+                        
+EclFile (Python)      ecl_file (C)             EclKW (Python)  
+   c_ptr                                          c_ptr
+    |                 ------------                  |
+    \------------->   | PRESSURE |                  |   
+                      | SGAS <---+------------------/
+                      | SWAT     |
+                      | ....     |
+                      ------------
+
+The situaton above (which is quite typical) could for instance come
+about from:
+
+   restart_file = ecl.EclFile( "ECLIPSE.X0057" )
+   sgas_kw      = restart_file.iget_named_kw( "SGAS" , 0 )
+
+Now, when the sgas_kw object goes out of scope it is important that
+the SGAS ecl_kw in the ecl_file file container is _NOT_ deleted that
+will be handled by the ecl_file_free() function when the restart_file
+object goes out scope. 
+
+To facilitate this different behaviour when an EclKW goes out scope
+the object contains a field 'data_owner', and the __del__() method
+looks like this:
+
+
+  def __del__( self ):
+     if self.data_owner:
+         cfunc.free( self )
+
+This technique is implemented in many of the objects. In the current
+code the data_owner field is set alongside with the c_ptr field, and
+not modified during the lifetime of the object.
+
 
 5.2 Funny types
 
