@@ -913,7 +913,7 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
     ministep, whereas the the update code below (can) go in several
     steps if memory is tight.
   */
-  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data , obs_data ,  V0T , Z , eig , U0 );
+  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data , obs_data ,  V0T , Z , eig , U0 , meas_data );
     
   if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
     randrot = enkf_analysis_alloc_mp_randrot( ens_size );
@@ -1029,8 +1029,8 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
       /* The actual update */
 
       /*Get the optimal update matrix - observe that the A matrix is input.*/
-      {
-        matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_data , obs_data , randrot, A , V0T , Z , eig, U0);   
+     { 
+        matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_data , obs_data , randrot, A , V0T , Z , eig, U0 , meas_data , ens_size);   
         
         msg_update(msg , " matrix multiplication");
         matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
@@ -1076,7 +1076,10 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
   free( row_offset );
   msg_free( msg , true );
   matrix_free( A );
-  
+  matrix_free( U0 );
+  matrix_free( V0T );
+  matrix_free( Z );
+  free( eig );
   if (randrot != NULL)
     matrix_free( randrot );
 }
@@ -1088,7 +1091,7 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
    the function, rather than sending it as an input.
 */
 
-void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , const local_ministep_type * ministep, const int_vector_type * step_list , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data, double std_cutoff, double alpha) {
+void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_ministep_type * ministep, const int_vector_type * step_list , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data, double std_cutoff, double alpha) {
   const int num_cpu_threads          = 4;
 
   int       matrix_size              = 1000;  /* Starting with this */
@@ -1110,20 +1113,21 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
   int report_step          = int_vector_get_last( step_list );
   
   matrix_type * randrot       = NULL;
-  matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
-  matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
-  matrix_type * Z    = matrix_alloc( nrmin , nrmin    );
-  double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);
   
-
   /*
-    Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
-    local CV below. This step is only performed once for each
-    ministep, whereas the the update code below (can) go in several
-    steps if memory is tight.
-  
-  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data , obs_data ,  V0T , Z , eig , U0 );
+    Generating a matrix with random integers to be used for sampling across serializing. 
+    This matrix will hold double values, but an integer cast will give a random integer
+    between 0 and ens_size-1.
   */
+
+  matrix_type * randints = matrix_alloc( ens_size , ens_size);
+  for (int i = 0; i < ens_size; i++){
+    for (int j = 0; j < ens_size; j++){
+      double r = ((double)rand() / ((double)RAND_MAX+(double)1))*ens_size;
+      matrix_iset(randints, i , j , r);
+    }
+  }
+
   if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
     randrot = enkf_analysis_alloc_mp_randrot( ens_size );
   
@@ -1245,30 +1249,39 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
         matrix_type      * A_resampled           = matrix_alloc( matrix_get_rows(work_A) , matrix_get_columns( work_A ));
         for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
           int ensemble_counter;
-          obs_data_type    * obs_data_resampled      = obs_data_alloc();
           /* Resample A and meas_data. Here we are careful to resample the working copy.*/
-
-
+	  int * bootstrap_components = util_malloc( ens_size * sizeof * bootstrap_components, __func__); 
           for (ensemble_counter  = 0; ensemble_counter < ens_size; ensemble_counter++) {
-            double r = ( (double)rand() / ((double)RAND_MAX+(double)1))*ens_size;
-            int random_column = (int) r;
-            
-            matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column);
+	    double random_col = matrix_iget(randints,ensemble_members_loop,ensemble_counter);
+	    int random_column = (int)random_col;
+	    bootstrap_components[ensemble_counter] = random_column;
+	    matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column);
             meas_data_assign_vector( meas_data_resampled, meas_data , ensemble_counter , random_column);
           }
-          
-
-          if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
-            enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data_resampled , obs_data_resampled ,  V0T , Z , eig , U0 );
-            matrix_type * X5_boot = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_data_resampled , obs_data_resampled , randrot, A_resampled , V0T , Z , eig, U0);
+	  int unique_bootstrap_components = util_int_unique_components( bootstrap_components , ens_size);
+	  free( bootstrap_components);
+          if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) { /* Bootstrapping and CV*/
+	    matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
+	    matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
+	    matrix_type * Z    = matrix_alloc( nrmin , nrmin    );
+	    double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);
+	    /*
+	      Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
+	      local CV below. 
+	    */
+            enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data_resampled , obs_data ,  V0T , Z , eig , U0 , meas_data );
+            matrix_type * X5_boot_cv = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_data_resampled , obs_data , randrot, A_resampled , V0T , Z , eig, U0, meas_data, unique_bootstrap_components);
             msg_update(msg , " matrix multiplication");
-            matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
-            matrix_free( X5_boot );
+            matrix_inplace_matmul_mt( A_resampled , X5_boot_cv , num_cpu_threads );
             matrix_inplace_add( A_resampled , work_A ); 
             matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
-          } else {
-            matrix_type * X5_boot = enkf_analysis_allocX( enkf_main->analysis_config , meas_data_resampled , obs_data , randrot);
-
+	    matrix_free( U0 );
+	    matrix_free( V0T );
+	    matrix_free( Z );
+	    free( eig );
+            matrix_free( X5_boot_cv );
+          } else { /* Just Bootstrapping */
+            matrix_type * X5_boot = enkf_analysis_allocX_boot( enkf_main->analysis_config , meas_data_resampled , obs_data , randrot, meas_data);
             msg_update(msg , " matrix multiplication");
             matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
             matrix_free( X5_boot );
@@ -1321,7 +1334,8 @@ void enkf_main_update_mulX_cv_bootstrap_update(enkf_main_type * enkf_main , cons
   free( row_offset );
   msg_free( msg , true );
   matrix_free( A );
-  
+  matrix_free( randints );
+
   if (randrot != NULL)
     matrix_free( randrot );
 }
@@ -1404,7 +1418,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
               data.
             */
             printf("Doing bootstrap\n");
-            enkf_main_update_mulX_cv_bootstrap_update(enkf_main , ministep, step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
+            enkf_main_update_mulX_bootstrap(enkf_main , ministep, step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
           } else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
             /* Update based on Cross validation AND local analysis. */
             enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);
