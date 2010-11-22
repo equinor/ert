@@ -99,7 +99,6 @@ process (as a string) and the corresponding Python type:
    CWrapper.registerType( "char*"  , ctypes.c_char_p )                          
    CWrapper.registerType( "int*"   , ctypes.POINTER( ctypes.c_int ))
    
-
   /-- Warning: ----------------------------------------------\
   | The mapping of types generally works quite well, however |
   | observe that the return type of C functions which return |
@@ -107,7 +106,6 @@ process (as a string) and the corresponding Python type:
   | that is because this return value is internalized  in    | 
   | the c_ptr attribute of the object.                       |
   \----------------------------------------------------------/
-
 
 
 
@@ -289,15 +287,20 @@ the ecl_kw.py file looks like this:
   cfunc.iset_char_ptr  = cwrapper.prototype("void ecl_kw_iset_char_ptr( ecl_kw , int , char*)")
   cfunc.iget_bool      = cwrapper.prototype("bool ecl_kw_iget_bool( ecl_kw , int)")
   cfunc.iset_bool      = cwrapper.prototype("bool ecl_kw_iset_bool( ecl_kw , int, bool)")
+  cfunc.alloc_new      = cwrapper.prototype("long ecl_kw_alloc( char* , int , int )")
   ....
   ....
 
 This makes the function cfunc.get_size, cfunc.get_type,
 cfunc.iget_char_ptr, ... available as first class Python functions,
 and the Python classes can be implemented based on these
-functions. The prototyped functions is quite low-level, and they
-should __NOT__ be used outside the file scope where they are defined.
+functions. Observe that the return value from "ecl_kw_alloc()" is
+'long' and not ecl_kw - that is because this return value is
+internalized in the c_ptr of the object (this is not particularly
+elegant, and could probably be improved upon..??).
 
+The prototyped functions is quite low-level, and they should __NOT__
+be used outside the file scope where they are defined.
 
 
 4.3 Python classes
