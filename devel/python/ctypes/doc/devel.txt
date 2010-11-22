@@ -12,9 +12,7 @@ Developer documentation
     4.1 Loading the shared library
     4.2 Prototyping
     4.3 The pure python code 
-  5 Caveats 
-    5.1 Garbage collection 
-    5.2 Funny types
+  5 Garbage collection and 'data_owner'
   6 Installation in Statoil
 
 
@@ -73,20 +71,8 @@ function object which wraps the standard library getenv()
 function. Before this is really usable we have to "tell" the function
 object which input arguments and return to expect, this is done with
 the restype attribute and the argtypes attribute of the function
-object. For the getenv() function which takes one (char *) input and
-returns a (char *) pointer this would be:
-
-    clib_handle.getenv.restype  =   ctypes.c_char_p
-    clib_handle.getenv.argtypes = [ ctypes.c_char_p ] 
-    
-In the ert python code this is achieved with the helper class CWrapper
-implemented in the module ert.cwrap.cwrap:
-
-    from ert.cwrap.cwrap import CWrapper
-
-    lib = clib.load( "libc" ) 
-    wrapper = CWRapper( lib )
-    getenv = wrapper.prototype("char*  getenv( char* )")
+object, more details of the prototype process can be found in section
+4.2
 
 
 2.2 Type mappings 
@@ -194,6 +180,9 @@ with the same name and a Python class with CamelCaps naming:
     C                                  Python
     ecl_kw.c implements ecl_kw_type    ecl_kw.py implements EclKW
 
+c_ptr
+
+
 
 
 4 Common structure of the wrapping
@@ -251,14 +240,63 @@ need access to the function objects pointing to C functions, like
 e.g. the prototype function in the CWrapper class, will use this
 attribute.
 
+If you take a detailed look at some of the "import libxxx" statements
+they might seem superfluous, in the sense that the active scope does
+not reference the imported library, however in many cases the "import
+libxxxx" statements are for side-effects only.
+
 
 4.2 Prototyping
 
-The bottom part of the Python modules typically look 
+As mentioned in section 2.1 we must "tell" the function pointers the
+type of the return value and the input arguments. This is done by
+setting the restype and argtypes attributes. For the getenv() function
+which takes one (char *) input and returns a (char *) pointer this
+would be:
+
+    clib_handle.getenv.restype  =   ctypes.c_char_p
+    clib_handle.getenv.argtypes = [ ctypes.c_char_p ] 
+    
+In the ert python code this is achieved with the helper class CWrapper
+implemented in the module ert.cwrap.cwrap:
+
+    from ert.cwrap.cwrap import CWrapper
+
+    lib = clib.load( "libc" ) 
+    wrapper = CWRapper( lib )
+    getenv = wrapper.prototype("char*  getenv( char* )")
+
+The prototype() method of the CWrapper class is essentially one
+massive regular expression which parses the "char* getenv( char* )"
+string and assigns the correct restype and argtypes attributes.
 
 
-The prototyped functions should __NOT__ be used outside the file scope
-where they are defined.
+All the calls to the prototype() method are typically assembled in the
+bottom of the file implementing a class defintion. E.g. the bottom of
+the ecl_kw.py file looks like this:
+
+  # 1: Load the shared library  
+  cwrapper = CWrapper( libecl.lib )
+
+  # 2: Register type mapping ecl_kw <--> EclKW
+  cwrapper.registerType( "ecl_kw" , EclKW )
+
+  # 3: Prototype the C functions we will use from Python
+  cfunc = CWrapperNameSpace("ecl_kw")
+  cfunc.get_size       = cwrapper.prototype("int ecl_kw_get_size( ecl_kw )")
+  cfunc.get_type       = cwrapper.prototype("int ecl_kw_get_type( ecl_kw )")
+  cfunc.iget_char_ptr  = cwrapper.prototype("char* ecl_kw_iget_char_ptr( ecl_kw , int )")
+  cfunc.iset_char_ptr  = cwrapper.prototype("void ecl_kw_iset_char_ptr( ecl_kw , int , char*)")
+  cfunc.iget_bool      = cwrapper.prototype("bool ecl_kw_iget_bool( ecl_kw , int)")
+  cfunc.iset_bool      = cwrapper.prototype("bool ecl_kw_iset_bool( ecl_kw , int, bool)")
+  ....
+  ....
+
+This makes the function cfunc.get_size, cfunc.get_type,
+cfunc.iget_char_ptr, ... available as first class Python functions,
+and the Python classes can be implemented based on these
+functions. The prototyped functions is quite low-level, and they
+should __NOT__ be used outside the file scope where they are defined.
 
 
 
@@ -266,6 +304,14 @@ where they are defined.
 
 All the main Python classes wrap a C based structure, and contain
 roughly the same structure:
+
+  * The underlying C structure is 'held' with the attribute c_ptr,
+    c_ptr is just a long which is the pointer value of the underlying
+    C structure. The name c_ptr is just convention, and could be
+    anything.
+
+    The type of c_ptr is 'long', ideally it should be some pointer
+    type, the use of 'long' amounts to hardcoding 64 bits behaviour.
 
   * The __init__() function, or alternatively a classmethod
     constructor calls the C based constructor, like
@@ -278,22 +324,15 @@ roughly the same structure:
     called, e.g. ecl_grid_free().
     
 
-The c_ptr
-
-5 Caveats
-
-As a user of the library it should __NOT__ be necessary to be aware of
-these possible pitfalls, but if you wish to extend the library it is
-essential to understand these points.
 
 
-5.1 Garbage collection and container types
+5 Garbage collection and 'data_owner'
 
 The Python language has garbage collection, and as a user of the ert
 python code you should just assume that the garbage collection works
 just as well for the ert py types. However, if you want to wrap new
-types (or maybe fix a bug) you should understand how the the ert py
-classes interact with garbage collection.
+types (or maybe fix a bug ...) you should understand how the the ert
+py classes interact with garbage collection.
 
 When the Python interpreter decides that an object will be collected,
 the __del__() method of that object is called, and whatever
@@ -349,25 +388,25 @@ about from:
    sgas_kw      = restart_file.iget_named_kw( "SGAS" , 0 )
 
 Now, when the sgas_kw object goes out of scope it is important that
-the SGAS ecl_kw in the ecl_file file container is _NOT_ deleted that
+the SGAS ecl_kw in the ecl_file file container is _NOT_ deleted, that
 will be handled by the ecl_file_free() function when the restart_file
-object goes out scope. 
+object goes out scope.
 
 To facilitate this different behaviour when an EclKW goes out scope
 the object contains a field 'data_owner', and the __del__() method
 looks like this:
 
-
   def __del__( self ):
      if self.data_owner:
          cfunc.free( self )
 
-This technique is implemented in many of the objects. In the current
-code the data_owner field is set alongside with the c_ptr field, and
-not modified during the lifetime of the object.
+I.e. the C based free() function is only called if the object is the
+owner of the underlying C structure.  This technique is implemented in
+many of the objects. In the current code the data_owner field is set
+alongside with the c_ptr field, and not modified during the lifetime
+of the object (i.e. it is not possible with 'hostile takeover' or
+'orphaning' of objects).
 
-
-5.2 Funny types
 
 
 6 Installation in Statoil
