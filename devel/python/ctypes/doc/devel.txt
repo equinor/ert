@@ -378,7 +378,7 @@ small restart file:
 EclFile (Python)      ecl_file (C)             EclKW (Python)  
    c_ptr                                          c_ptr
     |                 ------------                  |
-    \------------->   | PRESSURE |                  |   
+    \---------------->| PRESSURE |                  |   
                       | SGAS <---+------------------/
                       | SWAT     |
                       | ....     |
