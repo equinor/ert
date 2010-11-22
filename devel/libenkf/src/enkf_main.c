@@ -1250,16 +1250,17 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
         for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
           int ensemble_counter;
           /* Resample A and meas_data. Here we are careful to resample the working copy.*/
-	  int * bootstrap_components = util_malloc( ens_size * sizeof * bootstrap_components, __func__); 
+	  int_vector_type * bootstrap_components = int_vector_alloc( ens_size , 0);
           for (ensemble_counter  = 0; ensemble_counter < ens_size; ensemble_counter++) {
-	    double random_col = matrix_iget(randints,ensemble_members_loop,ensemble_counter);
+	    double random_col = matrix_iget( randints , ensemble_members_loop , ensemble_counter );
 	    int random_column = (int)random_col;
-	    bootstrap_components[ensemble_counter] = random_column;
-	    matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column);
+	    int_vector_iset( bootstrap_components , ensemble_counter , random_column );
+	    matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column );
             meas_data_assign_vector( meas_data_resampled, meas_data , ensemble_counter , random_column);
           }
-	  int unique_bootstrap_components = util_int_unique_components( bootstrap_components , ens_size);
-	  free( bootstrap_components);
+	  int_vector_select_unique( bootstrap_components );
+	  int unique_bootstrap_components = int_vector_size( bootstrap_components );
+	  int_vector_free( bootstrap_components);
           if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) { /* Bootstrapping and CV*/
 	    matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
 	    matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
