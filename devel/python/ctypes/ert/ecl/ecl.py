@@ -8,6 +8,7 @@ from   ert.cwrap.cwrap       import *
 import ert.util.ctime        
 import ecl_util
 import ecl_default
+import ecl_grav
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_CHAR_TYPE , ECL_BOOL_TYPE , ECL_DOUBLE_TYPE, EclKW
 from   ecl_file              import EclFile
 from   ecl_sum               import EclSum

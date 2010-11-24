@@ -1035,7 +1035,7 @@ void * job_queue_run_jobs__(void * __arg_pack) {
 
 void job_queue_insert_job(job_queue_type * queue , const char * run_path , const char * job_name , int job_index , int argc , const char ** argv) {
   if (!queue->user_exit) {/* We do not accept new jobs if a user-shutdown has been iniated. */
-
+    
     if (job_index >= 0 && job_index < queue->size) 
       job_queue_initialize_node(queue , run_path , job_name , job_index , argc , argv);
     else
