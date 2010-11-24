@@ -80,7 +80,7 @@ CWrapper.registerType( "stringlist" , StringList )
 
 cwrapper = CWrapper( libutil.lib )
 cfunc    = CWrapperNameSpace("StringList")
-cfunc.stringlist_alloc      = cwrapper.prototype("long stringlist_alloc_new( )")
+cfunc.stringlist_alloc      = cwrapper.prototype("c_void_p stringlist_alloc_new( )")
 cfunc.stringlist_free       = cwrapper.prototype("void stringlist_free( stringlist )")
 cfunc.stringlist_append     = cwrapper.prototype("void stringlist_append_copy( stringlist , char* )")
 cfunc.stringlist_iget       = cwrapper.prototype("char* stringlist_iget( stringlist , int )")

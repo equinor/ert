@@ -8,9 +8,8 @@ from   ecl_grid              import EclGrid
 
 def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , porv2):
     if not aquifern:
-        aquifern = EclKW.new("AQUIFERN" , rho1.size , ECL_INT_TYPE)
-        aquifern.assign( 0 )
-    
+        aquifern = EclKW.NULL()
+        
         # Something like this:
         # aquifern = ctypes.cast(None , ctypes.POINTER(ctypes.c_long)) 
 
@@ -80,6 +79,6 @@ def deltag( xyz , grid , init_file , restart_file1 , restart_file2):
 cwrapper           = CWrapper( libecl.lib )
 cfunc              = CWrapperNameSpace("ecl_grav")
 #cfunc.phase_deltag = cwrapper.prototype("double ecl_grav_phase_deltag( double, double ,double , ecl_grid , ecl_kw , ecl_kw , ecl_kw , ecl_kw , ecl_kw , ecl_kw , ecl_kw)")
-cfunc.phase_deltag = cwrapper.prototype("double ecl_grav_phase_deltag( double, double ,double , long , long , long , long , long , long , long , long)")
+cfunc.phase_deltag = cwrapper.prototype("double ecl_grav_phase_deltag( double, double ,double , c_void_p , c_void_p , c_void_p , c_void_p , c_void_p , c_void_p , c_void_p , c_void_p)")
 cfunc.phase_test_deltag = cwrapper.prototype("double ecl_grav_phase_test_deltag( double , double , double , ecl_grid , ecl_kw , ecl_kw , ecl_kw , ecl_kw)")
 

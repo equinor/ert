@@ -39,7 +39,7 @@ cwrapper.registerType("fortio" , FortIO )
 #    These functions are used when implementing the FortIO class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("fortio")
-cfunc.fortio_fopen = cwrapper.prototype("long fortio_fopen(char* , char* , bool)")
-cfunc.fortio_close = cwrapper.prototype("void fortio_fclose( fortio )")
+cfunc.fortio_fopen = cwrapper.prototype("c_void_p fortio_fopen(char* , char* , bool)")
+cfunc.fortio_close = cwrapper.prototype("void     fortio_fclose( fortio )")
 
 

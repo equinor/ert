@@ -290,10 +290,10 @@ cwrapper.registerType( "ecl_grid" , EclGrid )
 cfunc = CWrapperNameSpace("ecl_grid")
 
 
-cfunc.fread_alloc                  = cwrapper.prototype("long ecl_grid_load_case( char* )")
-cfunc.grdecl_create                = cwrapper.prototype("long ecl_grid_alloc_GRDECL_kw( ecl_kw , ecl_kw , ecl_kw , ecl_kw )") # MAPAXES not supported yet
-cfunc.get_lgr                      = cwrapper.prototype("long ecl_grid_get_lgr( ecl_grid , char* )")
-cfunc.get_cell_lgr                 = cwrapper.prototype("long ecl_grid_get_cell_lgr1( ecl_grid , int )")
+cfunc.fread_alloc                  = cwrapper.prototype("c_void_p ecl_grid_load_case( char* )")
+cfunc.grdecl_create                = cwrapper.prototype("c_void_p ecl_grid_alloc_GRDECL_kw( ecl_kw , ecl_kw , ecl_kw , ecl_kw )") # MAPAXES not supported yet
+cfunc.get_lgr                      = cwrapper.prototype("c_void_p ecl_grid_get_lgr( ecl_grid , char* )")
+cfunc.get_cell_lgr                 = cwrapper.prototype("c_void_p ecl_grid_get_cell_lgr1( ecl_grid , int )")
 cfunc.exists                       = cwrapper.prototype("bool ecl_grid_exists( char* )")
 cfunc.free                         = cwrapper.prototype("void ecl_grid_free( ecl_grid )")     
 cfunc.get_nx                       = cwrapper.prototype("int ecl_grid_get_nx( ecl_grid )")

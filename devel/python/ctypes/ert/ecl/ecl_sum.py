@@ -235,7 +235,7 @@ cwrapper.registerType( "ecl_sum" , EclSum )
 cfunc = CWrapperNameSpace("ecl_sum")
 
 
-cfunc.fread_alloc                   = cwrapper.prototype("c_ptr ecl_sum_fread_alloc_case__( char* , char* , bool)") 
+cfunc.fread_alloc                   = cwrapper.prototype("c_void_p ecl_sum_fread_alloc_case__( char* , char* , bool)") 
 cfunc.iiget                         = cwrapper.prototype("double   ecl_sum_iiget( ecl_sum , int , int)")
 cfunc.free                          = cwrapper.prototype("void     ecl_sum_free( ecl_sum )")
 cfunc.data_length                   = cwrapper.prototype("int      ecl_sum_get_data_length( ecl_sum )")

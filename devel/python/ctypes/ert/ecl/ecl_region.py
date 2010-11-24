@@ -277,7 +277,7 @@ cwrapper.registerType( "ecl_region" , EclRegion )
 # 3. Installing the c-functions used to manipulate.
 cfunc = CWrapperNameSpace("ecl_region")
 
-cfunc.alloc                      = cwrapper.prototype("long ecl_region_alloc( ecl_grid , bool )")
+cfunc.alloc                      = cwrapper.prototype("c_void_p ecl_region_alloc( ecl_grid , bool )")
 cfunc.free                       = cwrapper.prototype("void ecl_region_free( ecl_region )")     
 cfunc.reset                      = cwrapper.prototype("void ecl_region_reset( ecl_region )")
 
@@ -316,14 +316,14 @@ cfunc.iadd_kw                    = cwrapper.prototype("void  ecl_region_kw_iadd(
 cfunc.isub_kw                    = cwrapper.prototype("void  ecl_region_kw_isub( ecl_region , ecl_kw , ecl_kw , bool)")
 cfunc.copy_kw                    = cwrapper.prototype("void  ecl_region_kw_copy( ecl_region , ecl_kw , ecl_kw , bool)")
 
-cfunc.alloc_copy                 = cwrapper.prototype("long ecl_region_alloc_copy( ecl_region )")
+cfunc.alloc_copy                 = cwrapper.prototype("c_void_p ecl_region_alloc_copy( ecl_region )")
 cfunc.intersect                  = cwrapper.prototype("void ecl_region_intersection( ecl_region , ecl_region )")
 cfunc.combine                    = cwrapper.prototype("void ecl_region_union( ecl_region , ecl_region )")
 
-cfunc.get_kw_index_list          = cwrapper.prototype("long ecl_region_get_kw_index_list( ecl_region , ecl_kw , bool )")
-cfunc.get_active_list            = cwrapper.prototype("long ecl_region_get_active_list( ecl_region )")
-cfunc.get_global_list            = cwrapper.prototype("long ecl_region_get_global_list( ecl_region )")
-cfunc.get_active_global          = cwrapper.prototype("long ecl_region_get_global_active_list( ecl_region )")
+cfunc.get_kw_index_list          = cwrapper.prototype("c_void_p ecl_region_get_kw_index_list( ecl_region , ecl_kw , bool )")
+cfunc.get_active_list            = cwrapper.prototype("c_void_p ecl_region_get_active_list( ecl_region )")
+cfunc.get_global_list            = cwrapper.prototype("c_void_p ecl_region_get_global_list( ecl_region )")
+cfunc.get_active_global          = cwrapper.prototype("c_void_p ecl_region_get_global_active_list( ecl_region )")
 
 cfunc.select_cmp_less            = cwrapper.prototype("void ecl_region_cmp_select_less( ecl_region , ecl_kw , ecl_kw)")
 cfunc.select_cmp_more            = cwrapper.prototype("void ecl_region_cmp_select_more( ecl_region , ecl_kw , ecl_kw)")
