@@ -101,7 +101,6 @@ class EclKW(object):
 
     def __deep_copy__(self , memo):
         ecl_kw = EclKW.copy( self )
-        ecl_kw.data_owner = True
         return ecl_kw
 
 
@@ -276,7 +275,7 @@ class EclKW(object):
                     mask.set_kw( self , value , force_active )
                 else:
                     if self.__type == ECL_INT_TYPE:
-                        if isinstance( factor , int ):
+                        if isinstance( value , int ):
                             cfunc.set_int( self , value )
                         else:
                             raise TypeError("Type mismatch")
@@ -503,12 +502,12 @@ cfunc.double_ptr                 = cwrapper.prototype("double* ecl_kw_get_double
 cfunc.free                       = cwrapper.prototype("void ecl_kw_free( ecl_kw )")
 cfunc.copyc                      = cwrapper.prototype("long ecl_kw_alloc_copy( ecl_kw )")
 cfunc.fwrite                     = cwrapper.prototype("void ecl_kw_fwrite( ecl_kw , fortio )")
-cfunc.get_header                 = cwrapper.prototype("char* ecl_kw_get_header ( ecl_kw )")
-cfunc.set_header                 = cwrapper.prototype("void  ecl_kw_set_header_name ( ecl_kw , char*)")
-cfunc.fprintf_grdecl             = cwrapper.prototype("void ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
+cfunc.get_header                 = cwrapper.prototype("char*    ecl_kw_get_header ( ecl_kw )")
+cfunc.set_header                 = cwrapper.prototype("void     ecl_kw_set_header_name ( ecl_kw , char*)")
+cfunc.fprintf_grdecl             = cwrapper.prototype("void     ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
 cfunc.alloc_new                  = cwrapper.prototype("long ecl_kw_alloc( char* , int , int )")
 cfunc.load_grdecl                = cwrapper.prototype("long ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
-cfunc.fseek_grdecl               = cwrapper.prototype("bool ecl_kw_grdecl_fseek_kw(char* , bool, bool , FILE )")
+cfunc.fseek_grdecl               = cwrapper.prototype("bool     ecl_kw_grdecl_fseek_kw(char* , bool, bool , FILE )")
 
 cfunc.iadd                       = cwrapper.prototype("void ecl_kw_inplace_add( ecl_kw , ecl_kw )")
 cfunc.imul                       = cwrapper.prototype("void ecl_kw_inplace_mul( ecl_kw , ecl_kw )")

@@ -15,7 +15,7 @@ server_list = { "be" : "be-grid01.be.statoil.no",
 src_files     = ["data/eclipse/case/ECLIPSE.DATA" , "data/eclipse/case/include"]
 run_path_fmt  = "tmp/simulations/run%d"
 
-default_driver_string = "LOCAL"
+default_driver_string = "LSF"
 num_jobs              = 10
 max_running           = 3
 

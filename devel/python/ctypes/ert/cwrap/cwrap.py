@@ -21,6 +21,7 @@ class CWrapper:
     def registerDefaultTypes(cls):
         """Registers the default available types for prototyping."""
         cls.registerType("void"    ,  None)
+        cls.registerType("c_ptr"   ,  ctypes.c_void_p)
         cls.registerType("int"     ,  ctypes.c_int)
         cls.registerType("int*"    ,  ctypes.POINTER(ctypes.c_int))
         cls.registerType("bool"    ,  ctypes.c_int)
