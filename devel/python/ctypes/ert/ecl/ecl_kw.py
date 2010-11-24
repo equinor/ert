@@ -48,6 +48,14 @@ class EclKW(object):
         obj.__init( )
         return obj
     
+    @classmethod
+    def NULL( cls ):
+        obj = cls( )
+        obj.c_ptr  = None
+        obj.parent = None
+        obj.data_owner = False
+        return obj
+    
     
     @classmethod
     def grdecl_load( cls , file , kw , ecl_type = ECL_FLOAT_TYPE):
@@ -92,6 +100,12 @@ class EclKW(object):
     def __len__( self ):
         return cfunc.get_size( self )
 
+
+    def __nonzero__(self):
+        if self.c_ptr:
+            return True
+        else:
+            return False
     
 
     def __del__(self):
@@ -487,6 +501,9 @@ cwrapper.registerType( "ecl_kw" , EclKW )
 #    These functions are used when implementing the EclKW class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_kw")
+cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
+cfunc.load_grdecl                = cwrapper.prototype("c_void_p ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
+cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_copy( ecl_kw )")
 cfunc.get_size                   = cwrapper.prototype("int ecl_kw_get_size( ecl_kw )")
 cfunc.get_type                   = cwrapper.prototype("int ecl_kw_get_type( ecl_kw )")
 cfunc.iget_char_ptr              = cwrapper.prototype("char* ecl_kw_iget_char_ptr( ecl_kw , int )")
@@ -500,13 +517,10 @@ cfunc.float_ptr                  = cwrapper.prototype("float* ecl_kw_get_float_p
 cfunc.int_ptr                    = cwrapper.prototype("int* ecl_kw_get_int_ptr( ecl_kw )")
 cfunc.double_ptr                 = cwrapper.prototype("double* ecl_kw_get_double_ptr( ecl_kw )")
 cfunc.free                       = cwrapper.prototype("void ecl_kw_free( ecl_kw )")
-cfunc.copyc                      = cwrapper.prototype("long ecl_kw_alloc_copy( ecl_kw )")
 cfunc.fwrite                     = cwrapper.prototype("void ecl_kw_fwrite( ecl_kw , fortio )")
 cfunc.get_header                 = cwrapper.prototype("char*    ecl_kw_get_header ( ecl_kw )")
 cfunc.set_header                 = cwrapper.prototype("void     ecl_kw_set_header_name ( ecl_kw , char*)")
 cfunc.fprintf_grdecl             = cwrapper.prototype("void     ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
-cfunc.alloc_new                  = cwrapper.prototype("long ecl_kw_alloc( char* , int , int )")
-cfunc.load_grdecl                = cwrapper.prototype("long ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
 cfunc.fseek_grdecl               = cwrapper.prototype("bool     ecl_kw_grdecl_fseek_kw(char* , bool, bool , FILE )")
 
 cfunc.iadd                       = cwrapper.prototype("void ecl_kw_inplace_add( ecl_kw , ecl_kw )")
