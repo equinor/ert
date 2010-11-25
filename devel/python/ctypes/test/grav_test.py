@@ -6,7 +6,7 @@ import ert.ecl as ecl
 pos = (5354 , 9329 , 100)
 grid     = ecl.EclGrid("data/eclipse/case/ECLIPSE.EGRID")
 init     = ecl.EclFile("data/eclipse/case/ECLIPSE.INIT")
-restart1 = ecl.EclFile.restart_block("data/eclipse/case/ECLIPSE.UNRST" , dtime = datetime.date( 2004 , 12 , 1))
+restart1 = ecl.EclFile.restart_block("data/eclipse/case/ECLIPSE.UNRST" , report_step = 10)
 restart2 = ecl.EclFile.restart_block("data/eclipse/case/ECLIPSE.UNRST" , report_step = 40)
 
 

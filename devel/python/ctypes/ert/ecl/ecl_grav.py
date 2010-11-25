@@ -7,8 +7,6 @@ from   ecl_grid              import EclGrid
 
 
 def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , porv2):
-    if not aquifern:
-        aquifern = EclKW.NULL()
         
         # Something like this:
         # aquifern = ctypes.cast(None , ctypes.POINTER(ctypes.c_long)) 
@@ -34,13 +32,19 @@ def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , po
 # 3. The restart files can never contain oil saturation.
 
 def deltag( xyz , grid , init_file , restart_file1 , restart_file2):
+    swat1 = restart_file1.iget_named_kw( "SWAT" , 0)
+    swat2 = restart_file2.iget_named_kw( "SWAT" , 0)
+
     if init_file.has_kw( "AQUIFERN" ):
         aquifern = init_file.iget_named_kw( "AQUIFERN" , 0 )
     else:
-        aquifern = None
+        # The low level C function will create and discard a temporary
+        # aquifern keyword anyway, so we might just as well do it here, 
+        # where it can reused between all the phases.
+        aquifern = EclKW.new( "AQUIFERN" , swat1.size , ECL_INT_TYPE)
+        aquifern.assign( 0 )
+
         
-    swat1 = restart_file1.iget_named_kw( "SWAT" , 0)
-    swat2 = restart_file2.iget_named_kw( "SWAT" , 0)
     phase_list = [ ( swat1 , swat2) ]
 
     if restart_file1.has_kw( "SGAS" ):
