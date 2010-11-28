@@ -137,7 +137,6 @@ SDP.install_file("../../../../libjob_queue/slib/libjob_queue.so" , "%s/libjob_qu
 SDP.install_file("../../../../libplot/slib/libplot.so"           , "%s/libplot.so" % lib_root      , strict_exists = False)
 SDP.install_file("../../../../libsched/slib/libsched.so"         , "%s/libsched.so" % lib_root     , strict_exists = False)
 
-install_python( src_path , target , verbose)
 SDP.make_dir( "%s/gert" % python_root )
 SDP.install_path( "../code" , "%s/gert" % python_root , extensions = ["py"])
 SDP.install_path( "../help" , "%s/gert" % python_root , extensions = ["py"])
