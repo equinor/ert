@@ -72,7 +72,7 @@ import SDP
     
 
 (SDP_ROOT , RH) = SDP.get_SDP_ROOT()
-python_root = "%s/lib/python_root" % SDP_ROOT
+python_root = "%s/lib/python"      % SDP_ROOT
 lib_root    = "%s/lib/python/lib"  % SDP_ROOT
 cwd = os.getcwd()
 
