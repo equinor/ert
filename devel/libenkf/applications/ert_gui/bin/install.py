@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/prog/sdpsoft/python2.4/bin/python
 import sys
 import os.path
 import os
