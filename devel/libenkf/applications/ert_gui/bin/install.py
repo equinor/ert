@@ -139,9 +139,9 @@ SDP.install_file("../../../../libsched/slib/libsched.so"         , "%s/libsched.
 
 SDP.make_dir( "%s/gert" % python_root )
 SDP.install_path( "code" , "%s/gert" % python_root  ,  root = "../" , extensions = ["py"])
-SDP.install_path( "help" , "%s/gert" % python_root  ,  root = "../" , extensions = ["py"])
-SDP.install_path( "img"  , "%s/gert"  % python_root ,  root = "../" , extensions = ["py"])
-SDP.install_path( "doc"  , "%s/gert"  % python_root ,  root = "../" , extensions = ["py"])
+SDP.install_path( "help" , "%s/gert" % python_root  ,  root = "../" )
+SDP.install_path( "img"  , "%s/gert"  % python_root ,  root = "../" )
+SDP.install_path( "doc"  , "%s/gert"  % python_root ,  root = "../" )
 
 SDP.make_dir( "%s/gert/bin" % python_root )
 SDP.install_file( "gert"        , "%s/bin/gert"        % SDP_ROOT)
