@@ -5,6 +5,8 @@ import os
 import re
 from   stat import *
 import shutil
+sys.path += ["../../../../python/ctypes/SDP"]
+import SDP
 
 # The target for installation should be given as the first arguement on
 # the commandline, if no target is given the default_target will be
@@ -79,7 +81,7 @@ def install_walk( arg , dirname , entries ):
     relpath = __relpath( dirname , src_root )
     if relpath == "bin":
         # Special case for the bin directory:
-        install_file( "%s/ertgui.sh" % dirname   , "%s/%s/ertgui.sh"   % ( target_root , relpath) , verbose)
+        install_file( "%s/gert" % dirname        , "%s/%s/gert"        % ( target_root , relpath) , verbose)
         install_file( "%s/gdbcommands" % dirname , "%s/%s/gdbcommands" % ( target_root , relpath) , verbose)
         install_file( "%s/clean.py" % dirname    , "%s/%s/clean.py"    % ( target_root , relpath) , verbose)
     else:
@@ -120,26 +122,29 @@ def install_python( src , target , verbose):
     os.path.walk( src , install_walk , arg )
 
 
+#################################################################
 
-if len(sys.argv) >= 2:
-    target = sys.argv[1]
-else:
-    target = default_target
+(SDP_ROOT , RH) = SDP.get_SDP_ROOT()
+python_root = "%s/lib/python" % SDP_ROOT
+lib_root    = "%s/lib/python/lib"  % SDP_ROOT
 
-print "Installing ert_gui in: %s" % target
-
-realpath   = os.path.realpath( sys.argv[0] )
-split_path = realpath.split("/")
-src_path   = reduce( lambda x,y: "%s/%s" % (x,y) , split_path[:-2] )
+SDP.install_file("../../../../libutil/slib/libutil.so"           , "%s/libutil.so" % lib_root      , strict_exists = False)
+SDP.install_file("../../../../libecl/slib/libecl.so"             , "%s/libecl.so" % lib_root       , strict_exists = False)
+SDP.install_file("../../../../librms/slib/librms.so"             , "%s/librms.so" % lib_root       , strict_exists = False)
+SDP.install_file("../../../../libenkf/slib/libenkf.so"           , "%s/libenkf.so" % lib_root      , strict_exists = False)
+SDP.install_file("../../../../libconfig/slib/libconfig.so"       , "%s/libconfig.so" % lib_root    , strict_exists = False)
+SDP.install_file("../../../../libjob_queue/slib/libjob_queue.so" , "%s/libjob_queue.so" % lib_root , strict_exists = False)
+SDP.install_file("../../../../libplot/slib/libplot.so"           , "%s/libplot.so" % lib_root      , strict_exists = False)
+SDP.install_file("../../../../libsched/slib/libsched.so"         , "%s/libsched.so" % lib_root     , strict_exists = False)
 
 install_python( src_path , target , verbose)
+SDP.make_dir( "%s/gert" % python_root )
+SDP.install_path( "../code" , "%s/gert" % python_root , extensions = ["py"])
+SDP.install_path( "../help" , "%s/gert" % python_root , extensions = ["py"])
+SDP.install_path( "../img"  , "%s/gert" % python_root , extensions = ["py"])
+SDP.install_path( "../doc"  , "%s/gert" % python_root , extensions = ["py"])
 
-if os.getenv( "ERT_HOME" ):
-    ert_home = os.getenv( "ERT_HOME" )
-    install_dir( "%s/lib" % target , verbose )
-    for lib in ert_libs:
-        install_file( "%s/lib%s/slib/lib%s.so" % (ert_home , lib , lib) , "%s/lib/lib%s.so" % (target , lib) , verbose)
-
-
-
+SDP.make_dir( "%s/gert/bin" % python_root )
+SDP.install_file( "gert"        , "%s/bin/gert"        % SDP_ROOT)
+SDP.install_file( "gdbcommands" , "%s/bin/gdbcommands" % SDP_ROOT)
 
