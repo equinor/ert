@@ -5,15 +5,9 @@ import stat
 import shutil
 import sys
 import py_compile
+sys.path += ["SDP"]
+import SDP
 
-script_mode = 0775
-data_mode   = 0664
-dir_mode    = 0775
-uid         = os.getuid()
-res_guid    = os.stat("/project/res")[stat.ST_GID]
-
-lib_root    = "%s/lib/python/lib"        
-python_root = "%s/lib/python"
 
 #################################################################
 #
@@ -188,22 +182,21 @@ def install_path( src_path , target_root , extensions = None):
         install_path( dir , target_root , extensions = extensions)
     
 
-os.umask( 2 )
 (SDP_ROOT , RH) = get_SDP_ROOT()
-python_root = python_root % SDP_ROOT
-lib_root    = lib_root % SDP_ROOT
-
-make_dir( python_root )
-make_dir( lib_root )
-
+python_root = "%s/lib/python_root" % SDP_ROOT
+lib_root    = "%s/lib/python/lib"  % SDP_ROOT
 cwd = os.getcwd()
-install_path( "ert" , python_root , extensions = ["py"])
 
-install_file( "C/libpycfile/slib/libpycfile.so"            , "%s/libpycfile.so"   % lib_root , strict_exists = False)
-install_file( "../../libutil/slib/libutil.so"              , "%s/libutil.so"      % lib_root , strict_exists = False)
-install_file( "../../libconfig/slib/libconfig.so"          , "%s/libconfig.so"   % lib_root , strict_exists = False)
-install_file( "../../libecl/slib/libecl.so"                , "%s/libecl.so"      % lib_root , strict_exists = False)
-install_file( "../../libjob_queue/slib/libjob_queue.so"    , "%s/libjob_queue.so" % lib_root , strict_exists = False)
+SDP.make_dir( python_root )
+SDP.make_dir( lib_root )
 
-install_link( "%s/lib/python/lib/libpycfile.so" % SDP_ROOT , "%s/ert/util/pycfile.so" % python_root)
-install_link( "%s/C/libpycfile/slib/libpycfile.so"  % cwd  , "%s/ert/util/pycfile.so" % cwd)
+SDP.install_path( "ert" , python_root , extensions = ["py"])
+
+SDP.install_file( "C/libpycfile/slib/libpycfile.so"            , "%s/libpycfile.so"   % lib_root , strict_exists = False)
+SDP.install_file( "../../libutil/slib/libutil.so"              , "%s/libutil.so"      % lib_root , strict_exists = False)
+SDP.install_file( "../../libconfig/slib/libconfig.so"          , "%s/libconfig.so"   % lib_root , strict_exists = False)
+SDP.install_file( "../../libecl/slib/libecl.so"                , "%s/libecl.so"      % lib_root , strict_exists = False)
+SDP.install_file( "../../libjob_queue/slib/libjob_queue.so"    , "%s/libjob_queue.so" % lib_root , strict_exists = False)
+
+SDP.install_link( "%s/lib/python/lib/libpycfile.so" % SDP_ROOT , "%s/ert/util/pycfile.so" % python_root)
+SDP.install_link( "%s/C/libpycfile/slib/libpycfile.so"  % cwd  , "%s/ert/util/pycfile.so" % cwd)
