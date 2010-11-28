@@ -138,10 +138,10 @@ SDP.install_file("../../../../libplot/slib/libplot.so"           , "%s/libplot.s
 SDP.install_file("../../../../libsched/slib/libsched.so"         , "%s/libsched.so" % lib_root     , strict_exists = False)
 
 SDP.make_dir( "%s/gert" % python_root )
-SDP.install_path( "../code" , "%s/gert" % python_root , extensions = ["py"])
-SDP.install_path( "../help" , "%s/gert" % python_root , extensions = ["py"])
-SDP.install_path( "../img"  , "%s/gert" % python_root , extensions = ["py"])
-SDP.install_path( "../doc"  , "%s/gert" % python_root , extensions = ["py"])
+SDP.install_path( "../code" , "%s/gert/code" % python_root , extensions = ["py"])
+SDP.install_path( "../help" , "%s/gert/help" % python_root , extensions = ["py"])
+SDP.install_path( "../img"  , "%s/gert/img"  % python_root , extensions = ["py"])
+SDP.install_path( "../doc"  , "%s/gert/doc"  % python_root , extensions = ["py"])
 
 SDP.make_dir( "%s/gert/bin" % python_root )
 SDP.install_file( "gert"        , "%s/bin/gert"        % SDP_ROOT)
