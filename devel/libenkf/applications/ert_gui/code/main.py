@@ -37,14 +37,9 @@ window = Application()
 splash.showMessage("Bootstrapping...", color=QtCore.Qt.white)
 app.processEvents()
 
-if os.environ.has_key("ERT_LD_PATH"):
-    enkf_so = os.environ["ERT_LD_PATH"]
-else:
-    sys.exit("Must set environment variable: 'ERT_LD_PATH' to point to directory with ert shared library files.")
+ert = ertwrapper.ErtWrapper( )
 
-ert = ertwrapper.ErtWrapper(enkf_so)
-
-site_config = "/project/res/etc/ERT/Config/site-config"
+site_config = "/project/res/etc/ERT/site-config"
 enkf_config = sys.argv[1]
 strict      = True
 print "Looking for:%s" % enkf_config
