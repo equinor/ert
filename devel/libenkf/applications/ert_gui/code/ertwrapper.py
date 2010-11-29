@@ -7,6 +7,13 @@ import sys
 import os
 import erttypes
 
+
+def RH_version():
+    RH  = open('/etc/redhat-release' , 'r').read().split()[6]
+    return float( RH )
+
+
+
 class ErtWrapper:
     """Wraps the functionality of ERT using ctypes"""
 
@@ -52,8 +59,13 @@ class ErtWrapper:
         CDLL("liblapack.so" , RTLD_GLOBAL)
         CDLL("libz.so"      , RTLD_GLOBAL)
         CDLL("libnsl.so"    , RTLD_GLOBAL)
-        CDLL("liblsf.so"    , RTLD_GLOBAL)
-        CDLL("libbat.so"    , RTLD_GLOBAL)
+        if RH_version() < 4:
+            LSF_HOME = "/prog/LSF/7.0/linux2.4-glibc2.2-x86_64"
+        else:
+            LSF_HOME = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64"
+            
+        CDLL("%s/lib/liblsf.so" % LSF_HOME   , RTLD_GLOBAL)
+        CDLL("%s/lib/libbat.so" % LSF_HOME   , RTLD_GLOBAL)
 
         
         self.util = self.__loadLibrary( "libutil")
