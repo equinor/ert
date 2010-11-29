@@ -8,13 +8,9 @@ from   ecl_grid              import EclGrid
 
 def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , porv2):
         
-        # Something like this:
-        # aquifern = ctypes.cast(None , ctypes.POINTER(ctypes.c_long)) 
-
-    
     # Observe that the function cfunc.phase_deltag() is called with
     # directly with c_ptr pointer values, and that the function is
-    # prototyped with long arguments instead of ecl_grid and
+    # prototyped with c_void_p arguments instead of ecl_grid and
     # ecl_kw. For some strange reason some of the underlying C pointer
     # values were molested when reaching the C function. This is
     # avoided by using the pointer value directly. Maybe this is a
@@ -38,12 +34,7 @@ def deltag( xyz , grid , init_file , restart_file1 , restart_file2):
     if init_file.has_kw( "AQUIFERN" ):
         aquifern = init_file.iget_named_kw( "AQUIFERN" , 0 )
     else:
-        # The low level C function will create and discard a temporary
-        # aquifern keyword anyway, so we might just as well do it here, 
-        # where it can reused between all the phases.
-        aquifern = EclKW.new( "AQUIFERN" , swat1.size , ECL_INT_TYPE)
-        aquifern.assign( 0 )
-
+        aquifern = EclKW.NULL()
         
     phase_list = [ ( swat1 , swat2) ]
 
@@ -53,18 +44,30 @@ def deltag( xyz , grid , init_file , restart_file1 , restart_file2):
         sgas2 = restart_file2.iget_named_kw( "SGAS" , 0 )
 
         soil1 = 1 - (sgas1 + swat1)
-        soil2 = 1 - (sgas1 + swat1)
+        soil2 = 1 - (sgas2 + swat2)
         soil1.name = "SOIL"
         soil2.name = "SOIL"
         phase_list += [ (sgas1 , sgas2),
                         (soil1 , soil2) ]
     else:
-        # This is a two phase Water / Gas system
-        sgas1 = 1 - swat1
-        sgas2 = 1 - swat2
-        sgas1.name = "SGAS"
-        sgas2.name = "SGAS"
-        phase_list += [ (sgas1 , sgas2) ]
+        # This is a two phase Water / xxx System. Will look for
+        # OIL_DEN and GAS_DEN keywords to determine whether it is a
+        # Water / Oil or Water / Gas system.
+
+        if restart_file.has_kw( "OIL_DEN" ):
+            # Oil / Water system
+            soil1 = 1 - swat1
+            soil2 = 1 - swat2
+            soil1.name = "SOIL"
+            soil2.name = "SOIL"
+            phase_list += [ (soil1 , soil2) ]
+        else:
+            # Gas / Water system
+            sgas1 = 1 - swat1
+            sgas2 = 1 - swat2
+            sgas1.name = "SGAS"
+            sgas2.name = "SGAS"
+            phase_list += [ (sgas1 , sgas2) ]
 
     porv1 = restart_file1.iget_named_kw( "RPORV" , 0 )
     porv2 = restart_file2.iget_named_kw( "RPORV" , 0 )
@@ -82,7 +85,5 @@ def deltag( xyz , grid , init_file , restart_file1 , restart_file2):
 
 cwrapper           = CWrapper( libecl.lib )
 cfunc              = CWrapperNameSpace("ecl_grav")
-#cfunc.phase_deltag = cwrapper.prototype("double ecl_grav_phase_deltag( double, double ,double , ecl_grid , ecl_kw , ecl_kw , ecl_kw , ecl_kw , ecl_kw , ecl_kw , ecl_kw)")
 cfunc.phase_deltag = cwrapper.prototype("double ecl_grav_phase_deltag( double, double ,double , c_void_p , c_void_p , c_void_p , c_void_p , c_void_p , c_void_p , c_void_p , c_void_p)")
-cfunc.phase_test_deltag = cwrapper.prototype("double ecl_grav_phase_test_deltag( double , double , double , ecl_grid , ecl_kw , ecl_kw , ecl_kw , ecl_kw)")
 

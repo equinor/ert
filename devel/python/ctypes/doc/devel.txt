@@ -102,9 +102,9 @@ process (as a string) and the corresponding Python type:
   /-- Warning: ----------------------------------------------\
   | The mapping of types generally works quite well, however |
   | observe that the return type of C functions which return |
-  | an instance pointer is NOT the current class, but long,  |
-  | that is because this return value is internalized  in    | 
-  | the c_ptr attribute of the object.                       |
+  | an instance pointer is NOT the current class, but        |
+  | c_void_p, that is because this return value is           | 
+  | internalized in the c_ptr attribute of the object.       |
   \----------------------------------------------------------/
 
 
