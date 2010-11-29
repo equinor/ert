@@ -30,8 +30,6 @@ export ert_gui_dir=$SDP_BINDIST/lib/python/gert
 echo "Loading python GUI code from.......:" $ert_gui_dir
 echo "-----------------------------------------------------------------"
 
-python $script_dir/clean.py  
-
 
 if [ "$1" = "debug" ]
 then
