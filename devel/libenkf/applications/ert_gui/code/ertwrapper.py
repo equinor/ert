@@ -10,11 +10,12 @@ import erttypes
 class ErtWrapper:
     """Wraps the functionality of ERT using ctypes"""
 
-    def __init__(self, enkf_so):
-        self.__loadLibraries(enkf_so)
+    def __init__( self ):
+        self.__loadLibraries( )
 
         self.pattern = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
         self.__registerDefaultTypes()
+
         
     def bootstrap(self, enkf_config , site_config="/project/res/etc/ERT/site-config", strict = True):
         #bootstrap
@@ -35,17 +36,17 @@ class ErtWrapper:
 
         atexit.register(self.cleanup)
 
-    def __loadLibrary(self, prefix, name):
-        slib = ("%s/%s/slib/%s.so" % (prefix, name, name))
-        lib = ("%s/%s.so" % (prefix, name))
-        if os.path.exists(slib):
-            return CDLL(slib, RTLD_GLOBAL)
-        elif os.path.exists(lib):
-            return CDLL(lib, RTLD_GLOBAL)
-        else:
+
+    def __loadLibrary(self, name):
+        lib = "%s.so" % name
+        try:
+            lib_handle = CDLL(lib, RTLD_GLOBAL)
+            return lib_handle
+        except: 
             raise AssertionError("Can not find library: %s" % (name))
 
-    def __loadLibraries(self, prefix):
+
+    def __loadLibraries(self ):
         """Load libraries that are required by ERT and ERT itself"""
         CDLL("libblas.so"   , RTLD_GLOBAL)
         CDLL("liblapack.so" , RTLD_GLOBAL)
@@ -55,16 +56,16 @@ class ErtWrapper:
         CDLL("libbat.so"    , RTLD_GLOBAL)
 
         
-        self.util = self.__loadLibrary(prefix, "libutil")
-        self.ecl  = self.__loadLibrary(prefix, "libecl")
-        self.__loadLibrary(prefix, "libsched")
-        self.__loadLibrary(prefix, "librms")
-        self.__loadLibrary(prefix, "libconfig")
-        self.job_queue = self.__loadLibrary(prefix, "libjob_queue")
-        self.enkf      = self.__loadLibrary(prefix, "libenkf")
+        self.util = self.__loadLibrary( "libutil")
+        self.ecl  = self.__loadLibrary( "libecl")
+        self.__loadLibrary("libsched")
+        self.__loadLibrary("librms")
+        self.__loadLibrary("libconfig")
+        self.job_queue = self.__loadLibrary( "libjob_queue" )
+        self.enkf      = self.__loadLibrary( "libenkf" )
 
         self.enkf.enkf_main_install_SIGNALS()
-        self.enkf.enkf_main_init_debug("/usr/bin/python")
+        self.enkf.enkf_main_init_debug("/prog/sdpsoft/python2.4/bin/python")
         
     def __registerDefaultTypes(self):
         """Registers the default available types for prototyping."""
