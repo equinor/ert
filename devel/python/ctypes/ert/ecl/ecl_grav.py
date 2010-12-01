@@ -22,6 +22,7 @@ def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , po
                                sat2.c_ptr , rho2.c_ptr , porv2.c_ptr )
     
 
+
 # 1. All restart files should have water, i.e. the SWAT keyword. 
 # 2. All phases present in the restart file should also be present as densities, 
 #    in addition the model must contain one additional phase - which should have a density.
