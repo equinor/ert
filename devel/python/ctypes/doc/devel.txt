@@ -11,7 +11,7 @@ Developer documentation
   4 Common structure of the wrapping
     4.1 Loading the shared library
     4.2 Prototyping
-    4.3 The pure python code 
+    4.3 Python classes
   5 Garbage collection and 'data_owner'
   6 Installation in Statoil
 
@@ -40,9 +40,9 @@ http://www.python.org/org/library/ctypes.html
 
 In the ert Python wrapping loading the shared library is handled by
 the ert.util.clib function load(). When the shared library has been
-loaded, all the symbols of the shared library are available ass
+loaded, all the symbols of the shared library are available as
 attributes of the ctypes load handle. At the lowest level the loading
-of shared libraried is through the ctypes.CDLL() call like:
+of shared libraries is through the ctypes.CDLL() call like:
 
     lib_handle = ctypes.CDLL( "libname" )
 
@@ -99,13 +99,6 @@ process (as a string) and the corresponding Python type:
    CWrapper.registerType( "char*"  , ctypes.c_char_p )                          
    CWrapper.registerType( "int*"   , ctypes.POINTER( ctypes.c_int ))
    
-  /-- Warning: ----------------------------------------------\
-  | The mapping of types generally works quite well, however |
-  | observe that the return type of C functions which return |
-  | an instance pointer is NOT the current class, but        |
-  | c_void_p, that is because this return value is           | 
-  | internalized in the c_ptr attribute of the object.       |
-  \----------------------------------------------------------/
 
 
 
@@ -146,11 +139,23 @@ contains a method:
   def from_param( self ):
       return self.c_ptr 
 
-The AT class can then be used as a Python type in the restype and
-argtypes attributes. To make it available in the prototyping as well
-you must register the type:
+The AT class can then be used as a Python type in the argtypes
+attributes. To make it available in the prototyping as well you must
+register the type:
 
    CWrapper.registerType( "at" , AT )
+
+Observe that the AT class should NOT be used as restype, i.e. for the
+return value:
+
+    /-- Warning: ----------------------------------------------\
+    | The mapping of types generally works quite well, however |
+    | observe that the return type of C functions which return |
+    | an instance pointer is NOT the current class, but        |
+    | c_void_p, that is because this return value is           | 
+    | internalized in the c_ptr attribute of the object.       |
+    \----------------------------------------------------------/
+
 
 
 3 The C code
@@ -177,8 +182,6 @@ with the same name and a Python class with CamelCaps naming:
 
     C                                  Python
     ecl_kw.c implements ecl_kw_type    ecl_kw.py implements EclKW
-
-c_ptr
 
 
 
@@ -287,7 +290,7 @@ the ecl_kw.py file looks like this:
   cfunc.iset_char_ptr  = cwrapper.prototype("void ecl_kw_iset_char_ptr( ecl_kw , int , char*)")
   cfunc.iget_bool      = cwrapper.prototype("bool ecl_kw_iget_bool( ecl_kw , int)")
   cfunc.iset_bool      = cwrapper.prototype("bool ecl_kw_iset_bool( ecl_kw , int, bool)")
-  cfunc.alloc_new      = cwrapper.prototype("long ecl_kw_alloc( char* , int , int )")
+  cfunc.alloc_new      = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
   ....
   ....
 
@@ -295,7 +298,7 @@ This makes the function cfunc.get_size, cfunc.get_type,
 cfunc.iget_char_ptr, ... available as first class Python functions,
 and the Python classes can be implemented based on these
 functions. Observe that the return value from "ecl_kw_alloc()" is
-'long' and not ecl_kw - that is because this return value is
+c_void_p' and not ecl_kw - that is because this return value is
 internalized in the c_ptr of the object (this is not particularly
 elegant, and could probably be improved upon..??).
 
@@ -309,12 +312,18 @@ All the main Python classes wrap a C based structure, and contain
 roughly the same structure:
 
   * The underlying C structure is 'held' with the attribute c_ptr,
-    c_ptr is just a long which is the pointer value of the underlying
-    C structure. The name c_ptr is just convention, and could be
-    anything.
+    c_ptr is just a c_void_p instance which holds the pointer value of
+    the underlying C structure. The name c_ptr is just convention, and
+    could be anything. The type of c_ptr is 'c_void_p'.
 
-    The type of c_ptr is 'long', ideally it should be some pointer
-    type, the use of 'long' amounts to hardcoding 64 bits behaviour.
+    Mapping between a class instance and the C pointer held by this
+    instance is handled with the 'from_param' function:
+
+       def from_param( self ):
+           return self.c_ptr
+
+    The name 'from_param' is goverened by ctypes; the from_param
+    method is called automatically by the ctypes runtime.
 
   * The __init__() function, or alternatively a classmethod
     constructor calls the C based constructor, like
@@ -325,7 +334,8 @@ roughly the same structure:
   * The __del__ function is called when the Python object is garbage
     collected, then the corresponding C free function should be
     called, e.g. ecl_grid_free().
-    
+  
+
 
 
 
