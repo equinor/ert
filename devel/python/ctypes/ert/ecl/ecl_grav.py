@@ -8,12 +8,12 @@ from   ecl_grid              import EclGrid
 
 def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , porv2):
         
-    # Observe that the function cfunc.phase_deltag() is called with
+    # Observe that the function cfunc.phase_deltag() is called
     # directly with c_ptr pointer values, and that the function is
     # prototyped with c_void_p arguments instead of ecl_grid and
     # ecl_kw. For some strange reason some of the underlying C pointer
     # values were molested when reaching the C function. This is
-    # avoided by using the pointer value directly. Maybe this is a
+    # avoided by using the pointer value directly. This seems to be a
     # Python/ctypes bug in the current 2.4 implementation??
 
     return cfunc.phase_deltag( xyz[0] , xyz[1] , xyz[2] , 
