@@ -343,16 +343,16 @@ roughly the same structure:
 
 The Python language has garbage collection, and as a user of the ert
 python code you should just assume that the garbage collection works
-just as well for the ert py types. However, if you want to wrap new
-types (or maybe fix a bug ...) you should understand how the the ert
-py classes interact with garbage collection.
+for the ert py types. However, if you want to wrap new types (or maybe
+fix a bug ...) you should understand how the the ert py classes
+interact with garbage collection.
 
 When the Python interpreter decides that an object will be collected,
-the __del__() method of that object is called, and whatever
-non-standard cleanup code can be called here. In the case of ert py,
-this is where the C based destructor can be called. The important
-point is that it differs from case to case whether the C based
-constructor should indeed be called.
+the __del__() method of that object is called, and any non-standard
+cleanup code can be called here. In the case of ert py, this is where
+the C based destructor can be called. The important point is that it
+differs from case to case whether the C based constructor should
+indeed be called.
 
 The EclKW class illustrates this quite well. Broadly speaking you can
 instantiate an EclKW instance in two ways:
@@ -402,12 +402,14 @@ about from:
 
 Now, when the sgas_kw object goes out of scope it is important that
 the SGAS ecl_kw in the ecl_file file container is _NOT_ deleted, that
-will be handled by the ecl_file_free() function when the restart_file
-object goes out scope.
+keyword is owned by the ecl_file container and the whole thing will
+crash and burn if the ecl_kw is destroyed bypassing the container. The
+sgas keyword will be destroyed when the restart_file object goes out
+scope at a later stage.
 
-To facilitate this different behaviour when an EclKW goes out scope
-the object contains a field 'data_owner', and the __del__() method
-looks like this:
+To facilitate this difference in behaviour when an EclKW goes out
+scope the object contains a field 'data_owner', and the __del__()
+method looks like this:
 
   def __del__( self ):
      if self.data_owner:
@@ -417,8 +419,8 @@ I.e. the C based free() function is only called if the object is the
 owner of the underlying C structure.  This technique is implemented in
 many of the objects. In the current code the data_owner field is set
 alongside with the c_ptr field, and not modified during the lifetime
-of the object (i.e. it is not possible with 'hostile takeover' or
-'orphaning' of objects).
+of the object (i.e. the implementation does not support 'hostile
+takeover' or 'orphaning' of objects).
 
 
 

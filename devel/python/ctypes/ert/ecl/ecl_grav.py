@@ -35,7 +35,7 @@ def deltag( xyz , grid , init_file , restart_file1 , restart_file2):
     if init_file.has_kw( "AQUIFERN" ):
         aquifern = init_file.iget_named_kw( "AQUIFERN" , 0 )
     else:
-        aquifern = EclKW.NULL()
+        aquifern = None
         
     phase_list = [ ( swat1 , swat2) ]
 
