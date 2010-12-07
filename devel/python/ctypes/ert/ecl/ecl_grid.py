@@ -47,7 +47,6 @@ class EclGrid(object):
         if self.data_owner:
             cfunc.free( self )
 
-
     def from_param(self):
         return self.c_ptr
 
@@ -198,10 +197,8 @@ class EclGrid(object):
         else:
             return None
 
-
     def grid_value( self , kw , i,j,k):
         return cfunc.grid_value( self , kw , i , j , k)
-
 
     def createKW( self , array , kw_name , pack):
         if array.ndim == 3:

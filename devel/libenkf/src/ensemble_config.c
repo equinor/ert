@@ -457,7 +457,15 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
       const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
       const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
 
-      enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+      enkf_config_node_update_gen_data( config_node , 
+                                        input_format , 
+                                        output_format , 
+                                        init_file_fmt , 
+                                        template , 
+                                        key , 
+                                        ecl_file , 
+                                        result_file , 
+                                        min_std_file);
       {
         const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
         if (!gen_data_config_is_valid( gen_data_config ))

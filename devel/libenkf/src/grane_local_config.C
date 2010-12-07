@@ -43,7 +43,7 @@ static void include_cell(const EclGrid * Grid , int global_index , const IrapCla
           //printf("p.x() %g p.y() %g \n",p.x(),p.y());
           if (err == 0)
             indexList->append( Map->getGlobalIndex( map_i , map_j ));
-	  //printf("map %d \n", Map->getGlobalIndex( map_i , map_j ));
+          //printf("map %d \n", Map->getGlobalIndex( map_i , map_j ));
         }
       }
   }
@@ -176,7 +176,7 @@ include_path = ["%s/libutil/include" % root,
                 include_path_oddvar ,
                 project_res_include]
 
-lib_path = ["%s/libutil/lib" % root,
+lib_path = ["%s/libutil/lib"     % root,
             "%s/libutil/cpp_src" % root,
             "%s/libecl/lib" % root,
             "%s/libecl/cpp_src" % root,

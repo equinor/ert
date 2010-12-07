@@ -350,6 +350,12 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
   {
     enkf_var_type var_type = INVALID_VAR;
     /*
+      The var type parameter is determined by inspecting the
+      combination of input parameters. It is possible to specify an
+      invalid input combination; that should be identified with a call
+      to gen_data_config_is_valid() in the calling scope.
+
+
       PARAMETER:      init_file_fmt    != NULL
                       enkf_outfile_fmt != NULL
                       enkf_infile_fmt  == NULL
@@ -374,14 +380,18 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
   }
   
   if (config_node->var_type != INVALID_VAR) {
-    gen_data_config_update(config_node->data ,                           /* Special update */ 
+    gen_data_config_update(config_node->data ,           /* Special update */ 
                            config_node->var_type , 
                            input_format , 
                            output_format ,          
                            init_file_fmt , 
                            template_ecl_file , 
                            template_data_key);
-    enkf_config_node_update( config_node , enkf_outfile_fmt , enkf_infile_fmt, min_std_file); /* Generic update - needs the format settings from the special.*/
+    
+    enkf_config_node_update( config_node ,               /* Generic update - needs the format settings from the special.*/
+                             enkf_outfile_fmt , 
+                             enkf_infile_fmt, 
+                             min_std_file); 
   }
   
 }
