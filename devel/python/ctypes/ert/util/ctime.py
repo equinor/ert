@@ -12,8 +12,10 @@ class ctime(ctypes.c_long):
             self.value = value
         else:
             try:
-                self.value = int(math.floor(time.mktime( (value.year , value.month , value.day , value.hour , value.min , value.sec , 0 , 0 , -1 ) )))
+                # Input value is assumed to be datetime.datetime instance
+                self.value = int(math.floor(time.mktime( (value.year , value.month , value.day , value.hour , value.minute , value.second , 0 , 0 , -1 ) )))
             except:
+                # Input value is assumed to be datetime.date instance
                 self.value = int(math.floor(time.mktime( (value.year , value.month , value.day , 0 , 0 , 0 , 0 , 0 , -1 ) )))
                 
          
