@@ -15,12 +15,16 @@ def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , po
     # values were molested when reaching the C function. This is
     # avoided by using the pointer value directly. This seems to be a
     # Python/ctypes bug in the current 2.4 implementation??
+    
+    if not aquifern:
+        aquifern = EclKW.NULL() 
 
     return cfunc.phase_deltag( xyz[0] , xyz[1] , xyz[2] , 
                                grid.c_ptr , aquifern.c_ptr , 
                                sat1.c_ptr , rho1.c_ptr , porv1.c_ptr , 
                                sat2.c_ptr , rho2.c_ptr , porv2.c_ptr )
     
+
 
 
 # 1. All restart files should have water, i.e. the SWAT keyword. 
