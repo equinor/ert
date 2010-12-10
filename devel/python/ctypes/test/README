@@ -1,6 +1,5 @@
 This directory contains some tests which can be used to test a local
 ert-python installation before installing.
 
-To make sure you are indeed using the local copies you source the bash
-script init_local.sh first, which will prepend local directories to
-PYTHONPATH and LD_LIBRARY_PATH.
+To make sure you are indeed using the local copies you source one of
+the scripts 'local_bash' or 'local_csh' first.
