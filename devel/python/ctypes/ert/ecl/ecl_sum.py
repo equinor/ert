@@ -229,6 +229,7 @@ class EclSum(object):
 cwrapper = CWrapper( libecl.lib )
 cwrapper.registerType( "ecl_sum" , EclSum )
 
+
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
 #    These functions are used when implementing the EclKW class, not
 #    used outside this scope.
@@ -260,3 +261,5 @@ cfunc.has_key                       = cwrapper.prototype("bool     ecl_sum_has_g
 cfunc.check_sim_time                = cwrapper.prototype("bool     ecl_sum_check_sim_time( ecl_sum , time_t )") 
 cfunc.check_sim_days                = cwrapper.prototype("bool     ecl_sum_check_sim_days( ecl_sum , double )") 
 cfunc.sim_length                    = cwrapper.prototype("double   ecl_sum_get_sim_length( ecl_sum )")
+
+

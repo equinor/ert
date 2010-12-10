@@ -10,6 +10,8 @@ import sys
 
 
 class CWrapper:
+    # Observe that registered_types is a class attribute, shared
+    # between all CWrapper instances.
     registered_types = {}
     pattern          = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
 
@@ -101,6 +103,11 @@ class CWrapper:
                 func.argtypes = argtypes
 
             return func
+
+
+    def print_types(self):
+        for ctype in self.registered_types.keys():
+            print "%16s -> %s" % (ctype , self.registered_types[ ctype ])
 
 
 
