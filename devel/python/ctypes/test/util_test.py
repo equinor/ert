@@ -49,3 +49,24 @@ c.append( 5 )
 
 c.rsort()
 c.printf()
+
+print c.max
+print c.min
+print c.min_index()
+c[4] = 5
+print c.max_index( reverse = True )
+print c.max_index( reverse = False )
+
+d = c + 1
+d.printf()
+
+v2  = v.copy()
+v2  = v2 * 2
+v2 += v
+
+print v2.assign
+v2.assign( 1.0 )
+print v2[77]
+
+v2.default = 100
+print v2.default

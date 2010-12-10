@@ -58,7 +58,7 @@ void summary_copy(const summary_type *src , summary_type * target) {
     for (int k=0; k < data_size; k++)
       target->data[k] = src->data[k];
     
-    double_vector_memcpy( src->data_ts , target->data_ts );
+    double_vector_memcpy( target->data_ts , src->data_ts );
   } else
     util_abort("%s: do not share config objects \n",__func__);
 }
@@ -175,13 +175,13 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
           summary->data[0] = ecl_sum_iget_general_var(ecl_sum , last_report_index  , var_key);
         else 
           /* 
-	   The summary object does not have this well/group - probably
-	   meaning that it has not yet opened. We return loadOK ==
-	   true in this case.
+           The summary object does not have this well/group - probably
+           meaning that it has not yet opened. We return loadOK ==
+           true in this case.
            
            If the user has misspelled the name, we will go through
-	   the whole simulation without detecting that error.
-	*/
+           the whole simulation without detecting that error.
+        */
           summary->data[0] = 0;
         loadOK = true;   
       } else if (ecl_sum_has_general_var(ecl_sum , var_key)) {

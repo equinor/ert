@@ -191,7 +191,7 @@ class EclKW(object):
 
     def __IADD__(self , delta , add = True):
         if cfunc.assert_numeric( self ):
-            if hasattr( delta , "ecl_kw_instance"):
+            if type(self) == type(delta):
                 if cfunc.assert_binary( self, delta):
                     if add:
                         cfunc.iadd(self , delta )
@@ -276,7 +276,7 @@ class EclKW(object):
         
     def assign(self , value , mask = None , force_active = False):
         if cfunc.assert_numeric( self ):
-            if hasattr( value , "ecl_kw_instance"):
+            if type(value) == type(self):
                 if mask:
                     mask.copy_kw( self , value , force_active)
                 else:
