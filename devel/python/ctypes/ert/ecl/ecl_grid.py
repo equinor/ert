@@ -1,6 +1,7 @@
 import ctypes
 from   ert.cwrap.cwrap       import *
 import ert.util.stringlist
+from   ert.util.tvector      import DoubleVector  # Requires merging of typemaps ....
 import numpy
 import fortio
 import libecl
@@ -200,6 +201,11 @@ class EclGrid(object):
     def grid_value( self , kw , i,j,k):
         return cfunc.grid_value( self , kw , i , j , k)
 
+
+    def load_column( self , kw , i , j , column):
+        cfunc.load_column( self , kw , i , j , column)
+    
+
     def createKW( self , array , kw_name , pack):
         if array.ndim == 3:
             dims = array.shape
@@ -287,6 +293,7 @@ cwrapper.registerType( "ecl_grid" , EclGrid )
 cfunc = CWrapperNameSpace("ecl_grid")
 
 
+
 cfunc.fread_alloc                  = cwrapper.prototype("c_void_p ecl_grid_load_case( char* )")
 cfunc.grdecl_create                = cwrapper.prototype("c_void_p ecl_grid_alloc_GRDECL_kw( ecl_kw , ecl_kw , ecl_kw , ecl_kw )") # MAPAXES not supported yet
 cfunc.get_lgr                      = cwrapper.prototype("c_void_p ecl_grid_get_lgr( ecl_grid , char* )")
@@ -315,4 +322,4 @@ cfunc.get_cell_volume              = cwrapper.prototype("double ecl_grid_get_cel
 cfunc.get_cell_thickness           = cwrapper.prototype("double ecl_grid_get_cell_thickness1( ecl_grid , int )")
 cfunc.get_depth                    = cwrapper.prototype("double ecl_grid_get_cdepth1( ecl_grid , int )")
 cfunc.fwrite_grdecl                = cwrapper.prototype("void   ecl_grid_grdecl_fprintf_kw( ecl_grid , ecl_kw , FILE , double)") 
-
+cfunc.load_column                  = cwrapper.prototype("void   ecl_grid_get_column_property( ecl_grid , ecl_kw , int , int , double_vector)")

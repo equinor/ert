@@ -1,6 +1,8 @@
 #!/prog/sdpsoft/python2.4/bin/python
 import ert
 import ert.ecl as ecl
+from   ert.util.tvector import DoubleVector
+from   ert.util.tvector import DoubleVector
 
 def load_grid( grid_file ):
     grid = ecl.EclGrid( grid_file )
@@ -20,13 +22,18 @@ def load_grdecl( grdecl_file ):
     grid = ecl.EclGrid.create( specgrid , zcorn , coord , actnum )
     return grid
 
-
+init_file   = ecl.EclFile( "data/eclipse/case/ECLIPSE.INIT" )
 egrid_file  = "data/eclipse/case/ECLIPSE.EGRID"
 grid_file   = "data/eclipse/case/ECLIPSE.GRID"
 grdecl_file = "data/eclipse/case/include/example_grid_sim.GRDECL"    
 
-grid = load_egrid( egrid_file )
-grid = load_grid( grid_file )
 grid = load_grdecl( grdecl_file )
+grid = load_grid( grid_file )
+grid = load_egrid( egrid_file )
 
 print "Thickness(10,11,12): %g" % grid.cell_dz( ijk=(10,11,12) )
+
+permx_column = DoubleVector( -999 )
+grid.load_column( init_file.iget_named_kw( "PERMX" , 0 ) , 5 , 5 , permx_column)
+permx_column.printf()
+
