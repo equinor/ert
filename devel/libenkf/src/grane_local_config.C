@@ -182,26 +182,27 @@ Python start:
 -----------------------------------------------------------------     
 #!/usr/bin/python
 import os
-include_path_oddvar = "/private/joaho/EnKF/RMS-Oddvar/librms"
+
+# Oddvars code builds and works in version svn:68, head(svn:112) does not build.
+include_path_oddvar = "/d/proj/bg/enkf/software/Oddvar/librms"
 project_res_include = "/project/res/x86_64_RH_4/inc"
-root         = "/private/joaho/EnKF/devel/EnKF"
 
 
 
 
-include_path = ["%s/libutil/include" % root,
-                "%s/libutil/cpp_src" % root,
-                "%s/libjob_queue/src" % root , 
-                "%s/libecl/cpp_src"  % root,
-                "%s/libecl/include"  % root,
-                "%s/libenkf/include" % root,
+include_path = ["../../libutil/include" ,
+                "../../libutil/cpp_src" ,
+                "../../libecl/cpp_src"  ,
+                "../../libecl/include"  ,
+                "../../libjob_queue/include" , 
+                "../../libenkf/include" ,
                 include_path_oddvar ,
                 project_res_include]
 
-lib_path = ["%s/libutil/lib"     % root,
-            "%s/libutil/cpp_src" % root,
-            "%s/libecl/lib" % root,
-            "%s/libecl/cpp_src" % root,
+
+lib_path = ["../../libutil/lib"    ,
+            "../../libecl/lib"     , 
+            "../../libecl/cpp_src" ,
             include_path_oddvar]
 
 lib_list    = ["-lrms" , "-lEcl" , "-lecl" , "-lutil" , "-lpt" , "-lz" , "-llapack"]
@@ -223,6 +224,7 @@ os.system( compile_cmd )
 
 print "\nLinking: %s" % link_cmd
 os.system( link_cmd )
+
 -----------------------------------------------------------------     
 Python end:
 */
