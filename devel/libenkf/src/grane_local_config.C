@@ -191,6 +191,7 @@ root         = "/private/joaho/EnKF/devel/EnKF"
 
 include_path = ["%s/libutil/include" % root,
                 "%s/libutil/cpp_src" % root,
+                "%s/libjob_queue/src" % root , 
                 "%s/libecl/cpp_src"  % root,
                 "%s/libecl/include"  % root,
                 "%s/libenkf/include" % root,
@@ -348,7 +349,6 @@ int main (int argc , char ** argv ) {
        add_obs(stream , ministep_name , "WWPR:PR06_G28");
        add_obs(stream , ministep_name , "WOPR:PR06_G28");
        add_obs(stream , ministep_name , "WOPT:PR06_G28");
-       Region.select
 
        Region.select_from_ijkbox(42,57,113,215, 19 , 19 );
        add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
