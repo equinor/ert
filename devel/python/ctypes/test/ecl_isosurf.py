@@ -32,9 +32,59 @@ from   ert.util.lookup_table import LookupTable
 # Caveat: Non unique depth profile
 #
 
+def usage():
+    print """
+The ecl_isosurf script can be used to extract isosurfaces of the SWAT
+or SGAS keywords from a restart file. When using the program you must
+give commandline arguments about:
+
+  o Which restart file you want to use, and in case of unified restart
+    file which report_step you are interested in. The program will
+    look for a EGRID/GRID file with the same basename.
+
+  o Which phase you are interested in - i.e. SWAT or SGAS.
+
+  o The name of an output file where the surface will be
+    stored. Observe that this filename will be used a format
+    specifier, hence a float placeholder (i.e. something like %g /
+    %4.2f ) will be replaced with the level value when creating the
+    output file - that way you can create several iso surface with one
+    program invocation.
+
+  o The iso levels you are interested in.
+
+Example 1:
+
+   ecl_isosurf   ECLIPSE.UNRST  25  SWAT   surfaces/swat_%4.2f   0.50 0.6 0.70 0.80 0.90
+
+  This will look for a unified restart file "ECLIPSE.UNRST" in the
+  current directory, and load solution data from report step 25 in
+  that restart file. We will focus on water, i.e. the SWAT keyword,
+  and the output surfaces will be stored in files surfaces/swat_0.50,
+  surfaces/swat_0.60, surfaces/swat_0.70, ... the directory surfaces
+  will be created if it does not exist.
+
+
+Example 2:
+
+   ecl_isosurf  /path/to/ECLIPSE.X0060  SGAS  sgas_iso  0.50
+
+  In this case we give a non-unified restart filename, and then we
+  should not include a report number. Observe that we assume that the
+  grid is in the same directory as the restart file. In this case we
+  are interested the gas, and only at the iso level 0.50. Since we are
+  only interested in one level, we do not include any % formatting
+  characters in the output filename.
+"""
+    sys.exit()
+
 def iso_level( grid , kw , level , i , j ):
     depth_value = LookupTable()
     klist = range(grid.nz) 
+    if kw.name == "SGAS":
+        gas = True
+    else:
+        gas = False
     
     for k in klist:
         if grid.active( ijk = (i,j,k) ):
@@ -46,59 +96,94 @@ def iso_level( grid , kw , level , i , j ):
             k = grid.locate_depth( depth , i , j )
             return (depth , k)
         else:
-            return (None , 0)
+            # The level we are searching is outside the [min,max]
+            # range present in this column. We return values
+            # corresponding to reservoir top / reservoir bottom
+            # depending on the phase we are seaking, and whether we
+            # are above the max or below the min value present.
+            if gas:
+                if depth_value.arg_max < level:
+                    depth = grid.top( i , j)
+                    k = 0
+                else:
+                    depth = grid.bottom( i , j )
+                    k = grid.nz - 1
+            else:
+                if depth_value.arg_max < level:
+                    depth = grid.bottom( i , j)
+                    k = grid.nz - 1
+                else:
+                    depth = grid.top( i , j )
+                    k = 0
+            return (depth , k)
     else:
+        # The column zero or one active cells, not enough to determine
+        # a saturation-depth relationship.
         return (None , 0)
 
 
+# Creates a iso surface on the level @level of the phase found in @kw. 
 
 def write_surface( grid , kw , output_fmt , level ):
-    output_file = output_fmt % level
+    if output_fmt.find("%") > -1:
+        output_file = output_fmt % level
+    else:
+        output_file = output_fmt 
+
     (path , file) = os.path.split( output_file )
     if path:
         if not os.path.exists( path ):
-            print "Creating directory: %s" % path
             os.makedirs( path )
+    print "Creating surface: %s" % output_file
     fileH = open( output_file , "w")
     for i in range(grid.nx):
         for j in range(grid.ny):
             (depth , k) = iso_level( grid , kw , level ,i,j)
             if depth:
-                if k >= 0:
-                    (utm_x , utm_y , tmp) = grid.get_xyz( ijk=(i,j,k) )
-                    fileH.write("%12.7f  %12.7f  %12.7f\n" % (utm_x , utm_y , depth))
-                else:
-                    sys.stderr.write("Warning depth mapping problem in i=%d,j=%d level:%g\n" % (i,j,level))
+                (utm_x , utm_y , tmp) = grid.get_xyz( ijk=(i,j,k) )
+                fileH.write("%12.5f  %12.5f  %12.5f\n" % (utm_x , utm_y , depth))
     fileH.close()
 
 
 
+# The arguments to the ecl_isosurf script must be given on the
+# commandline; the full list of commandline arguments is then sent up
+# here for parsing and loading of files. 
+#
+# The function will return a tuple of four elements:
+#
+#      (grid , kw , output_fmt , level_list)
 
 def load_input( arglist ):
+    if len(arglist) < 3:
+        usage()
+
     input_file = arglist[0]
     file_type = ecl_util.get_file_type( input_file )
     if file_type == ecl_util.ECL_UNIFIED_RESTART_FILE:
         try:
             report_step = int( arglist[1] )
         except:
-            sys.exit("When using unified restart file you must specify report number in the next argument")
+            usage()
 
         if os.path.exists( input_file ):
             ecl_file = ecl.EclFile.restart_block( input_file , report_step = report_step )
         else:
-            sys.exit("Input file:%s not found." % input_file)
+            usage()
         arg_offset = 2
     elif file_type == ecl_util.ECL_RESTART_FILE:
         if os.path.exists( input_file ):
             ecl_file = ecl.EclFile( input_file )
         else:
-            sys.exit("Input file:%s not found." % input_file)
-    else:
-        sys.exit("Input argument:%s must be restart file." % input_file)
+            usage()
         arg_offset = 1
+    else:
+        usage()
     
     (path_base , ext) = os.path.splitext( input_file )
     grid = ecl.EclGrid( path_base )
+    if not grid:
+        usage()
 
     phase = arglist[ arg_offset ].upper()
     if phase in ["SWAT" , "SGAS"]:
@@ -116,9 +201,7 @@ def load_input( arglist ):
 
 
 
-restart_file = "data/eclipse/case/ECLIPSE.UNRST"
 
-sys.argv = [None , restart_file , "40" , "SWAT" , "/tmp/iso_swat_%f" , "0.30" , "0.40" , "0.50" , "0.60" , "0.70"]
 (grid , kw , output_fmt , level_list) = load_input( sys.argv[1:] )
 
 for level in level_list:
