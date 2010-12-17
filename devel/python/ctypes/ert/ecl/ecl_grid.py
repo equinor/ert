@@ -145,6 +145,15 @@ class EclGrid(object):
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
         return cfunc.get_depth( self , gi )
 
+    def top( self , i , j ):
+        return cfunc.get_top( self , i , j ) 
+
+    def bottom( self , i , j ):
+        return cfunc.get_bottom( self , i , j ) 
+
+    def locate_depth( self , depth , i , j ):
+        return cfunc.locate_depth( self , depth , i , j)
+
     def find_cell( self , x , y , z , start_ijk = None):
         if start_ijk:
             start_index = self.__global_index( ijk = start_ijk )
@@ -159,6 +168,7 @@ class EclGrid(object):
             return (i.value , j.value , k.value)
         else:
             return None
+
 
     def cell_volume( self, active_index = None , global_index = None , ijk = None):
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
@@ -278,7 +288,7 @@ class EclGrid(object):
             cfile = CFILE( pyfile )
             cfunc.fwrite_grdecl( self , ecl_kw , cfile , default_value )
         else:
-            raise ValueError("Keyword: %s has invalid size(%d), must be either nactive:%d  or nx*ny*nz:%d" % (ecl_kw.name , ecl_kw.size , self.nactive ,self.size))
+            raise ValueError("Keyword: %s has invalid size(%d), must be either nactive:%d  or nx*ny*nz:%d" % (ecl_kw.name , ecl_kw.size , self.nactive , self.size))
 
 
 
@@ -323,3 +333,6 @@ cfunc.get_cell_thickness           = cwrapper.prototype("double ecl_grid_get_cel
 cfunc.get_depth                    = cwrapper.prototype("double ecl_grid_get_cdepth1( ecl_grid , int )")
 cfunc.fwrite_grdecl                = cwrapper.prototype("void   ecl_grid_grdecl_fprintf_kw( ecl_grid , ecl_kw , FILE , double)") 
 cfunc.load_column                  = cwrapper.prototype("void   ecl_grid_get_column_property( ecl_grid , ecl_kw , int , int , double_vector)")
+cfunc.get_top                      = cwrapper.prototype("double ecl_grid_get_top2( ecl_grid , int , int )") 
+cfunc.get_bottom                   = cwrapper.prototype("double ecl_grid_get_bottom2( ecl_grid , int , int )") 
+cfunc.locate_depth                 = cwrapper.prototype("int    ecl_grid_locate_depth( ecl_grid , double , int , int )") 
