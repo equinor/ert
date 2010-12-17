@@ -14,7 +14,9 @@ def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , po
     # ecl_kw. For some strange reason some of the underlying C pointer
     # values were molested when reaching the C function. This is
     # avoided by using the pointer value directly. This seems to be a
-    # Python/ctypes bug in the current 2.4 implementation??
+    # Python/ctypes bug in the current 2.4 implementation; the call
+    # sequencence should modified to use the from_param() method like
+    # the rest of the bindings.
     
     if not aquifern:
         aquifern = EclKW.NULL() 
