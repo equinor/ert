@@ -30,7 +30,8 @@ from   ert.util.lookup_table import LookupTable
 #
 # 
 # Caveat: Non unique depth profile
-#
+
+
 
 def usage():
     print """
@@ -199,8 +200,9 @@ def load_input( arglist ):
     return (grid , kw , output_fmt , level_list )
 
 
-
-
+#################################################################
+# Main program
+#################################################################
 
 (grid , kw , output_fmt , level_list) = load_input( sys.argv[1:] )
 
