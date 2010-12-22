@@ -18,7 +18,7 @@
 #include <enkf_serialize.h>
 #include <buffer.h>
 #include <ecl_endian_flip.h>
-
+#include <mzran.h>
 
 GET_DATA_SIZE_HEADER(field);
 
@@ -732,7 +732,7 @@ void field_ecl_write(const field_type * field , const char * run_path , const ch
 
 
 
-bool field_initialize(field_type *field , int iens) {
+bool field_initialize(field_type *field , int iens , mzran_type * rng) {
   if (field_config_enkf_init(field->config)) {
     {
       char * filename = field_config_alloc_init_file(field->config , iens);

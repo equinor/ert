@@ -7,61 +7,41 @@
 #include <util.h>
 #include <ecl_util.h>
 #include <enkf_defaults.h>
+#include <mzran.h>
 
 
 
-
-static inline int randint() {
-  return rand();
-}
-
-double enkf_util_random_uniform() {
-  return randint() * 1.0 / RAND_MAX;
-}
-
-int enkf_util_random_int() {
-  return randint();
-}
-
-
-static void enkf_util_rand_dbl(int N , double max , double *R) {
-  int i;
-  for (i=0; i < N; i++) 
-    R[i] = randint() * max / RAND_MAX;
-}
-
-
-double enkf_util_rand_normal(double mean , double std) {
+double enkf_util_rand_normal(double mean , double std , mzran_type * rng) {
   const double pi = 3.141592653589;
-  double R[2];
-  enkf_util_rand_dbl(2 , 1.0 , R);
-  return mean + std * sqrt(-2.0 * log(R[0])) * cos(2.0 * pi * R[1]);
+  double R1 = mzran_get_double( rng );
+  double R2 = mzran_get_double( rng );
+
+  return mean + std * sqrt(-2.0 * log(R1)) * cos(2.0 * pi * R2);
 }
 
-void enkf_util_rand_stdnormal_vector(int size , double *R) {
+void enkf_util_rand_stdnormal_vector(int size , double *R, mzran_type * rng) {
   int i;
   for (i = 0; i < size; i++)
-    R[i] = enkf_util_rand_normal(0.0 , 1.0);
+    R[i] = enkf_util_rand_normal(0.0 , 1.0 , rng);
 
 }
 
 /**
   Vector containing a random permutation of the integers 1,...,size 
 */
-void enkf_util_randperm( int * P , int size) {
+void enkf_util_randperm( int * P , int size , mzran_type * rng) {
   int k, tmp;
   
   for (k = 0; k < size; k++)
     P[k] = k;
 
   while (size > 1) {
-    k = (int) (enkf_util_random_uniform() * size);
+    k = mzran_get_int( rng , size );
     size--;
     tmp = P[size];
     P[size] = P[k];
     P[k] = tmp;
   }
-    
 }
  
 
@@ -175,16 +155,16 @@ size_t util_copy_strided_vector(const void * _src, size_t src_size , int src_str
 //      scanf("%s" , file);
 //      util_alloc_file_components(file , &_path , NULL ,  NULL);
 //      if (_path != NULL) {
-//	if (!util_is_directory(_path)) 
-//	  if (options & AUTO_MKDIR)
-//	    util_make_path(_path);
-//	free(_path);
+//      if (!util_is_directory(_path)) 
+//        if (options & AUTO_MKDIR)
+//          util_make_path(_path);
+//      free(_path);
 //      }
 //      
 //      if ((options & EXISTING_FILE) && (!util_file_exists(file)))
-//	OK = false;
+//      OK = false;
 //      else if ((options & NEW_FILE) && (util_file_exists(file)))
-//	OK = false;
+//      OK = false;
 //
 //    } while (!OK);
 //    return util_alloc_string_copy(file);    

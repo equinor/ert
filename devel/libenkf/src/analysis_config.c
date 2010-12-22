@@ -6,6 +6,7 @@
 #include <enkf_types.h>
 #include <analysis_config.h>
 #include <enkf_defaults.h>
+#include <mzran.h>
 #include "config_keys.h"
 
 

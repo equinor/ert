@@ -53,7 +53,7 @@ Matrices: S, D, E and various internal variables.
 #include <vector.h>
 #include <pthread.h>
 #include <matrix.h>
-
+#include <mzran.h>
 
 #define OBS_BLOCK_TYPE_ID 995833
 
@@ -300,7 +300,7 @@ void obs_data_free(obs_data_type * obs_data) {
 
 
 
-matrix_type * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int active_size ) {
+matrix_type * obs_data_allocE(const obs_data_type * obs_data , mzran_type * rng , int ens_size, int active_size ) {
   double *pert_mean , *pert_var;
   matrix_type * E;
   int iens, iobs_active;
@@ -313,7 +313,8 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int
     double * tmp = util_malloc( active_size * ens_size * sizeof * tmp , __func__);
     int i,j;
     int k = 0;
-    enkf_util_rand_stdnormal_vector(active_size * ens_size , tmp);
+    
+    enkf_util_rand_stdnormal_vector(active_size * ens_size , tmp , rng);
     for (j=0; j < ens_size; j++) {
       for (i=0; i < active_size; i++) {
         matrix_iset( E , i , j , tmp[k]);

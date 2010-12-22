@@ -60,6 +60,7 @@
 #include <int_vector.h>
 #include <ert_build_info.h>
 #include <bool_vector.h>
+#include <mzran.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -122,6 +123,7 @@ struct enkf_main_struct {
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;         /* The ensemble ... */
   int                    ens_size;         /* The size of the ensemble */  
+  mzran_type           * rng; 
 };
 
 
@@ -304,6 +306,7 @@ static void enkf_main_free_ensemble( enkf_main_type * enkf_main ) {
 
 
 void enkf_main_free(enkf_main_type * enkf_main) {
+  mzran_free( enkf_main->rng );
   enkf_obs_free(enkf_main->obs);
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) enkf_fs_free( enkf_main->dbase );
@@ -913,10 +916,10 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
     ministep, whereas the the update code below (can) go in several
     steps if memory is tight.
   */
-  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data , obs_data ,  V0T , Z , eig , U0 , meas_data );
+  enkf_analysis_local_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data , obs_data ,  V0T , Z , eig , U0 , meas_data );
     
   if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-    randrot = enkf_analysis_alloc_mp_randrot( ens_size );
+    randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
   
   {
     int icpu;
@@ -1030,13 +1033,13 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
 
       /*Get the optimal update matrix - observe that the A matrix is input.*/
      { 
-        matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_data , obs_data , randrot, A , V0T , Z , eig, U0 , meas_data , ens_size);   
-        
-        msg_update(msg , " matrix multiplication");
-        matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
-        matrix_free( X5 );
-      }
-
+       matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data , obs_data , randrot, A , V0T , Z , eig, U0 , meas_data , ens_size);   
+       
+       msg_update(msg , " matrix multiplication");
+       matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
+       matrix_free( X5 );
+     }
+     
       /* Deserialize */
       {
         for (int i = ikw1; i < ikw2; i++) {
@@ -1123,13 +1126,13 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
   matrix_type * randints = matrix_alloc( ens_size , ens_size);
   for (int i = 0; i < ens_size; i++){
     for (int j = 0; j < ens_size; j++){
-      double r = ((double)rand() / ((double)RAND_MAX+(double)1))*ens_size;
+      double r = 1.0 * mzran_get_int( enkf_main->rng , ens_size );
       matrix_iset(randints, i , j , r);
     }
   }
 
   if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-    randrot = enkf_analysis_alloc_mp_randrot( ens_size );
+    randrot = enkf_analysis_alloc_mp_randrot( ens_size  , enkf_main->rng );
   
   {
     int icpu;
@@ -1250,39 +1253,39 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
         for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
           int ensemble_counter;
           /* Resample A and meas_data. Here we are careful to resample the working copy.*/
-	  int_vector_type * bootstrap_components = int_vector_alloc( ens_size , 0);
+          int_vector_type * bootstrap_components = int_vector_alloc( ens_size , 0);
           for (ensemble_counter  = 0; ensemble_counter < ens_size; ensemble_counter++) {
-	    double random_col = matrix_iget( randints , ensemble_members_loop , ensemble_counter );
-	    int random_column = (int)random_col;
-	    int_vector_iset( bootstrap_components , ensemble_counter , random_column );
-	    matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column );
+            double random_col = matrix_iget( randints , ensemble_members_loop , ensemble_counter );
+            int random_column = (int)random_col;
+            int_vector_iset( bootstrap_components , ensemble_counter , random_column );
+            matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column );
             meas_data_assign_vector( meas_data_resampled, meas_data , ensemble_counter , random_column);
           }
-	  int_vector_select_unique( bootstrap_components );
-	  int unique_bootstrap_components = int_vector_size( bootstrap_components );
-	  int_vector_free( bootstrap_components);
+          int_vector_select_unique( bootstrap_components );
+          int unique_bootstrap_components = int_vector_size( bootstrap_components );
+          int_vector_free( bootstrap_components);
           if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) { /* Bootstrapping and CV*/
-	    matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
-	    matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
-	    matrix_type * Z    = matrix_alloc( nrmin , nrmin    );
-	    double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);
-	    /*
-	      Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
-	      local CV below. 
-	    */
-            enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_data_resampled , obs_data ,  V0T , Z , eig , U0 , meas_data );
-            matrix_type * X5_boot_cv = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_data_resampled , obs_data , randrot, A_resampled , V0T , Z , eig, U0, meas_data, unique_bootstrap_components);
+            matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
+            matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
+            matrix_type * Z    = matrix_alloc( nrmin , nrmin    );
+            double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);
+            /*
+              Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
+              local CV below. 
+            */
+            enkf_analysis_local_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data ,  V0T , Z , eig , U0 , meas_data );
+            matrix_type * X5_boot_cv = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data , randrot, A_resampled , V0T , Z , eig, U0, meas_data, unique_bootstrap_components);
             msg_update(msg , " matrix multiplication");
             matrix_inplace_matmul_mt( A_resampled , X5_boot_cv , num_cpu_threads );
             matrix_inplace_add( A_resampled , work_A ); 
             matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
-	    matrix_free( U0 );
-	    matrix_free( V0T );
-	    matrix_free( Z );
-	    free( eig );
+            matrix_free( U0 );
+            matrix_free( V0T );
+            matrix_free( Z );
+            free( eig );
             matrix_free( X5_boot_cv );
           } else { /* Just Bootstrapping */
-            matrix_type * X5_boot = enkf_analysis_allocX_boot( enkf_main->analysis_config , meas_data_resampled , obs_data , randrot, meas_data);
+            matrix_type * X5_boot = enkf_analysis_allocX_boot( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data , randrot, meas_data);
             msg_update(msg , " matrix multiplication");
             matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
             matrix_free( X5_boot );
@@ -1379,7 +1382,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
 
     if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-      randrot = enkf_analysis_alloc_mp_randrot( ens_size );
+      randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
     
     {
       char * log_file;
@@ -1425,7 +1428,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
             enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);
           } else {
             /* Nothing fancy */
-            X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
+            X = enkf_analysis_allocX( enkf_main->analysis_config , enkf_main->rng , meas_forecast , obs_data , randrot);
             enkf_main_update_mulX( enkf_main , X , ministep , int_vector_get_last( step_list ) , use_count);
             matrix_free( X );
           }
@@ -2498,17 +2501,17 @@ static enkf_main_type * enkf_main_alloc_empty( void ) {
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
-
+  enkf_main->rng                = mzran_alloc( INIT_DEV_RANDOM );
 
   /* Here we add the functions which should be available for string substitution operations. */
-  enkf_main->subst_func_pool = subst_func_pool_alloc( );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                               , subst_func_exp         , false , 1 , 1 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "LOG"       , "log"                               , subst_func_log         , false , 1 , 1 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "POW10"     , "Calculates 10^x"                   , subst_func_pow10       , false , 1 , 1 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "ADD"       , "Adds arguments"                    , subst_func_add         , true  , 1 , 0 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "MUL"       , "Multiplies arguments"              , subst_func_mul         , true  , 1 , 0 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDINT"   , "Returns a random integer - 32 bit" , subst_func_randint     , false , 0 , 0 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDFLOAT" , "Returns a random float 0-1."       , subst_func_randfloat   , false , 0 , 0 );
+  enkf_main->subst_func_pool = subst_func_pool_alloc( enkf_main->rng );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                               , subst_func_exp         , false , 1 , 1 , NULL);
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "LOG"       , "log"                               , subst_func_log         , false , 1 , 1 , NULL);
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "POW10"     , "Calculates 10^x"                   , subst_func_pow10       , false , 1 , 1 , NULL);
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "ADD"       , "Adds arguments"                    , subst_func_add         , true  , 1 , 0 , NULL);
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "MUL"       , "Multiplies arguments"              , subst_func_mul         , true  , 1 , 0 , NULL);
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDINT"   , "Returns a random integer - 32 bit" , subst_func_randint     , false , 0 , 0 , enkf_main->rng);
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDFLOAT" , "Returns a random float 0-1."       , subst_func_randfloat   , false , 0 , 0 , enkf_main->rng);
 
   /**
      Allocating the parent subst_list instance. This will (should ...)

@@ -15,26 +15,26 @@ void plot1()
     item = plot_alloc();
     plot_initialize(item, "png", "stat.png", NORMAL);
     {
-	int i, j;
-	PLFLT *y, *x;
+        int i, j;
+        PLFLT *y, *x;
 
-	for (j = 0; j <= DATASETS; j++) {
-	    y = malloc(sizeof(PLFLT));
-	    x = malloc(sizeof(PLFLT));
-	    for (i = 0; i <= LEN; i++) {
-		if (i > 0) {
-		    y = realloc(y, sizeof(PLFLT) * (i + 1));
-		    x = realloc(x, sizeof(PLFLT) * (i + 1));
-		}
-		x[i] = i;
-		y[i] = rand() % 100;
-	    }
-	    d = plot_dataset_alloc();
-	    plot_dataset_set_data(d, x, y, LEN, BLACK, POINT);
-	    plot_dataset_add(item, d);
-	    util_safe_free(y);
-	    util_safe_free(x);
-	}
+        for (j = 0; j <= DATASETS; j++) {
+            y = malloc(sizeof(PLFLT));
+            x = malloc(sizeof(PLFLT));
+            for (i = 0; i <= LEN; i++) {
+                if (i > 0) {
+                    y = realloc(y, sizeof(PLFLT) * (i + 1));
+                    x = realloc(x, sizeof(PLFLT) * (i + 1));
+                }
+                x[i] = i;
+                y[i] = rand() % 100;
+            }
+            d = plot_dataset_alloc();
+            plot_dataset_set_data(d, x, y, LEN, BLACK, POINT);
+            plot_dataset_add(item, d);
+            util_safe_free(y);
+            util_safe_free(x);
+        }
     }
 
     plot_set_labels(item, "x-axis", "y-axis", "Test", BLACK);
@@ -60,16 +60,16 @@ void plot2()
     item = plot_alloc();
     plot_initialize(item, "png", "std.png", NORMAL);
     plot_set_labels(item, "x-axis", "y-axis",
-		    "Standard deviation of drand48()", BLACK);
+                    "Standard deviation of drand48()", BLACK);
 
     for (j = 0; j <= DATASETS; j++) {
-	for (i = 0; i <= N; i++) {
-	    x[i] = (i * period) / N;
-	    y[i] = drand48();
-	}
-	d = plot_dataset_alloc();
-	plot_dataset_set_data(d, x, y, N, BLACK, POINT);
-	plot_dataset_add(item, d);
+        for (i = 0; i <= N; i++) {
+            x[i] = (i * period) / N;
+            y[i] = drand48();
+        }
+        d = plot_dataset_alloc();
+        plot_dataset_set_data(d, x, y, N, BLACK, POINT);
+        plot_dataset_add(item, d);
     }
 
     plot_get_extrema(item, &xmax, &ymax, &xmin, &ymin);
@@ -79,8 +79,8 @@ void plot2()
 
     /* Now plot a blue true mean line, for reference - drand48 covers [0, 1) */
     for(i = 0; i <= N; i++) {
-	x[i] = (i * period) / N;
-	y[i] = 0.5;
+        x[i] = (i * period) / N;
+        y[i] = 0.5;
     }
     d = plot_dataset_alloc();
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);

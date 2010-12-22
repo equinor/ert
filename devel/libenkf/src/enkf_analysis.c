@@ -7,6 +7,7 @@
 #include <obs_data.h>
 #include <analysis_config.h>
 #include <enkf_util.h>
+#include <enkf_analysis.h>
 
 /**
    The static functions at the top are identical to the old fortran
@@ -402,7 +403,7 @@ static void lowrankCinv_pre_cv(const matrix_type * S , const matrix_type * R , m
 
 
 /*Special function for doing cross-validation */ 
-static void getW_pre_cv(matrix_type * W , matrix_type * V0T, matrix_type * Z , double * eig , matrix_type * U0 , int nfolds_CV, matrix_type * A, int unique_bootstrap_components) {
+static void getW_pre_cv(matrix_type * W , matrix_type * V0T, matrix_type * Z , double * eig , matrix_type * U0 , int nfolds_CV, matrix_type * A, int unique_bootstrap_components , mzran_type * rng) {
 
   const int nrobs = matrix_get_rows( U0 );
   const int nrens = matrix_get_columns( V0T );
@@ -440,7 +441,7 @@ static void getW_pre_cv(matrix_type * W , matrix_type * V0T, matrix_type * Z , d
   const int maxp = matrix_get_rows(V0T);
   
   /* draw random permutations of the integers 1,...,nrens */  
-  enkf_util_randperm( randperms , nrens );
+  enkf_util_randperm( randperms , nrens , rng);
   
   /*need to init cvError to all zeros (?) */
   for (i = 0; i < nrmin; i++){
@@ -633,14 +634,14 @@ static void X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type * ran
    NB: This should rather use the implementation in m_mean_preserving_rotation.f90. 
 */
 
-void enkf_analysis_set_randrot( matrix_type * Q ) {
+void enkf_analysis_set_randrot( matrix_type * Q  , mzran_type * rng) {
   int ens_size       = matrix_get_rows( Q );
   double      * tau  = util_malloc( sizeof * tau  * ens_size , __func__);
   int         * sign = util_malloc( sizeof * sign * ens_size , __func__);
 
   for (int i = 0; i < ens_size; i++) 
     for (int j = 0; j < ens_size; j++) 
-      matrix_iset(Q , i , j , enkf_util_rand_normal(0 , 1));
+      matrix_iset(Q , i , j , enkf_util_rand_normal(0 , 1 , rng));
 
   matrix_dgeqrf( Q , tau );  /* QR factorization */
   for (int i=0; i  < ens_size; i++) {
@@ -672,7 +673,7 @@ void enkf_analysis_set_randrot( matrix_type * Q ) {
    where U is an arbitrary orthonormal matrix of dim nrens-1 x nrens-1  (eq. 19)
 */
 
-matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size ) {
+matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size , mzran_type * rng) {
   matrix_type * Up  = matrix_alloc( ens_size , ens_size );  /* The return value. */
   {
     matrix_type * B   = matrix_alloc( ens_size , ens_size );
@@ -683,7 +684,7 @@ matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size ) {
     {
       int k,j;
       matrix_type * R   = matrix_alloc( ens_size , ens_size );
-      matrix_random_init( B );   /* B is filled up with U(0,1) numbers. */
+      matrix_random_init( B , rng);   /* B is filled up with U(0,1) numbers. */
       matrix_set_const_column( B , 1.0 / sqrt( ens_size ) , 0 );
 
       /* modified_gram_schmidt is used to create the orthonormal basis in B.*/
@@ -707,7 +708,7 @@ matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size ) {
       matrix_free( R );
     }
     
-    enkf_analysis_set_randrot( U );
+    enkf_analysis_set_randrot( U , rng );
     matrix_iset( Upb , 0 , 0 , 1);
     
     
@@ -944,7 +945,8 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type
   observation error and the mean will be subtracted from the S matrix.
 */
 
-static void enkf_analysis_alloc_matrices( const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
+static void enkf_analysis_alloc_matrices( mzran_type * rng , 
+                                          const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
                                           matrix_type ** S , 
                                           matrix_type ** R , 
                                           double      ** innov,
@@ -961,7 +963,7 @@ static void enkf_analysis_alloc_matrices( const meas_data_type * meas_data , obs
        We are using standard EnKF and need to perturbe the measurements,
        if we are using the SQRT scheme the E & D matrices are not used.
     */
-    *E = obs_data_allocE(obs_data , ens_size, active_size );
+    *E = obs_data_allocE(obs_data , rng , ens_size, active_size );
     *D = obs_data_allocD(obs_data , *E , *S );
   } else {
     *E          = NULL;
@@ -973,14 +975,15 @@ static void enkf_analysis_alloc_matrices( const meas_data_type * meas_data , obs
 }
 
 
-static void enkf_analysis_alloc_matrices_boot( const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
-					       matrix_type ** S , 
-					       matrix_type ** R , 
-					       double      ** innov,
-					       matrix_type ** E ,
-					       matrix_type ** D ,
-					       const meas_data_type * fasit,
-					       matrix_type  ** fullS) {
+static void enkf_analysis_alloc_matrices_boot( mzran_type * rng , 
+                                               const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
+                                               matrix_type ** S , 
+                                               matrix_type ** R , 
+                                               double      ** innov,
+                                               matrix_type ** E ,
+                                               matrix_type ** D ,
+                                               const meas_data_type * fasit,
+                                               matrix_type  ** fullS) {
   int ens_size              = meas_data_get_ens_size( meas_data );
   int active_size           = obs_data_get_active_size( obs_data );
   *S                        = meas_data_allocS( meas_data , active_size );
@@ -993,7 +996,7 @@ static void enkf_analysis_alloc_matrices_boot( const meas_data_type * meas_data 
        We are using standard EnKF and need to perturbe the measurements,
        if we are using the SQRT scheme the E & D matrices are not used.
     */
-    *E = obs_data_allocE(obs_data , ens_size, active_size );
+    *E = obs_data_allocE(obs_data , rng , ens_size, active_size );
     *D = obs_data_allocD(obs_data , *E , *fullS );
   } else {
     *E          = NULL;
@@ -1053,7 +1056,7 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
 
 */
    
-matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot) {
+matrix_type * enkf_analysis_allocX( const analysis_config_type * config , mzran_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot) {
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   matrix_set_name( X , "X");
@@ -1067,7 +1070,7 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const 
     double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
     bool bootstrap           = analysis_config_get_bootstrap( config );
-    enkf_analysis_alloc_matrices( meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
+    enkf_analysis_alloc_matrices( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
         
     /* 
        2: Diagonalize the S matrix; singular vectors are stored in W
@@ -1117,7 +1120,7 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , const 
 
 */
 
-matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , const meas_data_type * fasit) {
+matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , mzran_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , const meas_data_type * fasit) {
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   matrix_set_name( X , "X");
@@ -1132,7 +1135,7 @@ matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , c
     double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
     bool bootstrap           = analysis_config_get_bootstrap( config );
-    enkf_analysis_alloc_matrices_boot( meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS);
+    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS);
     
     matrix_free( fullS );
     /* 
@@ -1174,7 +1177,7 @@ matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , c
 }
 
 
-matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , matrix_type * A , matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0 , meas_data_type * fasit , int unique_bootstrap_components) {
+matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , mzran_type * rng , meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , matrix_type * A , matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0 , meas_data_type * fasit , int unique_bootstrap_components) {
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   {
@@ -1197,8 +1200,8 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     
     double * workeig    = util_malloc( sizeof * workeig * nrmin , __func__);
 
-    enkf_analysis_alloc_matrices_boot( meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS ); /*Using the bootstrap version every time, does mean a bit more data 
-															   carried through the function, but we avoid duplicating code.*/
+    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS ); /*Using the bootstrap version every time, does mean a bit more data 
+                                                                                                                           carried through the function, but we avoid duplicating code.*/
     matrix_free( fullS );
 
     /*copy entries in eig:*/
@@ -1217,7 +1220,7 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     W = X1, eig = inv(I+Lambda1),(Eq.14.30, and 14.29, Evensen, 2007, respectively)
     */ 
 
-    getW_pre_cv(W , V0T , Z , workeig ,  U0 , nfolds_CV , workA , unique_bootstrap_components);
+    getW_pre_cv(W , V0T , Z , workeig ,  U0 , nfolds_CV , workA , unique_bootstrap_components , rng);
     
     /* 
        3: actually calculating the X matrix. 
@@ -1260,15 +1263,15 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     in U0, V0T and eig respectively.
 */
 
-void enkf_analysis_local_pre_cv( const analysis_config_type * config , meas_data_type * meas_data , obs_data_type * obs_data ,  matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0, meas_data_type * fasit) {
+void enkf_analysis_local_pre_cv( const analysis_config_type * config , mzran_type * rng , meas_data_type * meas_data , obs_data_type * obs_data ,  matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0, meas_data_type * fasit) {
   {
     matrix_type * S , *R , *E , *D;
     matrix_type * fullS;
     double      * innov;
 
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );
-    enkf_analysis_alloc_matrices_boot( meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS ); /*Using the bootstrap version every time, does mean a bit more data 
-															   carried through the function, but we avoid duplicating code.*/
+    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS ); /*Using the bootstrap version every time, does mean a bit more data 
+                                                                                                                           carried through the function, but we avoid duplicating code.*/
     matrix_free( fullS );
     /* 
        2: Diagonalize the S matrix; singular vectors etc. needed later in the local CV:

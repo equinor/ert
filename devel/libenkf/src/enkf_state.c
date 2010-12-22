@@ -49,6 +49,7 @@
 #include <time_t_vector.h>
 #include <member_config.h>
 #include <enkf_defaults.h>
+#include <mzran.h>
 #define  ENKF_STATE_TYPE_ID 78132
 
 
@@ -121,6 +122,7 @@ struct enkf_state_struct {
   run_info_type         * run_info;                /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
   shared_info_type      * shared_info;             /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;               /* Private config information for this member; not updated during a simulation. */
+  mzran_type            * rng;
 };
 
 /*****************************************************************/
@@ -146,20 +148,8 @@ static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt
    When this initialization code has been run we are certain that the
    enkf_state object has all the information it needs to "run itself"
    forward.
-*/
 
-
-
-static void run_info_summarize( const run_info_type * run_info ) {
-  printf("Activ.....................: %d \n",run_info->active);
-  printf("Loading parameters from...: %d \n",run_info->init_step_parameters);
-  printf("Loading state from........: %d \n",run_info->step1);
-  printf("Simulating to.............: %d \n",run_info->step2);
-  printf("Loading from step.........: %d \n\n",run_info->load_start);
-}
-
-
-/**
+   
    This function inits the necessary fields in the run_info structure
    to be able to use the xxx_internalize_xxx() functions. Observe that
    trying actually run after the run_info structure has only been
@@ -271,7 +261,7 @@ void enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type 
   for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
     int iens = enkf_state_get_iens( enkf_state );
     enkf_node_type * param_node = enkf_state_get_node( enkf_state , stringlist_iget( param_list , ip));
-    if (enkf_node_initialize( param_node , iens))
+    if (enkf_node_initialize( param_node , iens , enkf_state->rng))
       enkf_fs_fwrite_node(enkf_state_get_fs_ref( enkf_state ) , param_node , 0 , iens , ANALYZED);
   }
 }
@@ -375,20 +365,6 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
   enkf_state_update_eclbase( enkf_state );
 }
 
-/**
-   Two small callback functions used to return (string representation)
-   of random integer and random float. The memorty allocated by these
-   functions will be freed by the calling scope.
-*/
-
-static char * enkf_state_subst_randint(const char * key , void * arg) {
-  return util_alloc_sprintf("%d" , rand());
-}
-
-static char * enkf_state_subst_randfloat(const char * key , void * arg) {
-  return util_alloc_sprintf("%12.10f" , 1.0 * rand() / RAND_MAX);
-}
-
 
 static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_config_type * ensemble_config) {
   stringlist_type * keylist  = ensemble_config_alloc_keylist(ensemble_config);
@@ -444,7 +420,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->node_hash         = hash_alloc();
   enkf_state->restart_kw_list   = stringlist_alloc_new();
   enkf_state->subst_list        = subst_list_alloc( subst_parent );
-
+  enkf_state->rng               = mzran_alloc( INIT_DEV_RANDOM ); 
   
   /*
     The user MUST specify an INIT_FILE, and for the first timestep the
@@ -1227,6 +1203,7 @@ void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
 
 
 void enkf_state_free(enkf_state_type *enkf_state) {
+  mzran_free( enkf_state->rng );
   hash_free(enkf_state->node_hash);
   subst_list_free(enkf_state->subst_list);
   stringlist_free(enkf_state->restart_kw_list);
@@ -1314,8 +1291,8 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const
          added for backwards compatibility, should be replaced with
         prober function callbacks.
     */
-    char * randint_value    = util_alloc_sprintf( "%d"      , rand());
-    char * randfloat_value  = util_alloc_sprintf( "%12.10f" , 1.0 * rand() / RAND_MAX);
+    char * randint_value    = util_alloc_sprintf( "%d"      , mzran_sample( enkf_state->rng ));
+    char * randfloat_value  = util_alloc_sprintf( "%12.10f" , mzran_get_double( enkf_state->rng ));
     
     enkf_state_add_subst_kw( enkf_state , "RANDINT"   , randint_value   , NULL);
     enkf_state_add_subst_kw( enkf_state , "RANDFLOAT" , randfloat_value , NULL);
@@ -1509,7 +1486,7 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_f
       stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
       for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
         enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
-        enkf_node_initialize( node , iens );
+        enkf_node_initialize( node , iens , enkf_state->rng );
       }
       stringlist_free( init_keys );
     }
@@ -1587,7 +1564,7 @@ bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , bool resampl
       stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
       for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
         enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
-        enkf_node_initialize( node , iens );
+        enkf_node_initialize( node , iens , enkf_state->rng );
       }
       stringlist_free( init_keys );
     }

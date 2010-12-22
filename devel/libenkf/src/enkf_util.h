@@ -9,6 +9,7 @@ extern "C" {
 #include <enkf_types.h>
 #include <ecl_util.h>
 #include <buffer.h>
+#include <mzran.h>
 
 /*****************************************************************/
 
@@ -53,9 +54,9 @@ for (i=0; i < data_size; i++)                       \
 void prefix ## _iscale(void *void_arg , double scale_factor) {             \
 prefix ## _type *arg = (prefix ## _type *) void_arg;                       \
 const int data_size = prefix ## _config_get_data_size(arg->config);        \
-int i;                                              			   \
-for (i=0; i < data_size; i++)                            		   \
- arg->data[i] *= scale_factor;                  			   \
+int i;                                                                     \
+for (i=0; i < data_size; i++)                                              \
+ arg->data[i] *= scale_factor;                                             \
 }
 #define SCALE_FUNC_SCALAR(prefix)   void prefix ## _iscale(void * void_arg, double scale_factor) { scalar_iscale(((prefix ## _type *) void_arg)->scalar , scale_factor); }
 #define SCALE_FUNC_VOID_HEADER(prefix) void prefix ## _iscale(void * , double)
@@ -67,9 +68,9 @@ for (i=0; i < data_size; i++)                            		   \
 void prefix ## _ireset(void *void_arg) {             \
 prefix ## _type *arg = (prefix ## _type *) void_arg;                       \
 const int data_size = prefix ## _config_get_data_size(arg->config);        \
-int i;                                              			   \
+int i;                                                                     \
 for (i=0; i < data_size; i++)                                              \
- arg->data[i] = 0;                               			   \
+ arg->data[i] = 0;                                                         \
 }
 #define RESET_FUNC_SCALAR(prefix)   void prefix ## _ireset(void * void_arg) { scalar_ireset(((prefix ## _type *) void_arg)->scalar); }
 #define RESET_FUNC_VOID_HEADER(prefix) void prefix ## _ireset(void *)
@@ -79,16 +80,16 @@ for (i=0; i < data_size; i++)                                              \
 
 #define ADD_FUNC(prefix)                                                       \
 void prefix ## _iadd(void *void_arg , const void *void_delta) {                \
-      prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
-const prefix ## _type *delta = (const prefix ## _type *) void_delta;	       \
-const prefix ## _config_type *config = arg->config; 			       \
+      prefix ## _type *arg   = (prefix ## _type *)       void_arg;             \
+const prefix ## _type *delta = (const prefix ## _type *) void_delta;           \
+const prefix ## _config_type *config = arg->config;                            \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
-int i;                                              			       \
+int i;                                                                         \
 if (config != delta->config) {                                                 \
     fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
-for (i=0; i < data_size; i++)                            			       \
+for (i=0; i < data_size; i++)                                                          \
  arg->data[i] += delta->data[i];                                               \
 }
 
@@ -99,16 +100,16 @@ for (i=0; i < data_size; i++)                            			       \
 
 #define MUL_ADD_FUNC(prefix)                                                                         \
 void prefix ## _imul_add(void *void_arg , double scale_factor , const void *void_delta) {                \
-      prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
-const prefix ## _type *delta = (const prefix ## _type *) void_delta;	       \
-const prefix ## _config_type *config = arg->config; 			       \
+      prefix ## _type *arg   = (prefix ## _type *)       void_arg;             \
+const prefix ## _type *delta = (const prefix ## _type *) void_delta;           \
+const prefix ## _config_type *config = arg->config;                            \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
-int i;                                              			       \
+int i;                                                                         \
 if (config != delta->config) {                                                 \
     fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
-for (i=0; i < data_size; i++)                            			       \
+for (i=0; i < data_size; i++)                                                          \
  arg->data[i] += scale_factor * delta->data[i];                                        \
 }
 
@@ -120,16 +121,16 @@ for (i=0; i < data_size; i++)                            			       \
 
 #define SUB_FUNC(prefix)                                                       \
 void prefix ## _isub(void *void_arg , const void *void_diff) {                 \
-      prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
-const prefix ## _type *diff = (const prefix ## _type *) void_diff;	       \
-const prefix ## _config_type *config = arg->config; 			       \
+      prefix ## _type *arg   = (prefix ## _type *)       void_arg;             \
+const prefix ## _type *diff = (const prefix ## _type *) void_diff;             \
+const prefix ## _config_type *config = arg->config;                            \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
-int i;                                              			       \
+int i;                                                                         \
 if (config != diff->config) {                                                  \
     fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
-for (i=0; i < data_size; i++)                            		       \
+for (i=0; i < data_size; i++)                                                  \
  arg->data[i] -= diff->data[i];                                                \
 }
 
@@ -140,16 +141,16 @@ for (i=0; i < data_size; i++)                            		       \
 
 #define MUL_FUNC(prefix)                                                       \
 void prefix ## _imul(void *void_arg , const void *void_factor) {                \
-      prefix ## _type *arg    = (prefix ## _type *)       void_arg;  	       \
-const prefix ## _type *factor = (const prefix ## _type *) void_factor;	       \
-const prefix ## _config_type *config = arg->config; 			       \
+      prefix ## _type *arg    = (prefix ## _type *)       void_arg;            \
+const prefix ## _type *factor = (const prefix ## _type *) void_factor;         \
+const prefix ## _config_type *config = arg->config;                            \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
-int i;                                              			       \
+int i;                                                                         \
 if (config != factor->config) {                                                 \
     fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
-for (i=0; i < data_size; i++)                            			       \
+for (i=0; i < data_size; i++)                                                          \
  arg->data[i] *= factor->data[i];                                               \
 }
 #define MUL_FUNC_SCALAR(prefix)   void prefix ## _imul(void *void_arg,  const void * void_factor) { scalar_imul( ((prefix ## _type *) void_arg)->scalar , (( const prefix ## _type *) void_factor)->scalar); }
@@ -160,16 +161,16 @@ for (i=0; i < data_size; i++)                            			       \
 
 #define ADDSQR_FUNC(prefix)                                                       \
 void prefix ## _iaddsqr(void *void_arg , const void *void_delta) {                \
-      prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
-const prefix ## _type *delta = (const prefix ## _type *) void_delta;	       \
-const prefix ## _config_type *config = arg->config; 			       \
+      prefix ## _type *arg   = (prefix ## _type *)       void_arg;             \
+const prefix ## _type *delta = (const prefix ## _type *) void_delta;           \
+const prefix ## _config_type *config = arg->config;                            \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
-int i;                                              			       \
+int i;                                                                         \
 if (config != delta->config) {                                                 \
     fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
-for (i=0; i < data_size; i++)                            		       \
+for (i=0; i < data_size; i++)                                                  \
  arg->data[i] += delta->data[i] * delta->data[i];                              \
 }
 #define ADDSQR_FUNC_SCALAR(prefix)   void prefix ## _iaddsqr(void *void_arg,  const void * void_factor) { scalar_iaddsqr( ((prefix ## _type *) void_arg)->scalar , (( const prefix ## _type *) void_factor)->scalar); }
@@ -244,26 +245,26 @@ void prefix ## _ensemble_mulX_vector__(void *new , int ens_size , const void ** 
 #define ALLOC_STATS_SCALAR(prefix)                                                                                                   \
 void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , prefix ## _type ** _mean , prefix ## _type ** _std) { \
   int iens;                                                                                                                          \
-  prefix ## _type * mean = prefix ## _copyc(ensemble[0]);									     \
-  prefix ## _type * std  = prefix ## _copyc(ensemble[0]);									     \
-  prefix ## _clear(mean);				 									     \
-  prefix ## _clear(std); 				 									     \
-  for (iens = 0; iens < ens_size; iens++) {     	 									     \
-    prefix ## _output_transform(ensemble[iens]);	 									     \
-    prefix ## _iadd(mean   , ensemble[iens]);   	 									     \
-    prefix ## _iaddsqr(std , ensemble[iens]);   	 									     \
-  }                                        		 									     \
-  prefix ## _iscale(mean , 1.0 / ens_size);		 									     \
-  prefix ## _iscale(std  , 1.0 / ens_size);		 									     \
-  {                                        		 									     \
-    prefix ## _type * tmp = prefix ## _copyc(mean);	 									     \
-    prefix ## _isqr(tmp);                          	 									     \
-    prefix ## _imul_add(std , -1.0 , tmp);	   	 									     \
-    prefix ## _free(tmp);                 	   	 									     \
-  }                                       	   	 									     \
-  prefix ## _isqrt(std);                           	 									     \
-  *_mean = mean;				   	 									     \
-  *_std  = std; 				   	 									     \
+  prefix ## _type * mean = prefix ## _copyc(ensemble[0]);                                                                            \
+  prefix ## _type * std  = prefix ## _copyc(ensemble[0]);                                                                            \
+  prefix ## _clear(mean);                                                                                                            \
+  prefix ## _clear(std);                                                                                                             \
+  for (iens = 0; iens < ens_size; iens++) {                                                                                          \
+    prefix ## _output_transform(ensemble[iens]);                                                                                     \
+    prefix ## _iadd(mean   , ensemble[iens]);                                                                                        \
+    prefix ## _iaddsqr(std , ensemble[iens]);                                                                                        \
+  }                                                                                                                                  \
+  prefix ## _iscale(mean , 1.0 / ens_size);                                                                                          \
+  prefix ## _iscale(std  , 1.0 / ens_size);                                                                                          \
+  {                                                                                                                                  \
+    prefix ## _type * tmp = prefix ## _copyc(mean);                                                                                  \
+    prefix ## _isqr(tmp);                                                                                                            \
+    prefix ## _imul_add(std , -1.0 , tmp);                                                                                           \
+    prefix ## _free(tmp);                                                                                                            \
+  }                                                                                                                                  \
+  prefix ## _isqrt(std);                                                                                                             \
+  *_mean = mean;                                                                                                                     \
+  *_std  = std;                                                                                                                      \
 }
 
 
@@ -272,25 +273,25 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 #define ALLOC_STATS(prefix)                                                                                                          \
 void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , prefix ## _type ** _mean , prefix ## _type ** _std) { \
   int iens;                                                                                                                          \
-  prefix ## _type * mean = prefix ## _copyc(ensemble[0]);									     \
-  prefix ## _type * std  = prefix ## _copyc(ensemble[0]);									     \
-  prefix ## _clear(mean);				 									     \
-  prefix ## _clear(std); 				 									     \
-  for (iens = 0; iens < ens_size; iens++) {     	 									     \
-    prefix ## _iadd(mean   , ensemble[iens]);   	 									     \
-    prefix ## _iaddsqr(std , ensemble[iens]);   	 									     \
-  }                                        		 									     \
-  prefix ## _iscale(mean , 1.0 / ens_size);		 									     \
-  prefix ## _iscale(std  , 1.0 / ens_size);		 									     \
-  {                                        		 									     \
-    prefix ## _type * tmp = prefix ## _copyc(mean);	 									     \
-    prefix ## _isqr(tmp);                          	 									     \
-    prefix ## _imul_add(std , -1.0 , tmp);	   	 									     \
-    prefix ## _free(tmp);                 	   	 									     \
-  }                                       	   	 									     \
-  prefix ## _isqrt(std);                           	 									     \
-  if (_mean != NULL)   *_mean = mean;				   	 							     \
-  if (_std != NULL)    *_std  = std; 				   	 							     \
+  prefix ## _type * mean = prefix ## _copyc(ensemble[0]);                                                                            \
+  prefix ## _type * std  = prefix ## _copyc(ensemble[0]);                                                                            \
+  prefix ## _clear(mean);                                                                                                            \
+  prefix ## _clear(std);                                                                                                             \
+  for (iens = 0; iens < ens_size; iens++) {                                                                                          \
+    prefix ## _iadd(mean   , ensemble[iens]);                                                                                        \
+    prefix ## _iaddsqr(std , ensemble[iens]);                                                                                        \
+  }                                                                                                                                  \
+  prefix ## _iscale(mean , 1.0 / ens_size);                                                                                          \
+  prefix ## _iscale(std  , 1.0 / ens_size);                                                                                          \
+  {                                                                                                                                  \
+    prefix ## _type * tmp = prefix ## _copyc(mean);                                                                                  \
+    prefix ## _isqr(tmp);                                                                                                            \
+    prefix ## _imul_add(std , -1.0 , tmp);                                                                                           \
+    prefix ## _free(tmp);                                                                                                            \
+  }                                                                                                                                  \
+  prefix ## _isqrt(std);                                                                                                             \
+  if (_mean != NULL)   *_mean = mean;                                                                                                \
+  if (_std != NULL)    *_std  = std;                                                                                                 \
 }
 
 
@@ -299,15 +300,13 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 /*****************************************************************/
 
 
-double enkf_util_random_uniform();
-int    enkf_util_random_int();
 
 void    enkf_util_truncate(void *  , int  , ecl_type_enum  , void *  , void *);
-void 	enkf_util_rand_stdnormal_vector(int  , double *);
-double 	enkf_util_rand_normal(double , double );
-void   	enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
+void    enkf_util_rand_stdnormal_vector(int  , double *, mzran_type * rng);
+double  enkf_util_rand_normal(double , double , mzran_type * rng);
+void    enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
 void    enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_type);
-void    enkf_util_randperm( int * , int);
+void    enkf_util_randperm( int * , int, mzran_type * rng);
 
   //char  * enkf_util_scanf_alloc_filename(const char * , int );
 void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , const bool * , bool , FILE * stream);

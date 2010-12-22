@@ -14,6 +14,7 @@ extern "C" {
 #include <matrix.h>
 #include <log.h>
 #include <meas_data.h>
+#include <mzran.h>
 
 #define CONFIG_STD_FIELDS \
 int __type_id;            \
@@ -208,11 +209,11 @@ void prefix ## _deserialize__(void *void_arg, const active_list_type * active_li
 /*****************************************************************/
 
 #define VOID_INITIALIZE(prefix)     \
-bool prefix ## _initialize__(void *void_arg, int iens) {         \
+  bool prefix ## _initialize__(void *void_arg, int iens , mzran_type * rng) {     \
    prefix ## _type  *arg = prefix ## _safe_cast(void_arg);       \
-   return prefix ## _initialize (arg , iens);                    \
+   return prefix ## _initialize (arg , iens , rng);                  \
 }
-#define VOID_INITIALIZE_HEADER(prefix) bool prefix ## _initialize__(void *, int);
+#define VOID_INITIALIZE_HEADER(prefix) bool prefix ## _initialize__(void *, int , mzran_type * );
 
 /*****************************************************************/
 

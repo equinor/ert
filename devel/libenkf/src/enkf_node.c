@@ -14,6 +14,7 @@
 #include <enkf_serialize.h>
 #include <buffer.h>
 #include <msg.h>
+#include <mzran.h>
 
 /**
    A small illustration (says more than thousand words ...) of how the
@@ -25,34 +26,34 @@
      |              |   o-----------
      |  ================           |                =====================
      |  |              |   o--------                |                   |
-     |	|  ================        |------------->  |                   |
-     |	|  |		  |        |                |  enkf_config_node |
-     |	|  |		  |        |                |                   |
+     |  |  ================        |------------->  |                   |
+     |  |  |              |        |                |  enkf_config_node |
+     |  |  |              |        |                |                   |
      ===|  |  enkf_node   |  o------                |                   |
-      o	|  |		  |                         |                   |
-      |	===|		  |                         =====================
-      |	 o |		  |                                   o
-      |	 | ================                                   |
+      o |  |              |                         |                   |
+      | ===|              |                         =====================
+      |  o |              |                                   o
+      |  | ================                                   |
       |  |        o                                           |
-      |  \        |					      |
-      |   \       | 					      |
-      |    |      |					      |
-      |    |  	  | 					      |
-      |    |  	  |  					      |
-      |    |      |   					      |
-     \|/   |	  |    					      |
-     ======|======|==                       		     \|/
+      |  \        |                                           |
+      |   \       |                                           |
+      |    |      |                                           |
+      |    |      |                                           |
+      |    |      |                                           |
+      |    |      |                                           |
+     \|/   |      |                                           |
+     ======|======|==                                        \|/
      |    \|/     | |   o-----------
      |  ==========|=====           |                =====================
      |  |        \|/   |   o--------                |                   |
-     |	|  ================        |------------->  |                   |
-     |	|  |		  |        |                |  field_config     |
-     |	|  |		  |        |                |                   |
+     |  |  ================        |------------->  |                   |
+     |  |  |              |        |                |  field_config     |
+     |  |  |              |        |                |                   |
      ===|  |  field       |  o------                |                   |
-       	|  |		  |                         |                   |
-     	===|		  |                         =====================
-     	   |		  |
-     	   ================
+        |  |              |                         |                   |
+        ===|              |                         =====================
+           |              |
+           ================
 
 
    To summarize in words:
@@ -178,18 +179,18 @@ struct enkf_node_struct {
   deserialize_ftype              * deserialize;
   load_ftype                     * load;
   store_ftype                    * store;    
-  initialize_ftype   		 * initialize;
+  initialize_ftype               * initialize;
   node_free_ftype                * freef;
-  clear_ftype        		 * clear;
+  clear_ftype                    * clear;
   node_copy_ftype                * copy;
-  scale_ftype        		 * scale;
-  iadd_ftype         		 * iadd;
-  imul_ftype         		 * imul;
-  isqrt_ftype        		 * isqrt;
-  iaddsqr_ftype      		 * iaddsqr;
+  scale_ftype                    * scale;
+  iadd_ftype                     * iadd;
+  imul_ftype                     * imul;
+  isqrt_ftype                    * isqrt;
+  iaddsqr_ftype                  * iaddsqr;
   
   /******************************************************************/
-  char               *node_key;       	    /* The (hash)key this node is identified with. */
+  char               *node_key;             /* The (hash)key this node is identified with. */
   void               *data;                 /* A pointer to the underlying enkf_object, i.e. multflt_type instance, or a field_type instance or ... */
   const enkf_config_node_type *config;      /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
   
@@ -382,9 +383,9 @@ bool enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
 
 void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step, int iens) {
   ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
-  enkf_node->__report_step 	= report_step;
-  enkf_node->__state       	= FORECAST;
-  enkf_node->__modified    	= false;
+  enkf_node->__report_step      = report_step;
+  enkf_node->__state            = FORECAST;
+  enkf_node->__modified         = false;
   enkf_node->__iens             = iens;
 }
 
@@ -548,9 +549,9 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
    necessary to internalize anything.
 */
 
-bool enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
+bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , mzran_type * rng) {
   if (enkf_node->initialize != NULL) {
-    if (enkf_node->initialize(enkf_node->data , iens)) {
+    if (enkf_node->initialize(enkf_node->data , iens , rng)) {
       enkf_node->__report_step = 0;
       enkf_node->__state       = ANALYZED;
       enkf_node->__modified    = true;
@@ -631,15 +632,15 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   /*
     Start by initializing all function pointers to NULL.
   */
-  //node->realloc_data   	   = NULL;
-  node->alloc          	   = NULL;
-  node->ecl_write      	   = NULL;
-  node->ecl_load       	   = NULL;
-  node->copy          	   = NULL;
-  node->initialize     	   = NULL;
-  node->freef          	   = NULL;
-  node->free_data      	   = NULL;
-  node->user_get       	   = NULL;
+  //node->realloc_data             = NULL;
+  node->alloc              = NULL;
+  node->ecl_write          = NULL;
+  node->ecl_load           = NULL;
+  node->copy               = NULL;
+  node->initialize         = NULL;
+  node->freef              = NULL;
+  node->free_data          = NULL;
+  node->user_get           = NULL;
   node->set_data           = NULL;
   node->fload              = NULL; 
   node->load               = NULL;
@@ -658,13 +659,13 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
 
   switch (impl_type) {
   case(GEN_KW):
-    //node->realloc_data 	     = gen_kw_realloc_data__;
-    node->alloc        	     = gen_kw_alloc__;
-    node->ecl_write    	     = gen_kw_ecl_write__;
-    node->copy        	     = gen_kw_copy__;
-    node->initialize   	     = gen_kw_initialize__;
-    node->freef        	     = gen_kw_free__;
-    //node->free_data    	     = gen_kw_free_data__;
+    //node->realloc_data             = gen_kw_realloc_data__;
+    node->alloc              = gen_kw_alloc__;
+    node->ecl_write          = gen_kw_ecl_write__;
+    node->copy               = gen_kw_copy__;
+    node->initialize         = gen_kw_initialize__;
+    node->freef              = gen_kw_free__;
+    //node->free_data                = gen_kw_free_data__;
     node->user_get           = gen_kw_user_get__; 
     node->store              = gen_kw_store__;
     node->load               = gen_kw_load__;
@@ -699,17 +700,17 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->isqrt              = summary_isqrt__;
     break;
   case(FIELD):
-    //node->realloc_data 	     = field_realloc_data__;
-    node->alloc        	     = field_alloc__;
-    node->ecl_write    	     = field_ecl_write__; 
-    node->ecl_load     	     = field_ecl_load__;  
-    node->copy        	     = field_copy__;
-    node->initialize   	     = field_initialize__;
-    node->freef        	     = field_free__;
-    //node->free_data    	     = field_free_data__;
-    node->user_get     	     = field_user_get__;
-    node->load         	     = field_load__;
-    node->store        	     = field_store__;
+    //node->realloc_data             = field_realloc_data__;
+    node->alloc              = field_alloc__;
+    node->ecl_write          = field_ecl_write__; 
+    node->ecl_load           = field_ecl_load__;  
+    node->copy               = field_copy__;
+    node->initialize         = field_initialize__;
+    node->freef              = field_free__;
+    //node->free_data                = field_free_data__;
+    node->user_get           = field_user_get__;
+    node->load               = field_load__;
+    node->store              = field_store__;
     node->serialize          = field_serialize__;
     node->deserialize        = field_deserialize__;
 
@@ -733,17 +734,17 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->store        = ecl_static_kw_store__;
     break;
   case(GEN_DATA):
-    //node->realloc_data 	     = gen_data_realloc_data__;
-    node->alloc        	     = gen_data_alloc__;
-    node->initialize   	     = gen_data_initialize__;
-    node->copy        	     = gen_data_copy__;
-    node->freef        	     = gen_data_free__;
-    //node->free_data    	     = gen_data_free_data__;
-    node->ecl_write    	     = gen_data_ecl_write__;
-    node->ecl_load     	     = gen_data_ecl_load__;
-    node->user_get     	     = gen_data_user_get__;
-    node->load         	     = gen_data_load__;
-    node->store        	     = gen_data_store__;
+    //node->realloc_data             = gen_data_realloc_data__;
+    node->alloc              = gen_data_alloc__;
+    node->initialize         = gen_data_initialize__;
+    node->copy               = gen_data_copy__;
+    node->freef              = gen_data_free__;
+    //node->free_data                = gen_data_free_data__;
+    node->ecl_write          = gen_data_ecl_write__;
+    node->ecl_load           = gen_data_ecl_load__;
+    node->user_get           = gen_data_user_get__;
+    node->load               = gen_data_load__;
+    node->store              = gen_data_store__;
     node->serialize          = gen_data_serialize__;
     node->deserialize        = gen_data_deserialize__;
     node->set_inflation      = gen_data_set_inflation__;
@@ -768,12 +769,12 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
 bool enkf_node_has_func(const enkf_node_type * node , node_function_type function_type) {
   bool has_func = false;
   switch (function_type) {
-    CASE_SET(alloc_func        		    , node->alloc);
-    CASE_SET(ecl_write_func    		    , node->ecl_write);
+    CASE_SET(alloc_func                     , node->alloc);
+    CASE_SET(ecl_write_func                 , node->ecl_write);
     CASE_SET(ecl_load_func                  , node->ecl_load);
-    CASE_SET(copy_func        		    , node->copy);
-    CASE_SET(initialize_func   		    , node->initialize);
-    CASE_SET(free_func         		    , node->freef);
+    CASE_SET(copy_func                      , node->copy);
+    CASE_SET(initialize_func                , node->initialize);
+    CASE_SET(free_func                      , node->freef);
   default:
     fprintf(stderr,"%s: node_function_identifier: %d not recognized - aborting \n",__func__ , function_type);
   }
@@ -822,28 +823,28 @@ void enkf_node_upgrade_file_103( const char * path , const char * file , enkf_im
       char * backup_file = util_alloc_filename(backup_path , file , NULL);
       
       if (!util_file_exists( backup_file )) {
-	util_make_path( backup_path );
-	util_copy_file( filename , backup_file );
-	
-	switch (impl_type) {
-	case(GEN_KW):
-	  gen_kw_upgrade_103( filename );
-	  break;
-	case(SUMMARY):
-	  summary_upgrade_103( filename );
-	  break;
-	case(FIELD):
-	  field_upgrade_103( filename );
-	  break;
-	case(STATIC):
-	  ecl_static_kw_upgrade_103( filename );
-	  break;
-	case(GEN_DATA):
-	  gen_data_upgrade_103( filename );
-	  break;
-	default:
-	  break;
-	}
+        util_make_path( backup_path );
+        util_copy_file( filename , backup_file );
+        
+        switch (impl_type) {
+        case(GEN_KW):
+          gen_kw_upgrade_103( filename );
+          break;
+        case(SUMMARY):
+          summary_upgrade_103( filename );
+          break;
+        case(FIELD):
+          field_upgrade_103( filename );
+          break;
+        case(STATIC):
+          ecl_static_kw_upgrade_103( filename );
+          break;
+        case(GEN_DATA):
+          gen_data_upgrade_103( filename );
+          break;
+        default:
+          break;
+        }
       }
       
       free( backup_path);

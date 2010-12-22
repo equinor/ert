@@ -13,6 +13,7 @@
 #include <gen_kw_config.h>
 #include <gen_kw.h>
 #include <log.h>
+#include <mzran.h>
 
 GET_DATA_SIZE_HEADER(gen_kw);
 
@@ -122,7 +123,7 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 
 
-bool gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
+bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , mzran_type * rng ) {
   char * init_file = gen_kw_config_alloc_initfile( gen_kw->config , iens);
   
   if (init_file != NULL) {
@@ -135,7 +136,7 @@ bool gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
     int i;
     
     for (i=0; i < data_size; i++) 
-      gen_kw->data[i] = enkf_util_rand_normal(mean , std);
+      gen_kw->data[i] = enkf_util_rand_normal(mean , std , rng);
     
   }
   return true;
