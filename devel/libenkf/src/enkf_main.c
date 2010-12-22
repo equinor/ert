@@ -2338,7 +2338,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   analysis_config_add_config_items( config );
   ensemble_config_add_config_items(config);
   ecl_config_add_config_items( config , strict );
-
+  
 
   /*****************************************************************/
   /* Required keywords from the ordinary model_config file */
@@ -2350,7 +2350,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_add_key_value( config , LOG_FILE_KEY  , false , CONFIG_STRING); 
 
   config_add_key_value(config , MAX_RESAMPLE_KEY , false , CONFIG_INT);
-
+  
   
   item = config_add_item(config , NUM_REALIZATIONS_KEY , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , 1, (const config_item_types [1]) {CONFIG_INT});
@@ -2398,6 +2398,12 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , ENKF_SCHED_FILE_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
+  item = config_add_item( config , STORE_SEED_KEY , false , false );
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , NULL );
+
+  item = config_add_item( config , LOAD_SEED_KEY , false , false );
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , HISTORY_SOURCE_KEY , false , false);
@@ -2637,6 +2643,7 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
     for (iens = enkf_main->ens_size; iens < new_ens_size; iens++) 
       
       enkf_main->ensemble[iens] = enkf_state_alloc(iens,
+                                                   enkf_main->rng , 
                                                    enkf_main->dbase ,
                                                    model_config_iget_casename( enkf_main->model_config , iens ) ,
                                                    enkf_main->pre_clear_runpath                                 ,
@@ -3715,6 +3722,7 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     ert_templates_fprintf_config( enkf_main->templates , stream );
     enkf_main_log_fprintf_config( enkf_main , stream );
     site_config_fprintf_config( enkf_main->site_config , stream );    
+    // SEED ...
     fclose( stream );
   }
 }

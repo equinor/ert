@@ -397,6 +397,7 @@ void enkf_state_set_pre_clear_runpath( enkf_state_type * enkf_state , bool pre_c
 
 
 enkf_state_type * enkf_state_alloc(int iens,
+                                   mzran_type                * main_rng ,   
                                    enkf_fs_type              * fs, 
                                    const char                * casename , 
                                    bool                        pre_clear_runpath , 
@@ -420,7 +421,8 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->node_hash         = hash_alloc();
   enkf_state->restart_kw_list   = stringlist_alloc_new();
   enkf_state->subst_list        = subst_list_alloc( subst_parent );
-  enkf_state->rng               = mzran_alloc( INIT_DEV_RANDOM ); 
+  enkf_state->rng               = mzran_alloc( INIT_NONE ); 
+  mzran_set_state4( enkf_state->rng , mzran_sample( main_rng ), mzran_sample( main_rng ), mzran_sample( main_rng ), mzran_sample( main_rng ) );
   
   /*
     The user MUST specify an INIT_FILE, and for the first timestep the

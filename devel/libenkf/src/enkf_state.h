@@ -28,7 +28,7 @@ extern "C" {
 #include <job_queue.h>
 #include <member_config.h>
 #include <subst_list.h>
-
+#include <mzran.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
 
@@ -60,6 +60,7 @@ void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_forward_model__(void * );
 enkf_state_type  * enkf_state_alloc(int ,
+                                    mzran_type     * main_rng , 
                                     enkf_fs_type   * fs, 
                                     const char * casename , 
                                     bool         pre_clear_runpath, 
