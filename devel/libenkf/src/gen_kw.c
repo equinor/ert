@@ -13,7 +13,7 @@
 #include <gen_kw_config.h>
 #include <gen_kw.h>
 #include <log.h>
-#include <mzran.h>
+#include <rng.h>
 
 GET_DATA_SIZE_HEADER(gen_kw);
 
@@ -123,7 +123,7 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 
 
-bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , mzran_type * rng ) {
+bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , rng_type * rng ) {
   char * init_file = gen_kw_config_alloc_initfile( gen_kw->config , iens);
   
   if (init_file != NULL) {

@@ -7,19 +7,19 @@
 #include <util.h>
 #include <ecl_util.h>
 #include <enkf_defaults.h>
-#include <mzran.h>
+#include <rng.h>
 
 
 
-double enkf_util_rand_normal(double mean , double std , mzran_type * rng) {
+double enkf_util_rand_normal(double mean , double std , rng_type * rng) {
   const double pi = 3.141592653589;
-  double R1 = mzran_get_double( rng );
-  double R2 = mzran_get_double( rng );
+  double R1 = rng_get_double( rng );
+  double R2 = rng_get_double( rng );
 
   return mean + std * sqrt(-2.0 * log(R1)) * cos(2.0 * pi * R2);
 }
 
-void enkf_util_rand_stdnormal_vector(int size , double *R, mzran_type * rng) {
+void enkf_util_rand_stdnormal_vector(int size , double *R, rng_type * rng) {
   int i;
   for (i = 0; i < size; i++)
     R[i] = enkf_util_rand_normal(0.0 , 1.0 , rng);
@@ -29,14 +29,14 @@ void enkf_util_rand_stdnormal_vector(int size , double *R, mzran_type * rng) {
 /**
   Vector containing a random permutation of the integers 1,...,size 
 */
-void enkf_util_randperm( int * P , int size , mzran_type * rng) {
+void enkf_util_randperm( int * P , int size , rng_type * rng) {
   int k, tmp;
   
   for (k = 0; k < size; k++)
     P[k] = k;
 
   while (size > 1) {
-    k = mzran_get_int( rng , size );
+    k = rng_get_int( rng , size );
     size--;
     tmp = P[size];
     P[size] = P[k];

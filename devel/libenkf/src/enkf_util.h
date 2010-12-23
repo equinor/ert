@@ -9,7 +9,7 @@ extern "C" {
 #include <enkf_types.h>
 #include <ecl_util.h>
 #include <buffer.h>
-#include <mzran.h>
+#include <rng.h>
 
 /*****************************************************************/
 
@@ -302,11 +302,11 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 
 
 void    enkf_util_truncate(void *  , int  , ecl_type_enum  , void *  , void *);
-void    enkf_util_rand_stdnormal_vector(int  , double *, mzran_type * rng);
-double  enkf_util_rand_normal(double , double , mzran_type * rng);
+void    enkf_util_rand_stdnormal_vector(int  , double *, rng_type * rng);
+double  enkf_util_rand_normal(double , double , rng_type * rng);
 void    enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
 void    enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_type);
-void    enkf_util_randperm( int * , int, mzran_type * rng);
+void    enkf_util_randperm( int * , int, rng_type * rng);
 
   //char  * enkf_util_scanf_alloc_filename(const char * , int );
 void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , const bool * , bool , FILE * stream);

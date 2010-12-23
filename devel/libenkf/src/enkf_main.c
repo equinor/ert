@@ -60,7 +60,8 @@
 #include <int_vector.h>
 #include <ert_build_info.h>
 #include <bool_vector.h>
-#include <mzran.h>
+#include <rng.h>
+#include <rng_config.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -108,6 +109,8 @@ struct enkf_main_struct {
   ert_templates_type   * templates;          /* Run time templates */
   log_type             * logh;               /* Handle to an open log file. */
   plot_config_type     * plot_config;        /* Information about plotting. */
+  rng_config_type      * rng_config;
+  rng_type             * rng;
 
   /*---------------------------*/            /* Variables related to substitution. */
   subst_func_pool_type * subst_func_pool;
@@ -123,7 +126,6 @@ struct enkf_main_struct {
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;         /* The ensemble ... */
   int                    ens_size;         /* The size of the ensemble */  
-  mzran_type           * rng; 
 };
 
 
@@ -306,7 +308,7 @@ static void enkf_main_free_ensemble( enkf_main_type * enkf_main ) {
 
 
 void enkf_main_free(enkf_main_type * enkf_main) {
-  mzran_free( enkf_main->rng );
+  rng_free( enkf_main->rng );
   enkf_obs_free(enkf_main->obs);
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) enkf_fs_free( enkf_main->dbase );
@@ -1126,7 +1128,7 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
   matrix_type * randints = matrix_alloc( ens_size , ens_size);
   for (int i = 0; i < ens_size; i++){
     for (int j = 0; j < ens_size; j++){
-      double r = 1.0 * mzran_get_int( enkf_main->rng , ens_size );
+      double r = 1.0 * rng_get_int( enkf_main->rng , ens_size );
       matrix_iset(randints, i , j , r);
     }
   }
@@ -2338,7 +2340,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   analysis_config_add_config_items( config );
   ensemble_config_add_config_items(config);
   ecl_config_add_config_items( config , strict );
-  
+  rng_config_add_config_items( config );
 
   /*****************************************************************/
   /* Required keywords from the ordinary model_config file */
@@ -2398,12 +2400,6 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , ENKF_SCHED_FILE_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-
-  item = config_add_item( config , STORE_SEED_KEY , false , false );
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , NULL );
-
-  item = config_add_item( config , LOAD_SEED_KEY , false , false );
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , HISTORY_SOURCE_KEY , false , false);
@@ -2495,20 +2491,7 @@ void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
 
 
 
-
-
-static enkf_main_type * enkf_main_alloc_empty( void ) {
-  enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main, __func__);
-  UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
-  enkf_main->dbase              = NULL;
-  enkf_main->ensemble           = NULL;
-  enkf_main->user_config_file   = NULL;
-  enkf_main->site_config_file   = NULL;
-  enkf_main->ens_size           = 0;
-  enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
-  enkf_main->rng                = mzran_alloc( INIT_DEV_RANDOM );
-
+static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
   /* Here we add the functions which should be available for string substitution operations. */
   enkf_main->subst_func_pool = subst_func_pool_alloc( enkf_main->rng );
   subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                               , subst_func_exp         , false , 1 , 1 , NULL);
@@ -2544,8 +2527,22 @@ static enkf_main_type * enkf_main_alloc_empty( void ) {
   subst_list_insert_func( enkf_main->subst_list , "MUL"         , "__MUL__");
   subst_list_insert_func( enkf_main->subst_list , "RANDINT"     , "__RANDINT__");
   subst_list_insert_func( enkf_main->subst_list , "RANDFLOAT"   , "__RANDFLOAT__");
+}
 
-  enkf_main->templates       = ert_templates_alloc( enkf_main->subst_list );
+
+
+static enkf_main_type * enkf_main_alloc_empty( void ) {
+  enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main, __func__);
+  UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
+  enkf_main->dbase              = NULL;
+  enkf_main->ensemble           = NULL;
+  enkf_main->user_config_file   = NULL;
+  enkf_main->site_config_file   = NULL;
+  enkf_main->ens_size           = 0;
+  enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
+  enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
+  enkf_main->rng_config         = rng_config_alloc( );
+  
   enkf_main->site_config     = site_config_alloc_empty();
   enkf_main->ensemble_config = ensemble_config_alloc_empty();
   enkf_main->ecl_config      = ecl_config_alloc_empty();
@@ -2641,7 +2638,8 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
 
     /*2: Allocate the new ensemble members. */
     for (iens = enkf_main->ens_size; iens < new_ens_size; iens++) 
-      
+
+      /* Observe that due to the initialization of the rng - this function is currently NOT thread safe. */
       enkf_main->ensemble[iens] = enkf_state_alloc(iens,
                                                    enkf_main->rng , 
                                                    enkf_main->dbase ,
@@ -2870,6 +2868,29 @@ void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
 
 /*****************************************************************/
 
+
+void enkf_main_rng_init( enkf_main_type * enkf_main) {
+  const char * seed_load  = rng_config_get_seed_load_file( enkf_main->rng_config );
+  const char * seed_store = rng_config_get_seed_store_file( enkf_main->rng_config );
+  enkf_main->rng = rng_alloc( rng_config_get_type(enkf_main->rng_config) , INIT_DEFAULT);
+  
+  if (seed_load != NULL) {
+    FILE * stream = util_fopen( seed_load , "r");
+    rng_fscanf_state( enkf_main->rng , stream );
+    fclose( stream );
+  } else
+    rng_init( enkf_main->rng , INIT_DEV_RANDOM );
+  
+
+  if (seed_store != NULL) {
+    FILE * stream = util_mkdir_fopen( seed_store , "w");
+    rng_fprintf_state( enkf_main->rng , stream );
+    fclose( stream );
+  }
+}
+
+
+
 /**
    Observe that the site-config initializations starts with chdir() to
    the location of the site_config_file; this ensures that the
@@ -3010,10 +3031,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_set_site_config_file( enkf_main , site_config );
     enkf_main_set_user_config_file( enkf_main , model_config );
     enkf_main_init_log( enkf_main , config );
-    enkf_main_init_data_kw( enkf_main , config );
     /*
       Initializing the various 'large' sub config objects. 
     */
+    rng_config_init( enkf_main->rng_config , config );
+    enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
+    enkf_main_init_subst_list( enkf_main );
+    enkf_main_init_data_kw( enkf_main , config );
+
     analysis_config_init( enkf_main->analysis_config , config );
     ecl_config_init( enkf_main->ecl_config , config );
     plot_config_init( enkf_main->plot_config , config );
@@ -3043,7 +3068,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
     }
     
-
+    
     /*****************************************************************/
     /**
        To keep or not to keep the runpath directories? The problem is
@@ -3100,6 +3125,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       
       /* Installing templates */
       {
+        enkf_main->templates       = ert_templates_alloc( enkf_main->subst_list );
         for (int i=0; i < config_get_occurences( config , RUN_TEMPLATE_KEY); i++) {
           const char * template_file = config_iget( config , RUN_TEMPLATE_KEY , i , 0);
           const char * target_file   = config_iget( config , RUN_TEMPLATE_KEY , i , 1);
@@ -3144,6 +3170,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
 
       /* Adding ensemble members */
+      printf("Priort:%p \n",enkf_main->rng);
       enkf_main_resize_ensemble( enkf_main  , config_iget_as_int(config , NUM_REALIZATIONS_KEY , 0 , 0) );
         
       /*****************************************************************/
@@ -3618,6 +3645,7 @@ void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_ta
   model_config_set_case_table( enkf_main->model_config , enkf_main->ens_size , case_table_file );
 }
 
+
 /*****************************************************************/
 
 
@@ -3722,7 +3750,7 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     ert_templates_fprintf_config( enkf_main->templates , stream );
     enkf_main_log_fprintf_config( enkf_main , stream );
     site_config_fprintf_config( enkf_main->site_config , stream );    
-    // SEED ...
+    rng_config_fprintf_config( enkf_main->rng_config , stream );
     fclose( stream );
   }
 }

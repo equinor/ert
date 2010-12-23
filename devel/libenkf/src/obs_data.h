@@ -9,7 +9,7 @@ extern "C" {
 #include <meas_data.h>
 #include <hash.h>
 #include <enkf_types.h>
-#include <mzran.h>
+#include <rng.h>
 
 typedef struct obs_data_struct   obs_data_type;
 typedef struct obs_block_struct  obs_block_type;
@@ -40,7 +40,7 @@ void                 obs_data_reset(obs_data_type * obs_data);
 matrix_type        * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S);
 matrix_type        * obs_data_allocR(const obs_data_type * obs_data , int active_size );
 double             * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_data_type * meas_data , int active_size);
-  matrix_type        * obs_data_allocE(const obs_data_type * obs_data , mzran_type * rng , int ens_size, int active_size);
+  matrix_type        * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , int ens_size, int active_size);
 void                 obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov);
 void                 obs_data_fprintf(const obs_data_type * , const meas_data_type * meas_data , FILE *);
 void                 obs_data_iget_value_std(const obs_data_type * obs_data , int index , double * value ,  double * std);

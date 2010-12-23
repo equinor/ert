@@ -14,7 +14,7 @@
 #include <enkf_serialize.h>
 #include <buffer.h>
 #include <msg.h>
-#include <mzran.h>
+#include <rng.h>
 
 /**
    A small illustration (says more than thousand words ...) of how the
@@ -549,7 +549,7 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
    necessary to internalize anything.
 */
 
-bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , mzran_type * rng) {
+bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , rng_type * rng) {
   if (enkf_node->initialize != NULL) {
     if (enkf_node->initialize(enkf_node->data , iens , rng)) {
       enkf_node->__report_step = 0;

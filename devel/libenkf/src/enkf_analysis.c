@@ -8,6 +8,7 @@
 #include <analysis_config.h>
 #include <enkf_util.h>
 #include <enkf_analysis.h>
+#include <rng.h>
 
 /**
    The static functions at the top are identical to the old fortran
@@ -403,7 +404,7 @@ static void lowrankCinv_pre_cv(const matrix_type * S , const matrix_type * R , m
 
 
 /*Special function for doing cross-validation */ 
-static void getW_pre_cv(matrix_type * W , matrix_type * V0T, matrix_type * Z , double * eig , matrix_type * U0 , int nfolds_CV, matrix_type * A, int unique_bootstrap_components , mzran_type * rng) {
+static void getW_pre_cv(matrix_type * W , matrix_type * V0T, matrix_type * Z , double * eig , matrix_type * U0 , int nfolds_CV, matrix_type * A, int unique_bootstrap_components , rng_type * rng) {
 
   const int nrobs = matrix_get_rows( U0 );
   const int nrens = matrix_get_columns( V0T );
@@ -634,7 +635,7 @@ static void X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type * ran
    NB: This should rather use the implementation in m_mean_preserving_rotation.f90. 
 */
 
-void enkf_analysis_set_randrot( matrix_type * Q  , mzran_type * rng) {
+void enkf_analysis_set_randrot( matrix_type * Q  , rng_type * rng) {
   int ens_size       = matrix_get_rows( Q );
   double      * tau  = util_malloc( sizeof * tau  * ens_size , __func__);
   int         * sign = util_malloc( sizeof * sign * ens_size , __func__);
@@ -673,7 +674,7 @@ void enkf_analysis_set_randrot( matrix_type * Q  , mzran_type * rng) {
    where U is an arbitrary orthonormal matrix of dim nrens-1 x nrens-1  (eq. 19)
 */
 
-matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size , mzran_type * rng) {
+matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size , rng_type * rng) {
   matrix_type * Up  = matrix_alloc( ens_size , ens_size );  /* The return value. */
   {
     matrix_type * B   = matrix_alloc( ens_size , ens_size );
@@ -945,7 +946,7 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type
   observation error and the mean will be subtracted from the S matrix.
 */
 
-static void enkf_analysis_alloc_matrices( mzran_type * rng , 
+static void enkf_analysis_alloc_matrices( rng_type * rng , 
                                           const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
                                           matrix_type ** S , 
                                           matrix_type ** R , 
@@ -975,7 +976,7 @@ static void enkf_analysis_alloc_matrices( mzran_type * rng ,
 }
 
 
-static void enkf_analysis_alloc_matrices_boot( mzran_type * rng , 
+static void enkf_analysis_alloc_matrices_boot( rng_type * rng , 
                                                const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
                                                matrix_type ** S , 
                                                matrix_type ** R , 
@@ -1056,7 +1057,7 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
 
 */
    
-matrix_type * enkf_analysis_allocX( const analysis_config_type * config , mzran_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot) {
+matrix_type * enkf_analysis_allocX( const analysis_config_type * config , rng_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot) {
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   matrix_set_name( X , "X");
@@ -1120,7 +1121,7 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , mzran_
 
 */
 
-matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , mzran_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , const meas_data_type * fasit) {
+matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , rng_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , const meas_data_type * fasit) {
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   matrix_set_name( X , "X");
@@ -1177,7 +1178,7 @@ matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , m
 }
 
 
-matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , mzran_type * rng , meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , matrix_type * A , matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0 , meas_data_type * fasit , int unique_bootstrap_components) {
+matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , rng_type * rng , meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , matrix_type * A , matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0 , meas_data_type * fasit , int unique_bootstrap_components) {
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   {
@@ -1263,7 +1264,7 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     in U0, V0T and eig respectively.
 */
 
-void enkf_analysis_local_pre_cv( const analysis_config_type * config , mzran_type * rng , meas_data_type * meas_data , obs_data_type * obs_data ,  matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0, meas_data_type * fasit) {
+void enkf_analysis_local_pre_cv( const analysis_config_type * config , rng_type * rng , meas_data_type * meas_data , obs_data_type * obs_data ,  matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0, meas_data_type * fasit) {
   {
     matrix_type * S , *R , *E , *D;
     matrix_type * fullS;

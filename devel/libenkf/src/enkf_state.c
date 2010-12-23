@@ -49,7 +49,7 @@
 #include <time_t_vector.h>
 #include <member_config.h>
 #include <enkf_defaults.h>
-#include <mzran.h>
+#include <rng.h>
 #define  ENKF_STATE_TYPE_ID 78132
 
 
@@ -122,7 +122,7 @@ struct enkf_state_struct {
   run_info_type         * run_info;                /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
   shared_info_type      * shared_info;             /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;               /* Private config information for this member; not updated during a simulation. */
-  mzran_type            * rng;
+  rng_type              * rng;
 };
 
 /*****************************************************************/
@@ -397,7 +397,7 @@ void enkf_state_set_pre_clear_runpath( enkf_state_type * enkf_state , bool pre_c
 
 
 enkf_state_type * enkf_state_alloc(int iens,
-                                   mzran_type                * main_rng ,   
+                                   rng_type                  * main_rng ,   
                                    enkf_fs_type              * fs, 
                                    const char                * casename , 
                                    bool                        pre_clear_runpath , 
@@ -421,10 +421,10 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->node_hash         = hash_alloc();
   enkf_state->restart_kw_list   = stringlist_alloc_new();
   enkf_state->subst_list        = subst_list_alloc( subst_parent );
-  enkf_state->rng               = mzran_alloc( INIT_NONE ); 
-  mzran_set_state4( enkf_state->rng , mzran_sample( main_rng ), mzran_sample( main_rng ), mzran_sample( main_rng ), mzran_sample( main_rng ) );
+  enkf_state->rng               = rng_alloc( rng_get_type( main_rng ) , INIT_DEFAULT ); 
+  rng_rng_init( enkf_state->rng , main_rng );  /* <- Not thread safe */
   
-  /*
+/*
     The user MUST specify an INIT_FILE, and for the first timestep the
    <INIT> tag in the data file will be replaced by an 
 
@@ -1205,7 +1205,7 @@ void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
 
 
 void enkf_state_free(enkf_state_type *enkf_state) {
-  mzran_free( enkf_state->rng );
+  rng_free( enkf_state->rng );
   hash_free(enkf_state->node_hash);
   subst_list_free(enkf_state->subst_list);
   stringlist_free(enkf_state->restart_kw_list);
@@ -1293,8 +1293,8 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const
          added for backwards compatibility, should be replaced with
         prober function callbacks.
     */
-    char * randint_value    = util_alloc_sprintf( "%d"      , mzran_sample( enkf_state->rng ));
-    char * randfloat_value  = util_alloc_sprintf( "%12.10f" , mzran_get_double( enkf_state->rng ));
+    char * randint_value    = util_alloc_sprintf( "%u"      , rng_forward( enkf_state->rng ));
+    char * randfloat_value  = util_alloc_sprintf( "%12.10f" , rng_get_double( enkf_state->rng ));
     
     enkf_state_add_subst_kw( enkf_state , "RANDINT"   , randint_value   , NULL);
     enkf_state_add_subst_kw( enkf_state , "RANDFLOAT" , randfloat_value , NULL);

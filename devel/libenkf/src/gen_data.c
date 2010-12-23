@@ -19,7 +19,7 @@
 #include <math.h>
 #include <log.h>
 #include <bool_vector.h>
-#include <mzran.h>
+#include <rng.h>
 
 /**
    The file implements a general data type which can be used to update
@@ -350,7 +350,7 @@ bool gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const 
 
 
 
-bool gen_data_initialize(gen_data_type * gen_data , int iens , mzran_type * rng) {
+bool gen_data_initialize(gen_data_type * gen_data , int iens , rng_type * rng) {
   char * init_file = gen_data_config_alloc_initfile(gen_data->config , iens);
   if (init_file != NULL) {
     if (!gen_data_fload_with_report_step(gen_data , init_file , 0))
