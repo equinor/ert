@@ -3170,7 +3170,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
 
       /* Adding ensemble members */
-      printf("Priort:%p \n",enkf_main->rng);
       enkf_main_resize_ensemble( enkf_main  , config_iget_as_int(config , NUM_REALIZATIONS_KEY , 0 , 0) );
         
       /*****************************************************************/
