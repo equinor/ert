@@ -183,12 +183,17 @@ Concrete tips:
      enkf_obs_get_obs_conf_class() function to allow for two
      additional arguments, for instance OBS_SCRIPT and SCRIPT_ARG.
      It is probably also necessary to relax some of the constraints in
-     the gen_obs_class definition. 
+     the gen_obs_class definition??
 
      Observe that the "conf" system is strongly key=value oriented,
      that means that it is difficult to set a list of arguments with
      one key, to solve this I suggest using quotes and a util function
      to split on " ".
+
+        .....
+        OBS_SCRIPT = /path/to/som/script/make_obs.py
+        SCRIPT_ARG = "ARG1 ARG2 ARG3 ...ARG17"
+        ....
 
   2. I suggest that the only "rule" for the script is that it should
      produce a stdout stream like:
