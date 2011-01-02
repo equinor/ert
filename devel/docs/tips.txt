@@ -94,19 +94,19 @@ it. In the configuration file both GEN_DATA and GEN_PARAM can be used:
       must be loaded at the end of each timestep. The arch-typical
       example of a GEN_DATA instance would be seismic data.
 
-Internally in the ert everything is implemented as gen_data. The
-flexibility of the gen_data implementation is a  good thing, however
+Internally in ERT everything is implemented as gen_data. The
+flexibility of the gen_data implementation is a good thing, however
 there are some significant disdvantages:
 
   * Since the gen_data_config object contains very limited meta-data
     information it is difficult to capture user error. Typically what
     happens is that:
 
-     - The user is is not discovered before long out in the
-       simulation, and when discovered possibly only as a a
-       util-abort().
+     - The user error is not discovered before long out in the
+       simulation, and when discovered possibly only as a 
+       util_abort().
     
-     - User eerror is not discovered at all - the user just gets other
+     - User error is not discovered at all - the user just gets other
        results than anticipated.
 
   * The implementation is quite complex, and "different" from the
@@ -114,7 +114,7 @@ there are some significant disdvantages:
     there are probably still bugs and inconsistenceis buried in the
     gen_data implementation.
 
-When configuring a gen_data instance you tell ert which file to look
+When configuring a gen_data instance you tell ERT which file to look
 for when loading the results from the forward model. When the forward
 model is complete and loading of results starts the following
 happens:
@@ -165,6 +165,52 @@ two here, my first suspect is with save/restore functionality in the
 functions gen_data_config_update_active() and
 gen_data_config_load_active().
  
+
+
+3. Some tips for implementing a obs_script
+------------------------------------------
+
+There are two different configuration systems present in the ERT
+code. libconfig/src/config.c implements the "config" system, whereas
+the "conf" system is implememented in libconfig/src/conf.c. The "conf"
+system is only used in the observation system, whereas the "config"
+system is used for the main configuration file and also some other
+small areas of the code.
+
+Concrete tips:
+
+  1. Modify the "enkf_conf_class" instance which is created in the
+     enkf_obs_get_obs_conf_class() function to allow for two
+     additional arguments, for instance OBS_SCRIPT and SCRIPT_ARG.
+     It is probably also necessary to relax some of the constraints in
+     the gen_obs_class definition. 
+
+     Observe that the "conf" system is strongly key=value oriented,
+     that means that it is difficult to set a list of arguments with
+     one key, to solve this I suggest using quotes and a util function
+     to split on " ".
+
+  2. I suggest that the only "rule" for the script is that it should
+     produce a stdout stream like:
+  
+        value1
+        value2
+        value3
+        ....
+        error1
+        error2
+        error3
+        ....
+     
+     this can then be easily captured to a temporary file by setting
+     the stdout redirection of the util_fork_exec() function, and then
+     subsequently the 100% normal way of creating a gen_obs instance
+     can be used.
+ 
+
+
+      
+         
 
 
   
