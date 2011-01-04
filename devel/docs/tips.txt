@@ -175,7 +175,11 @@ code. libconfig/src/config.c implements the "config" system, whereas
 the "conf" system is implememented in libconfig/src/conf.c. The "conf"
 system is only used in the observation system, whereas the "config"
 system is used for the main configuration file and also some other
-small areas of the code.
+small areas of the code. The occurence of two different config systems
+is of course a major embarressement, it should all have been xml :-(
+
+Since the observation file is implemented with the "conf" system, that
+is what applies in this case.
 
 Concrete tips:
 
@@ -210,7 +214,9 @@ Concrete tips:
      this can then be easily captured to a temporary file by setting
      the stdout redirection of the util_fork_exec() function, and then
      subsequently the 100% normal way of creating a gen_obs instance
-     can be used.
+     can be used. Input arguments / input files / e.t.c. to the
+     OBS_SCRIPT should be given in the SCRIPT_ARG option - fully
+     specified by the user.
  
 
 
