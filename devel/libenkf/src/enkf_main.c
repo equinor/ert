@@ -2974,7 +2974,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (site_config == NULL)
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
   
-  printf("site config : %s \n\n",site_config);
   {
 
     char * path;
@@ -3428,63 +3427,6 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
 
 /*****************************************************************/
-
-/**
-   This function stores a pid file for the running ert instance. The
-   rules of the game are as follows:
-
-     1. The name of the file is just the pid number.
-
-     2. The content of the file is the current executable and the uid
-        of the current user, separated with a space.
-
-     3. The argument to the function is argv[0] from the main
-        function.
-
-
-   On normal exit the file is removed with the enkf_main_delete_pid()
-   function.
-*/
-
-
-void enkf_main_store_pid(const char * argv0) {
-  const mode_t var_dir_mode = S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH + S_IWOTH; /* = a+rwx */
-  char * current_executable;
-  if (util_is_abs_path( argv0 ))
-    current_executable = util_alloc_string_copy( argv0 );
-  else
-    current_executable = util_alloc_PATH_executable( argv0 );
-
-  if (util_make_path2( DEFAULT_VAR_DIR , var_dir_mode )) {
-    char * pidfile = util_alloc_sprintf("%s/%d" , DEFAULT_VAR_DIR , getpid());
-    FILE * stream  = util_fopen( pidfile , "w");
-
-    fprintf(stream , "%s %d\n", current_executable , getuid());
-    fclose( stream );
-    util_chmod_if_owner( pidfile , S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH + S_IWOTH); /* chmod a+rw */
-    free( pidfile );
-  } else
-    fprintf(stderr,"** Failed to make directory:%s \n",DEFAULT_VAR_DIR);
-
-  util_safe_free( current_executable );
-}
-
-
-
-/**
-   This function is called when the ert application is exiting, it
-   will just delete the pid file.
-
-   If the ert application exits through a crash the pid file will be
-   left hanging around. In that case it will be deleted the
-   next time the enkf_main_list_users() function is run.
-*/
-
-void enkf_main_delete_pid( ) {
-  char * pidfile = util_alloc_sprintf("%s/%d" , DEFAULT_VAR_DIR , getpid());
-  util_unlink_existing( pidfile );
-  free( pidfile );
-}
 
 
 
