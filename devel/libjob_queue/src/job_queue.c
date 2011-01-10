@@ -7,7 +7,6 @@
 #include <msg.h>
 #include <util.h>
 #include <basic_queue_driver.h>
-#include <lsf_driver.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <arg_pack.h>
@@ -1117,7 +1116,10 @@ void * job_queue_get_driver( job_queue_type * queue ) {
 /*****************************************************************/
 
 const char * job_queue_get_driver_name( const job_queue_type * queue ) {
+  //return queue->driver->get_name( queue->driver );
+  
   job_driver_type driver_type = job_queue_get_driver_type( queue );
+  
   switch( driver_type ) {
   case(LSF_DRIVER):
     return "LSF";
