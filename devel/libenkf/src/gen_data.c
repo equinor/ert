@@ -158,29 +158,6 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_
 
 
 
-void gen_data_upgrade_103(const char * filename) {
-  FILE * stream               = util_fopen(filename , "r");
-  enkf_impl_type impl_type    = util_fread_int( stream );
-  int            size         = util_fread_int( stream );
-  int            report_step  = util_fread_int( stream );
-  size_t byte_size            = util_fread_sizeof_compressed( stream );
-  void            * data      = util_fread_alloc_compressed( stream );
-  fclose(stream);
-  {
-    buffer_type * buffer = buffer_alloc( 100 );
-    buffer_fwrite_time_t( buffer , time(NULL));
-    buffer_fwrite_int( buffer , impl_type );
-    buffer_fwrite_int( buffer , size );
-    buffer_fwrite_int( buffer , report_step );
-    buffer_fwrite_compressed( buffer , data , byte_size);
-    
-    buffer_store( buffer , filename );
-    buffer_free( buffer );
-  }
-}
-
-
-
 
 
 

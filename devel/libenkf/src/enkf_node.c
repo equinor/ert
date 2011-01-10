@@ -807,55 +807,6 @@ bool enkf_node_internalize(const enkf_node_type * node, int report_step) {
 
 /*****************************************************************/
 
-void enkf_node_upgrade_file_103( const char * path , const char * file , enkf_impl_type impl_type , int perc_complete , msg_type * msg) {
-  if (strstr( file , "backup") != NULL)  /* This is a backup-file from a previous (halted) upgrade */
-    return;
-  
-  {
-    char * filename = util_alloc_filename( path , file , NULL);
-    {
-      char * msg_txt = util_alloc_sprintf("[%2d %s]  %s", perc_complete , "%" , filename);
-      msg_update( msg , msg_txt );
-      free(msg_txt);
-    }
-    {
-      char * backup_path = util_alloc_filename(path , ".backup" , NULL);
-      char * backup_file = util_alloc_filename(backup_path , file , NULL);
-      
-      if (!util_file_exists( backup_file )) {
-        util_make_path( backup_path );
-        util_copy_file( filename , backup_file );
-        
-        switch (impl_type) {
-        case(GEN_KW):
-          gen_kw_upgrade_103( filename );
-          break;
-        case(SUMMARY):
-          summary_upgrade_103( filename );
-          break;
-        case(FIELD):
-          field_upgrade_103( filename );
-          break;
-        case(STATIC):
-          ecl_static_kw_upgrade_103( filename );
-          break;
-        case(GEN_DATA):
-          gen_data_upgrade_103( filename );
-          break;
-        default:
-          break;
-        }
-      }
-      
-      free( backup_path);
-      free( backup_file);
-    }
-    free(filename);
-  }
-}
-
-/*****************************************************************/
-
 
 ecl_write_ftype * enkf_node_get_func_pointer( const enkf_node_type * node ) {
   return node->ecl_write;
