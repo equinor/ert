@@ -6,7 +6,8 @@ import libecl
 
 class EclRegion:
     def __init__(self , grid , preselect , c_ptr = None):
-        self.grid  = grid
+        self.grid = grid
+        self.active_index = False
         if c_ptr:
             self.c_ptr = c_ptr
         else:
@@ -88,6 +89,7 @@ class EclRegion:
         cfunc.deselect_less( self , ecl_kw , limit )
 
     def select_equal( self , ecl_kw , value ):
+        print "Running select equal. Value:%d " % value
         cfunc.select_equal( self , ecl_kw , value )
 
     def deselect_equal( self , ecl_kw , value ):
@@ -243,6 +245,7 @@ class EclRegion:
     def ecl_region_instance( self ):
         return True
 
+    
 
     @property
     def active_list(self):
@@ -284,8 +287,8 @@ cfunc.reset                      = cwrapper.prototype("void ecl_region_reset( ec
 cfunc.select_all                 = cwrapper.prototype("void ecl_region_select_all( ecl_region )")
 cfunc.deselect_all               = cwrapper.prototype("void ecl_region_deselect_all( ecl_region )")
 
-cfunc.select_equal               = cwrapper.prototype("void ecl_region_select_all( ecl_region , ecl_kw , int )")
-cfunc.deselect_equal             = cwrapper.prototype("void ecl_region_deselect_all( ecl_region , ecl_kw , int)")
+cfunc.select_equal               = cwrapper.prototype("void ecl_region_select_equal( ecl_region , ecl_kw , int )")
+cfunc.deselect_equal             = cwrapper.prototype("void ecl_region_deselect_equal( ecl_region , ecl_kw , int)")
 
 cfunc.select_less                = cwrapper.prototype("void ecl_region_select_smaller( ecl_region , ecl_kw , float )")
 cfunc.deselect_less              = cwrapper.prototype("void ecl_region_deselect_smaller( ecl_region , ecl_kw , float )")
