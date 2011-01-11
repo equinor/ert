@@ -89,7 +89,6 @@ class EclRegion:
         cfunc.deselect_less( self , ecl_kw , limit )
 
     def select_equal( self , ecl_kw , value ):
-        print "Running select equal. Value:%d " % value
         cfunc.select_equal( self , ecl_kw , value )
 
     def deselect_equal( self , ecl_kw , value ):
