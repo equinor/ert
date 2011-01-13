@@ -5,10 +5,10 @@ extern "C" {
 #endif
 #include <hash.h>
 
-#define RSH_HOST           1
-#define RSH_HOSTLIST       2
-#define RSH_CMD            3     
-#define RSH_CLEAR_HOSTLIST 4
+#define RSH_HOST           "RSH_HOST"
+#define RSH_HOSTLIST       "RSH_HOSTLIST"
+#define RSH_CMD            "RSH_CMD" 
+#define RSH_CLEAR_HOSTLIST "RSH_CLEAR_HOSTLIST"
 
 typedef struct rsh_driver_struct rsh_driver_type;
 typedef struct rsh_job_struct    rsh_job_type;
@@ -28,8 +28,8 @@ job_status_type rsh_driver_get_job_status(void * __driver , void * __job);
 void            rsh_driver_free_job(void * __job);
 
 
-void         rsh_driver_set_option( void * __driver, int option_id , const void * value );
-const void * rsh_driver_get_option( const void * __driver , int option_id );
+void         rsh_driver_set_option( void * __driver, const char * option_key , const void * value );
+const void * rsh_driver_get_option( const void * __driver , const char * option_key);
 
 #ifdef __cplusplus
 }

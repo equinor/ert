@@ -68,9 +68,9 @@ typedef void                   (kill_job_ftype)             (void * , void * );
 typedef job_status_type        (get_status_ftype)           (void * , void * );
 typedef void                   (free_job_ftype)             (void * );
 typedef void                   (free_queue_driver_ftype)    (void *); 
-typedef void                   (set_option_ftype)           (void * , int , const void * );
-typedef const void *           (get_option_ftype)           (const void * , int );
-typedef bool                   (has_option_ftype)           (const void * , int );
+typedef void                   (set_option_ftype)           (void * , const char* , const void * );
+typedef const void *           (get_option_ftype)           (const void * , const char * );
+typedef bool                   (has_option_ftype)           (const void * , const char * );
 
 
 queue_driver_type * queue_driver_alloc_RSH( const char * rsh_cmd , const hash_type * rsh_hostlist);
@@ -86,9 +86,9 @@ void                queue_driver_set_max_running( queue_driver_type * driver , i
 int                 queue_driver_get_max_running( const queue_driver_type * driver );
 const char        * queue_driver_get_name( const queue_driver_type * driver );
 
-void                queue_driver_set_option( queue_driver_type * driver , int option_id , const void * value);
-void                queue_driver_set_int_option( queue_driver_type * driver , int option_id , int int_value);
-const        void * queue_driver_get_option( queue_driver_type * driver , int option_id );
+void                queue_driver_set_option( queue_driver_type * driver , const char * option_key , const void * value);
+void                queue_driver_set_int_option( queue_driver_type * driver , const char * option_key , int int_value);
+const        void * queue_driver_get_option( queue_driver_type * driver , const char * option_key );
 
 void                queue_driver_free( queue_driver_type * driver );
 

@@ -378,51 +378,33 @@ void rsh_driver_add_host_from_string(rsh_driver_type * rsh_driver , const char *
 }
 
 
-//const char * colon_ptr = strchr(hostname , ':');
-//  if (colon_ptr != NULL) {
-//    /* The hostname contains a ':' - and we must do some parsing. */
-//    int max_running;
-//    char * host = util_alloc_substring_copy( hostname , strlen( hostname ) - strlen( colon_ptr ));
-//    util_sscanf_int( &colon_ptr[1] , &max_running );
-//    rsh_driver_add_host( rsh_driver , host , 1);
-//    free( host );
-//  } else
-//    rsh_driver_add_host( rsh_driver , hostname , 1);
-//}
 
 
-void rsh_driver_set_option( void * __driver , int option_id , const void * value ) {
+void rsh_driver_set_option( void * __driver , const char * option_key , const void * value ) {
   rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
   {
-    switch( option_id ) {
-    case( RSH_HOST ):
+    if (strcmp(RSH_HOST , option_key) == 0)                 /* Add one host - value should be hostname:max */  
       rsh_driver_add_host_from_string( driver , value );
-      break;
-    case(RSH_HOSTLIST):
+    else if (strcmp(RSH_HOSTLIST , option_key) == 0) {      /* Set full host list - value should be hash of integers. */
       hash_safe_cast( value );
       rsh_driver_set_host_list( driver , value );
-      break;
-    case(RSH_CLEAR_HOSTLIST):
+    } else if (strcmp( RSH_CLEAR_HOSTLIST , option_key) == 0)
       /* Value is not considered - this is an action, and not a _set operation. */
       rsh_driver_set_host_list( driver , NULL );
-      break;
-    case( RSH_CMD ):
+    else if (strcmp( RSH_CMD , option_key) == 0)
       driver->rsh_command = util_realloc_string_copy( driver->rsh_command , value );
-      break;
-    default:
-      util_abort("%s: unrecognized option_id:%d for RSH driver \n",__func__ , option_id );
-    }
+    else
+      util_abort("%s: unrecognized option_id:%s for RSH driver \n",__func__ , option_key );
   }
 }
 
-const void * rsh_driver_get_option( const void * __driver , int option_id ) {
+
+const void * rsh_driver_get_option( const void * __driver , const char * option_key ) {
   const rsh_driver_type * driver = rsh_driver_safe_cast_const( __driver );
-  switch (option_id) {
-  case( RSH_CMD ):
-    return driver->rsh_command;
-    break;
-  case( RSH_HOSTLIST ):
-    {
+  {
+    if (strcmp( RSH_CMD , option_key ) == 0)
+      return driver->rsh_command;
+    else if (strcmp( RSH_HOSTLIST , option_key) == 0) {
       int ihost;
       hash_clear( driver->__host_hash );
       for (ihost = 0; ihost < driver->num_hosts; ihost++) {
@@ -430,11 +412,10 @@ const void * rsh_driver_get_option( const void * __driver , int option_id ) {
         hash_insert_int( driver->__host_hash , host->host_name , host->max_running);
       }
       return driver->__host_hash;
+    } else {
+      util_abort("%s: get not implemented fro option_id:%s for rsh \n",__func__ , option_key );
+      return NULL;
     }
-    break;
-  default:
-    util_abort("%s: get not implemented fro option_id:%d for rsh \n",__func__ , option_id );
-    return NULL;
   }
 }
 
