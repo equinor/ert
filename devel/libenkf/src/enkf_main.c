@@ -54,7 +54,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <job_queue.h>
-#include <basic_queue_driver.h>
+#include <queue_driver.h>
 #include <subst_list.h>
 #include <subst_func.h>
 #include <int_vector.h>

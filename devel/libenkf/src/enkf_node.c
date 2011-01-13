@@ -798,8 +798,6 @@ enkf_node_type * enkf_node_alloc_with_data(const enkf_config_node_type * config 
 }
 
 
-
-
 bool enkf_node_internalize(const enkf_node_type * node, int report_step) {
   return enkf_config_node_internalize( node->config , report_step );
 }

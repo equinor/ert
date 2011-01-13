@@ -1,9 +1,10 @@
-#ifndef __BASIC_QUEUE_DRIVER_H__
-#define __BASIC_QUEUE_DRIVER_H__
+#ifndef __QUEUE_DRIVER_H__
+#define __QUEUE_DRIVER_H__
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include <util.h>
+#include <hash.h>
 
 typedef enum { NULL_DRIVER  = 0,
                LSF_DRIVER   = 1,
@@ -60,38 +61,36 @@ typedef enum { JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in exter
 #define JOB_QUEUE_CAN_UPDATE_STATUS (JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING + JOB_QUEUE_SUBMITTED)
 
 
-typedef struct basic_queue_driver_struct basic_queue_driver_type;
+typedef struct queue_driver_struct queue_driver_type;
 
 typedef void                 * (submit_job_ftype)           (void * , const char * , const char * , const char * , int argc , const char **);
 typedef void                   (kill_job_ftype)             (void * , void * );
 typedef job_status_type        (get_status_ftype)           (void * , void * );
 typedef void                   (free_job_ftype)             (void * );
 typedef void                   (free_queue_driver_ftype)    (void *); 
-typedef void                   (display_info_ftype)         (void * , void * );
+typedef void                   (set_option_ftype)           (void * , int , const void * );
+typedef const void *           (get_option_ftype)           (const void * , int );
+typedef bool                   (has_option_ftype)           (const void * , int );
 
 
-struct basic_queue_job_struct {
-  int __id;
-};
+queue_driver_type * queue_driver_alloc_RSH( const char * rsh_cmd , const hash_type * rsh_hostlist);
+queue_driver_type * queue_driver_alloc_LSF(const char * queue_name , const char * resource_request , const char * remote_lsf_server , int num_cpu);
+queue_driver_type * queue_driver_alloc_local( );
 
+void *              queue_driver_submit_job( queue_driver_type * driver, const char * run_cmd , const char * run_path , const char * job_name , int argc , const char ** argv);
+void                queue_driver_free_job( queue_driver_type * driver , void * job_data );
+void                queue_driver_kill_job( queue_driver_type * driver , void * job_data );
+job_status_type     queue_driver_get_status( queue_driver_type * driver , void * job_data);
 
-#define QUEUE_DRIVER_FIELDS                         \
-submit_job_ftype           * submit;                \
-free_job_ftype             * free_job;              \
-kill_job_ftype             * kill_job;              \
-get_status_ftype           * get_status;            \
-free_queue_driver_ftype    * free_driver;           \
-display_info_ftype         * display_info;          \
-job_driver_type              driver_type;
+void                queue_driver_set_max_running( queue_driver_type * driver , int max_running);
+int                 queue_driver_get_max_running( const queue_driver_type * driver );
+const char        * queue_driver_get_name( const queue_driver_type * driver );
 
+void                queue_driver_set_option( queue_driver_type * driver , int option_id , const void * value);
+void                queue_driver_set_int_option( queue_driver_type * driver , int option_id , int int_value);
+const        void * queue_driver_get_option( queue_driver_type * driver , int option_id );
 
-struct basic_queue_driver_struct {
-  UTIL_TYPE_ID_DECLARATION
-  QUEUE_DRIVER_FIELDS
-};
-
-
-
+void                queue_driver_free( queue_driver_type * driver );
 
 #ifdef __cplusplus
 }

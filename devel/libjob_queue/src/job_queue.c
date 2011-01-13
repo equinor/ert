@@ -6,10 +6,11 @@
 #include <job_queue.h>
 #include <msg.h>
 #include <util.h>
-#include <basic_queue_driver.h>
+#include <queue_driver.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <arg_pack.h>
+#include <lsf_driver.h>    // Should not be here ...
 
 //job_queue_node_free_data: internal error - driver spesific job data has not been freed - will leak.
 
@@ -50,11 +51,11 @@
 
         The function allocating a driver instance will just return a
         (void *) however in the queue layer the driver is stored as a
-        basic_queue_driver_type instance which is a struct like this:
+        queue_driver_type instance which is a struct like this:
 
-        struct basic_queue_driver_struct {
+        struct queue_driver_struct {
             UTIL_TYPE_ID_DECLARATION
-            QUEUE_DRIVER_FUNCTIONS
+            QUEUE_DRIVER_FIELDS
         }   
         
         I.e. it only contains the pointers common to all the driver
@@ -116,7 +117,7 @@
 
   The status of a particular job is given by the job_status field of
   the job_queue_node_type, the possible values are given by the enum
-  job_status_type, defined in basic_queue_driver.h.
+  job_status_type, defined in queue_driver.h.
   
   To actually __GET__ the status of a job we use the driver->status()
   function which will invoke a driver specific function and return the
@@ -272,7 +273,7 @@ struct job_queue_struct {
   char                     * exit_file;                         /* The queue will look for the occurence of this file to detect a failure. */
   char                     * ok_file;                           /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
   job_queue_node_type     ** jobs;                              /* A vector of job nodes .*/
-  basic_queue_driver_type  * driver;                            /* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
+  queue_driver_type       * driver;                             /* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
   int                        status_list[JOB_QUEUE_MAX_STATE];  /* The number of jobs in the different states. */
   int                        old_status_list[JOB_QUEUE_MAX_STATE]; /* Should the display be updated ?? */
 
@@ -448,11 +449,9 @@ static void job_queue_complete_node( job_queue_type * queue , job_queue_node_typ
 
 
 static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * node) {
-  basic_queue_driver_type *driver  = queue->driver;
-  
   pthread_rwlock_wrlock( &node->job_lock );
   {
-    driver->free_job( node->job_data );
+    queue_driver_free_job( queue->driver , node->job_data );
     node->job_data = NULL;
   }
   pthread_rwlock_unlock( &node->job_lock );
@@ -477,7 +476,7 @@ static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * no
 
 static bool job_queue_update_status(job_queue_type * queue ) {
   bool update = false;
-  basic_queue_driver_type *driver  = queue->driver;
+  queue_driver_type *driver  = queue->driver;
   int ijob;
 
   
@@ -489,13 +488,12 @@ static bool job_queue_update_status(job_queue_type * queue ) {
       if (node->job_data != NULL) {
         job_status_type current_status = job_queue_node_get_status(node);
         if (current_status & JOB_QUEUE_CAN_UPDATE_STATUS) {
-          job_status_type new_status = driver->get_status(driver , node->job_data);
+          job_status_type new_status = queue_driver_get_status( driver , node->job_data);
           job_queue_change_node_status(queue , node , new_status);
         }
       }
     }
     pthread_rwlock_unlock( &node->job_lock );
-    
   }
   
   /* Has the net status changed? */
@@ -519,16 +517,14 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
   else {
     job_queue_assert_queue_index(queue , queue_index);
     {
-      job_queue_node_type     * node    = queue->jobs[queue_index];
-      basic_queue_driver_type * driver  = queue->driver;
-      
+      job_queue_node_type     * node = queue->jobs[queue_index];
       if (node->submit_attempt < queue->max_submit) {
-        void * job_data = driver->submit( queue->driver  , 
-                                          queue->run_cmd , 
-                                          node->run_path , 
-                                          node->job_name , 
-                                          node->argc     , 
-                                          (const char **) node->argv );
+        void * job_data = queue_driver_submit_job( queue->driver , 
+                                                   queue->run_cmd , 
+                                                   node->run_path , 
+                                                   node->job_name , 
+                                                   node->argc     , 
+                                                   (const char **) node->argv );
         
         if (job_data != NULL) {
           pthread_rwlock_wrlock( &node->job_lock );
@@ -579,7 +575,7 @@ job_status_type job_queue_get_job_status(job_queue_type * queue , int job_index)
 /**
    Will return the number of jobs with status @status.
 
-      #include <basic_queue_driver.h>
+      #include <queue_driver.h>
 
       printf("Running jobs...: %03d \n", job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING ));
       printf("Waiting jobs:..: %03d \n", job_queue_iget_status_summary( queue , JOB_QUEUE_WAITING ));
@@ -655,15 +651,15 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
   pthread_rwlock_wrlock( &node->job_lock );
   {
     if (node->job_status & JOB_QUEUE_CAN_KILL) {
-      basic_queue_driver_type * driver = queue->driver;
+      queue_driver_type * driver = queue->driver;
       /* 
          Jobs with status JOB_QUEUE_WAITING are killable - in the sense that status should be set to
          JOB_QUEUE_USER_KILLED; but they do not have any driver specific job_data, and the driver->kill_job() function
          can NOT be called.
       */
       if (node->job_status != JOB_QUEUE_WAITING) { 
-        driver->kill_job( driver , node->job_data );
-        driver->free_job( node->job_data );
+        queue_driver_kill_job( driver , node->job_data );
+        queue_driver_free_job( driver , node->job_data );
         node->job_data = NULL;
       }
       job_queue_change_node_status( queue , node , JOB_QUEUE_USER_KILLED );
@@ -765,12 +761,12 @@ static void job_queue_print_summary(const job_queue_type *queue, bool status_cha
 
 
 static void job_queue_display_job_info( job_queue_type * job_queue , job_queue_node_type * job_node ) {
-  if (job_queue->driver->display_info != NULL) {
-    pthread_rwlock_rdlock( &job_node->job_lock );
-    job_queue->driver->display_info( job_queue->driver , job_node->job_data );
-    pthread_rwlock_unlock( &job_node->job_lock );
-  }
-  printf("\n");
+  //if (job_queue->driver->display_info != NULL) {
+  //  pthread_rwlock_rdlock( &job_node->job_lock );
+  //  job_queue->driver->display_info( job_queue->driver , job_node->job_data );
+  //  pthread_rwlock_unlock( &job_node->job_lock );
+  //}
+  //printf("\n");
 }
 
 
@@ -1049,29 +1045,24 @@ void job_queue_insert_job(job_queue_type * queue , const char * run_path , const
 /**
    The calling scope must retain a handle to the current driver and
    free it.  Should (in principle) be possible to change driver on a
-   running system whoaaa.
+   running system whoaaa. Will read and update the max_running value
+   from the driver.  
 */
 
-void job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver) {
+void job_queue_set_driver(job_queue_type * queue , queue_driver_type * driver) {
   queue->driver = driver;
+  {
+    int driver_max_running = queue_driver_get_max_running( driver );
+    job_queue_set_max_running( queue , driver_max_running );
+  }
 }
 
 
-
-/*
-  Is currently a no-op for all other drivers than the lsf driver.
-*/
-void job_queue_set_num_cpu( job_queue_type * queue , int num_cpu) {
-  if (job_queue_get_driver_type( queue ) == LSF_DRIVER)
-    lsf_driver_set_num_cpu( queue->driver , num_cpu);
+void job_queue_reload_driver( job_queue_type * queue ) {
+  int driver_max_running = queue_driver_get_max_running( queue->driver );
+  job_queue_set_max_running( queue , driver_max_running );
 }
 
-int job_queue_get_num_cpu( const job_queue_type * queue ) {
-  if (job_queue_get_driver_type( queue ) == LSF_DRIVER)
-    return lsf_driver_get_num_cpu( queue->driver );
-  else
-    return 0;
-}
 
 
 /**
@@ -1079,12 +1070,16 @@ int job_queue_get_num_cpu( const job_queue_type * queue ) {
    nothing will be done to reduce the number of jobs currently
    running; but no more jobs will be submitted until the number of
    running has fallen below the new limit.
+
+   The updated value will also be pushed down to the current driver.
 */
 
 void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
   queue->max_running = max_running;
-  if (queue->max_running < 0)
+  if (queue->max_running < 0) {
     queue->max_running = 0;
+    queue_driver_set_max_running( queue->driver , max_running );
+  }
 }
 
 /*
@@ -1100,41 +1095,7 @@ int job_queue_get_max_running( const job_queue_type * queue ) {
 }
 
 
-job_driver_type job_queue_get_driver_type( const job_queue_type * queue ) {
-  if (queue->driver == NULL)
-    return NULL_DRIVER;
-  else
-    return queue->driver->driver_type;
-}
-
-
-void * job_queue_get_driver( job_queue_type * queue ) {
-  return queue->driver;
-}
-
-
 /*****************************************************************/
-
-const char * job_queue_get_driver_name( const job_queue_type * queue ) {
-  //return queue->driver->get_name( queue->driver );
-  
-  job_driver_type driver_type = job_queue_get_driver_type( queue );
-  
-  switch( driver_type ) {
-  case(LSF_DRIVER):
-    return "LSF";
-    break;
-  case(RSH_DRIVER):
-    return "RSH";
-    break;
-  case(LOCAL_DRIVER):
-    return "LOCAL";
-    break;
-  default:
-    util_abort("%s: driver_type not set?? \n",__func__);
-    return NULL;
-  }
-}
 
 
 job_driver_type job_queue_lookup_driver_name( const char * driver_name ) {

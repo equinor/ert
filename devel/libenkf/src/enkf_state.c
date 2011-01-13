@@ -28,11 +28,10 @@
 #include <summary.h>
 #include <arg_pack.h>
 #include <enkf_fs.h>
-#include <basic_driver.h>
 #include <node_ctype.h>
 #include <job_queue.h>
 #include <sched_file.h>
-#include <basic_queue_driver.h>
+#include <queue_driver.h>
 #include <pthread.h>
 #include <ext_joblist.h>
 #include <stringlist.h>
