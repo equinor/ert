@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <basic_queue_driver.h>
+#include <queue_driver.h>
 #include <local_driver.h>
 #include <util.h>
 #include <pthread.h>
@@ -24,7 +24,6 @@ struct local_job_struct {
 
 struct local_driver_struct {
   UTIL_TYPE_ID_DECLARATION
-  QUEUE_DRIVER_FUNCTIONS
   pthread_attr_t     thread_attr;
   pthread_mutex_t    submit_lock;
 };
@@ -97,7 +96,12 @@ void local_driver_kill_job( void * __driver , void * __job) {
 void * submit_job_thread__(void * __arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg);
   const char * executable  = arg_pack_iget_ptr(arg_pack , 0);
-  const char * run_path    = arg_pack_iget_ptr(arg_pack , 1);
+  /*
+    The arg_pack contains a run_path field as the second argument,
+    it has therefor been left here as a comment:
+    
+    const char * run_path    = arg_pack_iget_ptr(arg_pack , 1);   
+  */
   int          argc        = arg_pack_iget_int(arg_pack , 2);
   char ** argv             = arg_pack_iget_ptr(arg_pack , 3);
   local_job_type * job     = arg_pack_iget_ptr(arg_pack , 4);
@@ -162,16 +166,9 @@ void * local_driver_alloc() {
   pthread_attr_init( &local_driver->thread_attr );
   pthread_attr_setdetachstate( &local_driver->thread_attr , PTHREAD_CREATE_DETACHED );
   
-  local_driver->submit               = local_driver_submit_job;
-  local_driver->get_status           = local_driver_get_job_status;
-  local_driver->kill_job             = local_driver_kill_job;
-  local_driver->free_job             = local_driver_free_job;
-  local_driver->free_driver          = local_driver_free__;
-  local_driver->display_info         = NULL;
-  local_driver->driver_type          = LOCAL_DRIVER; 
-  
   return local_driver;
 }
+
 
 
 

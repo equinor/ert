@@ -5,10 +5,11 @@
 #include <plot_range.h>
 #include <plot_const.h>
 #include <plot_driver.h>
-#include <plplot_driver.h>
-#include <text_driver.h>
 #include <hash.h>
 #include <vector.h>
+#include <plplot_driver.h>
+#include <text_driver.h>
+
 
 /**
    The plotting functionality is centered around the plot_type

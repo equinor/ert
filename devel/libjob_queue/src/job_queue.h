@@ -3,19 +3,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <basic_queue_driver.h>
+#include <queue_driver.h>
 #include <path_fmt.h>
 
 typedef struct job_queue_struct job_queue_type;
 
-void                job_queue_set_num_cpu( job_queue_type * queue , int num_cpu);
-int                 job_queue_get_num_cpu( const job_queue_type * queue );
-void              * job_queue_get_driver( job_queue_type * queue );
 job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
-void                job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver);
+void                job_queue_set_driver(job_queue_type * queue , queue_driver_type * driver);
 void                job_queue_set_size( job_queue_type * job_queue , int size );
 void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-  job_queue_type   *  job_queue_alloc(int  , int , int  , bool , const char * ok_file , const char * exit_file , const char * cmd);
+job_queue_type   *  job_queue_alloc(int  , int , int  , bool , const char * ok_file , const char * exit_file , const char * cmd);
 void                job_queue_free(job_queue_type *);
 void                job_queue_insert_job(job_queue_type * , const char * , const char * , int , int argc , const char ** argv );
 void                job_queue_run_jobs(job_queue_type * , int , bool verbose);
@@ -30,10 +27,10 @@ const char        * job_queue_status_name( job_status_type status );
 void                job_queue_set_max_running( job_queue_type * queue , int max_running );
 int                 job_queue_inc_max_runnning( job_queue_type * queue, int delta );
 int                 job_queue_get_max_running( const job_queue_type * queue );
+void                job_queue_reload_driver( job_queue_type * queue );
 int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
 time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
 time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
-const char        * job_queue_get_driver_name( const job_queue_type * queue );
 job_driver_type     job_queue_lookup_driver_name( const char * driver_name );
 
 bool                job_queue_kill_job( job_queue_type * queue , int job_index);

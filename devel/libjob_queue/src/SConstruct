@@ -21,8 +21,8 @@ conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
 conf.update_env( env , [LIBCONFIG , LIBUTIL ] )
 
-src_list    = Split("forward_model.c job_queue.c lsf_driver.c local_driver.c rsh_driver.c ext_job.c ext_joblist.c")
-header_list = Split("job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h forward_model.h")
+src_list    = Split("forward_model.c queue_driver.c job_queue.c lsf_driver.c local_driver.c rsh_driver.c ext_job.c ext_joblist.c")
+header_list = Split("job_queue.h queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h forward_model.h")
 
 add_static_library( env , conf , lib_path  , package , src_list )
 add_shared_library( env , conf , slib_path , package , src_list )

@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <basic_queue_driver.h>
+#include <queue_driver.h>
 #include <rsh_driver.h>
 #include <util.h>
 #include <pthread.h>
@@ -38,18 +38,19 @@ typedef struct {
 
 struct rsh_driver_struct {
   UTIL_TYPE_ID_DECLARATION
-  QUEUE_DRIVER_FUNCTIONS
   pthread_mutex_t     submit_lock;
   pthread_attr_t      thread_attr;
   char              * rsh_command;
   int                 num_hosts;
   int                 last_host_index;
   rsh_host_type     **host_list;
+  hash_type          *__host_hash;  /* Stupid redundancy ... */
 };
 
 
 
 /******************************************************************/
+static UTIL_SAFE_CAST_FUNCTION_CONST( rsh_driver , RSH_DRIVER_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION( rsh_driver , RSH_DRIVER_TYPE_ID )
 static UTIL_SAFE_CAST_FUNCTION( rsh_job , RSH_JOB_TYPE_ID )
 
@@ -261,7 +262,6 @@ void * rsh_driver_submit_job(void  * __driver,
       arg_pack_append_ptr(arg_pack , argv );
       arg_pack_append_ptr(arg_pack , job);  
     
-      printf("Submitting job host:%s\n",host->host_name);
       {
         int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , arg_pack);
         if (pthread_return_value != 0) 
@@ -269,20 +269,30 @@ void * rsh_driver_submit_job(void  * __driver,
       }
       job->status = JOB_QUEUE_RUNNING; 
       job->active = true;
-    }else printf("No available host\n");
+    }
     pthread_mutex_unlock( &driver->submit_lock );
   }
   return job;
 }
 
 
-void rsh_driver_free(rsh_driver_type * driver) {
+void rsh_driver_clear_host_list( rsh_driver_type * driver ) {
   int ihost;
   for (ihost =0; ihost < driver->num_hosts; ihost++) 
     rsh_host_free(driver->host_list[ihost]);
-  free(driver->host_list);
+  util_safe_free(driver->host_list);
+  
+  driver->num_hosts            = 0;
+  driver->host_list            = NULL;
+  driver->last_host_index      = 0;  
+}
 
+
+void rsh_driver_free(rsh_driver_type * driver) {
+  rsh_driver_clear_host_list( driver ); 
   pthread_attr_destroy ( &driver->thread_attr );
+  util_safe_free(driver->rsh_command );
+  hash_free( driver->__host_hash );
   free(driver);
   driver = NULL;
 }
@@ -294,32 +304,8 @@ void rsh_driver_free__(void * __driver) {
 }
 
 
-
-
-/**
-   
-*/
-
-void * rsh_driver_alloc(const char * rsh_command, const hash_type * rsh_host_list) {
-  rsh_driver_type * rsh_driver = util_malloc( sizeof * rsh_driver , __func__ );
-  UTIL_TYPE_ID_INIT( rsh_driver , RSH_DRIVER_TYPE_ID );
-  pthread_mutex_init( &rsh_driver->submit_lock , NULL );
-  pthread_attr_init( &rsh_driver->thread_attr );
-  pthread_attr_setdetachstate( &rsh_driver->thread_attr , PTHREAD_CREATE_DETACHED );
-
-  rsh_driver->rsh_command          = util_alloc_string_copy(rsh_command);
-  rsh_driver->submit               = rsh_driver_submit_job;
-  rsh_driver->get_status           = rsh_driver_get_job_status;
-  rsh_driver->kill_job             = rsh_driver_kill_job;
-  rsh_driver->free_job             = rsh_driver_free_job;
-  rsh_driver->free_driver          = rsh_driver_free__;
-  rsh_driver->display_info         = NULL;
-  rsh_driver->driver_type          = RSH_DRIVER; 
-
-  rsh_driver->num_hosts            = 0;
-  rsh_driver->host_list            = NULL;
-  rsh_driver->last_host_index      = 0;  
-
+void rsh_driver_set_host_list( rsh_driver_type * rsh_driver , const hash_type * rsh_host_list) {
+  rsh_driver_clear_host_list( rsh_driver ); 
   if (rsh_host_list != NULL) {
     hash_iter_type * hash_iter = hash_iter_alloc( rsh_host_list );
     while (!hash_iter_is_complete( hash_iter )) {
@@ -330,27 +316,127 @@ void * rsh_driver_alloc(const char * rsh_command, const hash_type * rsh_host_lis
     if (rsh_driver->num_hosts == 0) 
       util_abort("%s: failed to add any valid RSH hosts - aborting.\n",__func__);
   }
+}
+
+
+
+
+/**
+   
+*/
+
+void * rsh_driver_alloc( ) {
+  rsh_driver_type * rsh_driver = util_malloc( sizeof * rsh_driver , __func__ );
+  UTIL_TYPE_ID_INIT( rsh_driver , RSH_DRIVER_TYPE_ID );
+  pthread_mutex_init( &rsh_driver->submit_lock , NULL );
+  pthread_attr_init( &rsh_driver->thread_attr );
+  pthread_attr_setdetachstate( &rsh_driver->thread_attr , PTHREAD_CREATE_DETACHED );
 
   /** 
       To simplify the Python wrapper it is possible to pass in NULL as
       rsh_host_list pointer, and then subsequently add hosts with
       rsh_driver_add_host().
   */
+  rsh_driver->__host_hash = hash_alloc();
   return rsh_driver;
 }
 
 
 
 void rsh_driver_add_host(rsh_driver_type * rsh_driver , const char * hostname , int host_max_running) {
-  rsh_host_type * new_host = rsh_host_alloc(hostname , host_max_running);
+  rsh_host_type * new_host = rsh_host_alloc(hostname , host_max_running);  /* Could in principle update an existing node if the host name is old. */
   if (new_host != NULL) {
     rsh_driver->num_hosts++;
     rsh_driver->host_list = util_realloc(rsh_driver->host_list , rsh_driver->num_hosts * sizeof * rsh_driver->host_list , __func__);
     rsh_driver->host_list[(rsh_driver->num_hosts - 1)] = new_host;
   }
-  printf("Adding host %s:%d \n",hostname , host_max_running);
 }
 
+
+/**
+   Hostname should be a string as host:max_running, the ":max_running"
+   part is optional, and will default to 1.  
+*/
+   
+void rsh_driver_add_host_from_string(rsh_driver_type * rsh_driver , const char * hostname) {
+  int     host_max_running;
+  char ** tmp;
+  char  * host;
+  int     tokens;
+  
+  util_split_string( hostname , ":" , &tokens , &tmp);
+  if (tokens > 1) {
+    if (!util_sscanf_int( tmp[tokens - 1] , &host_max_running))
+      util_abort("%s: failed to parse out integer from: %s \n",__func__ , hostname);
+    host = util_alloc_joined_string((const char **) tmp , tokens - 1 , ":");
+  } else
+    host = util_alloc_string_copy( tmp[0] );
+  rsh_driver_add_host( rsh_driver , host , host_max_running );
+  
+  util_free_stringlist( tmp , tokens );
+  free( host );
+}
+
+
+//const char * colon_ptr = strchr(hostname , ':');
+//  if (colon_ptr != NULL) {
+//    /* The hostname contains a ':' - and we must do some parsing. */
+//    int max_running;
+//    char * host = util_alloc_substring_copy( hostname , strlen( hostname ) - strlen( colon_ptr ));
+//    util_sscanf_int( &colon_ptr[1] , &max_running );
+//    rsh_driver_add_host( rsh_driver , host , 1);
+//    free( host );
+//  } else
+//    rsh_driver_add_host( rsh_driver , hostname , 1);
+//}
+
+
+void rsh_driver_set_option( void * __driver , int option_id , const void * value ) {
+  rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
+  {
+    switch( option_id ) {
+    case( RSH_HOST ):
+      rsh_driver_add_host_from_string( driver , value );
+      break;
+    case(RSH_HOSTLIST):
+      hash_safe_cast( value );
+      rsh_driver_set_host_list( driver , value );
+      break;
+    case(RSH_CLEAR_HOSTLIST):
+      /* Value is not considered - this is an action, and not a _set operation. */
+      rsh_driver_set_host_list( driver , NULL );
+      break;
+    case( RSH_CMD ):
+      driver->rsh_command = util_realloc_string_copy( driver->rsh_command , value );
+      break;
+    default:
+      util_abort("%s: unrecognized option_id:%d for RSH driver \n",__func__ , option_id );
+    }
+  }
+}
+
+const void * rsh_driver_get_option( const void * __driver , int option_id ) {
+  const rsh_driver_type * driver = rsh_driver_safe_cast_const( __driver );
+  switch (option_id) {
+  case( RSH_CMD ):
+    return driver->rsh_command;
+    break;
+  case( RSH_HOSTLIST ):
+    {
+      int ihost;
+      hash_clear( driver->__host_hash );
+      for (ihost = 0; ihost < driver->num_hosts; ihost++) {
+        rsh_host_type * host = driver->host_list[ ihost ];
+        hash_insert_int( driver->__host_hash , host->host_name , host->max_running);
+      }
+      return driver->__host_hash;
+    }
+    break;
+  default:
+    util_abort("%s: get not implemented fro option_id:%d for rsh \n",__func__ , option_id );
+    return NULL;
+  }
+}
 
 
 

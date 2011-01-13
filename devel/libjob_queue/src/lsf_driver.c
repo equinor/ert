@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <basic_queue_driver.h>
+#include <queue_driver.h>
 #include <lsf_driver.h>
 #include <util.h>
 #include <hash.h>
@@ -68,8 +68,6 @@
 
 
 
-
-
 #define LSF_DRIVER_TYPE_ID 10078365
 #define LSF_JOB_TYPE_ID    9963900
 #define BJOBS_REFRESH_TIME 10
@@ -86,7 +84,6 @@ struct lsf_job_struct {
 
 struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
-  QUEUE_DRIVER_FUNCTIONS
   char              * queue_name;
   char              * resource_request;
   pthread_mutex_t     submit_lock;
@@ -103,7 +100,7 @@ struct lsf_driver_struct {
   /* Fields used by the shell() based functions */
   
   time_t              last_bjobs_update;
-  hash_type         * my_jobs;            /* A hash table of all jobs submitted by this ERT instance - to ensure that we do not check status of old jobs in e.g. ZOMBIE status. */  
+  hash_type         * my_jobs;            /* A hash table of all jobs submitted by this ERT instance - to ensure that we do not check status of old jobs in e.g. ZOMBIE status. */
   hash_type         * status_map;
   hash_type         * bjobs_cache;        /* The output of calling bjobs is cached in this table. */
   pthread_mutex_t     bjobs_mutex;        /* Only one thread should update the bjobs_chache table. */
@@ -235,11 +232,13 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
 
 
 static int lsf_driver_get_status__(lsf_driver_type * driver , const char * status, const char * job_id) {
-
+  
   if (hash_has_key( driver->status_map , status))
     return hash_get_int( driver->status_map , status);
-  else 
+  else {
     util_exit("The lsf_status:%s  for job:%s is not recognized; call your LSF administrator - sorry :-( \n", status , job_id);
+    return -1;
+  }
 }
 
 
@@ -389,32 +388,10 @@ job_status_type lsf_driver_get_job_status(void * __driver , void * __job) {
 }
 
 
-void lsf_driver_display_info( void * __driver , void * __job) {
-  lsf_job_type    * job    = lsf_job_safe_cast( __job );
-  printf("Executing host: ");
-  {
-    int i;
-    for (i=0; i < job->num_exec_host; i++)
-      printf("%s ", job->exec_host[i]);
-  }
-}
-
-
 
 void lsf_driver_free_job(void * __job) {
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
   lsf_job_free(job);
-}
-
-
-int lsf_driver_get_num_cpu( const void * __lsf_driver ) {
-  const lsf_driver_type * lsf_driver = lsf_driver_safe_cast_const( __lsf_driver );
-  return lsf_driver->num_cpu;
-}
-
-void lsf_driver_set_num_cpu( void * __lsf_driver , int num_cpu) {
-  lsf_driver_type * lsf_driver = lsf_driver_safe_cast( __lsf_driver );
-  lsf_driver->num_cpu = num_cpu;
 }
 
 
@@ -534,37 +511,100 @@ void lsf_driver_free__(void * __driver ) {
 
 
 
-void lsf_driver_set_queue_name( lsf_driver_type * driver, const char * queue_name ) {
-  driver->queue_name = util_realloc_string_copy( driver->queue_name , queue_name );
+/*****************************************************************/
+/* Generic functions for runtime manipulation of options.        
+
+   LSF_SERVER
+   LSF_QUEUE
+   LSF_RESOURCE
+   LSF_NUM_CPU
+
+*/
+
+void lsf_driver_set_option( void * __driver , int option_id , const void * value) {
+  lsf_driver_type * driver  = lsf_driver_safe_cast( __driver );
+  {
+    switch( option_id ) {
+    case LSF_RESOURCE:
+      driver->resource_request = util_realloc_string_copy( driver->resource_request , value );
+      break;
+    case LSF_SERVER:
+      driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , value );
+      break;
+    case LSF_NUM_CPU:
+      {
+        const int num_cpu = ((const int *) value) [0];
+        driver->num_cpu = num_cpu;
+      }
+      break;
+    default:
+      util_abort("%s: option_id:%d not recognized for LSF driver \n",__func__ , option_id);
+    }
+  }
 }
 
 
-void lsf_driver_set_resource_request( lsf_driver_type * driver, const char * resource_request ) {
-  driver->resource_request = util_realloc_string_copy( driver->resource_request , resource_request );
+const void * lsf_driver_get_option( const void * __driver , int option_id) {
+  const lsf_driver_type * driver = lsf_driver_safe_cast_const( __driver );
+  {
+    const void * value;
+    switch( option_id ) {
+    case LSF_RESOURCE:
+      value = driver->resource_request;
+      break;
+    case LSF_SERVER:
+      value = driver->remote_lsf_server;
+      break;
+    case LSF_NUM_CPU:
+      value = &driver->num_cpu;
+      break;
+    default:
+      util_abort("%s: option_id:%d not recognized for LSF driver \n",__func__ , option_id);
+      value = NULL;
+    }
+    return value;
+  }
 }
 
-void lsf_driver_set_remote_server( lsf_driver_type * driver, const char * remote_lsf_server) {
-  driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_lsf_server );
+
+
+bool lsf_driver_has_option( const void * __driver , int option_id) {
+  {
+    bool has_key;
+    
+    switch( option_id ) {
+    case LSF_RESOURCE:
+      has_key = true;
+      break;
+    case LSF_SERVER:
+      has_key = true;
+      break;
+    case LSF_NUM_CPU:
+      has_key = true;
+      break;
+    default:
+      has_key = false;
+    }
+    
+    return has_key;
+  }
 }
 
+/*****************************************************************/
+
+/* Observe that this driver IS not properly initialized when returning
+   from this function, the option interface must be used to set the
+   keys:
+   
+*/
 
 
-void * lsf_driver_alloc(const char * queue_name , const char * resource_request , const char * remote_lsf_server , int num_cpu) {
+void * lsf_driver_alloc( ) {
   lsf_driver_type * lsf_driver     = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name           = NULL;
   lsf_driver->remote_lsf_server    = NULL; 
   lsf_driver->resource_request     = NULL;
-  lsf_driver_set_queue_name( lsf_driver , queue_name );
-  lsf_driver_set_resource_request( lsf_driver , resource_request );
-  lsf_driver_set_remote_server( lsf_driver  , remote_lsf_server );
   UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
-  lsf_driver->submit               = lsf_driver_submit_job;
-  lsf_driver->get_status           = lsf_driver_get_job_status;
-  lsf_driver->kill_job             = lsf_driver_kill_job;
-  lsf_driver->free_job             = lsf_driver_free_job;
-  lsf_driver->free_driver          = lsf_driver_free__;
-  lsf_driver->driver_type          = LSF_DRIVER;
-  lsf_driver->num_cpu              = num_cpu;
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
 
   /* Library initialisation */
@@ -601,15 +641,13 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request 
   hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_QUEUE_DONE);
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
-
-  if (lsf_driver->remote_lsf_server != NULL) {
+  
+  if (lsf_driver->remote_lsf_server != NULL) 
     lsf_driver->use_library_calls = false;
-    lsf_driver->display_info      = NULL;             /* The shell driver does not have any display info function. */
-  } else {
+  else {
     /* No remote server has been set - assuming we can issue proper library calls. */
     setenv("BSUB_QUIET" , "yes" , 1);            /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
     lsf_driver->use_library_calls = true;
-    lsf_driver->display_info      = lsf_driver_display_info;
   }
   
   return lsf_driver;
