@@ -63,38 +63,38 @@ static queue_driver_type * queue_driver_alloc_empty( ) {
 
 /*****************************************************************/
 /* Set option */
-void queue_driver_set_option( queue_driver_type * driver , int option_id , const void * value) {
+void queue_driver_set_option( queue_driver_type * driver , const char * option_key , const void * value) {
   if (driver->set_option != NULL) 
     /* The actual low level set functions can not fail! */
-    driver->set_option( driver->data , option_id , value );
+    driver->set_option( driver->data , option_key , value );
   else
     util_abort("%s: driver:%s does not support run time setting of options\n",__func__ , driver->name );
 }
 
-void queue_driver_set_int_option( queue_driver_type * driver , int option_id , int int_value) {
+void queue_driver_set_int_option( queue_driver_type * driver , const char * option_key , int int_value) {
   const void * void_value = &int_value;
-  queue_driver_set_option( driver , option_id , void_value );
+  queue_driver_set_option( driver , option_key , void_value );
 }
 
-void queue_driver_set_string_option( queue_driver_type * driver , int option_id , const char * value) {
-  queue_driver_set_option( driver , option_id , value);
+void queue_driver_set_string_option( queue_driver_type * driver , const char * option_key , const char * value) {
+  queue_driver_set_option( driver , option_key , value);
 }
 
 /*****************************************************************/
 
-bool queue_driver_has_option( queue_driver_type * driver , int option_id ) {
+bool queue_driver_has_option( queue_driver_type * driver , const char * option_key ) {
   if (driver->has_option != NULL)
-    return driver->has_option( driver , option_id );
+    return driver->has_option( driver , option_key );
   else
     return false;
 }
 
 /*****************************************************************/
 
-const void * queue_driver_get_option( queue_driver_type * driver , int option_id ) {
+const void * queue_driver_get_option( queue_driver_type * driver , const char * option_key ) {
   if (driver->get_option != NULL) 
     /* The actual low level set functions can not fail! */
-    return driver->get_option( driver->data , option_id );
+    return driver->get_option( driver->data , option_key );
   else {
     util_abort("%s: driver:%s does not support run time reading of options\n",__func__ , driver->name );
     return NULL;

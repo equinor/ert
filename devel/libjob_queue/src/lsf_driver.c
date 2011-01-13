@@ -521,73 +521,47 @@ void lsf_driver_free__(void * __driver ) {
 
 */
 
-void lsf_driver_set_option( void * __driver , int option_id , const void * value) {
+void lsf_driver_set_option( void * __driver , const char * option_key , const void * value) {
   lsf_driver_type * driver  = lsf_driver_safe_cast( __driver );
   {
-    switch( option_id ) {
-    case LSF_RESOURCE:
+    if (strcmp( LSF_RESOURCE , option_key ) == 0)
       driver->resource_request = util_realloc_string_copy( driver->resource_request , value );
-      break;
-    case LSF_SERVER:
+    else if (strcmp( LSF_SERVER , option_key) == 0)
       driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , value );
-      break;
-    case LSF_NUM_CPU:
-      {
-        const int num_cpu = ((const int *) value) [0];
-        driver->num_cpu = num_cpu;
-      }
-      break;
-    default:
-      util_abort("%s: option_id:%d not recognized for LSF driver \n",__func__ , option_id);
-    }
+    else if (strcmp( LSF_QUEUE , option_key) == 0)
+      driver->queue_name = util_realloc_string_copy( driver->queue_name , value );
+    else if (strcmp( LSF_NUM_CPU , option_key) == 0) {
+      const int num_cpu = ((const int *) value) [0];
+      driver->num_cpu = num_cpu;
+    } else 
+      util_abort("%s: option_id:%s not recognized for LSF driver \n",__func__ , option_key);
+    
   }
 }
 
 
-const void * lsf_driver_get_option( const void * __driver , int option_id) {
+const void * lsf_driver_get_option( const void * __driver , const char * option_key) {
   const lsf_driver_type * driver = lsf_driver_safe_cast_const( __driver );
   {
-    const void * value;
-    switch( option_id ) {
-    case LSF_RESOURCE:
-      value = driver->resource_request;
-      break;
-    case LSF_SERVER:
-      value = driver->remote_lsf_server;
-      break;
-    case LSF_NUM_CPU:
-      value = &driver->num_cpu;
-      break;
-    default:
-      util_abort("%s: option_id:%d not recognized for LSF driver \n",__func__ , option_id);
-      value = NULL;
+    if (strcmp( LSF_RESOURCE , option_key ) == 0)
+      return driver->resource_request;
+    else if (strcmp( LSF_SERVER , option_key ) == 0)
+      return driver->remote_lsf_server;
+    else if (strcmp( LSF_QUEUE , option_key ) == 0)
+      return driver->queue_name;
+    else if (strcmp( LSF_NUM_CPU , option_key ) == 0)
+      return &driver->num_cpu;
+    else {
+      util_abort("%s: option_id:%s not recognized for LSF driver \n",__func__ , option_key);
+      return NULL;
     }
-    return value;
   }
 }
 
 
 
-bool lsf_driver_has_option( const void * __driver , int option_id) {
-  {
-    bool has_key;
-    
-    switch( option_id ) {
-    case LSF_RESOURCE:
-      has_key = true;
-      break;
-    case LSF_SERVER:
-      has_key = true;
-      break;
-    case LSF_NUM_CPU:
-      has_key = true;
-      break;
-    default:
-      has_key = false;
-    }
-    
-    return has_key;
-  }
+bool lsf_driver_has_option( const void * __driver , const char * option_key) {
+  return false;
 }
 
 /*****************************************************************/

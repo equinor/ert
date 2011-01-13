@@ -7,10 +7,10 @@ extern "C" {
 #include <stringlist.h>
 
 
-#define LSF_QUEUE     1
-#define LSF_RESOURCE  2
-#define LSF_SERVER    3
-#define LSF_NUM_CPU   4
+#define LSF_QUEUE     "LSF_QUEUE"
+#define LSF_RESOURCE  "LSF_RESOURCE"
+#define LSF_SERVER    "LSF_SERVER"
+#define LSF_NUM_CPU   "NUM_CPU"
   
 
 
@@ -39,9 +39,9 @@ void            lsf_driver_free_job(void * __job);
 void            lsf_driver_display_info( void * __driver , void * __job);
 
 
-bool            lsf_driver_has_option( const void * __driver , int option_id);
-const  void   * lsf_driver_get_option( const void * __driver , int option_id);
-void            lsf_driver_set_option( void * __driver , int option_id , const void * value);
+bool            lsf_driver_has_option( const void * __driver , const char * option_key);
+const  void   * lsf_driver_get_option( const void * __driver , const char * option_key);
+void            lsf_driver_set_option( void * __driver , const char * option_key , const void * value);
 
 
 UTIL_SAFE_CAST_HEADER( lsf_driver );

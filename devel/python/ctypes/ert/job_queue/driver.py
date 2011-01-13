@@ -78,12 +78,13 @@ class LSFDriver(Driver):
     def __init__(self ,
                  lsf_server = None,
                  queue = "normal" ,
+                 num_cpu = 1,
                  resource_request = ecl_default.lsf_resource_request):
         if not self.__initialized:
             init_LSF_env()
             LSFDriver.__initialized = True
 
-        self.c_ptr = cfunc.alloc_driver_lsf( queue , resource_request , lsf_server , 1)
+        self.c_ptr = cfunc.alloc_driver_lsf( queue , resource_request , lsf_server , num_cpu)
 
 
 class LocalDriver(Driver):
@@ -91,7 +92,7 @@ class LocalDriver(Driver):
     def __init__( self ):
         self.c_ptr = cfunc.alloc_driver_local( )
 
-RSH_HOST = 1  # Value taken from rsh_driver.h
+RSH_HOST = "RSH_HOST"  # Value taken from rsh_driver.h
 class RSHDriver(Driver):
 
     # Changing shell to bash can come in conflict with running ssh
