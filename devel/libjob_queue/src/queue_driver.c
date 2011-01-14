@@ -7,12 +7,39 @@
 
 
 
+/**
+   This file implements the datatype queue_driver_type which is an
+   abstract datatype for communicating with a subsystem for
+   communcating with other low-level systems for running external
+   jobs. The job_queue instance, which will handle a queue of jobs,
+   interacts with the jobs through a queue_driver instance.
+
+   The queue_driver type is a quite small datastructure which "wraps"
+   and underlying specific driver instance; examples of specific
+   driver instances are the lsf_driver which communicates with the LSF
+   system and the local_driver which runs jobs directly on the current
+   workstation. The queue_driver type contains essentially three
+   different types of fields:
+
+    1. Functions pointers for manipulating the jobs, and the state of
+       the low-level driver.
+
+    2. An opaque (i.e. void *) pointer to the state of the low level
+       driver. This will be passed as first argument to all the
+       function pointers, e.g. like the "self" in Python methods.
+
+    3. Some data fields which are common to all driver types.
+
+*/
+
+
+
 struct queue_driver_struct {
   /* 
      Function pointers - pointing to low level functions in the implementations of
      e.g. lsf_driver.
   */
-  submit_job_ftype           * submit;             
+  submit_job_ftype           * submit;        
   free_job_ftype             * free_job;           
   kill_job_ftype             * kill_job;           
   get_status_ftype           * get_status;         
@@ -20,15 +47,16 @@ struct queue_driver_struct {
   set_option_ftype           * set_option;
   get_option_ftype           * get_option;
   has_option_ftype           * has_option; 
+
+  void                       * data;           /* Driver specific data - passed as first argument to the driver functions above. */
   
   
   /*
-    Data - common to all driver types.
+    Generic data - common to all driver types.
   */
   char             * name;           /* String name of driver. */
   job_driver_type    driver_type;    /* Enum value for driver. */
   int                max_running;    /* Possible to maintain different max_running values for different drivers. */ 
-  void             * data;           /* Driver specific data - passed as first argument to the driver functions above. */
 };
 
 
@@ -62,7 +90,10 @@ static queue_driver_type * queue_driver_alloc_empty( ) {
 }
 
 /*****************************************************************/
-/* Set option */
+/** 
+   Set option - can also be used to perform actions - not only setting
+   of parameters. There is no limit :-) 
+*/
 void queue_driver_set_option( queue_driver_type * driver , const char * option_key , const void * value) {
   if (driver->set_option != NULL) 
     /* The actual low level set functions can not fail! */
