@@ -337,6 +337,10 @@ void * rsh_driver_alloc( ) {
       rsh_host_list pointer, and then subsequently add hosts with
       rsh_driver_add_host().
   */
+  rsh_driver->num_hosts       = 0;
+  rsh_driver->host_list       = NULL;
+  rsh_driver->last_host_index = 0;  
+  rsh_driver->rsh_command = NULL;
   rsh_driver->__host_hash = hash_alloc();
   return rsh_driver;
 }
@@ -386,8 +390,10 @@ void rsh_driver_set_option( void * __driver , const char * option_key , const vo
     if (strcmp(RSH_HOST , option_key) == 0)                 /* Add one host - value should be hostname:max */  
       rsh_driver_add_host_from_string( driver , value );
     else if (strcmp(RSH_HOSTLIST , option_key) == 0) {      /* Set full host list - value should be hash of integers. */
-      hash_safe_cast( value );
-      rsh_driver_set_host_list( driver , value );
+      if (value != NULL) {
+        hash_safe_cast( value );
+        rsh_driver_set_host_list( driver , value );
+      }
     } else if (strcmp( RSH_CLEAR_HOSTLIST , option_key) == 0)
       /* Value is not considered - this is an action, and not a _set operation. */
       rsh_driver_set_host_list( driver , NULL );

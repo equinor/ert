@@ -162,7 +162,6 @@ site_config_type * site_config_alloc_empty() {
   site_config->path_values_user       = stringlist_alloc_new();
   site_config->path_variables_site    = hash_alloc();
   
-  site_config_create_queue_drivers( site_config );
   site_config_set_max_submit( site_config , DEFAULT_MAX_SUBMIT );
   return site_config;
 }
@@ -465,7 +464,7 @@ void site_config_clear_rsh_host_list( site_config_type * site_config ) {
 
 
 hash_type * site_config_get_rsh_host_list( const site_config_type * site_config ) {
-  return queue_driver_get_option( site_config->rsh_driver , RSH_HOSTLIST );
+  return (hash_type *) queue_driver_get_option( site_config->rsh_driver , RSH_HOSTLIST );
 }
 
 
@@ -645,7 +644,13 @@ void site_config_init(site_config_type * site_config , const config_type * confi
       site_config_update_pathvar( site_config , path , value );
     }
   }
-  
+  /* 
+     When LSF is used several enviroment variables must be set (by the
+     site wide file) - i.e.  the calls to SETENV must come first.
+  */
+  if (!site_config->user_mode) 
+    site_config_create_queue_drivers( site_config );   
+
   /* 
      Set the umask for all file creation. A value of '0' will ensure
      that all files and directories are created with 'equal rights'
@@ -730,10 +735,6 @@ void site_config_init(site_config_type * site_config , const config_type * confi
   if (config_item_set(config , JOB_SCRIPT_KEY))
     site_config_set_job_script( site_config , config_iget( config , JOB_SCRIPT_KEY , 0 , 0));
   
-  /* 
-     When LSF is used several enviroment variables must be set - i.e.
-     the calls to SETENV must come first. 
-  */
   if (config_item_set(config , LICENSE_PATH_KEY))
     site_config_set_license_root_path( site_config , config_iget( config , LICENSE_PATH_KEY , 0 , 0));
   
