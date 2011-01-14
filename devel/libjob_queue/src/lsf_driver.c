@@ -440,7 +440,7 @@ void * lsf_driver_submit_job(void * __driver ,
       char * quoted_resource_request = NULL;
       if (driver->resource_request != NULL)
         quoted_resource_request = util_alloc_sprintf("\"%s\"" , driver->resource_request);
-      
+
       job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd , argc, argv);
       job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
       hash_insert_ref( driver->my_jobs , job->lsf_jobnr_char , NULL );   
@@ -468,7 +468,7 @@ void * lsf_driver_submit_job(void * __driver ,
 
 
 void lsf_driver_free(lsf_driver_type * driver ) {
-  free(driver->queue_name);
+  util_safe_free(driver->queue_name);
   util_safe_free(driver->resource_request );
   util_safe_free(driver->remote_lsf_server );
   
@@ -484,6 +484,13 @@ void lsf_driver_free__(void * __driver ) {
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   lsf_driver_free( driver );
 }
+
+
+static void lsf_driver_set_queue( lsf_driver_type * driver,  const char * queue ) {
+  driver->queue_name         = util_realloc_string_copy( driver->queue_name , queue);
+  driver->lsf_request.queue  = driver->queue_name;
+}
+
 
 static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char * remote_server) {
   driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_server );
@@ -516,7 +523,7 @@ void lsf_driver_set_option( void * __driver , const char * option_key , const vo
     else if (strcmp( LSF_SERVER , option_key) == 0)
       lsf_driver_set_remote_server( driver , value );
     else if (strcmp( LSF_QUEUE , option_key) == 0)
-      driver->queue_name = util_realloc_string_copy( driver->queue_name , value );
+      lsf_driver_set_queue( driver , value );
     else if (strcmp( LSF_NUM_CPU , option_key) == 0) {
       const int num_cpu = ((const int *) value) [0];
       driver->num_cpu = num_cpu;
@@ -571,7 +578,6 @@ void * lsf_driver_alloc( ) {
   /* Library initialisation */
   /*****************************************************************/
   memset(&lsf_driver->lsf_request , 0 , sizeof (lsf_driver->lsf_request));
-  lsf_driver->lsf_request.queue            = lsf_driver->queue_name;
   lsf_driver->lsf_request.beginTime        = 0;
   lsf_driver->lsf_request.termTime         = 0;   
   lsf_driver->lsf_request.numProcessors    = 1;
@@ -582,7 +588,8 @@ void * lsf_driver_alloc( ) {
       lsf_driver->lsf_request.rLimits[i] = DEFAULT_RLIMIT;
   }
   lsf_driver->lsf_request.options2 = 0;
-  if (lsb_init(NULL) != 0) 
+  
+  if ( lsb_init(NULL) != 0 ) 
     util_abort("%s failed to initialize LSF environment : %s/%d  \n",__func__ , lsb_sysmsg() , lsberrno);
 
   
