@@ -58,15 +58,8 @@ libaries are installed globally as:
 
    /project/res/x86_64_RH_X/lib/python/lib/libXXX.so
 
-and
-
-   /d/proj/bg/enkf/ERT_GUI/lib/libXXX.so
-
-for the Python bindings and the GUI respectively. These shared
-libraries are of of course the same for both the Python bindings and
-the GUI, and should be assembled at the same location in the
-filesystem. Observe that the GUI is only installed in the Bergen
-location /d/proj/bg/enkf and should be moved to /project/res.
+This location is used both by the Python wrappers and the gui.
+---
 
 It is not entirely clear to me how to achieve the goals:
 
@@ -395,7 +388,10 @@ keywords, that is what the index/kw_list is used for.
 4.5 The different driver types 
 
 
-4.6 Reading and writing "other" files
+4.6 The mount map
+
+
+4.7 Reading and writing "other" files
       
          
 
