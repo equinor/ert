@@ -145,7 +145,7 @@ report_step can be fucked up):
   1. If you have problems with your forward model and are "trying
      again" old files left lying around can create problems.
 
-  2. If your forward model is a mult step model, where several steps
+  2. If your forward model is a multi step model, where several steps
      have gen_data content there will be a conflict.
 
 Both of the problems can be reduced by using a gen_data result file
@@ -334,6 +334,63 @@ Loading an enkf_node is essentially the reverse process, with store
 
 4.4 Reading and writing the index - kw_list
 
+The ERT filesystem implements something called alternatively "index"
+or "kw_list". This a quite crufty and inelegant consequence of to much
+ECLIPSE focus. The topic is related to storing/reassembling ECLIPSE
+restart information. The story goes about like this:
+
+ 1. A forward model has completed, and ERT loads an ECLIPSE restart
+    file. The ECLIPSE restart file might contain e.g. the keywords
+    (example only):
+
+      SEQNUM , INTEHEAD, DOUBHEAD, SGRP, PRESSURE, SWAT, SOMAX, RPORV
+
+    These keywords come in three categories:
+
+      a) Keywords we are updating with ERT, i.e. typically "PRESSURE"
+         and "SWAT" in the example above.
+
+      b) Keywords which are needed to perform a restart,
+         e.g. INTEHEAD, DOUBHEAD and SGRP.
+
+      c) Keywords which can be ignored, e.g. SOMAX and RPORV.
+
+    ERT uses the function ecl_config_include_static_kw() to
+    differentiate between cases b) and c). 
+
+ 2. For the static keywords which ERT determines it needs to store,
+    i.e. case b) above ERT will automatically create the corresponding
+    enkf_node instances (if they do not already exists), and then
+    subsequently store the results. I.e. for the case above we will
+    get the pseudo code:
+
+        enkf_node_store( "PRESSURE" )
+        enkf_node_store( "SWAT" )
+
+        if (!has_node( "INTEHEAD")) 
+           create_node( "INTEHEAD" )
+        enkf_node_store( "INTEHEAD" ) 
+
+        if (!has_node( "DOUBHEAD")) 
+           create_node( "DOUBHEAD" )
+        enkf_node_store( "DOUBHEAD" ) 
+
+        if (!has_node( "SGRP")) 
+           create_node( "SGRP" )
+        enkf_node_store( "SGRP" ) 
+
+ 3. When we want to create a corresponding restart files, we must
+    reassemble the keywords:
+
+        INTEHEAD, DOUBHEAD, SGRP, PRESSURE, SWAT
+
+    in the right order.
+
+Now - the point is that when we store the nodes in the database we
+loose track of the ordering of the keywords - and then ECLIPSE goes
+belly up. I.e. we must keep track of the original order of the
+keywords, that is what the index/kw_list is used for.
+    
 
 4.5 The different driver types 
 
