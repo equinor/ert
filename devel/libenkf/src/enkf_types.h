@@ -74,7 +74,6 @@ keep_runpath_type;
 
 
   
-/** HAVANA_FAULT = 109 - has been removed. */
 typedef enum {INVALID          = 0   , 
               IMPL_TYPE_OFFSET = 100,
               STATIC           = 100 ,       /* MULTZ has been removed & MULTFLT */ 

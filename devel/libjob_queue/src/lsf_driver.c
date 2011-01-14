@@ -27,42 +27,18 @@
   Unfortunately only quite few of the workstations in Statoil are
   "designated LSF machines", meaning that they are allowed to talk to
   the LIM servers, to be able to use the low-level lsb_xxx() function
-  calls the host making the calls must configured to be a LSF client -
-  this is unfortunately a quite scarce resource.
+  calls the host making the calls must configured to be a LSF client.
 
-  From Statoil-administration this has been solved by creating small
-  wrapper-scripts for (at least) the important executables 'bsub',
-  'bjobs' and 'bkill' which invoke the binary on a remote machine. To
-  make use of these shell based solutions the lsf_driver must call up
-  external programs, instead of simple library calls. 
+  The lsf_driver can either make use of the proper lsf library calls
+  (lsb_submit(), lsb_openjobinfo(), ...) or alternatively it can issue
+  ssh calls to an external LSF_SERVER and call up the bsub/bkill/bjob
+  executables on the remote server. Which behaviour is chosen is 
 
-  Both the capabilities to issue library calls, and the ability to
-  spawn external functions is compiled into the same binary. WHich
-  method is used in the end is determined like this:
 
-    1. If the environment variable "ERT_LINK_LSF" is set (to any
-       value), the program will use the library routines.
-
-    2. If "ERT_LINK_LSF" is not set the program will use the external
-       bsub/bjobs/bkill binaries:
-
-        a) If the environment variable "LSF_COMMAND_HOME" is set the
-           program will search for for bsub/bkill/bjobs in this directory.
-
-        b) Else bsub/bkill/bjobs will be searched for in the normal
-           PATH variable.
-   
-       The problem is that the library calls need several ENV
-       variables set by themselves, among other this will affect the
-       PATH variable, which will result that the external approach
-       finds the proper bsub/bjobs/bkill binaries instead of the
-       wrappers. What a mess.
-
-  All the functions with 'library' in the name are based on library
-  calls, and the functions with 'shell' in the name are based on
-  external functions (the actual calls are through the
-  util_fork_exec() function).
-*/
+  All the functions with
+  'library' in the name are based on library calls, and the functions
+  with 'shell' in the name are based on external functions (the actual
+  calls are through the util_fork_exec() function).  */
 
 
 
@@ -509,6 +485,17 @@ void lsf_driver_free__(void * __driver ) {
   lsf_driver_free( driver );
 }
 
+static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char * remote_server) {
+  driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_server );
+  if (driver->remote_lsf_server != NULL) {
+    driver->use_library_calls = false;
+    unsetenv( "BSUB_QUIET" );
+  } else {
+    /* No remote server has been set - assuming we can issue proper library calls. */
+    setenv("BSUB_QUIET" , "yes" , 1);            /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
+    driver->use_library_calls = true;
+  }
+}
 
 
 /*****************************************************************/
@@ -527,7 +514,7 @@ void lsf_driver_set_option( void * __driver , const char * option_key , const vo
     if (strcmp( LSF_RESOURCE , option_key ) == 0)
       driver->resource_request = util_realloc_string_copy( driver->resource_request , value );
     else if (strcmp( LSF_SERVER , option_key) == 0)
-      driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , value );
+      lsf_driver_set_remote_server( driver , value );
     else if (strcmp( LSF_QUEUE , option_key) == 0)
       driver->queue_name = util_realloc_string_copy( driver->queue_name , value );
     else if (strcmp( LSF_NUM_CPU , option_key) == 0) {
@@ -615,15 +602,7 @@ void * lsf_driver_alloc( ) {
   hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_QUEUE_DONE);
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
-  
-  if (lsf_driver->remote_lsf_server != NULL) 
-    lsf_driver->use_library_calls = false;
-  else {
-    /* No remote server has been set - assuming we can issue proper library calls. */
-    setenv("BSUB_QUIET" , "yes" , 1);            /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
-    lsf_driver->use_library_calls = true;
-  }
-  
+  lsf_driver_set_remote_server( lsf_driver , NULL );
   return lsf_driver;
 }
 
