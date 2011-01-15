@@ -387,6 +387,106 @@ keywords, that is what the index/kw_list is used for.
 
 4.5 The different driver types 
 
+The enkf_fs layer does not directly store nodes to disk, instead that
+task is passed on to a driver. When the enkf_fs layer has completed
+filling up a buffer instance with the data to store, that buffer is
+passed on to the apropriate driver. The driver is a structure with
+function pointers to functions for doing the very basic low-level
+read/write operations and also whatever state needed by the
+driver. The use of these pluggable drivers for read and write
+operations certainly increase the complexity quite a lot, however it
+also certainly gives good flexibility. At the moment someone could
+implement BDB storage (a good idea) or Amazon S3 storage (a bad idea)
+with only very limited modifications to enkf_fs.c and essentially no
+changes whatsoever to the rest of the ERT code.
+
+The drivers are included in the enkf_fs structure as:
+
+  ...  
+  fs_driver_type         * dynamic_forecast;
+  fs_driver_type         * dynamic_analyzed;
+  fs_driver_type         * parameter;
+  fs_driver_type         * eclipse_static;
+  fs_driver_index_type   * index;
+  ....
+
+I.e. all the different variable types in section 4.1 have their own
+private driver. The index variable is used for storing the kw_list
+(see section 4.4). fs_driver_type is an abstract type without any
+implementation (I think !). 
+
+
+4.5.1 The plain driver
+
+The first driver was the plain driver; this driver creates a deep
+directory structure and stores all nodes in a separate file. This has
+the following characteristica:
+
+  * Surprisingly good write performance
+  * Catastropich read performance
+  * The excessive number of small files (~ 10^7 for a large
+    simulation) is totally unacceptable.
+
+All in all the plain driver should not be used for serious work. The
+plain driver was obviously bad design already when written, but as
+long as the enkf_fs layer was written with abstract drivers the design
+of a more suitable fs driver could easily be postponed!
+
+
+4.5.2 The block_fs driver
+
+The block_fs driver is based on creating block_fs instances
+(block_fs_type is implemented in libutil/src/block_fs.c). The block_fs
+instances are binary files which are open through the duration of the
+program, the block_fs system then has an api for reading and writing
+(key,value) pairs to this file. 
+
+The block_fs_driver/block_fs combination is quite complex, but it has
+not had any hickups for about 1.5 years of extensive use in
+Statoil. Observe that if you pull the plug on ERT you might loose some
+of the data which has been stored with the block_fs driver, but partly
+written and malformed data will be detected and discarded at the next
+boot. You are therefor guaranteed (add as many quotes you like to the
+guarantee - but this has at least worked 100% up until now) that no
+bogus data will be loaded after an unclean shutdown. When shut down
+cleanly the block_fs can create an index file which can be used for
+faster startup next time, in the case of an unclean shutdown the index
+must be built from the data file. In the case of large files this can
+take some time <= 30 seconds?
+
+If you have set storage root to "Storage" the case "Prior" will create
+the following directory structure with the block_fs driver:
+
+   Storage/Prior/mod_0
+                /mod_1
+                /mod_2
+                ....
+                /mod_31
+
+Each of the mod_xx directories will contain block_fs mount/data/index
+files for each of the drivers. The reason to use the mod_xxx
+directories is mainly to increase multithreaded performance during
+both read and write, in addition the resulting files do not get that
+large (2GB limit and so on). The mod_xxx is used as follows:
+
+    Ensemble member ienn is stored in directory: mod_(mod(iens,32))
+
+I.e. ensemble members 0,32,64,96,.. are stored in directory mod_0,
+whereas ensemble members 7,39,71 and 103 are stored in mod_7.
+
+
+The resulting files are quite opaque, and impossible to work with by
+using filesystem/editor/shell commands.  In
+libutil/applications/block_fs/ there are some utilities for working
+with these files which can be used for various forms of crash
+recovery, problem inspection and so on.
+
+
+
+
+In addition an sqlite based driver has been written, it worked ok but
+performance turned out to be quite poor. 
+
 
 4.6 The mount map
 
