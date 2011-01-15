@@ -17,7 +17,7 @@ fs_driver_impl fs_types_lookup_string_name(const char * driver_name) {
 
 
 
-const char * fs_types_get_driver_name(fs_driver_type driver_type) {
+const char * fs_types_get_driver_name(fs_driver_enum driver_type) {
   switch( driver_type ) {
   case(DRIVER_PARAMETER):
     return "PARAMETER";

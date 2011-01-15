@@ -5,7 +5,7 @@
 #include <stringlist.h>
 #include <block_fs.h>
 #include <block_fs_driver_index.h>
-#include <basic_driver.h>
+#include <fs_driver.h>
 
 
 /*
@@ -15,7 +15,7 @@
 */
 
 struct block_fs_driver_index_struct {
-  BASIC_INDEX_DRIVER_FIELDS;
+  FS_INDEX_DRIVER_FIELDS;
   int                __id;
   block_fs_type    * read_fs;
   block_fs_type    * write_fs;
@@ -172,9 +172,9 @@ void * block_fs_driver_index_alloc(const char * root_path) {
   
   block_fs_driver->__id = BLOCK_FS_DRIVER_INDEX_ID;
   {
-    basic_driver_index_type * basic_driver = (basic_driver_index_type *) block_fs_driver;
-    basic_driver_index_init(basic_driver);
-    return basic_driver;
+    fs_driver_index_type * fs_driver = (fs_driver_index_type *) block_fs_driver;
+    fs_driver_index_init(fs_driver);
+    return fs_driver;
   }
 }
 

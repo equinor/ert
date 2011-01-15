@@ -32,10 +32,10 @@ struct bfs_struct  {
 
 
 struct block_fs_driver_struct {
-  BASIC_DRIVER_FIELDS;
+  FS_DRIVER_FIELDS;
   int                __id;
   int                num_drivers;
-  fs_driver_type     driver_type;
+  fs_driver_enum     driver_type;
   block_fs_type   ** read_fs;
   block_fs_type   ** write_fs;
   bfs_type        ** fs_list;
@@ -67,7 +67,7 @@ static void * bfs_close__( void * arg ) {
 }
 
 
-static bfs_type * bfs_alloc( fs_driver_type driver_type , int block_size , int max_cache_size , bool preload) {
+static bfs_type * bfs_alloc( fs_driver_enum driver_type , int block_size , int max_cache_size , bool preload) {
   bfs_type * fs      = util_malloc( sizeof * fs , __func__);
   fs->read_fs        = NULL;
   fs->write_fs       = NULL;
@@ -83,7 +83,7 @@ static bfs_type * bfs_alloc( fs_driver_type driver_type , int block_size , int m
 
 
 
-static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type driver_type , int block_size , int max_cache_size , bool preload) {
+static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_enum driver_type , int block_size , int max_cache_size , bool preload) {
   int i;
   bfs_type ** driver_list = util_malloc( num_drivers * sizeof * driver_list , __func__); 
   for (i=0; i < num_drivers; i++)
@@ -391,7 +391,7 @@ static void block_fs_driver_fsync( void * _driver ) {
 
   This is where the various function pointers are initialized.
 */
-static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driver_type , int num_drivers ) {
+static void * block_fs_driver_alloc(const char * root_path , fs_driver_enum driver_type , int num_drivers ) {
   block_fs_driver_type * driver = util_malloc(sizeof * driver , __func__);
 
   driver->load          = block_fs_driver_load_node;
@@ -435,16 +435,16 @@ static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driv
   
   
   {
-    basic_driver_type * basic_driver = (basic_driver_type *) driver;
-    basic_driver_init(basic_driver);
-    return basic_driver;
+    fs_driver_type * fs_driver = (fs_driver_type *) driver;
+    fs_driver_init(fs_driver);
+    return fs_driver;
   }
 }
 
 
 
 
-void block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , int num_drivers ) {
+void block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_enum driver_type , int num_drivers ) {
   util_fwrite_int(driver_type        , stream);
   util_fwrite_int(BLOCK_FS_DRIVER_ID , stream);
   util_fwrite_int(driver_type        , stream );
@@ -458,7 +458,7 @@ void block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_typ
 */
 
 block_fs_driver_type * block_fs_driver_fread_alloc(const char * root_path , FILE * stream) {
-  fs_driver_type driver_type    = util_fread_int( stream );
+  fs_driver_enum driver_type    = util_fread_int( stream );
   int num_drivers               = util_fread_int( stream );
   block_fs_driver_type * driver = block_fs_driver_alloc(root_path , driver_type , num_drivers );
   return driver;

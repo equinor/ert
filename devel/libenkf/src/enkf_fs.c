@@ -11,7 +11,7 @@
 #include <msg.h>
 #include <path_fmt.h>
 #include <enkf_node.h>
-#include <basic_driver.h>
+#include <fs_driver.h>
 #include <dirent.h>
 #include <fs_types.h>
 #include <menu.h>
@@ -279,11 +279,11 @@
 struct enkf_fs_struct {
   UTIL_TYPE_ID_DECLARATION;
   char                      * root_path;
-  basic_driver_type         * dynamic_forecast;
-  basic_driver_type         * dynamic_analyzed;
-  basic_driver_type         * parameter;
-  basic_driver_type         * eclipse_static;
-  basic_driver_index_type   * index ;
+  fs_driver_type         * dynamic_forecast;
+  fs_driver_type         * dynamic_analyzed;
+  fs_driver_type         * parameter;
+  fs_driver_type         * eclipse_static;
+  fs_driver_index_type   * index ;
 
   bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
   set_type                  * dir_set;               /* Set containing the existing directories. */
@@ -586,7 +586,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
       enkf_fs_get_fs_version__(stream);   /* Just top skip version header */
       for (i=0; i < num_drivers; i++) {
         void * driver   = NULL;
-        fs_driver_type driver_category = util_fread_int( stream );
+        fs_driver_enum driver_category = util_fread_int( stream );
         fs_driver_impl driver_id       = util_fread_int( stream );
 
         switch(driver_id) {
@@ -702,11 +702,11 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
     }
     
 
-    basic_driver_assert_cast(fs->dynamic_analyzed);
-    basic_driver_assert_cast(fs->dynamic_forecast);
-    basic_driver_assert_cast(fs->eclipse_static);
-    basic_driver_assert_cast(fs->parameter);
-    basic_driver_index_assert_cast(fs->index);
+    fs_driver_assert_cast(fs->dynamic_analyzed);
+    fs_driver_assert_cast(fs->dynamic_forecast);
+    fs_driver_assert_cast(fs->eclipse_static);
+    fs_driver_assert_cast(fs->parameter);
+    fs_driver_index_assert_cast(fs->index);
     
     free( config_file );
     {
@@ -726,11 +726,11 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
 
 
 
-static void enkf_fs_free_driver(basic_driver_type * driver) {
+static void enkf_fs_free_driver(fs_driver_type * driver) {
   driver->free_driver(driver);
 }
 
-static void enkf_fs_free_index_driver(basic_driver_index_type * driver) {
+static void enkf_fs_free_index_driver(fs_driver_index_type * driver) {
   driver->free_driver(driver);
 }
 
@@ -804,7 +804,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
     enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
     void * _driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) );
     {
-      basic_driver_type * driver = basic_driver_safe_cast(_driver);
+      fs_driver_type * driver = fs_driver_safe_cast(_driver);
       if (report_step == 0) {
         enkf_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
         if (impl_type == SUMMARY) return;    /* For report step == 0 the summary data is just garbage. */
@@ -826,13 +826,13 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
 }
 
 
-static void enkf_fs_fsync_driver( basic_driver_type * driver ) {
+static void enkf_fs_fsync_driver( fs_driver_type * driver ) {
   if (driver->fsync_driver != NULL)
     driver->fsync_driver( driver );
 }
 
 
-static void enkf_fs_fsync_driver_index( basic_driver_index_type * driver ) {
+static void enkf_fs_fsync_driver_index( fs_driver_index_type * driver ) {
   if (driver->fsync_driver != NULL)
     driver->fsync_driver( driver );
 }
@@ -870,7 +870,7 @@ static int __get_parameter_report_step( int report_step , state_enum state) {
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
   enkf_var_type var_type     = enkf_config_node_get_var_type(config_node);
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) );
+  fs_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) );
   int internal_report_step   = report_step;
   
   if (var_type == PARAMETER) {
@@ -908,7 +908,7 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
   {
-    basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , enkf_config_node_get_key( config_node ) ));
+    fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , enkf_config_node_get_key( config_node ) ));
     return driver->has_node(driver , config_node , report_step , iens ); 
   }
 }
@@ -1074,7 +1074,7 @@ stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * fs) {
 /* Index related functions  . */
 
 void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, const stringlist_type * kw_list) {
-  basic_driver_index_type * index = enkf_fs->index;
+  fs_driver_index_type * index = enkf_fs->index;
   buffer_type * buffer = buffer_alloc(1024);
   stringlist_buffer_fwrite( kw_list , buffer );
   index->save_kwlist( index , report_step , iens , buffer );
@@ -1084,7 +1084,7 @@ void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , i
 
 
 void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, stringlist_type * kw_list) {
-  basic_driver_index_type * index = enkf_fs->index;
+  fs_driver_index_type * index = enkf_fs->index;
   buffer_type * buffer = buffer_alloc(1024);
   index->load_kwlist( index , report_step , iens , buffer  );
   stringlist_buffer_fread( kw_list , buffer );

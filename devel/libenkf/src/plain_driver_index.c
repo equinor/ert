@@ -5,7 +5,7 @@
 #include <stringlist.h>
 #include <plain_driver_common.h>
 #include <plain_driver_index.h>
-#include <basic_driver.h>
+#include <fs_driver.h>
 
 
 /*
@@ -15,7 +15,7 @@
 */
 
 struct plain_driver_index_struct {
-  BASIC_INDEX_DRIVER_FIELDS;
+  FS_INDEX_DRIVER_FIELDS;
   int         __id;     
   path_fmt_type  * read_path_fmt;
   path_fmt_type  * write_path_fmt;
@@ -95,9 +95,9 @@ void * plain_driver_index_alloc(const char * root_path , const char * index_path
   plain_driver->fsync_driver   = NULL;
   plain_driver->__id = PLAIN_DRIVER_INDEX_ID;
   {
-    basic_driver_index_type * basic_driver = (basic_driver_index_type *) plain_driver;
-    basic_driver_index_init(basic_driver);
-    return basic_driver;
+    fs_driver_index_type * fs_driver = (fs_driver_index_type *) plain_driver;
+    fs_driver_index_init(fs_driver);
+    return fs_driver;
   }
 }
 

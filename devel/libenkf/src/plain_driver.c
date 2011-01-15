@@ -5,7 +5,7 @@
 #include <path_fmt.h>
 #include <fs_types.h>
 #include <buffer.h>
-#include <basic_driver.h>
+#include <fs_driver.h>
 #include <plain_driver.h>
 #include <plain_driver_index.h>
 #include <plain_driver_common.h>
@@ -36,7 +36,7 @@
 
 
 struct plain_driver_struct {
-  BASIC_DRIVER_FIELDS;
+  FS_DRIVER_FIELDS;
   int             plain_driver_id;
   path_fmt_type * read_path;
   path_fmt_type * write_path;
@@ -165,11 +165,11 @@ void plain_driver_select_dir(void *_driver , const char * directory, bool read, 
 void * plain_driver_alloc(const char * root_path , const char * fmt) {
   plain_driver_type * driver = util_malloc(sizeof * driver , __func__);
 
-  driver->load        	  = plain_driver_load_node;
-  driver->save        	  = plain_driver_save_node;
-  driver->free_driver 	  = plain_driver_free;
-  driver->unlink_node 	  = plain_driver_unlink_node;
-  driver->has_node    	  = plain_driver_has_node;
+  driver->load            = plain_driver_load_node;
+  driver->save            = plain_driver_save_node;
+  driver->free_driver     = plain_driver_free;
+  driver->unlink_node     = plain_driver_unlink_node;
+  driver->has_node        = plain_driver_has_node;
   driver->select_dir      = plain_driver_select_dir;
   driver->root_path       = util_alloc_string_copy( root_path );
   driver->fmt_string      = util_alloc_string_copy( fmt );
@@ -178,16 +178,16 @@ void * plain_driver_alloc(const char * root_path , const char * fmt) {
   driver->fsync_driver    = NULL;
   driver->plain_driver_id = PLAIN_DRIVER_ID;
   {
-    basic_driver_type * basic_driver = (basic_driver_type *) driver;
-    basic_driver_init(basic_driver);
-    return basic_driver;
+    fs_driver_type * fs_driver = (fs_driver_type *) driver;
+    fs_driver_init(fs_driver);
+    return fs_driver;
   }
 }
 
 
 
 
-void plain_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , const char * fmt ) {
+void plain_driver_fwrite_mount_info(FILE * stream , fs_driver_enum driver_type , const char * fmt ) {
   util_fwrite_int(driver_type , stream);
   util_fwrite_int(PLAIN_DRIVER_ID , stream);
   util_fwrite_string(fmt , stream);

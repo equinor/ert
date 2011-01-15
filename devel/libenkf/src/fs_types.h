@@ -39,16 +39,16 @@ typedef enum {
 */
 
 typedef enum {
-  DRIVER_PARAMETER  	  = 1,
-  DRIVER_STATIC     	  = 2,
-  DRIVER_DYNAMIC    	  = 3, /* Depreceated */
-  DRIVER_INDEX      	  = 4,  
+  DRIVER_PARAMETER        = 1,
+  DRIVER_STATIC           = 2,
+  DRIVER_DYNAMIC          = 3, /* Depreceated */
+  DRIVER_INDEX            = 4,  
   DRIVER_DYNAMIC_FORECAST = 5,
-  DRIVER_DYNAMIC_ANALYZED = 6} fs_driver_type;
+  DRIVER_DYNAMIC_ANALYZED = 6} fs_driver_enum;
 
 
 
 fs_driver_impl    fs_types_lookup_string_name(const char * driver_name);
-const char      * fs_types_get_driver_name(fs_driver_type driver_type);
+const char      * fs_types_get_driver_name(fs_driver_enum driver_type);
 
 #endif
