@@ -1093,7 +1093,7 @@ void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , in
 
 
 /*****************************************************************/
-
+/*****************************************************************/
 /* write_dir / read_dir confusion. */
 
 char * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const char * input_name) {

@@ -402,7 +402,7 @@ changes whatsoever to the rest of the ERT code.
 
 The drivers are included in the enkf_fs structure as:
 
-  ...  
+  ....  
   fs_driver_type         * dynamic_forecast;
   fs_driver_type         * dynamic_analyzed;
   fs_driver_type         * parameter;
@@ -423,9 +423,9 @@ directory structure and stores all nodes in a separate file. This has
 the following characteristica:
 
   * Surprisingly good write performance
-  * Catastropich read performance
+  * Catastrophic read performance
   * The excessive number of small files (~ 10^7 for a large
-    simulation) is totally unacceptable.
+    simulation) is *totally* unacceptable.
 
 All in all the plain driver should not be used for serious work. The
 plain driver was obviously bad design already when written, but as
@@ -449,7 +449,7 @@ written and malformed data will be detected and discarded at the next
 boot. You are therefor guaranteed (add as many quotes you like to the
 guarantee - but this has at least worked 100% up until now) that no
 bogus data will be loaded after an unclean shutdown. When shut down
-cleanly the block_fs can create an index file which can be used for
+cleanly the block_fs will create an index file which can be used for
 faster startup next time, in the case of an unclean shutdown the index
 must be built from the data file. In the case of large files this can
 take some time <= 30 seconds?
@@ -469,31 +469,60 @@ directories is mainly to increase multithreaded performance during
 both read and write, in addition the resulting files do not get that
 large (2GB limit and so on). The mod_xxx is used as follows:
 
-    Ensemble member ienn is stored in directory: mod_(mod(iens,32))
+    Ensemble member iens is stored in directory: mod_(mod(iens,32))
 
 I.e. ensemble members 0,32,64,96,.. are stored in directory mod_0,
 whereas ensemble members 7,39,71 and 103 are stored in mod_7.
 
 
 The resulting files are quite opaque, and impossible to work with by
-using filesystem/editor/shell commands.  In
+using normal filesystem/editor/shell commands. In
 libutil/applications/block_fs/ there are some utilities for working
 with these files which can be used for various forms of crash
 recovery, problem inspection and so on.
-
-
-
 
 In addition an sqlite based driver has been written, it worked ok but
 performance turned out to be quite poor. 
 
 
-4.6 The mount map
+4.6 Filesystem metadata
+
+The metadata required to instantiate (i.e. "mount") a enkf_fs
+filesystem is contained in the file "enkf_mount_info"; this is a
+binary file with the following content:
+
+    FS_MAGIC_ID           /* A magic number */
+    CURRENT_FS_VERSION    /* The version of the filesystem; 
+                             has been 104 since september 2009. */
+      -------
+     / DRIVER_CATEGORY            /* Element from fs_driver_enum in fs_types.h */
+     | DRIVER_IMPLEMENTATION      /* Element from fs_driver_impl in fs_types.h
+     \ Extra driver info          /* Whatever information needed by the driver
+      -------                        implementation given by DRIVER_IMPLEMENTATION. */  
+
+    CASES      
+
+The block [DRIVER_CATEGORY, DRIVER_IMPLEMENTATION, Extra ..] is
+repeated five times to cover all the driver categories
+DRIVER_PARAMETR, DRIVER_STATIC, DRIVE_DYNAMIC_FORECAST,
+DRIVER_DYNAMIC_ANALYZED and INDEX.
+
+Unfortunately there have been some hickups with the enkf_mount_info
+file in the past, it should probably have been an ascii file. If there
+are problems with it it is "quite safe" to just delete the mount info
+file and then restart ERT. When ERT finds old data files (in the case
+of block_fs) it will just load ythese and continue. However if you do
+this you must use the ERT menu option to recreate all your cases, ERT
+will then find the existing data and continue (more or less) happily.
 
 
 4.7 Reading and writing "other" files
-      
-         
+
+The main part (i.e. more than 99%) of the enkf_fs implementation is
+devoted to reading and writing of enkf_node instances. However there
+are typically some other situations during a simulation where it is
+interesting to store filenames with per member or per timestep
+information - this is available thorugh the functions at the bottom of
+enkf_fs. Not very important functions, but convenient enough.
 
 
-  
