@@ -5,7 +5,7 @@
 #include <path_fmt.h>
 #include <fs_types.h>
 #include <buffer.h>
-#include <basic_driver.h>
+#include <fs_driver.h>
 #include <block_fs_driver.h>
 #include <block_fs.h>
 #include <enkf_types.h>
