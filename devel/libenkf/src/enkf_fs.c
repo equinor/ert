@@ -110,8 +110,7 @@
    version.
 
 
-   Observe that all the upgrade functions were removeda at svn:3305.
-
+   Observe that all the upgrade functions were removed at svn:3305.
 */
 
 
@@ -136,8 +135,6 @@
        storage up in different drivers we can write drivers which are
        specialized for the different types of data.
 
-
-  
 
   The interface
   -------------     
@@ -255,7 +252,7 @@
   used when the driver is allocated with xxxx_fread_alloc().
 
   The different drivers can be in arbitrary order in the
-  enkf_mount_info file, but when foru records are read it checks that
+  enkf_mount_info file, but when four records are read it checks that
   all drivers have been initialized, and aborts if that is not the
   case.
   

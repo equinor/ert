@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 #include <path_fmt.h>
-#include <basic_driver.h>
+#include <fs_driver.h>
 #include <enkf_node.h>
 #include <enkf_config_node.h>
 #include <stringlist.h>
