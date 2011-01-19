@@ -511,7 +511,7 @@ Unfortunately there have been some hickups with the enkf_mount_info
 file in the past, it should probably have been an ascii file. If there
 are problems with it it is "quite safe" to just delete the mount info
 file and then restart ERT. When ERT finds old data files (in the case
-of block_fs) it will just load ythese and continue. However if you do
+of block_fs) it will just load these and continue. However if you do
 this you must use the ERT menu option to recreate all your cases, ERT
 will then find the existing data and continue (more or less) happily.
 

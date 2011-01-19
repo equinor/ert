@@ -111,7 +111,7 @@ class EclKW(object):
     def __del__(self):
         if self.data_owner:
             cfunc.free( self )
-
+            
 
     def __deep_copy__(self , memo):
         ecl_kw = EclKW.copy( self )
@@ -541,4 +541,5 @@ cfunc.set_float                  = cwrapper.prototype("void ecl_kw_scalar_set_fl
 cfunc.max_min_int                = cwrapper.prototype("void ecl_kw_max_min_int( ecl_kw , int* , int*)")
 cfunc.max_min_float              = cwrapper.prototype("void ecl_kw_max_min_float( ecl_kw , float* , float*)")
 cfunc.max_min_double             = cwrapper.prototype("void ecl_kw_max_min_double( ecl_kw , double* , double*)")
+
 
