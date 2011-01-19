@@ -11,6 +11,7 @@ then
     echo "Options (for debugging):"
     echo "        gert debug ert_configuration_file"
     echo "        gert strace ert_configuration_file"
+    eco  "        gert local ....  will use the Python code in your working copy"
     echo
     exit
 fi
@@ -26,7 +27,17 @@ source /prog/sdpsoft/environment.sh > /dev/null
 
 ORIGINAL_DIRECTORY=$PWD
 
-export ert_gui_dir=$SDP_BINDIST/lib/python/gert
+if [ "$1" = "local" ]
+then 
+   # The user has given "local" as the first argument, meaning that we should
+   # run based on Python code in the users current working directory, and not
+   # the centraly installed code.  
+   BASEDIR=$(dirname $0)
+   export ert_gui_dir=$BASEDIR/../
+   shift
+else
+   export ert_gui_dir=$SDP_BINDIST/lib/python/gert
+fi
 echo "Loading python GUI code from.......:" $ert_gui_dir
 echo "-----------------------------------------------------------------"
 

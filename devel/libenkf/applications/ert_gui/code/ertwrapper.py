@@ -63,7 +63,6 @@ class ErtWrapper:
             LSF_HOME = "/prog/LSF/7.0/linux2.4-glibc2.2-x86_64"
         else:
             LSF_HOME = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64"
-            
         CDLL("%s/lib/liblsf.so" % LSF_HOME   , RTLD_GLOBAL)
         CDLL("%s/lib/libbat.so" % LSF_HOME   , RTLD_GLOBAL)
 
