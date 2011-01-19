@@ -9,8 +9,8 @@ then
     echo "  ertgui.sh ert_configuration_file"
     echo
     echo "Options (for debugging):"
-    echo "        ertgui.sh debug ert_configuration_file"
-    echo "        ertgui.sh strace ert_configuration_file"
+    echo "        gert debug ert_configuration_file"
+    echo "        gert strace ert_configuration_file"
     echo
     exit
 fi
