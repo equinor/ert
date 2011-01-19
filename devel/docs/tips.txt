@@ -4,8 +4,9 @@ Table of contents:
   2. About gen_data / gen_param and gen_obs.
   3. Some tips for implementing a obs_script
   4. About the ERT filesystem
+  5. Installing ERT software in Statoil
 
-*****************************************************************
+**********************************************************************
 
 1. Static and shared libraries 
 ------------------------------ 
@@ -81,6 +82,7 @@ alteranatively specify the library files fully on the link command like:
 
 But how to tell SCons this?
 
+**********************************************************************
 
 2. About gen_data / gen_param and gen_obs.
 -----------------------------------------
@@ -167,7 +169,7 @@ two here, my first suspect is with save/restore functionality in the
 functions gen_data_config_update_active() and
 gen_data_config_load_active().
  
-
+**********************************************************************
 
 3. Some tips for implementing a obs_script
 ------------------------------------------
@@ -220,7 +222,7 @@ Concrete tips:
      OBS_SCRIPT should be given in the SCRIPT_ARG option - fully
      specified by the user.
 
-
+**********************************************************************
 
 4. About the ERT filesystem
 --------------------------- 
@@ -525,4 +527,93 @@ interesting to store filenames with per member or per timestep
 information - this is available thorugh the functions at the bottom of
 enkf_fs. Not very important functions, but convenient enough.
 
+**********************************************************************
 
+5. Installing ERT software in Statoil
+-------------------------------------
+
+Installation of research software in Statoil is according to the
+general guideline:
+
+ 1. Log in to a computer in Trondheim with the correct version of
+    RedHat installed; the files will be automagically distributed to
+    other locations within a couple of minutes.
+
+ 2. Copy the files you want to copy into the
+    /project/res/x86_64_RH_??/ directory.
+
+ 3. Update the metadata on the files you copy:
+    
+    a) chgrp res
+    b) chmod a+r g+w
+    c) For executables: chmod a+x 
+
+For the simple programs like the ECLIPSE programs summary.x &
+convert.x this can be easily achieved with the SDP_INSTALL of
+SConstruct files:
+
+    bash% scons SDP_INSTALL
+
+Unfortunately it has been a major pain in the ass to get SCons to
+behave according to the requirements listed above; for the more
+extensive installation procedures there are therefor simple Python
+scripts "install.py" which should be invoked after the SCons build is
+complete.
+
+
+5.1 Installing ert - the tui
+
+In the directory libenkf/applications/ert_tui there is a install.py
+script. This script will do the following:
+
+  1. Copy the "ert" binary found in the current directory to:
+
+          /project/res/x86_64_RH_???/bin/ert_release/ert_<SVN>
+
+     where <SVN> is the current svn version number. Observe that the
+     script will refuse to install if the svn version number is not
+     "pure", i.e. "3370" is okay, "3370M" or "3100:3370" is not OK.
+
+
+  2. Update the permissions & ownsherhip on the target file.
+
+
+  3. Update the symlink:
+
+        /project/res/x86_64_RH_??/bin/ert_latest_and_greatest 
+      
+     to point to the newly installed file.
+
+
+5.2 Installing python code
+
+The approach to installing Python code is the same for both the gui
+(which is mainly Python) and for ERT Python. The installation scripts
+are:
+
+    python/ctypes/install.py
+    libenkf/applications/ert_gui/bin/install.py
+
+These scripts will (should ??):
+
+  1. Install the ERT shared libraries like libecl.so and so on to
+   
+        /project/res/x86_64_RH_???/lib/python/lib
+   
+     These shared libraries are the same for both ERT Python and gert.
+
+  2. All Python files are byte compiled, producing the pyc
+     files - observe that this might face permission problems.
+
+  3. Update the modes and ownership on all installed files.
+
+
+
+5.3 Installing the etc files
+
+In the directory etc/ there is a install.py script. This script will:
+
+ 1. Copy the full content of the etc/ERT directory to
+    /project/res/etc/ERT.
+
+ 2. Update the modes and ownership on all installed files.
