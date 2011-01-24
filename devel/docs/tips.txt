@@ -585,7 +585,7 @@ script. This script will do the following:
      to point to the newly installed file.
 
 
-5.2 Installing python code
+5.2 Installing python code (including gert)
 
 The approach to installing Python code is the same for both the gui
 (which is mainly Python) and for ERT Python. The installation scripts
@@ -602,8 +602,12 @@ These scripts will (should ??):
    
      These shared libraries are the same for both ERT Python and gert.
 
-  2. All Python files are byte compiled, producing the pyc
-     files - observe that this might face permission problems.
+  2. Install python files (with directories) to
+
+        /project/res/x86_64_RH_???/lib/python
+
+     All Python files are byte compiled, producing the pyc files -
+     observe that this might induce permission problems.
 
   3. Update the modes and ownership on all installed files.
 
