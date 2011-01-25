@@ -122,6 +122,7 @@ struct enkf_main_struct {
 
   char                 * site_config_file;
   char                 * user_config_file;   
+  char                 * rft_config_file;       /* File giving the configuration to the RFTwells*/  
   enkf_obs_type        * obs;
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;         /* The ensemble ... */
@@ -175,6 +176,10 @@ void enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * u
   enkf_main->user_config_file = util_realloc_string_copy( enkf_main->user_config_file , user_config_file );
 }
 
+void enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rft_config_file ) {
+  enkf_main->rft_config_file = util_realloc_string_copy( enkf_main->rft_config_file , rft_config_file );
+} 
+
 void enkf_main_set_site_config_file( enkf_main_type * enkf_main , const char * site_config_file ) {
   enkf_main->site_config_file = util_realloc_string_copy( enkf_main->site_config_file , site_config_file );
 }
@@ -185,6 +190,10 @@ const char * enkf_main_get_user_config_file( const enkf_main_type * enkf_main ) 
 
 const char * enkf_main_get_site_config_file( const enkf_main_type * enkf_main ) {
   return enkf_main->site_config_file;
+}
+
+const char * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main ) {
+  return enkf_main->rft_config_file;
 }
 
 ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
@@ -331,6 +340,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   subst_list_free( enkf_main->subst_list );
   util_safe_free( enkf_main->user_config_file );
   util_safe_free( enkf_main->site_config_file );
+  util_safe_free( enkf_main->rft_config_file );
   free(enkf_main);
 }
 
@@ -2396,6 +2406,12 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   item = config_add_item(config , OBS_CONFIG_KEY  , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
+  item = config_add_item(config , RFT_CONFIG_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
+  item = config_add_item(config , RFTPATH_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+
   item = config_add_item(config , LOCAL_CONFIG_KEY  , false , true);
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
@@ -2538,6 +2554,7 @@ static enkf_main_type * enkf_main_alloc_empty( void ) {
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
   enkf_main->site_config_file   = NULL;
+  enkf_main->rft_config_file    = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
@@ -3159,6 +3176,19 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       enkf_main_update_obs_keys(enkf_main);
 
+      {
+	const char * rft_config_file;
+	if (config_has_set_item(config , RFT_CONFIG_KEY)){
+	  rft_config_file = config_iget(config , RFT_CONFIG_KEY , 0,0);
+	}
+	else{
+	  rft_config_file = NULL;
+	}
+	printf("RFT_CONFIG: %s",rft_config_file);
+	enkf_main_set_rft_config_file( enkf_main , rft_config_file ); 
+      }
+      
+
       /*****************************************************************/
       {
         const char * select_case = NULL;
@@ -3420,7 +3450,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
     }
     hash_iter_free(iter);
     hash_free(map);
-  }
+  }  
 }
 
 

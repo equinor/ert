@@ -112,7 +112,7 @@
 #define DEFAULT_PLOT_PATH   "plots"
 #define DEFAULT_RUNPATH     "simulations/realization%d"
 #define DEFAULT_ENSPATH     "storage"
-
+#define DEFAULT_RFTPATH     "rft"
 
 #define DEFAULT_PRE_CLEAR_RUNPATH   false
 

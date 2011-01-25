@@ -25,8 +25,10 @@ void                   model_config_set_select_case( model_config_type * model_c
 const char *           model_config_get_case_table_file( const model_config_type * model_config );
 void                   model_config_set_case_table( model_config_type * model_config , int ens_size , const char * case_table_file );
 void                   model_config_set_enspath( model_config_type * model_config , const char * enspath);
+void                   model_config_set_rftpath( model_config_type * model_config , const char * rftpath);
 void                   model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string);
 const char           * model_config_get_enspath( const model_config_type * model_config);
+const char           * model_config_get_rftpath( const model_config_type * model_config);
 fs_driver_impl         model_config_get_dbase_type(const model_config_type * model_config );
 void                   model_config_init_internalization( model_config_type * );
 void                   model_config_set_internalize_state( model_config_type *  , int );

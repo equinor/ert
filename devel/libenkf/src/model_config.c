@@ -47,6 +47,7 @@ struct model_config_struct {
   enkf_sched_type      * enkf_sched;                /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
   char                 * enkf_sched_file;           /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
   char                 * enspath;
+  char                 * rftpath;
   char                 * select_case;
   fs_driver_impl         dbase_type;
   int                    last_history_restart;       /* The end of the history - this is inclusive.*/
@@ -153,6 +154,9 @@ void model_config_set_case_table( model_config_type * model_config , int ens_siz
    model_config->enspath = util_realloc_string_copy( model_config->enspath , enspath );
  }
 
+ void model_config_set_rftpath( model_config_type * model_config , const char * rftpath) {
+   model_config->rftpath = util_realloc_string_copy( model_config->rftpath , rftpath );
+ }
 
  void model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string) {
    model_config->dbase_type = fs_types_lookup_string_name( dbase_type_string );
@@ -165,10 +169,13 @@ void model_config_set_case_table( model_config_type * model_config , int ens_siz
    return model_config->enspath;
  }
 
+const char * model_config_get_rftpath( const model_config_type * model_config) {
+  return model_config->rftpath;
+}
 
- fs_driver_impl model_config_get_dbase_type(const model_config_type * model_config ) {
-   return model_config->dbase_type;
- }
+fs_driver_impl model_config_get_dbase_type(const model_config_type * model_config ) {
+  return model_config->dbase_type;
+}
 
 
 
@@ -231,6 +238,7 @@ model_config_type * model_config_alloc_empty() {
   model_config->case_names                = NULL;
   model_config->max_internal_submit       = DEFAULT_MAX_INTERNAL_SUBMIT;
   model_config->enspath                   = NULL;
+  model_config->rftpath                   = NULL;
   model_config->dbase_type                = INVALID_DRIVER_ID;
   model_config->runpath                   = NULL;
   model_config->enkf_sched                = NULL;
@@ -245,6 +253,7 @@ model_config_type * model_config_alloc_empty() {
 
   model_config_set_history_source( model_config , DEFAULT_HISTORY_SOURCE );
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
+  model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
   model_config_set_dbase_type( model_config     , DEFAULT_DBASE_TYPE );
   model_config_set_runpath_fmt( model_config    , DEFAULT_RUNPATH);
   
@@ -322,6 +331,9 @@ void model_config_init(model_config_type * model_config ,
   
   if (config_item_set( config , ENSPATH_KEY))
     model_config_set_enspath( model_config , config_get_value(config , ENSPATH_KEY));
+
+  if (config_item_set( config , RFTPATH_KEY))
+    model_config_set_rftpath( model_config , config_get_value(config , RFTPATH_KEY));
   
   if (config_item_set( config , DBASE_TYPE_KEY))
     model_config_set_dbase_type( model_config , config_get_value(config , DBASE_TYPE_KEY));
@@ -346,6 +358,7 @@ void model_config_free(model_config_type * model_config) {
   if (model_config->enkf_sched != NULL)
     enkf_sched_free( model_config->enkf_sched );
   free( model_config->enspath );
+  free( model_config->rftpath );
   util_safe_free( model_config->enkf_sched_file );
   util_safe_free( model_config->select_case );
   util_safe_free( model_config->case_table_file );
@@ -474,7 +487,10 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
     
   fprintf( stream , CONFIG_KEY_FORMAT      , ENSPATH_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->enspath );
-  
+
+  fprintf( stream , CONFIG_KEY_FORMAT      , RFTPATH_KEY );
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->rftpath );
+
   if (model_config->select_case != NULL) {
     fprintf( stream , CONFIG_KEY_FORMAT      , SELECT_CASE_KEY );
     fprintf( stream , CONFIG_ENDVALUE_FORMAT , model_config->select_case );
