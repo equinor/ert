@@ -208,7 +208,8 @@ void plot_dataset_free(plot_dataset_type * d)
 }
 
 void plot_dataset_free__(void * d) {
-  plot_dataset_free( plot_dataset_safe_cast( d ));
+  plot_dataset_type * pd = plot_dataset_safe_cast ( d );
+  plot_dataset_free( pd );
 }
 
 
