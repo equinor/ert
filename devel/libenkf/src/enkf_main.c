@@ -3177,15 +3177,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main_update_obs_keys(enkf_main);
 
       {
-	const char * rft_config_file;
-	if (config_has_set_item(config , RFT_CONFIG_KEY)){
-	  rft_config_file = config_iget(config , RFT_CONFIG_KEY , 0,0);
-	}
-	else{
-	  rft_config_file = NULL;
-	}
-	printf("RFT_CONFIG: %s",rft_config_file);
-	enkf_main_set_rft_config_file( enkf_main , rft_config_file ); 
+        const char * rft_config_file = NULL;
+        if (config_has_set_item(config , RFT_CONFIG_KEY))
+          rft_config_file = config_iget(config , RFT_CONFIG_KEY , 0,0);
+
+        enkf_main_set_rft_config_file( enkf_main , rft_config_file ); 
       }
       
 

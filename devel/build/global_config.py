@@ -148,8 +148,9 @@ class conf:
         self.SDP_LIB_TARGET       = "%s/lib"             %  self.SDP_ROOT
         self.SDP_ERT_RELEASE      = "%s/bin/ert_release" %  self.SDP_ROOT
 
-        self.CCFLAGS  = "-m64 -O2 -std=gnu99 -g -Wall -pipe"
-        self.ARFLAGS  = "csr"
+        self.INCLUDE_LSF = True
+        self.CCFLAGS     = "-m64 -O2 -std=gnu99 -g -Wall -pipe"
+        self.ARFLAGS     = "csr"
 
         
         tmp = cwd.split("/")
