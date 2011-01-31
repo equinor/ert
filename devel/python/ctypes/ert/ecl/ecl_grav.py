@@ -6,7 +6,7 @@ from   ecl_grid              import EclGrid
 
 
 
-def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , porv2):
+def phase_deltag( xyz , grid , init , sat1 , rho1 , porv1 , sat2 , rho2 , porv2):
         
     # Observe that the function cfunc.phase_deltag() is called
     # directly with c_ptr pointer values, and that the function is
@@ -18,11 +18,8 @@ def phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , po
     # sequencence should modified to use the from_param() method like
     # the rest of the bindings.
     
-    if not aquifern:
-        aquifern = EclKW.NULL() 
-
     return cfunc.phase_deltag( xyz[0] , xyz[1] , xyz[2] , 
-                               grid.c_ptr , aquifern.c_ptr , 
+                               grid.c_ptr , init.c_ptr , 
                                sat1.c_ptr , rho1.c_ptr , porv1.c_ptr , 
                                sat2.c_ptr , rho2.c_ptr , porv2.c_ptr )
     
@@ -38,11 +35,6 @@ def deltag( xyz , grid , init_file , restart_file1 , restart_file2):
     swat1 = restart_file1.iget_named_kw( "SWAT" , 0)
     swat2 = restart_file2.iget_named_kw( "SWAT" , 0)
 
-    if init_file.has_kw( "AQUIFERN" ):
-        aquifern = init_file.iget_named_kw( "AQUIFERN" , 0 )
-    else:
-        aquifern = EclKW.NULL()
-        
     phase_list = [ ( swat1 , swat2) ]
 
     if restart_file1.has_kw( "SGAS" ):
@@ -84,7 +76,7 @@ def deltag( xyz , grid , init_file , restart_file1 , restart_file2):
         rho_name = "%s_DEN" % sat1.name[1:]   
         rho1 = restart_file1.iget_named_kw( rho_name , 0 )
         rho2 = restart_file2.iget_named_kw( rho_name , 0 )
-        deltag += phase_deltag( xyz , grid , aquifern , sat1 , rho1 , porv1 , sat2 , rho2 , porv2)
+        deltag += phase_deltag( xyz , grid , init_file , sat1 , rho1 , porv1 , sat2 , rho2 , porv2)
     return deltag
 
 
