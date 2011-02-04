@@ -103,7 +103,7 @@ class JobQueue:
     def __init__(self , driver , size , max_running , cmd , max_submit = 1):
         OK_file     = None 
         exit_file   = None
-        self.c_ptr  = cfunc.alloc_queue( size , max_running , max_submit , False , OK_file , exit_file , cmd )
+        self.c_ptr  = cfunc.alloc_queue(max_running , max_submit , False , OK_file , exit_file , cmd )
         self.size   = size
         self.driver = driver
         self.jobs   = JobList()
@@ -135,8 +135,8 @@ class JobQueue:
         c_argv = (ctypes.c_char_p * len(argv))()
         c_argv[:] = argv
         job_index = self.jobs.size
-        cfunc.insert_job( self , run_path , job_name , job_index , len(argv) , c_argv)
-        job = Job( self.driver , cfunc.get_job_ptr( self , job_index ) , False )
+        queue_index = cfunc.cadd_job( self , run_path , job_name , len(argv) , c_argv)
+        job = Job( self.driver , cfunc.get_job_ptr( self , queue_index ) , queue_index , False )
         
         self.jobs.add_job( job , job_name )
         return job
@@ -199,12 +199,12 @@ cwrapper = CWrapper( libjob_queue.lib )
 cwrapper.registerType( "job_queue" , JobQueue )
 cfunc  = CWrapperNameSpace( "JobQeueu" )
 
-cfunc.alloc_queue     = cwrapper.prototype("c_void_p job_queue_alloc(int , int , int , bool , char* )")
+cfunc.alloc_queue     = cwrapper.prototype("c_void_p job_queue_alloc( int , int , bool , char* )")
 cfunc.free_queue      = cwrapper.prototype("void job_queue_free( job_queue )")
 cfunc.set_max_running = cwrapper.prototype("void job_queue_set_max_running( job_queue , int)")
 cfunc.get_max_running = cwrapper.prototype("int  job_queue_get_max_running( job_queue )")
 cfunc.set_driver      = cwrapper.prototype("void job_queue_set_driver( job_queue , c_void_p )")
-cfunc.insert_job      = cwrapper.prototype("void job_queue_insert_job( job_queue , char* , char* , int , int , char**)")
+cfunc.cadd_job        = cwrapper.prototype("int  job_queue_add_job_mt( job_queue , char* , char* , int , char**)")
 cfunc.start_queue     = cwrapper.prototype("void job_queue_run_jobs( job_queue , int , bool)")
 cfunc.num_running     = cwrapper.prototype("int  job_queue_get_num_running( job_queue )")
 cfunc.num_complete    = cwrapper.prototype("int  job_queue_get_num_complete( job_queue )")

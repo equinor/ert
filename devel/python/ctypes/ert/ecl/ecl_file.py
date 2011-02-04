@@ -108,10 +108,10 @@ class EclFile(object):
         else:
             return False
 
-    
+
     def iget_restart_sim_time( self , index ):
         return cfunc.iget_restart_time( self , index )
-    
+
     @property
     def name(self):
         return cfunc.get_src_file( self )
