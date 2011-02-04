@@ -622,6 +622,10 @@ int job_queue_get_num_failed( const job_queue_type * queue) {
   return job_queue_iget_status_summary( queue , JOB_QUEUE_ALL_FAIL );
 }
 
+int job_queue_get_active_size( const job_queue_type * queue ) {
+  return queue->active_size;
+}
+
 
 void job_queue_set_load_OK(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
@@ -1070,10 +1074,36 @@ void * job_queue_run_jobs__(void * __arg_pack) {
    name, runpath and so on, and sets the job->status ==
    JOB_QUEUE_WAITING. This status means the job is ready to be
    submitted proper to one of the drivers (when a slot is ready).
-
    When submitted the job will get (driver specific) job_data != NULL
-   and status SUBMITTED.
+   and status SUBMITTED.  
+
+   The internal data structure jobs will grow as needed when new jobs
+   are added. Exactly how this growth takes place is regulated by the
+   @mt parameter, and is very important to get right:
+
+     mt == true: This means that we are running in multi threaded
+        mode, and in particular another thread is already running the
+        job_queue_run_jobs() function. In this case the
+        job_queue_add_job__() function will only signal that it needs
+        to grow the jobs array with the grow flag, and then block
+        until the job_queue_run_jobs() function actually expands the
+        array.
+
+     mt == false: There is no other thread running the
+        job_queue_run_jobs() function and it is safe for the
+        job_queue_add_job__() function to manipulate the jobs array
+        itself.
+   
+   Other thread running job_queue_run_jobs()      |   mt == true     |  Result
+   ---------------------------------------------------------------------------
+              Yes                                 |   Yes            | OK
+              Yes                                 |   No             | Crash and burn  
+              No                                  |   Yes            | Deadlock
+              No                                  |   No             | OK
+     ---------------------------------------------------------------------------
 */
+
+
 
 
 static int job_queue_add_job__(job_queue_type * queue , const char * run_path , const char * job_name , int argc , const char ** argv, bool mt) {
@@ -1110,6 +1140,7 @@ static int job_queue_add_job__(job_queue_type * queue , const char * run_path , 
   } else
     return -1;
 }
+
 
 
 int job_queue_add_job_mt(job_queue_type * queue , const char * run_path , const char * job_name , int argc , const char ** argv) {
