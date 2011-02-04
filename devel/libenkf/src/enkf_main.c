@@ -1915,6 +1915,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
         thread_pool_join(submit_threads);        
         thread_pool_free(submit_threads);        
       }
+      job_queue_submit_complete( job_queue );
       log_add_message(enkf_main->logh , 1 , NULL , "All jobs ready for running - waiting for completion" ,  false);
 
       enkf_main_run_wait_loop( enkf_main );      /* Waiting for all the jobs - and the loading of results - to complete. */

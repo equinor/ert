@@ -123,6 +123,6 @@ cfunc.alloc_driver_rsh       = cwrapper.prototype("c_void_p    queue_driver_allo
 cfunc.free_driver    = cwrapper.prototype("void        queue_driver_free( driver )")
 cfunc.submit         = cwrapper.prototype("c_void_p    queue_driver_submit_job( driver , char* , char* , char* , int , char**)")
 cfunc.free_job       = cwrapper.prototype("void        queue_driver_free_job( job )")
-cfunc.get_status     = cwrapper.prototype("int         queue_driver_get_job_status( driver , job)")
+cfunc.get_status     = cwrapper.prototype("int         queue_driver_get_status( driver , job)")
 cfunc.kill_job       = cwrapper.prototype("void        queue_driver_kill_job( driver , job )")
 cfunc.set_str_option = cwrapper.prototype("void        queue_driver_set_string_option( driver , int , char*)")

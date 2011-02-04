@@ -75,6 +75,7 @@ typedef struct run_info_struct {
   int                     step2;                  
   char                  * run_path;             /* The currently used  runpath - is realloced / freed for every step. */
   run_mode_type           run_mode;             /* What type of run this is */
+  int                     queue_index;          /* The job will in general have a different index in the queue than the iens number. */
   /******************************************************************/
   /* Return value - set by the called routine!!  */
   bool                    runOK;               /* Set to true when the run has completed - AND - the results have been loaded back. */
@@ -1445,12 +1446,11 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse(enkf_state);
-    job_queue_insert_job( shared_info->job_queue , 
-                          run_info->run_path     , 
-                          member_config_get_eclbase(my_config) , 
-                          member_config_get_iens(my_config) , 
-                          1, 
-                          (const char *[1]) { run_info->run_path });
+    run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
+                                                  run_info->run_path     , 
+                                                  member_config_get_eclbase(my_config) , 
+                                                  1, 
+                                                  (const char *[1]) { run_info->run_path } );
     run_info->num_internal_submit++;
   }
 }
@@ -1493,7 +1493,7 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_f
     }
     
     enkf_state_init_eclipse( enkf_state );                              /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
-    job_queue_set_external_restart( shared_info->job_queue , iens );    /* Here we inform the queue system that it should pick up this job and try again. */
+    job_queue_set_external_restart( shared_info->job_queue , run_info->queue_index );    /* Here we inform the queue system that it should pick up this job and try again. */
     run_info->num_internal_submit++;                                    
     return true;
   } else 
@@ -1507,7 +1507,7 @@ job_status_type enkf_state_get_run_status( const enkf_state_type * enkf_state ) 
   run_info_type             * run_info    = enkf_state->run_info;
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
-    return job_queue_get_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+    return job_queue_get_job_status(shared_info->job_queue , run_info->queue_index);
   } else
     return JOB_QUEUE_NOT_ACTIVE;
 }
@@ -1517,7 +1517,7 @@ time_t enkf_state_get_start_time( const enkf_state_type * enkf_state ) {
   run_info_type             * run_info    = enkf_state->run_info;
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
-    return job_queue_iget_sim_start(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+    return job_queue_iget_sim_start(shared_info->job_queue , run_info->queue_index);
   } else
     return -1;
 }
@@ -1527,7 +1527,7 @@ time_t enkf_state_get_submit_time( const enkf_state_type * enkf_state ) {
   run_info_type             * run_info    = enkf_state->run_info;
   if (run_info->active) {
     const shared_info_type * shared_info = enkf_state->shared_info;
-    return job_queue_iget_submit_time(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+    return job_queue_iget_submit_time(shared_info->job_queue , run_info->queue_index);
   } else
     return -1;
 }
@@ -1543,7 +1543,8 @@ time_t enkf_state_get_submit_time( const enkf_state_type * enkf_state ) {
 
 bool enkf_state_kill_simulation( const enkf_state_type * enkf_state ) {
   const shared_info_type * shared_info = enkf_state->shared_info;
-  return job_queue_kill_job(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+  const run_info_type * run_info       = enkf_state->run_info;             
+  return job_queue_kill_job(shared_info->job_queue , run_info->queue_index);
 }
 
 
@@ -1557,8 +1558,9 @@ bool enkf_state_kill_simulation( const enkf_state_type * enkf_state ) {
 
 bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , bool resample) {
   const shared_info_type * shared_info = enkf_state->shared_info;
+  const run_info_type * run_info       = enkf_state->run_info;             
   int iens                       = member_config_get_iens( enkf_state->my_config );
-  job_status_type current_status = job_queue_get_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+  job_status_type current_status = job_queue_get_job_status(shared_info->job_queue , run_info->queue_index);
   if (current_status & JOB_QUEUE_CAN_RESTART) { 
     /* Reinitialization of the nodes */
     if (resample) {
@@ -1570,7 +1572,7 @@ bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , bool resampl
       stringlist_free( init_keys );
     }
     enkf_state_init_eclipse( enkf_state );                              /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
-    job_queue_set_external_restart( shared_info->job_queue , iens );    /* Here we inform the queue system that it should pick up this job and try again. */
+    job_queue_set_external_restart( shared_info->job_queue , run_info->queue_index );    /* Here we inform the queue system that it should pick up this job and try again. */
     return true;
   } else
     return false; /* The job was not resubmitted. */
@@ -1594,7 +1596,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
   const int iens                          = member_config_get_iens( my_config );
   bool loadOK  = true;
 
-  job_queue_set_external_load( shared_info->job_queue , iens );  /* Set the the status of to JOB_QUEUE_LOADING */
+  job_queue_set_external_load( shared_info->job_queue , run_info->queue_index );  /* Set the the status of to JOB_QUEUE_LOADING */
   if (status == JOB_QUEUE_RUN_OK) {
     /**
        The queue system has reported that the run is OK, i.e. it has
@@ -1606,7 +1608,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
     enkf_state_internalize_results(enkf_state , &loadOK); 
     if (loadOK) {
       status = JOB_QUEUE_ALL_OK;
-      job_queue_set_load_OK( shared_info->job_queue , iens );
+      job_queue_set_load_OK( shared_info->job_queue , run_info->queue_index);
       log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_info->step1, run_info->step2);
     } else 
       if (!enkf_state_internal_retry( enkf_state , true)) 
@@ -1616,7 +1618,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
            job_queue_run_FAIL and then it falls all the way through to
            runOK = false and no more attempts.
         */
-        job_queue_set_external_fail( shared_info->job_queue , iens );
+        job_queue_set_external_fail( shared_info->job_queue , run_info->queue_index );
   } else if (status == JOB_QUEUE_RUN_FAIL) {
     /* 
        The external queue system has said that the job failed - we
@@ -1627,7 +1629,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
       run_info->runOK = false; /* OK - no more attempts. */
       log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
       /* We tell the queue system that we have really given up on this one */
-      job_queue_set_all_fail( shared_info->job_queue , iens );
+      job_queue_set_all_fail( shared_info->job_queue , run_info->queue_index);
     } 
   } else 
     util_abort("%s: status:%d invalid - should only be called with status == [JOB_QUEUE_RUN_FAIL || JON_QUEUE_ALL_OK].",__func__ , status);

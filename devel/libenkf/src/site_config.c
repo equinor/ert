@@ -604,7 +604,7 @@ static void site_config_install_job_queue(site_config_type  * site_config ) {
   if (site_config->job_script == NULL)
     util_exit("Must set the path to the job script with the %s key in the site_config / config file\n",JOB_SCRIPT_KEY);
   
-  site_config->job_queue = job_queue_alloc(0 , 0 , site_config->max_submit , true , "OK" , "EXIT" , site_config->job_script);
+  site_config->job_queue = job_queue_alloc(0 , site_config->max_submit , true , "OK" , "EXIT" , site_config->job_script);
 
   /* 
      All the various driver options are set, unconditionally of which
@@ -791,7 +791,7 @@ job_queue_type * site_config_get_job_queue( const site_config_type * site_config
 
 
 void site_config_set_ens_size( site_config_type * site_config , int ens_size ) {
-  job_queue_set_size( site_config->job_queue , ens_size );
+  //job_queue_set_size( site_config->job_queue , ens_size );
 }
 
 
