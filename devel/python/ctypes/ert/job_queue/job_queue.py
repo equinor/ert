@@ -99,12 +99,19 @@ class runtimeList:
 
 
 class JobQueue:
-    
+
+    # Current implementation is quite fragile with respect to:
+    #
+    #  * When the queue is started
+    #  * if _mt or _st function is used when adding jobs.
+    #  * need for xxx_submit_complete() call. 
+
+
     def __init__(self , driver , size , max_running , cmd , max_submit = 1):
         OK_file     = None 
         exit_file   = None
         self.c_ptr  = cfunc.alloc_queue(max_running , max_submit , False , OK_file , exit_file , cmd )
-        self.size   = size
+        self.size   = size  
         self.driver = driver
         self.jobs   = JobList()
 
