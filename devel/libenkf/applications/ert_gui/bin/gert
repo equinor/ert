@@ -24,6 +24,7 @@ export PYTHON_EXPERIMENTAL=1
 source /project/res/SDP_bashrc
 source /prog/sdpsoft/environment.sh > /dev/null
 
+export ERT_LD_PATH=$SDP_BINDIST/lib/python/lib
 
 ORIGINAL_DIRECTORY=$PWD
 
