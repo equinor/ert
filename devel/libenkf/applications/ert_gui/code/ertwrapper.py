@@ -75,6 +75,7 @@ class ErtWrapper:
         CDLL("%s/lib/libbat.so" % LSF_HOME   , RTLD_GLOBAL)
         
         ERT_LD_PATH = os.getenv("ERT_LD_PATH")
+        print "ERT_LD_PATH"
         self.util = self.__loadLibrary( "libutil")
         self.ecl  = self.__loadLibrary( "libecl")
         self.__loadLibrary( "libsched" )
