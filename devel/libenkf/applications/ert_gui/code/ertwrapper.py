@@ -44,11 +44,14 @@ class ErtWrapper:
         atexit.register(self.cleanup)
 
 
-    def __loadLibrary(self, name):
+    def __loadLibrary(self, name , ERT_LD_PATH = None):
         lib = "%s.so" % name
         print "Loading: %s" % lib
         try:
-            lib_handle = CDLL(lib, RTLD_GLOBAL)
+            if ERT_LD_PATH:
+                lib_handle = CDLL( "%s/lib" % ERT_LD_PATH , RTLD_GLOBAL )
+            else:
+                lib_handle = CDLL( lib, RTLD_GLOBAL )
             return lib_handle
         except: 
             raise AssertionError("Can not find library: %s" % (name))
