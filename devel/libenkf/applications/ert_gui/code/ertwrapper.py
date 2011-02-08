@@ -75,13 +75,12 @@ class ErtWrapper:
         CDLL("%s/lib/libbat.so" % LSF_HOME   , RTLD_GLOBAL)
         
         ERT_LD_PATH = os.getenv("ERT_LD_PATH")
-        print "ERT_LD_PATH : %s" % ERT_LD_PATH
-        self.util = self.__loadLibrary( "libutil")
-        self.ecl  = self.__loadLibrary( "libecl")
-        self.__loadLibrary( "libsched" )
-        self.__loadLibrary("librms" )
-        self.__loadLibrary("libconfig")
-        self.job_queue = self.__loadLibrary( "libjob_queue" )
+        self.util = self.__loadLibrary( "libutil" , ERT_LD_PATH)
+        self.ecl  = self.__loadLibrary( "libecl" , ERT_LD_PATH )
+        self.__loadLibrary( "libsched" , ERT_LD_PATH)
+        self.__loadLibrary("librms" , ERT_LD_PATH)
+        self.__loadLibrary("libconfig" , ERT_LD_PATH)
+        self.job_queue = self.__loadLibrary( "libjob_queue" , ERT_LD_PATH)
         self.enkf      = self.__loadLibrary( "libenkf" , ERT_LD_PATH )
 
         self.enkf.enkf_main_install_SIGNALS()
