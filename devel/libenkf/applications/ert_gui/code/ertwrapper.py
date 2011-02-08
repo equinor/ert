@@ -54,7 +54,11 @@ class ErtWrapper:
                 lib_handle = CDLL( lib, RTLD_GLOBAL )
             return lib_handle
         except: 
-            raise AssertionError("Can not find library: %s" % (name))
+            if ERT_LD_PATH:
+                raise AssertionError("Can not find library: %s/%s " % (ERT_LD_PATH , name))
+            else:
+                raise AssertionError("Can not find library: %s" % (name))
+            
 
 
     def __loadLibraries(self ):
