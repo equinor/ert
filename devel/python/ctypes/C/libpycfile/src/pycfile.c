@@ -1,4 +1,10 @@
+/* 
+   The resulting pycfile.so will be bound to the python version the
+   "Python.h" header file used by this include statement. If there is
+   a version mismatch initialization of the pycfile module will fail.
+*/
 #include <Python.h>
+
 
 /**
    The purpose of this module is to be able to call C functions which
@@ -19,6 +25,14 @@
      3. This opaque pointer is then wrapped with the normal ctypes
         approach in the cfile module, and passed on to C functions
         expecting FILE * input.
+
+   The main part of ert-python consist either solely of C code in the
+   form of shared libraries, or as pure Python code; i.e. there is no
+   dependance on the Python/C API. A fortunate consequence of this is
+   that ert-python is independent of Python versions; unfortunately
+   this particular file is an exception. It is built using the
+   Python/C API and is linked to the Python version of the Python.h
+   header file used when compiling.  
 */
 
 
