@@ -21,8 +21,8 @@ fi
 #
 export QT_EXPERIMENTAL=1
 export PYTHON_EXPERIMENTAL=1
+source /project/res/SDP_bashrc
 source /prog/sdpsoft/environment.sh > /dev/null
-
 
 
 ORIGINAL_DIRECTORY=$PWD
