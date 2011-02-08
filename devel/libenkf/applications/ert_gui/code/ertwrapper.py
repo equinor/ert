@@ -49,13 +49,13 @@ class ErtWrapper:
         print "Loading: %s" % lib
         try:
             if ERT_LD_PATH:
-                lib_handle = CDLL( "%s/lib" % ERT_LD_PATH , RTLD_GLOBAL )
+                lib_handle = CDLL( "%s/%s" % (ERT_LD_PATH , lib) , RTLD_GLOBAL )
             else:
                 lib_handle = CDLL( lib, RTLD_GLOBAL )
             return lib_handle
         except: 
             if ERT_LD_PATH:
-                raise AssertionError("Can not find library: %s/%s " % (ERT_LD_PATH , name))
+                raise AssertionError("Can not find library: %s/%s " % (ERT_LD_PATH , lib))
             else:
                 raise AssertionError("Can not find library: %s" % (name))
             
