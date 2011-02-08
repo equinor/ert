@@ -69,15 +69,15 @@ class ErtWrapper:
             LSF_HOME = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64"
         CDLL("%s/lib/liblsf.so" % LSF_HOME   , RTLD_GLOBAL)
         CDLL("%s/lib/libbat.so" % LSF_HOME   , RTLD_GLOBAL)
-
         
+        ERT_LD_PATH = os.getenv("ERT_LD_PATH")
         self.util = self.__loadLibrary( "libutil")
         self.ecl  = self.__loadLibrary( "libecl")
         self.__loadLibrary( "libsched" )
         self.__loadLibrary("librms" )
         self.__loadLibrary("libconfig")
         self.job_queue = self.__loadLibrary( "libjob_queue" )
-        self.enkf      = self.__loadLibrary( "libenkf" )
+        self.enkf      = self.__loadLibrary( "libenkf" , ERT_LD_PATH )
 
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug("/prog/sdpsoft/python2.4/bin/python")
