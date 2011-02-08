@@ -46,6 +46,7 @@ class ErtWrapper:
 
     def __loadLibrary(self, name):
         lib = "%s.so" % name
+        print "Loading: %s" % lib
         try:
             lib_handle = CDLL(lib, RTLD_GLOBAL)
             return lib_handle
@@ -69,8 +70,8 @@ class ErtWrapper:
         
         self.util = self.__loadLibrary( "libutil")
         self.ecl  = self.__loadLibrary( "libecl")
-        self.__loadLibrary("libsched")
-        self.__loadLibrary("librms")
+        self.__loadLibrary( "libsched" )
+        self.__loadLibrary("librms" )
         self.__loadLibrary("libconfig")
         self.job_queue = self.__loadLibrary( "libjob_queue" )
         self.enkf      = self.__loadLibrary( "libenkf" )
