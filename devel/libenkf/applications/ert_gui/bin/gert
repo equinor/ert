@@ -11,7 +11,7 @@ then
     echo "Options (for debugging):"
     echo "        gert debug ert_configuration_file"
     echo "        gert strace ert_configuration_file"
-    eco  "        gert local ....  will use the Python code in your working copy"
+    echo "        gert local ....  will use the Python code in your working copy"
     echo
     exit
 fi
