@@ -1,5 +1,8 @@
 #!/prog/sdpsoft/python2.4/bin/python
 import sys
+sys.path = ["/tmp"] + sys.path
+import ctypes
+print sys.path
 
 print  "import ert", 
 sys.stdout.flush()
