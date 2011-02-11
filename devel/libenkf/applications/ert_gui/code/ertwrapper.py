@@ -78,7 +78,7 @@ class ErtWrapper:
         self.util = self.__loadLibrary( "libutil" , ERT_LD_PATH)
         self.ecl  = self.__loadLibrary( "libecl" , ERT_LD_PATH )
         self.__loadLibrary( "libsched" , ERT_LD_PATH)
-        self.__loadLibrary("librms" , ERT_LD_PATH)
+        self.__loadLibrary("librms"    , ERT_LD_PATH)
         self.__loadLibrary("libconfig" , ERT_LD_PATH)
         self.job_queue = self.__loadLibrary( "libjob_queue" , ERT_LD_PATH)
         self.enkf      = self.__loadLibrary( "libenkf" , ERT_LD_PATH )
