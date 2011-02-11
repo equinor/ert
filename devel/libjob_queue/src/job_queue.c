@@ -1067,8 +1067,6 @@ void * job_queue_run_jobs__(void * __arg_pack) {
 /* Adding new jobs - it is complicated ... */
 
 
-
-
 /**
    This initializes the non-driver-spesific fields of a job, i.e. the
    name, runpath and so on, and sets the job->status ==
@@ -1142,16 +1140,32 @@ static int job_queue_add_job__(job_queue_type * queue , const char * run_path , 
 }
 
 
-
-int job_queue_add_job_mt(job_queue_type * queue , const char * run_path , const char * job_name , int argc , const char ** argv) {
-  return job_queue_add_job__(queue , run_path , job_name , argc , argv , true );
+/**
+   Adding a new job in multi-threaded mode, i.e. another thread is
+   running the job_queue_run_jobs() function. 
+*/ 
+int job_queue_add_job_mt(job_queue_type * queue , const char * run_path , const char * job_name , int argc , const char ** argv) { 
+  return job_queue_add_job__(queue , run_path , job_name , argc , argv , true); 
 }
 
+
+/**
+   Adding a new job in single-threaded mode, i.e. no another thread is
+   accessing the queue. 
+*/ 
 
 int job_queue_add_job_st(job_queue_type * queue , const char * run_path , const char * job_name , int argc , const char ** argv) {
   return job_queue_add_job__(queue , run_path , job_name , argc , argv , false);
 }
 
+
+/**
+   When the job_queue_run_jobs() has been called with @total_num_jobs
+   == 0 that means that the total number of jobs to run is not known
+   in advance. In that case it is essential to signal the queue when
+   we will not submit any more jobs, so that it can finalize and
+   return. That is done with the function job_queue_submit_complete()
+*/
 
 void job_queue_submit_complete( job_queue_type * queue ){
   queue->submit_complete = true;
@@ -1193,10 +1207,7 @@ void job_queue_reload_driver( job_queue_type * queue ) {
 
 void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
   queue->max_running = max_running;
-  if (queue->max_running < 0) {
-    queue->max_running = 0;
-    queue_driver_set_max_running( queue->driver , max_running );
-  }
+  queue_driver_set_max_running( queue->driver , max_running );
 }
 
 /*
@@ -1229,48 +1240,6 @@ job_driver_type job_queue_lookup_driver_name( const char * driver_name ) {
 }
 
 /*****************************************************************/
-
-/**
-   This can only be used to grow the queue.
-*/
-
-
-
-//void job_queue_set_size( job_queue_type * queue , int alloc_size ) {
-//  /* Delete the existing nodes. */
-//  {
-//    if (queue->alloc_size != 0) {
-//      for (int i=0; i < queue->alloc_size; i++)
-//        job_queue_node_free( queue->jobs[i] );
-//    }
-//  }
-//  
-//  
-//  /* Fill the new nodes */
-//  {
-//    queue->alloc_size      = alloc_size;
-//    queue->jobs            = util_realloc(queue->jobs , alloc_size * sizeof * queue->jobs , __func__);
-//    {
-//      int i;
-//      for (i=0; i < alloc_size; i++) 
-//        queue->jobs[i] = job_queue_node_alloc();
-//
-//      
-//      /** 
-//          Here the status list is clearead, and then it is set/updated
-//          according to the status of the nodes. This is the only place
-//          there is a net change in the status list.
-//      */
-//      
-//      for (i=0; i < JOB_QUEUE_MAX_STATE; i++)
-//        queue->status_list[i] = 0;
-//      
-//      for (i=0; i < alloc_size; i++) 
-//        queue->status_list[job_queue_node_get_status(queue->jobs[i])]++;
-//      
-//    }
-//  }
-//}
 
 
 void job_queue_set_run_cmd( job_queue_type * job_queue , const char * run_cmd ) {
