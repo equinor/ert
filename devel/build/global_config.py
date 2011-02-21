@@ -23,6 +23,7 @@ import stat
 
 # These are the modes we want - assuming umask( 0 );
 # and then comes the fxxxing umask into play.
+
 exe_mode  = 0775
 file_mode = 0664
 
