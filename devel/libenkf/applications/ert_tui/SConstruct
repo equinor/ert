@@ -27,12 +27,15 @@ lib_list = ["bat"  ,"lsf" , "nsl" , "lapack" , "plplotd" , "m" , "z" , "pthread"
 if conf.INCLUDE_LSF:
    lib_list.append( ["bat" , "lsf" , "nsl"] )
 
-if conf.RH == 3 :
+if conf.g2c:
    lib_list.append( "g2c" )
    
 
 conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL ] , lib_list , link = True)
-
+env.Append( CPPPATH = conf.PLPLOT_INCLUDE_PATH )
+env.Append( LIBPATH = conf.PLPLOT_LIB_PATH )
+if conf.INCLUDE_LSF:
+   env.Append( LIBPATH = conf.LSF_LIB_PATH ) 
 
 
 tui_objects = env.Object( ["enkf_tui_main.c" , "enkf_tui_fs.c" , "enkf_tui_ranking.c" , "enkf_tui_misc.c" , "enkf_tui_table.c" , "enkf_tui_plot.c" , 
@@ -48,6 +51,5 @@ ert          = env.Program( "ert"                       , [main_object, tui_obje
 ert_svn      = env.Program( "ert_%s" % conf.SVN_VERSION , [main_object, tui_objects])
 
 env.InstallProgram( bin_path , [ert , ert_test , local_config])
-SDP_INSTALL = env.Alias('SDP_INSTALL' , env.InstallProgram( conf.SDP_ERT_RELEASE , ert_svn ))
 
 Default( bin_path )

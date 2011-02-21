@@ -21,5 +21,5 @@ conf.update_env( env , [LIBCONFIG , LIBUTIL] , ext_liblist = ["m","z","pthread"]
 add_program(env , conf , bin_path , "config_test" , "config_test.c")
 add_program(env , conf , bin_path , "conf_test"   , "conf_test.c"  )
 
-(local , SDP_INSTALL) = get_targets( env , conf )
+(local ) = get_targets( env , conf )
 Default( local )

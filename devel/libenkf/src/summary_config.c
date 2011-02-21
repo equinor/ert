@@ -24,7 +24,6 @@
 #include <summary_config.h>
 #include <enkf_macros.h>
 #include <util.h>
-#include <ecl_well_vars.h>
 #include <ecl_sum.h>
 #include <ecl_smspec.h>
 #include <set.h>

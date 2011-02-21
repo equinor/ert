@@ -19,7 +19,7 @@ bin_path     = "../bin"
 conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
 lib_list =  ["lapack" , "m" , "z" , "pthread"]
-if conf.RH == 3 :
+if conf.g2c:
    lib_list.append( "g2c" )
 
 conf.update_env( env , [ LIBSCHED , LIBECL , LIBUTIL ] ,  lib_list , link = True)
@@ -32,7 +32,7 @@ add_program(env , conf , bin_path , "update_ir.x"             , "update_ir.c")
 
 ##################################################################
 
-(local , SDP_INSTALL) = get_targets( env , conf )
+(local ) = get_targets( env , conf )
 Default( local )
 
 

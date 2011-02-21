@@ -27,7 +27,6 @@
 #include <site_config.h>
 #include <local_driver.h>
 #include <lsf_driver.h>
-#include <lsf_request.h>
 #include <rsh_driver.h>
 #include <queue_driver.h>
 #include <sys/types.h>

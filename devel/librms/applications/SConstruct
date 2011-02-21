@@ -24,7 +24,7 @@ add_program(env , conf ,  bin_path , "rms_stat"    , "rms_stat.c"    )
 add_program(env , conf ,  bin_path , "rms_test"    , "rms_test.c"    )
 add_program(env , conf ,  bin_path , "tag_list"    , "tag_list.c"    )
 
-(local , SDP_INSTALL) = get_targets( env , conf )
+(local ) = get_targets( env , conf )
 Default( local )
 
 

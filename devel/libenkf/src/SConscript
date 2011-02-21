@@ -46,5 +46,5 @@ add_header( env , conf , include_path , header_list )
 
 
 
-(local , SDP_INSTALL) = get_targets( env , conf )
+( local ) = get_targets( env , conf )
 Default( local )
