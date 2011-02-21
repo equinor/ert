@@ -51,7 +51,6 @@ void text_splash() {
   const int usleep_time = 1250;
   int i;
   {
-    //#include "statoilhydro.h"
 #include "ERT.h"
     printf("\n\n");
     for (i = 0; i < SPLASH_LENGTH; i++) {
@@ -72,9 +71,9 @@ void text_splash() {
 */
 void enkf_welcome(const char * config_file) {
   if (util_file_exists( config_file )) {
-    char * svn_version  	 = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
-    char * compile_time 	 = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
-    char * abs_path     	 = util_alloc_realpath( config_file );
+    char * svn_version           = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
+    char * compile_time          = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
+    char * abs_path              = util_alloc_realpath( config_file );
     char * config_file_msg       = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
     
     /* This will be printed if/when util_abort() is called on a later stage. */
