@@ -3000,7 +3000,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
 
 
 enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _model_config, bool strict) {
-  const char     * site_config  = getenv("ENKF_SITE_CONFIG");
+  const char     * site_config  = getenv("ERT_SITE_CONFIG");
   char           * model_config;
   enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
 
@@ -3008,7 +3008,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     site_config = _site_config;
   
   if (site_config == NULL)
-    util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
+    util_exit("%s: main enkf_config file is not set. Use environment variable \"ERT_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
   
   {
 
