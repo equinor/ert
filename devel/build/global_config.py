@@ -29,15 +29,14 @@ file_mode = 0664
 umask = os.umask( 0 )
 os.umask( umask )
 
+# Guid ID assigned to all files and directories
+# created/modified during the installation process.
+guid = os.getgid()
 
-
-
-
-res_guid = os.stat("/project/res")[stat.ST_GID]
 
 def mkdir_gid( path ):
     mkdir( path )
-    os.chown( path , -1 , res_guid )
+    os.chown( path , -1 , guid )
 
 mkdir    = os.mkdir
 os.mkdir = mkdir_gid
@@ -57,7 +56,7 @@ def InstallPerm(env , dest , files , mode):
     obj = env.Install( dest , files )
     for f in obj:
         env.AddPostAction(f , env.Chmod(str(f) , mode))
-        env.AddPostAction(f , env.Chgrp(str(f) , res_guid))
+        env.AddPostAction(f , env.Chgrp(str(f) , guid))
     return dest
 
 
@@ -85,44 +84,32 @@ SConsEnvironment.InstallProgram = InstallProgram
 def add_program(env , conf , bin_path , target , src , **kwlist):
     P = env.Program( target , src , **kwlist)
     env.InstallProgram(bin_path , P)
-    env.InstallProgram(conf.SDP_BIN_TARGET , P)
-    conf.SDP_INSTALL[ conf.SDP_BIN_TARGET ] = True
     conf.local_install[ bin_path ]   = True
 
 
 def add_static_library( env, conf , lib_path , target , src , **kwlist):
     LIB = env.StaticLibrary( target , src , **kwlist)
     env.InstallLibrary( lib_path , LIB )
-    env.InstallLibrary( conf.SDP_LIB_TARGET , LIB )
-    conf.SDP_INSTALL[ conf.SDP_LIB_TARGET ] = True
     conf.local_install[ lib_path ]   = True
 
 
 def add_shared_library( env, conf , lib_path , target , src , **kwlist):
     LIB = env.SharedLibrary( target , src , **kwlist)
     env.InstallLibrary( lib_path , LIB )
-    #env.InstallLibrary( conf.SDP_LIB_TARGET , LIB )
-    #conf.SDP_INSTALL[ conf.SDP_LIB_TARGET ] = True
     conf.local_install[ lib_path ]   = True
 
 
 def add_header( env, conf , include_path , header_list ):
     env.InstallHeader( include_path , header_list )
-    env.InstallHeader( conf.SDP_INCLUDE_TARGET , header_list )
-    conf.SDP_INSTALL[ conf.SDP_INCLUDE_TARGET ] = True
     conf.local_install[ include_path ]   = True
 
 
 def get_targets( env , conf):
     def_list = []
-    SDP_list = []
     for target in conf.local_install.keys():
         def_list.append( target )
-
-    for target in conf.SDP_INSTALL.keys():
-        SDP_list.append( target )
-
-    return (env.Alias('local' , def_list) , env.Alias('SDP_INSTALL' , SDP_list))
+    
+    return (env.Alias('local' , def_list))
 
 
 #################################################################
@@ -141,35 +128,26 @@ LIBCONF      = 8
 
 
 
-def get_SDP_ROOT():
-    cpu = os.uname()[4]
-    RH  = open('/etc/redhat-release').read().split()[6]
-    sdp_root = "/project/res/%s_RH_%s" % (cpu , RH)
-    return (sdp_root , float(RH))
-
-
-
 class conf:
     def __init__(self , cwd , package , sub_level_depth):
 
         self.SVN_VERSION      = commands.getoutput("svnversion ./")
-        self.TIME_STAMP       = commands.getoutput("date")#.replace(" " , "_")
+        self.TIME_STAMP       = commands.getoutput("date")
         
-        self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/site-config"
-        (self.SDP_ROOT , self.RH) = get_SDP_ROOT()
-        self.SDP_BIN              = "%s/bin"             %  self.SDP_ROOT
-        self.SDP_BIN_TARGET       = "%s/bin"             %  self.SDP_ROOT
-        self.SDP_INCLUDE          = "%s/include"         %  self.SDP_ROOT
-        self.SDP_INCLUDE_TARGET   = "%s/include/lib%s"   % (self.SDP_ROOT , package)
-        self.SDP_LIB              = "%s/lib"             %  self.SDP_ROOT
-        self.SDP_LIB_TARGET       = "%s/lib"             %  self.SDP_ROOT
-        self.SDP_ERT_RELEASE      = "%s/bin/ert_release" %  self.SDP_ROOT
-
-        self.INCLUDE_LSF = True
-        self.CCFLAGS     = "-m64 -O2 -std=gnu99 -g -Wall -pipe"
-        self.ARFLAGS     = "csr"
-
+        # These are site-dependant; and should really be set OUTSIDE
+        # the central build configuration.
+        self.SITE_CONFIG_FILE    = "/project/res/etc/ERT/site-config"
+        self.INCLUDE_LSF         = True
+        self.LSF_INCLUDE_PATH    = "/prog/LSF/7.0/include"
+        self.LSF_LIB_PATH        = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"
+        self.g2c                 = False
+        self.PLPLOT_INCLUDE_PATH = "/project/res/x86_64_RH_4/include"
+        self.PLPLOT_LIB_PATH     = "/project/res/x86_64_RH_4/lib"
         
+        self.CCFLAGS             = "-m64 -O2 -std=gnu99 -g -Wall -pipe"
+        self.ARFLAGS             = "csr"
+        
+
         tmp = cwd.split("/")
         n   = len(tmp) - sub_level_depth
         self.BUILD_ROOT = ""
@@ -186,14 +164,11 @@ class conf:
         self.LIB[LIBJOB_QUEUE]  = {"home": "%s/libjob_queue" % self.BUILD_ROOT , "name": "job_queue"}
         self.LIB[LIBSCHED]      = {"home": "%s/libsched"     % self.BUILD_ROOT , "name": "sched"}
         self.LIB[LIBCONFIG]     = {"home": "%s/libconfig"    % self.BUILD_ROOT , "name": "config"}
-        self.RPATH              = self.SDP_LIB
-
-        
+        self.RPATH = self.PLPLOT_LIB_PATH
 
 
 
     def update_env( self , env , liblist , ext_liblist = None , ext_headerlist = None , link = False):
-        self.SDP_INSTALL   = {}
         self.local_install = {}
         CPPPATH = ["./"]
         LIBPATH = []
@@ -207,8 +182,6 @@ class conf:
             if lib.has_key("name"):
                 name = lib["name"]
                 LIBS.append( name )
-        CPPPATH.append( self.SDP_INCLUDE )
-        LIBPATH.append( self.SDP_LIB )
         env.Replace( CC = "gcc" )
 
         if ext_headerlist:
