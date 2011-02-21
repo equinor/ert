@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
+#ifdef INCLUDE_LSF
 
 #include <lsf/lsbatch.h>
 #include <stdlib.h>
@@ -22,6 +23,7 @@
 #include <string.h>
 #include <hash.h>
 #include <vector.h>
+
 
 #define BLOCK_COMMAND        "/d/proj/bg/enkf/bin/block_node.py"
 #define STATOIL_LSF_REQUEST  "select[cs && x86_64Linux]"
@@ -44,9 +46,9 @@ lsf_job_type * lsf_job_alloc(char * queue_name) {
   lsf_job_type * lsf_job = util_malloc( sizeof * lsf_job , __func__);
   
   memset(&lsf_job->lsf_request , 0 , sizeof (lsf_job->lsf_request));
-  lsf_job->lsf_request.queue     	= queue_name;
-  lsf_job->lsf_request.beginTime 	= 0;
-  lsf_job->lsf_request.termTime   	= 0;   
+  lsf_job->lsf_request.queue            = queue_name;
+  lsf_job->lsf_request.beginTime        = 0;
+  lsf_job->lsf_request.termTime         = 0;   
   lsf_job->lsf_request.numProcessors    = 1;
   lsf_job->lsf_request.maxNumProcessors = 1;
   lsf_job->lsf_request.command         = BLOCK_COMMAND; 
@@ -228,3 +230,8 @@ int main( int argc, char ** argv) {
     }
   }
 }
+#else
+int main( int argc, char ** argv) {
+  return 0;
+}
+#endif
