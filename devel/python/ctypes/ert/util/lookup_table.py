@@ -28,7 +28,7 @@ class LookupTable(object):
         self.c_ptr = cfunc.alloc()
         
     def from_param(self):
-        return self.c_ptr
+        return ctype.c_void_p( self.c_ptr )
         
     @property 
     def max(self):

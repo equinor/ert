@@ -64,7 +64,7 @@ class EclSum(object):
             cfunc.free( self )
 
     def from_param(self):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
     def get_key_index( self , key ):
         index = cfunc.get_general_var_index( self , key )

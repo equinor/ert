@@ -66,7 +66,7 @@ class EclGrid(object):
             cfunc.free( self )
 
     def from_param(self):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
     @property
     def nx( self ):

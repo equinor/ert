@@ -17,6 +17,7 @@
 
 import sys
 import libecl
+import ctypes
 from   ert.cwrap.cwrap       import *
 
 
@@ -33,7 +34,7 @@ class FortIO:
         self.file_open = True 
 
     def from_param(self):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
     # Implements normal Python semantics - close on delete.
     def __del__(self):

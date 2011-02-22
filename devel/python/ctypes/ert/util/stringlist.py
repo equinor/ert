@@ -17,6 +17,7 @@
 
 import unittest
 import libutil
+import ctypes
 from   ert.cwrap.cwrap import *
 
 
@@ -41,7 +42,7 @@ class StringList:
 
 
     def from_param( self ):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
 
     def __getitem__(self , index):
