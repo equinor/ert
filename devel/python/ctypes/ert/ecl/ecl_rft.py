@@ -16,6 +16,7 @@
 
 
 import libecl
+import ctypes
 from   ert.cwrap.cwrap       import *
 from   ert.util.ctime        import ctime
 
@@ -51,7 +52,7 @@ class EclRFTFile(object):
             raise TypeError("Index should be integer type")
 
     def from_param( self ):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
     
     @property
     def size( self , well = None , date = None):
@@ -93,7 +94,7 @@ class EclRFT:
         return cfunc_rft.get_size( self )
 
     def from_param( self ):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
     @property
     def type(self):

@@ -36,7 +36,7 @@ class CFILE:
         self.py_file =  py_file
 
     def from_param( self ):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
     def __del__(self):
         pass

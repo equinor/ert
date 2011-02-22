@@ -82,7 +82,7 @@ class EclRegion:
         return self.__iand__( other )
     
     def from_param(self):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
     def copy( self ):
         return self.__deep_copy__( {} )

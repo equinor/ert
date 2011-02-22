@@ -16,6 +16,7 @@
 
 
 import  types
+import  ctypes
 import  numpy
 from    ert.cwrap.cwrap       import *
 from    ert.util.cfile        import CFILE
@@ -111,7 +112,7 @@ class EclKW(object):
             
 
     def from_param(self):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
 
     def __len__( self ):

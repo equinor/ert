@@ -153,7 +153,7 @@ class JobQueue:
 
 
     def from_param( self ):
-        return self.c_ptr
+        return ctypes.c_void_p( self.c_ptr )
 
     def add_job( self , run_path , job_name , argv):
         c_argv = (ctypes.c_char_p * len(argv))()

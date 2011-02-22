@@ -137,7 +137,7 @@ pointer to a at instance in a "c_ptr" attribute. If the AT class
 contains a method:
 
   def from_param( self ):
-      return self.c_ptr 
+      return ctypes.c_void_p( self.c_ptr )
 
 The AT class can then be used as a Python type in the argtypes
 attributes. To make it available in the prototyping as well you must

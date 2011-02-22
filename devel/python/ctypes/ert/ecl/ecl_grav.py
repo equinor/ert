@@ -17,7 +17,7 @@
 
 from    ert.cwrap.cwrap       import *
 import  libecl
-
+import  ctypes 
 from   ecl_kw                import EclKW , ECL_INT_TYPE
 from   ecl_grid              import EclGrid
 
