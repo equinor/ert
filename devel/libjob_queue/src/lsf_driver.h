@@ -25,12 +25,14 @@ extern "C" {
 #include <stringlist.h>
 
 
-#define LSF_QUEUE     "LSF_QUEUE"
-#define LSF_RESOURCE  "LSF_RESOURCE"
-#define LSF_SERVER    "LSF_SERVER"
-#define LSF_NUM_CPU   "NUM_CPU"
-  
-
+/*
+  The options supported by the LSF driver.
+*/
+#define LSF_QUEUE        "LSF_QUEUE"
+#define LSF_RESOURCE     "LSF_RESOURCE"
+#define LSF_SERVER       "LSF_SERVER"
+#define LSF_NUM_CPU      "NUM_CPU"
+#define LSF_LOGIN_SHELL  "LSF_LOGIN_SHELL"  // Not fully implemented yet
 
 
 typedef struct lsf_driver_struct lsf_driver_type;
