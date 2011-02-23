@@ -45,18 +45,44 @@
   Unfortunately only quite few of the workstations in Statoil are
   "designated LSF machines", meaning that they are allowed to talk to
   the LIM servers, to be able to use the low-level lsb_xxx() function
-  calls the host making the calls must configured to be a LSF client.
-
+  calls the host making the calls must configured (by an LSF
+  administrator) to be a LSF client.
+  
   The lsf_driver can either make use of the proper lsf library calls
   (lsb_submit(), lsb_openjobinfo(), ...) or alternatively it can issue
   ssh calls to an external LSF_SERVER and call up the bsub/bkill/bjob
-  executables on the remote server. Which behaviour is chosen is 
+  executables on the remote server. 
+
+  All the functions with 'library' in the name are based on library
+  calls, and the functions with 'shell' in the name are based on
+  external functions (the actual calls are through the
+  util_fork_exec() function).
+
+  By default the driver will use the library, but if a value is
+  provided with the LSF_SERVER option, the shell based functions will
+  be used. Internally this is goverened by the boolean flag
+  'use_library_calls'.
+
+  Even though you only intend to submit through the shell commands
+  bsub / bjobs / bkill the build process still requires access to the
+  lsf headers and the lsf library; that is probably not optimal.
 
 
-  All the functions with
-  'library' in the name are based on library calls, and the functions
-  with 'shell' in the name are based on external functions (the actual
-  calls are through the util_fork_exec() function).  */
+  Remote login shell 
+  ------------------ 
+
+  When submitting with LSF the job will inherit the current
+  environment on the submitting host, and not read the users login
+  files on the remote host where the job is actually executed. E.g. in
+  situations where submitting host and executing host are
+  e.g. different operating system versions this might be
+  unfortunate. The '-L @shell' switch can used with bsub to force lsf
+  to source schell specific input files prior to executing your
+  job. This can be achieved with the LSF_LOGIN_SHELL option:
+
+     lsf_driver_set_option( driver , LSF_LOGIN_SHELL , "/bin/csh" );
+
+*/
 
 
 
@@ -80,10 +106,11 @@ struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
   char              * queue_name;
   char              * resource_request;
+  char              * login_shell;
   pthread_mutex_t     submit_lock;
   int                 num_cpu;
   
-  bool                use_library_calls;
+  bool                use_library_calls; 
   
   /*-----------------------------------------------------------------*/
   /* Fields used by the lsf library functions */
@@ -91,10 +118,11 @@ struct lsf_driver_struct {
   struct submitReply lsf_reply; 
 
   /*-----------------------------------------------------------------*/
-  /* Fields used by the shell() based functions */
+  /* Fields used by the shell based functions */
   
   time_t              last_bjobs_update;
-  hash_type         * my_jobs;            /* A hash table of all jobs submitted by this ERT instance - to ensure that we do not check status of old jobs in e.g. ZOMBIE status. */
+  hash_type         * my_jobs;            /* A hash table of all jobs submitted by this ERT instance - 
+                                             to ensure that we do not check status of old jobs in e.g. ZOMBIE status. */
   hash_type         * status_map;
   hash_type         * bjobs_cache;        /* The output of calling bjobs is cached in this table. */
   pthread_mutex_t     bjobs_mutex;        /* Only one thread should update the bjobs_chache table. */
@@ -155,46 +183,53 @@ static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
 
 
 
-/*
-  Essential to source /prog/LSF/conf/cshrc.lsf before invoking lf
-  functions on xStatoil.
-*/
-
 
 static int lsf_driver_submit_shell_job(lsf_driver_type * driver , 
-                                        const char *  run_path , 
-                                        const char *  job_name , 
-                                        const char *  lsf_queue , 
-                                        const char *  resource_request , 
-                                        const char *  submit_cmd,
-                                        int           job_argc,
-                                        const char ** job_argv) {
+                                       const char *  run_path , 
+                                       const char *  job_name , 
+                                       const char *  submit_cmd,
+                                       int           job_argc,
+                                       const char ** job_argv) {
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   char * lsf_stdout       = util_alloc_filename(run_path , job_name , "LSF-stdout");
-
+  
   char num_cpu_string[4];
+
+  
   sprintf(num_cpu_string , "%d" , driver->num_cpu);
   if (driver->remote_lsf_server != NULL) {
+    char * quoted_resource_request = NULL;
+    if (driver->resource_request != NULL)
+      quoted_resource_request = util_alloc_sprintf("\"%s\"" , driver->resource_request);
+
     /**
        Command is:
        
           ssh lsf_server remote_bsub_cmd
 
-       where remote_bsub_cmd  
+       where remote_bsub_cmd is one long unquoted string: 
+
+          bsub -o <outfile> -q <queue_name> -J <job_name> -n <num_cpu>  -R "<resource_request>" -L <login_shell> cmd arg1 arg2 arg3
+  
+       The options -R and -L are optional.    
     */
     buffer_type * remote_cmd = buffer_alloc(256);
     buffer_fwrite_char_ptr( remote_cmd , "bsub -o " );
     buffer_fwrite_char_ptr( remote_cmd , lsf_stdout );
     buffer_fwrite_char_ptr( remote_cmd , " -q " );
-    buffer_fwrite_char_ptr( remote_cmd , lsf_queue );
+    buffer_fwrite_char_ptr( remote_cmd , driver->queue_name );
     buffer_fwrite_char_ptr( remote_cmd , " -J " );
     buffer_fwrite_char_ptr( remote_cmd , job_name );
     buffer_fwrite_char_ptr( remote_cmd , " -n " );
     buffer_fwrite_char_ptr( remote_cmd , num_cpu_string );
-    if (resource_request != NULL) {
+    if (quoted_resource_request != NULL) {
       buffer_fwrite_char_ptr( remote_cmd , " -R ");
-      buffer_fwrite_char_ptr( remote_cmd , resource_request );
+      buffer_fwrite_char_ptr( remote_cmd , quoted_resource_request );
+    }
+    if (driver->login_shell != NULL) {
+      buffer_fwrite_char_ptr( remote_cmd , " -L ");
+      buffer_fwrite_char_ptr( remote_cmd , driver->login_shell );
     }
     buffer_fwrite_char( remote_cmd , ' ');
     buffer_fwrite_char_ptr( remote_cmd , submit_cmd);
@@ -214,6 +249,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
       free( argv );
     }
     buffer_free( remote_cmd );
+    util_safe_free(quoted_resource_request);
   }
   
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
@@ -446,6 +482,10 @@ void * lsf_driver_submit_job(void * __driver ,
           options += SUB_RES_REQ;
           driver->lsf_request.resReq = driver->resource_request;
         }
+        if (driver->login_shell != NULL) {
+          driver->lsf_request.loginShell = driver->login_shell;
+          options += SUB_LOGIN_SHELL;
+        } 
         driver->lsf_request.options = options;
       }
       driver->lsf_request.jobName       = (char *) job_name;
@@ -455,14 +495,9 @@ void * lsf_driver_submit_job(void * __driver ,
       job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
       free( command );  /* I trust the lsf layer is finished with the command? */
     } else {
-      char * quoted_resource_request = NULL;
-      if (driver->resource_request != NULL)
-        quoted_resource_request = util_alloc_sprintf("\"%s\"" , driver->resource_request);
-
-      job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd , argc, argv);
+      job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , run_path , job_name , submit_cmd , argc, argv);
       job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
       hash_insert_ref( driver->my_jobs , job->lsf_jobnr_char , NULL );   
-      util_safe_free(quoted_resource_request);
     }
 
     pthread_mutex_unlock( &driver->submit_lock );
@@ -486,6 +521,7 @@ void * lsf_driver_submit_job(void * __driver ,
 
 
 void lsf_driver_free(lsf_driver_type * driver ) {
+  util_safe_free(driver->login_shell);
   util_safe_free(driver->queue_name);
   util_safe_free(driver->resource_request );
   util_safe_free(driver->remote_lsf_server );
@@ -507,6 +543,11 @@ void lsf_driver_free__(void * __driver ) {
 static void lsf_driver_set_queue( lsf_driver_type * driver,  const char * queue ) {
   driver->queue_name         = util_realloc_string_copy( driver->queue_name , queue);
   driver->lsf_request.queue  = driver->queue_name;
+}
+
+
+static void lsf_driver_set_login_shell( lsf_driver_type * driver,  const char * login_shell ) {
+  driver->login_shell        = util_realloc_string_copy( driver->login_shell , login_shell);
 }
 
 
@@ -542,6 +583,8 @@ void lsf_driver_set_option( void * __driver , const char * option_key , const vo
       lsf_driver_set_remote_server( driver , value );
     else if (strcmp( LSF_QUEUE , option_key) == 0)
       lsf_driver_set_queue( driver , value );
+    else if (strcmp( LSF_LOGIN_SHELL , option_key) == 0)
+      lsf_driver_set_login_shell( driver , value );
     else if (strcmp( LSF_NUM_CPU , option_key) == 0) {
       const int num_cpu = ((const int *) value) [0];
       driver->num_cpu = num_cpu;
@@ -563,6 +606,8 @@ const void * lsf_driver_get_option( const void * __driver , const char * option_
       return driver->queue_name;
     else if (strcmp( LSF_NUM_CPU , option_key ) == 0)
       return &driver->num_cpu;
+    else if (strcmp( LSF_LOGIN_SHELL , option_key ) == 0)
+      return driver->login_shell;
     else {
       util_abort("%s: option_id:%s not recognized for LSF driver \n",__func__ , option_key);
       return NULL;
@@ -587,6 +632,7 @@ bool lsf_driver_has_option( const void * __driver , const char * option_key) {
 
 void * lsf_driver_alloc( ) {
   lsf_driver_type * lsf_driver     = util_malloc(sizeof * lsf_driver , __func__);
+  lsf_driver->login_shell          = NULL;
   lsf_driver->queue_name           = NULL;
   lsf_driver->remote_lsf_server    = NULL; 
   lsf_driver->resource_request     = NULL;
