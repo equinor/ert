@@ -38,7 +38,7 @@
 */
 
 
-inline int rms_util_global_index_from_eclipse_ijk(int nx, int ny , int nz , int i , int j , int k) {
+int rms_util_global_index_from_eclipse_ijk(int nx, int ny , int nz , int i , int j , int k) {
   return i*ny*nz  +  j*nz  +  (nz - k - 1);
 }
 

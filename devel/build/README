@@ -20,50 +20,12 @@ Build instructions:
     use dlopen() to load low drivers, so plplot usage might fail even
     after the application has booted successfully.
 
- 3. Open the file 'global_config.py' in this directory and edit some
-    variables: SITE_CONFIG_FILE, INCLUDE_LSF, LSF_INCLUDE_PATH,
-    LSF_LIB_PATH,g2c,PLPLOT_INCLUDE_PATH,PLPLOT_LIB_PATH
-
-         INCLUDE_LSF / LSF_INCLUDE_PATH / LSF_LIB_PATH
-         --------------------------------------------- 
-
-         LSF is the Load Sharing Facility from Platform Computing, this is
-         a queue system. If you have access to LSF at your site you should
-         set INCLUDE_LSF to True and then subsequently set LSF_INCLUDE_PATH
-         and LSF_LIB_PATH to point to the location of the LSF header files
-         and the lsf libraries. 
-
-         The LSF header files are used when compiling
-         libjob_queue/src/lsf_driver_impl.c and libjob_queue/applications/block_node.c
-
-         If you do not have LSF you can set INCLUDE_LSF to False.
-
-         PLPLOT_INCLUDE_PATH / PLPLOT_LIB_PATH     
-         -------------------------------------
-         This is the path to plplot header files and plplot library.
-
-         g2c
-         ---
-         When linking with old versions of lapack you need some additional
-         Fortran runtime libraries, these are included if you set g2c to
-         True. 
- 
-         SITE_CONFIG_FILE
-         ----------------
-         When ERT starts it will look for a site-wide configuration
-         file. The path to this configuration file is compiled into the
-         binary, and should be set with the build variable
-         SITE_CONFIG_FILE
-
-         It is also possible to use an environment variable to specify the
-         location of the site wide configuration file, see the function
-         enkf_main_bootstrap in libenkf/src/enkf_main.c.
-
-         In the directory etc-example/ERT there is an example of a possible
-         site wide configuration file.
-     
-    Clearly these configuration variables should have been set outside
-    the shared build configuration. We are working on it.
+ 3. You can set some variables in the file local_config.py (read
+    documentation in local_config_DEFAULT.py). If you do not create
+    your personal local_config.py file the defaults found in
+    local_config_DEFAULT.py will be used. Depending on your setup this
+    might be sufficient to compile; but to actually create a usable
+    ERT executable you must create a local_config.py file.
 
  4. Now thing should be ready to build - crosss everything you have
     and start the build with:

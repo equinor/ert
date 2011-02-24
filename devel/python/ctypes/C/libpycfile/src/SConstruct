@@ -1,5 +1,4 @@
-python_version = "2.4"
-python_include_path = "/prog/sdpsoft/python%s/include/python%s" % python_version
+python_include_path = "/usr/include/python2.6"
 env = Environment( CPPPATH = [ python_include_path  ])
 LIB = env.SharedLibrary('pycfile' , ["pycfile.c"])
 env.Install("../slib" , LIB) 
