@@ -41,22 +41,22 @@ import socket
 # The first element in the tuple is the single CPU version to use, and
 # the second element is the MPI version to use.
 
-version_table = {"2007.1"     : ("/prog/ecl/grid/2007.1/bin/linux_x86_64/eclipse.exe"     , "/prog/ecl/grid/2007.1/bin/linux_x86_64/eclipse_scampi.exe"),
-                 "2007.2"     : ("/prog/ecl/grid/2007.2/bin/linux_x86_64/eclipse.exe"     , "/prog/ecl/grid/2007.2/bin/linux_x86_64/eclipse_scampi.exe"),
-                 "2008.1"     : ("/prog/ecl/grid/2008.1/bin/linux_x86_64/eclipse.exe"     , "/prog/ecl/grid/2008.1/bin/linux_x86_64/eclipse_scampi.exe"),
-                 "2008.2"     : ("/prog/ecl/grid/2008.2/bin/linux_x86_64/eclipse.exe"     , "/prog/ecl/grid/2008.2/bin/linux_x86_64/eclipse_scampi.exe"),
-                 "2009.1"     : ("/prog/ecl/grid/2009.1/bin/linux_x86_64/eclipse.exe"     , "/prog/ecl/grid/2009.1/bin/linux_x86_64/eclipse_scampi.exe"),
-                 "2009.2"     : ("/prog/ecl/testgrid/2009.2/bin/linux_x86_64/eclipse.exe" , "/prog/ecl/testgrid/2009.2/bin/linux_x86_64/eclipse_scampi.exe")}
+version_table = {"2007.1"     : ("/PATH/ECLIPSE/2007.1/bin/linux_x86_64/eclipse.exe"     , "/PATH/ECLIPSE/2007.1/bin/linux_x86_64/eclipse_scampi.exe"),
+                 "2007.2"     : ("/PATH/ECLIPSE/2007.2/bin/linux_x86_64/eclipse.exe"     , "/PATH/ECLIPSE/2007.2/bin/linux_x86_64/eclipse_scampi.exe"),
+                 "2008.1"     : ("/PATH/ECLIPSE/2008.1/bin/linux_x86_64/eclipse.exe"     , "/PATH/ECLIPSE/2008.1/bin/linux_x86_64/eclipse_scampi.exe"),
+                 "2008.2"     : ("/PATH/ECLIPSE/2008.2/bin/linux_x86_64/eclipse.exe"     , "/PATH/ECLIPSE/2008.2/bin/linux_x86_64/eclipse_scampi.exe"),
+                 "2009.1"     : ("/PATH/ECLIPSE/2009.1/bin/linux_x86_64/eclipse.exe"     , "/PATH/ECLIPSE/2009.1/bin/linux_x86_64/eclipse_scampi.exe"),
+                 "2009.2"     : ("/PATH/ECLIPSE/2009.2/bin/linux_x86_64/eclipse.exe"     , "/PATH/ECLIPSE/2009.2/bin/linux_x86_64/eclipse_scampi.exe")}
 
 scali_path     = "/opt/scali"
-ecldir         = "/prog/ecl/grid"
+ecldir         = "/PATH/ECLIPSE"
 
 mpirun         = "%s/bin/mpirun" % scali_path
 config_file    = "%s/macros/CONFIG.ECL" % ecldir
 
 config_link    = "ECL.CFG"
 env_variables = {"F_UFMTENDIAN"    : "big",
-                 "LM_LICENSE_FILE" : "7321@st-vlic01.st.statoil.no"}
+                 "LM_LICENSE_FILE" : "flexlm.server.com" }
 
 max_cpu_sec           = 10000000
 max_wall_sec          = 99999999
