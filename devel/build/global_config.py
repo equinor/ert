@@ -20,6 +20,16 @@ import os.path
 import os
 import commands
 import stat
+import sys
+import os.path
+
+
+try:
+    sys.path.append( os.path.dirname( __file__ ))
+    from local_config import *
+except ImportError:
+    from local_config_DEFAULT import * 
+
 
 # These are the modes we want - assuming umask( 0 );
 # and then comes the fxxxing umask into play.
@@ -137,15 +147,18 @@ class conf:
         
         # These are site-dependant; and should really be set OUTSIDE
         # the central build configuration.
-        self.SITE_CONFIG_FILE    = "/project/res/etc/ERT/site-config"
-        self.INCLUDE_LSF         = True
-        self.LSF_INCLUDE_PATH    = "/prog/LSF/7.0/include"
-        self.LSF_LIB_PATH        = "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"
+        self.SITE_CONFIG_FILE    = SITE_CONFIG_FILE
+        self.INCLUDE_LSF         = INCLUDE_LSF
+        self.LSF_INCLUDE_PATH    = LSF_INCLUDE_PATH
+        self.LSF_LIB_PATH        = LSF_LIB_PATH
         self.g2c                 = False
-        self.PLPLOT_INCLUDE_PATH = "/project/res/x86_64_RH_4/include"
-        self.PLPLOT_LIB_PATH     = "/project/res/x86_64_RH_4/lib"
-        
-        self.CCFLAGS             = "-m64 -O2 -std=gnu99 -g -Wall -pipe"
+        self.PLPLOT_INCLUDE_PATH = PLPLOT_INCLUDE_PATH
+        self.PLPLOT_LIB_PATH     = PLPLOT_LIB_PATH
+        if M64:
+            self.CCFLAGS = "-m64 "
+        else:
+            self.CCFLAGS = ""
+        self.CCFLAGS            += "-O2 -std=gnu99 -g -Wall -pipe"
         self.ARFLAGS             = "csr"
         
 

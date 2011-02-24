@@ -1,4 +1,4 @@
-#!/prog/sdpsoft/python2.4/bin/python
+#!/usr/bin/env python
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
 #  The file 'job_test.py' is part of ERT - Ensemble based Reservoir Tool. 
@@ -25,9 +25,9 @@ import ert.ecl       as ecl
 import ert.job_queue as job_queue
 import socket
 
-server_list = { "be" : "be-grid01.be.statoil.no",
-                "st" : "st-grid01.st.statoil.no",
-                "tr" : "tr-grid01.tr.statoil.no" }
+server_list = { "be" : "lsf-be.no",
+                "st" : "lsf-st.no",
+                "tr" : "lsf-tr.no" }
 
 src_files     = ["data/eclipse/case/ECLIPSE.DATA" , "data/eclipse/case/include"]
 run_path_fmt  = "tmp/simulations/run%d"

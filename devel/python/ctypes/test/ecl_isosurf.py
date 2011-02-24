@@ -1,4 +1,4 @@
-#!/prog/sdpsoft/python2.4/bin/python
+#!/usr/bin/env python
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
 #  The file 'ecl_isosurf.py' is part of ERT - Ensemble based Reservoir Tool. 
