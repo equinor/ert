@@ -104,12 +104,12 @@ multi_seed_file  = "random.seeds"
 rms_license_file  = "/prog/roxar/licensing/geomaticLM.lic"
 
 
-rms_version_table = {"2010.1.1"   : "/prog/roxar/rms/versions/2010.1.1/linux-amd64-gcc_3_4-release/bin/rms",
-                     "2010"       : "/prog/roxar/rms/versions/2010/linux-amd64-gcc_3_2-release/bin/rms",
-                     "2009"       : "/prog/roxar/rms/versions/2009/linux-amd64-gcc_3_2-release/bin/rms",
-                     "2009.2"     : "/prog/roxar/rms/versions/2009.2/linux-amd64-gcc_3_2-release/bin/rms",
-                     "2009.3"     : "/prog/roxar/rms/versions/2009.3/linux-amd64-gcc_3_2-release/bin/rms",
-                     "9.0.7.4"    : "/prog/roxar/rms/versions/9.0.7.4/linux-amd64-gcc_3_2-release/bin/rms"}
+rms_version_table = {"2010.1.1"   : "/PATH/RMS/2010.1.1/linux-amd64-gcc_3_4-release/bin/rms",
+                     "2010"       : "/PATH/RMS/2010/linux-amd64-gcc_3_2-release/bin/rms",
+                     "2009"       : "/PATH/RMS/2009/linux-amd64-gcc_3_2-release/bin/rms",
+                     "2009.2"     : "/PATH/RMS/2009.2/linux-amd64-gcc_3_2-release/bin/rms",
+                     "2009.3"     : "/PATH/RMS/2009.3/linux-amd64-gcc_3_2-release/bin/rms",
+                     "9.0.7.4"    : "/PATH/RMS/9.0.7.4/linux-amd64-gcc_3_2-release/bin/rms"}
 
 
 
