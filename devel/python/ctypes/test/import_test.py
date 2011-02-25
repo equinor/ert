@@ -16,29 +16,22 @@
 #  for more details. 
 
 
-import sys
-sys.path = ["/tmp"] + sys.path
 import ctypes
-print sys.path
 
-print  "import ert", 
-sys.stdout.flush()
+print  "import ert" 
 import ert
-print
 
-print "import ert.ecl",
-sys.stdout.flush()
+
+print "import ert.ecl"
 import ert.ecl
-print
 
-print "import ert.job_queue",
-sys.stdout.flush()
+
+print "import ert.job_queue"
 import ert.job_queue 
-print
 
-print "import ert.util",
-sys.stdout.flush()
+
+print "import ert.util"
 import ert.util.stringlist
 import ert.util.tvector
 import ert.util.stat
-print
+
