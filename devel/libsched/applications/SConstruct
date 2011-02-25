@@ -7,7 +7,7 @@ from   global_config import LIBUTIL
 from   global_config import LIBECL
 from   global_config import LIBSCHED
 from   global_config import add_program
-from   global_config import get_targets
+from   global_config import get_target
 
 SConscript(["perturb_history/SConstruct"])
 
@@ -32,7 +32,6 @@ add_program(env , conf , bin_path , "update_ir.x"             , "update_ir.c")
 
 ##################################################################
 
-(local ) = get_targets( env , conf )
-Default( local )
+target = get_target( env , conf )
 
 

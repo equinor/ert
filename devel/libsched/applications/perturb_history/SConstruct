@@ -8,7 +8,7 @@ from   global_config import LIBECL
 from   global_config import LIBSCHED
 from   global_config import LIBCONFIG
 from   global_config import add_program
-from   global_config import get_targets
+from   global_config import get_target
 
 package      = "sched"
 lib_path     = "../lib"
@@ -22,7 +22,7 @@ conf.update_env( env , [LIBSCHED , LIBECL , LIBCONFIG , LIBUTIL] , ["m","z","pth
 
 
 add_program(env , conf , bin_path , "pert_hist" ,["perturb_history.c" , "well_rate.c" , "group_rate.c" , "pert_util.c"])
-(local) = get_targets( env , conf )
-Default( local )
+target = get_target( env , conf )
+
 
 

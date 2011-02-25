@@ -7,7 +7,7 @@ from   global_config import LIBUTIL
 from   global_config import LIBECL
 from   global_config import LIBRMS
 from   global_config import add_program
-from   global_config import get_targets
+from   global_config import get_target
 
 package      = "rms"
 lib_path     = "../lib"
@@ -24,7 +24,7 @@ add_program(env , conf ,  bin_path , "rms_stat"    , "rms_stat.c"    )
 add_program(env , conf ,  bin_path , "rms_test"    , "rms_test.c"    )
 add_program(env , conf ,  bin_path , "tag_list"    , "tag_list.c"    )
 
-(local ) = get_targets( env , conf )
-Default( local )
+target = get_target( env , conf )
+
 
 

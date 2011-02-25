@@ -3,7 +3,7 @@
 -- in this file in her per-project configuration file. Observe that
 -- prior to parsing this file ERT will issue a chdir() system call to
 -- the location of this file, i.e. you can safely use paths relative
--- from the location of this file.
+-- to the location of this file.
 
 
 -- Setting configuration information about the LSF system:
