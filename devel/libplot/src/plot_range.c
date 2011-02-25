@@ -18,12 +18,14 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 #include <plplot/plplot.h>
 #include <plplot/plplotP.h>
 #include <plot_const.h>
 #include <plot_range.h>
 #include <util.h>
 #include <arg_pack.h>
+
 
 /**
    This file implements some simple functionality to manipulate / do
@@ -76,8 +78,8 @@ void plot_range_fprintf(const plot_range_type * range, FILE * stream) {
 /*****************************************************************/
 
 static void plot_range_set__(plot_range_type * plot_range , int index , double value) {
-  plot_range->limits[index] 	= value;
-  plot_range->set[index]    	= true;
+  plot_range->limits[index]     = value;
+  plot_range->set[index]        = true;
   plot_range->auto_range[index] = false;
   plot_range->padding[index]    = 0;   /* If you are explicitly setting a limit - you get no padding. */
 }
@@ -361,21 +363,21 @@ void plot_range_apply(plot_range_type * plot_range) {
   {
     if (x1 == x2) {
       if (x1 == 0) {
-	x1 = -0.50;
-	x2 =  0.50;
+        x1 = -0.50;
+        x2 =  0.50;
       } else {
-	x1 -= 0.05 * abs(x1);
-	x2 += 0.05 * abs(x2);
+        x1 -= 0.05 * abs(x1);
+        x2 += 0.05 * abs(x2);
       }
     }
     
     if (y1 == y2) {
       if (y1 == 0.0) {
-	y1 = -0.50;
-	y2 =  0.50;
+        y1 = -0.50;
+        y2 =  0.50;
       } else {
-	y1 -= 0.05 * abs(y1);
-	y2 += 0.05 * abs(y2);
+        y1 -= 0.05 * abs(y1);
+        y2 += 0.05 * abs(y2);
       }
     }
   }
