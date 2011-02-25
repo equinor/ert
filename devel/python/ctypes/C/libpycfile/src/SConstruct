@@ -1,6 +1,31 @@
-python_include_path = "/usr/include/python2.6"
-python_include_path = "/prog/sdpsoft/python2.6/include/python2.6"
-env = Environment( CPPPATH = [ python_include_path  ])
-LIB = env.SharedLibrary('pycfile' , ["pycfile.c"])
-env.Install("../slib" , LIB) 
-Default( "../slib" )
+# This SConstruct file is for builing libpycfile.so, which is a very
+# small extension module to facilitate transparent 
+# 
+#    Python File <-> C FILE * 
+# 
+# interchange. Since this module is built using the Python/C API it gets
+# bound to the Python version of the include file "Python.h". If you
+# later try to use the module with a different Python version it will
+# fail at runtime. 
+# 
+# In the build process we need to locate the Python.h file. The approach
+# used here is to determine the path and version number of the Python
+# executable currently running SCons, and then guess an include path
+# from that. If no Python.h file is found that way we abort.
+
+import sys
+import os.path
+
+exec_prefix = sys.exec_prefix
+version_info = sys.version_info
+include_path = "%s/include/python%d.%d" % (exec_prefix , version_info[0] , version_info[1])
+
+print "Using: %s" % include_path 
+
+if os.path.exists( include_path ):
+   env = Environment( CPPPATH = [ include_path  ])
+   LIB = env.SharedLibrary('pycfile' , ["pycfile.c"])
+   env.Install("../slib" , LIB) 
+   Default( "../slib" )
+else:
+   sys.exit("** ERROR: Could not locate Python include path")

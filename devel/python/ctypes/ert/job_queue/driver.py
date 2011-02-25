@@ -21,7 +21,6 @@ import ctypes
 import sys
 import os
 import libjob_queue
-import ert.util.SDP     as     SDP
 from   job              import Job 
 from   ert.cwrap.cwrap  import *
 import ert.ecl.ecl_util    as ecl_util  
