@@ -157,7 +157,6 @@ return value:
     \----------------------------------------------------------/
 
 
-
 3 The C code
 
 The C libraries are to a large extent developed with abstract types
