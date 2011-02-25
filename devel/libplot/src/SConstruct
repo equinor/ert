@@ -7,7 +7,7 @@ from   global_config import LIBUTIL
 from   global_config import add_shared_library
 from   global_config import add_static_library
 from   global_config import add_header
-from   global_config import get_targets
+from   global_config import get_target
 
 
 
@@ -29,8 +29,8 @@ add_static_library( env , conf , lib_path , package , src_list)
 add_shared_library( env , conf , slib_path , package , src_list)
 add_header( env , conf , include_path , header_list )
 
-(local) = get_targets( env , conf )
-Default( local )
+target = get_target( env , conf )
+
 
 
 

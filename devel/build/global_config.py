@@ -115,12 +115,12 @@ def add_header( env, conf , include_path , header_list ):
     conf.local_install[ include_path ]   = True
 
 
-def get_targets( env , conf):
+def get_target( env , conf):
     def_list = []
     for target in conf.local_install.keys():
         def_list.append( target )
     
-    return (env.Alias('local' , def_list))
+    return env.Alias('local' , def_list)
 
 
 #################################################################
