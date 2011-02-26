@@ -50,6 +50,6 @@ ert_test     = env.Program( "ert_test"                  , [ert_test_object, tui_
 ert          = env.Program( "ert"                       , [main_object, tui_objects])
 ert_svn      = env.Program( "ert_%s" % conf.SVN_VERSION , [main_object, tui_objects])
 
-env.InstallProgram( bin_path , [ert , ert_test , local_config])
+env.Install( bin_path , [ert , ert_test , local_config])
 
 Default( bin_path )

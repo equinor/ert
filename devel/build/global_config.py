@@ -23,95 +23,36 @@ import stat
 import sys
 import os.path
 
-
+sys.path.append( os.path.dirname( __file__ ))
 try:
-    sys.path.append( os.path.dirname( __file__ ))
     from local_config import *
 except ImportError:
     from local_config_DEFAULT import * 
 
 
-# These are the modes we want - assuming umask( 0 );
-# and then comes the fxxxing umask into play.
-
-exe_mode  = 0775
-file_mode = 0664
-
-umask = os.umask( 0 )
-os.umask( umask )
-
-# Guid ID assigned to all files and directories
-# created/modified during the installation process.
-guid = os.getgid()
-
-
-def mkdir_gid( path ):
-    mkdir( path )
-    os.chown( path , -1 , guid )
-
-mkdir    = os.mkdir
-os.mkdir = mkdir_gid
-
-    
-
-def chgrp(path , guid ):
-    os.chown( path , -1 , guid )
-
-    
-#################################################################
-from SCons.Script.SConscript import SConsEnvironment
-SConsEnvironment.Chmod = SCons.Action.ActionFactory( os.chmod , lambda dest,mode : '')
-SConsEnvironment.Chgrp = SCons.Action.ActionFactory(    chgrp , lambda dest,group: '')
-
-def InstallPerm(env , dest , files , mode):
-    obj = env.Install( dest , files )
-    for f in obj:
-        env.AddPostAction(f , env.Chmod(str(f) , mode))
-        env.AddPostAction(f , env.Chgrp(str(f) , guid))
-    return dest
-
-
-
-def InstallProgram(env , dest , files):
-    return InstallPerm( env , dest , files , exe_mode)
-
-
-def InstallHeader(env , dest , files):
-    return InstallPerm( env , dest , files , file_mode)
-
-
-def InstallLibrary(env , dest , files ):
-    return InstallPerm( env , dest , files , file_mode)
-
-
-SConsEnvironment.InstallPerm    = InstallPerm
-SConsEnvironment.InstallLibrary = InstallLibrary
-SConsEnvironment.InstallHeader  = InstallHeader
-SConsEnvironment.InstallProgram = InstallProgram
-
-#################################################################
-
 
 def add_program(env , conf , bin_path , target , src , **kwlist):
     P = env.Program( target , src , **kwlist)
-    env.InstallProgram(bin_path , P)
+    env.Install(bin_path , P)
     conf.local_install[ bin_path ]   = True
+
 
 
 def add_static_library( env, conf , lib_path , target , src , **kwlist):
     LIB = env.StaticLibrary( target , src , **kwlist)
-    env.InstallLibrary( lib_path , LIB )
-    conf.local_install[ lib_path ]   = True
+    env.Install( lib_path , LIB )
+    conf.local_install[ lib_path ] = True
+
 
 
 def add_shared_library( env, conf , lib_path , target , src , **kwlist):
     LIB = env.SharedLibrary( target , src , **kwlist)
-    env.InstallLibrary( lib_path , LIB )
+    env.Install( lib_path , LIB )
     conf.local_install[ lib_path ]   = True
 
 
 def add_header( env, conf , include_path , header_list ):
-    env.InstallHeader( include_path , header_list )
+    env.Install( include_path , header_list )
     conf.local_install[ include_path ]   = True
 
 
@@ -151,7 +92,7 @@ class conf:
         self.INCLUDE_LSF         = INCLUDE_LSF
         self.LSF_INCLUDE_PATH    = LSF_INCLUDE_PATH
         self.LSF_LIB_PATH        = LSF_LIB_PATH
-        self.g2c                 = False
+        self.g2c                 = g2c
         self.PLPLOT_INCLUDE_PATH = PLPLOT_INCLUDE_PATH
         self.PLPLOT_LIB_PATH     = PLPLOT_LIB_PATH
         if M64:
