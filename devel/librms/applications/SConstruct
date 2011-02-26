@@ -24,7 +24,7 @@ add_program(env , conf ,  bin_path , "rms_stat"    , "rms_stat.c"    )
 add_program(env , conf ,  bin_path , "rms_test"    , "rms_test.c"    )
 add_program(env , conf ,  bin_path , "tag_list"    , "tag_list.c"    )
 
-target = get_target( env , conf )
+Default( bin_path )
 
 
 

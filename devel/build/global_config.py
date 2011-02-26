@@ -61,6 +61,7 @@ def get_target( env , conf):
     for target in conf.local_install.keys():
         def_list.append( target )
     
+    print def_list
     return env.Alias('local' , def_list)
 
 

@@ -32,6 +32,6 @@ add_program(env , conf , bin_path , "update_ir.x"             , "update_ir.c")
 
 ##################################################################
 
-target = get_target( env , conf )
+Default( bin_path )
 
 
