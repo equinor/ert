@@ -29,7 +29,7 @@ add_static_library( env , conf , lib_path , package , src_list)
 add_shared_library( env , conf , slib_path , package , src_list)
 add_header( env , conf , include_path , header_list )
 
-target = get_target( env , conf )
+Default( lib_path , slib_path , include_path )
 
 
 

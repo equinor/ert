@@ -26,4 +26,4 @@ if conf.INCLUDE_LSF:
    target = get_target( env , conf )
 
 
-
+   Default( bin_path )
