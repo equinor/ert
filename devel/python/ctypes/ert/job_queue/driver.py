@@ -32,6 +32,8 @@ LOCAL_TYPE = 2
 RSH_TYPE   = 3 
 
 
+
+
 class Driver:
     
     def is_driver_instance( self ):
@@ -77,12 +79,13 @@ class Driver:
 
 
 class LSFDriver(Driver):
+    
+    
     def __init__(self ,
-                 lsf_server = None,
+                 lsf_server = None ,
                  queue = "normal" ,
                  num_cpu = 1,
                  resource_request = ecl_default.lsf_resource_request):
-        
         self.c_ptr = cfunc.alloc_driver_lsf( queue , resource_request , lsf_server , num_cpu)
 
 
@@ -117,7 +120,7 @@ cfunc   = CWrapperNameSpace( "driver" )
 cfunc.alloc_driver_lsf       = cwrapper.prototype("c_void_p    queue_driver_alloc_LSF( char* , char* , char* , int )")
 cfunc.alloc_driver_local     = cwrapper.prototype("c_void_p    queue_driver_alloc_local( )")
 cfunc.alloc_driver_rsh       = cwrapper.prototype("c_void_p    queue_driver_alloc_RSH( char* , c_void_p )")
-cfunc.set_driver_option      = cwarpper.prototype("void        queue_driver_set_option( driver , char* , char*)")
+cfunc.set_driver_option      = cwrapper.prototype("void        queue_driver_set_option( driver , char* , char*)")
 
 
 cfunc.free_driver    = cwrapper.prototype("void        queue_driver_free( driver )")
