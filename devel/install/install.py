@@ -40,18 +40,18 @@ def msg( verbose , text , arg):
 def update_mode( path , mode , user , group):
     try:
         os.chmod( path , mode )
-    except:
-        pass
     
-    if user:   # Only applicable for root:
-        user_info = pwd.getpwnam( user )
-        uid = user_info[ 2 ]
-        os.chown( path , uid , -1 )
+        if user:   # Only applicable for root:
+            user_info = pwd.getpwnam( user )
+            uid = user_info[ 2 ]
+            os.chown( path , uid , -1 )
         
-    if group:
-        group_info = grp.getgrnam( group )
-        gid = group_info[ 2 ]
-        os.chown( path , -1 , gid )
+        if group:
+            group_info = grp.getgrnam( group )
+            gid = group_info[ 2 ]
+            os.chown( path , -1 , gid )
+    except:
+        pass # Probably some missing permissions
 
 
 def include_by_ext( full_path , ext_list):
