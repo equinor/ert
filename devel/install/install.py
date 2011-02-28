@@ -22,9 +22,11 @@ import os.path
 import re
 import stat
 
-DIR_MODE = 0755
-EXE_MODE = 0755
-REG_MODE = 0644
+DEFAULT_DIR_MODE = 0755
+DEFAULT_EXE_MODE = 0755
+DEFAULT_REG_MODE = 0644
+
+
 
 def msg( verbose , text , arg):
     text_width = 20
@@ -61,15 +63,15 @@ class File:
             self.target_name = self.name
 
 
-    def install( self , src_root , target_root , verbose , user , group):
+    def install( self , src_root , target_root , modes , verbose , user , group):
         if self.create_path:
             target_path = target_root
             for path in self.create_path.split("/"):
                 target_path += "/%s" % path
                 if not os.path.exists( target_path ):
-                    os.makedirs( target_path , DIR_MODE )
+                    os.makedirs( target_path , modes[0] )
                     msg(verbose , "Creating directory" , target_path)
-                update_mode( target_path , DIR_MODE , user, group)
+                update_mode( target_path , modes[0] , user, group)
             target_file = "%s/%s/%s" % (target_root , self.create_path , self.target_name)
         else:
             target_file = "%s/%s" % (target_root ,  self.target_name)
@@ -77,9 +79,9 @@ class File:
         msg( verbose , "Copying file" , "%s -> %s" % (src_file , target_file))
         shutil.copyfile( src_file , target_file )
         if os.access( src_file , os.X_OK):
-            update_mode( target_file , EXE_MODE , user , group)
+            update_mode( target_file , modes[2] , user , group)
         else:
-            update_mode( target_file , REG_MODE , user , group )
+            update_mode( target_file , modes[1] , user , group )
         (target_base , ext) = os.path.splitext( target_file )
         if ext == ".py":
             msg( verbose , "Byte compiling" , target_file)
@@ -96,10 +98,9 @@ class Install:
         self.src_root = src_root
         self.file_list = []
 
-
-    def install(self, target_root , user = None , group = None , verbose = False):
+    def install(self, target_root , modes = (DEFAULT_DIR_MODE , DEFAULT_REG_MODE, DEFAULT_EXE_MODE) , user = None , group = None , verbose = False):
         for file in self.file_list:
-            file.install( self.src_root , target_root , verbose , user , group)
+            file.install( self.src_root , target_root , modes , verbose , user , group)
 
 
     def add_path( self , path , create_path = None , recursive = False):
