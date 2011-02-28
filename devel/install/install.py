@@ -38,7 +38,10 @@ def msg( verbose , text , arg):
         
 
 def update_mode( path , mode , user , group):
-    os.chmod( path , mode )
+    try:
+        os.chmod( path , mode )
+    except:
+        pass
     
     if user:   # Only applicable for root:
         user_info = pwd.getpwnam( user )
