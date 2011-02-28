@@ -32,18 +32,6 @@ LOCAL_TYPE = 2
 RSH_TYPE   = 3 
 
 
-
-def init_LSF_env():
-    os.environ["LSF_BINDIR"]    = "%s/bin" % libjob_queue.LSF_HOME
-    os.environ["LSF_LIBDIR"]    = "%s/lib" % libjob_queue.LSF_HOME
-    os.environ["XLSF_UIDDIR"]   = "%s/lib/uid" % libjob_queue.LSF_HOME
-    os.environ["LSF_SERVERDIR"] = "%s/etc" % libjob_queue.LSF_HOME
-    os.environ["LSF_ENVDIR"]    = "/prog/LSF/conf"
-
-    os.environ["PATH"] += ":%s" % os.environ["LSF_BINDIR"]
-    
-
-
 class Driver:
     
     def is_driver_instance( self ):
@@ -89,17 +77,12 @@ class Driver:
 
 
 class LSFDriver(Driver):
-    __initialized = False
-
     def __init__(self ,
                  lsf_server = None,
                  queue = "normal" ,
                  num_cpu = 1,
                  resource_request = ecl_default.lsf_resource_request):
-        if not self.__initialized:
-            init_LSF_env()
-            LSFDriver.__initialized = True
-
+        
         self.c_ptr = cfunc.alloc_driver_lsf( queue , resource_request , lsf_server , num_cpu)
 
 
@@ -134,6 +117,7 @@ cfunc   = CWrapperNameSpace( "driver" )
 cfunc.alloc_driver_lsf       = cwrapper.prototype("c_void_p    queue_driver_alloc_LSF( char* , char* , char* , int )")
 cfunc.alloc_driver_local     = cwrapper.prototype("c_void_p    queue_driver_alloc_local( )")
 cfunc.alloc_driver_rsh       = cwrapper.prototype("c_void_p    queue_driver_alloc_RSH( char* , c_void_p )")
+cfunc.set_driver_option      = cwarpper.prototype("void        queue_driver_set_option( driver , char* , char*)")
 
 
 cfunc.free_driver    = cwrapper.prototype("void        queue_driver_free( driver )")

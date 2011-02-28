@@ -20,6 +20,7 @@ import ert.util.libutil
 import ert.util.SDP  as SDP
 import ert.util.clib as clib
 
+clib.load("libconfig.so" )
 
 # We try to import the lsf libraries unconditionally. If the import
 # fails we assume the lsf_driver has been built without LSF
@@ -31,7 +32,13 @@ import ert.util.clib as clib
 # LSF libraries are located, if that variable is not set we just try a
 # wild shot and see what the dynamic linker can come up with - that
 # probably fails.
-
+#
+# Here we just inspect the LSF_LIBDIR enviornment to locate the LSF
+# libraries, but if you actually intend to use the LSF system the
+# following variables must be set: LSF_BINDIR , LSF_LIBDIR ,
+# XLDF_UIDDIR , LSF_SERVERDIR, LSF_ENVDIR - this is an LSF requirement
+# and not related to ERT or the Python bindings. The normal way to
+# achieve this is by sourcing a shell script.
 
 LSF_LIBDIR = os.getenv("LSF_LIBDIR")
 try:
@@ -47,9 +54,6 @@ try:
 except:
     HAVE_LSF = False
 
-
-    
-clib.load("libconfig.so" )
 try:
     lib  = clib.load("libjob_queue.so")
 except:
