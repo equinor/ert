@@ -21,11 +21,13 @@ import shutil
 import os.path
 import re
 import stat
+import py_compile
 
 DEFAULT_DIR_MODE = 0755
 DEFAULT_EXE_MODE = 0755
 DEFAULT_REG_MODE = 0644
-
+ 
+os.umask( 0 )
 
 
 def msg( verbose , text , arg):
@@ -47,8 +49,33 @@ def update_mode( path , mode , user , group):
         group_info = grp.getgrnam( group )
         gid = group_info[ 2 ]
         os.chown( path , -1 , gid )
-    
 
+
+def include_by_ext( full_path , ext_list):
+    mode = os.stat( full_path )[stat.ST_MODE]
+    (base , ext) = os.path.splitext( full_path )
+    if stat.S_ISDIR( mode ):
+        if ext == ".svn":
+            return False
+        else:
+            return True
+    else:
+        if ext in ext_list:
+            return True
+        else:
+            return False
+
+
+
+def include_python( full_path ):
+    return include_by_ext( full_path , [".py"])
+
+
+def include_html( full_path ):
+    return include_by_ext( full_path , [".html"])
+
+def include_image( full_path ):
+    return include_by_ext( full_path , [".png" , ".jpg"])
 
 
 class File:
@@ -63,6 +90,8 @@ class File:
             self.target_name = self.name
 
 
+    # Modes should be a tuple of three elements: (DIR_MODE , REG_MODE , EXE_MODE);
+    # all modes assume umask( 0 )!
     def install( self , src_root , target_root , modes , verbose , user , group):
         if self.create_path:
             target_path = target_root
@@ -87,9 +116,8 @@ class File:
             msg( verbose , "Byte compiling" , target_file)
             py_compile.compile( target_file )
             pyc_file = target_base + ".pyc"
-            chgrp( pyc_file , res_guid )
-            chmod( pyc_file , data_mode )
-            
+            update_mode( pyc_file , modes[1] , user , group)
+                        
                 
 
 
@@ -97,30 +125,60 @@ class Install:
     def __init__( self , src_root ):
         self.src_root = src_root
         self.file_list = []
+        self.link_list = []
+        
 
     def install(self, target_root , modes = (DEFAULT_DIR_MODE , DEFAULT_REG_MODE, DEFAULT_EXE_MODE) , user = None , group = None , verbose = False):
         for file in self.file_list:
             file.install( self.src_root , target_root , modes , verbose , user , group)
+        
+        for (src,link) in self.link_list:
+            full_link = "%s/%s" % ( target_root , link )
+            print "Link:%s" % full_link
+            if os.path.exists( full_link ):
+                print "Trying to remove: %s" % full_link
+                os.remove( full_link )
+            else:
+                print "%s does not exist" % full_link
 
-
-    def add_path( self , path , create_path = None , recursive = False):
-        for entry in os.listdir( "%s/%s" % (self.src_root , path )):
-            (base , ext) = os.path.splitext( entry )
-
-            if ext == ".pyc":
-                continue
-            if ext == ".svn":
-                continue
+            msg( verbose , "Linking" , "%s/%s -> %s/%s" % (target_root , link , target_root , src))
+            os.symlink( "%s/%s" % (target_root , src), "%s/%s" % (target_root , link ))
+                 
             
 
+    def add_link( self , src , link , verbose = False):
+        self.link_list.append( ( src , link ))
+            
+        
+
+
+    def add_path( self , path , include_callback = None , create_path = None , recursive = False):
+        path_list = []
+        for entry in os.listdir( "%s/%s" % (self.src_root , path )):
+            
             full_path = "%s/%s/%s" % ( self.src_root , path , entry)
+
+            include = True
+            if include_callback:
+                include = include_callback( full_path )
+
+            if not include:
+                continue
+                
             mode = os.stat( full_path )[stat.ST_MODE]
             if stat.S_ISREG( mode ):
                 file = File("%s/%s" % (path , entry), create_path = create_path)
                 self.add_file( file )
             elif stat.S_ISDIR( mode ):
                 if recursive:
-                    self.add_path( "%s/%s" % (path , entry) , create_path = create_path , verbose = True )
+                    path_list.append( entry )
+
+        for dir in path_list:
+            if create_path:
+                new_create_path = "%s/%s" % (create_path , dir)
+            else:
+                new_create_path = dir
+            self.add_path( "%s/%s" % (path , dir) , include_callback = include_callback , create_path = new_create_path , recursive = True )
                     
 
     def add_file( self , file ):
