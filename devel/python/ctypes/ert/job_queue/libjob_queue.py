@@ -15,9 +15,9 @@
 #  for more details. 
 
 import os
+import sys
 import ctypes
 import ert.util.libutil
-import ert.util.SDP  as SDP
 import ert.util.clib as clib
 
 clib.load("libconfig.so" )
@@ -69,30 +69,36 @@ clib.load("libconfig.so" )
 # exist:
 #
 #   1. The libjob_queue library has been built without LSF support,
-#      i.e. INCLUDE_LSF == False, in this the loading of
+#      i.e. INCLUDE_LSF == False, in this case the loading of
 #      libjob_queue.so is "guaranteed" to suceed.
 #
 #  2.  The libjob_queue library has been built with LSF support,
 #      i.e. INCLUDE_LSF == True:
 #
 #      - If we succeeded in loading liblsf/libbat in the previous
-#        section, loading libjob_queue should work out OK.
+#        section, loading libjob_queue should.so work out OK.
 #
 #      - If we failed to load libbat/liblsf libjob_queue will not
 #        load, and the whole thing will go up in flames.
 # 
 
 
-#def init_LSF_env():
-#    os.environ["LSF_BINDIR"]    = "%s/bin" % libjob_queue.LSF_HOME
-#    os.environ["LSF_LIBDIR"]    = "%s/lib" % libjob_queue.LSF_HOME
-#    os.environ["XLSF_UIDDIR"]   = "%s/lib/uid" % libjob_queue.LSF_HOME
-#    os.environ["LSF_SERVERDIR"] = "%s/etc" % libjob_queue.LSF_HOME
-#    os.environ["LSF_ENVDIR"]    = "/prog/LSF/conf"
-#
-#    os.environ["PATH"] += ":%s" % os.environ["LSF_BINDIR"]
+def setenv( var , value):
+    if not os.getenv( var ):
+        os.environ[ var ] = value
+
+# 1: Setting up the full LSF environment
+
+LSF_HOME = os.getenv( "LSF_HOME")
+if LSF_HOME:
+    setenv( "LSF_BINDIR"  , "%s/bin" % LSF_HOME )
+    setenv( "LSF_LIBDIR"  , "%s/lib" % LSF_HOME )
+    setenv( "XLSF_UIDDIR" , "%s/lib/uid" % LSF_HOME )
+    setenv( "LSF_SERVERDIR" , "%s/etc" % LSF_HOME)
+    setenv( "LSF_ENVDIR" , "%s/conf" % LSF_HOME)   # This one might be too simple minded.
 
 
+# 2: Loading the LSF libraries
 LSF_LIBDIR = os.getenv("LSF_LIBDIR")
 try:
     clib.load("libnsl.so" , "libnsl.so.1")
@@ -107,6 +113,10 @@ try:
 except:
     HAVE_LSF = False
 
+
+# 3: Loading the libjob_queue library, which might (depending on the
+#    value of INCLUDE_LSF used when building) depend on the LSF
+#    libraries we tried to load at the previous step.
 try:
     lib  = clib.load("libjob_queue.so")
 except:
@@ -114,7 +124,7 @@ except:
         sys.stderr.write("** Failed to load the libjob_queue library, \n")
         sys.stderr.write("** have previosuly failed to load the LSF\n")
         sys.stderr.write("** libraries liblsf & libbat - that might be\n")
-        sys.stderr.wriet("** the reason ... ")
+        sys.stderr.write("** the reason ... ")
         if LSF_LIBDIR:
             sys.stderr.write("** LSF_LIBDIR = %s\n" % LSF_LIBDIR)
         else:
