@@ -19,6 +19,7 @@ fi
 #
 # setup the SDP environment
 #
+export ERT_SITE_CONFIG=/project/res/etc/ERT/site-config
 export QT_EXPERIMENTAL=1
 export PYTHON_EXPERIMENTAL=1
 source /project/res/SDP_bashrc

@@ -56,7 +56,7 @@ app.processEvents()
 
 ert = ertwrapper.ErtWrapper( )
 
-site_config = "/project/res/etc/ERT/site-config"
+site_config = os.getenv("ERT_SITE_CONFIG")
 enkf_config = sys.argv[1]
 strict      = True
 print "Looking for:%s" % enkf_config
