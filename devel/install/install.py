@@ -117,9 +117,12 @@ class File:
         (target_base , ext) = os.path.splitext( target_file )
         if ext == ".py":
             msg( verbose , "Byte compiling" , target_file)
-            py_compile.compile( target_file )
-            pyc_file = target_base + ".pyc"
-            update_mode( pyc_file , modes[1] , user , group)
+            try:
+                py_compile.compile( target_file )
+                pyc_file = target_base + ".pyc"
+                update_mode( pyc_file , modes[1] , user , group)
+            except:
+                pass # Some permissions missing ...
                         
                 
 
