@@ -16,6 +16,7 @@
    for more details. 
 */
 
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,11 +38,17 @@ struct analysis_config_struct {
   double                  overlap_alpha;
   double                  std_cutoff;
   enkf_mode_type          enkf_mode;
-  pseudo_inversion_type   inversion_mode;            /* Fixed to SVD_SS_N1_R */ 
-  char                  * log_path;                  /* Points to directory with update logs. */
-  int                     nfolds_CV;                 /* Number of folds in the CV scheme */
-  bool                    do_local_cross_validation; /* Should we do CV for separate state vector matrices? */
-  bool                    bootstrap;              /* Should we do bootstrapping?*/
+  pseudo_inversion_type   inversion_mode;              /* Fixed to SVD_SS_N1_R */ 
+  char                  * log_path;                    /* Points to directory with update logs. */
+  int                     nfolds_CV;                   /* Number of folds in the CV scheme */
+  int                     kernel_function;             /* Each kernel function are assigned their own integer, 1 = Gaussian,2 = ... */
+  int                     kernel_param;                 /* Scaling factor used in the kernel function */
+  bool                    do_local_cross_validation;   /* Should we do CV for separate state vector matrices? */
+  bool                    bootstrap;                   /* Should we do bootstrapping?*/
+  bool                    do_scaling;                  /* Should we normalise the data? */
+  bool                    do_kernel_regression;        /* Should we uppdate using kernel shrinkage regression? */
+  bool                    do_force_subspace_dimension; /*Should we force the subspace dimension in the SVD? */
+  int                     ncomp;                       /*Actual subspace dimension */
 }; 
 
 
@@ -110,6 +117,37 @@ bool analysis_config_get_do_local_cross_validation(const analysis_config_type * 
   return config->do_local_cross_validation;
 }
 
+bool analysis_config_get_do_scaling(const analysis_config_type * config) {
+  return config->do_scaling;
+}
+
+bool analysis_config_get_do_kernel_regression(const analysis_config_type * config) {
+  return config->do_kernel_regression;
+}
+
+
+bool analysis_config_get_force_subspace_dimension(const analysis_config_type * config) {
+  return config->do_force_subspace_dimension;
+}
+
+int analysis_config_get_subspace_dimension(const analysis_config_type * config) {
+  return config->ncomp;
+}
+
+int analysis_config_get_kernel_function(const analysis_config_type * config) {
+  return config->kernel_function;
+}
+
+int analysis_config_get_kernel_param(const analysis_config_type * config) {
+  return config->kernel_param;
+}
+
+
+
+bool analysis_config_get_do_force_subspace_dimension(const analysis_config_type * config) {
+  return config->do_force_subspace_dimension;
+}
+
 bool analysis_config_get_bootstrap(const analysis_config_type * config) {
   return config->bootstrap;
 }
@@ -118,8 +156,29 @@ static void analysis_config_set_bootstrap(analysis_config_type * config , bool b
   config->bootstrap = bootstrap;
 }
 
+static void analysis_config_set_do_scaling(analysis_config_type * config , bool do_scaling) {
+  config->do_scaling = do_scaling;
+}
+
+static void analysis_config_set_do_kernel_regression(analysis_config_type * config , bool do_kernel_regression) {
+  config->do_kernel_regression = do_kernel_regression;
+}
+
+static void analysis_config_set_kernel_function(analysis_config_type * config , int kernel_function) {
+  config->kernel_function = kernel_function;
+}
+
+static void analysis_config_set_kernel_param(analysis_config_type * config , int kernel_param) {
+  config->kernel_param = kernel_param;
+}
+
+
 static void analysis_config_set_CV(analysis_config_type * config , bool CV) {
   config->do_local_cross_validation = CV;
+}
+
+static void analysis_config_set_force_subspace_dimension(analysis_config_type * config , bool do_force) {
+  config->do_force_subspace_dimension = do_force;
 }
 
 void analysis_config_set_truncation( analysis_config_type * config , double truncation) {
@@ -140,6 +199,10 @@ void analysis_config_set_enkf_mode( analysis_config_type * config , enkf_mode_ty
 
 void analysis_config_set_nfolds_CV( analysis_config_type * config , int folds) {
   config->nfolds_CV = folds;
+}
+
+void analysis_config_set_subspace_dimension( analysis_config_type * config , int dimension) {
+  config->ncomp = dimension;
 }
 
 
@@ -210,6 +273,51 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   if (config_item_set( config , ENKF_BOOTSTRAP_KEY)) 
     analysis_config_set_bootstrap( analysis , config_get_value_as_bool( config , ENKF_BOOTSTRAP_KEY ));
 
+  /* Scaling of parameter */
+  if (config_item_set( config , ENKF_SCALING_KEY)) 
+    analysis_config_set_do_scaling( analysis , config_get_value_as_bool( config , ENKF_SCALING_KEY ));
+
+  /*Kernel shrinkage regression */
+  if (config_item_set( config , ENKF_KERNEL_REG_KEY)) {
+    analysis_config_set_do_kernel_regression( analysis , config_get_value_as_bool( config , ENKF_KERNEL_REG_KEY ));
+
+    /*Set kernel function */
+    if (config_item_set( config, ENKF_KERNEL_FUNC_KEY ))
+      analysis_config_set_kernel_function( analysis, config_get_value_as_int( config, ENKF_KERNEL_FUNC_KEY ));
+
+    /*Set kernel parameter */
+    if (config_item_set( config, ENKF_KERNEL_PARAM_KEY ))
+      analysis_config_set_kernel_param( analysis, config_get_value_as_int( config, ENKF_KERNEL_PARAM_KEY ));
+
+    /* We either force the number of components, use the truncation factor, or we use Cross-validation */
+    if (config_item_set( config , ENKF_FORCE_NCOMP_KEY )) {
+      analysis_config_set_force_subspace_dimension( analysis , config_get_value_as_bool( config , ENKF_FORCE_NCOMP_KEY ));
+      
+      
+      if (config_item_set( config ,ENKF_NCOMP_KEY )) 
+	analysis_config_set_subspace_dimension( analysis, config_get_value_as_int( config, ENKF_NCOMP_KEY ));
+      else if (config_item_set( config ,ENKF_LOCAL_CV_KEY )) {
+	analysis_config_set_CV( analysis , ENKF_LOCAL_CV_KEY);
+	/* Set number of CV folds (default, or user input */
+	if (config_item_set( config , ENKF_CV_FOLDS_KEY ))
+	  analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , ENKF_CV_FOLDS_KEY ));
+      } 
+      else {
+	if (config_item_set( config , ENKF_TRUNCATION_KEY ))
+	  analysis_config_set_truncation( analysis , config_get_value_as_double( config , ENKF_TRUNCATION_KEY ));
+      }
+    }
+    
+  }
+  
+  /* Keys for forcing subspace dimension:*/
+  if (config_item_set( config, ENKF_FORCE_NCOMP_KEY )) {
+    analysis_config_set_force_subspace_dimension( analysis , config_get_value_as_bool( config , ENKF_FORCE_NCOMP_KEY ));
+
+    if (config_item_set( config ,ENKF_NCOMP_KEY )) 
+      analysis_config_set_subspace_dimension( analysis, config_get_value_as_int( config, ENKF_NCOMP_KEY ));
+  }
+
 }
 
 
@@ -263,7 +371,12 @@ analysis_config_type * analysis_config_alloc_default() {
   config->log_path                  = NULL;
 
   analysis_config_set_CV( config                 , DEFAULT_ENKF_CV);
+  analysis_config_set_force_subspace_dimension( config , DEFAULT_ENKF_FORCE_NCOMP);
   analysis_config_set_bootstrap( config          , DEFAULT_ENKF_BOOTSTRAP );
+  analysis_config_set_do_scaling( config         , DEFAULT_ENKF_SCALING );
+  analysis_config_set_do_kernel_regression( config , DEFAULT_ENKF_KERNEL_REG );
+  analysis_config_set_kernel_function( config    , DEFAULT_ENKF_KERNEL_FUNC );
+  analysis_config_set_kernel_param( config       , DEFAULT_ENKF_KERNEL_PARAM );
   analysis_config_set_std_cutoff( config         , DEFAULT_ENKF_STD_CUTOFF );
   analysis_config_set_log_path( config           , DEFAULT_UPDATE_LOG_PATH );
   analysis_config_set_truncation( config         , DEFAULT_ENKF_TRUNCATION );
@@ -273,6 +386,7 @@ analysis_config_type * analysis_config_alloc_default() {
   analysis_config_set_rerun( config              , DEFAULT_RERUN );
   analysis_config_set_rerun_start( config        , DEFAULT_RERUN_START );
   analysis_config_set_nfolds_CV( config          , DEFAULT_CV_NFOLDS );         
+  analysis_config_set_subspace_dimension( config , DEFAULT_NCOMP );         
   
   return config;
 }
@@ -298,6 +412,12 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_BOOTSTRAP_KEY          , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_SCALING_KEY            , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_KERNEL_REG_KEY         , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_KERNEL_FUNC_KEY        , false , CONFIG_INT);
+  config_add_key_value( config , ENKF_KERNEL_PARAM_KEY       , false , CONFIG_INT);
+  config_add_key_value( config , ENKF_FORCE_NCOMP_KEY        , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_NCOMP_KEY              , false , CONFIG_INT);
   config_add_key_value( config , ENKF_CV_FOLDS_KEY           , false , CONFIG_INT);
   config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOLEAN);
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
@@ -359,11 +479,55 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
     fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->do_local_cross_validation ));
   }
 
+  if (config->bootstrap) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_BOOTSTRAP_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->bootstrap ));
+  }
+
+
+  if (config->do_scaling) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_SCALING_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->do_scaling ));
+  }
+
+  if (config->do_kernel_regression) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_KERNEL_REG_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->do_kernel_regression ));
+  }
+
+
+
   if (config->nfolds_CV != DEFAULT_CV_NFOLDS ) {
     fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_CV_FOLDS_KEY );
     fprintf( stream , CONFIG_INT_FORMAT   , config->nfolds_CV );
     fprintf( stream , "\n");
   }
+
+  if (config->kernel_function != DEFAULT_ENKF_KERNEL_FUNC ) {
+    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_KERNEL_FUNC_KEY );
+    fprintf( stream , CONFIG_INT_FORMAT   , config->kernel_function );
+    fprintf( stream , "\n");
+  }
+
+  if (config->kernel_param != DEFAULT_ENKF_KERNEL_PARAM ) {
+    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_KERNEL_PARAM_KEY );
+    fprintf( stream , CONFIG_INT_FORMAT   , config->kernel_param );
+    fprintf( stream , "\n");
+  }
+
+
+  if (config->do_force_subspace_dimension) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_FORCE_NCOMP_KEY );
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->do_force_subspace_dimension ));
+  }
+
+  if (config->ncomp != DEFAULT_NCOMP ) {
+    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_NCOMP_KEY );
+    fprintf( stream , CONFIG_INT_FORMAT   , config->ncomp );
+    fprintf( stream , "\n");
+  }
+
+
 
   fprintf(stream , "\n\n");
 }

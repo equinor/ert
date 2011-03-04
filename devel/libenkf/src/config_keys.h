@@ -16,6 +16,7 @@
    for more details. 
 */
 
+
 #ifndef  __CONFIG_KEYS_H__
 #define  __CONFIG_KEYS_H__
 #ifdef   __cplusplus
@@ -55,6 +56,12 @@ extern "C" {
 #define  ENKF_ALPHA_KEY                    "ENKF_ALPHA"
 #define  ENKF_CROSS_VALIDATION_KEY         "ENKF_CROSS_VALIDATION"
 #define  ENKF_CV_FOLDS_KEY                 "ENKF_CV_FOLDS"     
+#define  ENKF_FORCE_NCOMP_KEY              "ENKF_FORCE_NCOMP"
+#define  ENKF_NCOMP_KEY                    "ENKF_NCOMP"     
+#define  ENKF_SCALING_KEY                  "ENKF_SCALING"     
+#define  ENKF_KERNEL_REG_KEY               "ENKF_KERNEL_REGRESSION"     
+#define  ENKF_KERNEL_FUNC_KEY              "ENKF_KERNEL_FUNCTION"     
+#define  ENKF_KERNEL_PARAM_KEY             "ENKF_KERNEL_PARAM"     
 #define  ENKF_LOCAL_CV_KEY                 "ENKF_LOCAL_CV"     
 #define  ENKF_MERGE_OBSERVATIONS_KEY       "ENKF_MERGE_OBSERVATIONS"
 #define  ENKF_MODE_KEY                     "ENKF_MODE"

@@ -182,6 +182,10 @@ int obs_block_get_size( const obs_block_type * obs_block ) {
   return obs_block->size;
 }
 
+
+/*Function that sets each element of the scaling factor equal to 1 divided by the prior standard deviation (from the
+  obs_data input file.
+*/
 static void obs_block_init_scaling( const obs_block_type * obs_block , double * scale_factor , int * __obs_offset) {
   int obs_offset = *__obs_offset;
   int iobs;
@@ -206,6 +210,22 @@ static void obs_block_init_innov( const obs_block_type * obs_block , const meas_
   }
   *__obs_offset = obs_offset;
 }
+
+
+/*Function for setting the correct elements of the vector of observed data, dObs*/
+static void obs_block_init_dObs( const obs_block_type * obs_block , double * dObs , int * __obs_offset) {
+  int obs_offset = *__obs_offset;
+  int iobs;
+  for (iobs =0; iobs < obs_block->size; iobs++) {
+    if (obs_block->active_mode[iobs] == ACTIVE) {
+      dObs[ obs_offset ] = obs_block->value[ iobs ];
+      obs_offset++;
+    }
+  }
+  *__obs_offset = obs_offset;
+}
+
+
 
 
 static void obs_block_initR( const obs_block_type * obs_block , matrix_type * R, int * __obs_offset) {
@@ -259,6 +279,25 @@ static void obs_block_initE( const obs_block_type * obs_block , matrix_type * E,
   
   *__obs_offset = obs_offset;
 }
+
+
+static void obs_block_initE_non_centred( const obs_block_type * obs_block , matrix_type * E, int * __obs_offset) {
+  int ens_size   = matrix_get_columns( E );
+  int obs_offset = *__obs_offset;
+  int iobs;
+  for (iobs =0; iobs < obs_block->size; iobs++) {
+    if (obs_block->active_mode[iobs] == ACTIVE) {
+      double factor = obs_block->std[iobs];
+      for (int iens = 0; iens < ens_size; iens++) 
+        matrix_imul(E , obs_offset , iens , factor );
+
+      obs_offset++;
+    }
+  }
+  
+  *__obs_offset = obs_offset;
+}
+
 
 
 static void obs_block_initD( const obs_block_type * obs_block , matrix_type * D, int * __obs_offset) {
@@ -384,10 +423,49 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , 
 }
 
 
+/* Function that returns a matrix of independent, normal distributed random vector having mean zero,
+ and variance (covariance) specified in the input (obs_data) file. NOTICE THE DIFFERENCE WITH allocE, WHERE THE
+ RETURNED MATRIX IS CENTRED
+*/
+   
+
+matrix_type * obs_data_allocE_non_centred(const obs_data_type * obs_data , rng_type * rng , int ens_size, int active_size ) {
+  matrix_type * E;
+  
+  E         = matrix_alloc( active_size , ens_size);
+
+  {
+    double * tmp = util_malloc( active_size * ens_size * sizeof * tmp , __func__);
+    int i,j;
+    int k = 0;
+    
+    enkf_util_rand_stdnormal_vector(active_size * ens_size , tmp , rng); 
+    for (j=0; j < ens_size; j++) {
+      for (i=0; i < active_size; i++) {
+        matrix_iset( E , i , j , tmp[k]);
+        k++;
+      }
+    }
+    free(tmp);
+  }
+  
+
+  /*
+    The actual observed data are not accessed before this last block. 
+  */
+  {
+    int obs_offset = 0;
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block = vector_iget_const( obs_data->data , block_nr);
+      obs_block_initE_non_centred( obs_block , E , &obs_offset);
+    }
+  }
 
 
-
-
+  matrix_set_name( E , "E");
+  matrix_assert_finite( E );
+  return E;
+}
 
 matrix_type * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S) {
   matrix_type * D = matrix_alloc_copy( E );
@@ -407,7 +485,28 @@ matrix_type * obs_data_allocD(const obs_data_type * obs_data , const matrix_type
 }
 
 
+matrix_type * obs_data_allocD_kernel(const matrix_type * E  , const matrix_type * S) {
+  matrix_type * D = matrix_alloc_copy( S );
+  matrix_inplace_sub( D , E );
 
+  matrix_set_name( D , "D");
+  matrix_assert_finite( D );
+  return D;
+}
+
+
+/*Function that returns the vector of observed data */
+double * obs_data_alloc_dObs(const obs_data_type * obs_data, int active_size) {
+  double *dObs = util_malloc( active_size * sizeof * dObs , __func__);
+  {
+    int obs_offset = 0;
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block = vector_iget_const( obs_data->data , block_nr);
+      obs_block_init_dObs( obs_block , dObs , &obs_offset);
+    }
+  }
+  return dObs;
+}
 
 
 
@@ -458,6 +557,7 @@ void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_typ
     for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
       const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
       
+      /* Init. the scaling factor ( 1/std(dObs) ) */
       obs_block_init_scaling( obs_block , scale_factor  , &obs_offset);
     }
   }
@@ -465,25 +565,81 @@ void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_typ
 
   for  (iens = 0; iens < ens_size; iens++) {
     for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
+
+      /* Scale the forecasted data so that they (in theory) have the same variance 
+	 (if the prior distribution for the observation errors is correct) */
       matrix_imul(S , iobs_active , iens , scale_factor[iobs_active]);
 
       if (D != NULL)
+	/* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where 
+	   each column contains a copy of the observed data
+	 */
         matrix_imul(D , iobs_active , iens , scale_factor[iobs_active]);
 
       if (E != NULL)
+	/* Same with E (used for low rank representation of the error covariance matrix*/
         matrix_imul(E , iobs_active , iens , scale_factor[iobs_active]);
     }
   }
   
   if (innov != NULL)
+    /* Scale the vector of innovations*/
     for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
       innov[iobs_active] *= scale_factor[iobs_active];
   
   {
+    /* Scale the error covariance matrix*/
     for (int i=0; i < nrobs_active; i++)
       for (int j=0; j < nrobs_active; j++)
         matrix_imul(R , i , j , scale_factor[i] * scale_factor[j]);
   }
+  free(scale_factor);
+}
+
+
+void obs_data_scale_kernel(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , double *dObs) {
+  const int nrobs_active = matrix_get_rows( S );
+  const int ens_size     = matrix_get_columns( S );
+  double * scale_factor  = util_malloc(nrobs_active * sizeof * scale_factor , __func__);
+  int iens, iobs_active;
+  
+  {
+    int obs_offset = 0;
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
+      
+      /* Init. the scaling factor ( 1/std(dObs) ) */
+      obs_block_init_scaling( obs_block , scale_factor  , &obs_offset);
+    }
+  }
+
+
+  for  (iens = 0; iens < ens_size; iens++) {
+    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
+
+      /* Scale the forecasted data so that they (in theory) have the same variance 
+	 (if the prior distribution for the observation errors is correct) */
+      matrix_imul(S , iobs_active , iens , scale_factor[iobs_active]);
+
+      if (D != NULL)
+	/* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where 
+	   each column contains a copy of the observed data
+	 */
+        matrix_imul(D , iobs_active , iens , scale_factor[iobs_active]);
+      
+      if (E != NULL)
+	/* Same with E (used for low rank representation of the error covariance matrix*/
+        matrix_imul(E , iobs_active , iens , scale_factor[iobs_active]);
+    }
+  }
+  
+  /* Scale the vector of observed data*/
+  if (dObs != NULL) {
+    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
+      dObs[iobs_active] *= scale_factor[iobs_active];
+  }
+    
+
   free(scale_factor);
 }
 
