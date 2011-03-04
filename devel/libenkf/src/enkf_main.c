@@ -1456,7 +1456,17 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
           } else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
             /* Update based on Cross validation AND local analysis. */
             enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);
-          } else {
+          } 
+	  else if (analysis_config_get_force_subspace_dimension(enkf_main->analysis_config )) {
+	    printf("Selcting the user defined subspace dimension\n");
+	    /* HERE WE FORCE THE SUBSPACE DIMENSION INSTEAD */
+	    X = enkf_analysis_allocX_force( enkf_main->analysis_config , enkf_main->rng , meas_forecast , obs_data , randrot);
+	    enkf_main_update_mulX( enkf_main , X , ministep , int_vector_get_last( step_list ) , use_count);
+	    /*Dump file to matlab:*/
+	    matrix_matlab_dump( X , "X5_force.mat");
+	    matrix_free( X );
+	  }
+	  else {
             /* Nothing fancy */
             X = enkf_analysis_allocX( enkf_main->analysis_config , enkf_main->rng , meas_forecast , obs_data , randrot);
             enkf_main_update_mulX( enkf_main , X , ministep , int_vector_get_last( step_list ) , use_count);
