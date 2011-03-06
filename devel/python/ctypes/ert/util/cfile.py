@@ -29,14 +29,19 @@ from   ert.cwrap.cwrap       import *
 # The class needs support from the small C based extension module
 # pycfile which will get a Python filehandle and return the underlying
 # FILE * pointer value - this is stored in the c_ptr attribute.
+#
+# Observe that this small class is slightly different from the other
+# thin python classes in that the from_param() method does not contain
+# a ctypes.c_void_p() cast - quite frankly I can not explain why.
+
 
 class CFILE:
     def __init__( self , py_file ):
-        self.c_ptr   =  ctypes.c_long( pycfile( py_file ) )
+        self.c_ptr   =  ctypes.c_void_p( pycfile( py_file ) )
         self.py_file =  py_file
 
     def from_param( self ):
-        return ctypes.c_void_p( self.c_ptr )
+        return self.c_ptr     
 
     def __del__(self):
         pass
