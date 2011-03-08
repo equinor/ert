@@ -32,6 +32,7 @@ from   ecl_sum               import EclSum
 from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
 from   ecl_grid              import EclGrid
 from   ecl_region            import EclRegion
+from   fortio                import FortIO
 from   ecl_util              import *  
 
 

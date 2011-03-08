@@ -18,7 +18,7 @@
 import time
 import datetime
 import ctypes
-from   ert.util.pycfile      import pycfile
+from   ert.util.pycfile      import pycfile       
 from   ert.cwrap.cwrap       import *
 
 
@@ -45,7 +45,6 @@ class CFILE:
 
     def __del__(self):
         pass
-
 
 
 

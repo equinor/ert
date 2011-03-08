@@ -66,4 +66,15 @@ new_p = poro / 7.0
 
 poro.write_grdecl( open("/tmp/poro_cos.grdecl" , "w") )
 
+init_file = ecl.EclFile( "data/eclipse/case/ECLIPSE.INIT" )
+permx_kw = init_file.iget_named_kw( "PERMX" , 0 )
+permx_new = ecl.EclKW.new( "PERMX" , 3 , ecl.ECL_FLOAT_TYPE )
+permx_new[0] = 1
+permx_new[1] = 2
+permx_new[2] = 3
+
+init_file.replace_kw( permx_kw , permx_new )
+fortio = ecl.FortIO( "/tmp/init" , "w")
+init_file.fwrite( fortio )
+fortio.close()
 
