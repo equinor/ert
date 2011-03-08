@@ -107,6 +107,21 @@ class EclFile(object):
         else:
             return None
 
+
+    def replace_kw( self , old_kw , new_kw):
+        # We ensure that this scope owns the new_kw instance; the
+        # new_kw will be handed over to the ecl_file instance, and we
+        # can not give away something we do not alreready own.
+        if not new_kw.data_owner:
+            new_kw = EclKW.copy( new_kw )
+
+        # The ecl_file instance will take responsability for freeing
+        # this ecl_kw instance.
+        new_kw.data_owner = False
+        cfunc.replace_kw( self , old_kw , new_kw , False )
+
+
+
     @property
     def size(self):
         return cfunc.get_size( self )
@@ -133,6 +148,9 @@ class EclFile(object):
     def name(self):
         return cfunc.get_src_file( self )
     
+    def fwrite( self , fortio ):
+        cfunc.fwrite( self , fortio , 0 )
+
 
 
 # 2. Creating a wrapper object around the libecl library, 
@@ -159,4 +177,5 @@ cfunc.get_restart_index         = cwrapper.prototype("int        ecl_file_get_re
 cfunc.insert_kw                 = cwrapper.prototype("void       ecl_file_insert_kw( ecl_file , ecl_kw , bool , char* , int )")
 cfunc.del_kw                    = cwrapper.prototype("void       ecl_file_delete_kw( ecl_file , char* , int)")
 cfunc.get_src_file              = cwrapper.prototype("char*      ecl_file_get_src_file( ecl_file )")
-
+cfunc.replace_kw                = cwrapper.prototype("void       ecl_file_replace_kw( ecl_file , ecl_kw , ecl_kw , bool)")
+cfunc.fwrite                    = cwrapper.prototype("void       ecl_file_fwrite_fortio( ecl_file , fortio , int)")
