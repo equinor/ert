@@ -1,21 +1,3 @@
-/*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'enkf_defaults.h' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
-*/
-
 /**
    This file contains verious default values which are compiled into
    the enkf executable. Everytime you add something here you should
@@ -122,8 +104,14 @@
 #define DEFAULT_RERUN_START        0  
 #define DEFAULT_UPDATE_LOG_PATH    "update_log"
 #define DEFAULT_CV_NFOLDS          10
+#define DEFAULT_NCOMP              1
+#define DEFAULT_ENKF_SCALING       true
+#define DEFAULT_ENKF_KERNEL_REG    false
+#define DEFAULT_ENKF_KERNEL_FUNC   1    /*Default is the Gaussian */
+#define DEFAULT_ENKF_KERNEL_PARAM  1    /*Scale by the maximum value in the distance matrix */
 #define DEFAULT_ENKF_CV            false
 #define DEFAULT_ENKF_BOOTSTRAP     false
+#define DEFAULT_ENKF_FORCE_NCOMP   false
 
 
 /* Default directories. */
@@ -133,8 +121,6 @@
 #define DEFAULT_RFTPATH     "rft"
 
 #define DEFAULT_PRE_CLEAR_RUNPATH   false
-
-
 
 #define DEFAULT_PLOT_WIDTH           1024
 #define DEFAULT_PLOT_HEIGHT           768
