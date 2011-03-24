@@ -19,7 +19,7 @@
 import sys
 import commands
 import os
-sys.path += ["../../../python/ctypes/SDP"]
+sys.path += ["../../../../ERT-Statoil/OldStuff/python/ctypes/SDP"]
 import SDP
 
 local_ert   = "ert"
