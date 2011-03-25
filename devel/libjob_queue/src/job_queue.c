@@ -290,7 +290,6 @@ struct job_queue_struct {
   int                        active_size;                       /* The current number of job slots in the queue. */
   int                        alloc_size;                        /* The current allocated size of jobs array. */
   int                        max_submit;                        /* The maximum number of submit attempts for one job. */
-  int                        max_running;                       /* The maximum number of concurrently running jobs. */
   char                     * run_cmd;                           /* The command which is run (i.e. path to an executable with arguments). */
   char                     * exit_file;                         /* The queue will look for the occurence of this file to detect a failure. */
   char                     * ok_file;                           /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
@@ -853,6 +852,12 @@ static void job_queue_user_exit__( job_queue_type * queue ) {
 
 
 
+/**
+   If the total number of jobs is not known in advance the job_queue_run_jobs
+   function can be called with @num_total_run == 0. In that case it is paramount
+   to call the function job_queue_submit_complete() whan all jobs have been submitted.
+*/
+
 
 void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
   int trylock = pthread_mutex_trylock( &queue->run_mutex );
@@ -918,7 +923,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
             int max_submit     = 5; /* This is the maximum number of jobs submitted in one while() { ... } below. 
                                        Only to ensure that the waiting time before a status update is not too long. */
             int total_active   = queue->status_list[ STATUS_INDEX(JOB_QUEUE_PENDING) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUNNING) ];
-            int num_submit_new = util_int_min( max_submit , queue->max_running - total_active );
+            int num_submit_new = util_int_min( max_submit , job_queue_get_max_running( queue ) - total_active );
           
             new_jobs = false;
             if (queue->status_list[ STATUS_INDEX(JOB_QUEUE_WAITING) ] > 0)   /* We have waiting jobs at all           */
@@ -1200,16 +1205,6 @@ void job_queue_submit_complete( job_queue_type * queue ){
 
 void job_queue_set_driver(job_queue_type * queue , queue_driver_type * driver) {
   queue->driver = driver;
-  {
-    int driver_max_running = queue_driver_get_max_running( driver );
-    job_queue_set_max_running( queue , driver_max_running );
-  }
-}
-
-
-void job_queue_reload_driver( job_queue_type * queue ) {
-  int driver_max_running = queue_driver_get_max_running( queue->driver );
-  job_queue_set_max_running( queue , driver_max_running );
 }
 
 
@@ -1224,7 +1219,6 @@ void job_queue_reload_driver( job_queue_type * queue ) {
 */
 
 void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
-  queue->max_running = max_running;
   queue_driver_set_max_running( queue->driver , max_running );
 }
 
@@ -1232,12 +1226,12 @@ void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
   The return value is the new value for max_running.
 */
 int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
-  job_queue_set_max_running( queue , queue->max_running + delta );
-  return queue->max_running;
+  job_queue_set_max_running( queue , job_queue_get_max_running( queue ) + delta );
+  return job_queue_get_max_running( queue );
 }
 
 int job_queue_get_max_running( const job_queue_type * queue ) {
-  return queue->max_running;
+  return queue_driver_get_max_running( queue->driver );
 }
 
 
@@ -1314,8 +1308,7 @@ static void job_queue_grow( job_queue_type * queue , int alloc_size ) {
    a call to job_queue_set_driver() first.
 */
 
-job_queue_type * job_queue_alloc(int  max_running              , 
-                                 int  max_submit               ,            
+job_queue_type * job_queue_alloc(int  max_submit               ,            
                                  bool external_status_callback ,   /* Should external scope set the final status JOB_QUEUE_ALL_OK / JOB_QUEUE_ALL_FAIL */
                                  const char * ok_file , 
                                  const char * exit_file , 
@@ -1325,7 +1318,6 @@ job_queue_type * job_queue_alloc(int  max_running              ,
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
   queue->jobs            = NULL;
   queue->usleep_time     = 1000000; /* 1 second */
-  queue->max_running     = max_running;
   queue->max_submit      = max_submit;
   queue->driver          = NULL;
   queue->run_cmd         = NULL;
