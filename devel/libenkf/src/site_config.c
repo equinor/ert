@@ -420,18 +420,14 @@ static void site_config_install_LSF_job_queue(site_config_type * site_config ) {
 
 
 void site_config_set_max_running( site_config_type * site_config , int max_running ) {
-  queue_driver_set_max_running( site_config->current_driver , max_running );        /* We set the max running of the current driver */ 
-  if (site_config->job_queue != NULL) 
-    job_queue_reload_driver( site_config->job_queue );                         /* We tell the queue to reload max_running from the driver. */ 
+  queue_driver_set_max_running( site_config->current_driver , max_running );   /* We set the max running of the current driver */ 
 }
 
 
 
 void site_config_set_max_running_lsf( site_config_type * site_config , int max_running_lsf) {
   queue_driver_set_max_running( site_config->lsf_driver , max_running_lsf );
-  if (site_config->job_queue != NULL) 
-    job_queue_reload_driver( site_config->job_queue );
-
+  
   if (!site_config->user_mode) 
     site_config->max_running_lsf_site = max_running_lsf;
 }
@@ -444,9 +440,7 @@ int site_config_get_max_running_lsf( const site_config_type * site_config ) {
 
 void site_config_set_max_running_rsh( site_config_type * site_config , int max_running_rsh) {
   queue_driver_set_max_running( site_config->rsh_driver , max_running_rsh );
-  if (site_config->job_queue != NULL) 
-    job_queue_reload_driver( site_config->job_queue );
-
+  
   if (!site_config->user_mode) 
     site_config->max_running_rsh_site = max_running_rsh;
 }
@@ -458,8 +452,6 @@ int site_config_get_max_running_rsh( const site_config_type * site_config) {
 
 void site_config_set_max_running_local( site_config_type * site_config , int max_running_local) {
   queue_driver_set_max_running( site_config->local_driver , max_running_local );
-  if (site_config->job_queue != NULL) 
-    job_queue_reload_driver( site_config->job_queue );
   
   if (!site_config->user_mode) 
     site_config->max_running_local_site = max_running_local;
@@ -621,7 +613,7 @@ static void site_config_install_job_queue(site_config_type  * site_config ) {
   if (site_config->job_script == NULL)
     util_exit("Must set the path to the job script with the %s key in the site_config / config file\n",JOB_SCRIPT_KEY);
   
-  site_config->job_queue = job_queue_alloc(0 , site_config->max_submit , true , "OK" , "EXIT" , site_config->job_script);
+  site_config->job_queue = job_queue_alloc(site_config->max_submit , true , "OK" , "EXIT" , site_config->job_script);
 
   /* 
      All the various driver options are set, unconditionally of which

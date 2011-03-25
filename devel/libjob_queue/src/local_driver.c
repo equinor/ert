@@ -141,6 +141,7 @@ void * local_driver_submit_job(void * __driver,
                                int           argc,
                                const char ** argv ) {
   local_driver_type * driver = local_driver_safe_cast( __driver );
+  printf("Submitting local job ...\n");
   {
     local_job_type * job    = local_job_alloc();
     arg_pack_type  * arg_pack = arg_pack_alloc();
@@ -149,7 +150,7 @@ void * local_driver_submit_job(void * __driver,
     arg_pack_append_int( arg_pack , argc );
     arg_pack_append_ptr( arg_pack , util_alloc_stringlist_copy( argv , argc ));   /* Due to conflict with threads and python GC we take a local copy. */
     arg_pack_append_ptr( arg_pack , job );
-
+    
     pthread_mutex_lock( &driver->submit_lock );
     job->active = true;
     job->status = JOB_QUEUE_RUNNING;
