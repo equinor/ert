@@ -23,9 +23,8 @@ clib.load("libz" , "libz.so.1")
 # Depending on the Fortran compiler which has been used to compile
 # blas / lapack the there might be an additional dependency on libg2c:
 
-
 try:
-    # First try to load withoug libg2c
+    # First try to load without libg2c
     clib.load("libblas.so" , "libblas.so.3")
     clib.load("liblapack.so")
 except:
@@ -33,6 +32,6 @@ except:
     clib.load("libg2c.so.0")
     clib.load("libblas.so" , "libblas.so.3")
     clib.load("liblapack.so")
-
-
+    
 lib = clib.load("libutil.so")
+    
