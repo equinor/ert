@@ -124,11 +124,10 @@ class JobQueue:
     #  * need for xxx_submit_complete() call. 
 
 
-    def __init__(self , driver , size , max_running , cmd , max_submit = 1):
+    def __init__(self , driver , cmd , max_submit = 1):
         OK_file     = None 
         exit_file   = None
-        self.c_ptr  = cfunc.alloc_queue(max_running , max_submit , False , OK_file , exit_file , cmd )
-        self.size   = size  
+        self.c_ptr  = cfunc.alloc_queue(max_submit , False , OK_file , exit_file , cmd )
         self.driver = driver
         self.jobs   = JobList()
 
@@ -204,8 +203,8 @@ class EclQueue( JobQueue ):
     default_version      = ecl_default.version
 
     
-    def __init__(self , driver , size , max_running , ecl_version = default_version , eclipse_cmd = default_eclipse_cmd):
-        JobQueue.__init__( self , driver , size , max_running , eclipse_cmd )
+    def __init__(self , driver , ecl_version = default_version , eclipse_cmd = default_eclipse_cmd):
+        JobQueue.__init__( self , driver , eclipse_cmd )
         self.ecl_version = ecl_version
 
         

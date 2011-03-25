@@ -111,7 +111,7 @@ class EclFile(object):
     def replace_kw( self , old_kw , new_kw):
         # We ensure that this scope owns the new_kw instance; the
         # new_kw will be handed over to the ecl_file instance, and we
-        # can not give away something we do not alreready own.
+        # can not give away something we do not alreeady own.
         if not new_kw.data_owner:
             new_kw = EclKW.copy( new_kw )
 
@@ -156,6 +156,7 @@ class EclFile(object):
 # 2. Creating a wrapper object around the libecl library, 
 cwrapper = CWrapper( libecl.lib )
 cwrapper.registerType( "ecl_file" , EclFile )
+
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
 #    These functions are used when implementing the EclKW class, not
