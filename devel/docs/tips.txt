@@ -1,4 +1,4 @@
-Table of contents: 
+Table of contents:
 
   1. Static and shared libraries 
   2. About gen_data / gen_param and gen_obs.
