@@ -128,18 +128,19 @@ class File:
 
 
 class Install:
-    def __init__( self , src_root ):
+    def __init__( self , src_root , target_root):
         self.src_root = src_root
+        self.target_root = target_root
         self.file_list = []
         self.link_list = []
         
 
-    def install(self, target_root , modes = (DEFAULT_DIR_MODE , DEFAULT_REG_MODE, DEFAULT_EXE_MODE) , user = None , group = None , verbose = False):
+    def install(self, modes = (DEFAULT_DIR_MODE , DEFAULT_REG_MODE, DEFAULT_EXE_MODE) , user = None , group = None , verbose = False):
         for file in self.file_list:
-            file.install( self.src_root , target_root , modes , verbose , user , group)
+            file.install( self.src_root , self.target_root , modes , verbose , user , group)
         
         for (src,link) in self.link_list:
-            full_link = "%s/%s" % ( target_root , link )
+            full_link = "%s/%s" % ( self.target_root , link )
             print "Link:%s" % full_link
             if os.path.exists( full_link ):
                 print "Trying to remove: %s" % full_link
@@ -147,10 +148,9 @@ class Install:
             else:
                 print "%s does not exist" % full_link
 
-            msg( verbose , "Linking" , "%s/%s -> %s/%s" % (target_root , link , target_root , src))
-            os.symlink( "%s/%s" % (target_root , src), "%s/%s" % (target_root , link ))
+            msg( verbose , "Linking" , "%s/%s -> %s/%s" % (self.target_root , link , self.target_root , src))
+            os.symlink( "%s/%s" % (self.target_root , src), "%s/%s" % (self.target_root , link ))
                  
-            
 
     def add_link( self , src , link , verbose = False):
         self.link_list.append( ( src , link ))
@@ -161,7 +161,9 @@ class Install:
     def add_path( self , path , include_callback = None , create_path = None , recursive = False):
         path_list = []
         for entry in os.listdir( "%s/%s" % (self.src_root , path )):
-            
+            if entry == ".svn":
+                continue
+
             full_path = "%s/%s/%s" % ( self.src_root , path , entry)
 
             include = True
