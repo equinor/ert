@@ -22,8 +22,8 @@ fi
 export ERT_SITE_CONFIG=/project/res/etc/ERT/site-config
 export QT_EXPERIMENTAL=1
 export PYTHON_EXPERIMENTAL=1
-source /project/res/SDP_bashrc
-source /prog/sdpsoft/environment.sh > /dev/null
+source /project/res/SDP_bashrc > /dev/null
+set PYTHON=2.4 ; source /prog/sdpsoft/environment.sh > /dev/null
 
 export ERT_LD_PATH=$SDP_BINDIST/lib/python/lib
 
