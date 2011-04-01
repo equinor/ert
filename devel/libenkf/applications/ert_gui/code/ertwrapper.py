@@ -63,7 +63,6 @@ class ErtWrapper:
 
     def __loadLibrary(self, name , ERT_LD_PATH = None):
         lib = "%s.so" % name
-        print "Loading: %s" % lib
         try:
             if ERT_LD_PATH:
                 lib_handle = CDLL( "%s/%s" % (ERT_LD_PATH , lib) , RTLD_GLOBAL )
