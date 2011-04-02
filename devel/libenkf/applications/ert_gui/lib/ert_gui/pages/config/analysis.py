@@ -18,12 +18,12 @@
 # ----------------------------------------------------------------------------------------------
 # Analysis tab
 # ----------------------------------------------------------------------------------------------
-from widgets.checkbox import CheckBox
-import ertwrapper
-from widgets.spinnerwidgets import IntegerSpinner, DoubleSpinner, DoubleSpinner
-import widgets.tablewidgets
-from widgets.pathchooser import PathChooser
-from widgets.combochoice import ComboChoice
+from ert_gui.widgets.checkbox import CheckBox
+import ert.ertwrapper as ertwrapper
+from ert_gui.widgets.spinnerwidgets import IntegerSpinner, DoubleSpinner, DoubleSpinner
+import ert_gui.widgets.tablewidgets
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.combochoice import ComboChoice
 from PyQt4 import QtGui
 
 def createAnalysisPage(configPanel, parent):
@@ -48,7 +48,7 @@ def createAnalysisPage(configPanel, parent):
     r.getter = lambda ert : ert.enkf.model_config_get_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main))
     r.setter = lambda ert, value : ert.enkf.model_config_set_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main), str(value))
 
-    r = configPanel.addRow(widgets.tablewidgets.KeywordList(parent, "Local config", "config/analysis/local_config"))
+    r = configPanel.addRow(ert_gui.widgets.tablewidgets.KeywordList(parent, "Local config", "config/analysis/local_config"))
     r.newKeywordPopup = lambda list : QtGui.QFileDialog.getOpenFileName(r, "Select a path", "")
     r.initialize = lambda ert : [ert.prototype("long local_config_get_config_files(long)"),
                                  ert.prototype("long enkf_main_get_local_config(long)"),

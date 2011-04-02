@@ -15,21 +15,21 @@
 #  for more details. 
 
 
-from erttypes import time_t
-from widgets.helpedwidget import ContentModel
-from widgets.util import print_timing, resourceIcon
-from pages.config.parameters.parametermodels import DataModel, KeywordModel, FieldModel, SummaryModel
-from pages.config.parameters.parameterpanel import Parameter
-import ertwrapper
-import enums
+from ert.erttypes import time_t
+from ert_gui.widgets.helpedwidget import ContentModel
+from ert_gui.widgets.util import print_timing, resourceIcon
+from ert_gui.pages.config.parameters.parametermodels import DataModel, KeywordModel, FieldModel, SummaryModel
+from ert_gui.pages.config.parameters.parameterpanel import Parameter
+import ert.ertwrapper as ertwrapper
+import ert.enums as enums
 import sys
-from enums import obs_impl_type
+from ert.enums import obs_impl_type
 
-from pages.plot.ensemblefetcher import EnsembleFetcher
-from pages.plot.rftfetcher import RFTFetcher
+from ensemblefetcher import EnsembleFetcher
+from rftfetcher import RFTFetcher
 from PyQt4.QtGui import QFrame
 from PyQt4.QtCore import SIGNAL, QObject
-import widgets
+import ert_gui.widgets as widgets
 
 
 

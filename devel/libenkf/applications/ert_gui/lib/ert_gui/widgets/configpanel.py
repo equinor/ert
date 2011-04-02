@@ -16,7 +16,7 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.util import createSeparator
+from util import createSeparator
 
 class ConfigPanel(QtGui.QTabWidget):
     """Convenience class for a tabbed configuration panel"""

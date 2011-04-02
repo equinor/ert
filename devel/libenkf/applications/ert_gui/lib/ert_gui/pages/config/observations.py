@@ -18,10 +18,10 @@
 # ----------------------------------------------------------------------------------------------
 # Observations tab
 # ----------------------------------------------------------------------------------------------
-from widgets.combochoice import ComboChoice
-from widgets.pathchooser import PathChooser
-from enums import history_source_type
-from widgets.reloadbutton import ReloadButton
+from ert_gui.widgets.combochoice import ComboChoice
+from ert_gui.widgets.pathchooser import PathChooser
+from ert.enums import history_source_type
+from ert_gui.widgets.reloadbutton import ReloadButton
 
 def createObservationsPage(configPanel, parent):
     configPanel.startPage("Observations")

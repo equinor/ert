@@ -19,18 +19,18 @@
 # Simulations tab
 # ----------------------------------------------------------------------------------------------
 from PyQt4 import QtCore
-from widgets.spinnerwidgets import IntegerSpinner
-import ertwrapper
-from widgets.tablewidgets import KeywordTable
-from widgets.pathchooser import PathChooser
-from widgets.checkbox import CheckBox
-from widgets.configpanel import ConfigPanel
-from widgets.stringbox import StringBox
-from pages.config.jobs.forwardmodelpanel import ForwardModelPanel
-from pages.config.simulations.runpathpanel import RunpathMemberList, RunpathMemberPanel
-from enums import keep_runpath_type
-from pages.config.simulations.runtemplatepanel import RunTemplatePanel
-import widgets.helpedwidget
+from ert_gui.widgets.spinnerwidgets import IntegerSpinner
+import ert.ertwrapper as ertwrapper
+from ert_gui.widgets.tablewidgets import KeywordTable
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.checkbox import CheckBox
+from ert_gui.widgets.configpanel import ConfigPanel
+from ert_gui.widgets.stringbox import StringBox
+from jobs.forwardmodelpanel import ForwardModelPanel
+from simulations.runpathpanel import RunpathMemberList, RunpathMemberPanel
+from ert.enums import keep_runpath_type
+from simulations.runtemplatepanel import RunTemplatePanel
+import ert_gui.widgets.helpedwidget
 import os
 
 def createSimulationsPage(configPanel, parent):

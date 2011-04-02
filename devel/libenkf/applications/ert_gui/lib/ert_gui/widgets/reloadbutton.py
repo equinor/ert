@@ -16,7 +16,7 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.helpedwidget import HelpedWidget
+from helpedwidget import HelpedWidget
 
 class ReloadButton(HelpedWidget):
     """Presents a reload button. """

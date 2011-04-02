@@ -47,7 +47,7 @@ echo "-----------------------------------------------------------------"
 if [ "$1" = "debug" ]
 then
     export CONFIG_FILE="$2"
-    gdb python --command=$ert_gud_dir/bin/gdbcommands
+    gdb python --command=$ert_gui_dir/bin/gdbcommands
 elif [ "$1" = "strace" ]
 then
     strace -e trace=file python $ert_gui_dir/code/main.py "$2"

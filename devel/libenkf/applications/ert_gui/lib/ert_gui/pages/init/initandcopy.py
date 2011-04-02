@@ -15,11 +15,11 @@
 #  for more details. 
 
 
-from widgets.helpedwidget import HelpedWidget
-import ertwrapper
+from ert_gui.widgets.helpedwidget import HelpedWidget
+from ert import ertwrapper
 from PyQt4 import QtGui, QtCore
-from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, getItemsFromList
-from enums import ert_state_enum
+from ert_gui.widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, getItemsFromList
+from ert.enums import ert_state_enum
 
 class ParametersAndMembers(HelpedWidget):
 

@@ -18,15 +18,15 @@
 #----------------------------------------------------------------------------------------------
 # System tab
 # ----------------------------------------------------------------------------------------------
-from widgets.pathchooser import PathChooser
-from widgets.configpanel import ConfigPanel
-from widgets.tablewidgets import KeywordTable, KeywordList
-import ertwrapper
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.configpanel import ConfigPanel
+from ert_gui.widgets.tablewidgets import KeywordTable, KeywordList
+import ert.ertwrapper as ertwrapper
 from PyQt4 import QtGui, QtCore
-from pages.config.jobs.jobspanel import JobsPanel, Job
+from jobs.jobspanel import JobsPanel, Job
 import os
-import widgets.spinnerwidgets
-from widgets.activelabel import ActiveLabel
+import ert_gui.widgets.spinnerwidgets
+from ert_gui.widgets.activelabel import ActiveLabel
 
 def createSystemPage(configPanel, parent):
     configPanel.startPage("System")
@@ -174,7 +174,7 @@ def createSystemPage(configPanel, parent):
     r.getter = lambda ert : ert.util.log_get_filename(ert.logh)
     r.setter = lambda ert, value : ert.util.log_reset_filename(ert.logh, value)
 
-    r = configPanel.addRow(widgets.spinnerwidgets.IntegerSpinner(parent, "Log level", "config/systemenv/log_level", 0, 1000))
+    r = configPanel.addRow(ert_gui.widgets.spinnerwidgets.IntegerSpinner(parent, "Log level", "config/systemenv/log_level", 0, 1000))
     r.initialize = lambda ert : [ert.prototype("int log_get_level(long)", lib=ert.util),
                                  ert.prototype("void log_set_level(long, int)", lib=ert.util)]
     r.getter = lambda ert : ert.util.log_get_level(ert.logh)

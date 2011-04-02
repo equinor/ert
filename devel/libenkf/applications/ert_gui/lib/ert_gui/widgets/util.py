@@ -21,7 +21,7 @@ import time
 
 def resourceIcon(name):
     """Load an image as an icon"""
-    return QtGui.QIcon(os.path.dirname(__file__) + "/../../img/" + name)
+    return QtGui.QIcon(os.path.dirname(__file__) + "/../../../img/" + name)
 
 def resourceStateIcon(on, off):
     """Load two images as an icon with on and off states"""
@@ -32,7 +32,7 @@ def resourceStateIcon(on, off):
 
 def resourceImage(name):
     """Load an image as a Pixmap"""
-    return QtGui.QPixmap(os.path.dirname(__file__) + "/../../img/" + name)
+    return QtGui.QPixmap(os.path.dirname(__file__) + "/../../../img/" + name)
 
 
 class ListCheckPanel(QtGui.QHBoxLayout):

@@ -16,15 +16,15 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.cogwheel import Cogwheel
-from pages.run.legend import Legend
-from pages.run.simulation import SimulationItemDelegate, SimulationList, SimulationItem, Simulation, SimulationPanel, SimulationStatistics
+from ert_gui.widgets.cogwheel import Cogwheel
+from legend import Legend
+from simulation import SimulationItemDelegate, SimulationList, SimulationItem, Simulation, SimulationPanel, SimulationStatistics
 
 import threading
 import time
-import ertwrapper
-from widgets.util import getItemsFromList
-from enums import ert_job_status_type
+import ert.ertwrapper as ertwrapper
+from ert_gui.widgets.util import getItemsFromList
+from ert.enums import ert_job_status_type
 from PyQt4.QtGui import QApplication
 
 class SimulationsDialog(QtGui.QDialog):
@@ -217,8 +217,8 @@ class SimulationsDialogController:
 
             while(self.runthread.isAlive()):
                 for member in selectedMembers:
-                    state = ert.enkf.enkf_main_iget_state(ert.main, member)
-                    status = ert.enkf.enkf_state_get_run_status(state)
+                    state = ert.enkf.enkf_main_iget_state( ert.main , member)
+                    status = ert.enkf.enkf_state_get_run_status( state )
 
                     simulations[member].simulation.setStatus(ert_job_status_type.resolveValue(status))
 

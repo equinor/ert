@@ -15,16 +15,16 @@
 #  for more details. 
 
 
-from widgets.helpedwidget import HelpedWidget, ContentModel
-from widgets.searchablelist import SearchableList
+from ert_gui.widgets.helpedwidget import HelpedWidget, ContentModel
+from ert_gui.widgets.searchablelist import SearchableList
 from PyQt4 import QtGui, QtCore
-from widgets.pathchooser import PathChooser
-from widgets.validateddialog import ValidatedDialog
-import widgets.util
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.validateddialog import ValidatedDialog
+import ert_gui.widgets.util
 import os
-from widgets.util import ValidationInfo
-from pages.config.jobs.jobsdialog import EditJobDialog
-from widgets.stringbox import StringBox
+from ert_gui.widgets.util import ValidationInfo
+from jobsdialog import EditJobDialog
+from ert_gui.widgets.stringbox import StringBox
 
 class ForwardModelPanel(HelpedWidget):
     """
@@ -40,7 +40,7 @@ class ForwardModelPanel(HelpedWidget):
 
         self.createWidgets(parent)
 
-        self.emptyPanel = widgets.util.createEmptyPanel()
+        self.emptyPanel = ert_gui.widgets.util.createEmptyPanel()
 
         self.pagesWidget = QtGui.QStackedWidget()
         self.pagesWidget.addWidget(self.emptyPanel)
@@ -59,7 +59,7 @@ class ForwardModelPanel(HelpedWidget):
         self.connect(self.searchableList, QtCore.SIGNAL('orderChanged(list)'), self.forwardModelChanged)
 
 
-        self.forward_model_panel = widgets.util.createEmptyPanel()
+        self.forward_model_panel = ert_gui.widgets.util.createEmptyPanel()
 
         layout = QtGui.QFormLayout()
         layout.setLabelAlignment(QtCore.Qt.AlignRight)
@@ -72,12 +72,12 @@ class ForwardModelPanel(HelpedWidget):
 
         layout.addRow("Arguments:", self.forward_model_args)
 
-        layout.addRow(widgets.util.createSpace(20))
+        layout.addRow(ert_gui.widgets.util.createSpace(20))
 
         self.help_text = QtGui.QLabel()
         self.help_text.setText("")
 
-        layout.addRow(widgets.util.centeredWidget(self.help_text))
+        layout.addRow(ert_gui.widgets.util.centeredWidget(self.help_text))
 
         self.forward_model_panel.setLayout(layout)
         self.modelConnect('jobListChanged()', self.fetchContent)

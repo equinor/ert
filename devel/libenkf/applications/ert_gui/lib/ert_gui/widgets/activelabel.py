@@ -17,7 +17,7 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.helpedwidget import HelpedWidget
+from helpedwidget import HelpedWidget
 
 class ActiveLabel(HelpedWidget):
     """Label shows a string. The data structure expected from the getter is a string."""

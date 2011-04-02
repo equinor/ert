@@ -16,12 +16,12 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.combochoice import ComboChoice
-from widgets.stringbox import DoubleBox
-from widgets.pathchooser import PathChooser
-from pages.config.parameters.parametermodels import DataModel
-import enums
-import widgets.helpedwidget
+from ert_gui.widgets.combochoice import ComboChoice
+from ert_gui.widgets.stringbox import DoubleBox
+from ert_gui.widgets.pathchooser import PathChooser
+from parametermodels import DataModel
+import ert.enums as enums
+import ert_gui.widgets.helpedwidget
 
 class DataPanel(QtGui.QFrame):
 
@@ -84,7 +84,7 @@ class DataPanel(QtGui.QFrame):
         self.dataModel.emitUpdate()
 
     def modelWrap(self, widget, attribute):
-        widget.initialize = widgets.helpedwidget.ContentModel.emptyInitializer
+        widget.initialize = ert_gui.widgets.helpedwidget.ContentModel.emptyInitializer
         widget.setter = lambda model, value: self.dataModel.set(attribute, value)
         widget.getter = lambda model: self.dataModel[attribute]
 

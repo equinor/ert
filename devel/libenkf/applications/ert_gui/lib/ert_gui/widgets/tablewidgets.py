@@ -17,7 +17,7 @@
 
 from PyQt4 import QtGui, QtCore
 from helpedwidget import *
-from widgets.util import *
+from util         import *
 
 class OrderWidget(QtGui.QWidget):
     """

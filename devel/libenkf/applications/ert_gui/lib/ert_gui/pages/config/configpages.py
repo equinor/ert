@@ -15,7 +15,7 @@
 #  for more details. 
 
 
-from widgets.configpanel import ConfigPanel
+from   ert_gui.widgets.configpanel import ConfigPanel
 import eclipse
 import analysis
 import queuesystem

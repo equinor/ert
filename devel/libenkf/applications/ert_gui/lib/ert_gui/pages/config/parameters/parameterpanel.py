@@ -17,19 +17,19 @@
 
 from PyQt4 import QtGui, QtCore
 
-from widgets.helpedwidget import *
-from widgets.tablewidgets import AddRemoveWidget
-from widgets import util
-from widgets.pathchooser import PathChooser
-from widgets.combochoice import ComboChoice
-import widgets.stringbox
+from ert_gui.widgets.helpedwidget import *
+from ert_gui.widgets.tablewidgets import AddRemoveWidget
+from ert_gui.widgets import util
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.combochoice import ComboChoice
+import ert_gui.widgets.stringbox
 from fieldpanel import *
 from parameterdialog import ParameterDialog
-from widgets.searchablelist import SearchableList
-from pages.config.parameters.datapanel import DataPanel
-from pages.config.parameters.keywordpanel import KeywordPanel
-import widgets.util
-from pages.config.parameters.parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
+from ert_gui.widgets.searchablelist import SearchableList
+from datapanel import DataPanel
+from keywordpanel import KeywordPanel
+import ert_gui.widgets.util
+from parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
 from PyQt4.QtCore import SIGNAL
 
 class ParameterPanel(HelpedWidget):
@@ -45,7 +45,7 @@ class ParameterPanel(HelpedWidget):
 
         self.pagesWidget = QtGui.QStackedWidget()
 
-        self.emptyPanel = widgets.util.createEmptyPanel()
+        self.emptyPanel = ert_gui.widgets.util.createEmptyPanel()
 
         self.fieldPanel = FieldPanel(self)
         self.dataPanel = DataPanel(self)

@@ -20,9 +20,9 @@ import matplotlib.lines
 import matplotlib.text
 
 import numpy
-import erttypes
-import pages.plot.plotsettings
-from pages.plot.plotrenderer import DefaultPlotRenderer
+import ert.erttypes as erttypes
+import plotsettings
+from plotrenderer import DefaultPlotRenderer
 
 class PlotFigure:
     """A simple wrapper for a matplotlib Figure. Associated with a specified renderer."""

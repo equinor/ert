@@ -300,7 +300,7 @@ class PlotSettingsLoader:
 
 from PyQt4.QtGui import QDialog, QFormLayout, QLabel, QDialogButtonBox, QComboBox, QCheckBox
 from PyQt4.QtCore import Qt, SIGNAL
-from widgets.util import createSpace
+from ert_gui.widgets.util import createSpace
 
 class PlotSettingsCopyDialog(QDialog):
     """A dialog for selecting what settings to copy from another settings file."""

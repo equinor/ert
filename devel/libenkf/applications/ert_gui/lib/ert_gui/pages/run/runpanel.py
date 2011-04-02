@@ -16,18 +16,18 @@
 
 
 from PyQt4 import QtGui, QtCore
-import ertwrapper
+from ert import ertwrapper
 
-from widgets.helpedwidget import HelpedWidget, ContentModel
-from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, createSpace, getItemsFromList, frange
+from ert_gui.widgets.helpedwidget import HelpedWidget, ContentModel
+from ert_gui.widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, createSpace, getItemsFromList, frange
 import threading
 import time
-import widgets
+#import widgets
 import math
-from widgets.cogwheel import Cogwheel
-from pages.run.simulation import SimulationList, SimulationItemDelegate, SimulationItem, Simulation
-from pages.run.legend import Legend
-from pages.run.simulationsdialog import SimulationsDialog
+from ert_gui.widgets.cogwheel import Cogwheel
+from simulation import SimulationList, SimulationItemDelegate, SimulationItem, Simulation
+from legend import Legend
+from simulationsdialog import SimulationsDialog
 
 class RunWidget(HelpedWidget):
     """A widget that shows simulation parameters and the possibility to start the simulation"""

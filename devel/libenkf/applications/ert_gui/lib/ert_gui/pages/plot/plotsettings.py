@@ -15,9 +15,9 @@
 #  for more details. 
 
 
-from pages.plot.plotconfig import PlotConfig
+from plotconfig import PlotConfig
 import matplotlib
-from erttypes import time_t
+from ert.erttypes import time_t
 import datetime
 from  PyQt4.QtCore import QObject, SIGNAL
 

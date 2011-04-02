@@ -16,7 +16,7 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.validateddialog import ValidatedDialog
+from ert_gui.widgets.validateddialog import ValidatedDialog
 
 class ParameterDialog(ValidatedDialog):
     """A dialog for creating parameters based on type and name. Performs validation of name."""

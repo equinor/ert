@@ -16,9 +16,9 @@
 
 
 from PyQt4 import QtGui, QtCore
-from enums import keep_runpath_type
-from widgets.helpedwidget import HelpedWidget
-from pages.run.legend import Legend
+from ert.enums import keep_runpath_type
+from ert_gui.widgets.helpedwidget import HelpedWidget
+from ert_gui.pages.run.legend import Legend
 
 class RunpathMemberList(QtGui.QListWidget):
     """A list widget with custom items representing members"""
