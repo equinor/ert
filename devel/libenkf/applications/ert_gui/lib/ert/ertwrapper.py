@@ -41,8 +41,7 @@ class ErtWrapper:
         self.__registerDefaultTypes()
 
         
-    def bootstrap(self, enkf_config , site_config="/project/res/etc/ERT/site-config", strict = True):
-        #bootstrap
+    def bootstrap(self, enkf_config , site_config , strict = True):
         self.prototype("long enkf_main_bootstrap(char*, char*, bool)")
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config, strict)
         print "\nBootstrap complete!"
@@ -61,19 +60,13 @@ class ErtWrapper:
         atexit.register(self.cleanup)
 
 
-    def __loadLibrary(self, name , ERT_LD_PATH = None):
+    def __loadLibrary(self, name):
         lib = "%s.so" % name
         try:
-            if ERT_LD_PATH:
-                lib_handle = CDLL( "%s/%s" % (ERT_LD_PATH , lib) , RTLD_GLOBAL )
-            else:
-                lib_handle = CDLL( lib, RTLD_GLOBAL )
+            lib_handle = CDLL( lib, RTLD_GLOBAL )
             return lib_handle
         except: 
-            if ERT_LD_PATH:
-                raise AssertionError("Can not find library: %s/%s " % (ERT_LD_PATH , lib))
-            else:
-                raise AssertionError("Can not find library: %s" % (name))
+            raise AssertionError("Can not find library: %s" % (name))
             
 
 
@@ -91,17 +84,17 @@ class ErtWrapper:
         else:
             sys.exit("Need a value for environment variable LSF_HOME")
         
-        ERT_LD_PATH = os.getenv("ERT_LD_PATH")
-        self.util = self.__loadLibrary( "libutil" , ERT_LD_PATH)
-        self.ecl  = self.__loadLibrary( "libecl" , ERT_LD_PATH )
-        self.__loadLibrary( "libsched" , ERT_LD_PATH)
-        self.__loadLibrary("librms"    , ERT_LD_PATH)
-        self.__loadLibrary("libconfig" , ERT_LD_PATH)
-        self.job_queue = self.__loadLibrary( "libjob_queue" , ERT_LD_PATH)
-        self.enkf      = self.__loadLibrary( "libenkf" , ERT_LD_PATH )
+        self.util = self.__loadLibrary( "libutil" )
+        self.ecl  = self.__loadLibrary( "libecl" )
+        self.__loadLibrary( "libsched" )
+        self.__loadLibrary("librms"    )
+        self.__loadLibrary("libconfig" )
+        self.job_queue = self.__loadLibrary( "libjob_queue" )
+        self.enkf      = self.__loadLibrary( "libenkf" )
 
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug("/prog/sdpsoft/python2.4/bin/python")
+
         
     def __registerDefaultTypes(self):
         """Registers the default available types for prototyping."""
@@ -290,9 +283,9 @@ class ErtWrapper:
 
     def __getErtPointer(self, function):
         """Returns a pointer from ERT as a c_long (64-bit support)"""
-        func = getattr(self.enkf, function)
+        func = getattr( self.enkf, function )
         func.restype = c_long   # Should be c_size_t - if that exists.
-        return func(self.main)
+        return func( self.main )
 
     
     def createBoolVector(self, size, list):

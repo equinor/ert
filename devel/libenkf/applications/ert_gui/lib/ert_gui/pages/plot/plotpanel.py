@@ -16,27 +16,27 @@
 
 
 from PyQt4 import QtGui, QtCore
-from pages.config.parameters.parameterpanel import Parameter
-from pages.plot.plotview import PlotView
-import ertwrapper
-import pages.config.parameters.parameterpanel
-import widgets.helpedwidget
-from widgets.helpedwidget import ContentModel
-from pages.config.parameters.parametermodels import DataModel, FieldModel, KeywordModel, SummaryModel
-from pages.plot.plotdata import PlotContextDataFetcher, PlotDataFetcher, enums
-import widgets.util
+from ert_gui.pages.config.parameters.parameterpanel import Parameter
+from ert_gui.pages.plot.plotview import PlotView
+import ert.ertwrapper as ertwrapper
+import ert_gui.pages.config.parameters.parameterpanel
+import ert_gui.widgets.helpedwidget
+from ert_gui.widgets.helpedwidget import ContentModel
+from ert_gui.pages.config.parameters.parametermodels import DataModel, FieldModel, KeywordModel, SummaryModel
+from ert_gui.pages.plot.plotdata import PlotContextDataFetcher, PlotDataFetcher, enums
+import ert_gui.widgets.util
 import datetime
 import time
 import matplotlib.dates
-from pages.plot.zoomslider import ZoomSlider
-from widgets.configpanel import ConfigPanel
+from zoomslider import ZoomSlider
+from ert_gui.widgets.configpanel import ConfigPanel
 from PyQt4.Qt import SIGNAL
 from PyQt4.QtCore import QDate, Qt, QPoint
-from pages.plot.plotconfig import PlotConfigPanel
+from plotconfig import PlotConfigPanel
 from PyQt4.QtGui import QTabWidget, QFormLayout, QFrame, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QToolButton, QMainWindow
 from PyQt4.QtGui import QCalendarWidget
-import pages.plot.plotsettings
-import erttypes
+import plotsettings
+import ert.erttypes as erttypes
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -132,7 +132,7 @@ class PlotPanel(QtGui.QWidget):
 
             self.plot.drawPlot()
 
-    @widgets.util.may_take_a_long_time
+    @ert_gui.widgets.util.may_take_a_long_time
     def select(self, current, previous):
         if current:
             self.plotDataFetcher.setParameter(current, self.plotContextDataFetcher.data)
@@ -232,7 +232,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         layout.addRow("Y max:", self.y_max)
 
 
-        layout.addWidget(widgets.util.createSeparator())
+        layout.addWidget(ert_gui.widgets.util.createSeparator())
 
         self.plot_compare_to_case = QtGui.QComboBox()
         self.plot_compare_to_case.setToolTip("Select case to compare members against.")
@@ -256,17 +256,17 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         button_layout = QHBoxLayout()
 
         self.import_button = QtGui.QPushButton()
-        self.import_button.setIcon(widgets.util.resourceIcon("plugin"))
+        self.import_button.setIcon(ert_gui.widgets.util.resourceIcon("plugin"))
         self.import_button.setIconSize(QtCore.QSize(16, 16))
         self.import_button.setToolTip("Copy settings from another plot.")
 
         self.save_button = QtGui.QPushButton()
-        self.save_button.setIcon(widgets.util.resourceIcon("disk"))
+        self.save_button.setIcon(ert_gui.widgets.util.resourceIcon("disk"))
         self.save_button.setIconSize(QtCore.QSize(16, 16))
         self.save_button.setToolTip("Save a plot.")
 
         self.save_many_button = QtGui.QPushButton()
-        self.save_many_button.setIcon(widgets.util.resourceIcon("save_plots"))
+        self.save_many_button.setIcon(ert_gui.widgets.util.resourceIcon("save_plots"))
         self.save_many_button.setIconSize(QtCore.QSize(16, 16))
         self.save_many_button.setToolTip("Save all configured plots.")
 
@@ -313,7 +313,7 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         return frame
 
     def plotSelectionChanged(self, selected_members):
-        if isinstance(selected_members, pages.plot.plotsettings.PlotSettings):
+        if isinstance(selected_members, plotsettings.PlotSettings):
             selected_members = selected_members.getSelectedMembers()
         text = ""
         for member in selected_members:

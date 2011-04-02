@@ -16,10 +16,10 @@
 
 
 from fetcher import PlotDataFetcherHandler
-import ertwrapper
-import enums
-import pages.plot.plotdata
-from enums import ert_state_enum, obs_impl_type
+import ert.ertwrapper as ertwrapper
+import ert.enums as enums
+import plotdata
+from ert.enums import ert_state_enum, obs_impl_type
 import numpy
 
 class RFTFetcher(PlotDataFetcherHandler):

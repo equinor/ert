@@ -18,15 +18,15 @@
 import os
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt4.QtGui import QFrame, QSizePolicy, QVBoxLayout, QCursor, QDialog, QDialogButtonBox
-from pages.plot.plotfigure import PlotFigure
+from plotfigure import PlotFigure
 from PyQt4.QtCore import Qt, QPoint, QSize, SIGNAL
 from PyQt4.QtGui import QProgressBar, QApplication
 import threading
 from plotsettingsxml import PlotSettingsLoader
 from plotsettings import PlotSettings
-from pages.plot.plotdata import PlotContextDataFetcher, PlotDataFetcher
-from pages.config.parameters.parametermodels import SummaryModel, KeywordModel
-import enums
+from plotdata import PlotContextDataFetcher, PlotDataFetcher
+from ert_gui.pages.config.parameters.parametermodels import SummaryModel, KeywordModel
+import ert.enums as enums
 
 class PlotGenerator(QFrame):
 

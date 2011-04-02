@@ -18,13 +18,13 @@
 # ----------------------------------------------------------------------------------------------
 # Queue System tab
 # ----------------------------------------------------------------------------------------------
-from widgets.configpanel import ConfigPanel
-from widgets.combochoice import ComboChoice
-import ertwrapper
-from widgets.stringbox import StringBox
-from widgets.pathchooser import PathChooser
-from widgets.spinnerwidgets import IntegerSpinner
-from widgets.tablewidgets import KeywordTable
+from ert_gui.widgets.configpanel import ConfigPanel
+from ert_gui.widgets.combochoice import ComboChoice
+import ert.ertwrapper as ertwrapper
+from ert_gui.widgets.stringbox import StringBox
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.spinnerwidgets import IntegerSpinner
+from ert_gui.widgets.tablewidgets import KeywordTable
 
 def createQueueSystemPage(configPanel, parent):
     configPanel.startPage("Queue System")

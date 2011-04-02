@@ -16,16 +16,16 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.configpanel import ConfigPanel
-from widgets.pathchooser import PathChooser
-from widgets.tablewidgets import KeywordTable
-from widgets.tablewidgets import KeywordList
-from widgets.stringbox import StringBox
+from ert_gui.widgets.configpanel import ConfigPanel
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.tablewidgets import KeywordTable
+from ert_gui.widgets.tablewidgets import KeywordList
+from ert_gui.widgets.stringbox import StringBox
 import os
-from ertwrapper import c_char_p, c_int
-from widgets.spinnerwidgets import IntegerSpinner
-import widgets.util
-from widgets.helpedwidget import ContentModelProxy
+from ert.ertwrapper import c_char_p, c_int
+from ert_gui.widgets.spinnerwidgets import IntegerSpinner
+import ert_gui.widgets.util
+from ert_gui.widgets.helpedwidget import ContentModelProxy
 
 class EditJobDialog(QtGui.QDialog):
     """

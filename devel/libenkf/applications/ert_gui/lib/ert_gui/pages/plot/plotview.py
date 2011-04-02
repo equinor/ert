@@ -19,11 +19,11 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 
 import datetime
 import time
-from erttypes import time_t
+from ert.erttypes import time_t
 
-from widgets.util import print_timing
-from  pages.plot.plotdata import PlotData
-import widgets
+from ert_gui.widgets.util import print_timing
+from  plotdata import PlotData
+import ert_gui.widgets
 
 from PyQt4.QtCore import SIGNAL
 import os
@@ -32,10 +32,10 @@ from plotconfig import PlotConfig
 from plotfigure import PlotFigure, matplotlib
 
 from PyQt4.QtGui import QFrame, QInputDialog, QSizePolicy
-from pages.plot.plotsettingsxml import PlotSettingsSaver, PlotSettingsLoader
-from pages.plot.plotsettings import PlotSettings
-from pages.plot.plotsettingsxml import PlotSettingsCopyDialog
-from pages.plot.plotgenerator import PlotGenerator
+from plotsettingsxml import PlotSettingsSaver, PlotSettingsLoader
+from plotsettings import PlotSettings
+from plotsettingsxml import PlotSettingsCopyDialog
+from plotgenerator import PlotGenerator
 
 class PlotView(QFrame):
     """PlotView presents a matplotlib canvas with interaction possibilities. (picking and tooltip)"""
@@ -66,7 +66,7 @@ class PlotView(QFrame):
         else:
             self.plot_settings.selectMember(gid)
 
-    @widgets.util.may_take_a_long_time
+    @ert_gui.widgets.util.may_take_a_long_time
     def drawPlot(self):
         self.plot_figure.drawPlot(self.data, self.plot_settings)        
         self.canvas.draw()

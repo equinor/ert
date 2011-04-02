@@ -16,7 +16,7 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.util import frange
+from util import frange
 import math
 
 class Cogwheel(QtGui.QWidget):

@@ -18,10 +18,9 @@
 from PyQt4 import QtGui, QtCore
 import help
 import sys
-from widgets.util import resourceIcon, resourceImage
+from   util import resourceIcon, resourceImage
 import inspect
-import widgets.helpedwidget
-import enums
+import ert.enums as enums
 
 def abstract():
     """Abstract keyword that indicate an abstract function"""

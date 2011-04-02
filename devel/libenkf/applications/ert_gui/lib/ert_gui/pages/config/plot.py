@@ -18,11 +18,11 @@
 # ----------------------------------------------------------------------------------------------
 # Plot tab
 # ----------------------------------------------------------------------------------------------
-from widgets.pathchooser import PathChooser
-from widgets.combochoice import ComboChoice
-from widgets.spinnerwidgets import IntegerSpinner
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.combochoice import ComboChoice
+from ert_gui.widgets.spinnerwidgets import IntegerSpinner
 
-import ertwrapper
+import ert.ertwrapper as ertwrapper
 
 def createPlotPage(configPanel, parent):
     configPanel.startPage("Plot")

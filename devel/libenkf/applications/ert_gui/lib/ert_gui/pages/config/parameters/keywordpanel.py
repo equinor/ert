@@ -16,11 +16,11 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.combochoice import ComboChoice
-from widgets.stringbox import DoubleBox
-from widgets.pathchooser import PathChooser
-from pages.config.parameters.parametermodels import KeywordModel
-from widgets.helpedwidget import ContentModel
+from ert_gui.widgets.combochoice import ComboChoice
+from ert_gui.widgets.stringbox import DoubleBox
+from ert_gui.widgets.pathchooser import PathChooser
+from parametermodels import KeywordModel
+from ert_gui.widgets.helpedwidget import ContentModel
 
 class KeywordPanel(QtGui.QFrame):
     def __init__(self, parent):

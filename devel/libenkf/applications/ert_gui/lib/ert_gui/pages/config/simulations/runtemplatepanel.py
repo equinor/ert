@@ -15,17 +15,17 @@
 #  for more details. 
 
 
-from widgets.helpedwidget import HelpedWidget
-from widgets.searchablelist import SearchableList
+from ert_gui.widgets.helpedwidget import HelpedWidget
+from ert_gui.widgets.searchablelist import SearchableList
 from PyQt4 import QtGui, QtCore
-from widgets.pathchooser import PathChooser
-from widgets.validateddialog import ValidatedDialog
-import widgets.util
+from ert_gui.widgets.pathchooser import PathChooser
+from ert_gui.widgets.validateddialog import ValidatedDialog
+import ert_gui.widgets.util
 import os
-from widgets.util import ValidationInfo
-from pages.config.jobs.jobsdialog import EditJobDialog
-from widgets.stringbox import StringBox
-from widgets.helpedwidget import ContentModel
+from ert_gui.widgets.util import ValidationInfo
+from ert_gui.pages.config.jobs.jobsdialog import EditJobDialog
+from ert_gui.widgets.stringbox import StringBox
+from ert_gui.widgets.helpedwidget import ContentModel
 
 class RunTemplatePanel(HelpedWidget):
     """
@@ -39,7 +39,7 @@ class RunTemplatePanel(HelpedWidget):
 
         self.createWidgets(parent)
 
-        self.emptyPanel = widgets.util.createEmptyPanel()
+        self.emptyPanel = ert_gui.widgets.util.createEmptyPanel()
 
         self.pagesWidget = QtGui.QStackedWidget()
         self.pagesWidget.addWidget(self.emptyPanel)
@@ -57,7 +57,7 @@ class RunTemplatePanel(HelpedWidget):
         self.connect(self.searchableList, QtCore.SIGNAL('removeItem(list)'), self.removeItem)
 
 
-        self.run_template_panel = widgets.util.createEmptyPanel()
+        self.run_template_panel = ert_gui.widgets.util.createEmptyPanel()
 
         layout = QtGui.QFormLayout()
         layout.setLabelAlignment(QtCore.Qt.AlignRight)
@@ -81,7 +81,7 @@ class RunTemplatePanel(HelpedWidget):
         layout.addRow("Target file:", self.run_template_target)
         layout.addRow("Arguments:", self.run_template_args)
 
-        layout.addRow(widgets.util.createSpace(20))
+        layout.addRow(ert_gui.widgets.util.createSpace(20))
 
         self.run_template_panel.setLayout(layout)
 

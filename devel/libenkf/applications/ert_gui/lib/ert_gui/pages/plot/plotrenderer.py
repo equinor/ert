@@ -16,7 +16,7 @@
 
 
 from matplotlib.dates import AutoDateLocator, datetime, matplotlib
-import erttypes
+import ert.erttypes as erttypes
 
 class PlotRenderer:
     """An abstract plotter that plots data"""

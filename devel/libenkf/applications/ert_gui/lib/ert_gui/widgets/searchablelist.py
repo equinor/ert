@@ -15,9 +15,9 @@
 #  for more details. 
 
 
-from widgets.tablewidgets import AddRemoveWidget
+from tablewidgets import AddRemoveWidget
 from PyQt4 import QtGui, QtCore
-from widgets.tablewidgets import OrderWidget
+from tablewidgets import OrderWidget
 
 class SearchableList(QtGui.QWidget):
     """

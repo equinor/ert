@@ -16,14 +16,14 @@
 
 
 from PyQt4 import QtGui, QtCore
-from widgets.tablewidgets import KeywordList
-from widgets.validateddialog import ValidatedDialog
-import ertwrapper
-from widgets.combochoice import ComboChoice
+from ert_gui.widgets.tablewidgets import KeywordList
+from ert_gui.widgets.validateddialog import ValidatedDialog
+import ert.ertwrapper as ertwrapper
+from ert_gui.widgets.combochoice import ComboChoice
 
 
-from widgets.helpedwidget import HelpedWidget
-from widgets.util import resourceIcon, createSeparator, may_take_a_long_time
+from ert_gui.widgets.helpedwidget import HelpedWidget
+from ert_gui.widgets.util import resourceIcon, createSeparator, may_take_a_long_time
 
 from initandcopy import *
 

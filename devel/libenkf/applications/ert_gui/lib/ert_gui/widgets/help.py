@@ -18,7 +18,7 @@
 import os
 import sys
 
-prefix = os.path.dirname(__file__) + "/../help/"
+prefix = os.path.dirname(__file__) + "/../../../help/"
 
 def getTemplate():
     path = prefix + "template.html"
