@@ -114,8 +114,11 @@ from PyQt4 import QtGui, QtCore
 import sys
 import os
 
-print "GERT_SHARE_PATH = %s" % os.getenv("GERT_SHARE_PATH")
-sys.exit()
+
+from ert_gui.widgets.helpedwidget import ContentModel
+from ert_gui.widgets.util import resourceImage, resourceIcon
+ert_gui.widgets.help.help_prefix = os.getenv("GERT_SHARE_PATH")+ "/help/"
+ert_gui.widgets.help.img_prefix  = os.getenv("GERT_SHARE_PATH")+ "/img/"
 
 
 
@@ -129,15 +132,9 @@ from ert_gui.pages.init.initpanel import InitPanel
 from ert_gui.pages.run.runpanel import RunPanel
 from ert_gui.pages.config.configpages import ConfigPages
 from ert_gui.pages.plot.plotpanel import PlotPanel
-from ert_gui.widgets.helpedwidget import ContentModel
-from ert_gui.widgets.util import resourceImage, resourceIcon
 from ert.ertwrapper import ErtWrapper
 import ert_gui.widgets.util
 import ert_gui.widgets.help
-
-ert_gui.widgets.help.help_prefix = os.getenv("GERT_SHARE_PATH")+ "/help/"
-ert_gui.widgets.help.img_prefix  = os.getenv("GERT_SHARE_PATH")+ "/img/"
-
 
 import matplotlib
 print "PyQt4 version: ", QtCore.qVersion()
