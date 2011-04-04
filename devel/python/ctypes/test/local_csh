@@ -5,7 +5,7 @@ ln -sf ../../../../libecl/slib/libecl.so lib/libecl.so
 ln -sf ../../../../libjob_queue/slib/libjob_queue.so lib/libjob_queue.so
 ln -sf ../../../../libconfig/slib/libconfig.so lib/libconfig.so
 
-ln -sf ../C/libpycfile/slib/libpycfile.so ../ert/util/pycfile.so
+ln -sf ../../C/libpycfile/slib/libpycfile.so ../ert/util/pycfile.so
 
 ln -sf ../../ert lib/ert
 

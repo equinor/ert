@@ -19,9 +19,14 @@ from PyQt4 import QtGui, QtCore
 import os
 import time
 
+# The variable @img_prefix should be set to point to a directory
+# containing icons and images. In the current implementation this
+# variable is set from the gert_main.py script.
+img_prefix = None
+
 def resourceIcon(name):
     """Load an image as an icon"""
-    return QtGui.QIcon(os.path.dirname(__file__) + "/../../../img/" + name)
+    return QtGui.QIcon(img_prefix + name)
 
 def resourceStateIcon(on, off):
     """Load two images as an icon with on and off states"""
@@ -32,7 +37,7 @@ def resourceStateIcon(on, off):
 
 def resourceImage(name):
     """Load an image as a Pixmap"""
-    return QtGui.QPixmap(os.path.dirname(__file__) + "/../../../img/" + name)
+    return QtGui.QPixmap(img_prefix + name)
 
 
 class ListCheckPanel(QtGui.QHBoxLayout):

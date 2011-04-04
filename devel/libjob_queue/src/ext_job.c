@@ -504,6 +504,7 @@ static void __end_line(FILE * stream) {
   fprintf(stream,",\n");
 }
 
+
 static void __indent(FILE * stream, int indent) {
   int i;
   for (i = 0; i < indent; i++)

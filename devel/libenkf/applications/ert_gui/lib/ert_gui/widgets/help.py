@@ -18,10 +18,14 @@
 import os
 import sys
 
-prefix = os.path.dirname(__file__) + "/../../../help/"
+# The variable @help_prefix should be set to point to a directory
+# containing (directories) with html help files. In the current
+# implementation this variable is set from the gert_main.py script.
+help_prefix = None
+
 
 def getTemplate():
-    path = prefix + "template.html"
+    path = help_prefix + "template.html"
     if os.path.exists(path) and os.path.isfile(path):
         f = open(path, 'r')
         template = f.read()
@@ -41,7 +45,7 @@ def resolveHelpLabel(label):
 #    if label.strip() == "":
 #        raise AssertionError("NOOOOOOOOOOOOOOOOOOOOO!!!!!!!!!!!!")
 
-    path = prefix + label + ".html"
+    path = help_prefix + label + ".html"
     if os.path.exists(path) and os.path.isfile(path):
         f = open(path, 'r')
         help = f.read()

@@ -116,26 +116,32 @@ class runtimeList:
 
 
 class JobQueue:
-
-    # Current implementation is quite fragile with respect to:
+    
+    # If the queue is created with size == 0 that means that it will
+    # just grow as needed; for the queue layer to know when to exit
+    # you must call the function submit_complete() when you have no
+    # more jobs to submit.
     #
-    #  * When the queue is started
-    #  * if _mt or _st function is used when adding jobs.
-    #  * need for xxx_submit_complete() call. 
+    # If the number of jobs is known in advance you can create the
+    # queue with a finite value for size, in that case it is not
+    # necessary to explitly inform the queue layer when all jobs have
+    # been submitted.
 
-
-    def __init__(self , driver , cmd , max_submit = 1):
+    def __init__(self , driver , cmd , max_submit = 1 , size = 0):
         OK_file     = None 
         exit_file   = None
         self.c_ptr  = cfunc.alloc_queue(max_submit , False , OK_file , exit_file , cmd )
         self.driver = driver
         self.jobs   = JobList()
+        self.size   = 0
+
 
         self.exists   = exList( self.jobs )
         self.status   = statusList( self.jobs )
         self.run_time = runtimeList( self.jobs , self )
         cfunc.set_driver( self , driver.c_ptr )
-        
+        self.start( blocking = False )
+
     
     def kill_job(self , index):
         job = self.jobs.__getitem__( index )
@@ -158,15 +164,22 @@ class JobQueue:
         c_argv = (ctypes.c_char_p * len(argv))()
         c_argv[:] = argv
         job_index = self.jobs.size
-        queue_index = cfunc.cadd_job( self , run_path , job_name , len(argv) , c_argv)
+        queue_index = cfunc.cadd_job_mt( self , run_path , job_name , len(argv) , c_argv)
         job = Job( self.driver , cfunc.get_job_ptr( self , queue_index ) , queue_index , False )
         
         self.jobs.add_job( job , job_name )
         return job
 
-
     def clear( self ):
         pass
+
+    
+    # This method is used to signal the queue layer that all jobs have
+    # been submitted, and that the queue can exit when all jobs have
+    # completed. If the queue is created with a finite size it is not
+    # necessary to use this function.
+    def submit_complete( self ):
+        cfunc.submit_complete( self )
 
 
     @property
@@ -203,10 +216,10 @@ class EclQueue( JobQueue ):
     default_version      = ecl_default.version
 
     
-    def __init__(self , driver , ecl_version = default_version , eclipse_cmd = default_eclipse_cmd):
-        JobQueue.__init__( self , driver , eclipse_cmd )
+    def __init__(self , driver , ecl_version = default_version , eclipse_cmd = default_eclipse_cmd, size = 0):
+        JobQueue.__init__( self , driver , eclipse_cmd , size = size)
         self.ecl_version = ecl_version
-
+        
         
     def add_job( self , data_file):
         (path_base , ext) = os.path.splitext( data_file )
@@ -222,17 +235,20 @@ cwrapper = CWrapper( libjob_queue.lib )
 cwrapper.registerType( "job_queue" , JobQueue )
 cfunc  = CWrapperNameSpace( "JobQeueu" )
 
-cfunc.alloc_queue     = cwrapper.prototype("c_void_p job_queue_alloc( int , int , bool , char* )")
+cfunc.alloc_queue     = cwrapper.prototype("c_void_p job_queue_alloc( int , bool , char* , char* , char* )")
 cfunc.free_queue      = cwrapper.prototype("void job_queue_free( job_queue )")
 cfunc.set_max_running = cwrapper.prototype("void job_queue_set_max_running( job_queue , int)")
 cfunc.get_max_running = cwrapper.prototype("int  job_queue_get_max_running( job_queue )")
 cfunc.set_driver      = cwrapper.prototype("void job_queue_set_driver( job_queue , c_void_p )")
-cfunc.cadd_job        = cwrapper.prototype("int  job_queue_add_job_mt( job_queue , char* , char* , int , char**)")
+cfunc.cadd_job_mt     = cwrapper.prototype("int  job_queue_add_job_mt( job_queue , char* , char* , int , char**)")
+cfunc.cadd_job_st     = cwrapper.prototype("int  job_queue_add_job_st( job_queue , char* , char* , int , char**)")
 cfunc.start_queue     = cwrapper.prototype("void job_queue_run_jobs( job_queue , int , bool)")
 cfunc.num_running     = cwrapper.prototype("int  job_queue_get_num_running( job_queue )")
 cfunc.num_complete    = cwrapper.prototype("int  job_queue_get_num_complete( job_queue )")
 cfunc.num_waiting     = cwrapper.prototype("int  job_queue_get_num_waiting( job_queue )")
 cfunc.num_pending     = cwrapper.prototype("int  job_queue_get_num_pending( job_queue )")
 cfunc.is_running      = cwrapper.prototype("int  job_queue_is_running( job_queue )")
+cfunc.submit_complete = cwrapper.prototype("void job_queue_submit_complete( job_queue )")
 cfunc.get_job_ptr     = cwrapper.prototype("c_void_p job_queue_iget_job_data( job_queue , int)")
 cfunc.iget_sim_start  = cwrapper.prototype("time_t job_queue_iget_sim_start( job_queue , int)")
+cfunc.get_active_size = cwrapper.prototype("int job_queue_get_active_size( job_queue )")

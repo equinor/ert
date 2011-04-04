@@ -14,4 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
+from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_CHAR_TYPE , ECL_BOOL_TYPE , ECL_DOUBLE_TYPE, EclKW
+from   ecl_file              import EclFile
+from   ecl_sum               import EclSum
+from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
+from   ecl_grid              import EclGrid
+from   ecl_region            import EclRegion
+from   fortio                import FortIO
+from   ecl                   import EclCase
+from   ecl_util              import *  
+import ecl_grav
