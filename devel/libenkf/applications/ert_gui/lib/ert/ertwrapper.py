@@ -87,8 +87,8 @@ class ErtWrapper:
         self.util = self.__loadLibrary( "libutil" )
         self.ecl  = self.__loadLibrary( "libecl" )
         self.__loadLibrary( "libsched" )
-        self.__loadLibrary("librms"    )
-        self.__loadLibrary("libconfig" )
+        self.__loadLibrary( "librms"    )
+        self.__loadLibrary( "libconfig" )
         self.job_queue = self.__loadLibrary( "libjob_queue" )
         self.enkf      = self.__loadLibrary( "libenkf" )
 
