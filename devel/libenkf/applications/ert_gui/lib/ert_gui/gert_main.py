@@ -114,6 +114,9 @@ from PyQt4 import QtGui, QtCore
 import sys
 import os
 
+print "GERT_SHARE_PATH = %s" % os.getenv("GERT_SHARE_PATH")
+sys.exit()
+
 
 
 from ert_gui.newconfig import NewConfigurationDialog
@@ -134,6 +137,7 @@ import ert_gui.widgets.help
 
 ert_gui.widgets.help.help_prefix = os.getenv("GERT_SHARE_PATH")+ "/help/"
 ert_gui.widgets.help.img_prefix  = os.getenv("GERT_SHARE_PATH")+ "/img/"
+
 
 import matplotlib
 print "PyQt4 version: ", QtCore.qVersion()
