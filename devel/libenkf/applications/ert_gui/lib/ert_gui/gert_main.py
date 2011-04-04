@@ -114,18 +114,16 @@ from PyQt4 import QtGui, QtCore
 import sys
 import os
 
-
-from ert_gui.widgets.helpedwidget import ContentModel
-from ert_gui.widgets.util import resourceImage, resourceIcon
+import ert_gui.widgets.util
+import ert_gui.widgets.help
 ert_gui.widgets.help.help_prefix = os.getenv("GERT_SHARE_PATH")+ "/help/"
-ert_gui.widgets.help.img_prefix  = os.getenv("GERT_SHARE_PATH")+ "/img/"
+ert_gui.widgets.util.img_prefix  = os.getenv("GERT_SHARE_PATH")+ "/img/"
 
 
 
 from ert_gui.newconfig import NewConfigurationDialog
 
 app = QtGui.QApplication(sys.argv) #Early so that QT is initialized before other imports
-print "App created ..."
 
 from ert_gui.pages.application import Application
 from ert_gui.pages.init.initpanel import InitPanel
@@ -133,8 +131,8 @@ from ert_gui.pages.run.runpanel import RunPanel
 from ert_gui.pages.config.configpages import ConfigPages
 from ert_gui.pages.plot.plotpanel import PlotPanel
 from ert.ertwrapper import ErtWrapper
-import ert_gui.widgets.util
-import ert_gui.widgets.help
+from ert_gui.widgets.helpedwidget import ContentModel
+from ert_gui.widgets.util import resourceImage, resourceIcon
 
 import matplotlib
 print "PyQt4 version: ", QtCore.qVersion()
@@ -150,12 +148,22 @@ window = Application()
 splash.showMessage("Bootstrapping...", color=QtCore.Qt.white)
 app.processEvents()
 
-ert = ErtWrapper( )
-
-site_config = os.getenv("ERT_SITE_CONFIG")
-enkf_config = sys.argv[1]
+ert         = ErtWrapper( )
 strict      = True
-print "Looking for:%s" % enkf_config
+site_config = os.getenv("ERT_SITE_CONFIG")
+if len(sys.argv) == 1:
+    print "-----------------------------------------------------------------"
+    print "-- You must supply the name of configuration file as the first --"
+    print "-- commandline argument:                                       --"
+    print "--                                                             --"
+    print "-- bash%  gert <config_file>                                   --"
+    print "--                                                             --"
+    print "-- If the configuration file does not exist, gert will create  --"
+    print "-- create a new configuration file.                            --"
+    print "-----------------------------------------------------------------"
+    sys.exit( )
+    
+enkf_config = sys.argv[1]
 if not os.path.exists(enkf_config):
     print "Trying to start new config"
     new_configuration_dialog = NewConfigurationDialog(enkf_config)
