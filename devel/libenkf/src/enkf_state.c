@@ -1520,10 +1520,15 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_f
 }
 
 
-
+   
 job_status_type enkf_state_get_run_status( const enkf_state_type * enkf_state ) {
   run_info_type             * run_info    = enkf_state->run_info;
-  if (run_info->active) {
+  /** 
+      The submission process happens in another thread, and might not
+      be complete, must therefor check the value of queue_index prior
+      to invoking the job_queue layer.
+  */
+  if (run_info->active && run_info->queue_index >= 0) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
     return job_queue_get_job_status(shared_info->job_queue , run_info->queue_index);
   } else

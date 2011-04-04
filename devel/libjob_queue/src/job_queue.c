@@ -929,8 +929,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
             if (queue->status_list[ STATUS_INDEX(JOB_QUEUE_WAITING) ] > 0)   /* We have waiting jobs at all           */
               if (num_submit_new > 0)                                        /* The queue can allow more running jobs */
                 new_jobs = true;
-          
-            
+
             if (new_jobs) {
               int submit_count = 0;
               int queue_index  = 0;

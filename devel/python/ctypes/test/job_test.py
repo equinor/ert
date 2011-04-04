@@ -32,7 +32,7 @@ server_list = { "be" : "lsf-be.no",
 src_files     = ["data/eclipse/case/ECLIPSE.DATA" , "data/eclipse/case/include"]
 run_path_fmt  = "tmp/simulations/run%d"
 
-default_driver_string = "LSF"
+default_driver_string = "LOCAL"
 num_jobs              = 10
 max_running           = 3
 
@@ -59,7 +59,7 @@ def get_lsf_server():
     site = host[:2]
     lsf_server = server_list.get( site , False)
     if not lsf_server:
-        print "Sorry - don't know what is the LSF server of in:%s" %  site
+        print "Sorry - don't know what is the LSF server in:%s" %  site
         sys.exit()
     return lsf_server
 
@@ -71,14 +71,14 @@ else:
     driver_string = sys.argv[1].upper()
 
 if driver_string == "LSF":
-    driver = job_queue.LSFDriver( lsf_server = None )
+    driver = job_queue.LSFDriver( max_running , lsf_server = None )
 elif driver_string == "LOCAL":
-    driver = job_queue.LocalDriver()
+    driver = job_queue.LocalDriver( max_running )
 else:
     sys.exit("Unrecognized driver string:%s" % driver_string)
 
-queue = job_queue.EclQueue( driver , num_jobs , max_running )
-queue.start()
+
+queue = job_queue.EclQueue( driver , size = num_jobs)
 case_list = []    
 for case_nr in range( num_jobs ):
     copy_case( run_path_fmt % case_nr , src_files )

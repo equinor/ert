@@ -18,6 +18,7 @@
 import time
 import datetime
 import ctypes
+import ert.util.pycfile
 from   ert.util.pycfile      import pycfile       
 from   ert.cwrap.cwrap       import *
 

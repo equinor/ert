@@ -141,7 +141,6 @@ void * local_driver_submit_job(void * __driver,
                                int           argc,
                                const char ** argv ) {
   local_driver_type * driver = local_driver_safe_cast( __driver );
-  printf("Submitting local job ...\n");
   {
     local_job_type * job    = local_job_alloc();
     arg_pack_type  * arg_pack = arg_pack_alloc();

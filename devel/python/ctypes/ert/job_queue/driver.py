@@ -75,24 +75,34 @@ class Driver:
 
     def kill_job( self , job ):
         cfunc.ckill_job( self , job )
+
+    def get_max_running( self ):
+        return cfunc.get_max_running( self )
+    
+    def set_max_running( self , max_running ):
+        cfunc.set_max_running( self , max_running )
         
+    max_running = property( get_max_running , set_max_running )
 
 
 class LSFDriver(Driver):
     
     
     def __init__(self ,
+                 max_running ,
                  lsf_server = None ,
                  queue = "normal" ,
                  num_cpu = 1,
                  resource_request = ecl_default.lsf_resource_request):
         self.c_ptr = cfunc.alloc_driver_lsf( queue , resource_request , lsf_server , num_cpu)
-
+        self.set_max_running( max_running )
 
 class LocalDriver(Driver):
 
-    def __init__( self ):
+    def __init__( self , max_running ):
         self.c_ptr = cfunc.alloc_driver_local( )
+        self.set_max_running( max_running )
+
 
 RSH_HOST = "RSH_HOST"  # Value taken from rsh_driver.h
 class RSHDriver(Driver):
@@ -100,14 +110,16 @@ class RSHDriver(Driver):
     # Changing shell to bash can come in conflict with running ssh
     # commands.
     
-    def __init__( self , rsh_host_list , rsh_cmd = "/usr/bin/ssh" ):
+    def __init__( self , max_running , rsh_host_list , rsh_cmd = "/usr/bin/ssh" ):
         """@rsh_host_list should be a list of tuples like: (hostname , max_running) 
         """
 
         self.c_ptr = cfunc.alloc_driver( rhs_cmd , None ) 
-        
+        self.set_max_running( max_running )
+
         for (host,max_running) in rsh_host_list:
             cfunc.set_str_option( self , RSH_HOST , "%s:%d" % (host , max_running))
+
             
 
 
@@ -117,15 +129,18 @@ cwrapper.registerType( "driver" , Driver )
 cwrapper.registerType( "job"    , Job )
 cfunc   = CWrapperNameSpace( "driver" )
 
+
 cfunc.alloc_driver_lsf       = cwrapper.prototype("c_void_p    queue_driver_alloc_LSF( char* , char* , char* , int )")
 cfunc.alloc_driver_local     = cwrapper.prototype("c_void_p    queue_driver_alloc_local( )")
 cfunc.alloc_driver_rsh       = cwrapper.prototype("c_void_p    queue_driver_alloc_RSH( char* , c_void_p )")
 cfunc.set_driver_option      = cwrapper.prototype("void        queue_driver_set_option( driver , char* , char*)")
 
 
-cfunc.free_driver    = cwrapper.prototype("void        queue_driver_free( driver )")
-cfunc.submit         = cwrapper.prototype("c_void_p    queue_driver_submit_job( driver , char* , char* , char* , int , char**)")
-cfunc.free_job       = cwrapper.prototype("void        queue_driver_free_job( job )")
-cfunc.get_status     = cwrapper.prototype("int         queue_driver_get_status( driver , job)")
-cfunc.kill_job       = cwrapper.prototype("void        queue_driver_kill_job( driver , job )")
-cfunc.set_str_option = cwrapper.prototype("void        queue_driver_set_string_option( driver , int , char*)")
+cfunc.free_driver     = cwrapper.prototype("void        queue_driver_free( driver )")
+cfunc.submit          = cwrapper.prototype("c_void_p    queue_driver_submit_job( driver , char* , char* , char* , int , char**)")
+cfunc.free_job        = cwrapper.prototype("void        queue_driver_free_job( job )")
+cfunc.get_status      = cwrapper.prototype("int         queue_driver_get_status( driver , job)")
+cfunc.kill_job        = cwrapper.prototype("void        queue_driver_kill_job( driver , job )")
+cfunc.set_str_option  = cwrapper.prototype("void        queue_driver_set_string_option( driver , int , char*)")
+cfunc.set_max_running = cwrapper.prototype("void        queue_driver_set_max_running( driver , int )")
+cfunc.get_max_running = cwrapper.prototype("int         queue_driver_get_max_running( driver )")
