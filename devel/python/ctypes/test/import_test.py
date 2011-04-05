@@ -35,3 +35,5 @@ import ert.util.stringlist
 import ert.util.tvector
 import ert.util.stat
 
+print "import ert.enkf"
+import ert.enkf
