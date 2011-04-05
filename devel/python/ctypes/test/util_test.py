@@ -21,6 +21,7 @@ import copy
 
 from   ert.util.tvector import DoubleVector
 from   ert.util.tvector import IntVector
+from   ert.util.tvector import BoolVector
 import ert.util.stat    as stat
 
 v = DoubleVector( 0 )
@@ -87,3 +88,8 @@ print v2[77]
 
 v2.default = 100
 print v2.default
+
+B = BoolVector( True )
+B[4] = False
+B.printf()
+

@@ -1,6 +1,6 @@
 mkdir -p lib 
 ln -sf ../../../../libutil/slib/libutil.so lib/libutil.so
-ln -sf ../../../../libutil/slib/libutil-no-matrix.so lib/libutil-no-matrix.so
+ln -sf ../../../../libenkf/slib/libenkf.so lib/libenkf.so
 ln -sf ../../../../libecl/slib/libecl.so lib/libecl.so
 ln -sf ../../../../libjob_queue/slib/libjob_queue.so lib/libjob_queue.so
 ln -sf ../../../../libconfig/slib/libconfig.so lib/libconfig.so
