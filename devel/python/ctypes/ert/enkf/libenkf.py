@@ -17,6 +17,5 @@
 
 import ctypes
 import ert.cwrap.clib as clib
-print "Prover ..."
-lib = clib.load("libenkf.so" , "/private/joaho/ERT/NR/libenkf/slib/libenkf.so")
+lib = clib.load("libenkf.so")
     
