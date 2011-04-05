@@ -305,11 +305,51 @@ class DoubleVector(TVector):
             cls.scale         = cfunc.double_vector_scale
             cls.inplace_add   = cfunc.double_vector_inplace_add
             cls.inplace_mul   = cfunc.double_vector_inplace_mul
-            cls.cassign        = cfunc.double_vector_assign
+            cls.cassign       = cfunc.double_vector_assign
             cls.memcpy        = cfunc.double_vector_memcpy
             cls.cset_default  = cfunc.double_vector_set_default
             cls.cget_default  = cfunc.double_vector_get_default
             cls.def_fmt       = "%g"
+            cls.initialized = True
+
+        obj = TVector.__new__( cls )
+        return obj
+
+
+class BoolVector(TVector):
+    initialized = False
+
+    def __new__( cls , *arglist ):
+        if not cls.initialized:
+            cls.csort         = cfunc.bool_vector_sort
+            cls.crsort        = cfunc.bool_vector_rsort
+            cls.alloc         = cfunc.bool_vector_alloc
+            cls.alloc_copy    = cfunc.bool_vector_alloc_copy
+            cls.free          = cfunc.bool_vector_free
+            cls.get_size      = cfunc.bool_vector_size
+            cls.iget          = cfunc.bool_vector_iget
+            cls.iset          = cfunc.bool_vector_iset
+            cls.fprintf       = cfunc.bool_vector_fprintf
+            cls.cappend       = cfunc.bool_vector_append
+            cls.idel_block    = cfunc.bool_vector_idel_block            
+            cls.cclear        = cfunc.bool_vector_reset
+            cls.cstrided_copy = cfunc.bool_vector_strided_copy
+            cls.csafe_iget    = cfunc.bool_vector_safe_iget
+            cls.set_read_only = cfunc.bool_vector_set_read_only
+            cls.get_read_only = cfunc.bool_vector_get_read_only
+            cls.get_max       = cfunc.bool_vector_get_max
+            cls.get_min       = cfunc.bool_vector_get_min
+            cls.get_max_index = cfunc.bool_vector_get_max_index
+            cls.get_min_index = cfunc.bool_vector_get_min_index
+            cls.shift         = cfunc.bool_vector_shift
+            cls.scale         = cfunc.bool_vector_scale
+            cls.inplace_add   = cfunc.bool_vector_inplace_add
+            cls.inplace_mul   = cfunc.bool_vector_inplace_mul
+            cls.cassign       = cfunc.bool_vector_assign
+            cls.memcpy        = cfunc.bool_vector_memcpy
+            cls.cset_default  = cfunc.bool_vector_set_default
+            cls.cget_default  = cfunc.bool_vector_get_default
+            cls.def_fmt       = "%d"
             cls.initialized = True
 
         obj = TVector.__new__( cls )
@@ -361,6 +401,7 @@ class IntVector(TVector):
 
 CWrapper.registerType( "double_vector" , DoubleVector )
 CWrapper.registerType( "int_vector"    , IntVector )
+CWrapper.registerType( "bool_vector"   , BoolVector ) 
 
 cwrapper = CWrapper( libutil.lib )
 cfunc    = CWrapperNameSpace("tvector")
@@ -423,3 +464,33 @@ cfunc.int_vector_assign              = cwrapper.prototype("void   int_vector_set
 cfunc.int_vector_memcpy              = cwrapper.prototype("void   int_vector_memcpy(int_vector , int_vector )")
 cfunc.int_vector_set_default         = cwrapper.prototype("void   int_vector_set_default( int_vector , int)")
 cfunc.int_vector_get_default         = cwrapper.prototype("int    int_vector_get_default( int_vector )")
+
+
+cfunc.bool_vector_alloc_copy          = cwrapper.prototype("c_void_p bool_vector_alloc_copy( bool_vector )")
+cfunc.bool_vector_alloc               = cwrapper.prototype("c_void_p   bool_vector_alloc( bool , bool )")
+cfunc.bool_vector_strided_copy        = cwrapper.prototype("c_void_p   bool_vector_alloc_strided_copy( bool_vector , bool , bool , bool)")
+cfunc.bool_vector_free                = cwrapper.prototype("void   bool_vector_free( bool_vector )")
+cfunc.bool_vector_iget                = cwrapper.prototype("bool    bool_vector_iget( bool_vector , bool )")
+cfunc.bool_vector_safe_iget           = cwrapper.prototype("bool    bool_vector_safe_iget( bool_vector , bool )")
+cfunc.bool_vector_iset                = cwrapper.prototype("bool    bool_vector_iset( bool_vector , bool , bool)")
+cfunc.bool_vector_size                = cwrapper.prototype("bool    bool_vector_size( bool_vector )")
+cfunc.bool_vector_append              = cwrapper.prototype("void   bool_vector_append( bool_vector , bool )") 
+cfunc.bool_vector_idel_block          = cwrapper.prototype("void   bool_vector_idel_block( bool_vector , bool , bool )") 
+cfunc.bool_vector_fprintf             = cwrapper.prototype("void   bool_vector_fprintf( bool_vector , FILE , char* , char*)")
+cfunc.bool_vector_sort                = cwrapper.prototype("void   bool_vector_sort( bool_vector )") 
+cfunc.bool_vector_rsort               = cwrapper.prototype("void   bool_vector_rsort( bool_vector )") 
+cfunc.bool_vector_reset               = cwrapper.prototype("void   bool_vector_reset( bool_vector )") 
+cfunc.bool_vector_set_read_only       = cwrapper.prototype("void   bool_vector_set_read_only( bool_vector , bool )") 
+cfunc.bool_vector_get_read_only       = cwrapper.prototype("bool   bool_vector_get_read_only( bool_vector )") 
+cfunc.bool_vector_get_max             = cwrapper.prototype("bool    bool_vector_get_max( bool_vector )")
+cfunc.bool_vector_get_min             = cwrapper.prototype("bool    bool_vector_get_min( bool_vector )")
+cfunc.bool_vector_get_max_index       = cwrapper.prototype("bool    bool_vector_get_max_index( bool_vector , bool)")
+cfunc.bool_vector_get_min_index       = cwrapper.prototype("bool    bool_vector_get_min_index( bool_vector , bool)")
+cfunc.bool_vector_shift               = cwrapper.prototype("void   bool_vector_shift( bool_vector , bool )")
+cfunc.bool_vector_scale               = cwrapper.prototype("void   bool_vector_scale( bool_vector , bool )") 
+cfunc.bool_vector_inplace_add         = cwrapper.prototype("void   bool_vector_inplace_add( bool_vector , bool_vector )")
+cfunc.bool_vector_inplace_mul         = cwrapper.prototype("void   bool_vector_inplace_mul( bool_vector , bool_vector )")
+cfunc.bool_vector_assign              = cwrapper.prototype("void   bool_vector_set_all( bool_vector , bool)")  
+cfunc.bool_vector_memcpy              = cwrapper.prototype("void   bool_vector_memcpy(bool_vector , bool_vector )")
+cfunc.bool_vector_set_default         = cwrapper.prototype("void   bool_vector_set_default( bool_vector , bool)")
+cfunc.bool_vector_get_default         = cwrapper.prototype("bool    bool_vector_get_default( bool_vector )")
