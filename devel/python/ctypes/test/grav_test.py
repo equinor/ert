@@ -18,7 +18,7 @@
 
 import datetime
 import ert
-import ert.ecl as ecl
+import ert.ecl.ecl as ecl
 
 pos = (5354 , 9329 , 100)
 grid     = ecl.EclGrid("data/eclipse/case/ECLIPSE.EGRID")

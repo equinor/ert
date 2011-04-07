@@ -17,7 +17,9 @@
 
 
 import ert
-import ert.ecl as ecl
+import ert.ecl.ecl as ecl
+
+from   ert.ecl.ecl import *
 from   ert.util.tvector import DoubleVector
 from   ert.util.tvector import DoubleVector
 
@@ -33,16 +35,16 @@ def load_egrid( egrid_file ):
 
 def load_grdecl( grdecl_file ):
     fileH = open( grdecl_file , "r")
-    specgrid = ecl.EclKW.grdecl_load( fileH , "SPECGRID" , ecl_type = ecl.ECL_INT_TYPE )
-    zcorn    = ecl.EclKW.grdecl_load( fileH , "ZCORN" )
-    coord    = ecl.EclKW.grdecl_load( fileH , "COORD" )
-    actnum   = ecl.EclKW.grdecl_load( fileH , "ACTNUM" , ecl_type = ecl.ECL_INT_TYPE )
+    specgrid = EclKW.grdecl_load( fileH , "SPECGRID" , ecl_type = ecl.ECL_INT_TYPE )
+    zcorn    = EclKW.grdecl_load( fileH , "ZCORN" )
+    coord    = EclKW.grdecl_load( fileH , "COORD" )
+    actnum   = EclKW.grdecl_load( fileH , "ACTNUM" , ecl_type = ecl.ECL_INT_TYPE )
 
     grid = ecl.EclGrid.create( specgrid , zcorn , coord , actnum )
     return grid
 
 
-init_file   = ecl.EclFile( "data/eclipse/case/ECLIPSE.INIT" )
+init_file   = EclFile( "data/eclipse/case/ECLIPSE.INIT" )
 egrid_file  = "data/eclipse/case/ECLIPSE.EGRID"
 grid_file   = "data/eclipse/case/ECLIPSE.GRID"
 grdecl_file = "data/eclipse/case/include/example_grid_sim.GRDECL"    
