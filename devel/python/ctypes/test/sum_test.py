@@ -18,7 +18,7 @@
 
 import datetime
 import ert
-import ert.ecl as ecl
+import ert.ecl.ecl as ecl
 
 case = "data/eclipse/case/ECLIPSE"
 sum  = ecl.EclSum( case ) 
