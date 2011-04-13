@@ -94,7 +94,7 @@ void enkf_usage() {
   printf(" **   bash> ert config_file                                         **\n");
   printf(" **                                                                 **\n");
   printf(" ** Instructions on how to create the configuration file can be     **\n");
-  printf(" ** found at: http://sdp.statoil.no/wiki/index.php/res:enkf         **\n");
+  printf(" ** found at: http://ert.nr.no                                      **\n");
   printf(" *********************************************************************\n");
 }
 
