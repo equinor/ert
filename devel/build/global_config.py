@@ -24,6 +24,16 @@ import sys
 import os.path
 
 sys.path.append( os.path.dirname( __file__ ))
+
+# Local configuration options are loaded from the file 'local_config.py'; this
+# file is not part of the distribution, and you must create it yourself. If the
+# file 'local_config.py' can not be found the script will use the
+# 'local_config_DEFAULT.py' file instead. This might be enough to get things to
+# compile, but the resulting executable will probably not be usable for much.
+#
+# The file 'local_config_DEFAULT.py' contains documentation on how to create
+# your own personal configuration file 'local_config.py'.
+
 try:
     from local_config import *
 except ImportError:
