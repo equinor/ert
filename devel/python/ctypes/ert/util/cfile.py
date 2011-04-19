@@ -25,29 +25,26 @@ from   ert.cwrap.cwrap       import *
 
 # This purpose of this class is to wrap the underlying FILE * pointer
 # of Python filehandle to be able to call C functions which expect
-# FILE * input with a Python filehandle.
-#
-# The class needs support from the small C based extension module
-# pycfile which will get a Python filehandle and return the underlying
-# FILE * pointer value - this is stored in the c_ptr attribute.
-#
-# Observe that this small class is slightly different from the other
-# thin python classes in that the from_param() method does not contain
-# a ctypes.c_void_p() cast - quite frankly I can not explain why.
+# FILE * input with a Python filehandle. Based on the internal
+# dll-like object ctypes.pythonapi.
 
 
 class CFILE:
     def __init__( self , py_file ):
-        self.c_ptr   =  ctypes.c_void_p( pycfile( py_file ) )
-        self.py_file =  py_file
+        self.c_ptr   = cfunc.as_file( py_file ) 
+        self.py_file = py_file
+
 
     def from_param( self ):
-        return self.c_ptr     
+        return ctypes.c_void_p( self.c_ptr )
+
 
     def __del__(self):
         pass
 
 
 
-cwrapper = CWrapper( None ) 
+cwrapper = CWrapper( ctypes.pythonapi ) 
 cwrapper.registerType( "FILE" , CFILE )
+cfunc         = CWrapperNameSpace("FILE")
+cfunc.as_file = cwrapper.prototype("c_void_p PyFile_AsFile( py_object )")

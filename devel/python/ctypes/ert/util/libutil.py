@@ -15,7 +15,6 @@
 #  for more details. 
 
 
-import ctypes
 import ert.cwrap.clib as clib
 
 clib.load("libz" , "libz.so.1")
