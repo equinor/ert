@@ -1,6 +1,6 @@
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
-#  The file 'libutil.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'libconfig.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -15,7 +15,6 @@
 #  for more details. 
 
 
-import ctypes
 import ert.cwrap.clib as clib
 lib = clib.load("libconfig.so")
     

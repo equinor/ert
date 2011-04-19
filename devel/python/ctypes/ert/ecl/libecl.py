@@ -15,7 +15,6 @@
 #  for more details. 
 
 
-import ctypes
 import ert.util.libutil
 import ert.cwrap.clib as clib
 

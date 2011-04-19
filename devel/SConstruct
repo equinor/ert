@@ -5,8 +5,7 @@ SConscript(["libsched/SConstruct",
             "libplot/SConstruct",
             "libutil/SConstruct",
             "libconfig/SConstruct",
-            "libenkf/SConstruct",
-            "python/ctypes/SConstruct"])
+            "libenkf/SConstruct"])
             
            
         
