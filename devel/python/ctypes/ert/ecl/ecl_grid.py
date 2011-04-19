@@ -225,6 +225,7 @@ class EclGrid(object):
         else:
             return None
 
+    
     def grid_value( self , kw , i,j,k):
         return cfunc.grid_value( self , kw , i , j , k)
 

@@ -18,12 +18,14 @@
 
 
 
+
 print  "import ert" 
 import ert
 
 
 print "import ert.ecl"
-import ert.ecl
+from ert.ecl.ecl import *
+g = EclGrid( "Bjarne" ) 
 
 
 print "import ert.job_queue"
@@ -40,4 +42,5 @@ import ert.util.stat
 #import ert.rms.librms
 #import ert.sched.libsched
 #import ert.enkf.libenkf
+
 
