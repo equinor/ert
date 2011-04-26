@@ -21,7 +21,9 @@ import ctypes
 import sys
 import os.path
 
-from ecl import * 
+import ecl_sum
+import ecl_grid
+import ecl_rft
 
 class EclCase:
     def __init__(self , input_case):
@@ -53,21 +55,21 @@ class EclCase:
     @property
     def sum( self ):
         if not self.__sum:
-            self.__sum = EclSum( self.case )
+            self.__sum = ecl_sum.EclSum( self.case )
         return self.__sum
     
 
     @property
     def grid( self ):
         if not self.__grid:
-            self.__grid = EclGrid( self.case )
+            self.__grid = ecl_grid.EclGrid( self.case )
         return self.__grid
 
 
     @property
     def rft_file( self ):
         if not self.__rft:
-            self.__rft = EclRFTFile( self.case )
+            self.__rft = ecl_rft.EclRFTFile( self.case )
         return self.__rft
 
 
