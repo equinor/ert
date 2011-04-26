@@ -24,6 +24,7 @@ import os.path
 import ecl_sum
 import ecl_grid
 import ecl_rft
+import ecl_default
 
 class EclCase:
     def __init__(self , input_case):
