@@ -28,6 +28,7 @@ import ecl_default
 import ecl_grav
 
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_CHAR_TYPE , ECL_BOOL_TYPE , ECL_DOUBLE_TYPE, EclKW
+from   ecl_case              import EclCase
 from   ecl_file              import EclFile
 from   ecl_sum               import EclSum
 from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
