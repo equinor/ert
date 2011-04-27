@@ -147,6 +147,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   
   bool  plot_dates             = true;
   const int errorbar_max_obsnr = plot_config_get_errorbar_max( plot_config );
+  const bool plot_errorbars = plot_config_get_plot_errorbar( plot_config );
   const bool add_observations  = true;
   const bool            logy   = plot_config_get_logy( plot_config );
   bool  show_plot              = false;
@@ -332,7 +333,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       }
       
       if (double_vector_size( sim_time ) > 0) {
-        if (obs_size > errorbar_max_obsnr) {
+        if (obs_size > errorbar_max_obsnr && plot_errorbars) {
           /* 
              There are very many observations - to increase
              readability of the plots we plot an upper and lower limit
@@ -375,7 +376,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
             plot_dataset_append_point_xy( data_lower , days , value - std);
             plot_dataset_append_point_xy( data_upper , days , value + std);
           }
-        } else {
+        } else if (plot_errorbars){
           /*
             Normal plot with errorbars. Observe that the coordinates
             are (x,y1,y2) and NOT (x,y,std_y).
@@ -790,244 +791,6 @@ void enkf_tui_plot_observation(void * arg) {
 }
 
 
-void enkf_tui_plot_RFT__(enkf_main_type * enkf_main,
-                         const char * obs_key , 
-                         int report_step) {
-  
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
-  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main );
-  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  enkf_fs_type               * fs              = enkf_main_get_fs( enkf_main );
-  const obs_vector_type      * obs_vector      = enkf_obs_get_vector( enkf_obs , obs_key );
-  const char                 * state_kw        = obs_vector_get_state_kw( obs_vector );
-  plot_type                  * plot;
-  enkf_node_type             * node;
-  
-  const int ens_size                  = enkf_main_get_ensemble_size( enkf_main );
-  enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
-  field_config_type * field_config    = enkf_config_node_get_ref( config_node );
-  field_obs_type    * field_obs       = obs_vector_iget_node( obs_vector , report_step );
-  char * plot_file;
-  
-  plot_file = enkf_tui_plot_alloc_plot_file(plot_config , enkf_fs_get_read_dir(fs), obs_key );
-  plot = __plot_alloc(plot_config , state_kw , "Depth" , obs_key , plot_file);
-  {
-    msg_type * msg             = msg_alloc("Loading realization: ",false);
-    const int * i              = field_obs_get_i(field_obs);
-    const int * j              = field_obs_get_j(field_obs);
-    const int * k              = field_obs_get_k(field_obs);
-    const int   obs_size       = field_obs_get_size(field_obs);
-    const ecl_grid_type * grid = field_config_get_grid( field_config );
-    double * depth             = util_malloc( obs_size * sizeof * depth , __func__);
-    double min_depth , max_depth;
-    
-    int l;
-    int iens;
-    int iens1 = 0;        /* Could be user input */
-    int iens2 = ens_size - 1;
-    
-    plot_dataset_type *  obs;
-    node = enkf_node_alloc( config_node );
-    
-    for (l = 0; l < obs_size; l++) {
-      double xpos, ypos,zpos;
-      ecl_grid_get_xyz3(grid , i[l] , j[l] , k[l] , &xpos , &ypos , &zpos);
-      depth[l] = zpos;
-    }
-    
-    max_depth = depth[0];
-    min_depth = depth[0];
-    for (l=1; l< obs_size; l++)
-      util_update_double_max_min( depth[l] , &max_depth , &min_depth);
-    
-    
-    msg_show( msg );
-    for (iens=iens1; iens <= iens2; iens++) {
-      char cens[5];
-      sprintf(cens , "%03d" , iens);
-      msg_update(msg , cens);
-      bool has_node = true;
-      
-
-      if (enkf_fs_has_node(fs , config_node , report_step , iens , ANALYZED)) /* Trying analyzed first. */
-        enkf_fs_fread_node(fs , node , report_step , iens , ANALYZED);
-      else if (enkf_fs_has_node(fs , config_node , report_step , iens , FORECAST))
-        enkf_fs_fread_node(fs , node , report_step , iens , FORECAST);
-      else 
-        has_node = false;
-      
-      if (has_node) {
-        const field_type * field = enkf_node_value_ptr( node );
-        plot_dataset_type * data = plot_alloc_new_dataset( plot , NULL , PLOT_XY);
-        plot_dataset_set_style( data , POINTS );
-        plot_dataset_set_symbol_size( data , 1.00 );
-        for (l = 0; l < obs_size; l++)  /* l : kind of ran out of indices ... */
-          plot_dataset_append_point_xy(data , field_ijk_get_double( field , i[l] , j[l] , k[l]) , depth[l]);
-      } else printf("No data found for :%d/%d \n",iens, report_step);
-    }
-    
-    obs = plot_alloc_new_dataset( plot , NULL , PLOT_X1X2Y );
-    for (l = 0; l < obs_size; l++) {
-      double value , std;
-      
-      field_obs_iget(field_obs , l , &value , &std);
-      plot_dataset_append_point_x1x2y( obs , value - std , value + std , depth[l]);
-    }
-    
-    plot_set_bottom_padding( plot , 0.05);
-    plot_set_top_padding( plot , 0.05);
-    plot_set_left_padding( plot , 0.05);
-    plot_set_right_padding( plot , 0.05);
-    plot_invert_y_axis( plot );
-    
-    plot_dataset_set_line_color( obs , RED );
-    free(depth);
-    msg_free(msg , true);
-  }
-  __plot_show( plot , plot_config , plot_file);
-  printf("Plot saved in: %s \n",plot_file);
-  free(plot_file);
-}
-
-
-static void enkf_tui_plot_select_RFT(const enkf_main_type * enkf_main , char ** _obs_key , int * _report_step) {
-  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  {
-    const char * prompt  = "Which RFT observation: ";
-
-    const obs_vector_type * obs_vector = NULL;
-    char  *obs_key;
-    int    report_step;
-    while (true) {
-      util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
-      obs_key = util_alloc_stdin_line( );
-      if (obs_key != NULL) {
-        if (enkf_obs_has_key(enkf_obs , obs_key)) {
-          obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-          if (obs_vector_get_impl_type( obs_vector ) == FIELD_OBS)
-            break; /* Jumping out with a valid obs_vector pointer. */
-          else {
-            fprintf(stderr,"Observation key:%s does not correspond to a field observation.\n",obs_key);
-            obs_vector = NULL;
-          }
-        } else
-          fprintf(stderr,"Do not have observation key:%s \n",obs_key);
-      } else
-        break; /* Jumping out on blank input */
-    }
-
-    if (obs_vector != NULL) {
-      do {
-        if (obs_vector_get_num_active( obs_vector ) == 1)
-          report_step = obs_vector_get_active_report_step( obs_vector );
-        else
-          report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length( enkf_main ) , "Report step" , PROMPT_LEN);
-      } while (!obs_vector_iget_active(obs_vector , report_step));
-      *_obs_key = obs_key;
-      *_report_step = report_step;
-    }
-  }
-}
-
-
-
-void enkf_tui_plot_RFT_depth(void * arg) {
-  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  {
-    char * obs_key;
-    int report_step;
-    obs_vector_type * obs_vector;
-    
-    enkf_tui_plot_select_RFT(enkf_main , &obs_key , &report_step);
-    obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-
-    enkf_tui_plot_RFT__(enkf_main , obs_key , report_step);
-    free( obs_key );
-  }
-}
-
-
-
-void enkf_tui_plot_RFT_time(void * arg) {
-  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  {
-    const char * state_kw;
-    char * index_key = NULL;
-    char * user_key  = NULL;
-    char * obs_key;
-    int report_step;
-    obs_vector_type       * obs_vector;
-    enkf_config_node_type * config_node;
-    int step1 , step2;
-    int iens1 , iens2;
-    state_enum plot_state;
-
-    enkf_tui_plot_select_RFT(enkf_main , &obs_key , &report_step);
-    obs_vector  = enkf_obs_get_vector( enkf_obs , obs_key );
-    config_node = obs_vector_get_config_node( obs_vector );
-
-    /* Could be user input ... */
-    step1      = 0;
-    step2      = enkf_main_get_history_length( enkf_main );
-    iens1      = 0;
-    iens2      = enkf_main_get_ensemble_size( enkf_main ) - 1;
-    plot_state = BOTH;
-    state_kw   = enkf_config_node_get_key( config_node );
-    {
-      int block_nr,i,j,k;
-      const field_obs_type * field_obs = obs_vector_iget_node( obs_vector , report_step );
-      for (block_nr = 0; block_nr < field_obs_get_size( field_obs ); block_nr++) {
-        field_obs_iget_ijk( field_obs , block_nr , &i , &j , &k);
-        index_key = util_realloc_sprintf( index_key , "%d,%d,%d"    , i+1,j+1,k+1);
-        user_key  = util_realloc_sprintf( user_key  , "%s:%d,%d,%d" , state_kw , i+1,j+1,k+1);
-        enkf_tui_plot_ensemble__(enkf_main , config_node , user_key , index_key , step1 , step2 , false , iens1 , iens2 , plot_state);
-      }
-    }
-    free( obs_key );
-    free( index_key );
-    free( user_key );
-  }
-}
-
-
-
-
-/**
-   This function plots all the RFT's - observe that 'RFT' is no
-   fundamental type in the enkf_obs type system. It will plot all
-   BLOCK_OBS observations, they will typically (99% ??) be Pressure
-   observations, but could in principle also be saturation observatioons.
-*/
-
-
-
-void enkf_tui_plot_all_RFT( void * arg) {
-  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  {
-    int iobs , report_step;
-    stringlist_type * RFT_keys = enkf_obs_alloc_typed_keylist(enkf_obs , FIELD_OBS);
-    
-    for (iobs = 0; iobs < stringlist_get_size( RFT_keys ); iobs++) {
-      const char * obs_key = stringlist_iget( RFT_keys , iobs);
-      const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-      
-      do {
-        if (obs_vector_get_num_active( obs_vector ) == 1)
-          report_step = obs_vector_get_active_report_step( obs_vector );
-        else 
-          /* An RFT should really be active at only one report step - but ... */
-          report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length( enkf_main ) , "Report step" , PROMPT_LEN);
-      } while (!obs_vector_iget_active(obs_vector , report_step));
-      
-      enkf_tui_plot_RFT__(enkf_main , obs_key , report_step);
-    }
-  }
-}
-
-
 int enkf_tui_plot_read_rft_obs(enkf_main_type * enkf_main, 
 			  char * wellname, 
 			  double_vector_type * UTM_x, 
@@ -1078,15 +841,16 @@ int enkf_tui_plot_read_rft_obs(enkf_main_type * enkf_main,
 
 
 void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main , 
-				     const char * wellname   ,
-				     double_vector_type * MD, 
-				     double_vector_type * RFT_obs,
-				     double_vector_type * RFT_refcase,
-			             bool_vector_type * refcase_has_data,
-                                     vector_type * pressure_container, 
-				     int_vector_type * active,
-			             bool rft_file_exists,
-			             vector_type * has_data_container) {
+			  const char * wellname   ,
+                          double_vector_type * MD, 
+			  double_vector_type * RFT_obs,
+			  double_vector_type * RFT_refcase,
+			  bool_vector_type * refcase_has_data,
+                          vector_type * pressure_container, 
+			  int_vector_type * active,
+			  bool rft_file_exists,
+			  vector_type * has_data_container,
+                          bool isMD) {
                                      
   const int ens_size                        = enkf_main_get_ensemble_size( enkf_main );
   enkf_fs_type               * fs           = enkf_main_get_fs(enkf_main);
@@ -1094,7 +858,11 @@ void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main ,
   bool  show_plot              = false;
   char * plot_file             = enkf_tui_plot_alloc_plot_file( plot_config , enkf_fs_get_read_dir(fs), wellname );
   plot_type * plot ;
-  plot =  __plot_alloc(plot_config , "RFT pressure", "MD" , wellname, plot_file);
+  if(isMD)
+    plot =  __plot_alloc(plot_config , "RFT pressure", "MD" , wellname, plot_file);
+  else
+    plot =  __plot_alloc(plot_config , "RFT pressure", "TVD" , wellname, plot_file);
+  
   {
     show_plot = true;
   }
@@ -1158,7 +926,7 @@ void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main ,
 
 
 
-void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpathformat, const path_fmt_type * caseformat, char * wellname , time_t recording_time){
+void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpathformat, const path_fmt_type * caseformat, char * wellname , time_t recording_time, bool isMD){
   const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   /*
     Start by reading RFT measurment
@@ -1282,7 +1050,10 @@ void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpath
   /*
     Do the actual plotting
   */
-  enkf_tui_plot_RFTS__( enkf_main , wellname , MD, RFT_obs, RFT_refcase, refcase_has_data, pressure_container, active, eclipse_rft_exists, has_data_container);
+  if(isMD)
+    enkf_tui_plot_RFTS__( enkf_main , wellname , MD, RFT_obs, RFT_refcase, refcase_has_data, pressure_container, active, eclipse_rft_exists, has_data_container, isMD);
+  else
+    enkf_tui_plot_RFTS__( enkf_main , wellname , TVD_z, RFT_obs, RFT_refcase, refcase_has_data, pressure_container, active, eclipse_rft_exists, has_data_container, isMD);
   double_vector_free( UTM_x );
   double_vector_free( UTM_y );
   double_vector_free( MD  );
@@ -1346,7 +1117,7 @@ int enkf_tui_plot_read_rft_config(const char * rft_config_file, stringlist_type 
   return lines;
 }
 
-void enkf_tui_plot_RFT_sim_all( void * arg) {
+void enkf_tui_plot_RFT_sim_all_MD( void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
   const char * rft_config_file = enkf_main_get_rft_config_file( enkf_main );
@@ -1358,12 +1129,29 @@ void enkf_tui_plot_RFT_sim_all( void * arg) {
   for (int i = 0; i<lines; i++){
     char * wellname = stringlist_iget_copy(wellnames, i);
     time_t  recording_time = time_t_vector_iget(dates, i);
-    enkf_tui_plot_RFT_simIn(enkf_main, runpathformat, caseformat, wellname, recording_time);
+    enkf_tui_plot_RFT_simIn(enkf_main, runpathformat, caseformat, wellname, recording_time, true);
   }
   stringlist_free(wellnames);
   time_t_vector_free(dates);
 }
 
+void enkf_tui_plot_RFT_sim_all_TVD( void * arg) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+  const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+  const char * rft_config_file = enkf_main_get_rft_config_file( enkf_main );
+  stringlist_type * wellnames = stringlist_alloc_new();
+  time_t_vector_type * dates = time_t_vector_alloc(0,0);
+  int lines = enkf_tui_plot_read_rft_config(rft_config_file, wellnames, dates);
+  path_fmt_type * runpathformat = model_config_get_runpath_fmt( model_config );
+  const path_fmt_type * caseformat = ecl_config_get_eclbase_fmt(enkf_main_get_ecl_config(enkf_main));
+  for (int i = 0; i<lines; i++){
+    char * wellname = stringlist_iget_copy(wellnames, i);
+    time_t  recording_time = time_t_vector_iget(dates, i);
+    enkf_tui_plot_RFT_simIn(enkf_main, runpathformat, caseformat, wellname, recording_time, false);
+  }
+  stringlist_free(wellnames);
+  time_t_vector_free(dates);
+}
 
 
 
@@ -1574,17 +1362,15 @@ void enkf_tui_plot_menu(void * arg) {
       menu = menu_alloc(title , "Back" , "bB");
       free(title);
     }
-    menu_add_item(menu , "Ensemble plot"    , "eE"                           , enkf_tui_plot_ensemble    , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of ALL summary variables"     , "aA" , enkf_tui_plot_all_summary , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of GEN_KW parameter"          , "g"  , enkf_tui_plot_GEN_KW      , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of ALL ALL GEN_KW parameters" , "G"  , enkf_tui_plot_all_GEN_KW  , enkf_main , NULL);
-    menu_add_item(menu , "Observation plot" , "oO"                           , enkf_tui_plot_observation , enkf_main , NULL);
-    menu_add_item(menu , "RFT depth plot"   , "rR"                           , enkf_tui_plot_RFT_depth   , enkf_main , NULL);
-    menu_add_item(menu , "RFT time plot"    , "tT"                           , enkf_tui_plot_RFT_time    , enkf_main , NULL);
-    menu_add_item(menu , "RFT plot of all RFT"  , "fF"                       , enkf_tui_plot_all_RFT     , enkf_main , NULL);
-    menu_add_item(menu , "Plot RFT and simulated pressure vs. MD" , "iI"     , enkf_tui_plot_RFT_sim_all , enkf_main , NULL);
-    menu_add_item(menu , "Sensitivity plot"     , "sS"                       , enkf_tui_plot_sensitivity , enkf_main , NULL); 
-    menu_add_item(menu , "Histogram"        , "hH"                           , enkf_tui_plot_histogram   , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot"    , "eE"                           , enkf_tui_plot_ensemble        , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL summary variables"     , "aA" , enkf_tui_plot_all_summary     , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of GEN_KW parameter"          , "g"  , enkf_tui_plot_GEN_KW          , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL ALL GEN_KW parameters" , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
+    menu_add_item(menu , "Observation plot" , "oO"                           , enkf_tui_plot_observation     , enkf_main , NULL);
+    menu_add_item(menu , "Plot RFT and simulated pressure vs. TVD" , "tT"    , enkf_tui_plot_RFT_sim_all_TVD , enkf_main , NULL);
+    menu_add_item(menu , "Plot RFT and simulated pressure vs. MD" , "mM"     , enkf_tui_plot_RFT_sim_all_MD  , enkf_main , NULL);
+    menu_add_item(menu , "Sensitivity plot"     , "sS"                       , enkf_tui_plot_sensitivity     , enkf_main , NULL); 
+    menu_add_item(menu , "Histogram"        , "hH"                           , enkf_tui_plot_histogram       , enkf_main , NULL);
     menu_add_separator(menu);
     {
       menu_item_type * menu_item;
