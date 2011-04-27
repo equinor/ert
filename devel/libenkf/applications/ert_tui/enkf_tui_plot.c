@@ -392,12 +392,40 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
             plot_dataset_append_point_xy1y2( obs_errorbar , days , value - std , value + std);
           }
         }
+	else {
+	            /*
+            Normal plot without errorbars. Observe that the coordinates
+            are (x,y1,y2) and NOT (x,y,std_y).
+          */
+	  plot_dataset_type * data_value = plot_alloc_new_dataset( plot , "observation"       , PLOT_XY );
+          plot_dataset_set_style( data_value , POINTS );
+          plot_dataset_set_point_color( data_value , BLACK);
+          plot_dataset_set_symbol_type( data_value , PLOT_SYMBOL_FILLED_CIRCLE);
+
+          {
+            int * perm = double_vector_alloc_sort_perm( sim_time );
+            double_vector_permute( sim_time  , perm );
+            double_vector_permute( obs_value , perm );
+            double_vector_permute( obs_std   , perm );
+            free( perm );
+          }
+          
+          for (i = 0; i < double_vector_size( sim_time ); i++) {
+            double days  = double_vector_iget( sim_time  , i);
+            double value = double_vector_iget( obs_value , i);
+            plot_dataset_append_point_xy( data_value , days , value);
+          }
+
+	}
       }
       double_vector_free( sim_time );
       double_vector_free( obs_std );
       double_vector_free( obs_value );
     }
   }
+
+  /* Her skal plot refcase inn. 
+     if(plot_refcase){Do something crazy}*/
 
   plot_set_bottom_padding( plot , 0.05);
   plot_set_top_padding( plot    , 0.05);
