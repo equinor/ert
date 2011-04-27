@@ -31,6 +31,7 @@ void               plot_config_set_driver(plot_config_type * plot_config , const
 void               plot_config_set_errorbar_max(plot_config_type * plot_config , int errorbar_max);
 
 int                plot_config_get_errorbar_max(const plot_config_type * plot_config );
+bool               plot_config_get_plot_errorbar(const plot_config_type * plot_config );
 int                plot_config_get_width(const plot_config_type * plot_config );
 int                plot_config_get_height(const plot_config_type * plot_config );
 const char  *      plot_config_get_path(const plot_config_type * plot_config );

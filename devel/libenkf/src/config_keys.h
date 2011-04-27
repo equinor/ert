@@ -102,6 +102,7 @@ extern "C" {
 #define  OBS_CONFIG_KEY                    "OBS_CONFIG" 
 #define  PLOT_DRIVER_KEY                   "PLOT_DRIVER"
 #define  PLOT_ERRORBAR_MAX_KEY             "PLOT_ERRORBAR_MAX" 
+#define  PLOT_PLOT_ERRORBAR_KEY            "PLOT_PLOT_ERRORBAR"
 #define  PLOT_HEIGHT_KEY                   "PLOT_HEIGHT"       
 #define  PLOT_PATH_KEY                     "PLOT_PATH"         
 #define  PLOT_WIDTH_KEY                    "PLOT_WIDTH"        

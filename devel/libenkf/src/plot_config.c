@@ -32,6 +32,7 @@ struct plot_config_struct {
   char * driver;        /* The driver used by the libplot layer when actually 'rendering' the plots. */
   char * viewer;        /* The executable used when displaying the newly created image - can be NULL - in which case the plots are not displayed in any way. */
   int    errorbar_max;  /* If the number of observations is less than this it is plotted with errorbars - otherwise with lines. */
+  bool   plot_errorbar; /*Should the errorbars be plotted*/
   int    height;   
   int    width;
   bool   logy;
@@ -42,6 +43,10 @@ struct plot_config_struct {
 
 void plot_config_set_errorbar_max( plot_config_type * plot_config , int errorbar_max ) {
   plot_config->errorbar_max = errorbar_max;
+}
+
+void plot_config_set_plot_errorbar( plot_config_type * plot_config, bool plot_errorbar) {
+  plot_config->plot_errorbar = plot_errorbar;
 }
 
 void plot_config_set_width(plot_config_type * plot_config , int width) {
@@ -140,7 +145,9 @@ int plot_config_get_errorbar_max( const plot_config_type * plot_config ) {
   return plot_config->errorbar_max;
 }
 
-
+bool plot_config_get_plot_errorbar( const plot_config_type * plot_config) {
+  return plot_config->plot_errorbar;
+}
 
 void plot_config_free( plot_config_type * plot_config) {
   free(plot_config->plot_path);
@@ -168,6 +175,7 @@ plot_config_type * plot_config_alloc_default() {
   plot_config_set_width(info        , DEFAULT_PLOT_WIDTH );
   plot_config_set_height(info       , DEFAULT_PLOT_HEIGHT );
   plot_config_set_errorbar_max(info , DEFAULT_PLOT_ERRORBAR_MAX);
+  plot_config_set_plot_errorbar(info, DEFAULT_PLOT_PLOT_ERRORBAR);
   plot_config_set_logy( info        , DEFAULT_PLOT_LOGY );
   return info;
 }
@@ -190,6 +198,9 @@ void plot_config_init(plot_config_type * plot_config , const config_type * confi
   if (config_item_set( config , PLOT_ERRORBAR_MAX_KEY))
     plot_config_set_errorbar_max( plot_config , config_get_value_as_int( config , PLOT_ERRORBAR_MAX_KEY ));
   
+  if (config_item_set( config , PLOT_PLOT_ERRORBAR_KEY))
+    plot_config_set_plot_errorbar( plot_config , config_get_value_as_bool( config , PLOT_PLOT_ERRORBAR_KEY ));  
+
   if (config_item_set( config , PLOT_HEIGHT_KEY))
     plot_config_set_height( plot_config , config_get_value_as_int( config , PLOT_HEIGHT_KEY ));
 
@@ -203,6 +214,7 @@ void plot_config_add_config_items( config_type * config ) {
   config_add_key_value(config , PLOT_WIDTH_KEY        , false , CONFIG_INT);
   config_add_key_value(config , PLOT_PATH_KEY         , false , CONFIG_STRING);
   config_add_key_value(config , IMAGE_VIEWER_KEY      , false , CONFIG_FILE);
+  config_add_key_value(config , PLOT_PLOT_ERRORBAR_KEY, false , CONFIG_BOOLEAN);
   config_add_key_value(config , PLOT_ERRORBAR_MAX_KEY , false , CONFIG_INT);
 
   {
@@ -253,6 +265,12 @@ void plot_config_fprintf_config( const plot_config_type * plot_config , FILE * s
   if (plot_config->errorbar_max != DEFAULT_PLOT_ERRORBAR_MAX) {
     fprintf(stream , CONFIG_KEY_FORMAT , PLOT_ERRORBAR_MAX_KEY);
     fprintf(stream , CONFIG_INT_FORMAT , plot_config->errorbar_max );
+    fprintf(stream , "\n");
+  }
+
+  if (plot_config->plot_errorbar != DEFAULT_PLOT_PLOT_ERRORBAR) {
+    fprintf(stream , CONFIG_KEY_FORMAT , PLOT_PLOT_ERRORBAR_KEY);
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , CONFIG_BOOL_STRING(plot_config->plot_errorbar) );
     fprintf(stream , "\n");
   }
 
