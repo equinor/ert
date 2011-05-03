@@ -428,7 +428,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 // Should check the refcase for key - if it is != NULL.
 
 void obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type * conf_instance , const sched_file_type * sched_file , 
-                                              const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff) {
+                                              const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff , FILE * debug_handle) {
   if(!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
     util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" instance, got \"%s\".\n",__func__, conf_instance_get_class_name_ref(conf_instance) );
   
@@ -541,7 +541,10 @@ void obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , con
     for (restart_nr = 0; restart_nr < size; restart_nr++) {
       if (bool_vector_safe_iget( valid , restart_nr)) {
         if (double_vector_iget( std , restart_nr) > std_cutoff) {
-          obs_vector_add_summary_obs( obs_vector , restart_nr , sum_key , sum_key , double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ) , auto_corrf_name , auto_corrf_param);
+          obs_vector_add_summary_obs( obs_vector , restart_nr , sum_key , sum_key , 
+                                      double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ) , 
+                                      auto_corrf_name , auto_corrf_param);
+          fprintf(debug_handle, "%12s   TStep: %04d   Value: %8.4f +/- %8.4f \n", sum_key , restart_nr , double_vector_iget( value ,restart_nr) , double_vector_iget( std , restart_nr ));
         } else 
           fprintf(stderr,"** Warning: to small observation error in observation %s:%d - ignored. \n", sum_key , restart_nr);
       }

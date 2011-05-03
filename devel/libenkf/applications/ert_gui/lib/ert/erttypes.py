@@ -18,6 +18,8 @@
 import datetime
 import time
 import ctypes
+#from   ert.util.tvector import DoubleVector
+
 
 class time_t(ctypes.c_long):
     """A convenience class for working with time_t objects."""
