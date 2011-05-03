@@ -164,7 +164,6 @@ class ErtWrapper:
             restype = match.groupdict()["return"]
             functioname = match.groupdict()["function"]
             arguments = match.groupdict()["arguments"].split(",")
-            #print restype, functioname, arguments
 
             func = getattr(lib , functioname)
             func.restype = self.__parseType(restype)

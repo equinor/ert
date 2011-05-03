@@ -39,11 +39,12 @@ namespace prefix:
    sum = example.example_sum( 100 , 100)
    instance = example.ExampleClass()
 
-Observe that even though we have imported the 'example' module, we still
-need to use the 'example' prefix when referring to the symbols found in
-the example module. It is important that the module object in itself is
-only a collection of symbols - you can not use the module itself, only
-the symbols contained in the module can be put to useful work.
+Observe that even though we have imported the 'example' module, we
+still need to use the 'example' prefix when referring to the symbols
+found in the example module. It is important to remember that the
+module object is only a collection of symbols - you can not use the
+module itself, only the symbols contained in the module can be put to
+useful work.
 
 It is also possible to import the symbols from 'example' directly into
 the current namespace, without creating the intermediate namespace
