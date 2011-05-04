@@ -115,17 +115,18 @@
 
 
 /* Default directories. */
-#define DEFAULT_PLOT_PATH   "plots"
-#define DEFAULT_RUNPATH     "simulations/realization%d"
-#define DEFAULT_ENSPATH     "storage"
-#define DEFAULT_RFTPATH     "rft"
+#define DEFAULT_PLOT_PATH    "plots"
+#define DEFAULT_RUNPATH      "simulations/realization%d"
+#define DEFAULT_ENSPATH      "storage"
+#define DEFAULT_RFTPATH      "rft"
+#define DEFAULT_PLOT_REFCASE ""
 
 #define DEFAULT_PRE_CLEAR_RUNPATH   false
 
 #define DEFAULT_PLOT_WIDTH           1024
 #define DEFAULT_PLOT_HEIGHT           768
 #define DEFAULT_PLOT_ERRORBAR_MAX      25
-#define DEFAULT_PLOT_PLOT_ERRORBAR  false
+#define DEFAULT_PLOT_ERRORBAR       false
 #define DEFAULT_IMAGE_TYPE         "png"
 #define DEFAULT_PLOT_DRIVER        "PLPLOT"
 #define DEFAULT_IMAGE_VIEWER       "/usr/bin/display"
