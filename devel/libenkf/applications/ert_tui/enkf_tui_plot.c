@@ -50,7 +50,6 @@
 #include <ert_tui_const.h>
 #include <ecl_rft_file.h>
 #include <path_fmt.h>
-
 /**
    The final plot path consists of three parts: 
 
@@ -147,7 +146,8 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   
   bool  plot_dates             = true;
   const int errorbar_max_obsnr = plot_config_get_errorbar_max( plot_config );
-  const bool plot_errorbars = plot_config_get_plot_errorbar( plot_config );
+  const char * data_file       = plot_config_get_plot_refcase( plot_config );
+  const bool plot_errorbars    = plot_config_get_plot_errorbar( plot_config );
   const bool add_observations  = true;
   const bool            logy   = plot_config_get_logy( plot_config );
   bool  show_plot              = false;
@@ -157,7 +157,9 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   msg_type * msg;
   bool_vector_type * has_data = bool_vector_alloc( 0 , false );
   int     iens , step;
-
+  bool plot_refcase = true;
+  if ( strcmp( data_file , "" ) == 0)
+    plot_refcase = false;
 
   if (plot_dates)
     plot =  __plot_alloc(plot_config , "" , /* y akse */ "" ,user_key,plot_file);
@@ -172,9 +174,9 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   }
   msg_show(msg);
 
-  
+      double_vector_type * x      = double_vector_alloc(0,0);
   {
-    double_vector_type * x      = double_vector_alloc(0,0);
+
     double_vector_type * y      = double_vector_alloc(0,0);
     for (iens = iens1; iens <= iens2; iens++) {
       char msg_label[32];
@@ -191,7 +193,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
         
         double sim_days = member_config_iget_sim_days(enkf_main_iget_member_config( enkf_main , iens ) , step , fs);
         time_t sim_time = member_config_iget_sim_time(enkf_main_iget_member_config( enkf_main , iens ) , step , fs);
-        
+
         /* Forecast block */
         if (plot_state & FORECAST) {
           if (enkf_fs_has_node(fs , config_node , step , iens , FORECAST)) {
@@ -237,8 +239,9 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
             if (valid) {
               double_vector_append(y , value);
               bool_vector_iset(has_data , step , true);
-              if (plot_dates) 
+              if (plot_dates)
                 double_vector_append(x , sim_time );
+	       
               else
                 double_vector_append(x , sim_days );
             }
@@ -261,7 +264,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
         __plot_add_data(plot , plot_label , double_vector_size( x ) , double_vector_get_ptr( x ) , double_vector_get_ptr( y ));
       }
     }
-    double_vector_free( x );
     double_vector_free( y );
   }
 
@@ -423,28 +425,66 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       double_vector_free( obs_value );
     }
   }
+  /*REFCASE PLOTTING*/
 
-  /* Her skal plot refcase inn. 
-     if(plot_refcase){Do something crazy}*/
-
+  if(plot_refcase){
+    if( util_file_exists( data_file )){
+      double_vector_type * refcase_value = double_vector_alloc( 0 , 0 );
+      double_vector_type * refcase_time  = double_vector_alloc( 0 , 0 );
+      plot_dataset_type  * d             = plot_alloc_new_dataset( plot ,"refcase" , PLOT_XY );
+      plot_dataset_set_style( d , LINE );
+      plot_dataset_set_line_color( d , RED);
+      char *base;
+      char *header_file;
+      stringlist_type * summary_file_list = stringlist_alloc_new();
+      char *path;
+      ecl_sum_type *ecl_sum;
+      util_alloc_file_components( data_file , &path , &base , NULL );
+      ecl_util_alloc_summary_files( path , base , NULL , &header_file , summary_file_list);
+      ecl_sum = ecl_sum_fread_alloc( header_file , summary_file_list , ":" );
+      for ( int i = 0; i < double_vector_size(x); i++ ){
+	time_t sim_time = ( time_t ) double_vector_iget( x , i );
+	if( ecl_sum_has_general_var( ecl_sum , user_key ) && ecl_sum_check_sim_time( ecl_sum , sim_time)){
+	  double_vector_append( refcase_value , ecl_sum_get_general_var_from_sim_time( ecl_sum, sim_time , user_key));
+	  double_vector_append( refcase_time , sim_time );
+	}
+      }
+      
+      util_safe_free(header_file);
+      util_safe_free(base);
+      util_safe_free(path);
+      ecl_sum_free(ecl_sum);
+      
+      for (int i = 0; i < double_vector_size( refcase_time ); i++) {
+	double days  = double_vector_iget( refcase_time  , i);
+	double value = double_vector_iget( refcase_value , i);
+	plot_dataset_append_point_xy( d , days , value);
+      }
+      double_vector_free( refcase_value );
+      double_vector_free( refcase_time );
+    }
+    else {
+      printf("\nCannot find refcase data file: \n%s\n", data_file);
+    }
+  }
+  double_vector_free( x );    
   plot_set_bottom_padding( plot , 0.05);
   plot_set_top_padding( plot    , 0.05);
   plot_set_left_padding( plot   , 0.05);
   plot_set_right_padding( plot  , 0.05);
-
-  enkf_node_free(node);
-  msg_free(msg , true);
-  if (show_plot) {
-    __plot_show(plot , plot_config , plot_file); /* Frees the plot - logical ehhh. */
+  
+  enkf_node_free( node );
+  msg_free( msg , true );
+  if ( show_plot ) {
+    __plot_show( plot , plot_config , plot_file ); /* Frees the plot - logical ehhh. */
   } else {
-    printf("No data to plot \n");
-    plot_free(plot);
+    printf( "No data to plot \n" );
+    plot_free( plot );
   }
-           
-  free(plot_file);
+  
+  free( plot_file );
   bool_vector_free( has_data );
 }
-
 
 
 void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_type * config_node , int step1 , int step2 , int iens1 , int iens2) {
@@ -975,7 +1015,6 @@ void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpath
   int_vector_type * j_values = int_vector_alloc( lines , 0 );
   int_vector_type * k_values = int_vector_alloc( lines , 0 );
   int_vector_type * active   = int_vector_alloc( lines , 0 );
-  int start_index = 0;
   for (int nobs =0; nobs<lines; nobs++){
     int start_index = 0;
     int i; int j; int k;
