@@ -17,27 +17,59 @@
 
 
 import datetime
-import ert
 import ert.ecl.ecl as ecl
-import sys
+
+
+# 1: We need the name of the GRID/EGRID file and the init file. Pass
+#    these two filenames to the EclGrav() constructor.
+grid_file = "data/eclipse/grav/TROLL.EGRID"
+init_file = "data/eclipse/grav/TROLL.INIT"
+grav = ecl.EclGrav( grid_file , init_file )
+
+
+# 2: We load the restart files for the times we are interested in,
+#    this can be done in two different ways:
+#    
+#    a) In the case of non unified restart files you can just use the
+#       EclFile() constructor to load the whole file:
+#
+#              restart1 = ecl.EclFile("ECLIPSE.X0078")
+#
+#    b) You can use the ecl.EclFile.restart_block() method to load
+#       only one block from a unified restart file. In that case you
+#       must use 'report_step = nnn' to specifiy which report_step you
+#       are interested in. Alternatively you can use 'dtime =
+#       datetime( year , month , day)' to specify which block are
+#       interested in.
+# 
+#          restart1 = ecl.EclFile.restart_block( "ECLIPSE.UNRST" , report_step = 88)
+#          restart2 = ecl.EclFile.restart_block( "ECLIPSE.UNRST" , dtime = datetime.datetime( 2008 , 12 , 1) )
 
 restart1  = ecl.EclFile.restart_block("data/eclipse/grav/TROLL.UNRST" , report_step = 117 )
 restart2  = ecl.EclFile.restart_block("data/eclipse/grav/TROLL.UNRST" , report_step = 199 )
-grid_file = "data/eclipse/grav/TROLL.EGRID"
-init_file = "data/eclipse/grav/TROLL.INIT"
-
-rporv1 = restart1.iget_named_kw( "RPORV" , 0 ) 
-rporv2 = restart2.iget_named_kw( "RPORV" , 0 )
-
-pormod1 = restart1.iget_named_kw( "PORV_MOD" , 0 ) 
-pormod2 = restart2.iget_named_kw( "PORV_MOD" , 0 )
-
-for i in range( rporv1.size ):
-    print "%d  %g  %g  %g  %g" % (i , rporv1[i] , rporv2[i], pormod1[i] , pormod2[i])
 
 
-grav = ecl.EclGrav( grid_file , init_file )
+# 3. Add the surveys - as loaded from restart files. Give them a
+#    sensible name as the first argument. You must add at least two
+#    surveys, but you can add as many as you like.
+
 grav.add_survey_PORMOD("BASE"    , restart1 )
 grav.add_survey_PORMOD("MONITOR" , restart2 )
 
-print " %g " % grav.eval( "BASE" , "MONITOR" , 541003 , 6709907 , 297.023)
+
+
+# 4: Load the list of stations from file - this can of course be done
+#    any way you want.
+stations = []
+fileH = open("data/eclipse/grav/gravity_stations_2002" , "r")
+for line in fileH.readlines():
+    tmp = line.split()
+    name = tmp[0]
+    pos = (float( tmp[1]) , float( tmp[2] ) , float( tmp[3] ))
+    stations.append( (name , pos) )
+fileH.close()
+
+
+# 5. Evaluate the gravitational response for all the stations.
+for (name, pos) in stations:
+    print "%-5s: %8.3f" % (name , grav.eval( "BASE" , "MONITOR" , pos))
