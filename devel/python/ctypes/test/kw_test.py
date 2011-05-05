@@ -18,7 +18,7 @@
 
 import math
 import ert
-import ert.ecl as ecl
+import ert.ecl.ecl as ecl
 import sys
 
 def cutoff( x , arg ):
