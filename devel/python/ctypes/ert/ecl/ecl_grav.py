@@ -48,8 +48,8 @@ class EclGrav:
     def new_std_density( self , phase_enum , default_density):
         cfunc.new_std_density( self , phase_enum , default_density )
         
-    def add_std_density( self , phase_enum , pvtnum , denisty):
-        cfunc.add_std_density( self , phase_enum , pvtnum , default_density )
+    def add_std_density( self , phase_enum , pvtnum , density):
+        cfunc.add_std_density( self , phase_enum , pvtnum , density )
 
 
 # 2. Creating a wrapper object around the libecl library, 
