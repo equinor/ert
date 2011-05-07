@@ -21,8 +21,8 @@ import time
 import sys
 import shutil
 import os.path
-import ert.ecl       as ecl
-import ert.job_queue as job_queue
+import ert.ecl.ecl       as ecl
+import ert.job_queue.job_queue as job_queue
 import socket
 
 server_list = { "be" : "lsf-be.no",
