@@ -33,7 +33,11 @@ ECL_INIT_FILE            = 128
 ECL_RFT_FILE             = 256 
 ECL_DATA_FILE            = 512 
 
+# ecl_phase_enum from ecl_util.h
 
+ECL_OIL_PHASE   = 1
+ECL_GAS_PHASE   = 2
+ECL_WATER_PHASE = 4
 
 
 def get_num_cpu( datafile ):

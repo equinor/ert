@@ -38,9 +38,19 @@ class EclGrav:
 
     def add_survey_PORMOD( self , survey_name , restart_file ):
         cfunc.add_survey_PORMOD( self , survey_name , restart_file )
+
+    def add_survey_FIP( self , survey_name , restart_file ):
+        cfunc.add_survey_FIP( self , survey_name , restart_file )
                 
     def eval(self , base_survey , monitor_survey , pos):
         return cfunc.eval( self , base_survey , monitor_survey , pos[0] , pos[1] , pos[2])
+
+    def new_std_density( self , phase_enum , default_density):
+        cfunc.new_std_density( self , phase_enum , default_density )
+        
+    def add_std_density( self , phase_enum , pvtnum , denisty):
+        cfunc.add_std_density( self , phase_enum , pvtnum , default_density )
+
 
 # 2. Creating a wrapper object around the libecl library, 
 cwrapper = CWrapper( libecl.lib )
@@ -59,5 +69,7 @@ cfunc.free        = cwrapper.prototype("void       ecl_grav_free( ecl_grav )")
 cfunc.add_survey         = cwrapper.prototype("c_void_p  ecl_grav_add_survey( ecl_grav , char* , ecl_file )")
 cfunc.add_survey_RPORV   = cwrapper.prototype("c_void_p  ecl_grav_add_survey_RPORV( ecl_grav , char* , ecl_file )")
 cfunc.add_survey_PORMOD  = cwrapper.prototype("c_void_p  ecl_grav_add_survey_PORMOD( ecl_grav , char* , ecl_file )")
-
+cfunc.add_survey_FIP  = cwrapper.prototype("c_void_p  ecl_grav_add_survey_FIP( ecl_grav , char* , ecl_file )")
+cfunc.new_std_density    = cwrapper.prototype("void      ecl_grav_new_std_density( ecl_grav , int , double)")
+cfunc.add_std_density    = cwrapper.prototype("void      ecl_grav_add_std_density( ecl_grav , int , int , double)")
 cfunc.eval               = cwrapper.prototype("double    ecl_grav_eval( ecl_grav , char* , char* , double , double , double)")

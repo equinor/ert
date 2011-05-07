@@ -56,7 +56,9 @@ restart2  = ecl.EclFile.restart_block("data/eclipse/grav/TROLL.UNRST" , report_s
 grav.add_survey_PORMOD("BASE"    , restart1 )
 grav.add_survey_PORMOD("MONITOR" , restart2 )
 
-
+grav.new_std_density( ecl.ECL_GAS_PHASE ,  100 )
+grav.new_std_density( ecl.ECL_WATER_PHASE , 1000 )
+grav.add_survey_FIP("FIP" , restart1 )
 
 # 4: Load the list of stations from file - this can of course be done
 #    any way you want.
