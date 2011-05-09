@@ -53,11 +53,11 @@ restart2  = ecl.EclFile.restart_block("data/eclipse/grav/TROLL.UNRST" , report_s
 #    sensible name as the first argument. You must add at least two
 #    surveys, but you can add as many as you like.
 
-grav.add_survey_PORMOD("BASE"    , restart1 )
-grav.add_survey_PORMOD("MONITOR" , restart2 )
+grav.add_survey_PORMOD("PORMOD"    , restart1 )
+grav.add_survey_RPORV("RPORV" , restart1 )
 
-grav.new_std_density( ecl.ECL_GAS_PHASE ,  100 )
-grav.new_std_density( ecl.ECL_WATER_PHASE , 1000 )
+grav.new_std_density( ecl.ECL_GAS_PHASE , 0.77840  )
+grav.new_std_density( ecl.ECL_WATER_PHASE , 1045 )
 grav.add_survey_FIP("FIP" , restart1 )
 
 # 4: Load the list of stations from file - this can of course be done
@@ -74,4 +74,4 @@ fileH.close()
 
 # 5. Evaluate the gravitational response for all the stations.
 for (name, pos) in stations:
-    print "%-5s: %8.3f" % (name , grav.eval( "BASE" , "MONITOR" , pos))
+    print "%-5s: %8.3f  %8.3f" % (name , grav.eval( "PORMOD" , "FIP" , pos) , grav.eval( "RPORV" , "FIP" , pos) )
