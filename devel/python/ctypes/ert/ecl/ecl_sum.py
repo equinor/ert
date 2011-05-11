@@ -17,11 +17,45 @@
 
 import ctypes
 import numpy
-import matplotlib.dates
 import libecl
 from   ert.cwrap.cwrap       import *
 from   ert.util.stringlist   import StringList
 from   ert.util.ctime        import ctime 
+
+
+# The date2num function is a verbatim copy of the _to_ordinalf()
+# function from the matplotlib.dates module. Inserted here only to
+# avoid importing the full matplotlib library. The date2num
+# implementation could be replaced with:
+#
+#   from matplotlib.dates import date2num
+
+
+HOURS_PER_DAY     = 24.0
+MINUTES_PER_DAY   =  60*HOURS_PER_DAY
+SECONDS_PER_DAY   =  60*MINUTES_PER_DAY
+MUSECONDS_PER_DAY = 1e6*SECONDS_PER_DAY
+
+def date2num( dt ):
+    """
+    convert datetime to the Gregorian date as UTC float days,
+    preserving hours, minutes, seconds and microseconds.  return value
+    is a float
+    """
+
+    if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+        delta = dt.tzinfo.utcoffset(dt)
+        if delta is not None:
+            dt -= delta
+            
+    base =  float(dt.toordinal())
+    if hasattr(dt, 'hour'):
+        base += (dt.hour/HOURS_PER_DAY + dt.minute/MINUTES_PER_DAY +
+                 dt.second/SECONDS_PER_DAY + dt.microsecond/MUSECONDS_PER_DAY
+                 )
+    return base
+
+
 
 class EclSumNode:
     def __init__(self , value , report_step , days , time_t):
@@ -41,8 +75,8 @@ class EclSum(object):
     
     def __new__( cls , case , join_string = ":" , include_restart = True):
         """
-        The constructor loads a summary case, if no summary can be loaded the constructor will
-        return None.
+        The constructor loads a summary case, if no summary can be
+        loaded the constructor will return None.
         """
         c_ptr = cfunc.fread_alloc( case , join_string , include_restart)
         if c_ptr:
@@ -163,13 +197,14 @@ class EclSum(object):
             days[i] = cfunc.iget_sim_days( self , i)
         return days
 
+
     @property
     def numpy_mpl_time( self ):
         length = cfunc.data_length( self )
         time   = numpy.zeros( length )
         for i in range( length ):
             ctime = cfunc.iget_sim_time( self , i)
-            time[i] = matplotlib.dates.date2num( ctime.datetime() )
+            time[i] = date2num( ctime.datetime() )
         return time
 
     def iget_days(self , internal_index):

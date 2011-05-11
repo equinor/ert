@@ -14,27 +14,53 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+"""
+The ecl_grid module contains functionality to load and query an
+ECLIPSE grid file; it is currently not possible to manipulate or let
+alone create a grid with ecl_grid module. The functionality is
+implemented in the EclGrid class. The ecl_grid module is a thin
+wrapper around the ecl_grid.c implementation from the libecl library.
+"""
+
 
 import ctypes
 from   ert.cwrap.cwrap       import *
-import ert.util.stringlist
 from   ert.util.tvector      import DoubleVector  # Requires merging of typemaps ....
 import numpy
 import fortio
 import libecl
 import ecl_kw
-from   ert.util.cfile   import CFILE
+from   ert.util.cfile        import CFILE
 
 class EclGrid(object):
     
     @classmethod
     def create(cls , specgrid , zcorn , coord , actnum , mapaxes = None ):
-        obj = object.__new__( cls )
-        gridhead = ecl_kw.EclKW.new( "GRIDHEAD" , 4 , 3 )
-        gridhead[0] = 1
-        for i in (range(3)):
-            gridhead[i+1] = specgrid[i]
+        """
+        Create a new grid instance from existing keywords.
 
+        This is a class method which can be used to create an EclGrid
+        instance based on the EclKW instances @specgrid, @zcorn,
+        @coord and @actnum. An ECLIPSE EGRID file contains the
+        SPECGRID, ZCORN, COORD and ACTNUM keywords, so a somewhat
+        involved way to create a EclGrid instance could be:
+
+          file = ecl.EclFile( "ECLIPSE.EGRID" )
+          specgrid_kw = file.iget_named_kw( "SPECGRID" , 0)
+          zcorn_kw = file.iget_named_kw( "ZCORN" , 0)
+          coord_kw = file.iget_named_kw( "COORD" , 0)
+          actnum_kw = file.iget_named_kw( "ACTNUM" , 0 )
+          
+          grid = EclGrid.create( specgrid_kw , zcorn_kw , coord_kw , actnum_kw)
+          
+        If you are so inclined ...  
+        """
+        obj = object.__new__( cls )
+        gridhead = ecl_kw.EclKW.new( "GRIDHEAD" , 4 , 3 ) 
+        gridhead[0] = 1 
+        for i in (range(3)): 
+            gridhead[i+1] = specgrid[i]
+    
         obj.c_ptr = cfunc.grdecl_create( gridhead , zcorn , coord , actnum , None) # , mapaxes) 
         obj.data_owner = True
         obj.parent     = None
@@ -60,36 +86,47 @@ class EclGrid(object):
         else:
             return None
 
-        
     def __del__(self):
         if self.data_owner:
             cfunc.free( self )
 
     def from_param(self):
-        return ctypes.c_void_p( self.c_ptr )
+        """
+        ctypes utility function.
+        
+        ctypes utility method facilitating transparent mapping between
+        python EclGrid instances and C based ecl_grid_type pointers.
+        """
+        return self.c_ptr
 
     @property
     def nx( self ):
+        """The number of cells in the i direction - nx."""
         return cfunc.get_nx( self )
 
     @property
     def ny( self ):
+        """The number of cells in the j direction - ny."""
         return cfunc.get_ny( self )
 
     @property
     def nz( self ):
+        """The number of cells in the k direction - nz."""
         return cfunc.get_nz( self )
 
     @property
     def size( self ):
+        """The total number of cells in the grid, i.e. nx*ny*nz."""
         return cfunc.get_nx( self ) * cfunc.get_ny( self ) * cfunc.get_nz( self )
 
     @property
     def nactive( self ):
+        """The number of active cells in the grid."""
         return cfunc.get_active( self )
 
     @property
     def dims( self ):
+        """A tuple of four elements: (nx , ny , nz , nactive)."""
         return ( cfunc.get_nx( self ) ,
                  cfunc.get_ny( self ) ,
                  cfunc.get_nz( self ) ,
@@ -97,6 +134,14 @@ class EclGrid(object):
 
     @property
     def name( self ):
+        """
+        Name of the current grid.
+        
+        For the main grid this is the filename given to the
+        constructor when loading the grid; for an LGR this is the name
+        of the LGR. If the grid instance has been created with the
+        create() classmethod this can be None.
+        """
         return cfunc.get_name( self )
 
     def __global_index( self , active_index = None , global_index = None , ijk = None):
@@ -120,11 +165,23 @@ class EclGrid(object):
                  
 
     def get_active_index( self , ijk = None , global_index = None):
+        """
+        Lookup active index based on ijk or global index.
+
+        Will determine the active_index of a cell, based on either
+        @ijk = (i,j,k) or @global_index. If the cell specified by the
+        input arguments is not active the function will return -1.
+        """
         gi = self.__global_index( global_index = global_index , ijk = ijk)
         return cfunc.get_active_index1( self , gi)
 
-
+    
     def active( self , ijk = None , global_index = None):
+        """
+        Is the cell active?
+
+        See documentation og get_xyz() for explanation of parameters @ijk and @global_index.
+        """
         gi = self.__global_index( global_index = global_index , ijk = ijk)
         active_index = cfunc.get_active_index1( self , gi)
         if active_index >= 0:
@@ -132,11 +189,21 @@ class EclGrid(object):
         else:
             return False
 
+
     def get_global_index( self , ijk = None , active_index = None):
+        """
+        Lookup global index based on ijk or active index.
+        """
         gi = self.__global_index( active_index = active_index , ijk = ijk)
         return gi
 
+
     def get_ijk( self, active_index = None , global_index = None):
+        """
+        Lookup (i,j,k) for a cell, based on either active index or global index.
+
+        The return value is a tuple with three elements (i,j,k).
+        """
         i = ctypes.c_int()
         j = ctypes.c_int()
         k = ctypes.c_int()
@@ -148,6 +215,38 @@ class EclGrid(object):
 
 
     def get_xyz( self, active_index = None , global_index = None , ijk = None):
+        """
+        Find true position of cell center.
+
+        Will return world position, i.e. (utm_x , utm_y , depth), of
+        the center of a cell in the grid.
+        
+        The cells of a grid can be specified in three different ways:
+
+           (i,j,k)      : As a tuple of i,j,k values.
+
+           global_index : A number in the range [0,nx*ny*nz). The
+                          global index is related to (i,j,k) as:
+
+                            global_index = i + j*nx + k*nx*ny
+           
+           active_index : A number in the range [0,nactive).
+           
+        For many of the EclGrid methods a cell can be specified using
+        any of these three methods. Observe that one and only method is
+        allowed:
+
+        OK:
+            pos1 = grid.get_xyz( active_index = 100 )                    
+            pos2 = grid.get_xyz( ijk = (10,20,7 ))                       
+
+        Crash and burn:
+            pos3 = grid.get_xyz( ijk = (10,20,7 ) , global_index = 10)   
+            pos4 = grid.get_xyz()
+            
+        All the indices in the EclGrid() class are zero offset, this
+        is in contrast to ECLIPSE which display an offset 1 interface.
+        """
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
 
         x = ctypes.c_double()
@@ -155,23 +254,57 @@ class EclGrid(object):
         z = ctypes.c_double()
 
         cfunc.get_xyz1( self , gi , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
-        
         return (x.value , y.value , z.value)
 
     def depth( self , active_index = None , global_index = None , ijk = None):
+        """
+        Depth of the center of a cell.
+
+        Returns the depth of the center of the cell given by
+        @active_index, @global_index or @ijk. See method get_xyz() for
+        documentation of @active_index, @global_index and @ijk.
+        """
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
         return cfunc.get_depth( self , gi )
 
     def top( self , i , j ):
+        """Top of the reservoir; in the column (@i , @j)."""
         return cfunc.get_top( self , i , j ) 
 
     def bottom( self , i , j ):
+        """Bottom of the reservoir; in the column (@i , @j)."""
         return cfunc.get_bottom( self , i , j ) 
 
     def locate_depth( self , depth , i , j ):
+        """
+        Will locate the k value of cell containing specified depth.
+
+        Will scan through the grid column specified by the input
+        arguments @i and @j and search for a cell containing the depth
+        given by input argument @depth. The return value is the k
+        value of cell containing @depth.
+
+        If @depth is above the top of the reservoir the function will
+        return -1, and if @depth is below the bottom of the reservoir
+        the function will return -nz.
+        """
         return cfunc.locate_depth( self , depth , i , j)
 
     def find_cell( self , x , y , z , start_ijk = None):
+        """
+        Lookup cell containg true position (x,y,z).
+
+        Will locate the cell in the grid which contains the true
+        position (@x,@y,@z), the return value is as a triplet
+        (i,j,k). The underlying C implementation is not veeery
+        efficient, and can potentially take quite long time. If you
+        provide a good intial guess with the parameter @start_ijk (a
+        tuple (i,j,k)) things can speed up quite substantially.
+
+        If the location (@x,@y,@z) can not be found in the grid, the
+        method will return None.
+        """
+
         if start_ijk:
             start_index = self.__global_index( ijk = start_ijk )
         else:
@@ -186,23 +319,43 @@ class EclGrid(object):
         else:
             return None
 
-
     def cell_volume( self, active_index = None , global_index = None , ijk = None):
+        """
+        Calculate the volume of a cell.
+
+        Will calculate the total volume of the cell. See method
+        get_xyz() for documentation of @active_index, @global_index
+        and @ijk.
+        """
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
         return cfunc.get_cell_volume( self , gi)
             
 
     def cell_dz( self , active_index = None , global_index = None , ijk = None):
+        """
+        The thickness of a cell.
+
+        Will calculate the (average) thickness of the cell. See method
+        get_xyz() for documentation of @active_index, @global_index
+        and @ijk.
+        """
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index )
         return cfunc.get_cell_thickness( self , gi )
 
 
     @property
     def num_lgr( self ):
+        """
+        How many LGRs are attached to this main grid?
+
+        How many LGRs are attached to this main grid; the grid
+        instance doing the query must itself be a main grid.
+        """
         return cfunc.num_lgr( self )
 
 
     def has_lgr( self , lgr_name ):
+        """Query if the grid has an LGR with name @lgr_name."""
         if cfunc.has_lgr( self , lgr_name ):
             return True
         else:
@@ -210,6 +363,17 @@ class EclGrid(object):
 
 
     def get_lgr( self , lgr_name ):
+        """
+        Get EclGrid instance with LGR content.
+        
+        Return an EclGrid instance based on the LGR named
+        @lgr_name. The LGR grid instance is in most questions like an
+        ordinary grid instance; the only difference is that it can not
+        be used for further queries about LGRs.
+
+        If the grid does not contain an LGR with this name the method
+        will return None.
+        """
         if cfunc.has_lgr(self , lgr_name ):
             lgr = EclGrid( None , lgr = cfunc.get_lgr( self , lgr_name ) , parent = self)
             return lgr
@@ -218,6 +382,16 @@ class EclGrid(object):
         
 
     def get_cell_lgr( self, active_index = None , global_index = None , ijk = None):
+        """
+        Get EclGrid instance located in cell.
+        
+        Will query the current grid instance if the cell given by
+        @active_index, @global_index or @ijk has been refined with an
+        LGR. Will return None if the cell in question has not been
+        refined, the return value can be used for further queries.
+        
+        See get_xyz() for documentation of the input parameters.
+        """
         gi  = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
         lgr = cfunc.get_cell_lgr( self , gi )
         if lgr:
@@ -226,11 +400,38 @@ class EclGrid(object):
             return None
 
     
-    def grid_value( self , kw , i,j,k):
+    def grid_value( self , kw , i , j , k):
+        """
+        Will evalute @kw in location (@i,@j,@k).
+
+        The ECLIPSE properties and solution vectors are stored in
+        restart and init files as 1D vectors of length nx*nx*nz or
+        nactive. The grid_value() method is a minor convenience
+        function to convert the (@i,@j,@k) input values to an
+        appropriate 1D index.
+
+        Depending on the length of kw the input arguments are
+        converted either to an active index or to a global index. If
+        the length of kw does not fit with either the global size of
+        the grid or the active size of the grid things will fail hard.
+        """
         return cfunc.grid_value( self , kw , i , j , k)
 
 
     def load_column( self , kw , i , j , column):
+        """
+        Load the values of @kw from the column specified by (@i,@j).
+
+        The method will scan through all k values of the input field
+        @kw for fixed values of i and j. The size of @kw must be
+        either nactive or nx*ny*nz.
+
+        The input argument @column should be a DoubleVector instance,
+        observe that if size of @kw == nactive k values corresponding
+        to inactive cells will not be modified in the @column
+        instance; in that case it is important that @column is
+        initialized with a suitable default value.
+        """
         cfunc.load_column( self , kw , i , j , column)
     
 
@@ -281,6 +482,14 @@ class EclGrid(object):
     
 
     def create3D( self , ecl_kw , default = 0):
+        """
+        Creates a 3D numpy array object with the data from  @ecl_kw.
+
+
+        Observe that 3D numpy object is a copy of the data in the
+        EclKW instance, i.e. modification to the numpy object will not
+        be reflected in the ECLIPSE keyword.
+        """
         if ecl_kw.size == self.nactive or ecl_kw.size == self.size:
             array = numpy.ones( [ self.nx , self.ny , self.nz] , dtype = ecl_kw.dtype) * default
             array = numpy.ones( [ self.size ] , dtype = ecl_kw.dtype) * default
