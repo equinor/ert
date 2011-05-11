@@ -180,7 +180,8 @@ class EclGrid(object):
         """
         Is the cell active?
 
-        See documentation og get_xyz() for explanation of parameters @ijk and @global_index.
+        See documentation og get_xyz() for explanation of parameters
+        @ijk and @global_index.
         """
         gi = self.__global_index( global_index = global_index , ijk = ijk)
         active_index = cfunc.get_active_index1( self , gi)
@@ -436,6 +437,12 @@ class EclGrid(object):
     
 
     def createKW( self , array , kw_name , pack):
+        """
+        Creates an EclKW instance based on existing 3D numpy object.
+
+        The methods create3D() does the inverse operation; creating a
+        3D numpy object from an EclKW instance.
+        """
         if array.ndim == 3:
             dims = array.shape
             if dims[0] == self.nx and dims[1] == self.ny and dims[2] == self.nz:
@@ -485,10 +492,12 @@ class EclGrid(object):
         """
         Creates a 3D numpy array object with the data from  @ecl_kw.
 
-
         Observe that 3D numpy object is a copy of the data in the
         EclKW instance, i.e. modification to the numpy object will not
         be reflected in the ECLIPSE keyword.
+        
+        The methods createKW() does the inverse operation; creating an
+        EclKW instance from a 3D numpy object.
         """
         if ecl_kw.size == self.nactive or ecl_kw.size == self.size:
             array = numpy.ones( [ self.nx , self.ny , self.nz] , dtype = ecl_kw.dtype) * default
@@ -511,6 +520,28 @@ class EclGrid(object):
         
         
     def write_grdecl( self , ecl_kw , pyfile , default_value = 0):
+        """
+        Writes an EclKW instance as an ECLIPSE grdecl formatted file.
+
+        The input argument @ecl_kw must be an EclKW instance of size
+        nactive or nx*ny*nz. If the size is nactive the inactive cells
+        will be filled with @default_value; hence the function will
+        always write nx*ny*nz elements. 
+        
+        The data in the @ecl_kw argument can be of type integer,
+        float, double or bool. In the case of bool the default value
+        must be specified as 1 (True) or 0 (False).
+
+        The input argument @pyfile should be a valid python filehandle
+        opened for writing; i.e.
+
+           pyfile = open("PORO.GRDECL" , "w")
+           grid.write_grdecl( poro_kw  , pyfile , default_value = 0.0)
+           grid.write_grdecl( permx_kw , pyfile , default_value = 0.0)
+           pyfile.close()
+
+        """
+        
         if ecl_kw.size == self.nactive or ecl_kw.size == self.size:
             cfile = CFILE( pyfile )
             cfunc.fwrite_grdecl( self , ecl_kw , cfile , default_value )
