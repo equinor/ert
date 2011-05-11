@@ -13,42 +13,110 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+The ecl_grav module contains functionality to load time-lapse ECLIPSE
+results and calculate the change in gravitational strength between the
+different surveys. The implementation is a thin wrapper around
+the ecl_grav.c implementation in the libecl library.
+"""
 
-
-
-import libecl
-from   ert.cwrap.cwrap       import *
-
+import  libecl
+import  ert.ecl.ecl_file 
+from    ert.cwrap.cwrap   import *
 
 class EclGrav:
+    """The EclGrav class is a collection class holding the results
+    from ECLIPSE forward modelling of gravity surveys. Observe that
+    the class is focused on the ECLIPSE side of things, and does not
+    have any notion of observed values or locations; that should be
+    handled by the scope using the EclGrav class.
+
+    Typical use of the EclGrav class involves the following steps:
+
+      1. Create the EclGrav instance.
+      2. Add surveys with the add_survey_XXXX() methods.
+      3. Evalute the gravitationl response with the eval() method.
+    """
+
     def __init__( self , grid_file , init_file ):
+        """Creates an EclGrav instance. The input arguments @grid_file
+        and @init_file should be strings containing the name of an
+        ECLIPSE GRID/EGRID file and an ECLIPSE INIT file."""
         self.c_ptr = cfunc.grav_alloc( grid_file , init_file )
         
     def __del__( self ):
         cfunc.free( self )
 
     def from_param( self ):
+        """ctypes utility method facilitating transparent mapping
+        between python EclGrav instances and C based ecl_grav_type
+        pointers."""
         return self.c_ptr
 
-    def add_survey( self , survey_name , restart_file ):
-        cfunc.add_survey( self , survey_name , restart_file )
-
     def add_survey_RPORV( self , survey_name , restart_file ):
+        """Add a new survey; in this context a survey is the state of
+        reservoir, i.e. an ECLIPSE restart file. The @survey_name
+        input argument will be used when refering to this survey at a
+        later stage. The @restart_file input argument should be an
+        EclFile instance with data from one report step.
+
+        The pore volume of each cell will be calculated based on the
+        RPORV keyword from the restart files. The methods
+        add_survey_PORMOD() and add_survey_FIP() are alternatives
+        which are based on other keywords."""
         cfunc.add_survey_RPORV( self , survey_name , restart_file )
 
     def add_survey_PORMOD( self , survey_name , restart_file ):
+        """See documentation of add_survey_RPORV. For the
+        add_survey_PORMOD() method the pore volum is calculated from
+        the initial pore volume and the PORV_MOD keyword from the
+        restart file."""
         cfunc.add_survey_PORMOD( self , survey_name , restart_file )
 
     def add_survey_FIP( self , survey_name , restart_file ):
+        """This method adds a survey as add_survey_RPORV() and
+        add_survey_PORMOD; but the mass content in each cell is
+        calculated based on the FIPxxx keyword along with the mass
+        density at standard conditions of the respective phases. 
+
+        The mass density must be specified with the new_std_density()
+        method before calling the add_survey_FIP() method."""
         cfunc.add_survey_FIP( self , survey_name , restart_file )
                 
     def eval(self , base_survey , monitor_survey , pos):
+        """This is method everything is leading up to; this will
+        calculate the change in gravitational strength, in units of
+        micro Gal, between the two surveys named @base_survey and
+        @monitor_survey. The @pos argument should be a tuple of three
+        elements with the (utm_x , utm_y , depth) position where we
+        want to evaluate the change in gravitational strength."""
         return cfunc.eval( self , base_survey , monitor_survey , pos[0] , pos[1] , pos[2])
 
     def new_std_density( self , phase_enum , default_density):
+        """Adds a new phase with a corresponding density; must be used
+        prior to calling the add_survey_FIP() method. 
+
+        @phase_enum is one of the integer constants ECL_OIL_PHASE,
+        ECL_GAS_PHASE or ECL_WATER_PHASE, all available in the
+        ecl_util and also ecl modules. 
+
+        @default_density is the density, at standard conditions, for
+        this particular phase. By default @default_density will be
+        used for all the cells in the model; by using the
+        add_std_density() method you can specify different densities
+        for different PVT regions."""
         cfunc.new_std_density( self , phase_enum , default_density )
         
     def add_std_density( self , phase_enum , pvtnum , density):
+        """The new_std_density() method will add a standard conditions
+        density which applies to all cells in the model. Using the
+        add_std_density() method it is possible to add standard
+        conditions densities on a per PVT region basis. You can add
+        densities for as many PVT regions as you like, and then fall
+        back to the default density for the others.
+
+        The new_std_density() method must be called prior to calling
+        the add_std_density() method."""
         cfunc.add_std_density( self , phase_enum , pvtnum , density )
 
 
@@ -58,7 +126,7 @@ cwrapper.registerType( "ecl_grav" , EclGrav )
 
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
+#    These functions are used when implementing the EclGrav class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_grav")
 
@@ -66,10 +134,10 @@ cfunc.grav_alloc  = cwrapper.prototype("c_void_p   ecl_grav_alloc( char* , char*
 cfunc.free        = cwrapper.prototype("void       ecl_grav_free( ecl_grav )")
 
 # Return value ignored in the add_survey_xxx() functions:
-cfunc.add_survey         = cwrapper.prototype("c_void_p  ecl_grav_add_survey( ecl_grav , char* , ecl_file )")
 cfunc.add_survey_RPORV   = cwrapper.prototype("c_void_p  ecl_grav_add_survey_RPORV( ecl_grav , char* , ecl_file )")
 cfunc.add_survey_PORMOD  = cwrapper.prototype("c_void_p  ecl_grav_add_survey_PORMOD( ecl_grav , char* , ecl_file )")
-cfunc.add_survey_FIP  = cwrapper.prototype("c_void_p  ecl_grav_add_survey_FIP( ecl_grav , char* , ecl_file )")
+cfunc.add_survey_FIP     = cwrapper.prototype("c_void_p  ecl_grav_add_survey_FIP( ecl_grav , char* , ecl_file )")
+
 cfunc.new_std_density    = cwrapper.prototype("void      ecl_grav_new_std_density( ecl_grav , int , double)")
 cfunc.add_std_density    = cwrapper.prototype("void      ecl_grav_add_std_density( ecl_grav , int , int , double)")
 cfunc.eval               = cwrapper.prototype("double    ecl_grav_eval( ecl_grav , char* , char* , double , double , double)")
