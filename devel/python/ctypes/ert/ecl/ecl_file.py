@@ -83,6 +83,7 @@ class EclFile(object):
 
     @classmethod
     def NULL( cls ):
+        """Classmethod which creates an empty instance; will evalute to False in __nonzero__()."""
         obj = object.__new__( cls )
         obj.c_ptr  = None 
         obj.parent = None
@@ -112,6 +113,7 @@ class EclFile(object):
             cfunc.free( self )
 
     def __getitem__(self , index):
+        """Get ecl_kw nr @index - implements index operator []."""
         if isinstance( index , types.IntType):
             if index < 0 or index >= cfunc.get_size( self ):
                 raise IndexError
@@ -252,8 +254,10 @@ class EclFile(object):
 
         The C-level ecl_file_type structure takes full ownership of
         all installed ecl_kw instances; mixing the garbage collector
-        into it means that this is quite low level.
+        into it means that this is quite low level - and potentially
+        dangerous!
         """
+
         # We ensure that this scope owns the new_kw instance; the
         # new_kw will be handed over to the ecl_file instance, and we
         # can not give away something we do not alreeady own.
@@ -282,6 +286,10 @@ class EclFile(object):
         return cfunc.get_num_named_kw( self , kw )
 
     def has_kw( self , kw , num = 0):
+        """
+        Check if current EclFile instance has a keyword @kw.
+        """
+
         num_named_kw = self.num_named_kw( kw )
         if num_named_kw > num:
             return True
@@ -289,13 +297,28 @@ class EclFile(object):
             return False
 
     def iget_restart_sim_time( self , index ):
+        """Will locate restart block nr @index and return the true time as a datetime instance."""
         return cfunc.iget_restart_time( self , index )
 
     @property
     def name(self):
+        """Name of the file currently loaded."""
         return cfunc.get_src_file( self )
     
     def fwrite( self , fortio ):
+        """
+        Will write current EclFile instance to fortio stream.
+
+        ECLIPSE is written in Fortran; and a "special" handle for
+        Fortran IO must be used when reading and writing these files.
+        This method will write the current EclFile instance to a
+        FortIO stream opened for writing:
+
+           fortio = FortIO( "FILE.XX" )
+           file.fwrite( fortio )
+           fortio.close()
+           
+        """
         cfunc.fwrite( self , fortio , 0 )
 
 

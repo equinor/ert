@@ -13,14 +13,54 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+Package for working with ECLIPSE files.
 
-#from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_CHAR_TYPE , ECL_BOOL_TYPE , ECL_DOUBLE_TYPE, EclKW
-#from   ecl_file              import EclFile
-#from   ecl_sum               import EclSum
-#from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
-#from   ecl_grid              import EclGrid
-#from   ecl_region            import EclRegion
-#from   fortio                import FortIO
-#from   ecl                   import EclCase
-#from   ecl_util              import *  
-#import ecl_grav
+The ecl package contains several classes for working with ECLIPSE
+files. The ecl package is a wrapper around the libecl library from the
+ERT distribution. Mainly the package is organized with modules
+ecl_xxx.py with a class EclXXX. The module ecl_xxx.py will generalyy
+wrap the content of the c-file ecl_xxx.c The main content is:
+
+  fortio/FortIO: This is functionality to read and write binary
+     fortran files.
+
+  ecl_kw/EclKW: This class holds one ECLIPSE keyword, like SWAT, in
+     restart format.
+
+  ecl_file/EclFile: This class is used to load an ECLIPSE file in
+     restart format, alternatively only parts of the file can be
+     loaded. Internally it consists of a collection of EclKW
+     instances.
+
+  ecl_grid/EclGrid: This will load an ECLIPSE GRID or EGRID file, and
+     can then subsequently be used for queries about the grid.
+
+  ecl_sum/EclSum: This will load summary results from an ECLIPSE run;
+     both data file(s) and the SMSPEC file. The EclSum object can be
+     used as basis for queries on summary vectors.
+
+  ecl_rft/[EclRFTFile , EclRFT , EclRFTCell]: Loads an ECLIPSE RFT/PLT
+     file, and can afterwords be used to support various queries.
+
+  ecl_region/EclRegion: Convenience class to support selecting cells
+     in a grid based on a wide range of criteria. Can be used as a
+     mask in operations on EclKW instances.
+
+  ecl_grav/EclGrav: Class used to simplify evaluation of ECLIPSE
+     modelling time-lapse gravitational surveys.
+
+In addition there are some modules which do not follow the one class
+per module organization:
+
+  ecl_util: This is mainly a collection of constants, and a few
+     stateless functions.
+
+  ecl: This module is purely for convenience, all the symbols in the
+     package are explicitly imported into this package, so that all
+     symbols in the package are available under the common namespace
+     'ecl'.
+
+  libecl: This module contains some low-level ctypes trickery to
+     actually load the shared library libecl.so.
+"""
