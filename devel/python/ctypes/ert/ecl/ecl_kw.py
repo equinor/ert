@@ -13,7 +13,9 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-
+"""
+Module documentation.
+"""
 
 import  types
 import  ctypes
@@ -22,7 +24,6 @@ from    ert.cwrap.cwrap       import *
 from    ert.util.cfile        import CFILE
 import  fortio
 import  libecl
-
 
 
 
@@ -36,7 +37,13 @@ ECL_MESS_TYPE   = 5
 
 
 class EclKW(object):
-    
+    """
+    The EclKW class contains the information from one ECLIPSE keyword.
+
+    Many of the special __xxx___() functions have been implemented, so
+    that the EclKW class supports both numerical operations and also
+    [] based lookup.
+    """
     @classmethod
     def new( cls , name, size , type):
         obj = cls()
@@ -125,7 +132,6 @@ class EclKW(object):
         else:
             return False
     
-
     def __del__(self):
         if self.data_owner:
             cfunc.free( self )
@@ -343,7 +349,8 @@ class EclKW(object):
             return self.__idiv__( other )
 
     def apply( self , func , arg = None , mask = None , force_active = False):
-        """Will apply the function @func on the keyword - inplace.
+        """
+        Will apply the function @func on the keyword - inplace.
 
         The function @func should take a scalar value from the ecl_kw
         vector as input, and return a scalar value of the same type;
