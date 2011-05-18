@@ -934,32 +934,9 @@ void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main ,
   {
     show_plot = true;
   }
-  plot_dataset_type * rft_obs_value     = plot_alloc_new_dataset( plot , "observation"       , PLOT_XY );
-  plot_dataset_type * rft_refcase_value = plot_alloc_new_dataset( plot , "refcase"       , PLOT_XY );
-
-  plot_dataset_set_style( rft_obs_value , POINTS );
-  plot_dataset_set_style( rft_refcase_value , POINTS );
-          
-  plot_dataset_set_point_color( rft_obs_value , 15);
-  plot_dataset_set_point_color( rft_refcase_value , 15);
-
-  plot_dataset_set_symbol_type( rft_obs_value , 5);
-  plot_dataset_set_symbol_type( rft_refcase_value , 17);
-  
-  
-  for (int nobs = 0; nobs < double_vector_size(RFT_obs); nobs++){
-    double rft_obs_numeric     = double_vector_iget(RFT_obs , nobs);
-    double md_numeric          = double_vector_iget(MD , nobs);
-    plot_dataset_append_point_xy( rft_obs_value, rft_obs_numeric , md_numeric);
-    if( bool_vector_iget(refcase_has_data, nobs)){
-      double rft_refcase_numeric = double_vector_iget(RFT_refcase , nobs);
-      plot_dataset_append_point_xy( rft_refcase_value, rft_refcase_numeric , md_numeric);
-    }
-  }
-  
   /*
-    Now that the refcase and observations are handeled, simulated rfts are to be plotted.
-  */ 
+    Start with plotting the simulated rfts
+  */
   if(rft_file_exists){
     for (int iens=0; iens < ens_size; iens++){
       const double_vector_type * simulated_pressure = vector_iget_const(pressure_container, iens);
@@ -976,6 +953,32 @@ void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main ,
       }
     }
   }
+    /*
+    Now continue with refcase and observations.
+  */ 
+  plot_dataset_type * rft_obs_value     = plot_alloc_new_dataset( plot , "observation"       , PLOT_XY );
+  plot_dataset_type * rft_refcase_value = plot_alloc_new_dataset( plot , "refcase"       , PLOT_XY );
+
+  plot_dataset_set_style( rft_obs_value , POINTS );
+  plot_dataset_set_style( rft_refcase_value , POINTS );
+          
+  plot_dataset_set_point_color( rft_obs_value , 15);
+  plot_dataset_set_point_color( rft_refcase_value , 14);
+
+  plot_dataset_set_symbol_type( rft_obs_value , 5);
+  plot_dataset_set_symbol_type( rft_refcase_value , 5);
+  
+  
+  for (int nobs = 0; nobs < double_vector_size(RFT_obs); nobs++){
+    double rft_obs_numeric     = double_vector_iget(RFT_obs , nobs);
+    double md_numeric          = double_vector_iget(MD , nobs);
+    plot_dataset_append_point_xy( rft_obs_value, rft_obs_numeric , md_numeric);
+    if( bool_vector_iget(refcase_has_data, nobs)){
+      double rft_refcase_numeric = double_vector_iget(RFT_refcase , nobs);
+      plot_dataset_append_point_xy( rft_refcase_value, rft_refcase_numeric , md_numeric);
+    }
+  }
+
   plot_invert_y_axis(plot);
   plot_set_bottom_padding( plot , 0.05);
   plot_set_top_padding( plot    , 0.05);
@@ -996,6 +999,11 @@ void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main ,
 
 void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpathformat, const path_fmt_type * caseformat, char * wellname , time_t recording_time, bool isMD){
   const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
+  const plot_config_type    * plot_config      = enkf_main_get_plot_config( enkf_main );
+  const char * data_file       = plot_config_get_plot_refcase( plot_config );
+  bool plot_refcase = true;
+  if ( strcmp( data_file , "" ) == 0)
+    plot_refcase = false;
   /*
     Start by reading RFT measurment
   */
@@ -1033,18 +1041,28 @@ void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpath
   */
   double_vector_type * RFT_refcase = double_vector_alloc( 0 , 0);
   bool_vector_type * refcase_has_data = bool_vector_alloc(0, false);
-  const char * refcase_name = ecl_config_get_refcase_name( enkf_main_get_ecl_config(enkf_main));
-  const char * refcase_file_name = ecl_rft_file_alloc_case_filename(refcase_name );
+  const char * refcase_file_name = ecl_rft_file_alloc_case_filename(data_file);
+  
   if (refcase_file_name == NULL){
-    util_abort("%s: Cannot find eclipse RFT file",__func__ , refcase_file_name);
+    if( plot_refcase )
+      util_abort("%s: Cannot find eclipse RFT file",__func__ , refcase_file_name);
+
   }
   ecl_rft_file_type * rft_refcase_file = ecl_rft_file_alloc( refcase_file_name );
   if (refcase_file_name == NULL){
-    util_abort("%s: Cannot find eclipse RFT file",__func__ , refcase_file_name);
+    if( plot_refcase )
+      util_abort("%s: Cannot find eclipse RFT file",__func__ , refcase_file_name);
+    
   }
   const ecl_rft_node_type * rft_refcase_node = ecl_rft_file_get_well_time_rft( rft_refcase_file , wellname , recording_time);  
   if(rft_refcase_node == NULL){
-    printf("No RFT information exists for %s in refcase.\n", wellname);
+    if( plot_refcase )
+      printf("No RFT information exists for %s in refcase.\n", wellname);
+
+    for( int nobs = 0; nobs < lines; nobs++){
+      double_vector_append(RFT_refcase, 0.0);
+      bool_vector_append(refcase_has_data, false);
+    }
   }
   else{
     for( int nobs = 0; nobs < lines; nobs++){
