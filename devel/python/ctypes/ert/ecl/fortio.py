@@ -13,28 +13,34 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+Module documentation - FortIO
+"""
 
-
-import sys
 import libecl
 import ctypes
 from   ert.cwrap.cwrap       import *
 
 
-# The FortIO class is a thin wrapper around the C struct fortio. The
-# FortIO class is created to facilitate reading and writing binary
-# fortran files. The python implementation (currently) only supports
-# instantiation and subsequent use in a C function, but it would be
-# simple to wrap the low level read/write functions for Python access as
-# well.
 
 class FortIO:
+    """
+    Class to support binary IO of files created by the Fortran runtime.
+
+    The FortIO class is a thin wrapper around the C struct fortio. The
+    FortIO class is created to facilitate reading and writing binary
+    fortran files. The python implementation (currently) only supports
+    instantiation and subsequent use in a C function, but it would be
+    simple to wrap the low level read/write functions for Python
+    access as well.
+    """
     def __init__(self , filename , mode , fmt_file = False , endian_flip = True):
         self.c_ptr = cfunc.fortio_fopen( filename , mode , endian_flip , fmt_file)
         self.file_open = True 
-
+        
     def from_param(self):
-        return ctypes.c_void_p( self.c_ptr )
+        return self.c_ptr
+
 
     # Implements normal Python semantics - close on delete.
     def __del__(self):
