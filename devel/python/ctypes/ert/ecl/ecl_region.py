@@ -13,7 +13,9 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-
+"""
+Module used to select cells based on many different criteria.
+"""
 
 import ctypes
 from   ert.cwrap.cwrap       import *

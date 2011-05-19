@@ -14,7 +14,28 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 """
-Module documentation.
+Support for working with one keyword from ECLIPSE file.
+
+ECLIPSE files in "restart format" are organized in keywords consisting
+of a simple header and blocks of data. A keyword typically looks like:
+
+  'SWAT    '  10000  'REAL'
+  0.05  0.08  0.08  0.10
+  0.11  0.11  0.10  0.09
+  ....  
+
+I.e. it starts with of header consisting of a 8 characters name, a
+length and a datatype, immediately followed by the actual
+data. 
+
+Altough the term "restart format" is used to describe denote the
+format, this particular format is not limited to restart files; it is
+(at least) used in INIT, EGRID, GRID, Snnn, UNSMRY, SMSPEC, UNRST,
+Xnnnn and RFT files. This module also has (some) support for working
+with GRDECL 'formatted' files.
+
+The ecl_kw.py implementation wraps the ecl_kw.c implementation in the
+libecl library.
 """
 
 import  types
@@ -25,9 +46,7 @@ from    ert.util.cfile        import CFILE
 import  fortio
 import  libecl
 
-
-
-# Enum defintion from ecl_util.h1
+# Enum defintion from ecl_util.h
 ECL_CHAR_TYPE   = 0
 ECL_FLOAT_TYPE  = 1
 ECL_DOUBLE_TYPE = 2
@@ -40,12 +59,29 @@ class EclKW(object):
     """
     The EclKW class contains the information from one ECLIPSE keyword.
 
+    The ecl_kw type is the lowest level type in the libecl C library,
+    and all the other datatypes like e.g. ecl_grid and ecl_sum are
+    based collections of ecl_kw instances, and interpreting the
+    content of the ecl_kw keywords.
+
     Many of the special __xxx___() functions have been implemented, so
     that the EclKW class supports both numerical operations and also
     [] based lookup.
     """
+
     @classmethod
     def new( cls , name, size , type):
+        """
+        Creates a brand new EclKW instance.
+
+        This method will create a grand spanking new EclKW
+        instance. The instance will get name @name (silently truncated
+        to eight characters), @size elements and datatype @type. Using
+        this method you could create a SOIL keyword with:
+
+            soil_kw = EclKW.new( "SOIL" , 10000 , ECL_FLOAT_TYPE )
+            
+        """
         obj = cls()
         obj.c_ptr      = cfunc.alloc_new( name , size , type )
         obj.data_owner = True
@@ -53,7 +89,8 @@ class EclKW(object):
         obj.__init( )
         return obj
 
-
+    # Could this method be avoided totally by using an ecl_kw return
+    # value from the ecl_file_iget_xxx() methods?
     @classmethod
     def ref( cls , c_ptr , parent ):
         obj = cls( )
@@ -116,13 +153,22 @@ class EclKW(object):
             # Iteration not supported ...
             self.data_ptr = None
             self.dtype    = None
-            
+
+
+    #def __init__( self , c_ptr ):
+    #    self.c_ptr = c_ptr
+    #    self.data_owner = False
+    #    self.parent = None
+    #    self.__init()
+        
 
     def from_param(self):
-        return ctypes.c_void_p( self.c_ptr )
-
+        return self.c_ptr
 
     def __len__( self ):
+        """
+        Returns the number of elements. Implements len( )
+        """
         return cfunc.get_size( self )
 
 
@@ -143,6 +189,9 @@ class EclKW(object):
 
 
     def __getitem__(self, index ):
+        """
+        Function to support index based lookup: y = kw[index]
+        """
         if isinstance( index , types.IntType):
             length = self.__len__()
             if index < 0 or index >= length:
@@ -162,6 +211,9 @@ class EclKW(object):
 
 
     def __setitem__(self, index ,value):
+        """
+        Function to support index based assignment: kw[index] = value
+        """
         if isinstance( index , types.IntType):
             length = self.__len__()
             if index < 0 or index >= length:
@@ -529,20 +581,20 @@ cfunc = CWrapperNameSpace("ecl_kw")
 cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
 cfunc.load_grdecl                = cwrapper.prototype("c_void_p ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
 cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_copy( ecl_kw )")
-cfunc.get_size                   = cwrapper.prototype("int ecl_kw_get_size( ecl_kw )")
-cfunc.get_type                   = cwrapper.prototype("int ecl_kw_get_type( ecl_kw )")
-cfunc.iget_char_ptr              = cwrapper.prototype("char* ecl_kw_iget_char_ptr( ecl_kw , int )")
-cfunc.iset_char_ptr              = cwrapper.prototype("void ecl_kw_iset_char_ptr( ecl_kw , int , char*)")
-cfunc.iget_bool                  = cwrapper.prototype("bool ecl_kw_iget_bool( ecl_kw , int)")
-cfunc.iset_bool                  = cwrapper.prototype("bool ecl_kw_iset_bool( ecl_kw , int, bool)")
-cfunc.iget_int                   = cwrapper.prototype("int ecl_kw_iget_int( ecl_kw , int )")
-cfunc.iget_double                = cwrapper.prototype("double ecl_kw_iget_double( ecl_kw , int )")
-cfunc.iget_float                 = cwrapper.prototype("float ecl_kw_iget_float( ecl_kw , int)")
-cfunc.float_ptr                  = cwrapper.prototype("float* ecl_kw_get_float_ptr( ecl_kw )")
-cfunc.int_ptr                    = cwrapper.prototype("int* ecl_kw_get_int_ptr( ecl_kw )")
-cfunc.double_ptr                 = cwrapper.prototype("double* ecl_kw_get_double_ptr( ecl_kw )")
-cfunc.free                       = cwrapper.prototype("void ecl_kw_free( ecl_kw )")
-cfunc.fwrite                     = cwrapper.prototype("void ecl_kw_fwrite( ecl_kw , fortio )")
+cfunc.get_size                   = cwrapper.prototype("int      ecl_kw_get_size( ecl_kw )")
+cfunc.get_type                   = cwrapper.prototype("int      ecl_kw_get_type( ecl_kw )")
+cfunc.iget_char_ptr              = cwrapper.prototype("char*    ecl_kw_iget_char_ptr( ecl_kw , int )")
+cfunc.iset_char_ptr              = cwrapper.prototype("void     ecl_kw_iset_char_ptr( ecl_kw , int , char*)")
+cfunc.iget_bool                  = cwrapper.prototype("bool     ecl_kw_iget_bool( ecl_kw , int)")
+cfunc.iset_bool                  = cwrapper.prototype("bool     ecl_kw_iset_bool( ecl_kw , int, bool)")
+cfunc.iget_int                   = cwrapper.prototype("int      ecl_kw_iget_int( ecl_kw , int )")
+cfunc.iget_double                = cwrapper.prototype("double   ecl_kw_iget_double( ecl_kw , int )")
+cfunc.iget_float                 = cwrapper.prototype("float    ecl_kw_iget_float( ecl_kw , int)")
+cfunc.float_ptr                  = cwrapper.prototype("float*   ecl_kw_get_float_ptr( ecl_kw )")
+cfunc.int_ptr                    = cwrapper.prototype("int*     ecl_kw_get_int_ptr( ecl_kw )")
+cfunc.double_ptr                 = cwrapper.prototype("double*  ecl_kw_get_double_ptr( ecl_kw )")
+cfunc.free                       = cwrapper.prototype("void     ecl_kw_free( ecl_kw )")
+cfunc.fwrite                     = cwrapper.prototype("void     ecl_kw_fwrite( ecl_kw , fortio )")
 cfunc.get_header                 = cwrapper.prototype("char*    ecl_kw_get_header ( ecl_kw )")
 cfunc.set_header                 = cwrapper.prototype("void     ecl_kw_set_header_name ( ecl_kw , char*)")
 cfunc.fprintf_grdecl             = cwrapper.prototype("void     ecl_kw_fprintf_grdecl( ecl_kw , FILE )")

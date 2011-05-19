@@ -14,45 +14,50 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 """
+Calculate dynamic change in gravitational strength.
+
 The ecl_grav module contains functionality to load time-lapse ECLIPSE
 results and calculate the change in gravitational strength between the
-different surveys. The implementation is a thin wrapper around
-the ecl_grav.c implementation in the libecl library.
+different surveys. The implementation is a thin wrapper around the
+ecl_grav.c implementation in the libecl library.
 """
 
 import  libecl
 import  ert.ecl.ecl_file 
+import  ert.ecl.ecl_grid
 from    ert.cwrap.cwrap   import *
 
 class EclGrav:
     """
-    Collection holding ECLIPSE results for calculating gravity
-    changes.
+    Holding ECLIPSE results for calculating gravity changes.
     
     The EclGrav class is a collection class holding the results from
     ECLIPSE forward modelling of gravity surveys. Observe that the
     class is focused on the ECLIPSE side of things, and does not have
-    any notion of observed values or locations; that should be handled
-    by the scope using the EclGrav class.
+    any notion of observed values or measurement locations; that
+    should be handled by the scope using the EclGrav class.
 
     Typical use of the EclGrav class involves the following steps:
 
       1. Create the EclGrav instance.
       2. Add surveys with the add_survey_XXXX() methods.
-      3. Evalute the gravitationl response with the eval() method.
+      3. Evalute the gravitational response with the eval() method.
     """
 
-    def __init__( self , grid_file , init_file ):
+    def __init__( self , grid , init_file ):
         """
-        Creates an EclGrav instance. The input arguments @grid_file
-        and @init_file should be strings containing the name of an
-        ECLIPSE GRID/EGRID file and an ECLIPSE INIT file.
+        Creates a new EclGrav instance. 
+
+        The input arguments @grid and @init_file should be instances
+        of EclGrid and EclFile respectively.
         """
-        self.c_ptr = cfunc.grav_alloc( grid_file , init_file )
+        self.c_ptr     = cfunc.grav_alloc( grid , init_file )
+        self.init_file = init_file   # Inhibit premature garbage collection of init_file
         
+
     def __del__( self ):
         cfunc.free( self )
-
+        
     def from_param( self ):
         """
         ctypes utility method facilitating transparent mapping
@@ -121,6 +126,11 @@ class EclGrav:
         the change in gravitational strength, in units of micro Gal,
         between the two surveys named @base_survey and
         @monitor_survey. 
+
+        The second survey can be 'None' - the resulting answer has
+        nothing whatsovever to do with gravitation, but can be
+        interesting to determine the numerical size of the quantities
+        which are subtracted in a 4D study.
         
         The @pos argument should be a tuple of three elements with the
         (utm_x , utm_y , depth) position where we want to evaluate the
@@ -130,12 +140,11 @@ class EclGrav:
 
     def new_std_density( self , phase_enum , default_density):
         """
-        Adds a new phase with a corresponding density; must be used
-        prior to calling the add_survey_FIP() method.
+        Adds a new phase with a corresponding density.
 
         @phase_enum is one of the integer constants ECL_OIL_PHASE,
         ECL_GAS_PHASE or ECL_WATER_PHASE, all available in the
-        ecl_util and also ecl modules. 
+        ecl_util and also ecl modules.
 
         @default_density is the density, at standard conditions, for
         this particular phase. By default @default_density will be
@@ -147,6 +156,9 @@ class EclGrav:
         
     def add_std_density( self , phase_enum , pvtnum , density):
         """
+        Will add standard conditions density for specified phase and
+        PVT region.
+        
         The new_std_density() method will add a standard conditions
         density which applies to all cells in the model. Using the
         add_std_density() method it is possible to add standard
@@ -170,7 +182,7 @@ cwrapper.registerType( "ecl_grav" , EclGrav )
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_grav")
 
-cfunc.grav_alloc  = cwrapper.prototype("c_void_p   ecl_grav_alloc( char* , char* )")
+cfunc.grav_alloc  = cwrapper.prototype("c_void_p   ecl_grav_alloc( ecl_grid , ecl_file )")
 cfunc.free        = cwrapper.prototype("void       ecl_grav_free( ecl_grav )")
 
 # Return value ignored in the add_survey_xxx() functions:
