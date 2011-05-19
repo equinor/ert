@@ -14,14 +14,32 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 """
-Module documentation - FortIO
+Module to support transparent binary IO of Fortran created files.
+
+Fortran is a a funny language; when writing binary blobs of data to
+file the Fortran runtime will silently add a header and footer around
+the date. The Fortran code:
+
+   integer array(100)
+   write(unit) array
+
+it actually writes a head and tail in addition to the actual
+data. The header and tail is a 4 byte integer, which value is the
+number of bytes in the immediately following record. I.e. what is
+actually found on disk after the Fortran code above is:
+
+  | 400 | array ...... | 400 |
+
+The fortio.c file implements the fortio_type C structure which can be
+used to read and write these structures transparently. The current
+python module is a minimal wrapping of this datastructure; mainly to
+support passing of FortIO handles to the underlying C functions. A
+more extensive wrapping of the fortio implementation would be easy.
 """
 
 import libecl
 import ctypes
 from   ert.cwrap.cwrap       import *
-
-
 
 class FortIO:
     """
@@ -34,9 +52,29 @@ class FortIO:
     simple to wrap the low level read/write functions for Python
     access as well.
     """
+
     def __init__(self , filename , mode , fmt_file = False , endian_flip = True):
+        """
+        Create a FortIO handle connected to file @filename. @mode as in fopen()
+
+        Will create a FortIO handle conntected to the file
+        @filename. The @mode flag is passed directly to the final
+        fopen() call and should be "r" to open the file for reading
+        and "w" for writing.
+        
+        The point of the FortIO class is to work with binary files,
+        but you can set the @fmt_file parameter to True if you want to
+        read/write formatted ECLIPSE files in restart format. 
+
+        By default the FortIO instances will be opened with
+        endian_flip set to True (this is the correct behaviour for the
+        ECLIPSE/x86 combination) - but other values are in principle
+        possible. Observe that the endian flipping only applies to the
+        header/footer inserted by the Fortran runtime, the actual data
+        is not touched by the FortIO instance.
+        """
         self.c_ptr = cfunc.fortio_fopen( filename , mode , endian_flip , fmt_file)
-        self.file_open = True 
+
         
     def from_param(self):
         return self.c_ptr
@@ -44,12 +82,18 @@ class FortIO:
 
     # Implements normal Python semantics - close on delete.
     def __del__(self):
-        if self.file_open:
+        """
+        Desctructor - will close the filehandle.
+        """
+        if self.c_ptr:
             cfunc.fortio_close( self )
             
     def close( self ):
+        """
+        Close the filehandle.
+        """
         cfunc.fortio_close( self )
-        self.file_open = False
+        self.c_ptr = None
 
 
 
