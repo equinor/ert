@@ -13,13 +13,14 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-
+"""
+Module for loading ECLIPSE RFT files.
+"""
 
 import libecl
 import ctypes
 from   ert.cwrap.cwrap       import *
 from   ert.util.ctime        import ctime
-
 
 RFT = 1
 PLT = 2
@@ -52,7 +53,7 @@ class EclRFTFile(object):
             raise TypeError("Index should be integer type")
 
     def from_param( self ):
-        return ctypes.c_void_p( self.c_ptr )
+        return self.c_ptr 
     
     @property
     def size( self , well = None , date = None):
@@ -94,7 +95,7 @@ class EclRFT:
         return cfunc_rft.get_size( self )
 
     def from_param( self ):
-        return ctypes.c_void_p( self.c_ptr )
+        return self.c_ptr 
 
     @property
     def type(self):

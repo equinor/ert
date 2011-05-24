@@ -15,6 +15,8 @@
 #  for more details. 
 
 """
+Module to load and query ECLIPSE GRID/EGRID files.
+
 The ecl_grid module contains functionality to load and query an
 ECLIPSE grid file; it is currently not possible to manipulate or let
 alone create a grid with ecl_grid module. The functionality is
@@ -27,7 +29,6 @@ import ctypes
 from   ert.cwrap.cwrap       import *
 from   ert.util.tvector      import DoubleVector  # Requires merging of typemaps ....
 import numpy
-import fortio
 import libecl
 import ecl_kw
 from   ert.util.cfile        import CFILE
@@ -145,6 +146,18 @@ class EclGrid(object):
         return cfunc.get_name( self )
 
     def __global_index( self , active_index = None , global_index = None , ijk = None):
+        """
+        Will convert @active_index or @ijk to global_index.
+
+        This method will convert @active_index or @ijk to a global
+        index. Exactly one of the arguments @active_index,
+        @global_index or @ijk must be supplied. 
+
+        The method is used extensively internally in the EclGrid
+        class; most methods which take coordinate input pass through
+        this method to normalize the coordinate representation.
+        """
+
         set_count = 0
         if not active_index == None:
             set_count += 1
@@ -246,7 +259,7 @@ class EclGrid(object):
             pos4 = grid.get_xyz()
             
         All the indices in the EclGrid() class are zero offset, this
-        is in contrast to ECLIPSE which display an offset 1 interface.
+        is in contrast to ECLIPSE which has an offset 1 interface.
         """
         gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
 
@@ -269,11 +282,15 @@ class EclGrid(object):
         return cfunc.get_depth( self , gi )
 
     def top( self , i , j ):
-        """Top of the reservoir; in the column (@i , @j)."""
+        """
+        Top of the reservoir; in the column (@i , @j).
+        """
         return cfunc.get_top( self , i , j ) 
 
     def bottom( self , i , j ):
-        """Bottom of the reservoir; in the column (@i , @j)."""
+        """
+        Bottom of the reservoir; in the column (@i , @j).
+        """
         return cfunc.get_bottom( self , i , j ) 
 
     def locate_depth( self , depth , i , j ):
@@ -356,7 +373,9 @@ class EclGrid(object):
 
 
     def has_lgr( self , lgr_name ):
-        """Query if the grid has an LGR with name @lgr_name."""
+        """
+        Query if the grid has an LGR with name @lgr_name.
+        """
         if cfunc.has_lgr( self , lgr_name ):
             return True
         else:

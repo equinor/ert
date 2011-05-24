@@ -37,10 +37,11 @@ import ert.util.stringlist
 import ert.util.tvector
 import ert.util.stat
 
-#import ert.ecl.libecl
-#import ert.config.libconfig
-#import ert.rms.librms
-#import ert.sched.libsched
-#import ert.enkf.libenkf
+import ert.ecl.libecl
+import ert.config.libconfig
+import ert.rms.librms
+import ert.sched.libsched
+import ert.enkf.libenkf
+
 
 

@@ -43,16 +43,10 @@ import  ctypes
 import  numpy
 from    ert.cwrap.cwrap       import *
 from    ert.util.cfile        import CFILE
+from    ecl_util              import ECL_CHAR_TYPE, ECL_DOUBLE_TYPE, ECL_INT_TYPE, ECL_BOOL_TYPE, ECL_MESS_TYPE, ECL_FLOAT_TYPE
+
 import  fortio
 import  libecl
-
-# Enum defintion from ecl_util.h
-ECL_CHAR_TYPE   = 0
-ECL_FLOAT_TYPE  = 1
-ECL_DOUBLE_TYPE = 2
-ECL_INT_TYPE    = 3
-ECL_BOOL_TYPE   = 4
-ECL_MESS_TYPE   = 5
 
 
 class EclKW(object):
@@ -66,7 +60,9 @@ class EclKW(object):
 
     Many of the special __xxx___() functions have been implemented, so
     that the EclKW class supports both numerical operations and also
-    [] based lookup.
+    [] based lookup. Many of the methods accept an optional @mask
+    argument; this should be a EclRegion instance which can be used to
+    limit the operation to a part of the EclKW.
     """
 
     @classmethod
@@ -79,7 +75,7 @@ class EclKW(object):
         to eight characters), @size elements and datatype @type. Using
         this method you could create a SOIL keyword with:
 
-            soil_kw = EclKW.new( "SOIL" , 10000 , ECL_FLOAT_TYPE )
+        soil_kw = EclKW.new( "SOIL" , 10000 , ECL_FLOAT_TYPE )
             
         """
         obj = cls()
@@ -329,7 +325,7 @@ class EclKW(object):
         return self.__sub__( delta ) * -1 
     
     def __mul__(self , factor):
-        copy = self.deep_copy()
+        copy  = self.deep_copy()
         copy *= factor
         return copy
 

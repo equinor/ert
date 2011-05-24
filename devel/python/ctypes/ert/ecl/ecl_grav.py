@@ -156,8 +156,7 @@ class EclGrav:
         
     def add_std_density( self , phase_enum , pvtnum , density):
         """
-        Will add standard conditions density for specified phase and
-        PVT region.
+        Add standard conditions density for PVT region.
         
         The new_std_density() method will add a standard conditions
         density which applies to all cells in the model. Using the
