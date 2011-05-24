@@ -13,7 +13,9 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-
+"""
+Module for loading and querying summary data.
+"""
 
 import ctypes
 import numpy
@@ -29,7 +31,6 @@ from   ert.util.ctime        import ctime
 # implementation could be replaced with:
 #
 #   from matplotlib.dates import date2num
-
 
 HOURS_PER_DAY     = 24.0
 MINUTES_PER_DAY   =  60*HOURS_PER_DAY

@@ -293,7 +293,7 @@
 
 struct enkf_fs_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char                      * root_path;
+  char                   * root_path;
   fs_driver_type         * dynamic_forecast;
   fs_driver_type         * dynamic_analyzed;
   fs_driver_type         * parameter;
