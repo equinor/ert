@@ -99,6 +99,9 @@ class EclKW(object):
 
     @classmethod
     def copy( cls , src ):
+        """
+        Will create a deep copy of the current kw instance.
+        """
         obj = cls( )
         obj.c_ptr = cfunc.copyc( src )
         obj.parent = None
@@ -108,6 +111,9 @@ class EclKW(object):
     
     @classmethod
     def NULL( cls ):
+        """
+        Utility method to create kw instance which evaluates to False.
+        """
         obj = cls( )
         obj.c_ptr  = None
         obj.parent = None
@@ -117,6 +123,43 @@ class EclKW(object):
     
     @classmethod
     def grdecl_load( cls , file , kw , ecl_type = ECL_FLOAT_TYPE):
+        """
+        Function to load an EclKW instance from a grdecl file.
+
+        This constructor can be used to load an EclKW instance from a
+        grdecl formatted file; the input files for petrophysical
+        properties are typically given as grdecl files. 
+
+        The @file argument should be a Python filehandle to an open
+        file. The @kw argument should be the keyword header you are
+        searching for, e.g. "PORO" or "PVTNUM"[1], the method will
+        then search forward through the file to look for this @kw. If
+        the keyword can not be found the method will return None.
+
+        The grdecl files have no datatype header, so this must be
+        supplied by the caller through the @ecl_type argument. The
+        default value of @ecl_type is ECL_FLOAT_TYPE. 
+
+           fileH =  open('ECLIPSE.PVT' , 'r')
+           pvtnum_kw = EclKW.grdecl_load( fileH , 'PVTNUM', ecl_type = ECL_INT_TYPE)
+           fileH.close()
+
+           fileH = open('ECLIPSE.PETRO','r')
+           poro_kw = EclKW.grdecl_load( fileH , 'PORO' )
+           fileH.close()
+
+        Observe that since the grdecl files are quite weakly
+        structured it is difficult to verify the integrity of the
+        files, malformed input might therefor very well pass unnoticed
+        before things blow up at a later stage.
+        
+           
+        [1]: It is possible, but not recommended, to pass in None for
+             @kw, in which case the method will load the first keyword
+             it finds in the file.
+        """
+        
+
         cfile  = CFILE( file )
         c_ptr  = cfunc.load_grdecl( cfile , kw , ecl_type )
         if c_ptr:
@@ -180,6 +223,9 @@ class EclKW(object):
             
 
     def __deep_copy__(self , memo):
+        """
+        Python special routine used to perform deep copy.
+        """
         ecl_kw = EclKW.copy( self )
         return ecl_kw
 
@@ -340,13 +386,43 @@ class EclKW(object):
     # No __rdiv__()
 
     def assert_binary( self , other ):
-        print self.header 
-        print other.header
+        """
+        Utility function to assert that keywords @self and @other can
+        be combined.
+        """
         return cfunc.assert_binary( self , other )
 
     #################################################################
         
     def assign(self , value , mask = None , force_active = False):
+        """
+        Assign a value to current kw instance.
+
+        This method is used to assign value(s) to the current EclKW
+        instance. The @value parameter can either be a scalar, or
+        another EclKW instance. To set all elements of a keword to
+        1.0:
+
+            kw.assign( 1.0 )
+
+        The numerical type of @value must be compatible with the
+        current keyword. The optional @mask argument should be an
+        EclRegion instance which can be used to limit the assignment
+        to only parts of the EclKW. In the example below we select all
+        the elements with PORO below 0.10, and then assign EQLNUM
+        value 88 to those cells:
+        
+            grid = ecl.EclGrid("ECLIPSE.EGRID")
+            reg  = ecl.EclRegion( grid , false )
+            init = ecl.EclFile("ECLIPSE.INIT")
+
+            poro = init.iget_named_kw( "PORO" , 0 )
+            eqlnum = init.iget_named_kw( "EQLNUM" , 0 )
+            reg.select_below( poro , 0.10 )
+            
+            eqlnum.assign( 88 , mask = reg )
+        
+        """
         if cfunc.assert_numeric( self ):
             if type(value) == type(self):
                 if mask:
@@ -596,23 +672,23 @@ cfunc.set_header                 = cwrapper.prototype("void     ecl_kw_set_heade
 cfunc.fprintf_grdecl             = cwrapper.prototype("void     ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
 cfunc.fseek_grdecl               = cwrapper.prototype("bool     ecl_kw_grdecl_fseek_kw(char* , bool, bool , FILE )")
 
-cfunc.iadd                       = cwrapper.prototype("void ecl_kw_inplace_add( ecl_kw , ecl_kw )")
-cfunc.imul                       = cwrapper.prototype("void ecl_kw_inplace_mul( ecl_kw , ecl_kw )")
-cfunc.idiv                       = cwrapper.prototype("void ecl_kw_inplace_div( ecl_kw , ecl_kw )")
-cfunc.isub                       = cwrapper.prototype("void ecl_kw_inplace_sub( ecl_kw , ecl_kw )")
+cfunc.iadd                       = cwrapper.prototype("void     ecl_kw_inplace_add( ecl_kw , ecl_kw )")
+cfunc.imul                       = cwrapper.prototype("void     ecl_kw_inplace_mul( ecl_kw , ecl_kw )")
+cfunc.idiv                       = cwrapper.prototype("void     ecl_kw_inplace_div( ecl_kw , ecl_kw )")
+cfunc.isub                       = cwrapper.prototype("void     ecl_kw_inplace_sub( ecl_kw , ecl_kw )")
 
-cfunc.assert_binary              = cwrapper.prototype("bool ecl_kw_assert_binary_numeric( ecl_kw , ecl_kw )")
-cfunc.scale_int                  = cwrapper.prototype("void ecl_kw_scale_int( ecl_kw , int )")
-cfunc.scale_float                = cwrapper.prototype("void ecl_kw_scale_float_or_double( ecl_kw , double )")
-cfunc.shift_int                  = cwrapper.prototype("void ecl_kw_shift_int( ecl_kw , int )")
-cfunc.shift_float                = cwrapper.prototype("void ecl_kw_shift_float_or_double( ecl_kw , double )")
-cfunc.assert_numeric             = cwrapper.prototype("bool ecl_kw_assert_numeric( ecl_kw )")
-cfunc.copy_data                  = cwrapper.prototype("void ecl_kw_memcpy_data( ecl_kw , ecl_kw )")
-cfunc.set_int                    = cwrapper.prototype("void ecl_kw_scalar_set_int( ecl_kw , int )")
-cfunc.set_float                  = cwrapper.prototype("void ecl_kw_scalar_set_float_or_double( ecl_kw , double )")
+cfunc.assert_binary              = cwrapper.prototype("bool     ecl_kw_assert_binary_numeric( ecl_kw , ecl_kw )")
+cfunc.scale_int                  = cwrapper.prototype("void     ecl_kw_scale_int( ecl_kw , int )")
+cfunc.scale_float                = cwrapper.prototype("void     ecl_kw_scale_float_or_double( ecl_kw , double )")
+cfunc.shift_int                  = cwrapper.prototype("void     ecl_kw_shift_int( ecl_kw , int )")
+cfunc.shift_float                = cwrapper.prototype("void     ecl_kw_shift_float_or_double( ecl_kw , double )")
+cfunc.assert_numeric             = cwrapper.prototype("bool     ecl_kw_assert_numeric( ecl_kw )")
+cfunc.copy_data                  = cwrapper.prototype("void     ecl_kw_memcpy_data( ecl_kw , ecl_kw )")
+cfunc.set_int                    = cwrapper.prototype("void     ecl_kw_scalar_set_int( ecl_kw , int )")
+cfunc.set_float                  = cwrapper.prototype("void     ecl_kw_scalar_set_float_or_double( ecl_kw , double )")
 
-cfunc.max_min_int                = cwrapper.prototype("void ecl_kw_max_min_int( ecl_kw , int* , int*)")
-cfunc.max_min_float              = cwrapper.prototype("void ecl_kw_max_min_float( ecl_kw , float* , float*)")
-cfunc.max_min_double             = cwrapper.prototype("void ecl_kw_max_min_double( ecl_kw , double* , double*)")
+cfunc.max_min_int                = cwrapper.prototype("void     ecl_kw_max_min_int( ecl_kw , int* , int*)")
+cfunc.max_min_float              = cwrapper.prototype("void     ecl_kw_max_min_float( ecl_kw , float* , float*)")
+cfunc.max_min_double             = cwrapper.prototype("void     ecl_kw_max_min_double( ecl_kw , double* , double*)")
 
 

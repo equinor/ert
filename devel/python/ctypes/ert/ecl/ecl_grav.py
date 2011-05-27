@@ -60,6 +60,8 @@ class EclGrav:
         
     def from_param( self ):
         """
+        ctypes utility method.
+
         ctypes utility method facilitating transparent mapping
         between python EclGrav instances and C based ecl_grav_type
         pointers.

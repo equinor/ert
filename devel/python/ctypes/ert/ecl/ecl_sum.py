@@ -17,7 +17,6 @@
 Module for loading and querying summary data.
 """
 
-import ctypes
 import numpy
 import libecl
 from   ert.cwrap.cwrap       import *
@@ -99,7 +98,7 @@ class EclSum(object):
             cfunc.free( self )
 
     def from_param(self):
-        return ctypes.c_void_p( self.c_ptr )
+        return self.c_ptr 
 
     def get_key_index( self , key ):
         index = cfunc.get_general_var_index( self , key )

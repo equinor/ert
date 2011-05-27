@@ -13,12 +13,10 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+Module documentation.
+"""
 
-
-import time
-import datetime
-import ctypes
-import sys
 import os.path
 
 import ecl_sum
