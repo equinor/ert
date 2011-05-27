@@ -422,6 +422,14 @@ class EclKW(object):
             
             eqlnum.assign( 88 , mask = reg )
         
+        The EclRegion instance has two equivalent sets of selected
+        indices; one consisting of active indices and one consisting
+        of global indices. By default the assign() method will select
+        the global indices of keyword has nx*ny*nz elements and the
+        active indices if the kw has nactive elements. By setting the
+        optinal argument @force_active to true, you can force the
+        method to only update the active indices, even though the
+        keyword has nx*ny*nz elements.
         """
         if cfunc.assert_numeric( self ):
             if type(value) == type(self):
@@ -449,24 +457,40 @@ class EclKW(object):
 
                         
     def add( self , other , mask = None , force_active = False):
+        """
+        See method assign() for documentation of optional arguments
+        @mask and @force_active.
+        """
         if mask:
             mask.iadd_kw( self , other , force_active )
         else:
             return self.__iadd__( other )
         
     def sub(self , other , mask = None , force_active = False):
+        """
+        See method assign() for documentation of optional arguments
+        @mask and @force_active.
+        """
         if mask:
             mask.isub_kw(  self , other , force_active )
         else:
             return self.__isub__( other )
 
     def mul(self , other , mask = None , force_active = False):
+        """
+        See method assign() for documentation of optional arguments
+        @mask and @force_active.
+        """
         if mask:
             mask.imul_kw(  self , other , force_active )
         else:
             return self.__imul__( other )
 
     def div(self , other , mask = None , force_active = False):
+        """
+        See method assign() for documentation of optional arguments
+        @mask and @force_active.
+        """
         if mask:
             mask.idiv_kw(  self , other , force_active )
         else:
@@ -492,8 +516,8 @@ class EclKW(object):
           kw.apply( cutoff , arg = 0.10 )
 
         
-        It is possible to supply a EclRegion instance via the @mask
-        attribute.
+        See method assign() for documentation of optional arguments
+        @mask and @force_active.
         """
         if mask:
             active_list = mask.kw_index_list( self , force_active )
@@ -633,8 +657,28 @@ class EclKW(object):
         cfunc.fwrite( self , fortio )
 
     def write_grdecl( self , file ):
-        cfile = CFILE( file )
-        cfunc.fprintf_grdecl( self , cfile )
+        """
+        Will write keyword in GRDECL format.
+
+        This method will write the current keyword in GRDECL format,
+        the @file argument must be a Python file handle to an already
+        opened file. In the example below we load the porosity from an
+        existing GRDECL file, set all poro values below 0.05 to 0.00
+        and write back an updated GRDECL file.
+           
+            poro = ecl.EclKW.load_grdecl( open("poro1.grdecl" , "r") , "PORO" )
+            grid = ecl.EclGrid( "ECLIPSE.EGRID" )
+            reg  = ecl.EclRegion( grid , False )
+            
+            reg.select_below( poro , 0.05 )
+            poro.assign( 0.0 , mask = reg )
+
+            fileH = open( "poro2.grdecl" , "w")
+            poro.write_grdecl( fileH )
+            fileH.close()
+            
+        """
+        cfile = CFILE( file ) cfunc.fprintf_grdecl( self , cfile )
 
 
 
