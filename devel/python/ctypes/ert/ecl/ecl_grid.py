@@ -232,8 +232,9 @@ class EclGrid(object):
         """
         Find true position of cell center.
 
-        Will return world position, i.e. (utm_x , utm_y , depth), of
-        the center of a cell in the grid.
+        Will return world position of the center of a cell in the
+        grid. The return value is a tuple of three elements: 
+        (utm_x , utm_y , depth).
         
         The cells of a grid can be specified in three different ways:
 

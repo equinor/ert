@@ -13,18 +13,25 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+Convenience module importing all symbols in the ecl package.
 
+This module is purely for convenience; it explicitly imports all the
+symbols from all the other modules into the common ecl namespace. The
+whole point of this excercise is to facilitate the following
+construction:
 
-import time
-import datetime
-import ctypes
-import sys
-import os.path
-
-from   ert.cwrap.cwrap       import *
-import ert.util.ctime        
-import ecl_default
-
+   import ert.ecl.ecl as ecl            <-- Import this module; and create the
+                                            namespace 'ecl'
+   ...
+   ...
+   sum  = ecl.EclSum( "ECLIPSE.DATA")   <-- Classes EclSum and EclGrid are now
+   grid = ecl.EclGrid("ECLIPSE.EGRID")      accessible under the ecl namespace.
+   
+It is not necessary to use the this module. See the import.txt
+document in the doc/ directory of the python source distribution for
+more details of module import and namespace resolution.
+"""
 from   ecl_kw                import EclKW
 from   ecl_case              import EclCase
 from   ecl_file              import EclFile

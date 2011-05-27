@@ -26,7 +26,6 @@ When the selection process is complete the region instance can be
 queried for the corresponding list of indices.
 """
 
-import ctypes
 import libecl
 from   ert.cwrap.cwrap       import *
 from   ert.util.tvector      import IntVector
