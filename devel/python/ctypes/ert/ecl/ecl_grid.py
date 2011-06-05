@@ -34,6 +34,9 @@ import ecl_kw
 from   ert.util.cfile        import CFILE
 
 class EclGrid(object):
+    """
+    Class for loading and internalizing ECLIPSE GRID/EGRID files.
+    """
     
     @classmethod
     def create(cls , specgrid , zcorn , coord , actnum , mapaxes = None ):

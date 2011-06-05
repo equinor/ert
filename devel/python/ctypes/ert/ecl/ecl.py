@@ -17,9 +17,9 @@
 Convenience module importing all symbols in the ecl package.
 
 This module is purely for convenience; it explicitly imports all the
-symbols from all the other modules into the common ecl namespace. The
-whole point of this excercise is to facilitate the following
-construction:
+symbols from all the other modules into the common 'ecl'
+namespace. The whole point of this excercise is to facilitate the
+following construction:
 
    import ert.ecl.ecl as ecl            <-- Import this module; and create the
                                             namespace 'ecl'
@@ -28,9 +28,9 @@ construction:
    sum  = ecl.EclSum( "ECLIPSE.DATA")   <-- Classes EclSum and EclGrid are now
    grid = ecl.EclGrid("ECLIPSE.EGRID")      accessible under the ecl namespace.
    
-It is not necessary to use the this module. See the import.txt
-document in the doc/ directory of the python source distribution for
-more details of module import and namespace resolution.
+It is not necessary to use the this module. See the doc/import.txt
+document in the ert-python source distribution for more details of
+module import and namespace resolution.
 """
 from   ecl_kw                import EclKW
 from   ecl_case              import EclCase
