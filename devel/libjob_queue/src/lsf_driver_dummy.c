@@ -31,7 +31,7 @@ static void lsf_driver_invalid_usage( const char * func) {
   fprintf(stderr,"of the LSF driver must be recompiled:   \n");
   fprintf(stderr,"\n");
   fprintf(stderr,"  1. Rebuild the lsf_driver with the preprossor symbol \'INCLUDE_LSF\' defined.\n");
-  fprintf(stderr,"  2. Relink the whole application - wth the libraries \'libbat\', \'libnsl\' and \'liblsf\'.\n");
+  fprintf(stderr,"  2. Relink the whole application - with the libraries \'libbat\', \'libnsl\' and \'liblsf\'.\n");
   fprintf(stderr,"\n");
   fprintf(stderr,"-----------------------------------------------------------------\n");
   exit(1);
@@ -94,16 +94,10 @@ bool lsf_driver_has_option( const void * driver , const char * option_key) {
 
 /*****************************************************************/
 
-/* Observe that this driver IS not properly initialized when returning
-   from this function, the option interface must be used to set the
-   keys:
-   
-*/
 
 
 void * lsf_driver_alloc( ) {
-  fprintf(stderr,"** Warning - this is an unfunctional LSF driver **\n");
-  fprintf(stderr,"** Warning - this is an unfunctional LSF driver **\n");
+  fprintf(stderr,"** Warning - this is an unfunctional LSF driver ** \n");
   return NULL;
 }
 

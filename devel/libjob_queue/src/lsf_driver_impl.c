@@ -460,8 +460,7 @@ void * lsf_driver_submit_job(void * __driver ,
     lsf_job_type * job            = lsf_job_alloc();
     char * lsf_stdout             = util_alloc_joined_string( (const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
     pthread_mutex_lock( &driver->submit_lock );
-
-
+    
     if (driver->use_library_calls) {
       char * command;
       {

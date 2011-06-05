@@ -13,5 +13,23 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+Package with utility classes, used by other ERT classes.
 
+The libutil library implements many utility functions and classes of
+things like hash table and vector; these classes are extensively used
+by the other ert libraries. The present wrapping here is to facilitate
+use and interaction with various ert classes, in a pure python context
+you are probably better served by using a plain python solution, or
+alternatively similar functionality is probably provided better with
+plain python, or well established third party packages.
+
+The modules included in the util package are:
+
+  tvector.py: This module implements the classes IntVector,
+     DoubleVector and BoolVector. This is a quite normal
+     implementation of a typed growable vector; but with a special
+     twist regarding default values.
+   
+"""
 

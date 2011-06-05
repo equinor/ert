@@ -28,14 +28,14 @@ I.e. it starts with of header consisting of a 8 characters name, a
 length and a datatype, immediately followed by the actual
 data. 
 
-Altough the term "restart format" is used to describe denote the
-format, this particular format is not limited to restart files; it is
-(at least) used in INIT, EGRID, GRID, Snnn, UNSMRY, SMSPEC, UNRST,
-Xnnnn and RFT files. This module also has (some) support for working
-with GRDECL 'formatted' files.
+Altough the term "restart format" is used to describe the format, this
+particular format is not limited to restart files; it is (at least)
+used in INIT, EGRID, GRID, Snnn, UNSMRY, SMSPEC, UNRST, Xnnnn and RFT
+files. This module also has (some) support for working with GRDECL
+'formatted' files.
 
-The ecl_kw.py implementation wraps the ecl_kw.c implementation in the
-libecl library.
+The ecl_kw.py implementation wraps the ecl_kw.c implementation from
+the libecl library.
 """
 
 import  types
@@ -47,6 +47,10 @@ from    ecl_util              import ECL_CHAR_TYPE, ECL_DOUBLE_TYPE, ECL_INT_TYP
 
 import  fortio
 import  libecl
+
+
+
+        
 
 
 class EclKW(object):
@@ -95,7 +99,21 @@ class EclKW(object):
         obj.parent     = parent
         obj.__init( )
         return obj
-        
+
+
+    @classmethod
+    def slice_copy( cls , src , slice ):
+        (start , stop , step) = slice.indices( src.size )
+        if stop > start:
+            obj = cls( )
+            obj.c_ptr = cfunc.slice_copyc( src , start , stop , step)
+            obj.parent = None
+            obj.data_owner = True
+            obj.__init( )
+            return obj
+        else:
+            return EclKW.NULL( )
+    
 
     @classmethod
     def copy( cls , src ):
@@ -234,8 +252,12 @@ class EclKW(object):
         """
         Function to support index based lookup: y = kw[index]
         """
-        if isinstance( index , types.IntType):
+        if isinstance( index ,int ):
             length = self.__len__()
+            if index < 0:
+                # We allow one level of negative indexing
+                index += self.size
+
             if index < 0 or index >= length:
                 raise IndexError
             else:
@@ -248,6 +270,8 @@ class EclKW(object):
                         return cfunc.iget_char_ptr( self , index )
                     else:
                         raise TypeError("Internal implementation error ...")
+        elif isinstance( index , slice):
+            return self.slice_copy( self , index )
         else:
             raise TypeError("Index should be integer type")
 
@@ -665,7 +689,7 @@ class EclKW(object):
         opened file. In the example below we load the porosity from an
         existing GRDECL file, set all poro values below 0.05 to 0.00
         and write back an updated GRDECL file.
-           
+        
             poro = ecl.EclKW.load_grdecl( open("poro1.grdecl" , "r") , "PORO" )
             grid = ecl.EclGrid( "ECLIPSE.EGRID" )
             reg  = ecl.EclRegion( grid , False )
@@ -678,7 +702,8 @@ class EclKW(object):
             fileH.close()
             
         """
-        cfile = CFILE( file ) cfunc.fprintf_grdecl( self , cfile )
+        cfile = CFILE( file ) 
+        cfunc.fprintf_grdecl( self , cfile )
 
 
 
@@ -697,6 +722,7 @@ cfunc = CWrapperNameSpace("ecl_kw")
 cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
 cfunc.load_grdecl                = cwrapper.prototype("c_void_p ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
 cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_copy( ecl_kw )")
+cfunc.slice_copyc                = cwrapper.prototype("c_void_p ecl_kw_alloc_slice_copy( ecl_kw , int , int , int )")
 cfunc.get_size                   = cwrapper.prototype("int      ecl_kw_get_size( ecl_kw )")
 cfunc.get_type                   = cwrapper.prototype("int      ecl_kw_get_type( ecl_kw )")
 cfunc.iget_char_ptr              = cwrapper.prototype("char*    ecl_kw_iget_char_ptr( ecl_kw , int )")

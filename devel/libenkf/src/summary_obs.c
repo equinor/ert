@@ -68,8 +68,10 @@ static auto_corrf_ftype * summary_obs_lookup_auto_corrf( const char * fname ) {
       return auto_corrf_exp;
     else if (strcmp( fname , AUTO_CORRF_GAUSS) == 0)
       return auto_corrf_gauss;
-    else
+    else {
       util_abort("%s: correlation function:%s not recognized \n",__func__ , fname);
+      return NULL;  /* Compiler shut up. */
+    }
   }
 }
 

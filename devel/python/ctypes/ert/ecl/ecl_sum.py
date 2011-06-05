@@ -15,6 +15,10 @@
 #  for more details. 
 """
 Module for loading and querying summary data.
+
+The low-level organisation of summary data is extensively documented
+in the C source files ecl_sum.c, ecl_smspec.c and ecl_sum_data in the
+libecl/src directory.
 """
 
 import numpy
@@ -75,8 +79,21 @@ class EclSum(object):
     
     def __new__( cls , case , join_string = ":" , include_restart = True):
         """
-        The constructor loads a summary case, if no summary can be
-        loaded the constructor will return None.
+        Loads a new EclSum instance with summary data.
+
+        Loads a new summary results from the ECLIPSE case given by
+        argument @case; @case should be the basename of the ECLIPSE
+        simulation you want to load. @case can contain a leading path
+        component, and also an extension - the latter will be ignored.
+        
+        The @join_string is the string used when combining elements
+        from the WGNAMES, KEYWORDS and NUMS vectors into a composit
+        key; with @join_string == ":" the water cut in well OP_1 will
+        be available as "WWCT:OP_1".
+
+        If the @include_restart parameter is set to try the summary
+        loader will, in the case of a restarted ECLIPSE simulation,
+        try to load summary results also from the restarted case.
         """
         c_ptr = cfunc.fread_alloc( case , join_string , include_restart)
         if c_ptr:
@@ -88,6 +105,11 @@ class EclSum(object):
 
 
     def __init__(self , case , join_string = ":" ,include_restart = False , c_ptr = None):
+        """
+        Initialize a new EclSum instance.
+
+        See __new__() for further documentation.
+        """
         self.case            = case
         self.join_string     = join_string
         self.include_restart = include_restart
@@ -96,6 +118,7 @@ class EclSum(object):
     def __del__( self ):
         if self.c_ptr:
             cfunc.free( self )
+        self.c_ptr = None
 
     def from_param(self):
         return self.c_ptr 
@@ -230,6 +253,14 @@ class EclSum(object):
 
 
     def matching_keys( self , pattern ):
+        """
+        Return a list of summary keys matching @pattern.
+
+        The matching algorithm is ultimately based on the fnmatch()
+        function, i.e. normal shell-character syntax is used. With
+        @pattern == "WWCT:*" you will get a list of watercut keys for
+        all wells.
+        """
         s = StringList()
         cfunc.select_matching_keys( self , pattern , s )
         return s.strings

@@ -69,6 +69,8 @@ poro.write_grdecl( open("/tmp/poro_cos.grdecl" , "w") )
 init_file = ecl.EclFile( "data/eclipse/case/ECLIPSE.INIT" )
 permx_kw = init_file.iget_named_kw( "PERMX" , 0 )
 permx_new = ecl.EclKW.new( "PERMX" , 3 , ecl.ECL_FLOAT_TYPE )
+print ecl.ECL_GRID_FILE
+print ecl.ecl_file_enum
 permx_new[0] = 1
 permx_new[1] = 2
 permx_new[2] = 3
@@ -78,3 +80,18 @@ fortio = ecl.FortIO( "/tmp/init" , "w" )
 init_file.fwrite( fortio )
 fortio.close()
 
+
+poro   = ecl.EclKW.grdecl_load( open( "data/eclipse/case/include/example_poro.GRDECL" , "r") , "PORO" )
+eqlnum = ecl.EclKW.grdecl_load( open( "data/eclipse/case/include/example_eqlnum.GRDECL" , "r") , "EQLNUM" , ecl_type = ecl.ECL_INT_TYPE)
+dummy  = ecl.EclKW.grdecl_load( open( "data/eclipse/case/include/example_eqlnum.GRDECL" , "r") , "BJARNE" , ecl_type = ecl.ECL_INT_TYPE)
+
+if dummy:
+    print "Loading BJARNE OK"
+else:
+    print "Loading BJARNE Failed (correctly)"
+
+print "Poro[100] :%g  eqlnum[100]:%d" % (poro[100] , eqlnum[100]) 
+
+p2 = poro[100:160]
+if p2:
+    print p2.header

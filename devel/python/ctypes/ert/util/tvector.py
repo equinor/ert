@@ -13,7 +13,29 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+Typed vectors IntVector, DoubleVector and BoolVector.
 
+This module implements a quite simple typed vector which will grow
+transparently as needed. The vector is created with a default value,
+which will be used for not explicitly set indices.
+
+   vec = IntVector( default_value = 66 )
+   vec[0] = 10
+   vec[2] = 10    
+
+After the 'vec[2] = 10' statement the vector has grown to contain
+three elements. The element vec[1] has not been explicitly assigned by
+the user, in that case the implementation has 'filled the hole' with
+the default value (i.e. 66 in this case). So the statement
+
+   print vec[1]
+
+will give '66'. The main part of the implementation is in terms of an
+"abstract base class" TVector. The TVector class should be not
+instantiated directly, instead the children IntVector, DoubleVector or
+BoolVector should be used.
+"""
 
 import sys
 import ctypes
@@ -21,28 +43,22 @@ import libutil
 from   ert.cwrap.cwrap       import *
 from   ert.util.cfile        import CFILE
 
-
-
 class TVector(object):
     
     @classmethod
     def strided_copy( cls , obj , slice ):
-        """Used to support sliced lookup"""
-        start  = 0
-        stop   = obj.size - 1
-        stride = 1
-        if slice.start:
-            start = slice.start
-        if slice.stop:
-            stop = slice.stop
-        if slice.step:
-            stride = slice.step
+        """
+        Used to support sliced lookup.
+        """
+        (start , stop , step) = slice.indices( obj.size )
+        if stop > start:
+            new_obj = TVector.__new__( cls )
+            new_obj.c_ptr = cls.cstrided_copy( obj  , start , stop , step )
+            new_obj.data_owner = True
+            return new_obj
+        else:
+            return None
 
-        new_obj = TVector.__new__( cls )
-        new_obj.c_ptr = cls.cstrided_copy( obj  , start , stop , stride )
-        new_obj.data_owner = True
-        return new_obj
-    
 
     @classmethod
     def __copy__( cls , obj ):
@@ -77,13 +93,15 @@ class TVector(object):
         return new
 
     def __init__( self , default_value = 0 , c_ptr = None):
-        # Default initializer allocates a new instance from the C layer.
+        """
+        Creates a new TVector instance.
+        """
         init_size  = 0
         self.c_ptr = self.alloc( init_size , default_value )
         self.data_owner = True
 
     def from_param( self ):
-        return ctypes.c_void_p( self.c_ptr )
+        return self.c_ptr
 
 
     def __del__(self):
@@ -93,6 +111,9 @@ class TVector(object):
     def __getitem__(self, index ):
         if isinstance( index , types.IntType):
             length = self.__len__()
+            if index < 0:
+                index += length
+
             if index < 0 or index >= length:
                 raise IndexError
             else:
@@ -403,8 +424,10 @@ CWrapper.registerType( "double_vector" , DoubleVector )
 CWrapper.registerType( "int_vector"    , IntVector )
 CWrapper.registerType( "bool_vector"   , BoolVector ) 
 
+
 cwrapper = CWrapper( libutil.lib )
 cfunc    = CWrapperNameSpace("tvector")
+
 
 cfunc.double_vector_alloc            = cwrapper.prototype("c_void_p   double_vector_alloc( int , double )")
 cfunc.double_vector_alloc_copy       = cwrapper.prototype("c_void_p   double_vector_alloc_copy( double_vector )")
