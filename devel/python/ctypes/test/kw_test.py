@@ -31,7 +31,9 @@ def cutoff( x , arg ):
 init_file = ecl.EclFile( "data/eclipse/case/ECLIPSE.INIT" )
 permx     = init_file.iget_named_kw("PERMX" , 0 )
 poro      = init_file.iget_named_kw("PORO" , 0 )
+pvt       = init_file.iget_named_kw("PVTNUM" , 0 )
 grid      = ecl.EclGrid( "data/eclipse/case/ECLIPSE.EGRID" )
+
 
 poro3d = grid.create3D( poro   , default = -100)
 
@@ -95,3 +97,6 @@ print "Poro[100] :%g  eqlnum[100]:%d" % (poro[100] , eqlnum[100])
 p2 = poro[100:160]
 if p2:
     print p2.header
+print poro
+print pvt.str( max_lines = 8 )
+

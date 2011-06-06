@@ -17,9 +17,9 @@
 Constants from the header ecl_util.h - some stateless functions.
 
 This module does not contain any class definitions; it mostly consists
-of enum definitions/values which are copied verbatim from the
-ecl_util.h header. Observe that the the numerical values given here
-must be KEPT IN SYNC WITH ecl_util.h MANUALLY. 
+of enum definitions/values from ecl_util.h; the enum values are
+extracted from the shared library using the
+ert.cwrap.cenum.create_enum() function in a semi-automagic manner.
 
 In addition to the enum definitions there are a few stateless
 functions from ecl_util.c which are not bound to any class type.
@@ -59,10 +59,14 @@ def get_file_type( filename ):
     return cfunc.get_file_type( filename , None , None )
 
 
+def type_name( ecl_type ):
+    return cfunc.get_type_name( ecl_type )
+
+
 cwrapper             = CWrapper( libecl.lib )
 cfunc                = CWrapperNameSpace("ecl_util")
 
-cfunc.get_num_cpu    = cwrapper.prototype("int ecl_util_get_num_cpu( char* )")
-cfunc.get_file_type  = cwrapper.prototype("int ecl_util_get_file_type( char* , bool* , int*)")
-
+cfunc.get_num_cpu    = cwrapper.prototype("int   ecl_util_get_num_cpu( char* )")
+cfunc.get_file_type  = cwrapper.prototype("int   ecl_util_get_file_type( char* , bool* , int*)")
+cfunc.get_type_name  = cwrapper.prototype("char* ecl_util_get_type_name( int )")
 
