@@ -19,6 +19,42 @@ import ctypes
 import sys
 
 def create_enum( lib, func_name , enum_name , dict):
+    """
+    Create and insert enum values as integer constants.
+
+    This function is based on iteratively querying the C library for
+    symbol name and enum value for an enum. The @lib argument should
+    be a ctypes libhandle, i.e. the return value from a CDLL()
+    call. The @func_name argument should be the name (i.e. a string)
+    of a C-function in the library which can provide symbol name and
+    numerical value for the elements in an enum.
+
+    For an enum defition like:
+
+       enum my_enum {
+          INVALID = 0,
+          VALUE1  = 1,
+          VALUE2  = 2
+       }
+
+    The @func_name function in @lib should return
+
+         'INVALID' , 0
+         'VALUE1'  , 1
+         'VALUE2'  , 2
+
+    for index arguments 0,1 and 2 respectively.  The symbols are
+    installed in the dictionary @dict[1], so after the enum above has
+    been internalized the dict scope will have symols like:
+
+        INVALID = 0
+        VALUE1  = 1
+        VALUE2  = 2
+        
+    The @dict dictionary should typically be the globals() dictionary
+    from the calling scope.
+    """
+
     try:
         func = getattr( lib , func_name )
     except AttributeError:
@@ -38,6 +74,7 @@ def create_enum( lib, func_name , enum_name , dict):
         else:
             break
     dict[ enum_name ] = enum
+    return enum
         
 
     

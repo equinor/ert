@@ -43,8 +43,8 @@ import  ctypes
 import  numpy
 from    ert.cwrap.cwrap       import *
 from    ert.util.cfile        import CFILE
-from    ecl_util              import ECL_CHAR_TYPE, ECL_DOUBLE_TYPE, ECL_INT_TYPE, ECL_BOOL_TYPE, ECL_MESS_TYPE, ECL_FLOAT_TYPE
-
+from    ecl_util              import ECL_CHAR_TYPE, ECL_DOUBLE_TYPE, ECL_INT_TYPE, ECL_BOOL_TYPE, ECL_MESS_TYPE, ECL_FLOAT_TYPE 
+import  ecl_util
 import  fortio
 import  libecl
 
@@ -200,24 +200,21 @@ class EclKW(object):
         if self.__type == ECL_INT_TYPE:
             self.data_ptr = cfunc.int_ptr( self )
             self.dtype    = numpy.int32        
+            self.str_fmt  = "%8d "
         elif self.__type == ECL_FLOAT_TYPE:
             self.data_ptr = cfunc.float_ptr( self )
             self.dtype    = numpy.float32
+            self.str_fmt  = "%11.4f "
         elif self.__type == ECL_DOUBLE_TYPE:
             self.data_ptr = cfunc.double_ptr( self )
             self.dtype    = numpy.float64        
+            self.str_fmt  = "%11.4f "
         else:
             # Iteration not supported ...
             self.data_ptr = None
             self.dtype    = None
+            self.str_fmt  = "%8s "
 
-
-    #def __init__( self , c_ptr ):
-    #    self.c_ptr = c_ptr
-    #    self.data_owner = False
-    #    self.parent = None
-    #    self.__init()
-        
 
     def from_param(self):
         return self.c_ptr
@@ -651,6 +648,9 @@ class EclKW(object):
     def __type__( self ):
         return self.__type
 
+    @property
+    def type_name( self ):
+        return ecl_util.type_name( self.__type )
     
     @property
     def header( self ):
@@ -668,6 +668,62 @@ class EclKW(object):
             a.size        = cfunc.get_size( self )
             a.__parent__  = self  # Inhibit GC
         return a
+
+    
+    def str_data( self , width , index1 , index2 , fmt):
+        """
+        Helper function for str() method.
+        """
+        data = []
+        s = ""
+        for index in range(index1, index2):
+            data.append( self[index] )
+        for index in range(len(data)):
+            s += fmt % data[ index ]
+            if index % width == (width - 1):
+                s+= "\n"
+        return s
+
+        
+    def str(self , width = 5 , max_lines = 10 , fmt = None):
+        """
+        Return string representation of kw for pretty printing.
+
+        The function will return a string consisting of a header, and
+        then a chunk of data. The data will be formatted in @width
+        columns, and a maximum of @max_lines lines. If @max_lines is
+        not sufficient the first elements in the kewyord are
+        represented, a .... continuation line and then the last part
+        of the keyword.
+
+        If a value is given for @fmt that is used as format string for
+        each element, otherwise a type-specific default format is
+        used. If given the @fmt string should contain spacing between
+        the elements. The implementation of the builtin method
+        __str__() is based on this method.
+        """
+        s = "%-8s %8d %-4s\n" % (self.name , self.size , self.type_name)
+        lines = self.size / width
+        if not fmt:
+            fmt = self.str_fmt
+
+        if lines <= max_lines:
+            s += self.str_data( width , 0 , self.size , fmt)
+        else:
+            s1 = width * max_lines / 2
+            s += self.str_data( width  , 0 , s1 , fmt)
+            s += "   ....   \n"
+            s += self.str_data( width  , self.size - s1 , self.size , fmt)
+        
+        return s
+
+    def __str__(self):
+        """
+        Return string representation - see method str().
+        """
+        return self.str( width = 5 , max_lines = 10)
+    
+
 
     @property
     def numpy_array( self ):
