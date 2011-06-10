@@ -55,6 +55,9 @@ def update_mode( path , mode , user , group):
 
 
 def include_by_ext( full_path , ext_list):
+    if not os.path.exists( full_path ):
+        return False
+
     mode = os.stat( full_path )[stat.ST_MODE]
     (base , ext) = os.path.splitext( full_path )
     if stat.S_ISDIR( mode ):
@@ -141,12 +144,8 @@ class Install:
         
         for (src,link) in self.link_list:
             full_link = "%s/%s" % ( self.target_root , link )
-            print "Link:%s" % full_link
             if os.path.exists( full_link ):
-                print "Trying to remove: %s" % full_link
                 os.remove( full_link )
-            else:
-                print "%s does not exist" % full_link
 
             msg( verbose , "Linking" , "%s/%s -> %s/%s" % (self.target_root , link , self.target_root , src))
             os.symlink( "%s/%s" % (self.target_root , src), "%s/%s" % (self.target_root , link ))
