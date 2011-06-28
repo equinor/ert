@@ -51,7 +51,7 @@ const char * summary_config_get_var(const summary_config_type * config) {
 ecl_smspec_var_type summary_config_get_var_type(summary_config_type * config , const ecl_sum_type * ecl_sum) {
   /* This might race as hell - but what the fuck. */
   if (config->var_type == ECL_SMSPEC_INVALID_VAR) 
-    config->var_type = ecl_sum_identify_var_type( ecl_sum , config->var );
+    config->var_type = ecl_sum_get_var_type( ecl_sum , config->var );
 
 
   return config->var_type;
