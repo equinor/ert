@@ -196,16 +196,16 @@ class EclKW(object):
 
     def __init(self):
         self.data_ptr   = None
-        self.__type = cfunc.get_type( self )
-        if self.__type == ECL_INT_TYPE:
+        self.ecl_type = cfunc.get_type( self )
+        if self.ecl_type == ECL_INT_TYPE:
             self.data_ptr = cfunc.int_ptr( self )
             self.dtype    = numpy.int32        
             self.str_fmt  = "%8d "
-        elif self.__type == ECL_FLOAT_TYPE:
+        elif self.ecl_type == ECL_FLOAT_TYPE:
             self.data_ptr = cfunc.float_ptr( self )
             self.dtype    = numpy.float32
             self.str_fmt  = "%11.4f "
-        elif self.__type == ECL_DOUBLE_TYPE:
+        elif self.ecl_type == ECL_DOUBLE_TYPE:
             self.data_ptr = cfunc.double_ptr( self )
             self.dtype    = numpy.float64        
             self.str_fmt  = "%11.4f "
@@ -261,9 +261,9 @@ class EclKW(object):
                 if self.data_ptr:
                     return self.data_ptr[ index ]
                 else:
-                    if self.__type == ECL_BOOL_TYPE:
+                    if self.ecl_type == ECL_BOOL_TYPE:
                         return cfunc.iget_bool( self, index)
-                    elif self.__type == ECL_CHAR_TYPE:
+                    elif self.ecl_type == ECL_CHAR_TYPE:
                         return cfunc.iget_char_ptr( self , index )
                     else:
                         raise TypeError("Internal implementation error ...")
@@ -285,9 +285,9 @@ class EclKW(object):
                 if self.data_ptr:
                     self.data_ptr[ index ] = value
                 else:
-                    if self.__type == ECL_BOOL_TYPE:
+                    if self.ecl_type == ECL_BOOL_TYPE:
                         cfunc.iset_bool( self , index , value)
-                    elif self.__type == ECL_CHAR_TYPE:
+                    elif self.ecl_type == ECL_CHAR_TYPE:
                         return cfunc.iset_char_ptr( self , index , value)
                     else:
                         raise SystemError("Internal implementation error ...")
@@ -312,7 +312,7 @@ class EclKW(object):
                 if not mul:
                     factor = 1.0 / factor
                     
-                if self.__type == ECL_INT_TYPE:
+                if self.ecl_type == ECL_INT_TYPE:
                     if isinstance( factor , int ):
                         cfunc.scale_int( self , factor )
                     else:
@@ -344,7 +344,7 @@ class EclKW(object):
                 else:
                     sign = -1
 
-                if self.__type == ECL_INT_TYPE:
+                if self.ecl_type == ECL_INT_TYPE:
                     if isinstance( delta , int ):
                         cfunc.shift_int( self , delta * sign)
                     else:
@@ -465,7 +465,7 @@ class EclKW(object):
                 if mask:
                     mask.set_kw( self , value , force_active )
                 else:
-                    if self.__type == ECL_INT_TYPE:
+                    if self.ecl_type == ECL_INT_TYPE:
                         if isinstance( value , int ):
                             cfunc.set_int( self , value )
                         else:
@@ -581,31 +581,31 @@ class EclKW(object):
     @property
     def type( self ):
         # enum ecl_type_enum from ecl_util.h
-        if self.__type == ECL_CHAR_TYPE:
+        if self.ecl_type == ECL_CHAR_TYPE:
             return "CHAR"
-        if self.__type == ECL_FLOAT_TYPE:
+        if self.ecl_type == ECL_FLOAT_TYPE:
             return "REAL"
-        if self.__type == ECL_DOUBLE_TYPE:
+        if self.ecl_type == ECL_DOUBLE_TYPE:
             return "DOUB"
-        if self.__type == ECL_INT_TYPE:
+        if self.ecl_type == ECL_INT_TYPE:
             return "INTE"
-        if self.__type == ECL_BOOL_TYPE:
+        if self.ecl_type == ECL_BOOL_TYPE:
             return "BOOL"
-        if self.__type == ECL_MESS_TYPE:
+        if self.ecl_type == ECL_MESS_TYPE:
             return "MESS"
 
 
     @property    
     def min_max( self ):
-        if self.__type == ECL_FLOAT_TYPE:
+        if self.ecl_type == ECL_FLOAT_TYPE:
             min = ctypes.c_float()
             max = ctypes.c_float()
             cfunc.max_min_float( self , ctypes.byref( max ) , ctypes.byref( min ))
-        elif self.__type == ECL_DOUBLE_TYPE:
+        elif self.ecl_type == ECL_DOUBLE_TYPE:
             min = ctypes.c_double()
             max = ctypes.c_double()
             cfunc.max_min_double( self , ctypes.byref( max ) , ctypes.byref( min ))
-        elif self.__type == ECL_INT_TYPE:
+        elif self.ecl_type == ECL_INT_TYPE:
             min = ctypes.c_int()
             max = ctypes.c_int()
             cfunc.max_min_int( self , ctypes.byref( max ) , ctypes.byref( min ))
@@ -635,32 +635,32 @@ class EclKW(object):
     
     @property
     def numeric(self):
-        if self.__type == ECL_FLOAT_TYPE:
+        if self.ecl_type == ECL_FLOAT_TYPE:
             return True
-        if self.__type == ECL_DOUBLE_TYPE:
+        if self.ecl_type == ECL_DOUBLE_TYPE:
             return True
-        if self.__type == ECL_INT_TYPE:
+        if self.ecl_type == ECL_INT_TYPE:
             return True
         return False
 
     
     @property
-    def __type__( self ):
-        return self.__type
+    def type( self ):
+        return self.ecl_type
 
     @property
     def type_name( self ):
-        return ecl_util.type_name( self.__type )
+        return ecl_util.type_name( self.ecl_type )
     
     @property
     def header( self ):
-        return (self.name , self.size , self.type)
+        return (self.name , self.size , self.type_name )
 
 
     def iget( self , index ):
         return self.__getitem__( index )
-
-
+    
+    
     @property
     def array(self):
         a = self.data_ptr

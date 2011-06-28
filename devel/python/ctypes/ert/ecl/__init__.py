@@ -57,9 +57,9 @@ per module organization:
      stateless functions.
 
   ecl: This module is purely for convenience, all the symbols in the
-     package are explicitly imported into this package, so that all
-     symbols in the package are available under the common namespace
-     'ecl'.
+     package are explicitly imported into this module, ensuring that
+     all symbols in the package are available under the common
+     namespace 'ecl'.
 
   libecl: This module contains some low-level ctypes trickery to
      actually load the shared library libecl.so.
