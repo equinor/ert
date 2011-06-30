@@ -45,6 +45,7 @@ struct analysis_config_struct {
   int                     kernel_param;                 /* Scaling factor used in the kernel function */
   bool                    do_local_cross_validation;   /* Should we do CV for separate state vector matrices? */
   bool                    bootstrap;                   /* Should we do bootstrapping?*/
+  bool                    do_pen_press;                /* Should we penalise the PRESS statistic to avoid overfitting?*/
   bool                    do_scaling;                  /* Should we normalise the data? */
   bool                    do_kernel_regression;        /* Should we uppdate using kernel shrinkage regression? */
   bool                    do_force_subspace_dimension; /*Should we force the subspace dimension in the SVD? */
@@ -148,17 +149,26 @@ bool analysis_config_get_do_force_subspace_dimension(const analysis_config_type 
   return config->do_force_subspace_dimension;
 }
 
+bool analysis_config_get_penalised_press(const analysis_config_type * config) {
+  return config->do_pen_press;
+}
+
+
 bool analysis_config_get_bootstrap(const analysis_config_type * config) {
   return config->bootstrap;
 }
+
 
 static void analysis_config_set_bootstrap(analysis_config_type * config , bool bootstrap) {
   config->bootstrap = bootstrap;
 }
 
+
 static void analysis_config_set_do_scaling(analysis_config_type * config , bool do_scaling) {
   config->do_scaling = do_scaling;
 }
+
+
 
 static void analysis_config_set_do_kernel_regression(analysis_config_type * config , bool do_kernel_regression) {
   config->do_kernel_regression = do_kernel_regression;
@@ -180,6 +190,12 @@ static void analysis_config_set_CV(analysis_config_type * config , bool CV) {
 static void analysis_config_set_force_subspace_dimension(analysis_config_type * config , bool do_force) {
   config->do_force_subspace_dimension = do_force;
 }
+
+
+void analysis_config_set_penalised_press(analysis_config_type * config , bool do_pen_press) {
+  config->do_pen_press = do_pen_press;
+}
+
 
 void analysis_config_set_truncation( analysis_config_type * config , double truncation) {
   config->truncation = truncation;
@@ -265,6 +281,11 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   if (config_item_set( config , ENKF_LOCAL_CV_KEY )) {
     analysis_config_set_CV( analysis , config_get_value_as_bool(config , ENKF_LOCAL_CV_KEY ));
 
+    /*PRESS (Only usable if CV is set) Statistic parameters: */
+    if ( config_item_set( config , ENKF_PEN_PRESS_KEY))
+      analysis_config_set_penalised_press( analysis , config_get_value_as_bool( config , ENKF_PEN_PRESS_KEY));
+    
+    /*Set number of CV folds */
     if (config_item_set( config , ENKF_CV_FOLDS_KEY ))
       analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , ENKF_CV_FOLDS_KEY ));
   } 
@@ -272,6 +293,9 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   /*Bootstrap parameters: */  
   if (config_item_set( config , ENKF_BOOTSTRAP_KEY)) 
     analysis_config_set_bootstrap( analysis , config_get_value_as_bool( config , ENKF_BOOTSTRAP_KEY ));
+
+
+  
 
   /* Scaling of parameter */
   if (config_item_set( config , ENKF_SCALING_KEY)) 
@@ -373,6 +397,7 @@ analysis_config_type * analysis_config_alloc_default() {
   analysis_config_set_CV( config                 , DEFAULT_ENKF_CV);
   analysis_config_set_force_subspace_dimension( config , DEFAULT_ENKF_FORCE_NCOMP);
   analysis_config_set_bootstrap( config          , DEFAULT_ENKF_BOOTSTRAP );
+  analysis_config_set_penalised_press( config    , DEFAULT_ENKF_PEN_PRESS );
   analysis_config_set_do_scaling( config         , DEFAULT_ENKF_SCALING );
   analysis_config_set_do_kernel_regression( config , DEFAULT_ENKF_KERNEL_REG );
   analysis_config_set_kernel_function( config    , DEFAULT_ENKF_KERNEL_FUNC );
@@ -412,6 +437,7 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_BOOTSTRAP_KEY          , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_PEN_PRESS_KEY          , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_SCALING_KEY            , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_KERNEL_REG_KEY         , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_KERNEL_FUNC_KEY        , false , CONFIG_INT);
@@ -477,12 +503,20 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
   if (config->do_local_cross_validation) {
     fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_LOCAL_CV_KEY );
     fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->do_local_cross_validation ));
+    
+    if ( config->do_pen_press) {
+      fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_PEN_PRESS_KEY );
+      fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->do_pen_press ));
+    }
+
+    
   }
 
   if (config->bootstrap) {
     fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_BOOTSTRAP_KEY );
     fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->bootstrap ));
   }
+
 
 
   if (config->do_scaling) {

@@ -47,6 +47,7 @@ int                    analysis_config_get_kernel_param(const analysis_config_ty
 int                    analysis_config_get_nfolds_CV(const analysis_config_type * config);
 int                    analysis_config_get_subspace_dimension(const analysis_config_type * config);
 bool                   analysis_config_get_bootstrap(const analysis_config_type * config);
+bool                   analysis_config_get_penalised_press(const analysis_config_type * config);
 bool                   analysis_config_get_do_scaling(const analysis_config_type * config);
 void                   analysis_config_set_rerun(analysis_config_type * config , bool rerun);
 void                   analysis_config_set_rerun_start( analysis_config_type * config , int rerun_start );
@@ -57,6 +58,7 @@ void                   analysis_config_set_enkf_mode( analysis_config_type * con
 void                   analysis_config_set_nfolds_CV( analysis_config_type * config , int folds);
 void                   analysis_config_set_subspace_dimension( analysis_config_type * config , int dimension);
 void                   analysis_config_set_do_bootstrap( analysis_config_type * config , bool do_bootstrap);
+void                   analysis_config_set_penalised_press( analysis_config_type * config , bool do_pen_press);
 void                   analysis_config_set_log_path(analysis_config_type * config , const char * log_path );
 void                   analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff );
 double                 analysis_config_get_std_cutoff( const analysis_config_type * config );

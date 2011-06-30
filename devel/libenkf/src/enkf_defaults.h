@@ -111,6 +111,7 @@
 #define DEFAULT_ENKF_KERNEL_PARAM  1    /*Scale by the maximum value in the distance matrix */
 #define DEFAULT_ENKF_CV            false
 #define DEFAULT_ENKF_BOOTSTRAP     false
+#define DEFAULT_ENKF_PEN_PRESS     false
 #define DEFAULT_ENKF_FORCE_NCOMP   false
 
 

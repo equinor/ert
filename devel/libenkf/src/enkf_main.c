@@ -1117,6 +1117,231 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
     matrix_free( randrot );
 }
 
+
+
+void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local_ministep_type * ministep, int report_step , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data) {
+  const int num_cpu_threads          = 4;
+
+  int       matrix_size              = 1000;  /* Starting with this */
+  const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
+  enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
+  matrix_type * A = matrix_alloc(matrix_size , ens_size);
+  msg_type  * msg = msg_alloc("Updating: " , false);
+  stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
+  const int num_kw  = stringlist_get_size( update_keys );
+  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
+  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
+  int ikw           = 0;
+  bool complete     = false;
+  serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info * num_cpu_threads , __func__);
+  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
+  
+  int nrobs                = obs_data_get_active_size(obs_data);
+  int nrmin                = util_int_min( ens_size , nrobs);
+  
+  
+  matrix_type * randrot       = NULL;
+  /*NOT NEEDED IN THIS CODE */
+  /*  matrix_type * U0   = matrix_alloc( nrobs , nrmin    );*/ /* Left singular vectors.  */
+  /*  matrix_type * V0T  = matrix_alloc( nrmin , ens_size );*/ /* Right singular vectors. */
+  
+  /*Allocate matrix for principal components and reduced error covariance matrix Rp */
+  matrix_type * Z    = matrix_alloc( nrmin , ens_size    );
+  matrix_type * Rp   = matrix_alloc( nrmin , nrmin       );
+  matrix_type * Dp   = matrix_alloc( nrmin , ens_size    );
+
+  /*  double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);*/
+  
+
+  /*
+    Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
+    local CV below. This step is only performed once for each
+    ministep, whereas the the update code below (can) go in several
+    steps if memory is tight.
+  */
+  enkf_analysis_get_principal_components( enkf_main->analysis_config , enkf_main->rng , meas_data , obs_data ,  Z , Rp , Dp);
+    
+  if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
+    randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
+  
+  {
+    int icpu;
+    int iens_offset = 0;
+    for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+      serialize_info[icpu].fs          = fs;
+      serialize_info[icpu].ensemble    = enkf_main->ensemble;
+      serialize_info[icpu].report_step = report_step;
+      serialize_info[icpu].A           = A;
+      serialize_info[icpu].iens1       = iens_offset;
+      serialize_info[icpu].iens2       = iens_offset + (ens_size - iens_offset) / (num_cpu_threads - icpu);
+      iens_offset = serialize_info[icpu].iens2;
+    }
+  }
+
+  msg_show( msg );
+  do {
+    bool first_kw            = true;
+    bool add_more_kw         = true;
+    int ikw1                 = ikw;
+    int ikw2                 = ikw;
+    int current_row_offset   = 0;
+    matrix_resize( A , matrix_size , ens_size , false);  /* Recover full matrix size - after matrix_shrink_header() has been called. */
+
+    do { /* Fill up the A-matrix */
+      const char             * key              = stringlist_iget(update_keys , ikw);
+      const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+
+
+      /**
+          This is very awkward; the problem is that for the GEN_DATA
+          type the config object does not really own the size. Instead
+          the size is pushed (on load time) from gen_data instances to
+          the gen_data_config instance. Therefor we have to assert
+          that at least one gen_data instance has been loaded (and
+          consequently updated the gen_data_config instance) before we
+          query for the size.
+      */
+      {
+        if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
+          enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[0] , key);
+          enkf_fs_fread_node( fs , node , report_step , 0 , FORECAST);
+        }
+      }
+      active_size[ikw] = __get_active_size( config_node , report_step , active_list );
+      row_offset[ikw]  = current_row_offset;
+
+      if ((active_size[ikw] + current_row_offset) > matrix_size) {
+        /* Not enough space in A */
+        if (first_kw) {
+          /* Try to grow the matrix */
+          if (!matrix_safe_resize(A , active_size[ikw] , ens_size , false))
+            util_exit("%s: sorry failed to allocate %d doubles for the inner enkf update. Need more memory \n",__func__ , active_size[ikw] * ens_size);
+          matrix_size = active_size[ikw];
+        } else
+          /* Do not try to grow the matrix unless we are at the first kw. */
+          add_more_kw = false;
+      }
+
+
+      if (add_more_kw) {
+        if (active_size[ikw] > 0) {
+          state_enum load_state;
+
+          if (hash_inc_counter( use_count , key) == 0)
+            load_state = FORECAST;   /* This is the first time this keyword is updated for this reportstep */
+          else
+            load_state = ANALYZED;
+
+          {
+            /* Multithreaded */
+            int icpu;
+            thread_pool_restart( work_pool );
+            for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+              serialize_info[icpu].key         = key;
+              serialize_info[icpu].active_list = active_list;
+              serialize_info[icpu].load_state  = load_state;
+              serialize_info[icpu].row_offset  = row_offset[ikw];
+              
+              thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
+            }
+            thread_pool_join( work_pool );
+
+            current_row_offset += active_size[ikw];
+          }
+        }
+
+        ikw++;
+        if (ikw == num_kw)
+          add_more_kw = false;
+      }
+      //add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
+      first_kw = false;
+      {
+        char * label = util_alloc_sprintf("serializing: %s" , key);
+        msg_update( msg , label);
+        free(label);
+      }
+    } while (add_more_kw);
+
+    /*****************************************************************/
+    /* OK - the A matrix is full. We continue to the analysis step.  */
+    /*****************************************************************/
+
+    ikw2 = ikw;
+    matrix_shrink_header( A , current_row_offset , ens_size );
+
+    if (current_row_offset > 0) {
+      /* The actual update */
+
+      /*Get the optimal update matrix - observe that the A matrix is input.*/
+     { 
+       /*NEED TO CREATE A NEW FUNCTION!!!*/
+       matrix_type * X5 = enkf_analysis_allocX_principal_components_cv( enkf_main->analysis_config , enkf_main->rng, A , Z , Rp , Dp );   
+       /*       matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data , obs_data , randrot, A , V0T , Z , eig, U0 , meas_data , ens_size);  */
+       
+       msg_update(msg , " matrix multiplication");
+       matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
+       matrix_free( X5 );
+
+     }
+     
+      /* Deserialize */
+      {
+        for (int i = ikw1; i < ikw2; i++) {
+          if (active_size[i] > 0) {
+            const char             * key              = stringlist_iget(update_keys , i);
+            const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+            {
+              char * label = util_alloc_sprintf("deserializing: %s" , key);
+              msg_update( msg , label);
+              free(label);
+            }
+
+            {
+              /* Multithreaded */
+              int icpu;
+              thread_pool_restart( work_pool );
+              for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+                serialize_info[icpu].key         = key;
+                serialize_info[icpu].active_list = active_list;
+                serialize_info[icpu].row_offset  = row_offset[i];
+                
+                thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
+              }
+              thread_pool_join( work_pool );
+            }
+          }
+        }
+      }
+    }
+
+    if (ikw2 == num_kw)
+      complete = true;
+  } while ( !complete );
+  thread_pool_free( work_pool );
+  free( serialize_info );
+  free( active_size );
+  free( row_offset );
+  msg_free( msg , true );
+  matrix_free( A );
+  matrix_free( Rp );
+  matrix_free( Dp );
+  matrix_free( Z );
+  if (randrot != NULL)
+    matrix_free( randrot );
+}
+
+
+
+
+
+
+
+
+
+
+
 /* 
    Perform Cross-Validation and update ensemble members one at a time
    using BOOTSTRAP estimates for ensemble covariance for localised 
@@ -1455,7 +1680,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
             enkf_main_update_mulX_bootstrap(enkf_main , ministep, step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
           } else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
             /* Update based on Cross validation AND local analysis. */
-            enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);
+            enkf_main_update_mulX_prin_comp_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);
+	    /*            enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);*/
           } 
           else if (analysis_config_get_force_subspace_dimension(enkf_main->analysis_config )) {
             printf("Selcting the user defined subspace dimension\n");
