@@ -119,7 +119,7 @@ static void svdS(const matrix_type * S , matrix_type * U0 , matrix_type * V0T , 
         break;
     }
 
-    printf("Subspace dimension selected based on a truncation factor of %0.2f : %d\n",truncation,num_significant+1);
+    printf("Subspace dimension selected based on a truncation factor of %0.2f : %d\n",truncation,num_significant);
 
     /* Explicitly setting the insignificant singular values to zero. */
     for (i=num_significant; i < num_singular_values; i++)
@@ -209,7 +209,6 @@ int enkf_analysis_get_optimal_numb_comp(const matrix_type * cvErr , const int ma
   
   double tmp2 = (1.0 / (double)nFolds); 
 
-
   double * cvMean = util_malloc( sizeof * cvMean * maxP, __func__);
   
   for (int p = 0; p < maxP; p++ ){
@@ -232,23 +231,32 @@ int enkf_analysis_get_optimal_numb_comp(const matrix_type * cvErr , const int ma
   }
 
   minErr = cvMean[0];
-  optP = 0;
+  optP = 1;
+  
+
+  printf("PRESS = \n");
+  for (i = 0; i < maxP; i++) {
+    printf(" %0.2f \n",cvMean[i]);
+  }
+  
+
 
   for (i = 1; i < maxP; i++) {
     tmp = cvMean[i];
     if (tmp < minErr && tmp > 0.0) {
       minErr = tmp;
-      optP = i;
+      optP = i+1;
     }
   }
 
-  printf("Global optimum= %d\n",optP+1);
+  printf("Global optimum= %d\n",optP);
   
 
   if (pen_press) {
+    printf("Selecting optimal number of components using Penalised PRESS statistic: \n");
     for ( i = 0; i < optP; i++){
       if( cvMean[i] - cvStd[i] <= minErr ){
-	optP = i;
+	optP = i+1;
 	break;
       }
     }
@@ -722,7 +730,7 @@ static void getW_pre_cv(matrix_type * W , const matrix_type * V0T, const matrix_
 
   printf("Optimal number of components found: %d \n",optP);
   FILE * compSel_log = util_fopen("compSel_log_local_cv" , "a");
-  fprintf( compSel_log , " %d ",optP );
+  fprintf( compSel_log , " %d ",optP);
   fclose( compSel_log);
 
 
@@ -787,10 +795,9 @@ int get_optimal_principal_components(const matrix_type * Z , const matrix_type *
   int optP;
 
 
-  printf("\nOnly searching for the optimal subspace dimension among the first %d principal components\n",maxP+1);
+  printf("\nOnly searching for the optimal subspace dimension among the first %d principal components\n",maxP);
   
   matrix_type * cvError = matrix_alloc( maxP ,nfolds_CV );
-  
 
  
   /* start cross-validation: */
@@ -835,9 +842,9 @@ int get_optimal_principal_components(const matrix_type * Z , const matrix_type *
   /* find optimal truncation value for the cv-scheme */
   optP = enkf_analysis_get_optimal_numb_comp( cvError , maxP, nfolds_CV , pen_press);
 
-  printf("Optimal number of components found: %d \n",optP+1);
+  printf("Optimal number of components found: %d \n",optP);
   FILE * compSel_log = util_fopen("compSel_log_local_cv" , "a");
-  fprintf( compSel_log , " %d ",optP+1 );
+  fprintf( compSel_log , " %d ",optP);
   fclose( compSel_log);
 
 
@@ -861,14 +868,14 @@ static void getW_prin_comp(matrix_type *W , const matrix_type * Z ,
   int nrens = matrix_get_columns( Z );
   
   /* Finally, compute W = Z(1:p,:)' * inv(Z(1:p,:) * Z(1:p,:)' + (n -1) * Rp) */
-  matrix_type *Zp = matrix_alloc( optP + 1, nrens );
-  for (i = 0; i <= optP ; i++) {
+  matrix_type *Zp = matrix_alloc( optP, nrens );
+  for (i = 0; i < optP ; i++) {
     for (j = 0; j < nrens; j++) {
       matrix_iset(Zp , i , j , matrix_iget(Z , i ,j));
     }
   }
 
-  matrix_type *SigZp = matrix_alloc( optP + 1 ,optP + 1);
+  matrix_type *SigZp = matrix_alloc( optP ,optP);
   /*Compute SigZp = Zp * Zp' */
   matrix_dgemm( SigZp , Zp , Zp, false , true , 1.0, 0.0);
   
@@ -877,8 +884,8 @@ static void getW_prin_comp(matrix_type *W , const matrix_type * Z ,
   int tmp3 = nrens - 1;
 
 
-  for(i = 0; i <= optP; i++) {
-    for( j = 0; j <= optP; j++) {
+  for(i = 0; i < optP; i++) {
+    for( j = 0; j < optP; j++) {
       tmp2 = matrix_iget(SigZp , i , j) + tmp3 * matrix_iget(Rp, i, j);
       matrix_iset( SigZp , i , j , tmp2 );
     }
@@ -1853,6 +1860,8 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     const int nrens = matrix_get_columns( S );
     const int nrmin = util_int_min( nrobs , nrens );
 
+    printf("Maximum number of Principal Components is %d\n",nrmin);
+
     double truncation                     = analysis_config_get_truncation( config );  
     
 
@@ -1894,7 +1903,8 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     matrix_free(U0);
     matrix_free(V0T);
     
-    printf("\nReturning the Pre-Computed Principal Components\n");
+    printf("Returning the Pre-Computed Principal Components\n");
+    printf("\n");
 
     /* 
        2: Diagonalize the S matrix; singular vectors etc. needed later in the local CV:
@@ -1948,14 +1958,19 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
 
     
     
-    int maxP = matrix_get_rows( Z );
+    int nrmin = matrix_get_rows( Z );
+    int maxP = nrmin;
 
     /* We only want to search the non-zero eigenvalues */
-    for (int i = 0; i < maxP; i++) {
+    for (int i = 0; i < nrmin; i++) {
       if (matrix_iget(Z,i,1) == 0.0) {
 	maxP = i;
 	break;
       }
+    }
+    
+    if (maxP > nrmin) {
+      maxP = nrmin;
     }
 
 
@@ -1967,7 +1982,7 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
     int optP = get_optimal_principal_components(Z , Rp , nfolds_CV, workA , rng , maxP, penalised_press);
     matrix_free( workA );
 
-    matrix_type * W          = matrix_alloc(ens_size , optP+1);                      
+    matrix_type * W          = matrix_alloc(ens_size , optP);                      
 
     /* Compute  W = Z(1:p,:)' * inv(Z(1:p,:) * Z(1:p,:)' + (ens_size-1) * Rp(1:p,1:p))*/
     getW_prin_comp( W , Z , Rp, optP);
@@ -1977,7 +1992,7 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
     for( i = 0; i < ens_size; i++) {
       for( j = 0; j < ens_size; j++) {
 	tmp = 0.0;
-	for(k = 0; k < optP+1; k++) {
+	for(k = 0; k < optP; k++) {
 	  tmp += matrix_iget( W , i , k) * matrix_iget( Dp , k , j);
 	}
 	
