@@ -504,11 +504,13 @@ static void enkf_analysis_get_cv_error_prin_comp(matrix_type * cvErr , const mat
     }
 
 
+
     matrix_type * W2 = matrix_alloc(nTrain , nTest );
     /*Compute W2 = ZpTrain' * W */
     matrix_dgemm( W2 , ZpTrain , W , true , false , 1.0 , 0.0);
     
     matrix_free( ZpTrain );
+    matrix_free( SigDp );
     matrix_free( W );
 
     /*Estimate the state-vector */
@@ -763,8 +765,6 @@ static void getW_pre_cv(matrix_type * W , const matrix_type * V0T, const matrix_
   matrix_matmul(W , U0 , workZ); /* x1 = w = u0 * z2 = u0 * sigma0^(+') * z    */
   
 
-  matrix_free(workZ);
-
 
 
   /*end cross-validation */
@@ -905,6 +905,9 @@ static void getW_prin_comp(matrix_type *W , const matrix_type * Z ,
   
   /*Compute W = Zp' * inv(SigZp) */
   matrix_dgemm( W , Zp , SigZp , true , false , 1.0 , 0.0);
+
+  matrix_free( Zp );
+  matrix_free( SigZp );
   
 
 }
@@ -2001,6 +2004,8 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
       }
     }
 
+    matrix_free( W );
+    
     /*Add one on the diagonal of X: */
     for(i = 0; i < ens_size; i++) {
       matrix_iadd( X , i , i , 1.0); /*X5 = I + X5 */
@@ -2008,6 +2013,9 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
     
     enkf_analysis_checkX(X , bootstrap);
   }
+  
+
+  
   return X;
 }
 
