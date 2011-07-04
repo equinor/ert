@@ -729,6 +729,7 @@ static void getW_pre_cv(matrix_type * W , const matrix_type * V0T, const matrix_
   optP = enkf_analysis_get_optimal_numb_comp( cvError , maxp, nfolds_CV, pen_press);
 
   printf("Optimal number of components found: %d \n",optP);
+  printf("\n");
   FILE * compSel_log = util_fopen("compSel_log_local_cv" , "a");
   fprintf( compSel_log , " %d ",optP);
   fclose( compSel_log);
@@ -816,7 +817,7 @@ int get_optimal_principal_components(const matrix_type * Z , const matrix_type *
   }
   
   int ntest, ntrain, k;
-  printf("\nStarting cross-validation\n");
+  printf("Starting cross-validation\n");
   for (i = 0; i < nfolds_CV; i++) {
     printf(".");
 
