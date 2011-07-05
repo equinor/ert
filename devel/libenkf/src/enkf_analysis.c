@@ -1879,6 +1879,14 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
     
     svdS(S , U0 , V0T , DGESVD_MIN_RETURN , sig0 , truncation);
+
+    /* NEED TO invert sig0!!  */
+    for(i = 0; i < nrmin; i++) {
+      if ( sig0[i] > 0 ) {
+	sig0[i] = 1 / sig0[i];
+      }
+    }
+	  
     
     /*
 	Compute the actual princpal components, Z = sig0 * VOT 
@@ -1891,7 +1899,7 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
 	matrix_iset( Z , i , j , sig0[i] * matrix_iget( V0T , i , j ) );
       }
     }
-
+    
     /* Also compute Rp */
 
     matrix_type * X0 = matrix_alloc( nrmin , matrix_get_rows( R ));
