@@ -1883,7 +1883,7 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     /* NEED TO invert sig0!!  */
     for(i = 0; i < nrmin; i++) {
       if ( sig0[i] > 0 ) {
-	sig0[i] = 1 / sig0[i];
+	sig0[i] = 1.0 / sig0[i];
       }
     }
 	  
