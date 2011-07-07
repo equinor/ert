@@ -12,29 +12,35 @@
 #  FITNESS FOR A PARTICULAR PURPOSE.   
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+g#  for more details. 
+"""
+Module implementing type map between C types and Python classes.
 
+The prototype_pattern is a major regexp which is used to set the
+correct restype and argtypes attributes of the function objects.
+"""
 
-import math
 import ctypes
-import types
 import re
-import datetime
-import time
 import sys
 
 
+prototype_pattern = "(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]" 
 
 
 class CWrapper:
     # Observe that registered_types is a class attribute, shared
     # between all CWrapper instances.
     registered_types = {}
-    pattern          = re.compile("(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
+    pattern          = re.compile( prototype_pattern )
 
     def __init__( self , lib ):
         self.lib = lib
 
+    @classmethod
+    def registerType(cls, type, value ):
+        """Register a type against a legal ctypes type"""
+        cls.registered_types[type] = value
 
     @classmethod
     def registerDefaultTypes(cls):
@@ -54,12 +60,6 @@ class CWrapper:
         cls.registerType("float*"  ,  ctypes.POINTER(ctypes.c_float))
         cls.registerType("double"  ,  ctypes.c_double)
         cls.registerType("double*" ,  ctypes.POINTER(ctypes.c_double))
-
-
-    @classmethod
-    def registerType(cls, type, value ):
-        """Register a type against a legal ctypes type"""
-        cls.registered_types[type] = value
 
 
 
@@ -83,13 +83,13 @@ class CWrapper:
 
         where type is a type available to ctypes
         Some type are automatically converted:
-            int -> c_int
+            int  -> c_int
             long -> c_long
             char -> c_char_p
             bool -> c_int
             void -> None
             double -> c_double
-            float -> c_float
+            float  -> c_float
 
         There are also pointer versions of these:
             long* -> POINTER(c_long)

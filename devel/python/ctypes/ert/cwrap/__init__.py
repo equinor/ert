@@ -13,5 +13,29 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+The cwrap package contains several small utility modules to simplify
+the process of interacting with a C library:
 
+  cenum: This module contains a function 'create_enum()' which can
+     internalize enum symbols with the corresponding values in the
+     calling scope. The enum symbols are not part of the shared
+     library as such, and the working of create_enum() requires a
+     special function for 'enum-introspection' to be available in the
+     shared library.
+
+  clib: This module contains the function load() which will load a
+     shared library using the ctypes.CDLL(); the function has
+     facilities for trying several different names when loading the
+     library.
+
+  cwrap: This module contains support for a Python <-> C type map. The
+     whole type mapping in the ert python bindings is based on this
+     module.
+
+  cfile: This module implemenets the class CFILE which can be used to
+     extract the underlying FILE pointer from a Python filehandle, to
+     facilitate use of Python filehandles for functions expecting a
+     FILE pointer.
+"""
 

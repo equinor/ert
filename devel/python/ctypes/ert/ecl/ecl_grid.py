@@ -31,7 +31,7 @@ from   ert.util.tvector      import DoubleVector  # Requires merging of typemaps
 import numpy
 import libecl
 import ecl_kw
-from   ert.util.cfile        import CFILE
+from   ert.cwrap.cfile        import CFILE
 
 class EclGrid(object):
     """

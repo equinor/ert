@@ -13,23 +13,29 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-
+"""
+Convenience module for loading shared library.
+"""
 
 import ctypes
 import os
 
-# The shared libraries typically exist under several different names,
-# with different level of version detail. Unfortunately the same
-# library can exist under different names on the different Statoil
-# computers, to support this the load function can get several
-# arguments like:
-#
-#    load("libz.so" , "libz.so.1" , "libz.so.1.2.1.2" , "libZ-fucker.so")
-#
-# Will return a handle to the first successfull load, and raise
-# ImportError if none of the loads succeed.
 
 def load( *lib_list ):
+    """
+    Thin wrapper around the ctypes.CDLL function for loading shared library.
+    
+    The shared libraries typically exist under several different
+    names, with different level of version detail. Unfortunately the
+    same library can exist under different names on different
+    computers, to support this the load function can get several
+    arguments like:
+    
+       load("libz.so" , "libz.so.1" , "libz.so.1.2.1.2" , "libZ-fucker.so")
+    
+    Will return a handle to the first successfull load, and raise
+    ImportError if none of the loads succeed.
+    """
     dll = None
     
     for lib in lib_list:
@@ -39,9 +45,19 @@ def load( *lib_list ):
         except:
             pass
     
-    error_msg = "Sorry - failed to load shared library:%s\n\nTried in: " % lib_list[0]
-    path_list = os.getenv("LD_LIBRARY_PATH").split(":")
-    for path in path_list:
-        error_msg += path + "\n          "
+    LD_LIBRARY_PATH = os.getenv("LD_LIBRARY_PATH")
+    if not LD_LIBRARY_PATH:
+        LD_LIBRARY_PATH = ""
 
+    error_msg = """
+Failed to load shared library:%s
+
+The runtime linker has searched through the default location of shared
+libraries, and also the locations mentioned in your LD_LIBRARY_PATH
+variable. Your current LD_LIBRARY_PATH setting is:
+
+   LD_LIBRARY_PATH:%s
+
+You might need to update this variable?
+""" % (lib_list[0] , LD_LIBRARY_PATH)
     raise ImportError( error_msg )

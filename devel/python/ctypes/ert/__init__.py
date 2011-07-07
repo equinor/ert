@@ -14,7 +14,3 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
-#import ecl.ecl             as   ecl
-#import job_queue.job_queue as   job_queue
-

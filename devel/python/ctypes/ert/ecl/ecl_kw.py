@@ -42,7 +42,7 @@ import  types
 import  ctypes
 import  numpy
 from    ert.cwrap.cwrap       import *
-from    ert.util.cfile        import CFILE
+from    ert.cwrap.cfile       import CFILE
 from    ecl_util              import ECL_CHAR_TYPE, ECL_DOUBLE_TYPE, ECL_INT_TYPE, ECL_BOOL_TYPE, ECL_MESS_TYPE, ECL_FLOAT_TYPE 
 import  ecl_util
 import  fortio
@@ -59,7 +59,7 @@ class EclKW(object):
 
     The ecl_kw type is the lowest level type in the libecl C library,
     and all the other datatypes like e.g. ecl_grid and ecl_sum are
-    based collections of ecl_kw instances, and interpreting the
+    based on collections of ecl_kw instances, and interpreting the
     content of the ecl_kw keywords.
 
     Many of the special __xxx___() functions have been implemented, so
@@ -79,8 +79,8 @@ class EclKW(object):
         to eight characters), @size elements and datatype @type. Using
         this method you could create a SOIL keyword with:
 
-        soil_kw = EclKW.new( "SOIL" , 10000 , ECL_FLOAT_TYPE )
-            
+           soil_kw = EclKW.new( "SOIL" , 10000 , ECL_FLOAT_TYPE )
+           
         """
         obj = cls()
         obj.c_ptr      = cfunc.alloc_new( name , size , type )
@@ -88,7 +88,7 @@ class EclKW(object):
         obj.parent     = None
         obj.__init( )
         return obj
-
+    
     # Could this method be avoided totally by using an ecl_kw return
     # value from the ecl_file_iget_xxx() methods?
     @classmethod
@@ -168,8 +168,8 @@ class EclKW(object):
 
         Observe that since the grdecl files are quite weakly
         structured it is difficult to verify the integrity of the
-        files, malformed input might therefor very well pass unnoticed
-        before things blow up at a later stage.
+        files, malformed input might therefor pass unnoticed before
+        things blow up at a later stage.
         
            
         [1]: It is possible, but not recommended, to pass in None for
@@ -421,7 +421,7 @@ class EclKW(object):
 
         This method is used to assign value(s) to the current EclKW
         instance. The @value parameter can either be a scalar, or
-        another EclKW instance. To set all elements of a keword to
+        another EclKW instance. To set all elements of a keyword to
         1.0:
 
             kw.assign( 1.0 )
@@ -446,11 +446,12 @@ class EclKW(object):
         The EclRegion instance has two equivalent sets of selected
         indices; one consisting of active indices and one consisting
         of global indices. By default the assign() method will select
-        the global indices of keyword has nx*ny*nz elements and the
-        active indices if the kw has nactive elements. By setting the
-        optinal argument @force_active to true, you can force the
-        method to only update the active indices, even though the
-        keyword has nx*ny*nz elements.
+        the global indices if the keyword has nx*ny*nz elements and
+        the active indices if the kw has nactive elements. By setting
+        the optional argument @force_active to true, you can force the
+        method to only modify the active indices, even though the
+        keyword has nx*ny*nz elements; if the keyword has nactive
+        elements the @force_active flag is not considered.
         """
         if cfunc.assert_numeric( self ):
             if type(value) == type(self):
@@ -543,11 +544,11 @@ class EclKW(object):
         if mask:
             active_list = mask.kw_index_list( self , force_active )
             if arg:
-                for i in range(active_list.size):
-                    self.data_ptr[i] = func( self.data_ptr[i] , arg)
+                for index in active_list:
+                    self.data_ptr[index] = func( self.data_ptr[index] , arg)
             else:
-                for i in range(active_list.size):
-                    self.data_ptr[i] = func( self.data_ptr[i] )
+                for index in active_list:
+                    self.data_ptr[index] = func( self.data_ptr[index] )
         else:
             if arg:
                 for i in range(self.size):
