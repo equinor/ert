@@ -45,7 +45,7 @@ import numpy
 import ctypes
 import libutil
 from   ert.cwrap.cwrap       import *
-from   ert.util.cfile        import CFILE
+from   ert.cwrap.cfile       import CFILE
 
 class TVector(object):
     
@@ -205,7 +205,7 @@ class TVector(object):
         elif isinstance( index , types.SliceType ):
             return self.strided_copy( self , index )
         else:
-            raise TypeError("Index should be integer type")
+            raise TypeError("Index should be integer or slice type.")
         
     def __setitem__( self , index , value ):
         """

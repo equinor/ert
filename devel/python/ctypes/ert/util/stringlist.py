@@ -13,9 +13,24 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+Simple wrapping of stringlist 'class' from C library.
 
+The stringlist type from the libutil C library is a simple structure
+consisting of a vector of \0 terminated char pointers - slightly
+higher level than the (char ** string , int size) convention.
 
-import unittest
+For a pure Python application you should just stick with a normal
+Python list of string objects; but when interfacing with the C
+libraries there are situations where you might need to instantiate a
+stringlist instance. 
+
+The StringList constructor can take an optional argument which should
+be an iterable consisting of strings, and the strings property will
+return a normal python list of string objects, used in this way you
+hardly need to notice that the StringList class is at play.
+"""
+
 import libutil
 import ctypes
 from   ert.cwrap.cwrap import *
@@ -23,31 +38,46 @@ from   ert.cwrap.cwrap import *
 
 
 class StringList:
-    def __init__( self , arg = None):
+    def __init__( self , initial = None):
+        """
+        Creates a new stringlist instance.
+        
+        Creates a new stringlist instance. The optional argument
+        @initial should be an iterable of strings which will be the
+        initial content of the StringList; the content will be copied
+        from the initial list:
+
+            S = StringList( initial = ["My" , "name" , "is", "John" , "Doe"] )
+
+        If an element in the @initial argument is not a string the
+        TypeError exception will be raised.
+        """
         self.c_ptr = cfunc.stringlist_alloc( )
         if arg:
-            if isinstance( arg , types.ListType ) or isinstance( arg , types.TupleType ):
-                for s in arg:
-                    if isinstance( s , types.StringType):
-                        self.append( s )
-                    else:
-                        raise TypeError("Item:%s not a string" % s)
-                    
-            else:
-                raise TypeError("Stringlist( arg ) arg: must be list or tuple")
-
+            for s in arg:
+                if isinstance( s , types.StringType):
+                    self.append( s )
+                else:
+                    raise TypeError("Item:%s not a string" % s)
+                
             
     def __del__( self ):
         cfunc.stringlist_free( self )
 
-
     def from_param( self ):
         return ctypes.c_void_p( self.c_ptr )
 
-
     def __getitem__(self , index):
+        """
+        Implements [] read operator on the stringlist.
+        
+        The __getitem__ method supports negative, i.e. from the right,
+        indexing; but currently not slices.
+        """
         if isinstance( index , types.IntType):
             length = self.__len__()
+            if index < 0:
+                index += length
             if index < 0 or index >= length:
                 raise IndexError
             else:
@@ -57,10 +87,16 @@ class StringList:
 
 
     def __len__(self):
+        """
+        The length of the list - used to support builtin len().
+        """
         return cfunc.stringlist_get_size( self )
 
 
     def __str__(self):
+        """
+        String representation of list; used when calling print."
+        """
         buffer = "["
         length = len(self)
         for i in range(length):
@@ -72,6 +108,9 @@ class StringList:
 
 
     def append(self, s):
+        """
+        Appends a new string @s to list.
+        """
         if isinstance( s, types.StringType):
             cfunc.stringlist_append( self , s)
         else:
@@ -81,11 +120,10 @@ class StringList:
     @property
     def strings(self):
         """
-        Will return the strings in the stringlist as a 100% standard
-        Python List of strings. 
+        The strings in as a normal Python list of strings.
 
-        The content is copied, so the StringList() instance can very
-        well go out of scope.
+        The content is copied, so the StringList() instance can safely go
+        out of scope after the call has completed.
         """
         slist = []
         for s in self:

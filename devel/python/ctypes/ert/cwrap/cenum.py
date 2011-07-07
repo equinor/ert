@@ -13,7 +13,9 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-
+"""
+Convenience module for loading enum symbols and values.
+"""
 
 import ctypes
 import sys
@@ -29,7 +31,7 @@ def create_enum( lib, func_name , enum_name , dict):
     of a C-function in the library which can provide symbol name and
     numerical value for the elements in an enum.
 
-    For an enum defition like:
+    For an enum definition like:
 
        enum my_enum {
           INVALID = 0,
@@ -52,7 +54,36 @@ def create_enum( lib, func_name , enum_name , dict):
         VALUE2  = 2
         
     The @dict dictionary should typically be the globals() dictionary
-    from the calling scope.
+    from the calling scope. In addition to updating the @dict
+    dictionary with enum defintions a dictionary of name -> value
+    mappings will be returned. 
+
+    The ecl_util.h header file contains the following emum definition:
+
+       typedef enum { ECL_OTHER_FILE           = 0   , 
+                      ECL_RESTART_FILE         = 1   , 
+                      ECL_UNIFIED_RESTART_FILE = 2   , 
+                      ECL_SUMMARY_FILE         = 4   , 
+                      ECL_UNIFIED_SUMMARY_FILE = 8   , 
+                      ECL_SUMMARY_HEADER_FILE  = 16  , 
+                      ECL_GRID_FILE            = 32  , 
+                      ECL_EGRID_FILE           = 64  , 
+                      ECL_INIT_FILE            = 128 ,
+                      ECL_RFT_FILE             = 256 ,
+                      ECL_DATA_FILE            = 512 } ecl_file_enum;   
+
+    In the ecl_util.py module this enum is loaded as:                
+
+      file_enum = create_enum( libecl.lib , "ecl_util_file_enum_iget" , "ecl_file_enum" , globals())
+
+    This will install the symbols ECL_OTHER_FILE, ECL_RESTART_FILE,
+    ... , ECL_DATA_FILE in the global namespace of the calling module
+    and in additional return a dictionary with the same mapping:
+
+      for enum_elm in file_enum.keys():
+          print "%s -> %d" % ( enum_elm , file_enum[ enum_elm ] )
+       
+    The returned dictionary can very well be dropped.
     """
 
     try:
@@ -66,7 +97,7 @@ def create_enum( lib, func_name , enum_name , dict):
     index = 0
     while True:
         value = ctypes.c_int()
-        name = func( index , ctypes.byref( value ))
+        name  = func( index , ctypes.byref( value ))
         if name:
             dict[ name ] = value.value
             enum[ name ] = value.value
