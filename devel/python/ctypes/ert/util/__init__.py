@@ -20,9 +20,9 @@ The libutil library implements many utility functions and classes of
 things like hash table and vector; these classes are extensively used
 by the other ert libraries. The present wrapping here is to facilitate
 use and interaction with various ert classes, in a pure python context
-you are probably better served by using a plain python solution, or
-alternatively similar functionality is probably provided better with
-plain python, or well established third party packages.
+you are probably better served by using a plain python solution;
+either based on built in python objects or well established third
+party packages.
 
 The modules included in the util package are:
 
@@ -30,6 +30,9 @@ The modules included in the util package are:
      DoubleVector and BoolVector. This is a quite normal
      implementation of a typed growable vector; but with a special
      twist regarding default values.
+
+  util_func.py: This module wraps a couple of stateless (i.e. there is
+     no class involved) functions from the util.c file.
    
 """
 

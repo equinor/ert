@@ -32,7 +32,7 @@ import libecl
 from   ert.cwrap.cwrap       import *
 from   ert.util.stringlist   import StringList
 from   ert.util.ctime        import ctime 
-
+#import ert.ecl_plot.sum_plot as sum_plot
 
 # The date2num function is a verbatim copy of the _to_ordinalf()
 # function from the matplotlib.dates module. Inserted here only to
@@ -74,6 +74,8 @@ def date2num( dt ):
 class EclSumNode:
     def __init__(self , mini_step , report_step , days , date , mpl_date , value):
         """
+        EclSumNode is a 'struct' with a summary value and time.
+
         EclSumNode - a small 'struct' with a summary value and time in
         several formats. When iterating over a EclSumVector instance
         you will get EclSumNode instances.
@@ -316,6 +318,13 @@ class EclSumVector:
         else:
             return None
             
+
+    #def plot(self):
+    #    sum_plot.plot_vector( self )
+        
+
+
+
     #################################################################
 
 class EclSum( object ):
@@ -360,8 +369,8 @@ class EclSum( object ):
         # Initializing the time vectors
         length = self.length
         self.__dates       = [ 0 ] * length
-        self.__report_step = numpy.zeros( length , dtype = numpy.dtype('i'))
-        self.__mini_step   = numpy.zeros( length , dtype = numpy.dtype('i'))
+        self.__report_step = numpy.zeros( length , dtype = numpy.int32)
+        self.__mini_step   = numpy.zeros( length , dtype = numpy.int32)
         self.__days        = numpy.zeros( length )
         self.__mpl_dates   = numpy.zeros( length )
         for i in range( length ):
@@ -374,8 +383,8 @@ class EclSum( object ):
         index_list = self.report_index_list()
         length = len( index_list )
         self.__datesR       = [ 0 ] * length
-        self.__report_stepR = numpy.zeros( length , dtype = numpy.dtype('i'))
-        self.__mini_stepR   = numpy.zeros( length , dtype = numpy.dtype('i'))
+        self.__report_stepR = numpy.zeros( length , dtype = numpy.int32)
+        self.__mini_stepR   = numpy.zeros( length , dtype = numpy.int32)
         self.__daysR        = numpy.zeros( length )
         self.__mpl_datesR   = numpy.zeros( length )
         for i in range( length ):
@@ -793,12 +802,14 @@ class EclSum( object ):
     def keys( self , pattern = None):
         """
         Return a list of summary keys matching @pattern.
-
+        
         The matching algorithm is ultimately based on the fnmatch()
         function, i.e. normal shell-character syntax is used. With
         @pattern == "WWCT:*" you will get a list of watercut keys for
-        all wells. If pattern is None you will get all the keys of
-        summary object.
+        all wells. 
+        
+        If pattern is None you will get all the keys of summary
+        object.
         """
         s = StringList()
         cfunc.select_matching_keys( self , pattern , s )
