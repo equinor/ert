@@ -694,7 +694,8 @@ class EclKW(object):
         columns, and a maximum of @max_lines lines. If @max_lines is
         not sufficient the first elements in the kewyord are
         represented, a .... continuation line and then the last part
-        of the keyword.
+        of the keyword. If @max_lines is None all of the vector will
+        be printed, irrespective of how long it is.
 
         If a value is given for @fmt that is used as format string for
         each element, otherwise a type-specific default format is
@@ -707,7 +708,7 @@ class EclKW(object):
         if not fmt:
             fmt = self.str_fmt
 
-        if lines <= max_lines:
+        if max_lines is None or lines <= max_lines:
             s += self.str_data( width , 0 , self.size , fmt)
         else:
             s1 = width * max_lines / 2

@@ -33,11 +33,15 @@ the default value (i.e. 66 in this case). So the statement
 
 will give '66'. The main part of the implementation is in terms of an
 "abstract base class" TVector. The TVector class should be not
-instantiated directly, instead the children IntVector, DoubleVector or
-BoolVector should be used.
+instantiated directly, instead the child classes IntVector,
+DoubleVector or BoolVector should be used. 
+
+The C-level has implementations for several fundamental types like
+float and size_t not currently implemented in the Python version.
 """
 
 import sys
+import numpy
 import ctypes
 import libutil
 from   ert.cwrap.cwrap       import *
@@ -48,7 +52,19 @@ class TVector(object):
     @classmethod
     def strided_copy( cls , obj , slice ):
         """
-        Used to support sliced lookup.
+        Will create a new copy according to @slice.
+
+        Mainly a support function to support slice based lookup like
+
+           v = IntVector()
+           v[0] = 1
+           v[1] = 1
+           v[100] = 100
+           ...
+           c = v[0:100:10]
+
+        Now 'c' will be a Intvector() instance containing every tenth
+        element from 'v'.
         """
         (start , stop , step) = slice.indices( obj.size )
         if stop > start:
@@ -84,6 +100,9 @@ class TVector(object):
 
     
     def copy( self ):
+        """
+        Create a new copy of the current vector.
+        """
         new = self.__copy__( self )  # Invoking the class method
         return new
 
@@ -98,17 +117,82 @@ class TVector(object):
         """
         init_size  = 0
         self.c_ptr = self.alloc( init_size , default_value )
-        self.data_owner = True
+        self.data_owner   = True
+        self.element_size = self.get_element_size( self ) 
+
+
+    def str_data( self , width , index1 , index2 , fmt):
+        """
+        Helper function for str() method.
+        """
+        data = []
+        s = ""
+        for index in range(index1, index2):
+            data.append( self[index] )
+        for index in range(len(data)):
+            s += fmt % data[ index ]
+            if index % width == (width - 1):
+                s+= "\n"
+        return s
+
+
+    # The str() method is a verbatim copy of the implementation in
+    # ecl_kw.py.
+    def str(self , width = 5 , max_lines = 10 , fmt = None):
+        """
+        Return string representation of vector for pretty printing.
+
+        The function will return a string consisting of a header, and
+        then a chunk of data. The data will be formatted in @width
+        columns, and a maximum of @max_lines lines. If @max_lines is
+        not sufficient the first elements in the kewyord are
+        represented, a .... continuation line and then the last part
+        of the vector. If @max_lines is None all of the vector will be
+        printed, irrespectiv of how long it is.
+
+        If a value is given for @fmt that is used as format string for
+        each element, otherwise a type-specific default format is
+        used. If given the @fmt string should contain spacing between
+        the elements. The implementation of the builtin method
+        __str__() is based on this method.
+        """
+
+        s = ""
+        lines = self.size / width
+        if not fmt:
+            fmt = self.def_fmt + " "
+
+        if max_lines is None or lines <= max_lines:
+            s += self.str_data( width , 0 , self.size , fmt)
+        else:
+            s1 = width * max_lines / 2
+            s += self.str_data( width  , 0 , s1 , fmt)
+            s += "   ....   \n"
+            s += self.str_data( width  , self.size - s1 , self.size , fmt)
+
+        return s
+
+    def __str__(self):
+        """
+        Returns string representantion of vector.
+        """
+        return self.str( max_lines = 10 , width = 5 )
 
     def from_param( self ):
         return self.c_ptr
 
 
     def __del__(self):
+        """
+        Method called by the gc on the way out.
+        """
         if self.data_owner:
             self.free( self )
 
     def __getitem__(self, index ):
+        """
+        Implements read [] operator - @index can be slice instance.
+        """
         if isinstance( index , types.IntType):
             length = self.__len__()
             if index < 0:
@@ -124,6 +208,9 @@ class TVector(object):
             raise TypeError("Index should be integer type")
         
     def __setitem__( self , index , value ):
+        """
+        Implements write [] operator - @index must be integer.
+        """
         if isinstance( index , types.IntType):
             self.iset( self, index , value )
         else:
@@ -133,6 +220,23 @@ class TVector(object):
     # Mathematical operations:
 
     def __IADD__(self , delta , add ):
+        """
+        Low-level function implementing inplace add.
+
+        The __IADD__ function implements the operation:
+        
+           v += a
+
+        The variable which is added, i.e. @delta, can either be of the
+        same type as the current instance, or a numerical scalar. The
+        __IADD__ method implements both add and subtract, based on the
+        boolean flag @add.
+
+        The __IADD__ method should not be called directly; but rather
+        via the __iadd__, __add__ and __radd__ methods which implement
+        the various addition operation, and the corresponding
+        subtraction operations: __isub__, __sub__ and __rsub__.
+        """
         if type(self) == type(delta):
             # This is vector + vector operation. 
             if not add:
@@ -148,9 +252,21 @@ class TVector(object):
 
         return self
 
-    # The __IADD__() function implements both addition and subtraction,
     # the __IMUL__ function only implements multiplication.
     def __IMUL__(self , factor ):
+        """
+        Low-level function implementing inplace multiplication.
+
+        The __IMUL__ function implements the operation:
+        
+           v *= a
+
+        The variable which is multiplied in, i.e. @factor, can either
+        be of the same type as the current instance, or a numerical
+        scalar. The __IMUL__ method should not be called directly, but
+        rather via the __mul__, __imul__ and __rmul__ functions.
+        """
+
         if type(self) == type(factor):
             # This is vector * vector operation. 
             self.inplace_mul( self , factor  )
@@ -164,20 +280,37 @@ class TVector(object):
 
 
     def __iadd__(self , delta ):
+        """
+        Implements inplace add. @delta can be vector or scalar.
+        """
         return self.__IADD__( delta , True )
 
     def __isub__(self , delta):
+        """
+        Implements inplace subtract. @delta can be vector or scalar.
+        """
         return self.__IADD__(delta , False )
 
     def __radd__(self , delta):
         return self.__add__( delta )
 
     def __add__(self , delta):
+        """
+        Implements add operation - creating a new copy.
+
+           b = DoubleVector()
+           c = DoubleVector()  // Or alternatively scalar
+           ....
+           a = b + c
+        """
         copy = self.__copy__( self )
         copy += delta
         return copy
 
     def __sub__(self , delta):
+        """
+        Implements subtraction - creating new copy.
+        """
         copy  = self.__copy__( self )
         copy -= delta
         return copy
@@ -209,6 +342,23 @@ class TVector(object):
 
     # Essentally implements a = b
     def assign(self , value):
+        """
+        Implements assignment of type a = b.
+
+        The @value parameter can either be a vector instance, in which
+        case the content of @value is copied into the current
+        instance, or a scalar in which case all the elements of the
+        vector are set to this value:
+
+           v1 = IntVector()
+           v2 = IntVector()
+           
+           v1[10] = 77
+           v2.assign( v1 )      # Now v2 contains identicall content to v1
+           ....
+           v1.assign( 66 )       # Now v1 is a vector of 11 elements - all equal to 66
+
+        """
         if type(self) == type(value):
             # This is a copy operation
             self.memcpy( self , value )
@@ -219,10 +369,17 @@ class TVector(object):
                 raise TypeError("Value has wrong type")
 
     def __len__(self):
+        """
+        The number of elements in the vector."
+        """
         return self.get_size( self )
-
+    
 
     def printf( self , fmt = None , name = None , stream = sys.stdout ):
+        """
+        See also the str() method which returns string representantion
+        of the vector.
+        """
         cfile = CFILE( stream )
         if not fmt:
             fmt = self.def_fmt
@@ -230,6 +387,9 @@ class TVector(object):
 
     @property
     def size( self ):
+        """
+        The number of elements in the vector.
+        """
         return self.__len__()
 
     @property
@@ -262,12 +422,23 @@ class TVector(object):
         self.cappend( self , value )
 
     def del_block( self , index , block_size ):
+        """
+        Remove a block of size @block_size starting at @index.
+        
+        After the removal data will be left shifted.
+        """
         self.idel_block( self , index , block_size )
 
     def sort( self ):
+        """
+        Sort the vector inplace in increasing numerical order.
+        """
         self.csort( self )
 
     def rsort( self ):
+        """
+        Sort the vector inplace in reverse (decreasing) numerical order.
+        """
         self.crsort( self )
 
     def clear(self):
@@ -292,6 +463,36 @@ class TVector(object):
 
     default = property( get_default , set_default )
 
+
+    # The numpy_copy() method goes thorugh a bit of hoops to get the
+    # memory ownership correct:
+    #
+    #   1. A numpy array (view) is created which wraps the underlying
+    #      storage of the vector instance.
+    #
+    #   2. A new numpy copy is created from the view and returned.
+    #
+    # The point of this involved exercise is to ensure that the numpy
+    # copy has it's own storage copy[1], and to ensure that the numpy
+    # storage is disposed correctly when the numpy vector is garbage
+    # collected.
+    #
+    # 1: The underlying storage of the vector instance is quite
+    #    volatile, and it is not possible to create a numpy instance
+    #    which safely shares storage with the vector.
+
+    def numpy_copy(self):
+        """
+        Will return a copy of the vector as a numpy array.
+
+        The returned numpy copy is a true copy, and does not share any
+        storage with the vector instance.
+        """
+        data_ptr = self.data_ptr( self )
+        buffer_size = self.size * self.element_size
+        buffer = buffer_from_ptr( data_ptr , buffer_size )
+        view = numpy.frombuffer( buffer , self.numpy_dtype )
+        return numpy.copy( view )
 
 
 #################################################################
@@ -330,11 +531,16 @@ class DoubleVector(TVector):
             cls.memcpy        = cfunc.double_vector_memcpy
             cls.cset_default  = cfunc.double_vector_set_default
             cls.cget_default  = cfunc.double_vector_get_default
-            cls.def_fmt       = "%g"
+            cls.alloc_data_copy = cfunc.double_vector_alloc_data_copy
+            cls.get_element_size    = cfunc.double_vector_element_size
+            cls.data_ptr            = cfunc.double_vector_data_ptr
+            cls.numpy_dtype   = numpy.float64
+            cls.def_fmt       = "%8.4f"
             cls.initialized = True
 
         obj = TVector.__new__( cls )
         return obj
+    
 
 
 class BoolVector(TVector):
@@ -370,7 +576,11 @@ class BoolVector(TVector):
             cls.memcpy        = cfunc.bool_vector_memcpy
             cls.cset_default  = cfunc.bool_vector_set_default
             cls.cget_default  = cfunc.bool_vector_get_default
-            cls.def_fmt       = "%d"
+            cls.alloc_data_copy = cfunc.bool_vector_alloc_data_copy
+            cls.get_element_size    = cfunc.bool_vector_element_size
+            cls.data_ptr            = cfunc.bool_vector_data_ptr
+            cls.numpy_dtype   = numpy.bool
+            cls.def_fmt       = "%8d"
             cls.initialized = True
 
         obj = TVector.__new__( cls )
@@ -411,7 +621,10 @@ class IntVector(TVector):
             cls.memcpy        = cfunc.int_vector_memcpy
             cls.cset_default  = cfunc.int_vector_set_default
             cls.cget_default  = cfunc.int_vector_get_default
-            
+            cls.alloc_data_copy = cfunc.int_vector_alloc_data_copy
+            cls.data_ptr            = cfunc.int_vector_data_ptr
+            cls.get_element_size    = cfunc.int_vector_element_size
+            cls.numpy_dtype   = numpy.int32
             cls.def_fmt       = "%d"
             cls.initialized = True
 
@@ -419,6 +632,10 @@ class IntVector(TVector):
         return obj
     
 #################################################################
+
+buffer_from_ptr = ctypes.pythonapi.PyBuffer_FromMemory
+buffer_from_ptr.restype  = ctypes.py_object
+buffer_from_ptr.argtypes = [ ctypes.c_void_p , ctypes.c_long ]
 
 CWrapper.registerType( "double_vector" , DoubleVector )
 CWrapper.registerType( "int_vector"    , IntVector )
@@ -457,6 +674,9 @@ cfunc.double_vector_assign              = cwrapper.prototype("void   double_vect
 cfunc.double_vector_memcpy              = cwrapper.prototype("void   double_vector_memcpy(double_vector , double_vector )")
 cfunc.double_vector_set_default         = cwrapper.prototype("void   double_vector_set_default( double_vector , double)")
 cfunc.double_vector_get_default         = cwrapper.prototype("double    double_vector_get_default( double_vector )")
+cfunc.double_vector_alloc_data_copy     = cwrapper.prototype("double*  double_vector_alloc_data_copy( double_vector )")
+cfunc.double_vector_data_ptr            = cwrapper.prototype("double*  double_vector_get_ptr( double_vector )")
+cfunc.double_vector_element_size        = cwrapper.prototype("int      double_vector_element_size( double_vector )")
 
 
 cfunc.int_vector_alloc_copy          = cwrapper.prototype("c_void_p int_vector_alloc_copy( int_vector )")
@@ -487,6 +707,9 @@ cfunc.int_vector_assign              = cwrapper.prototype("void   int_vector_set
 cfunc.int_vector_memcpy              = cwrapper.prototype("void   int_vector_memcpy(int_vector , int_vector )")
 cfunc.int_vector_set_default         = cwrapper.prototype("void   int_vector_set_default( int_vector , int)")
 cfunc.int_vector_get_default         = cwrapper.prototype("int    int_vector_get_default( int_vector )")
+cfunc.int_vector_alloc_data_copy     = cwrapper.prototype("int*  int_vector_alloc_data_copy( int_vector )")
+cfunc.int_vector_data_ptr            = cwrapper.prototype("int*  int_vector_get_ptr( int_vector )")
+cfunc.int_vector_element_size        = cwrapper.prototype("int    int_vector_element_size( int_vector )")
 
 
 cfunc.bool_vector_alloc_copy          = cwrapper.prototype("c_void_p bool_vector_alloc_copy( bool_vector )")
@@ -516,4 +739,7 @@ cfunc.bool_vector_inplace_mul         = cwrapper.prototype("void   bool_vector_i
 cfunc.bool_vector_assign              = cwrapper.prototype("void   bool_vector_set_all( bool_vector , bool)")  
 cfunc.bool_vector_memcpy              = cwrapper.prototype("void   bool_vector_memcpy(bool_vector , bool_vector )")
 cfunc.bool_vector_set_default         = cwrapper.prototype("void   bool_vector_set_default( bool_vector , bool)")
-cfunc.bool_vector_get_default         = cwrapper.prototype("bool    bool_vector_get_default( bool_vector )")
+cfunc.bool_vector_get_default         = cwrapper.prototype("bool   bool_vector_get_default( bool_vector )")
+cfunc.bool_vector_alloc_data_copy     = cwrapper.prototype("bool*  bool_vector_alloc_data_copy( bool_vector )")
+cfunc.bool_vector_data_ptr            = cwrapper.prototype("bool*  bool_vector_get_ptr( bool_vector )")
+cfunc.bool_vector_element_size        = cwrapper.prototype("int    bool_vector_element_size( bool_vector )")
