@@ -1862,7 +1862,7 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
 
     const int nrobs = matrix_get_rows( S );
     const int nrens = matrix_get_columns( S );
-    const int nrmin = util_int_min( nrobs , nrens );
+    const int nrmin = util_int_min( nrobs , nrens - 1 );
 
     printf("Maximum number of Principal Components is %d\n",nrmin);
 
