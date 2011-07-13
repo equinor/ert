@@ -119,7 +119,7 @@ static void svdS(const matrix_type * S , matrix_type * U0 , matrix_type * V0T , 
         break;
     }
 
-    printf("Subspace dimension selected based on a truncation factor of %0.2f : %d\n",truncation,num_significant);
+    printf("Subspace dimension selected based on a truncation factor of %0.6f : %d\n",truncation,num_significant);
 
     /* Explicitly setting the insignificant singular values to zero. */
     for (i=num_significant; i < num_singular_values; i++)
