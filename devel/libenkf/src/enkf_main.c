@@ -1042,7 +1042,7 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
         if (ikw == num_kw)
           add_more_kw = false;
       }
-      //add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
+      add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
       first_kw = false;
       {
         char * label = util_alloc_sprintf("serializing: %s" , key);
@@ -1181,7 +1181,7 @@ void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local
   msg_show( msg );
   do {
     bool first_kw            = true;
-    bool add_more_kw         = true;
+    bool add_more_kw         = true; 
     int ikw1                 = ikw;
     int ikw2                 = ikw;
     int current_row_offset   = 0;
@@ -1255,7 +1255,7 @@ void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local
         if (ikw == num_kw)
           add_more_kw = false;
       }
-      //add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
+      add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
       first_kw = false;
       {
         char * label = util_alloc_sprintf("serializing: %s" , key);
@@ -1562,7 +1562,7 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
             const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
             {
               char * label = util_alloc_sprintf("deserializing: %s" , key);
-              msg_update( msg , label);
+	      msg_update( msg , label);
               free(label);
             }
 
@@ -1678,7 +1678,10 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
             */
             printf("Doing bootstrap\n");
             enkf_main_update_mulX_bootstrap(enkf_main , ministep, step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
-          } else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
+          } 
+	  else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
+	    printf("Updating using Cross-Validation\n");
+	    
             /* Update based on Cross validation AND local analysis. */
             enkf_main_update_mulX_prin_comp_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);
 	    /*            enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);*/
