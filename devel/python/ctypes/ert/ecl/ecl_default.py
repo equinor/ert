@@ -20,24 +20,34 @@ This module contains site specific default values for various
 variables related to the eclipse environment. Observe that this module
 itself does not set any default values, instead it will try to import
 a module ecl_local; and then subsequently read all values from this
-module. Observe that the local module is not provided in the ert
-source distribution, you must write this yourself.
+module. The ecl_local module is not provided in the ert source
+distribution, you must create this yourself and install along with
+this module.
 
-It is perfectly permissible to not provide a ecl_local module, but if
-you at a later stage try to use a property from the EclConfig class
-you will get an exception.
+It is not necessary to create a ecl_local module, but if you try to
+access the default properties and have not created a ecl_local module
+a NotImplemtedError exception will be raised.
+
+The intention is not to use the EclDefault explicitly, rather the
+ert-python code will consult the EclDefault class internally. For
+instance the code to submit an ECLIPSE simulation looks like this:
+
+   def submit()
+
+
+The ecl_local module can define the following variables:
+
+  cmd:
+  version:
+  lsf_resource_request:
+
+It is not necessary to define all the variables.
 """ 
-
-#cmd                  = None
-#version              = None
-#lsf_resource_request = None
-
 #cmd                  = "/project/res/etc/ERT/Scripts/run_eclipse.py"
 #version              = "2009.2"   
 #lsf_resource_request = "select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]"
 
-
-class EclConfig:
+class EclDefault:
     def __init__(self):
         pass
 
@@ -77,5 +87,5 @@ except ImportError:
     pass
 
 
-config = EclConfig()
+default = EclDefault()
 
