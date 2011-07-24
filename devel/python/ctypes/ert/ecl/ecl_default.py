@@ -30,18 +30,32 @@ a NotImplemtedError exception will be raised.
 
 The intention is not to use the EclDefault explicitly, rather the
 ert-python code will consult the EclDefault class internally. For
-instance the code to submit an ECLIPSE simulation looks like this:
+instance the EclCase method to submit an ECLIPSE simulation looks like
+this:
 
-   def submit()
-
-
+   import ecl_default.default as default
+   ...
+   ...
+   def submit(self , version = None , cmd = None):
+       if not cmd:
+          cmd = default.cmd
+       if not version:
+          version = default.version
+       ...
+       
+I.e. if the user has not supplied values for the optional arguments
+version and cmd the method will consult the default instance from the
+ecl_default module.
+   
 The ecl_local module can define the following variables:
 
   cmd:
   version:
   lsf_resource_request:
 
-It is not necessary to define all the variables.
+Depending on the computing environment some variables might be
+irrelevant; it is not necessary to set variables which will not be
+used.
 """ 
 #cmd                  = "/project/res/etc/ERT/Scripts/run_eclipse.py"
 #version              = "2009.2"   
@@ -52,6 +66,12 @@ class EclDefault:
         pass
 
     def safe_get( self , attr ):
+        """
+        Internal function to get class attributes.
+        
+        Will raise NotImplemtedError if the attribute has not been
+        loaded from the site spesific ecl_default module.
+        """
         if hasattr( self , "__%s" % attr):
             value = getattr( self , "__%s" % attr)
             return value
@@ -59,12 +79,15 @@ class EclDefault:
             raise NotImplementedError("The default attribute:%s has not been set - you must update/provide a ecl_local module." % attr)
         
     @property
-    def cmd( self ):
-        return self.safe_get( "cmd" )
+    def ecl_cmd( self ):
+        """
+        The path to the executable used to invoke ECLIPSE.
+        """
+        return self.safe_get( "ecl_cmd" )
 
     @property
-    def version( self ):
-        return self.safe_get( "version" )
+    def ecl_version( self ):
+        return self.safe_get( "ecl_version" )
 
     @property
     def lsf_resource_request( self ):
