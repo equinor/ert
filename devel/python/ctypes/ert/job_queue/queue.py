@@ -14,20 +14,19 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import  time
+import  threading
+import  ctypes
 
 from    ert.cwrap.cwrap       import *
-import time
-import datetime
-import ctypes
-import re
-import sys
-import libjob_queue
-import threading
-from   driver import *
-from   job    import Job
-import ert.ecl.ecl_util    as ecl_util  
-import ert.ecl.ecl_default as ecl_default
 
+# Need to import this to ensure that the ctime type is registered
+import  ert.util.ctime        
+
+
+import  libjob_queue
+
+from    job  import Job
 
 
 class QueueThread( threading.Thread ):
@@ -211,23 +210,23 @@ class JobQueue:
 
 
 
-class EclQueue( JobQueue ):
-    default_eclipse_cmd  = ecl_default.cmd
-    default_version      = ecl_default.version
+#class EclQueue( JobQueue ):
+#    default_eclipse_cmd  = ecl_default.cmd
+#    default_version      = ecl_default.version
+#
+#    
+#    def __init__(self , driver , ecl_version = default_version , eclipse_cmd = default_eclipse_cmd, size = 0):
+#        JobQueue.__init__( self , driver , eclipse_cmd , size = size)
+#        self.ecl_version = ecl_version
+#        
+#        
+#    def add_job( self , data_file):
+#        (path_base , ext) = os.path.splitext( data_file )
+#        (run_path , base) = os.path.split( path_base )
+#        
+#        argv = [ self.ecl_version , path_base , "%s" % ecl_util.get_num_cpu( data_file )]
+#        return JobQueue.add_job( self , run_path , base , argv)
 
-    
-    def __init__(self , driver , ecl_version = default_version , eclipse_cmd = default_eclipse_cmd, size = 0):
-        JobQueue.__init__( self , driver , eclipse_cmd , size = size)
-        self.ecl_version = ecl_version
-        
-        
-    def add_job( self , data_file):
-        (path_base , ext) = os.path.splitext( data_file )
-        (run_path , base) = os.path.split( path_base )
-        
-        argv = [ self.ecl_version , path_base , "%s" % ecl_util.get_num_cpu( data_file )]
-        return JobQueue.add_job( self , run_path , base , argv)
-        
 
 #################################################################
 

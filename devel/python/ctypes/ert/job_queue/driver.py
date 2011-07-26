@@ -15,27 +15,32 @@
 #  for more details. 
 
 
-import time
-import datetime
 import ctypes
-import sys
-import os
+import os.path
+
 import libjob_queue
-from   job              import Job 
-from   ert.cwrap.cwrap  import *
-import ert.ecl.ecl_util    as ecl_util  
-import ert.ecl.ecl_default as ecl_default  
+from   job                   import Job 
+from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cenum       import create_enum
 
 
-LSF_TYPE   = 1
-LOCAL_TYPE = 2
-RSH_TYPE   = 3 
-
-
-
+# job_driver_type defintion from queue_driver.h
+create_enum( libjob_queue.lib , "queue_driver_type_enum_iget" , "queue_driver_enum" , globals())
 
 class Driver:
-    
+    def __init__( self , type , max_running = 1 , options = None):
+        """
+        Creates a new driver instance
+        """
+        self.c_ptr = cfunc.alloc_driver( type )
+        if options:
+            for (key,value) in options:
+                if isinstance( value , int ):
+                    cfunc.set_int_option( self , key , value )
+                else:
+                    cfunc.set_str_option( self , key , value )
+        self.max_running = max_running
+
     def is_driver_instance( self ):
         return True
 
@@ -56,23 +61,13 @@ class Driver:
             job = None
         
         return job
-        
-
-    def submit_ecl( self , data_file , eclipse_cmd = ecl_default.cmd , eclipse_version = ecl_default.version , blocking = False):
-        (path_base , ext) = os.path.splitext( data_file )
-        (run_path , base) = os.path.split( path_base )
-        num_cpu = "%s" % ecl_util.get_num_cpu( data_file )
-        return cfunc.submit( base , eclipse_cmd , run_path , [ eclipse_version , data_file , num_cpu ], blocking = blocking)
-    
 
     def free_job( self , job ):
         cfunc.free_job( job )
     
-        
     def get_status( self , job ):
         return cfunc.cget_status( self , job )
     
-
     def kill_job( self , job ):
         cfunc.ckill_job( self , job )
 
@@ -87,40 +82,46 @@ class Driver:
 
 class LSFDriver(Driver):
     
-    
     def __init__(self ,
                  max_running ,
                  lsf_server = None ,
                  queue = "normal" ,
                  num_cpu = 1,
-                 resource_request = ecl_default.lsf_resource_request):
-        self.c_ptr = cfunc.alloc_driver_lsf( queue , resource_request , lsf_server , num_cpu)
-        self.set_max_running( max_running )
+                 resource_request = None):
+
+        # The strings should match the available keys given in the
+        # lsf_driver.h header file.
+        options = [("LSF_QUEUE"    , queue),
+                   ("LSF_SERVER"   , lsf_server),
+                   ("LSF_RESOURCE" , resource_request ),
+                   ("NUM_CPU"      , num_cpu)]
+        Driver.__init__( self , LSF_DRIVER , max_running = max_running , options = options)
+        
 
 class LocalDriver(Driver):
 
     def __init__( self , max_running ):
-        self.c_ptr = cfunc.alloc_driver_local( )
-        self.set_max_running( max_running )
+        Driver.__init__( self , LOCAL_DRIVER , max_running , options = [] )
+        
 
 
-RSH_HOST = "RSH_HOST"  # Value taken from rsh_driver.h
+
 class RSHDriver(Driver):
 
     # Changing shell to bash can come in conflict with running ssh
     # commands.
     
     def __init__( self , max_running , rsh_host_list , rsh_cmd = "/usr/bin/ssh" ):
-        """@rsh_host_list should be a list of tuples like: (hostname , max_running) 
         """
-
-        self.c_ptr = cfunc.alloc_driver( rhs_cmd , None ) 
-        self.set_max_running( max_running )
-
-        for (host,max_running) in rsh_host_list:
-            cfunc.set_str_option( self , RSH_HOST , "%s:%d" % (host , max_running))
-
+        @rsh_host_list should be a list of tuples like: (hostname , max_running) 
+        """
+        
+        options = [("RSH_CMD" , rsh_cmd)]
+        for (host,host_max) in rsh_host_list:
+            options.append( ("RSH_HOST" , "%s:%d" % (host , host_max)) )
+        Driver.__init__( self , RSH_DRIVER , max_running , options = options )
             
+
 
 
 #################################################################
@@ -133,7 +134,8 @@ cfunc   = CWrapperNameSpace( "driver" )
 cfunc.alloc_driver_lsf       = cwrapper.prototype("c_void_p    queue_driver_alloc_LSF( char* , char* , char* , int )")
 cfunc.alloc_driver_local     = cwrapper.prototype("c_void_p    queue_driver_alloc_local( )")
 cfunc.alloc_driver_rsh       = cwrapper.prototype("c_void_p    queue_driver_alloc_RSH( char* , c_void_p )")
-cfunc.set_driver_option      = cwrapper.prototype("void        queue_driver_set_option( driver , char* , char*)")
+cfunc.alloc_driver           = cwrapper.prototype("c_void_p    queue_driver_alloc( int )")
+cfunc.set_driver_option      = cwrapper.prototype("void        queue_driver_set_option(driver , char* , char*)")
 
 
 cfunc.free_driver     = cwrapper.prototype("void        queue_driver_free( driver )")
@@ -141,6 +143,7 @@ cfunc.submit          = cwrapper.prototype("c_void_p    queue_driver_submit_job(
 cfunc.free_job        = cwrapper.prototype("void        queue_driver_free_job( job )")
 cfunc.get_status      = cwrapper.prototype("int         queue_driver_get_status( driver , job)")
 cfunc.kill_job        = cwrapper.prototype("void        queue_driver_kill_job( driver , job )")
-cfunc.set_str_option  = cwrapper.prototype("void        queue_driver_set_string_option( driver , int , char*)")
+cfunc.set_str_option  = cwrapper.prototype("void        queue_driver_set_string_option( driver , char* , char*)")
+cfunc.set_int_option  = cwrapper.prototype("void        queue_driver_set_int_option( driver , char* , int)")
 cfunc.set_max_running = cwrapper.prototype("void        queue_driver_set_max_running( driver , int )")
 cfunc.get_max_running = cwrapper.prototype("int         queue_driver_get_max_running( driver )")
