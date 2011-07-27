@@ -17,8 +17,8 @@
 import pwd
 import grp
 import os
-import shutil
 import os.path
+import shutil
 import re
 import stat
 import py_compile
@@ -110,7 +110,12 @@ class File:
             target_file = "%s/%s/%s" % (target_root , self.create_path , self.target_name)
         else:
             target_file = "%s/%s" % (target_root ,  self.target_name)
-        src_file = "%s/%s" % (src_root , self.src)
+
+        if os.path.isabs(self.src[0])
+            src_file = self.src
+        else:
+            src_file = "%s/%s" % (src_root , self.src)
+
         msg( verbose , "Copying file" , "%s -> %s" % (src_file , target_file))
         shutil.copyfile( src_file , target_file )
         if os.access( src_file , os.X_OK):
