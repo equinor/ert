@@ -136,6 +136,7 @@ void * submit_job_thread__(void * __arg) {
 
 void * local_driver_submit_job(void * __driver, 
                                const char *  submit_cmd           , 
+                               int           num_cpu              , /* Ignored */
                                const char *  run_path             , 
                                const char *  job_name              ,
                                int           argc,

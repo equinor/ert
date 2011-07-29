@@ -21,7 +21,7 @@ conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
 conf.update_env( env , [LIBCONFIG , LIBUTIL ] )
 if conf.INCLUDE_LSF:
-   env.Append( CPPDEFINES = ["INCLUDE_LSF"])
+   env.Append( CPPDEFINES = ["HAVE_LSF"])
    env.Append( CPPPATH = conf.LSF_INCLUDE_PATH )
 
 src_list    = Split("forward_model.c queue_driver.c job_queue.c lsf_driver.c local_driver.c rsh_driver.c ext_job.c ext_joblist.c")
