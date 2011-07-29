@@ -173,13 +173,13 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
           summary->data[0] = ecl_sum_iget_general_var(ecl_sum , last_report_index  , var_key);
         else 
           /* 
-           The summary object does not have this well/group - probably
-           meaning that it has not yet opened. We return loadOK ==
-           true in this case.
-           
-           If the user has misspelled the name, we will go through
-           the whole simulation without detecting that error.
-        */
+             The summary object does not have this well/group - probably
+             meaning that it has not yet opened. We return loadOK ==
+             true in this case.
+             
+             If the user has misspelled the name, we will go through
+             the whole simulation without detecting that error.
+          */
           summary->data[0] = 0;
         loadOK = true;   
       } else if (ecl_sum_has_general_var(ecl_sum , var_key)) {

@@ -117,9 +117,6 @@ struct site_config_struct {
 };
 
 
-void site_config_set_num_cpu( site_config_type * site_config , int num_cpu ) {
-  queue_driver_set_int_option( site_config->lsf_driver , LSF_NUM_CPU , num_cpu );
-}
 
 
 void site_config_set_umask( site_config_type * site_config , mode_t new_mask) {
@@ -140,7 +137,7 @@ mode_t site_config_get_umask( const site_config_type * site_config ) {
 static void site_config_create_queue_drivers( site_config_type * site_config ) {
   site_config->local_driver = queue_driver_alloc_local( );
   site_config->rsh_driver   = queue_driver_alloc_RSH( NULL , NULL );
-  site_config->lsf_driver   = queue_driver_alloc_LSF( NULL , NULL ,   NULL , 0);
+  site_config->lsf_driver   = queue_driver_alloc_LSF( NULL , NULL ,   NULL);
 }
 
 
@@ -582,9 +579,6 @@ void site_config_set_job_script( site_config_type * site_config , const char * j
   char * job_script_full_path = util_alloc_realpath( job_script );
   {
     site_config->job_script = util_realloc_string_copy( site_config->job_script , job_script_full_path );
-    if (site_config->job_queue != NULL)
-      job_queue_set_run_cmd( site_config->job_queue  , site_config->job_script );
-    
     if (!site_config->user_mode) 
       site_config->job_script_site = util_realloc_string_copy( site_config->job_script_site , site_config->job_script );
   }
@@ -593,7 +587,7 @@ void site_config_set_job_script( site_config_type * site_config , const char * j
 
 
 const char * site_config_get_job_script( const site_config_type * site_config ) {
-  return job_queue_get_run_cmd( site_config->job_queue );
+  return site_config->job_script;
 }
 
 
@@ -613,7 +607,7 @@ static void site_config_install_job_queue(site_config_type  * site_config ) {
   if (site_config->job_script == NULL)
     util_exit("Must set the path to the job script with the %s key in the site_config / config file\n",JOB_SCRIPT_KEY);
   
-  site_config->job_queue = job_queue_alloc(site_config->max_submit , true , "OK" , "EXIT" , site_config->job_script);
+  site_config->job_queue = job_queue_alloc(site_config->max_submit , true , "OK" , "EXIT" );
 
   /* 
      All the various driver options are set, unconditionally of which

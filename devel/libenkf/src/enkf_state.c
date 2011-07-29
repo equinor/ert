@@ -116,6 +116,7 @@ typedef struct shared_info_struct {
   enkf_fs_type                * fs;                /* The filesystem object - used to load and store nodes. */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
+  site_config_type            * site_config;
   log_type                    * logh;              /* The log handle. */
   ert_templates_type          * templates; 
 } shared_info_type;
@@ -249,6 +250,7 @@ static shared_info_type * shared_info_alloc(const site_config_type * site_config
   shared_info->fs           = fs;
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
+  shared_info->site_config  = site_config;
   shared_info->model_config = model_config;
   shared_info->logh         = logh;
   shared_info->templates    = templates;
@@ -623,7 +625,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
           const int step2                        = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
           
           for (report_step = load_start; report_step <= step2; report_step++) {
-            hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
+            hash_iter_type * iter       = hash_iter_alloc( enkf_state->node_hash );
             while ( !hash_iter_is_complete(iter) ) {
               enkf_node_type * node = hash_iter_get_next_value(iter);
               if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
@@ -1460,11 +1462,14 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
     const shared_info_type    * shared_info   = enkf_state->shared_info;
     const member_config_type  * my_config     = enkf_state->my_config;
     const forward_model_type  * forward_model = model_config_get_forward_model(shared_info->model_config);
+    const site_config_type    * site_config   = shared_info->site_config;
     /*
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse(enkf_state);
     run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
+                                                  site_config_get_job_script( site_config ),
+                                                  ecl_config_get_num_cpu( enkf_state->ecl_config ),
                                                   run_info->run_path     , 
                                                   member_config_get_eclbase(my_config) , 
                                                   1, 

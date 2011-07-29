@@ -295,7 +295,6 @@ void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_fi
 */
 
 static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
-  site_config_set_num_cpu( enkf_main->site_config , ecl_config_get_num_cpu( enkf_main->ecl_config ));
   /**
      This is how the number of CPU's are passed on to the forward models:
   */
@@ -1562,7 +1561,7 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
             const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
             {
               char * label = util_alloc_sprintf("deserializing: %s" , key);
-	      msg_update( msg , label);
+              msg_update( msg , label);
               free(label);
             }
 
@@ -1679,12 +1678,12 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
             printf("Doing bootstrap\n");
             enkf_main_update_mulX_bootstrap(enkf_main , ministep, step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
           } 
-	  else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
-	    printf("Updating using Cross-Validation\n");
-	    
+          else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
+            printf("Updating using Cross-Validation\n");
+            
             /* Update based on Cross validation AND local analysis. */
             enkf_main_update_mulX_prin_comp_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);
-	    /*            enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);*/
+            /*            enkf_main_update_mulX_cv(enkf_main , ministep, int_vector_get_last( step_list ) , use_count , meas_forecast , obs_data);*/
           } 
           else if (analysis_config_get_force_subspace_dimension(enkf_main->analysis_config )) {
             printf("Selcting the user defined subspace dimension\n");
@@ -2132,11 +2131,11 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
     {
       pthread_t        queue_thread;
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-      arg_pack_type * queue_args = arg_pack_alloc();
+      arg_pack_type * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__()
+                                                           function after the content has been unpacked. */
       arg_pack_append_ptr(queue_args  , job_queue);
       arg_pack_append_int(queue_args  , job_size);
       arg_pack_append_bool(queue_args , verbose_queue);
-      arg_pack_lock( queue_args );
       
       pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 
@@ -2177,8 +2176,6 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
 
       enkf_main_run_wait_loop( enkf_main );      /* Waiting for all the jobs - and the loading of results - to complete. */
       pthread_join( queue_thread , NULL );       /* Wait for the job_queue_run_jobs() function to complete. */
-
-      arg_pack_free( queue_args );
     }
 
 
