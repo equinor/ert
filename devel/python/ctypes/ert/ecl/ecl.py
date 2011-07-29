@@ -41,7 +41,10 @@ from   ecl_grid              import EclGrid
 from   ecl_grav              import EclGrav
 from   ecl_region            import EclRegion
 from   fortio                import FortIO
+from   ecl_queue             import EclQueue
 from   ecl_util              import *  
+
+import ecl_default
 
 
         

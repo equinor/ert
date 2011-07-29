@@ -12,7 +12,7 @@
 #  FITNESS FOR A PARTICULAR PURPOSE.   
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-g#  for more details. 
+#  for more details. 
 """
 Module implementing type map between C types and Python classes.
 

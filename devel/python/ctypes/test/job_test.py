@@ -21,9 +21,11 @@ import time
 import sys
 import shutil
 import os.path
-import ert.ecl.ecl       as ecl
-import ert.job_queue.job_queue as job_queue
+import ert.job_queue.driver as driver
+import ert.ecl.ecl as ecl
 import socket
+
+default = ecl.ecl_default.default
 
 server_list = { "be" : "lsf-be.no",
                 "st" : "lsf-st.no",
@@ -65,30 +67,24 @@ def get_lsf_server():
 
 #################################################################
 
-if len(sys.argv) == 1:
-    driver_string = default_driver_string
-else:
-    driver_string = sys.argv[1].upper()
-
-if driver_string == "LSF":
-    driver = job_queue.LSFDriver( max_running , lsf_server = None )
-elif driver_string == "LOCAL":
-    driver = job_queue.LocalDriver( max_running )
-else:
-    sys.exit("Unrecognized driver string:%s" % driver_string)
+#lsf_driver   = driver.LSFDriver( 1 )
+#local_driver = driver.LocalDriver( 3 )
+#rsh_driver   = driver.RSHDriver( 1 , [("be-lx655082" , 2)])
 
 
-queue = job_queue.EclQueue( driver , size = num_jobs)
+queue = ecl.EclQueue( driver_type = driver.LOCAL_DRIVER , size = num_jobs , max_running = 2)
+
 case_list = []    
 for case_nr in range( num_jobs ):
     copy_case( run_path_fmt % case_nr , src_files )
     case = ecl.EclCase( run_path_fmt % case_nr + "/ECLIPSE.DATA" )
     case.submit( queue )
 
+queue.block_waiting()
 
-while queue.running:                      
-    print "Still running"
-    time.sleep( 3 )
+#while queue.running:                      
+ #   print "Still running"
+ #   time.sleep( 3 )
 
 
 

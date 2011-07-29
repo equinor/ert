@@ -25,3 +25,17 @@ sum  = ecl.EclSum( case )
 
 print sum.get_interp( "WWCT:OP_3" , days = 750 )
 print sum.get_interp( "WWCT:OP_3" , date = datetime.date( 2004 , 1, 1 ))
+
+vec = sum.get_vector( "WWCT:OP_3" , report_only = False) 
+for (d,v) in zip( vec.days , vec.values ):
+    print d,v
+
+print sum.get_values("WWCT:OP_3" )
+for (m,r) in zip( vec.mini_step , vec.report_step):
+    print "%d %d" % (m,r)
+
+v = vec.get_interp_vector( days_list = [100,200,300,400,500,600,700,800,900,1000,1500] )
+print sum.dates
+print sum.iget_date( 50 )
+
+print sum.keys( "WWCT:*" )

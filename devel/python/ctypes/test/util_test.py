@@ -23,6 +23,7 @@ from   ert.util.tvector import DoubleVector
 from   ert.util.tvector import IntVector
 from   ert.util.tvector import BoolVector
 import ert.util.stat    as stat
+from   ert.util.util_func import *
 
 v = DoubleVector( 0 )
 print v
@@ -92,4 +93,16 @@ print v2.default
 B = BoolVector( True )
 B[4] = False
 B.printf()
+
+l = ["CASE-9","CASE-10"]
+print l.sort()
+print l.sort( strcmp_int )
+
+v.default = 13
+v[1000] = 99
+print v.size
+np = v.numpy_copy()
+v[0] = 77
+v[5] = 99
+print v.str( max_lines = None )
 

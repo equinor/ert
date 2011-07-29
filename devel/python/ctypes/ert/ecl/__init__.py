@@ -19,7 +19,7 @@ Package for working with ECLIPSE files.
 The ecl package contains several classes for working with ECLIPSE
 files. The ecl package is a wrapper around the libecl library from the
 ERT distribution. Mainly the package is organized with modules
-ecl_xxx.py with a class EclXXX. The module ecl_xxx.py will generalyy
+ecl_xxx.py with a class EclXXX. The module ecl_xxx.py will generaly
 wrap the content of the c-file ecl_xxx.c The main content is:
 
   fortio/FortIO: This is functionality to read and write binary
@@ -49,6 +49,12 @@ wrap the content of the c-file ecl_xxx.c The main content is:
 
   ecl_grav/EclGrav: Class used to simplify evaluation of ECLIPSE
      modelling time-lapse gravitational surveys.
+
+  ecl_case/EclCase: Small class essentially wrapping one ECLIPSE
+     datafile.
+
+  ecl_queue/EclQueue: Class implementing a queue to run ECLIPSE
+     simulations.
 
 In addition there are some modules which do not follow the one class
 per module organization:
