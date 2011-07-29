@@ -44,7 +44,7 @@ struct rsh_job_struct {
 typedef struct {
   char            * host_name;
   int               max_running;  /* How many can the host handle. */
-  int               running;      /* How many are currently running on the host (goverened by this driver that is). */
+  int               running;      /* How many are currently running on the host (goverened by this driver instance that is). */
   pthread_mutex_t   host_mutex;
 } rsh_host_type;
 
@@ -75,33 +75,33 @@ static UTIL_SAFE_CAST_FUNCTION( rsh_job , RSH_JOB_TYPE_ID )
 
 
 /**
-   If the host is for some reason not available, NULL should be returned.
+   If the host is for some reason not available, NULL should be
+   returned. Will also return NULL if some funny guy tries to allocate
+   with max_running <= 0.  
 */
 
 static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) {
-  struct addrinfo * result;
-  if (getaddrinfo(host_name , NULL , NULL , &result) == 0) {
-    rsh_host_type * host = util_malloc(sizeof * host , __func__);
-    
-    host->host_name   = util_alloc_string_copy(host_name);
-    host->max_running = max_running;
-    host->running     = 0;
-    pthread_mutex_init( &host->host_mutex , NULL );
-
-    freeaddrinfo( result );
-    return host;
-  } else {
-    fprintf(stderr,"** Warning: could not locate server: %s \n",host_name);
+  if (max_running > 0) {
+    struct addrinfo * result;
+    if (getaddrinfo(host_name , NULL , NULL , &result) == 0) {
+      rsh_host_type * host = util_malloc(sizeof * host , __func__);
+      
+      host->host_name   = util_alloc_string_copy(host_name);
+      host->max_running = max_running;
+      host->running     = 0;
+      pthread_mutex_init( &host->host_mutex , NULL );
+      
+      freeaddrinfo( result );
+      return host;
+    } else {
+      fprintf(stderr,"** Warning: could not locate server: %s \n",host_name);
+      return NULL;
+    }
+  } else
     return NULL;
-  }
 }
 
 
-/*
-  static void rsh_host_reset(rsh_host_type * rsh_host) {
-  rsh_host->running = 0;
-}
-*/
 
 static void rsh_host_free(rsh_host_type * rsh_host) {
   free(rsh_host->host_name);
@@ -127,7 +127,7 @@ static bool rsh_host_available(rsh_host_type * rsh_host) {
 
 
 
-static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, const char * rsh_cmd , const char * submit_cmd , int job_argc , const char ** job_argv) {
+static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, const char * rsh_cmd , const char * submit_cmd , int num_cpu , int job_argc , const char ** job_argv) {
   /* 
      Observe that this job has already been added to the running jobs
      in the rsh_host_available function.
@@ -164,11 +164,12 @@ static void * rsh_host_submit_job__(void * __arg_pack) {
   char * rsh_cmd           = arg_pack_iget_ptr(arg_pack , 0); 
   rsh_host_type * rsh_host = arg_pack_iget_ptr(arg_pack , 1);
   char * submit_cmd        = arg_pack_iget_ptr(arg_pack , 2); 
-  int argc                 = arg_pack_iget_int(arg_pack , 3); 
-  const char ** argv       = arg_pack_iget_ptr(arg_pack , 4); 
-  rsh_job_type * job       = arg_pack_iget_ptr(arg_pack , 5);
+  int num_cpu              = arg_pack_iget_int(arg_pack , 3);    
+  int argc                 = arg_pack_iget_int(arg_pack , 4); 
+  const char ** argv       = arg_pack_iget_ptr(arg_pack , 5); 
+  rsh_job_type * job       = arg_pack_iget_ptr(arg_pack , 6);
   
-  rsh_host_submit_job(rsh_host , job , rsh_cmd , submit_cmd , argc , argv);
+  rsh_host_submit_job(rsh_host , job , rsh_cmd , submit_cmd , num_cpu , argc , argv);
   pthread_exit( NULL );
   arg_pack_free( arg_pack );
 }
@@ -240,8 +241,9 @@ void rsh_driver_kill_job(void * __driver ,void  * __job) {
 
 
 void * rsh_driver_submit_job(void  * __driver, 
-                             const char  * submit_cmd     , 
-                             const char  * run_path       ,
+                             const char  * submit_cmd      , 
+                             int           num_cpu         ,     /* Ignored */
+                             const char  * run_path        ,
                              const char  * job_name        ,
                              int           argc, 
                              const char ** argv ) {
@@ -252,41 +254,48 @@ void * rsh_driver_submit_job(void  * __driver,
     /* 
        command is freed in the start_routine() function
     */
-    rsh_host_type * host = NULL;
-    int ihost;
-    int host_index = 0;
     pthread_mutex_lock( &driver->submit_lock );
-    for (ihost = 0; ihost < driver->num_hosts; ihost++) {
-      host_index = (ihost + driver->last_host_index) % driver->num_hosts;
-      if (rsh_host_available(driver->host_list[host_index])) {
-        host = driver->host_list[host_index];
-        break;
-      } 
-    }
-    driver->last_host_index = (host_index + 1) % driver->num_hosts;
-    
-    if (host != NULL) {
-      /* A host is available */
-      arg_pack_type * arg_pack = arg_pack_alloc();   /* The arg_pack is freed() in the rsh_host_submit_job__() function.
-                                                        freeing it here is dangerous, because we might free it before the 
-                                                        thread-called function is finished with it. */
-
-      job = rsh_job_alloc(run_path);
-
-      arg_pack_append_ptr(arg_pack ,  driver->rsh_command);
-      arg_pack_append_ptr(arg_pack ,  host);
-      arg_pack_append_ptr(arg_pack , (char *) submit_cmd);
-      arg_pack_append_int(arg_pack , argc );
-      arg_pack_append_ptr(arg_pack , argv );
-      arg_pack_append_ptr(arg_pack , job);  
-    
-      {
-        int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , arg_pack);
-        if (pthread_return_value != 0) 
-          util_abort("%s failed to create thread ERROR:%d  \n", __func__ , pthread_return_value);
+    {
+      rsh_host_type * host = NULL;
+      int ihost;
+      int host_index = 0;
+      
+      if (driver->num_hosts == 0)
+        util_abort("%s: fatal error - no hosts added to the rsh driver.\n",__func__);
+      
+      for (ihost = 0; ihost < driver->num_hosts; ihost++) {
+        host_index = (ihost + driver->last_host_index) % driver->num_hosts;
+        if (rsh_host_available(driver->host_list[host_index])) {
+          host = driver->host_list[host_index];
+          break;
+        } 
       }
-      job->status = JOB_QUEUE_RUNNING; 
-      job->active = true;
+      driver->last_host_index = (host_index + 1) % driver->num_hosts;
+      
+      if (host != NULL) {
+        /* A host is available */
+        arg_pack_type * arg_pack = arg_pack_alloc();   /* The arg_pack is freed() in the rsh_host_submit_job__() function.
+                                                          freeing it here is dangerous, because we might free it before the 
+                                                          thread-called function is finished with it. */
+        
+        job = rsh_job_alloc(run_path);
+        
+        arg_pack_append_ptr(arg_pack ,  driver->rsh_command);
+        arg_pack_append_ptr(arg_pack ,  host);
+        arg_pack_append_ptr(arg_pack , (char *) submit_cmd);
+        arg_pack_append_int(arg_pack , num_cpu );
+        arg_pack_append_int(arg_pack , argc );
+        arg_pack_append_ptr(arg_pack , argv );
+        arg_pack_append_ptr(arg_pack , job);  
+        
+        {
+          int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , arg_pack);
+          if (pthread_return_value != 0) 
+            util_abort("%s failed to create thread ERROR:%d  \n", __func__ , pthread_return_value);
+        }
+        job->status = JOB_QUEUE_RUNNING; 
+        job->active = true;
+      }
     }
     pthread_mutex_unlock( &driver->submit_lock );
   }

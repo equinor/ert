@@ -31,7 +31,7 @@ extern "C" {
 #define LSF_QUEUE        "LSF_QUEUE"
 #define LSF_RESOURCE     "LSF_RESOURCE"
 #define LSF_SERVER       "LSF_SERVER"
-#define LSF_NUM_CPU      "NUM_CPU"
+#define LSF_RSH_CMD      "LSF_RSH_CMD"      // This option is set to DEFAULT_RSH_CMD at driver creation.
 #define LSF_LOGIN_SHELL  "LSF_LOGIN_SHELL"  // Not fully implemented yet
 
 
@@ -43,6 +43,7 @@ void      * lsf_driver_alloc( );
 
 void * lsf_driver_submit_job(void * __driver , 
                              const char  * submit_cmd     , 
+                             int           num_cpu , 
                              const char  * run_path       , 
                              const char  * job_name ,
                              int           argc,     

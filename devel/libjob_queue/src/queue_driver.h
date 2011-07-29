@@ -29,7 +29,15 @@ typedef enum { NULL_DRIVER  = 0,
                LOCAL_DRIVER = 2,
                RSH_DRIVER   = 3} job_driver_type;
 
+#define JOB_DRIVER_ENUM_DEFS                                    \
+{.value = 0 , .name = "NULL_DRIVER"},                           \
+{.value = 1 , .name = "LSF_DRIVER"},                            \
+{.value = 2 , .name = "LOCAL_DRIVER"},                          \
+{.value = 3 , .name = "RSH_DRIVER"}
+#define JOB_DRIVER_ENUM_SIZE 4
 
+
+  
 typedef enum { JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in external query routines - for jobs which are (currently) not active. */
                JOB_QUEUE_LOADING       =    2 ,   /* This value is used by external routines. Not used in the libjob_queue implementation. */
                JOB_QUEUE_WAITING       =    4 ,   /* A node which is waiting in the internal queue. */
@@ -46,6 +54,23 @@ typedef enum { JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in exter
                JOB_QUEUE_USER_EXIT     = 8192 }   /* The whole job_queue has been exited by the user - the job can NOT be restarted. */
                job_status_type;
 #define JOB_QUEUE_MAX_STATE 14
+
+#define JOB_STATUS_ENUM_DEFS  \
+{.value =    1 , .name = "JOB_QUEUE_NOT_ACTIVE" }, \
+{.value =    2 , .name = "JOB_QUEUE_LOADING" },    \
+{.value =    4 , .name = "JOB_QUEUE_WAITING" },    \
+{.value =    8 , .name = "JOB_QUEUE_SUBMITTED" },  \
+{.value =   16 , .name = "JOB_QUEUE_PENDING" },    \
+{.value =   32 , .name = "JOB_QUEUE_RUNNING" },    \
+{.value =   64 , .name = "JOB_QUEUE_DONE" },       \
+{.value =  128 , .name = "JOB_QUEUE_EXIT" },       \
+{.value =  256 , .name = "JOB_QUEUE_RUN_OK" },     \
+{.value =  512 , .name = "JOB_QUEUE_RUN_FAIL" },   \
+{.value = 1024 , .name = "JOB_QUEUE_ALL_OK" },     \
+{.value = 2048 , .name = "JOB_QUEUE_ALL_FAIL" },   \
+{.value = 4096 , .name = "JOB_QUEUE_USER_KILLED" },\
+{.value = 8192 , .name = "JOB_QUEUE_USER_EXIT" }
+#define JOB_STATUS_ENUM_SIZE JOB_QUEUE_MAX_STATE
 
 
 /*
@@ -81,7 +106,7 @@ typedef enum { JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in exter
 
 typedef struct queue_driver_struct queue_driver_type;
 
-typedef void                 * (submit_job_ftype)           (void * , const char * , const char * , const char * , int argc , const char **);
+typedef void                 * (submit_job_ftype)           (void * data , const char * cmd , int num_cpu , const char * run_path , const char * job_name , int argc , const char ** argv);
 typedef void                   (kill_job_ftype)             (void * , void * );
 typedef job_status_type        (get_status_ftype)           (void * , void * );
 typedef void                   (free_job_ftype)             (void * );
@@ -92,10 +117,11 @@ typedef bool                   (has_option_ftype)           (const void * , cons
 
 
 queue_driver_type * queue_driver_alloc_RSH( const char * rsh_cmd , const hash_type * rsh_hostlist);
-queue_driver_type * queue_driver_alloc_LSF(const char * queue_name , const char * resource_request , const char * remote_lsf_server , int num_cpu);
+queue_driver_type * queue_driver_alloc_LSF(const char * queue_name , const char * resource_request , const char * remote_lsf_server);
 queue_driver_type * queue_driver_alloc_local( );
+queue_driver_type * queue_driver_alloc( job_driver_type type );
 
-void *              queue_driver_submit_job( queue_driver_type * driver, const char * run_cmd , const char * run_path , const char * job_name , int argc , const char ** argv);
+void *              queue_driver_submit_job( queue_driver_type * driver, const char * run_cmd , int num_cpu , const char * run_path , const char * job_name , int argc , const char ** argv);
 void                queue_driver_free_job( queue_driver_type * driver , void * job_data );
 void                queue_driver_kill_job( queue_driver_type * driver , void * job_data );
 job_status_type     queue_driver_get_status( queue_driver_type * driver , void * job_data);
@@ -110,6 +136,8 @@ const        void * queue_driver_get_option( queue_driver_type * driver , const 
 
 void                queue_driver_free( queue_driver_type * driver );
 
+const char        * queue_driver_type_enum_iget( int index, int * value);
+const char        * queue_driver_status_emun_iget( int index, int * value);
 #ifdef __cplusplus
 }
 #endif

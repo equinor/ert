@@ -21,6 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <pthread.h>
 #include <queue_driver.h>
 #include <path_fmt.h>
 
@@ -30,11 +31,12 @@ job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
 void                job_queue_set_driver(job_queue_type * queue , queue_driver_type * driver);
   //void                job_queue_set_size( job_queue_type * job_queue , int size );
 void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-job_queue_type   *  job_queue_alloc( int  , bool , const char * ok_file , const char * exit_file , const char * cmd);
+job_queue_type   *  job_queue_alloc( int  , bool , const char * ok_file , const char * exit_file);
 void                job_queue_free(job_queue_type *);
-int                 job_queue_add_job_mt(job_queue_type * , const char * , const char * , int argc , const char ** argv );
-int                 job_queue_add_job_st(job_queue_type * , const char * , const char * , int argc , const char ** argv );
+int                 job_queue_add_job_mt(job_queue_type * , const char * run_cmd , int num_cpu , const char * , const char * , int argc , const char ** argv );
+int                 job_queue_add_job_st(job_queue_type * , const char * run_cmd , int num_cpu , const char * , const char * , int argc , const char ** argv );
 void                job_queue_run_jobs(job_queue_type * , int , bool verbose);
+void                job_queue_run_jobs_threaded(job_queue_type * queue , int num_total_run, bool verbose);
 void *              job_queue_run_jobs__(void * );
 job_status_type     job_queue_get_job_status(job_queue_type * , int );
 void                job_queue_set_load_OK(job_queue_type * queue , int job_index);
@@ -55,8 +57,6 @@ bool                job_queue_kill_job( job_queue_type * queue , int job_index);
 bool                job_queue_is_running( const job_queue_type * queue );
 void                job_queue_set_max_submit( job_queue_type * job_queue , int max_submit );
 int                 job_queue_get_max_submit(const job_queue_type * job_queue );
-void                job_queue_set_run_cmd( job_queue_type * job_queue , const char * run_cmd );
-const char        * job_queue_get_run_cmd( job_queue_type * job_queue);
 
 bool                job_queue_get_pause( const job_queue_type * job_queue );
 void                job_queue_set_pause_on( job_queue_type * job_queue);

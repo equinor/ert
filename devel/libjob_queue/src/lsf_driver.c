@@ -34,7 +34,7 @@
    the final executable.  
 */
 
-#ifdef INCLUDE_LSF
+#ifdef HAVE_LSF
 #include "lsf_driver_impl.c"
 #else
 #include "lsf_driver_dummy.c"
