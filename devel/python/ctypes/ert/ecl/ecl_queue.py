@@ -59,9 +59,9 @@ class EclQueue( JobQueue ):
            size = 0: That means that you do not tell the queue in
               advance how many jobs you have. The queue will just run
               all the jobs you add, but you have to inform the queue
-              in some way that all jobs have been submitted, and no
-              more will be coming. To achieve this you should call the
-              submit_complete() method when all jobs are submitted.
+              in some way that all jobs have been submitted. To
+              achieve this you should call the submit_complete()
+              method when all jobs have been submitted.
 
            size > 0: The queue will now exactly how many jobs to run,
               and will continue until this number of jobs have
