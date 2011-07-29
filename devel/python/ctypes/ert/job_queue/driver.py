@@ -39,8 +39,8 @@ class Driver:
                     cfunc.set_int_option( self , key , value )
                 else:
                     cfunc.set_str_option( self , key , value )
-        self.max_running = max_running
-
+        self.set_max_running( max_running )
+        
     def is_driver_instance( self ):
         return True
 
@@ -50,20 +50,19 @@ class Driver:
     def __del__( self ):
         cfunc.free_driver( self )
 
-    def submit( self , name , cmd , run_path , argList , blocking = False):
+    def submit( self , name , cmd , run_path , argList , num_cpu = 1 , blocking = False):
         argc = len( argList )
         argv = (ctypes.c_char_p * argc)()
         argv[:] = map( str , argList )
-        job_c_ptr = cfunc.submit( self , cmd , run_path , name , argc , argv )
+        job_c_ptr = cfunc.submit( self , cmd , num_cpu , run_path , name , argc , argv )
         job = Job( self , job_c_ptr , blocking )
         if blocking:
             job.block()
             job = None
-        
         return job
 
     def free_job( self , job ):
-        cfunc.free_job( job )
+        cfunc.free_job( self , job )
     
     def get_status( self , job ):
         return cfunc.cget_status( self , job )
@@ -86,15 +85,13 @@ class LSFDriver(Driver):
                  max_running ,
                  lsf_server = None ,
                  queue = "normal" ,
-                 num_cpu = 1,
                  resource_request = None):
 
         # The strings should match the available keys given in the
         # lsf_driver.h header file.
         options = [("LSF_QUEUE"    , queue),
                    ("LSF_SERVER"   , lsf_server),
-                   ("LSF_RESOURCE" , resource_request ),
-                   ("NUM_CPU"      , num_cpu)]
+                   ("LSF_RESOURCE" , resource_request )]
         Driver.__init__( self , LSF_DRIVER , max_running = max_running , options = options)
         
 
@@ -131,7 +128,7 @@ cwrapper.registerType( "job"    , Job )
 cfunc   = CWrapperNameSpace( "driver" )
 
 
-cfunc.alloc_driver_lsf       = cwrapper.prototype("c_void_p    queue_driver_alloc_LSF( char* , char* , char* , int )")
+cfunc.alloc_driver_lsf       = cwrapper.prototype("c_void_p    queue_driver_alloc_LSF( char* , char* , char* )")
 cfunc.alloc_driver_local     = cwrapper.prototype("c_void_p    queue_driver_alloc_local( )")
 cfunc.alloc_driver_rsh       = cwrapper.prototype("c_void_p    queue_driver_alloc_RSH( char* , c_void_p )")
 cfunc.alloc_driver           = cwrapper.prototype("c_void_p    queue_driver_alloc( int )")
@@ -139,8 +136,8 @@ cfunc.set_driver_option      = cwrapper.prototype("void        queue_driver_set_
 
 
 cfunc.free_driver     = cwrapper.prototype("void        queue_driver_free( driver )")
-cfunc.submit          = cwrapper.prototype("c_void_p    queue_driver_submit_job( driver , char* , char* , char* , int , char**)")
-cfunc.free_job        = cwrapper.prototype("void        queue_driver_free_job( job )")
+cfunc.submit          = cwrapper.prototype("c_void_p    queue_driver_submit_job( driver , char* , int , char* , char* , int , char**)")
+cfunc.free_job        = cwrapper.prototype("void        queue_driver_free_job( driver , job )")
 cfunc.get_status      = cwrapper.prototype("int         queue_driver_get_status( driver , job)")
 cfunc.kill_job        = cwrapper.prototype("void        queue_driver_kill_job( driver , job )")
 cfunc.set_str_option  = cwrapper.prototype("void        queue_driver_set_string_option( driver , char* , char*)")

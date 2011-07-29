@@ -36,7 +36,8 @@ class Job:
                     
     def __del__(self):
         self.driver.free_job( self )
-
+        
+        
     def block( self ):
         while True:
             status = self.status()
@@ -49,7 +50,7 @@ class Job:
         self.driver.kill_job( self )
     
     def from_param(self):
-        return ctype.c_void_p( self.c_ptr )
+        return ctypes.c_void_p( self.c_ptr )
 
     @property
     def run_time( self ):

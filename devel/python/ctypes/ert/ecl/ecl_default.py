@@ -62,6 +62,12 @@ used.
 #lsf_resource_request = "select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]"
 
 class EclDefault:
+    __ecl_cmd = None
+    __ecl_version = None
+    __lsf_resource_request = None
+    __driver_type = None
+    __driver_options = None
+
     def __init__(self):
         pass
 
@@ -86,6 +92,14 @@ class EclDefault:
         return self.safe_get( "ecl_cmd" )
 
     @property
+    def driver_type( self ):
+        return self.safe_get( "driver_type" )
+
+    @property
+    def driver_options( self ):
+        return self.safe_get( "driver_options" )
+
+    @property
     def ecl_version( self ):
         return self.safe_get( "ecl_version" )
 
@@ -97,15 +111,22 @@ class EclDefault:
 try:
     import ecl_local
 
-    if hasattr( ecl_local , "cmd"):
-        EclConfig.__cmd = ecl_local.cmd
+    if hasattr( ecl_local , "ecl_cmd"):
+        EclDefault.__ecl_cmd = ecl_local.ecl_cmd
 
-    if hasattr( ecl_local , "version"):
-        EclConfig.__version = ecl_local.version
+    if hasattr( ecl_local , "ecl_version"):
+        EclDefault.__ecl_version = ecl_local.ecl_version
 
     if hasattr( ecl_local , "lsf_resource_request"):
-        EclConfig.__lsf_resource_request = ecl_local.lsf_resource_request
+        EclDefault.__lsf_resource_request = ecl_local.lsf_resource_request
 
+    if hasattr( ecl_local , "driver_type"):
+        EclDefault.__driver_type = ecl_local.driver_type
+
+    if hasattr( ecl_local , "driver_options"):
+        EclDefault.__driver_options = ecl_local.driver_options
+
+    
 except ImportError:
     pass
 
