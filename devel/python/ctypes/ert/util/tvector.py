@@ -41,6 +41,7 @@ float and size_t not currently implemented in the Python version.
 """
 
 import sys
+import types
 import numpy
 import ctypes
 import libutil

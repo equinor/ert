@@ -32,6 +32,7 @@ hardly need to notice that the StringList class is at play.
 """
 
 import libutil
+import types
 import ctypes
 from   ert.cwrap.cwrap import *
 
@@ -53,8 +54,8 @@ class StringList:
         TypeError exception will be raised.
         """
         self.c_ptr = cfunc.stringlist_alloc( )
-        if arg:
-            for s in arg:
+        if initial:
+            for s in initial:
                 if isinstance( s , types.StringType):
                     self.append( s )
                 else:
