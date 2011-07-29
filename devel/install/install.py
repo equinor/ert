@@ -111,7 +111,7 @@ class File:
         else:
             target_file = "%s/%s" % (target_root ,  self.target_name)
 
-        if os.path.isabs(self.src)
+        if os.path.isabs(self.src):
             src_file = self.src
         else:
             src_file = "%s/%s" % (src_root , self.src)
