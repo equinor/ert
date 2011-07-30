@@ -16,17 +16,22 @@
 """
 Implements a queue to run many ECLIPSE simulations.
 
-The EclQueue class is a small wrapper around the JobQueue class, which
-is specialized to only submit ECLIPSE simulations. 
-
-The EclQueue class should be used when you have more simulations than
-you can perform in parallell; when using used in combination with LSF
-the whole concept of a private queue is somewhat superfluos. 
+The EclQueue class should be used when you have more ECLIPSE
+simulations than you can perform concurrently; the queue will start
+simulations when there is available computing resources. The EclQueue
+can be combined with LSF, in that case the EclQueue will limit the
+number of jobs submitted to LSF, but it is clearly most relevant when
+simulationg locally or on workstations through rsh commands.
 
 The queue is based on the use of 'driver' to communicate with the low
 level systems for running the simulations. The driver must be
 instantiated before you can create a queue. The driver is implemented
 in the driver module in ert.job_queue.driver.
+
+The EclQueue class is a decendant of the JobQueue class, which is
+specialized to only submit ECLIPSE simulations. To fully understand
+the EclQueue class it is important to consult the documentation of the
+JobQueue class in ert.job_queue.queue as well.
 """
 import os.path
 
@@ -48,24 +53,97 @@ class EclQueue( JobQueue ):
                  size = 0):
 
         """
-        Short doc.
+        Create a new queue instance to manage ECLIPSE simulations.
 
-           max_running: The maximum number of jobs the queue can run
-              concurrently. The default value max_running=0 means that
-              the queue can take an unlimited number of jobs.
+        The constructor will create a new EclQueue instance which can
+        be used to manage ECLIPSE simulations. All the ECLIPSE
+        simulations managed by this queue instance will be 'of the
+        same type', i.e. they will run the same ECLIPSE version using
+        the same command to run ECLIPSE. 
+
+        The queue starts running (i.e. managing jobs) as soon as it is
+        created. Subsequently the user must add jobs to run using the
+        submit() method, or alternatively the submit() method of an
+        EclCase instance.
         
-        When it comes to the size argument there are two alternatives:
+        The queue will run in a separate thread, and there is nothing
+        preventing your script from finishing (i.e. exit) even though
+        the queue thread is still running; in that case the jobs which
+        are still waiting in the queue will not be started[1]. To
+        protect against this premature exit you must use on of the
+        methods:
 
-           size = 0: That means that you do not tell the queue in
-              advance how many jobs you have. The queue will just run
-              all the jobs you add, but you have to inform the queue
-              in some way that all jobs have been submitted. To
-              achieve this you should call the submit_complete()
-              method when all jobs have been submitted.
+          - queue.block_waiting()
+          - queue.block()
+          - while queue.running:
+                .....
 
-           size > 0: The queue will now exactly how many jobs to run,
-              and will continue until this number of jobs have
-              completed.
+        All simulations which have been started by the queue instance
+        will continue running even if the queue itself goes out of
+        scope and the script exits.
+
+        There are many arguments to the constructor, all of them are
+        optional with sensible default values. There are essentially
+        three groups of arguments:
+
+        Driver related arguments  
+        ------------------------
+        driver: This should be an instance of Driver (or one of the
+           descendants LSFDriver, LocalDriver, or ...) from the
+           ert.job_queue.driver module. If the driver is None the
+           queue will instanstiate a driver itself.
+
+        driver_type: If the driver is None the queue needs to
+           instantiate a private driver. It will then instantiate a
+           driver of the type given by driver_type.
+
+        driver_options: If the queue needs to instantiate a private
+           driver it will pass the options given by the
+           driver_options argument to the driver constructor.
+              
+        There is some dependance between the driver related arguments;
+        if a @driver argument is passed the @driver_type and
+        @driver_options arguments are not considered.
+
+        ECLIPSE related arguments
+        -------------------------
+        ecl_version: The ECLIPSE version used when simulating. This
+           should be a string of the type "2009.1".
+
+        ecl_cmd: The path to the executable used to invoke
+           ECLIPSE. The executable will be invoked with commandline
+           arguments: 
+                         version   data_file   num_cpu
+           And this executable is responsible for then starting the
+           real ECLIPSE binary. 
+
+        Other arguments
+        ---------------
+        max_running: The maximum number of jobs the queue can run
+           concurrently. The default value max_running=0 means that
+           the queue can start an unlimited number of jobs; in the
+           case of e.g. LSF the default value can be sensible,
+           otherwise you should probably set a value.
+
+        size: This is the total number of simulations we want to run
+           with the queue; this is further documented in the
+           ert.job_queue.queue.JobQueue class.
+
+        Use example
+        -----------
+        import ert.ecl.ecl as ecl
+        import ert.job_queue.driver as driver
+        
+        queue = ecl.EclQueue( driver_type = driver.LOCAL , max_running = 4 , size = 100)
+        data_file_fmt = "/path/to/ECLIPSE/sim%d/ECL.DATA"
+        for i in range(100):
+            queue.submit( data_file_fmt % i )
+        
+        queue.block()
+        
+        [1]: It should be possible with a fork based solution to let
+             the queue stay alive and continue managing jobs even
+             after the main thread has exited - not yet :-(
         """
 
         self.ecl_version = ecl_version
@@ -77,10 +155,17 @@ class EclQueue( JobQueue ):
         JobQueue.__init__( self , driver , self.ecl_cmd , size = size)
 
         
-    def add_job( self , data_file):
+    def submit( self , data_file):
+        """
+        Will submit a new simulation of case given by @data_file.
+        
+        The return value is a Job instance from the
+        ert.job_queue.queue.job module which can be used to query the
+        status of the job while it is running.
+        """
         (path_base , ext) = os.path.splitext( data_file )
         (run_path , base) = os.path.split( path_base )
         
         argv = [ self.ecl_version , path_base , "%s" % ecl_util.get_num_cpu( data_file )]
-        return JobQueue.add_job( self , self.ecl_cmd , run_path , base , argv)
+        return JobQueue.submit( self , self.ecl_cmd , run_path , base , argv)
 
