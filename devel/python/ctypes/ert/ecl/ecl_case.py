@@ -213,4 +213,4 @@ class EclCase:
         which will collect the jobs, and pass them on to a driver when
         there is free capacity.
         """
-        queue.add_job( self.datafile )
+        queue.submit( self.datafile )

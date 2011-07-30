@@ -116,6 +116,26 @@ class JobQueue:
     # been submitted.
 
     def __init__(self , driver , cmd , max_submit = 1 , size = 0):
+        """
+        SHort doc...
+
+        
+        
+        When it comes to the size argument there are two alternatives:
+
+        size = 0: That means that you do not tell the queue in
+        advance how many jobs you have. The queue will just run
+        all the jobs you add, but you have to inform the queue
+        in some way that all jobs have been submitted. To
+        achieve this you should call the submit_complete()
+        method when all jobs have been submitted.
+
+        size > 0: The queue will now exactly how many jobs to run,
+        and will continue until this number of jobs have
+        completed.
+
+        """
+
         OK_file     = None 
         exit_file   = None
         self.c_ptr  = cfunc.alloc_queue(max_submit , False , OK_file , exit_file , cmd )
@@ -145,7 +165,7 @@ class JobQueue:
     def from_param( self ):
         return ctypes.c_void_p( self.c_ptr )
 
-    def add_job( self , cmd , run_path , job_name , argv , num_cpu = 1):
+    def submit( self , cmd , run_path , job_name , argv , num_cpu = 1):
         c_argv = (ctypes.c_char_p * len(argv))()
         c_argv[:] = argv
         job_index = self.jobs.size
@@ -165,6 +185,10 @@ class JobQueue:
         while self.num_waiting > 0:
             time.sleep( 1 )
             
+    def block(self):
+        while self.running:
+            time.sleep( 1 )
+
 
     # This method is used to signal the queue layer that all jobs have
     # been submitted, and that the queue can exit when all jobs have
