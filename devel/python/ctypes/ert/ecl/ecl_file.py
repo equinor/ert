@@ -16,7 +16,7 @@
 """
 The ecl_file module contains functionality to load a an ECLIPSE file
 in 'restart format'. Files of 'restart format' include restart files,
-init file, grid files, summary files and RFT files.
+init files, grid files, summary files and RFT files.
 
 The ecl_file implementation is agnostic[1] to the content and
 structure of the file; more specialized classes like EclSum and
@@ -38,6 +38,7 @@ implementation from the libecl library.
 
 import datetime
 import ctypes
+import types
 import libecl
 
 from   ert.cwrap.cwrap       import *
@@ -63,7 +64,7 @@ class EclFile(object):
             block2 = EclFile.restart_block( "ECLIPSE.UNRST" , report_step = 67 )
 
         If the block you are asking for can not be found the method
-        will return a False value.
+        will return a EclFile instance which evaluates to False.
         """
         if dtime:
             c_ptr = cfunc.restart_block_time( filename , ctime( dtime ))
@@ -113,7 +114,33 @@ class EclFile(object):
             cfunc.free( self )
 
     def __getitem__(self , index):
-        """Get ecl_kw nr @index - implements index operator []."""
+        """
+        Implements [] operator; index can integer or key.
+
+        Will look up EclKW instances from the current EclFile
+        instance. The @index argument can either be an integer, in
+        which case the method will return EclKW number @index, or
+        alternatively a keyword string, in which case the method will
+        return a list of EclKW instances with that keyword:
+
+           restart_file = ecl_file.EclFile("ECLIPSE.UNRST")
+           kw9 = restart_file[9]
+           swat_list = restart_file["SWAT"]
+
+        The keyword based lookup can be combined with an extra [] to
+        get EclKW instance nr:
+
+           swat9 = restart_file["SWAT"][9]
+
+        Will return the 10'th SWAT keyword from the restart file. The
+        following example will iterate over all the SWAT keywords in a
+        restart file:
+
+           restart_file = ecl_file.EclFile("ECLIPSE.UNRST")
+           for swat in restart_file["SWAT"]:
+               ....
+        """
+
         if isinstance( index , types.IntType):
             if index < 0 or index >= cfunc.get_size( self ):
                 raise IndexError
@@ -121,7 +148,14 @@ class EclFile(object):
                 kw_c_ptr = cfunc.iget_kw( self , index )
                 return EclKW.ref( kw_c_ptr , self )
         else:
-            raise TypeError
+            if isinstance( index , types.StringType):
+                kw_index = index
+                kw_list = []
+                for index in range( self.num_named_kw( kw_index )):
+                    kw_list.append(  self.iget_named_kw( kw_index , index))
+                return kw_list
+            else:
+                raise TypeError("Index must be integer or string (keyword)")
         
 
     def __nonzero__(self):
@@ -281,6 +315,49 @@ class EclFile(object):
         """The number of unique keyword (names) in the current EclFile object."""
         return cfunc.get_unique_size( self )
 
+    @property
+    def headers(self):
+        """
+        Will return a list of the headers of all the keywords.
+        """
+        header_list = []
+        for index in range(self.size):
+            kw = self[index]
+            header_list.append( kw.header )
+        return header_list
+    
+    @property
+    def report_steps( self ):
+        """
+        Will return a list of all report steps.
+
+        The method works by iterating through the whole restart file
+        looking for 'SEQNUM' keywords; if the current EclFile instance
+        is not a restart file it will not contain any 'SEQNUM'
+        keywords and the method will simply return an empty list.
+        """
+        steps = []
+        seqnum_list = self["SEQNUM"]
+        for kw in self["SEQNUM"]:
+            steps.append( kw[0] )
+        return steps
+    
+    @property
+    def report_dates( self ):
+        """
+        Will return a list of the dates for all report steps.
+        
+        The method works by iterating through the whole restart file
+        looking for 'INTEHEAD' keywords; the method can probably be
+        tricked by other file types also containing an INTEHEAD
+        keyword.
+        """
+        dates = []
+        for index in range( self.num_named_kw( 'INTEHEAD' )):
+            dates.append( self.iget_restart_sim_time( index ))
+        return dates
+    
+
     def num_named_kw( self , kw):
         """The number of keywords with name == @kw in the current EclFile object."""
         return cfunc.get_num_named_kw( self , kw )
@@ -288,8 +365,10 @@ class EclFile(object):
     def has_kw( self , kw , num = 0):
         """
         Check if current EclFile instance has a keyword @kw.
-        """
 
+        If the optional argument @num is given it will check if the
+        EclFile has at least @num occurences of @kw.
+        """
         num_named_kw = self.num_named_kw( kw )
         if num_named_kw > num:
             return True
@@ -298,7 +377,9 @@ class EclFile(object):
 
     def iget_restart_sim_time( self , index ):
         """Will locate restart block nr @index and return the true time as a datetime instance."""
-        return cfunc.iget_restart_time( self , index )
+        ctime = cfunc.iget_restart_time( self , index ) 
+        return ctime.datetime()
+
 
     @property
     def name(self):

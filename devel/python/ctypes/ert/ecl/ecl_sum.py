@@ -522,6 +522,8 @@ class EclSum( object ):
     def __getitem__(self , key):
         """
         Implements [] operator - @key should be a summary key.
+
+        The returned value will be a EclSumVector instance.
         """
         return self.get_vector( key )
 
