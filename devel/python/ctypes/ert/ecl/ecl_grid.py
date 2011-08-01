@@ -463,7 +463,7 @@ class EclGrid(object):
         """
         Creates an EclKW instance based on existing 3D numpy object.
 
-        The methods create3D() does the inverse operation; creating a
+        The method create3D() does the inverse operation; creating a
         3D numpy object from an EclKW instance.
         """
         if array.ndim == 3:

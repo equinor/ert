@@ -21,7 +21,7 @@ simulations than you can perform concurrently; the queue will start
 simulations when there is available computing resources. The EclQueue
 can be combined with LSF, in that case the EclQueue will limit the
 number of jobs submitted to LSF, but it is clearly most relevant when
-simulationg locally or on workstations through rsh commands.
+simulating locally or on workstations through rsh commands.
 
 The queue is based on the use of 'driver' to communicate with the low
 level systems for running the simulations. The driver must be

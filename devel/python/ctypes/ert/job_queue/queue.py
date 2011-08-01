@@ -13,6 +13,12 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+"""
+Module implementing a queue for managing external jobs.
+
+
+"""
+
 
 import  time
 import  threading
@@ -121,19 +127,20 @@ class JobQueue:
 
         
         
-        When it comes to the size argument there are two alternatives:
+        The @size argument is used to say how many jobs the queue will
+        run, in total.
 
-        size = 0: That means that you do not tell the queue in
-        advance how many jobs you have. The queue will just run
-        all the jobs you add, but you have to inform the queue
-        in some way that all jobs have been submitted. To
-        achieve this you should call the submit_complete()
-        method when all jobs have been submitted.
+          size = 0: That means that you do not tell the queue in
+            advance how many jobs you have. The queue will just run
+            all the jobs you add, but you have to inform the queue in
+            some way that all jobs have been submitted. To achieve
+            this you should call the submit_complete() method when all
+            jobs have been submitted.
 
-        size > 0: The queue will now exactly how many jobs to run,
-        and will continue until this number of jobs have
-        completed.
-
+          size > 0: The queue will now exactly how many jobs to run,
+            and will continue until this number of jobs have completed
+            - it is not necessary to call the submit_complete() method
+            in this case.
         """
 
         OK_file     = None 
@@ -190,11 +197,20 @@ class JobQueue:
             time.sleep( 1 )
 
 
-    # This method is used to signal the queue layer that all jobs have
-    # been submitted, and that the queue can exit when all jobs have
-    # completed. If the queue is created with a finite size it is not
-    # necessary to use this function.
     def submit_complete( self ):
+        """
+        Method to inform the queue that all jobs have been submitted.
+
+        If the queue has been created with size == 0 the queue has no
+        way of knowing when all jobs have completed; hence in that
+        case you must call the submit_complete() method when all jobs
+        have been submitted.
+
+        If you know in advance exactly how many jobs you will run that
+        should be specified with the size argument when creating the
+        queue, in that case it is not necessary to call the
+        submit_complete() method.
+        """
         cfunc.submit_complete( self )
 
 
@@ -228,7 +244,6 @@ class JobQueue:
     def get_max_running( self ):
         return self.driver.get_max_running()
     
-    # The set is never called????
     def set_max_running( self , max_running ):
         self.driver.set_max_running( max_running )
     
@@ -239,7 +254,7 @@ class JobQueue:
 
 cwrapper = CWrapper( libjob_queue.lib )
 cwrapper.registerType( "job_queue" , JobQueue )
-cfunc  = CWrapperNameSpace( "JobQeueu" )
+cfunc  = CWrapperNameSpace( "JobQueue" )
 
 cfunc.user_exit       = cwrapper.prototype("void job_queue_user_exit( job_queue )") 
 cfunc.alloc_queue     = cwrapper.prototype("c_void_p job_queue_alloc( int , bool , char* , char* , char* )")

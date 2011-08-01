@@ -129,7 +129,7 @@ class EclGrav:
         between the two surveys named @base_survey and
         @monitor_survey. 
 
-        The second survey can be 'None' - the resulting answer has
+        The monitor survey can be 'None' - the resulting answer has
         nothing whatsovever to do with gravitation, but can be
         interesting to determine the numerical size of the quantities
         which are subtracted in a 4D study.

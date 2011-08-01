@@ -73,7 +73,7 @@ class StringList:
         Implements [] read operator on the stringlist.
         
         The __getitem__ method supports negative, i.e. from the right,
-        indexing; but currently not slices.
+        indexing; but not slices.
         """
         if isinstance( index , types.IntType):
             length = self.__len__()
