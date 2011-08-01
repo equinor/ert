@@ -1,6 +1,6 @@
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
-#  The file '__init__.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'job_queue.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -14,6 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 """
-Package documentation
+Module doc
 """
 
+from queue  import JobQueue
+from driver import Driver
+from job    import Job
