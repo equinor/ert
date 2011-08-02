@@ -76,7 +76,16 @@ class EclGrav:
         reservoir, i.e. an ECLIPSE restart file. The @survey_name
         input argument will be used when refering to this survey at a
         later stage. The @restart_file input argument should be an
-        EclFile instance with data from one report step.
+        EclFile instance with data from one report step. A typical way
+        to load the @restart_file argument is:
+
+           import datetime
+           import ert.ecl.ecl as ecl
+           ...
+           ...
+           date = datetime.datetime( year , month , day )
+           restart_file1 = ecl.EclFile.restart_block( "ECLIPSE.UNRST" , dtime = date)
+           restart_file2 = ecl.EclFile.restart_block( "ECLIPSE.UNRST" , report_step = 67 )
 
         The pore volume of each cell will be calculated based on the
         RPORV keyword from the restart files. The methods
