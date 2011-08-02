@@ -59,7 +59,7 @@ class EclFile(object):
         specified with either one of the optional arguments
         @report_step or @dtime. If present @dtime should be a normal
         python datetime instance:
-
+        
             block1 = EclFile.restart_block( "ECLIPSE.UNRST" , dtime = datetime.datetime( year , month , day ))
             block2 = EclFile.restart_block( "ECLIPSE.UNRST" , report_step = 67 )
 
@@ -80,6 +80,51 @@ class EclFile(object):
             obj = EclFile.NULL()
 
         return obj
+
+
+    @classmethod
+    def contains_report_step( cls , filename , report_step ):
+        """
+        Will check if the @filename contains @report_step.
+
+        This classmethod works by opening the file @filename and
+        searching through linearly to see if an ecl_kw with value
+        corresponding to @report_step can be found. Since this is a
+        classmethod it is invoked like this:
+
+           import ert.ecl.ecl as ecl
+           ....
+           if ecl.EclFile.contains_report_step("ECLIPSE.UNRST" , 20):
+              print "OK - file contains report step 20"
+           else:
+              print "File does not contain report step 20"
+
+        If you have already loaded the file into an EclFile instance
+        you should use the has_report_step() method instead.
+        """
+        return cfunc.contains_report_step( filename , report_step )
+
+    @classmethod
+    def contains_sim_time( cls , filename , dtime ):
+        """
+        Will check if the @filename contains simulation at @dtime.
+
+        This classmethod works by opening the file @filename and
+        searching through linearly to see if a result block at the
+        time corresponding to @dtime can be found. Since this is a
+        classmethod it is invoked like this:
+
+           import ert.ecl.ecl as ecl
+           ....
+           if ecl.EclFile.contains_sim_time("ECLIPSE.UNRST" , datetime.datetime( 2007 , 10 , 10) ):
+              print "OK - file contains October 2007"
+           else:
+              print "File does not contain October 2007"
+
+        If you have already loaded the file into an EclFile instance
+        you should use the has_sim_time() method instead.
+        """
+        return cfunc.contains_sim_time( filename , ctime(dtime) )
 
 
     @classmethod
@@ -214,7 +259,7 @@ class EclFile(object):
         return self.__getitem__( index )
   
   
-    def iget_named_kw( self , kw_name , index ):
+    def iget_named_kw( self , kw_name , index , copy = False):
         """
         Will return EclKW nr @index reference with header @kw_name.
         
@@ -233,7 +278,12 @@ class EclFile(object):
 
         To get the third 'PARAMS' keyword you can use the method call:
   
-            params_kw = iget_named_kw( "PARAMS" , 2 )
+            params_kw = file.iget_named_kw( "PARAMS" , 2 )
+
+        The functionality of the iget_named_kw() method is also
+        available as:
+        
+           params_kw = file["PARAMS"][2]
             
         Observe that the returned EclKW instance is only a reference
         to the data owned by the EclFile instance.
@@ -243,10 +293,14 @@ class EclFile(object):
         """
 
         kw_c_ptr = cfunc.iget_named_kw( self , kw_name , index )
-        return EclKW.ref( kw_c_ptr , self )
+        ecl_kw = EclKW.ref( kw_c_ptr , self )
+        if copy:
+            return EclKW.copy( ecl_kw )
+        else:
+            return ecl_kw
 
 
-    def restart_get_kw( self , kw_name , dtime ):
+    def restart_get_kw( self , kw_name , dtime , copy = False):
         """
         Will return EclKW @kw_name from restart file at time @dtime.
 
@@ -258,13 +312,22 @@ class EclFile(object):
             file = EclFile( "ECLIPSE.UNRST" )
             swat2010 = file.restart_get_kw( "SWAT" , datetime.datetime( 2000 , 1 , 1 ))
 
-        If the file does not have the keyword at the specified time
-        the function will return None.
+        By default the returned kw instance is a reference to the
+        ecl_kw still contained in the EclFile instance; i.e. the kw
+        will become a dangling reference if the EclFile instance goes
+        out of scope. If the optional argument @copy is True the
+        returned kw will be a true copy.
+
+        If the file does not have the keyword at the specified time the
+        function will return None.
         """
-        
         index = cfunc.get_restart_index( self , ctime( dtime ) )
         if index >= 0:
-            return self.iget_named_kw( kw_name , index )
+            kw = self.iget_named_kw( kw_name , index )
+            if copy:
+                return EclKW.copy( kw )
+            else:
+                return kw
         else:
             return None
 
@@ -277,9 +340,9 @@ class EclFile(object):
         in the current EclFile. The @old_kw reference must be to the
         actual EclKW instance in the current EclFile instance (the
         final comparison is based on C pointer equality!), i.e. it
-        must come from one of the ??get_kw?? methods of the EclFile
-        class. In the example below we replace the SWAT keyword from a
-        restart file:
+        must be a reference from one of the ??get_kw?? methods of the
+        EclFile class. In the example below we replace the SWAT
+        keyword from a restart file:
 
            swat = file.iget_named_kw( "SWAT" , 0 )
            new_swat = swat * 0.25
@@ -291,7 +354,7 @@ class EclFile(object):
         into it means that this is quite low level - and potentially
         dangerous!
         """
-
+        
         # We ensure that this scope owns the new_kw instance; the
         # new_kw will be handed over to the ecl_file instance, and we
         # can not give away something we do not alreeady own.
@@ -375,6 +438,31 @@ class EclFile(object):
         else:
             return False
 
+    def has_report_step( self , report_step ):
+        """
+        Checks if the current EclFile has report step @report_step.
+
+        If the EclFile in question is not a restart file, you will
+        just get False. If you want to check if the file contains the
+        actual report_step before loading the file, you should use the
+        classmethod contains_report_step() instead.
+        """
+        return cfunc.has_report_step( self , report_step )
+
+    
+    def has_sim_time( self , dtime ):
+        """
+        Checks if the current EclFile has data for time @dtime.
+
+        The implementation goes through all the INTEHEAD headers in
+        the EclFile, i.e. it can be fooled (and probably crash and
+        burn) if the EclFile instance in question is not a restart
+        file. The @dtime argument should be normal python datetime
+        instance.
+        """
+        return cfunc.has_sim_time( self , ctime(dtime) )    
+
+    
     def iget_restart_sim_time( self , index ):
         """Will locate restart block nr @index and return the true time as a datetime instance."""
         ctime = cfunc.iget_restart_time( self , index ) 
@@ -431,3 +519,8 @@ cfunc.del_kw                    = cwrapper.prototype("void        ecl_file_delet
 cfunc.get_src_file              = cwrapper.prototype("char*       ecl_file_get_src_file( ecl_file )")
 cfunc.replace_kw                = cwrapper.prototype("void        ecl_file_replace_kw( ecl_file , ecl_kw , ecl_kw , bool)")
 cfunc.fwrite                    = cwrapper.prototype("void        ecl_file_fwrite_fortio( ecl_file , fortio , int)")
+cfunc.has_instance              = cwrapper.prototype("bool        ecl_file_has_kw_ptr(ecl_file , ecl_kw)")
+cfunc.has_report_step           = cwrapper.prototype("bool        ecl_file_has_report_step( ecl_file , int)")
+cfunc.has_sim_time              = cwrapper.prototype("bool        ecl_file_has_sim_time( ecl_file , time_t )")
+cfunc.contains_report_step      = cwrapper.prototype("bool        ecl_file_contains_report_step( char* , int )")
+cfunc.contains_sim_time         = cwrapper.prototype("bool        ecl_file_contains_sim_time( char* , time_t )")

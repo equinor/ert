@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 """
-Package documentation
+The job_queue package contains modules and classes for running
+external commands.
 """
 
