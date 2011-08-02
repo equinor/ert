@@ -158,6 +158,25 @@ class EclFile(object):
         if self.c_ptr:
             cfunc.free( self )
 
+    def restart_section( self, report_step = None , sim_time = None):
+        
+        if report_step:
+            c_ptr = cfunc.copy_restart_section( self , report_step )
+        elif sim_time:
+            print "Trying ..."
+            c_ptr = cfunc.copy_restart_section_time_t( self , ctime( sim_time ) )
+        else:
+            sys.exit("Must give either report_step or sim_time")
+        
+        if c_ptr:
+            obj = object.__new__( EclFile )
+            obj.c_ptr = c_ptr
+        else:
+            obj = EclFile.NULL()
+
+        return obj
+        
+
     def __getitem__(self , index):
         """
         Implements [] operator; index can integer or key.
@@ -334,15 +353,15 @@ class EclFile(object):
 
     def replace_kw( self , old_kw , new_kw):
         """
-        Will replace the one keyword in current EclFile instance.
+        Will replace @old_kw with @new_kw in current EclFile instance.
 
         This method can be used to replace one of the EclKW instances
         in the current EclFile. The @old_kw reference must be to the
         actual EclKW instance in the current EclFile instance (the
         final comparison is based on C pointer equality!), i.e. it
-        must be a reference from one of the ??get_kw?? methods of the
-        EclFile class. In the example below we replace the SWAT
-        keyword from a restart file:
+        must be a reference (not a copy) from one of the ??get_kw??
+        methods of the EclFile class. In the example below we replace
+        the SWAT keyword from a restart file:
 
            swat = file.iget_named_kw( "SWAT" , 0 )
            new_swat = swat * 0.25
@@ -370,12 +389,16 @@ class EclFile(object):
 
     @property
     def size(self):
-        """The number of keywords in the current EclFile object."""
+        """
+        The number of keywords in the current EclFile object.
+        """
         return cfunc.get_size( self )
 
     @property
     def unique_size( self ):
-        """The number of unique keyword (names) in the current EclFile object."""
+        """
+        The number of unique keyword (names) in the current EclFile object.
+        """
         return cfunc.get_unique_size( self )
 
     @property
@@ -422,7 +445,9 @@ class EclFile(object):
     
 
     def num_named_kw( self , kw):
-        """The number of keywords with name == @kw in the current EclFile object."""
+        """
+        The number of keywords with name == @kw in the current EclFile object.
+        """
         return cfunc.get_num_named_kw( self , kw )
 
     def has_kw( self , kw , num = 0):
@@ -464,14 +489,19 @@ class EclFile(object):
 
     
     def iget_restart_sim_time( self , index ):
-        """Will locate restart block nr @index and return the true time as a datetime instance."""
+        """
+        Will locate restart block nr @index and return the true time
+        as a datetime instance.
+        """
         ctime = cfunc.iget_restart_time( self , index ) 
         return ctime.datetime()
 
 
     @property
     def name(self):
-        """Name of the file currently loaded."""
+        """
+        Name of the file currently loaded.
+        """
         return cfunc.get_src_file( self )
     
     def fwrite( self , fortio ):
@@ -483,14 +513,16 @@ class EclFile(object):
         This method will write the current EclFile instance to a
         FortIO stream opened for writing:
 
-           fortio = FortIO( "FILE.XX" )
+           import ert.ecl.ecl as ecl
+           ...
+           fortio = ecl.FortIO( "FILE.XX" )
            file.fwrite( fortio )
            fortio.close()
            
         """
         cfunc.fwrite( self , fortio , 0 )
 
-
+        
 
 # 2. Creating a wrapper object around the libecl library, 
 cwrapper = CWrapper( libecl.lib )
@@ -502,25 +534,27 @@ cwrapper.registerType( "ecl_file" , EclFile )
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_file")
 
-cfunc.fread_alloc               = cwrapper.prototype("c_void_p    ecl_file_fread_alloc( char* )")
-cfunc.new                       = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")
-cfunc.restart_block_time        = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section_time( char* , time_t )")
-cfunc.restart_block_step        = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section( char* , int )")
-cfunc.iget_kw                   = cwrapper.prototype("c_void_p    ecl_file_iget_kw( ecl_file , int)")
-cfunc.iget_named_kw             = cwrapper.prototype("c_void_p    ecl_file_iget_named_kw( ecl_file , char* , int)")
-cfunc.free                      = cwrapper.prototype("void        ecl_file_free( ecl_file )")
-cfunc.get_size                  = cwrapper.prototype("int         ecl_file_get_num_kw( ecl_file )")
-cfunc.get_unique_size           = cwrapper.prototype("int         ecl_file_get_num_distinct_kw( ecl_file )")
-cfunc.get_num_named_kw          = cwrapper.prototype("int         ecl_file_get_num_named_kw( ecl_file , char* )")
-cfunc.iget_restart_time         = cwrapper.prototype("time_t      ecl_file_iget_restart_sim_date( ecl_file , int )")
-cfunc.get_restart_index         = cwrapper.prototype("int         ecl_file_get_restart_index( ecl_file , time_t)")
-cfunc.insert_kw                 = cwrapper.prototype("void        ecl_file_insert_kw( ecl_file , ecl_kw , bool , char* , int )")
-cfunc.del_kw                    = cwrapper.prototype("void        ecl_file_delete_kw( ecl_file , char* , int)")
-cfunc.get_src_file              = cwrapper.prototype("char*       ecl_file_get_src_file( ecl_file )")
-cfunc.replace_kw                = cwrapper.prototype("void        ecl_file_replace_kw( ecl_file , ecl_kw , ecl_kw , bool)")
-cfunc.fwrite                    = cwrapper.prototype("void        ecl_file_fwrite_fortio( ecl_file , fortio , int)")
-cfunc.has_instance              = cwrapper.prototype("bool        ecl_file_has_kw_ptr(ecl_file , ecl_kw)")
-cfunc.has_report_step           = cwrapper.prototype("bool        ecl_file_has_report_step( ecl_file , int)")
-cfunc.has_sim_time              = cwrapper.prototype("bool        ecl_file_has_sim_time( ecl_file , time_t )")
-cfunc.contains_report_step      = cwrapper.prototype("bool        ecl_file_contains_report_step( char* , int )")
-cfunc.contains_sim_time         = cwrapper.prototype("bool        ecl_file_contains_sim_time( char* , time_t )")
+cfunc.fread_alloc                 = cwrapper.prototype("c_void_p    ecl_file_fread_alloc( char* )")
+cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")
+cfunc.restart_block_time          = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section_time( char* , time_t )")
+cfunc.restart_block_step          = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section( char* , int )")
+cfunc.iget_kw                     = cwrapper.prototype("c_void_p    ecl_file_iget_kw( ecl_file , int)")
+cfunc.iget_named_kw               = cwrapper.prototype("c_void_p    ecl_file_iget_named_kw( ecl_file , char* , int)")
+cfunc.free                        = cwrapper.prototype("void        ecl_file_free( ecl_file )")
+cfunc.get_size                    = cwrapper.prototype("int         ecl_file_get_num_kw( ecl_file )")
+cfunc.get_unique_size             = cwrapper.prototype("int         ecl_file_get_num_distinct_kw( ecl_file )")
+cfunc.get_num_named_kw            = cwrapper.prototype("int         ecl_file_get_num_named_kw( ecl_file , char* )")
+cfunc.iget_restart_time           = cwrapper.prototype("time_t      ecl_file_iget_restart_sim_date( ecl_file , int )")
+cfunc.get_restart_index           = cwrapper.prototype("int         ecl_file_get_restart_index( ecl_file , time_t)")
+cfunc.insert_kw                   = cwrapper.prototype("void        ecl_file_insert_kw( ecl_file , ecl_kw , bool , char* , int )")
+cfunc.del_kw                      = cwrapper.prototype("void        ecl_file_delete_kw( ecl_file , char* , int)")
+cfunc.get_src_file                = cwrapper.prototype("char*       ecl_file_get_src_file( ecl_file )")
+cfunc.replace_kw                  = cwrapper.prototype("void        ecl_file_replace_kw( ecl_file , ecl_kw , ecl_kw , bool)")
+cfunc.fwrite                      = cwrapper.prototype("void        ecl_file_fwrite_fortio( ecl_file , fortio , int)")
+cfunc.has_instance                = cwrapper.prototype("bool        ecl_file_has_kw_ptr(ecl_file , ecl_kw)")
+cfunc.has_report_step             = cwrapper.prototype("bool        ecl_file_has_report_step( ecl_file , int)")
+cfunc.has_sim_time                = cwrapper.prototype("bool        ecl_file_has_sim_time( ecl_file , time_t )")
+cfunc.contains_report_step        = cwrapper.prototype("bool        ecl_file_contains_report_step( char* , int )")
+cfunc.contains_sim_time           = cwrapper.prototype("bool        ecl_file_contains_sim_time( char* , time_t )")
+cfunc.copy_restart_section        = cwrapper.prototype("c_void_p    ecl_file_copy_restart_section( ecl_file , int )")
+cfunc.copy_restart_section_time_t = cwrapper.prototype("c_void_p    ecl_file_copy_restart_section_time_t( ecl_file , time_t )")

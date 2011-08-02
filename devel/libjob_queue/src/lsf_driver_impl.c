@@ -38,7 +38,7 @@
   How to call the lsf commands bsub/bjobs/bkill:
   ----------------------------------------------
   
-  To commands to submit, monitor and modify LSF jobs are available
+  The commands to submit, monitor and modify LSF jobs are available
   through library calls through the lsf library. This is a good
   solution which works well.
 
