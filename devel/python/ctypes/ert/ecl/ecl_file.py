@@ -159,14 +159,30 @@ class EclFile(object):
             cfunc.free( self )
 
     def restart_section( self, report_step = None , sim_time = None):
+        """
+        Will create a new EclFile instance consisting of one restart block.
+
+        You must specify either a report step with the @report_step
+        argument, or a true time with the @sim_time argument; if
+        neither argument is given exception TypeError wiull be
+        raised. If present the @sim_time argument should be a datetime
+        instance.
         
+        If the restart section you ask for can not be found the method
+        will return a EclFile instance which evaluates to False;
+        alternatively you can query first with the has_report_step()
+        or has_sim_time() methods.
+
+        This method should be used when you have already loaded the
+        complete file; if you only want to load a section from the
+        file you can use the classmethod restart_block().
+        """
         if report_step:
             c_ptr = cfunc.copy_restart_section( self , report_step )
         elif sim_time:
-            print "Trying ..."
             c_ptr = cfunc.copy_restart_section_time_t( self , ctime( sim_time ) )
         else:
-            sys.exit("Must give either report_step or sim_time")
+            raise TypeError("restart_section() requires either dtime or report_step argument - none given")
         
         if c_ptr:
             obj = object.__new__( EclFile )
@@ -284,7 +300,8 @@ class EclFile(object):
         
         The keywords in a an ECLIPSE file are organized in a long
         linear array; keywords with the same name can occur many
-        times. For instance a summary data[1] file might look like this:
+        times. For instance a summary data[1] file might look like
+        this:
 
            SEQHDR  
            MINISTEP
@@ -300,17 +317,16 @@ class EclFile(object):
             params_kw = file.iget_named_kw( "PARAMS" , 2 )
 
         The functionality of the iget_named_kw() method is also
-        available as:
+        available through the __getitem__() method as:
         
            params_kw = file["PARAMS"][2]
-            
+
         Observe that the returned EclKW instance is only a reference
         to the data owned by the EclFile instance.
         
         [1]: For working with summary data you are probably better off
              using the EclSum class.
         """
-
         kw_c_ptr = cfunc.iget_named_kw( self , kw_name , index )
         ecl_kw = EclKW.ref( kw_c_ptr , self )
         if copy:

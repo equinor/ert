@@ -121,10 +121,10 @@ class JobQueue:
     # necessary to explitly inform the queue layer when all jobs have
     # been submitted.
 
-    def __init__(self , driver , cmd , max_submit = 1 , size = 0):
+    def __init__(self , driver , max_submit = 1 , size = 0):
         """
         SHort doc...
-
+        
         
         
         The @size argument is used to say how many jobs the queue will
@@ -145,7 +145,7 @@ class JobQueue:
 
         OK_file     = None 
         exit_file   = None
-        self.c_ptr  = cfunc.alloc_queue(max_submit , False , OK_file , exit_file , cmd )
+        self.c_ptr  = cfunc.alloc_queue(max_submit , False , OK_file , exit_file )
         self.driver = driver
         self.jobs   = JobList()
         self.size   = size
@@ -156,7 +156,11 @@ class JobQueue:
         cfunc.set_driver( self , driver.c_ptr )
         self.start( blocking = False )
 
+
     def kill_job(self , index):
+        """
+        Will kill job nr @index.
+        """
         job = self.jobs.__getitem__( index )
         if job:
             job.kill()
@@ -187,12 +191,15 @@ class JobQueue:
 
     def block_waiting( self ):
         """
-        Will block the queue as long as there are waiting jobs.
+        Will block as long as there are waiting jobs.
         """
         while self.num_waiting > 0:
             time.sleep( 1 )
             
     def block(self):
+        """
+        Will block as long as there are running jobs.
+        """
         while self.running:
             time.sleep( 1 )
 
@@ -257,7 +264,7 @@ cwrapper.registerType( "job_queue" , JobQueue )
 cfunc  = CWrapperNameSpace( "JobQueue" )
 
 cfunc.user_exit       = cwrapper.prototype("void job_queue_user_exit( job_queue )") 
-cfunc.alloc_queue     = cwrapper.prototype("c_void_p job_queue_alloc( int , bool , char* , char* , char* )")
+cfunc.alloc_queue     = cwrapper.prototype("c_void_p job_queue_alloc( int , bool , char* , char* )")
 cfunc.free_queue      = cwrapper.prototype("void job_queue_free( job_queue )")
 cfunc.set_max_running = cwrapper.prototype("void job_queue_set_max_running( job_queue , int)")
 cfunc.get_max_running = cwrapper.prototype("int  job_queue_get_max_running( job_queue )")

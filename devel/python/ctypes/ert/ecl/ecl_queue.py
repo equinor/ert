@@ -152,7 +152,7 @@ class EclQueue( JobQueue ):
             if driver_options is None:
                 driver_options = default.driver_options[ driver_type ]
             driver = queue_driver.Driver( driver_type , max_running = max_running , options = driver_options )
-        JobQueue.__init__( self , driver , self.ecl_cmd , size = size)
+        JobQueue.__init__( self , driver , size = size)
 
         
     def submit( self , data_file):
