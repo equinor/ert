@@ -25,6 +25,7 @@ ecl_grav.c implementation in the libecl library.
 import  libecl
 import  ert.ecl.ecl_file 
 import  ert.ecl.ecl_grid
+from    ert.ecl.ecl_util      import ECL_WATER_PHASE , ECL_OIL_PHASE , ECL_GAS_PHASE
 from    ert.cwrap.cwrap   import *
 
 class EclGrav:
@@ -113,7 +114,8 @@ class EclGrav:
         calculated based on the FIPxxx keyword along with the mass
         density at standard conditions of the respective phases.
 
-        The mass density must be specified with the new_std_density()
+        The mass density at standard conditions must be specified with
+        the new_std_density() (and possibly also add_std_density())
         method before calling the add_survey_FIP() method.
         """
         cfunc.add_survey_FIP( self , survey_name , restart_file )
@@ -128,8 +130,9 @@ class EclGrav:
         per-cell mass density of the respective phases.
         """
         cfunc.add_survey_RFIP( self , survey_name , restart_file )
+
                 
-    def eval(self , base_survey , monitor_survey , pos):
+    def eval(self , base_survey , monitor_survey , pos , phase_mask = ECL_OIL_PHASE + ECL_GAS_PHASE + ECL_WATER_PHASE):
         """
         Calculates the gravity change between two surveys.
         
@@ -146,8 +149,13 @@ class EclGrav:
         The @pos argument should be a tuple of three elements with the
         (utm_x , utm_y , depth) position where we want to evaluate the
         change in gravitational strength.
+
+        The optional argument @phase_mask is an integer flag to
+        indicate which phases you are interested in. It should be a
+        sum of the relevant integer constants 'ECL_OIL_PHASE',
+        'ECL_GAS_PHASE' and 'ECL_WATER_PHASE'.
         """
-        return cfunc.eval( self , base_survey , monitor_survey , pos[0] , pos[1] , pos[2])
+        return cfunc.eval( self , base_survey , monitor_survey , pos[0] , pos[1] , pos[2] , phase_mask)
 
     def new_std_density( self , phase_enum , default_density):
         """
@@ -162,12 +170,16 @@ class EclGrav:
         used for all the cells in the model; by using the
         add_std_density() method you can specify different densities
         for different PVT regions.
+
+        The new_std_density() and add_std_density() methods must be
+        used before you use the add_survey_FIP() method to add a
+        survey based on the FIP keyword.
         """
         cfunc.new_std_density( self , phase_enum , default_density )
         
     def add_std_density( self , phase_enum , pvtnum , density):
         """
-        Add standard conditions density for PVT region.
+        Add standard conditions density for PVT region @pvtnum.
         
         The new_std_density() method will add a standard conditions
         density which applies to all cells in the model. Using the
@@ -176,8 +188,12 @@ class EclGrav:
         densities for as many PVT regions as you like, and then fall
         back to the default density for the others.
 
-        The new_std_density() method must be called prior to calling
-        the add_std_density() method.
+        The new_std_density() method must be called before calling the
+        add_std_density() method.
+        
+        The new_std_density() and add_std_density() methods must be
+        used before you use the add_survey_FIP() method to add a
+        survey based on the FIP keyword.
         """
         cfunc.add_std_density( self , phase_enum , pvtnum , density )
 
@@ -187,7 +203,7 @@ cwrapper = CWrapper( libecl.lib )
 cwrapper.registerType( "ecl_grav" , EclGrav )
 
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
+# 3. Installing the c-functions used to manipulate ecl_grav instances.
 #    These functions are used when implementing the EclGrav class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_grav")
@@ -203,4 +219,4 @@ cfunc.add_survey_RFIP    = cwrapper.prototype("c_void_p  ecl_grav_add_survey_RFI
 
 cfunc.new_std_density    = cwrapper.prototype("void      ecl_grav_new_std_density( ecl_grav , int , double)")
 cfunc.add_std_density    = cwrapper.prototype("void      ecl_grav_add_std_density( ecl_grav , int , int , double)")
-cfunc.eval               = cwrapper.prototype("double    ecl_grav_eval( ecl_grav , char* , char* , double , double , double)")
+cfunc.eval               = cwrapper.prototype("double    ecl_grav_eval( ecl_grav , char* , char* , double , double , double, int)")

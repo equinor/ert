@@ -513,6 +513,21 @@ class EclRegion:
         Will invert the current selection.
         """
         cfunc.invert_selection( self )
+
+    def select_above_plane( self , n , p):
+        """
+        Will select all the cells 'above' the plane defined by n & p.
+        """
+        n_vec = ctypes.cast( (ctypes.c_double * 3)() , ctypes.POINTER( ctypes.c_double ))
+        p_vec = ctypes.cast( (ctypes.c_double * 3)() , ctypes.POINTER( ctypes.c_double ))
+        for i in range(3):
+            n_vec[i] = n[i]
+            p_vec[i] = p[i]
+            
+        cfunc.select_above_plane( self , n_vec , p_vec )
+
+
+    #################################################################
         
     def iadd_kw( self , target_kw , delta_kw , force_active = False):
         """
@@ -716,3 +731,7 @@ cfunc.select_inactive            = cwrapper.prototype("void ecl_region_select_in
 cfunc.deselect_active            = cwrapper.prototype("void ecl_region_deselect_active_cells( ecl_region )")
 cfunc.deselect_inactive          = cwrapper.prototype("void ecl_region_deselect_inactive_cells( ecl_region )")
 
+cfunc.select_above_plane        = cwrapper.prototype("void ecl_region_select_above_plane( ecl_region  , double* , double* )")
+cfunc.select_below_plane        = cwrapper.prototype("void ecl_region_select_below_plane( ecl_region  , double* , double* )")
+cfunc.deselect_above_plane      = cwrapper.prototype("void ecl_region_deselect_above_plane( ecl_region, double* , double* )")
+cfunc.deselect_below_plane      = cwrapper.prototype("void ecl_region_deselect_below_plane( ecl_region, double* , double* )")
