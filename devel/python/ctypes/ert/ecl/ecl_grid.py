@@ -162,17 +162,19 @@ class EclGrid(object):
         """
 
         set_count = 0
-        if not active_index == None:
+        if not active_index is None:
             set_count += 1
-        if not global_index == None:
+
+        if not global_index is None:
             set_count += 1
+
         if ijk:
             set_count += 1
             
         if not set_count == 1:
             raise ValueError("Exactly one of the kewyord arguments active_index, global_index or ijk must be set")
         
-        if active_index:
+        if not active_index is None:
             global_index = cfunc.get_global_index1A( self , active_index )
         elif ijk:
             global_index = cfunc.get_global_index3( self , ijk[0] , ijk[1] , ijk[2])
@@ -270,7 +272,7 @@ class EclGrid(object):
         x = ctypes.c_double()
         y = ctypes.c_double()
         z = ctypes.c_double()
-
+        print gi
         cfunc.get_xyz1( self , gi , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
         return (x.value , y.value , z.value)
 

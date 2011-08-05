@@ -117,9 +117,9 @@ class EclFile(object):
            import ert.ecl.ecl as ecl
            ....
            if ecl.EclFile.contains_sim_time("ECLIPSE.UNRST" , datetime.datetime( 2007 , 10 , 10) ):
-              print "OK - file contains October 2007"
+              print "OK - file contains 10th of October 2007"
            else:
-              print "File does not contain October 2007"
+              print "File does not contain 10th of October 2007"
 
         If you have already loaded the file into an EclFile instance
         you should use the has_sim_time() method instead.
@@ -129,7 +129,9 @@ class EclFile(object):
 
     @classmethod
     def NULL( cls ):
-        """Classmethod which creates an empty instance; will evalute to False in __nonzero__()."""
+        """
+        Creates a new instance which evaluates to False.
+        """
         obj = object.__new__( cls )
         obj.c_ptr  = None 
         obj.parent = None
@@ -195,7 +197,7 @@ class EclFile(object):
 
     def __getitem__(self , index):
         """
-        Implements [] operator; index can integer or key.
+        Implements [] operator; index can be integer or key.
 
         Will look up EclKW instances from the current EclFile
         instance. The @index argument can either be an integer, in
@@ -254,7 +256,7 @@ class EclFile(object):
         return self.c_ptr
 
 
-    def iget_kw( self , index ):
+    def iget_kw( self , index , copy = False):
         """
         Will return EclKW instance nr @index.
         
@@ -291,7 +293,11 @@ class EclFile(object):
         the keyword you are interested in is in general more useful
         than this method.
         """
-        return self.__getitem__( index )
+        kw = self[index]
+        if copy:
+            return EclKW.copy( kw )
+        else:
+            return kw
   
   
     def iget_named_kw( self , kw_name , index , copy = False):
@@ -417,6 +423,7 @@ class EclFile(object):
         """
         return cfunc.get_unique_size( self )
 
+    
     @property
     def headers(self):
         """
@@ -527,7 +534,7 @@ class EclFile(object):
         ECLIPSE is written in Fortran; and a "special" handle for
         Fortran IO must be used when reading and writing these files.
         This method will write the current EclFile instance to a
-        FortIO stream opened for writing:
+        FortIO stream already opened for writing:
 
            import ert.ecl.ecl as ecl
            ...
@@ -545,8 +552,8 @@ cwrapper = CWrapper( libecl.lib )
 cwrapper.registerType( "ecl_file" , EclFile )
 
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
+# 3. Installing the c-functions used to manipulate ecl_file instances.
+#    These functions are used when implementing the EclFile class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_file")
 

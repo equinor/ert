@@ -48,8 +48,13 @@ mask2.select_more( poro , 0.30 )
 mask3  = mask1.copy()
 mask3 |= mask2
 
-
+mask1.reset()
+(x,y,z) = grid.get_xyz( ijk = (grid.nx / 2 , grid.ny /2 , grid.nz / 2) )
+mask1.select_above_plane( [0,0,1] , [x,y,z] )
 print mask1.active_size
+print mask1.active_list.str( max_lines = None )
+sys.exit(1)
+
 print mask2.active_size
 print mask3.active_size
 
