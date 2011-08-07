@@ -56,7 +56,7 @@ The runtime linker has searched through the default location of shared
 libraries, and also the locations mentioned in your LD_LIBRARY_PATH
 variable. Your current LD_LIBRARY_PATH setting is:
 
-   LD_LIBRARY_PATH:%s
+   LD_LIBRARY_PATH: %s
 
 You might need to update this variable?
 """ % (lib_list[0] , LD_LIBRARY_PATH)

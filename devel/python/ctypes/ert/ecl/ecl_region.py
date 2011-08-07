@@ -33,6 +33,8 @@ from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_DOUBLE_T
 import ecl_grid
 
 class EclRegion:
+    
+
     def __init__(self , grid , preselect , c_ptr = None):
         """
         Create a new region selector for cells in @grid.
@@ -152,7 +154,8 @@ class EclRegion:
         return self.__and__( other )
 
     def __del__( self ):
-        cfunc.free( self )
+        if self.c_ptr:
+            cfunc.free( self )
 
     def union_with( self, other):
         """
