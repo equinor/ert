@@ -24,6 +24,7 @@ ecl_grav.c implementation in the libecl library.
 
 import  libecl
 import  ert.ecl.ecl_file 
+import  ert.ecl.ecl_region 
 import  ert.ecl.ecl_grid
 from    ert.ecl.ecl_util      import ECL_WATER_PHASE , ECL_OIL_PHASE , ECL_GAS_PHASE
 from    ert.cwrap.cwrap   import *
@@ -132,7 +133,7 @@ class EclGrav:
         cfunc.add_survey_RFIP( self , survey_name , restart_file )
 
                 
-    def eval(self , base_survey , monitor_survey , pos , phase_mask = ECL_OIL_PHASE + ECL_GAS_PHASE + ECL_WATER_PHASE):
+    def eval(self , base_survey , monitor_survey , pos , region = None , phase_mask = ECL_OIL_PHASE + ECL_GAS_PHASE + ECL_WATER_PHASE):
         """
         Calculates the gravity change between two surveys.
         
@@ -155,7 +156,10 @@ class EclGrav:
         sum of the relevant integer constants 'ECL_OIL_PHASE',
         'ECL_GAS_PHASE' and 'ECL_WATER_PHASE'.
         """
-        return cfunc.eval( self , base_survey , monitor_survey , pos[0] , pos[1] , pos[2] , phase_mask)
+        if region:
+            return cfunc.eval_region( self , base_survey , monitor_survey , region , pos[0] , pos[1] , pos[2] , phase_mask)
+        else:
+            return cfunc.eval( self , base_survey , monitor_survey , pos[0] , pos[1] , pos[2] , phase_mask)
 
     def new_std_density( self , phase_enum , default_density):
         """
@@ -219,4 +223,5 @@ cfunc.add_survey_RFIP    = cwrapper.prototype("c_void_p  ecl_grav_add_survey_RFI
 
 cfunc.new_std_density    = cwrapper.prototype("void      ecl_grav_new_std_density( ecl_grav , int , double)")
 cfunc.add_std_density    = cwrapper.prototype("void      ecl_grav_add_std_density( ecl_grav , int , int , double)")
+cfunc.eval_region        = cwrapper.prototype("double    ecl_grav_eval_region( ecl_grav , char* , char* , ecl_region , double , double , double, int)")
 cfunc.eval               = cwrapper.prototype("double    ecl_grav_eval( ecl_grav , char* , char* , double , double , double, int)")

@@ -20,6 +20,7 @@ import ert
 import ert.ecl.ecl as ecl
 
 from   ert.ecl.ecl import *
+
 from   ert.util.tvector import DoubleVector
 from   ert.util.tvector import DoubleVector
 
