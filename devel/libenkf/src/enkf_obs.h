@@ -35,15 +35,11 @@ extern "C" {
 #include <sched_file.h>
 
 
+
 const char    * enkf_obs_get_config_file( const enkf_obs_type * enkf_obs);
 enkf_obs_type * enkf_obs_alloc( const history_type * hist, double std_cutoff );
 
 void            enkf_obs_free(  enkf_obs_type * enkf_obs);
-
-//void enkf_obs_add_obs(
-//  enkf_obs_type       * enkf_obs,
-//  const char          * key ,
-//  const obs_node_type * node);
 
 obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
 

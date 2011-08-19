@@ -40,7 +40,7 @@
 
 struct enkf_config_node_struct {
   UTIL_TYPE_ID_DECLARATION;
-  enkf_impl_type          impl_type;
+  ert_impl_type          impl_type;
   enkf_var_type           var_type; 
 
   bool_vector_type      * internalize;      /* Should this node be internalized - observe that question of what to internalize is MOSTLY handled at a higher level - without consulting this variable. Can be NULL. */ 
@@ -60,7 +60,7 @@ struct enkf_config_node_struct {
 
 
 static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_type, 
-                                                         enkf_impl_type  impl_type, 
+                                                         ert_impl_type  impl_type, 
                                                          const char * key) {
   enkf_config_node_type * node = util_malloc( sizeof *node , __func__);
   UTIL_TYPE_ID_INIT( node , ENKF_CONFIG_NODE_TYPE_ID );
@@ -196,7 +196,7 @@ static void enkf_config_node_update( enkf_config_node_type * config_node ,
 
 
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_type,
-                                               enkf_impl_type             impl_type,
+                                               ert_impl_type             impl_type,
                                                const char               * key , 
                                                const char               * enkf_outfile_fmt , 
                                                const char               * enkf_infile_fmt  , 
@@ -545,7 +545,7 @@ bool enkf_config_node_include_type(const enkf_config_node_type * config_node , i
 }
 
 
-enkf_impl_type enkf_config_node_get_impl_type(const enkf_config_node_type *config_node) { 
+ert_impl_type enkf_config_node_get_impl_type(const enkf_config_node_type *config_node) { 
   return config_node->impl_type; 
 }
 
@@ -573,7 +573,7 @@ int enkf_config_node_get_num_obs( const enkf_config_node_type * config_node ) {
 */
 
 int enkf_config_node_load_obs( const enkf_config_node_type * config_node , enkf_obs_type * enkf_obs ,const char * key_index , int obs_count , time_t * _sim_time , double * _y , double * _std) {
-  enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
+  ert_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
   int num_obs = 0;
   int iobs;
 

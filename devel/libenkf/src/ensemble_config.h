@@ -46,7 +46,7 @@ void                     ensemble_config_ensure_static_key(ensemble_config_type 
 void                     ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config);
 void                     ensemble_config_add_obs_key(ensemble_config_type * , const char * , const char * );
 const enkf_config_node_type  * ensemble_config_user_get_node(const ensemble_config_type *  , const char * , char **);
-enkf_impl_type           ensemble_config_impl_type(const ensemble_config_type *, const char * );
+ert_impl_type            ensemble_config_impl_type(const ensemble_config_type *, const char * );
 enkf_var_type            ensemble_config_var_type(const ensemble_config_type *, const char * );
 void                     ensemble_config_init(ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid , const ecl_sum_type * refcase);
 void                     ensemble_config_free(ensemble_config_type * );
@@ -54,7 +54,7 @@ bool                     ensemble_config_has_key(const ensemble_config_type * , 
 enkf_config_node_type  * ensemble_config_add_node(ensemble_config_type * ,
                                                 const char    * ,
                                                 enkf_var_type ,
-                                                enkf_impl_type ,
+                                                ert_impl_type ,
                                                 const char   * ,
                                                 const char   * ,
                                                 void         * );
@@ -65,7 +65,7 @@ void                          ensemble_config_add_config_items(config_type * );
 enkf_config_node_type       * ensemble_config_get_node(const ensemble_config_type * , const char * );
 stringlist_type             * ensemble_config_alloc_keylist(const ensemble_config_type *);
 stringlist_type             * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type *  , int var_mask);
-stringlist_type             * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *  , enkf_impl_type );
+stringlist_type             * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *  , ert_impl_type );
 bool                          ensemble_config_iget_keep_runpath(const ensemble_config_type * , int );
 ensemble_config_type        * ensemble_config_alloc_empty( );
 void                          ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream );

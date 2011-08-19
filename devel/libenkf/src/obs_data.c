@@ -199,12 +199,12 @@ static void obs_block_init_scaling( const obs_block_type * obs_block , double * 
 }
 
 
-static void obs_block_init_innov( const obs_block_type * obs_block , const meas_block_type * meas_block , double * innov , int * __obs_offset) {
+static void obs_block_init_innov( const obs_block_type * obs_block , const meas_block_type * meas_block , matrix_type * innov , int * __obs_offset) {
   int obs_offset = *__obs_offset;
   int iobs;
   for (iobs =0; iobs < obs_block->size; iobs++) {
     if (obs_block->active_mode[iobs] == ACTIVE) {
-      innov[ obs_offset ] = obs_block->value[ iobs ] - meas_block_iget_ens_mean( meas_block , iobs );
+      matrix_iset( innov , obs_offset , 0 , obs_block->value[ iobs ] - meas_block_iget_ens_mean( meas_block , iobs ));
       obs_offset++;
     }
   }
@@ -527,11 +527,8 @@ matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size) 
 }
 
 
-
-
-
-double * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_data_type * meas_data , int active_size) {
-  double *innov = util_malloc( active_size * sizeof * innov , __func__);
+matrix_type * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_data_type * meas_data , int active_size) {
+  matrix_type * innov = matrix_alloc( active_size , 1 );
   {
     int obs_offset = 0;
     for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
@@ -546,7 +543,7 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_data_t
 
 
 
-void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov) {
+void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , matrix_type * innov) {
   const int nrobs_active = matrix_get_rows( S );
   const int ens_size     = matrix_get_columns( S );
   double * scale_factor  = util_malloc(nrobs_active * sizeof * scale_factor , __func__);
@@ -567,17 +564,17 @@ void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_typ
     for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
 
       /* Scale the forecasted data so that they (in theory) have the same variance 
-	 (if the prior distribution for the observation errors is correct) */
+         (if the prior distribution for the observation errors is correct) */
       matrix_imul(S , iobs_active , iens , scale_factor[iobs_active]);
 
       if (D != NULL)
-	/* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where 
-	   each column contains a copy of the observed data
-	 */
+        /* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where 
+           each column contains a copy of the observed data
+         */
         matrix_imul(D , iobs_active , iens , scale_factor[iobs_active]);
 
       if (E != NULL)
-	/* Same with E (used for low rank representation of the error covariance matrix*/
+        /* Same with E (used for low rank representation of the error covariance matrix*/
         matrix_imul(E , iobs_active , iens , scale_factor[iobs_active]);
     }
   }
@@ -585,7 +582,7 @@ void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_typ
   if (innov != NULL)
     /* Scale the vector of innovations*/
     for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
-      innov[iobs_active] *= scale_factor[iobs_active];
+      matrix_imul( innov , iobs_active , 0 , scale_factor[iobs_active]);
   
   {
     /* Scale the error covariance matrix*/
@@ -618,17 +615,17 @@ void obs_data_scale_kernel(const obs_data_type * obs_data , matrix_type *S , mat
     for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
 
       /* Scale the forecasted data so that they (in theory) have the same variance 
-	 (if the prior distribution for the observation errors is correct) */
+         (if the prior distribution for the observation errors is correct) */
       matrix_imul(S , iobs_active , iens , scale_factor[iobs_active]);
 
       if (D != NULL)
-	/* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where 
-	   each column contains a copy of the observed data
-	 */
+        /* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where 
+           each column contains a copy of the observed data
+         */
         matrix_imul(D , iobs_active , iens , scale_factor[iobs_active]);
       
       if (E != NULL)
-	/* Same with E (used for low rank representation of the error covariance matrix*/
+        /* Same with E (used for low rank representation of the error covariance matrix*/
         matrix_imul(E , iobs_active , iens , scale_factor[iobs_active]);
     }
   }

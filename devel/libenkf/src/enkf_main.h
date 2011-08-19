@@ -83,8 +83,8 @@ bool                          enkf_main_has_key(const enkf_main_type * , const c
 
 
 void                          enkf_main_add_gen_kw(enkf_main_type * , const char * );
-void                          enkf_main_add_type(enkf_main_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);
-void                          enkf_main_add_type0(enkf_main_type * , const char * , int , enkf_var_type , enkf_impl_type );
+void                          enkf_main_add_type(enkf_main_type * , const char * , enkf_var_type , ert_impl_type , const char * , const void *);
+void                          enkf_main_add_type0(enkf_main_type * , const char * , int , enkf_var_type , ert_impl_type );
 void                          enkf_main_add_well(enkf_main_type * , const char * , int , const char ** );
 void                          enkf_main_analysis(enkf_main_type * );
 void                          enkf_main_free(enkf_main_type * );
@@ -106,7 +106,7 @@ enkf_node_type             ** enkf_main_get_node_ensemble(const enkf_main_type *
 void                          enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean );
 void                          enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const enkf_node_type * mean , enkf_node_type * std);
 
-enkf_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
+ert_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
 enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );
 
 const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);

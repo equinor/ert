@@ -95,8 +95,8 @@ void enkf_util_truncate(void * void_data , int size , ecl_type_enum ecl_type , v
 
 
 
-void enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_type) {
-  enkf_impl_type file_type;
+void enkf_util_assert_buffer_type(buffer_type * buffer, ert_impl_type target_type) {
+  ert_impl_type file_type;
   file_type = buffer_fread_int(buffer);
   if (file_type != target_type) 
     util_abort("%s: wrong target type in file (expected:%d  got:%d)  - aborting \n",__func__ , target_type , file_type);
@@ -104,15 +104,15 @@ void enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_ty
 }
 
 
-void enkf_util_fread_assert_target_type_from_buffer(char ** ptr , enkf_impl_type target_type) {
-  enkf_impl_type file_type;
+void enkf_util_fread_assert_target_type_from_buffer(char ** ptr , ert_impl_type target_type) {
+  ert_impl_type file_type;
   util_fread_from_buffer( &file_type , sizeof file_type , 1 , ptr);
   if (file_type != target_type) 
     util_abort("%s: wrong target type in file (expected:%d  got:%d)  - aborting \n",__func__ , target_type , file_type);
 }
 
 
-void enkf_util_fwrite_target_type(FILE * stream , enkf_impl_type target_type) {
+void enkf_util_fwrite_target_type(FILE * stream , ert_impl_type target_type) {
   util_fwrite_int(target_type , stream);
 }
 

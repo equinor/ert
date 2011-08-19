@@ -118,7 +118,7 @@ void             enkf_node_free__(void *);
 void             enkf_initialize    (enkf_node_type * , int);
 bool             enkf_node_include_type(const enkf_node_type * , int );
 void           * enkf_node_value_ptr(const enkf_node_type * );
-enkf_impl_type   enkf_node_get_impl_type(const enkf_node_type * );
+ert_impl_type    enkf_node_get_impl_type(const enkf_node_type * );
 enkf_var_type    enkf_node_get_var_type(const enkf_node_type * );
 void             enkf_node_clear_serial_state(enkf_node_type * );
 void             enkf_node_serialize(enkf_node_type *enkf_node , const active_list_type * active_list , matrix_type * A , int row_offset , int column);
@@ -158,7 +158,7 @@ const char     *  enkf_node_get_swapfile(const enkf_node_type *);
 bool              enkf_node_has_func(const enkf_node_type * , node_function_type );
 bool              enkf_node_internalize(const enkf_node_type * , int );
 
-void              enkf_node_upgrade_file_103( const char * path , const char * file , enkf_impl_type impl_type , int perc_complete , msg_type * msg);
+void              enkf_node_upgrade_file_103( const char * path , const char * file , ert_impl_type impl_type , int perc_complete , msg_type * msg);
 
 #ifdef __cplusplus
 }

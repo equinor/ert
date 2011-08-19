@@ -61,7 +61,7 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
   
 
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
-                                               enkf_impl_type        ,
+                                               ert_impl_type        ,
                                                const char          * ,
                                                const char          * , 
                                                const char          * , 
@@ -118,7 +118,7 @@ void                    enkf_config_node_free(enkf_config_node_type * );
 bool                    enkf_config_node_include_type(const enkf_config_node_type * , int );
 int                     enkf_config_node_get_serial_size(enkf_config_node_type *, int *);
 bool                    enkf_config_node_include_type(const enkf_config_node_type * , int);
-enkf_impl_type          enkf_config_node_get_impl_type(const enkf_config_node_type *);
+ert_impl_type           enkf_config_node_get_impl_type(const enkf_config_node_type *);
 enkf_var_type           enkf_config_node_get_var_type(const enkf_config_node_type *);
       void     *        enkf_config_node_get_ref(const enkf_config_node_type * );
 const char     *        enkf_config_node_get_key(const enkf_config_node_type * );

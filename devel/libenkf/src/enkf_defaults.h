@@ -96,6 +96,7 @@
    instantiated with these values.
 */
 #define DEFAULT_ENKF_MODE          ENKF_STANDARD
+#define DEFAULT_NCOMP              1
 #define DEFAULT_ENKF_TRUNCATION    0.99
 #define DEFAULT_ENKF_ALPHA         1.50      /* Should be raised ?? */
 #define DEFAULT_ENKF_STD_CUTOFF    1e-6
@@ -104,7 +105,6 @@
 #define DEFAULT_RERUN_START        0  
 #define DEFAULT_UPDATE_LOG_PATH    "update_log"
 #define DEFAULT_CV_NFOLDS          10
-#define DEFAULT_NCOMP              1
 #define DEFAULT_ENKF_SCALING       true
 #define DEFAULT_ENKF_KERNEL_REG    false
 #define DEFAULT_ENKF_KERNEL_FUNC   1    /*Default is the Gaussian */

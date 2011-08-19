@@ -280,7 +280,7 @@ bool enkf_node_include_type(const enkf_node_type * enkf_node, int mask) {
 }
 
 
-enkf_impl_type enkf_node_get_impl_type(const enkf_node_type * enkf_node) {
+ert_impl_type enkf_node_get_impl_type(const enkf_node_type * enkf_node) {
   return enkf_config_node_get_impl_type(enkf_node->config);
 }
 
@@ -640,7 +640,7 @@ void enkf_node_invalidate_cache( enkf_node_type * node ) {
 /* Manual inheritance - .... */
 static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *config) {
   const char *node_key     = enkf_config_node_get_key(config);
-  enkf_impl_type impl_type = enkf_config_node_get_impl_type(config);
+  ert_impl_type impl_type = enkf_config_node_get_impl_type(config);
   enkf_node_type * node    = util_malloc(sizeof * node , __func__);
   node->config             = config;
   node->node_key           = util_alloc_string_copy(node_key);

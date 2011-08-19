@@ -319,16 +319,16 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
       
       
       if (config_item_set( config ,ENKF_NCOMP_KEY )) 
-	analysis_config_set_subspace_dimension( analysis, config_get_value_as_int( config, ENKF_NCOMP_KEY ));
+        analysis_config_set_subspace_dimension( analysis, config_get_value_as_int( config, ENKF_NCOMP_KEY ));
       else if (config_item_set( config ,ENKF_LOCAL_CV_KEY )) {
-	analysis_config_set_CV( analysis , ENKF_LOCAL_CV_KEY);
-	/* Set number of CV folds (default, or user input */
-	if (config_item_set( config , ENKF_CV_FOLDS_KEY ))
-	  analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , ENKF_CV_FOLDS_KEY ));
+        analysis_config_set_CV( analysis , ENKF_LOCAL_CV_KEY);
+        /* Set number of CV folds (default, or user input */
+        if (config_item_set( config , ENKF_CV_FOLDS_KEY ))
+          analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , ENKF_CV_FOLDS_KEY ));
       } 
       else {
-	if (config_item_set( config , ENKF_TRUNCATION_KEY ))
-	  analysis_config_set_truncation( analysis , config_get_value_as_double( config , ENKF_TRUNCATION_KEY ));
+        if (config_item_set( config , ENKF_TRUNCATION_KEY ))
+          analysis_config_set_truncation( analysis , config_get_value_as_double( config , ENKF_TRUNCATION_KEY ));
       }
     }
     
@@ -394,24 +394,24 @@ analysis_config_type * analysis_config_alloc_default() {
   config->random_rotation           = true;
   config->log_path                  = NULL;
 
-  analysis_config_set_CV( config                 , DEFAULT_ENKF_CV);
+  analysis_config_set_CV( config                       , DEFAULT_ENKF_CV);
   analysis_config_set_force_subspace_dimension( config , DEFAULT_ENKF_FORCE_NCOMP);
-  analysis_config_set_bootstrap( config          , DEFAULT_ENKF_BOOTSTRAP );
-  analysis_config_set_penalised_press( config    , DEFAULT_ENKF_PEN_PRESS );
-  analysis_config_set_do_scaling( config         , DEFAULT_ENKF_SCALING );
-  analysis_config_set_do_kernel_regression( config , DEFAULT_ENKF_KERNEL_REG );
-  analysis_config_set_kernel_function( config    , DEFAULT_ENKF_KERNEL_FUNC );
-  analysis_config_set_kernel_param( config       , DEFAULT_ENKF_KERNEL_PARAM );
-  analysis_config_set_std_cutoff( config         , DEFAULT_ENKF_STD_CUTOFF );
-  analysis_config_set_log_path( config           , DEFAULT_UPDATE_LOG_PATH );
-  analysis_config_set_truncation( config         , DEFAULT_ENKF_TRUNCATION );
-  analysis_config_set_alpha( config              , DEFAULT_ENKF_ALPHA );
-  analysis_config_set_merge_observations( config , DEFAULT_MERGE_OBSERVATIONS );
-  analysis_config_set_enkf_mode ( config         , DEFAULT_ENKF_MODE );
-  analysis_config_set_rerun( config              , DEFAULT_RERUN );
-  analysis_config_set_rerun_start( config        , DEFAULT_RERUN_START );
-  analysis_config_set_nfolds_CV( config          , DEFAULT_CV_NFOLDS );         
-  analysis_config_set_subspace_dimension( config , DEFAULT_NCOMP );         
+  analysis_config_set_bootstrap( config                , DEFAULT_ENKF_BOOTSTRAP );
+  analysis_config_set_penalised_press( config          , DEFAULT_ENKF_PEN_PRESS );
+  analysis_config_set_do_scaling( config               , DEFAULT_ENKF_SCALING );
+  analysis_config_set_do_kernel_regression( config     , DEFAULT_ENKF_KERNEL_REG );
+  analysis_config_set_kernel_function( config          , DEFAULT_ENKF_KERNEL_FUNC );
+  analysis_config_set_kernel_param( config             , DEFAULT_ENKF_KERNEL_PARAM );
+  analysis_config_set_std_cutoff( config               , DEFAULT_ENKF_STD_CUTOFF );
+  analysis_config_set_log_path( config                 , DEFAULT_UPDATE_LOG_PATH );
+  analysis_config_set_truncation( config               , DEFAULT_ENKF_TRUNCATION );
+  analysis_config_set_alpha( config                    , DEFAULT_ENKF_ALPHA );
+  analysis_config_set_merge_observations( config       , DEFAULT_MERGE_OBSERVATIONS );
+  analysis_config_set_enkf_mode ( config               , DEFAULT_ENKF_MODE );
+  analysis_config_set_rerun( config                    , DEFAULT_RERUN );
+  analysis_config_set_rerun_start( config              , DEFAULT_RERUN_START );
+  analysis_config_set_nfolds_CV( config                , DEFAULT_CV_NFOLDS );         
+  analysis_config_set_subspace_dimension( config       , DEFAULT_NCOMP );         
   
   return config;
 }

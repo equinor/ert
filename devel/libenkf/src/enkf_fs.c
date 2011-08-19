@@ -821,7 +821,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
     {
       fs_driver_type * driver = fs_driver_safe_cast(_driver);
       if (report_step == 0) {
-        enkf_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
+        ert_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
         if (impl_type == SUMMARY) return;    /* For report step == 0 the summary data is just garbage. */
       }
       {
@@ -950,7 +950,7 @@ void enkf_fs_copy_node(enkf_fs_type * enkf_fs,
   /* Hack to ensure that size is set for the gen_data instances.
      This sneeks low level stuff into a high level scope. BAD. */
   {
-    enkf_impl_type impl_type = enkf_node_get_impl_type( enkf_node );
+    ert_impl_type impl_type = enkf_node_get_impl_type( enkf_node );
     if (impl_type == GEN_DATA) {
       /* Read the size at report_step_from */
       gen_data_type * gen_data = enkf_node_value_ptr( enkf_node );

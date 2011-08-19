@@ -727,7 +727,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
     {
       int ikw; 
       for (ikw =0; ikw < ecl_file_get_num_kw( restart_file ); ikw++) {
-        enkf_impl_type impl_type;
+        ert_impl_type impl_type;
         const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
         int occurence              = ecl_file_iget_occurence( restart_file , ikw ); /* This is essentially the static counter value. */
         char * kw                  = util_alloc_string_copy( ecl_kw_get_header( ecl_kw ) );

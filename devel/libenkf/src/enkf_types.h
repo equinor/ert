@@ -78,8 +78,8 @@ keep_runpath_type;
 
 
 /* 
-   enkf_impl_type are the actual node implementation types. Observe
-   that one enkf_impl_type can be used in several ways as
+   ert_impl_type are the actual node implementation types. Observe
+   that one ert_impl_type can be used in several ways as
    enkf_var_type. For instance the pressure is implemented with a
    field, and behaves as a dynamic_state variable, on the other hand
    the permeability is also implemented as a field, but this is a
@@ -99,7 +99,7 @@ typedef enum {INVALID          = 0   ,
               GEN_KW           = 107 ,       /* RELPERM has been removed & HAVANA_FAULT */
               SUMMARY          = 110 ,       /* TPGZONE has been removed */
               GEN_DATA         = 113 ,       /* PILOT_POINT has been removed */
-              MAX_IMPL_TYPE    = 113 } enkf_impl_type;
+              MAX_IMPL_TYPE    = 113 } ert_impl_type;
 
   
 
@@ -228,15 +228,15 @@ typedef enum {
 
 
 /*****************************************************************/
-
 typedef struct enkf_obs_struct enkf_obs_type;
+
   
 
 
 const char      * enkf_types_get_var_name(enkf_var_type var_type);
-enkf_impl_type    enkf_types_get_impl_type(const char * );
-const char      * enkf_types_get_impl_name(enkf_impl_type );
-enkf_impl_type    enkf_types_check_impl_type(const char * );
+ert_impl_type     enkf_types_get_impl_type(const char * );
+const char      * enkf_types_get_impl_name(ert_impl_type );
+ert_impl_type     enkf_types_check_impl_type(const char * );
 
 #ifdef __cplusplus
 }

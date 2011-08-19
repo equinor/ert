@@ -63,7 +63,7 @@ static UTIL_SAFE_CAST_FUNCTION( meas_block , MEAS_BLOCK_TYPE_ID )
    Observe that meas_block instance must be allocated with a correct
    value for obs_size; it can not grow during use, and it does also
    not count the number of elements added.
-
+   
    Observe that the input argument @obs_size should be the total size
    of the observation; if parts of the observation have been excluded
    due to local analysis it should still be included in the @obs_size

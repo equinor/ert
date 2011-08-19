@@ -11,6 +11,8 @@ from   global_config import LIBPLOT
 from   global_config import LIBSCHED
 from   global_config import LIBPLOT
 from   global_config import LIBJOB_QUEUE
+from   global_config import LIBANALYSIS
+
 from   global_config import add_static_library
 from   global_config import add_shared_library
 from   global_config import add_header

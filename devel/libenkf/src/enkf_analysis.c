@@ -28,6 +28,7 @@
 #include <enkf_analysis.h>
 #include <timer.h>
 #include <rng.h>
+//#include <analysis_module.h>
 
 /**
    The static functions at the top are identical to the old fortran
@@ -71,8 +72,23 @@ static void genX2(matrix_type * X2 , const matrix_type * S , const matrix_type *
 }
 
 
+/**
+   The number of significant singular values to retain can either be
+   forced to a fixed number, or a cutoff on small values can be
+   used. This behaviour is regulated by the @ncomp and @truncation
+   parameters:
 
-/* 
+     ncomp > 0 , truncation < 0: Use ncomp parameters.
+     ncomp < 0 , trunctaion > 0: Truncate at level 'truncation'
+     
+   If the ncomp,truncation input does not satisfy the requirements
+   above the function will crash and burn.
+
+   Singular values stored in sig0, , left hand singular vectors in U0
+   and right hand singular vector in V0T 
+
+   -------
+
    Input is the S - matrix. U0 comes directly from dgesvd, sig0 has
    been seriously massaged. The right singular vectors of S are
    returned in V0T, this can be NULL.
@@ -90,84 +106,70 @@ static void genX2(matrix_type * X2 , const matrix_type * S , const matrix_type *
    The input parameters in this function are NOT orthogonal.
 */
 
-static void svdS(const matrix_type * S , matrix_type * U0 , matrix_type * V0T , dgesvd_vector_enum jobVT , double * sig0, double truncation) {
-  int num_singular_values = util_int_min( matrix_get_rows( S ) , matrix_get_columns( S ));
-  {
-    /* 
-       The svd routine will destroy the contents of the input matrix,
-       we therefor have to store a copy of S before calling it. The
-       fortran implementation seems to handle this automagically??
-    */
-    matrix_type        * workS     = matrix_alloc_copy( S );
-    matrix_dgesvd(DGESVD_MIN_RETURN , jobVT , workS , sig0 , U0 , V0T);  /* Have singular values in s0, , left hand singular vectors in U0 and right hand singular vector in V0T */
-    matrix_free( workS );
-  }
+
+
+static void svdS(const matrix_type * S , 
+                 matrix_type * U0 , 
+                 matrix_type * V0T , 
+                 dgesvd_vector_enum jobVT , 
+                 double * sig0, 
+                 double truncation , 
+                 int ncomp) {
   
-  {
-    double total_sigma2    = 0.0;
-    double running_sigma2  = 0.0;
-    int    num_significant = 0;
-    int i;
-    for (i=0; i < num_singular_values; i++)
-      total_sigma2 += sig0[i] * sig0[i];
-    
-    for (i=0; i < num_singular_values; i++) {
-      if (running_sigma2 / total_sigma2 < truncation) {  /* Include one more singular value ? */
-        num_significant++;
-        running_sigma2 += sig0[i] * sig0[i];
-      } else 
-        break;
-    }
-
-    printf("Subspace dimension selected based on a truncation factor of %0.6f : %d\n",truncation,num_significant);
-
-    /* Explicitly setting the insignificant singular values to zero. */
-    for (i=num_significant; i < num_singular_values; i++)
-      sig0[i] = 0;                                     
-    
-    /* Inverting the significant singular values */
-    for (i = 0; i < num_significant; i++)
-      sig0[i] = 1.0 / sig0[i];
-  }
-}
-
-
-static void svdS_force(const matrix_type * S , matrix_type * U0 , matrix_type * V0T , dgesvd_vector_enum jobVT , double * sig0, int ncomp) {
-  int num_singular_values = util_int_min( matrix_get_rows( S ) , matrix_get_columns( S ));
-  {
-    /* 
-       The svd routine will destroy the contents of the input matrix,
-       we therefor have to store a copy of S before calling it. The
-       fortran implementation seems to handle this automagically??
-    */
-    matrix_type        * workS     = matrix_alloc_copy( S );
-    matrix_dgesvd(DGESVD_MIN_RETURN , jobVT , workS , sig0 , U0 , V0T);  /* Have singular values in s0, , left hand singular vectors in U0 and right hand singular vector in V0T */
-    matrix_free( workS );
-  }
-  
-  {
-    double total_sigma2    = 0;
-    double running_sigma2  = 0;
-    int    num_significant = ncomp;
-    int i;
-    for (i=0; i < num_singular_values; i++)
-      total_sigma2 += sig0[i] * sig0[i];
-    
-    for (i=0; i < ncomp; i++) {
-      running_sigma2 += sig0[i] * sig0[i];
+  if (((truncation > 0) && (ncomp < 0)) ||
+      ((truncation < 0) && (ncomp > 0))) {
+    int num_singular_values = util_int_min( matrix_get_rows( S ) , matrix_get_columns( S ));
+    {
+      /* 
+         The svd routine will destroy the contents of the input matrix,
+         we therefor have to store a copy of S before calling it. 
+      */
+      matrix_type        * workS     = matrix_alloc_copy( S );
+      matrix_dgesvd(DGESVD_MIN_RETURN , jobVT , workS , sig0 , U0 , V0T);  
+      matrix_free( workS );
     }
     
-    printf("Selected %d components. Variance explained = %f \n",ncomp,running_sigma2 / total_sigma2);
-
-
-    /* Explicitly setting the insignificant singular values to zero. */
-    for (i=num_significant; i < num_singular_values; i++)
-      sig0[i] = 0;                                     
-    
-    /* Inverting the significant singular values */
-    for (i = 0; i < num_significant; i++)
-      sig0[i] = 1.0 / sig0[i];
-  }
+    {
+      int    num_significant;
+      int i;
+      /* Determine the number of singular values to include */
+      {
+        double total_sigma2    = 0;
+        double running_sigma2  = 0;
+        for (i=0; i < num_singular_values; i++)
+          total_sigma2 += sig0[i] * sig0[i];
+        
+        if (ncomp > 0) {   
+          /* Use a fixed number of singular values given exetrnally. */
+          num_significant = ncomp;
+          for (i=0; i < ncomp; i++) 
+            running_sigma2 += sig0[i] * sig0[i];
+        } else {
+          /* Determine the number of singular values by enforcing that
+             less than a fraction @truncation of the total variance be
+             accounted for. */
+          num_significant = 0;
+          for (i=0; i < num_singular_values; i++) {
+            if (running_sigma2 / total_sigma2 < truncation) {  /* Include one more singular value ? */
+              num_significant++;
+              running_sigma2 += sig0[i] * sig0[i];
+            } else 
+              break;
+          }
+        }
+        printf("Selected %d components. Variance explained = %f \n",num_significant , running_sigma2 / total_sigma2);
+      }
+      
+      /* Explicitly setting the insignificant singular values to zero. */
+      for (i=num_significant; i < num_singular_values; i++)
+        sig0[i] = 0;                                     
+      
+      /* Inverting the significant singular values */
+      for (i = 0; i < num_significant; i++)
+        sig0[i] = 1.0 / sig0[i];
+    }
+  } else 
+    util_abort("%s:  truncation:%g  ncomp:%d  - invalid input \n",__func__ , truncation , ncomp );
 }
 
 
@@ -256,8 +258,8 @@ int enkf_analysis_get_optimal_numb_comp(const matrix_type * cvErr , const int ma
     printf("Selecting optimal number of components using Penalised PRESS statistic: \n");
     for ( i = 0; i < optP; i++){
       if( cvMean[i] - cvStd[i] <= minErr ){
-	optP = i+1;
-	break;
+        optP = i+1;
+        break;
       }
     }
   }
@@ -464,7 +466,7 @@ static void enkf_analysis_get_cv_error_prin_comp(matrix_type * cvErr , const mat
     matrix_type *ZpTrain = matrix_alloc( pOrg, nTrain );
     for (i = 0; i < pOrg ; i++) {
       for (j = 0; j < nTrain; j++) {
-	matrix_iset(ZpTrain , i , j , matrix_iget(Z , i ,indexTrain[j]));
+        matrix_iset(ZpTrain , i , j , matrix_iget(Z , i ,indexTrain[j]));
       }
     }
 
@@ -476,8 +478,8 @@ static void enkf_analysis_get_cv_error_prin_comp(matrix_type * cvErr , const mat
 
     for(i = 0; i < pOrg; i++) {
       for( j = 0; j < pOrg; j++) {
-	tmp2 = matrix_iget(SigDp , i , j) + tmp3 * matrix_iget(Rp, i, j);
-	matrix_iset( SigDp , i , j , tmp2 );
+        tmp2 = matrix_iget(SigDp , i , j) + tmp3 * matrix_iget(Rp, i, j);
+        matrix_iset( SigDp , i , j , tmp2 );
       }
     }
     
@@ -495,11 +497,11 @@ static void enkf_analysis_get_cv_error_prin_comp(matrix_type * cvErr , const mat
     matrix_type * W = matrix_alloc(pOrg , nTest );
     for (i = 0; i < pOrg; i++) {
       for (j = 0; j < nTest; j++) {
-	tmp = 0.0;
+        tmp = 0.0;
         for (k = 0; k < pOrg; k++) {
-	  tmp += matrix_iget(SigDp , i , k) * matrix_iget(Z , k , indexTest[j]);
+          tmp += matrix_iget(SigDp , i , k) * matrix_iget(Z , k , indexTest[j]);
         }
-	matrix_iset(W , i , j , tmp);
+        matrix_iset(W , i , j , tmp);
       }
     }
 
@@ -537,124 +539,78 @@ static void enkf_analysis_get_cv_error_prin_comp(matrix_type * cvErr , const mat
 
 
 
+static void lowrankCinv__(const matrix_type * S , 
+                          const matrix_type * R , 
+                          matrix_type * V0T , 
+                          matrix_type * Z, 
+                          double * eig , 
+                          matrix_type * U0, 
+                          double truncation, 
+                          int ncomp) {
+  
+  const int nrobs = matrix_get_rows( S );
+  const int nrens = matrix_get_columns( S );
+  const int nrmin = util_int_min( nrobs , nrens );
+  
+  double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
+
+  if (V0T != NULL)
+    svdS(S , U0 , V0T , DGESVD_MIN_RETURN , sig0 , truncation , ncomp);
+  else
+    svdS(S , U0 , NULL /* V0T */ , DGESVD_NONE , sig0, truncation , ncomp);
+
+  {
+    matrix_type * B    = matrix_alloc( nrmin , nrmin );
+    lowrankCee( B , nrens , R , U0 , sig0);          /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
+    matrix_dgesvd(DGESVD_MIN_RETURN , DGESVD_NONE, B , eig, Z , NULL);
+    matrix_free( B );
+  }
+  
+  {
+    int i,j;
+    /* Lambda1 = (I + Lambda)^(-1) */
+
+    for (i=0; i < nrmin; i++) 
+      eig[i] = 1.0 / (1 + eig[i]);
+    
+    for (j=0; j < nrmin; j++)
+      for (i=0; i < nrmin; i++)
+        matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
+  }
+  util_safe_free( sig0 );
+}
 
 
+
+/**
+   See comment above svdS() for description of input arguments
+   truncation and ncomp.
+*/
 
 static void lowrankCinv(const matrix_type * S , 
                         const matrix_type * R , 
                         matrix_type * W       , /* Corresponding to X1 from Eq. 14.29 */
                         double * eig          , /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
-                        double truncation) {
+                        double truncation     ,
+                        int    ncomp) {
 
   const int nrobs = matrix_get_rows( S );
   const int nrens = matrix_get_columns( S );
   const int nrmin = util_int_min( nrobs , nrens );
 
-  matrix_type * B    = matrix_alloc( nrmin , nrmin );
   matrix_type * U0   = matrix_alloc( nrobs , nrmin );
   matrix_type * Z    = matrix_alloc( nrmin , nrmin );
-  double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
-
-  svdS(S , U0 , NULL /* V0T */ , DGESVD_NONE , sig0, truncation );
-  lowrankCee( B , nrens , R , U0 , sig0);            /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
-  matrix_dsyevx_all( DSYEVX_AUPPER , B , eig , Z);   /*(Eq. 14.27, Evensen, 2007)*/                       
-
-  /*****************************************************************/
-  {
-    int i,j;
-
-    for (i=0; i < nrmin; i++) 
-      eig[i] = 1.0 / (1 + eig[i]);
-
-    
-    for (j=0; j < nrmin; j++)
-      for (i=0; i < nrmin; i++)
-        matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
-  }
-  /******************************************************************/
-
+  
+  lowrankCinv__( S , R , NULL , Z , eig , U0 , truncation , ncomp);
   matrix_matmul(W , U0 , Z); /* X1 = W = U0 * Z2 = U0 * Sigma0^(+') * Z    */
-  util_safe_free( sig0 );
+
   matrix_free( U0 );
-  matrix_free( B  );
-  matrix_free( Z  );
-}
-
-/* HERE WE FORCE THE NUMBER OF PRINCIPAL COMPONENTS USED IN THE REGRESSION */
-static void lowrankCinv_force(const matrix_type * S , 
-                        const matrix_type * R , 
-                        matrix_type * W       , /* Corresponding to X1 from Eq. 14.29 */
-                        double * eig          , /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
-                        int ncomp) {
-
-  const int nrobs = matrix_get_rows( S );
-  const int nrens = matrix_get_columns( S );
-  const int nrmin = util_int_min( nrobs , nrens );
-
-  matrix_type * B    = matrix_alloc( nrmin , nrmin );
-  matrix_type * U0   = matrix_alloc( nrobs , nrmin );
-  matrix_type * Z    = matrix_alloc( nrmin , nrmin );
-  double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
-
-  svdS_force(S , U0 , NULL /* V0T */ , DGESVD_NONE , sig0, ncomp );
-  lowrankCee( B , nrens , R , U0 , sig0);            /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
-
-
-  matrix_dsyevx_all( DSYEVX_AUPPER , B , eig , Z);   /*(Eq. 14.27, Evensen, 2007)*/                       
-
-  /*****************************************************************/
-  {
-    int i,j;
-    /* Lambda1 = (I + Lambda)^(-1) */
-    for (i=0; i < nrmin; i++) 
-      eig[i] = 1.0 / (1 + eig[i]);
-    
-    for (j=0; j < nrmin; j++)
-      for (i=0; i < nrmin; i++)
-        matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
-  }
-  /******************************************************************/
-
-  matrix_matmul(W , U0 , Z); /* X1 = W = U0 * Z2 = U0 * Sigma0^(+') * Z    */
-  util_safe_free( sig0 );
-  matrix_free( U0 );
-  matrix_free( B  );
   matrix_free( Z  );
 }
 
 
 
-static void lowrankCinv_pre_cv(const matrix_type * S , const matrix_type * R , matrix_type * V0T , matrix_type * Z, double * eig , matrix_type * U0, double truncation) {
-  const int nrobs = matrix_get_rows( S );
-  const int nrens = matrix_get_columns( S );
-  const int nrmin = util_int_min( nrobs , nrens );
-  
-  matrix_type * B    = matrix_alloc( nrmin , nrmin );
-  double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
 
-  svdS(S , U0 , V0T , DGESVD_MIN_RETURN , sig0 , truncation);
-  lowrankCee( B , nrens , R , U0 , sig0);          /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
-  
-  /*USE SVD INSTEAD*/
-  matrix_dgesvd(DGESVD_MIN_RETURN , DGESVD_NONE, B , eig, Z , NULL);
-
-  matrix_free( B );
-
-  
-  {
-    int i,j;
-    /* Lambda1 = (I + Lambda)^(-1) */
-
-    for (i=0; i < nrmin; i++) 
-      eig[i] = 1.0 / (1 + eig[i]);
-
-
-    
-    for (j=0; j < nrmin; j++)
-      for (i=0; i < nrmin; i++)
-        matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
-  }
-}
 
 
 
@@ -665,7 +621,7 @@ static void lowrankCinv_pre_cv(const matrix_type * S , const matrix_type * R , m
 
 /*Special function for doing cross-validation */ 
 static void getW_pre_cv(matrix_type * W , const matrix_type * V0T, const matrix_type * Z , double * eig , const matrix_type * U0 , int nfolds_CV, 
-			const matrix_type * A, int unique_bootstrap_components , rng_type * rng, bool pen_press) {
+                        const matrix_type * A, int unique_bootstrap_components , rng_type * rng, bool pen_press) {
 
   const int nrobs = matrix_get_rows( U0 );
   const int nrens = matrix_get_columns( V0T );
@@ -862,7 +818,7 @@ int get_optimal_principal_components(const matrix_type * Z , const matrix_type *
 
 /*NB! HERE WE COUNT optP from 0,1,2,... */
 static void getW_prin_comp(matrix_type *W , const matrix_type * Z , 
-			   const matrix_type * Rp , const int optP) { 
+                           const matrix_type * Rp , const int optP) { 
 
   int i, j;
   double tmp2;
@@ -916,7 +872,7 @@ static void getW_prin_comp(matrix_type *W , const matrix_type * Z ,
 
   
 
-static void meanX5(const matrix_type * S , const matrix_type * W , const double * eig , const double * innov , matrix_type * X5) {
+static void meanX5(const matrix_type * S , const matrix_type * W , const double * eig , const matrix_type * innov , matrix_type * X5) {
   const int nrens = matrix_get_columns( S );
   const int nrobs = matrix_get_rows( S );
   const int nrmin = util_int_min( nrobs , nrens );
@@ -929,13 +885,13 @@ static void meanX5(const matrix_type * S , const matrix_type * W , const double 
     
     if (nrobs == 1) {
       /* Is this special casing necessary ??? */
-      y1[0] = matrix_iget(W , 0,0) * innov[0];
+      y1[0] = matrix_iget(W , 0,0) * matrix_iget( innov , 0 , 0);
       y2[0] = eig[0] * y1[0];
       y3[0] = matrix_iget(W , 0, 0) *y2[0];
       for (int iens = 0; iens < nrens; iens++)
         y4[iens] = y3[0] * matrix_iget(S , 0, iens);
     } else {
-      matrix_dgemv(W , innov , y1 , true , 1.0, 0.0);   /* y1 = Trans(W) * innov */
+      matrix_dgemv(W , matrix_get_data( innov ) , y1 , true , 1.0, 0.0);   /* y1 = Trans(W) * innov */
       for (int i= 0; i < nrmin; i++)
         y2[i] = eig[i] * y1[i];                         /* y2 = eig * y1      */
       matrix_dgemv(W , y2 , y3 , false , 1.0 , 0.0);    /* y3 = W * y2;       */ 
@@ -1134,47 +1090,31 @@ matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size , rng_type * rng) {
 
 
 void enkf_analysis_invertS(const analysis_config_type * config , const matrix_type * S , const matrix_type * R , matrix_type * W , double * eig) {
-  double truncation                     = analysis_config_get_truncation( config );
   pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );  
+  bool force_subspace_dimension         = analysis_config_get_force_subspace_dimension( config );
+  int  ens_size                         = matrix_get_columns( S );  
+  int  nrobs                            = matrix_get_rows( S ); 
+  double truncation                     = -1;
+  int    ncomp                          = -1;
 
+  if (force_subspace_dimension) {
+    ncomp = analysis_config_get_subspace_dimension( config );
+    /* Check if the dimension is appropropriate. If not, change to default */
+    if (ncomp > util_int_min( ens_size - 1, nrobs) ) {
+      printf("Selected number of components, %d, too high. Changing to default value: 1\n",ncomp);
+      ncomp = 1;
+    }
+  } else
+    truncation = analysis_config_get_truncation( config );
   
   switch (inversion_mode) {
   case(SVD_SS_N1_R):
-    lowrankCinv( S , R , W , eig , truncation );    
+    lowrankCinv( S , R , W , eig , truncation , ncomp);    
     break;
   default:
     util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
   }
 }
-
-
-void enkf_analysis_invertS_force(const analysis_config_type * config , const matrix_type * S , const matrix_type * R , matrix_type * W , double * eig, int ncomp) {
-  pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );  
-  
-  switch (inversion_mode) {
-  case(SVD_SS_N1_R):
-    lowrankCinv_force( S , R , W , eig , ncomp );    
-    break;
-  default:
-    util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
-  }
-}
-
-
-
-
-/*Find optimal truncation factor based on k-fold CV */
-//void enkf_analysis_invertS_cv(const analysis_config_type * config , const matrix_type * S , const matrix_type * R , matrix_type * W , double * eig, int nfolds_CV , matrix_type * A) {
-//  pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );  
-//  
-//  switch (inversion_mode) {
-//  case(SVD_SS_N1_R):
-//    lowrankCinv_CV( S , R , W , eig , nfolds_CV , A);    
-//    break;
-//  default:
-//    util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
-//  }
-//}
 
 
 
@@ -1184,7 +1124,7 @@ void enkf_analysis_invertS_pre_cv(const analysis_config_type * config , const ma
   
   switch (inversion_mode) {
   case(SVD_SS_N1_R):
-    lowrankCinv_pre_cv( S , R , V0T , Z , eig , U0 , truncation);    
+    lowrankCinv__( S , R , V0T , Z , eig , U0 , truncation , -1);    
     break;
   default:
     util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
@@ -1193,14 +1133,6 @@ void enkf_analysis_invertS_pre_cv(const analysis_config_type * config , const ma
 
 
 
-
-/**
-   Observe the following about the S matrix:
-
-   1. On input the matrix is supposed to contain actual measurement values.
-   2. On return the ensemble mean has been shifted away ...
-   
-*/
 
 
 static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , const matrix_type * D , const matrix_type * W , const double * eig, bool bootstrap) {
@@ -1221,7 +1153,7 @@ static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , co
 }
 
 
-static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const matrix_type * randrot , const double * innov , const matrix_type * W , const double * eig , bool bootstrap) {
+static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const matrix_type * randrot , const matrix_type * innov , const matrix_type * W , const double * eig , bool bootstrap) {
   const int nrobs   = matrix_get_rows( S );
   const int nrens   = matrix_get_columns( S );
   const int nrmin   = util_int_min( nrobs , nrens );
@@ -1358,18 +1290,21 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type
 */
 
 static void enkf_analysis_alloc_matrices( rng_type * rng , 
-                                          const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
+                                          const meas_data_type * meas_data , 
+                                          obs_data_type * obs_data , 
+                                          enkf_mode_type enkf_mode , 
                                           matrix_type ** S , 
                                           matrix_type ** R , 
-                                          double      ** innov,
+                                          matrix_type ** innov,
                                           matrix_type ** E ,
-                                          matrix_type ** D ) {
+                                          matrix_type ** D , 
+                                          bool scale) {
   int ens_size              = meas_data_get_ens_size( meas_data );
   int active_size           = obs_data_get_active_size( obs_data );
 
   *S                        = meas_data_allocS( meas_data , active_size );
   *R                        = obs_data_allocR( obs_data , active_size );
-  *innov                    = obs_data_alloc_innov(obs_data , meas_data , active_size );
+  *innov                    = obs_data_alloc_innov( obs_data , meas_data , active_size );
   
   if (enkf_mode == ENKF_STANDARD) {
     /* 
@@ -1384,38 +1319,8 @@ static void enkf_analysis_alloc_matrices( rng_type * rng ,
     *D          = NULL;
   }
 
-  obs_data_scale(obs_data ,  *S , *E , *D , *R , *innov );
-  matrix_subtract_row_mean( *S );  /* Subtracting the ensemble mean */
-}
-
-static void enkf_analysis_alloc_matrices_no_scaling( rng_type * rng , 
-                                          const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
-                                          matrix_type ** S , 
-                                          matrix_type ** R , 
-                                          double      ** innov,
-                                          matrix_type ** E ,
-                                          matrix_type ** D ) {
-  int ens_size              = meas_data_get_ens_size( meas_data );
-  int active_size           = obs_data_get_active_size( obs_data );
-
-  *S                        = meas_data_allocS( meas_data , active_size );
-  *R                        = obs_data_allocR( obs_data , active_size );
-  *innov                    = obs_data_alloc_innov(obs_data , meas_data , active_size );
-  
-  if (enkf_mode == ENKF_STANDARD) {
-    /* 
-       We are using standard EnKF and need to perturbe the measurements,
-       if we are using the SQRT scheme the E & D matrices are not used.
-    */
-    *E = obs_data_allocE(obs_data , rng , ens_size, active_size );
-    *D = obs_data_allocD(obs_data , *E , *S );
-    
-  } else {
-    *E          = NULL;
-    *D          = NULL;
-  }
-
-  /*obs_data_scale(obs_data ,  *S , *E , *D , *R , *innov );*/
+  if (scale)
+    obs_data_scale(obs_data ,  *S , *E , *D , *R , *innov );
   matrix_subtract_row_mean( *S );  /* Subtracting the ensemble mean */
 }
 
@@ -1425,28 +1330,32 @@ static void enkf_analysis_alloc_matrices_no_scaling( rng_type * rng ,
 
 
 static void enkf_analysis_alloc_matrices_boot( rng_type * rng , 
-                                               const meas_data_type * meas_data , obs_data_type * obs_data , enkf_mode_type enkf_mode , 
+                                               const meas_data_type * meas_data , 
+                                               obs_data_type * obs_data , 
+                                               enkf_mode_type enkf_mode , 
                                                matrix_type ** S , 
                                                matrix_type ** R , 
-                                               double      ** innov,
+                                               matrix_type ** innov,
                                                matrix_type ** E ,
                                                matrix_type ** D ,
-                                               const meas_data_type * fasit,
-                                               matrix_type  ** fullS) {
+                                               const meas_data_type * fasit) {
+
   int ens_size              = meas_data_get_ens_size( meas_data );
   int active_size           = obs_data_get_active_size( obs_data );
+  
   *S                        = meas_data_allocS( meas_data , active_size );
-  *fullS                    = meas_data_allocS( fasit , active_size );
   *R                        = obs_data_allocR( obs_data , active_size );
   *innov                    = obs_data_alloc_innov(obs_data , meas_data , active_size );
   
   if (enkf_mode == ENKF_STANDARD) {
+    matrix_type * fullS       = meas_data_allocS( fasit , active_size );
     /* 
        We are using standard EnKF and need to perturbe the measurements,
        if we are using the SQRT scheme the E & D matrices are not used.
     */
     *E = obs_data_allocE(obs_data , rng , ens_size, active_size );
-    *D = obs_data_allocD(obs_data , *E , *fullS );
+    *D = obs_data_allocD(obs_data , *E , fullS );
+    matrix_free( fullS );
   } else {
     *E          = NULL;
     *D          = NULL;
@@ -1455,6 +1364,7 @@ static void enkf_analysis_alloc_matrices_boot( rng_type * rng ,
   obs_data_scale(obs_data ,  *S , *E , *D , *R , *innov );
   matrix_subtract_row_mean( *S );  /* Subtracting the ensemble mean */
 }
+
 
 /**
    Checking that the sum through one row in the X matrix is one.
@@ -1472,7 +1382,7 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
     for (int icol = 0; icol < matrix_get_columns( X ); icol++) {
       double col_sum = matrix_get_column_sum(X , icol);
       if (fabs(col_sum - target_sum) > 0.0001) 
-        util_abort("%s: something is seriously broken. col:%d  col_sum = %g != 1.0 - ABORTING\n",__func__ , icol , col_sum);
+        util_abort("%s: something is seriously broken. col:%d  col_sum = %g != %g - ABORTING\n",__func__ , icol , col_sum , target_sum);
     }
   }
 }
@@ -1483,7 +1393,7 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
 /**
    This function allocates a X matrix for the 
 
-      A' = AX
+   A' = AX
 
    EnKF update. It takes as input a meas_data - where all the
    measurements have been collected, and a obs_data instance where the
@@ -1495,38 +1405,52 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
    The function consists of three different parts:
 
    1.  The function starts with several function call allocating the
-       ordinary matrices S, D, R, E and innov.
+   ordinary matrices S, D, R, E and innov.
 
-    2. The S matrix is 'diagonalized', and singular vectors and
-       singular values are stored in W and eig.
+   2. The S matrix is 'diagonalized', and singular vectors and
+   singular values are stored in W and eig.
 
-    3. The actual X matrix is calculated, based on either the standard
-       enkf with perturbed measurement or the square root scheme.
+   3. The actual X matrix is calculated, based on either the standard
+   enkf with perturbed measurement or the square root scheme.
 
+       
+   Research code for computing the update matrix: Includes the option
+   of forcing the number of principal components. 
 */
-   
-matrix_type * enkf_analysis_allocX( const analysis_config_type * config , rng_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot) {
+
+matrix_type * enkf_analysis_allocX( const analysis_config_type * config , 
+                                    rng_type * rng , 
+                                    const meas_data_type * meas_data , 
+                                    obs_data_type * obs_data , 
+                                    const matrix_type * randrot) {
+  
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   matrix_set_name( X , "X");
   {
-    matrix_type * S , *R , *E , *D;
-    double      * innov;
+    matrix_type * S , *R , *E , *D, *innov;
+
     int nrobs                = obs_data_get_active_size(obs_data);
     int nrmin                = util_int_min( ens_size , nrobs); 
     
     matrix_type * W          = matrix_alloc(nrobs , nrmin);                      
     double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
-    bool bootstrap           = analysis_config_get_bootstrap( config );
-    enkf_analysis_alloc_matrices( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
+    
+    /*Check if we want to scale the data or not */
+    bool do_scaling          = analysis_config_get_do_scaling( config );
+    bool bootstrap           = false;
+        
+    enkf_analysis_alloc_matrices( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , do_scaling);
+    if (!do_scaling)
+      printf("\nWarning: Scaling of forecasted data turned off! Generally this is not recommended...\n");
         
     /* 
        2: Diagonalize the S matrix; singular vectors are stored in W
-          and singular values (after some massage) are stored in eig. 
-          W = X1, eig = inv(I+Lambda1),(Eq.14.30, and 14.29, Evensen, 2007, respectively)
+       and singular values (after some massage) are stored in eig. 
+       W = X1, eig = inv(I+Lambda1),(Eq.14.30, and 14.29, Evensen, 2007, respectively)
     */ 
-
+    
     enkf_analysis_invertS( config , S , R , W , eig );
     
     /* 
@@ -1546,87 +1470,7 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , rng_ty
     matrix_free( W );
     matrix_free( R );
     matrix_free( S );
-    free( innov );
-    free( eig );
-    
-    if (enkf_mode == ENKF_STANDARD) {
-      matrix_free( E );
-      matrix_free( D );
-    }
-
-    enkf_analysis_checkX(X , bootstrap);
-  }
-  return X;
-}
-
-
-/*Research code for computing the update matrix: Includes the option of forcing the number of principal components: */
-matrix_type * enkf_analysis_allocX_force( const analysis_config_type * config , rng_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot) {
-  int ens_size          = meas_data_get_ens_size( meas_data );
-  matrix_type * X       = matrix_alloc( ens_size , ens_size );
-  matrix_set_name( X , "X");
-  {
-    matrix_type * S , *R , *E , *D;
-    double      * innov;
-    int nrobs                = obs_data_get_active_size(obs_data);
-    int nrmin                = util_int_min( ens_size , nrobs); 
-    
-    /*retrieve the subspace dimension we want to use */
-    int ncomp                = analysis_config_get_subspace_dimension( config );
-
-    /* Check if we want to run a bootrap */
-    bool bootstrap           = analysis_config_get_bootstrap( config );
-    
-    /*Check if we want to scale the data or not */
-    bool do_scaling          = analysis_config_get_do_scaling( config );
-    /*HERE WE ARE*/
-    
-
-    /* Check if the dimension is appropropriate. If not, change to default */
-    if (ncomp > util_int_min( ens_size - 1, nrobs) ) {
-      printf("Selected number of components, %d, too high. Changing to default value: 1\n",ncomp);
-      ncomp = 1;
-    }
-    
-	
-    
-    matrix_type * W          = matrix_alloc(nrobs , nrmin);                      
-    double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
-    enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
-    if (do_scaling) {
-      enkf_analysis_alloc_matrices( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
-    }
-    else {
-      printf("\nWarning: Scaling of forecasted data turned off! Generally this is not recommended...\n");
-      enkf_analysis_alloc_matrices_no_scaling( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D );
-    }
-        
-    /* 
-       2: Diagonalize the S matrix; singular vectors are stored in W
-          and singular values (after some massage) are stored in eig. 
-          W = X1, eig = inv(I+Lambda1),(Eq.14.30, and 14.29, Evensen, 2007, respectively)
-    */ 
-
-    enkf_analysis_invertS_force( config , S , R , W , eig , ncomp);
-    
-    /* 
-       3: actually calculating the X matrix. 
-    */
-    switch (enkf_mode) {
-    case(ENKF_STANDARD):
-      enkf_analysis_standard(X , S , D , W , eig , bootstrap);
-      break;
-    case(ENKF_SQRT):
-      enkf_analysis_SQRT(X , S , randrot , innov , W , eig , bootstrap);
-      break;
-    default:
-      util_abort("%s: INTERNAL ERROR \n",__func__);
-    }
-    
-    matrix_free( W );
-    matrix_free( R );
-    matrix_free( S );
-    free( innov );
+    matrix_free( innov );
     free( eig );
     
     if (enkf_mode == ENKF_STANDARD) {
@@ -1654,14 +1498,19 @@ matrix_type * enkf_analysis_allocX_force( const analysis_config_type * config , 
 
 */
 
-matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , rng_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , const meas_data_type * fasit) {
+matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , 
+                                         rng_type * rng , 
+                                         const meas_data_type * meas_data , 
+                                         obs_data_type * obs_data , 
+                                         const matrix_type * randrot , 
+                                         const meas_data_type * fasit) {
+  
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   matrix_set_name( X , "X");
   {
-    matrix_type * S , *R , *E , *D;
-    matrix_type * fullS;
-    double      * innov;
+    matrix_type * S , *R , *E , *D , *innov;
+    
     int nrobs                = obs_data_get_active_size(obs_data);
     int nrmin                = util_int_min( ens_size , nrobs); 
     
@@ -1669,16 +1518,15 @@ matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , r
     double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
     bool bootstrap           = analysis_config_get_bootstrap( config );
-    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS);
-    
-    matrix_free( fullS );
+    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit);
+
     /* 
        2: Diagonalize the S matrix; singular vectors are stored in W
           and singular values (after some massage) are stored in eig. 
           W = X1, eig = inv(I+Lambda1),(Eq.14.30, and 14.29, Evensen, 2007, respectively)
     */ 
 
-    enkf_analysis_invertS( config , S , R , W , eig );
+    enkf_analysis_invertS( config , S , R , W , eig);
     
     /* 
        3: actually calculating the X matrix. 
@@ -1697,7 +1545,7 @@ matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , r
     matrix_free( W );
     matrix_free( R );
     matrix_free( S );
-    free( innov );
+    matrix_free( innov );
     free( eig );
     
     if (enkf_mode == ENKF_STANDARD) {
@@ -1712,8 +1560,8 @@ matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , r
 
 
 matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , rng_type * rng , meas_data_type * meas_data , obs_data_type * obs_data , 
-					   const matrix_type * randrot , const matrix_type * A , const matrix_type * V0T , const matrix_type * Z ,
-					   const double * eig , const matrix_type * U0 , meas_data_type * fasit , int unique_bootstrap_components) {
+                                           const matrix_type * randrot , const matrix_type * A , const matrix_type * V0T , const matrix_type * Z ,
+                                           const double * eig , const matrix_type * U0 , meas_data_type * fasit , int unique_bootstrap_components) {
   int ens_size          = meas_data_get_ens_size( meas_data );
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   {
@@ -1726,9 +1574,7 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     */
     /*Need a copy of A, because we need it later */
     matrix_type * workA      = matrix_alloc_copy( A );    /* <- This is a massive memory requirement. */
-    matrix_type * S , *R , *E , *D;
-    matrix_type * fullS;
-    double      * innov;
+    matrix_type * S , *R , *E , *D , *innov;
     
     matrix_type * W          = matrix_alloc(nrobs , nrmin);                      
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
@@ -1737,10 +1583,8 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     
     double * workeig    = util_malloc( sizeof * workeig * nrmin , __func__);
 
-    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS ); /*Using the bootstrap version every time, does mean a bit more data 
+    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit ); /*Using the bootstrap version every time, does mean a bit more data 
                                                                                                                            carried through the function, but we avoid duplicating code.*/
-    matrix_free( fullS );
-
     /*copy entries in eig:*/
     {
       int i;
@@ -1777,7 +1621,7 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
     matrix_free( R );
     matrix_free( S );
     matrix_free( workA );
-    free( innov );
+    matrix_free( innov );
     free( workeig );
     
     if (enkf_mode == ENKF_STANDARD) {
@@ -1802,14 +1646,11 @@ matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config ,
 
 void enkf_analysis_local_pre_cv( const analysis_config_type * config , rng_type * rng , meas_data_type * meas_data , obs_data_type * obs_data ,  matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0, meas_data_type * fasit ) {
   {
-    matrix_type * S , *R , *E , *D;
-    matrix_type * fullS;
-    double      * innov;
+    matrix_type * S , *R , *E , *D , *innov;
     
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );
-    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit , &fullS ); /*Using the bootstrap version every time, does mean a bit more data 
+    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , fasit ); /*Using the bootstrap version every time, does mean a bit more data 
                                                                                                                            carried through the function, but we avoid duplicating code.*/
-    matrix_free( fullS );
     /* 
        2: Diagonalize the S matrix; singular vectors etc. needed later in the local CV:
        (V0T = transposed right singular vectors of S, Z = scaled principal components, 
@@ -1821,7 +1662,7 @@ void enkf_analysis_local_pre_cv( const analysis_config_type * config , rng_type 
     
     matrix_free( R );
     matrix_free( S );
-    free( innov );
+    matrix_free( innov );
         
     if (enkf_mode == ENKF_STANDARD) {
       matrix_free( E );
@@ -1850,14 +1691,13 @@ void enkf_analysis_local_pre_cv( const analysis_config_type * config , rng_type 
 
 void enkf_analysis_get_principal_components( const analysis_config_type * config , rng_type * rng , meas_data_type * meas_data , obs_data_type * obs_data ,  matrix_type * Z , matrix_type * Rp , matrix_type * Dp) {
   {
-    matrix_type * S , *R , *E , *D;
-    double      * innov;
+    matrix_type * S , *R , *E , *D , *innov;
     int i, j;
 
     printf("\nInside the Principal Components Function\n");
     
     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );
-    enkf_analysis_alloc_matrices( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D ); 
+    enkf_analysis_alloc_matrices( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , true ); 
 
 
     const int nrobs = matrix_get_rows( S );
@@ -1878,25 +1718,25 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     
     double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
     
-    svdS(S , U0 , V0T , DGESVD_MIN_RETURN , sig0 , truncation);
+    svdS(S , U0 , V0T , DGESVD_MIN_RETURN , sig0 , truncation , -1);
 
     /* NEED TO invert sig0!!  */
     for(i = 0; i < nrmin; i++) {
       if ( sig0[i] > 0 ) {
-	sig0[i] = 1.0 / sig0[i];
+        sig0[i] = 1.0 / sig0[i];
       }
     }
-	  
+          
     
     /*
-	Compute the actual princpal components, Z = sig0 * VOT 
-	NOTE: Z contains potentially alot of redundant zeros, but 
-	we do not care about this for now
-	      
+        Compute the actual principal components, Z = sig0 * VOT 
+        NOTE: Z contains potentially alot of redundant zeros, but 
+        we do not care about this for now
+              
     */
     for(i = 0; i < nrmin; i++) {
       for(j = 0; j < nrens; j++) {
-	matrix_iset( Z , i , j , sig0[i] * matrix_iget( V0T , i , j ) );
+        matrix_iset( Z , i , j , sig0[i] * matrix_iget( V0T , i , j ) );
       }
     }
     
@@ -1910,7 +1750,7 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     /*We also need to compute the reduced "Innovation matrix" Dp = U0' * D    */
     matrix_dgemm(Dp , U0 , D , true , false , 1.0 , 0.0);
     
-	
+        
     free(sig0);
     matrix_free(U0);
     matrix_free(V0T);
@@ -1929,14 +1769,14 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     
     matrix_free( R );
     matrix_free( S );
-    free( innov );
+    matrix_free( innov );
         
     if (enkf_mode == ENKF_STANDARD) {
       matrix_free( E );
       matrix_free( D );
-      
     }
   }
+  
   
 }
 
@@ -1976,8 +1816,8 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
     /* We only want to search the non-zero eigenvalues */
     for (int i = 0; i < nrmin; i++) {
       if (matrix_iget(Z,i,1) == 0.0) {
-	maxP = i;
-	break;
+        maxP = i;
+        break;
       }
     }
     
@@ -2003,12 +1843,12 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
     /*Compute X5 = W * Dp (The hard way) */
     for( i = 0; i < ens_size; i++) {
       for( j = 0; j < ens_size; j++) {
-	tmp = 0.0;
-	for(k = 0; k < optP; k++) {
-	  tmp += matrix_iget( W , i , k) * matrix_iget( Dp , k , j);
-	}
-	
-	matrix_iset(X , i , j ,tmp);
+        tmp = 0.0;
+        for(k = 0; k < optP; k++) {
+          tmp += matrix_iget( W , i , k) * matrix_iget( Dp , k , j);
+        }
+        
+        matrix_iset(X , i , j ,tmp);
       }
     }
 

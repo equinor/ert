@@ -36,7 +36,7 @@ struct ecl_static_kw_struct {
 ecl_static_kw_type * ecl_static_kw_alloc( ) {  
   ecl_static_kw_type * static_kw = util_malloc(sizeof *static_kw , __func__);
   UTIL_TYPE_ID_INIT( static_kw , STATIC );
-  static_kw->ecl_kw    	   = NULL;
+  static_kw->ecl_kw        = NULL;
   return static_kw;
 }
 
@@ -79,8 +79,8 @@ void ecl_static_kw_init(ecl_static_kw_type * ecl_static_kw, const ecl_kw_type * 
 
 void ecl_static_kw_upgrade_103( const char * filename ) {
   FILE * stream  = util_fopen(filename , "r");
-  enkf_impl_type impl_type = util_fread_int( stream );
-  ecl_kw_type * ecl_kw     = ecl_kw_fread_alloc_compressed( stream );
+  ert_impl_type impl_type = util_fread_int( stream );
+  ecl_kw_type * ecl_kw    = ecl_kw_fread_alloc_compressed( stream );
   fclose( stream );
 
   {

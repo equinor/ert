@@ -140,8 +140,8 @@ ensemble_config_type * ensemble_config_alloc_empty( ) {
 
 
 
-enkf_impl_type ensemble_config_impl_type(const ensemble_config_type *ensemble_config, const char * ecl_kw_name) {
-  enkf_impl_type impl_type = INVALID;
+ert_impl_type ensemble_config_impl_type(const ensemble_config_type *ensemble_config, const char * ecl_kw_name) {
+  ert_impl_type impl_type = INVALID;
 
   if (hash_has_key(ensemble_config->config_nodes , ecl_kw_name)) {
     enkf_config_node_type * node = hash_get(ensemble_config->config_nodes , ecl_kw_name);
@@ -227,7 +227,7 @@ void ensemble_config_add_node__( ensemble_config_type * ensemble_config , enkf_c
 enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensemble_config , 
                                                   const char    * key              , 
                                                   enkf_var_type  enkf_type         , 
-                                                  enkf_impl_type impl_type         ,
+                                                  ert_impl_type impl_type         ,
                                                   const char   * enkf_outfile      , /* Written by EnKF and read by forward model */
                                                   const char   * enkf_infile       , /* Written by forward model and read by EnKF */ 
                                                   void         * data ) {
@@ -702,7 +702,7 @@ stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_con
 
 
 
-stringlist_type * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type * config , enkf_impl_type impl_type) {
+stringlist_type * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type * config , ert_impl_type impl_type) {
   stringlist_type * key_list = stringlist_alloc_new();
   hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
   while (!hash_iter_is_complete( iter )) {

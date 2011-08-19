@@ -412,7 +412,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
         gen_obs = gen_obs_alloc( enkf_config_node_get_ref( config_node ) , obs_key , obs_file , scalar_value , scalar_error , index_file , index_list , error_covar_file); 
         obs_vector_install_node( obs_vector , obs_restart_nr , gen_obs );
       } else {
-        enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
+        ert_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
         util_abort("%s: %s has implementation type:\'%s\' - expected:\'%s\'.\n",__func__ , state_kw , enkf_types_get_impl_name(impl_type) , enkf_types_get_impl_name(GEN_DATA));
       }
     }

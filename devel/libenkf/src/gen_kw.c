@@ -107,7 +107,7 @@ bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_
 #define MULTFLT 102
 void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer, int report_step) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
-  enkf_impl_type file_type;
+  ert_impl_type file_type;
   file_type = buffer_fread_int(buffer);
   if ((file_type == GEN_KW) || (file_type == MULTFLT)) 
     buffer_fread(buffer , gen_kw->data , sizeof *gen_kw->data , data_size);
