@@ -39,3 +39,8 @@ if ecl.EclFile.contains_sim_time( "data/eclipse/case/ECLIPSE.UNRST" , datetime.d
 section2 = file.restart_section( report_step = 40 )
 section2 = file.restart_section( sim_time = datetime.datetime( 2002 , 6 , 1) )
 print section2.headers
+
+f2 = ecl.EclFile( "data/eclipse/case/ECLIPSE.UNRST" , ["INTEHEAD","SEQNUM","SGAS","PRESSURE","SWAT"])
+print f2["SWAT"][10]
+
+print ecl.EclFile.file_report_steps( "data/eclipse/case/ECLIPSE.UNRST" )

@@ -23,7 +23,7 @@ higher level than the (char ** string , int size) convention.
 For a pure Python application you should just stick with a normal
 Python list of string objects; but when interfacing with the C
 libraries there are situations where you might need to instantiate a
-stringlist instance. 
+StringList instance. 
 
 The StringList constructor can take an optional argument which should
 be an iterable consisting of strings, and the strings property will
@@ -39,6 +39,13 @@ from   ert.cwrap.cwrap import *
 
 
 class StringList:
+
+    @classmethod
+    def NULL( cls ):
+        obj = object.__new__( cls )
+        obj.c_ptr = None 
+        return obj
+
     def __init__( self , initial = None):
         """
         Creates a new stringlist instance.
@@ -63,10 +70,17 @@ class StringList:
                 
             
     def __del__( self ):
-        cfunc.stringlist_free( self )
+        if self.c_ptr:
+            cfunc.stringlist_free( self )
 
-    def from_param( self ):
-        return ctypes.c_void_p( self.c_ptr )
+
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return obj.c_ptr
+
 
     def __getitem__(self , index):
         """
@@ -124,7 +138,7 @@ class StringList:
         The strings in as a normal Python list of strings.
 
         The content is copied, so the StringList() instance can safely go
-        out of scope after the call has completed.
+        out of scope after the call has completed. Hmmmm - is that true?
         """
         slist = []
         for s in self:

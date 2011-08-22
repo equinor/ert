@@ -94,14 +94,12 @@ class EclGrid(object):
         if self.data_owner:
             cfunc.free( self )
 
-    def from_param(self):
-        """
-        ctypes utility function.
-        
-        ctypes utility method facilitating transparent mapping between
-        python EclGrid instances and C based ecl_grid_type pointers.
-        """
-        return self.c_ptr
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return obj.c_ptr
 
     @property
     def nx( self ):
@@ -466,7 +464,9 @@ class EclGrid(object):
         Creates an EclKW instance based on existing 3D numpy object.
 
         The method create3D() does the inverse operation; creating a
-        3D numpy object from an EclKW instance.
+        3D numpy object from an EclKW instance. If the argument @pack
+        is true the resulting keyword will have length 'nactive',
+        otherwise the element will have length nx*ny*nz.
         """
         if array.ndim == 3:
             dims = array.shape

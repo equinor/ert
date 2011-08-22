@@ -179,9 +179,12 @@ class TVector(object):
         """
         return self.str( max_lines = 10 , width = 5 )
 
-    def from_param( self ):
-        return self.c_ptr
-
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return obj.c_ptr
 
     def __del__(self):
         """

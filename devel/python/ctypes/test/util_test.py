@@ -22,6 +22,7 @@ import copy
 from   ert.util.tvector import DoubleVector
 from   ert.util.tvector import IntVector
 from   ert.util.tvector import BoolVector
+from   ert.util.stringlist import StringList
 import ert.util.stat    as stat
 from   ert.util.util_func import *
 
@@ -105,4 +106,7 @@ np = v.numpy_copy()
 v[0] = 77
 v[5] = 99
 print v.str( max_lines = None )
+
+S = StringList()
+
 

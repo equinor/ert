@@ -112,7 +112,7 @@ class EclKW(object):
             obj.__init( )
             return obj
         else:
-            return EclKW.NULL( )
+            return None
     
 
     @classmethod
@@ -127,16 +127,6 @@ class EclKW(object):
         obj.__init( )
         return obj
     
-    @classmethod
-    def NULL( cls ):
-        """
-        Utility method to create kw instance which evaluates to False.
-        """
-        obj = cls( )
-        obj.c_ptr  = None
-        obj.parent = None
-        obj.data_owner = False
-        return obj
     
     
     @classmethod
@@ -216,8 +206,12 @@ class EclKW(object):
             self.str_fmt  = "%8s "
 
 
-    def from_param(self):
-        return self.c_ptr
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return obj.c_ptr
 
     def __len__( self ):
         """
@@ -225,12 +219,6 @@ class EclKW(object):
         """
         return cfunc.get_size( self )
 
-
-    def __nonzero__(self):
-        if self.c_ptr:
-            return True
-        else:
-            return False
     
     def __del__(self):
         if self.data_owner:

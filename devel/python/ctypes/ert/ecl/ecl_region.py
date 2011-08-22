@@ -32,8 +32,16 @@ from   ert.util.tvector      import IntVector
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_DOUBLE_TYPE
 import ecl_grid
 
-class EclRegion:
+class EclRegion(object):
     
+
+    #@classmethod
+    #def NULL( cls ):
+    #    obj = object.__new__( cls )
+    #    obj.c_ptr = None 
+    #    obj.grid  = None
+    #    return obj
+
 
     def __init__(self , grid , preselect , c_ptr = None):
         """
@@ -173,8 +181,12 @@ class EclRegion:
         """
         return self.__iand__( other )
     
-    def from_param(self):
-        return self.c_ptr
+    @classmethod 
+    def from_param(cls , obj):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return obj.c_ptr
 
     def copy( self ):
         return self.__deep_copy__( {} )
@@ -240,6 +252,7 @@ class EclRegion:
         """
         cfunc.deselect_less( self , ecl_kw , limit )
 
+    
     def select_equal( self , ecl_kw , value ):
         """
         Select all cells where @ecl_kw is equal to @value.

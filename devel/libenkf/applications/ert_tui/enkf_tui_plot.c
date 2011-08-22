@@ -241,7 +241,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
               bool_vector_iset(has_data , step , true);
               if (plot_dates)
                 double_vector_append(x , sim_time );
-	       
+               
               else
                 double_vector_append(x , sim_days );
             }
@@ -272,7 +272,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
     Observe that all the observations are 'flattened'.
   */
   if (add_observations) {
-    enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
+    ert_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
     if ((impl_type == SUMMARY) || (impl_type == FIELD) || (impl_type == GEN_DATA)) {
       /*
         These three double vectors are used to assemble
@@ -394,12 +394,12 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
             plot_dataset_append_point_xy1y2( obs_errorbar , days , value - std , value + std);
           }
         }
-	else {
-	            /*
+        else {
+                    /*
             Normal plot without errorbars. Observe that the coordinates
             are (x,y1,y2) and NOT (x,y,std_y).
           */
-	  plot_dataset_type * data_value = plot_alloc_new_dataset( plot , "observation"       , PLOT_XY );
+          plot_dataset_type * data_value = plot_alloc_new_dataset( plot , "observation"       , PLOT_XY );
           plot_dataset_set_style( data_value , POINTS );
           plot_dataset_set_point_color( data_value , BLACK);
           plot_dataset_set_symbol_type( data_value , PLOT_SYMBOL_FILLED_CIRCLE);
@@ -418,7 +418,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
             plot_dataset_append_point_xy( data_value , days , value);
           }
 
-	}
+        }
       }
       double_vector_free( sim_time );
       double_vector_free( obs_std );
@@ -443,11 +443,11 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       ecl_util_alloc_summary_files( path , base , NULL , &header_file , summary_file_list);
       ecl_sum = ecl_sum_fread_alloc( header_file , summary_file_list , ":" );
       for ( int i = 0; i < double_vector_size(x); i++ ){
-	time_t sim_time = ( time_t ) double_vector_iget( x , i );
-	if( ecl_sum_has_general_var( ecl_sum , user_key ) && ecl_sum_check_sim_time( ecl_sum , sim_time)){
-	  double_vector_append( refcase_value , ecl_sum_get_general_var_from_sim_time( ecl_sum, sim_time , user_key));
-	  double_vector_append( refcase_time , sim_time );
-	}
+        time_t sim_time = ( time_t ) double_vector_iget( x , i );
+        if( ecl_sum_has_general_var( ecl_sum , user_key ) && ecl_sum_check_sim_time( ecl_sum , sim_time)){
+          double_vector_append( refcase_value , ecl_sum_get_general_var_from_sim_time( ecl_sum, sim_time , user_key));
+          double_vector_append( refcase_time , sim_time );
+        }
       }
       
       util_safe_free(header_file);
@@ -456,9 +456,9 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       ecl_sum_free(ecl_sum);
       
       for (int i = 0; i < double_vector_size( refcase_time ); i++) {
-	double days  = double_vector_iget( refcase_time  , i);
-	double value = double_vector_iget( refcase_value , i);
-	plot_dataset_append_point_xy( d , days , value);
+        double days  = double_vector_iget( refcase_time  , i);
+        double value = double_vector_iget( refcase_value , i);
+        plot_dataset_append_point_xy( d , days , value);
       }
       double_vector_free( refcase_value );
       double_vector_free( refcase_time );
@@ -860,12 +860,12 @@ void enkf_tui_plot_observation(void * arg) {
 
 
 int enkf_tui_plot_read_rft_obs(enkf_main_type * enkf_main, 
-			  char * wellname, 
-			  double_vector_type * UTM_x, 
-			  double_vector_type * UTM_y, 
-			  double_vector_type * MD, 
-			  double_vector_type * TVD_z, 
-			  double_vector_type * RFT_obs){
+                          char * wellname, 
+                          double_vector_type * UTM_x, 
+                          double_vector_type * UTM_y, 
+                          double_vector_type * MD, 
+                          double_vector_type * TVD_z, 
+                          double_vector_type * RFT_obs){
   const model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
   const char * pathname = model_config_get_rftpath( model_config );
   path_fmt_type * pathname_fmt = path_fmt_alloc_directory_fmt(pathname);
@@ -883,14 +883,14 @@ int enkf_tui_plot_read_rft_obs(enkf_main_type * enkf_main,
     util_split_string(line , " \t" , &tokens , &token_list);
     if( tokens == 5 ){
       if ( util_sscanf_double( token_list[0] , &utm_x ) && util_sscanf_double( token_list[1] , &utm_y ) && util_sscanf_double( token_list[2] , &md ) && util_sscanf_double( token_list[3] , &tvd_z ) && util_sscanf_double( token_list[4] , &rft_obs )){
-	double_vector_iset( UTM_x  , i, utm_x );
-	double_vector_iset( UTM_y  , i, utm_y );
-	double_vector_iset( MD     , i, md );
-	double_vector_iset( TVD_z  , i, tvd_z);
-	double_vector_iset( RFT_obs, i, rft_obs);
+        double_vector_iset( UTM_x  , i, utm_x );
+        double_vector_iset( UTM_y  , i, utm_y );
+        double_vector_iset( MD     , i, md );
+        double_vector_iset( TVD_z  , i, tvd_z);
+        double_vector_iset( RFT_obs, i, rft_obs);
       }
       else{
-	util_abort("%s: RFT file has to be on the format UTM_X; UTM_Y; MD; TVD_Z; RFT \n",__func__ , pathandfilename);
+        util_abort("%s: RFT file has to be on the format UTM_X; UTM_Y; MD; TVD_Z; RFT \n",__func__ , pathandfilename);
       }
     }
     else{
@@ -909,15 +909,15 @@ int enkf_tui_plot_read_rft_obs(enkf_main_type * enkf_main,
 
 
 void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main , 
-			  const char * wellname   ,
+                          const char * wellname   ,
                           double_vector_type * MD, 
-			  double_vector_type * RFT_obs,
-			  double_vector_type * RFT_refcase,
-			  bool_vector_type * refcase_has_data,
+                          double_vector_type * RFT_obs,
+                          double_vector_type * RFT_refcase,
+                          bool_vector_type * refcase_has_data,
                           vector_type * pressure_container, 
-			  int_vector_type * active,
-			  bool rft_file_exists,
-			  vector_type * has_data_container,
+                          int_vector_type * active,
+                          bool rft_file_exists,
+                          vector_type * has_data_container,
                           bool isMD) {
                                      
   const int ens_size                        = enkf_main_get_ensemble_size( enkf_main );
@@ -942,14 +942,14 @@ void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main ,
       const double_vector_type * simulated_pressure = vector_iget_const(pressure_container, iens);
       const bool_vector_type * has_data = vector_iget_const(has_data_container, iens);
       for (int nobs = 0; nobs < double_vector_size(RFT_obs); nobs++){
-	if (bool_vector_iget(has_data, nobs)){
-	  plot_dataset_type * iplot  = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
-	  double rft_sim_numeric     = double_vector_iget(simulated_pressure , nobs);
-	  double md_numeric          = double_vector_iget(MD , nobs);
-	  plot_dataset_append_point_xy( iplot, rft_sim_numeric , md_numeric);
-	  plot_dataset_set_style( iplot , POINTS );
-	  plot_dataset_set_point_color( iplot , (iens % 13)+1); /*Can choose between 16 colors, but we dont want 0 which is white or reserved 14 and 15*/ 
-	}
+        if (bool_vector_iget(has_data, nobs)){
+          plot_dataset_type * iplot  = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
+          double rft_sim_numeric     = double_vector_iget(simulated_pressure , nobs);
+          double md_numeric          = double_vector_iget(MD , nobs);
+          plot_dataset_append_point_xy( iplot, rft_sim_numeric , md_numeric);
+          plot_dataset_set_style( iplot , POINTS );
+          plot_dataset_set_point_color( iplot , (iens % 13)+1); /*Can choose between 16 colors, but we dont want 0 which is white or reserved 14 and 15*/ 
+        }
       }
     }
   }
@@ -1067,20 +1067,20 @@ void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpath
   else{
     for( int nobs = 0; nobs < lines; nobs++){
       if( int_vector_iget(active,nobs) > -1){
-	int cell_index = ecl_rft_node_lookup_ijk( rft_refcase_node , int_vector_iget(i_values,nobs), int_vector_iget(j_values,nobs),int_vector_iget(k_values,nobs) ); //lookup cell
-	if(cell_index > -1){
-	  double pressure_value = ecl_rft_node_iget_pressure( rft_refcase_node , cell_index); // Pressure
-	  double_vector_append(RFT_refcase, pressure_value);
-	  bool_vector_append(refcase_has_data, true);
-	}
-	else{
-	  double_vector_append(RFT_refcase, 0.0);
-	  bool_vector_append(refcase_has_data, false);
-	}
+        int cell_index = ecl_rft_node_lookup_ijk( rft_refcase_node , int_vector_iget(i_values,nobs), int_vector_iget(j_values,nobs),int_vector_iget(k_values,nobs) ); //lookup cell
+        if(cell_index > -1){
+          double pressure_value = ecl_rft_node_iget_pressure( rft_refcase_node , cell_index); // Pressure
+          double_vector_append(RFT_refcase, pressure_value);
+          bool_vector_append(refcase_has_data, true);
+        }
+        else{
+          double_vector_append(RFT_refcase, 0.0);
+          bool_vector_append(refcase_has_data, false);
+        }
       }
       else {
-	double_vector_append(RFT_refcase, 0.0);
-	bool_vector_append(refcase_has_data, false);
+        double_vector_append(RFT_refcase, 0.0);
+        bool_vector_append(refcase_has_data, false);
       }
     }
   }
@@ -1108,24 +1108,24 @@ void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpath
       ecl_rft_file_type * rftfile = ecl_rft_file_alloc( case_file_name );
       const ecl_rft_node_type * rftnode = ecl_rft_file_get_well_time_rft( rftfile , wellname , recording_time);
       if(rftnode == NULL){
-	printf("No RFT information exists for %s:\n", wellname);
+        printf("No RFT information exists for %s:\n", wellname);
       }
       else{
-	for( int nobs = 0; nobs < lines; nobs++){
-	  if( int_vector_iget(active,nobs) > -1){
-	    int cell_index = ecl_rft_node_lookup_ijk( rftnode , int_vector_iget(i_values,nobs), int_vector_iget(j_values,nobs),int_vector_iget(k_values,nobs) ); //lookup cell
-	    double pressure_value = ecl_rft_node_iget_pressure( rftnode , cell_index); // Pressure
-	    double_vector_iset(simulated_pressures,nobs , pressure_value);
-	    if(cell_index > -1)
-	      bool_vector_iset(has_data, nobs, true);
-	    else
-	      bool_vector_iset(has_data, nobs, false);
-	  }
-	  else {
-	    double_vector_iset(simulated_pressures,nobs ,0.0);
-	    bool_vector_iset(has_data, nobs, false);
-	  }
-	}
+        for( int nobs = 0; nobs < lines; nobs++){
+          if( int_vector_iget(active,nobs) > -1){
+            int cell_index = ecl_rft_node_lookup_ijk( rftnode , int_vector_iget(i_values,nobs), int_vector_iget(j_values,nobs),int_vector_iget(k_values,nobs) ); //lookup cell
+            double pressure_value = ecl_rft_node_iget_pressure( rftnode , cell_index); // Pressure
+            double_vector_iset(simulated_pressures,nobs , pressure_value);
+            if(cell_index > -1)
+              bool_vector_iset(has_data, nobs, true);
+            else
+              bool_vector_iset(has_data, nobs, false);
+          }
+          else {
+            double_vector_iset(simulated_pressures,nobs ,0.0);
+            bool_vector_iset(has_data, nobs, false);
+          }
+        }
       }
       ecl_rft_file_free(rftfile);
       vector_append_owned_ref( pressure_container , simulated_pressures , double_vector_free__ );
@@ -1179,17 +1179,17 @@ int enkf_tui_plot_read_rft_config(const char * rft_config_file, stringlist_type 
       char * name = token_list[0];
       char * ownname = util_alloc_string_copy(name);
       if( tokens == 4 ){
-	stringlist_append_owned_ref( wellnames , ownname );
-	if ( util_sscanf_int( token_list[1] , &day ) && util_sscanf_int( token_list[2] , &month ) && util_sscanf_int( token_list[3] , &year ) ){
-	  time_t recording_time = util_make_date(day , month , year);
-	  time_t_vector_append(dates, recording_time);
-	}
-	else{
-	  util_abort("%s: RFT config file has to be on the format NAME DAY MONTH YEAR \n",__func__ , rft_config_file);
-	}
+        stringlist_append_owned_ref( wellnames , ownname );
+        if ( util_sscanf_int( token_list[1] , &day ) && util_sscanf_int( token_list[2] , &month ) && util_sscanf_int( token_list[3] , &year ) ){
+          time_t recording_time = util_make_date(day , month , year);
+          time_t_vector_append(dates, recording_time);
+        }
+        else{
+          util_abort("%s: RFT config file has to be on the format NAME DAY MONTH YEAR \n",__func__ , rft_config_file);
+        }
       }
       else{
-	util_abort("%s: RFT config file has to be on the format NAME DAY MONTH YEAR \n",__func__ , rft_config_file);
+        util_abort("%s: RFT config file has to be on the format NAME DAY MONTH YEAR \n",__func__ , rft_config_file);
       }
       free( line );
       free( name );

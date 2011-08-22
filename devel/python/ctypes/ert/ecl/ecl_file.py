@@ -44,7 +44,7 @@ import libecl
 from   ert.cwrap.cwrap       import *
 from   ecl_kw                import EclKW
 from   ert.util.ctime        import ctime 
-
+from   ert.util.stringlist   import StringList
 
 class EclFile(object):
 
@@ -77,7 +77,7 @@ class EclFile(object):
             obj = object.__new__( cls )
             obj.c_ptr = c_ptr
         else:
-            obj = EclFile.NULL()
+            obj = None
 
         return obj
 
@@ -104,6 +104,7 @@ class EclFile(object):
         """
         return cfunc.contains_report_step( filename , report_step )
 
+    
     @classmethod
     def contains_sim_time( cls , filename , dtime ):
         """
@@ -127,20 +128,20 @@ class EclFile(object):
         return cfunc.contains_sim_time( filename , ctime(dtime) )
 
 
+    
     @classmethod
-    def NULL( cls ):
+    def file_report_steps( cls , filename ):
         """
-        Creates a new instance which evaluates to False.
+        Will identify the available report_steps from @filename.
         """
-        obj = object.__new__( cls )
-        obj.c_ptr  = None 
-        obj.parent = None
-        obj.data_owner = False
-        return obj
-
+        report_steps = []
+        f = cls( filename , kw_list = ["SEQNUM"] )
+        for s in f:
+            report_steps.append( s[0] )
+        return report_steps
 
         
-    def __init__( self , filename):
+    def __init__( self , filename , kw_list = None):
         """
         Loads the complete file @filename.
 
@@ -148,13 +149,22 @@ class EclFile(object):
         @filename. The file @filename must be in 'restart format' -
         otherwise it will be crash and burn. 
         
-        When the file has been loaded the EclFile instance can be used
-        to query for and get reference to different EclKW instances
-        like e.g. SWAT from a restart file or FIPNUM from an INIT
-        file.
-        """
-        self.c_ptr = cfunc.fread_alloc( filename )
+        The optional argument @kw_list can be used to limit the
+        loading to only some of the keywords in the file, @kw_list
+        should be a an ordinary Python list of strings. To load only
+        the solution data from a restart file:
 
+            sol_data = ecl.EclFile("ECLIPSE.UNRST" , kw_list = ["PRESSURE" , "SWAT" , "SGAS"])
+
+        When the file has been loaded the EclFile instance can be used
+        to query for and get reference to the EclKW instances
+        constituting the file, like e.g. SWAT from a restart file or
+        FIPNUM from an INIT file.
+        """
+        if kw_list:
+            kw_list = StringList( initial = kw_list ) 
+        self.c_ptr = cfunc.load( filename , kw_list )
+        
         
     def __del__(self):
         if self.c_ptr:
@@ -190,7 +200,7 @@ class EclFile(object):
             obj = object.__new__( EclFile )
             obj.c_ptr = c_ptr
         else:
-            obj = EclFile.NULL()
+            obj = None
 
         return obj
         
@@ -239,22 +249,13 @@ class EclFile(object):
             else:
                 raise TypeError("Index must be integer or string (keyword)")
         
-
-    def __nonzero__(self):
-        if self.c_ptr:
-            return True
+    
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
         else:
-            return False
-
-    def from_param(self):
-        """
-        ctypes utility function.
-        
-        ctypes utility method facilitating transparent mapping between
-        python EclFile instances and C based ecl_file_type pointers.
-        """
-        return self.c_ptr
-
+            return obj.c_ptr
 
     def iget_kw( self , index , copy = False):
         """
@@ -504,9 +505,9 @@ class EclFile(object):
 
         The implementation goes through all the INTEHEAD headers in
         the EclFile, i.e. it can be fooled (and probably crash and
-        burn) if the EclFile instance in question is not a restart
-        file. The @dtime argument should be normal python datetime
-        instance.
+        burn) if the EclFile instance in question is has INTEHEAD
+        keyword(s), but is still not a restart file. The @dtime
+        argument should be a normal python datetime instance.
         """
         return cfunc.has_sim_time( self , ctime(dtime) )    
 
@@ -557,7 +558,7 @@ cwrapper.registerType( "ecl_file" , EclFile )
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_file")
 
-cfunc.fread_alloc                 = cwrapper.prototype("c_void_p    ecl_file_fread_alloc( char* )")
+cfunc.load                        = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_selected_kw(char* , stringlist)")
 cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")
 cfunc.restart_block_time          = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section_time( char* , time_t )")
 cfunc.restart_block_step          = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section( char* , int )")
@@ -581,3 +582,4 @@ cfunc.contains_report_step        = cwrapper.prototype("bool        ecl_file_con
 cfunc.contains_sim_time           = cwrapper.prototype("bool        ecl_file_contains_sim_time( char* , time_t )")
 cfunc.copy_restart_section        = cwrapper.prototype("c_void_p    ecl_file_copy_restart_section( ecl_file , int )")
 cfunc.copy_restart_section_time_t = cwrapper.prototype("c_void_p    ecl_file_copy_restart_section_time_t( ecl_file , time_t )")
+
