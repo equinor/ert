@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <string.h>
 #include <hash.h>
-#include <list.h>
 #include <set.h>
 #include <util.h>
 #include <conf.h>
@@ -41,7 +40,7 @@ struct conf_class_struct
   
   hash_type             * sub_classes;        /** conf_class_types          */
   hash_type             * item_specs;         /** conf_item_spec_types      */
-  list_type             * item_mutexes;       /** item_mutex_types          */
+  vector_type           * item_mutexes;       /** item_mutex_types          */
 };
 
 
@@ -109,7 +108,8 @@ conf_class_type * conf_class_alloc_empty(
   conf_class->singleton        = singleton;
   conf_class->sub_classes      = hash_alloc();
   conf_class->item_specs       = hash_alloc();
-  conf_class->item_mutexes     = list_alloc();
+  conf_class->item_mutexes     = vector_alloc_new();
+  
   
   conf_class_set_help( conf_class , help );
   return conf_class;
@@ -124,7 +124,7 @@ void conf_class_free(
   util_safe_free(conf_class->help);
   hash_free(conf_class->sub_classes);
   hash_free(conf_class->item_specs);
-  list_free(conf_class->item_mutexes);
+  vector_free(conf_class->item_mutexes);
   free(conf_class);
 }
 
@@ -466,7 +466,7 @@ conf_item_mutex_type * conf_class_new_item_mutex(conf_class_type * conf_class , 
 {
   assert(conf_class != NULL);
   conf_item_mutex_type * mutex = conf_item_mutex_alloc( conf_class , require_one , inverse);
-  list_append_list_owned_ref(conf_class->item_mutexes, mutex, conf_item_mutex_free__);
+  vector_append_owned_ref(conf_class->item_mutexes, mutex, conf_item_mutex_free__);
   return mutex;
 }
 
@@ -1174,12 +1174,12 @@ bool conf_instance_has_valid_mutexes(
 {
   bool ok = true;
   const conf_class_type * conf_class   = conf_instance->conf_class;
-  const list_type       * item_mutexes = conf_class->item_mutexes;
-  int                     num_mutexes  = list_get_size(item_mutexes);
+  const vector_type     * item_mutexes = conf_class->item_mutexes;
+  int                     num_mutexes  = vector_get_size(item_mutexes);
   
   for(int mutex_nr = 0; mutex_nr < num_mutexes; mutex_nr++)
   {
-    const conf_item_mutex_type * conf_item_mutex = list_iget_node_value_ptr(item_mutexes, mutex_nr);
+    const conf_item_mutex_type * conf_item_mutex = vector_iget( item_mutexes, mutex_nr );
     if(!conf_instance_check_item_mutex(conf_instance, conf_item_mutex))
       ok = false;
   }

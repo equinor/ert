@@ -74,10 +74,15 @@ class FortIO:
         is not touched by the FortIO instance.
         """
         self.c_ptr = cfunc.fortio_fopen( filename , mode , endian_flip , fmt_file)
-
         
-    def from_param(self):
-        return self.c_ptr
+    
+        
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return obj.c_ptr
 
 
     # Implements normal Python semantics - close on delete.

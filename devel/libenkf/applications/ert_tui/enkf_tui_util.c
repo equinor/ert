@@ -60,17 +60,17 @@ state_enum enkf_tui_util_scanf_state(const char * prompt, int prompt_len, bool a
     if (strlen(analyzed_string) == 1) {
       char c = toupper(analyzed_string[0]);
       if (c == 'A')
-	state = ANALYZED;
+        state = ANALYZED;
       else if (c == 'F')
-	state = FORECAST;
+        state = FORECAST;
       else {
-	if (accept_both) {
-	  if (c == 'B') 
-	    state = BOTH;
-	  else
-	    OK = false;
-	} else
-	  OK = false;
+        if (accept_both) {
+          if (c == 'B') 
+            state = BOTH;
+          else
+            OK = false;
+        } else
+          OK = false;
       }
     } else
       OK = false;
@@ -99,7 +99,7 @@ state_enum enkf_tui_util_scanf_state(const char * prompt, int prompt_len, bool a
    keyword is of type impl_type.
 */
 
-const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type * config , int prompt_len , enkf_impl_type impl_type ,  enkf_var_type var_type) {
+const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type * config , int prompt_len , ert_impl_type impl_type ,  enkf_var_type var_type) {
   char * kw;
   bool OK;
   const enkf_config_node_type * config_node = NULL;
@@ -111,12 +111,12 @@ const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type
       config_node = ensemble_config_get_node(config , kw);
       
       if (impl_type != INVALID) 
-	if (enkf_config_node_get_impl_type(config_node) != impl_type) 
-	  OK = false;
+        if (enkf_config_node_get_impl_type(config_node) != impl_type) 
+          OK = false;
       
       if (var_type != INVALID_VAR)
-	if (enkf_config_node_get_var_type(config_node) != var_type) 
-	  OK = false;
+        if (enkf_config_node_get_var_type(config_node) != var_type) 
+          OK = false;
     } else OK = false;
     free(kw);
   } while (!OK);
@@ -317,13 +317,13 @@ void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * co
     
     if (analysis_state & FORECAST) {
       if (enkf_fs_has_node(fs , config_node , report_step , iens , FORECAST)) {
-	enkf_fs_fread_node(fs , node , report_step , iens , FORECAST); {
-	  const field_type * field = enkf_node_value_ptr( node );
-	  y[index] = field_iget_double(field , get_index);
-	}
+        enkf_fs_fread_node(fs , node , report_step , iens , FORECAST); {
+          const field_type * field = enkf_node_value_ptr( node );
+          y[index] = field_iget_double(field , get_index);
+        }
       } else {
-	fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key  , iens , report_step);
-	y[index] = -1;
+        fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key  , iens , report_step);
+        y[index] = -1;
       }
       x[index] = report_step;
       index++;
@@ -332,13 +332,13 @@ void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * co
     
     if (analysis_state & ANALYZED) {
       if (enkf_fs_has_node(fs , config_node , report_step , iens , ANALYZED)) {
-	enkf_fs_fread_node(fs , node , report_step , iens , ANALYZED); {
-	  const field_type * field = enkf_node_value_ptr( node );
-	  y[index] = field_iget_double(field , get_index);
-	}
+        enkf_fs_fread_node(fs , node , report_step , iens , ANALYZED); {
+          const field_type * field = enkf_node_value_ptr( node );
+          y[index] = field_iget_double(field , get_index);
+        }
       } else {
-	fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key , iens , report_step);
-	y[index] = -1;
+        fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key , iens , report_step);
+        y[index] = -1;
       }
       x[index] = report_step;
       index++;

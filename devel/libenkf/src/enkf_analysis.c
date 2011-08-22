@@ -28,179 +28,13 @@
 #include <enkf_analysis.h>
 #include <timer.h>
 #include <rng.h>
-//#include <analysis_module.h>
-
-/**
-   The static functions at the top are identical to the old fortran
-   functions from mod_anafunc() with the same name.
-*/
+#include <analysis_module.h>
+#include <enkf_linalg.h>
 
 
 
-static void genX3(matrix_type * X3 , const matrix_type * W , const matrix_type * D , const double * eig) {
-  const int nrobs = matrix_get_rows( D );
-  const int nrens = matrix_get_columns( D );
-  const int nrmin = util_int_min( nrobs , nrens );
-  int i,j;
-  matrix_type * X1 = matrix_alloc(nrmin , nrobs);
-  matrix_type * X2 = matrix_alloc(nrmin , nrens);
-
-  /* X1 = (I + Lambda1)^(-1) * W'*/
-  for (i=0; i < nrmin; i++)
-    for (j=0; j < nrobs; j++)
-      matrix_iset(X1 , i , j , eig[i] * matrix_iget(W , j , i));
-  
-  matrix_matmul(X2 , X1 , D); /*   X2 = X1 * D           (Eq. 14.31) */
-  matrix_matmul(X3 , W  , X2); /*  X3 = W * X2 = X1 * X2 (Eq. 14.31) */  
-  
-  matrix_free( X1 );
-  matrix_free( X2 );
-}
 
 
-
-static void genX2(matrix_type * X2 , const matrix_type * S , const matrix_type * W , const double * eig) {
-  const int nrens = matrix_get_columns( S );
-  const int idim  = matrix_get_rows( X2 );
-  matrix_dgemm(X2 , W , S , true , false , 1.0 , 0.0);
-  { 
-    int i,j;
-    for (j=0; j < nrens; j++)
-      for (i=0; i < idim; i++)
-        matrix_imul(X2 , i,j , sqrt(eig[i]));
-  }
-}
-
-
-/**
-   The number of significant singular values to retain can either be
-   forced to a fixed number, or a cutoff on small values can be
-   used. This behaviour is regulated by the @ncomp and @truncation
-   parameters:
-
-     ncomp > 0 , truncation < 0: Use ncomp parameters.
-     ncomp < 0 , trunctaion > 0: Truncate at level 'truncation'
-     
-   If the ncomp,truncation input does not satisfy the requirements
-   above the function will crash and burn.
-
-   Singular values stored in sig0, , left hand singular vectors in U0
-   and right hand singular vector in V0T 
-
-   -------
-
-   Input is the S - matrix. U0 comes directly from dgesvd, sig0 has
-   been seriously massaged. The right singular vectors of S are
-   returned in V0T, this can be NULL.
-   
-   This method can be called in two slightly different ways.
-
-     VOT == NULL: Truncation based on singular values (i.e. the
-                  'traditional') way. In this case the value of the
-                  truncation should be less than 1.0.
-
-     VOT != NULL: This is used when Cross Validation will be
-                  performed. In this case the truncation should be set
-                  to 1.0
-
-   The input parameters in this function are NOT orthogonal.
-*/
-
-
-
-static void svdS(const matrix_type * S , 
-                 matrix_type * U0 , 
-                 matrix_type * V0T , 
-                 dgesvd_vector_enum jobVT , 
-                 double * sig0, 
-                 double truncation , 
-                 int ncomp) {
-  
-  if (((truncation > 0) && (ncomp < 0)) ||
-      ((truncation < 0) && (ncomp > 0))) {
-    int num_singular_values = util_int_min( matrix_get_rows( S ) , matrix_get_columns( S ));
-    {
-      /* 
-         The svd routine will destroy the contents of the input matrix,
-         we therefor have to store a copy of S before calling it. 
-      */
-      matrix_type        * workS     = matrix_alloc_copy( S );
-      matrix_dgesvd(DGESVD_MIN_RETURN , jobVT , workS , sig0 , U0 , V0T);  
-      matrix_free( workS );
-    }
-    
-    {
-      int    num_significant;
-      int i;
-      /* Determine the number of singular values to include */
-      {
-        double total_sigma2    = 0;
-        double running_sigma2  = 0;
-        for (i=0; i < num_singular_values; i++)
-          total_sigma2 += sig0[i] * sig0[i];
-        
-        if (ncomp > 0) {   
-          /* Use a fixed number of singular values given exetrnally. */
-          num_significant = ncomp;
-          for (i=0; i < ncomp; i++) 
-            running_sigma2 += sig0[i] * sig0[i];
-        } else {
-          /* Determine the number of singular values by enforcing that
-             less than a fraction @truncation of the total variance be
-             accounted for. */
-          num_significant = 0;
-          for (i=0; i < num_singular_values; i++) {
-            if (running_sigma2 / total_sigma2 < truncation) {  /* Include one more singular value ? */
-              num_significant++;
-              running_sigma2 += sig0[i] * sig0[i];
-            } else 
-              break;
-          }
-        }
-        printf("Selected %d components. Variance explained = %f \n",num_significant , running_sigma2 / total_sigma2);
-      }
-      
-      /* Explicitly setting the insignificant singular values to zero. */
-      for (i=num_significant; i < num_singular_values; i++)
-        sig0[i] = 0;                                     
-      
-      /* Inverting the significant singular values */
-      for (i = 0; i < num_significant; i++)
-        sig0[i] = 1.0 / sig0[i];
-    }
-  } else 
-    util_abort("%s:  truncation:%g  ncomp:%d  - invalid input \n",__func__ , truncation , ncomp );
-}
-
-
-
-static void lowrankCee(matrix_type * B, int nrens , const matrix_type * R , const matrix_type * U0 , const double * sig0) {
-  const int nrmin = matrix_get_rows( B );
-  {
-    matrix_type * X0 = matrix_alloc( nrmin , matrix_get_rows( R ));
-    matrix_dgemm(X0 , U0 , R  , true  , false , 1.0 , 0.0);  /* X0 = U0^T * R */
-    matrix_dgemm(B  , X0 , U0 , false , false , 1.0 , 0.0);  /* B = X0 * U0 */
-    matrix_free( X0 );
-  }    
-  
-  {
-    int i ,j;
-
-    /* Funny code ?? 
-       Multiply B with S^(-1)from left and right
-       BHat =  S^(-1) * B * S^(-1) 
-    */
-    for (j=0; j < matrix_get_columns( B ) ; j++)
-      for (i=0; i < matrix_get_rows( B ); i++)
-        matrix_imul(B , i , j , sig0[i]);
-
-    for (j=0; j < matrix_get_columns( B ) ; j++)
-      for (i=0; i < matrix_get_rows( B ); i++)
-        matrix_imul(B , i , j , sig0[j]);
-  }
-  
-  matrix_scale(B , nrens - 1.0);
-}
 
 
 
@@ -287,11 +121,11 @@ int enkf_analysis_get_optimal_numb_comp(const matrix_type * cvErr , const int ma
    VT         -  Matrix containing the transpose of the right singular vector of the S matrix 
    Z          -  Matrix containing the eigenvalues of the X0 matrix defined in Eq. 14.26 in Evensen (2007)
    eig        -  Vector containing the diagonal elements of the matrix L1i = inv(I + L1), where L1 
-                  are the eigenvalues of the X0 matrix above
+   are the eigenvalues of the X0 matrix above
    indexTest  -  Vector containing integers specifying which ensemble members are
-                  contained in the test ensemble
+   contained in the test ensemble
    indexTrain -  Vector containing integers specifying which ensemble members are 
-                  contained in the training ensemble               
+   contained in the training ensemble               
    nTest      -  Number of ensemble members in the test ensemble
    nTrain     -  Number of ensemble members in the training ensemble
 */
@@ -300,7 +134,7 @@ int enkf_analysis_get_optimal_numb_comp(const matrix_type * cvErr , const int ma
  
 static void enkf_analysis_get_cv_error(matrix_type * cvErr , const matrix_type * A , const matrix_type * VT , const matrix_type * Z , const double * eig, const int * indexTest, const int * indexTrain , const int nTest , const int nTrain , const int foldIndex) { 
   /*  We need to predict ATest(p), for p = 1,...,nens -1, based on the estimated regression model:
-     ATest(p) = A[:,indexTrain] * VT[1:p,indexTrain]'* Z[1:p,1:p] * eig[1:p,1:p] * Z[1:p,1:p]' * VT[1:p,testIndex]
+      ATest(p) = A[:,indexTrain] * VT[1:p,indexTrain]'* Z[1:p,1:p] * eig[1:p,1:p] * Z[1:p,1:p]' * VT[1:p,testIndex]
   */
   
   /* Start by multiplying from the right: */
@@ -430,7 +264,7 @@ static void enkf_analysis_get_cv_error(matrix_type * cvErr , const matrix_type *
 */
 static void enkf_analysis_get_cv_error_prin_comp(matrix_type * cvErr , const matrix_type * A , const matrix_type * Z , const matrix_type * Rp , const int * indexTest, const int * indexTrain , const int nTest , const int nTrain , const int foldIndex, const int maxP) { 
   /*  We need to predict ATest(p), for p = 1,...,nens -1, based on the estimated regression model:
-     AHatTest(p) = A[:,indexTrain] * Z[1:p,indexTrain]'* inv( Z[1:p,indexTrain] * Z[1:p,indexTrain]' + (nens-1) * Rp[1:p,1:p] ) * Z[1:p,indexTest];
+      AHatTest(p) = A[:,indexTrain] * Z[1:p,indexTrain]'* inv( Z[1:p,indexTrain] * Z[1:p,indexTrain]' + (nens-1) * Rp[1:p,1:p] ) * Z[1:p,indexTest];
   */
   
   /* Start by multiplying from the right: */
@@ -458,7 +292,7 @@ static void enkf_analysis_get_cv_error_prin_comp(matrix_type * cvErr , const mat
 
   for (p = 0; p < maxP; p++) {
 
-     pOrg = p + 1;
+    pOrg = p + 1;
 
 
     /*For now we do this the hard way through a full inversion of the reduced data covariance matrix: */
@@ -539,74 +373,9 @@ static void enkf_analysis_get_cv_error_prin_comp(matrix_type * cvErr , const mat
 
 
 
-static void lowrankCinv__(const matrix_type * S , 
-                          const matrix_type * R , 
-                          matrix_type * V0T , 
-                          matrix_type * Z, 
-                          double * eig , 
-                          matrix_type * U0, 
-                          double truncation, 
-                          int ncomp) {
-  
-  const int nrobs = matrix_get_rows( S );
-  const int nrens = matrix_get_columns( S );
-  const int nrmin = util_int_min( nrobs , nrens );
-  
-  double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
-
-  if (V0T != NULL)
-    svdS(S , U0 , V0T , DGESVD_MIN_RETURN , sig0 , truncation , ncomp);
-  else
-    svdS(S , U0 , NULL /* V0T */ , DGESVD_NONE , sig0, truncation , ncomp);
-
-  {
-    matrix_type * B    = matrix_alloc( nrmin , nrmin );
-    lowrankCee( B , nrens , R , U0 , sig0);          /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
-    matrix_dgesvd(DGESVD_MIN_RETURN , DGESVD_NONE, B , eig, Z , NULL);
-    matrix_free( B );
-  }
-  
-  {
-    int i,j;
-    /* Lambda1 = (I + Lambda)^(-1) */
-
-    for (i=0; i < nrmin; i++) 
-      eig[i] = 1.0 / (1 + eig[i]);
-    
-    for (j=0; j < nrmin; j++)
-      for (i=0; i < nrmin; i++)
-        matrix_imul(Z , i , j , sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
-  }
-  util_safe_free( sig0 );
-}
 
 
 
-/**
-   See comment above svdS() for description of input arguments
-   truncation and ncomp.
-*/
-
-static void lowrankCinv(const matrix_type * S , 
-                        const matrix_type * R , 
-                        matrix_type * W       , /* Corresponding to X1 from Eq. 14.29 */
-                        double * eig          , /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
-                        double truncation     ,
-                        int    ncomp) {
-
-  const int nrobs = matrix_get_rows( S );
-  const int nrens = matrix_get_columns( S );
-  const int nrmin = util_int_min( nrobs , nrens );
-
-  matrix_type * U0   = matrix_alloc( nrobs , nrmin );
-  matrix_type * Z    = matrix_alloc( nrmin , nrmin );
-  
-  lowrankCinv__( S , R , NULL , Z , eig , U0 , truncation , ncomp);
-  matrix_matmul(W , U0 , Z); /* X1 = W = U0 * Z2 = U0 * Sigma0^(+') * Z    */
-
-  matrix_free( U0 );
-  matrix_free( Z  );
-}
 
 
 
@@ -969,16 +738,16 @@ static void X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type * ran
 
 
 /**
-    This routine generates a real orthogonal random matrix.
-    The algorithm is the one by
-       Francesco Mezzadri (2007), How to generate random matrices from the classical
-       compact groups, Notices of the AMS, Vol. 54, pp 592-604.
-    1. First a matrix with independent random normal numbers are simulated.
-    2. Then the QR decomposition is computed, and Q will then be a random orthogonal matrix.
-    3. The diagonal elements of R are extracted and we construct the diagonal matrix X(j,j)=R(j,j)/|R(j,j)|
-    4. An updated Q'=Q X is computed, and this is now a random orthogonal matrix with a Haar measure.
+   This routine generates a real orthogonal random matrix.
+   The algorithm is the one by
+   Francesco Mezzadri (2007), How to generate random matrices from the classical
+   compact groups, Notices of the AMS, Vol. 54, pp 592-604.
+   1. First a matrix with independent random normal numbers are simulated.
+   2. Then the QR decomposition is computed, and Q will then be a random orthogonal matrix.
+   3. The diagonal elements of R are extracted and we construct the diagonal matrix X(j,j)=R(j,j)/|R(j,j)|
+   4. An updated Q'=Q X is computed, and this is now a random orthogonal matrix with a Haar measure.
     
-    The implementation is a plain reimplementation/copy of the old m_randrot.f90 function.
+   The implementation is a plain reimplementation/copy of the old m_randrot.f90 function.
 */
 
 
@@ -1021,7 +790,7 @@ void enkf_analysis_set_randrot( matrix_type * Q  , rng_type * rng) {
    B is a random orthonormal basis with the elements in the first column equals 1/sqrt(nrens)
 
    Upb = | 1  0 |
-         | 0  U |
+   | 0  U |
 
    where U is an arbitrary orthonormal matrix of dim nrens-1 x nrens-1  (eq. 19)
 */
@@ -1109,7 +878,7 @@ void enkf_analysis_invertS(const analysis_config_type * config , const matrix_ty
   
   switch (inversion_mode) {
   case(SVD_SS_N1_R):
-    lowrankCinv( S , R , W , eig , truncation , ncomp);    
+    enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
     break;
   default:
     util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
@@ -1118,13 +887,20 @@ void enkf_analysis_invertS(const analysis_config_type * config , const matrix_ty
 
 
 
-void enkf_analysis_invertS_pre_cv(const analysis_config_type * config , const matrix_type * S , const matrix_type * R , matrix_type * V0T , matrix_type * Z , double * eig , matrix_type * U0 ) {
+void enkf_analysis_invertS_pre_cv(const analysis_config_type * config , 
+                                  const matrix_type * S , 
+                                  const matrix_type * R , 
+                                  matrix_type * V0T , 
+                                  matrix_type * Z , 
+                                  double * eig , 
+                                  matrix_type * U0 ) {
+
   pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );  
   double truncation                     = analysis_config_get_truncation( config );  
   
   switch (inversion_mode) {
   case(SVD_SS_N1_R):
-    lowrankCinv__( S , R , V0T , Z , eig , U0 , truncation , -1);    
+    enkf_linalg_lowrankCinv__( S , R , V0T , Z , eig , U0 , truncation , -1);    
     break;
   default:
     util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
@@ -1140,8 +916,8 @@ static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , co
   const int nrens   = matrix_get_columns( S );
   matrix_type * X3  = matrix_alloc(nrobs , nrens);
   
-  genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
-                            /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
+  enkf_linalg_genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
+                                        /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
 
   matrix_dgemm( X5 , S , X3 , true , false , 1.0 , 0.0);  /* X5 = S' * X3 */
   if (!bootstrap) {
@@ -1153,7 +929,14 @@ static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , co
 }
 
 
-static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const matrix_type * randrot , const matrix_type * innov , const matrix_type * W , const double * eig , bool bootstrap) {
+static void enkf_analysis_SQRT(matrix_type * X5      , 
+                               const matrix_type * S , 
+                               const matrix_type * randrot , 
+                               const matrix_type * innov , 
+                               const matrix_type * W , 
+                               const double * eig , 
+                               bool bootstrap) {
+
   const int nrobs   = matrix_get_rows( S );
   const int nrens   = matrix_get_columns( S );
   const int nrmin   = util_int_min( nrobs , nrens );
@@ -1164,7 +947,7 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
     util_exit("%s: Sorry bootstrap support not fully implemented for SQRT scheme\n",__func__);
 
   meanX5( S , W , eig , innov , X5 );
-  genX2(X2 , S , W , eig);
+  enkf_linalg_genX2(X2 , S , W , eig);
   X5sqrt(X2 , X5 , randrot , nrobs);
 
   matrix_free( X2 );
@@ -1714,26 +1497,26 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     */
       
     matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
-    matrix_type * V0T  = matrix_alloc( nrmin , nrens ); /* Right singular vectors. */
+    matrix_type * V0T  = matrix_alloc( nrmin , nrens );    /* Right singular vectors. */
     
-    double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
-    
-    svdS(S , U0 , V0T , DGESVD_MIN_RETURN , sig0 , truncation , -1);
+    double * inv_sig0      = util_malloc( nrmin * sizeof * inv_sig0 , __func__);
+    double * sig0          = inv_sig0;
 
-    /* NEED TO invert sig0!!  */
-    for(i = 0; i < nrmin; i++) {
-      if ( sig0[i] > 0 ) {
-        sig0[i] = 1.0 / sig0[i];
-      }
-    }
-          
+    enkf_linalg_svdS(S , truncation , -1 , DGESVD_MIN_RETURN , inv_sig0 , U0 , V0T);
+    
+    /* Need to use the original non-inverted singular values. */
+    for(i = 0; i < nrmin; i++) 
+      if ( inv_sig0[i] > 0 ) 
+        sig0[i] = 1.0 / inv_sig0[i];
+    
+    
     
     /*
-        Compute the actual principal components, Z = sig0 * VOT 
-        NOTE: Z contains potentially alot of redundant zeros, but 
-        we do not care about this for now
-              
+      Compute the actual principal components, Z = sig0 * VOT 
+      NOTE: Z contains potentially alot of redundant zeros, but 
+      we do not care about this for now
     */
+    
     for(i = 0; i < nrmin; i++) {
       for(j = 0; j < nrens; j++) {
         matrix_iset( Z , i , j , sig0[i] * matrix_iget( V0T , i , j ) );
@@ -1742,16 +1525,18 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     
     /* Also compute Rp */
 
-    matrix_type * X0 = matrix_alloc( nrmin , matrix_get_rows( R ));
-    matrix_dgemm(X0 , U0 , R  , true  , false , 1.0 , 0.0);  /* X0 = U0^T * R */
-    matrix_dgemm(Rp  , X0 , U0 , false , false , 1.0 , 0.0);  /* Rp = X0 * U0 */
-    matrix_free( X0 );
+    {
+      matrix_type * X0 = matrix_alloc( nrmin , matrix_get_rows( R ));
+      matrix_dgemm(X0 , U0 , R  , true  , false , 1.0 , 0.0);  /* X0 = U0^T * R */
+      matrix_dgemm(Rp  , X0 , U0 , false , false , 1.0 , 0.0);  /* Rp = X0 * U0 */
+      matrix_free( X0 );
+    }
 
     /*We also need to compute the reduced "Innovation matrix" Dp = U0' * D    */
     matrix_dgemm(Dp , U0 , D , true , false , 1.0 , 0.0);
     
         
-    free(sig0);
+    free(inv_sig0);
     matrix_free(U0);
     matrix_free(V0T);
     

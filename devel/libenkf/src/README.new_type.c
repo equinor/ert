@@ -61,9 +61,9 @@ the configuration information in two different files (objects):
      |             /          |           |           |
      |            |           |           |           |
     _|__        __|_         _|__        _|__        _|__  
-   |    |      |    | 	    |    |      |    | 	    |    | 
-   | 01 |      | 02 | 	    | 03 |      | 04 | 	    | 05 | 
-   |____|      |____| 	    |____|      |____| 	    |____| 
+   |    |      |    |       |    |      |    |      |    | 
+   | 01 |      | 02 |       | 03 |      | 04 |      | 05 | 
+   |____|      |____|       |____|      |____|      |____| 
 
 
 The figure shows an ensemble of 5 members (of some type); they all
@@ -260,7 +260,7 @@ OK - here comes the implementation:
 
 /*
   This file contains several enum typedefs, the most important one in
-  this context is the enkf_impl_type; the NEW_TYPE should be added to
+  this context is the ert_impl_type; the NEW_TYPE should be added to
   this (at the end).
 */
 #include <enkf_types.h>
@@ -280,7 +280,7 @@ OK - here comes the implementation:
   the current directory; it is *not* installed in an include/
   directory.
 */
-#define  TARGET_TYPE NEW_TYPE   /* The variable type in this file - according to the enkf_impl_type classification */
+#define  TARGET_TYPE NEW_TYPE   /* The variable type in this file - according to the ert_impl_type classification */
 #define  DEBUG                  /* We want debugging */  
 #include "enkf_debug.h"
 

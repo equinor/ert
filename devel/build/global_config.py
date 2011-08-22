@@ -56,7 +56,7 @@ def add_static_library( env, conf , lib_path , target , src , **kwlist):
 
 
 def add_shared_library( env, conf , lib_path , target , src , **kwlist):
-    LIB = env.SharedLibrary( target , src , **kwlist)
+    LIB = env.SharedLibrary( target , src , **kwlist )
     env.Install( lib_path , LIB )
     conf.local_install[ lib_path ]   = True
 
@@ -88,7 +88,7 @@ LIBJOB_QUEUE = 5
 LIBSCHED     = 6
 LIBCONFIG    = 7
 LIBCONF      = 8
-
+LIBANALYSIS  = 9
 
 
 class conf:
@@ -123,6 +123,7 @@ class conf:
         self.LIB = {}
         self.LIB[LIBUTIL]       = {"home": "%s/libutil"      % self.BUILD_ROOT , "name": "util"}
         self.LIB[LIBECL]        = {"home": "%s/libecl"       % self.BUILD_ROOT , "name": "ecl"}
+        self.LIB[LIBANALYSIS]   = {"home": "%s/libanalysis"  % self.BUILD_ROOT , "name": "analysis"}
         self.LIB[LIBRMS]        = {"home": "%s/librms"       % self.BUILD_ROOT , "name": "rms"}
         self.LIB[LIBCONF]       = {"home": "%s/libconf"      % self.BUILD_ROOT , "name": "conf"}
         self.LIB[LIBPLOT]       = {"home": "%s/libplot"      % self.BUILD_ROOT , "name": "plot"}

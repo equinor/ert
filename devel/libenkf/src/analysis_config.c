@@ -26,10 +26,15 @@
 #include <analysis_config.h>
 #include <enkf_defaults.h>
 #include <rng.h>
+#include <analysis_module.h>
 #include "config_keys.h"
 
 
 struct analysis_config_struct {
+  hash_type            * analysis_modules;
+  analysis_module_type * analysis_module;
+
+
   bool                    merge_observations;  /* When observing from time1 to time2 - should ALL observations in between be used? */
   bool                    rerun;               /* Should we rerun the simulator when the parameters have been updated? */
   int                     rerun_start;         /* When rerunning - from where should we start? */
@@ -364,6 +369,7 @@ double analysis_config_get_truncation(const analysis_config_type * config) {
 
 
 void analysis_config_free(analysis_config_type * config) {
+  hash_free( config->analysis_modules );
   free(config->log_path);
   free(config);
 }
@@ -386,6 +392,26 @@ bool analysis_config_Xbased(const analysis_config_type * config) {
     return false;
 }
 
+/*****************************************************************/
+
+void analysis_config_load_internal_module( analysis_config_type * config , const char * internal_name , const char * symbol_table ) {
+  const char * external_name    = NULL;
+  analysis_module_type * module = analysis_module_alloc_internal( symbol_table , external_name );
+  if (module != NULL)
+    hash_insert_hash_owned_ref( config->analysis_modules , internal_name , module , analysis_module_free__ );
+  else
+    fprintf(stderr,"** Warning: failed to load module %s from %s \n",internal_name , symbol_table);
+}
+
+void analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
+  config->analysis_module = hash_get( config->analysis_modules , module_name );
+}
+
+analysis_module_type * analysis_config_get_module( analysis_config_type * config ) {
+  return config->analysis_module;
+}
+
+/*****************************************************************/
 
 analysis_config_type * analysis_config_alloc_default() {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
@@ -412,7 +438,11 @@ analysis_config_type * analysis_config_alloc_default() {
   analysis_config_set_rerun_start( config              , DEFAULT_RERUN_START );
   analysis_config_set_nfolds_CV( config                , DEFAULT_CV_NFOLDS );         
   analysis_config_set_subspace_dimension( config       , DEFAULT_NCOMP );         
-  
+
+  config->analysis_module  = NULL;
+  config->analysis_modules = hash_alloc();
+  analysis_config_load_internal_module( config , "simple_enkf" , "simple_enkf_symbol_table");
+  analysis_config_select_module( config , "simple_enkf");
   return config;
 }
 

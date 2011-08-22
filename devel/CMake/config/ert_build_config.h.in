@@ -1,0 +1,6 @@
+#cmakedefine HAVE_PTHREAD
+#cmakedefine HAVE_EXECINFO
+#cmakedefine HAVE_FORK
+#cmakedefine HAVE_ZLIB
+#cmakedefine HAVE_LSF
+

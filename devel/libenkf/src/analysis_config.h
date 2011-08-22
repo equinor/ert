@@ -23,6 +23,7 @@
 #include <config.h>
 #include <enkf_types.h>
 #include <stdbool.h>
+#include <analysis_module.h>
 
 typedef struct analysis_config_struct analysis_config_type;
 
@@ -64,5 +65,8 @@ void                   analysis_config_set_std_cutoff( analysis_config_type * co
 double                 analysis_config_get_std_cutoff( const analysis_config_type * config );
 void                   analysis_config_add_config_items( config_type * config );
 void                   analysis_config_fprintf_config( analysis_config_type * config , FILE * stream);
+
+void                   analysis_config_select_module( analysis_config_type * config , const char * module_name );
+analysis_module_type * analysis_config_get_module( analysis_config_type * config );
 
 #endif

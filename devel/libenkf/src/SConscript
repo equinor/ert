@@ -34,7 +34,7 @@ def make_build_info(conf , target_file):
 conf = global_config.get_conf(os.getcwd() , package , 2)
 make_build_info( conf , "ert_build_info.h")
 env  = Environment()
-conf.update_env( env , [ LIBJOB_QUEUE , LIBCONFIG , LIBRMS , LIBSCHED , LIBECL , LIBPLOT , LIBUTIL ] , link = False)
+conf.update_env( env , [ LIBANALYSIS , LIBJOB_QUEUE , LIBCONFIG , LIBRMS , LIBSCHED , LIBECL , LIBPLOT , LIBUTIL ] , link = False)
 
 
 src_list = Split("rng_config.c trans_func.c enkf_types.c enkf_obs.c obs_data.c field_obs.c enkf_config_node.c field_config.c field.c ecl_static_kw.c enkf_state.c enkf_util.c enkf_node.c gen_kw_config.c gen_kw.c enkf_fs.c fs_driver.c meas_data.c summary_obs.c summary.c summary_config.c gen_data_config.c gen_data.c gen_common.c gen_obs.c enkf_sched.c enkf_serialize.c plain_driver_common.c ecl_config.c enkf_defaults.c ensemble_config.c model_config.c site_config.c active_list.c obs_vector.c field_trans.c plain_driver_index.c plain_driver.c config_parser.c enkf_analysis.c local_ministep.c local_updatestep.c local_config.c analysis_config.c misfit_table.c fs_types.c block_fs_driver.c  block_fs_driver_index.c plot_config.c ert_template.c member_config.c enkf_main.c")

@@ -1,11 +1,13 @@
 SConscript(["libsched/SConstruct",
             "librms/SConstruct",
             "libecl/SConstruct",
+            "libanalysis/SConstruct",
             "libjob_queue/SConstruct",
             "libplot/SConstruct",
             "libutil/SConstruct",
             "libconfig/SConstruct",
             "libenkf/SConstruct"])
+
             
            
         

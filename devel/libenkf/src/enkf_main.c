@@ -80,7 +80,7 @@
 #include <bool_vector.h>
 #include <rng.h>
 #include <rng_config.h>
-//#include <analysis_module.h>
+#include <analysis_module.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -123,7 +123,6 @@ struct enkf_main_struct {
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
-  hash_type            * analysis_modules;
   analysis_config_type * analysis_config;
   local_config_type    * local_config;       /* Holding all the information about local analysis. */
   ert_templates_type   * templates;          /* Run time templates */
@@ -337,13 +336,13 @@ static void enkf_main_free_ensemble( enkf_main_type * enkf_main ) {
 
 void enkf_main_free(enkf_main_type * enkf_main) {
   rng_free( enkf_main->rng );
+  rng_config_free( enkf_main->rng_config );
   enkf_obs_free(enkf_main->obs);
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) enkf_fs_free( enkf_main->dbase );
 
   log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
   log_close( enkf_main->logh );
-  hash_free( enkf_main->analysis_modules );
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
@@ -896,31 +895,6 @@ static void serialize_info_init( serialize_info_type * serialize_info , enkf_mai
 
 
 
-//void enkf_main_module_update( enkf_main_type * enkf_main , const meas_data_type * forecast , obs_data_type * obs_data) {
-//  analysis_module_type * module;
-//  int ens_size     = meas_data_get_ens_size( forecast );
-//  int active_size  = obs_data_get_active_size( obs_data );
-//  matrix_type * X  = matrix_alloc( ens_size , ens_size );
-//  matrix_type * S  = meas_data_allocS( forecast , active_size );
-//  matrix_type * R  = obs_data_allocR( obs_data , active_size );
-//  matrix_type * innov   = obs_data_alloc_innov( obs_data , forecast , active_size );
-//  matrix_type * E  = NULL;
-//  matrix_type * D  = NULL;
-//
-//  if (analysis_module_needs_ED( module )) {
-//    E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
-//    D = obs_data_allocD( obs_data , E , S );
-//  }
-//  
-//  //analysis_module_initX( module , X , S , R , innov , E , D );
-//  
-//
-//  matrix_safe_free( E );
-//  matrix_safe_free( D );
-//  matrix_free( S );
-//  matrix_free( R );
-//  matrix_free( innov );
-//}
 
 
 
@@ -1243,6 +1217,42 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
 
 
 
+void enkf_main_module_update( enkf_main_type * enkf_main , 
+                              hash_type * use_count,
+                              int report_step , 
+                              const local_ministep_type * ministep , 
+                              const meas_data_type * forecast , 
+                              obs_data_type * obs_data) {
+  
+  analysis_module_type * module = analysis_config_get_module( enkf_main->analysis_config );
+  int ens_size     = meas_data_get_ens_size( forecast );
+  int active_size  = obs_data_get_active_size( obs_data );
+  matrix_type * X  = matrix_alloc( ens_size , ens_size );
+  matrix_type * S  = meas_data_allocS( forecast , active_size );
+  matrix_type * R  = obs_data_allocR( obs_data , active_size );
+  matrix_type * innov   = obs_data_alloc_innov( obs_data , forecast , active_size );
+  matrix_type * E  = NULL;
+  matrix_type * D  = NULL;
+
+  if (analysis_module_needs_ED( module )) {
+    E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
+    D = obs_data_allocD( obs_data , E , S );
+  }
+  
+  analysis_module_initX( module , X , S , R , innov , E , D );
+  enkf_main_update_mulX( enkf_main , X , ministep , report_step , use_count);
+
+  matrix_safe_free( E );
+  matrix_safe_free( D );
+  matrix_free( S );
+  matrix_free( R );
+  matrix_free( innov );
+  matrix_free( X );
+}
+
+
+
+
 /**
    This is  T H E  EnKF update routine.
 **/
@@ -1310,6 +1320,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       if (obs_data_get_active_size(obs_data) > 0) {
         if (analysis_config_Xbased( enkf_main->analysis_config )) {
           
+          enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
+
+          if (0) {
           if (analysis_config_get_bootstrap( enkf_main->analysis_config )) {
             /*
               Think there is a memory bug in this update code, when
@@ -1339,6 +1352,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
             }
 
             matrix_free( X );
+          }
           }
         }
       }
@@ -2304,7 +2318,6 @@ static enkf_main_type * enkf_main_alloc_empty( void ) {
   enkf_main->model_config     = model_config_alloc_empty();
   enkf_main->analysis_config  = analysis_config_alloc_default();   /* This is ready for use. */
   enkf_main->plot_config      = plot_config_alloc_default();       /* This is ready for use. */
-  enkf_main->analysis_modules = hash_alloc( );
   return enkf_main;
 }
 

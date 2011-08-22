@@ -382,7 +382,11 @@ trans_func_type * trans_func_fscanf_alloc( FILE * stream ) {
 
   func_name = util_fscanf_alloc_token(stream);
   if (func_name == NULL) {
-    fprintf(stderr,"Problem at file:line: %s:%d \n",util_alloc_filename_from_stream( stream ) , util_get_current_linenr( stream ));
+    char * filename = "????";
+#ifdef HAVE_FORK
+      filename = util_alloc_filename_from_stream( stream );
+#endif
+    fprintf(stderr,"Problem at file:line: %s:%d \n", filename, util_get_current_linenr( stream ));
     util_abort("%s: could not locate name of transformation - aborting \n",__func__);
   }
   

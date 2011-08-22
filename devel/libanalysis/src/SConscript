@@ -1,0 +1,40 @@
+import os
+import os.path
+import sys
+sys.path += ["../../build"]
+import global_config
+from   global_config import LIBUTIL
+from   global_config import LIBANALYSIS
+from   global_config import add_static_library
+from   global_config import add_shared_library
+from   global_config import add_header
+from   global_config import get_target
+from   global_config import add_program
+
+package      = "analysis"
+lib_path     = "../lib"
+slib_path     = "../slib"
+include_path = "../include"
+module_path  = "../modules"
+
+
+conf = global_config.get_conf(os.getcwd() , package , 2)
+env  = Environment()
+conf.update_env( env , [ LIBUTIL , LIBANALYSIS ] , link = False)
+
+src_list = Split("analysis_module.c enkf_linalg.c")
+src_list.append("simple_enkf.c")
+
+
+header_list = Split("analysis_module.h analysis_table.h enkf_linalg.h")
+
+
+add_shared_library( env , conf , lib_path , package , src_list )
+add_header( env , conf , include_path , header_list )
+
+env['SHLIBPREFIX'] = ""
+add_shared_library( env , conf , module_path , "simple_enkf.so" , ["simple_enkf.c"] )
+
+
+Default( lib_path , include_path , slib_path , module_path)
+

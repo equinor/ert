@@ -58,10 +58,11 @@ void lsf_driver_kill_job(void * driver , void * job) {
 
 
 void * lsf_driver_submit_job(void * driver , 
-                             const char  * submit_cmd     , 
-                             const char  * run_path       , 
-                             const char  * job_name ,
-                             int           argc,     
+                             const char  * submit_cmd  , 
+                             int           num_cpu     , 
+                             const char  * run_path    , 
+                             const char  * job_name    ,
+                             int           argc        ,     
                              const char ** argv ) {
   lsf_driver_invalid_usage( __func__ );
   return NULL;
