@@ -47,7 +47,7 @@ void            * rms_tagkey_copyc_(const void *);
 void              rms_tagkey_load(rms_tagkey_type *, bool , FILE *, hash_type *);
 void            * rms_tagkey_get_data_ref(const rms_tagkey_type *);
 void              rms_tagkey_fwrite(const rms_tagkey_type * , FILE *);
-void              rms_tagkey_printf(const rms_tagkey_type * , FILE *);
+void              rms_tagkey_fprintf(const rms_tagkey_type * , FILE *);
 rms_tagkey_type * rms_tagkey_copyc(const rms_tagkey_type *);
 int               rms_tagkey_get_size(const rms_tagkey_type *);
 

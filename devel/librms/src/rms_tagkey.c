@@ -30,11 +30,11 @@
 static const char * rms_array_string      = "array";
 
 static const char rms_type_names[6][7] = {{"char\0"},
-					  {"float\0"},
-					  {"double\0"},
-					  {"bool\0"},
-					  {"byte\0"},
-					  {"int\0"}};
+                                          {"float\0"},
+                                          {"double\0"},
+                                          {"bool\0"},
+                                          {"byte\0"},
+                                          {"int\0"}};
 
 static const int rms_type_size[6] = {1 , 4 , 8 , 1 , 1 , 4}; /* */
 
@@ -55,7 +55,7 @@ struct rms_tagkey_struct {
 /*****************************************************************/
 
 
-			    
+                            
 /*****************************************************************/
 
 
@@ -84,14 +84,14 @@ void rms_tagkey_clear(rms_tagkey_type * tagkey) {
     {
       double *tmp = (double *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] = 0;
+        tmp[i] = 0;
     }
     break;
   case(rms_float_type):
     {
       float *tmp = (float *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] = 0;
+        tmp[i] = 0;
     }
     break;
   default:
@@ -109,7 +109,7 @@ int i;
     {
       double *tmp = (double *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] = f(tmp[i]);
+        tmp[i] = f(tmp[i]);
     }
     break;
 
@@ -117,7 +117,7 @@ int i;
     {
       float *tmp = (float *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] = f(tmp[i]);
+        tmp[i] = f(tmp[i]);
     }
     break;
 
@@ -136,7 +136,7 @@ void rms_tagkey_inplace_sqr(rms_tagkey_type * tagkey) {
     {
       double *tmp = (double *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] *= tmp[i];
+        tmp[i] *= tmp[i];
     }
     break;
 
@@ -144,7 +144,7 @@ void rms_tagkey_inplace_sqr(rms_tagkey_type * tagkey) {
     {
       float *tmp = (float *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] *= tmp[i];
+        tmp[i] *= tmp[i];
     }
     break;
 
@@ -168,7 +168,7 @@ void rms_tagkey_inplace_log10(rms_tagkey_type * tagkey) {
     {
       double *tmp = (double *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] = log10(tmp[i]);
+        tmp[i] = log10(tmp[i]);
     }
     break;
 
@@ -176,7 +176,7 @@ void rms_tagkey_inplace_log10(rms_tagkey_type * tagkey) {
     {
       float *tmp = (float *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] = log10(tmp[i]);
+        tmp[i] = log10(tmp[i]);
     }
     break;
     
@@ -195,7 +195,7 @@ void rms_tagkey_inplace_sqrt(rms_tagkey_type * tagkey) {
     {
       double *tmp = (double *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] = sqrt(util_double_max(0.0 , tmp[i]));
+        tmp[i] = sqrt(util_double_max(0.0 , tmp[i]));
     }
     break;
     
@@ -203,7 +203,7 @@ void rms_tagkey_inplace_sqrt(rms_tagkey_type * tagkey) {
     {
       float *tmp = (float *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] = sqrtf(util_float_max(0.0 , tmp[i]));
+        tmp[i] = sqrtf(util_float_max(0.0 , tmp[i]));
     }
     break;
 
@@ -222,7 +222,7 @@ void rms_tagkey_scale(rms_tagkey_type * tagkey , double scale_factor) {
     {
       double *tmp = (double *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] *= scale_factor;
+        tmp[i] *= scale_factor;
     }
     break;
 
@@ -230,7 +230,7 @@ void rms_tagkey_scale(rms_tagkey_type * tagkey , double scale_factor) {
     {
       float *tmp = (float *) tagkey->data;
       for (i=0; i < tagkey->size; i++)
-	tmp[i] *= scale_factor;
+        tmp[i] *= scale_factor;
     }
     break;
 
@@ -250,7 +250,7 @@ void rms_tagkey_inplace_add(rms_tagkey_type * tagkey , const rms_tagkey_type *de
       double *tmp1       = (double *) tagkey->data;
       const double *tmp2 = (const double *) delta->data;
       for (i=0; i < tagkey->size; i++)
-	tmp1[i] += tmp2[i];
+        tmp1[i] += tmp2[i];
     }
     break;
     
@@ -259,7 +259,7 @@ void rms_tagkey_inplace_add(rms_tagkey_type * tagkey , const rms_tagkey_type *de
       float *tmp1       = (float *) tagkey->data;
       const float *tmp2 = (const float *) delta->data;
       for (i=0; i < tagkey->size; i++)
-	tmp1[i] += tmp2[i];
+        tmp1[i] += tmp2[i];
     }
     break;
 
@@ -279,7 +279,7 @@ void rms_tagkey_inplace_add_scaled(rms_tagkey_type * tagkey , const rms_tagkey_t
       double *tmp1       = (double *) tagkey->data;
       const double *tmp2 = (const double *) delta->data;
       for (i=0; i < tagkey->size; i++)
-	tmp1[i] += tmp2[i] * factor;
+        tmp1[i] += tmp2[i] * factor;
     }
     break;
     
@@ -288,7 +288,7 @@ void rms_tagkey_inplace_add_scaled(rms_tagkey_type * tagkey , const rms_tagkey_t
       float *tmp1       = (float *) tagkey->data;
       const float *tmp2 = (const float *) delta->data;
       for (i=0; i < tagkey->size; i++)
-	tmp1[i] += tmp2[i] * factor;
+        tmp1[i] += tmp2[i] * factor;
     }
     break;
 
@@ -308,7 +308,7 @@ void rms_tagkey_inplace_mul(rms_tagkey_type * tagkey , const rms_tagkey_type *de
       double *tmp1       = (double *) tagkey->data;
       const double *tmp2 = (const double *) delta->data;
       for (i=0; i < tagkey->size; i++)
-	tmp1[i] *= tmp2[i];
+        tmp1[i] *= tmp2[i];
     }
     break;
 
@@ -317,7 +317,7 @@ void rms_tagkey_inplace_mul(rms_tagkey_type * tagkey , const rms_tagkey_type *de
       float *tmp1       = (float *) tagkey->data;
       const float *tmp2 = (const float *) delta->data;
       for (i=0; i < tagkey->size; i++)
-	tmp1[i] *= tmp2[i];
+        tmp1[i] *= tmp2[i];
     }
     break;
     
@@ -328,13 +328,13 @@ void rms_tagkey_inplace_mul(rms_tagkey_type * tagkey , const rms_tagkey_type *de
 }
 
 
-#define TAGKEY_MAX_MIN(type)                       	 \
-{                                              		 \
+#define TAGKEY_MAX_MIN(type)                             \
+{                                                        \
   type * data = rms_tagkey_get_data_ref(tagkey);         \
-  type max = -data[0];                         		 \
-  type min =  data[0];                         		 \
-  int i;                                       		 \
-  for (i=1; i < tagkey->size; i++)        		 \
+  type max = -data[0];                                   \
+  type min =  data[0];                                   \
+  int i;                                                 \
+  for (i=1; i < tagkey->size; i++)                       \
       util_update_ ## type ## _max_min(data[i] , &max , &min); \
   memcpy(_max , &max , tagkey->sizeof_ctype);            \
   memcpy(_min , &min , tagkey->sizeof_ctype);            \
@@ -377,8 +377,8 @@ static void rms_tagkey_alloc_data(rms_tagkey_type *tagkey) {
     if (tagkey->data_size > tagkey->alloc_size) {
       void *tmp = realloc(tagkey->data , tagkey->data_size);
       if (tmp == NULL) {
-	fprintf(stderr,"%s: failed to allocate: %d bytes of storage - aborting \n",__func__ , tagkey->data_size);
-	abort();
+        fprintf(stderr,"%s: failed to allocate: %d bytes of storage - aborting \n",__func__ , tagkey->data_size);
+        abort();
       } 
       tagkey->data       = tmp;
       tagkey->alloc_size = tagkey->data_size;
@@ -421,7 +421,7 @@ static void rms_tagkey_set_data_size(rms_tagkey_type *tagkey , FILE *stream , in
       const long int init_pos = ftell(stream);
       int i;
       for (i=0; i < tagkey->size; i++)
-	rms_util_fskip_string(stream);
+        rms_util_fskip_string(stream);
       tagkey->data_size = ftell(stream) - init_pos;
       fseek(stream , init_pos , SEEK_SET);
     } else 
@@ -543,7 +543,7 @@ void rms_tagkey_fwrite(const rms_tagkey_type * tagkey , FILE *stream) {
   rms_tagkey_fwrite_data(tagkey , stream);
 }
 
-void rms_tagkey_printf(const rms_tagkey_type * tagkey, FILE *stream) {
+void rms_tagkey_fprintf(const rms_tagkey_type * tagkey, FILE *stream) {
   fprintf(stream,"    <%s> %6d %s",tagkey->name , tagkey->size , rms_type_names[tagkey->rms_type]);
   if (tagkey->size == 1) {
     if (tagkey->rms_type == rms_int_type)
@@ -582,11 +582,11 @@ bool rms_tagkey_char_eq(const rms_tagkey_type *tagkey , const char *keyvalue) {
 rms_tagkey_type * rms_tagkey_alloc_empty(bool endian_convert) {
   
   rms_tagkey_type *tagkey = malloc(sizeof *tagkey);
-  tagkey->alloc_size 	  = 0;
+  tagkey->alloc_size      = 0;
   tagkey->data_size       = 0;
   tagkey->size            = 0;
-  tagkey->name       	  = NULL;
-  tagkey->data       	  = NULL;
+  tagkey->name            = NULL;
+  tagkey->data            = NULL;
   tagkey->endian_convert  = endian_convert;
   tagkey->shared_data     = false;
   
@@ -597,11 +597,11 @@ rms_tagkey_type * rms_tagkey_alloc_empty(bool endian_convert) {
 
 static rms_tagkey_type * rms_tagkey_alloc_initialized(const char * name , int size , rms_type_enum rms_type , bool endian_convert) {
   rms_tagkey_type *tagkey = rms_tagkey_alloc_empty(endian_convert);
-  tagkey->size         	  = size;
-  tagkey->rms_type     	  = rms_type;
-  tagkey->sizeof_ctype 	  = rms_type_size[rms_type];
-  tagkey->data_size    	  = tagkey->size * tagkey->sizeof_ctype;
-  tagkey->name         	  = util_alloc_string_copy(name);
+  tagkey->size            = size;
+  tagkey->rms_type        = rms_type;
+  tagkey->sizeof_ctype    = rms_type_size[rms_type];
+  tagkey->data_size       = tagkey->size * tagkey->sizeof_ctype;
+  tagkey->name            = util_alloc_string_copy(name);
   return tagkey;
 }
 
@@ -697,12 +697,12 @@ rms_tagkey_type * rms_tagkey_alloc_creationDate() {
   rms_tagkey_set_data_size(tagkey , NULL , len);
   rms_tagkey_alloc_data(tagkey);
   sprintf(tagkey->data , "%02d/%02d/%4d %02d:%02d:%02d" , 
-	  ts.tm_mday, 
-	  ts.tm_mon,
-	  ts.tm_year + 1900, 
-	  ts.tm_hour,
-	  ts.tm_min,
-	  ts.tm_sec);
+          ts.tm_mday, 
+          ts.tm_mon,
+          ts.tm_year + 1900, 
+          ts.tm_hour,
+          ts.tm_min,
+          ts.tm_sec);
 
   return tagkey;
 }

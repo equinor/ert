@@ -21,8 +21,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <hash.h>
-#include <list.h>
-#include <list_node.h>
+#include <vector.h>
 #include <util.h>
 
 
@@ -48,12 +47,12 @@ static const char * rms_comment2          = "Creator: RMS - Reservoir Modelling 
 
 
 struct rms_file_struct {
-  char       * filename;
-  bool         endian_convert;
-  bool         fmt_file;
-  hash_type  * type_map;
-  list_type  * tag_list;
-  FILE       * stream;
+  char         * filename;
+  bool           endian_convert;
+  bool           fmt_file;
+  hash_type    * type_map;
+  vector_type  * tag_list;
+  FILE         * stream;
 };
 
 
@@ -83,7 +82,7 @@ static bool rms_fmt_file(const rms_file_type *rms_file) {
 
     
 static void rms_file_add_tag(rms_file_type *rms_file , const rms_tag_type *tag) {
-  list_append_ref(rms_file->tag_list , tag);
+  vector_append_owned_ref(rms_file->tag_list , tag , rms_tag_free__ );
 }
 
 
@@ -101,26 +100,27 @@ void rms_file_add_dimensions(rms_file_type * rms_file , int nX , int nY , int nZ
 }
 
 
-rms_tag_type * rms_file_get_tag_ref(const rms_file_type *rms_file , const char *tagname, const char *keyname, const char *keyvalue, bool abort_on_error) {
-  bool cont;
-  rms_tag_type *return_tag = NULL;
-  list_node_type *tag_node = list_get_head(rms_file->tag_list);
-  if (tag_node != NULL)
-    cont = true;
-  else
-    cont = false;
+rms_tag_type * rms_file_get_tag_ref(const rms_file_type *rms_file , 
+                                    const char *tagname , 
+                                    const char *keyname , 
+                                    const char *keyvalue, bool abort_on_error) {
 
-  while (cont) {
-    rms_tag_type *tag = list_node_value_ptr(tag_node);
-    if (rms_tag_name_eq(tag , tagname , keyname , keyvalue)) {
-      return_tag = tag;
-      cont = false;
-    } else 
-      tag_node = list_node_get_next(tag_node);
-    if (tag_node == NULL)
-      cont = false;
+  rms_tag_type *return_tag = NULL;
+  bool cont;
+  {
+    int index = 0;
+    while (cont) {
+      if (index < vector_get_size( rms_file->tag_list )) {
+        rms_tag_type *tag = vector_iget( rms_file->tag_list , index );
+        if (rms_tag_name_eq(tag , tagname , keyname , keyvalue)) {
+          return_tag = tag;
+          cont = false;
+        } else 
+          index++;
+      } else
+        cont = false;
+    }
   }
-  
   
   if (return_tag == NULL && abort_on_error) {
     if (keyname != NULL && keyvalue != NULL) 
@@ -132,12 +132,6 @@ rms_tag_type * rms_file_get_tag_ref(const rms_file_type *rms_file , const char *
 }
 
 
-list_node_type * rms_file_iterate_tag_node(const rms_file_type * rms_file , list_node_type * tag_node) {
-  if (tag_node == NULL)
-    return list_get_head(rms_file->tag_list);
-  else 
-    return list_node_get_next(tag_node);
-}
 
 
 
@@ -151,8 +145,8 @@ list_node_type * rms_file_iterate_tag_node(const rms_file_type * rms_file , list
 rms_file_type * rms_file_alloc(const char *filename, bool fmt_file) {
   rms_file_type *rms_file   = malloc(sizeof *rms_file);
   rms_file->endian_convert  = false;
-  rms_file->type_map  	    = hash_alloc();
-  rms_file->tag_list  	    = list_alloc();
+  rms_file->type_map        = hash_alloc();
+  rms_file->tag_list        = vector_alloc_new();
   
   hash_insert_hash_owned_ref(rms_file->type_map , "byte"   , rms_type_alloc(rms_byte_type ,    1) ,  rms_type_free);
   hash_insert_hash_owned_ref(rms_file->type_map , "bool"   , rms_type_alloc(rms_bool_type,     1) ,  rms_type_free);
@@ -179,29 +173,16 @@ void rms_file_set_filename(rms_file_type * rms_file , const char *filename , boo
 }
 
 
-static void rms_file_delete_tag(rms_file_type * rms_file , list_node_type *tag_node) {
-  rms_tag_free( list_node_value_ptr(tag_node) );
-  list_del_node(rms_file->tag_list , tag_node);
-}
-
 
 void rms_file_free_data(rms_file_type * rms_file) {
-  list_node_type    *tag_node , *next_tag_node;
-  list_type         *tag_list = rms_file->tag_list;
-    
-  tag_node = list_get_head(tag_list);
-  while (tag_node) {
-    next_tag_node = list_node_get_next(tag_node);
-    rms_file_delete_tag(rms_file , tag_node);
-    tag_node = next_tag_node;
-  }
+  vector_clear( rms_file->tag_list );
 }
 
 
 
 void rms_file_free(rms_file_type * rms_file) {
   rms_file_free_data(rms_file);
-  list_free(rms_file->tag_list);
+  vector_free( rms_file->tag_list );
   hash_free(rms_file->type_map);
   free(rms_file->filename);
   free(rms_file);
@@ -228,8 +209,8 @@ void rms_file_assert_dimensions(const rms_file_type *rms_file , int nx , int ny 
 
   if (!OK) {
     fprintf(stderr,"%s: dimensions on file: %s (%d, %d, %d) did not match with input dimensions (%d,%d,%d) - aborting \n",__func__ , rms_file->filename,
-	    rms_file_get_dim(tag , "nX"), rms_file_get_dim(tag , "nY"), rms_file_get_dim(tag , "nZ"),
-	    nx , ny , nz);
+            rms_file_get_dim(tag , "nX"), rms_file_get_dim(tag , "nY"), rms_file_get_dim(tag , "nZ"),
+            nx , ny , nz);
     abort();
   }
 }
@@ -293,12 +274,12 @@ rms_tag_type * rms_file_fread_alloc_tag(rms_file_type * rms_file , const char *t
       bool eof_tag;
       rms_tag_type * tmp_tag = rms_tag_fread_alloc(rms_file->stream , rms_file->type_map , rms_file->endian_convert , &eof_tag);
       if (rms_tag_name_eq(tmp_tag , tagname , keyname , keyvalue)) {
-	tag_found = true;
-	tag = tmp_tag;
+        tag_found = true;
+        tag = tmp_tag;
       } else 
-	rms_tag_free(tmp_tag);
+        rms_tag_free(tmp_tag);
       if (tag_found || eof_tag)
-	cont = false;
+        cont = false;
     }
     if (tag == NULL) {
       fseek(rms_file->stream , start_pos , SEEK_SET);
@@ -351,9 +332,9 @@ void rms_file_fread(rms_file_type *rms_file) {
     while (!eof_tag) {
       rms_tag_type * tag = rms_tag_fread_alloc(rms_file->stream ,  rms_file->type_map , rms_file->endian_convert , &eof_tag );
       if (!eof_tag)
-	rms_file_add_tag(rms_file , tag);
+        rms_file_add_tag(rms_file , tag);
       else
-	rms_tag_free(tag);
+        rms_tag_free(tag);
       
     }
   }
@@ -389,26 +370,25 @@ void rms_file_fwrite(rms_file_type * rms_file, const char * filetype) {
   rms_file_init_fwrite(rms_file , filetype );
 
   {
-    list_node_type * tag_node = list_get_head(rms_file->tag_list);
-    while (tag_node != NULL) {
-      const rms_tag_type *tag = list_node_value_ptr(tag_node);
+    int tag_index;
+    for (tag_index = 0; tag_index < vector_get_size( rms_file->tag_list ); tag_index++) {
+      const rms_tag_type *tag = vector_iget_const( rms_file->tag_list , tag_index );
       rms_tag_fwrite(tag , rms_file->stream);
-      tag_node = list_node_get_next(tag_node);
     }
   }
+
   rms_file_complete_fwrite(rms_file );
   rms_file_fclose(rms_file);
 }
 
 
-void rms_file_printf(const rms_file_type *rms_file , FILE *stream) {
+void rms_file_fprintf(const rms_file_type *rms_file , FILE *stream) {
   fprintf(stream , "<%s>\n",rms_file->filename);
   {
-    list_node_type * tag_node = list_get_head(rms_file->tag_list);
-    while (tag_node != NULL) {
-      const rms_tag_type *tag = list_node_value_ptr(tag_node);
-      rms_tag_printf(tag , stream);
-      tag_node = list_node_get_next(tag_node);
+    int tag_index;
+    for (tag_index = 0; tag_index < vector_get_size( rms_file->tag_list ); tag_index++) {
+      const rms_tag_type *tag = vector_iget_const( rms_file->tag_list , tag_index );
+      rms_tag_fprintf(tag , rms_file->stream);
     }
   }
   fprintf(stream , "</%s>\n",rms_file->filename);
@@ -431,44 +411,41 @@ void rms_file_2eclipse(const char * rms_file , const char * ecl_path, bool ecl_f
   
   util_alloc_file_components(rms_file , NULL , &rms_base_file , NULL);
   {
-    list_node_type * tag_node = NULL;
     float * ecl_data = malloc(size * sizeof * ecl_data);
-    do {
-      tag_node = rms_file_iterate_tag_node(file , tag_node);
-      
-      if (tag_node != NULL) {
-	rms_tag_type * rms_tag = list_node_value_ptr(tag_node);
-	if (rms_tag_name_eq(rms_tag , "parameter" , NULL , NULL)) {
-	  rms_tagkey_type * rms_tagkey = rms_tag_get_datakey(rms_tag);
-	  const float * data = rms_tagkey_get_data_ref(rms_tagkey);
-	  rms_util_set_fortran_data(ecl_data , data , sizeof * ecl_data , dims[0] , dims[1] , dims[2]);
+    int tag_index;
+    for (tag_index = 0; tag_index < vector_get_size( file->tag_list ); tag_index++) {
+      rms_tag_type * rms_tag = vector_iget( file->tag_list , tag_index );
 
-	  {
-	    float rms_undef = -999;
-	    float ecl_undef = 0;
-	    rms_util_translate_undef(ecl_data , size , rms_tagkey_get_sizeof_ctype(rms_tagkey) , &rms_undef , &ecl_undef);
-	  }
-	  
-	  {
-	    const char * tagname  = rms_tag_get_namekey_name(rms_tag);
-	    char       * ecl_base = malloc(4 + strlen(tagname) + 2);
-	    char       * ecl_file;
-	    
-	    sprintf(ecl_base , "%s_%04d" , tagname , ecl_file_nr);
-	    ecl_file = util_alloc_filename(ecl_path , ecl_base , NULL);
-	    if (util_same_file(ecl_file , rms_file)) {
-	      fprintf(stderr,"%s: attempt to overwrite %s -> %s - aborting \n",__func__ , rms_file , ecl_file);
-	      abort();
-	    }
-	    
-	    ecl_kw_fwrite_param(ecl_file , ecl_fmt_file , tagname , ECL_FLOAT_TYPE , size , ecl_data);
-	    free(ecl_base);
-	    free(ecl_file);
-	    
-	  }
-	}
+      if (rms_tag_name_eq(rms_tag , "parameter" , NULL , NULL)) {
+        rms_tagkey_type * rms_tagkey = rms_tag_get_datakey(rms_tag);
+        const float * data = rms_tagkey_get_data_ref(rms_tagkey);
+        rms_util_set_fortran_data(ecl_data , data , sizeof * ecl_data , dims[0] , dims[1] , dims[2]);
+        
+        {
+          float rms_undef = -999;
+          float ecl_undef = 0;
+          rms_util_translate_undef(ecl_data , size , rms_tagkey_get_sizeof_ctype(rms_tagkey) , &rms_undef , &ecl_undef);
+        }
+        
+        {
+          const char * tagname  = rms_tag_get_namekey_name(rms_tag);
+          char       * ecl_base = malloc(4 + strlen(tagname) + 2);
+          char       * ecl_file;
+          
+          sprintf(ecl_base , "%s_%04d" , tagname , ecl_file_nr);
+          ecl_file = util_alloc_filename(ecl_path , ecl_base , NULL);
+          if (util_same_file(ecl_file , rms_file)) {
+            fprintf(stderr,"%s: attempt to overwrite %s -> %s - aborting \n",__func__ , rms_file , ecl_file);
+            abort();
+          }
+          
+          ecl_kw_fwrite_param(ecl_file , ecl_fmt_file , tagname , ECL_FLOAT_TYPE , size , ecl_data);
+          free(ecl_base);
+          free(ecl_file);
+          
+        }
       }
-    } while (tag_node != NULL);
+    } 
     free(ecl_data);
   }
   free(rms_base_file);
@@ -477,8 +454,8 @@ void rms_file_2eclipse(const char * rms_file , const char * ecl_path, bool ecl_f
 
 
 bool rms_file_is_roff(FILE * stream) {
-  const int len        	     = strlen(rms_comment1);
-  char *header         	     = malloc(strlen(rms_comment1) + 1);
+  const int len              = strlen(rms_comment1);
+  char *header               = malloc(strlen(rms_comment1) + 1);
   const long int current_pos = ftell(stream);
   bool roff_file             = false;
 
