@@ -21,7 +21,6 @@
 #include <rms_file.h>
 #include <rms_tagkey.h>
 #include <rms_stats.h>
-#include <list.h>
 #include <string.h>
 
 int main (int argc , char **argv) {

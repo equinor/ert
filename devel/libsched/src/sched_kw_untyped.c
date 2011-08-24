@@ -18,8 +18,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <list.h>
-#include <list_node.h>
+#include <vector.h>
 #include <ctype.h>
 #include <util.h>
 #include <sched_kw_untyped.h>

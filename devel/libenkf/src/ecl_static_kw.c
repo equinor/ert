@@ -77,21 +77,6 @@ void ecl_static_kw_init(ecl_static_kw_type * ecl_static_kw, const ecl_kw_type * 
 
 
 
-void ecl_static_kw_upgrade_103( const char * filename ) {
-  FILE * stream  = util_fopen(filename , "r");
-  ert_impl_type impl_type = util_fread_int( stream );
-  ecl_kw_type * ecl_kw    = ecl_kw_fread_alloc_compressed( stream );
-  fclose( stream );
-
-  {
-    buffer_type * buffer = buffer_alloc( 100 );
-    buffer_fwrite_time_t( buffer , time(NULL));
-    buffer_fwrite_int( buffer , impl_type );
-    ecl_kw_buffer_store( ecl_kw , buffer );
-    
-    buffer_store( buffer , filename );
-  }
-}
 
 
 

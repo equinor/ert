@@ -20,7 +20,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <list.h>
 #include <util.h>
 #include <sched_util.h>
 #include <sched_kw_include.h>

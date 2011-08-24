@@ -21,7 +21,6 @@
 #include <rms_file.h>
 #include <rms_tagkey.h>
 #include <rms_stats.h>
-#include <list.h>
 #include <string.h>
 #include <util.h>
 
@@ -79,22 +78,22 @@ int main (int argc , char **argv) {
       new_file = util_alloc_filename(NULL , new_name , "ROFF");
       
       {
-	rms_tag_type   * tag;
-	rms_file_type  * out_file = rms_file_alloc(new_file , false);
-	FILE *stream = rms_file_fopen_w(out_file);
-	rms_file_init_fwrite(out_file , "parameter");
-	rms_tag_fwrite(dim_tag , stream);
-	
-	tag = rms_file_get_tag_ref(file , "parameter" , "name" , old_name , true);
-	rms_tag_fwrite_parameter(new_name, rms_tag_get_datakey(tag) , stream);
-	rms_file_complete_fwrite(out_file);
-	fclose(stream);
+        rms_tag_type   * tag;
+        rms_file_type  * out_file = rms_file_alloc(new_file , false);
+        FILE *stream = rms_file_fopen_w(out_file);
+        rms_file_init_fwrite(out_file , "parameter");
+        rms_tag_fwrite(dim_tag , stream);
+        
+        tag = rms_file_get_tag_ref(file , "parameter" , "name" , old_name , true);
+        rms_tag_fwrite_parameter(new_name, rms_tag_get_datakey(tag) , stream);
+        rms_file_complete_fwrite(out_file);
+        fclose(stream);
       }
       if (new_name == old_name) 
-	free(new_name);
+        free(new_name);
       else {
-	free(new_name);
-	free(old_name);
+        free(new_name);
+        free(old_name);
       }
     }
     rms_file_free(file);

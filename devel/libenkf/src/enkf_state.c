@@ -24,14 +24,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <list.h>
 #include <hash.h>
 #include <fortio.h>
 #include <util.h>
 #include <ecl_kw.h>
 #include <ecl_io_config.h>
 #include <ecl_file.h>
-#include <list_node.h>
 #include <enkf_node.h>
 #include <enkf_state.h>
 #include <enkf_types.h>

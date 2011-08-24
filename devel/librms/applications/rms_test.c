@@ -18,10 +18,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <rms_file.h>
 #include <rms_tagkey.h>
+#include <rms_file.h>
 #include <rms_stats.h>
-#include <list.h>
 
 
 
@@ -80,7 +79,7 @@ int main (int argc , char **argv) {
     
     for (i=0; i < ens_size; i++)
       for (j=0; j < ens_size; j++)
-	X[i][j] = 0;
+        X[i][j] = 0;
     
     for (i=0; i < ens_size; i++)
       X[i][i] = 1.0;

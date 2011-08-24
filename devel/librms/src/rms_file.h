@@ -26,13 +26,10 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <rms_tag.h>
-#include <list.h>
-
 
 typedef struct rms_file_struct   rms_file_type;
 
 void                 rms_file_2eclipse(const char * rms_file , const char * , bool , int );
-list_node_type     * rms_file_iterate_tag_node(const rms_file_type * , list_node_type * );
 void                 rms_file_fclose(rms_file_type *);
 FILE               * rms_file_fopen_r(rms_file_type *rms_file);
 FILE               * rms_file_fopen_w(rms_file_type *rms_file);
