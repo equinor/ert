@@ -58,6 +58,10 @@
        Step three here is implemented by the job_dispatch script
        actually running the jobs.
 
+   It is essential that the license_root_path is on a volume which is
+   accessible from all the nodes which will run jobs. Using e.g. /tmp
+   as license_root_path will fail HARD.
+
 */
 
 
@@ -69,13 +73,6 @@ struct ext_joblist_struct {
 };
 
 
-
-
-/**
-   It is essential that the license_root_path is on a volume which is
-   accessible from all the nodes which will run jobs. Using e.g. /tmp
-   as license_root_path will fail HARD.
-*/
 
 
 ext_joblist_type * ext_joblist_alloc( ) {
@@ -151,22 +148,3 @@ hash_type * ext_joblist_get_jobs( const ext_joblist_type * joblist ) {
 
 
 
-
-
-//void ext_python_joblist_fprintf(const ext_joblist_type * joblist , const stringlist_type * kw_list , const char * path, const subst_list_type * subst_list) {
-//  char * module_file = util_alloc_filename(path , MODULE_NAME , NULL);
-//  FILE * stream      = util_fopen(module_file , "w");
-//  int i;
-//
-//  fprintf(stream , "%s = [" , JOBLIST_NAME);
-//  for (i=0; i < stringlist_get_size(kw_list); i++) {
-//    const ext_job_type * job = ext_joblist_get_job( joblist , stringlist_iget(kw_list , i));
-//    ext_job_python_fprintf(job , stream , subst_list);
-//    if (i < (stringlist_get_size(kw_list) - 1))
-//      fprintf(stream,",\n");
-//  }
-//  fprintf(stream , "]\n");
-//  
-//  fclose(stream);
-//  free(module_file);
-//}

@@ -3,5 +3,6 @@
 
 int main(int argc , char ** argv) {
   pid_t child_pid = fork( );
+  BUG
   exit(1);
 }

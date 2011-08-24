@@ -110,7 +110,7 @@ class conf:
             self.CCFLAGS = "-m64 "
         else:
             self.CCFLAGS = ""
-        self.CCFLAGS            += "-O2 -std=gnu99 -g -Wall -pipe -DHAVE_FORK -DHAVE_ZLIB -DHAVE_PTHREAD"
+        self.CCFLAGS            += "-O2 -std=gnu99 -g -Wall -pipe -DHAVE_EXECINFO -DHAVE_FORK -DHAVE_ZLIB -DHAVE_PTHREAD"
         self.ARFLAGS             = "csr"
         
 
