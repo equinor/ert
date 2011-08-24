@@ -16,7 +16,7 @@ if (EXECINFO_HEADER)
    set( HAVE_EXECINFO ON )   
 endif()
 
-find_library( LAPACK_LIBRARY NAMES lapack )
+#find_library( LAPACK_LIBRARY NAMES lapack )
 
 option(HAVE_LSF "Include support for LSF" OFF)
 if (HAVE_LSF)
