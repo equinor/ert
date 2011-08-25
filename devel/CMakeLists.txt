@@ -83,6 +83,11 @@ if (HAVE_SYMLINK)
    add_definitions( -DHAVE_SYMLINK )
 endif()
 
+try_compile( HAVE_GETUID ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_getuid.c )
+if (HAVE_GETUID)
+   add_definitions( -DHAVE_GETUID )
+endif()
+
 
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )

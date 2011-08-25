@@ -5,3 +5,4 @@
 #cmakedefine HAVE_LSF
 #cmakedefine HAVE_REALPATH
 #cmakedefine HAVE_SYMLINK
+#cmakedefine HAVE_GETUID
