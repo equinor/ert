@@ -2,59 +2,85 @@ cmake_minimum_required( VERSION 2.6 )
 project( ERT C )
 add_definitions( -g -O2 -Wall -std=gnu99 -m64 )
 
+#-----------------------------------------------------------------
+option(USE_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
+if (USE_ZLIB)
+   find_library( ZLIB_LIBRARY NAMES z )
+   find_path( ZLIB_HEADER zlib.h /usr/include )
 
-option(HAVE_ZLIB "Include support for zlib functions compress()/uncompress()" OFF)
-find_library( ZLIB_LIBRARY NAMES z )
-find_path( ZLIB_HEADER Xzlib.h /usr/include )
+   if (!ZLIB_LIBRARY)
+      set( USE_ZLIB OFF )
+   endif()
 
-option(HAVE_PTHREAD "Include support for pthreads" OFF)
-find_library( PTHREAD_LIBRARY NAMES Xpthread )
-find_path( PTHREAD_HEADER Xpthread.h /usr/include )
+   if (!ZLIB_HEADER)
+      set( USE_ZLIB OFF )
+   endif()
+endif()
+if (USE_ZLIB)
+   set( HAVE_ZLIB ON )
+   add_definitions( -DHAVE_ZLIB )
+endif()
+#-----------------------------------------------------------------
+option( USE_PTHREAD "Include support for pthreads" ON )
+if (USE_PTHREAD)
+   find_library( PTHREAD_LIBRARY NAMES pthread )
+   find_path( PTHREAD_HEADER pthread.h /usr/include )
 
-find_path( EXECINFO_HEADER Xexecinfo.h /usr/include )
+   if (!PTHREAD_LIBRARY)
+      set( USE_PTHREAD OFF )
+   endif()
+
+   if (!PTHREAD_HEADER)
+      set( USE_PTHREAD OFF )
+   endif()
+endif()
+if (USE_PTHREAD)
+   set( HAVE_PTHREAD ON )
+   add_definitions( -DHAVE_PTHREAD )
+endif()
+#-----------------------------------------------------------------
+option(USE_LSF "Include support for LSF" ON)
+if (USE_LSF)
+   #find_path( LSF_HEADER lsf.h ENV{LSF_INCLUDE_PATH})
+   find_path( LSF_HEADER lsf.h /prog/LSF/8.0/include/lsf)
+   find_library( LSF_LIBRARY NAMES lsf PATHS /prog/LSF/8.0/linux2.6-glibc2.3-x86_64/lib )   
+   if (!LSF_HEADER)
+      set(USE_LSF OFF)
+   endif()
+   if (!LSF_LIBRARY)
+      set( USE_LSF OFF )
+   endif()
+endif()
+if (USE_LSF)
+   set( HAVE_LSF ON )
+   add_definitions( -DHAVE_LSF )
+endif()
+#-----------------------------------------------------------------
+find_path( EXECINFO_HEADER execinfo.h /usr/include )
 if (EXECINFO_HEADER)
    set( HAVE_EXECINFO ON )   
+   add_definitions( -DHAVE_EXECINFOX )
 endif()
+#-----------------------------------------------------------------
 
 #find_library( LAPACK_LIBRARY NAMES lapack )
 
-option(HAVE_LSF "Include support for LSF" OFF)
-if (HAVE_LSF)
-   set( HAVE_LSF OFF )
-   #find_path( LSF_HEADER lsf.h ENV{LSF_INCLUDE_PATH})
-   find_path( LSF_HEADER lsf.h /prog/LSF/8.0/include/lsf)
-   find_library( LSF_LIBRARY NAMES lsf PATHS /prog/LSF/8.0/linux2.6-glibc2.3-x86_64/lib )
-   if (LSF_HEADER)
-      if (LSF_LIBRARY)
-          set( HAVE_LSF ON )
-      endif()
-   endif()
+#-----------------------------------------------------------------
+
+
+try_compile( HAVE_REALPATH ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_realpath.c )
+if (HAVE_REALPATH)
+   add_definitions( -DHAVE_REALPATHX )
 endif()
 
 try_compile( HAVE_FORK ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_fork.c )
+if (HAVE_FORK)
+   add_definitions( -DHAVE_FORKX )
+endif()
+
 
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
-
-if (HAVE_LSF)
-   add_definitions( -DHAVE_LSF )
-endif()
-
-if (HAVE_FORK)
-   add_definitions( -DHAVE_FORK )
-endif()
-
-if (HAVE_ZLIB)
-   add_definitions( -DHAVE_ZLIB )
-endif()
-
-if (HAVE_PTHREAD)
-   add_definitions( -DHAVE_PTHREAD )
-endif()
-
-if (HAVE_EXECINFO)
-   add_definitions( -DHAVE_EXECINFO )
-endif()
 
 set( libutil_build_path ${CMAKE_BINARY_DIR}/libutil/src )
 set( libutil_src_path   ${CMAKE_SOURCE_DIR}/libutil/src )
