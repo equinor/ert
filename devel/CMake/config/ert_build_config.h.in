@@ -3,4 +3,4 @@
 #cmakedefine HAVE_FORK
 #cmakedefine HAVE_ZLIB
 #cmakedefine HAVE_LSF
-
+#cmakedefine HAVE_REALPATH
