@@ -59,7 +59,7 @@ endif()
 find_path( EXECINFO_HEADER execinfo.h /usr/include )
 if (EXECINFO_HEADER)
    set( HAVE_EXECINFO ON )   
-   add_definitions( -DHAVE_EXECINFOX )
+   add_definitions( -DHAVE_EXECINFO )
 endif()
 #-----------------------------------------------------------------
 
@@ -70,12 +70,17 @@ endif()
 
 try_compile( HAVE_REALPATH ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_realpath.c )
 if (HAVE_REALPATH)
-   add_definitions( -DHAVE_REALPATHX )
+   add_definitions( -DHAVE_REALPATH )
 endif()
 
 try_compile( HAVE_FORK ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_fork.c )
 if (HAVE_FORK)
-   add_definitions( -DHAVE_FORKX )
+   add_definitions( -DHAVE_FORK )
+endif()
+
+try_compile( HAVE_SYMLINK ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_symlink.c )
+if (HAVE_SYMLINK)
+   add_definitions( -DHAVE_SYMLINK )
 endif()
 
 
