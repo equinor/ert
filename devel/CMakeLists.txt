@@ -103,6 +103,11 @@ if (HAVE_LOCKF)
    add_definitions( -DHAVE_LOCKF )
 endif()
 
+try_compile( HAVE_GLOB ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_glob.c )
+if (HAVE_GLOB)
+   add_definitions( -DHAVE_GLOB )
+endif()
+
 try_compile( HAVE_GETENV ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_getenv.c )
 if (HAVE_GETENV)
    add_definitions( -DHAVE_GETENV )
