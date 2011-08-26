@@ -93,6 +93,11 @@ if (HAVE_LOCALTIME_R)
    add_definitions( -DHAVE_LOCALTIME_R )
 endif()
 
+try_compile( MKDIR_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_mkdir.c )
+if (MKDIR_POSIX)
+   add_definitions( -DMKDIR_POSIX )
+endif()
+
 try_compile( HAVE_LOCKF ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_lockf.c )
 if (HAVE_LOCKF)
    add_definitions( -DHAVE_LOCKF )
