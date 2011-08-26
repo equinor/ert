@@ -88,6 +88,11 @@ if (HAVE_GETUID)
    add_definitions( -DHAVE_GETUID )
 endif()
 
+try_compile( HAVE_LOCALTIME_R ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_localtime_r.c )
+if (HAVE_LOCALTIME_R)
+   add_definitions( -DHAVE_LOCALTIME_R )
+endif()
+
 
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
