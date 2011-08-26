@@ -9,6 +9,7 @@
 #cmakedefine HAVE_LOCALTIME_R
 #cmakedefine HAVE_LOCKF
 #cmakedefine HAVE_GETENV
+#cmakedefine HAVE_GLOB
 #cmakedefine MKDIR_POSIX
 
 
