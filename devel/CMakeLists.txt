@@ -93,6 +93,11 @@ if (HAVE_LOCALTIME_R)
    add_definitions( -DHAVE_LOCALTIME_R )
 endif()
 
+try_compile( HAVE_LOCKF ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_lockf.c )
+if (HAVE_LOCKF)
+   add_definitions( -DHAVE_LOCKF )
+endif()
+
 
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
