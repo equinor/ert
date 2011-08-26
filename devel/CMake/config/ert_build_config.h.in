@@ -8,5 +8,7 @@
 #cmakedefine HAVE_GETUID
 #cmakedefine HAVE_LOCALTIME_R
 #cmakedefine HAVE_LOCKF
-#cmakedefein HAVE_GETENV
+#cmakedefine HAVE_GETENV
+#cmakedefine MKDIR_POSIX
+
 
