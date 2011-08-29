@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 2.6 )
 project( ERT C )
-add_definitions( -g -O2 -Wall -std=gnu99 -m64 )
+add_definitions( -g -O2 -Wall -std=gnu99 )
 
 #-----------------------------------------------------------------
 option(USE_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
@@ -116,6 +116,11 @@ endif()
 try_compile( HAVE_GETENV ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_getenv.c )
 if (HAVE_GETENV)
    add_definitions( -DHAVE_GETENV )
+endif()
+
+try_compile( HAVE_POW10 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_pow10.c )
+if (HAVE_POW10)
+   add_definitions( -DHAVE_POW10 )
 endif()
 
 
