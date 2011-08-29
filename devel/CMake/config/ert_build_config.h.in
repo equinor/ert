@@ -12,4 +12,5 @@
 #cmakedefine HAVE_GLOB
 #cmakedefine MKDIR_POSIX
 #cmakedefine HAVE_FNMATCH
+#cmakedefine HAVE_POW10
 
