@@ -53,28 +53,44 @@ class FortIO:
     access as well.
     """
 
-    def __init__(self , filename , mode , fmt_file = False , endian_flip = True):
-        """
-        Create a FortIO handle connected to file @filename. @mode as in fopen()
+    #def __init__(self , filename , mode , fmt_file = False , endian_flip = True):
+    #    """
+    #    Create a FortIO handle connected to file @filename. @mode as in fopen()
+    #
+    #    Will create a FortIO handle conntected to the file
+    #    @filename. The @mode flag is passed directly to the final
+    #    fopen() call and should be "r" to open the file for reading
+    #    and "w" for writing.
+    #    
+    #    The point of the FortIO class is to work with binary files,
+    #    but you can set the @fmt_file parameter to True if you want to
+    #    read/write formatted ECLIPSE files in restart format. 
+    #
+    #    By default the FortIO instances will be opened with
+    #    endian_flip set to True (this is the correct behaviour for the
+    #    ECLIPSE/x86 combination) - but other values are in principle
+    #    possible. Observe that the endian flipping only applies to the
+    #    header/footer inserted by the Fortran runtime, the actual data
+    #    is not touched by the FortIO instance.
+    #    """
+    #    #BUG HERE - must have classmethods reader and writer
+    #    self.c_ptr = cfunc.fortio_fopen( filename , mode , endian_flip , fmt_file)
 
-        Will create a FortIO handle conntected to the file
-        @filename. The @mode flag is passed directly to the final
-        fopen() call and should be "r" to open the file for reading
-        and "w" for writing.
         
-        The point of the FortIO class is to work with binary files,
-        but you can set the @fmt_file parameter to True if you want to
-        read/write formatted ECLIPSE files in restart format. 
+    @classmethod
+    def reader(cls , filename , fmt_file = False , endian_flip = True):
+        obj = cls( )
+        obj.c_ptr = cfunc.fortio_open_reader( filename , endian_flip , fmt_file )
+        return obj
 
-        By default the FortIO instances will be opened with
-        endian_flip set to True (this is the correct behaviour for the
-        ECLIPSE/x86 combination) - but other values are in principle
-        possible. Observe that the endian flipping only applies to the
-        header/footer inserted by the Fortran runtime, the actual data
-        is not touched by the FortIO instance.
-        """
-        self.c_ptr = cfunc.fortio_fopen( filename , mode , endian_flip , fmt_file)
-        
+
+    @classmethod
+    def writer(cls , filename , fmt_file = False , endian_flip = True):
+        obj = cls( )
+        obj.c_ptr = cfunc.fortio_open_writer( filename , endian_flip , fmt_file )
+        return obj
+    
+
     
         
     @classmethod
@@ -112,7 +128,8 @@ cwrapper.registerType("fortio" , FortIO )
 #    These functions are used when implementing the FortIO class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("fortio")
-cfunc.fortio_fopen = cwrapper.prototype("c_void_p fortio_fopen(char* , char* , bool)")
-cfunc.fortio_close = cwrapper.prototype("void     fortio_fclose( fortio )")
+cfunc.fortio_open_reader = cwrapper.prototype("c_void_p fortio_fopen_reader(char* , bool , bool)")
+cfunc.fortio_open_writer = cwrapper.prototype("c_void_p fortio_fopen_writer(char* , bool , bool)")
+cfunc.fortio_close        = cwrapper.prototype("void     fortio_fclose( fortio )")
 
 

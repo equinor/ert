@@ -53,7 +53,6 @@ mask1.reset()
 mask1.select_above_plane( [0,0,1] , [x,y,z] )
 print mask1.active_size
 print mask1.active_list.str( max_lines = None )
-sys.exit(1)
 
 print mask2.active_size
 print mask3.active_size
@@ -83,7 +82,8 @@ permx_new[1] = 2
 permx_new[2] = 3
 
 init_file.replace_kw( permx_kw , permx_new )
-fortio = ecl.FortIO( "/tmp/init" , "w" )
+fortio = ecl.FortIO.writer( "/tmp/init" )
+print fortio
 init_file.fwrite( fortio )
 fortio.close()
 

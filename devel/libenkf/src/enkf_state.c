@@ -930,7 +930,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const bool fmt_file                  = ecl_config_get_formatted(enkf_state->ecl_config);
   const int iens                       = member_config_get_iens( my_config );
   char * restart_file                  = ecl_util_alloc_filename(run_info->run_path , member_config_get_eclbase( enkf_state->my_config ) , ECL_RESTART_FILE , fmt_file , run_info->step1);
-  fortio_type * fortio                 = fortio_fopen(restart_file , "w" , ECL_ENDIAN_FLIP , fmt_file);
+  fortio_type * fortio                 = fortio_fopen_writer(restart_file , ECL_ENDIAN_FLIP , fmt_file);
   const char * kw;
   int          ikw;
 
