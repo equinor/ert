@@ -11,5 +11,5 @@
 #cmakedefine HAVE_GETENV
 #cmakedefine HAVE_GLOB
 #cmakedefine MKDIR_POSIX
-
+#cmakedefine HAVE_FNMATCH
 
