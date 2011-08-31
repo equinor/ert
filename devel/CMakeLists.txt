@@ -115,6 +115,11 @@ if (HAVE_FNMATCH)
    add_definitions( -DHAVE_FNMATCH )
 endif()
 
+check_function_exists( fsync HAVE_FSYNC )
+if (HAVE_FSYNC)
+   add_definitions( -DHAVE_FSYNC )
+endif()
+
 #try_compile( HAVE_GETENV ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_getenv.c )
 check_function_exists( getenv HAVE_GETENV )
 if (HAVE_GETENV)
