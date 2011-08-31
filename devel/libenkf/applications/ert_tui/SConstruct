@@ -32,7 +32,7 @@ if conf.g2c:
    lib_list.append( "g2c" )
    
 
-conf.update_env( env , [ LIBANALYSIS , LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL ] , lib_list , link = True)
+conf.update_env( env , [ LIBENKF , LIBRMS , LIBANALYSIS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL ] , lib_list , link = True)
 env.Append( CPPPATH = conf.PLPLOT_INCLUDE_PATH )
 env.Append( LIBPATH = conf.PLPLOT_LIB_PATH )
 if conf.INCLUDE_LSF:
