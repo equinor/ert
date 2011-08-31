@@ -13,7 +13,7 @@ from   global_config import add_program
 
 package      = "analysis"
 lib_path     = "../lib"
-slib_path     = "../slib"
+#slib_path    = "../slib"
 include_path = "../include"
 module_path  = "../modules"
 
@@ -36,5 +36,5 @@ env['SHLIBPREFIX'] = ""
 add_shared_library( env , conf , module_path , "simple_enkf.so" , ["simple_enkf.c"] )
 
 
-Default( lib_path , include_path , slib_path , module_path)
+Default( lib_path , include_path , lib_path , module_path)
 
