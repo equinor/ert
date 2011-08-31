@@ -843,7 +843,7 @@ static void local_config_load_file( local_config_type * local_config , const ecl
       {
         char * file_key  = read_alloc_string( stream , binary ); 
         char * file_name = read_alloc_string( stream , binary );
-        ecl_file_type * ecl_file = ecl_file_fread_alloc( file_name );
+        ecl_file_type * ecl_file = ecl_file_open( file_name );
         hash_insert_hash_owned_ref( files , file_key , ecl_file , ecl_file_free__);
         free( file_key );
         free( file_name );

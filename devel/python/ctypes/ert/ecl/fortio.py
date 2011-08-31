@@ -128,8 +128,8 @@ cwrapper.registerType("fortio" , FortIO )
 #    These functions are used when implementing the FortIO class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("fortio")
-cfunc.fortio_open_reader = cwrapper.prototype("c_void_p fortio_fopen_reader(char* , bool , bool)")
-cfunc.fortio_open_writer = cwrapper.prototype("c_void_p fortio_fopen_writer(char* , bool , bool)")
+cfunc.fortio_open_reader = cwrapper.prototype("c_void_p fortio_open_reader(char* , bool , bool)")
+cfunc.fortio_open_writer = cwrapper.prototype("c_void_p fortio_open_writer(char* , bool , bool)")
 cfunc.fortio_close        = cwrapper.prototype("void     fortio_fclose( fortio )")
 
 

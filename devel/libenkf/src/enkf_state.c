@@ -704,7 +704,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   {
     char * file  = ecl_util_alloc_exfilename(run_info->run_path , member_config_get_eclbase(enkf_state->my_config) , ECL_RESTART_FILE , fmt_file , report_step);
     if (file != NULL) {
-      restart_file = ecl_file_fread_alloc(file );
+      restart_file = ecl_file_open( file );
       free(file);
     } else 
       restart_file = NULL;  /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
@@ -724,7 +724,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
     stringlist_clear( enkf_state->restart_kw_list );
     {
       int ikw; 
-      for (ikw =0; ikw < ecl_file_get_num_kw( restart_file ); ikw++) {
+      for (ikw =0; ikw < ecl_file_get_size( restart_file ); ikw++) {
         ert_impl_type impl_type;
         const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
         int occurence              = ecl_file_iget_occurence( restart_file , ikw ); /* This is essentially the static counter value. */
@@ -855,7 +855,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   
   /*****************************************************************/
   /* Cleaning up */
-  if (restart_file != NULL) ecl_file_free( restart_file );
+  if (restart_file != NULL) ecl_file_close( restart_file );
 }
 
 
@@ -930,7 +930,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const bool fmt_file                  = ecl_config_get_formatted(enkf_state->ecl_config);
   const int iens                       = member_config_get_iens( my_config );
   char * restart_file                  = ecl_util_alloc_filename(run_info->run_path , member_config_get_eclbase( enkf_state->my_config ) , ECL_RESTART_FILE , fmt_file , run_info->step1);
-  fortio_type * fortio                 = fortio_fopen_writer(restart_file , ECL_ENDIAN_FLIP , fmt_file);
+  fortio_type * fortio                 = fortio_open_writer(restart_file , ECL_ENDIAN_FLIP , fmt_file);
   const char * kw;
   int          ikw;
 

@@ -71,7 +71,7 @@ bool set_var( void * module_data , const char * flag , double value) {
 
 analysis_table_type SYMBOL_TABLE[] = {
   { 
-    .name       = "SimpleEnKF" , 
+    .name       = "simple_enkf" , 
     .alloc      = simple_enkf_alloc,
     .freef      = simple_enkf_free,
     .set_flag   = set_flag , 
