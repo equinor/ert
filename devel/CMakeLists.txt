@@ -1,4 +1,6 @@
 cmake_minimum_required( VERSION 2.6 )
+
+include (CheckFunctionExists)
 project( ERT C )
 add_definitions( -g -O2 -Wall -std=gnu99 )
 
@@ -113,12 +115,15 @@ if (HAVE_FNMATCH)
    add_definitions( -DHAVE_FNMATCH )
 endif()
 
-try_compile( HAVE_GETENV ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_getenv.c )
+#try_compile( HAVE_GETENV ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_getenv.c )
+check_function_exists( getenv HAVE_GETENV )
 if (HAVE_GETENV)
    add_definitions( -DHAVE_GETENV )
 endif()
 
-try_compile( HAVE_POW10 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_pow10.c )
+set(CMAKE_REQUIRED_FLAGS _GNU_SOURCE __USE_GNU)
+check_function_exists( pow10 HAVE_POW10 )
+#try_compile( HAVE_POW10 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_pow10.c )
 if (HAVE_POW10)
    add_definitions( -DHAVE_POW10 )
 endif()
