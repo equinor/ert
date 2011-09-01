@@ -65,7 +65,9 @@ if (EXECINFO_HEADER)
 endif()
 #-----------------------------------------------------------------
 
-#find_library( LAPACK_LIBRARY NAMES lapack )
+find_library( LAPACK_LIBRARY NAMES lapack PATHS C:/lib)
+find_library( BLAS_LIBRARY NAME blas PATHS C:/lib)
+find_library( GFORTRAN_LIBRARY NAME gfortran-3 )
 
 #-----------------------------------------------------------------
 find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
