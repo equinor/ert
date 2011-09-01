@@ -278,12 +278,12 @@ stringlist_type * site_config_get_path_values( const site_config_type * site_con
 
 /**
    Observe that the value inserted in the internal hash tables is the
-   interpolated value returned from util_setenv(), where $VAR
+   interpolated value returned from util_interp_setenv(), where $VAR
    expressions have been expanded.
 */
    
 void site_config_setenv( site_config_type * site_config , const char * variable, const char * __value) {
-  const char * value = util_setenv( variable , __value );
+  const char * value = util_interp_setenv( variable , __value );
 
   if (site_config->user_mode) {
     /* In the table meant for user-export we store the literal $var strings. */
@@ -318,7 +318,7 @@ void site_config_clear_env( site_config_type * site_config ) {
     hash_iter_type * hash_iter = hash_iter_alloc( site_config->env_variables_user );
     while (!hash_iter_is_complete( hash_iter )) {
       const char * var       = hash_iter_get_next_key( hash_iter );
-      unsetenv( var );
+      util_unsetenv( var );
     }
     hash_iter_free( hash_iter );
     hash_clear( site_config->env_variables_user );
@@ -331,7 +331,7 @@ void site_config_clear_env( site_config_type * site_config ) {
     while (!hash_iter_is_complete( hash_iter )) {
       const char * var       = hash_iter_get_next_key( hash_iter );
       const char * value     = hash_get( site_config->env_variables_site , var );
-      util_setenv( var , value );    /* Will call unsetenv if value == NULL */
+      util_interp_setenv( var , value );    /* Will call unsetenv if value == NULL */
     }
     hash_iter_free( hash_iter );
   }  
@@ -349,9 +349,9 @@ void site_config_clear_pathvar( site_config_type * site_config ) {
       const char * site_value = hash_get( site_config->path_variables_site , var );
       
       if (site_value == NULL)
-        unsetenv( var );
+        util_unsetenv( var );
       else
-        setenv( var , site_value , 1 );
+        util_setenv( var , site_value );
     }
   }
 }
@@ -960,7 +960,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   */
   item = config_add_item(config , SETENV_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
-  config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_setenv()). */
+  config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
   
   item = config_add_item(config , UMASK_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
@@ -972,7 +972,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   */
   item = config_add_item(config , UPDATE_PATH_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
-  config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_setenv()). */
+  config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
 
   item = config_add_item( config , LICENSE_PATH_KEY , site_only , false );
   config_item_set_argc_minmax(item , 1 , 1, 0 , NULL );

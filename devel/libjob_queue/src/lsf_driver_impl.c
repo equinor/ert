@@ -565,10 +565,10 @@ static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char 
   driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_server );
   if (driver->remote_lsf_server != NULL) {
     driver->use_library_calls = false;
-    unsetenv( "BSUB_QUIET" );
+    util_unsetenv__( "BSUB_QUIET" );
   } else {
     /* No remote server has been set - assuming we can issue proper library calls. */
-    setenv("BSUB_QUIET" , "yes" , 1);            /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
+    util_setenv__("BSUB_QUIET" , "yes");            /* This must NOT be set when using the shell function, because then stdout is redirected and read. */
     driver->use_library_calls = true;
   }
 }
