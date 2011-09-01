@@ -125,10 +125,9 @@ if (HAVE_FSYNC)
    add_definitions( -DHAVE_FSYNC )
 endif()
 
-#try_compile( HAVE_GETENV ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_getenv.c )
-check_function_exists( getenv HAVE_GETENV )
-if (HAVE_GETENV)
-   add_definitions( -DHAVE_GETENV )
+check_function_exists( getenv HAVE_SETENV )
+if (HAVE_SETENV)
+   add_definitions( -DPOSIX_SETENV )
 endif()
 
 
