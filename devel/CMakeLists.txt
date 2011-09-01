@@ -65,9 +65,8 @@ if (EXECINFO_HEADER)
 endif()
 #-----------------------------------------------------------------
 
-find_library( LAPACK_LIBRARY NAMES lapack PATHS C:/lib)
-find_library( BLAS_LIBRARY NAME blas PATHS C:/lib)
-find_library( GFORTRAN_LIBRARY NAME gfortran-3 )
+find_library( LAPACK_LIBRARY NAMES lapack)
+find_library( BLAS_LIBRARY NAMES blas)
 
 #-----------------------------------------------------------------
 find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
@@ -125,7 +124,7 @@ if (HAVE_FSYNC)
    add_definitions( -DHAVE_FSYNC )
 endif()
 
-check_function_exists( getenv HAVE_SETENV )
+check_function_exists( setenv HAVE_SETENV )
 if (HAVE_SETENV)
    add_definitions( -DPOSIX_SETENV )
 endif()
