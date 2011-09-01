@@ -68,7 +68,10 @@ endif()
 #find_library( LAPACK_LIBRARY NAMES lapack )
 
 #-----------------------------------------------------------------
-
+find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
+if (SHLWAPI_LIBRARY)
+   message("Found the SHLWAPI library")
+endif()
 
 check_function_exists( realpath HAVE_RELPATH )
 if (HAVE_REALPATH)
