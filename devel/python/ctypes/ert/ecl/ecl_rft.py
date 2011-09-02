@@ -19,6 +19,7 @@ Module for loading ECLIPSE RFT files.
 
 import libecl
 import ctypes
+import types
 from   ert.cwrap.cwrap       import *
 from   ert.util.ctime        import ctime
 
