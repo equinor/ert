@@ -153,15 +153,18 @@ void analysis_module_initX(analysis_module_type * module ,
 }
 
 void analysis_module_set_flag(analysis_module_type * module , const char * flag , int value) {
-  module->set_flag( module->module_data , flag , value );
+  if (module->set_flag != NULL) 
+    module->set_flag( module->module_data , flag , value );
 }
 
 void analysis_module_set_var(analysis_module_type * module , const char * var , double value) {
-  module->set_var( module->module_data , var , value );
+  if (module->set_var != NULL)
+    module->set_var( module->module_data , var , value );
 }
 
 void analysis_module_set_string(analysis_module_type * module , const char * var , const char * value) {
-  module->set_string( module->module_data , var , value );
+  if (module->set_string != NULL)
+    module->set_string( module->module_data , var , value );
 }
 
 bool analysis_module_needs_ED( const analysis_module_type * module ) {
