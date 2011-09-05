@@ -126,12 +126,6 @@ if (HAVE_SETENV)
   add_definitions( -DPOSIX_SETENV )
 endif()
 
-try_compile( HAVE_POW10 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_pow10.c )
-if (HAVE_POW10)
-  add_definitions( -DHAVE_POW10 )
-endif()
-
-
 find_library( LAPACK_LIBRARY NAMES lapack)
 set(CMAKE_REQUIRED_LIBS LAPACK_LIBRARY)
 try_compile( BLAS0 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_blas.c )
