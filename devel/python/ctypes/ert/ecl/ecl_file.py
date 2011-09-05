@@ -66,19 +66,19 @@ class EclFile(object):
         If the block you are asking for can not be found the method
         will return None.
         """
+        obj = object.__new__( cls )
+        obj.c_ptr = cfunc.open( filename )
+        
         if dtime:
-            c_ptr = cfunc.restart_block_time( filename , ctime( dtime ))
+            OK = cfunc.restart_block_time( obj , ctime( dtime )):
         elif not report_step == None:
-            c_ptr = cfunc.restart_block_step( filename , report_step )
+            OK = cfunc.restart_block_step( obj , report_step )
         else:
             raise TypeError("restart_block() requires either dtime or report_step argument - none given")
         
-        if c_ptr:
-            obj = object.__new__( cls )
-            obj.c_ptr = c_ptr
-        else:
-            obj = None
-
+        if not OK:
+            raise TypeError("restart_block() Could not locate report_step/dtime")
+        
         return obj
 
 
@@ -558,8 +558,8 @@ cfunc = CWrapperNameSpace("ecl_file")
 
 cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_open( char* )")
 cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")
-cfunc.restart_block_time          = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section_time( char* , time_t )")
-cfunc.restart_block_step          = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section( char* , int )")
+cfunc.restart_block_time          = cwrapper.prototype("bool        ecl_file_select_rstblock_sim_time( char* , time_t )")
+cfunc.restart_block_step          = cwrapper.prototype("bool        ecl_file_select_rstblock_report_step( char* , int )")
 cfunc.iget_kw                     = cwrapper.prototype("c_void_p    ecl_file_iget_kw( ecl_file , int)")
 cfunc.iget_named_kw               = cwrapper.prototype("c_void_p    ecl_file_iget_named_kw( ecl_file , char* , int)")
 cfunc.close                       = cwrapper.prototype("void        ecl_file_close( ecl_file )")
