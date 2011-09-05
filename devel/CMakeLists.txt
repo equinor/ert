@@ -71,7 +71,7 @@ if (SHLWAPI_LIBRARY)
   message("Found the SHLWAPI library")
 endif()
 
-check_function_exists( realpath HAVE_RELPATH )
+check_function_exists( realpath HAVE_REALPATH )
 if (HAVE_REALPATH)
   add_definitions( -DHAVE_REALPATH )
 endif()
@@ -126,13 +126,10 @@ if (HAVE_SETENV)
   add_definitions( -DPOSIX_SETENV )
 endif()
 
-
-set(CMAKE_REQUIRED_FLAGS _GNU_SOURCE __USE_GNU)
-check_function_exists( pow10 HAVE_POW10 )
+try_compile( HAVE_POW10 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_pow10.c )
 if (HAVE_POW10)
-  add_definitions( -DHAVE_POW10 )
+   add_definitions( -DHAVE_POW10 )
 endif()
-
 
 find_library( LAPACK_LIBRARY NAMES lapack)
 set(CMAKE_REQUIRED_LIBS LAPACK_LIBRARY)
