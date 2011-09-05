@@ -64,7 +64,7 @@ class EclFile(object):
             block2 = EclFile.restart_block( "ECLIPSE.UNRST" , report_step = 67 )
 
         If the block you are asking for can not be found the method
-        will return a EclFile instance which evaluates to False.
+        will return None.
         """
         if dtime:
             c_ptr = cfunc.restart_block_time( filename , ctime( dtime ))
@@ -141,7 +141,7 @@ class EclFile(object):
         return report_steps
 
         
-    def __init__( self , filename , kw_list = None):
+    def __init__( self , filename ):
         """
         Loads the complete file @filename.
 
@@ -161,14 +161,12 @@ class EclFile(object):
         constituting the file, like e.g. SWAT from a restart file or
         FIPNUM from an INIT file.
         """
-        if kw_list:
-            kw_list = StringList( initial = kw_list ) 
-        self.c_ptr = cfunc.load( filename , kw_list )
+        self.c_ptr = cfunc.open( filename )
         
         
     def __del__(self):
         if self.c_ptr:
-            cfunc.free( self )
+            cfunc.close( self )
 
     def restart_section( self, report_step = None , sim_time = None):
         """
@@ -558,13 +556,13 @@ cwrapper.registerType( "ecl_file" , EclFile )
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_file")
 
-cfunc.load                        = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_selected_kw(char* , stringlist)")
+cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_open( char* )")
 cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")
 cfunc.restart_block_time          = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section_time( char* , time_t )")
 cfunc.restart_block_step          = cwrapper.prototype("c_void_p    ecl_file_fread_alloc_unrst_section( char* , int )")
 cfunc.iget_kw                     = cwrapper.prototype("c_void_p    ecl_file_iget_kw( ecl_file , int)")
 cfunc.iget_named_kw               = cwrapper.prototype("c_void_p    ecl_file_iget_named_kw( ecl_file , char* , int)")
-cfunc.free                        = cwrapper.prototype("void        ecl_file_free( ecl_file )")
+cfunc.close                       = cwrapper.prototype("void        ecl_file_close( ecl_file )")
 cfunc.get_size                    = cwrapper.prototype("int         ecl_file_get_size( ecl_file )")
 cfunc.get_unique_size             = cwrapper.prototype("int         ecl_file_get_num_distinct_kw( ecl_file )")
 cfunc.get_num_named_kw            = cwrapper.prototype("int         ecl_file_get_num_named_kw( ecl_file , char* )")

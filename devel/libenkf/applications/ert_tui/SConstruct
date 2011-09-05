@@ -23,7 +23,7 @@ bin_path     = "../bin"
 conf = global_config.get_conf(os.getcwd() , package , 3)
 env  = Environment()
 
-lib_list = ["lapack" , "plplotd" , "m" , "z" , "pthread"]
+lib_list = ["lapack" , "plplotd" , "m" , "z" , "pthread" , "dl"]
 
 if conf.INCLUDE_LSF:
    lib_list.append( ["bat" , "lsf" , "nsl"] )
