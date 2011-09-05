@@ -136,9 +136,10 @@ endif()
 
 find_library( LAPACK_LIBRARY NAMES lapack)
 set(CMAKE_REQUIRED_LIBS LAPACK_LIBRARY)
-try_compile( NEED_BLAS ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_blas.c )
-if (NEED_BLAS)
-  find_library( BLAS_LIBRARY NAMES blas)
+try_compile( BLAS0 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_blas.c )
+if (!BLAS0)
+   set( NEED_BLAS ON ) 
+   find_library( BLAS_LIBRARY NAMES blas)
 endif()
 
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
