@@ -105,9 +105,9 @@ static analysis_module_type * analysis_module_alloc( const char * libname , cons
     
     if (module == NULL) 
       dlclose( lib_handle );
-  } else
-    fprintf(stderr , "Failed to load library:%s \n",libname);
-
+  } else 
+    fprintf(stderr , "Failed to load library:%s. Error:%s \n",libname , dlerror());
+  
   return module;
 }
 
