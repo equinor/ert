@@ -441,8 +441,8 @@ analysis_config_type * analysis_config_alloc_default() {
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
-  analysis_config_load_internal_module( config , "simple_enkf" , "simple_enkf_symbol_table");
-  analysis_config_select_module( config , "simple_enkf");
+  analysis_config_load_internal_module( config , "std_enkf" , "std_enkf_symbol_table");
+  analysis_config_select_module( config , "std_enkf");
   return config;
 }
 
