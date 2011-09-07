@@ -20,8 +20,9 @@ import datetime
 import ert.ecl.ecl as ecl
 
 file = ecl.EclFile( "data/eclipse/case/ECLIPSE.UNRST" )
-print file.report_steps
-print file.report_dates
+
+for (step,date) in zip( file.report_steps , file.report_dates):
+    print step,date
 
 kw = file["SWAT"][4]
 if file.has_report_step( 4 ):
@@ -36,11 +37,18 @@ if ecl.EclFile.contains_report_step( "data/eclipse/case/ECLIPSE.UNRST" , 4 ):
 if ecl.EclFile.contains_sim_time( "data/eclipse/case/ECLIPSE.UNRST" , datetime.datetime( 2002 , 6 , 7) ):
     print "OK"
 
-section2 = file.restart_section( report_step = 40 )
-section2 = file.restart_section( sim_time = datetime.datetime( 2002 , 6 , 1) )
-print section2.headers
+file.select_restart_section( report_step = 40 )
+file.select_restart_section( sim_time = datetime.datetime( 2002 , 6 , 1) )
+print file.headers
 
-f2 = ecl.EclFile( "data/eclipse/case/ECLIPSE.UNRST" , ["INTEHEAD","SEQNUM","SGAS","PRESSURE","SWAT"])
+
+f2 = ecl.EclFile( "data/eclipse/case/ECLIPSE.UNRST")
 print f2["SWAT"][10]
 
 print ecl.EclFile.file_report_steps( "data/eclipse/case/ECLIPSE.UNRST" )
+
+midF = ecl.EclFile( "midgard/MD7_BA11.UNRST" )
+for index in range(len(midF["SEQNUM"])):
+    midF.select_section( "SEQNUM" , index )
+    print midF["SEQNUM"][0][0]
+    

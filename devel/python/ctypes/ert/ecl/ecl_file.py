@@ -66,11 +66,10 @@ class EclFile(object):
         If the block you are asking for can not be found the method
         will return None.
         """
-        obj = object.__new__( cls )
-        obj.c_ptr = cfunc.open( filename )
+        obj = EclFile( filename )
         
         if dtime:
-            OK = cfunc.restart_block_time( obj , ctime( dtime )):
+            OK = cfunc.restart_block_time( obj , ctime( dtime ))
         elif not report_step == None:
             OK = cfunc.restart_block_step( obj , report_step )
         else:
@@ -102,7 +101,8 @@ class EclFile(object):
         If you have already loaded the file into an EclFile instance
         you should use the has_report_step() method instead.
         """
-        return cfunc.contains_report_step( filename , report_step )
+        obj = EclFile( filename )
+        return obj.has_report_step( report_step )
 
     
     @classmethod
@@ -125,8 +125,9 @@ class EclFile(object):
         If you have already loaded the file into an EclFile instance
         you should use the has_sim_time() method instead.
         """
-        return cfunc.contains_sim_time( filename , ctime(dtime) )
-
+        obj = EclFile( filename )
+        return obj.has_sim_time( dtime )
+    
 
     
     @classmethod
@@ -135,13 +136,13 @@ class EclFile(object):
         Will identify the available report_steps from @filename.
         """
         report_steps = []
-        f = cls( filename , kw_list = ["SEQNUM"] )
-        for s in f:
+        file = EclFile( filename )
+        for s in file["SEQNUM"]:
             report_steps.append( s[0] )
         return report_steps
 
         
-    def __init__( self , filename ):
+    def __init__( self , filename , read_only = True):
         """
         Loads the complete file @filename.
 
@@ -161,17 +162,27 @@ class EclFile(object):
         constituting the file, like e.g. SWAT from a restart file or
         FIPNUM from an INIT file.
         """
-        self.c_ptr = cfunc.open( filename )
+        if read_only:
+            self.c_ptr = cfunc.open( filename )
+        else:
+            self.c_ptr = cfunc.open_writable( filename )
         
         
     def __del__(self):
         if self.c_ptr:
             cfunc.close( self )
 
-    def restart_section( self, report_step = None , sim_time = None):
-        """
-        Will create a new EclFile instance consisting of one restart block.
+    def select_section( self, kw , kw_index):
+        cfunc.select_block( self , kw , kw_index )
 
+    def select_global( self ):
+        cfunc.select_global( self )
+
+
+    def select_restart_section( self, report_step = None , sim_time = None):
+        """
+        Will select a restart section as the active section.
+        
         You must specify either a report step with the @report_step
         argument, or a true time with the @sim_time argument; if
         neither argument is given exception TypeError wiull be
@@ -187,20 +198,18 @@ class EclFile(object):
         complete file; if you only want to load a section from the
         file you can use the classmethod restart_block().
         """
-        if report_step:
-            c_ptr = cfunc.copy_restart_section( self , report_step )
-        elif sim_time:
-            c_ptr = cfunc.copy_restart_section_time_t( self , ctime( sim_time ) )
-        else:
-            raise TypeError("restart_section() requires either dtime or report_step argument - none given")
-        
-        if c_ptr:
-            obj = object.__new__( EclFile )
-            obj.c_ptr = c_ptr
-        else:
-            obj = None
 
-        return obj
+        OK = False
+        if report_step:
+            OK = cfunc.restart_block_step( self , report_step )
+        elif sim_time:
+            OK = cfunc.restart_block_time( self , ctime( sim_time ) )
+        else:
+            raise TypeError("select_restart_section() requires either dtime or report_step argument - none given")
+        
+        if not OK:
+            raise TypeError("select_restart_section() Could not locate report_step/dtime")
+        return OK
         
 
     def __getitem__(self , index):
@@ -557,9 +566,14 @@ cwrapper.registerType( "ecl_file" , EclFile )
 cfunc = CWrapperNameSpace("ecl_file")
 
 cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_open( char* )")
+cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_open_writable( char* )")
 cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")
-cfunc.restart_block_time          = cwrapper.prototype("bool        ecl_file_select_rstblock_sim_time( char* , time_t )")
-cfunc.restart_block_step          = cwrapper.prototype("bool        ecl_file_select_rstblock_report_step( char* , int )")
+
+cfunc.select_block                = cwrapper.prototype("bool        ecl_file_select_block( ecl_file , char* , int )")
+cfunc.restart_block_time          = cwrapper.prototype("bool        ecl_file_select_rstblock_sim_time( ecl_file , time_t )")
+cfunc.restart_block_step          = cwrapper.prototype("bool        ecl_file_select_rstblock_report_step( ecl_file , int )")
+cfunc.select_global               = cwrapper.prototype("void        ecl_file_select_global( ecl_file )")
+
 cfunc.iget_kw                     = cwrapper.prototype("c_void_p    ecl_file_iget_kw( ecl_file , int)")
 cfunc.iget_named_kw               = cwrapper.prototype("c_void_p    ecl_file_iget_named_kw( ecl_file , char* , int)")
 cfunc.close                       = cwrapper.prototype("void        ecl_file_close( ecl_file )")
@@ -574,8 +588,4 @@ cfunc.fwrite                      = cwrapper.prototype("void        ecl_file_fwr
 cfunc.has_instance                = cwrapper.prototype("bool        ecl_file_has_kw_ptr(ecl_file , ecl_kw)")
 cfunc.has_report_step             = cwrapper.prototype("bool        ecl_file_has_report_step( ecl_file , int)")
 cfunc.has_sim_time                = cwrapper.prototype("bool        ecl_file_has_sim_time( ecl_file , time_t )")
-cfunc.contains_report_step        = cwrapper.prototype("bool        ecl_file_contains_report_step( char* , int )")
-cfunc.contains_sim_time           = cwrapper.prototype("bool        ecl_file_contains_sim_time( char* , time_t )")
-cfunc.copy_restart_section        = cwrapper.prototype("c_void_p    ecl_file_copy_restart_section( ecl_file , int )")
-cfunc.copy_restart_section_time_t = cwrapper.prototype("c_void_p    ecl_file_copy_restart_section_time_t( ecl_file , time_t )")
 

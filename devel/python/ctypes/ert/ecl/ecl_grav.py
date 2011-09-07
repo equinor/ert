@@ -157,7 +157,7 @@ class EclGrav:
         sum of the relevant integer constants 'ECL_OIL_PHASE',
         'ECL_GAS_PHASE' and 'ECL_WATER_PHASE'.
         """
-        return cfunc.eval_region( self , base_survey , monitor_survey , region , pos[0] , pos[1] , pos[2] , phase_mask)
+        return cfunc.eval( self , base_survey , monitor_survey , region , pos[0] , pos[1] , pos[2] , phase_mask)
     
 
     def new_std_density( self , phase_enum , default_density):
