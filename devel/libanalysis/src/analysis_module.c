@@ -85,6 +85,7 @@ static void dldebug( void ) {
   printf("Adress of dlsym         : %p \n" , dlsym);
   printf("Adress of dlerror       : %p \n" , dlerror);
   printf("dlopen(NULL , RTLD_NOW) : %p \n" , dlopen( NULL , RTLD_NOW ));
+  printf("dlerror()               : %s \n" , dlerror()); 
   printf("-----------------------------------------------------------------\n");
 }
 
