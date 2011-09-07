@@ -29,8 +29,6 @@ typedef struct analysis_module_struct analysis_module_type;
 
 analysis_module_type * analysis_module_alloc_external( const char * libname , const char * name);
 analysis_module_type * analysis_module_alloc_internal( const char * symbol_table , const char * module_name);
-void                   analysis_module_set_var(analysis_module_type * module , const char * var , double value);
-void                   analysis_module_set_flag(analysis_module_type * module , const char * flag , int value);
 bool                   analysis_module_needs_ED( const analysis_module_type * module );
 void                   analysis_module_free( analysis_module_type * module );
 void                   analysis_module_free__( void * arg);

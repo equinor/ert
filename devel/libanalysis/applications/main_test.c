@@ -10,8 +10,8 @@ int main( int argc , char ** argv) {
   {
     analysis_module_type * module = analysis_module_alloc_external( "./simple_enkf.so" , "SimpleEnKF" );
     if (module != NULL) {
-      analysis_module_set_flag( module , "FLAG" , 42 );
-      analysis_module_set_var( module , "VarX" , 42.77 );
+      analysis_module_set_var( module , "FLAG" , "42" );
+      analysis_module_set_var( module , "VarX" , "42.77" );
       analysis_module_free( module );
     } else
       fprintf(stderr,"Hmmmm - failed to load external analysis module. \n");
@@ -22,8 +22,8 @@ int main( int argc , char ** argv) {
   {
     analysis_module_type * module = analysis_module_alloc_internal( "simple_enkf_symbol_table", "SimpleEnKF" );
     if (module != NULL) {
-      analysis_module_set_flag( module , "FLAG" , 42 );
-      analysis_module_set_var( module , "VarX" , 42.7708 );
+      analysis_module_set_var( module , "FLAG" , "42" );
+      analysis_module_set_var( module , "VarX" , "42.7708" );
       analysis_module_free( module );
     } else
       fprintf(stderr,"Hmmmm - failed to load internal analysis module. \n");

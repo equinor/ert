@@ -17,6 +17,7 @@
 */
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <dlfcn.h>
@@ -37,8 +38,8 @@ struct analysis_module_struct {
   analysis_alloc_ftype       * alloc;
   analysis_initX_ftype       * initX;
     
-  analysis_set_flag_ftype    * set_flag;
-  analysis_set_var_ftype     * set_var;
+  analysis_set_int_ftype     * set_int;
+  analysis_set_double_ftype  * set_double;
   analysis_set_string_ftype  * set_string;
 };
 
@@ -50,8 +51,9 @@ static analysis_module_type * analysis_module_alloc_empty( ) {
 
   module->lib_handle  = NULL;
   module->initX       = NULL;
-  module->set_flag    = NULL;
-  module->set_var     = NULL;
+  module->set_int     = NULL;
+  module->set_double  = NULL;
+  module->set_string  = NULL;
   module->module_data = NULL;
 
   return module;
@@ -63,11 +65,12 @@ static analysis_module_type * analysis_module_alloc__( const analysis_table_type
   
   module->lib_handle = lib_handle;
   module->initX      = analysis->initX;
-  module->set_flag   = analysis->set_flag;
-  module->set_var    = analysis->set_var;
+  module->set_int    = analysis->set_int;
+  module->set_double = analysis->set_double;
+  module->set_string = analysis->set_string;
   module->alloc      = analysis->alloc;
   module->freef      = analysis->freef;
-
+  
   if (module->alloc != NULL)
     module->module_data = module->alloc( );
   
@@ -77,7 +80,7 @@ static analysis_module_type * analysis_module_alloc__( const analysis_table_type
 
 static analysis_module_type * analysis_module_alloc( const char * libname , const char * table_name , const char * name ) {
   analysis_module_type * module = NULL;
-  void * lib_handle = dlopen( libname , RTLD_NOW );
+  void * lib_handle = dlopen( NULL , RTLD_NOW );
   if (lib_handle != NULL) {
     analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
     if (analysis_table != NULL) {
@@ -152,21 +155,57 @@ void analysis_module_initX(analysis_module_type * module ,
   module->initX(module->module_data , X , S , R , innov , E , D );
 }
 
-void analysis_module_set_flag(analysis_module_type * module , const char * flag , int value) {
-  if (module->set_flag != NULL) 
-    module->set_flag( module->module_data , flag , value );
-}
-
-void analysis_module_set_var(analysis_module_type * module , const char * var , double value) {
-  if (module->set_var != NULL)
-    module->set_var( module->module_data , var , value );
-}
-
-void analysis_module_set_string(analysis_module_type * module , const char * var , const char * value) {
-  if (module->set_string != NULL)
-    module->set_string( module->module_data , var , value );
-}
-
 bool analysis_module_needs_ED( const analysis_module_type * module ) {
   return true;
+}
+
+/*****************************************************************/
+
+static bool analysis_module_set_int(analysis_module_type * module , const char * flag , int value) {
+  if (module->set_int != NULL) 
+    return module->set_int( module->module_data , flag , value );
+  else
+    return false;
+}
+
+static bool analysis_module_set_double(analysis_module_type * module , const char * var , double value) {
+  if (module->set_double != NULL)
+    return module->set_double( module->module_data , var , value );
+  else
+    return false;
+}
+
+static bool analysis_module_set_string(analysis_module_type * module , const char * var , const char * value) {
+  if (module->set_string != NULL)
+    return module->set_string( module->module_data , var , value );
+  else
+    return false;
+}
+
+/* 
+   The same variable name can NOT be used for several variables.
+*/
+
+bool analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value ) {
+  bool set_ok = false;
+  {
+    int  int_value;
+    
+    if (util_sscanf_int( string_value , &int_value )) 
+      set_ok = analysis_module_set_int( module , var_name , int_value );
+    
+    if (set_ok)
+      return true;
+  }
+  
+  {
+    double double_value;
+    if (util_sscanf_double( string_value , &double_value )) 
+      set_ok = analysis_module_set_double( module , var_name , double_value );
+
+    if (set_ok)
+      return true;
+  }
+
+  return analysis_module_set_string( module , var_name , string_value );
 }

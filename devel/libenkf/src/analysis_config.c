@@ -400,7 +400,7 @@ void analysis_config_load_internal_module( analysis_config_type * config , const
   if (module != NULL)
     hash_insert_hash_owned_ref( config->analysis_modules , internal_name , module , analysis_module_free__ );
   else
-    fprintf(stderr,"** Warning: failed to load module %s from %s \n",internal_name , symbol_table);
+    fprintf(stderr,"** Warning: failed to load module %s from %s.\n",internal_name , symbol_table);
 }
 
 void analysis_config_select_module( analysis_config_type * config , const char * module_name ) {

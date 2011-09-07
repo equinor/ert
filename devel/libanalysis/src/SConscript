@@ -23,7 +23,7 @@ env  = Environment()
 conf.update_env( env , [ LIBUTIL , LIBANALYSIS ] , link = False)
 
 src_list = Split("analysis_module.c enkf_linalg.c")
-src_list.append("simple_enkf.c")
+src_list.append("std_enkf.c")
 
 
 header_list = Split("analysis_module.h analysis_table.h enkf_linalg.h")
@@ -32,7 +32,7 @@ add_shared_library( env , conf , slib_path , package , src_list )
 add_header( env , conf , include_path , header_list )
 
 env['SHLIBPREFIX'] = ""
-add_shared_library( env , conf , module_path , "simple_enkf.so" , ["simple_enkf.c"] )
+add_shared_library( env , conf , module_path , "std_enkf.so" , ["std_enkf.c"] )
 
 
 Default( include_path , slib_path , module_path)
