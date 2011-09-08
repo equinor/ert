@@ -4,6 +4,7 @@ include (CheckFunctionExists)
 project( ERT C )
 add_definitions( -g -O2 -Wall -std=gnu99 )
 
+set( INSTALL_GROUP "" CACHE STRING "Group to install as - blank to install as current group")
 #-----------------------------------------------------------------
 option(USE_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
 if (USE_ZLIB)
@@ -147,6 +148,10 @@ set( libecl_src_path    ${CMAKE_SOURCE_DIR}/libecl/src )
 
 add_subdirectory( libutil )
 add_subdirectory( libecl )
+
+#-----------------------------------------------------------------
+
+
 #add_subdirectory( libconfig )
 #add_subdirectory( libjob_queue )
 
