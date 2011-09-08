@@ -78,24 +78,11 @@ static analysis_module_type * analysis_module_alloc__( const analysis_table_type
 }
 
 
-static void dldebug( void ) {
-  printf("-----------------------------------------------------------------\n");
-  printf("Debugging dynamic libraries\n");
-  printf("Adress of dlopen        : %p \n" , dlopen);
-  printf("Adress of dlsym         : %p \n" , dlsym);
-  printf("Adress of dlerror       : %p \n" , dlerror);
-  printf("dlopen(NULL , RTLD_NOW) : %p \n" , dlopen( NULL , RTLD_NOW ));
-  printf("dlerror()               : %s \n" , dlerror()); 
-  printf("-----------------------------------------------------------------\n");
-}
 
 
 
 static analysis_module_type * analysis_module_alloc( const char * libname , const char * table_name , const char * name ) {
   analysis_module_type * module = NULL;
-  {
-    dldebug();
-  }
   void * lib_handle = dlopen( NULL , RTLD_NOW );
   if (lib_handle != NULL) {
     analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
