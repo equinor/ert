@@ -241,11 +241,46 @@ static const char * analysis_config_get_mode_string( enkf_mode_type mode ) {
   }
 }
 
+
+/*****************************************************************/
+
+void analysis_config_load_internal_module( analysis_config_type * config , const char * user_name , const char * symbol_table ) {
+  analysis_module_type * module = analysis_module_alloc_internal( user_name , symbol_table );
+  if (module != NULL)
+    hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
+  else
+    fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , symbol_table);
+}
+
+
+void analysis_config_load_external_module( analysis_config_type * config , const char * user_name , const char * lib_name) {
+  analysis_module_type * module = analysis_module_alloc_external( user_name , lib_name );
+  if (module != NULL)
+    hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
+  else
+    fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , lib_name);
+}
+
+
+analysis_module_type * analysis_config_get_module( analysis_config_type * config , const char * module_name ) {
+  return hash_get( config->analysis_modules , module_name );
+}
+
+void analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
+  config->analysis_module = analysis_config_get_module( config , module_name );
+}
+
+analysis_module_type * analysis_config_get_active_module( analysis_config_type * config ) {
+  return config->analysis_module;
+}
+
+/*****************************************************************/
+
+
 /**
    The analysis_config object is instantiated with the default values
    for enkf_defaults.h
 */
-
 
 void analysis_config_init( analysis_config_type * analysis , const config_type * config ) {
   if (config_item_set( config , UPDATE_LOG_PATH_KEY ))
@@ -300,7 +335,6 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
     analysis_config_set_bootstrap( analysis , config_get_value_as_bool( config , ENKF_BOOTSTRAP_KEY ));
 
 
-  
 
   /* Scaling of parameter */
   if (config_item_set( config , ENKF_SCALING_KEY)) 
@@ -346,7 +380,36 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
     if (config_item_set( config ,ENKF_NCOMP_KEY )) 
       analysis_config_set_subspace_dimension( analysis, config_get_value_as_int( config, ENKF_NCOMP_KEY ));
   }
+  
+  /* Loading external modules */
+  {
+    for (int i=0; i < config_get_occurences( config , ANALYSIS_LOAD_KEY ); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_SET_VAR_KEY , i);
+      const char * user_name = stringlist_iget( tokens , 0 );
+      const char * lib_name  = stringlist_iget( tokens , 1 );
+      
+      analysis_config_load_external_module( analysis , user_name , lib_name);
+    }
+  }
 
+  /* Setting variables for analysis modules */
+  {
+    for (int i=0; i < config_get_occurences( config , ANALYSIS_SET_VAR_KEY ); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_SET_VAR_KEY , i);
+      const char * module_name = stringlist_iget( tokens , 0 );
+      const char * var_name    = stringlist_iget( tokens , 1 );
+      char       * value       = stringlist_alloc_joined_segment_string( tokens , 2 , stringlist_get_size( tokens ) , " " );
+      analysis_module_type * module = analysis_config_get_module( analysis , module_name );
+      
+      analysis_module_set_var( module , var_name , value );
+      
+      free( value );
+    }
+  }
+
+  if (config_item_set( config, ANALYSIS_SELECT_KEY )) 
+    analysis_config_select_module( analysis , config_get_value( config , ANALYSIS_SELECT_KEY ));
+  
 }
 
 
@@ -392,26 +455,6 @@ bool analysis_config_Xbased(const analysis_config_type * config) {
     return false;
 }
 
-/*****************************************************************/
-
-void analysis_config_load_internal_module( analysis_config_type * config , const char * internal_name , const char * symbol_table ) {
-  const char * external_name    = NULL;
-  analysis_module_type * module = analysis_module_alloc_internal( symbol_table , external_name );
-  if (module != NULL)
-    hash_insert_hash_owned_ref( config->analysis_modules , internal_name , module , analysis_module_free__ );
-  else
-    fprintf(stderr,"** Warning: failed to load module %s from %s.\n",internal_name , symbol_table);
-}
-
-void analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
-  config->analysis_module = hash_get( config->analysis_modules , module_name );
-}
-
-analysis_module_type * analysis_config_get_module( analysis_config_type * config ) {
-  return config->analysis_module;
-}
-
-/*****************************************************************/
 
 analysis_config_type * analysis_config_alloc_default() {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
@@ -441,8 +484,9 @@ analysis_config_type * analysis_config_alloc_default() {
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
-  analysis_config_load_internal_module( config , "std_enkf" , "std_enkf_symbol_table");
-  analysis_config_select_module( config , "std_enkf");
+  analysis_config_load_internal_module( config , "STD_ENKF" , "std_enkf_symbol_table");
+  analysis_config_load_internal_module( config , "SQRT_ENKF" , "sqrt_enkf_symbol_table");
+  analysis_config_select_module( config , "STD_ENKF");
   return config;
 }
 
@@ -478,6 +522,15 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOLEAN);
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
   config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
+  config_add_key_value( config , STD_CUTOFF_KEY              , false , CONFIG_FLOAT);
+
+  config_add_key_value( config , ANALYSIS_SELECT_KEY         , false , CONFIG_STRING);
+
+  item = config_add_item( config , ANALYSIS_LOAD_KEY , false , true );
+  config_item_set_argc_minmax( item , 2 , 2 , 0 , NULL );  
+  
+  item = config_add_item( config , ANALYSIS_SET_VAR_KEY , false , true );
+  config_item_set_argc_minmax( item , 3 , -1 , 0 , NULL );
 }
 
 

@@ -67,6 +67,6 @@ void                   analysis_config_add_config_items( config_type * config );
 void                   analysis_config_fprintf_config( analysis_config_type * config , FILE * stream);
 
 void                   analysis_config_select_module( analysis_config_type * config , const char * module_name );
-analysis_module_type * analysis_config_get_module( analysis_config_type * config );
+analysis_module_type * analysis_config_get_active_module( analysis_config_type * config );
 
 #endif

@@ -36,5 +36,13 @@ void enkf_linalg_lowrankCinv(const matrix_type * S ,
 void enkf_linalg_genX2(matrix_type * X2 , const matrix_type * S , const matrix_type * W , const double * eig);
 void enkf_linalg_genX3(matrix_type * X3 , const matrix_type * W , const matrix_type * D , const double * eig);
 
+void enkf_linalg_meanX5(const matrix_type * S , 
+                        const matrix_type * W , 
+                        const double * eig    , 
+                        const matrix_type * innov ,
+                        matrix_type * X5);
+
+
+void enkf_linalg_X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type * randrot, int nrobs);
 
 #endif

@@ -6,7 +6,7 @@
    it under the terms of the GNU General Public License as published by 
    the Free Software Foundation, either version 3 of the License, or 
    (at your option) any later version. 
-    
+   
    ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
    WARRANTY; without even the implied warranty of MERCHANTABILITY or 
    FITNESS FOR A PARTICULAR PURPOSE.   
@@ -1076,7 +1076,14 @@ void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local
    the function, rather than sending it as an input.
 */
 
-void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_ministep_type * ministep, const int_vector_type * step_list , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data, double std_cutoff, double alpha) {
+void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , 
+                                     const local_ministep_type * ministep, 
+                                     const int_vector_type * step_list , 
+                                     hash_type * use_count , 
+                                     meas_data_type * meas_data , 
+                                     obs_data_type * obs_data, 
+                                     double std_cutoff, 
+                                     double alpha) {
   const int num_cpu_threads          = 4;
 
   int       matrix_size              = 1000;  /* Starting with this */
@@ -1145,7 +1152,8 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
           int ensemble_members_loop;
           matrix_type * work_A                     = matrix_alloc_copy( A ); // Huge memory requirement. Is needed such that we do not resample updated ensemble members from A
           meas_data_type * meas_data_resampled = meas_data_alloc_copy( meas_data );
-          matrix_type      * A_resampled           = matrix_alloc( matrix_get_rows(work_A) , matrix_get_columns( work_A ));
+          matrix_type      * A_resampled       = matrix_alloc( matrix_get_rows(work_A) , matrix_get_columns( work_A ));
+
           for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
             int ensemble_counter;
             /* Resample A and meas_data. Here we are careful to resample the working copy.*/
@@ -1170,7 +1178,19 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
                 local CV below. 
               */
               enkf_analysis_local_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data ,  V0T , Z , eig , U0 , meas_data );
-              matrix_type * X5_boot_cv = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data , randrot, A_resampled , V0T , Z , eig, U0, meas_data, unique_bootstrap_components);
+              matrix_type * X5_boot_cv = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , 
+                                                                      enkf_main->rng , 
+                                                                      meas_data_resampled , 
+                                                                      obs_data , 
+                                                                      randrot, 
+                                                                      A_resampled , 
+                                                                      V0T ,
+                                                                      Z , 
+                                                                      eig, 
+                                                                      U0, 
+                                                                      meas_data, 
+                                                                      unique_bootstrap_components);
+              
               msg_update(msg , " matrix multiplication");
               matrix_inplace_matmul_mt( A_resampled , X5_boot_cv , num_cpu_threads );
               matrix_inplace_add( A_resampled , work_A ); 
@@ -1181,7 +1201,12 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
               free( eig );
               matrix_free( X5_boot_cv );
             } else { /* Just Bootstrapping */
-              matrix_type * X5_boot = enkf_analysis_allocX_boot( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data , randrot, meas_data);
+              matrix_type * X5_boot = enkf_analysis_allocX_boot( enkf_main->analysis_config , 
+                                                                 enkf_main->rng , 
+                                                                 meas_data_resampled , 
+                                                                 obs_data , 
+                                                                 randrot , 
+                                                                 meas_data);
               msg_update(msg , " matrix multiplication");
               matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
               matrix_free( X5_boot );
@@ -1209,6 +1234,7 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , const local_mi
   free( serialize_info );
   free( active_size );
   free( row_offset );
+  
   msg_free( msg , true );
   matrix_free( A );
   matrix_free( randints );
@@ -1224,7 +1250,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
                               const meas_data_type * forecast , 
                               obs_data_type * obs_data) {
   
-  analysis_module_type * module = analysis_config_get_module( enkf_main->analysis_config );
+  analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
   int ens_size     = meas_data_get_ens_size( forecast );
   int active_size  = obs_data_get_active_size( obs_data );
   matrix_type * X  = matrix_alloc( ens_size , ens_size );
@@ -1233,15 +1259,20 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_type * innov   = obs_data_alloc_innov( obs_data , forecast , active_size );
   matrix_type * E  = NULL;
   matrix_type * D  = NULL;
+  matrix_type * randrot = NULL; 
 
   if (analysis_module_needs_ED( module )) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
   
-  analysis_module_initX( module , X , S , R , innov , E , D );
+  if (analysis_module_needs_randrot( module )) 
+    randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
+  
+  analysis_module_initX( module , X , S , R , innov , E , D , randrot );
   enkf_main_update_mulX( enkf_main , X , ministep , report_step , use_count);
-
+  
+  matrix_safe_free( randrot );
   matrix_safe_free( E );
   matrix_safe_free( D );
   matrix_free( S );
@@ -1320,9 +1351,6 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       if (obs_data_get_active_size(obs_data) > 0) {
         if (analysis_config_Xbased( enkf_main->analysis_config )) {
           
-          enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
-
-          if (0) {
           if (analysis_config_get_bootstrap( enkf_main->analysis_config )) {
             /*
               Think there is a memory bug in this update code, when
@@ -1343,16 +1371,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
                                                obs_data);
 
           } else {
-            X = enkf_analysis_allocX( enkf_main->analysis_config , enkf_main->rng , meas_forecast , obs_data , randrot);
-            enkf_main_update_mulX( enkf_main , X , ministep , int_vector_get_last( step_list ) , use_count);
-            
-            if (analysis_config_get_force_subspace_dimension(enkf_main->analysis_config )) {
-              printf("Selecting the user defined subspace dimension \n");
-              matrix_matlab_dump( X , "X5_force.mat");
-            }
-
-            matrix_free( X );
-          }
+            /* Plain vanilla goes through module update. */
+            enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
           }
         }
       }

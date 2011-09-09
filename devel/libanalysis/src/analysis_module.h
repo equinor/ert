@@ -27,9 +27,8 @@ extern "C" {
 typedef struct analysis_module_struct analysis_module_type;
 
 
-analysis_module_type * analysis_module_alloc_external( const char * libname , const char * name);
-analysis_module_type * analysis_module_alloc_internal( const char * symbol_table , const char * module_name);
-bool                   analysis_module_needs_ED( const analysis_module_type * module );
+analysis_module_type * analysis_module_alloc_external( const char * user_name , const char * libname );
+analysis_module_type * analysis_module_alloc_internal( const char * user_name , const char * symbol_table );
 void                   analysis_module_free( analysis_module_type * module );
 void                   analysis_module_free__( void * arg);
 
@@ -39,7 +38,14 @@ void analysis_module_initX(analysis_module_type * module ,
                            matrix_type * R , 
                            matrix_type * innov , 
                            matrix_type * E , 
-                           matrix_type * D );
+                           matrix_type * D ,
+                           matrix_type * randrot);
+
+bool  analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
+
+bool                   analysis_module_needs_ED( const analysis_module_type * module );
+bool                   analysis_module_needs_randrot( const analysis_module_type * module );
+
 
 #ifdef  __cplusplus
 }

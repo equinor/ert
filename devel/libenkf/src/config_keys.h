@@ -134,8 +134,11 @@ extern "C" {
 #define  UPDATE_LOG_PATH_KEY               "UPDATE_LOG_PATH"
 #define  UPDATE_PATH_KEY                   "UPDATE_PATH"
 
-#define  LOAD_ANALYSIS_MODULE_KEY          "ANALYSIS_MODULE"
-#define  ANALYSIS_MODULE_SET_KEY           "ANALYSIS_MODULE_SET_VAR"
+#define  ANALYSIS_LOAD_KEY                 "ANALYSIS_LOAD"
+#define  ANALYSIS_SET_VAR_KEY              "ANALYSIS_SET_VAR"
+#define  ANALYSIS_SELECT_KEY               "ANALYSIS_SELECT"
+
+
 
 
 #define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"

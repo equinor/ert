@@ -231,3 +231,93 @@ void enkf_linalg_lowrankCinv(const matrix_type * S ,
 }
 
 
+void enkf_linalg_meanX5(const matrix_type * S , 
+                        const matrix_type * W , 
+                        const double * eig    , 
+                        const matrix_type * innov , 
+                        matrix_type * X5) {
+
+
+  const int nrens = matrix_get_columns( S );
+  const int nrobs = matrix_get_rows( S );
+  const int nrmin = util_int_min( nrobs , nrens );
+  double * work   = util_malloc( (2 * nrmin + nrobs + nrens) * sizeof * work , __func__);
+  {
+    double * y1 = &work[0];
+    double * y2 = &work[nrmin];
+    double * y3 = &work[2*nrmin];
+    double * y4 = &work[2*nrmin + nrobs]; 
+    
+    if (nrobs == 1) {
+      /* Is this special casing necessary ??? */
+      y1[0] = matrix_iget(W , 0,0) * matrix_iget( innov , 0 , 0);
+      y2[0] = eig[0] * y1[0];
+      y3[0] = matrix_iget(W , 0, 0) *y2[0];
+      for (int iens = 0; iens < nrens; iens++)
+        y4[iens] = y3[0] * matrix_iget(S , 0, iens);
+    } else {
+      matrix_dgemv(W , matrix_get_data( innov ) , y1 , true , 1.0, 0.0);   /* y1 = Trans(W) * innov */
+      for (int i= 0; i < nrmin; i++)
+        y2[i] = eig[i] * y1[i];                         /* y2 = eig * y1      */
+      matrix_dgemv(W , y2 , y3 , false , 1.0 , 0.0);    /* y3 = W * y2;       */ 
+      matrix_dgemv(S , y3 , y4 , true  , 1.0 , 0.0);    /* y4 = Trans(S) * y3 */
+    }
+    
+    for (int iens = 0; iens < nrens; iens++)
+      matrix_set_column(X5 , y4 , iens );
+    
+    matrix_shift(X5 , 1.0/nrens);
+  }
+  free( work );
+}
+
+
+
+void enkf_linalg_X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type * randrot, int nrobs) { 
+  const int nrens   = matrix_get_columns( X5 );
+  const int nrmin   = util_int_min( nrobs , nrens );
+  matrix_type * VT  = matrix_alloc( nrens , nrens );
+  double * sig      = util_malloc( nrmin * sizeof * sig , __func__);
+  double * isig     = util_malloc( nrmin * sizeof * sig , __func__);
+
+  matrix_dgesvd(DGESVD_NONE , DGESVD_ALL , X2 , sig , NULL , VT);
+  {
+    matrix_type * X3   = matrix_alloc( nrens , nrens );
+    matrix_type * X33  = matrix_alloc( nrens , nrens );
+    matrix_type * X4   = matrix_alloc( nrens , nrens );
+    matrix_type * IenN = matrix_alloc( nrens , nrens );
+    int i,j;
+    for (i = 0; i < nrmin; i++)
+      isig[i] = sqrt( util_double_max( 1.0 - sig[i]*sig[i]  ,0.0));
+    
+    for (j = 0; j < nrens; j++)
+      for (i = 0; i < nrens; i++)
+        matrix_iset(X3 , i , j , matrix_iget(VT , j , i));
+    
+    for (j=0; j< nrmin; j++)
+      matrix_scale_column(X3 , j , isig[j]);
+    
+    matrix_dgemm(X33 , X3 , VT , false , false , 1.0 , 0.0);        /* X33 = X3   * VT */
+    if (randrot != NULL)
+      matrix_dgemm(X4  , X33 , randrot , false, false , 1.0 , 0.0);   /* X4  = X33  * Randrot */             
+    else
+      matrix_assign(X4 , X33);
+    
+    matrix_set(IenN , -1.0/ nrens);
+    for (i = 0; i < nrens; i++)
+      matrix_iadd(IenN , i , i , 1.0);
+    
+    matrix_dgemm(X5  , IenN , X4 , false , false , 1.0 , 1.0);      /* X5  = IenN * X4 + X5 */
+
+    matrix_free( X3   );
+    matrix_free( X33  );
+    matrix_free( X4   );
+    matrix_free( IenN );
+  }
+
+  free(sig);
+  free(isig);
+  matrix_free( VT );
+}
+
+

@@ -456,8 +456,6 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
     
     /** Handle HISTORY_OBSERVATION instances. */
     {
-      const char * obs_debug_file     = "obs_debug.txt";
-      FILE            * debug_handle  = util_fopen( obs_debug_file , "w");
       stringlist_type * hist_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "HISTORY_OBSERVATION");
       int               num_hist_obs  = stringlist_get_size(hist_obs_keys);
       
@@ -471,15 +469,13 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
         if (config_node != NULL) {
           obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ) , enkf_obs->obs_time , num_reports);
           if (obs_vector != NULL) {
-            obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , sched_file , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff , debug_handle);
+            obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , sched_file , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff );
             enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
           }
         } else 
           fprintf(stderr,"** Warning: summary:%s does not exist - observation:%s not added. \n", obs_key , obs_key);
       }
       
-      printf("Debug information of summary observations written to:%s \n", obs_debug_file );
-      fclose( debug_handle );
       stringlist_free(hist_obs_keys);
     }
     

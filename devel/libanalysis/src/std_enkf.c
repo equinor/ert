@@ -2,6 +2,7 @@
 #include <string.h>
 #include <util.h>
 #include <matrix.h>
+#include <matrix_blas.h>
 #include <stdio.h>
 #include <analysis_table.h>
 #include <enkf_linalg.h>
@@ -9,14 +10,28 @@
 
 #define STD_ENKF_TYPE_ID 261123
 
+#define INVALID_SUBSPACE_DIMENSION  -1
+#define INVALID_TRUNCATION          -1
+#define DEFAULT_SUBSPACE_DIMENSION  INVALID_SUBSPACE_DIMENSION
+
+/*
+  Observe that only one of the settings subspace_dimension and
+  truncation can be valid at a time; otherwise the svd routine will
+  fail. This implies that the set_truncation() and
+  set_subspace_dimension() routines will set one variable, AND
+  INVALIDATE THE OTHER. For most situations this will be OK, but if
+  you have repeated calls to both of these functions the end result
+  might be a surprise.  
+*/
 
 
-typedef struct {
+
+
+struct std_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
-  double    truncation;
-  double    overlap_alpha;
-  double    std_cutoff;
-} std_enkf_data_type;
+  double    truncation;            // ENKF_TRUNCATION_KEY
+  int       subspace_dimension;    // ENKF_NCOMP_KEY (-1: use Truncation instead)
+};
 
 
 
@@ -25,56 +40,82 @@ static UTIL_SAFE_CAST_FUNCTION( std_enkf_data , STD_ENKF_TYPE_ID )
 
 void std_enkf_set_truncation( std_enkf_data_type * data , double truncation ) {
   data->truncation = truncation;
+  if (truncation > 0.0)
+    data->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
 }
 
-void std_enkf_set_alpha( std_enkf_data_type * data , double alpha) {
-  data->overlap_alpha = alpha;
+double std_enkf_get_truncation( void * module_data ) {
+  std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
+  return data->truncation;
 }
 
-void std_enkf_set_cutoff( std_enkf_data_type * data , double cutoff) {
-  data->std_cutoff = cutoff;
+void std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_dimension) {
+  data->subspace_dimension = subspace_dimension;
+  if (subspace_dimension > 0)
+    data->truncation = INVALID_TRUNCATION;
 }
 
-void * std_enkf_alloc( ) {
+int std_enkf_get_subspace_dimension( void * module_data ) {
+  std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
+  return data->subspace_dimension;
+}
+
+
+void * std_enkf_data_alloc( ) {
   std_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_TYPE_ID );
 
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
-  std_enkf_set_alpha( data , DEFAULT_ENKF_ALPHA_ );
-  std_enkf_set_cutoff( data , DEFAULT_ENKF_STD_CUTOFF_ );
+  std_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
   
   return data;
 }
 
 
-void std_enkf_free( void * data ) { 
+void std_enkf_data_free( void * data ) { 
   free( data );
 }
 
 
+void std_enkf_initX(void * module_data , 
+                    matrix_type * X , 
+                    matrix_type * S , 
+                    matrix_type * R , 
+                    matrix_type * innov , 
+                    matrix_type * E , 
+                    matrix_type *D, 
+                    matrix_type * randrot) {
 
-void std_enkf_initX(void * module_data , matrix_type * X , matrix_type * S , matrix_type * R , matrix_type * innov , matrix_type * E , matrix_type *D) {
-  double truncation = 0.99;
-  int ncomp         = -1;
-  int nrobs         = matrix_get_rows( S );
-  int ens_size      = matrix_get_columns( S );
-  int nrmin         = util_int_min( ens_size , nrobs); 
-  
-  matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
-  double      * eig = util_malloc( sizeof * eig * nrmin , __func__);    
+  std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
+  {
+    int ncomp         = data->subspace_dimension;
+    double truncation = data->truncation;
+    int nrobs         = matrix_get_rows( S );
+    int ens_size      = matrix_get_columns( S );
+    int nrmin         = util_int_min( ens_size , nrobs); 
+    matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
+    double      * eig = util_malloc( sizeof * eig * nrmin , __func__);    
+    
+    enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
+    { /* The part in the block here was a seperate function, and might be
+         factored out again. */
+      matrix_type * X3  = matrix_alloc(nrobs , ens_size);
+      enkf_linalg_genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
+                                            /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
 
-  enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
-  matrix_diag_set_scalar( X , 1.0 );
+      matrix_dgemm( X , S , X3 , true , false , 1.0 , 0.0);  /* X = S' * X3 */
+      // If !bootstrap {
+      for (int i = 0; i < ens_size ; i++)
+        matrix_iadd( X , i , i , 1.0); /*X = I + X */
+      // }
 
-  matrix_free( W );
-  free( eig );
+      matrix_free( X3 );
+
+    }
+    matrix_free( W );
+    free( eig );
+  }
 }
-
-
-bool std_enkf_set_int( void * module_data , const char * flag , int value) {
-  return true;
-}
-
 
 
 
@@ -85,10 +126,21 @@ bool std_enkf_set_double( void * arg , const char * var_name , double value) {
 
     if (strcmp( var_name , ENKF_TRUNCATION_KEY_) == 0)
       std_enkf_set_truncation( module_data , value );
-    else if (strcmp( var_name , ENKF_ALPHA_KEY_) == 0)
-      std_enkf_set_alpha( module_data , value );
-    else if (strcmp( var_name , STD_CUTOFF_KEY_) == 0)
-      std_enkf_set_cutoff( module_data , value );
+    else
+      name_recognized = false;
+
+    return name_recognized;
+  }
+}
+
+
+bool std_enkf_set_int( void * arg , const char * var_name , int value) {
+  std_enkf_data_type * module_data = std_enkf_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+    
+    if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
+      std_enkf_set_subspace_dimension( module_data , value );
     else
       name_recognized = false;
 
@@ -105,7 +157,6 @@ bool std_enkf_set_double( void * arg , const char * var_name , double value) {
 */
 
 
-#define INTERNAL_LINK
 
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE std_enkf_symbol_table
@@ -115,16 +166,14 @@ bool std_enkf_set_double( void * arg , const char * var_name , double value) {
 
 analysis_table_type SYMBOL_TABLE[] = {
   { 
-    .name       = "std_enkf" , 
-    .alloc      = std_enkf_alloc,
-    .freef      = std_enkf_free,
-    .set_int    = std_enkf_set_int , 
-    .set_double = std_enkf_set_double , 
-    .set_string = NULL , 
-    .initX      = std_enkf_initX , 
-  },
-  { 
-    .name = NULL 
+    .alloc        = std_enkf_data_alloc,
+    .freef        = std_enkf_data_free,
+    .set_int      = std_enkf_set_int , 
+    .set_double   = std_enkf_set_double , 
+    .set_string   = NULL , 
+    .initX        = std_enkf_initX , 
+    .need_ED      = true,
+    .need_randrot = false,
   }
 };
 

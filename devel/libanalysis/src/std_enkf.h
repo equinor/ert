@@ -8,18 +8,21 @@ extern "C" {
 #include <stdbool.h>
 #include <matrix.h>
 
-#define DEFAULT_ENKF_TRUNCATION_  0.99
-#define DEFAULT_ENKF_ALPHA_       1.50
-#define DEFAULT_ENKF_STD_CUTOFF_  1e-6
+#define  DEFAULT_ENKF_TRUNCATION_  0.99
+#define  ENKF_TRUNCATION_KEY_      "ENKF_TRUNCATION"
+#define  ENKF_NCOMP_KEY_           "ENKF_NCOMP" 
 
-#define  ENKF_TRUNCATION_KEY_     "ENKF_TRUNCATION"
-#define  ENKF_ALPHA_KEY_          "ENKF_ALPHA"
-#define  STD_CUTOFF_KEY_          "STD_CUTOFF"
+typedef struct std_enkf_data_struct std_enkf_data_type;
 
-void     std_enkf_initX(void * module_data , matrix_type * X , matrix_type * S , matrix_type * R , matrix_type * innov , matrix_type * E , matrix_type *D);
-bool     std_enkf_set_flag( void * module_data , const char * flag , int value);
-bool     std_enkf_set_var( void * module_data , const char * flag , double value);
 
+  void     std_enkf_initX(void * module_data , matrix_type * X , matrix_type * S , matrix_type * R , matrix_type * innov , matrix_type * E , matrix_type *D , matrix_type * randrot);
+bool     std_enkf_set_double( void * arg , const char * var_name , double value);
+bool     std_enkf_set_int( void * arg , const char * var_name , int value);
+
+double   std_enkf_get_truncation( void * module_data );
+void   * std_enkf_data_alloc( );
+void     std_enkf_data_free( void * module_data );
+int      std_enkf_get_subspace_dimension( void * module_data );
 
 
 
