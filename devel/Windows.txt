@@ -4,23 +4,24 @@ Preparations:
 1. Install the CMake build system from www.cmake.org
 
 2. Install the MinGW and MSYS packages from www.mingw.org - this a
-   collection of gnu tools for built for windows. Observe that these
-   tools behave like they do on linux, but they are native windows
+   collection of gnu tools built for windows. Observe that these tools
+   behave like they do on linux, but they are native windows
    applications and the compilers produce native windows binaries, not
    like Cygwin which is based on a portability layer.
 
-   Make sure to install at least the C and fortran compilers.
+   Make sure to install at least the C and Fortran compilers.
 
 3. Install lapack; download and install instructions can be found on
    http://icl.cs.utk.edu/lapack-for-windows/ The text says that you
-   will need the Intel fortran compiler, but the gfortran compiler
-   from MinGW works fine. The distribution contains a cmake
-   CMakeLists.txt file.
+   will need the Intel Fortran compiler, but the Fortran compiler from
+   MinGW works fine. The distribution contains a cmake CMakeLists.txt
+   file, and build with Cmake is easy altough time consuming.
    
    To make sure the system can find your libraries you should update
    the windows PATH variable to include the location of your
    libblas.dll and liblapack.dll files; if you fail to do this CMake
-   will fail to generate a valid set of makefiles.
+   will fail to generate a valid set of makefiles for building libutil
+   and libecl.
 
 
 Building libecl / libutil
@@ -29,8 +30,8 @@ Building libecl / libutil
 1. Go to the root directory of the ert distribution and create a
    directory for the files created by the build - e.g. 'tmp-build'.
 
-2. Open the cmake and give the path to the source (i.e. the root of
-   the ert distribution) and the path to the build directory. 
+2. Open the cmake gui and give the path to the source (i.e. the root
+   of the ert distribution) and the path to the build directory.
 
 3. Press the [Configure] button and select the "MSys Makefiles"
    option. Cmake will inspect your system and set build configuration
@@ -41,7 +42,7 @@ Building libecl / libutil
         USE_PTHREAD
         USE_ZLIB
 
-   and uncheck these. In addition you might want to modify some other
+   and uncheck them. In addition you might want to modify some other
    variables? Press the [Configure] button again, and then finally the
    [Generate] button to create makefiles.
 
