@@ -1297,7 +1297,6 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
   double alpha       = analysis_config_get_alpha( enkf_main->analysis_config );
   double std_cutoff  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
   const int ens_size = enkf_main_get_ensemble_size(enkf_main);
-  matrix_type * X;
   
   {
     /*

@@ -26,7 +26,6 @@
 #include <int_vector.h>
 #include <rng.h>
 
-matrix_type * enkf_analysis_allocX( const analysis_config_type * config , rng_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot);
 matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , rng_type * rng , meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , const matrix_type * A , const matrix_type * V0T , const matrix_type * Z , const double * eig , const matrix_type * U0 , meas_data_type * fasit , int unique_bootstrap_components);
 matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , rng_type * rng , const meas_data_type * meas_data , obs_data_type * obs_data , const matrix_type * randrot , const meas_data_type * fasit);
 matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_config_type * config , rng_type * rng, const matrix_type * A , const matrix_type * Z , const matrix_type * Rp , const matrix_type * Dp );
