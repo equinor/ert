@@ -1304,7 +1304,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       structures. obs_data is a precursor for the 'd' vector, and
       meas_forecast is a precursor for the 'S' matrix'.
 
-      The reason for gong via these temporary structures is to support
+      The reason for going via these temporary structures is to support
       deactivating observations which should not be used in the update
       process.
     */

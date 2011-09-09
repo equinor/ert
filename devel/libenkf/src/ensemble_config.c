@@ -413,23 +413,6 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   ensemble_config->field_trans_table     = field_trans_table_alloc();    
   ensemble_config_set_refcase( ensemble_config , refcase );
 
-  /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
-  if (config_get_occurences(config , "MULTFLT") > 0) {
-    printf("******************************************************************\n");
-    printf("** You have used the keyword MULTFLT - this is unfortunately no **\n");
-    printf("** longer supported - use GEN_KW instead.                       **\n");
-    printf("******************************************************************\n");
-    exit(1);
-  }
-
-  if (config_get_occurences(config , "HAVANA_FAULT") > 0) {
-    printf("************************************************************************\n");
-    printf("** You have used the keyword HAVANA_FAULT - this is unfortunately no  **\n");
-    printf("** longer supported - use GEN_KW instead and a suitable FORWARD_MODEL.**\n");
-    printf("************************************************************************\n");
-    exit(1);
-  }
-
   if (config_item_set( config , GEN_KW_TAG_FORMAT_KEY))
     ensemble_config_set_gen_kw_format( ensemble_config , config_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
   
