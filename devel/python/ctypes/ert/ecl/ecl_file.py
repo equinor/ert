@@ -73,11 +73,15 @@ class EclFile(object):
         elif not report_step == None:
             OK = cfunc.restart_block_step( obj , report_step )
         else:
-            raise TypeError("restart_block() requires either dtime or report_step argument - none given")
+            raise TypeError("restart_block() requires either dtime or report_step argument - none given.")
         
         if not OK:
-            raise TypeError("restart_block() Could not locate report_step/dtime")
-        
+            if dtime:
+                raise ValueError("Could not locate date:%02d/%02d/%4d in restart file: %s." % (dtime.day , dtime.month , dtime.year , filename))
+            else:
+                raise ValueError("Could not locate report step:%d in restart file: %s." % (report_step , filename))
+            
+            
         return obj
 
 
@@ -465,14 +469,21 @@ class EclFile(object):
         Will return a list of the dates for all report steps.
         
         The method works by iterating through the whole restart file
-        looking for 'INTEHEAD' keywords; the method can probably be
-        tricked by other file types also containing an INTEHEAD
-        keyword.
+        looking for 'SEQNUM/INTEHEAD' keywords; the method can
+        probably be tricked by other file types also containing an
+        INTEHEAD keyword. 
         """
         dates = []
-        for index in range( self.num_named_kw( 'INTEHEAD' )):
+        for index in range( self.num_named_kw( 'SEQNUM' )):
             dates.append( self.iget_restart_sim_time( index ))
         return dates
+
+    @property
+    def dates( self ):
+        """
+        Will return a list of the dates for all report steps.
+        """
+        return self.report_dates
     
 
     def num_named_kw( self , kw):
