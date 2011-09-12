@@ -21,6 +21,9 @@ import ert.ecl.ecl as ecl
 
 file = ecl.EclFile( "data/eclipse/case/ECLIPSE.UNRST" )
 
+bl = ecl.EclFile.restart_block( "data/eclipse/case/ECLIPSE.UNRST" , dtime = datetime.datetime( 2001 , 6 , 1 ))
+
+
 for (step,date) in zip( file.report_steps , file.report_dates):
     print step,date
 

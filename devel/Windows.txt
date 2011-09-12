@@ -28,7 +28,8 @@ Building libecl / libutil
 -------------------------
 
 1. Go to the root directory of the ert distribution and create a
-   directory for the files created by the build - e.g. 'tmp-build'.
+   directory to hold the files created by the build -
+   e.g. 'tmp-build'.
 
 2. Open the cmake gui and give the path to the source (i.e. the root
    of the ert distribution) and the path to the build directory.
@@ -46,7 +47,8 @@ Building libecl / libutil
    variables? Press the [Configure] button again, and then finally the
    [Generate] button to create makefiles.
 
-4. Start up the MSys shell, go to the build directory and type:
+4. Start up the MSys shell, go to the build directory,
+   e.g. 'tmp-build', and type:
 
       make ; make install
 
