@@ -183,20 +183,20 @@ class EclFile(object):
         cfunc.select_global( self )
 
 
-    def select_restart_section( self, report_step = None , sim_time = None):
+    def select_restart_section( self, index = None , report_step = None , sim_time = None):
         """
         Will select a restart section as the active section.
         
-        You must specify either a report step with the @report_step
-        argument, or a true time with the @sim_time argument; if
-        neither argument is given exception TypeError wiull be
-        raised. If present the @sim_time argument should be a datetime
-        instance.
+        You must specify a report step with the @report_step argument,
+        a true time with the @sim_time argument or a plain index to
+        select restart block. If none of arguments are given exception
+        TypeError wiull be raised. If present the @sim_time argument
+        should be a datetime instance.
         
         If the restart section you ask for can not be found the method
-        will return a EclFile instance which evaluates to False;
-        alternatively you can query first with the has_report_step()
-        or has_sim_time() methods.
+        will raise a ValueError exeception. To protect against this
+        you can query first with the has_report_step(), 
+        has_sim_time() or num_report_steps() methods.
 
         This method should be used when you have already loaded the
         complete file; if you only want to load a section from the
@@ -208,8 +208,11 @@ class EclFile(object):
             OK = cfunc.restart_block_step( self , report_step )
         elif sim_time:
             OK = cfunc.restart_block_time( self , ctime( sim_time ) )
+        elif index:
+            OK = cfunc.restart_block_iselect( self, index )
         else:
             raise TypeError("select_restart_section() requires either dtime or report_step argument - none given")
+
         
         if not OK:
             raise TypeError("select_restart_section() Could not locate report_step/dtime")
@@ -516,7 +519,20 @@ class EclFile(object):
         """
         return cfunc.has_report_step( self , report_step )
 
+    def num_report_steps( self ):
+        """
+        Returns the total number of report steps in the restart file.
+
+        Works by counting the number of 'SEQNUM' instances, and will
+        happily return 0 for a non-restart file. Observe that the
+        report_steps present in a unified restart file are in general
+        not consecutive, i.e. the last report step will typically be
+        much higher than the return value from this function.
+        """
+        return len( self["SEQNUM"] )
     
+
+
     def has_sim_time( self , dtime ):
         """
         Checks if the current EclFile has data for time @dtime.
@@ -583,6 +599,7 @@ cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_all
 cfunc.select_block                = cwrapper.prototype("bool        ecl_file_select_block( ecl_file , char* , int )")
 cfunc.restart_block_time          = cwrapper.prototype("bool        ecl_file_select_rstblock_sim_time( ecl_file , time_t )")
 cfunc.restart_block_step          = cwrapper.prototype("bool        ecl_file_select_rstblock_report_step( ecl_file , int )")
+cfunc.restart_block_iselect       = cwrapper.prototype("bool        ecl_file_iselect_rstblock( ecl_file , int )")
 cfunc.select_global               = cwrapper.prototype("void        ecl_file_select_global( ecl_file )")
 
 cfunc.iget_kw                     = cwrapper.prototype("c_void_p    ecl_file_iget_kw( ecl_file , int)")
