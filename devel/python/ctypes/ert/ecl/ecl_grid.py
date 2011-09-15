@@ -270,7 +270,6 @@ class EclGrid(object):
         x = ctypes.c_double()
         y = ctypes.c_double()
         z = ctypes.c_double()
-        print gi
         cfunc.get_xyz1( self , gi , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
         return (x.value , y.value , z.value)
 
