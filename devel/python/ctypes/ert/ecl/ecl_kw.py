@@ -142,7 +142,15 @@ class EclKW(object):
         file. The @kw argument should be the keyword header you are
         searching for, e.g. "PORO" or "PVTNUM"[1], the method will
         then search forward through the file to look for this @kw. If
-        the keyword can not be found the method will return None.
+        the keyword can not be found the method will return None. 
+
+        Observe that there is a strict 8 character limit on @kw -
+        altough you could in principle use an arbitrary external
+        program to create grdecl files with more than 8 character
+        length headers, this implementation will refuse to even try
+        loading them. In that case you will have to rename the
+        keywords in your file - sorry. A TypeError exception 
+        will be raised if @kw has more than 8 characters.
 
         The grdecl files have no datatype header, so this must be
         supplied by the caller through the @ecl_type argument. The
@@ -169,6 +177,10 @@ class EclKW(object):
         
 
         cfile  = CFILE( file )
+        if kw:
+            if len(kw) > 8:
+                raise TypeError("Sorry keyword:%s is too long, must be eight characters or less." % kw)
+            
         c_ptr  = cfunc.load_grdecl( cfile , kw , ecl_type )
         if c_ptr:
             obj = cls( )
