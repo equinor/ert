@@ -134,7 +134,9 @@ void local_ministep_add_dataset( local_ministep_type * ministep , const local_da
 
 
 
-
+local_dataset_type * local_ministep_get_dataset( const local_ministep_type * ministep, const char * dataset_name) {
+  return hash_get( ministep->datasets, dataset_name );
+}
 
 local_obsset_type * local_ministep_get_obsset( const local_ministep_type * ministep ) {
   return ministep->observations;
@@ -156,7 +158,7 @@ void local_ministep_fprintf( const local_ministep_type * ministep , FILE * strea
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_key          = hash_iter_get_next_key( dataset_iter );
 
-      fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_NODESET ) , ministep->name , dataset_key );
+      fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_DATASET ) , ministep->name , dataset_key );
     }
     hash_iter_free( dataset_iter );
   }

@@ -255,14 +255,13 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
                                           const int_vector_type    * step_list , 
                                           state_enum                 state,
                                           int                        ens_size,
-                                          const enkf_state_type   ** ensemble ,
-                                          meas_data_type           * meas_data,
+                                          const enkf_state_type   **   ensemble ,
+                                          meas_data_type           *   meas_data,
                                           obs_data_type              * obs_data,
-                                          const local_ministep_type  * mstep , 
+                                          const local_obsset_type    * obsset , 
                                           double_vector_type         * obs_value , 
                                           double_vector_type         * obs_std) {
 
-  const local_obsset_type * obsset     = local_ministep_get_obsset( mstep );
   const active_list_type * active_list = local_obsset_get_obs_active_list( obsset , obs_vector_get_obs_key( obs_vector ));
   matrix_type * error_covar = NULL;
   int active_count          = 0;
@@ -370,14 +369,13 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   const int_vector_type  * step_list , 
                                   state_enum               state,
                                   int                      ens_size,
-                                  const enkf_state_type ** ensemble ,
-                                  meas_data_type       * meas_data,
-                                  obs_data_type          * obs_data,
-                                  const local_ministep_type  * mstep) {
+                                  const enkf_state_type    ** ensemble ,
+                                  meas_data_type           * meas_data,
+                                  obs_data_type            * obs_data,
+                                  const local_obsset_type  * obsset) {
 
   double_vector_type * work_value  = double_vector_alloc( 0 , -1 );
   double_vector_type * work_std    = double_vector_alloc( 0 , -1 );
-  const local_obsset_type * obsset = local_ministep_get_obsset( mstep );
   
   hash_iter_type * iter = local_obsset_alloc_obs_iter( obsset );
   while ( !hash_iter_is_complete(iter) ) {
@@ -395,7 +393,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                             ensemble , 
                                             meas_data , 
                                             obs_data , 
-                                            mstep , 
+                                            obsset , 
                                             work_value, 
                                             work_std);
     else {

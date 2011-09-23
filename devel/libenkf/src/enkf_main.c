@@ -756,17 +756,21 @@ static void enkf_main_serialize_node( const char * node_key ,
 
 
 
+/**
+   The return value is the number of rows in the serialized
+   A matrix. 
+*/
 
-static void enkf_main_serialize_dataset( enkf_main_type * enkf_main, 
-                                         const local_dataset_type * dataset ,
-                                         int report_step,
-                                         hash_type * use_count ,  
-                                         int * active_size , 
-                                         int * row_offset,
-                                         thread_pool_type * work_pool,
-                                         serialize_info_type * serialize_info ) {
+static int enkf_main_serialize_dataset( enkf_main_type * enkf_main, 
+					const local_dataset_type * dataset ,
+					int report_step,
+					hash_type * use_count ,  
+					int * active_size , 
+					int * row_offset,
+					thread_pool_type * work_pool,
+					serialize_info_type * serialize_info ) {
 
-  matrix_type * A               = serialize_info->A;
+  matrix_type * A   = serialize_info->A;
   stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
   const int num_kw  = stringlist_get_size( update_keys );
   int ens_size      = matrix_get_columns( A );
@@ -796,10 +800,10 @@ static void enkf_main_serialize_dataset( enkf_main_type * enkf_main,
       enkf_main_serialize_node( key , load_state , active_list , row_offset[ikw] , work_pool , serialize_info );
       current_row += active_size[ikw];
     }
-    
   } 
   matrix_shrink_header( A , current_row , ens_size );
   stringlist_free( update_keys ); 
+  return matrix_get_rows( A );
 }
 
 
@@ -833,7 +837,6 @@ static void * deserialize_nodes_mt( void * arg ) {
 
 
 static void enkf_main_deserialize_dataset( const local_dataset_type * dataset , 
-                                           int ikw1 , int ikw2 , 
                                            const int * active_size , 
                                            const int * row_offset , 
                                            serialize_info_type * serialize_info , 
@@ -841,7 +844,7 @@ static void enkf_main_deserialize_dataset( const local_dataset_type * dataset ,
                                            thread_pool_type * work_pool ) {
   
   stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
-  for (int i = ikw1; i < ikw2; i++) {
+  for (int i = 0; i < stringlist_get_size( update_keys ); i++) {
     if (active_size[i] > 0) {
       const char             * key              = stringlist_iget(update_keys , i);
       const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
@@ -865,8 +868,12 @@ static void enkf_main_deserialize_dataset( const local_dataset_type * dataset ,
 }
 
 
+static void serialize_info_free( serialize_info_type * serialize_info ) {
+  free( serialize_info );
+}
 
-static void serialize_info_init( serialize_info_type * serialize_info , enkf_main_type * enkf_main , int report_step , matrix_type * A , int num_cpu_threads ) {
+static serialize_info_type * serialize_info_alloc( enkf_main_type * enkf_main , int report_step , matrix_type * A , int num_cpu_threads ) {
+  serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info , __func__ );
   int ens_size = matrix_get_columns( A );
   int icpu;
   int iens_offset = 0;
@@ -899,40 +906,37 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
   const int num_kw  = local_dataset_get_size( dataset );
   int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
   int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
-  serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info * num_cpu_threads , __func__);
   thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
+  serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
 
   matrix_set_name( A , "A" );
-  serialize_info_init( serialize_info , enkf_main , report_step , A , num_cpu_threads );
   msg_show( msg );
 
   {
     int ikw1 = 0;
     int ikw2;
+    int serial_size;
     matrix_full_size( A );
     
-    enkf_main_serialize_dataset(enkf_main   , 
-                                dataset,
-                                report_step , 
-                                use_count   , 
-                                active_size , 
-                                row_offset , 
-                                work_pool , 
-                                serialize_info );
-    
-    /* The actual update */
-    if (1) {   // Check if the dataset actually had any data.
+    serial_size = enkf_main_serialize_dataset(enkf_main   , 
+					      dataset,
+					      report_step , 
+					      use_count   , 
+					      active_size , 
+					      row_offset , 
+					      work_pool , 
+					      serialize_info );
+    if (serial_size > 0) {
       msg_update(msg , "matrix multiplication");
       matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );     // <- Could recycle the work_pool
       matrix_assert_finite( A );
       
-    /* Deserialize */
-      enkf_main_deserialize_dataset( dataset , ikw1 , ikw2 , active_size , row_offset ,  serialize_info , num_cpu_threads , work_pool );
+      enkf_main_deserialize_dataset( dataset , active_size , row_offset ,  serialize_info , num_cpu_threads , work_pool );
     }
   }
   
   thread_pool_free( work_pool );
-  free( serialize_info );
+  serialize_info_free( serialize_info );
   free( active_size );
   free( row_offset );
   msg_free( msg , true );
@@ -952,7 +956,7 @@ void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local
   int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
   int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
   bool complete     = false;
-  serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info * num_cpu_threads , __func__);
+  serialize_info_type * serialize_info;
   thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
   
   int nrobs                = obs_data_get_active_size(obs_data);
@@ -983,7 +987,7 @@ void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local
   if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
     randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
   
-  serialize_info_init( serialize_info , enkf_main , report_step , A , num_cpu_threads );
+  serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
   msg_show( msg );
   {
     int ikw1 = 0;
@@ -1037,7 +1041,7 @@ void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local
   } 
   
   thread_pool_free( work_pool );
-  free( serialize_info );
+  serialize_info_free( serialize_info );
   free( active_size );
   free( row_offset );
   msg_free( msg , true );
@@ -1091,7 +1095,7 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main ,
   int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
   int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
   bool complete     = false;
-  serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info * num_cpu_threads , __func__);
+  serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
   thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
   
   int nrobs                = obs_data_get_active_size(obs_data);
@@ -1116,7 +1120,6 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main ,
 
   if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
     randrot = enkf_analysis_alloc_mp_randrot( ens_size  , enkf_main->rng );
-  serialize_info_init( serialize_info , enkf_main , report_step , A , num_cpu_threads );
   
   msg_show( msg );
   {
@@ -1227,7 +1230,7 @@ void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main ,
   }
 
   thread_pool_free( work_pool );
-  free( serialize_info );
+  serialize_info_free( serialize_info );
   free( active_size );
   free( row_offset );
   
@@ -1245,16 +1248,21 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
                               const local_ministep_type * ministep , 
                               const meas_data_type * forecast , 
                               obs_data_type * obs_data) {
+
+  const int cpu_threads       = 4;
+  const int matrix_start_size = 25000;
+  thread_pool_type * tp       = thread_pool_alloc( cpu_threads , true );
   
   analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
-  int ens_size     = meas_data_get_ens_size( forecast );
-  int active_size  = obs_data_get_active_size( obs_data );
-  matrix_type * X  = matrix_alloc( ens_size , ens_size );
-  matrix_type * S  = meas_data_allocS( forecast , active_size );
-  matrix_type * R  = obs_data_allocR( obs_data , active_size );
+  int ens_size          = meas_data_get_ens_size( forecast );
+  int active_size       = obs_data_get_active_size( obs_data );
+  matrix_type * X       = matrix_alloc( ens_size , ens_size );
+  matrix_type * S       = meas_data_allocS( forecast , active_size );
+  matrix_type * R       = obs_data_allocR( obs_data , active_size );
   matrix_type * innov   = obs_data_alloc_innov( obs_data , forecast , active_size );
-  matrix_type * E  = NULL;
-  matrix_type * D  = NULL;
+  matrix_type * A       = matrix_alloc( matrix_start_size , ens_size );
+  matrix_type * E  	= NULL;
+  matrix_type * D  	= NULL;
   matrix_type * randrot = NULL; 
 
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
@@ -1267,17 +1275,29 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   
   /*****************************************************************/
   
-  // Should create A separately here.
-
   analysis_module_init_update( module , S , R , innov , E , D );
-  analysis_module_initX( module , X , S , R , innov , E , D , randrot );
   {
-    local_dataset_type * dataset = NULL;
-    enkf_main_update_mulX( enkf_main , X , dataset , report_step , use_count);
+    hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
+    serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
+    while (!hash_iter_is_complete( dataset_iter )) {
+  
+      const char * dataset_name = hash_iter_get_next_key( dataset_iter );
+      const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
+
+      //enkf_main_serialize_dataset( enkf_main , dataset , A , tp);
+      analysis_module_initX( module , X , S , R , innov , E , D , randrot );
+
+      thread_pool_restart( tp );
+      matrix_inplace_matmul_mt2( A , X , tp );
+
+      enkf_main_update_mulX( enkf_main , X , dataset , report_step , use_count);
+      //enkf_main_deserialize_dataset( );
+      
+    }
+    serialize_info_free( serialize_info );
   }
   analysis_module_complete_update( module );
-  
-  
+    
 
   /*****************************************************************/
 
@@ -1344,12 +1364,22 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
     
 
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
-      local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
-      local_dataset_type * dataset = NULL;
+      local_ministep_type * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
+      local_dataset_type  * dataset = NULL;
+      local_obsset_type   * obsset  = local_ministep_get_obsset( ministep );
+
       obs_data_reset( obs_data );
       meas_data_reset( meas_forecast );
-      enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), step_list , FORECAST, ens_size,
-                                   (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
+      
+      enkf_obs_get_obs_and_measure(enkf_main->obs, 
+				   enkf_main_get_fs(enkf_main), 
+				   step_list , 
+				   FORECAST, 
+				   ens_size,
+                                   (const enkf_state_type **) enkf_main->ensemble, 
+				   meas_forecast, 
+				   obs_data , 
+				   obsset );
       
       enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
       
@@ -1394,18 +1424,6 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
   }
 }
 
-
-
-/**
-   This function returns the state-vector ensemble matrix A in order to do
-   Cross-Validation. The function is simply based on the function enkf_main_update_mulX
-   (without deserializing)
-*/
-
-matrix_type * enkf_main_getA(enkf_main_type * enkf_main , const local_ministep_type * ministep, int report_step , hash_type * use_count) {
-  util_exit("%s: This function was removed during refactoring ~ SVN:3500 has the function intact.Consider using enkf_main_serialize()",__func__);
-  return NULL;
-}
 
 
 

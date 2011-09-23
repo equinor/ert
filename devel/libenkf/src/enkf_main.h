@@ -167,7 +167,6 @@ void                enkf_main_set_misfit_table( enkf_main_type * enkf_main , mis
 misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main );
 void                     enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file );
 void                     enkf_main_list_users(  set_type * users , const char * executable );
-matrix_type      *       enkf_main_getA(enkf_main_type * enkf_main , const local_ministep_type * ministep, int report_step , hash_type * use_count);
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 
 subst_list_type        * enkf_main_get_data_kw( const enkf_main_type * enkf_main );

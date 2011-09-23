@@ -46,8 +46,9 @@ const char          * local_ministep_get_name( const local_ministep_type * minis
 void                  local_ministep_clear_nodes( local_ministep_type * ministep);
 void                  local_ministep_clear_observations( local_ministep_type * ministep);
 void                  local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream );
-void                  local_ministep_add_nodeset( local_ministep_type * ministep , const local_nodeset_type * nodeset);
+void                  local_ministep_add_nodeset( local_ministep_type * ministep , const local_dataset_type * dataset);
 local_obsset_type   * local_ministep_get_obsset(const local_ministep_type * ministep);
+local_dataset_type  * local_ministep_get_dataset( const local_ministep_type * ministep, const char * dataset_name);
 
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);

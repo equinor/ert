@@ -29,7 +29,7 @@ extern "C" {
 #include <obs_data.h>
 #include <obs_vector.h>
 #include <hash.h>
-#include <local_ministep.h>
+#include <local_obsset.h>
 #include <enkf_types.h>
 #include <time.h>
 #include <sched_file.h>
@@ -59,7 +59,7 @@ void enkf_obs_get_obs_and_measure(
         const enkf_state_type ** ensemble ,
         meas_data_type         * meas_data,
         obs_data_type          * obs_data,
-        const local_ministep_type * ministep);
+        const local_obsset_type * obsset);
 
 
 stringlist_type * enkf_obs_alloc_typed_keylist( enkf_obs_type * enkf_obs , obs_impl_type );
