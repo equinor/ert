@@ -37,8 +37,8 @@ typedef enum {
   CREATE_UPDATESTEP               = 1,  /* UPDATESTEP_NAME                   ->     local_config_alloc_updatestep(); */
   CREATE_MINISTEP                 = 2,  /* MINISTEP_NAME  OBSSET_NAME        ->     local_config_alloc_ministep();   */
   ATTACH_MINISTEP                 = 3,  /* UPDATESTEP_NAME , MINISTEP_NAME   ->     local_updatestep_add_ministep(); */
-  CREATE_NODESET                  = 4,  /* NAME */
-  ATTACH_NODESET                  = 5,  /* NODESET_NAME MINISETP_NAME */
+  CREATE_DATASET                  = 4,  /* NAME */
+  ATTACH_DATASET                  = 5,  /* DATASET_NAME MINISETP_NAME */
   CREATE_OBSSET                   = 6,  /* NAME */ 
   ADD_DATA                        = 7,  /* DATA_KEY                          ->     local_ministep_add_node();       */
   ADD_OBS                         = 8,  /* OBS_KEY                           ->     local_ministep_add_obs();        */
@@ -70,8 +70,8 @@ typedef enum {
 #define CREATE_UPDATESTEP_STRING                "CREATE_UPDATESTEP"
 #define CREATE_MINISTEP_STRING                  "CREATE_MINISTEP"
 #define ATTACH_MINISTEP_STRING                  "ATTACH_MINISTEP"
-#define CREATE_NODESET_STRING                   "CREATE_NODESET"
-#define ATTACH_NODESET_STRING                   "ATTACH_NODESET"
+#define CREATE_DATASET_STRING                   "CREATE_DATASET"
+#define ATTACH_DATASET_STRING                   "ATTACH_DATASET"
 #define CREATE_OBSSET_STRING                    "CREATE_OBSSET"
 #define ADD_DATA_STRING                         "ADD_DATA"
 #define ADD_OBS_STRING                          "ADD_OBS"      

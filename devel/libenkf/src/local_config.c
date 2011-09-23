@@ -26,7 +26,7 @@
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <local_config.h>
-#include <local_nodeset.h>
+#include <local_dataset.h>
 #include <local_obsset.h>
 #include <int_vector.h>
 #include <ensemble_config.h>
@@ -60,7 +60,7 @@ observation keys. Before the ministep will be used you must attach it
 to an updatestep with the ATTACH_MINISTEP command
 
 
-CREATE_NODESET [NAME_OF_NODESET]
+CREATE_DATASET [NAME_OF_DATASET]
 --------------------------------
 
 
@@ -149,7 +149,7 @@ explicitly set another updatestep with the INSTALL_UPDATESTEP function.
 
 
 
-ADD_FIELD   [NODESET_NAME    FIELD_NAME    REGION_NAME]
+ADD_FIELD   [DATASET_NAME    FIELD_NAME    REGION_NAME]
 --------------------------------------------------------
 
 This function will install the node with name 'FIELD_NAME' in the
@@ -300,8 +300,8 @@ struct local_config_struct {
   vector_type           * updatestep;            /* This is an indexed vector with (pointers to) local_reportsstep instances. */
   local_updatestep_type * default_updatestep;    /* A default report step returned if no particular report step has been installed for this time index. */
   hash_type             * updatestep_storage;    /* These three hash tables are the 'holding area' for the local_updatestep, */
-  hash_type             * ministep_storage;      /* local_ministep and local_nodeset instances. */
-  hash_type             * nodeset_storage;
+  hash_type             * ministep_storage;      /* local_ministep instances. */
+  hash_type             * dataset_storage;
   hash_type             * obsset_storage; 
   stringlist_type       * config_files;
   int                     history_length;
@@ -312,7 +312,7 @@ static void local_config_clear( local_config_type * local_config ) {
   local_config->default_updatestep  = NULL;
   hash_clear( local_config->updatestep_storage );
   hash_clear( local_config->ministep_storage );
-  hash_clear( local_config->nodeset_storage );
+  hash_clear( local_config->dataset_storage );
   hash_clear( local_config->obsset_storage );
   vector_clear( local_config->updatestep );
   {
@@ -334,7 +334,7 @@ local_config_type * local_config_alloc( int history_length ) {
   local_config->default_updatestep  = NULL;
   local_config->updatestep_storage  = hash_alloc();
   local_config->ministep_storage    = hash_alloc();
-  local_config->nodeset_storage     = hash_alloc();
+  local_config->dataset_storage     = hash_alloc();
   local_config->obsset_storage      = hash_alloc();
   local_config->updatestep          = vector_alloc_new();
   local_config->history_length      = history_length;
@@ -349,7 +349,7 @@ void local_config_free(local_config_type * local_config) {
   vector_free( local_config->updatestep );
   hash_free( local_config->updatestep_storage );
   hash_free( local_config->ministep_storage);
-  hash_free( local_config->nodeset_storage);
+  hash_free( local_config->dataset_storage);
   stringlist_free( local_config->config_files );
   free( local_config );
 }
@@ -394,10 +394,10 @@ local_obsset_type * local_config_alloc_obsset( local_config_type * local_config 
 
 
 
-local_nodeset_type * local_config_alloc_nodeset( local_config_type * local_config , const char * key ) {
-  local_nodeset_type * nodeset = local_nodeset_alloc( key );
-  hash_insert_hash_owned_ref( local_config->nodeset_storage , key , nodeset , local_nodeset_free__);
-  return nodeset;
+local_dataset_type * local_config_alloc_dataset( local_config_type * local_config , const char * key ) {
+  local_dataset_type * dataset = local_dataset_alloc( key );
+  hash_insert_hash_owned_ref( local_config->dataset_storage , key , dataset , local_dataset_free__);
+  return dataset;
 }
 
 
@@ -413,9 +413,9 @@ local_obsset_type * local_config_get_obsset( const local_config_type * local_con
 }
 
 
-local_nodeset_type * local_config_get_nodeset( const local_config_type * local_config , const char * key) {
-  local_nodeset_type * nodeset = hash_get( local_config->nodeset_storage , key );
-  return nodeset;
+local_dataset_type * local_config_get_dataset( const local_config_type * local_config , const char * key) {
+  local_dataset_type * dataset = hash_get( local_config->dataset_storage , key );
+  return dataset;
 }
 
 
@@ -495,11 +495,11 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
   case(ATTACH_MINISTEP):
     return ATTACH_MINISTEP_STRING;
     break;
-  case(CREATE_NODESET):
-    return CREATE_NODESET_STRING;
+  case(CREATE_DATASET):
+    return CREATE_DATASET_STRING;
     break;
-  case(ATTACH_NODESET):
-    return ATTACH_NODESET_STRING;
+  case(ATTACH_DATASET):
+    return ATTACH_DATASET_STRING;
     break;
   case(CREATE_OBSSET):
     return CREATE_OBSSET_STRING;
@@ -670,8 +670,8 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , CREATE_UPDATESTEP_STRING               , CREATE_UPDATESTEP);
   hash_insert_int(cmd_table , CREATE_MINISTEP_STRING                 , CREATE_MINISTEP);
   hash_insert_int(cmd_table , ATTACH_MINISTEP_STRING                 , ATTACH_MINISTEP);
-  hash_insert_int(cmd_table , CREATE_NODESET_STRING                  , CREATE_NODESET);
-  hash_insert_int(cmd_table , ATTACH_NODESET_STRING                  , ATTACH_NODESET);
+  hash_insert_int(cmd_table , CREATE_DATASET_STRING                  , CREATE_DATASET);
+  hash_insert_int(cmd_table , ATTACH_DATASET_STRING                  , ATTACH_DATASET);
   hash_insert_int(cmd_table , CREATE_OBSSET_STRING                   , CREATE_OBSSET);
   hash_insert_int(cmd_table , ADD_DATA_STRING                        , ADD_DATA);
   hash_insert_int(cmd_table , ADD_OBS_STRING                         , ADD_OBS );
@@ -720,7 +720,7 @@ static void local_config_load_file( local_config_type * local_config ,
   char * obs_key      = NULL;
   char * data_key     = NULL;
   char * region_name  = NULL;
-  char * nodeset_name = NULL;
+  char * dataset_name = NULL;
   int index;
   int_vector_type * int_vector = int_vector_alloc(0,0);
   
@@ -750,25 +750,25 @@ static void local_config_load_file( local_config_type * local_config ,
         local_updatestep_add_ministep( update , ministep );
       }
       break;
-    case(CREATE_NODESET):
-      nodeset_name = read_alloc_string( stream , binary );
-      local_config_alloc_nodeset( local_config , nodeset_name );
+    case(CREATE_DATASET):
+      dataset_name = read_alloc_string( stream , binary );
+      local_config_alloc_dataset( local_config , dataset_name );
       break;
-    case(ATTACH_NODESET):
+    case(ATTACH_DATASET):
       mini_name = read_alloc_string( stream , binary );
-      nodeset_name = read_alloc_string( stream , binary );
+      dataset_name = read_alloc_string( stream , binary );
       {
         local_ministep_type * ministep = local_config_get_ministep( local_config , mini_name );
-        local_nodeset_type * nodeset = local_config_get_nodeset( local_config , nodeset_name );
-        local_ministep_add_nodeset( ministep , nodeset );
+        local_dataset_type * dataset = local_config_get_dataset( local_config , dataset_name );
+        local_ministep_add_dataset( ministep , dataset );
       }
       break;
     case(ADD_DATA):
-      nodeset_name = read_alloc_string( stream , binary );
+      dataset_name = read_alloc_string( stream , binary );
       data_key = read_alloc_string( stream , binary );
       {
-        local_nodeset_type   * nodeset = local_config_get_nodeset( local_config , nodeset_name );
-        local_nodeset_add_node( nodeset , data_key );
+        local_dataset_type   * dataset = local_config_get_dataset( local_config , dataset_name );
+        local_dataset_add_node( dataset , data_key );
       }
       break;
     case(ADD_OBS):
@@ -790,12 +790,12 @@ static void local_config_load_file( local_config_type * local_config ,
       }
       break;
     case(ACTIVE_LIST_ADD_DATA_INDEX):
-      nodeset_name = read_alloc_string( stream , binary );
+      dataset_name = read_alloc_string( stream , binary );
       data_key     = read_alloc_string( stream , binary );
       index        = read_int( stream , binary );
       {
-        local_nodeset_type * nodeset     = local_config_get_nodeset( local_config , nodeset_name );
-        active_list_type   * active_list = local_nodeset_get_node_active_list( nodeset , data_key );
+        local_dataset_type * dataset     = local_config_get_dataset( local_config , dataset_name );
+        active_list_type   * active_list = local_dataset_get_node_active_list( dataset , data_key );
         active_list_add_index( active_list , index );
       }
       break;
@@ -811,12 +811,12 @@ static void local_config_load_file( local_config_type * local_config ,
       }
       break;
     case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
-      nodeset_name = read_alloc_string( stream , binary );
+      dataset_name = read_alloc_string( stream , binary );
       data_key     = read_alloc_string( stream , binary );
       read_int_vector( stream , binary , int_vector);
       {
-        local_nodeset_type * nodeset     = local_config_get_nodeset( local_config , nodeset_name );
-        active_list_type   * active_list = local_nodeset_get_node_active_list( nodeset , data_key );
+        local_dataset_type * dataset     = local_config_get_dataset( local_config , dataset_name );
+        active_list_type   * active_list = local_dataset_get_node_active_list( dataset , data_key );
         for (int i = 0; i < int_vector_size( int_vector ); i++) 
           active_list_add_index( active_list , int_vector_iget(int_vector , i));
       }
@@ -836,11 +836,11 @@ static void local_config_load_file( local_config_type * local_config ,
       local_config_set_default_updatestep( local_config , update_name );
       break;
     case(DEL_DATA):
-      nodeset_name = read_alloc_string( stream , binary );
+      dataset_name = read_alloc_string( stream , binary );
       data_key  = read_alloc_string( stream , binary );
       {
-        local_nodeset_type * nodeset = local_config_get_nodeset( local_config , nodeset_name );
-        local_nodeset_del_node( nodeset , data_key );
+        local_dataset_type * dataset = local_config_get_dataset( local_config , dataset_name );
+        local_dataset_del_node( dataset , data_key );
       }
       break;
     case(DEL_OBS):
@@ -852,10 +852,10 @@ static void local_config_load_file( local_config_type * local_config ,
       }
       break;
     case(DEL_ALL_DATA):
-      nodeset_name = read_alloc_string( stream , binary );
+      dataset_name = read_alloc_string( stream , binary );
       {
-        local_nodeset_type * nodeset = local_config_get_nodeset( local_config , nodeset_name );
-        local_nodeset_clear( nodeset );
+        local_dataset_type * dataset = local_config_get_dataset( local_config , dataset_name );
+        local_dataset_clear( dataset );
       }
       break;
     case(DEL_ALL_OBS):
@@ -868,15 +868,15 @@ static void local_config_load_file( local_config_type * local_config ,
     case(ADD_FIELD):
       {
         char * field_name;
-        nodeset_name = read_alloc_string( stream , binary );
+        dataset_name = read_alloc_string( stream , binary );
         field_name   = read_alloc_string( stream , binary );
         region_name  = read_alloc_string( stream , binary );
         {
           ecl_region_type     * region  = hash_get( regions , region_name );
-          local_nodeset_type  * nodeset = local_config_get_nodeset( local_config , nodeset_name );
-          local_nodeset_add_node( nodeset , field_name );
+          local_dataset_type  * dataset = local_config_get_dataset( local_config , dataset_name );
+          local_dataset_add_node( dataset , field_name );
           {
-            active_list_type * active_list        = local_nodeset_get_node_active_list( nodeset , field_name );
+            active_list_type * active_list        = local_dataset_get_node_active_list( dataset , field_name );
             const int_vector_type * region_active = ecl_region_get_active_list( region );
             
             for (int i=0; i < int_vector_size( region_active ); i++)

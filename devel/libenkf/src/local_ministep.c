@@ -23,7 +23,7 @@
 #include <enkf_macros.h>
 #include <local_config.h>  
 #include <local_ministep.h>
-#include <local_nodeset.h>
+#include <local_dataset.h>
 #include <local_obsset.h>
 
 /**
@@ -49,7 +49,7 @@
 struct local_ministep_struct {
   UTIL_TYPE_ID_DECLARATION;
   char              * name;             /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
-  hash_type         * nodesets;         /* A hash table of local_nodeset_type instances - indexed by the name of the nodesets. */
+  hash_type         * datasets;         /* A hash table of local_dataset_type instances - indexed by the name of the datasets. */
   local_obsset_type * observations;
 };
 
@@ -67,7 +67,7 @@ local_ministep_type * local_ministep_alloc(const char * name , local_obsset_type
 
   ministep->name         = util_alloc_string_copy( name );
   ministep->observations = observations;
-  ministep->nodesets     = hash_alloc();
+  ministep->datasets     = hash_alloc();
   UTIL_TYPE_ID_INIT( ministep , LOCAL_MINISTEP_TYPE_ID);
   
   return ministep;
@@ -86,11 +86,11 @@ local_ministep_type * local_ministep_alloc_copy( const local_ministep_type * src
   //}
   //
   //{
-  //  hash_iter_type * nodeset_iter = hash_iter_alloc( src->nodesets );
+  //  hash_iter_type * nodeset_iter = hash_iter_alloc( src->datasets );
   //  while (!hash_iter_is_complete( nodeset_iter )) {
   //    const char * nodeset_key = hash_iter_get_next_key( nodeset_iter );
-  //    local_nodeset_type * new_nodeset = local_nodeset_alloc_copy( hash_get( src->nodesets , nodeset_key ));
-  //    hash_insert_ref( new->nodesets , nodeset_key , new_nodeset );
+  //    local_nodeset_type * new_nodeset = local_nodeset_alloc_copy( hash_get( src->datasets , nodeset_key ));
+  //    hash_insert_ref( new->datasets , nodeset_key , new_nodeset );
   //  }
   //}
   //
@@ -102,7 +102,7 @@ local_ministep_type * local_ministep_alloc_copy( const local_ministep_type * src
 
 void local_ministep_free(local_ministep_type * ministep) {
   free(ministep->name);
-  hash_free( ministep->nodesets );
+  hash_free( ministep->datasets );
   free( ministep );
 }
 
@@ -128,8 +128,8 @@ void local_ministep_free__(void * arg) {
 
 
 
-void local_ministep_add_nodeset( local_ministep_type * ministep , const local_nodeset_type * nodeset) {
-  hash_insert_ref( ministep->nodesets , local_nodeset_get_name( nodeset ) , nodeset );
+void local_ministep_add_dataset( local_ministep_type * ministep , const local_dataset_type * dataset) {
+  hash_insert_ref( ministep->datasets , local_dataset_get_name( dataset ) , dataset );
 }
 
 
@@ -152,12 +152,12 @@ const char * local_ministep_get_name( const local_ministep_type * ministep ) {
 void local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream ) {
   fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( CREATE_MINISTEP ), ministep->name , local_obsset_get_name( ministep->observations) );
   {
-    hash_iter_type * nodeset_iter = hash_iter_alloc( ministep->nodesets );
-    while (!hash_iter_is_complete( nodeset_iter )) {
-      const char * nodeset_key          = hash_iter_get_next_key( nodeset_iter );
+    hash_iter_type * dataset_iter = hash_iter_alloc( ministep->datasets );
+    while (!hash_iter_is_complete( dataset_iter )) {
+      const char * dataset_key          = hash_iter_get_next_key( dataset_iter );
 
-      fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_NODESET ) , ministep->name , nodeset_key );
+      fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ATTACH_NODESET ) , ministep->name , dataset_key );
     }
-    hash_iter_free( nodeset_iter );
+    hash_iter_free( dataset_iter );
   }
 }

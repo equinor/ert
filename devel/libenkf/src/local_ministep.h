@@ -27,7 +27,7 @@ extern "C" {
 #include <stringlist.h>
 #include <util.h>
 #include <active_list.h>
-#include <local_nodeset.h>
+#include <local_dataset.h>
 #include <local_obsset.h>
 
 
