@@ -81,7 +81,7 @@ permx_new[0] = 1
 permx_new[1] = 2
 permx_new[2] = 3
 
-init_file.replace_kw( permx_kw , permx_new )
+#init_file.replace_kw( permx_kw , permx_new )
 fortio = ecl.FortIO.writer( "/tmp/init" )
 print fortio
 init_file.fwrite( fortio )

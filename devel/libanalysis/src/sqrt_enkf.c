@@ -38,6 +38,7 @@
 typedef struct {
   UTIL_TYPE_ID_DECLARATION;
   std_enkf_data_type * std_data;
+  long                 options;
 } sqrt_enkf_data_type;
 
 
@@ -47,7 +48,8 @@ static UTIL_SAFE_CAST_FUNCTION( sqrt_enkf_data , SQRT_ENKF_TYPE_ID )
 void * sqrt_enkf_data_alloc( ) {
   sqrt_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
   UTIL_TYPE_ID_INIT( data , SQRT_ENKF_TYPE_ID );
-  
+
+  data->options  = ANALYSIS_NEED_RANDROT;
   data->std_data = std_enkf_data_alloc( );
   return data;
 }
@@ -132,6 +134,14 @@ void sqrt_enkf_initX(void * module_data ,
 }
 
 
+bool sqrt_enkf_get_option( void * arg , long flag ) {
+  sqrt_enkf_data_type * module_data = sqrt_enkf_data_safe_cast( arg );
+  {
+    return (flag & module_data->options);
+  }
+}
+
+
 
 
 
@@ -146,13 +156,14 @@ void sqrt_enkf_initX(void * module_data ,
 
 analysis_table_type SYMBOL_TABLE[] = {
   { 
-    .alloc        = sqrt_enkf_data_alloc,
-    .freef        = sqrt_enkf_data_free,
-    .set_int      = sqrt_enkf_set_int , 
-    .set_double   = sqrt_enkf_set_double , 
-    .set_string   = NULL , 
-    .initX        = sqrt_enkf_initX , 
-    .need_ED      = false,
-    .need_randrot = true,
+    .alloc           = sqrt_enkf_data_alloc,
+    .freef           = sqrt_enkf_data_free,
+    .set_int         = sqrt_enkf_set_int , 
+    .set_double      = sqrt_enkf_set_double , 
+    .set_string      = NULL , 
+    .initX           = sqrt_enkf_initX , 
+    .init_update     = NULL,
+    .complete_update = NULL,
+    .get_option      = sqrt_enkf_get_option , 
   }
 };

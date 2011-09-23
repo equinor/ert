@@ -49,6 +49,7 @@ struct std_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
   double    truncation;            // ENKF_TRUNCATION_KEY
   int       subspace_dimension;    // ENKF_NCOMP_KEY (-1: use Truncation instead)
+  int       option_flags;
 };
 
 
@@ -82,10 +83,10 @@ int std_enkf_get_subspace_dimension( void * module_data ) {
 void * std_enkf_data_alloc( ) {
   std_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_TYPE_ID );
-
+  
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   std_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
-  
+  data->option_flags = ANALYSIS_NEED_ED;
   return data;
 }
 
@@ -167,6 +168,13 @@ bool std_enkf_set_int( void * arg , const char * var_name , int value) {
 }
 
 
+bool std_enkf_get_option( void * arg , long flag ) {
+  std_enkf_data_type * module_data = std_enkf_data_safe_cast( arg );
+  {
+    return (flag & module_data->option_flags);
+  }
+}
+
 
 
 /**
@@ -184,14 +192,15 @@ bool std_enkf_set_int( void * arg , const char * var_name , int value) {
 
 analysis_table_type SYMBOL_TABLE[] = {
   { 
-    .alloc        = std_enkf_data_alloc,
-    .freef        = std_enkf_data_free,
-    .set_int      = std_enkf_set_int , 
-    .set_double   = std_enkf_set_double , 
-    .set_string   = NULL , 
-    .initX        = std_enkf_initX , 
-    .need_ED      = true,
-    .need_randrot = false,
+    .alloc           = std_enkf_data_alloc,
+    .freef           = std_enkf_data_free,
+    .set_int         = std_enkf_set_int , 
+    .set_double      = std_enkf_set_double , 
+    .set_string      = NULL , 
+    .get_option      = std_enkf_get_option , 
+    .initX           = std_enkf_initX , 
+    .init_update     = NULL,
+    .complete_update = NULL,
   }
 };
 

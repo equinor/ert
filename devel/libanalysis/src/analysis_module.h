@@ -43,9 +43,14 @@ void analysis_module_initX(analysis_module_type * module ,
 
 bool  analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
 
-bool                   analysis_module_needs_ED( const analysis_module_type * module );
-bool                   analysis_module_needs_randrot( const analysis_module_type * module );
-
+bool                   analysis_module_get_option( const analysis_module_type * module , long flag);
+void                   analysis_module_complete_update( analysis_module_type * module );
+void                   analysis_module_init_update( analysis_module_type * module , 
+                                                    matrix_type * S , 
+                                                    matrix_type * R , 
+                                                    matrix_type * innov , 
+                                                    matrix_type * E , 
+                                                    matrix_type * D );
 
 #ifdef  __cplusplus
 }

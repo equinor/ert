@@ -984,16 +984,17 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type
   observation error and the mean will be subtracted from the S matrix.
 */
 
-static void enkf_analysis_alloc_matrices( rng_type * rng , 
-                                          const meas_data_type * meas_data , 
-                                          obs_data_type * obs_data , 
-                                          enkf_mode_type enkf_mode , 
-                                          matrix_type ** S , 
-                                          matrix_type ** R , 
-                                          matrix_type ** innov,
-                                          matrix_type ** E ,
-                                          matrix_type ** D , 
-                                          bool scale) {
+void enkf_analysis_alloc_matrices( rng_type * rng , 
+                                   const meas_data_type * meas_data , 
+                                   obs_data_type * obs_data , 
+                                   enkf_mode_type enkf_mode , 
+                                   matrix_type ** S , 
+                                   matrix_type ** R , 
+                                   matrix_type ** innov,
+                                   matrix_type ** E ,
+                                   matrix_type ** D , 
+                                   bool scale) {
+  
   int ens_size              = meas_data_get_ens_size( meas_data );
   int active_size           = obs_data_get_active_size( obs_data );
 
@@ -1302,25 +1303,24 @@ void enkf_analysis_local_pre_cv( const analysis_config_type * config , rng_type 
 */
 
 
-void enkf_analysis_get_principal_components( const analysis_config_type * config , rng_type * rng , meas_data_type * meas_data , obs_data_type * obs_data ,  matrix_type * Z , matrix_type * Rp , matrix_type * Dp) {
+void enkf_analysis_init_principal_components( double truncation , 
+                                              const matrix_type * S, 
+                                              const matrix_type * R,
+                                              const matrix_type * innov,
+                                              const matrix_type * E , 
+                                              const matrix_type * D , 
+                                              matrix_type * Z , 
+                                              matrix_type * Rp , 
+                                              matrix_type * Dp) {
   {
-    matrix_type * S , *R , *E , *D , *innov;
     int i, j;
-
-    printf("\nInside the Principal Components Function\n");
     
-    enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );
-    enkf_analysis_alloc_matrices( rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , true ); 
-
-
+    
     const int nrobs = matrix_get_rows( S );
     const int nrens = matrix_get_columns( S );
     const int nrmin = util_int_min( nrobs , nrens );
-
-    printf("Maximum number of Principal Components is %d\n",nrmin - 1);
-
-    double truncation                     = analysis_config_get_truncation( config );  
     
+    printf("Maximum number of Principal Components is %d\n",nrmin - 1);
 
     /*
       Compute SVD(S)
@@ -1347,14 +1347,12 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
       we do not care about this for now
     */
     
-    for(i = 0; i < nrmin; i++) {
-      for(j = 0; j < nrens; j++) {
+    for(i = 0; i < nrmin; i++) 
+      for(j = 0; j < nrens; j++) 
         matrix_iset( Z , i , j , sig0[i] * matrix_iget( V0T , i , j ) );
-      }
-    }
     
-    /* Also compute Rp */
 
+    /* Also compute Rp */
     {
       matrix_type * X0 = matrix_alloc( nrmin , matrix_get_rows( R ));
       matrix_dgemm(X0 , U0 , R  , true  , false , 1.0 , 0.0);   /* X0 = U0^T * R */
@@ -1370,9 +1368,6 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     matrix_free(U0);
     matrix_free(V0T);
     
-    printf("Returning the Pre-Computed Principal Components\n");
-    printf("\n");
-
     /* 
        2: Diagonalize the S matrix; singular vectors etc. needed later in the local CV:
        (V0T = transposed right singular vectors of S, Z = scaled principal components, 
@@ -1381,13 +1376,6 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
     */ 
     /*   enkf_analysis_invertS_pre_cv( config , S , R , V0T , Z , eig , U0);*/
     
-    
-    matrix_free( R );
-    matrix_free( S );
-    matrix_free( innov );
-        
-    matrix_safe_free( E );
-    matrix_safe_free( D );
   }
   
   
@@ -1395,23 +1383,21 @@ void enkf_analysis_get_principal_components( const analysis_config_type * config
 
 
 /*Matrix that computes and returns the X5 matrix used in the EnKF updating */
-matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_config_type * config , 
-                                                            rng_type * rng, 
-                                                            const matrix_type * A , 
-                                                            const matrix_type * Z , 
-                                                            const matrix_type * Rp , 
-                                                            const matrix_type * Dp ) {
+void enkf_analysis_initX_principal_components_cv( int nfolds_CV , 
+                                                  bool penalised_press , 
+                                                  matrix_type * X , 
+                                                  rng_type * rng, 
+                                                  const matrix_type * A , 
+                                                  const matrix_type * Z , 
+                                                  const matrix_type * Rp , 
+                                                  const matrix_type * Dp ) {
   int ens_size = matrix_get_columns( Dp );
-  matrix_type * X       = matrix_alloc( ens_size , ens_size );
   {
 
-    int nfolds_CV            = analysis_config_get_nfolds_CV( config );
-    bool bootstrap           = analysis_config_get_bootstrap( config );
-    bool penalised_press     = analysis_config_get_penalised_press( config );
     int i, j, k;
     double tmp;
-      
-
+    
+    
     /*
       1: Allocating all matrices
     */
@@ -1429,7 +1415,7 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
     
     
     int nrmin = matrix_get_rows( Z );
-    int maxP = nrmin;
+    int maxP  = nrmin;
 
     /* We only want to search the non-zero eigenvalues */
     for (int i = 0; i < nrmin; i++) {
@@ -1477,12 +1463,8 @@ matrix_type * enkf_analysis_allocX_principal_components_cv( const analysis_confi
       matrix_iadd( X , i , i , 1.0); /*X5 = I + X5 */
     }
     
-    enkf_analysis_checkX(X , bootstrap);
+    enkf_analysis_checkX(X , false);
   }
-  
-
-  
-  return X;
 }
 
 

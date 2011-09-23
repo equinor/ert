@@ -23,30 +23,31 @@
 extern "C" {
 #endif
 
-#include <active_list.h>
 #include <hash.h>
 #include <stringlist.h>
 #include <util.h>
+#include <active_list.h>
+#include <local_nodeset.h>
+#include <local_obsset.h>
+
 
 typedef struct local_ministep_struct local_ministep_type;
 
-local_ministep_type * local_ministep_alloc(const char * name);
-void 		      local_ministep_free(local_ministep_type * ministep);
-void 		      local_ministep_free__(void * arg);
-void 		      local_ministep_add_obs(local_ministep_type * ministep, const char * obs_key);
-void 		      local_ministep_add_node(local_ministep_type * ministep, const char *node_key);
-active_list_type    * local_ministep_get_obs_active_list(const local_ministep_type * ministep , const char * obs_key );
+local_ministep_type * local_ministep_alloc(const char * name , local_obsset_type * observations);
+void                  local_ministep_free(local_ministep_type * ministep);
+void                  local_ministep_free__(void * arg);
+void                  local_ministep_add_obs(local_ministep_type * ministep, const char * obs_key);
 active_list_type    * local_ministep_get_node_active_list(const local_ministep_type * ministep , const char * node_key );
-hash_iter_type 	    * local_ministep_alloc_node_iter(const local_ministep_type * ministep);
-hash_iter_type 	    * local_ministep_alloc_obs_iter(const local_ministep_type * ministep);
-stringlist_type     * local_ministep_alloc_node_keys(const local_ministep_type * ministep);
+hash_iter_type      * local_ministep_alloc_obs_iter(const local_ministep_type * ministep);
 local_ministep_type * local_ministep_alloc_copy( const local_ministep_type * src , const char * name);
-void 		      local_ministep_del_obs( local_ministep_type * ministep , const char * obs_key);
-void 		      local_ministep_del_node( local_ministep_type * ministep , const char * node_key);
+void                  local_ministep_del_obs( local_ministep_type * ministep , const char * obs_key);
+void                  local_ministep_del_node( local_ministep_type * ministep , const char * node_key);
 const char          * local_ministep_get_name( const local_ministep_type * ministep );
 void                  local_ministep_clear_nodes( local_ministep_type * ministep);
 void                  local_ministep_clear_observations( local_ministep_type * ministep);
 void                  local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream );
+void                  local_ministep_add_nodeset( local_ministep_type * ministep , const local_nodeset_type * nodeset);
+local_obsset_type   * local_ministep_get_obsset(const local_ministep_type * ministep);
 
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);

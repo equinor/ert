@@ -107,13 +107,14 @@
 #define DEFAULT_CV_NFOLDS          10
 #define DEFAULT_ENKF_SCALING       true
 #define DEFAULT_ENKF_KERNEL_REG    false
-#define DEFAULT_ENKF_KERNEL_FUNC   1    /*Default is the Gaussian */
-#define DEFAULT_ENKF_KERNEL_PARAM  1    /*Scale by the maximum value in the distance matrix */
+#define DEFAULT_ENKF_KERNEL_FUNC   1       /*Default is the Gaussian */
+#define DEFAULT_ENKF_KERNEL_PARAM  1       /*Scale by the maximum value in the distance matrix */
 #define DEFAULT_ENKF_CV            false
 #define DEFAULT_ENKF_BOOTSTRAP     false
 #define DEFAULT_ENKF_PEN_PRESS     false
 #define DEFAULT_ENKF_FORCE_NCOMP   false
-
+#define DEFAULT_UPDATE_RESULTS     false
+#define DEFAULT_SINGLE_NODE_UPDATE true
 
 /* Default directories. */
 #define DEFAULT_PLOT_PATH    "plots"

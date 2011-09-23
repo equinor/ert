@@ -55,6 +55,8 @@ struct analysis_config_struct {
   bool                    do_kernel_regression;        /* Should we uppdate using kernel shrinkage regression? */
   bool                    do_force_subspace_dimension; /*Should we force the subspace dimension in the SVD? */
   int                     ncomp;                       /*Actual subspace dimension */
+  bool                    update_results;              /* Should result values like e.g. WWCT be updated? */
+  bool                    single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
 }; 
 
 
@@ -83,18 +85,34 @@ const char * analysis_config_get_log_path( const analysis_config_type * config )
 }
 
 
-void analysis_config_set_rerun(analysis_config_type * config , bool rerun) {
-  config->rerun = rerun;
-}
 
 
 void analysis_config_set_rerun_start( analysis_config_type * config , int rerun_start ) {
   config->rerun_start = rerun_start;
 }
 
+void analysis_config_set_rerun(analysis_config_type * config , bool rerun) {
+  config->rerun = rerun;
+}
 
 bool analysis_config_get_rerun(const analysis_config_type * config) {
   return config->rerun;
+}
+
+void analysis_config_set_update_results(analysis_config_type * config , bool update_results) {
+  config->update_results = update_results;
+}
+
+bool analysis_config_get_update_results(const analysis_config_type * config) {
+  return config->update_results;
+}
+
+void analysis_config_set_single_node_update(analysis_config_type * config , bool single_node_update) {
+  config->single_node_update = single_node_update;
+}
+
+bool analysis_config_get_single_node_update(const analysis_config_type * config) {
+  return config->single_node_update;
 }
 
 double analysis_config_get_std_cutoff(const analysis_config_type * config) {
@@ -315,6 +333,12 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   if (config_item_set( config , ENKF_RERUN_KEY ))
     analysis_config_set_rerun( analysis , config_get_value_as_bool( config , ENKF_RERUN_KEY ));
 
+  if (config_item_set( config , UPDATE_RESULTS_KEY ))
+    analysis_config_set_update_results( analysis , config_get_value_as_bool( config , UPDATE_RESULTS_KEY ));
+
+  if (config_item_set( config , SINGLE_NODE_UPDATE_KEY ))
+    analysis_config_set_single_node_update( analysis , config_get_value_as_bool( config , SINGLE_NODE_UPDATE_KEY ));
+  
   if (config_item_set( config , RERUN_START_KEY ))
     analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , RERUN_START_KEY ));
   
@@ -481,11 +505,14 @@ analysis_config_type * analysis_config_alloc_default() {
   analysis_config_set_rerun_start( config              , DEFAULT_RERUN_START );
   analysis_config_set_nfolds_CV( config                , DEFAULT_CV_NFOLDS );         
   analysis_config_set_subspace_dimension( config       , DEFAULT_NCOMP );         
+  analysis_config_set_update_results( config           , DEFAULT_UPDATE_RESULTS);
+  analysis_config_set_single_node_update( config       , DEFAULT_SINGLE_NODE_UPDATE );
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
-  analysis_config_load_internal_module( config , "STD_ENKF" , "std_enkf_symbol_table");
+  analysis_config_load_internal_module( config , "STD_ENKF"  , "std_enkf_symbol_table");
   analysis_config_load_internal_module( config , "SQRT_ENKF" , "sqrt_enkf_symbol_table");
+  analysis_config_load_internal_module( config , "CV_ENKF"   , "cv_enkf_symbol_table");
   analysis_config_select_module( config , "STD_ENKF");
   return config;
 }
@@ -508,6 +535,8 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ENKF_TRUNCATION_KEY         , false , CONFIG_FLOAT);
   config_add_key_value( config , ENKF_ALPHA_KEY              , false , CONFIG_FLOAT);
   config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , UPDATE_RESULTS_KEY          , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , SINGLE_NODE_UPDATE_KEY      , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOLEAN);
   config_add_key_value( config , ENKF_BOOTSTRAP_KEY          , false , CONFIG_BOOLEAN);
@@ -562,6 +591,16 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
     fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->merge_observations ));
   }
 
+  if (config->update_results != DEFAULT_UPDATE_RESULTS) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , UPDATE_RESULTS_KEY);
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->update_results ));
+  }
+
+  if (config->update_results != DEFAULT_SINGLE_NODE_UPDATE) {
+    fprintf( stream , CONFIG_KEY_FORMAT        , SINGLE_NODE_UPDATE_KEY);
+    fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->single_node_update ));
+  }
+  
   if (config->rerun) {
     fprintf( stream , CONFIG_KEY_FORMAT        , ENKF_RERUN_KEY);
     fprintf( stream , CONFIG_ENDVALUE_FORMAT   , CONFIG_BOOL_STRING( config->rerun ));

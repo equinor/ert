@@ -31,22 +31,23 @@
 
 struct analysis_module_struct {
   UTIL_TYPE_ID_DECLARATION;
-  void                       * lib_handle;
-  void                       * module_data;
+  void                           * lib_handle;
+  void                           * module_data;
 
-  analysis_free_ftype        * freef;
-  analysis_alloc_ftype       * alloc;
-  analysis_initX_ftype       * initX;
+  analysis_free_ftype            * freef;
+  analysis_alloc_ftype           * alloc;
+  analysis_initX_ftype           * initX;
+  analysis_init_update_ftype     * init_update;
+  analysis_complete_update_ftype * complete_update;
+  analysis_get_option_ftype      * get_option;
     
-  analysis_set_int_ftype     * set_int;
-  analysis_set_double_ftype  * set_double;
-  analysis_set_string_ftype  * set_string;
+  analysis_set_int_ftype         * set_int;
+  analysis_set_double_ftype      * set_double;
+  analysis_set_string_ftype      * set_string;
   
-  bool                         need_ED;
-  bool                         need_randrot;
 
-  char                       * user_name;   /* String used to identify this module for the user; not used in 
-                                               the linking process. */
+  char                           * user_name;   /* String used to identify this module for the user; not used in 
+                                                   the linking process. */
 };
 
 
@@ -55,12 +56,14 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
   analysis_module_type * module = util_malloc( sizeof * module , __func__ );
   UTIL_TYPE_ID_INIT( module , ANALYSIS_MODULE_TYPE_ID );
 
-  module->lib_handle  = NULL;
-  module->initX       = NULL;
-  module->set_int     = NULL;
-  module->set_double  = NULL;
-  module->set_string  = NULL;
-  module->module_data = NULL;
+  module->lib_handle      = NULL;
+  module->initX           = NULL;
+  module->set_int         = NULL;
+  module->set_double      = NULL;
+  module->set_string      = NULL;
+  module->module_data     = NULL;
+  module->init_update     = NULL;
+  module->complete_update = NULL;
   module->user_name   = util_alloc_string_copy( user_name );
 
   return module;
@@ -72,14 +75,15 @@ static analysis_module_type * analysis_module_alloc__( const analysis_table_type
   
   module->lib_handle        = lib_handle;
   module->initX             = table->initX;
+  module->init_update       = table->init_update;
+  module->complete_update   = table->complete_update;
   module->set_int           = table->set_int;
   module->set_double        = table->set_double;
   module->set_string        = table->set_string;
   module->alloc             = table->alloc;
   module->freef             = table->freef;
-  module->need_ED           = table->need_ED;
-  module->need_randrot      = table->need_randrot;
-
+  module->get_option        = table->get_option; 
+  
   if (module->alloc != NULL)
     module->module_data = module->alloc( );
   
@@ -140,6 +144,9 @@ void analysis_module_free__( void * arg) {
   analysis_module_free( module );
 }
 
+/*****************************************************************/
+/* Update functions */
+
 
 void analysis_module_initX(analysis_module_type * module , 
                            matrix_type * X , 
@@ -152,15 +159,27 @@ void analysis_module_initX(analysis_module_type * module ,
   module->initX(module->module_data , X , S , R , innov , E , D , randrot );
 }
 
-bool analysis_module_needs_ED( const analysis_module_type * module ) {
-  return module->need_ED;
+
+void analysis_module_init_update( analysis_module_type * module , 
+                                  matrix_type * S , 
+                                  matrix_type * R , 
+                                  matrix_type * innov , 
+                                  matrix_type * E , 
+                                  matrix_type * D ) {
+  if (module->init_update != NULL)
+    module->init_update( module->module_data , S , R , innov , E , D);
 }
 
-bool analysis_module_needs_randrot( const analysis_module_type * module ) {
-  return module->need_randrot;
+
+void analysis_module_complete_update( analysis_module_type * module ) {
+  if (module->complete_update != NULL)
+    module->complete_update( module->module_data );
 }
+
+
 
 /*****************************************************************/
+
 
 static bool analysis_module_set_int(analysis_module_type * module , const char * flag , int value) {
   if (module->set_int != NULL) 
@@ -183,9 +202,11 @@ static bool analysis_module_set_string(analysis_module_type * module , const cha
     return false;
 }
 
+
+
 /* 
-   The input value typically comes from the ocnfiguration system and
-   is in terms of a string - irrespective of the fundamental type of
+   The input value typically comes from the configuration system and
+   is in terms of a string, irrespective of the fundamental type of
    the underlying parameter. The algorithm for setting the parameter
    tries datatypes as follows: integer - double - string.
 
@@ -223,4 +244,9 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
     fprintf(stderr,"** Warning: failed to set %s=%s for analysis module:%s\n", var_name , string_value , module->user_name);
   
   return set_ok;
+}
+
+
+bool analysis_module_get_option( const analysis_module_type * module , long flag) {
+  return module->get_option( module->module_data , flag );
 }

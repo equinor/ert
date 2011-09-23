@@ -133,6 +133,8 @@ extern "C" {
 #define  UMASK_KEY                         "UMASK"   
 #define  UPDATE_LOG_PATH_KEY               "UPDATE_LOG_PATH"
 #define  UPDATE_PATH_KEY                   "UPDATE_PATH"
+#define  UPDATE_RESULTS_KEY                "UPDATE_RESULTS"
+#define  SINGLE_NODE_UPDATE_KEY            "SINGLE_NODE_UPDATE"
 
 #define  ANALYSIS_LOAD_KEY                 "ANALYSIS_LOAD"
 #define  ANALYSIS_SET_VAR_KEY              "ANALYSIS_SET_VAR"
