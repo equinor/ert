@@ -78,7 +78,16 @@ class EclSumNode:
 
         EclSumNode - a small 'struct' with a summary value and time in
         several formats. When iterating over a EclSumVector instance
-        you will get EclSumNode instances.
+        you will get EclSumNode instances. The content of the
+        EclSumNode type is stored as plain attributes:
+
+            value       : The actual value
+            report_step : The report step
+            mini_step   : The ministep
+            days        : Days since simulation start
+            date        : The simulation date
+            mpl_date    : A date format suitable for matplotlib 
+
         """
         self.value       = value  
         self.report_step = report_step
@@ -124,13 +133,27 @@ class EclSumVector:
     def __str__(self):
         return "<Summary vector: %s>" % self.key
         
+
+    @property
+    def unit( self ):
+        """
+        The unit of this vector.
+        """
+        return self.parent.get_unit( self.key )
+    
+    def assert_values( self ):
+        """
+        This function will load and internalize all the values.
+        """
+        if self.__values == None:
+            self.__values = self.parent.get_values( self.key , self.report_only )
+            
     @property
     def values( self ):
         """
         All the summary values of the vector, as a numpy vector.
         """
-        if self.__values == None:
-            self.__values = self.parent.get_values( self.key , self.report_only )
+        self.assert_values( )
         return self.__values
 
     @property
@@ -179,7 +202,9 @@ class EclSumVector:
 
     def __iget__( self , index ):
         """
-        Will return an EclSumNode for element @index.
+        Will return an EclSumNode for element @index; should be called
+        through the [] operator, otherwise you can come across
+        unitialized data.
         """
         return EclSumNode( self.__mini_step[index] , 
                            self.__report_step[index] , 
@@ -202,7 +227,7 @@ class EclSumVector:
             not be a proper EclSumVector instance, but rather a normal
             Python list of EclSumNode instances.
         """
-        values = self.values
+        self.assert_values( )
         length = len( self.values )
         if isinstance( index, int):
             if index < 0:
@@ -220,11 +245,29 @@ class EclSumVector:
             sub_vector = []
             while index < stop:
                 sub_vector.append( self.__iget__(index) )
-                print "Appending:%d" % index
                 index += step
             return sub_vector
                 
         raise KeyError("Invalid index:%s - must have integer or slice." % index)
+
+    @property
+    def first( self ):
+        """
+        Will return the first EclSumNode in this vector.
+        """
+        self.assert_values( )
+        return self.__iget__( 0 )
+
+    @property
+    def last( self ):
+        """
+        Will return the last EclSumNode in this vector.
+        """
+        self.assert_values( )
+        
+        index = len(self.__values) - 1
+        return self.__iget__( index )
+    
     
     def get_interp( self , days = None , date = None):
         """
@@ -329,13 +372,13 @@ class EclSumVector:
 
 class EclSum( object ):
     
-    def __new__( cls , case , join_string = ":" , include_restart = True):
+    def __new__( cls , load_case , join_string = ":" , include_restart = True):
         """
         Loads a new EclSum instance with summary data.
 
         Loads a new summary results from the ECLIPSE case given by
-        argument @case; @case should be the basename of the ECLIPSE
-        simulation you want to load. @case can contain a leading path
+        argument @load_case; @load_case should be the basename of the ECLIPSE
+        simulation you want to load. @load_case can contain a leading path
         component, and also an extension - the latter will be ignored.
         
         The @join_string is the string used when combining elements
@@ -347,7 +390,7 @@ class EclSum( object ):
         loader will, in the case of a restarted ECLIPSE simulation,
         try to load summary results also from the restarted case.
         """
-        c_ptr = cfunc.fread_alloc( case , join_string , include_restart)
+        c_ptr = cfunc.fread_alloc( load_case , join_string , include_restart)
         if c_ptr:
             obj = object.__new__( cls )
             obj.c_ptr = c_ptr
@@ -356,13 +399,13 @@ class EclSum( object ):
             return None
         
 
-    def __init__(self , case , join_string = ":" ,include_restart = False , c_ptr = None):
+    def __init__(self , load_case , join_string = ":" ,include_restart = False , c_ptr = None):
         """
         Initialize a new EclSum instance.
 
         See __new__() for further documentation.
         """
-        self.case            = case
+        self.load_case            = load_case
         self.join_string     = join_string
         self.include_restart = include_restart
         
@@ -418,7 +461,7 @@ class EclSum( object ):
         if self.has_key( key ):
             return EclSumVector( self , key , report_only )
         else:
-            raise KeyError("Summary object does not have key:%s" % key)
+            raise KeyError("Summary object does not have key: %s" % key)
 
 
     def report_index_list( self ):
@@ -621,6 +664,19 @@ class EclSum( object ):
         """
         return cfunc.has_key( self, key )
 
+    def unit(self , key):
+        """
+        Will return the unit of @key. 
+        """
+        return cfunc.get_unit( self , key )
+
+    @property
+    def case(self):
+        """
+        Will return the case name of the current instance - including path.
+        """
+        return cfunc.get_simcase( self )
+
 
     #-----------------------------------------------------------------
     # Here comes functions for getting vectors of the time
@@ -660,9 +716,9 @@ class EclSum( object ):
 
     def get_mpl_dates( self , report_only = False):
         if report_only:
-            return self.__mpl_dates
-        else:
             return self.__mpl_datesR
+        else:
+            return self.__mpl_dates
     
     @property 
     def mini_step( self ):
@@ -866,5 +922,5 @@ cfunc.has_key                       = cwrapper.prototype("bool     ecl_sum_has_g
 cfunc.check_sim_time                = cwrapper.prototype("bool     ecl_sum_check_sim_time( ecl_sum , time_t )") 
 cfunc.check_sim_days                = cwrapper.prototype("bool     ecl_sum_check_sim_days( ecl_sum , double )") 
 cfunc.sim_length                    = cwrapper.prototype("double   ecl_sum_get_sim_length( ecl_sum )")
-
-
+cfunc.get_unit                      = cwrapper.prototype("char*    ecl_sum_get_unit( ecl_sum , char*)") 
+cfunc.get_simcase                   = cwrapper.prototype("char*    ecl_sum_get_case( ecl_sum )")
