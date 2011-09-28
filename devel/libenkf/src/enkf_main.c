@@ -762,13 +762,13 @@ static void enkf_main_serialize_node( const char * node_key ,
 */
 
 static int enkf_main_serialize_dataset( enkf_main_type * enkf_main, 
-					const local_dataset_type * dataset ,
-					int report_step,
-					hash_type * use_count ,  
-					int * active_size , 
-					int * row_offset,
-					thread_pool_type * work_pool,
-					serialize_info_type * serialize_info ) {
+                                        const local_dataset_type * dataset ,
+                                        int report_step,
+                                        hash_type * use_count ,  
+                                        int * active_size , 
+                                        int * row_offset,
+                                        thread_pool_type * work_pool,
+                                        serialize_info_type * serialize_info ) {
 
   matrix_type * A   = serialize_info->A;
   stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
@@ -919,13 +919,13 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
     matrix_full_size( A );
     
     serial_size = enkf_main_serialize_dataset(enkf_main   , 
-					      dataset,
-					      report_step , 
-					      use_count   , 
-					      active_size , 
-					      row_offset , 
-					      work_pool , 
-					      serialize_info );
+                                              dataset,
+                                              report_step , 
+                                              use_count   , 
+                                              active_size , 
+                                              row_offset , 
+                                              work_pool , 
+                                              serialize_info );
     if (serial_size > 0) {
       msg_update(msg , "matrix multiplication");
       matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );     // <- Could recycle the work_pool
@@ -1251,7 +1251,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
 
   const int cpu_threads       = 4;
   const int matrix_start_size = 25000;
-  thread_pool_type * tp       = thread_pool_alloc( cpu_threads , true );
+  thread_pool_type * tp       = thread_pool_alloc( cpu_threads , false );
   
   analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
   int ens_size          = meas_data_get_ens_size( forecast );
@@ -1261,8 +1261,8 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_type * R       = obs_data_allocR( obs_data , active_size );
   matrix_type * innov   = obs_data_alloc_innov( obs_data , forecast , active_size );
   matrix_type * A       = matrix_alloc( matrix_start_size , ens_size );
-  matrix_type * E  	= NULL;
-  matrix_type * D  	= NULL;
+  matrix_type * E       = NULL;
+  matrix_type * D       = NULL;
   matrix_type * randrot = NULL; 
 
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
@@ -1280,19 +1280,28 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
     while (!hash_iter_is_complete( dataset_iter )) {
-  
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
+      if (dataset_get_size( dataset ) {
+          int * active_size = util_malloc( local_dataset_get_size( dataset ) * sizeof * active_size , __func__);
+          int * row_offset  = util_malloc( local_dataset_get_size( dataset ) * sizeof * row_offset  , __func__);
 
-      //enkf_main_serialize_dataset( enkf_main , dataset , A , tp);
-      analysis_module_initX( module , X , S , R , innov , E , D , randrot );
+          thread_pool_restart( tp );
+          enkf_main_serialize_dataset( enkf_main , dataset , report_step ,  use_count , active_size , row_offset , tp , serialize_info);
 
-      thread_pool_restart( tp );
-      matrix_inplace_matmul_mt2( A , X , tp );
+          analysis_module_initX( module , X , S , R , innov , E , D , randrot );
+          
+          thread_pool_restart( tp );
+          matrix_inplace_matmul_mt2( A , X , tp );
+          
+          
+          //enkf_main_update_mulX( enkf_main , X , dataset , report_step , use_count);
 
-      enkf_main_update_mulX( enkf_main , X , dataset , report_step , use_count);
-      //enkf_main_deserialize_dataset( );
-      
+          //thread_pool_restart( tp );
+          //enkf_main_deserialize_dataset( );
+          free( active_size );
+          free( row_offset );
+        }
     }
     serialize_info_free( serialize_info );
   }
@@ -1372,14 +1381,14 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       meas_data_reset( meas_forecast );
       
       enkf_obs_get_obs_and_measure(enkf_main->obs, 
-				   enkf_main_get_fs(enkf_main), 
-				   step_list , 
-				   FORECAST, 
-				   ens_size,
+                                   enkf_main_get_fs(enkf_main), 
+                                   step_list , 
+                                   FORECAST, 
+                                   ens_size,
                                    (const enkf_state_type **) enkf_main->ensemble, 
-				   meas_forecast, 
-				   obs_data , 
-				   obsset );
+                                   meas_forecast, 
+                                   obs_data , 
+                                   obsset );
       
       enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
       
