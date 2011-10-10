@@ -201,11 +201,10 @@ long std_enkf_get_options( void * arg , long flag ) {
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE std_enkf_symbol_table
 #else
-#define SYMBOL_TABLE analysis_table
+#define SYMBOL_TABLE EXTERNAL_MODULE_TABLE
 #endif
 
-analysis_table_type SYMBOL_TABLE[] = {
-  { 
+analysis_table_type SYMBOL_TABLE = {
     .alloc           = std_enkf_data_alloc,
     .freef           = std_enkf_data_free,
     .set_int         = std_enkf_set_int , 
@@ -217,6 +216,5 @@ analysis_table_type SYMBOL_TABLE[] = {
     .updateA         = NULL,
     .init_update     = NULL,
     .complete_update = NULL,
-  }
 };
 

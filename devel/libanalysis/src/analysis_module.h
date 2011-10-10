@@ -30,6 +30,9 @@ extern "C" {
 #define ANALYSIS_USE_A                4       
 #define ANALYSIS_UPDATE_A             8
 
+#define EXTERNAL_MODULE_TABLE      "analysis_table"
+
+
 
 
 typedef struct analysis_module_struct analysis_module_type;

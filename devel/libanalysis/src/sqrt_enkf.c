@@ -153,21 +153,21 @@ long sqrt_enkf_get_options( void * arg , long flag ) {
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE sqrt_enkf_symbol_table
 #else
-#define SYMBOL_TABLE analysis_table
+#define SYMBOL_TABLE EXTERNAL_MODULE_TABLE
 #endif
 
-analysis_table_type SYMBOL_TABLE[] = {
-  { 
-    .alloc           = sqrt_enkf_data_alloc,
-    .freef           = sqrt_enkf_data_free,
-    .set_int         = sqrt_enkf_set_int , 
-    .set_double      = sqrt_enkf_set_double , 
-    .set_bool        = NULL , 
-    .set_string      = NULL , 
-    .initX           = sqrt_enkf_initX , 
-    .updateA         = NULL,
-    .init_update     = NULL,
-    .complete_update = NULL,
-    .get_options     = sqrt_enkf_get_options 
-  }
+
+analysis_table_type SYMBOL_TABLE = {
+  .alloc           = sqrt_enkf_data_alloc,
+  .freef           = sqrt_enkf_data_free,
+  .set_int         = sqrt_enkf_set_int , 
+  .set_double      = sqrt_enkf_set_double , 
+  .set_bool        = NULL , 
+  .set_string      = NULL , 
+  .initX           = sqrt_enkf_initX , 
+  .updateA         = NULL,
+  .init_update     = NULL,
+  .complete_update = NULL,
+  .get_options     = sqrt_enkf_get_options 
 };
+

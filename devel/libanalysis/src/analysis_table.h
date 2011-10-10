@@ -52,7 +52,7 @@ typedef void * (analysis_alloc_ftype) ( rng_type * rng );
 
 /*****************************************************************/
 
-#define EXTERNAL_MODULE_TABLE "analysis_table"
+
 
 
 typedef struct {

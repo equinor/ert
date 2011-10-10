@@ -619,21 +619,20 @@ long cv_enkf_get_options( void * arg , long flag) {
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE cv_enkf_symbol_table
 #else
-#define SYMBOL_TABLE analysis_table
+#define SYMBOL_TABLE EXTERNAL_MODULE_TABLE
 #endif
 
-analysis_table_type SYMBOL_TABLE[] = {
-  { 
-    .alloc           = cv_enkf_data_alloc,
-    .freef           = cv_enkf_data_free,
-    .set_int         = cv_enkf_set_int , 
-    .set_double      = cv_enkf_set_double , 
-    .set_bool        = NULL , 
-    .set_string      = NULL , 
-    .get_options     = cv_enkf_get_options , 
-    .initX           = cv_enkf_initX , 
-    .updateA         = NULL,
-    .init_update     = cv_enkf_init_update , 
-    .complete_update = cv_enkf_complete_update
-  }
+
+analysis_table_type SYMBOL_TABLE = {
+  .alloc           = cv_enkf_data_alloc,
+  .freef           = cv_enkf_data_free,
+  .set_int         = cv_enkf_set_int , 
+  .set_double      = cv_enkf_set_double , 
+  .set_bool        = NULL , 
+  .set_string      = NULL , 
+  .get_options     = cv_enkf_get_options , 
+  .initX           = cv_enkf_initX , 
+  .updateA         = NULL,
+  .init_update     = cv_enkf_init_update , 
+  .complete_update = cv_enkf_complete_update
 };

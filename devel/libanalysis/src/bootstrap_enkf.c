@@ -228,24 +228,22 @@ bool bootstrap_enkf_set_int( void * arg , const char * var_name , int value) {
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE bootstrap_enkf_symbol_table
 #else
-#define SYMBOL_TABLE analysis_table
+#define SYMBOL_TABLE EXTERNAL_MODULE_TABLE
 #endif
 
 
 
 
-analysis_table_type SYMBOL_TABLE[] = {
-  { 
-    .alloc           = bootstrap_enkf_data_alloc,
-    .freef           = bootstrap_enkf_data_free,
-    .set_int         = bootstrap_enkf_set_int , 
-    .set_double      = bootstrap_enkf_set_double , 
-    .set_bool        = NULL , 
-    .set_string      = NULL , 
-    .get_options     = bootstrap_enkf_get_options , 
-    .initX           = NULL,
-    .updateA         = bootstrap_enkf_updateA , 
-    .init_update     = bootstrap_enkf_init_update , 
-    .complete_update = bootstrap_enkf_complete_update
-  }
+analysis_table_type SYMBOL_TABLE = {
+  .alloc           = bootstrap_enkf_data_alloc,
+  .freef           = bootstrap_enkf_data_free,
+  .set_int         = bootstrap_enkf_set_int , 
+  .set_double      = bootstrap_enkf_set_double , 
+  .set_bool        = NULL , 
+  .set_string      = NULL , 
+  .get_options     = bootstrap_enkf_get_options , 
+  .initX           = NULL,
+  .updateA         = bootstrap_enkf_updateA , 
+  .init_update     = bootstrap_enkf_init_update , 
+  .complete_update = bootstrap_enkf_complete_update
 };

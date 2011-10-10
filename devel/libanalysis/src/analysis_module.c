@@ -75,6 +75,10 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
 }
 
 
+static bool analysis_module_internal_check( analysis_module_type * module ) {
+  return true;
+}
+
 static analysis_module_type * analysis_module_alloc__( rng_type * rng , 
                                                        const analysis_table_type * table , 
                                                        const char * user_name , 
@@ -96,7 +100,13 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
   
   if (module->alloc != NULL)
     module->module_data = module->alloc( rng );
-  
+
+  if (!analysis_module_internal_check( module )) {
+    fprintf(stderr,"** Warning loading module: %s failed - internal inconsistency\n", module->user_name);
+    analysis_module_free( module );
+    module = NULL;
+  }
+
   return module;
 }
 
@@ -112,8 +122,7 @@ static analysis_module_type * analysis_module_alloc( rng_type * rng ,
   if (lib_handle != NULL) {
     analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
     if (analysis_table != NULL) {
-      analysis_table_type * analysis  = analysis_table;
-      module = analysis_module_alloc__( rng , analysis , user_name , lib_handle );
+      module = analysis_module_alloc__( rng , analysis_table , user_name , lib_handle );
     } else
       fprintf(stderr , "Failed to load symbol table:%s. Error:%s \n",table_name , dlerror());
     

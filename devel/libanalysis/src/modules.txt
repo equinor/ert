@@ -20,10 +20,75 @@ identically.
 
 How modules work
 ----------------
+The modules are instances of the object type analysis_module_type, and
+the enkf_main layer interacts with the module through the
+analyis_module instance. The most important part of the
+analysis_module type is a list of function pointers to functions which
+"actually do the work". In addition to some functions for setting
+internal module variables the most core functions are:
+
+   init_update()
+   initX()
+   updateA()
+   complete_update()
+
+Of these functions a module should have ONLY ONE of initX() and
+updateA(); the initX() function will initialize an X matrix which is
+then subsequently used to update the ensemble matrix A. Alternatively
+the updateA() function should will directly manipulate the A matrix.
+
+The init_update() and complete_update() functions are optional, they
+can be used to avoid repeated initialization calculations. These
+functions interact quite closely with the scheme used for local
+analysis; so you should understand that in detail before deciding
+whether it is worthwile to implement init_update() and
+complete_update() functions.
 
 
 Loading modules
 ---------------
+
+The loading of modules is based on the dlopen() function to open a
+shared a library and map it into the adress space of the current
+process, and then the dlsym() function to locate a symbol table which
+is a list of function pointers. The only difference between internal
+and external modules is in the arguments passed to the dlopen() and
+dlsym() function calls:
+
+   Loading internal modules
+   ------------------------
+   Internal modules means modules which have been compiled into the
+   libanalyis library, i.e. they are already part of the ERT
+   executable, however before we have "loaded" these modules we have
+   no way to access them. The current executable is loaded by
+   passing NULL as argument to dlopen().
+
+   When dlopen() has succeded we must use dlsym() to get a handle to
+   the symbol table. The symbol table is essentially a global
+   variable in the ERT adress space, and must have a unique name for
+   each module.
+
+   Loading external modules
+   ------------------------
+   External modules are ordinary shared libraries. To load an
+   external module the name of the shared library must be given to
+   the dlopen() function, normal rules for runtime loading of
+   dynamic libraries apply - i.e. the shared library must be in a
+   location where the runtime linker can find it. The name of module
+   should be a filename, including the .so extension.
+
+   When dlopen() has succeded we must use dlsym() to get a handle to
+   the symbol table; when the module loading is hidden behind a
+   dlopen() call we have essentially created a module namespace, and
+   the symbol tables from the different modules can have the same
+   name. For convenience we assume that the symbol table is given by
+   the name defined by the symbol EXTERNAL_MODULE_TABLE in
+   analysis_module.h.
+
+In practice this should all be handled by the functions 
+
+  analysis_module_type * analysis_module_alloc_internal( );
+  analysis_module_type * analysis_module_alloc_external( );
 
 
 Interacting with modules
@@ -52,8 +117,8 @@ Common for all these functions is:
      and bool respectively and then cascade through the functions in
      the order listed above. This involves two things:
 
-       a) A module has an internal namespace which is shared among all
-          variable types.
+       a) A module has an internal variable namespace which is shared
+          among all variable types.
 
        b) If the string value argument is incorrectly formatted,
           i.e. an integer is passed as "12x" the correct low level
