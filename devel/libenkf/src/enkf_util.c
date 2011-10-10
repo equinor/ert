@@ -45,8 +45,9 @@ void enkf_util_rand_stdnormal_vector(int size , double *R, rng_type * rng) {
 }
 
 /**
-  Vector containing a random permutation of the integers 1,...,size 
+   Vector containing a random permutation of the integers 1,...,size 
 */
+
 void enkf_util_randperm( int * P , int size , rng_type * rng) {
   int k, tmp;
   

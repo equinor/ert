@@ -262,8 +262,9 @@ static const char * analysis_config_get_mode_string( enkf_mode_type mode ) {
 
 /*****************************************************************/
 
-void analysis_config_load_internal_module( analysis_config_type * config , const char * user_name , const char * symbol_table ) {
-  analysis_module_type * module = analysis_module_alloc_internal( user_name , symbol_table );
+void analysis_config_load_internal_module( analysis_config_type * config , rng_type * rng , 
+                                           const char * user_name , const char * symbol_table ) {
+  analysis_module_type * module = analysis_module_alloc_internal( rng , user_name , symbol_table );
   if (module != NULL)
     hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
   else
@@ -271,8 +272,9 @@ void analysis_config_load_internal_module( analysis_config_type * config , const
 }
 
 
-void analysis_config_load_external_module( analysis_config_type * config , const char * user_name , const char * lib_name) {
-  analysis_module_type * module = analysis_module_alloc_external( user_name , lib_name );
+void analysis_config_load_external_module( analysis_config_type * config , rng_type * rng , 
+                                           const char * user_name , const char * lib_name) {
+  analysis_module_type * module = analysis_module_alloc_external( rng , user_name , lib_name );
   if (module != NULL)
     hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
   else
@@ -284,8 +286,22 @@ analysis_module_type * analysis_config_get_module( analysis_config_type * config
   return hash_get( config->analysis_modules , module_name );
 }
 
+bool analysis_config_has_module(analysis_config_type * config , const char * module_name) {
+  return hash_has_key( config->analysis_modules , module_name );
+}
+
 void analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
-  config->analysis_module = analysis_config_get_module( config , module_name );
+  if (analysis_config_has_module( config , module_name )) 
+    config->analysis_module = analysis_config_get_module( config , module_name );
+  else {
+    if (config->analysis_module == NULL)
+      util_abort("%s: sorry module:%s does not exist - and no module currently selected\n",__func__ , module_name);
+    else
+      fprintf(stderr , "** Warning: analysis module:%s does not exists - current selection unchanged:%s\n", 
+              module_name , 
+              analysis_module_get_name( config->analysis_module ));
+    
+  }
 }
 
 analysis_module_type * analysis_config_get_active_module( analysis_config_type * config ) {
@@ -295,12 +311,20 @@ analysis_module_type * analysis_config_get_active_module( analysis_config_type *
 /*****************************************************************/
 
 
+void analysis_config_load_internal_modules( analysis_config_type * config , rng_type * rng) {
+  analysis_config_load_internal_module( config , rng , "STD_ENKF"       , "std_enkf_symbol_table");
+  analysis_config_load_internal_module( config , rng , "SQRT_ENKF"      , "sqrt_enkf_symbol_table");
+  analysis_config_load_internal_module( config , rng , "CV_ENKF"        , "cv_enkf_symbol_table");
+  analysis_config_load_internal_module( config , rng , "BOOTSTRAP_ENKF" , "bootstrap_enkf_symbol_table");
+  analysis_config_select_module( config , DEFAULT_ANALYSIS_MODULE);
+}
+
 /**
    The analysis_config object is instantiated with the default values
    for enkf_defaults.h
 */
 
-void analysis_config_init( analysis_config_type * analysis , const config_type * config ) {
+void analysis_config_init( analysis_config_type * analysis , const config_type * config , rng_type * rng) {
   if (config_item_set( config , UPDATE_LOG_PATH_KEY ))
     analysis_config_set_log_path( analysis , config_get_value( config , UPDATE_LOG_PATH_KEY ));
   
@@ -412,7 +436,7 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
       const char * user_name = stringlist_iget( tokens , 0 );
       const char * lib_name  = stringlist_iget( tokens , 1 );
       
-      analysis_config_load_external_module( analysis , user_name , lib_name);
+      analysis_config_load_external_module( analysis , rng , user_name , lib_name);
     }
   }
 
@@ -480,7 +504,7 @@ bool analysis_config_Xbased(const analysis_config_type * config) {
 }
 
 
-analysis_config_type * analysis_config_alloc_default() {
+analysis_config_type * analysis_config_alloc_default( ) {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
   
   config->inversion_mode            = SVD_SS_N1_R;
@@ -510,10 +534,6 @@ analysis_config_type * analysis_config_alloc_default() {
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
-  analysis_config_load_internal_module( config , "STD_ENKF"  , "std_enkf_symbol_table");
-  analysis_config_load_internal_module( config , "SQRT_ENKF" , "sqrt_enkf_symbol_table");
-  analysis_config_load_internal_module( config , "CV_ENKF"   , "cv_enkf_symbol_table");
-  analysis_config_select_module( config , "STD_ENKF");
   return config;
 }
 

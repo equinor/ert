@@ -118,7 +118,6 @@ void enkf_linalg_svdS(const matrix_type * S ,
               break;
           }
         }
-        
       }
       
       /* Inverting the significant singular values */
@@ -234,14 +233,15 @@ void enkf_linalg_lowrankCinv(const matrix_type * S ,
 void enkf_linalg_meanX5(const matrix_type * S , 
                         const matrix_type * W , 
                         const double * eig    , 
-                        const matrix_type * innov , 
+                        const matrix_type * dObs, 
                         matrix_type * X5) {
 
-
+  
   const int nrens = matrix_get_columns( S );
   const int nrobs = matrix_get_rows( S );
   const int nrmin = util_int_min( nrobs , nrens );
   double * work   = util_malloc( (2 * nrmin + nrobs + nrens) * sizeof * work , __func__);
+  matrix_type * innov = enkf_linalg_alloc_innov( dObs , S );
   {
     double * y1 = &work[0];
     double * y2 = &work[nrmin];
@@ -269,6 +269,7 @@ void enkf_linalg_meanX5(const matrix_type * S ,
     matrix_shift(X5 , 1.0/nrens);
   }
   free( work );
+  matrix_free( innov );
 }
 
 
@@ -321,3 +322,8 @@ void enkf_linalg_X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type 
 }
 
 
+matrix_type * enkf_linalg_alloc_innov( const matrix_type * dObs , const matrix_type * S) {
+  matrix_type * innov = matrix_alloc_copy( dObs );
+  for (int iobs =0; iobs < matrix_get_row_sum( dObs , iobs); iobs++) 
+    matrix_isub( innov , iobs , 0 , matrix_get_row_sum( S , iobs ));
+}

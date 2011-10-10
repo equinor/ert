@@ -23,6 +23,7 @@
 #include <dlfcn.h>
 #include <matrix.h>
 #include <util.h>
+#include <rng.h>
 
 #include <analysis_module.h>
 #include <analysis_table.h>
@@ -37,15 +38,17 @@ struct analysis_module_struct {
   analysis_free_ftype            * freef;
   analysis_alloc_ftype           * alloc;
   analysis_initX_ftype           * initX;
+  analysis_updateA_ftype         * updateA;
   analysis_init_update_ftype     * init_update;
   analysis_complete_update_ftype * complete_update;
   analysis_get_option_ftype      * get_option;
     
   analysis_set_int_ftype         * set_int;
   analysis_set_double_ftype      * set_double;
+  analysis_set_bool_ftype        * set_bool; 
   analysis_set_string_ftype      * set_string;
   
-
+  bool                             internal;  
   char                           * user_name;   /* String used to identify this module for the user; not used in 
                                                    the linking process. */
 };
@@ -58,7 +61,9 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
 
   module->lib_handle      = NULL;
   module->initX           = NULL;
+  module->updateA         = NULL;
   module->set_int         = NULL;
+  module->set_bool        = NULL;
   module->set_double      = NULL;
   module->set_string      = NULL;
   module->module_data     = NULL;
@@ -70,11 +75,16 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
 }
 
 
-static analysis_module_type * analysis_module_alloc__( const analysis_table_type * table , const char * user_name , void * lib_handle ) {
+static analysis_module_type * analysis_module_alloc__( rng_type * rng , 
+                                                       const analysis_table_type * table , 
+                                                       const char * user_name , 
+                                                       void * lib_handle ) {
+
   analysis_module_type * module = analysis_module_alloc_empty( user_name );
   
   module->lib_handle        = lib_handle;
   module->initX             = table->initX;
+  module->updateA           = table->updateA;
   module->init_update       = table->init_update;
   module->complete_update   = table->complete_update;
   module->set_int           = table->set_int;
@@ -85,7 +95,7 @@ static analysis_module_type * analysis_module_alloc__( const analysis_table_type
   module->get_option        = table->get_option; 
   
   if (module->alloc != NULL)
-    module->module_data = module->alloc( );
+    module->module_data = module->alloc( rng );
   
   return module;
 }
@@ -94,15 +104,16 @@ static analysis_module_type * analysis_module_alloc__( const analysis_table_type
 
 
 
-static analysis_module_type * analysis_module_alloc( const char * libname , const char * user_name , 
+static analysis_module_type * analysis_module_alloc( rng_type * rng , 
+                                                     const char * libname , const char * user_name , 
                                                      const char * table_name ) {
   analysis_module_type * module = NULL;
-  void * lib_handle = dlopen( NULL , RTLD_NOW );
+  void * lib_handle = dlopen( libname , RTLD_NOW );
   if (lib_handle != NULL) {
     analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
     if (analysis_table != NULL) {
       analysis_table_type * analysis  = analysis_table;
-      module = analysis_module_alloc__( analysis , user_name , lib_handle );
+      module = analysis_module_alloc__( rng , analysis , user_name , lib_handle );
     } else
       fprintf(stderr , "Failed to load symbol table:%s. Error:%s \n",table_name , dlerror());
     
@@ -111,19 +122,28 @@ static analysis_module_type * analysis_module_alloc( const char * libname , cons
   } else 
     fprintf(stderr , "Failed to load library:%s. Error:%s \n",libname , dlerror());
   
+  if (module != NULL) {
+    if (libname == NULL)
+      module->internal = true;
+    else
+      module->internal = false;
+  }
+
   return module;
 }
 
-analysis_module_type * analysis_module_alloc_internal( const char * user_name , const char * symbol_table ) {
-  return analysis_module_alloc( NULL , user_name , symbol_table );
+analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * user_name , const char * symbol_table ) {
+  return analysis_module_alloc( rng , NULL , user_name , symbol_table );
 }
 
 
-analysis_module_type * analysis_module_alloc_external( const char * user_name , const char * lib_name) {
-  return analysis_module_alloc( lib_name , user_name , EXTERNAL_MODULE_TABLE );
+analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * user_name , const char * lib_name) {
+  return analysis_module_alloc( rng , lib_name , user_name , EXTERNAL_MODULE_TABLE );
 }
 
-
+const char * analysis_module_get_name( const analysis_module_type * module ) {
+  return module->user_name;
+}
 
 /*****************************************************************/
 
@@ -150,24 +170,41 @@ void analysis_module_free__( void * arg) {
 
 void analysis_module_initX(analysis_module_type * module , 
                            matrix_type * X , 
+                           matrix_type * A , 
                            matrix_type * S , 
                            matrix_type * R , 
-                           matrix_type * innov , 
+                           matrix_type * dObs , 
                            matrix_type * E , 
                            matrix_type * D , 
                            matrix_type * randrot) {
-  module->initX(module->module_data , X , S , R , innov , E , D , randrot );
+  
+  module->initX(module->module_data , X , A , S , R , dObs , E , D , randrot );
 }
+
+
+void analysis_module_updateA(analysis_module_type * module , 
+                             matrix_type * A , 
+                             matrix_type * S , 
+                             matrix_type * R , 
+                             matrix_type * dObs , 
+                             matrix_type * E , 
+                             matrix_type * D , 
+                             matrix_type * randrot) {
+
+  module->updateA(module->module_data , A , S , R , dObs , E , D , randrot );
+}
+
+
 
 
 void analysis_module_init_update( analysis_module_type * module , 
                                   matrix_type * S , 
                                   matrix_type * R , 
-                                  matrix_type * innov , 
+                                  matrix_type * dObs , 
                                   matrix_type * E , 
                                   matrix_type * D ) {
   if (module->init_update != NULL)
-    module->init_update( module->module_data , S , R , innov , E , D);
+    module->init_update( module->module_data , S , R , dObs , E , D);
 }
 
 
@@ -194,6 +231,15 @@ static bool analysis_module_set_double(analysis_module_type * module , const cha
   else
     return false;
 }
+
+
+static bool analysis_module_set_bool(analysis_module_type * module , const char * var , bool value) {
+  if (module->set_bool != NULL)
+    return module->set_bool( module->module_data , var , value );
+  else
+    return false;
+}
+
 
 static bool analysis_module_set_string(analysis_module_type * module , const char * var , const char * value) {
   if (module->set_string != NULL)
@@ -239,6 +285,15 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
     if (set_ok)
       return true;
   }
+
+  {
+    bool bool_value;
+    if (util_sscanf_bool( string_value , &bool_value))
+      set_ok = analysis_module_set_bool( module , var_name , bool_value );
+  }
+  
+  
+
   set_ok = analysis_module_set_string( module , var_name , string_value );
   if (!set_ok)
     fprintf(stderr,"** Warning: failed to set %s=%s for analysis module:%s\n", var_name , string_value , module->user_name);

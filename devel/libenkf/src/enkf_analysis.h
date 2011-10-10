@@ -71,16 +71,16 @@ void enkf_analysis_local_pre_cv( const analysis_config_type * config ,
                                  matrix_type * U0 , 
                                  meas_data_type * fasit);
 
-void enkf_analysis_alloc_matrices( rng_type * rng , 
-                                   const meas_data_type * meas_data , 
-                                   obs_data_type * obs_data , 
-                                   enkf_mode_type enkf_mode , 
-                                   matrix_type ** S , 
-                                   matrix_type ** R , 
-                                   matrix_type ** innov,
-                                   matrix_type ** E ,
-                                   matrix_type ** D , 
-                                   bool scale);
+//void enkf_analysis_alloc_matrices( rng_type * rng , 
+//                                   const meas_data_type * meas_data , 
+//                                   obs_data_type * obs_data , 
+//                                   enkf_mode_type enkf_mode , 
+//                                   matrix_type ** S , 
+//                                   matrix_type ** R , 
+//                                   matrix_type ** innov,
+//                                   matrix_type ** E ,
+//                                   matrix_type ** D , 
+//                                   bool scale);
 
 void          enkf_analysis_init_principal_components( double truncation , 
                                                        const matrix_type * S, 

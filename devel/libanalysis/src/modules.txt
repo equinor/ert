@@ -1,0 +1,23 @@
+Overview
+--------
+The ERT application has evolved into a quite complex beast. Originally
+the actual EnKF algorithm was located very deep down in the code, and
+changes to the EnKF algorithm required detailed knowledge about the
+enkf_node objects, the datatype for measurements and observations,
+serialisation and so on. Quite complex and fragile stuff.
+
+To facilitate easier development and testing of new update schemes the
+core EnKF update step has been factored out as analysis modules, which
+are called from the enkf_main scope. The update functions in the
+module get ordinary matrices as input, and do not need to know
+anything about the internals of the ERT application. 
+
+The modules can either be built in, or you can compile your own module
+as a shared library and load it runtime. Apart from the initial
+loading internal modules and external modules are treated 100%
+identically.
+
+
+----
+
+

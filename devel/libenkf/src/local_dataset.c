@@ -91,7 +91,7 @@ active_list_type * local_dataset_get_node_active_list(const local_dataset_type *
 }
 
 stringlist_type * local_dataset_alloc_keys( const local_dataset_type * dataset ) {
-  return hash_alloc_keylist( dataset->nodes );
+  return hash_alloc_stringlist( dataset->nodes );
 }
 
 
@@ -110,6 +110,7 @@ void local_dataset_fprintf( const local_dataset_type * dataset , FILE * stream) 
 
 
 int local_dataset_get_size( const local_dataset_type * dataset ) {
+  local_dataset_safe_cast( dataset );
   return hash_get_size( dataset->nodes );
 }
 

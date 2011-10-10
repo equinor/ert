@@ -24,12 +24,14 @@
 #include <enkf_types.h>
 #include <stdbool.h>
 #include <analysis_module.h>
+#include <rng.h>
 
 typedef struct analysis_config_struct analysis_config_type;
 
+void                   analysis_config_load_internal_modules( analysis_config_type * analysis , rng_type * rng);
 const char           * analysis_config_get_log_path( const analysis_config_type * config );
-void                   analysis_config_init( analysis_config_type * analysis , const config_type * config );
-analysis_config_type * analysis_config_alloc_default(void );
+void                   analysis_config_init( analysis_config_type * analysis , const config_type * config , rng_type * rng);
+analysis_config_type * analysis_config_alloc_default( );
 void                   analysis_config_free( analysis_config_type * );
 bool                   analysis_config_get_merge_observations(const analysis_config_type * );
 double                 analysis_config_get_alpha(const analysis_config_type * config);

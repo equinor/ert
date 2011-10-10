@@ -23,6 +23,7 @@
 #include <matrix_blas.h>
 #include <stdio.h>
 #include <analysis_table.h>
+#include <analysis_module.h>
 #include <enkf_linalg.h>
 #include <std_enkf.h>
 
@@ -45,12 +46,12 @@ typedef struct {
 static UTIL_SAFE_CAST_FUNCTION( sqrt_enkf_data , SQRT_ENKF_TYPE_ID )
 
 
-void * sqrt_enkf_data_alloc( ) {
+void * sqrt_enkf_data_alloc( rng_type * rng ) {
   sqrt_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
   UTIL_TYPE_ID_INIT( data , SQRT_ENKF_TYPE_ID );
 
   data->options  = ANALYSIS_NEED_RANDROT;
-  data->std_data = std_enkf_data_alloc( );
+  data->std_data = std_enkf_data_alloc( rng );
   return data;
 }
 
@@ -97,9 +98,10 @@ bool sqrt_enkf_set_int( void * arg , const char * var_name , int value) {
 
 void sqrt_enkf_initX(void * module_data , 
                      matrix_type * X , 
+                     matrix_type * A , 
                      matrix_type * S , 
                      matrix_type * R , 
-                     matrix_type * innov , 
+                     matrix_type * dObs , 
                      matrix_type * E , 
                      matrix_type *D, 
                      matrix_type * randrot) {
@@ -122,7 +124,7 @@ void sqrt_enkf_initX(void * module_data ,
       //if (bootstrap)
       //util_exit("%s: Sorry bootstrap support not fully implemented for SQRT scheme\n",__func__);
       
-      enkf_linalg_meanX5( S , W , eig , innov , X );
+      enkf_linalg_meanX5( S , W , eig , dObs , X );
       enkf_linalg_genX2(X2 , S , W , eig);
       enkf_linalg_X5sqrt(X2 , X , randrot , nrobs);
       
@@ -160,8 +162,10 @@ analysis_table_type SYMBOL_TABLE[] = {
     .freef           = sqrt_enkf_data_free,
     .set_int         = sqrt_enkf_set_int , 
     .set_double      = sqrt_enkf_set_double , 
+    .set_bool        = NULL , 
     .set_string      = NULL , 
     .initX           = sqrt_enkf_initX , 
+    .updateA         = NULL,
     .init_update     = NULL,
     .complete_update = NULL,
     .get_option      = sqrt_enkf_get_option , 

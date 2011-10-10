@@ -22,11 +22,14 @@
 #include <matrix.h>
 #include <matrix_blas.h>
 #include <stdio.h>
+#include <analysis_module.h>
 #include <analysis_table.h>
 #include <enkf_linalg.h>
 #include <std_enkf.h>
+#include <rng.h>
 
 #define STD_ENKF_TYPE_ID 261123
+
 
 #define INVALID_SUBSPACE_DIMENSION  -1
 #define INVALID_TRUNCATION          -1
@@ -80,7 +83,7 @@ int std_enkf_get_subspace_dimension( void * module_data ) {
 }
 
 
-void * std_enkf_data_alloc( ) {
+void * std_enkf_data_alloc( rng_type * rng) {
   std_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_TYPE_ID );
   
@@ -98,44 +101,55 @@ void std_enkf_data_free( void * data ) {
 
 void std_enkf_initX(void * module_data , 
                     matrix_type * X , 
+                    matrix_type * A , 
                     matrix_type * S , 
                     matrix_type * R , 
-                    matrix_type * innov , 
+                    matrix_type * dObs , 
                     matrix_type * E , 
-                    matrix_type *D, 
+                    matrix_type * D, 
                     matrix_type * randrot) {
 
   std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
   {
     int ncomp         = data->subspace_dimension;
     double truncation = data->truncation;
-    int nrobs         = matrix_get_rows( S );
-    int ens_size      = matrix_get_columns( S );
-    int nrmin         = util_int_min( ens_size , nrobs); 
-    matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
-    double      * eig = util_malloc( sizeof * eig * nrmin , __func__);    
-    
-    enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
-    { /* The part in the block here was a seperate function, and might be
-         factored out again. */
-      matrix_type * X3  = matrix_alloc(nrobs , ens_size);
-      enkf_linalg_genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
-                                            /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
-
-      matrix_dgemm( X , S , X3 , true , false , 1.0 , 0.0);  /* X = S' * X3 */
-      // If !bootstrap {
-      for (int i = 0; i < ens_size ; i++)
-        matrix_iadd( X , i , i , 1.0); /*X = I + X */
-      // }
-
-      matrix_free( X3 );
-
-    }
-    matrix_free( W );
-    free( eig );
+    std_enkf_initX__(X,S,R,E,D,truncation,ncomp,false);
   }
 }
 
+void std_enkf_initX__( matrix_type * X , 
+                       matrix_type * S , 
+                       matrix_type * R , 
+                       matrix_type * E , 
+                       matrix_type * D ,
+                       double truncation,
+                       int    ncomp,
+                       bool   bootstrap ) {
+
+  int nrobs         = matrix_get_rows( S );
+  int ens_size      = matrix_get_columns( S );
+  int nrmin         = util_int_min( ens_size , nrobs); 
+  matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
+  double      * eig = util_malloc( sizeof * eig * nrmin , __func__);    
+  
+  enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
+  { /* The part in the block here was a seperate function, and might be
+       factored out again. */
+    matrix_type * X3  = matrix_alloc(nrobs , ens_size);
+    enkf_linalg_genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
+    /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
+    
+    matrix_dgemm( X , S , X3 , true , false , 1.0 , 0.0);  /* X = S' * X3 */
+    if (!bootstrap) {
+      for (int i = 0; i < ens_size ; i++)
+        matrix_iadd( X , i , i , 1.0);     /*X = I + X */
+    }
+    
+    matrix_free( X3 );
+  }
+  matrix_free( W );
+  free( eig );
+}
 
 
 bool std_enkf_set_double( void * arg , const char * var_name , double value) {
@@ -196,9 +210,11 @@ analysis_table_type SYMBOL_TABLE[] = {
     .freef           = std_enkf_data_free,
     .set_int         = std_enkf_set_int , 
     .set_double      = std_enkf_set_double , 
+    .set_bool        = NULL , 
     .set_string      = NULL , 
     .get_option      = std_enkf_get_option , 
     .initX           = std_enkf_initX , 
+    .updateA         = NULL,
     .init_update     = NULL,
     .complete_update = NULL,
   }

@@ -199,6 +199,7 @@ static void obs_block_init_scaling( const obs_block_type * obs_block , double * 
 }
 
 
+/*
 static void obs_block_init_innov( const obs_block_type * obs_block , const meas_block_type * meas_block , matrix_type * innov , int * __obs_offset) {
   int obs_offset = *__obs_offset;
   int iobs;
@@ -210,20 +211,21 @@ static void obs_block_init_innov( const obs_block_type * obs_block , const meas_
   }
   *__obs_offset = obs_offset;
 }
+*/
 
-
-/*Function for setting the correct elements of the vector of observed data, dObs*/
-static void obs_block_init_dObs( const obs_block_type * obs_block , double * dObs , int * __obs_offset) {
+static void obs_block_initdObs( const obs_block_type * obs_block , matrix_type * dObs , int * __obs_offset) {
   int obs_offset = *__obs_offset;
   int iobs;
   for (iobs =0; iobs < obs_block->size; iobs++) {
     if (obs_block->active_mode[iobs] == ACTIVE) {
-      dObs[ obs_offset ] = obs_block->value[ iobs ];
+      matrix_iset( dObs , obs_offset , 0 , obs_block->value[ iobs ]);
       obs_offset++;
     }
   }
   *__obs_offset = obs_offset;
 }
+
+
 
 
 
@@ -495,19 +497,6 @@ matrix_type * obs_data_allocD_kernel(const matrix_type * E  , const matrix_type 
 }
 
 
-/*Function that returns the vector of observed data */
-double * obs_data_alloc_dObs(const obs_data_type * obs_data, int active_size) {
-  double *dObs = util_malloc( active_size * sizeof * dObs , __func__);
-  {
-    int obs_offset = 0;
-    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
-      const obs_block_type * obs_block = vector_iget_const( obs_data->data , block_nr);
-      obs_block_init_dObs( obs_block , dObs , &obs_offset);
-    }
-  }
-  return dObs;
-}
-
 
 
 matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size) {
@@ -526,7 +515,7 @@ matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size) 
   return R;
 }
 
-
+/*
 matrix_type * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_data_type * meas_data , int active_size) {
   matrix_type * innov = matrix_alloc( active_size , 1 );
   {
@@ -540,10 +529,24 @@ matrix_type * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_d
   }
   return innov;
 }
+*/
+
+matrix_type * obs_data_allocdObs(const obs_data_type * obs_data , int active_size) {
+  matrix_type * dObs = matrix_alloc( active_size , 1 );
+  {
+    int obs_offset = 0;
+    for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
+      const obs_block_type * obs_block   = vector_iget_const( obs_data->data , block_nr );
+      
+      obs_block_initdObs( obs_block ,  dObs , &obs_offset);
+    }
+  }
+  return dObs;
+}
 
 
 
-void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , matrix_type * innov) {
+void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , matrix_type * dObs) {
   const int nrobs_active = matrix_get_rows( S );
   const int ens_size     = matrix_get_columns( S );
   double * scale_factor  = util_malloc(nrobs_active * sizeof * scale_factor , __func__);
@@ -579,10 +582,9 @@ void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_typ
     }
   }
   
-  if (innov != NULL)
-    /* Scale the vector of innovations*/
+  if (dObs != NULL)
     for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
-      matrix_imul( innov , iobs_active , 0 , scale_factor[iobs_active]);
+      matrix_imul( dObs , iobs_active , 0 , scale_factor[iobs_active]);
   
   {
     /* Scale the error covariance matrix*/

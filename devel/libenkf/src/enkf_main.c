@@ -712,11 +712,10 @@ static void serialize_node( enkf_fs_type * fs ,
                             int row_offset , 
                             const active_list_type * active_list,
                             matrix_type * A) {
-  
+
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
   enkf_fs_fread_node( fs , node , report_step , iens , load_state);
   enkf_node_serialize( node , active_list , A , row_offset , iens);
-  
 }
 
 
@@ -740,7 +739,7 @@ static void enkf_main_serialize_node( const char * node_key ,
   /* Multithreaded serializing*/
   const int num_cpu_threads = thread_pool_get_max_running( work_pool );
   int icpu;
-
+  
   thread_pool_restart( work_pool );
   for (icpu = 0; icpu < num_cpu_threads; icpu++) {
     serialize_info[icpu].key         = node_key;
@@ -750,7 +749,6 @@ static void enkf_main_serialize_node( const char * node_key ,
     
     thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
   }
-  
   thread_pool_join( work_pool );
 }
 
@@ -775,7 +773,7 @@ static int enkf_main_serialize_dataset( enkf_main_type * enkf_main,
   const int num_kw  = stringlist_get_size( update_keys );
   int ens_size      = matrix_get_columns( A );
   int current_row   = 0;
-  
+
   for (int ikw=0; ikw < num_kw; ikw++) {
     const char             * key              = stringlist_iget(update_keys , ikw);
     const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
@@ -840,9 +838,9 @@ static void enkf_main_deserialize_dataset( const local_dataset_type * dataset ,
                                            const int * active_size , 
                                            const int * row_offset , 
                                            serialize_info_type * serialize_info , 
-                                           int num_cpu_threads ,  
                                            thread_pool_type * work_pool ) {
   
+  int num_cpu_threads = thread_pool_get_max_running( work_pool );
   stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
   for (int i = 0; i < stringlist_get_size( update_keys ); i++) {
     if (active_size[i] > 0) {
@@ -873,7 +871,7 @@ static void serialize_info_free( serialize_info_type * serialize_info ) {
 }
 
 static serialize_info_type * serialize_info_alloc( enkf_main_type * enkf_main , int report_step , matrix_type * A , int num_cpu_threads ) {
-  serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info , __func__ );
+  serialize_info_type * serialize_info = util_malloc( num_cpu_threads * sizeof * serialize_info , __func__ );
   int ens_size = matrix_get_columns( A );
   int icpu;
   int iens_offset = 0;
@@ -888,175 +886,7 @@ static serialize_info_type * serialize_info_alloc( enkf_main_type * enkf_main , 
     iens_offset = serialize_info[icpu].iens2;
   }
   serialize_info[num_cpu_threads - 1].iens2 = ens_size;
-}
-
-
-
-
-
-
-
-void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 , const local_dataset_type * dataset, int report_step , hash_type * use_count) {
-  const int num_cpu_threads          = 4;
-
-  int       matrix_size              = 1000;   /* Starting with this */
-  const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
-  matrix_type * A = matrix_alloc(matrix_size , ens_size);
-  msg_type  * msg = msg_alloc("Updating: " , false);
-  const int num_kw  = local_dataset_get_size( dataset );
-  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
-  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
-  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
-  serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
-
-  matrix_set_name( A , "A" );
-  msg_show( msg );
-
-  {
-    int ikw1 = 0;
-    int ikw2;
-    int serial_size;
-    matrix_full_size( A );
-    
-    serial_size = enkf_main_serialize_dataset(enkf_main   , 
-                                              dataset,
-                                              report_step , 
-                                              use_count   , 
-                                              active_size , 
-                                              row_offset , 
-                                              work_pool , 
-                                              serialize_info );
-    if (serial_size > 0) {
-      msg_update(msg , "matrix multiplication");
-      matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );     // <- Could recycle the work_pool
-      matrix_assert_finite( A );
-      
-      enkf_main_deserialize_dataset( dataset , active_size , row_offset ,  serialize_info , num_cpu_threads , work_pool );
-    }
-  }
-  
-  thread_pool_free( work_pool );
-  serialize_info_free( serialize_info );
-  free( active_size );
-  free( row_offset );
-  msg_free( msg , true );
-  matrix_free( A );
-}
-
-
-
-void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local_dataset_type * dataset , int report_step , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data) {
-  const int num_cpu_threads          = 4;
-  int       matrix_size              = 1000;  /* Starting with this */
-  const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
-  matrix_type * A = matrix_alloc(matrix_size , ens_size);
-  msg_type  * msg = msg_alloc("Updating: " , false);
-  stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
-  const int num_kw  = stringlist_get_size( update_keys );
-  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
-  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
-  bool complete     = false;
-  serialize_info_type * serialize_info;
-  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
-  
-  int nrobs                = obs_data_get_active_size(obs_data);
-  int nrmin                = util_int_min( ens_size , nrobs);
-  enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( enkf_main->analysis_config );
-  double truncation                     = analysis_config_get_truncation( enkf_main->analysis_config );  
-  matrix_type * S , *R , *E , *D , *innov;
-  matrix_type * randrot       = NULL;
-
-  
-  /*Allocate matrix for principal components and reduced error covariance matrix Rp */
-  matrix_type * Z    = matrix_alloc( nrmin , ens_size    );
-  matrix_type * Rp   = matrix_alloc( nrmin , nrmin       );
-  matrix_type * Dp   = matrix_alloc( nrmin , ens_size    );
-
-  
-  /*
-    Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
-    local CV below. This step is only performed once for each
-    ministep, whereas the the update code below (can) go in several
-    steps if memory is tight.
-  */
-
-
-  enkf_analysis_alloc_matrices( enkf_main->rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , true ); 
-  enkf_analysis_init_principal_components( truncation ,  S , R , innov , E , D , Z , Rp , Dp);
-  
-  if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-    randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
-  
-  serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
-  msg_show( msg );
-  {
-    int ikw1 = 0;
-    do {
-      int ikw2;
-      int current_row_offset   = 0;
-      /* Recover full matrix size - after matrix_shrink_header() has been called. */
-      matrix_resize( A , matrix_size , ens_size , false);  
-      
-      ikw2 = enkf_main_serialize(enkf_main , 
-                                 A , 
-                                 report_step , 
-                                 use_count , 
-                                 ikw1 , 
-                                 active_size , 
-                                 row_offset , 
-                                 update_keys , 
-                                 dataset,
-                                 work_pool , 
-                                 serialize_info , 
-                                 &current_row_offset , 
-                                 msg );
-      
-      if (current_row_offset > 0) {
-        /* The actual update */
-        
-        /*Get the optimal update matrix - observe that the A matrix is input.*/
-        { 
-          matrix_type * X5 = matrix_alloc( ens_size , ens_size );
-
-          enkf_analysis_initX_principal_components_cv( analysis_config_get_nfolds_CV( enkf_main->analysis_config ),
-                                                       analysis_config_get_penalised_press( enkf_main->analysis_config ),
-                                                       X5 , 
-                                                       enkf_main->rng, 
-                                                       A  , 
-                                                       Z  , 
-                                                       Rp , 
-                                                       Dp );   
-          
-          msg_update(msg , " matrix multiplication");
-          matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
-          matrix_free( X5 );
-        }
-        
-        enkf_main_deserialize( update_keys , ikw1 , ikw2 , active_size , row_offset , dataset , serialize_info , num_cpu_threads , work_pool , msg );
-      }
-      ikw1 = ikw2;
-      if (ikw2 == num_kw)
-        complete = true;
-    } while ( !complete );
-  } 
-  
-  thread_pool_free( work_pool );
-  serialize_info_free( serialize_info );
-  free( active_size );
-  free( row_offset );
-  msg_free( msg , true );
-
-  matrix_free( R );
-  matrix_free( S );
-  matrix_free( innov );
-  
-  matrix_safe_free( E );
-  matrix_safe_free( D );
-  matrix_free( A );
-  matrix_free( Rp );
-  matrix_free( Dp );
-  matrix_free( Z );
-  matrix_safe_free( randrot );
+  return serialize_info;
 }
 
 
@@ -1066,179 +896,300 @@ void enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local
 
 
 
-
-
-
-/* 
-   Perform Cross-Validation and update ensemble members one at a time
-   using BOOTSTRAP estimates for ensemble covariance for localised 
-   EnKF updating schemes.  Here we create the update matrix X5 within 
-   the function, rather than sending it as an input.
-*/
-
-void enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , 
-                                     const local_dataset_type * dataset , 
-                                     const int_vector_type * step_list , 
-                                     hash_type * use_count , 
-                                     meas_data_type * meas_data , 
-                                     obs_data_type * obs_data, 
-                                     double std_cutoff, 
-                                     double alpha) {
-  const int num_cpu_threads          = 4;
-
-  int       matrix_size              = 1000;  /* Starting with this */
-  const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
-  matrix_type * A = matrix_alloc(matrix_size , ens_size);
-  msg_type  * msg = msg_alloc("Updating: " , false);
-  stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
-  const int num_kw  = stringlist_get_size( update_keys );
-  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
-  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
-  bool complete     = false;
-  serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
-  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
-  
-  int nrobs                = obs_data_get_active_size(obs_data);
-  int nrmin                = util_int_min( ens_size , nrobs);
-  int report_step          = int_vector_get_last( step_list );
-  
-  matrix_type * randrot       = NULL;
-  
-  /*
-    Generating a matrix with random integers to be used for sampling
-    across serializing. This matrix will hold double values, but an
-    integer cast will give a random integer between 0 and ens_size-1.
-  */
-
-  matrix_type * randints = matrix_alloc( ens_size , ens_size);
-  for (int i = 0; i < ens_size; i++){
-    for (int j = 0; j < ens_size; j++){
-      double r = 1.0 * rng_get_int( enkf_main->rng , ens_size );
-      matrix_iset(randints, i , j , r);
-    }
-  }
-
-  if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-    randrot = enkf_analysis_alloc_mp_randrot( ens_size  , enkf_main->rng );
-  
-  msg_show( msg );
-  {
-    int ikw1 = 0;
-    do {
-      int ikw2;
-      int current_row_offset   = 0;
-      matrix_resize( A , matrix_size , ens_size , false);  /* Recover full matrix size - after matrix_shrink_header() has been called. */
-
-      ikw2 = enkf_main_serialize(enkf_main , 
-                                 A , 
-                                 report_step , 
-                                 use_count , 
-                                 ikw1 , 
-                                 active_size , 
-                                 row_offset , 
-                                 update_keys , 
-                                 dataset ,
-                                 work_pool , 
-                                 serialize_info , 
-                                 &current_row_offset , 
-                                 msg );
-  
-      if (current_row_offset > 0) {
-        /* The actual update */
-        
-        /* The updates are performed one at a time when using bootstrap. Hence the followin loop*/
-        { 
-          int ensemble_members_loop;
-          matrix_type * work_A                     = matrix_alloc_copy( A ); // Huge memory requirement. Is needed such that we do not resample updated ensemble members from A
-          meas_data_type * meas_data_resampled = meas_data_alloc_copy( meas_data );
-          matrix_type      * A_resampled       = matrix_alloc( matrix_get_rows(work_A) , matrix_get_columns( work_A ));
-
-          for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
-            int ensemble_counter;
-            /* Resample A and meas_data. Here we are careful to resample the working copy.*/
-            int_vector_type * bootstrap_components = int_vector_alloc( ens_size , 0);
-            for (ensemble_counter  = 0; ensemble_counter < ens_size; ensemble_counter++) {
-              double random_col = matrix_iget( randints , ensemble_members_loop , ensemble_counter );
-              int random_column = (int)random_col;
-              int_vector_iset( bootstrap_components , ensemble_counter , random_column );
-              matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column );
-              meas_data_assign_vector( meas_data_resampled, meas_data , ensemble_counter , random_column);
-            }
-            int_vector_select_unique( bootstrap_components );
-            int unique_bootstrap_components = int_vector_size( bootstrap_components );
-            int_vector_free( bootstrap_components);
-            if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) { /* Bootstrapping and CV*/
-              matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
-              matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
-              matrix_type * Z    = matrix_alloc( nrmin , nrmin    );
-              double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);
-              /*
-                Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
-                local CV below. 
-              */
-              enkf_analysis_local_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data ,  V0T , Z , eig , U0 , meas_data );
-              matrix_type * X5_boot_cv = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , 
-                                                                      enkf_main->rng , 
-                                                                      meas_data_resampled , 
-                                                                      obs_data , 
-                                                                      randrot, 
-                                                                      A_resampled , 
-                                                                      V0T ,
-                                                                      Z , 
-                                                                      eig, 
-                                                                      U0, 
-                                                                      meas_data, 
-                                                                      unique_bootstrap_components);
-              
-              msg_update(msg , " matrix multiplication");
-              matrix_inplace_matmul_mt( A_resampled , X5_boot_cv , num_cpu_threads );
-              matrix_inplace_add( A_resampled , work_A ); 
-              matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
-              matrix_free( U0 );
-              matrix_free( V0T );
-              matrix_free( Z );
-              free( eig );
-              matrix_free( X5_boot_cv );
-            } else { /* Just Bootstrapping */
-              matrix_type * X5_boot = enkf_analysis_allocX_boot( enkf_main->analysis_config , 
-                                                                 enkf_main->rng , 
-                                                                 meas_data_resampled , 
-                                                                 obs_data , 
-                                                                 randrot , 
-                                                                 meas_data);
-              msg_update(msg , " matrix multiplication");
-              matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
-              matrix_free( X5_boot );
-              matrix_inplace_add( A_resampled , work_A );
-              matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
-            }
-          }
-          matrix_free( A_resampled );
-          meas_data_free(meas_data_resampled);
-          matrix_free(work_A);
-        }
-        
-        enkf_main_deserialize( update_keys , ikw1 , ikw2 , active_size , 
-                               row_offset , dataset , serialize_info , 
-                               num_cpu_threads , work_pool , msg );
-        
-      }
-      ikw1 = ikw2;
-      if (ikw2 == num_kw)
-        complete = true;
-    } while ( !complete );
-  }
-
-  thread_pool_free( work_pool );
-  serialize_info_free( serialize_info );
-  free( active_size );
-  free( row_offset );
-  
-  msg_free( msg , true );
-  matrix_free( A );
-  matrix_free( randints );
-  matrix_safe_free( randrot );
-}
+// Bootstrap + CVvoid enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local_dataset_type * dataset , int report_step , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data) {
+// Bootstrap + CV  const int num_cpu_threads          = 4;
+// Bootstrap + CV  int       matrix_size              = 1000;  /* Starting with this */
+// Bootstrap + CV  const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
+// Bootstrap + CV  matrix_type * A = matrix_alloc(matrix_size , ens_size);
+// Bootstrap + CV  msg_type  * msg = msg_alloc("Updating: " , false);
+// Bootstrap + CV  stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
+// Bootstrap + CV  const int num_kw  = stringlist_get_size( update_keys );
+// Bootstrap + CV  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
+// Bootstrap + CV  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
+// Bootstrap + CV  bool complete     = false;
+// Bootstrap + CV  serialize_info_type * serialize_info;
+// Bootstrap + CV  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
+// Bootstrap + CV  
+// Bootstrap + CV  int nrobs                = obs_data_get_active_size(obs_data);
+// Bootstrap + CV  int nrmin                = util_int_min( ens_size , nrobs);
+// Bootstrap + CV  enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( enkf_main->analysis_config );
+// Bootstrap + CV  double truncation                     = analysis_config_get_truncation( enkf_main->analysis_config );  
+// Bootstrap + CV  matrix_type * S , *R , *E , *D , *innov;
+// Bootstrap + CV  matrix_type * randrot       = NULL;
+// Bootstrap + CV
+// Bootstrap + CV  
+// Bootstrap + CV  /*Allocate matrix for principal components and reduced error covariance matrix Rp */
+// Bootstrap + CV  matrix_type * Z    = matrix_alloc( nrmin , ens_size    );
+// Bootstrap + CV  matrix_type * Rp   = matrix_alloc( nrmin , nrmin       );
+// Bootstrap + CV  matrix_type * Dp   = matrix_alloc( nrmin , ens_size    );
+// Bootstrap + CV
+// Bootstrap + CV  
+// Bootstrap + CV  /*
+// Bootstrap + CV    Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
+// Bootstrap + CV    local CV below. This step is only performed once for each
+// Bootstrap + CV    ministep, whereas the the update code below (can) go in several
+// Bootstrap + CV    steps if memory is tight.
+// Bootstrap + CV  */
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV  enkf_analysis_alloc_matrices( enkf_main->rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , true ); 
+// Bootstrap + CV  enkf_analysis_init_principal_components( truncation ,  S , R , innov , E , D , Z , Rp , Dp);
+// Bootstrap + CV  
+// Bootstrap + CV  if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
+// Bootstrap + CV    randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
+// Bootstrap + CV  
+// Bootstrap + CV  serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
+// Bootstrap + CV  msg_show( msg );
+// Bootstrap + CV  {
+// Bootstrap + CV    int ikw1 = 0;
+// Bootstrap + CV    do {
+// Bootstrap + CV      int ikw2;
+// Bootstrap + CV      int current_row_offset   = 0;
+// Bootstrap + CV      /* Recover full matrix size - after matrix_shrink_header() has been called. */
+// Bootstrap + CV      matrix_resize( A , matrix_size , ens_size , false);  
+// Bootstrap + CV      
+// Bootstrap + CV      ikw2 = enkf_main_serialize(enkf_main , 
+// Bootstrap + CV                                 A , 
+// Bootstrap + CV                                 report_step , 
+// Bootstrap + CV                                 use_count , 
+// Bootstrap + CV                                 ikw1 , 
+// Bootstrap + CV                                 active_size , 
+// Bootstrap + CV                                 row_offset , 
+// Bootstrap + CV                                 update_keys , 
+// Bootstrap + CV                                 dataset,
+// Bootstrap + CV                                 work_pool , 
+// Bootstrap + CV                                 serialize_info , 
+// Bootstrap + CV                                 &current_row_offset , 
+// Bootstrap + CV                                 msg );
+// Bootstrap + CV      
+// Bootstrap + CV      if (current_row_offset > 0) {
+// Bootstrap + CV        /* The actual update */
+// Bootstrap + CV        
+// Bootstrap + CV        /*Get the optimal update matrix - observe that the A matrix is input.*/
+// Bootstrap + CV        { 
+// Bootstrap + CV          matrix_type * X5 = matrix_alloc( ens_size , ens_size );
+// Bootstrap + CV
+// Bootstrap + CV          enkf_analysis_initX_principal_components_cv( analysis_config_get_nfolds_CV( enkf_main->analysis_config ),
+// Bootstrap + CV                                                       analysis_config_get_penalised_press( enkf_main->analysis_config ),
+// Bootstrap + CV                                                       X5 , 
+// Bootstrap + CV                                                       enkf_main->rng, 
+// Bootstrap + CV                                                       A  , 
+// Bootstrap + CV                                                       Z  , 
+// Bootstrap + CV                                                       Rp , 
+// Bootstrap + CV                                                       Dp );   
+// Bootstrap + CV          
+// Bootstrap + CV          msg_update(msg , " matrix multiplication");
+// Bootstrap + CV          matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
+// Bootstrap + CV          matrix_free( X5 );
+// Bootstrap + CV        }
+// Bootstrap + CV        
+// Bootstrap + CV        enkf_main_deserialize( update_keys , ikw1 , ikw2 , active_size , row_offset , dataset , serialize_info , num_cpu_threads , work_pool , msg );
+// Bootstrap + CV      }
+// Bootstrap + CV      ikw1 = ikw2;
+// Bootstrap + CV      if (ikw2 == num_kw)
+// Bootstrap + CV        complete = true;
+// Bootstrap + CV    } while ( !complete );
+// Bootstrap + CV  } 
+// Bootstrap + CV  
+// Bootstrap + CV  thread_pool_free( work_pool );
+// Bootstrap + CV  serialize_info_free( serialize_info );
+// Bootstrap + CV  free( active_size );
+// Bootstrap + CV  free( row_offset );
+// Bootstrap + CV  msg_free( msg , true );
+// Bootstrap + CV
+// Bootstrap + CV  matrix_free( R );
+// Bootstrap + CV  matrix_free( S );
+// Bootstrap + CV  matrix_free( innov );
+// Bootstrap + CV  
+// Bootstrap + CV  matrix_safe_free( E );
+// Bootstrap + CV  matrix_safe_free( D );
+// Bootstrap + CV  matrix_free( A );
+// Bootstrap + CV  matrix_free( Rp );
+// Bootstrap + CV  matrix_free( Dp );
+// Bootstrap + CV  matrix_free( Z );
+// Bootstrap + CV  matrix_safe_free( randrot );
+// Bootstrap + CV}
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV
+// Bootstrap + CV/* 
+// Bootstrap + CV   Perform Cross-Validation and update ensemble members one at a time
+// Bootstrap + CV   using BOOTSTRAP estimates for ensemble covariance for localised 
+// Bootstrap + CV   EnKF updating schemes.  Here we create the update matrix X5 within 
+// Bootstrap + CV   the function, rather than sending it as an input.
+// Bootstrap + CV*/
+// Bootstrap + CV
+// Bootstrap + CVvoid enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , 
+// Bootstrap + CV                                     const local_dataset_type * dataset , 
+// Bootstrap + CV                                     const int_vector_type * step_list , 
+// Bootstrap + CV                                     hash_type * use_count , 
+// Bootstrap + CV                                     meas_data_type * meas_data , 
+// Bootstrap + CV                                     obs_data_type * obs_data, 
+// Bootstrap + CV                                     double std_cutoff, 
+// Bootstrap + CV                                     double alpha) {
+// Bootstrap + CV  const int num_cpu_threads          = 4;
+// Bootstrap + CV
+// Bootstrap + CV  int       matrix_size              = 1000;  /* Starting with this */
+// Bootstrap + CV  const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
+// Bootstrap + CV  matrix_type * A = matrix_alloc(matrix_size , ens_size);
+// Bootstrap + CV  msg_type  * msg = msg_alloc("Updating: " , false);
+// Bootstrap + CV  stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
+// Bootstrap + CV  const int num_kw  = stringlist_get_size( update_keys );
+// Bootstrap + CV  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
+// Bootstrap + CV  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
+// Bootstrap + CV  bool complete     = false;
+// Bootstrap + CV  serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
+// Bootstrap + CV  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
+// Bootstrap + CV  
+// Bootstrap + CV  int nrobs                = obs_data_get_active_size(obs_data);
+// Bootstrap + CV  int nrmin                = util_int_min( ens_size , nrobs);
+// Bootstrap + CV  int report_step          = int_vector_get_last( step_list );
+// Bootstrap + CV  
+// Bootstrap + CV  matrix_type * randrot       = NULL;
+// Bootstrap + CV  
+// Bootstrap + CV  /*
+// Bootstrap + CV    Generating a matrix with random integers to be used for sampling
+// Bootstrap + CV    across serializing. This matrix will hold double values, but an
+// Bootstrap + CV    integer cast will give a random integer between 0 and ens_size-1.
+// Bootstrap + CV  */
+// Bootstrap + CV
+// Bootstrap + CV  matrix_type * randints = matrix_alloc( ens_size , ens_size);
+// Bootstrap + CV  for (int i = 0; i < ens_size; i++){
+// Bootstrap + CV    for (int j = 0; j < ens_size; j++){
+// Bootstrap + CV      double r = 1.0 * rng_get_int( enkf_main->rng , ens_size );
+// Bootstrap + CV      matrix_iset(randints, i , j , r);
+// Bootstrap + CV    }
+// Bootstrap + CV  }
+// Bootstrap + CV
+// Bootstrap + CV  if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
+// Bootstrap + CV    randrot = enkf_analysis_alloc_mp_randrot( ens_size  , enkf_main->rng );
+// Bootstrap + CV  
+// Bootstrap + CV  msg_show( msg );
+// Bootstrap + CV  {
+// Bootstrap + CV    int ikw1 = 0;
+// Bootstrap + CV    do {
+// Bootstrap + CV      int ikw2;
+// Bootstrap + CV      int current_row_offset   = 0;
+// Bootstrap + CV      matrix_resize( A , matrix_size , ens_size , false);  /* Recover full matrix size - after matrix_shrink_header() has been called. */
+// Bootstrap + CV
+// Bootstrap + CV      ikw2 = enkf_main_serialize(enkf_main , 
+// Bootstrap + CV                                 A , 
+// Bootstrap + CV                                 report_step , 
+// Bootstrap + CV                                 use_count , 
+// Bootstrap + CV                                 ikw1 , 
+// Bootstrap + CV                                 active_size , 
+// Bootstrap + CV                                 row_offset , 
+// Bootstrap + CV                                 update_keys , 
+// Bootstrap + CV                                 dataset ,
+// Bootstrap + CV                                 work_pool , 
+// Bootstrap + CV                                 serialize_info , 
+// Bootstrap + CV                                 &current_row_offset , 
+// Bootstrap + CV                                 msg );
+// Bootstrap + CV  
+// Bootstrap + CV      if (current_row_offset > 0) {
+// Bootstrap + CV        /* The actual update */
+// Bootstrap + CV        
+// Bootstrap + CV        /* The updates are performed one at a time when using bootstrap. Hence the followin loop*/
+// Bootstrap + CV        { 
+// Bootstrap + CV          int ensemble_members_loop;
+// Bootstrap + CV          matrix_type * work_A                     = matrix_alloc_copy( A ); // Huge memory requirement. Is needed such that we do not resample updated ensemble members from A
+// Bootstrap + CV          meas_data_type * meas_data_resampled = meas_data_alloc_copy( meas_data );
+// Bootstrap + CV          matrix_type      * A_resampled       = matrix_alloc( matrix_get_rows(work_A) , matrix_get_columns( work_A ));
+// Bootstrap + CV
+// Bootstrap + CV          for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
+// Bootstrap + CV            int ensemble_counter;
+// Bootstrap + CV            /* Resample A and meas_data. Here we are careful to resample the working copy.*/
+// Bootstrap + CV            int_vector_type * bootstrap_components = int_vector_alloc( ens_size , 0);
+// Bootstrap + CV            for (ensemble_counter  = 0; ensemble_counter < ens_size; ensemble_counter++) {
+// Bootstrap + CV              double random_col = matrix_iget( randints , ensemble_members_loop , ensemble_counter );
+// Bootstrap + CV              int random_column = (int)random_col;
+// Bootstrap + CV              int_vector_iset( bootstrap_components , ensemble_counter , random_column );
+// Bootstrap + CV              matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column );
+// Bootstrap + CV              meas_data_assign_vector( meas_data_resampled, meas_data , ensemble_counter , random_column);
+// Bootstrap + CV            }
+// Bootstrap + CV            int_vector_select_unique( bootstrap_components );
+// Bootstrap + CV            int unique_bootstrap_components = int_vector_size( bootstrap_components );
+// Bootstrap + CV            int_vector_free( bootstrap_components);
+// Bootstrap + CV            if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) { /* Bootstrapping and CV*/
+// Bootstrap + CV              matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
+// Bootstrap + CV              matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
+// Bootstrap + CV              matrix_type * Z    = matrix_alloc( nrmin , nrmin    );
+// Bootstrap + CV              double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);
+// Bootstrap + CV              /*
+// Bootstrap + CV                Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
+// Bootstrap + CV                local CV below. 
+// Bootstrap + CV              */
+// Bootstrap + CV              enkf_analysis_local_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data ,  V0T , Z , eig , U0 , meas_data );
+// Bootstrap + CV              matrix_type * X5_boot_cv = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , 
+// Bootstrap + CV                                                                      enkf_main->rng , 
+// Bootstrap + CV                                                                      meas_data_resampled , 
+// Bootstrap + CV                                                                      obs_data , 
+// Bootstrap + CV                                                                      randrot, 
+// Bootstrap + CV                                                                      A_resampled , 
+// Bootstrap + CV                                                                      V0T ,
+// Bootstrap + CV                                                                      Z , 
+// Bootstrap + CV                                                                      eig, 
+// Bootstrap + CV                                                                      U0, 
+// Bootstrap + CV                                                                      meas_data, 
+// Bootstrap + CV                                                                      unique_bootstrap_components);
+// Bootstrap + CV              
+// Bootstrap + CV              msg_update(msg , " matrix multiplication");
+// Bootstrap + CV              matrix_inplace_matmul_mt( A_resampled , X5_boot_cv , num_cpu_threads );
+// Bootstrap + CV              matrix_inplace_add( A_resampled , work_A ); 
+// Bootstrap + CV              matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
+// Bootstrap + CV              matrix_free( U0 );
+// Bootstrap + CV              matrix_free( V0T );
+// Bootstrap + CV              matrix_free( Z );
+// Bootstrap + CV              free( eig );
+// Bootstrap + CV              matrix_free( X5_boot_cv );
+// Bootstrap + CV            } else { /* Just Bootstrapping */
+// Bootstrap + CV              matrix_type * X5_boot = enkf_analysis_allocX_boot( enkf_main->analysis_config , 
+// Bootstrap + CV                                                                 enkf_main->rng , 
+// Bootstrap + CV                                                                 meas_data_resampled , 
+// Bootstrap + CV                                                                 obs_data , 
+// Bootstrap + CV                                                                 randrot , 
+// Bootstrap + CV                                                                 meas_data);
+// Bootstrap + CV              msg_update(msg , " matrix multiplication");
+// Bootstrap + CV              matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
+// Bootstrap + CV              matrix_free( X5_boot );
+// Bootstrap + CV              matrix_inplace_add( A_resampled , work_A );
+// Bootstrap + CV              matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
+// Bootstrap + CV            }
+// Bootstrap + CV          }
+// Bootstrap + CV          matrix_free( A_resampled );
+// Bootstrap + CV          meas_data_free(meas_data_resampled);
+// Bootstrap + CV          matrix_free(work_A);
+// Bootstrap + CV        }
+// Bootstrap + CV        
+// Bootstrap + CV        enkf_main_deserialize( update_keys , ikw1 , ikw2 , active_size , 
+// Bootstrap + CV                               row_offset , dataset , serialize_info , 
+// Bootstrap + CV                               num_cpu_threads , work_pool , msg );
+// Bootstrap + CV        
+// Bootstrap + CV      }
+// Bootstrap + CV      ikw1 = ikw2;
+// Bootstrap + CV      if (ikw2 == num_kw)
+// Bootstrap + CV        complete = true;
+// Bootstrap + CV    } while ( !complete );
+// Bootstrap + CV  }
+// Bootstrap + CV
+// Bootstrap + CV  thread_pool_free( work_pool );
+// Bootstrap + CV  serialize_info_free( serialize_info );
+// Bootstrap + CV  free( active_size );
+// Bootstrap + CV  free( row_offset );
+// Bootstrap + CV  
+// Bootstrap + CV  msg_free( msg , true );
+// Bootstrap + CV  matrix_free( A );
+// Bootstrap + CV  matrix_free( randints );
+// Bootstrap + CV  matrix_safe_free( randrot );
+// Bootstrap + CV}
 
 
 
@@ -1259,11 +1210,12 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_type * X       = matrix_alloc( ens_size , ens_size );
   matrix_type * S       = meas_data_allocS( forecast , active_size );
   matrix_type * R       = obs_data_allocR( obs_data , active_size );
-  matrix_type * innov   = obs_data_alloc_innov( obs_data , forecast , active_size );
+  matrix_type * dObs    = obs_data_allocdObs( obs_data , active_size );
   matrix_type * A       = matrix_alloc( matrix_start_size , ens_size );
   matrix_type * E       = NULL;
   matrix_type * D       = NULL;
   matrix_type * randrot = NULL; 
+  matrix_type * localA  = NULL;
 
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
@@ -1273,37 +1225,42 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   if (analysis_module_get_option( module , ANALYSIS_NEED_RANDROT)) 
     randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
   
+  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) {
+    printf("Using A \n");
+    localA = A;
+  }
+
   /*****************************************************************/
   
-  analysis_module_init_update( module , S , R , innov , E , D );
+  analysis_module_init_update( module , S , R , dObs , E , D );
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
-      if (dataset_get_size( dataset ) {
-          int * active_size = util_malloc( local_dataset_get_size( dataset ) * sizeof * active_size , __func__);
-          int * row_offset  = util_malloc( local_dataset_get_size( dataset ) * sizeof * row_offset  , __func__);
-
-          thread_pool_restart( tp );
-          enkf_main_serialize_dataset( enkf_main , dataset , report_step ,  use_count , active_size , row_offset , tp , serialize_info);
-
-          analysis_module_initX( module , X , S , R , innov , E , D , randrot );
-          
-          thread_pool_restart( tp );
+      if (local_dataset_get_size( dataset )) {
+        int * active_size = util_malloc( local_dataset_get_size( dataset ) * sizeof * active_size , __func__);
+        int * row_offset  = util_malloc( local_dataset_get_size( dataset ) * sizeof * row_offset  , __func__);
+        
+        enkf_main_serialize_dataset( enkf_main , dataset , report_step ,  use_count , active_size , row_offset , tp , serialize_info);
+        
+        if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
+          analysis_module_updateA( module , localA , S , R , dObs , E , D , randrot );
+        else {
+          analysis_module_initX( module , X , localA , S , R , dObs , E , D , randrot );
           matrix_inplace_matmul_mt2( A , X , tp );
-          
-          
-          //enkf_main_update_mulX( enkf_main , X , dataset , report_step , use_count);
-
-          //thread_pool_restart( tp );
-          //enkf_main_deserialize_dataset( );
-          free( active_size );
-          free( row_offset );
         }
+          
+        enkf_main_deserialize_dataset( dataset , active_size , row_offset , serialize_info , tp);
+        
+        free( active_size );
+        free( row_offset );
+      }
     }
+    hash_iter_free( dataset_iter );
     serialize_info_free( serialize_info );
+      
   }
   analysis_module_complete_update( module );
     
@@ -1315,7 +1272,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_safe_free( D );
   matrix_free( S );
   matrix_free( R );
-  matrix_free( innov );
+  matrix_free( dObs );
   matrix_free( X );
 }
 
@@ -1398,27 +1355,29 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
       if (obs_data_get_active_size(obs_data) > 0) {
         if (analysis_config_Xbased( enkf_main->analysis_config )) {
-          
-          if (analysis_config_get_bootstrap( enkf_main->analysis_config )) {
-            /*
-              Think there is a memory bug in this update code, when
-              the allocated A matrix is not large enough to hold all
-              data.
-            */
-            enkf_main_update_mulX_bootstrap(enkf_main , dataset , step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
-          } else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
-            /* Update based on Cross validation AND local analysis. */
-            enkf_main_update_mulX_prin_comp_cv(enkf_main , 
-                                               dataset , 
-                                               int_vector_get_last( step_list ) , 
-                                               use_count , 
-                                               meas_forecast , 
-                                               obs_data);
 
-          } else {
-            /* Plain vanilla goes through module update. */
-            enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
-          }
+          enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
+          
+          //Bootstrap + CVif (analysis_config_get_bootstrap( enkf_main->analysis_config )) {
+          //Bootstrap + CV  /*
+          //Bootstrap + CV    Think there is a memory bug in this update code, when
+          //Bootstrap + CV    the allocated A matrix is not large enough to hold all
+          //Bootstrap + CV    data.
+          //Bootstrap + CV  */
+          //Bootstrap + CV  enkf_main_update_mulX_bootstrap(enkf_main , dataset , step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
+          //Bootstrap + CV} else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
+          //Bootstrap + CV  /* Update based on Cross validation AND local analysis. */
+          //Bootstrap + CV  enkf_main_update_mulX_prin_comp_cv(enkf_main , 
+          //Bootstrap + CV                                     dataset , 
+          //Bootstrap + CV                                     int_vector_get_last( step_list ) , 
+          //Bootstrap + CV                                     use_count , 
+          //Bootstrap + CV                                     meas_forecast , 
+          //Bootstrap + CV                                     obs_data);
+          //Bootstrap + CV
+          //Bootstrap + CV} else {
+          //Bootstrap + CV  /* Plain vanilla goes through module update. */
+          //Bootstrap + CV  enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
+          //Bootstrap + CV}
         }
       }
     }
@@ -2381,11 +2340,12 @@ static enkf_main_type * enkf_main_alloc_empty( void ) {
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
   
+
   enkf_main->site_config      = site_config_alloc_empty();
   enkf_main->ensemble_config  = ensemble_config_alloc_empty();
   enkf_main->ecl_config       = ecl_config_alloc_empty();
   enkf_main->model_config     = model_config_alloc_empty();
-  enkf_main->analysis_config  = analysis_config_alloc_default();   /* This is ready for use. */
+  enkf_main->analysis_config  = analysis_config_alloc_default( enkf_main->rng );   /* This is ready for use. */
   enkf_main->plot_config      = plot_config_alloc_default();       /* This is ready for use. */
   return enkf_main;
 }
@@ -2875,8 +2835,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
     enkf_main_init_subst_list( enkf_main );
     enkf_main_init_data_kw( enkf_main , config );
-
-    analysis_config_init( enkf_main->analysis_config , config );
+    
+    analysis_config_load_internal_modules( enkf_main->analysis_config , enkf_main->rng );
+    analysis_config_init( enkf_main->analysis_config , config , enkf_main->rng);
     ecl_config_init( enkf_main->ecl_config , config );
     plot_config_init( enkf_main->plot_config , config );
     ensemble_config_init( enkf_main->ensemble_config , config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );

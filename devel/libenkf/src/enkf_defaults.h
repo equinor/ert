@@ -115,6 +115,7 @@
 #define DEFAULT_ENKF_FORCE_NCOMP   false
 #define DEFAULT_UPDATE_RESULTS     false
 #define DEFAULT_SINGLE_NODE_UPDATE true
+#define DEFAULT_ANALYSIS_MODULE    "STD_ENKF"
 
 /* Default directories. */
 #define DEFAULT_PLOT_PATH    "plots"

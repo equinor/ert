@@ -151,6 +151,11 @@ const char * local_ministep_get_name( const local_ministep_type * ministep ) {
 
 /*****************************************************************/
 
+hash_iter_type * local_ministep_alloc_dataset_iter( const local_ministep_type * ministep ) {
+  return hash_iter_alloc( ministep->datasets );
+}
+
+
 void local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream ) {
   fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( CREATE_MINISTEP ), ministep->name , local_obsset_get_name( ministep->observations) );
   {

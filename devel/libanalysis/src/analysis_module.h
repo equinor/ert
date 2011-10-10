@@ -24,31 +24,50 @@ extern "C" {
 
 #include <matrix.h>
 
+
+#define ANALYSIS_NEED_ED              1
+#define ANALYSIS_NEED_RANDROT         2
+#define ANALYSIS_USE_A                4       
+#define ANALYSIS_UPDATE_A             8
+
+
+
 typedef struct analysis_module_struct analysis_module_type;
 
 
-analysis_module_type * analysis_module_alloc_external( const char * user_name , const char * libname );
-analysis_module_type * analysis_module_alloc_internal( const char * user_name , const char * symbol_table );
+analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * user_name , const char * libname );
+analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * user_name , const char * symbol_table );
 void                   analysis_module_free( analysis_module_type * module );
 void                   analysis_module_free__( void * arg);
 
 void analysis_module_initX(analysis_module_type * module , 
                            matrix_type * X , 
+                           matrix_type * A , 
                            matrix_type * S , 
                            matrix_type * R , 
-                           matrix_type * innov , 
+                           matrix_type * dObs , 
                            matrix_type * E , 
                            matrix_type * D ,
                            matrix_type * randrot);
 
+void analysis_module_updateA(analysis_module_type * module , 
+                             matrix_type * A , 
+                             matrix_type * S , 
+                             matrix_type * R , 
+                             matrix_type * dObs , 
+                             matrix_type * E , 
+                             matrix_type * D , 
+                             matrix_type * randrot);
+
 bool  analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
 
+const char * analysis_module_get_name( const analysis_module_type * module );
 bool                   analysis_module_get_option( const analysis_module_type * module , long flag);
 void                   analysis_module_complete_update( analysis_module_type * module );
 void                   analysis_module_init_update( analysis_module_type * module , 
                                                     matrix_type * S , 
                                                     matrix_type * R , 
-                                                    matrix_type * innov , 
+                                                    matrix_type * dObs , 
                                                     matrix_type * E , 
                                                     matrix_type * D );
 

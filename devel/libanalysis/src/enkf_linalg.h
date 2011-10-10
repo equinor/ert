@@ -13,6 +13,8 @@ void enkf_linalg_svdS(const matrix_type * S ,
 
 
 
+matrix_type * enkf_linalg_alloc_innov( const matrix_type * dObs , const matrix_type * S);
+
 void enkf_linalg_lowrankCinv__(const matrix_type * S , 
                                const matrix_type * R , 
                                matrix_type * V0T , 
