@@ -41,7 +41,7 @@ struct analysis_module_struct {
   analysis_updateA_ftype         * updateA;
   analysis_init_update_ftype     * init_update;
   analysis_complete_update_ftype * complete_update;
-  analysis_get_option_ftype      * get_option;
+  analysis_get_options_ftype     * get_options;
     
   analysis_set_int_ftype         * set_int;
   analysis_set_double_ftype      * set_double;
@@ -92,7 +92,7 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
   module->set_string        = table->set_string;
   module->alloc             = table->alloc;
   module->freef             = table->freef;
-  module->get_option        = table->get_option; 
+  module->get_options       = table->get_options; 
   
   if (module->alloc != NULL)
     module->module_data = module->alloc( rng );
@@ -303,5 +303,5 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
 
 
 bool analysis_module_get_option( const analysis_module_type * module , long flag) {
-  return module->get_option( module->module_data , flag );
+  return (flag & module->get_options( module->module_data , flag ));
 }

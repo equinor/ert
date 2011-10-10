@@ -18,6 +18,65 @@ loading internal modules and external modules are treated 100%
 identically.
 
 
-----
+How modules work
+----------------
+
+
+Loading modules
+---------------
+
+
+Interacting with modules
+------------------------
+The modules can implement four different functions to set a scalar
+value. The four functions have signature:
+
+   bool set_int (void * module_data, const char * var_name , int value)
+   bool set_double( void * module_data , const char * var_name , double value)
+   bool set_bool( void * module_data , const char * var_name , bool value )
+   bool set_string( void * module_data , const char * var_name , const char * value )
+
+Common for all these functions is:
+
+  1. It is not necessary to implement these functions; if you know
+     that the module has no internal integer variables which should be
+     user-modifiable you can just set the set_int function pointer to
+     NULL.
+
+  2. If the module recognizes the variable name and actually sets an
+     internal variable it should return true, otherwise return false.
+
+  3. The set_xxx() functions are called from the wrapper function
+     analysis_module_set_var(); when calling the wrapper function the
+     value variable is a string which we try to convert to int, double
+     and bool respectively and then cascade through the functions in
+     the order listed above. This involves two things:
+
+       a) A module has an internal namespace which is shared among all
+          variable types.
+
+       b) If the string value argument is incorrectly formatted,
+          i.e. an integer is passed as "12x" the correct low level
+          function will not be called.
+
+The method to get information out from the module is much more
+limited. Each module should contain an internal variable:
+
+    long option_flags;
+
+And when instantiating the private module you should initialize the
+option_flags variable by adding together the relevant options from
+analysis_module.h. The enkf_main_UPDATE() method which invokes the
+module functions will inspect the option_flags to see which variables
+to pass to the module, and which module functions to invoke, so this
+must be correct.
+
+
+Example 
+------- 
+The module/file std_enkf.c is commented quite heavily to serve as an
+example.
+
+
 
 

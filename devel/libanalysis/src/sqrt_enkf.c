@@ -136,10 +136,10 @@ void sqrt_enkf_initX(void * module_data ,
 }
 
 
-bool sqrt_enkf_get_option( void * arg , long flag ) {
+long sqrt_enkf_get_options( void * arg , long flag ) {
   sqrt_enkf_data_type * module_data = sqrt_enkf_data_safe_cast( arg );
   {
-    return (flag & module_data->options);
+    return module_data->options;
   }
 }
 
@@ -168,6 +168,6 @@ analysis_table_type SYMBOL_TABLE[] = {
     .updateA         = NULL,
     .init_update     = NULL,
     .complete_update = NULL,
-    .get_option      = sqrt_enkf_get_option , 
+    .get_options     = sqrt_enkf_get_options 
   }
 };

@@ -24,7 +24,7 @@ extern "C" {
 
 #include <matrix.h>
 
-
+// Option flags:
 #define ANALYSIS_NEED_ED              1
 #define ANALYSIS_NEED_RANDROT         2
 #define ANALYSIS_USE_A                4       

@@ -197,10 +197,10 @@ void bootstrap_enkf_complete_update(void * arg) {
 
 
 
-bool bootstrap_enkf_get_option( void * arg , long flag) {
+long bootstrap_enkf_get_options( void * arg , long flag) {
   bootstrap_enkf_data_type * bootstrap_data = bootstrap_enkf_data_safe_cast( arg );
   {
-    return (flag & bootstrap_data->option_flags);
+    return bootstrap_data->option_flags;
   }
 }
 
@@ -242,7 +242,7 @@ analysis_table_type SYMBOL_TABLE[] = {
     .set_double      = bootstrap_enkf_set_double , 
     .set_bool        = NULL , 
     .set_string      = NULL , 
-    .get_option      = bootstrap_enkf_get_option , 
+    .get_options     = bootstrap_enkf_get_options , 
     .initX           = NULL,
     .updateA         = bootstrap_enkf_updateA , 
     .init_update     = bootstrap_enkf_init_update , 

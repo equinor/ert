@@ -47,7 +47,7 @@ typedef void * (analysis_alloc_ftype) ( rng_type * rng );
   
   typedef void (analysis_complete_update_ftype) (void * module_data );
   
-  typedef bool (analysis_get_option_ftype) (void * module_data , long option);
+  typedef long (analysis_get_options_ftype) (void * module_data , long option);
 
 
 /*****************************************************************/
@@ -69,7 +69,7 @@ typedef struct {
   analysis_set_double_ftype      * set_double;
   analysis_set_bool_ftype        * set_bool; 
   analysis_set_string_ftype      * set_string;
-  analysis_get_option_ftype      * get_option;
+  analysis_get_options_ftype     * get_options;
 } analysis_table_type;
 
 

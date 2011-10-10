@@ -606,10 +606,10 @@ bool cv_enkf_set_int( void * arg , const char * var_name , int value) {
 }
 
 
-bool cv_enkf_get_option( void * arg , long flag) {
+long cv_enkf_get_options( void * arg , long flag) {
   cv_enkf_data_type * cv_data = cv_enkf_data_safe_cast( arg );
   {
-    return (flag & cv_data->option_flags);
+    return cv_data->option_flags;
   }
 }
 
@@ -630,7 +630,7 @@ analysis_table_type SYMBOL_TABLE[] = {
     .set_double      = cv_enkf_set_double , 
     .set_bool        = NULL , 
     .set_string      = NULL , 
-    .get_option      = cv_enkf_get_option , 
+    .get_options     = cv_enkf_get_options , 
     .initX           = cv_enkf_initX , 
     .updateA         = NULL,
     .init_update     = cv_enkf_init_update , 
