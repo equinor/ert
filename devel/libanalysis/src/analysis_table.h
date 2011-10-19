@@ -16,8 +16,7 @@ typedef void (analysis_updateA_ftype) (void * module_data ,
                                         matrix_type * R , 
                                         matrix_type * dObs , 
                                         matrix_type * E ,
-                                        matrix_type * D , 
-                                        matrix_type * randrot);
+                                        matrix_type * D );
 
 
 typedef void (analysis_initX_ftype)       (void * module_data , 
@@ -27,8 +26,8 @@ typedef void (analysis_initX_ftype)       (void * module_data ,
                                            matrix_type * R , 
                                            matrix_type * dObs , 
                                            matrix_type * E , 
-                                           matrix_type * D , 
-                                           matrix_type * randrot); 
+                                           matrix_type * D );
+
 
 typedef bool (analysis_set_int_ftype)       (void * module_data , const char * flag , int value);
 typedef bool (analysis_set_bool_ftype)      (void * module_data , const char * flag , bool value);

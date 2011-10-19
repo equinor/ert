@@ -192,6 +192,23 @@ class EclKW(object):
         else:
             return None
 
+    @classmethod
+    def fread( cls , fortio ):
+        """
+        Will read a new EclKW instance from the open FortIO file.
+        """
+        c_ptr = cfunc.fread_alloc( fortio )
+        if c_ptr:
+            obj = cls( )
+            obj.c_ptr = c_ptr
+            obj.data_owner = True
+            obj.parent = None
+            obj.__init()
+            return obj
+        else:
+            return None
+
+
     def ecl_kw_instance( self ):
         return True
 
@@ -659,6 +676,7 @@ class EclKW(object):
 
 
     def iget( self , index ):
+        raise DeprecationWarning("The iget() method is deprecated use array notation: kw[index] instead.")
         return self.__getitem__( index )
     
     
@@ -781,6 +799,7 @@ cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( ch
 cfunc.load_grdecl                = cwrapper.prototype("c_void_p ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
 cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_copy( ecl_kw )")
 cfunc.slice_copyc                = cwrapper.prototype("c_void_p ecl_kw_alloc_slice_copy( ecl_kw , int , int , int )")
+cfunc.fread_alloc                = cwrapper.prototype("c_void_p ecl_kw_fread_alloc( fortio )")
 cfunc.get_size                   = cwrapper.prototype("int      ecl_kw_get_size( ecl_kw )")
 cfunc.get_type                   = cwrapper.prototype("int      ecl_kw_get_type( ecl_kw )")
 cfunc.iget_char_ptr              = cwrapper.prototype("char*    ecl_kw_iget_char_ptr( ecl_kw , int )")

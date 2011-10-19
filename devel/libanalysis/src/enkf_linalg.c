@@ -133,9 +133,7 @@ void enkf_linalg_svdS(const matrix_type * S ,
 }
 
 
-
-
-static void lowrankCee(matrix_type * B, int nrens , const matrix_type * R , const matrix_type * U0 , const double * inv_sig0) {
+void enkf_linalg_Cee(matrix_type * B, int nrens , const matrix_type * R , const matrix_type * U0 , const double * inv_sig0) {
   const int nrmin = matrix_get_rows( B );
   {
     matrix_type * X0 = matrix_alloc( nrmin , matrix_get_rows( R ));
@@ -188,7 +186,7 @@ void enkf_linalg_lowrankCinv__(const matrix_type * S ,
 
   {
     matrix_type * B    = matrix_alloc( nrmin , nrmin );
-    lowrankCee( B , nrens , R , U0 , inv_sig0);          /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
+    enkf_linalg_Cee( B , nrens , R , U0 , inv_sig0);          /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/     
     matrix_dgesvd(DGESVD_MIN_RETURN , DGESVD_NONE, B , eig, Z , NULL);
     matrix_free( B );
   }
@@ -324,6 +322,175 @@ void enkf_linalg_X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type 
 
 matrix_type * enkf_linalg_alloc_innov( const matrix_type * dObs , const matrix_type * S) {
   matrix_type * innov = matrix_alloc_copy( dObs );
+
   for (int iobs =0; iobs < matrix_get_row_sum( dObs , iobs); iobs++) 
     matrix_isub( innov , iobs , 0 , matrix_get_row_sum( S , iobs ));
+
+  return innov;
+}
+
+
+void enkf_linalg_init_stdX( matrix_type * X , const matrix_type * S , const matrix_type * D , 
+                            const matrix_type * W , const double * eig , bool bootstrap) {
+  
+  int nrobs     =  matrix_get_rows( W );
+  int ens_size  =  matrix_get_rows( X );
+  
+  matrix_type * X3  = matrix_alloc(nrobs , ens_size);
+  enkf_linalg_genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
+                                        /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
+  
+  matrix_dgemm( X , S , X3 , true , false , 1.0 , 0.0);  /* X = S' * X3 */
+  if (!bootstrap) {
+    for (int i = 0; i < ens_size ; i++)
+      matrix_iadd( X , i , i , 1.0);     /*X = I + X */
+  }
+  
+  matrix_free( X3 );
+}
+
+
+
+void enkf_linalg_init_sqrtX(matrix_type * X5      , 
+                            const matrix_type * S , 
+                            const matrix_type * randrot , 
+                            const matrix_type * innov , 
+                            const matrix_type * W , 
+                            const double * eig , 
+                            bool bootstrap) {
+  
+  const int nrobs   = matrix_get_rows( S );
+  const int nrens   = matrix_get_columns( S );
+  const int nrmin   = util_int_min( nrobs , nrens );
+  
+  matrix_type * X2    = matrix_alloc(nrmin , nrens);
+  
+  if (bootstrap)
+    util_exit("%s: Sorry bootstrap support not fully implemented for SQRT scheme\n",__func__);
+  
+  enkf_linalg_meanX5( S , W , eig , innov , X5 );
+  enkf_linalg_genX2(X2 , S , W , eig);
+  enkf_linalg_X5sqrt(X2 , X5 , randrot , nrobs);
+
+  matrix_free( X2 );
+}
+
+/*****************************************************************/
+
+
+
+
+
+/**
+   This routine generates a real orthogonal random matrix.
+   The algorithm is the one by
+   Francesco Mezzadri (2007), How to generate random matrices from the classical
+   compact groups, Notices of the AMS, Vol. 54, pp 592-604.
+   1. First a matrix with independent random normal numbers are simulated.
+   2. Then the QR decomposition is computed, and Q will then be a random orthogonal matrix.
+   3. The diagonal elements of R are extracted and we construct the diagonal matrix X(j,j)=R(j,j)/|R(j,j)|
+   4. An updated Q'=Q X is computed, and this is now a random orthogonal matrix with a Haar measure.
+    
+   The implementation is a plain reimplementation/copy of the old m_randrot.f90 function.
+*/
+
+
+
+/**
+   NB: This should rather use the implementation in m_mean_preserving_rotation.f90. 
+*/
+
+void enkf_linalg_set_randrot( matrix_type * Q  , rng_type * rng) {
+  int ens_size       = matrix_get_rows( Q );
+  double      * tau  = util_malloc( sizeof * tau  * ens_size , __func__);
+  int         * sign = util_malloc( sizeof * sign * ens_size , __func__);
+
+  for (int i = 0; i < ens_size; i++) 
+    for (int j = 0; j < ens_size; j++) 
+      matrix_iset(Q , i , j , rng_std_normal( rng ));
+
+  matrix_dgeqrf( Q , tau );  /* QR factorization */
+  for (int i=0; i  < ens_size; i++) {
+    double Qii = matrix_iget( Q , i,i);
+    sign[i] = Qii / abs(Qii);
+  }
+
+  matrix_dorgqr( Q , tau , ens_size );
+  for (int i = 0; i < ens_size; i++) {
+    if (sign[i] < 0)
+      matrix_scale_column( Q , i , -1 );
+  }
+
+  free( sign );
+  free( tau ); 
+}
+
+
+
+
+/**
+   Generates the mean preserving random rotation for the EnKF SQRT algorithm
+   using the algorithm from Sakov 2006-07.  I.e, generate rotation Up suceh that
+   Up*Up^T=I and Up*1=1 (all rows have sum = 1)  see eq 17.
+   From eq 18,    Up=B * Upb * B^T 
+   B is a random orthonormal basis with the elements in the first column equals 1/sqrt(nrens)
+
+   Upb = | 1  0 |
+   | 0  U |
+
+   where U is an arbitrary orthonormal matrix of dim nrens-1 x nrens-1  (eq. 19)
+*/
+
+matrix_type * enkf_linalg_alloc_mp_randrot(int ens_size , rng_type * rng) {
+  matrix_type * Up  = matrix_alloc( ens_size , ens_size );  /* The return value. */
+  {
+    matrix_type * B   = matrix_alloc( ens_size , ens_size );
+    matrix_type * Upb = matrix_alloc( ens_size , ens_size );
+    matrix_type * U   = matrix_alloc_shared(Upb , 1 , 1 , ens_size - 1, ens_size - 1);
+    
+    
+    {
+      int k,j;
+      matrix_type * R   = matrix_alloc( ens_size , ens_size );
+      matrix_random_init( B , rng);   /* B is filled up with U(0,1) numbers. */
+      matrix_set_const_column( B , 1.0 / sqrt( ens_size ) , 0 );
+
+      /* modified_gram_schmidt is used to create the orthonormal basis in B.*/
+      for (k=0; k < ens_size; k++) {
+        double Rkk = sqrt( matrix_column_column_dot_product( B , k , B , k));   
+        matrix_iset(R , k , k , Rkk);
+        matrix_scale_column(B , k , 1.0/Rkk);
+        for (j=k+1; j < ens_size; j++) {
+          double Rkj = matrix_column_column_dot_product(B , k , B , j);
+          matrix_iset(R , k , j , Rkj);
+          {
+            int i;
+            for (i=0; i < ens_size; i++) {
+              double Bij = matrix_iget(B , i , j);
+              double Bik = matrix_iget(B , i , k);
+              matrix_iset(B , i , j , Bij - Bik * Rkj);
+            }
+          }
+        }
+      }
+      matrix_free( R );
+    }
+    
+    enkf_linalg_set_randrot( U , rng );
+    matrix_iset( Upb , 0 , 0 , 1);
+    
+    
+    {
+      matrix_type * Q   = matrix_alloc( ens_size , ens_size );
+      matrix_dgemm( Q  , B , Upb , false , false , 1, 0);   /* Q  = B * Ubp  */
+      matrix_dgemm( Up , Q , B   , false , true  , 1, 0);   /* Up = Q * T(B) */
+      matrix_free( Q );
+    }
+    
+    matrix_free( B );
+    matrix_free( Upb );
+    matrix_free( U );
+  }
+  
+  return Up;
 }

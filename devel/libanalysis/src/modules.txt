@@ -68,14 +68,15 @@ dlsym() function calls:
    variable in the ERT adress space, and must have a unique name for
    each module.
 
-   Loading external modules
-   ------------------------
-   External modules are ordinary shared libraries. To load an
-   external module the name of the shared library must be given to
-   the dlopen() function, normal rules for runtime loading of
-   dynamic libraries apply - i.e. the shared library must be in a
-   location where the runtime linker can find it. The name of module
-   should be a filename, including the .so extension.
+
+   Loading external modules 
+   ------------------------ 
+   External modules are ordinary shared libraries. To load an external
+   module the name of the shared library must be given to the dlopen()
+   function, normal rules for runtime loading of dynamic libraries
+   apply - i.e. the shared library must be in a location where the
+   dynamic linker can find it. The name of module should be a
+   filename, including the .so extension.  undo
 
    When dlopen() has succeded we must use dlsym() to get a handle to
    the symbol table; when the module loading is hidden behind a
@@ -85,7 +86,7 @@ dlsym() function calls:
    the name defined by the symbol EXTERNAL_MODULE_TABLE in
    analysis_module.h.
 
-In practice this should all be handled by the functions 
+In practice all of is handled by the functions:
 
   analysis_module_type * analysis_module_alloc_internal( );
   analysis_module_type * analysis_module_alloc_external( );
@@ -129,12 +130,12 @@ limited. Each module should contain an internal variable:
 
     long option_flags;
 
-And when instantiating the private module you should initialize the
-option_flags variable by adding together the relevant options from
-analysis_module.h. The enkf_main_UPDATE() method which invokes the
-module functions will inspect the option_flags to see which variables
-to pass to the module, and which module functions to invoke, so this
-must be correct.
+And when instantiating the module data you should initialize the
+option_flags variable by adding together the relevant option flags
+from analysis_module.h. The enkf_main_UPDATE() method which invokes
+the module functions will inspect the option_flags to see which
+variables to pass to the module, and which module functions to invoke,
+so this must be correct.
 
 
 Example 

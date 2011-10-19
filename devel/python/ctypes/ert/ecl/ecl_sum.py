@@ -386,7 +386,7 @@ class EclSum( object ):
         key; with @join_string == ":" the water cut in well OP_1 will
         be available as "WWCT:OP_1".
 
-        If the @include_restart parameter is set to try the summary
+        If the @include_restart parameter is set to true the summary
         loader will, in the case of a restarted ECLIPSE simulation,
         try to load summary results also from the restarted case.
         """
@@ -399,13 +399,13 @@ class EclSum( object ):
             return None
         
 
-    def __init__(self , load_case , join_string = ":" ,include_restart = False , c_ptr = None):
+    def __init__(self , load_case , join_string = ":" ,include_restart = True , c_ptr = None):
         """
         Initialize a new EclSum instance.
 
         See __new__() for further documentation.
         """
-        self.load_case            = load_case
+        self.load_case       = load_case
         self.join_string     = join_string
         self.include_restart = include_restart
         

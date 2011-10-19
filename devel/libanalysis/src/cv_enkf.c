@@ -27,6 +27,7 @@
 #include <analysis_module.h>
 #include <enkf_linalg.h>
 #include <std_enkf.h>
+#include <cv_enkf.h>
 #include <math.h>
 
 #define CV_ENKF_TYPE_ID 765523
@@ -39,7 +40,7 @@
 #define NFOLDS_KEY                  "CV_NFOLDS"
 
 
-typedef struct {
+struct cv_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
   matrix_type          * Z;
   matrix_type          * Rp;
@@ -50,7 +51,7 @@ typedef struct {
   int                    subspace_dimension;  // ENKF_NCOMP_KEY (-1: use Truncation instead)
   long                   option_flags;
   bool                   penalised_press;
-} cv_enkf_data_type;
+};
 
 
 
@@ -86,8 +87,8 @@ void * cv_enkf_data_alloc( rng_type * rng ) {
   data->rng          = rng;
 
   data->penalised_press = false;
-  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_USE_A;
-  data->nfolds = DEFAULT_NFOLDS;
+  data->option_flags    = ANALYSIS_NEED_ED + ANALYSIS_USE_A;
+  data->nfolds          = DEFAULT_NFOLDS;
   cv_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   
   return data;
@@ -206,101 +207,93 @@ static void enkf_analysis_get_cv_error_prin_comp( cv_enkf_data_type * cv_data ,
                                                   const int nTrain , 
                                                   const int foldIndex, 
                                                   const int maxP) { 
-  /*  We need to predict ATest(p), for p = 1,...,nens -1, based on the estimated regression model:
+  /*  
+      We need to predict ATest(p), for p = 1,...,nens -1, based on the estimated regression model:
       AHatTest(p) = A[:,indexTrain] * Z[1:p,indexTrain]'* inv( Z[1:p,indexTrain] * Z[1:p,indexTrain]' + (nens-1) * Rp[1:p,1:p] ) * Z[1:p,indexTest];
   */
   
-  /* Start by multiplying from the right: */
-  int p,i,j,k, inv_ok, tmp3;
-  double tmp, tmp2;
 
-  const int nx   = matrix_get_rows( A );
-  matrix_type * AHat = matrix_alloc(nx , nTest );
-    
-  /*We want to use the blas function to speed things up: */
+  const int nx         = matrix_get_rows( A );
+  matrix_type * AHat   = matrix_alloc(nx , nTest );
   matrix_type * ATrain = matrix_alloc( nx , nTrain );
-  /* Copy elements*/
-  for (i = 0; i < nx; i++) {
-    for (j = 0; j < nTrain; j++) {
-      matrix_iset(ATrain , i , j , matrix_iget( A , i , indexTrain[j]));
-    }
-  }
   
-  tmp3 = nTrain - 1;
-  int pOrg;
-
-  for (p = 0; p < maxP; p++) {
-
-    pOrg = p + 1;
-
-
-    /*For now we do this the hard way through a full inversion of the reduced data covariance matrix: */
-    /* Alloc ZTrain(1:p): */
-    matrix_type * ZpTrain = matrix_alloc( pOrg, nTrain );
-    for (i = 0; i < pOrg ; i++) 
-      for (j = 0; j < nTrain; j++) 
-        matrix_iset(ZpTrain , i , j , matrix_iget(cv_data->Z , i ,indexTrain[j]));
-
-
-    matrix_type *SigDp = matrix_alloc( pOrg ,pOrg);
-    /*Compute SigDp = ZpTrain * ZpTrain' */
-    matrix_dgemm( SigDp , ZpTrain , ZpTrain, false , true , 1.0, 0.0);
+  int p,i,j;
     
-    /*Add (ntrain-1) * Rp*/
+  
+  /* Copy elements*/
+  for (i = 0; i < nx; i++) 
+    for (j = 0; j < nTrain; j++) 
+      matrix_iset(ATrain , i , j , matrix_iget( A , i , indexTrain[j]));
+  
+  
+  for (p = 0; p < maxP; p++) {
+    matrix_type * ZpTrain = matrix_alloc( p + 1, nTrain );
+    matrix_type *SigDp    = matrix_alloc( p + 1 , p + 1);
+    
+    
+    for (i = 0; i <= p ; i++) 
+      for (j = 0; j < nTrain; j++) 
+        matrix_iset(ZpTrain , i , j , matrix_iget(cv_data->Z , i , indexTrain[j]));
+    
+    /* SigDp = ZpTrain * ZpTrain' */
+    matrix_dgemm( SigDp , ZpTrain , ZpTrain, false , true , 1.0, 0.0);
 
-    for(i = 0; i < pOrg; i++) {
-      for( j = 0; j < pOrg; j++) {
-        tmp2 = matrix_iget(SigDp , i , j) + tmp3 * matrix_iget(cv_data->Rp, i, j);
-        matrix_iset( SigDp , i , j , tmp2 );
-      }
-    }
+    /* SigDp += (nTrain - 1) * Rp */
+    for(i = 0; i <= p; i++) 
+      for( j = 0; j <= p; j++) 
+        matrix_iadd( SigDp , i , j , (nTrain - 1) * matrix_iget(cv_data->Rp, i, j));
+    
     
     /* Invert the covariance matrix for the principal components  */
-    inv_ok = matrix_inv( SigDp );
-
-    /*Check if the inversion went ok */
-    if ( inv_ok != 0 ) 
-      util_abort("%s: inversion of covariance matrix for the principal components failed for subspace dimension p = %d\n - aborting \n",__func__,pOrg); 
-
-    /*Compute inv(SigDp) * ZTest: */
-
     {
-      matrix_type * W = matrix_alloc(pOrg , nTest );
+      int inv_ok = matrix_inv( SigDp );
+      if ( inv_ok != 0 ) 
+        util_abort("%s: inversion of covariance matrix for the principal components failed for subspace dimension p = %d\n - aborting \n",__func__,p+1); 
+    }
+
+    
+    {
+      matrix_type * W  = matrix_alloc(p + 1 , nTest );
       matrix_type * W2 = matrix_alloc(nTrain , nTest );
-      for (i = 0; i < pOrg; i++) {
+
+      /* W = inv(SigDp) * ZTest */
+      for (i = 0; i <= p; i++) {
         for (j = 0; j < nTest; j++) {
-          tmp = 0.0;
-          for (k = 0; k < pOrg; k++) {
-            tmp += matrix_iget(SigDp , i , k) * matrix_iget(cv_data->Z , k , indexTest[j]);
-          }
-          matrix_iset(W , i , j , tmp);
+          double ksum = 0.0;
+          for (int k = 0; k <= p; k++) 
+            ksum += matrix_iget(SigDp , i , k) * matrix_iget(cv_data->Z , k , indexTest[j]);
+          
+          matrix_iset(W , i , j , ksum);
         }
       }
 
-      /*Compute W2 = ZpTrain' * W */
+      /* W2 = ZpTrain' * W */
       matrix_dgemm( W2 , ZpTrain , W , true , false , 1.0 , 0.0);
       
-      matrix_free( ZpTrain );
-      matrix_free( SigDp );
-      matrix_free( W );
+      /* Estimate the state-vector */
+      matrix_matmul( AHat , ATrain , W2 );
 
-      /*Estimate the state-vector */
-      matrix_matmul(AHat , ATrain , W2 );
       matrix_free( W2 );
+      matrix_free( W );
     }
 
     
     /*Compute Press Statistic: */
-    tmp = 0.0;
-    for (i = 0; i < nx; i++) {
-      for (j = 0; j < nTest; j++) {
-        tmp2 = matrix_iget(A , i , indexTest[j]) - matrix_iget(AHat , i , j);
-        tmp += tmp2 * tmp2;
+    {
+      double R2Sum = 0;
+
+      for (i = 0; i < nx; i++) {
+        for (j = 0; j < nTest; j++) {
+          double tmp = matrix_iget(A , i , indexTest[j]) - matrix_iget(AHat , i , j);
+          R2Sum += tmp * tmp;
+        }
       }
+      matrix_iset( cvErr , p , foldIndex , R2Sum );
     }
     
-    matrix_iset( cvErr , p , foldIndex , tmp );
     
+    matrix_free( ZpTrain );
+    matrix_free( SigDp );
   } /*end for p */
   
   matrix_free( AHat );
@@ -317,54 +310,50 @@ int enkf_analysis_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
                                         const int maxP ) {
                                         
 
-  int i, optP;
-  double tmp, minErr;
-  
-  double tmp2 = (1.0 / (double) cv_data->nfolds); 
-
   double * cvMean = util_malloc( sizeof * cvMean * maxP, __func__);
-  
-  for (int p = 0; p < maxP; p++ ){
-    tmp = 0.0;
-    for (int folds = 0; folds < cv_data->nfolds; folds++ )
-      tmp += matrix_iget( cvErr , p, folds );
+  double * cvStd  = util_malloc( sizeof * cvStd * maxP, __func__);
+  int optP;
 
-    cvMean[p] = tmp * tmp2;
-  }
-
-  
-  tmp2 = 1.0 / ((double)(cv_data->nfolds - 1));
-  double * cvStd = util_malloc( sizeof * cvStd * maxP, __func__);
-  for ( int p = 0; p < maxP; p++){
-    tmp = 0.0;
-    for ( int folds = 0; folds < cv_data->nfolds; folds++)
-      tmp += pow( matrix_iget( cvErr , p , folds ) - cvMean[p] , 2);
+  {
+    for (int p = 0; p < maxP; p++ ){
+      double err_sum = 0;
+      for (int folds = 0; folds < cv_data->nfolds; folds++ )
+        err_sum += matrix_iget( cvErr , p, folds );
+      
+      cvMean[p] = err_sum / cv_data->nfolds;
+    }
     
-    cvStd[p] = sqrt( tmp * tmp2 );
-  }
-
-  minErr = cvMean[0];
-  optP = 1;
-  
-  for (i = 1; i < maxP; i++) {
-    tmp = cvMean[i];
-    if (tmp < minErr && tmp > 0.0) {
-      minErr = tmp;
-      optP = i+1;
+    for ( int p = 0; p < maxP; p++){
+      double err_sum2 = 0;
+      for ( int folds = 0; folds < cv_data->nfolds; folds++)
+        err_sum2 += pow( matrix_iget( cvErr , p , folds ) - cvMean[p] , 2);
+      
+      cvStd[p] = sqrt( err_sum2 / (cv_data->nfolds - 1) );
     }
   }
-
   
-  if (cv_data->penalised_press) {
-    for ( i = 0; i < optP; i++){
-      if( cvMean[i] - cvStd[i] <= minErr ){
+  {
+    double minErr = cvMean[0];
+    int i;
+    
+    for (i = 1; i < maxP; i++) {
+      if ((cvMean[i] < minErr) && (cvMean[i] > 0.0)) {
+        minErr = cvMean[i];
         optP = i+1;
-        break;
       }
     }
-  }
-  
 
+  
+    if (cv_data->penalised_press) {
+      for ( i = 0; i < optP; i++){
+        if( cvMean[i] - cvStd[i] <= minErr ){
+          optP = i+1;
+          break;
+        }
+      }
+    }
+  }    
+  
   free( cvStd );
   free( cvMean );
   return optP;
@@ -385,16 +374,14 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
   const int nrens = matrix_get_columns( cv_data->Z );
   const int nrmin = matrix_get_rows( cv_data->Z );
   matrix_type * cvError;
-  
   int * randperms     = util_malloc( sizeof * randperms * nrens, __func__);
   
   int maxP  = nrmin;
   int optP;
-  int i,j;
       
   
   /* We only want to search the non-zero eigenvalues */
-  for (i = 0; i < nrmin; i++) {
+  for (int i = 0; i < nrmin; i++) {
     if (matrix_iget(cv_data->Z,i,1) == 0.0) {
       maxP = i;
       break;
@@ -404,23 +391,19 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
   if (maxP > nrmin) 
     maxP = nrmin;
   
-  
-  cvError = matrix_alloc( maxP , cv_data->nfolds );
-  
   if ( nrens < cv_data->nfolds )
     util_abort("%s: number of ensemble members %d need to be larger than the number of cv-folds - aborting \n",
                __func__,
                nrens,
                cv_data->nfolds); 
   
-  /* draw random permutations of the integers 0,...,nrens-1 */  
-  for (i=0; i < nrens; i++)
+  for (int i=0; i < nrens; i++)
     randperms[i] = i;
   rng_shuffle_int( cv_data->rng , randperms , nrens );
   
-
+  cvError = matrix_alloc( maxP , cv_data->nfolds );
   {
-    int ntest, ntrain, k;
+    int ntest, ntrain, k,j,i;
     int * indexTest  = util_malloc( sizeof * indexTest * nrens, __func__);
     int * indexTrain = util_malloc( sizeof * indexTrain * nrens, __func__);
     for (i = 0; i < cv_data->nfolds; i++) {
@@ -452,7 +435,6 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
 
   matrix_free( cvError );
   free( randperms );
-
   return optP;
 }
 
@@ -467,12 +449,12 @@ static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const 
   
   /* Finally, compute W = Z(1:p,:)' * inv(Z(1:p,:) * Z(1:p,:)' + (n -1) * Rp) */
   matrix_type *Zp = matrix_alloc( optP, nrens );
-  for (i = 0; i < optP ; i++) 
-    for (j = 0; j < nrens; j++) 
-      matrix_iset(Zp , i , j , matrix_iget(cv_data->Z , i ,j));
-
-
   matrix_type *SigZp = matrix_alloc( optP ,optP);
+
+  
+  
+  matrix_copy_block( Zp , 0 , 0 , optP , nrens , cv_data->Z , 0 , 0 );
+
   /*Compute SigZp = Zp * Zp' */
   matrix_dgemm( SigZp , Zp , Zp, false , true , 1.0, 0.0);
   
@@ -514,8 +496,8 @@ void cv_enkf_initX(void * module_data ,
                    matrix_type * R , 
                    matrix_type * dObs , 
                    matrix_type * E ,
-                   matrix_type * D, 
-                   matrix_type * randrot) {
+                   matrix_type * D) {
+
   
   cv_enkf_data_type * cv_data = cv_enkf_data_safe_cast( module_data );
   {

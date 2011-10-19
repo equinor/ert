@@ -39,6 +39,8 @@
 typedef struct {
   UTIL_TYPE_ID_DECLARATION;
   std_enkf_data_type * std_data;
+  matrix_type        * randrot; 
+  rng_type           * rng;
   long                 options;
 } sqrt_enkf_data_type;
 
@@ -50,8 +52,9 @@ void * sqrt_enkf_data_alloc( rng_type * rng ) {
   sqrt_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
   UTIL_TYPE_ID_INIT( data , SQRT_ENKF_TYPE_ID );
 
-  data->options  = ANALYSIS_NEED_RANDROT;
   data->std_data = std_enkf_data_alloc( rng );
+  data->randrot  = NULL;
+  data->rng      = rng;
   return data;
 }
 
@@ -103,8 +106,7 @@ void sqrt_enkf_initX(void * module_data ,
                      matrix_type * R , 
                      matrix_type * dObs , 
                      matrix_type * E , 
-                     matrix_type *D, 
-                     matrix_type * randrot) {
+                     matrix_type *D ) {
 
   sqrt_enkf_data_type * data = sqrt_enkf_data_safe_cast( module_data );
   {
@@ -117,19 +119,7 @@ void sqrt_enkf_initX(void * module_data ,
     double      * eig = util_malloc( sizeof * eig * nrmin , __func__);    
     
     enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
-    { /* The part in the block here was a seperate function, and might be
-         factored out again. */
-      matrix_type * X2    = matrix_alloc(nrmin , ens_size);
-      
-      //if (bootstrap)
-      //util_exit("%s: Sorry bootstrap support not fully implemented for SQRT scheme\n",__func__);
-      
-      enkf_linalg_meanX5( S , W , eig , dObs , X );
-      enkf_linalg_genX2(X2 , S , W , eig);
-      enkf_linalg_X5sqrt(X2 , X , randrot , nrobs);
-      
-      matrix_free( X2 );
-    }
+    enkf_linalg_init_sqrtX( X , S , data->randrot , dObs , W , eig , false);
     matrix_free( W );
     free( eig );
   }
@@ -144,6 +134,28 @@ long sqrt_enkf_get_options( void * arg , long flag ) {
 }
 
 
+void sqrt_enkf_init_update( void * arg , 
+                          const matrix_type * S , 
+                          const matrix_type * R , 
+                          const matrix_type * dObs , 
+                          const matrix_type * E , 
+                          const matrix_type * D ) {
+
+  sqrt_enkf_data_type * sqrt_data = sqrt_enkf_data_safe_cast( arg );
+  {
+    int ens_size = matrix_get_columns( S );
+    sqrt_data->randrot = enkf_linalg_alloc_mp_randrot( ens_size , sqrt_data->rng );
+  }
+}
+
+
+void sqrt_enkf_complete_update( void * arg ) {
+  sqrt_enkf_data_type * sqrt_data = sqrt_enkf_data_safe_cast( arg );
+  {
+    matrix_free( sqrt_data->randrot );
+    sqrt_data->randrot = NULL;
+  }
+}
 
 
 
@@ -166,8 +178,8 @@ analysis_table_type SYMBOL_TABLE = {
   .set_string      = NULL , 
   .initX           = sqrt_enkf_initX , 
   .updateA         = NULL,
-  .init_update     = NULL,
-  .complete_update = NULL,
+  .init_update     = sqrt_enkf_init_update,
+  .complete_update = sqrt_enkf_complete_update,
   .get_options     = sqrt_enkf_get_options 
 };
 

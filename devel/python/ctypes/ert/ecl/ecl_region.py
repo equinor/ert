@@ -659,6 +659,14 @@ class EclRegion(object):
         index_list = IntVector.ref( c_ptr , self )
         return index_list
 
+    def set_name( self , name ):
+        cfunc.set_name( self , name )
+
+    def get_name( self ):
+        return cfunc.get_name( self )
+        
+    name = property( get_name , set_name )
+
 
 # 2. Creating a wrapper object around the libecl library.
 cwrapper = CWrapper( libecl.lib )
@@ -751,3 +759,6 @@ cfunc.select_above_plane        = cwrapper.prototype("void ecl_region_select_abo
 cfunc.select_below_plane        = cwrapper.prototype("void ecl_region_select_below_plane( ecl_region  , double* , double* )")
 cfunc.deselect_above_plane      = cwrapper.prototype("void ecl_region_deselect_above_plane( ecl_region, double* , double* )")
 cfunc.deselect_below_plane      = cwrapper.prototype("void ecl_region_deselect_below_plane( ecl_region, double* , double* )")
+
+cfunc.set_name                  = cwrapper.prototype("void  ecl_region_set_name( ecl_region , char*)")
+cfunc.get_name                  = cwrapper.prototype("char* ecl_region_get_name( ecl_region )")

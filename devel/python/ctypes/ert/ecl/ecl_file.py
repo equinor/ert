@@ -190,7 +190,7 @@ class EclFile(object):
         You must specify a report step with the @report_step argument,
         a true time with the @sim_time argument or a plain index to
         select restart block. If none of arguments are given exception
-        TypeError wiull be raised. If present the @sim_time argument
+        TypeError will be raised. If present the @sim_time argument
         should be a datetime instance.
         
         If the restart section you ask for can not be found the method
@@ -201,6 +201,9 @@ class EclFile(object):
         This method should be used when you have already loaded the
         complete file; if you only want to load a section from the
         file you can use the classmethod restart_block().
+
+        The method will return 'self' which can be used to aid
+        readability.
         """
 
         OK = False
@@ -216,7 +219,7 @@ class EclFile(object):
         
         if not OK:
             raise TypeError("select_restart_section() Could not locate report_step/dtime")
-        return OK
+        return self
         
 
     def __getitem__(self , index):

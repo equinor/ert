@@ -73,8 +73,6 @@ class FortIO:
     #    header/footer inserted by the Fortran runtime, the actual data
     #    is not touched by the FortIO instance.
     #    """
-    #    #BUG HERE - must have classmethods reader and writer
-    #    self.c_ptr = cfunc.fortio_fopen( filename , mode , endian_flip , fmt_file)
 
         
     @classmethod

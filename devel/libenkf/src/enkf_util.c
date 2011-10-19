@@ -41,7 +41,6 @@ void enkf_util_rand_stdnormal_vector(int size , double *R, rng_type * rng) {
   int i;
   for (i = 0; i < size; i++)
     R[i] = enkf_util_rand_normal(0.0 , 1.0 , rng);
-
 }
 
 /**

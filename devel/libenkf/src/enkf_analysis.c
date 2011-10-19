@@ -38,71 +38,72 @@
 
 
 
-//CV ->int enkf_analysis_get_optimal_numb_comp(const matrix_type * cvErr , const int maxP , const int nFolds , const bool pen_press) {
-//CV ->
-//CV ->  int i, optP;
-//CV ->  double tmp, minErr;
-//CV ->  
-//CV ->  double tmp2 = (1.0 / (double)nFolds); 
-//CV ->
-//CV ->  double * cvMean = util_malloc( sizeof * cvMean * maxP, __func__);
-//CV ->  
-//CV ->  for (int p = 0; p < maxP; p++ ){
-//CV ->    tmp = 0.0;
-//CV ->    for (int folds = 0; folds < nFolds; folds++ ){
-//CV ->      tmp += matrix_iget( cvErr , p, folds );
-//CV ->    }
-//CV ->    cvMean[p] = tmp * tmp2;
-//CV ->  }
-//CV ->
-//CV ->  
-//CV ->  tmp2 = 1.0 / ((double)(nFolds - 1));
-//CV ->  double * cvStd = util_malloc( sizeof * cvStd * maxP, __func__);
-//CV ->  for ( int p = 0; p < maxP; p++){
-//CV ->    tmp = 0.0;
-//CV ->    for ( int folds = 0; folds < nFolds; folds++){
-//CV ->      tmp += pow( matrix_iget( cvErr , p , folds ) - cvMean[p] , 2);
-//CV ->    }
-//CV ->    cvStd[p] = sqrt( tmp * tmp2 );
-//CV ->  }
-//CV ->
-//CV ->  minErr = cvMean[0];
-//CV ->  optP = 1;
-//CV ->  
-//CV ->
-//CV ->  printf("PRESS = \n");
-//CV ->  for (i = 0; i < maxP; i++) {
-//CV ->    printf(" %0.2f \n",cvMean[i]);
-//CV ->  }
-//CV ->  
-//CV ->
-//CV ->
-//CV ->  for (i = 1; i < maxP; i++) {
-//CV ->    tmp = cvMean[i];
-//CV ->    if (tmp < minErr && tmp > 0.0) {
-//CV ->      minErr = tmp;
-//CV ->      optP = i+1;
-//CV ->    }
-//CV ->  }
-//CV ->
-//CV ->  printf("Global optimum= %d\n",optP);
-//CV ->  
-//CV ->
-//CV ->  if (pen_press) {
-//CV ->    printf("Selecting optimal number of components using Penalised PRESS statistic: \n");
-//CV ->    for ( i = 0; i < optP; i++){
-//CV ->      if( cvMean[i] - cvStd[i] <= minErr ){
-//CV ->        optP = i+1;
-//CV ->        break;
-//CV ->      }
-//CV ->    }
-//CV ->  }
-//CV ->  
-//CV ->
-//CV ->  free( cvStd );
-//CV ->  free( cvMean );
-//CV ->  return optP;
-//CV ->}
+//CV: int enkf_analysis_get_optimal_numb_comp(const matrix_type * cvErr , const int maxP , const int nFolds , const bool pen_press) {
+//CV: 
+//CV:   int i, optP;
+//CV:   double tmp, minErr;
+//CV:   
+//CV:   double tmp2 = (1.0 / (double)nFolds); 
+//CV: 
+//CV:   double * cvMean = util_malloc( sizeof * cvMean * maxP, __func__);
+//CV:   
+//CV:   for (int p = 0; p < maxP; p++ ){
+//CV:     tmp = 0.0;
+//CV:     for (int folds = 0; folds < nFolds; folds++ ){
+//CV:       tmp += matrix_iget( cvErr , p, folds );
+//CV:     }
+//CV:     cvMean[p] = tmp * tmp2;
+//CV:   }
+//CV: 
+//CV:   
+//CV:   tmp2 = 1.0 / ((double)(nFolds - 1));
+//CV:   double * cvStd = util_malloc( sizeof * cvStd * maxP, __func__);
+//CV:   for ( int p = 0; p < maxP; p++){
+//CV:     tmp = 0.0;
+//CV:     for ( int folds = 0; folds < nFolds; folds++){
+//CV:       tmp += pow( matrix_iget( cvErr , p , folds ) - cvMean[p] , 2);
+//CV:     }
+//CV:     cvStd[p] = sqrt( tmp * tmp2 );
+//CV:   }
+//CV: 
+//CV:   minErr = cvMean[0];
+//CV:   optP = 1;
+//CV:   
+//CV: 
+//CV:   printf("PRESS = \n");
+//CV:   for (i = 0; i < maxP; i++) {
+//CV:     printf(" %0.2f \n",cvMean[i]);
+//CV:   }
+//CV:   
+//CV: 
+//CV: 
+//CV:   for (i = 1; i < maxP; i++) {
+//CV:     tmp = cvMean[i];
+//CV:     if (tmp < minErr && tmp > 0.0) {
+//CV:       minErr = tmp;
+//CV:       optP = i+1;
+//CV:     }
+//CV:   }
+//CV: 
+//CV:   printf("Global optimum= %d\n",optP);
+//CV:   
+//CV: 
+//CV:   if (pen_press) {
+//CV:     printf("Selecting optimal number of components using Penalised PRESS statistic: \n");
+//CV:     for ( i = 0; i < optP; i++){
+//CV:       if( cvMean[i] - cvStd[i] <= minErr ){
+//CV:         optP = i+1;
+//CV:         break;
+//CV:       }
+//CV:     }
+//CV:   }
+//CV:   
+//CV: 
+//CV:   free( cvStd );
+//CV:   free( cvMean );
+//CV:   return optP;
+//CV: }
+
 //CV ->  
 //CV ->
 //CV ->/* function that estimates the Predictive Error Sum of Squares (PRESS)
@@ -132,118 +133,120 @@
 //CV ->
 //CV ->
 //CV -> 
-//CV ->static void enkf_analysis_get_cv_error(matrix_type * cvErr , const matrix_type * A , const matrix_type * VT , const matrix_type * Z , const double * eig, const int * indexTest, const int * indexTrain , const int nTest , const int nTrain , const int foldIndex) { 
-//CV ->  /*  We need to predict ATest(p), for p = 1,...,nens -1, based on the estimated regression model:
-//CV ->      ATest(p) = A[:,indexTrain] * VT[1:p,indexTrain]'* Z[1:p,1:p] * eig[1:p,1:p] * Z[1:p,1:p]' * VT[1:p,testIndex]
-//CV ->  */
-//CV ->  
-//CV ->  /* Start by multiplying from the right: */
-//CV ->  int p,i,j,k;
-//CV ->  double tmp, tmp2;
-//CV ->
-//CV ->  int maxP = matrix_get_rows( VT );
-//CV ->
-//CV ->  const int nx   = matrix_get_rows( A );
-//CV ->
-//CV ->  /* We only want to search the non-zero eigenvalues */
-//CV ->  for (i = 0; i < maxP; i++) {
-//CV ->    if (eig[i] == 1.0) {
-//CV ->      maxP = i;
-//CV ->      break;
-//CV ->    }
-//CV ->  }
-//CV ->
-//CV ->  matrix_type * AHat = matrix_alloc(nx , nTest );
-//CV ->  matrix_type * W3 = matrix_alloc(nTrain, nTest );
-//CV ->    
-//CV ->  /*We want to use the blas function to speed things up: */
-//CV ->  matrix_type * ATrain = matrix_alloc( nx , nTrain );
-//CV ->  /* Copy elements*/
-//CV ->  for (i = 0; i < nx; i++) {
-//CV ->    for (j = 0; j < nTrain; j++) {
-//CV ->      matrix_iset(ATrain , i , j , matrix_iget( A , i , indexTrain[j]));
-//CV ->    }
-//CV ->  }
-//CV ->  
-//CV ->
-//CV ->
-//CV ->  for (p = 0; p < maxP; p++) {
-//CV ->    
-//CV ->      
-//CV ->    
-//CV ->    /*    printf("p = %d \n",p);*/
-//CV ->    matrix_type * W = matrix_alloc(p + 1 , nTest );
-//CV ->    matrix_type * W2 = matrix_alloc(p + 1 , nTest );
-//CV ->    
-//CV ->    /* Matrix multiplication: W = Z[1:p,1:p]' * VT[1:p,indexTest] */
-//CV ->    for (i = 0; i < p; i++) {
-//CV ->      for (j = 0; j < nTest; j++) {
-//CV ->        tmp = 0.0;
-//CV ->        for (k = 0; k < p; k++) {
-//CV ->          tmp += matrix_iget(Z , k , i) * matrix_iget(VT , k , indexTest[j]);
-//CV ->        }
-//CV ->        matrix_iset(W , i , j , tmp);
-//CV ->      }
-//CV ->    }
-//CV ->
-//CV ->     
-//CV ->    /*Multiply W with the diagonal matrix eig[1:p,1:p] from the left */
-//CV ->    for (j=0; j < nTest; j++)
-//CV ->      for (i=0; i < p; i++)
-//CV ->        matrix_imul(W , i , j , eig[i]);
-//CV ->    
-//CV ->    for (i = 0; i < p; i++) {
-//CV ->      for (j = 0; j < nTest; j++) {
-//CV ->        tmp = 0.0;
-//CV ->        for (k = 0; k < p; k++) {
-//CV ->          tmp += matrix_iget(Z , i , k) * matrix_iget(W , k , j);
-//CV ->        }
-//CV ->        
-//CV ->        matrix_iset(W2 , i , j , tmp);
-//CV ->      }
-//CV ->    }
-//CV ->
-//CV ->    matrix_free( W );
-//CV ->
-//CV ->    
-//CV ->    /*Compute W3 = VT[TrainIndex,1:p]' * W*/
-//CV ->    for (i = 0; i < nTrain; i++) {
-//CV ->      for (j = 0; j < nTest; j++) {
-//CV ->        tmp = 0.0;
-//CV ->        for (k = 0; k < p; k++) {
-//CV ->          tmp += matrix_iget(VT , k , indexTrain[i] ) * matrix_iget(W2 , k , j);
-//CV ->        }
-//CV ->          
-//CV ->        matrix_iset(W3 , i , j , tmp);
-//CV ->      }
-//CV ->    }
-//CV ->
-//CV ->    matrix_free( W2 );
-//CV ->    
-//CV ->
-//CV ->    matrix_matmul(AHat , ATrain , W3 );
-//CV ->
-//CV ->
-//CV ->
-//CV ->    /*Compute Press Statistic: */
-//CV ->    tmp = 0.0;
-//CV ->    
-//CV ->    for (i = 0; i < nx; i++) {
-//CV ->      for (j = 0; j < nTest; j++) {
-//CV ->        tmp2 = matrix_iget(A , i , indexTest[j]) - matrix_iget(AHat , i , j);
-//CV ->        tmp += tmp2 * tmp2;
-//CV ->      }
-//CV ->    }
-//CV ->    
-//CV ->    matrix_iset( cvErr , p , foldIndex , tmp );
-//CV ->    
-//CV ->  } /*end for p */
-//CV ->  
-//CV ->  matrix_free( AHat );
-//CV ->  matrix_free( ATrain );
-//CV ->  matrix_free( W3 );
-//CV ->
-//CV ->}
+
+//CV: static void enkf_analysis_get_cv_error(matrix_type * cvErr , 
+//CV:                                        const matrix_type * A , 
+//CV:                                        const matrix_type * VT , 
+//CV:                                        const matrix_type * Z , 
+//CV:                                        const double * eig, 
+//CV:                                        const int * indexTest, 
+//CV:                                        const int * indexTrain , 
+//CV:                                        const int nTest , 
+//CV:                                        const int nTrain , 
+//CV:                                        const int foldIndex) { 
+//CV:   /*  
+//CV:       We need to predict ATest(p), for p = 1,...,nens -1, based on the estimated regression model:
+//CV:       ATest(p) = A[:,indexTrain] * VT[1:p,indexTrain]' * Z[1:p,1:p] * eig[1:p,1:p] * Z[1:p,1:p]' * VT[1:p,testIndex]
+//CV:   */
+//CV:   const int nx   = matrix_get_rows( A );
+//CV: 
+//CV:   matrix_type * AHat   = matrix_alloc(nx , nTest );
+//CV:   matrix_type * W3     = matrix_alloc(nTrain, nTest );
+//CV:   matrix_type * ATrain = matrix_alloc( nx , nTrain );
+//CV:   
+//CV:   int p,i,j;
+//CV:   double tmp, tmp2;
+//CV: 
+//CV:   int maxP = matrix_get_rows( VT );
+//CV:   
+//CV:   /* We only want to search the non-zero eigenvalues */
+//CV:   for (i = 0; i < maxP; i++) {
+//CV:     if (eig[i] == 1.0) {
+//CV:       maxP = i;
+//CV:       break;
+//CV:     }
+//CV:   }
+//CV: 
+//CV:   
+//CV: 
+//CV: 
+//CV:   /* Copy elements*/
+//CV:   for (i = 0; i < nx; i++) 
+//CV:     for (j = 0; j < nTrain; j++) 
+//CV:       matrix_iset(ATrain , i , j , matrix_iget( A , i , indexTrain[j]));
+//CV:   
+//CV:   for (p = 0; p < maxP; p++) {
+//CV:     matrix_type * W = matrix_alloc(p + 1 , nTest );
+//CV:     matrix_type * W2 = matrix_alloc(p + 1 , nTest );
+//CV:     
+//CV:     /* Matrix multiplication: W = Z[1:p,1:p]' * VT[1:p,indexTest] */
+//CV:     for (i = 0; i < p; i++) {
+//CV:       for (j = 0; j < nTest; j++) {
+//CV:         double ksum = 0;
+//CV:         for (int k = 0; k < p; k++) 
+//CV:           ksum += matrix_iget(Z , k , i) * matrix_iget(VT , k , indexTest[j]);
+//CV:         
+//CV:         matrix_iset(W , i , j , ksum);
+//CV:       }
+//CV:     }
+//CV:      
+//CV:     /*Multiply W with the diagonal matrix eig[1:p,1:p] from the left */
+//CV:     for (j=0; j < nTest; j++)
+//CV:       for (i=0; i < p; i++)
+//CV:         matrix_imul(W , i , j , eig[i]);
+//CV:     
+//CV:     for (i = 0; i < p; i++) {
+//CV:       for (j = 0; j < nTest; j++) {
+//CV:         double ksum = 0;
+//CV:         for (int k = 0; k < p; k++) 
+//CV:           ksum += matrix_iget(Z , i , k) * matrix_iget(W , k , j);
+//CV:         
+//CV:         matrix_iset(W2 , i , j , ksum);
+//CV:       }
+//CV:     }
+//CV:     matrix_free( W );
+//CV: 
+//CV:     
+//CV:     /*Compute W3 = VT[TrainIndex,1:p]' * W*/
+//CV:     for (i = 0; i < nTrain; i++) {
+//CV:       for (j = 0; j < nTest; j++) {
+//CV:         tmp = 0.0;
+//CV:         for (int k = 0; k < p; k++) {
+//CV:           tmp += matrix_iget(VT , k , indexTrain[i] ) * matrix_iget(W2 , k , j);
+//CV:         }
+//CV:           
+//CV:         matrix_iset(W3 , i , j , tmp);
+//CV:       }
+//CV:     }
+//CV: 
+//CV:     matrix_free( W2 );
+//CV:     
+//CV: 
+//CV:     matrix_matmul(AHat , ATrain , W3 );
+//CV: 
+//CV: 
+//CV: 
+//CV:     /*Compute Press Statistic: */
+//CV:     tmp = 0.0;
+//CV:     
+//CV:     for (i = 0; i < nx; i++) {
+//CV:       for (j = 0; j < nTest; j++) {
+//CV:         tmp2 = matrix_iget(A , i , indexTest[j]) - matrix_iget(AHat , i , j);
+//CV:         tmp += tmp2 * tmp2;
+//CV:       }
+//CV:     }
+//CV:     
+//CV:     matrix_iset( cvErr , p , foldIndex , tmp );
+//CV:     
+//CV:   } /*end for p */
+//CV:   
+//CV:   matrix_free( AHat );
+//CV:   matrix_free( ATrain );
+//CV:   matrix_free( W3 );
+//CV: 
+//CV: }
+
+
 //CV ->
 //CV ->
 //CV ->/*Function that computes the PRESS for different subspace dimensions using
@@ -649,119 +652,6 @@
 
 
 
-/**
-   This routine generates a real orthogonal random matrix.
-   The algorithm is the one by
-   Francesco Mezzadri (2007), How to generate random matrices from the classical
-   compact groups, Notices of the AMS, Vol. 54, pp 592-604.
-   1. First a matrix with independent random normal numbers are simulated.
-   2. Then the QR decomposition is computed, and Q will then be a random orthogonal matrix.
-   3. The diagonal elements of R are extracted and we construct the diagonal matrix X(j,j)=R(j,j)/|R(j,j)|
-   4. An updated Q'=Q X is computed, and this is now a random orthogonal matrix with a Haar measure.
-    
-   The implementation is a plain reimplementation/copy of the old m_randrot.f90 function.
-*/
-
-
-
-/**
-   NB: This should rather use the implementation in m_mean_preserving_rotation.f90. 
-*/
-
-void enkf_analysis_set_randrot( matrix_type * Q  , rng_type * rng) {
-  int ens_size       = matrix_get_rows( Q );
-  double      * tau  = util_malloc( sizeof * tau  * ens_size , __func__);
-  int         * sign = util_malloc( sizeof * sign * ens_size , __func__);
-
-  for (int i = 0; i < ens_size; i++) 
-    for (int j = 0; j < ens_size; j++) 
-      matrix_iset(Q , i , j , enkf_util_rand_normal(0 , 1 , rng));
-
-  matrix_dgeqrf( Q , tau );  /* QR factorization */
-  for (int i=0; i  < ens_size; i++) {
-    double Qii = matrix_iget( Q , i,i);
-    sign[i] = Qii / abs(Qii);
-  }
-
-  matrix_dorgqr( Q , tau , ens_size );
-  for (int i = 0; i < ens_size; i++) {
-    if (sign[i] < 0)
-      matrix_scale_column( Q , i , -1 );
-  }
-
-  free( sign );
-  free( tau ); 
-}
-
-
-/**
-   Generates the mean preserving random rotation for the EnKF SQRT algorithm
-   using the algorithm from Sakov 2006-07.  I.e, generate rotation Up suceh that
-   Up*Up^T=I and Up*1=1 (all rows have sum = 1)  see eq 17.
-   From eq 18,    Up=B * Upb * B^T 
-   B is a random orthonormal basis with the elements in the first column equals 1/sqrt(nrens)
-
-   Upb = | 1  0 |
-   | 0  U |
-
-   where U is an arbitrary orthonormal matrix of dim nrens-1 x nrens-1  (eq. 19)
-*/
-
-matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size , rng_type * rng) {
-  matrix_type * Up  = matrix_alloc( ens_size , ens_size );  /* The return value. */
-  {
-    matrix_type * B   = matrix_alloc( ens_size , ens_size );
-    matrix_type * Upb = matrix_alloc( ens_size , ens_size );
-    matrix_type * U   = matrix_alloc_shared(Upb , 1 , 1 , ens_size - 1, ens_size - 1);
-    
-    
-    {
-      int k,j;
-      matrix_type * R   = matrix_alloc( ens_size , ens_size );
-      matrix_random_init( B , rng);   /* B is filled up with U(0,1) numbers. */
-      matrix_set_const_column( B , 1.0 / sqrt( ens_size ) , 0 );
-
-      /* modified_gram_schmidt is used to create the orthonormal basis in B.*/
-      for (k=0; k < ens_size; k++) {
-        double Rkk = sqrt( matrix_column_column_dot_product( B , k , B , k));   
-        matrix_iset(R , k , k , Rkk);
-        matrix_scale_column(B , k , 1.0/Rkk);
-        for (j=k+1; j < ens_size; j++) {
-          double Rkj = matrix_column_column_dot_product(B , k , B , j);
-          matrix_iset(R , k , j , Rkj);
-          {
-            int i;
-            for (i=0; i < ens_size; i++) {
-              double Bij = matrix_iget(B , i , j);
-              double Bik = matrix_iget(B , i , k);
-              matrix_iset(B , i , j , Bij - Bik * Rkj);
-            }
-          }
-        }
-      }
-      matrix_free( R );
-    }
-    
-    enkf_analysis_set_randrot( U , rng );
-    matrix_iset( Upb , 0 , 0 , 1);
-    
-    
-    {
-      matrix_type * Q   = matrix_alloc( ens_size , ens_size );
-      matrix_dgemm( Q  , B , Upb , false , false , 1, 0);   /* Q  = B * Ubp  */
-      matrix_dgemm( Up , Q , B   , false , true  , 1, 0);   /* Up = Q * T(B) */
-      matrix_free( Q );
-    }
-    
-    matrix_free( B );
-    matrix_free( Upb );
-    matrix_free( U );
-  }
-  
-  return Up;
-}
-
-
 
 /*****************************************************************/
 /*****************************************************************/
@@ -770,100 +660,100 @@ matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size , rng_type * rng) {
 /*****************************************************************/
 
 
-void enkf_analysis_invertS(const analysis_config_type * config , const matrix_type * S , const matrix_type * R , matrix_type * W , double * eig) {
-  pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );  
-  bool force_subspace_dimension         = analysis_config_get_force_subspace_dimension( config );
-  int  ens_size                         = matrix_get_columns( S );  
-  int  nrobs                            = matrix_get_rows( S ); 
-  double truncation                     = -1;
-  int    ncomp                          = -1;
-
-  if (force_subspace_dimension) {
-    ncomp = analysis_config_get_subspace_dimension( config );
-    /* Check if the dimension is appropropriate. If not, change to default */
-    if (ncomp > util_int_min( ens_size - 1, nrobs) ) {
-      printf("Selected number of components, %d, too high. Changing to default value: 1\n",ncomp);
-      ncomp = 1;
-    }
-  } else
-    truncation = analysis_config_get_truncation( config );
-  
-  switch (inversion_mode) {
-  case(SVD_SS_N1_R):
-    enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
-    break;
-  default:
-    util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
-  }
-}
-
-
-
-void enkf_analysis_invertS_pre_cv(const analysis_config_type * config , 
-                                  const matrix_type * S , 
-                                  const matrix_type * R , 
-                                  matrix_type * V0T , 
-                                  matrix_type * Z , 
-                                  double * eig , 
-                                  matrix_type * U0 ) {
-
-  pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );  
-  double truncation                     = analysis_config_get_truncation( config );  
-  
-  switch (inversion_mode) {
-  case(SVD_SS_N1_R):
-    enkf_linalg_lowrankCinv__( S , R , V0T , Z , eig , U0 , truncation , -1);    
-    break;
-  default:
-    util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
-  }
-}
-
-
-
-
-
-static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , const matrix_type * D , const matrix_type * W , const double * eig, bool bootstrap) {
-  const int nrobs   = matrix_get_rows( S );
-  const int nrens   = matrix_get_columns( S );
-  matrix_type * X3  = matrix_alloc(nrobs , nrens);
-  
-  enkf_linalg_genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
-                                        /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
-
-  matrix_dgemm( X5 , S , X3 , true , false , 1.0 , 0.0);  /* X5 = S' * X3 */
-  if (!bootstrap) {
-    for (int i = 0; i < nrens; i++)
-      matrix_iadd( X5 , i , i , 1.0); /*X5 = I + X5 */
-  }
-  
-  matrix_free( X3 );
-}
-
-
-static void enkf_analysis_SQRT(matrix_type * X5      , 
-                               const matrix_type * S , 
-                               const matrix_type * randrot , 
-                               const matrix_type * innov , 
-                               const matrix_type * W , 
-                               const double * eig , 
-                               bool bootstrap) {
-
-  const int nrobs   = matrix_get_rows( S );
-  const int nrens   = matrix_get_columns( S );
-  const int nrmin   = util_int_min( nrobs , nrens );
-  
-  matrix_type * X2    = matrix_alloc(nrmin , nrens);
-  
-  if (bootstrap)
-    util_exit("%s: Sorry bootstrap support not fully implemented for SQRT scheme\n",__func__);
-
-  enkf_linalg_meanX5( S , W , eig , innov , X5 );
-  enkf_linalg_genX2(X2 , S , W , eig);
-  enkf_linalg_X5sqrt(X2 , X5 , randrot , nrobs);
-
-  matrix_free( X2 );
-}
+//void enkf_analysis_invertS(const analysis_config_type * config , const matrix_type * S , const matrix_type * R , matrix_type * W , double * eig) {
+//  pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );  
+//  bool force_subspace_dimension         = analysis_config_get_force_subspace_dimension( config );
+//  int  ens_size                         = matrix_get_columns( S );  
+//  int  nrobs                            = matrix_get_rows( S ); 
+//  double truncation                     = -1;
+//  int    ncomp                          = -1;
+//
+//  if (force_subspace_dimension) {
+//    ncomp = analysis_config_get_subspace_dimension( config );
+//    /* Check if the dimension is appropropriate. If not, change to default */
+//    if (ncomp > util_int_min( ens_size - 1, nrobs) ) {
+//      printf("Selected number of components, %d, too high. Changing to default value: 1\n",ncomp);
+//      ncomp = 1;
+//    }
+//  } else
+//    truncation = analysis_config_get_truncation( config );
+//  
+//  switch (inversion_mode) {
+//  case(SVD_SS_N1_R):
+//    enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
+//    break;
+//  default:
+//    util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
+//  }
+//}
+//
+//
+//
+//void enkf_analysis_invertS_pre_cv(const analysis_config_type * config , 
+//                                  const matrix_type * S , 
+//                                  const matrix_type * R , 
+//                                  matrix_type * V0T , 
+//                                  matrix_type * Z , 
+//                                  double * eig , 
+//                                  matrix_type * U0 ) {
+//
+//  pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );  
+//  double truncation                     = analysis_config_get_truncation( config );  
+//  
+//  switch (inversion_mode) {
+//  case(SVD_SS_N1_R):
+//    enkf_linalg_lowrankCinv__( S , R , V0T , Z , eig , U0 , truncation , -1);    
+//    break;
+//  default:
+//    util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
+//  }
+//}
+//
+//
+//
+//
+//
+//static void enkf_analysis_standard(matrix_type * X5 , const matrix_type * S , const matrix_type * D , const matrix_type * W , const double * eig, bool bootstrap) {
+//  const int nrobs   = matrix_get_rows( S );
+//  const int nrens   = matrix_get_columns( S );
+//  matrix_type * X3  = matrix_alloc(nrobs , nrens);
+//  
+//  enkf_linalg_genX3(X3 , W , D , eig ); /*  X2 = diag(eig) * W' * D (Eq. 14.31, Evensen (2007)) */
+//                                        /*  X3 = W * X2 = X1 * X2 (Eq. 14.31, Evensen (2007)) */  
+//
+//  matrix_dgemm( X5 , S , X3 , true , false , 1.0 , 0.0);  /* X5 = S' * X3 */
+//  if (!bootstrap) {
+//    for (int i = 0; i < nrens; i++)
+//      matrix_iadd( X5 , i , i , 1.0); /*X5 = I + X5 */
+//  }
+//  
+//  matrix_free( X3 );
+//}
+//
+//
+//static void enkf_analysis_SQRT(matrix_type * X5      , 
+//                               const matrix_type * S , 
+//                               const matrix_type * randrot , 
+//                               const matrix_type * innov , 
+//                               const matrix_type * W , 
+//                               const double * eig , 
+//                               bool bootstrap) {
+//
+//  const int nrobs   = matrix_get_rows( S );
+//  const int nrens   = matrix_get_columns( S );
+//  const int nrmin   = util_int_min( nrobs , nrens );
+//  
+//  matrix_type * X2    = matrix_alloc(nrmin , nrens);
+//  
+//  if (bootstrap)
+//    util_exit("%s: Sorry bootstrap support not fully implemented for SQRT scheme\n",__func__);
+//
+//  enkf_linalg_meanX5( S , W , eig , innov , X5 );
+//  enkf_linalg_genX2(X2 , S , W , eig);
+//  enkf_linalg_X5sqrt(X2 , X5 , randrot , nrobs);
+//
+//  matrix_free( X2 );
+//}
 
 
 
@@ -1100,64 +990,64 @@ static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
 
 */
 
-matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , 
-                                         rng_type * rng , 
-                                         const meas_data_type * meas_data , 
-                                         obs_data_type * obs_data , 
-                                         const matrix_type * randrot , 
-                                         const meas_data_type * fasit) {
-  
-  int ens_size          = meas_data_get_ens_size( meas_data );
-  matrix_type * X       = matrix_alloc( ens_size , ens_size );
-  matrix_set_name( X , "X");
-  {
-    matrix_type * S , *R , *E , *D ;
-    
-    int nrobs                = obs_data_get_active_size(obs_data);
-    int nrmin                = util_int_min( ens_size , nrobs); 
-    
-    matrix_type * W          = matrix_alloc(nrobs , nrmin);                      
-    double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
-    enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
-    bool bootstrap           = analysis_config_get_bootstrap( config );
-    enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &E , &D , fasit);
-
-    /* 
-       2: Diagonalize the S matrix; singular vectors are stored in W
-          and singular values (after some massage) are stored in eig. 
-          W = X1, eig = inv(I+Lambda1),(Eq.14.30, and 14.29, Evensen, 2007, respectively)
-    */ 
-
-    enkf_analysis_invertS( config , S , R , W , eig);
-    
-    /* 
-       3: actually calculating the X matrix. 
-    */
-    switch (enkf_mode) {
-    case(ENKF_STANDARD):
-      enkf_analysis_standard(X , S , D , W , eig , bootstrap);
-      break;
-    case(ENKF_SQRT):
-      //enkf_analysis_SQRT(X , S , randrot , innov , W , eig , bootstrap);
-      break;
-    default:
-      util_abort("%s: INTERNAL ERROR \n",__func__);
-    }
-    
-    matrix_free( W );
-    matrix_free( R );
-    matrix_free( S );
-    free( eig );
-    
-    if (enkf_mode == ENKF_STANDARD) {
-      matrix_free( E );
-      matrix_free( D );
-    }
-    
-    enkf_analysis_checkX(X , bootstrap);
-  }
-  return X;
-}
+// matrix_type * enkf_analysis_allocX_boot( const analysis_config_type * config , 
+//                                          rng_type * rng , 
+//                                          const meas_data_type * meas_data , 
+//                                          obs_data_type * obs_data , 
+//                                          const matrix_type * randrot , 
+//                                          const meas_data_type * fasit) {
+//   
+//   int ens_size          = meas_data_get_ens_size( meas_data );
+//   matrix_type * X       = matrix_alloc( ens_size , ens_size );
+//   matrix_set_name( X , "X");
+//   {
+//     matrix_type * S , *R , *E , *D ;
+//     
+//     int nrobs                = obs_data_get_active_size(obs_data);
+//     int nrmin                = util_int_min( ens_size , nrobs); 
+//     
+//     matrix_type * W          = matrix_alloc(nrobs , nrmin);                      
+//     double      * eig        = util_malloc( sizeof * eig * nrmin , __func__);    
+//     enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( config );    
+//     bool bootstrap           = analysis_config_get_bootstrap( config );
+//     enkf_analysis_alloc_matrices_boot( rng , meas_data , obs_data , enkf_mode , &S , &R , &E , &D , fasit);
+// 
+//     /* 
+//        2: Diagonalize the S matrix; singular vectors are stored in W
+//           and singular values (after some massage) are stored in eig. 
+//           W = X1, eig = inv(I+Lambda1),(Eq.14.30, and 14.29, Evensen, 2007, respectively)
+//     */ 
+// 
+//     enkf_analysis_invertS( config , S , R , W , eig);
+//     
+//     /* 
+//        3: actually calculating the X matrix. 
+//     */
+//     switch (enkf_mode) {
+//     case(ENKF_STANDARD):
+//       enkf_analysis_standard(X , S , D , W , eig , bootstrap);
+//       break;
+//     case(ENKF_SQRT):
+//       //enkf_analysis_SQRT(X , S , randrot , innov , W , eig , bootstrap);
+//       break;
+//     default:
+//       util_abort("%s: INTERNAL ERROR \n",__func__);
+//     }
+//     
+//     matrix_free( W );
+//     matrix_free( R );
+//     matrix_free( S );
+//     free( eig );
+//     
+//     if (enkf_mode == ENKF_STANDARD) {
+//       matrix_free( E );
+//       matrix_free( D );
+//     }
+//     
+//     enkf_analysis_checkX(X , bootstrap);
+//   }
+//   return X;
+// }
 
 
 //CV ->matrix_type * enkf_analysis_allocX_pre_cv( const analysis_config_type * config , 

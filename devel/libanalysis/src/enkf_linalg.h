@@ -2,6 +2,26 @@
 #define __ENKF_LINALG_H__
 
 #include <matrix_lapack.h>
+#include <matrix.h>
+
+void enkf_linalg_init_stdX( matrix_type * X , 
+                            const matrix_type * S , 
+                            const matrix_type * D , 
+                            const matrix_type * W , 
+                            const double * eig , 
+                            bool bootstrap);
+
+
+void enkf_linalg_init_sqrtX(matrix_type * X5      , 
+                            const matrix_type * S , 
+                            const matrix_type * randrot , 
+                            const matrix_type * innov , 
+                            const matrix_type * W , 
+                            const double * eig , 
+                            bool bootstrap);
+
+
+void enkf_linalg_Cee(matrix_type * B, int nrens , const matrix_type * R , const matrix_type * U0 , const double * inv_sig0);
 
 void enkf_linalg_svdS(const matrix_type * S , 
                       double truncation , 
@@ -46,5 +66,8 @@ void enkf_linalg_meanX5(const matrix_type * S ,
 
 
 void enkf_linalg_X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type * randrot, int nrobs);
+
+matrix_type * enkf_linalg_alloc_mp_randrot(int ens_size , rng_type * rng);
+void          enkf_linalg_set_randrot( matrix_type * Q  , rng_type * rng);
 
 #endif

@@ -1214,16 +1214,12 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_type * A       = matrix_alloc( matrix_start_size , ens_size );
   matrix_type * E       = NULL;
   matrix_type * D       = NULL;
-  matrix_type * randrot = NULL; 
   matrix_type * localA  = NULL;
 
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
-  
-  if (analysis_module_get_option( module , ANALYSIS_NEED_RANDROT)) 
-    randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
   
   if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) {
     printf("Using A \n");
@@ -1246,9 +1242,9 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
         enkf_main_serialize_dataset( enkf_main , dataset , report_step ,  use_count , active_size , row_offset , tp , serialize_info);
         
         if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
-          analysis_module_updateA( module , localA , S , R , dObs , E , D , randrot );
+          analysis_module_updateA( module , localA , S , R , dObs , E , D );
         else {
-          analysis_module_initX( module , X , localA , S , R , dObs , E , D , randrot );
+          analysis_module_initX( module , X , localA , S , R , dObs , E , D );
           matrix_inplace_matmul_mt2( A , X , tp );
         }
           
@@ -1267,7 +1263,6 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
 
   /*****************************************************************/
 
-  matrix_safe_free( randrot );
   matrix_safe_free( E );
   matrix_safe_free( D );
   matrix_free( S );
@@ -1309,13 +1304,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
     local_config_type           * local_config  = enkf_main->local_config;
     const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , int_vector_get_last( step_list ));  /* Only last step considered when forming local update */
     hash_type                   * use_count     = hash_alloc();
-    matrix_type                 * randrot       = NULL;
     const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
     FILE                        * log_stream;
 
-
-    if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-      randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
     
     {
       char * log_file;
@@ -1383,7 +1374,6 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
     }
     fclose( log_stream );
 
-    matrix_safe_free( randrot );
     obs_data_free( obs_data );
     meas_data_free( meas_forecast );
     meas_data_free( meas_analyzed );

@@ -184,10 +184,10 @@ void analysis_module_initX(analysis_module_type * module ,
                            matrix_type * R , 
                            matrix_type * dObs , 
                            matrix_type * E , 
-                           matrix_type * D , 
-                           matrix_type * randrot) {
+                           matrix_type * D ) {
+
   
-  module->initX(module->module_data , X , A , S , R , dObs , E , D , randrot );
+  module->initX(module->module_data , X , A , S , R , dObs , E , D );
 }
 
 
@@ -197,10 +197,9 @@ void analysis_module_updateA(analysis_module_type * module ,
                              matrix_type * R , 
                              matrix_type * dObs , 
                              matrix_type * E , 
-                             matrix_type * D , 
-                             matrix_type * randrot) {
+                             matrix_type * D ) {
 
-  module->updateA(module->module_data , A , S , R , dObs , E , D , randrot );
+  module->updateA(module->module_data , A , S , R , dObs , E , D );
 }
 
 

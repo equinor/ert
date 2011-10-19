@@ -21,7 +21,6 @@ C based functions.
 """
 
 import os.path
-
 import ecl_sum
 import ecl_grid
 import ecl_rft
@@ -54,6 +53,8 @@ class EclCase:
            case3 = EclCase( "/absolute/path/simulation/ECLIPSE_3.xxx" )
 
         """
+        raise DeprecationWarning("The EclCase class is deprecated - instantiate the EclSum / EclGrid / ... classes directly.")
+
         self.case = input_case
         (path , tmp) = os.path.split( input_case )
         if path:
@@ -61,7 +62,6 @@ class EclCase:
         else:
             self.__path = os.getcwd()
         (self.__base , self.ext) = os.path.splitext( tmp )
-        
         
         self.__sum         = None
         self.__grid        = None
@@ -77,6 +77,7 @@ class EclCase:
         Observe that this method is purely about string manipulation;
         i.e. it is not checked if the datafile actually exists.
         """
+        
         if not self.__data_file:
             self.__data_file = "%s/%s.DATA" % ( self.__path , self.__base )
         return self.__data_file

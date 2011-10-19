@@ -26,7 +26,6 @@ extern "C" {
 
 // Option flags:
 #define ANALYSIS_NEED_ED              1
-#define ANALYSIS_NEED_RANDROT         2
 #define ANALYSIS_USE_A                4       
 #define ANALYSIS_UPDATE_A             8
 
@@ -50,8 +49,8 @@ void analysis_module_initX(analysis_module_type * module ,
                            matrix_type * R , 
                            matrix_type * dObs , 
                            matrix_type * E , 
-                           matrix_type * D ,
-                           matrix_type * randrot);
+                           matrix_type * D);
+                           
 
 void analysis_module_updateA(analysis_module_type * module , 
                              matrix_type * A , 
@@ -59,8 +58,9 @@ void analysis_module_updateA(analysis_module_type * module ,
                              matrix_type * R , 
                              matrix_type * dObs , 
                              matrix_type * E , 
-                             matrix_type * D , 
-                             matrix_type * randrot);
+                             matrix_type * D );
+
+                             
 
 bool  analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
 

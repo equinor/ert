@@ -103,7 +103,7 @@ void          enkf_analysis_deactivate_outliers(obs_data_type * obs_data ,
                                                 double std_cutoff , 
                                                 double alpha);
 
-matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size , rng_type * rng);
+  //matrix_type * enkf_analysis_alloc_mp_randrot(int ens_size , rng_type * rng);
 
 
 #ifdef __cplusplus
