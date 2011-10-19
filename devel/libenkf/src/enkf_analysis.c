@@ -915,63 +915,41 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_data_type
 
 
 
-static void enkf_analysis_alloc_matrices_boot( rng_type * rng , 
-                                               const meas_data_type * meas_data , 
-                                               obs_data_type * obs_data , 
-                                               enkf_mode_type enkf_mode , 
-                                               matrix_type ** S , 
-                                               matrix_type ** R , 
-                                               matrix_type ** E ,
-                                               matrix_type ** D ,
-                                               const meas_data_type * fasit) {
+//Boot: static void enkf_analysis_alloc_matrices_boot( rng_type * rng , 
+//Boot:                                                const meas_data_type * meas_data , 
+//Boot:                                                obs_data_type * obs_data , 
+//Boot:                                                enkf_mode_type enkf_mode , 
+//Boot:                                                matrix_type ** S , 
+//Boot:                                                matrix_type ** R , 
+//Boot:                                                matrix_type ** E ,
+//Boot:                                                matrix_type ** D ,
+//Boot:                                                const meas_data_type * fasit) {
+//Boot: 
+//Boot:   int ens_size              = meas_data_get_ens_size( meas_data );
+//Boot:   int active_size           = obs_data_get_active_size( obs_data );
+//Boot:   
+//Boot:   *S                        = meas_data_allocS( meas_data , active_size );
+//Boot:   *R                        = obs_data_allocR( obs_data , active_size );
+//Boot:   
+//Boot:   if (enkf_mode == ENKF_STANDARD) {
+//Boot:     matrix_type * fullS       = meas_data_allocS( fasit , active_size );
+//Boot:     /* 
+//Boot:        We are using standard EnKF and need to perturbe the measurements,
+//Boot:        if we are using the SQRT scheme the E & D matrices are not used.
+//Boot:     */
+//Boot:     *E = obs_data_allocE(obs_data , rng , ens_size, active_size );
+//Boot:     *D = obs_data_allocD(obs_data , *E , fullS );
+//Boot:     matrix_free( fullS );
+//Boot:   } else {
+//Boot:     *E          = NULL;
+//Boot:     *D          = NULL;
+//Boot:   }
+//Boot:   
+//Boot:   obs_data_scale(obs_data ,  *S , *E , *D , *R , NULL );
+//Boot:   matrix_subtract_row_mean( *S );  /* Subtracting the ensemble mean */
+//Boot: }
 
-  int ens_size              = meas_data_get_ens_size( meas_data );
-  int active_size           = obs_data_get_active_size( obs_data );
-  
-  *S                        = meas_data_allocS( meas_data , active_size );
-  *R                        = obs_data_allocR( obs_data , active_size );
-  
-  if (enkf_mode == ENKF_STANDARD) {
-    matrix_type * fullS       = meas_data_allocS( fasit , active_size );
-    /* 
-       We are using standard EnKF and need to perturbe the measurements,
-       if we are using the SQRT scheme the E & D matrices are not used.
-    */
-    *E = obs_data_allocE(obs_data , rng , ens_size, active_size );
-    *D = obs_data_allocD(obs_data , *E , fullS );
-    matrix_free( fullS );
-  } else {
-    *E          = NULL;
-    *D          = NULL;
-  }
-  
-  obs_data_scale(obs_data ,  *S , *E , *D , *R , NULL );
-  matrix_subtract_row_mean( *S );  /* Subtracting the ensemble mean */
-}
 
-
-/**
-   Checking that the sum through one row in the X matrix equals
-   @target_sum. @target_sum will be 1 normally, and zero if we are doing
-   bootstrap.  
-*/
-
-static void enkf_analysis_checkX(const matrix_type * X , bool bootstrap) {
-  matrix_assert_finite( X );
-  {
-    int target_sum;
-    if (bootstrap)
-      target_sum = 0;
-    else
-      target_sum = 1;
-    
-    for (int icol = 0; icol < matrix_get_columns( X ); icol++) {
-      double col_sum = matrix_get_column_sum(X , icol);
-      if (fabs(col_sum - target_sum) > 0.0001) 
-        util_abort("%s: something is seriously broken. col:%d  col_sum = %g != %g - ABORTING\n",__func__ , icol , col_sum , target_sum);
-    }
-  }
-}
 
 
 

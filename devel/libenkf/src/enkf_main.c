@@ -1284,9 +1284,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
      interval [step1+1,step2] will be used, otherwise only the last
      observation at step2 will be used.
   */
+  const int ens_size = enkf_main_get_ensemble_size(enkf_main);
   double alpha       = analysis_config_get_alpha( enkf_main->analysis_config );
   double std_cutoff  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
-  const int ens_size = enkf_main_get_ensemble_size(enkf_main);
   
   {
     /*
@@ -1344,33 +1344,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , stdout );
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , log_stream );
 
-      if (obs_data_get_active_size(obs_data) > 0) {
-        if (analysis_config_Xbased( enkf_main->analysis_config )) {
+      if (obs_data_get_active_size(obs_data) > 0)
+        enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
 
-          enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
-          
-          //Bootstrap + CVif (analysis_config_get_bootstrap( enkf_main->analysis_config )) {
-          //Bootstrap + CV  /*
-          //Bootstrap + CV    Think there is a memory bug in this update code, when
-          //Bootstrap + CV    the allocated A matrix is not large enough to hold all
-          //Bootstrap + CV    data.
-          //Bootstrap + CV  */
-          //Bootstrap + CV  enkf_main_update_mulX_bootstrap(enkf_main , dataset , step_list , use_count , meas_forecast , obs_data, std_cutoff, alpha);
-          //Bootstrap + CV} else if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
-          //Bootstrap + CV  /* Update based on Cross validation AND local analysis. */
-          //Bootstrap + CV  enkf_main_update_mulX_prin_comp_cv(enkf_main , 
-          //Bootstrap + CV                                     dataset , 
-          //Bootstrap + CV                                     int_vector_get_last( step_list ) , 
-          //Bootstrap + CV                                     use_count , 
-          //Bootstrap + CV                                     meas_forecast , 
-          //Bootstrap + CV                                     obs_data);
-          //Bootstrap + CV
-          //Bootstrap + CV} else {
-          //Bootstrap + CV  /* Plain vanilla goes through module update. */
-          //Bootstrap + CV  enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
-          //Bootstrap + CV}
-        }
-      }
     }
     fclose( log_stream );
 
