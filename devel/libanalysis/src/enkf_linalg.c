@@ -494,3 +494,30 @@ matrix_type * enkf_linalg_alloc_mp_randrot(int ens_size , rng_type * rng) {
   
   return Up;
 }
+
+
+/*****************************************************************/
+
+/**
+   Checking that the sum through one row in the X matrix equals
+   @target_sum. @target_sum will be 1 normally, and zero if we are doing
+   bootstrap.  
+*/
+
+void enkf_linalg_checkX(const matrix_type * X , bool bootstrap) {
+  matrix_assert_finite( X );
+  {
+    int target_sum;
+    if (bootstrap)
+      target_sum = 0;
+    else
+      target_sum = 1;
+    
+    for (int icol = 0; icol < matrix_get_columns( X ); icol++) {
+      double col_sum = matrix_get_column_sum(X , icol);
+      if (fabs(col_sum - target_sum) > 0.0001) 
+        util_abort("%s: something is seriously broken. col:%d  col_sum = %g != %g - ABORTING\n",__func__ , icol , col_sum , target_sum);
+    }
+  }
+}
+

@@ -135,6 +135,14 @@ void analysis_config_load_internal_module( analysis_config_type * config , rng_t
 }
 
 
+void analysis_config_reload_internal_module( analysis_config_type * config , rng_type * rng , 
+                                             const char * existing_name , const char * new_name) {
+  analysis_module_type * module = analysis_config_get_module( config , existing_name );
+  analysis_config_load_internal_module( config , rng  , new_name , analysis_module_get_table_name( module ) );
+}
+
+
+
 void analysis_config_load_external_module( analysis_config_type * config , rng_type * rng , 
                                            const char * user_name , const char * lib_name) {
   analysis_module_type * module = analysis_module_alloc_external( rng , user_name , lib_name );
@@ -215,13 +223,25 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   /* Loading external modules */
   {
     for (int i=0; i < config_get_occurences( config , ANALYSIS_LOAD_KEY ); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_SET_VAR_KEY , i);
+      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_LOAD_KEY , i);
       const char * user_name = stringlist_iget( tokens , 0 );
       const char * lib_name  = stringlist_iget( tokens , 1 );
       
       analysis_config_load_external_module( analysis , rng , user_name , lib_name);
     }
   }
+  
+  /* (Reload) internal modules. */
+  {
+    for (int i=0; i < config_get_occurences( config , ANALYSIS_LOAD_INTERNAL_KEY ); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_LOAD_INTERNAL_KEY , i);
+      const char * existing_name = stringlist_iget( tokens , 0 );
+      const char * new_name      = stringlist_iget( tokens , 1 );
+      
+      analysis_config_reload_internal_module( analysis , rng , existing_name , new_name);
+    }
+  }
+
 
   /* Setting variables for analysis modules */
   {
@@ -293,6 +313,7 @@ void analysis_config_add_config_items( config_type * config ) {
   config_item_type * item;
   
   config_add_key_value( config , ENKF_ALPHA_KEY              , false , CONFIG_FLOAT);
+  config_add_key_value( config , STD_CUTOFF_KEY              , false , CONFIG_FLOAT);
   config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOLEAN);
   config_add_key_value( config , UPDATE_RESULTS_KEY          , false , CONFIG_BOOLEAN);
   config_add_key_value( config , SINGLE_NODE_UPDATE_KEY      , false , CONFIG_BOOLEAN);
@@ -313,6 +334,9 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ANALYSIS_SELECT_KEY         , false , CONFIG_STRING);
 
   item = config_add_item( config , ANALYSIS_LOAD_KEY , false , true );
+  config_item_set_argc_minmax( item , 2 , 2 , 0 , NULL );  
+
+  item = config_add_item( config , ANALYSIS_LOAD_INTERNAL_KEY , false , true );
   config_item_set_argc_minmax( item , 2 , 2 , 0 , NULL );  
   
   item = config_add_item( config , ANALYSIS_SET_VAR_KEY , false , true );

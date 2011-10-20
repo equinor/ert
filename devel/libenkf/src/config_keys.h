@@ -136,6 +136,7 @@ extern "C" {
 #define  UPDATE_RESULTS_KEY                "UPDATE_RESULTS"
 #define  SINGLE_NODE_UPDATE_KEY            "SINGLE_NODE_UPDATE"
 
+#define  ANALYSIS_LOAD_INTERNAL_KEY        "ANALYSIS_RELOAD_INTERNAL"
 #define  ANALYSIS_LOAD_KEY                 "ANALYSIS_LOAD"
 #define  ANALYSIS_SET_VAR_KEY              "ANALYSIS_SET_VAR"
 #define  ANALYSIS_SELECT_KEY               "ANALYSIS_SELECT"

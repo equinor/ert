@@ -69,5 +69,5 @@ void enkf_linalg_X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type 
 
 matrix_type * enkf_linalg_alloc_mp_randrot(int ens_size , rng_type * rng);
 void          enkf_linalg_set_randrot( matrix_type * Q  , rng_type * rng);
-
+void          enkf_linalg_checkX(const matrix_type * X , bool bootstrap);
 #endif
