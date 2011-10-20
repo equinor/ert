@@ -46,6 +46,56 @@ struct analysis_config_struct {
 }; 
 
 
+/*****************************************************************/
+/* 
+
+Interacting with modules
+------------------------
+
+The modules which are included in the build must be installed/loaded with a
+hard-coded call to analysis_config_load_internal_module(). External modules
+are loaded with the config statement:
+
+   ANALYSIS_LOAD    ModuleName   libfile
+
+Where 'ModuleName is the name you want to use to refer to the module, and
+libfile is the name of the library file which implements the analysis
+module[1]. 
+
+It is possible to create a copy of an analysis module under a different
+name, this can be convenient when trying out the same algorithm with
+different parameter settings. I.e. based on the built in module STD_ENKF we
+can create two copies with high and low truncation respectively:
+
+   ANALYSIS_COPY  STD_ENKF  ENKF_HIGH_TRUNCATION
+   ANALYSIS_COPY  STD_ENKF  ENKF_LOW_TRUNCATION
+
+The copy operation does not differentiate between external and internal
+modules. When a module has been loaded you can set internal parameters for
+the module with the config command:
+
+   ANALYSIS_SET_VAR  ModuleName  VariableName   Value
+
+The module will be called with a function for setting variables which gets
+the VariableName and value parameters as input; if the module recognizes
+VariableName and Value is of the right type the module should set the
+internal variable accordingly. If the module does not recognize the
+variable name a warning will be printed on stderr, but no further action.
+
+
+[1] The libfile argument should include the '.so' extension, and can
+    optionally contain a path component. The libfile will be passed directly to
+    the dlopen() library call, this implies that normal runtime linking
+    conventions apply - i.e. you have three options:
+     
+     1. The library name is given with a full path.
+     2. The library is in a standard location for shared libraries.
+     3. The library is in one of the directories mentioned in the
+        LD_LIBRARY_PATH environment variable.
+
+*/
+
+   
 
 
 
@@ -72,6 +122,7 @@ double analysis_config_get_std_cutoff(const analysis_config_type * config) {
 void analysis_config_set_log_path(analysis_config_type * config , const char * log_path ) {
   config->log_path        = util_realloc_string_copy(config->log_path , log_path);
 }
+
 
 /**
    Will in addition create the path.
@@ -135,10 +186,10 @@ void analysis_config_load_internal_module( analysis_config_type * config , rng_t
 }
 
 
-void analysis_config_reload_internal_module( analysis_config_type * config , rng_type * rng , 
-                                             const char * existing_name , const char * new_name) {
-  analysis_module_type * module = analysis_config_get_module( config , existing_name );
-  analysis_config_load_internal_module( config , rng  , new_name , analysis_module_get_table_name( module ) );
+void analysis_config_add_module_copy( analysis_config_type * config , rng_type * rng , 
+                                      const char * src_name , const char * target_name) {
+  analysis_module_type * module = analysis_config_get_module( config , src_name );
+  analysis_config_load_internal_module( config , rng  , target_name , analysis_module_get_table_name( module ) );
 }
 
 
@@ -173,6 +224,7 @@ void analysis_config_select_module( analysis_config_type * config , const char *
               analysis_module_get_name( config->analysis_module ));
     
   }
+
 }
 
 analysis_module_type * analysis_config_get_active_module( analysis_config_type * config ) {
@@ -231,14 +283,14 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
     }
   }
   
-  /* (Reload) internal modules. */
+  /* Reload/copy modules. */
   {
-    for (int i=0; i < config_get_occurences( config , ANALYSIS_LOAD_INTERNAL_KEY ); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_LOAD_INTERNAL_KEY , i);
-      const char * existing_name = stringlist_iget( tokens , 0 );
-      const char * new_name      = stringlist_iget( tokens , 1 );
+    for (int i=0; i < config_get_occurences( config , ANALYSIS_COPY_KEY ); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_COPY_KEY , i);
+      const char * src_name    = stringlist_iget( tokens , 0 );
+      const char * target_name = stringlist_iget( tokens , 1 );
       
-      analysis_config_reload_internal_module( analysis , rng , existing_name , new_name);
+      analysis_config_add_module_copy( analysis , rng , src_name , target_name);
     }
   }
 
@@ -295,6 +347,7 @@ analysis_config_type * analysis_config_alloc_default( ) {
   analysis_config_set_rerun_start( config              , DEFAULT_RERUN_START );
   analysis_config_set_update_results( config           , DEFAULT_UPDATE_RESULTS);
   analysis_config_set_single_node_update( config       , DEFAULT_SINGLE_NODE_UPDATE );
+  analysis_config_set_log_path( config                 , DEFAULT_UPDATE_LOG_PATH);
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
@@ -336,7 +389,7 @@ void analysis_config_add_config_items( config_type * config ) {
   item = config_add_item( config , ANALYSIS_LOAD_KEY , false , true );
   config_item_set_argc_minmax( item , 2 , 2 , 0 , NULL );  
 
-  item = config_add_item( config , ANALYSIS_LOAD_INTERNAL_KEY , false , true );
+  item = config_add_item( config , ANALYSIS_COPY_KEY , false , true );
   config_item_set_argc_minmax( item , 2 , 2 , 0 , NULL );  
   
   item = config_add_item( config , ANALYSIS_SET_VAR_KEY , false , true );

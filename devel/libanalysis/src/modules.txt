@@ -137,7 +137,6 @@ the module functions will inspect the option_flags to see which
 variables to pass to the module, and which module functions to invoke,
 so this must be correct.
 
-
 Example 
 ------- 
 The module/file std_enkf.c is commented quite heavily to serve as an
