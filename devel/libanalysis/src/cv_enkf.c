@@ -451,9 +451,17 @@ static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const 
   matrix_type *Zp = matrix_alloc( optP, nrens );
   matrix_type *SigZp = matrix_alloc( optP ,optP);
 
+  for (i = 0; i < optP ; i++) 
+    for (j = 0; j < nrens; j++) 
+      matrix_iset(Zp , i , j , matrix_iget(cv_data->Z , i ,j));
   
-  
-  matrix_copy_block( Zp , 0 , 0 , optP , nrens , cv_data->Z , 0 , 0 );
+
+  //printf("Calling copy block \n");
+  //printf("optP:%d nrens:%d  Zp:[%d,%d] , cv->Z:[%d,%d] \n",optP , nrens , matrix_get_rows( Zp ) , matrix_get_columns( Zp ),
+  //                   matrix_get_rows( cv_data->Z ) , matrix_get_columns( cv_data->Z ) );
+  //
+  //matrix_copy_block( Zp , 0 , 0 , optP , nrens , cv_data->Z , 0 , 0 );
+  //printf("OK\n");
 
   /*Compute SigZp = Zp * Zp' */
   matrix_dgemm( SigZp , Zp , Zp, false , true , 1.0, 0.0);
@@ -500,6 +508,7 @@ void cv_enkf_initX(void * module_data ,
 
   
   cv_enkf_data_type * cv_data = cv_enkf_data_safe_cast( module_data );
+  printf("Running CV\n");
   {
     int optP;
     int ens_size = matrix_get_columns( S );
