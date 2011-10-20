@@ -82,6 +82,9 @@ VariableName and Value is of the right type the module should set the
 internal variable accordingly. If the module does not recognize the
 variable name a warning will be printed on stderr, but no further action.
 
+The actual analysis module to use is selected with the statement:
+
+ANALYSIS_SELECT  ModuleName
 
 [1] The libfile argument should include the '.so' extension, and can
     optionally contain a path component. The libfile will be passed directly to
