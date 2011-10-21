@@ -389,7 +389,9 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
   }
   
   if (maxP > nrmin) 
-    maxP = nrmin;
+    maxP = nrmin - 1;      // <- Change by Joakim; using nrmin here will load to out 
+                           // bounds access oc cv_data->Z at line 460.
+
   
   if ( nrens < cv_data->nfolds )
     util_abort("%s: number of ensemble members %d need to be larger than the number of cv-folds - aborting \n",
@@ -448,20 +450,18 @@ static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const 
   int nrens = matrix_get_columns( cv_data->Z );
   
   /* Finally, compute W = Z(1:p,:)' * inv(Z(1:p,:) * Z(1:p,:)' + (n -1) * Rp) */
-  matrix_type *Zp = matrix_alloc( optP, nrens );
+  matrix_type *Zp    = matrix_alloc( optP, nrens );
   matrix_type *SigZp = matrix_alloc( optP ,optP);
 
+  // This loop will fail with i to large whcn accessing cv_data->Z
+  // if we do not limit maxP to nrmin - 1?
   for (i = 0; i < optP ; i++) 
     for (j = 0; j < nrens; j++) 
-      matrix_iset(Zp , i , j , matrix_iget(cv_data->Z , i ,j));
-  
+      matrix_iset_safe(Zp , i , j , matrix_iget_safe(cv_data->Z , i ,j));
 
-  //printf("Calling copy block \n");
-  //printf("optP:%d nrens:%d  Zp:[%d,%d] , cv->Z:[%d,%d] \n",optP , nrens , matrix_get_rows( Zp ) , matrix_get_columns( Zp ),
-  //                   matrix_get_rows( cv_data->Z ) , matrix_get_columns( cv_data->Z ) );
-  //
-  //matrix_copy_block( Zp , 0 , 0 , optP , nrens , cv_data->Z , 0 , 0 );
-  //printf("OK\n");
+  // Matrix copy_block should be used in stead of the double (i,j) loop;
+  // however that failed because the cv_data->Z matrix had one row too few?
+  // matrix_copy_block( Zp , 0 , 0 , optP , nrens , cv_data->Z , 0 , 0 );
 
   /*Compute SigZp = Zp * Zp' */
   matrix_dgemm( SigZp , Zp , Zp, false , true , 1.0, 0.0);

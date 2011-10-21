@@ -308,7 +308,6 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
       analysis_module_type * module = analysis_config_get_module( analysis , module_name );
       
       analysis_module_set_var( module , var_name , value );
-      
       free( value );
     }
   }
