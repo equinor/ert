@@ -192,6 +192,22 @@ class EclGrid(object):
         return cfunc.get_active_index1( self , gi)
 
     
+    def cell_invalid( self , ijk = None , global_index = None , active_index = None):
+        """
+        Tries to check if a cell is invalid.
+
+        Cells which are used to represent numerical aquifers are
+        typically located in UTM position (0,0); these cells have
+        completely whacked up shape and size, and should **NOT** be
+        used in calculations involving real world coordinates. To
+        protect against this a heuristic is used identify such cells
+        and mark them as invalid. There might be other sources than
+        numerical aquifers to this problem.
+        """
+        gi = self.__global_index( global_index = global_index , ijk = ijk , active_index = active_index)
+        return cfunc.invalid_cell( self , gi )
+
+
     def active( self , ijk = None , global_index = None):
         """
         Is the cell active?
@@ -618,3 +634,4 @@ cfunc.load_column                  = cwrapper.prototype("void   ecl_grid_get_col
 cfunc.get_top                      = cwrapper.prototype("double ecl_grid_get_top2( ecl_grid , int , int )") 
 cfunc.get_bottom                   = cwrapper.prototype("double ecl_grid_get_bottom2( ecl_grid , int , int )") 
 cfunc.locate_depth                 = cwrapper.prototype("int    ecl_grid_locate_depth( ecl_grid , double , int , int )") 
+cfunc.invalid_cell                 = cwrapper.prototype("bool   ecl_grid_cell_invalid1( ecl_grid , int)")
