@@ -48,10 +48,10 @@ typedef enum {
   ACTIVE_LIST_ADD_MANY_DATA_INDEX = 12, /* DATA_KEY , NUM_INDEX , INDEX1 , INDEX2 , INDEX3 ,... */  
   INSTALL_UPDATESTEP              = 13, /* UPDATESTEP_NAME , STEP1 , STEP2          local_config_set_updatestep() */
   INSTALL_DEFAULT_UPDATESTEP      = 14, /* UPDATETSTEP_NAME                         local_config_set_default_updatestep() */
-  DEL_DATA                        = 16, /* MINISTEP KEY*/
+  DEL_DATA                        = 16, /* DATASET KEY*/
   DEL_OBS                         = 17, /* MINISTEP OBS_KEY */
-  DEL_ALL_DATA                    = 18, /* No arguments */
-  DEL_ALL_OBS                     = 19, /* No arguments */
+  DATASET_DEL_ALL_DATA            = 18, /* DATASET */
+  OBSSET_DEL_ALL_OBS              = 19, /* No arguments */
   ADD_FIELD                       = 20,  /* MINISTEP  FIELD_NAME  REGION_NAME */
   /*****************************************************************/
   CREATE_REGION                   = 21, /* Name of region  TRUE|FALSE*/
@@ -84,8 +84,8 @@ typedef enum {
 #define DEL_DATA_STRING                         "DEL_DATA"
 #define DEL_OBS_STRING                          "DEL_OBS"
 #define ADD_FIELD_STRING                        "ADD_FIELD"
-#define DEL_ALL_DATA_STRING                     "DEL_ALL_DATA"
-#define DEL_ALL_OBS_STRING                      "DEL_ALL_OBS"
+#define DATASET_DEL_ALL_DATA_STRING             "DATASET_DEL_ALL_DATA"
+#define OBSSET_DEL_ALL_OBS_STRING               "OBSSET_DEL_ALL_OBS"
 #define CREATE_REGION_STRING                    "CREATE_REGION"
 #define LOAD_FILE_STRING                        "LOAD_FILE"
 #define REGION_SELECT_ALL_STRING                "REGION_SELECT_ALL"   

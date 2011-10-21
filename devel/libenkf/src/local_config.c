@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'local_config.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'local_config.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <stdlib.h>
@@ -45,7 +45,7 @@ included in the program file:
 
 
 CREATE_UPDATESTEP [NAME_OF_UPDATESTEP]
---------------------------------------- 
+---------------------------------------
 This function will create a new updatestep with the name
 'NAME_OF_UPDATESTEP'. Observe that you must add (at least) one
 ministep to the updatestep, otherwise it will not be able to do
@@ -62,6 +62,18 @@ to an updatestep with the ATTACH_MINISTEP command
 
 CREATE_DATASET [NAME_OF_DATASET]
 --------------------------------
+This function will create a new dataset, i.e. a collection of
+enkf_nodes which should be updated together. Before you can actually
+use a dataset you must attach it to a ministep with the ATTACH_DATASET
+command.
+
+
+CREATE_OBSSET [NAME_OF_OBSSET]
+------------------------------
+This function will create an observation set, i.e. a collection of
+observation keys which will be used as the observations in one
+ministep. Before the obsset can be used it must be attached to a
+ministep with the ATTACH_OBSSET command.
 
 
 ATTACH_MINISTEP [NAME_OF_UPDATESTEP  NAME_OF_MINISTEP]
@@ -71,66 +83,76 @@ updatestep 'NAME_OF_UPDATESTEP'; one ministep can be attached to many
 updatesteps.
 
 
-ADD_DATA [NAME_OF_MINISTEP   KEY]
+ATTACH_DATASET [NAME_OF_MINISTEP NAME_OF_DATASET]
+-------------------------------------------------
+Will attach the dataset 'NAME_OF_DATASET' to the ministep given by
+'NAME_OF_MINISTEP'.
+
+
+ATTACH_OBSSET [NAME_OF_MINISTEP NAME_OF_OBSSET]
+-------------------------------------------------
+Will attach the obsset 'NAME_OF_OBSSET' to the ministep given by
+'NAME_OF_MINISTEP'.
+
+
+ADD_DATA [NAME_OF_DATASET   KEY]
 ---------------------------------
 This function will install 'KEY' as one enkf node which should be
-updated in this ministep. If you do not manipulate the KEY further
+updated in this dataset. If you do not manipulate the KEY further
 with the ACTIVE_LIST_ADD_DATA_INDEX function the KEY will be added as
 'ALL_ACTIVE', i.e. all elements will be updated.
 
 
-ADD_OBS [NAME_OF_MINISTEP  OBS_KEY]
+ADD_OBS [NAME_OF_OBSSET  OBS_KEY]
 -----------------------------------
 This function will install the observation 'OBS_KEY' as an observation
-for this ministep - similarly to the ADD_DATA function.
+for this obsset - similarly to the ADD_DATA function.
 
 
-DEL_DATA [NAME_OF_MINISTEP  KEY]
+DEL_DATA [NAME_OF_DATASET  KEY]
 --------------------------------
-This function will delete the data 'KEY' from the ministep
+This function will delete the data 'KEY' from the dataset
+'NAME_OF_DATASET'.
+
+
+DEL_OBS [NAME_OF_OBSSET  OBS_KEY]
+-----------------------------------
+This function will delete the obs 'OBS_KEY' from the obsset
+'NAME_OF_OBSSET'.
+
+
+DATASET_DEL_ALL_DATA [NAME_OF_DATASET]
+--------------------------------------
+This function will delete all the data keys from the dataset
 'NAME_OF_MINISTEP'.
 
 
-DEL_OBS [NAME_OF_MINISTEP  OBS_KEY]
+OBSSET_DEL_ALL_OBS [NAME_OF_OBSSET]
 -----------------------------------
-This function will delete the obs 'OBS_KEY' from the ministep
-'NAME_OF_MINISTEP'.
+This function will delete all the obs keys from the obsset
+'NAME_OF_OBSSET'.
 
 
-DEL_ALL_DATA [NAME_OF_MINISTEP]
---------------------------------
-This function will delete all the data keys from the ministep
-'NAME_OF_MINISTEP'; typically used after a call to
-alloc_ministep_copy.
-
-
-DEL_ALL_OBS [NAME_OF_MINISTEP]
------------------------------------
-this function will delete all the obs keys from the ministep
-'NAME_OF_MINISTEP'; typically used after a call to
-alloc_ministep_copy.
-
-
-ACTIVE_LIST_ADD_OBS_INDEX[MINISTEP_NAME  OBS_KEY  INDEX]
+ACTIVE_LIST_ADD_OBS_INDEX[OBSSET_NAME  OBS_KEY  INDEX]
 --------------------------------------------------------
 This function will say that the observation with name 'OBS_KEY' in
-ministep with name 'MINISTEP_NAME' should have the index 'INDEX'
+obsset with name 'OBSSET_NAME' should have the index 'INDEX'
 active.
 
 
-ACTIVE_LIST_ADD_DATA_INDEX[MINISTEP_NAME  DATA_KEY  INDEX]
+ACTIVE_LIST_ADD_DATA_INDEX[DATASET_NAME  DATA_KEY  INDEX]
 --------------------------------------------------------
-This function will say that the data with name 'DATA_KEY' in ministep
-with name 'MINISTEP_NAME' should have the index 'INDEX' active.
+This function will say that the data with name 'DATA_KEY' in dataset
+with name 'DATASTEP_NAME' should have the index 'INDEX' active.
 
 
-ACTIVE_LIST_ADD_MANY_OBS_INDEX[MINISTEP_NAME  OBS_KEY  N INDEX1 INDEX2 INDEX3 .. INDEXN]
+ACTIVE_LIST_ADD_MANY_OBS_INDEX[OBSSET_NAME  OBS_KEY  N INDEX1 INDEX2 INDEX3 .. INDEXN]
 ----------------------------------------------------------------------------------------
 This function is simular to ACTIVE_LIST_ADD_OBS_INDEX, but it will add many indices.
 
 
 
-ACTIVE_LIST_ADD_MANY_DATA_INDEX[MINISTEP_NAME  DATA_KEY  N INDEX1 INDEX2 INDEX3 .. INDEXN]
+ACTIVE_LIST_ADD_MANY_DATA_INDEX[DATA_NAME  DATA_KEY  N INDEX1 INDEX2 INDEX3 .. INDEXN]
 ------------------------------------------------------------------------------------------
 This function is simular to ACTIVE_LIST_ADD_DATA_INDEX, but it will add many indices.
 
@@ -153,13 +175,13 @@ ADD_FIELD   [DATASET_NAME    FIELD_NAME    REGION_NAME]
 --------------------------------------------------------
 
 This function will install the node with name 'FIELD_NAME' in the
-ministep 'MINISTEP_NAME'. It will in addition select all the
+dataset 'DATASET_NAME'. It will in addition select all the
 (currently) active cells in the region 'REGION_NAME' as active for
 this field/ministep combination. The ADD_FIELD command is actually a
 shortcut for the following:
 
-   ADD_DATA   MINISTEP  FIELD_NAME
-   ACTIVE_LIST_AD_MANY_DATA_INDEX  <All the indices from the region>
+   ADD_DATA   DATASET  FIELD_NAME
+   ACTIVE_LIST_ADD_MANY_DATA_INDEX  <All the indices from the region>
 
 
 
@@ -227,12 +249,12 @@ I have added comments in the example - that is not actually supported (yet at le
 
 -------------------------------------------------------------------------------------
 CREATE_MINISTEP MSTEP
-CREATE_REGION   FIPNUM3       FALSE              --- We create a region called FIPNUM3 with no elements 
+CREATE_REGION   FIPNUM3       FALSE              --- We create a region called FIPNUM3 with no elements
                                                  --- selected from the start.
-CREATE_REGION   WATER_FLOODED TRUE               --- We create a region called WATER_FLOEDED, 
+CREATE_REGION   WATER_FLOODED TRUE               --- We create a region called WATER_FLOEDED,
                                                  --- which starts with all elements selected.
 CREATE_REGION   MIDLLE        FALSE              --- Create a region called MIDDLE with
-                                                 --- no elements initially.    
+                                                 --- no elements initially.
 LOAD_FILE       INIT          /path/to/ECL.INIT  --- We load the INIT file and label
                                                  --- it as INIT for further use.
 LOAD_FILE       RESTART       /path/to/ECL.UNRST --- We load a unified restart fila
@@ -249,51 +271,129 @@ REGION_SELECT_VALUE_LESS    WATER_FLOODED RESTART:SWAT:100   0.90    FALSE
 
 -- We select the the layers k=4,5,6 in the region MIDDLE. The indices 4,5
 -- and 6 are "normal" k values, where the counting starts at 1.
-REGION_SELECT_SLICE  MIDDLE   Z   4  6   TRUE   
+REGION_SELECT_SLICE  MIDDLE   Z   4  6   TRUE
 
 
--- We add field data in the current ministep, corresponding to the two 
--- selection region (poro is only updated in FIPNUM3, PERMX is only updated in 
+-- We add field data in the current ministep, corresponding to the two
+-- selection region (poro is only updated in FIPNUM3, PERMX is only updated in
 -- the water flooded region and NTG is only updates in the MIDDLE region).
 ADD_FIELD    MSTEP    PORO    FIPNUM3
 ADD_FIELD    MSTEP    PERMX   WATER_FLOODED
-ADD_FIELD    MSTEP    NTG     MIDDLE 
+ADD_FIELD    MSTEP    NTG     MIDDLE
 -------------------------------------------------------------------------------------
 
 
     _________________________________________________________________________
    /                                                                         \
-   | Observe that prior to loading your hand-crafted configuration file      | 
-   | the program will load an ALL_ACTIVE configuration which will be         | 
+   | Observe that prior to loading your hand-crafted configuration file      |
+   | the program will load an ALL_ACTIVE configuration which will be         |
    | installed as default. If you want you can start with this               |
    | configuration:                                                          |
    |                                                                         |
    | DEL_OBS   ALL_ACTIVE   <Some observation key you do not want to use..>  |
    |                                                                         |
-   \_________________________________________________________________________/ 
-   
-
-
+   \_________________________________________________________________________/
 
 */
 /******************************************************************/
 
+/*
 
-/**
-   This file implements the top level object in the system keeping
-   track of active/inactive parameters and observations. The system is
-   based on three levels.
+  +-------------------------- local_updatestep_type ---------------------------------------+
+  |	    									     	   |
+  |   	    									     	   |
+  |    +----------------- local_ministep_type --------------------------------------+	   |
+  |    |       	       	       	       	       	       	       	       	       	    |  	   |
+  |    |     	       	    		       /    +--- local_dataset_type ---+    |	   |
+  |    |    		    		       |    | PRESSURE 	       	       |    |	   |
+  |    |    		    		       |    | SWAT		       |    |	   |
+  |    |    		    		       |    | SGAS		       |    |	   |
+  |    |    		    		       |    +--------------------------+    |	   |
+  |    |    +-- local_obsset_type ---+ 	       |       	       	       	       	    |	   |
+  |    |    | WWCT:OP_2		     |	       |    +--- local_dataset_type ---+    |	   |
+  |    |    | WGOR:OP_1		     |	       |    | MULTFLT1 	       	       |    |	   |
+  |    |    | RFT:WELL1 	     | 	<------|    | MULTFLT2		       |    |	   |
+  |    |    | RFT:WELL3		     |	       |    | MULTFLT3		       |    |	   |
+  |    |    | WWCT:WELLX       	     |	       |    +--------------------------+    |	   |
+  |    |    +------------------------+	       |				    |      |
+  |    |    				       |    +--- local_dataset_type ---+    |	   |
+  |    |    				       |    | RELPERM1 	       	       |    |	   |
+  |    |    				       |    | RELPERM2		       |    |	   |
+  |    |    				       |    | RELPERM3 		       |    |	   |
+  |    |    				       \    +--------------------------+    |	   |
+  |    |    				       					    |	   |
+  |    +----------------------------------------------------------------------------+      |
+  |                                                                                        |
+  |                                                                                        |  
+  |    +----------------- local_ministep_type --------------------------------------+	   |
+  |    |       	       	       	       	       	       	       	       	       	    |  	   |
+  |    |     	       	    		       /    +--- local_dataset_type ---+    |	   |
+  |    |    +-- local_obsset_type ---+         |    | PERMX PORO               |    |      |
+  |    |    | 4D Seismic       	     | 	       |    | PRESSURE SWAT            |    |  	   |
+  |    |    | Gravimetri    	     |	       |    | SGAS		       |    |	   |
+  |    |    |		    	     | 	<------|    +--------------------------+    |	   |
+  |    |    |                        | 	       |       	       	       	       	    |	   |
+  |    |    |  	       	       	     | 	       |    +--- local_dataset_type ---+    |	   |
+  |    |    +------------------------+ 	       |    | MULTFLT1 	       	       |    |	   |
+  |    |     			       	       |    | MULTFLT2		       |    |	   |
+  |    |     			      	       |    | MULTFLT3		       |    |	   |
+  |    |       	       	       	      	       \    +--------------------------+    |	   |
+  |    |				       					    |	   |
+  |    +----------------------------------------------------------------------------+      |
+  |                                                                                        |
+  +----------------------------------------------------------------------------------------+
 
-        1. local_config_type - this implementation
+This figure illustrates the different objects when configuring local
+analysis:
 
-        2. local_updatestep_type - what should be updated and which
-           observations to use at one report step.
-  
-        3. local_ministep_type - what should be updated and which
-           observations to use at one enkf update.
-           
+local_updatestep_type: This is is the top level configuration of the
+   updating at one timestep. In principle you can have different
+   updatestep configurations at the different timesteps, but it will
+   typically be identical for all the time steps. Observe that the
+   update at one time step can typically conist of several enkf
+   updates, this is handled by using several local_ministep.
+
+local_ministep_type: The ministep defines a collection of observations
+   and state/parameter variables which are mutually dependant on
+   eachother and should be updated together. The local_ministep will
+   consist of *ONE* local_obsset of observations, and one or more
+   local_dataset of data which should be updated.
+
+local_obsset_type: This is a collection of observation data; there is
+   exactly one local_obsset for each local_ministep.
+
+local_dataset_type: This is a collection of data/parameters which
+   should be updated together in the EnKF updating. 
+
+
+How the local_dataset_type is configured is quite important for the
+core EnKF updating:
+
+ 1. All the members in one local_dataset instance are serialized and
+    packed in the A-matrix together; i.e. in the example above the
+    parameters RELPERM1,RELPERM2 and RELPERM3 are updated in one go.
+
+ 2. When using the standard EnKF the X matrix is calculated with using
+    the actual data vectors, and the results will be identical if we
+    use one large local_dataset instance or several small. However
+    when using more advanced techniques where the A matrix is used
+    explicitly when calculating the update this will matter.
+
+ 3. If you have not entered a local configuration explicitly the
+    default ALL_ACTIVE local configuration will be used. The
+    ALL_ACTIVE configuration can be modified slightly with the
+    UPDATE_RESULTS and SINGLE_NODE_UPDATE settings in the config file:
+
+      UPDATE_RESULTS: Determines whether variables with enkf_type ==
+         DYNAMIC_RESULT should be updated. 
+
+      SINGLE_NODE_UPDATE: If SINGLE_NODE_UPDATE is set to true the
+         ALL_ACTIVE configuration will consist of maaany
+         local_dataset_type instances with one enkf_node in each. In
+         the opposite case only one local_dataset_type instance will
+         be created with all the enkf_node instances assembled in one
+         big package. A middle-ground might be good?
 */
-
 
 
 struct local_config_struct {
@@ -302,7 +402,7 @@ struct local_config_struct {
   hash_type             * updatestep_storage;    /* These three hash tables are the 'holding area' for the local_updatestep, */
   hash_type             * ministep_storage;      /* local_ministep instances. */
   hash_type             * dataset_storage;
-  hash_type             * obsset_storage; 
+  hash_type             * obsset_storage;
   stringlist_type       * config_files;
   int                     history_length;
 };
@@ -326,7 +426,7 @@ static void local_config_clear( local_config_type * local_config ) {
 
 
 /**
-   Observe that history_length is *INCLUSIVE* 
+   Observe that history_length is *INCLUSIVE*
 */
 local_config_type * local_config_alloc( int history_length ) {
   local_config_type * local_config = util_malloc( sizeof * local_config , __func__);
@@ -339,7 +439,7 @@ local_config_type * local_config_alloc( int history_length ) {
   local_config->updatestep          = vector_alloc_new();
   local_config->history_length      = history_length;
   local_config->config_files = stringlist_alloc_new();
-  
+
   local_config_clear( local_config );
   return local_config;
 }
@@ -431,16 +531,16 @@ local_ministep_type * local_config_alloc_ministep_copy( local_config_type * loca
 
 const local_updatestep_type * local_config_iget_updatestep( const local_config_type * local_config , int index) {
   const local_updatestep_type * updatestep = vector_iget_const( local_config->updatestep , index );
-  if (updatestep == NULL) 
-    /* 
+  if (updatestep == NULL)
+    /*
        No particular report step has been installed for this
        time-index, revert to the default.
     */
     updatestep = local_config->default_updatestep;
 
-  if (updatestep == NULL) 
+  if (updatestep == NULL)
     util_exit("%s: fatal error. No report step information for step:%d - and no default \n",__func__ , index);
-    
+
   return updatestep;
 }
 
@@ -460,10 +560,10 @@ local_updatestep_type * local_config_get_updatestep( const local_config_type * l
 void local_config_set_updatestep(local_config_type * local_config, int step1 , int step2 , const char * key) {
   local_updatestep_type * updatestep = hash_get( local_config->updatestep_storage , key );
   int step;
-  
+
   for ( step = step1; step < util_int_min(step2 + 1 , vector_get_size( local_config->updatestep )); step++)
     vector_iset_ref(local_config->updatestep , step , updatestep );
-  
+
 }
 
 
@@ -472,7 +572,7 @@ void local_config_set_updatestep(local_config_type * local_config, int step1 , i
 
 
 static local_config_instruction_type local_config_cmd_from_string( hash_type * cmd_table , char * cmd_string ) {
-  
+
   util_strupr( cmd_string );
   if (hash_has_key( cmd_table, cmd_string))
     return hash_get_int( cmd_table , cmd_string);
@@ -534,11 +634,11 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
   case(DEL_OBS):
     return DEL_OBS_STRING;
     break;
-  case(DEL_ALL_DATA):
-    return DEL_ALL_DATA_STRING;
+  case(DATASET_DEL_ALL_DATA):
+    return DATASET_DEL_ALL_DATA_STRING;
     break;
-  case(DEL_ALL_OBS):
-    return DEL_ALL_OBS_STRING;
+  case(OBSSET_DEL_ALL_OBS):
+    return OBSSET_DEL_ALL_OBS_STRING;
     break;
   case(ADD_FIELD):
     return ADD_FIELD_STRING;
@@ -595,10 +695,10 @@ static void read_int_vector(FILE * stream , bool binary , int_vector_type * vect
     int size,value,i;
     int_vector_reset( vector );
     fscanf(stream , "%d" , &size);
-    for (i=0; i < size; i++) { 
+    for (i=0; i < size; i++) {
       if (fscanf(stream , "%d", &value) == 1)
         int_vector_append(vector , value);
-      else 
+      else
         util_abort("%s: premature end of indices when reading local configuraton - malformed file.\n",__func__);
     }
   }
@@ -634,7 +734,7 @@ static bool read_bool(FILE * stream , bool binary) {
 
 
 static bool read_cmd( hash_type * cmd_table , FILE * stream , bool binary , local_config_instruction_type * cmd) {
-  if (binary) { 
+  if (binary) {
     if (fread( cmd , sizeof cmd , 1 , stream) == 1)
       return true;
     else
@@ -644,7 +744,7 @@ static bool read_cmd( hash_type * cmd_table , FILE * stream , bool binary , loca
     if (fscanf(stream , "%s" , cmd_string) == 1) {
       *cmd = local_config_cmd_from_string( cmd_table , cmd_string );
       return true;
-    } else 
+    } else
       return false;
   }
 }
@@ -683,8 +783,8 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , INSTALL_DEFAULT_UPDATESTEP_STRING      , INSTALL_DEFAULT_UPDATESTEP);
   hash_insert_int(cmd_table , DEL_DATA_STRING                        , DEL_DATA);
   hash_insert_int(cmd_table , DEL_OBS_STRING                         , DEL_OBS);
-  hash_insert_int(cmd_table , DEL_ALL_DATA_STRING                    , DEL_ALL_DATA);
-  hash_insert_int(cmd_table , DEL_ALL_OBS_STRING                     , DEL_ALL_OBS);
+  hash_insert_int(cmd_table , DATASET_DEL_ALL_DATA_STRING            , DATASET_DEL_ALL_DATA);
+  hash_insert_int(cmd_table , OBSSET_DEL_ALL_OBS_STRING              , OBSSET_DEL_ALL_OBS);
   hash_insert_int(cmd_table , ADD_FIELD_STRING                       , ADD_FIELD);
   hash_insert_int(cmd_table , CREATE_REGION_STRING                   , CREATE_REGION);
   hash_insert_int(cmd_table , LOAD_FILE_STRING                       , LOAD_FILE);
@@ -702,33 +802,33 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
    anything. These should be used for input validation.
 */
 
-static void local_config_load_file( local_config_type * local_config , 
-                                    const ecl_grid_type * ecl_grid , 
-                                    const ensemble_config_type * ensemble_config , 
-                                    const enkf_obs_type * enkf_obs  , 
+static void local_config_load_file( local_config_type * local_config ,
+                                    const ecl_grid_type * ecl_grid ,
+                                    const ensemble_config_type * ensemble_config ,
+                                    const enkf_obs_type * enkf_obs  ,
                                     const char * config_file) {
   bool binary = false;
   local_config_instruction_type cmd;
   hash_type * regions   = hash_alloc();
   hash_type * files     = hash_alloc();
   hash_type * cmd_table = hash_alloc();
-  
+
   FILE * stream       = util_fopen( config_file , "r");
   char * update_name  = NULL;
   char * mini_name    = NULL;
-  char * obs_name     = NULL; 
+  char * obs_name     = NULL;
   char * obs_key      = NULL;
   char * data_key     = NULL;
   char * region_name  = NULL;
   char * dataset_name = NULL;
   int index;
   int_vector_type * int_vector = int_vector_alloc(0,0);
-  
+
   local_config_init_cmd_table( cmd_table );
-  
+
   while ( read_cmd( cmd_table , stream, binary , &cmd)) {
     switch(cmd) {
-    case(CREATE_UPDATESTEP):   
+    case(CREATE_UPDATESTEP):
       update_name = read_alloc_string( stream , binary );
       local_config_alloc_updatestep( local_config , update_name );
       break;
@@ -806,7 +906,7 @@ static void local_config_load_file( local_config_type * local_config ,
       {
         local_obsset_type * obsset  = local_config_get_obsset( local_config , obs_name );
         active_list_type  * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
-        for (int i = 0; i < int_vector_size( int_vector ); i++) 
+        for (int i = 0; i < int_vector_size( int_vector ); i++)
           active_list_add_index( active_list , int_vector_iget(int_vector , i));
       }
       break;
@@ -817,7 +917,7 @@ static void local_config_load_file( local_config_type * local_config ,
       {
         local_dataset_type * dataset     = local_config_get_dataset( local_config , dataset_name );
         active_list_type   * active_list = local_dataset_get_node_active_list( dataset , data_key );
-        for (int i = 0; i < int_vector_size( int_vector ); i++) 
+        for (int i = 0; i < int_vector_size( int_vector ); i++)
           active_list_add_index( active_list , int_vector_iget(int_vector , i));
       }
       break;
@@ -825,7 +925,7 @@ static void local_config_load_file( local_config_type * local_config ,
       update_name = read_alloc_string( stream , binary );
       {
         int step1,step2;
-        
+
         step1 = read_int( stream , binary );
         step2 = read_int( stream , binary );
         local_config_set_updatestep( local_config , step1 , step2 , update_name );
@@ -851,14 +951,14 @@ static void local_config_load_file( local_config_type * local_config ,
         local_obsset_del_obs( obsset , obs_key );
       }
       break;
-    case(DEL_ALL_DATA):
+    case(DATASET_DEL_ALL_DATA):
       dataset_name = read_alloc_string( stream , binary );
       {
         local_dataset_type * dataset = local_config_get_dataset( local_config , dataset_name );
         local_dataset_clear( dataset );
       }
       break;
-    case(DEL_ALL_OBS):
+    case(OBSSET_DEL_ALL_OBS):
       obs_name = read_alloc_string( stream , binary );
       {
         local_obsset_type   * obsset = local_config_get_obsset( local_config , obs_name );
@@ -878,7 +978,7 @@ static void local_config_load_file( local_config_type * local_config ,
           {
             active_list_type * active_list        = local_dataset_get_node_active_list( dataset , field_name );
             const int_vector_type * region_active = ecl_region_get_active_list( region );
-            
+
             for (int i=0; i < int_vector_size( region_active ); i++)
               active_list_add_index( active_list , int_vector_iget( region_active , i ) );
           }
@@ -896,7 +996,7 @@ static void local_config_load_file( local_config_type * local_config ,
       break;
     case(LOAD_FILE):
       {
-        char * file_key  = read_alloc_string( stream , binary ); 
+        char * file_key  = read_alloc_string( stream , binary );
         char * file_name = read_alloc_string( stream , binary );
         ecl_file_type * ecl_file = ecl_file_open( file_name );
         hash_insert_hash_owned_ref( files , file_key , ecl_file , ecl_file_free__);
@@ -916,14 +1016,14 @@ static void local_config_load_file( local_config_type * local_config ,
           int k1          = read_int( stream , binary ) - 1;
           int k2          = read_int( stream , binary ) - 1;
           bool select     = read_bool( stream , binary );
-          
+
           ecl_region_type * region = hash_get( regions , region_name );
-          
+
           if (select)
             ecl_region_select_from_ijkbox( region , i1 , i2 , j1 , j2 , k1 , k2);
           else
             ecl_region_deselect_from_ijkbox( region , i1 , i2 , j1 , j2 , k1 , k2);
-          
+
         }
       }
       break;
@@ -935,9 +1035,9 @@ static void local_config_load_file( local_config_type * local_config ,
         int n2           = read_int( stream , binary) - 1;
         bool     select = read_bool( stream , binary );
         ecl_region_type * region = hash_get( regions , region_name );
-        
+
         util_strupr( dir );
-        
+
         if (strcmp( dir , "X") == 0) {
           if (select)
             ecl_region_select_i1i2( region , n1 , n2 );
@@ -953,9 +1053,9 @@ static void local_config_load_file( local_config_type * local_config ,
             ecl_region_select_k1k2( region , n1 , n2 );
           else
             ecl_region_deselect_k1k2( region , n1 , n2 );
-        } else 
+        } else
           util_abort("%s: slice direction:%s not recognized \n",__func__ , dir );
-        
+
         free(dir );
       }
       break;
@@ -984,18 +1084,18 @@ static void local_config_load_file( local_config_type * local_config ,
         master_key   = read_alloc_string( stream , binary );
         value_string = read_alloc_string( stream , binary );
         select       = read_bool( stream , binary );
-        
+
         {
           stringlist_type * key_list = stringlist_alloc_from_split( master_key , ":");
           ecl_file_type * ecl_file   = hash_get( files , stringlist_iget(key_list , 0 ));
           int key_nr = 0;
-          if (stringlist_get_size( key_list ) == 3) 
+          if (stringlist_get_size( key_list ) == 3)
             util_sscanf_int( stringlist_iget( key_list , 2 ) , &key_nr );
-          
+
           ecl_kw = ecl_file_iget_named_kw( ecl_file , stringlist_iget( key_list , 1 ) , key_nr);
           stringlist_free( key_list );
         }
-        
+
         region = hash_get( regions , region_name );
 
         if (cmd == REGION_SELECT_VALUE_EQUAL) {
@@ -1047,13 +1147,13 @@ static void local_config_load_file( local_config_type * local_config ,
 
 
 /*
-  Should probably have a "modified" flag to ensure internal consistency 
+  Should probably have a "modified" flag to ensure internal consistency
 */
 
-void local_config_reload( local_config_type * local_config , 
-                          const ecl_grid_type * ecl_grid , 
-                          const ensemble_config_type * ensemble_config , 
-                          const enkf_obs_type * enkf_obs  , 
+void local_config_reload( local_config_type * local_config ,
+                          const ecl_grid_type * ecl_grid ,
+                          const ensemble_config_type * ensemble_config ,
+                          const enkf_obs_type * enkf_obs  ,
                           const char * all_active_config_file ) {
 
   local_config_clear( local_config );
@@ -1070,7 +1170,7 @@ void local_config_reload( local_config_type * local_config ,
 
 void local_config_fprintf( const local_config_type * local_config , const char * config_file) {
   FILE * stream = util_mkdir_fopen( config_file , "w");
-  
+
   /* Start with dumping all the ministep instances. */
   {
     hash_iter_type * hash_iter = hash_iter_alloc( local_config->ministep_storage );
@@ -1079,20 +1179,20 @@ void local_config_fprintf( const local_config_type * local_config , const char *
       const local_ministep_type * ministep = hash_iter_get_next_value( hash_iter );
       local_ministep_fprintf( ministep , stream );
     }
-        
+
     hash_iter_free( hash_iter );
   }
-  
-  
+
+
   /* Dumping all the reportstep instances as ATTACH_MINISTEP commands. */
   {
     hash_iter_type * hash_iter = hash_iter_alloc( local_config->updatestep_storage );
-    
+
     while (!hash_iter_is_complete( hash_iter )) {
       const local_updatestep_type * updatestep = hash_iter_get_next_value( hash_iter );
       local_updatestep_fprintf( updatestep , stream );
     }
-        
+
     hash_iter_free( hash_iter );
   }
 
@@ -1107,9 +1207,9 @@ void local_config_fprintf( const local_config_type * local_config , const char *
   }
 
   /* Installing the default updatestep */
-  if (local_config->default_updatestep != NULL) 
+  if (local_config->default_updatestep != NULL)
     fprintf(stream , "%s %s\n", local_config_get_cmd_string( INSTALL_DEFAULT_UPDATESTEP ) , local_updatestep_get_name( local_config->default_updatestep ));
-  
+
   fclose( stream );
 }
 
