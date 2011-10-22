@@ -28,6 +28,7 @@ extern "C" {
 typedef struct local_obsset_struct local_obsset_type;
 
 local_obsset_type * local_obsset_alloc( const char * name );
+local_obsset_type * local_obsset_alloc_copy( local_obsset_type * src_dataset , const char * copy_name );
 void                local_obsset_free( local_obsset_type * obsset );
 void                local_obsset_free__( void * arg );
 void                local_obsset_add_obs(local_obsset_type * obsset, const char * obs_key);

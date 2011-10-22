@@ -501,6 +501,24 @@ local_dataset_type * local_config_alloc_dataset( local_config_type * local_confi
 }
 
 
+local_dataset_type * local_config_alloc_dataset_copy( local_config_type * local_config , const char * src_key , const char * target_key) {
+  local_dataset_type * src_dataset = hash_get( local_config->dataset_storage , src_key );
+  local_dataset_type * copy_dataset = local_dataset_alloc_copy( src_dataset , target_key );
+  
+  hash_insert_hash_owned_ref( local_config->dataset_storage , target_key , copy_dataset , local_dataset_free__);
+  return copy_dataset;
+}
+
+
+local_obsset_type * local_config_alloc_obsset_copy( local_config_type * local_config , const char * src_key , const char * target_key) {
+  local_obsset_type * src_obsset = hash_get( local_config->obsset_storage , src_key );
+  local_obsset_type * copy_obsset = local_obsset_alloc_copy( src_obsset , target_key );
+  
+  hash_insert_hash_owned_ref( local_config->obsset_storage , target_key , copy_obsset , local_obsset_free__);
+  return copy_obsset;
+}
+
+
 local_ministep_type * local_config_get_ministep( const local_config_type * local_config , const char * key) {
   local_ministep_type * ministep = hash_get( local_config->ministep_storage , key );
   return ministep;
@@ -783,6 +801,8 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , INSTALL_DEFAULT_UPDATESTEP_STRING      , INSTALL_DEFAULT_UPDATESTEP);
   hash_insert_int(cmd_table , DEL_DATA_STRING                        , DEL_DATA);
   hash_insert_int(cmd_table , DEL_OBS_STRING                         , DEL_OBS);
+  hash_insert_int(cmd_table , COPY_DATASET_STRING                    , COPY_DATASET);
+  hash_insert_int(cmd_table , COPY_OBSSET_STRING                     , COPY_OBSSET);
   hash_insert_int(cmd_table , DATASET_DEL_ALL_DATA_STRING            , DATASET_DEL_ALL_DATA);
   hash_insert_int(cmd_table , OBSSET_DEL_ALL_OBS_STRING              , OBSSET_DEL_ALL_OBS);
   hash_insert_int(cmd_table , ADD_FIELD_STRING                       , ADD_FIELD);
@@ -853,6 +873,24 @@ static void local_config_load_file( local_config_type * local_config ,
     case(CREATE_DATASET):
       dataset_name = read_alloc_string( stream , binary );
       local_config_alloc_dataset( local_config , dataset_name );
+      break;
+    case(COPY_DATASET):
+      {
+	char * src_name     = read_alloc_string( stream , binary );
+	char * target_name = read_alloc_string( stream , binary );
+	local_config_alloc_dataset_copy( local_config , src_name , target_name );
+	free( target_name );
+	free( src_name );
+      }
+      break;
+    case(COPY_OBSSET):
+      {
+	char * src_name     = read_alloc_string( stream , binary );
+	char * target_name = read_alloc_string( stream , binary );
+	local_config_alloc_obsset_copy( local_config , src_name , target_name );
+	free( target_name );
+	free( src_name );
+      }
       break;
     case(ATTACH_DATASET):
       mini_name = read_alloc_string( stream , binary );

@@ -52,16 +52,18 @@ typedef enum {
   DEL_OBS                         = 17, /* MINISTEP OBS_KEY */
   DATASET_DEL_ALL_DATA            = 18, /* DATASET */
   OBSSET_DEL_ALL_OBS              = 19, /* No arguments */
-  ADD_FIELD                       = 20,  /* MINISTEP  FIELD_NAME  REGION_NAME */
+  ADD_FIELD                       = 20, /* MINISTEP  FIELD_NAME  REGION_NAME */
+  COPY_DATASET                    = 21, /* SRC_NAME  TARGET_NAME */
+  COPY_OBSSET                     = 22, /* SRC_NAME  TARGET_NAME */
   /*****************************************************************/
-  CREATE_REGION                   = 21, /* Name of region  TRUE|FALSE*/
-  LOAD_FILE                       = 22, /* Key, filename      */  
-  REGION_SELECT_ALL               = 23, /* Region  TRUE|FALSE */
-  REGION_SELECT_VALUE_EQUAL       = 24, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */
-  REGION_SELECT_VALUE_LESS        = 25, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
-  REGION_SELECT_VALUE_MORE        = 26, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
-  REGION_SELECT_BOX               = 27, /* Region i1 i2 j1 j2 k1 k2 TRUE|FALSE */
-  REGION_SELECT_SLICE             = 28  /* Region dir n1 n2    TRUE|FALSE  */
+  CREATE_REGION                   = 23, /* Name of region  TRUE|FALSE*/
+  LOAD_FILE                       = 24, /* Key, filename      */  
+  REGION_SELECT_ALL               = 25, /* Region  TRUE|FALSE */
+  REGION_SELECT_VALUE_EQUAL       = 26, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */
+  REGION_SELECT_VALUE_LESS        = 27, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
+  REGION_SELECT_VALUE_MORE        = 28, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
+  REGION_SELECT_BOX               = 29, /* Region i1 i2 j1 j2 k1 k2 TRUE|FALSE */
+  REGION_SELECT_SLICE             = 30  /* Region dir n1 n2    TRUE|FALSE  */
 } local_config_instruction_type; 
 
 
@@ -86,6 +88,8 @@ typedef enum {
 #define ADD_FIELD_STRING                        "ADD_FIELD"
 #define DATASET_DEL_ALL_DATA_STRING             "DATASET_DEL_ALL_DATA"
 #define OBSSET_DEL_ALL_OBS_STRING               "OBSSET_DEL_ALL_OBS"
+#define COPY_DATASET_STRING                     "COPY_DATASET"
+#define COPY_OBSSET_STRING                      "COPY_OBSSET"
 #define CREATE_REGION_STRING                    "CREATE_REGION"
 #define LOAD_FILE_STRING                        "LOAD_FILE"
 #define REGION_SELECT_ALL_STRING                "REGION_SELECT_ALL"   

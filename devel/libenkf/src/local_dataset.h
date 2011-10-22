@@ -26,6 +26,7 @@ extern "C" {
 
 typedef struct local_dataset_struct local_dataset_type;
 
+local_dataset_type * local_dataset_alloc_copy( local_dataset_type * src_dataset , const char * copy_name );
 local_dataset_type * local_dataset_alloc( const char * name );
 void                 local_dataset_free( local_dataset_type * dataset );
 void                 local_dataset_free__( void * arg );
