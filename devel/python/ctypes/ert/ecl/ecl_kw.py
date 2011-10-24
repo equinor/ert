@@ -175,12 +175,11 @@ class EclKW(object):
              it finds in the file.
         """
         
-
         cfile  = CFILE( file )
         if kw:
             if len(kw) > 8:
                 raise TypeError("Sorry keyword:%s is too long, must be eight characters or less." % kw)
-            
+        
         c_ptr  = cfunc.load_grdecl( cfile , kw , ecl_type )
         if c_ptr:
             obj = cls( )
