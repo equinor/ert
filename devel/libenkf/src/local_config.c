@@ -67,6 +67,21 @@ enkf_nodes which should be updated together. Before you can actually
 use a dataset you must attach it to a ministep with the ATTACH_DATASET
 command.
 
+COPY_DATASET [SRC_DATASET TARGET_DATASET]
+-----------------------------------------
+Will create a new local_dataset instance which is a copy of the
+'SRC_DATASET'; this is a deep copy where also the lowest level
+active_list instances are copied, and can then subsequently be updated
+independently of eachother.
+
+
+COPY_OBSSET [SRC_OBSSET TARGET_OBSSET]
+-----------------------------------------
+Will create a new local_obsset instance which is a copy of the
+'SRC_OBSSET'; this is a deep copy where also the lowest level
+active_list instances are copied, and can then subsequently be updated
+independently of eachother.
+
 
 CREATE_OBSSET [NAME_OF_OBSSET]
 ------------------------------
@@ -300,45 +315,45 @@ ADD_FIELD    MSTEP    NTG     MIDDLE
 /*
 
   +-------------------------- local_updatestep_type ---------------------------------------+
-  |	    									     	   |
-  |   	    									     	   |
-  |    +----------------- local_ministep_type --------------------------------------+	   |
-  |    |       	       	       	       	       	       	       	       	       	    |  	   |
-  |    |     	       	    		       /    +--- local_dataset_type ---+    |	   |
-  |    |    		    		       |    | PRESSURE 	       	       |    |	   |
-  |    |    		    		       |    | SWAT		       |    |	   |
-  |    |    		    		       |    | SGAS		       |    |	   |
-  |    |    		    		       |    +--------------------------+    |	   |
-  |    |    +-- local_obsset_type ---+ 	       |       	       	       	       	    |	   |
-  |    |    | WWCT:OP_2		     |	       |    +--- local_dataset_type ---+    |	   |
-  |    |    | WGOR:OP_1		     |	       |    | MULTFLT1 	       	       |    |	   |
-  |    |    | RFT:WELL1 	     | 	<------|    | MULTFLT2		       |    |	   |
-  |    |    | RFT:WELL3		     |	       |    | MULTFLT3		       |    |	   |
-  |    |    | WWCT:WELLX       	     |	       |    +--------------------------+    |	   |
-  |    |    +------------------------+	       |				    |      |
-  |    |    				       |    +--- local_dataset_type ---+    |	   |
-  |    |    				       |    | RELPERM1 	       	       |    |	   |
-  |    |    				       |    | RELPERM2		       |    |	   |
-  |    |    				       |    | RELPERM3 		       |    |	   |
-  |    |    				       \    +--------------------------+    |	   |
-  |    |    				       					    |	   |
+  |                                                                                        |
+  |                                                                                        |
+  |    +----------------- local_ministep_type --------------------------------------+      |
+  |    |                                                                            |      |
+  |    |                                       /    +--- local_dataset_type ---+    |      |
+  |    |                                       |    | PRESSURE                 |    |      |
+  |    |                                       |    | SWAT                     |    |      |
+  |    |                                       |    | SGAS                     |    |      |
+  |    |                                       |    +--------------------------+    |      |
+  |    |    +-- local_obsset_type ---+         |                                    |      |
+  |    |    | WWCT:OP_2              |         |    +--- local_dataset_type ---+    |      |
+  |    |    | WGOR:OP_1              |         |    | MULTFLT1                 |    |      |
+  |    |    | RFT:WELL1              |  <------|    | MULTFLT2                 |    |      |
+  |    |    | RFT:WELL3              |         |    | MULTFLT3                 |    |      |
+  |    |    | WWCT:WELLX             |         |    +--------------------------+    |      |
+  |    |    +------------------------+         |                                    |      |
+  |    |                                       |    +--- local_dataset_type ---+    |      |
+  |    |                                       |    | RELPERM1                 |    |      |
+  |    |                                       |    | RELPERM2                 |    |      |
+  |    |                                       |    | RELPERM3                 |    |      |
+  |    |                                       \    +--------------------------+    |      |
+  |    |                                                                            |      |
   |    +----------------------------------------------------------------------------+      |
   |                                                                                        |
   |                                                                                        |  
-  |    +----------------- local_ministep_type --------------------------------------+	   |
-  |    |       	       	       	       	       	       	       	       	       	    |  	   |
-  |    |     	       	    		       /    +--- local_dataset_type ---+    |	   |
+  |    +----------------- local_ministep_type --------------------------------------+      |
+  |    |                                                                            |      |
+  |    |                                       /    +--- local_dataset_type ---+    |      |
   |    |    +-- local_obsset_type ---+         |    | PERMX PORO               |    |      |
-  |    |    | 4D Seismic       	     | 	       |    | PRESSURE SWAT            |    |  	   |
-  |    |    | Gravimetri    	     |	       |    | SGAS		       |    |	   |
-  |    |    |		    	     | 	<------|    +--------------------------+    |	   |
-  |    |    |                        | 	       |       	       	       	       	    |	   |
-  |    |    |  	       	       	     | 	       |    +--- local_dataset_type ---+    |	   |
-  |    |    +------------------------+ 	       |    | MULTFLT1 	       	       |    |	   |
-  |    |     			       	       |    | MULTFLT2		       |    |	   |
-  |    |     			      	       |    | MULTFLT3		       |    |	   |
-  |    |       	       	       	      	       \    +--------------------------+    |	   |
-  |    |				       					    |	   |
+  |    |    | 4D Seismic             |         |    | PRESSURE SWAT            |    |      |
+  |    |    | Gravimetri             |         |    | SGAS                     |    |      |
+  |    |    |                        |  <------|    +--------------------------+    |      |
+  |    |    |                        |         |                                    |      |
+  |    |    |                        |         |    +--- local_dataset_type ---+    |      |
+  |    |    +------------------------+         |    | MULTFLT1                 |    |      |
+  |    |                                       |    | MULTFLT2                 |    |      |
+  |    |                                       |    | MULTFLT3                 |    |      |
+  |    |                                       \    +--------------------------+    |      |
+  |    |                                                                            |      |
   |    +----------------------------------------------------------------------------+      |
   |                                                                                        |
   +----------------------------------------------------------------------------------------+
@@ -876,20 +891,20 @@ static void local_config_load_file( local_config_type * local_config ,
       break;
     case(COPY_DATASET):
       {
-	char * src_name     = read_alloc_string( stream , binary );
-	char * target_name = read_alloc_string( stream , binary );
-	local_config_alloc_dataset_copy( local_config , src_name , target_name );
-	free( target_name );
-	free( src_name );
+        char * src_name     = read_alloc_string( stream , binary );
+        char * target_name = read_alloc_string( stream , binary );
+        local_config_alloc_dataset_copy( local_config , src_name , target_name );
+        free( target_name );
+        free( src_name );
       }
       break;
     case(COPY_OBSSET):
       {
-	char * src_name     = read_alloc_string( stream , binary );
-	char * target_name = read_alloc_string( stream , binary );
-	local_config_alloc_obsset_copy( local_config , src_name , target_name );
-	free( target_name );
-	free( src_name );
+        char * src_name     = read_alloc_string( stream , binary );
+        char * target_name = read_alloc_string( stream , binary );
+        local_config_alloc_obsset_copy( local_config , src_name , target_name );
+        free( target_name );
+        free( src_name );
       }
       break;
     case(ATTACH_DATASET):

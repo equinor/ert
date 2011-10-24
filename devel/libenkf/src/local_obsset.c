@@ -47,12 +47,12 @@ local_obsset_type * local_obsset_alloc( const char * name ) {
 
 local_obsset_type * local_obsset_alloc_copy( local_obsset_type * src_dataset , const char * copy_name ) {
   local_obsset_type * copy_dataset = local_obsset_alloc( copy_name );
-  hash_iter_type * node_iter = hash_iter_alloc( src_dataset->nodes );
+  hash_iter_type * node_iter = hash_iter_alloc( src_dataset->observations );
 
   while (!hash_iter_is_complete( node_iter )) {
     const char * key = hash_iter_get_next_key( node_iter );
-    active_list_type * active_list = active_list_alloc_copy( hash_get( src_dataset , key ) );
-    hash_insert_hash_owned_ref( copy_dataset->nodes , key , active_list , active_list_free__);
+    active_list_type * active_list = active_list_alloc_copy( hash_get( src_dataset->observations , key ) );
+    hash_insert_hash_owned_ref( copy_dataset->observations , key , active_list , active_list_free__);
   }
 
   hash_iter_free( node_iter );
