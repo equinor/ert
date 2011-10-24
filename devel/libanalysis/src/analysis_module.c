@@ -35,6 +35,7 @@ struct analysis_module_struct {
   void                           * lib_handle;
   void                           * module_data;
   char                           * symbol_table;  
+  char                           * lib_name;
 
   analysis_free_ftype            * freef;
   analysis_alloc_ftype           * alloc;
@@ -56,7 +57,7 @@ struct analysis_module_struct {
 
 
 
-static analysis_module_type * analysis_module_alloc_empty( const char * user_name , const char * symbol_table ) {
+static analysis_module_type * analysis_module_alloc_empty( const char * user_name , const char * symbol_table , const char * lib_name) {
   analysis_module_type * module = util_malloc( sizeof * module , __func__ );
   UTIL_TYPE_ID_INIT( module , ANALYSIS_MODULE_TYPE_ID );
 
@@ -72,6 +73,7 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
   module->complete_update = NULL;
   module->user_name     = util_alloc_string_copy( user_name );
   module->symbol_table  = util_alloc_string_copy( symbol_table );
+  module->lib_name      = util_alloc_string_copy( lib_name );
   return module;
 }
 
@@ -83,10 +85,11 @@ static bool analysis_module_internal_check( analysis_module_type * module ) {
 static analysis_module_type * analysis_module_alloc__( rng_type * rng , 
                                                        const analysis_table_type * table , 
                                                        const char * symbol_table , 
+                                                       const char * lib_name , 
                                                        const char * user_name , 
                                                        void * lib_handle ) {
 
-  analysis_module_type * module = analysis_module_alloc_empty( user_name , symbol_table );
+  analysis_module_type * module = analysis_module_alloc_empty( user_name , symbol_table , lib_name );
   
   module->lib_handle        = lib_handle;
   module->initX             = table->initX;
@@ -117,14 +120,15 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
 
 
 static analysis_module_type * analysis_module_alloc( rng_type * rng , 
-                                                     const char * libname , const char * user_name , 
+                                                     const char * libname , 
+                                                     const char * user_name , 
                                                      const char * table_name ) {
   analysis_module_type * module = NULL;
   void * lib_handle = dlopen( libname , RTLD_NOW );
   if (lib_handle != NULL) {
     analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
     if (analysis_table != NULL) {
-      module = analysis_module_alloc__( rng , analysis_table , table_name , user_name , lib_handle );
+      module = analysis_module_alloc__( rng , analysis_table , table_name , libname , user_name , lib_handle );
     } else
       fprintf(stderr , "Failed to load symbol table:%s. Error:%s \n",table_name , dlerror());
     
@@ -160,6 +164,14 @@ const char * analysis_module_get_table_name( const analysis_module_type * module
   return module->symbol_table;
 }
 
+const char * analysis_module_get_lib_name( const analysis_module_type * module) {
+  return module->lib_name;
+}
+
+bool analysis_module_internal( const analysis_module_type * module ) {
+  return module->internal;
+}
+
 /*****************************************************************/
 
 static UTIL_SAFE_CAST_FUNCTION( analysis_module , ANALYSIS_MODULE_TYPE_ID )
@@ -169,6 +181,7 @@ void analysis_module_free( analysis_module_type * module ) {
   if (module->freef != NULL)
     module->freef( module->module_data );
   
+  util_safe_free( module->lib_name );
   free( module->user_name );
   free( module->symbol_table );
   dlclose( module->lib_handle );

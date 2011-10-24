@@ -28,12 +28,14 @@
 #include <std_enkf.h>
 #include <rng.h>
 
+/*
+  A random 'magic' integer id which is used for run-time type checking
+  of the input data. 
+*/
 #define STD_ENKF_TYPE_ID 261123
 
 
-#define INVALID_SUBSPACE_DIMENSION  -1
-#define INVALID_TRUNCATION          -1
-#define DEFAULT_SUBSPACE_DIMENSION  INVALID_SUBSPACE_DIMENSION
+
 
 /*
   Observe that only one of the settings subspace_dimension and
@@ -44,31 +46,67 @@
   you have repeated calls to both of these functions the end result
   might be a surprise.  
 */
+#define INVALID_SUBSPACE_DIMENSION  -1
+#define INVALID_TRUNCATION          -1
+#define DEFAULT_SUBSPACE_DIMENSION  INVALID_SUBSPACE_DIMENSION
+
+
+
+
+
+/*
+  The configuration data used by the std_enkf module is contained in a
+  std_enkf_data_struct instance. The data type used for the std_enkf
+  module is quite simple; with only a few scalar variables, but there
+  are essentially no limits to what you can pack into such a datatype.
+
+  All the functions in the module have a void pointer as the first
+  argument, this will immediately be casted to a std_enkf_data_type
+  instance, to get some type safety the UTIL_TYPE_ID system should be
+  used (see documentation in util.h)
+
+  The data structure holding the data for your analysis module should
+  be created and initialized by a constructor, which should be
+  registered with the '.alloc' element of the analysis table; in the
+  same manner the desctruction of this data should be handled by a
+  destructor or free() function registered with the .freef field of
+  the analysis table.
+*/
 
 
 
 
 struct std_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
-  double    truncation;            // ENKF_TRUNCATION_KEY
-  int       subspace_dimension;    // ENKF_NCOMP_KEY (-1: use Truncation instead)
+  double    truncation;            // Controlled by config key: ENKF_TRUNCATION_KEY
+  int       subspace_dimension;    // Controlled by config key: ENKF_NCOMP_KEY (-1: use Truncation instead)
   long      option_flags;
 };
 
 
+/*
+  This is a macro which will expand to generate a function:
 
+     std_enkf_data_type * std_enkf_data_safe_cast( void * arg ) {}
+
+  which is used for runtime type checking of all the functions which
+  accept a void pointer as first argument. 
+*/
 static UTIL_SAFE_CAST_FUNCTION( std_enkf_data , STD_ENKF_TYPE_ID )
 
+
+double std_enkf_get_truncation( std_enkf_data_type * data ) {
+  return data->truncation;
+}
+
+int std_enkf_get_subspace_dimension( std_enkf_data_type * data ) {
+  return data->subspace_dimension;
+}
 
 void std_enkf_set_truncation( std_enkf_data_type * data , double truncation ) {
   data->truncation = truncation;
   if (truncation > 0.0)
     data->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
-}
-
-double std_enkf_get_truncation( void * module_data ) {
-  std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
-  return data->truncation;
 }
 
 void std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_dimension) {
@@ -77,10 +115,6 @@ void std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_d
     data->truncation = INVALID_TRUNCATION;
 }
 
-int std_enkf_get_subspace_dimension( void * module_data ) {
-  std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
-  return data->subspace_dimension;
-}
 
 
 void * std_enkf_data_alloc( rng_type * rng) {
@@ -99,23 +133,6 @@ void std_enkf_data_free( void * data ) {
 }
 
 
-void std_enkf_initX(void * module_data , 
-                    matrix_type * X , 
-                    matrix_type * A , 
-                    matrix_type * S , 
-                    matrix_type * R , 
-                    matrix_type * dObs , 
-                    matrix_type * E , 
-                    matrix_type * D) {
-
-
-  std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
-  {
-    int ncomp         = data->subspace_dimension;
-    double truncation = data->truncation;
-    std_enkf_initX__(X,S,R,E,D,truncation,ncomp,false);
-  }
-}
 
 
 void std_enkf_initX__( matrix_type * X , 
@@ -139,6 +156,28 @@ void std_enkf_initX__( matrix_type * X ,
   
   matrix_free( W );
   free( eig );
+  
+}
+
+
+
+void std_enkf_initX(void * module_data , 
+                    matrix_type * X , 
+                    matrix_type * A , 
+                    matrix_type * S , 
+                    matrix_type * R , 
+                    matrix_type * dObs , 
+                    matrix_type * E , 
+                    matrix_type * D) {
+
+
+  std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
+  {
+    int ncomp         = data->subspace_dimension;
+    double truncation = data->truncation;
+
+    std_enkf_initX__(X,S,R,E,D,truncation,ncomp,false);
+  }
 }
 
 

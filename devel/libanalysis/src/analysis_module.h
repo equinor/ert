@@ -60,9 +60,10 @@ void analysis_module_updateA(analysis_module_type * module ,
                              matrix_type * E , 
                              matrix_type * D );
 
-                             
 
-bool  analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
+const char           * analysis_module_get_lib_name( const analysis_module_type * module);
+bool                   analysis_module_internal( const analysis_module_type * module );
+bool                   analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
 const char           * analysis_module_get_table_name( const analysis_module_type * module);
 const char           * analysis_module_get_name( const analysis_module_type * module );
 bool                   analysis_module_get_option( const analysis_module_type * module , long flag);

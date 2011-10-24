@@ -10,7 +10,7 @@ To facilitate easier development and testing of new update schemes the
 core EnKF update step has been factored out as analysis modules, which
 are called from the enkf_main scope. The update functions in the
 module get ordinary matrices as input, and do not need to know
-anything about the internals of the ERT application. 
+anything about the internals of the ERT application.
 
 The modules can either be built in, or you can compile your own module
 as a shared library and load it runtime. Apart from the initial
@@ -69,8 +69,8 @@ dlsym() function calls:
    each module.
 
 
-   Loading external modules 
-   ------------------------ 
+   Loading external modules
+   ------------------------
    External modules are ordinary shared libraries. To load an external
    module the name of the shared library must be given to the dlopen()
    function, normal rules for runtime loading of dynamic libraries
@@ -137,11 +137,74 @@ the module functions will inspect the option_flags to see which
 variables to pass to the module, and which module functions to invoke,
 so this must be correct.
 
-Example 
-------- 
+Example
+-------
 The module/file std_enkf.c is commented quite heavily to serve as an
 example.
 
+---------------------------------------------------------------------
+
+With the analysis modules we have essentially got a three layer
+design:
+
+ 1. The ert core layer which creates/loads a list of analysis_module
+    instances.
+
+ 2. analysis_module instances are a thing layer which:
+
+    a) Hold on to specific analysis implementations like e.g. the
+       std_enkf implementation on one side.
+
+    b) Present a uniform module interface to the ert layer on the
+       'other side'.
+
+ 3. Specific analysis module implementations like the std_enkf.
 
 
-
+In fine ASCII art:
+                                                                                                           .
+                                                                              +----------------------+     .     +---------------------------+
+                                                                              |    Analysis module   |     .     |  Implementation std_enkf  |
+                                                                              +----------------------+     .     +---------------------------+
+                                                                              |                      |  /------> |   std_enkf_alloc()        |
+                                                      ----------------------> |                      | /   .     |   std_enkf_free()         |
+                                                     /                        |         X            |o--------> |   std_enkf_get_options()  |
+                                                    /                         |                      | \   .     |   std_enkf_initX()        |
+    +------------------------------------------+   /                          |                      |  \------> |   std_enkf_set_int()      |
+    | The ert core layer; in particular        |  /                           |                      |     .     |   std_enkf_set_double()   |
+    | the following functions:                 | /                            +----------------------+     .     +---------------------------+
+    | - analysis_config_load_external_module() |o                                                          .
+    | - analysis_config_load_internal_module() | \                            +----------------------+     .     +---------------------------+
+    | - enkf_main_module_update()              |  \                           |    Analysis module   |     .     |  Implementation sqrt_enkf |
+    +------------------------------------------+   \                          +----------------------+     .     +---------------------------+
+                                                    \                         |                      |  /------> |  sqrt_enkf_alloc()        |
+                                                     \                        |                      | /   .     |  sqrt_enkf_free()         |
+                                                      \---------------------> |                      |o--------> |  sqrt_enkf_get_options()  |
+                                                       \                      |          X           | \   .     |  sqrt_enkf_initX()        |
+                                                        \                     |                      |  \------> |  sqrt_enkf_set_int()      |
+                                                         \                    |                      |     .     |  sqrt_enkf_set_double()   |
+                                                          \                   +----------------------+     .     +---------------------------+
+                                                           \                                               .
+                             In the ert core layer the      \                 +----------------------+     .     +---------------------------+
+                             different analysis module       \                |    Analysis module   |     .     |  Implementation cv_enkf   |
+                             instances are collected in       \               +----------------------+     .     +---------------------------+
+                             a hash table, and all function    \              |                      |  /------> |    cv_enkf_alloc()        |
+                             invocations go through the         \             |                      | /   .     |    cv_enkf_free()         |
+                             functions in the analysis_module    -----------> |                      |o--------> |    cv_enkf_get_options()  |
+                             layer.                                           |          X           | \   .     |    cv_enkf_initX()        |
+                                                                              |                      |  \------> |    cv_enkf_set_int()      |
+                                                                              |                      |     .     |    cv_enkf_set_double()   |
+                                                                              +----------------------+     .     +---------------------------+
+                                                                                                           .
+                                                                                                           .
+                                                                                                           .
+                                                                                                           .
+                                                                                                           .
+                                                                                                   The links between the analysis
+                                                                                                   modules and the std_enkf, sqrt_enkf
+                                                                                                   and cv_enkf implementations are
+                                                                                                   in terms of function pointers. These
+                                                                                                   links are established runtime, and
+                                                                                                   the vertical dotted line represents
+                                                                                                   an opaque wall which ert core layer
+                                                                                                   can not see through. 

@@ -20,12 +20,12 @@ typedef struct std_enkf_data_struct std_enkf_data_type;
 bool     std_enkf_set_double( void * arg , const char * var_name , double value);
 
 bool     std_enkf_set_int( void * arg , const char * var_name , int value);
-int      std_enkf_get_subspace_dimension( void * module_data );
+int      std_enkf_get_subspace_dimension( std_enkf_data_type * data );
 void     std_enkf_set_truncation( std_enkf_data_type * data , double truncation );
 void     std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_dimension);
 
 
-double   std_enkf_get_truncation( void * module_data );
+double   std_enkf_get_truncation( std_enkf_data_type * data );
 void   * std_enkf_data_alloc( rng_type * rng);
 void     std_enkf_data_free( void * module_data );
 

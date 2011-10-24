@@ -189,13 +189,6 @@ void analysis_config_load_internal_module( analysis_config_type * config , rng_t
 }
 
 
-void analysis_config_add_module_copy( analysis_config_type * config , rng_type * rng , 
-                                      const char * src_name , const char * target_name) {
-  analysis_module_type * module = analysis_config_get_module( config , src_name );
-  analysis_config_load_internal_module( config , rng  , target_name , analysis_module_get_table_name( module ) );
-}
-
-
 
 void analysis_config_load_external_module( analysis_config_type * config , rng_type * rng , 
                                            const char * user_name , const char * lib_name) {
@@ -205,6 +198,19 @@ void analysis_config_load_external_module( analysis_config_type * config , rng_t
   else
     fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , lib_name);
 }
+
+
+void analysis_config_add_module_copy( analysis_config_type * config , 
+                                      rng_type * rng , 
+                                      const char * src_name , 
+                                      const char * target_name) {
+  analysis_module_type * module = analysis_config_get_module( config , src_name );
+  if (analysis_module_internal( module ))
+    analysis_config_load_internal_module( config , rng , target_name , analysis_module_get_table_name( module ));
+  else
+    analysis_config_load_external_module( config , rng , target_name , analysis_module_get_lib_name( module ));
+}
+
 
 
 analysis_module_type * analysis_config_get_module( analysis_config_type * config , const char * module_name ) {
