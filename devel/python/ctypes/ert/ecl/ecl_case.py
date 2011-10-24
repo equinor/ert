@@ -27,6 +27,7 @@ import ecl_rft
 import ecl_default
 import ecl_util
 import ert.job_queue.driver as queue_driver
+import warnings
 
 class EclCase:
     """
@@ -53,7 +54,7 @@ class EclCase:
            case3 = EclCase( "/absolute/path/simulation/ECLIPSE_3.xxx" )
 
         """
-        raise DeprecationWarning("The EclCase class is deprecated - instantiate the EclSum / EclGrid / ... classes directly.")
+        warnings.warn("The EclCase class is deprecated - instantiate the EclSum / EclGrid / ... classes directly." , DeprecationWarning)
 
         self.case = input_case
         (path , tmp) = os.path.split( input_case )
