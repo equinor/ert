@@ -222,11 +222,11 @@ class EclKW(object):
         elif self.ecl_type == ECL_FLOAT_TYPE:
             self.data_ptr = cfunc.float_ptr( self )
             self.dtype    = numpy.float32
-            self.str_fmt  = "%11.4f "
+            self.str_fmt  = "%13.4f "
         elif self.ecl_type == ECL_DOUBLE_TYPE:
             self.data_ptr = cfunc.double_ptr( self )
             self.dtype    = numpy.float64        
-            self.str_fmt  = "%11.4f "
+            self.str_fmt  = "%13.4f "
         else:
             # Iteration not supported ...
             self.data_ptr = None
