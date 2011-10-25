@@ -136,6 +136,8 @@ void cv_enkf_init_update( void * arg ,
     
     double * inv_sig0  = util_malloc( nrmin * sizeof * inv_sig0 , __func__);
     double * sig0      = inv_sig0;
+    
+    printf("Computing svd using truncation %0.4f\n",cv_data->truncation);
 
     enkf_linalg_svdS(S , cv_data->truncation , cv_data->subspace_dimension , DGESVD_MIN_RETURN , inv_sig0 , U0 , V0T);
     
@@ -198,7 +200,7 @@ void cv_enkf_init_update( void * arg ,
   
 */
 
-static void enkf_analysis_get_cv_error_prin_comp( cv_enkf_data_type * cv_data , 
+static void cv_enkf_get_cv_error_prin_comp( cv_enkf_data_type * cv_data , 
                                                   matrix_type * cvErr , 
                                                   const matrix_type * A ,  
                                                   const int * indexTest, 
@@ -292,6 +294,7 @@ static void enkf_analysis_get_cv_error_prin_comp( cv_enkf_data_type * cv_data ,
     }
     
     
+    
     matrix_free( ZpTrain );
     matrix_free( SigDp );
   } /*end for p */
@@ -305,7 +308,7 @@ static void enkf_analysis_get_cv_error_prin_comp( cv_enkf_data_type * cv_data ,
 
 
 
-int enkf_analysis_get_optimal_numb_comp(cv_enkf_data_type * cv_data , 
+int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data , 
                                         const matrix_type * cvErr , 
                                         const int maxP ) {
                                         
@@ -335,13 +338,19 @@ int enkf_analysis_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
   {
     double minErr = cvMean[0];
     int i;
+    optP = 1;
     
+    printf("PRESS:\n");
+    printf("%f\n",cvMean[0]);
     for (i = 1; i < maxP; i++) {
+      printf("%f\n",cvMean[i]);
       if ((cvMean[i] < minErr) && (cvMean[i] > 0.0)) {
         minErr = cvMean[i];
         optP = i+1;
       }
     }
+
+
 
   
     if (cv_data->penalised_press) {
@@ -373,6 +382,9 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
 
   const int nrens = matrix_get_columns( cv_data->Z );
   const int nrmin = matrix_get_rows( cv_data->Z );
+
+
+
   matrix_type * cvError;
   int * randperms     = util_malloc( sizeof * randperms * nrens, __func__);
   
@@ -393,6 +405,8 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
                            // bounds access oc cv_data->Z at line 460.
 
   
+
+
   if ( nrens < cv_data->nfolds )
     util_abort("%s: number of ensemble members %d need to be larger than the number of cv-folds - aborting \n",
                __func__,
@@ -401,6 +415,7 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
   
   for (int i=0; i < nrens; i++)
     randperms[i] = i;
+
   rng_shuffle_int( cv_data->rng , randperms , nrens );
   
   cvError = matrix_alloc( maxP , cv_data->nfolds );
@@ -425,7 +440,7 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
       }
 
       /*Perform CV for each subspace dimension p */
-      enkf_analysis_get_cv_error_prin_comp( cv_data , cvError , A , indexTest , indexTrain, ntest, ntrain , i , maxP);
+      cv_enkf_get_cv_error_prin_comp( cv_data , cvError , A , indexTest , indexTrain, ntest, ntrain , i , maxP);
     }
     free( indexTest );
     free( indexTrain );
@@ -433,7 +448,7 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
   
 
   /* find optimal truncation value for the cv-scheme */
-  optP = enkf_analysis_get_optimal_numb_comp( cv_data , cvError , maxP);
+  optP = cv_enkf_get_optimal_numb_comp( cv_data , cvError , maxP);
 
   matrix_free( cvError );
   free( randperms );
@@ -520,6 +535,7 @@ void cv_enkf_initX(void * module_data ,
       matrix_type * workA = matrix_alloc_copy( A ); 
       matrix_subtract_row_mean( workA );
       optP = get_optimal_principal_components(cv_data , workA );
+      printf("Optimal subspace dimension found %d\n",optP);
       matrix_free( workA );
     }
 

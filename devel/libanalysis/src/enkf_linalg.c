@@ -119,6 +119,8 @@ void enkf_linalg_svdS(const matrix_type * S ,
           }
         }
       }
+
+      printf("PCA completed: Number of significant terms = %d\n",num_significant);
       
       /* Inverting the significant singular values */
       for (i = 0; i < num_significant; i++)
