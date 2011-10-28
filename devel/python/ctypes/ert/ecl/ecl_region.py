@@ -530,17 +530,106 @@ class EclRegion(object):
         """
         cfunc.invert_selection( self )
 
-    def select_above_plane( self , n , p):
-        """
-        Will select all the cells 'above' the plane defined by n & p.
-        """
+    def __init_plane_select( self , n , p ):
         n_vec = ctypes.cast( (ctypes.c_double * 3)() , ctypes.POINTER( ctypes.c_double ))
         p_vec = ctypes.cast( (ctypes.c_double * 3)() , ctypes.POINTER( ctypes.c_double ))
         for i in range(3):
             n_vec[i] = n[i]
             p_vec[i] = p[i]
-            
+        return ( n_vec , p_vec )
+
+    def select_above_plane( self , n , p):
+        """
+        Will select all the cells 'above' the plane defined by n & p.
+        """
+        (n_vec , p_vec) = self.__init_plane_select( n , p )
         cfunc.select_above_plane( self , n_vec , p_vec )
+
+    def select_below_plane( self , n , p):
+        """
+        Will select all the cells 'below' the plane defined by n & p.
+        """
+        (n_vec , p_vec) = self.__init_plane_select( n , p )
+        cfunc.select_below_plane( self , n_vec , p_vec )
+
+    def deselect_above_plane( self , n , p):
+        """
+        Will deselect all the cells 'above' the plane defined by n & p.
+        """
+        (n_vec , p_vec) = self.__init_plane_deselect( n , p )
+        cfunc.deselect_above_plane( self , n_vec , p_vec )
+
+    def deselect_below_plane( self , n , p):
+        """
+        Will deselect all the cells 'below' the plane defined by n & p.
+        """
+        (n_vec , p_vec) = self.__init_plane_deselect( n , p )
+        cfunc.deselect_below_plane( self , n_vec , p_vec )
+
+    def __init_poly_select( self , points ):
+        x_list = ctypes.cast( (ctypes.c_double * len(points))() , ctypes.POINTER( ctypes.c_double ))
+        y_list = ctypes.cast( (ctypes.c_double * len(points))() , ctypes.POINTER( ctypes.c_double ))
+
+        index = 0
+        for (x,y) in points:
+            x_list[index] = x
+            y_list[index] = y
+            index += 1
+
+        return (x_list , y_list)
+        
+
+    def select_inside_polygon( self , points ):
+        """
+        Will select all points inside polygon.
+
+        Will select all points inside polygon specified by input
+        variable @points. Points should be a list of two-element
+        tuples (x,y). So to select all the points within the rectangle
+        bounded by the lower left rectangle (0,0) and upper right
+        (100,100) the @points list should be:
+
+           points = [(0,0) , (0,100) , (100,100) ,  (100,0)]
+
+        The elements in the points list should be (utm_x, utm_y)
+        values. These values will be compared with the centerpoints of
+        the cells in the grid. The selection is based the top k=0
+        layer, and then extending this selection to all k values; this
+        implies that the selection polygon will effectively be
+        translated if the pillars are not vertical.
+        """
+        (x_list , y_list) = self.__init_poly_select( points )
+        cfunc.select_inside_polygon( self , x_list , y_list , len( points ))
+
+    def select_outside_polygon( self , points ):
+        """
+        Will select all points outside polygon.
+
+        See select_inside_polygon for more docuemntation.
+        """
+        (x_list , y_list) = self.__init_poly_select( points )
+        cfunc.select_outside_polygon( self , x_list , y_list , len( points ))
+
+    def deselect_outside_polygon( self , points ):
+        """
+        Will select all points outside polygon.
+
+        See select_inside_polygon for more docuemntation.
+        """
+        (x_list , y_list) = self.__init_poly_select( points )
+        cfunc.deselect_inside_polygon( self , x_list , y_list , len( points ))
+
+    def deselect_outside_polygon( self , points ):
+        """
+        Will select all points outside polygon.
+
+        See select_inside_polygon for more docuemntation.
+        """
+        (x_list , y_list) = self.__init_poly_select( points )
+        cfunc.deselect_outside_polygon( self , x_list , y_list , len( points ))
+
+
+
 
 
     #################################################################
@@ -759,6 +848,11 @@ cfunc.select_above_plane        = cwrapper.prototype("void ecl_region_select_abo
 cfunc.select_below_plane        = cwrapper.prototype("void ecl_region_select_below_plane( ecl_region  , double* , double* )")
 cfunc.deselect_above_plane      = cwrapper.prototype("void ecl_region_deselect_above_plane( ecl_region, double* , double* )")
 cfunc.deselect_below_plane      = cwrapper.prototype("void ecl_region_deselect_below_plane( ecl_region, double* , double* )")
+
+cfunc.select_inside_polygon     = cwrapper.prototype("void ecl_region_select_inside_polygon( ecl_region , double* , double* , int )")
+cfunc.select_outside_polygon    = cwrapper.prototype("void ecl_region_select_outside_polygon( ecl_region , double* , double* , int )")
+cfunc.deselect_inside_polygon   = cwrapper.prototype("void ecl_region_deselect_inside_polygon( ecl_region , double* , double* , int )")
+cfunc.deselect_outside_polygon  = cwrapper.prototype("void ecl_region_deselect_outside_polygon( ecl_region , double* , double* , int )")
 
 cfunc.set_name                  = cwrapper.prototype("void  ecl_region_set_name( ecl_region , char*)")
 cfunc.get_name                  = cwrapper.prototype("char* ecl_region_get_name( ecl_region )")

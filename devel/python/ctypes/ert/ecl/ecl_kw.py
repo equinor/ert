@@ -142,7 +142,10 @@ class EclKW(object):
         file. The @kw argument should be the keyword header you are
         searching for, e.g. "PORO" or "PVTNUM"[1], the method will
         then search forward through the file to look for this @kw. If
-        the keyword can not be found the method will return None. 
+        the keyword can not be found the method will return None. The
+        searching will start from the current position in the file; so
+        if you want to reposition the file pointer you should use the
+        seek() method of the file object first.
 
         Observe that there is a strict 8 character limit on @kw -
         altough you could in principle use an arbitrary external
@@ -169,7 +172,6 @@ class EclKW(object):
         files, malformed input might therefor pass unnoticed before
         things blow up at a later stage.
         
-           
         [1]: It is possible, but not recommended, to pass in None for
              @kw, in which case the method will load the first keyword
              it finds in the file.
