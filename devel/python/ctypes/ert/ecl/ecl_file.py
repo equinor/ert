@@ -176,8 +176,11 @@ class EclFile(object):
         if self.c_ptr:
             cfunc.close( self )
 
-    def select_section( self, kw , kw_index):
-        cfunc.select_block( self , kw , kw_index )
+    def select_block( self, kw , kw_index):
+        OK = cfunc.select_block( self , kw , kw_index )
+        if not OK:
+            raise ValueError("Could not find block %s:%d" % (kw , kw_index))
+        
 
     def select_global( self ):
         cfunc.select_global( self )
@@ -258,11 +261,14 @@ class EclFile(object):
                 return EclKW.ref( kw_c_ptr , self )
         else:
             if isinstance( index , types.StringType):
-                kw_index = index
-                kw_list = []
-                for index in range( self.num_named_kw( kw_index )):
-                    kw_list.append(  self.iget_named_kw( kw_index , index))
-                return kw_list
+                if self.has_kw( index ):
+                    kw_index = index
+                    kw_list = []
+                    for index in range( self.num_named_kw( kw_index )):
+                        kw_list.append(  self.iget_named_kw( kw_index , index))
+                    return kw_list
+                else:
+                    raise KeyError("Unrecognized keyword:\'%s\'" % index)
             else:
                 raise TypeError("Index must be integer or string (keyword)")
         
@@ -619,4 +625,5 @@ cfunc.fwrite                      = cwrapper.prototype("void        ecl_file_fwr
 cfunc.has_instance                = cwrapper.prototype("bool        ecl_file_has_kw_ptr(ecl_file , ecl_kw)")
 cfunc.has_report_step             = cwrapper.prototype("bool        ecl_file_has_report_step( ecl_file , int)")
 cfunc.has_sim_time                = cwrapper.prototype("bool        ecl_file_has_sim_time( ecl_file , time_t )")
+
 

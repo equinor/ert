@@ -482,16 +482,14 @@ static void getW_prin_comp(cv_enkf_data_type * cv_data , matrix_type *W , const 
   matrix_dgemm( SigZp , Zp , Zp, false , true , 1.0, 0.0);
   
   /*Add (ntrain-1) * Rp*/
-  int tmp3 = nrens - 1;
-
-
   for(i = 0; i < optP; i++) {
     for( j = 0; j < optP; j++) {
-      tmp2 = matrix_iget(SigZp , i , j) + tmp3 * matrix_iget(cv_data->Rp, i, j);
+      tmp2 = matrix_iget(SigZp , i , j) + (nrens - 1) * matrix_iget(cv_data->Rp, i, j);
       matrix_iset( SigZp , i , j , tmp2 );
     }
   }
   
+
   /* Invert the covariance matrix for the principal components  */
   int inv_ok = matrix_inv( SigZp );
   
