@@ -32,6 +32,7 @@
 #include <enkf_analysis.h>
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
+#include <enkf_tui_analysis.h>
 #include <ert_tui_const.h>
 
 
@@ -156,74 +157,6 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
 
 
 
-void enkf_tui_run_analyze_selected__(void * enkf_main) {
-  int_vector_type * step_list = int_vector_alloc(0,0);
-  {
-    char * filename = util_fscanf_alloc_filename("File with selected report steps" , PROMPT_LEN , 1);
-    FILE * stream = util_fopen( filename , "r");
-    
-    while (true) {
-      int step;
-      if (fscanf(stream , "%d" , &step) == 1) 
-        int_vector_append( step_list , step );
-      else
-        break;
-    }
-    
-    fclose( stream );
-    free( filename );
-  }
-  enkf_main_UPDATE(enkf_main , step_list );
-  int_vector_free( step_list );
-}
-
-
-
-/**
-   Observe that this function will update manually at the report step
-   given by the user. The function will ignore
-   ENKF_SCHED_FILE setting and also the
-   ENKF_MERGE_OBSERVATIONS
-*/
-
-void enkf_tui_run_analyze__(void * enkf_main) {
-  int report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length(enkf_main) , "Which report step to analyze" , PROMPT_LEN);
-  int_vector_type * step_list = int_vector_alloc(0,0);
-  int_vector_append( step_list , report_step );
-  enkf_main_UPDATE(enkf_main , step_list );
-  int_vector_free( step_list );
-}
-
-
-void enkf_tui_run_smooth__(void * enkf_main) {
-  bool default_used;
-  int last_report = enkf_main_get_history_length( enkf_main ) ;
-  int step1       = enkf_tui_util_scanf_report_step(last_report , "First report step" , PROMPT_LEN);
-  int step2       = enkf_tui_util_scanf_report_step(last_report , "Last report step"  , PROMPT_LEN);
-  int stride      = enkf_tui_util_scanf_int_with_default( "Stride [default:1]" , PROMPT_LEN , &default_used);
-
-  int_vector_type * step_list = int_vector_alloc(0,0);
-
-  if (default_used)
-    stride = 1;
-
-  {
-    int step = step1;
-    while (true) {
-      int_vector_append( step_list , step );
-      step += stride;
-      if (step > step2)
-        break;
-    }
-    if (int_vector_get_last( step_list ) != step2)
-      int_vector_append( step_list , step2 );
-  }
-  enkf_main_UPDATE(enkf_main , step_list );
-  
-  int_vector_free( step_list );
-}
-
-
 
 void enkf_tui_run_predictions__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
@@ -343,9 +276,7 @@ void enkf_tui_run_menu(void * arg) {
   menu_add_item(menu , "Create runpath directories - NO simulation" , "cC" , enkf_tui_run_create_runpath__ , enkf_main , NULL );
   menu_add_item(menu , "Load results manually"                  , "lL"  , enkf_tui_run_manual_load__ , enkf_main , NULL);
   menu_add_separator(menu);
-  menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_tui_run_analyze__ , enkf_main , NULL);
-  menu_add_item(menu , "Analyze interval manually" , "iI" , enkf_tui_run_smooth__  , enkf_main , NULL);
-  menu_add_item(menu , "Analyze selected steps manually" , "nN" , enkf_tui_run_analyze_selected__ , enkf_main , NULL);
+  menu_add_item(menu , "Analysis menu"             , "aA" , enkf_tui_analysis_menu , enkf_main , NULL);
   menu_add_separator(menu);
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );
@@ -355,7 +286,6 @@ void enkf_tui_run_menu(void * arg) {
     
     arg_pack_append_ptr(arg_pack , model_config);
     arg_pack_append_ptr(arg_pack , menu_add_item(menu , runpath_label , "dD" , enkf_tui_run_set_runpath , arg_pack , arg_pack_free__));
-    
     
     free(runpath_label);
   }
