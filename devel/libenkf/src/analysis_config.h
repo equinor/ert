@@ -67,7 +67,7 @@ double                 analysis_config_get_std_cutoff( const analysis_config_typ
 void                   analysis_config_add_config_items( config_type * config );
 void                   analysis_config_fprintf_config( analysis_config_type * config , FILE * stream);
 
-void                   analysis_config_select_module( analysis_config_type * config , const char * module_name );
+bool                   analysis_config_select_module( analysis_config_type * config , const char * module_name );
 analysis_module_type * analysis_config_get_active_module( analysis_config_type * config );
 void                   analysis_config_set_update_results(analysis_config_type * config , bool update_results);
 bool                   analysis_config_get_update_results(const analysis_config_type * config);

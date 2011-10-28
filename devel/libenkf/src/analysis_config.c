@@ -31,8 +31,8 @@
 
 
 struct analysis_config_struct {
-  hash_type            * analysis_modules;
-  analysis_module_type * analysis_module;
+  hash_type             * analysis_modules;
+  analysis_module_type  * analysis_module;
   char                  * log_path;                    /* Points to directory with update logs. */
   bool                    merge_observations;          /* When observing from time1 to time2 - should ALL observations in between be used? */
   bool                    rerun;                       /* Should we rerun the simulator when the parameters have been updated? */
@@ -221,20 +221,21 @@ bool analysis_config_has_module(analysis_config_type * config , const char * mod
   return hash_has_key( config->analysis_modules , module_name );
 }
 
-void analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
-  if (analysis_config_has_module( config , module_name )) 
+bool analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
+  if (analysis_config_has_module( config , module_name )) { 
     config->analysis_module = analysis_config_get_module( config , module_name );
-  else {
+    return true;
+  } else {
     if (config->analysis_module == NULL)
       util_abort("%s: sorry module:%s does not exist - and no module currently selected\n",__func__ , module_name);
     else
       fprintf(stderr , "** Warning: analysis module:%s does not exists - current selection unchanged:%s\n", 
               module_name , 
               analysis_module_get_name( config->analysis_module ));
-    
+    return false;
   }
-
 }
+
 
 analysis_module_type * analysis_config_get_active_module( analysis_config_type * config ) {
   return config->analysis_module;

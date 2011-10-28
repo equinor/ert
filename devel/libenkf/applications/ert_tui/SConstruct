@@ -40,7 +40,7 @@ if conf.INCLUDE_LSF:
 
 
 tui_objects = env.Object( ["enkf_tui_main.c" , "enkf_tui_fs.c" , "enkf_tui_ranking.c" , "enkf_tui_misc.c" , "enkf_tui_table.c" , "enkf_tui_plot.c" , 
-                           "enkf_tui_run.c", "enkf_tui_util.c" , "enkf_tui_init.c" , "enkf_tui_export.c"])
+                           "enkf_tui_run.c", "enkf_tui_util.c" , "enkf_tui_init.c" , "enkf_tui_export.c" , "enkf_tui_analysis.c"])
 define_fmt = "\'%s=\"%s\"\'"
 main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE) ])
 
