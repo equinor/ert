@@ -25,13 +25,12 @@ combined e.g. with logical &.
 When the selection process is complete the region instance can be
 queried for the corresponding list of indices.
 """
-
+import warnings
 import libecl
 from   ert.cwrap.cwrap       import *
 from   ert.util.tvector      import IntVector
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_DOUBLE_TYPE
 import ecl_grid
-
 class EclRegion(object):
     
 
@@ -393,6 +392,13 @@ class EclRegion(object):
         """
         cfunc.deselect_all( self )
 
+    def clear( self ):
+        """
+        Will deselect all cells.
+        """
+        self.deselect_all()
+
+
     def select_deep( self, depth):
         """
         Will select all cells below @depth.
@@ -541,6 +547,13 @@ class EclRegion(object):
     def select_above_plane( self , n , p):
         """
         Will select all the cells 'above' the plane defined by n & p.
+
+        @n is the surface normal vector of the plane in question and
+        @p is a point on the plane surface. The point @p should be
+        given in (utm_x , utm_y , tvd) coordinates. The term 'above'
+        means that the cell center has a positive distance to the
+        plain; correspondingly 'below' means that the cell center has
+        a negative disatnce to the plane.
         """
         (n_vec , p_vec) = self.__init_plane_select( n , p )
         cfunc.select_above_plane( self , n_vec , p_vec )
@@ -548,6 +561,8 @@ class EclRegion(object):
     def select_below_plane( self , n , p):
         """
         Will select all the cells 'below' the plane defined by n & p.
+
+        See method 'select_above_plane' for further documentation.
         """
         (n_vec , p_vec) = self.__init_plane_select( n , p )
         cfunc.select_below_plane( self , n_vec , p_vec )
@@ -555,6 +570,8 @@ class EclRegion(object):
     def deselect_above_plane( self , n , p):
         """
         Will deselect all the cells 'above' the plane defined by n & p.
+
+        See method 'select_above_plane' for further documentation.
         """
         (n_vec , p_vec) = self.__init_plane_deselect( n , p )
         cfunc.deselect_above_plane( self , n_vec , p_vec )
@@ -562,6 +579,8 @@ class EclRegion(object):
     def deselect_below_plane( self , n , p):
         """
         Will deselect all the cells 'below' the plane defined by n & p.
+        
+        See method 'select_above_plane' for further documentation.
         """
         (n_vec , p_vec) = self.__init_plane_deselect( n , p )
         cfunc.deselect_below_plane( self , n_vec , p_vec )
@@ -734,6 +753,7 @@ class EclRegion(object):
         """
         Number of active cells in region.
         """
+        warnings.warn("The active_size property is deprecated - use \'active_list.size\' instead." , DeprecationWarning)
         return self.active_list.size
 
     @property
@@ -741,6 +761,7 @@ class EclRegion(object):
         """
         Number of global cells in region.
         """
+        warnings.warn("The global_size property is deprecated - use \'global_list.size\' instead." , DeprecationWarning)
         return self.global_list.size    
     
     def kw_index_list(self , ecl_kw , force_active):
