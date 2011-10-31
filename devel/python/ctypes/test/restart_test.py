@@ -52,6 +52,6 @@ print ecl.EclFile.file_report_steps( "data/eclipse/case/ECLIPSE.UNRST" )
 
 midF = ecl.EclFile( "midgard/MD7_BA11.UNRST" )
 for index in range(len(midF["SEQNUM"])):
-    midF.select_section( "SEQNUM" , index )
+    midF.select_block( "SEQNUM" , index )
     print midF["SEQNUM"][0][0]
     
