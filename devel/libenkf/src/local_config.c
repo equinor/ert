@@ -250,7 +250,7 @@ inclusive, and the counting starts at 1.
 
 REGION_SELECT_SLICE         [ REGION_NAME dir n1 n2 SELECT]
 -----------------------------------------------------------
-This ffunction will select a slice in the direction given by 'dir',
+This function will select a slice in the direction given by 'dir',
 which can 'x', 'y' or 'z'. Depending on the value of 'dir' the numbers
 n1 and n2 are interpreted as (i1 i2), (j1 j2) or (k1 k2)
 respectively. The numbers n1 and n2 are inclusice and the counting
@@ -258,6 +258,12 @@ starts at 1. It is OK to use very high/low values to imply "the rest
 of the cells" in one direction.
 
 
+REGION_SELECT_PLANE  [REGION_NAME nx ny nz px py pz sign SELECT]
+---------------------------------------------------------
+Will select all points which have positive (sign > 0) distance to 
+the plane defined by normal vector n = (nx,ny,nz) and point 
+p = (px,py,pz). If sign < 0 all cells with negative distance to 
+plane will be selected.
 
 
 I have added comments in the example - that is not actually supported (yet at least)
@@ -700,6 +706,12 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
   case(REGION_SELECT_SLICE):
     return REGION_SELECT_SLICE_STRING;
     break;
+  case(REGION_SELECT_PLANE):
+    return REGION_SELECT_PLANE_STRING;
+    break;
+  case(REGION_SELECT_IN_POLYGON):
+    return REGION_SELECT_IN_POLYGON_STRING;
+    break;
   default:
     util_abort("%s: command:%d not recognized \n",__func__ , cmd);
     return NULL;
@@ -717,6 +729,16 @@ static int read_int(FILE * stream , bool binary ) {
   }
 }
 
+
+static double read_double(FILE * stream , bool binary) {
+  if (binary)
+    return util_fread_double( stream );
+  else {
+    double value;
+    fscanf(stream , "%lg" , &value);
+    return value;
+  }
+}
 
 
 
@@ -829,6 +851,8 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , REGION_SELECT_VALUE_MORE_STRING        , REGION_SELECT_VALUE_MORE);
   hash_insert_int(cmd_table , REGION_SELECT_BOX_STRING               , REGION_SELECT_BOX);
   hash_insert_int(cmd_table , REGION_SELECT_SLICE_STRING             , REGION_SELECT_SLICE);
+  hash_insert_int(cmd_table , REGION_SELECT_PLANE_STRING             , REGION_SELECT_PLANE);
+  hash_insert_int(cmd_table , REGION_SELECT_IN_POLYGON_STRING        , REGION_SELECT_IN_POLYGON);
 }
 
 
@@ -1137,7 +1161,7 @@ static void local_config_load_file( local_config_type * local_config ,
         master_key   = read_alloc_string( stream , binary );
         value_string = read_alloc_string( stream , binary );
         select       = read_bool( stream , binary );
-
+        
         {
           stringlist_type * key_list = stringlist_alloc_from_split( master_key , ":");
           ecl_file_type * ecl_file   = hash_get( files , stringlist_iget(key_list , 0 ));
@@ -1177,6 +1201,72 @@ static void local_config_load_file( local_config_type * local_config ,
         }
         free( master_key );
         free( value_string );
+      }
+      break;
+    case( REGION_SELECT_PLANE ):
+      {
+        double normal_vec[3];
+        double p0[3];
+        double sign;
+        bool   select;
+        ecl_region_type * region;
+        region_name  = read_alloc_string( stream , binary );
+        
+        normal_vec[0] = read_double( stream , binary );
+        normal_vec[1] = read_double( stream , binary );
+        normal_vec[2] = read_double( stream , binary );
+
+        p0[0]         = read_double( stream , binary );
+        p0[1]         = read_double( stream , binary );
+        p0[2]         = read_double( stream , binary );
+        
+        sign          = read_double( stream , binary);
+        select        = read_bool( stream , binary );
+        
+        region = hash_get( regions , region_name );
+        if (select) {
+          if (sign > 0)
+            ecl_region_select_above_plane( region , normal_vec , p0 );
+          else
+            ecl_region_select_below_plane( region , normal_vec , p0 );
+        } else {
+          if (sign > 0)
+            ecl_region_deselect_above_plane( region , normal_vec , p0 );
+          else
+            ecl_region_deselect_below_plane( region , normal_vec , p0 );
+        }
+      }
+      break;
+    case(REGION_SELECT_IN_POLYGON):
+      {
+        double * xlist; 
+        double * ylist;
+        int      num_points;
+        bool     select;
+        ecl_region_type * region;
+
+        region_name  = read_alloc_string( stream , binary );
+        num_points   = read_int( stream , binary );
+        
+        if (num_points < 2)
+          util_abort("%s: error when parsing REGION_SELECT_IN_POLYGON - need at least 3 points in polygon\n",__func__);
+        
+        xlist = util_malloc( num_points * sizeof * xlist , __func__);
+        ylist = util_malloc( num_points * sizeof * ylist , __func__);
+        for (int i=0; i < num_points; i++) {
+          xlist[i] = read_double( stream , binary );
+          ylist[i] = read_double( stream , binary );
+        }
+        select = read_bool( stream , binary );
+
+        region = hash_get( regions , region_name );
+        if (select) 
+          ecl_region_select_inside_polygon( region , num_points , xlist , ylist );
+        else
+          ecl_region_select_inside_polygon( region , num_points , xlist , ylist );
+        
+        free( xlist );
+        free( ylist );
       }
       break;
     default:

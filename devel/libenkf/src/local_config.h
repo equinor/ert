@@ -63,7 +63,9 @@ typedef enum {
   REGION_SELECT_VALUE_LESS        = 27, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
   REGION_SELECT_VALUE_MORE        = 28, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
   REGION_SELECT_BOX               = 29, /* Region i1 i2 j1 j2 k1 k2 TRUE|FALSE */
-  REGION_SELECT_SLICE             = 30  /* Region dir n1 n2    TRUE|FALSE  */
+  REGION_SELECT_SLICE             = 30, /* Region dir n1 n2    TRUE|FALSE  */
+  REGION_SELECT_PLANE             = 31, /* Region nx ny nz   px py pz  sign TRUE|FALSE */
+  REGION_SELECT_IN_POLYGON        = 32  /* Region num_points p1x p12  p2x p2y  p3x p3y  ... pnx pny TRUE|FALSE */ 
 } local_config_instruction_type; 
 
 
@@ -98,9 +100,8 @@ typedef enum {
 #define REGION_SELECT_VALUE_MORE_STRING         "REGION_SELECT_VALUE_MORE"
 #define REGION_SELECT_BOX_STRING                "REGION_SELECT_BOX" 
 #define REGION_SELECT_SLICE_STRING              "REGION_SELECT_SLICE" 
-
-
-
+#define REGION_SELECT_PLANE_STRING              "REGION_SELECT_PLANE"
+#define REGION_SELECT_IN_POLYGON_STRING         "REGION_SELECT_IN_POLYGON"
 
 
 typedef struct local_config_struct local_config_type;
