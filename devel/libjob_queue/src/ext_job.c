@@ -139,6 +139,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->executable          = NULL;
   ext_job->stdout_file         = NULL;
   ext_job->target_file         = NULL;
+  ext_job->error_file          = NULL;
   ext_job->start_file          = NULL;
   ext_job->stdin_file          = NULL;
   ext_job->stderr_file         = NULL;
@@ -198,6 +199,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   new_job->config_file    = util_alloc_string_copy(src_job->config_file);
   new_job->executable     = util_alloc_string_copy(src_job->executable);
   new_job->target_file    = util_alloc_string_copy(src_job->target_file);
+  new_job->error_file     = util_alloc_string_copy(src_job->error_file);
   new_job->start_file     = util_alloc_string_copy(src_job->start_file);
   new_job->stdout_file    = util_alloc_string_copy(src_job->stdout_file);
   new_job->stdin_file     = util_alloc_string_copy(src_job->stdin_file);
@@ -234,6 +236,7 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->stdout_file);
   util_safe_free(ext_job->stdin_file);
   util_safe_free(ext_job->target_file);
+  util_safe_free(ext_job->error_file);
   util_safe_free(ext_job->stderr_file);
   util_safe_free(ext_job->license_path);
   util_safe_free(ext_job->license_root_path);
