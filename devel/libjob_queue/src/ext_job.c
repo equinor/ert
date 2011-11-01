@@ -99,6 +99,7 @@ struct ext_job_struct {
   char            * name;
   char            * executable;
   char            * target_file;
+  char            * error_file;            /* Job has failed if this is present. */
   char            * start_file;            /* Will not start if not this file is present */
   char            * stdout_file;
   char            * stdin_file;
@@ -340,6 +341,14 @@ const char * ext_job_get_target_file(const ext_job_type * ext_job) {
   return ext_job->target_file;
 }
 
+void ext_job_set_error_file(ext_job_type * ext_job, const char * error_file) {
+  ext_job->error_file = util_realloc_string_copy(ext_job->error_file , error_file);
+}
+
+const char * ext_job_get_error_file(const ext_job_type * ext_job) {
+  return ext_job->error_file;
+}
+
 const char * ext_job_get_executable(const ext_job_type * ext_job) {
   return ext_job->executable;
 }
@@ -520,6 +529,7 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const s
   __indent(stream, 0); __fprintf_python_string(stream , "name"                , ext_job->name                , ext_job->private_args , NULL);        __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "executable"          , ext_job->executable          , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "target_file"         , ext_job->target_file         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "error_file"         , ext_job->error_file         , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "start_file"          , ext_job->start_file          , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stdout"              , ext_job->stdout_file         , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stderr"              , ext_job->stderr_file         , ext_job->private_args, global_args);  __end_line(stream);
@@ -565,6 +575,7 @@ void ext_job_save( const ext_job_type * ext_job ) {
   PRINT_KEY_STRING( stream , "STDOUT"           , ext_job->stdout_file);
   PRINT_KEY_STRING( stream , "TARGET_FILE"      , ext_job->target_file);
   PRINT_KEY_STRING( stream , "START_FILE"       , ext_job->start_file);
+  PRINT_KEY_STRING( stream , "ERROR_FILE"       , ext_job->error_file);
   PRINT_KEY_INT( stream , "MAX_RUNNING"         , ext_job->max_running);
   PRINT_KEY_INT( stream , "MAX_RUNNING_MINUTES" , ext_job->max_running_minutes);
 
@@ -633,6 +644,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_item(config , "STDERR"              , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
       item = config_add_item(config , "EXECUTABLE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
       item = config_add_item(config , "TARGET_FILE"         , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
+      item = config_add_item(config , "ERROR_FILE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
       item = config_add_item(config , "START_FILE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
       item = config_add_item(config , "ENV"                 , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , 0 , NULL);
       item = config_add_item(config , "ARGLIST"             , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , 0 , NULL);
@@ -644,6 +656,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       if (config_item_set(config , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
       if (config_item_set(config , "STDOUT"))                ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
       if (config_item_set(config , "STDERR"))                ext_job_set_stderr_file(ext_job      , config_iget(config  , "STDERR" , 0,0));
+      if (config_item_set(config , "ERROR_FILE"))            ext_job_set_error_file(ext_job       , config_iget(config  , "ERROR_FILE" , 0,0));
       if (config_item_set(config , "TARGET_FILE"))           ext_job_set_target_file(ext_job      , config_iget(config  , "TARGET_FILE" , 0,0));
       if (config_item_set(config , "START_FILE"))            ext_job_set_start_file(ext_job       , config_iget(config  , "START_FILE" , 0,0));
       if (config_item_set(config , "EXECUTABLE"))            ext_job_set_executable(ext_job       , config_iget(config  , "EXECUTABLE" , 0,0));
