@@ -89,7 +89,7 @@ LIBSCHED     = 6
 LIBCONFIG    = 7
 LIBCONF      = 8
 LIBANALYSIS  = 9
-
+LIBGEOMETRY  = 10
 
 class conf:
     def __init__(self , cwd , package , sub_level_depth):
@@ -132,6 +132,7 @@ class conf:
         self.LIB[LIBJOB_QUEUE]  = {"home": "%s/libjob_queue" % self.BUILD_ROOT , "name": "job_queue"}
         self.LIB[LIBSCHED]      = {"home": "%s/libsched"     % self.BUILD_ROOT , "name": "sched"}
         self.LIB[LIBCONFIG]     = {"home": "%s/libconfig"    % self.BUILD_ROOT , "name": "config"}
+        self.LIB[LIBCONFIG]     = {"home": "%s/libgeometry"  % self.BUILD_ROOT , "name": "geometry"}
         self.RPATH = self.PLPLOT_LIB_PATH
 
 
