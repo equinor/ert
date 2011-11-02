@@ -132,7 +132,7 @@ class conf:
         self.LIB[LIBJOB_QUEUE]  = {"home": "%s/libjob_queue" % self.BUILD_ROOT , "name": "job_queue"}
         self.LIB[LIBSCHED]      = {"home": "%s/libsched"     % self.BUILD_ROOT , "name": "sched"}
         self.LIB[LIBCONFIG]     = {"home": "%s/libconfig"    % self.BUILD_ROOT , "name": "config"}
-        self.LIB[LIBCONFIG]     = {"home": "%s/libgeometry"  % self.BUILD_ROOT , "name": "geometry"}
+        self.LIB[LIBGEOMETRY]   = {"home": "%s/libgeometry"  % self.BUILD_ROOT , "name": "geometry"}
         self.RPATH = self.PLPLOT_LIB_PATH
 
 

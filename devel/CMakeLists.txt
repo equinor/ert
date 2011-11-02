@@ -5,6 +5,8 @@ project( ERT C )
 add_definitions( -g -O2 -Wall -std=gnu99 )
 
 set( INSTALL_GROUP "" CACHE STRING "Group to install as - blank to install as current group")
+set( INSTALL_ROOT "/tmp" CACHE STRING "Root path for installation")
+
 #-----------------------------------------------------------------
 option(USE_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
 if (USE_ZLIB)
@@ -141,11 +143,11 @@ set( libutil_build_path ${CMAKE_BINARY_DIR}/libutil/src )
 set( libutil_src_path   ${CMAKE_SOURCE_DIR}/libutil/src )
 set( libconfig_src_path ${CMAKE_SOURCE_DIR}/libconfig/src )
 set( libecl_src_path    ${CMAKE_SOURCE_DIR}/libecl/src )
-
+set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
 
 add_subdirectory( libutil )
+add_subdirectory( libgeometry )
 add_subdirectory( libecl )
-
 #-----------------------------------------------------------------
 
 
