@@ -36,7 +36,7 @@ struct surface_config_struct {
 
 surface_config_type  * surface_config_alloc_empty( ) {
   surface_config_type * config = util_malloc( sizeof * config , __func__ );
-  
+  UTIL_TYPE_ID_INIT( config , SURFACE_CONFIG_TYPE_ID );
   config->init_file_fmt = NULL;
   config->base_surface  = NULL;
 }
@@ -74,8 +74,13 @@ const geo_surface_type * surface_config_get_base_surface( const surface_config_t
   return config->base_surface;
 }
 
+
 int surface_config_get_data_size( const surface_config_type * config ) {
   return geo_surface_get_size( config->base_surface );
+}
+
+void surface_config_ecl_write( const surface_config_type * config , const char * filename , const double * zcoord) {
+  geo_surface_fprintf_irap_external_zcoord(  config->base_surface , filename , zcoord );
 }
 
 

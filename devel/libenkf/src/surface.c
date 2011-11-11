@@ -57,7 +57,9 @@ static void surface_fload( surface_type * surface , const char * filename ) {
 bool surface_initialize(surface_type *surface , int iens , rng_type * rng) {
   char * filename = surface_config_alloc_init_file(surface->config , iens);
   surface_fload(surface , filename );
+  
   free(filename);
+  return true;
 }
 
 
@@ -134,7 +136,7 @@ void surface_deserialize(surface_type * surface , const active_list_type * activ
 
 void surface_ecl_write(const surface_type * surface , const char * run_path , const char * base_file , fortio_type * fortio) {
   char * target_file = util_alloc_filename( run_path , base_file  , NULL);
-  //
+  surface_config_ecl_write( surface->config , target_file , surface->data );
   free( target_file );
 }
 

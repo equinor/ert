@@ -28,6 +28,7 @@ extern "C" {
 
   typedef struct surface_config_struct surface_config_type;
 
+  void                     surface_config_ecl_write( const surface_config_type * config , const char * filename , const double * zcoord);
   const geo_surface_type * surface_config_get_base_surface( const surface_config_type * config );
   char                   * surface_config_alloc_init_file(const surface_config_type * config, int iens);
   void                     surface_config_free( surface_config_type * config );
