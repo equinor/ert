@@ -30,6 +30,7 @@
 #include <gen_data_config.h>
 #include <gen_kw_config.h>
 #include <summary_config.h>
+#include <surface_config.h>
 #include <enkf_obs.h>
 #include <gen_obs.h>
 #include <enkf_config_node.h>
@@ -98,6 +99,10 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
     case(GEN_DATA):
       node->freef             = gen_data_config_free__;
       node->get_data_size     = NULL;
+      break;
+    case(SURFACE):
+      node->freef             = surface_config_free__;
+      node->get_data_size     = surface_config_get_data_size__;
       break;
     default:
       util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
@@ -236,6 +241,22 @@ enkf_config_node_type * enkf_config_node_new_gen_kw( const char * key , const ch
 }
 
 
+enkf_config_node_type * enkf_config_node_new_surface( const char * key ) {
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , SURFACE , key );
+  config_node->data = surface_config_alloc_empty( );
+  return config_node;
+}
+
+
+void enkf_config_node_update_surface( enkf_config_node_type * config_node , const char * base_surface, const char * init_file_fmt , const char * output_file , const char * min_std_file ) {
+
+  /* 1: Update the date owned by the surface node. */
+  surface_config_set_init_file_fmt( config_node->data , init_file_fmt );
+  surface_config_set_base_surface( config_node->data , base_surface );
+  
+  /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
+  enkf_config_node_update( config_node , output_file , NULL , min_std_file);
+}
 
 
 /*****************************************************************/

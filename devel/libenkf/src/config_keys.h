@@ -32,6 +32,7 @@ extern "C" {
 #define  ECL_FILE_KEY                      "ECL_FILE"
 #define  INPUT_FORMAT_KEY                  "INPUT_FORMAT"
 #define  OUTPUT_FORMAT_KEY                 "OUTPUT_FORMAT"
+#define  OUTPUT_FILE_KEY                   "OUTPUT_FILE"
 #define  MAX_KEY                           "MAX"
 #define  MIN_KEY                           "MIN"
 #define  INPUT_TRANSFORM_KEY               "INPUT_TRANSFORM"
@@ -42,6 +43,7 @@ extern "C" {
 #define  GENERAL_KEY                       "GENERAL"
 #define  INCLUDE_KEY                       "INCLUDE"
 #define  DEFINE_KEY                        "DEFINE"  
+#define  BASE_SURFACE_KEY                  "BASE_SURFACE"
 
 #define  STORE_SEED_KEY                    "STORE_SEED"
 #define  LOAD_SEED_KEY                     "LOAD_SEED"  
@@ -71,6 +73,7 @@ extern "C" {
 #define  ENKF_TRUNCATION_KEY               "ENKF_TRUNCATION"
 #define  ENSPATH_KEY                       "ENSPATH" 
 #define  FIELD_KEY                         "FIELD"
+#define  SURFACE_KEY                       "SURFACE"
 #define  FORWARD_MODEL_KEY                 "FORWARD_MODEL"
 #define  GEN_DATA_KEY                      "GEN_DATA"
 #define  GEN_KW_KEY                        "GEN_KW"

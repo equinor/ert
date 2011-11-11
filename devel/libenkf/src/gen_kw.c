@@ -367,7 +367,7 @@ UTIL_SAFE_CAST_FUNCTION_CONST(gen_kw , GEN_KW);
 VOID_ALLOC(gen_kw);
 VOID_INITIALIZE(gen_kw);
 VOID_COPY(gen_kw)
-VOID_FREE   (gen_kw)
+VOID_FREE(gen_kw)
 VOID_ECL_WRITE(gen_kw)
 VOID_USER_GET(gen_kw)
 VOID_STORE(gen_kw)

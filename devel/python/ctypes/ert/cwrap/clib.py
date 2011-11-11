@@ -37,7 +37,6 @@ def load( *lib_list ):
     ImportError if none of the loads succeed.
     """
     dll = None
-    
     for lib in lib_list:
         try:
             dll = ctypes.CDLL( lib , ctypes.RTLD_GLOBAL )

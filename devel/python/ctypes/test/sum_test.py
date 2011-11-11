@@ -39,3 +39,9 @@ print sum.dates
 print sum.iget_date( 50 )
 
 print sum.keys( "WWCT:*" )
+
+print sum.get_days()
+print sum.get_mpl_dates()
+
+print len(sum.get_days())
+print len(sum.get_mpl_dates())

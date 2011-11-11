@@ -1,18 +1,18 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
+   copyright (c) 2011  statoil asa, norway. 
     
-   The file 'ensemble_config.c' is part of ERT - Ensemble based Reservoir Tool. 
+   the file 'ensemble_config.c' is part of ert - ensemble based reservoir tool. 
     
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
+   ert is free software: you can redistribute it and/or modify 
+   it under the terms of the gnu general public license as published by 
+   the free software foundation, either version 3 of the license, or 
    (at your option) any later version. 
     
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
+   ert is distributed in the hope that it will be useful, but without any 
+   warranty; without even the implied warranty of merchantability or 
+   fitness for a particular purpose.   
     
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+   see the gnu general public license at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
 
@@ -30,6 +30,7 @@
 #include <enkf_types.h>
 #include <field_config.h>
 #include <gen_data_config.h>
+#include <surface_config.h>
 #include <thread_pool.h>
 #include <meas_data.h>
 #include <enkf_types.h>
@@ -51,7 +52,7 @@
 #include <ensemble_config.h>
 #include <config.h>
 #include <gen_data_config.h>
-#include <pthread.h>                /* Must have rw locking on the config_nodes ... */
+#include <pthread.h>                /* must have rw locking on the config_nodes ... */
 #include <field_trans.h>
 #include <subst_func.h>
 #include <enkf_obs.h>
@@ -62,39 +63,39 @@
 
 struct ensemble_config_struct {
   pthread_mutex_t          mutex;
-  char                   * gen_kw_format_string;   /* Format string used when creating gen_kw search/replace strings. */
-  hash_type              * config_nodes;           /* A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
-  field_trans_table_type * field_trans_table;      /* A table of the transformations which are available to apply on fields. */
-  const ecl_sum_type     * refcase;                /* A ecl_sum reference instance - can be NULL (NOT owned by the ensemble
-                                                      config). Is only used to check that summary keys are valid when adding. */
+  char                   * gen_kw_format_string;   /* format string used when creating gen_kw search/replace strings. */
+  hash_type              * config_nodes;           /* a hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  field_trans_table_type * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
+  const ecl_sum_type     * refcase;                /* a ecl_sum reference instance - can be null (not owned by the ensemble
+                                                      config). is only used to check that summary keys are valid when adding. */
 };
 
 
 
 /**
-   Setting the format string used to 'mangle' the string in the gen_kw
-   template files. Consider the following example:
+   setting the format string used to 'mangle' the string in the gen_kw
+   template files. consider the following example:
 
-      Parameter file
+      parameter file
       --------------
-      MULTPV   LOGUNIF  0.0001 0.10
+      multpv   logunif  0.0001 0.10
 
 
-      Template file
+      template file
       -------------
-      BOX
+      box
          1  10  1 10  1 5 /
 
-      MULTPV  500*__MULTPV__
+      multpv  500*__multpv__
 
-   Here the parameter file defines a parameter named 'MULTPV', and the
-   template file uses the marker string '__MULTPV__' which should be
-   replaced with a numerical value. For the current example the
+   here the parameter file defines a parameter named 'multpv', and the
+   template file uses the marker string '__multpv__' which should be
+   replaced with a numerical value. for the current example the
    gen_kw_format_string should have the value '__%s__'.
 
-   There are no rules for the format string, but it _must_ contain a
+   there are no rules for the format string, but it _must_ contain a
    '%s' placeholder which will be replaced with the parameter name
-   (this is not checked for). The function call creating a search
+   (this is not checked for). the function call creating a search
    string from a parameter name is:
 
       tagged_string = util_alloc_sprintf( gen_kw_format_string , parameter_name );
@@ -193,19 +194,19 @@ enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * en
     return node;
   } else {
     util_abort("%s: ens node:\"%s\" does not exist \n",__func__ , key);
-    return NULL; /* Compiler shut up */
+    return NULL; /* compiler shut up */
   }
 }
 
 
 /** 
-    This will remove the config node indexed by key, it will use the
-    function hash_safe_del(), which is thread_safe, and will NOT fail
+    this will remove the config node indexed by key, it will use the
+    function hash_safe_del(), which is thread_safe, and will not fail
     if the node has already been removed from the hash. 
 
-    However - it is extremely important to ensure that all storage
+    however - it is extremely important to ensure that all storage
     nodes (which point to the config nodes) have been deleted before
-    calling this function. That is only assured by using
+    calling this function. that is only assured by using
     enkf_main_del_node().
 */
 
@@ -228,8 +229,8 @@ enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensembl
                                                   const char    * key              , 
                                                   enkf_var_type  enkf_type         , 
                                                   ert_impl_type impl_type         ,
-                                                  const char   * enkf_outfile      , /* Written by EnKF and read by forward model */
-                                                  const char   * enkf_infile       , /* Written by forward model and read by EnKF */ 
+                                                  const char   * enkf_outfile      , /* written by enkf and read by forward model */
+                                                  const char   * enkf_infile       , /* written by forward model and read by enkf */ 
                                                   void         * data ) {
 
     if (ensemble_config_has_key(ensemble_config , key)) 
@@ -245,7 +246,7 @@ enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensembl
 
 
 /**
-   This is called by the enkf_state function while loading results,
+   this is called by the enkf_state function while loading results,
    that code is run in parallell by many threads.
 */
 void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , const char * kw ) {
@@ -259,22 +260,22 @@ void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , 
 
 
 ///* 
-//   Required options:
-//   * INPUT_FORMAT 
-//   * INPUT_FILES
-//   * INIT_FILES
-//   * OUTPUT_FORMAT
+//   required options:
+//   * input_format 
+//   * input_files
+//   * init_files
+//   * output_format
 //       
-//   Optional:
-//   * TEMPLATE
-//   * KEY
+//   optional:
+//   * template
+//   * key
 //*/
 //
 //void ensemble_config_add_gen_param(ensemble_config_type * config , const char * key , const char * enkf_outfile , stringlist_type * options) {
 //  gen_data_config_type * node = gen_data_config_alloc_with_options( key , true , options );
 //  {
 //    //char                  * enkf_outfile   = gen_data_config_pop_enkf_outfile( node );
-//    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , PARAMETER , GEN_DATA , enkf_outfile , NULL , node );
+//    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , parameter , gen_data , enkf_outfile , NULL , node );
 //    gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
 //
 //    if (gen_data_min_std != NULL) {
@@ -290,12 +291,12 @@ void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , 
 //
 //
 ///* 
-//   For this datatype the cooperation between the enkf_node layer and
-//   the underlying type NOT particularly elegant.
+//   for this datatype the cooperation between the enkf_node layer and
+//   the underlying type not particularly elegant.
 //   
-//   The problem is that the enkf_node layer owns the ECLIPSE
-//   input/output filenames. However, the node itself knows whether it
-//   should import/export ECLIPSE files (and therefore whether it
+//   the problem is that the enkf_node layer owns the eclipse
+//   input/output filenames. however, the node itself knows whether it
+//   should import/export eclipse files (and therefore whether it
 //   needs the input/output filenames.
 //*/
 //
@@ -310,15 +311,15 @@ void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , 
 //  
 //  if (enkf_outfile == NULL) 
 //    /* 
-//       EnKF should not provide the forward model with an instance of this
-//       data => We have dynamic_result.
+//       enkf should not provide the forward model with an instance of this
+//       data => we have dynamic_result.
 //    */
-//    var_type = DYNAMIC_RESULT;
+//    var_type = dynamic_result;
 //  else
-//    var_type = DYNAMIC_STATE;   
+//    var_type = dynamic_state;   
 //
 //  {
-//    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , var_type , GEN_DATA , enkf_outfile , enkf_infile , node );
+//    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , var_type , gen_data , enkf_outfile , enkf_infile , node );
 //    gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
 //    
 //    if (gen_data_min_std != NULL) {
@@ -359,7 +360,7 @@ void ensemble_config_add_config_items(config_type * config) {
   config_item_type * item;
 
   /** 
-      The two fault types are just added to the CONFIG object only to
+      the two fault types are just added to the config object only to
       be able to print suitable messages before exiting.
   */
       
@@ -378,7 +379,7 @@ void ensemble_config_add_config_items(config_type * config) {
   item = config_add_key_value( config , GEN_KW_TAG_FORMAT_KEY , false , CONFIG_STRING);
   
   item = config_add_item(config , SCHEDULE_PREDICTION_FILE_KEY , false , false);
-  /* SCEDHULE_PREDICTION_FILE   FILENAME  <PARAMETERS:> <INIT_FILES:> */
+  /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
   config_item_set_argc_minmax(item , 1 , 3 ,  3 , (const config_item_types [3]) { CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
 
   item = config_add_item(config , GEN_PARAM_KEY , false , true);
@@ -387,24 +388,26 @@ void ensemble_config_add_config_items(config_type * config) {
   item = config_add_item(config , GEN_DATA_KEY , false , true);
   config_item_set_argc_minmax(item , 1 , -1 ,  0 , NULL);
 
-  item = config_add_item(config , SUMMARY_KEY , false , true);   /* Can have several summary keys on each line. */
+  item = config_add_item(config , SUMMARY_KEY , false , true);   /* can have several summary keys on each line. */
   config_item_set_argc_minmax(item , 1 , -1 ,  0 , NULL);
-  
+
+  item = config_add_item( config , SURFACE_KEY , false , true );
+  config_item_set_argc_minmax(item , 4 , 5 ,  0 , NULL);
   /* 
-     The way config info is entered for fields is unfortunate because
+     the way config info is entered for fields is unfortunate because
      it is difficult/impossible to let the config system handle run
      time validation of the input.
   */
   
   item = config_add_item(config , FIELD_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , -1 ,  0 , NULL);
-  config_item_add_required_children(item , GRID_KEY);   /* If you are using a FIELD - you must have a grid. */
+  config_item_add_required_children(item , GRID_KEY);   /* if you are using a field - you must have a grid. */
 }
 
 
 /**
-   Observe that if the user has not given a refcase with the REFCASE
-   key the refcase pointer will be NULL. In that case it will be
+   observe that if the user has not given a refcase with the refcase
+   key the refcase pointer will be NULL. in that case it will be
    impossible to use wildcards when expanding summary variables.
 */
 
@@ -416,11 +419,11 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   if (config_item_set( config , GEN_KW_TAG_FORMAT_KEY))
     ensemble_config_set_gen_kw_format( ensemble_config , config_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
   
-  /* GEN_PARAM  - should be unified with the GEN_DATA*/
+  /* gen_param  - should be unified with the gen_data*/
   for (i=0; i < config_get_occurences(config , GEN_PARAM_KEY); i++) {
     stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_PARAM_KEY , i);
     const char * key                          = stringlist_iget(tokens , 0);
-    const char * ecl_file                     = stringlist_iget(tokens , 1);  /* Only difference from GEN_DATA is that the ECL_FILE is not a ":" keyword. */
+    const char * ecl_file                     = stringlist_iget(tokens , 1);  /* only difference from gen_data is that the ecl_file is not a ":" keyword. */
     enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
     {
       hash_type * options = hash_alloc_from_options( tokens );
@@ -436,13 +439,13 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
       {
         const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
         if (!gen_data_config_is_valid( gen_data_config ))
-          util_abort("%s: sorry the GEN_PARAM key:%s is not valid \n",__func__ , key);
+          util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , key);
       }
       hash_free( options );
     }
   }
   
-  /* GEN_DATA */
+  /* gen_data */
   for (i=0; i < config_get_occurences(config , GEN_DATA_KEY); i++) {
     stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_DATA_KEY , i);
     const char * key                          = stringlist_iget(tokens , 0);
@@ -470,14 +473,47 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
       {
         const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
         if (!gen_data_config_is_valid( gen_data_config ))
-          util_abort("%s: sorry the GEN_DATA key:%s is not valid \n",__func__ , key);
+          util_abort("%s: sorry the gen_data key:%s is not valid \n",__func__ , key);
       }
       hash_free( options );
     }
   }
 
+  /* surface */
+  {
+    for (i=0; i < config_get_occurences( config , SURFACE_KEY ); i++) {
+      stringlist_type * tokens   = config_iget_stringlist_ref(config , SURFACE_KEY , i);
+      const char * key           = stringlist_iget(tokens , 0);
+      {
+        hash_type * options = hash_alloc_from_options( tokens );  /* INIT_FILE:<init_files>  OUTPUT_FILE:<outfile>  BASE_SURFACE:<base_file> */
 
-  /* FIELD */
+        const char * init_file_fmt = hash_safe_get( options , INIT_FILES_KEY );
+        const char * output_file   = hash_safe_get( options , OUTPUT_FILE_KEY);
+        const char * base_surface  = hash_safe_get( options , BASE_SURFACE_KEY);
+        const char * min_std_file  = hash_safe_get( options , MIN_STD_KEY);
+
+        if ((init_file_fmt == NULL) || (output_file == NULL) || (base_surface == NULL)) {
+          fprintf(stderr,"** error: when entering a surface you must provide arguments:\n");
+          fprintf(stderr,"**   %s:/path/to/input/files%%d  \n",INIT_FILES_KEY);
+          fprintf(stderr,"**   %s:name_of_output_file\n", OUTPUT_FILE_KEY);
+          fprintf(stderr,"**   %s:base_surface_file\n",base_surface);
+          exit(1);
+        }
+
+        {
+          enkf_config_node_type * config_node = ensemble_config_add_surface( ensemble_config , key );
+          enkf_config_node_update_surface( config_node , base_surface , init_file_fmt , output_file , min_std_file );
+        }
+        
+        hash_free( options );
+      }
+    }
+  }
+
+
+
+
+  /* field */
   {
     for (i=0; i < config_get_occurences(config , FIELD_KEY); i++) {
       stringlist_type * tokens            = config_iget_stringlist_ref(config , FIELD_KEY , i);
@@ -510,7 +546,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
           const char *  init_file_fmt     = hash_safe_get( options , INIT_FILES_KEY );
           const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );
           const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
-          const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY);
+          const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY );
           
           enkf_config_node_update_parameter_field( config_node, 
                                                    ecl_file          , 
@@ -528,7 +564,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
           const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );
           const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
           const char *  input_transform   = hash_safe_get( options , INPUT_TRANSFORM_KEY );
-          const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY);
+          const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY );
           
 
           enkf_config_node_update_general_field( config_node,
@@ -543,14 +579,14 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
 
           
         } else 
-          util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
+          util_abort("%s: field type: %s is not recognized\n",__func__ , var_type_string);
         
         hash_free( options );
       }
     }
   }
 
-  /* GEN_KW */
+  /* gen_kw */
   for (i=0; i < config_get_occurences(config , GEN_KW_KEY); i++) {
     stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_KW_KEY , i);
     char * key            = stringlist_iget_copy(tokens , 0);
@@ -581,7 +617,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   }
 
 
-  /* SUMMARY */
+  /* summary */
   {
     stringlist_type * keys = stringlist_alloc_new ( );
     
@@ -593,11 +629,11 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
         
         if (util_string_has_wildcard( key )) {
           if (ensemble_config->refcase != NULL) {
-            ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* Expanding the wildcard notatition with help of the refcase. */
+            ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* expanding the wildcard notatition with help of the refcase. */
             for (k=0; k < stringlist_get_size( keys ); k++) 
               ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) );
           } else
-            util_exit("ERROR: When using SUMMARY wildcards like: \"%s\" you must supply a valid refcase.\n",key);
+            util_exit("error: when using summary wildcards like: \"%s\" you must supply a valid refcase.\n",key);
         } else 
           ensemble_config_add_summary(ensemble_config , key );
       }
@@ -610,16 +646,16 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
 }
 
 /**
-   This function takes a string like this: "PRESSURE:1,4,7" - it
+   this function takes a string like this: "pressure:1,4,7" - it
    splits the string on ":" and tries to lookup a config object with
-   that key. For the general string A:B:C:D it will try consecutively
-   the keys: A, A:B, A:B:C, A:B:C:D. If a config object is found it is
+   that key. for the general string a:b:c:d it will try consecutively
+   the keys: a, a:b, a:b:c, a:b:c:d. if a config object is found it is
    returned, otherwise NULL is returned.
 
-   The last argument is the pointer to a string which will be updated
-   with the node-spesific part of the full key. So for instance with
-   the example "PRESSURE:1,4,7", the index_key will contain
-   "1,4,7". If the full full_key is used to find an object index_key
+   the last argument is the pointer to a string which will be updated
+   with the node-spesific part of the full key. so for instance with
+   the example "pressure:1,4,7", the index_key will contain
+   "1,4,7". if the full full_key is used to find an object index_key
    will be NULL, that also applies if no object is found.
 */
 
@@ -660,10 +696,10 @@ stringlist_type * ensemble_config_alloc_keylist(const ensemble_config_type * con
 
 
 /**
-   Observe that var_type here is an integer - naturally written as a
+   observe that var_type here is an integer - naturally written as a
    sum of enkf_var_type values:
 
-     ensemble_config_alloc_keylist_from_var_type( config , PARAMETER + DYNAMIC_STATE);
+     ensemble_config_alloc_keylist_from_var_type( config , parameter + dynamic_state);
 
 */
    
@@ -715,7 +751,7 @@ void ensemble_config_init_internalization( ensemble_config_type * config ) {
 
 
 /**
-   This function will look up the user_key in the ensemble_config. If
+   this function will look up the user_key in the ensemble_config. if
    the corresponding config_node can not be found 0 will be returned,
    otherwise enkf_config_node functions will be invoked.
 */
@@ -737,11 +773,11 @@ int ensemble_config_get_observations( const ensemble_config_type * config , enkf
 
 
 /* 
-   The ensemble_config_add_xxx() functions below will create a new xxx
+   the ensemble_config_add_xxx() functions below will create a new xxx
    instance and add it to the ensemble_config; the return value from
    the functions is the newly created config_node instances.
 
-   The newly created enkf_config_node instances are __NOT__ fully
+   the newly created enkf_config_node instances are __not__ fully
    initialized, and a subsequent call to enkf_config_node_update_xxx()
    is essential for proper operation.
 */
@@ -768,11 +804,11 @@ enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * con
 
 
 /**
-   This function ensures that object contains a node with 'key' and
-   type == SUMMARY.
+   this function ensures that object contains a node with 'key' and
+   type == summary.
    
-   If the @refcase pointer is different from NULL the key will be
-   validated. Keys which do not exist in the refcase will be ignored,
+   if the @refcase pointer is different from NULL the key will be
+   validated. keys which do not exist in the refcase will be ignored,
    a warning will be printed on stderr and the function will return
    NULL.
 */
@@ -788,8 +824,15 @@ enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensem
       config_node = enkf_config_node_alloc_summary( key );
       ensemble_config_add_node__(ensemble_config , config_node );
     } else
-      fprintf(stderr,"** Warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( ensemble_config->refcase ) , key);
+      fprintf(stderr,"** warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( ensemble_config->refcase ) , key);
   }
+  return config_node;
+}
+
+
+enkf_config_node_type * ensemble_config_add_surface( ensemble_config_type * ensemble_config , const char * key ) {
+  enkf_config_node_type * config_node = enkf_config_node_new_surface( key );
+  ensemble_config_add_node__( ensemble_config , config_node );
   return config_node;
 }
 

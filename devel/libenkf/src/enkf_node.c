@@ -24,6 +24,7 @@
 #include <enkf_config_node.h>
 #include <util.h>
 #include <field.h>
+#include <surface.h>
 #include <summary.h>
 #include <ecl_static_kw.h>
 #include <gen_kw.h>
@@ -716,6 +717,27 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->iaddsqr            = summary_iaddsqr__;
     node->imul               = summary_imul__;
     node->isqrt              = summary_isqrt__;
+    break;
+  case(SURFACE):
+    //node->ecl_load           = summary_ecl_load__;
+    //node->realloc_data       = summary_realloc_data__;
+    node->initialize         = surface_initialize__;
+    node->ecl_write          = surface_ecl_write__; 
+    node->alloc              = surface_alloc__;
+    node->copy               = surface_copy__;
+    node->freef              = surface_free__;
+    //node->free_data          = surface_free_data__;
+    node->user_get           = surface_user_get__; 
+    node->load               = surface_load__;
+    node->store              = surface_store__;
+    node->serialize          = surface_serialize__;
+    node->deserialize        = surface_deserialize__;
+    node->clear              = surface_clear__;
+    node->iadd               = surface_iadd__;
+    node->scale              = surface_scale__;
+    node->iaddsqr            = surface_iaddsqr__;
+    node->imul               = surface_imul__;
+    node->isqrt              = surface_isqrt__;
     break;
   case(FIELD):
     //node->realloc_data             = field_realloc_data__;
