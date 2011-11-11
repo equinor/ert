@@ -22,4 +22,5 @@ This module will load the libecl.so shared library.
 import ert.util.libutil               
 
 import ert.cwrap.clib as clib
+clib.load("libgeometry.so")
 lib = clib.load("libecl.so")

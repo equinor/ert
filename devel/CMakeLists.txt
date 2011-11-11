@@ -139,10 +139,10 @@ endif()
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
 
-set( libutil_build_path ${CMAKE_BINARY_DIR}/libutil/src )
-set( libutil_src_path   ${CMAKE_SOURCE_DIR}/libutil/src )
-set( libconfig_src_path ${CMAKE_SOURCE_DIR}/libconfig/src )
-set( libecl_src_path    ${CMAKE_SOURCE_DIR}/libecl/src )
+set( libutil_build_path   ${CMAKE_BINARY_DIR}/libutil/src )
+set( libutil_src_path     ${CMAKE_SOURCE_DIR}/libutil/src )
+set( libconfig_src_path   ${CMAKE_SOURCE_DIR}/libconfig/src )
+set( libecl_src_path      ${CMAKE_SOURCE_DIR}/libecl/src )
 set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
 
 add_subdirectory( libutil )
