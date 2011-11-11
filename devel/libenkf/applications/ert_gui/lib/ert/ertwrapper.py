@@ -85,11 +85,12 @@ class ErtWrapper:
             sys.exit("Need a value for environment variable LSF_HOME")
         
         self.util = self.__loadLibrary( "libutil" )
-        #self.__loadLibrary( "libgeometry" )
+        self.__loadLibrary( "libgeometry" )
         self.ecl  = self.__loadLibrary( "libecl" )
         self.__loadLibrary( "libsched" )
         self.__loadLibrary( "librms"    )
         self.__loadLibrary( "libconfig" )
+        self.__loadLibrary( "libanalysis" )
         self.job_queue = self.__loadLibrary( "libjob_queue" )
         self.enkf      = self.__loadLibrary( "libenkf" )
 
