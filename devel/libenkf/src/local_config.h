@@ -56,23 +56,32 @@ typedef enum {
   COPY_DATASET                    = 21, /* SRC_NAME  TARGET_NAME */
   COPY_OBSSET                     = 22, /* SRC_NAME  TARGET_NAME */
   /*****************************************************************/
-  CREATE_REGION                   = 23, /* Name of region  TRUE|FALSE*/
-  LOAD_FILE                       = 24, /* Key, filename      */  
-  REGION_SELECT_ALL               = 25, /* Region  TRUE|FALSE */
-  REGION_SELECT_VALUE_EQUAL       = 26, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */
-  REGION_SELECT_VALUE_LESS        = 27, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
-  REGION_SELECT_VALUE_MORE        = 28, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
-  REGION_SELECT_BOX               = 29, /* Region i1 i2 j1 j2 k1 k2 TRUE|FALSE */
-  REGION_SELECT_SLICE             = 30, /* Region dir n1 n2    TRUE|FALSE  */
-  REGION_SELECT_PLANE             = 31, /* Region nx ny nz   px py pz  sign TRUE|FALSE */
-  REGION_SELECT_IN_POLYGON        = 32  /* Region num_points p1x p12  p2x p2y  p3x p3y  ... pnx pny TRUE|FALSE */ 
+  CREATE_ECLREGION                = 100, /* Name of region  TRUE|FALSE*/
+  LOAD_FILE                       = 101, /* Key, filename      */  
+  ECLREGION_SELECT_ALL            = 102, /* Region  TRUE|FALSE */
+  ECLREGION_SELECT_VALUE_EQUAL    = 103, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */
+  ECLREGION_SELECT_VALUE_LESS     = 104, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
+  ECLREGION_SELECT_VALUE_MORE     = 105, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
+  ECLREGION_SELECT_BOX            = 106, /* Region i1 i2 j1 j2 k1 k2 TRUE|FALSE */
+  ECLREGION_SELECT_SLICE          = 107, /* Region dir n1 n2    TRUE|FALSE  */
+  ECLREGION_SELECT_PLANE          = 108, /* Region nx ny nz   px py pz  sign TRUE|FALSE */
+  ECLREGION_SELECT_IN_POLYGON     = 109, /* Region num_points p1x p12  p2x p2y  p3x p3y  ... pnx pny TRUE|FALSE */ 
+  /*****************************************************************/
+  CREATE_POLYGON                  = 200,/* NAME NUM_POINTS  x1 y1 x2 y2 x3 y3 ... xn yn */
+  LOAD_POLYGON                    = 201,/* NAME FILENAME */
+  /*****************************************************************/
+  LOAD_SURFACE                     = 300,
+  CREATE_SURFACE_REGION            = 301,
+  SURFACE_REGION_SELECT_IN_POLYGON = 302,
+  SURFACE_REGION_SELECT_LINE      = 303,
+  ADD_DATA_SURFACE                 = 304     
 } local_config_instruction_type; 
-
 
 
 
 #define CREATE_UPDATESTEP_STRING                "CREATE_UPDATESTEP"
 #define CREATE_MINISTEP_STRING                  "CREATE_MINISTEP"
+
 #define ATTACH_MINISTEP_STRING                  "ATTACH_MINISTEP"
 #define CREATE_DATASET_STRING                   "CREATE_DATASET"
 #define ATTACH_DATASET_STRING                   "ATTACH_DATASET"
@@ -92,16 +101,23 @@ typedef enum {
 #define OBSSET_DEL_ALL_OBS_STRING               "OBSSET_DEL_ALL_OBS"
 #define COPY_DATASET_STRING                     "COPY_DATASET"
 #define COPY_OBSSET_STRING                      "COPY_OBSSET"
-#define CREATE_REGION_STRING                    "CREATE_REGION"
+#define CREATE_ECLREGION_STRING                 "CREATE_ECLREGION"
 #define LOAD_FILE_STRING                        "LOAD_FILE"
-#define REGION_SELECT_ALL_STRING                "REGION_SELECT_ALL"   
-#define REGION_SELECT_VALUE_EQUAL_STRING        "REGION_SELECT_VALUE_EQUAL"
-#define REGION_SELECT_VALUE_LESS_STRING         "REGION_SELECT_VALUE_LESS"
-#define REGION_SELECT_VALUE_MORE_STRING         "REGION_SELECT_VALUE_MORE"
-#define REGION_SELECT_BOX_STRING                "REGION_SELECT_BOX" 
-#define REGION_SELECT_SLICE_STRING              "REGION_SELECT_SLICE" 
-#define REGION_SELECT_PLANE_STRING              "REGION_SELECT_PLANE"
-#define REGION_SELECT_IN_POLYGON_STRING         "REGION_SELECT_IN_POLYGON"
+#define ECLREGION_SELECT_ALL_STRING             "ECLREGION_SELECT_ALL"   
+#define ECLREGION_SELECT_VALUE_EQUAL_STRING     "ECLREGION_SELECT_VALUE_EQUAL"
+#define ECLREGION_SELECT_VALUE_LESS_STRING      "ECLREGION_SELECT_VALUE_LESS"
+#define ECLREGION_SELECT_VALUE_MORE_STRING      "ECLREGION_SELECT_VALUE_MORE"
+#define ECLREGION_SELECT_BOX_STRING             "ECLREGION_SELECT_BOX" 
+#define ECLREGION_SELECT_SLICE_STRING           "ECLREGION_SELECT_SLICE" 
+#define ECLREGION_SELECT_PLANE_STRING           "ECLREGION_SELECT_PLANE"
+#define ECLREGION_SELECT_IN_POLYGON_STRING      "ECLREGION_SELECT_IN_POLYGON"
+#define CREATE_POLYGON_STRING                   "CREATE_POLYGON"
+#define LOAD_POLYGON_STRING                     "LOAD_POLYGON"
+#define LOAD_SURFACE_STRING                     "LOAD_SURFACE" 
+#define CREATE_SURFACE_REGION_STRING            "CREATE_SURFACE_REGION" 
+#define SURFACE_REGION_SELECT_IN_POLYGON_STRING "SURFACE_REGION_SELECT_IN_POLYGON"
+#define SURFACE_REGION_SELECT_LINE_STRING       "SURFACE_REGION_SELECT_LINE"
+#define ADD_DATA_SURFACE_STRING                 "ADD_DATA_SURFACE"
 
 
 typedef struct local_config_struct local_config_type;

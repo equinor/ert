@@ -23,11 +23,14 @@
 #include <util.h>
 #include <ecl_grid.h>
 #include <ecl_region.h>
+#include <geo_polygon.h>
+#include <geo_region.h>
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <local_config.h>
 #include <local_dataset.h>
 #include <local_obsset.h>
+#include <local_context.h>
 #include <int_vector.h>
 #include <ensemble_config.h>
 #include <enkf_obs.h>
@@ -58,7 +61,6 @@ This function will create a new ministep with the name
 'NAME_OF_MINISTEP'. The ministep is then ready for adding data and
 observation keys. Before the ministep will be used you must attach it
 to an updatestep with the ATTACH_MINISTEP command
-
 
 CREATE_DATASET [NAME_OF_DATASET]
 --------------------------------
@@ -186,12 +188,12 @@ explicitly set another updatestep with the INSTALL_UPDATESTEP function.
 
 
 
-ADD_FIELD   [DATASET_NAME    FIELD_NAME    REGION_NAME]
+ADD_FIELD   [DATASET_NAME    FIELD_NAME    ECLREGION_NAME]
 --------------------------------------------------------
 
 This function will install the node with name 'FIELD_NAME' in the
 dataset 'DATASET_NAME'. It will in addition select all the
-(currently) active cells in the region 'REGION_NAME' as active for
+(currently) active cells in the region 'ECLREGION_NAME' as active for
 this field/ministep combination. The ADD_FIELD command is actually a
 shortcut for the following:
 
@@ -204,51 +206,51 @@ LOAD_FILE       [KEY    FILENAME]
 ---------------------------------
 This function will load an ECLIPSE file in restart format
 (i.e. restart file or INIT file), the keywords in this file can then
-subsequently be used in REGION_SELECT_VALUE_XXX commands below. The
+subsequently be used in ECLREGION_SELECT_VALUE_XXX commands below. The
 'KEY' argument is a string which will be used later when we refer to
 the content of this file
 
 
-CREATE_REGION   [REGION_NAME    SELECT_ALL]
+CREATE_ECLREGION   [ECLREGION_NAME    SELECT_ALL]
 -------------------------------------------
-This function will create a new region 'REGION_NAME', which can
+This function will create a new region 'ECLREGION_NAME', which can
 subsequently be used when defining active regions for fields. The
 second argument, SELECT_ALL, is a boolean value. If this value is set
 to true the region will start with all cells selected, if set to false
 the region will start with no cells selected.
 
 
-REGION_SELECT_ALL     [REGION_NAME   SELECT]
+ECLREGION_SELECT_ALL     [ECLREGION_NAME   SELECT]
 --------------------------------------------
 Will select all the cells in the region (or deselect if SELECT == FALSE).
 
 
-REGION_SELECT_VALUE_EQUAL   [REGION_NAME   FILE_KEY:KEYWORD<:NR>    VALUE   SELECT]
+ECLREGION_SELECT_VALUE_EQUAL   [ECLREGION_NAME   FILE_KEY:KEYWORD<:NR>    VALUE   SELECT]
 -----------------------------------------------------------------------------------
 This function will compare an ecl_kw instance loaded from file with a
 user supplied value, and select (or deselect) all cells which match
 this value. It is assumed that the ECLIPSE keyword is an INTEGER
-keyword, for float comparisons use the REGION_SELECT_VALUE_LESS and
-REGION_SELECT_VALUE_MORE functions.
+keyword, for float comparisons use the ECLREGION_SELECT_VALUE_LESS and
+ECLREGION_SELECT_VALUE_MORE functions.
 
 
-REGION_SELECT_VALUE_LESS
-REGION_SELECT_VALUE_MORE    [REGION_NAME   FILE_KEY:KEYWORD<:NR>  VALUE   SELECT]
+ECLREGION_SELECT_VALUE_LESS
+ECLREGION_SELECT_VALUE_MORE    [ECLREGION_NAME   FILE_KEY:KEYWORD<:NR>  VALUE   SELECT]
 ---------------------------------------------------------------------------------
 This function will compare an ecl_kw instance loaded from disc with a
 numerical value, and select all cells which have numerical below or
 above the limiting value. The ecl_kw value should be a floating point
-value like e.g. PRESSURE or PORO. The arguments are just as for REGION_SELECT_VALUE_EQUAL.
+value like e.g. PRESSURE or PORO. The arguments are just as for ECLREGION_SELECT_VALUE_EQUAL.
 
 
-REGION_SELECT_BOX            [ REGION_NAME i1 i2 j1 j2 k1 k2 SELECT]
+ECLREGION_SELECT_BOX            [ ECLREGION_NAME i1 i2 j1 j2 k1 k2 SELECT]
 --------------------------------------------------------------------
 This function will select (or deselect) all the cells in the box
 defined by the six coordinates i1 i2 j1 j2 k1 k2. The coordinates are
 inclusive, and the counting starts at 1.
 
 
-REGION_SELECT_SLICE         [ REGION_NAME dir n1 n2 SELECT]
+ECLREGION_SELECT_SLICE         [ ECLREGION_NAME dir n1 n2 SELECT]
 -----------------------------------------------------------
 This function will select a slice in the direction given by 'dir',
 which can 'x', 'y' or 'z'. Depending on the value of 'dir' the numbers
@@ -258,7 +260,7 @@ starts at 1. It is OK to use very high/low values to imply "the rest
 of the cells" in one direction.
 
 
-REGION_SELECT_PLANE  [REGION_NAME nx ny nz px py pz sign SELECT]
+ECLREGION_SELECT_PLANE  [ECLREGION_NAME nx ny nz px py pz sign SELECT]
 ---------------------------------------------------------
 Will select all points which have positive (sign > 0) distance to 
 the plane defined by normal vector n = (nx,ny,nz) and point 
@@ -266,15 +268,21 @@ p = (px,py,pz). If sign < 0 all cells with negative distance to
 plane will be selected.
 
 
+ECLREGION_SELECT_IN_POLYGON [ECLREGION_NAME POLYGON_NAME SELECT]
+---------------------------------------------------
+
+
+
+
 I have added comments in the example - that is not actually supported (yet at least)
 
 -------------------------------------------------------------------------------------
 CREATE_MINISTEP MSTEP
-CREATE_REGION   FIPNUM3       FALSE              --- We create a region called FIPNUM3 with no elements
+CREATE_ECLREGION   FIPNUM3       FALSE              --- We create a region called FIPNUM3 with no elements
                                                  --- selected from the start.
-CREATE_REGION   WATER_FLOODED TRUE               --- We create a region called WATER_FLOEDED,
+CREATE_ECLREGION   WATER_FLOODED TRUE               --- We create a region called WATER_FLOEDED,
                                                  --- which starts with all elements selected.
-CREATE_REGION   MIDLLE        FALSE              --- Create a region called MIDDLE with
+CREATE_ECLREGION   MIDLLE        FALSE              --- Create a region called MIDDLE with
                                                  --- no elements initially.
 LOAD_FILE       INIT          /path/to/ECL.INIT  --- We load the INIT file and label
                                                  --- it as INIT for further use.
@@ -283,16 +291,16 @@ LOAD_FILE       RESTART       /path/to/ECL.UNRST --- We load a unified restart f
 
 -- We select all the cells corresponding to a FIPNUM value of 3. Since there is
 -- only one FIPNUM keyword in the INIT file we do not need the :NR suffix on the key.
-REGION_SELECT_VALUE_EQUAL     FIPNUM3     INIT:FIPNUM    3    TRUE
+ECLREGION_SELECT_VALUE_EQUAL     FIPNUM3     INIT:FIPNUM    3    TRUE
 
 
 -- In the region WATER_FLOODED all cells are selected from the start, now
 -- we deselect all the cells which have SWAT value below 0.90, at report step 100:
-REGION_SELECT_VALUE_LESS    WATER_FLOODED RESTART:SWAT:100   0.90    FALSE
+ECLREGION_SELECT_VALUE_LESS    WATER_FLOODED RESTART:SWAT:100   0.90    FALSE
 
 -- We select the the layers k=4,5,6 in the region MIDDLE. The indices 4,5
 -- and 6 are "normal" k values, where the counting starts at 1.
-REGION_SELECT_SLICE  MIDDLE   Z   4  6   TRUE
+ECLREGION_SELECT_SLICE  MIDDLE   Z   4  6   TRUE
 
 
 -- We add field data in the current ministep, corresponding to the two
@@ -682,35 +690,41 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
   case(ADD_FIELD):
     return ADD_FIELD_STRING;
     break;
-  case(CREATE_REGION):
-    return CREATE_REGION_STRING;
+  case(CREATE_ECLREGION):
+    return CREATE_ECLREGION_STRING;
     break;
   case(LOAD_FILE):
     return LOAD_FILE_STRING;
     break;
-  case(REGION_SELECT_ALL):
-    return REGION_SELECT_ALL_STRING;
+  case(ECLREGION_SELECT_ALL):
+    return ECLREGION_SELECT_ALL_STRING;
     break;
-  case(REGION_SELECT_VALUE_EQUAL):
-    return REGION_SELECT_VALUE_EQUAL_STRING;
+  case(ECLREGION_SELECT_VALUE_EQUAL):
+    return ECLREGION_SELECT_VALUE_EQUAL_STRING;
     break;
-  case(REGION_SELECT_VALUE_LESS):
-    return REGION_SELECT_VALUE_LESS_STRING;
+  case(ECLREGION_SELECT_VALUE_LESS):
+    return ECLREGION_SELECT_VALUE_LESS_STRING;
     break;
-  case(REGION_SELECT_VALUE_MORE):
-    return REGION_SELECT_VALUE_MORE_STRING;
+  case(ECLREGION_SELECT_VALUE_MORE):
+    return ECLREGION_SELECT_VALUE_MORE_STRING;
     break;
-  case(REGION_SELECT_BOX):
-    return REGION_SELECT_BOX_STRING;
+  case(ECLREGION_SELECT_BOX):
+    return ECLREGION_SELECT_BOX_STRING;
     break;
-  case(REGION_SELECT_SLICE):
-    return REGION_SELECT_SLICE_STRING;
+  case(ECLREGION_SELECT_SLICE):
+    return ECLREGION_SELECT_SLICE_STRING;
     break;
-  case(REGION_SELECT_PLANE):
-    return REGION_SELECT_PLANE_STRING;
+  case(ECLREGION_SELECT_PLANE):
+    return ECLREGION_SELECT_PLANE_STRING;
     break;
-  case(REGION_SELECT_IN_POLYGON):
-    return REGION_SELECT_IN_POLYGON_STRING;
+  case(ECLREGION_SELECT_IN_POLYGON):
+    return ECLREGION_SELECT_IN_POLYGON_STRING;
+    break;
+  case(CREATE_POLYGON):
+    return CREATE_POLYGON_STRING;
+    break;
+  case(LOAD_POLYGON):
+    return LOAD_POLYGON_STRING;
     break;
   default:
     util_abort("%s: command:%d not recognized \n",__func__ , cmd);
@@ -843,21 +857,588 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , DATASET_DEL_ALL_DATA_STRING            , DATASET_DEL_ALL_DATA);
   hash_insert_int(cmd_table , OBSSET_DEL_ALL_OBS_STRING              , OBSSET_DEL_ALL_OBS);
   hash_insert_int(cmd_table , ADD_FIELD_STRING                       , ADD_FIELD);
-  hash_insert_int(cmd_table , CREATE_REGION_STRING                   , CREATE_REGION);
+  hash_insert_int(cmd_table , CREATE_ECLREGION_STRING                , CREATE_ECLREGION);
   hash_insert_int(cmd_table , LOAD_FILE_STRING                       , LOAD_FILE);
-  hash_insert_int(cmd_table , REGION_SELECT_ALL_STRING               , REGION_SELECT_ALL);
-  hash_insert_int(cmd_table , REGION_SELECT_VALUE_EQUAL_STRING       , REGION_SELECT_VALUE_EQUAL);
-  hash_insert_int(cmd_table , REGION_SELECT_VALUE_LESS_STRING        , REGION_SELECT_VALUE_LESS);
-  hash_insert_int(cmd_table , REGION_SELECT_VALUE_MORE_STRING        , REGION_SELECT_VALUE_MORE);
-  hash_insert_int(cmd_table , REGION_SELECT_BOX_STRING               , REGION_SELECT_BOX);
-  hash_insert_int(cmd_table , REGION_SELECT_SLICE_STRING             , REGION_SELECT_SLICE);
-  hash_insert_int(cmd_table , REGION_SELECT_PLANE_STRING             , REGION_SELECT_PLANE);
-  hash_insert_int(cmd_table , REGION_SELECT_IN_POLYGON_STRING        , REGION_SELECT_IN_POLYGON);
+  hash_insert_int(cmd_table , ECLREGION_SELECT_ALL_STRING            , ECLREGION_SELECT_ALL);
+  hash_insert_int(cmd_table , ECLREGION_SELECT_VALUE_EQUAL_STRING    , ECLREGION_SELECT_VALUE_EQUAL);
+  hash_insert_int(cmd_table , ECLREGION_SELECT_VALUE_LESS_STRING     , ECLREGION_SELECT_VALUE_LESS);
+  hash_insert_int(cmd_table , ECLREGION_SELECT_VALUE_MORE_STRING     , ECLREGION_SELECT_VALUE_MORE);
+  hash_insert_int(cmd_table , ECLREGION_SELECT_BOX_STRING            , ECLREGION_SELECT_BOX);
+  hash_insert_int(cmd_table , ECLREGION_SELECT_SLICE_STRING          , ECLREGION_SELECT_SLICE);
+  hash_insert_int(cmd_table , ECLREGION_SELECT_PLANE_STRING          , ECLREGION_SELECT_PLANE);
+  hash_insert_int(cmd_table , ECLREGION_SELECT_IN_POLYGON_STRING     , ECLREGION_SELECT_IN_POLYGON);
+  hash_insert_int(cmd_table , CREATE_POLYGON_STRING                  , CREATE_POLYGON );
+  hash_insert_int(cmd_table , LOAD_POLYGON_STRING                    , LOAD_POLYGON );
+  hash_insert_int(cmd_table , LOAD_SURFACE_STRING                    , LOAD_SURFACE );   
+  hash_insert_int(cmd_table , CREATE_SURFACE_REGION_STRING           , CREATE_SURFACE_REGION );   
+  hash_insert_int(cmd_table , SURFACE_REGION_SELECT_IN_POLYGON_STRING, SURFACE_REGION_SELECT_IN_POLYGON);
+  hash_insert_int(cmd_table , SURFACE_REGION_SELECT_LINE_STRING     , SURFACE_REGION_SELECT_LINE);
+  hash_insert_int(cmd_table , ADD_DATA_SURFACE_STRING                , ADD_DATA_SURFACE);
 }
 
 
+static void local_config_CREATE_UPDATESTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * update_name = read_alloc_string( stream , binary );
+  local_config_alloc_updatestep( config , update_name );
+  free( update_name );
+}
+
+
+
+static void local_config_CREATE_MINISTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * mini_name = read_alloc_string( stream , binary );
+  char * obs_name  = read_alloc_string( stream , binary );
+  local_config_alloc_ministep( config , mini_name , obs_name );
+  free( mini_name );
+  free( obs_name );
+}
+
+
+static void local_config_CREATE_OBSSET( local_config_type * config , local_context_type * context , FILE * stream , bool binary)  {
+  char * obs_name = read_alloc_string( stream , binary );
+  local_config_alloc_obsset( config , obs_name);
+  free( obs_name );
+}
+
+
+
+static void local_config_ATTACH_MINISTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * update_name = read_alloc_string( stream , binary );
+  char * mini_name   = read_alloc_string( stream , binary );
+  {
+    local_updatestep_type * update   = local_config_get_updatestep( config , update_name );
+    local_ministep_type   * ministep = local_config_get_ministep( config , mini_name );
+    local_updatestep_add_ministep( update , ministep );
+  }
+  free( update_name );
+  free( mini_name );
+}
+
+
+
+static void local_config_CREATE_DATASET( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * dataset_name = read_alloc_string( stream , binary );
+  local_config_alloc_dataset( config , dataset_name );
+}
+
+
+static void local_config_COPY_DATASET( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * src_name    = read_alloc_string( stream , binary );
+  char * target_name = read_alloc_string( stream , binary );
+  local_config_alloc_dataset_copy( config , src_name , target_name );
+  free( target_name );
+  free( src_name );
+}
+
+static void local_config_COPY_OBSSET( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * src_name     = read_alloc_string( stream , binary );
+  char * target_name = read_alloc_string( stream , binary );
+  local_config_alloc_obsset_copy( config , src_name , target_name );
+  free( target_name );
+  free( src_name );
+}
+
+
+static void local_config_ATTACH_DATASET( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * mini_name = read_alloc_string( stream , binary );
+  char * dataset_name = read_alloc_string( stream , binary );
+  {
+    local_ministep_type * ministep = local_config_get_ministep( config , mini_name );
+    local_dataset_type * dataset = local_config_get_dataset( config , dataset_name );
+    local_ministep_add_dataset( ministep , dataset );
+  }
+  free( mini_name );
+  free( dataset_name );
+}
+
+static void local_config_ADD_DATA( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * dataset_name = read_alloc_string( stream , binary );
+  char * data_key = read_alloc_string( stream , binary );
+  {
+    local_dataset_type   * dataset = local_config_get_dataset( config , dataset_name );
+    local_dataset_add_node( dataset , data_key );
+  }
+  free( data_key );
+  free( dataset_name );
+}
+
+static void local_config_ADD_OBS( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * obs_name = read_alloc_string( stream , binary );
+  char * obs_key  = read_alloc_string( stream , binary );
+  {
+    local_obsset_type * obsset = local_config_get_obsset( config , obs_name );
+    local_obsset_add_obs( obsset , obs_key );
+  }
+  free( obs_name );
+  free( obs_key );
+}
+
+static void local_config_ACTIVE_LIST_ADD_OBS_INDEX( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * obs_name = read_alloc_string( stream , binary );
+  char * obs_key  = read_alloc_string( stream , binary );
+  int index = read_int( stream , binary );
+  {
+    local_obsset_type * obsset  = local_config_get_obsset( config , obs_name );
+    active_list_type  * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
+    active_list_add_index( active_list , index );
+  }
+  free( obs_name );
+  free( obs_key );
+}
+
+
+static void local_config_ADD_DATA_INDEX( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * dataset_name = read_alloc_string( stream , binary );
+  char * data_key     = read_alloc_string( stream , binary );
+  int index           = read_int( stream , binary );
+  {
+    local_dataset_type * dataset     = local_config_get_dataset( config , dataset_name );
+    active_list_type   * active_list = local_dataset_get_node_active_list( dataset , data_key );
+    active_list_add_index( active_list , index );
+  }
+  free( data_key );
+  free( dataset_name );
+}
+
+
+static void local_config_ACTIVE_LIST_ADD_MANY_OBS_INDEX( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  int_vector_type * int_vector = int_vector_alloc(0,0);
+  char * obs_name = read_alloc_string( stream , binary );
+  char * obs_key  = read_alloc_string( stream , binary );
+    
+  read_int_vector( stream , binary , int_vector);
+  {
+    local_obsset_type * obsset  = local_config_get_obsset( config , obs_name );
+    active_list_type  * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
+    for (int i = 0; i < int_vector_size( int_vector ); i++)
+      active_list_add_index( active_list , int_vector_iget(int_vector , i));
+  }
+  free( obs_key );
+  free( obs_name );
+  int_vector_free( int_vector );
+}
+
+
+static void local_config_ACTIVE_LIST_ADD_MANY_DATA_INDEX( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  int_vector_type * int_vector = int_vector_alloc( 0 , 0 );
+  char * dataset_name = read_alloc_string( stream , binary );
+  char * data_key     = read_alloc_string( stream , binary );
+
+  read_int_vector( stream , binary , int_vector);
+  {
+    local_dataset_type * dataset     = local_config_get_dataset( config , dataset_name );
+    active_list_type   * active_list = local_dataset_get_node_active_list( dataset , data_key );
+    for (int i = 0; i < int_vector_size( int_vector ); i++)
+      active_list_add_index( active_list , int_vector_iget(int_vector , i));
+  }
+  free( data_key );
+  free( dataset_name );
+  int_vector_free( int_vector );
+}
+
+static void local_config_INSTALL_UPDATESTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * update_name = read_alloc_string( stream , binary );
+  {
+    int step1,step2;
+    
+    step1 = read_int( stream , binary );
+    step2 = read_int( stream , binary );
+    local_config_set_updatestep( config , step1 , step2 , update_name );
+  }
+  free( update_name );
+}
+
+static void local_config_INSTALL_DEFAULT_UPDATESTEP( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * update_name = read_alloc_string( stream , binary );
+  local_config_set_default_updatestep( config , update_name );
+  free( update_name );
+}
+
+static void local_config_DEL_DATA( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * dataset_name = read_alloc_string( stream , binary );
+  char * data_key  = read_alloc_string( stream , binary );
+  {
+    local_dataset_type * dataset = local_config_get_dataset( config , dataset_name );
+    local_dataset_del_node( dataset , data_key );
+  }
+  free( data_key );
+  free( dataset_name );
+}
+
+
+static void local_config_DEL_OBS( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * obs_name = read_alloc_string( stream , binary );
+  char * obs_key  = read_alloc_string( stream , binary );
+  {
+    local_obsset_type * obsset = local_config_get_obsset( config , obs_name );
+    local_obsset_del_obs( obsset , obs_key );
+  }
+  free( obs_name );
+  free( obs_key );
+}
+
+static void local_config_DATASET_DEL_ALL_DATA( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * dataset_name = read_alloc_string( stream , binary );
+  {
+    local_dataset_type * dataset = local_config_get_dataset( config , dataset_name );
+    local_dataset_clear( dataset );
+  }
+  free( dataset_name );
+}
+
+static void local_config_OBSSET_DEL_ALL_OBS( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * obs_name = read_alloc_string( stream , binary );
+  {
+    local_obsset_type   * obsset = local_config_get_obsset( config , obs_name );
+    local_obsset_clear( obsset );
+  }
+  free( obs_name );
+}
+
+
+static void local_config_ADD_FIELD( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * dataset_name = read_alloc_string( stream , binary );
+  char * field_name   = read_alloc_string( stream , binary );
+  char * region_name  = read_alloc_string( stream , binary );
+  {
+    ecl_region_type     * region  = local_context_get_ecl_region( context , region_name );
+    local_dataset_type  * dataset = local_config_get_dataset( config , dataset_name );
+    local_dataset_add_node( dataset , field_name );
+    {
+      active_list_type * active_list        = local_dataset_get_node_active_list( dataset , field_name );
+      const int_vector_type * region_active = ecl_region_get_active_list( region );
+      
+      for (int i=0; i < int_vector_size( region_active ); i++)
+        active_list_add_index( active_list , int_vector_iget( region_active , i ) );
+    }
+  }
+  free( field_name );
+  free( dataset_name );
+  free( region_name );
+}
+
+static void local_config_CREATE_ECLREGION( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * region_name  = read_alloc_string( stream , binary );
+  bool   preselect    = read_bool( stream , binary );
+  local_context_create_ecl_region( context , GLOBAL_GRID , region_name , preselect );
+  free( region_name );
+}
+
+static void local_config_LOAD_FILE( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * file_key  = read_alloc_string( stream , binary );
+  char * file_name = read_alloc_string( stream , binary );
+
+  local_context_load_file( context , file_name , file_key );
+  
+  free( file_key );
+  free( file_name );
+}
+
+
+static void local_config_ECLREGION_SELECT_BOX( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * region_name = read_alloc_string( stream , binary );
+  int i1          = read_int( stream , binary ) - 1;
+  int i2          = read_int( stream , binary ) - 1;
+  int j1          = read_int( stream , binary ) - 1;
+  int j2          = read_int( stream , binary ) - 1;
+  int k1          = read_int( stream , binary ) - 1;
+  int k2          = read_int( stream , binary ) - 1;
+  bool select     = read_bool( stream , binary );
+  
+  ecl_region_type * region = local_context_get_ecl_region( context , region_name );
+  
+  if (select)
+    ecl_region_select_from_ijkbox( region , i1 , i2 , j1 , j2 , k1 , k2);
+  else
+    ecl_region_deselect_from_ijkbox( region , i1 , i2 , j1 , j2 , k1 , k2);
+  
+  free( region_name );
+}
+
+
+static void local_config_ECLREGION_SELECT_SLICE( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * region_name = read_alloc_string( stream , binary );
+  char * dir         = read_alloc_string( stream , binary );
+  int n1             = read_int( stream , binary) - 1;
+  int n2             = read_int( stream , binary) - 1;
+  bool     select    = read_bool( stream , binary );
+
+  ecl_region_type * region = local_context_get_ecl_region( context , region_name );
+  
+  util_strupr( dir );
+  
+  if (strcmp( dir , "X") == 0) {
+    if (select)
+      ecl_region_select_i1i2( region , n1 , n2 );
+    else
+      ecl_region_deselect_i1i2( region , n1 , n2 );
+  } else if (strcmp(dir , "Y") == 0) {
+    if (select)
+      ecl_region_select_j1j2( region , n1 , n2 );
+    else
+      ecl_region_deselect_j1j2( region , n1 , n2 );
+  } else if (strcmp(dir , "Z") == 0) {
+    if (select)
+      ecl_region_select_k1k2( region , n1 , n2 );
+    else
+      ecl_region_deselect_k1k2( region , n1 , n2 );
+  } else
+    util_abort("%s: slice direction:%s not recognized \n",__func__ , dir );
+  
+  free(dir );
+  free( region_name );
+}
+
+
+static void local_config_ECLREGION_SELECT_ALL( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * region_name = read_alloc_string( stream , binary );
+  {
+    bool select = read_bool( stream , binary );
+    ecl_region_type * region = local_context_get_ecl_region( context , region_name );
+    if (select)
+      ecl_region_select_all( region );
+    else
+      ecl_region_deselect_all( region );
+  }
+  free( region_name );
+}
+
+
+static void local_config_ECLREGION_SELECT_VALUE( local_config_type * config , local_context_type * context , FILE * stream , bool binary , local_config_instruction_type cmd) {
+  char * region_name  = read_alloc_string( stream , binary );
+  char * master_key   = read_alloc_string( stream , binary );
+  char * value_string = read_alloc_string( stream , binary );
+  bool select         = read_bool( stream , binary );
+  {
+    ecl_kw_type * ecl_kw;
+    ecl_region_type * region;
+
+    { 
+      stringlist_type * key_list = stringlist_alloc_from_split( master_key , ":");
+      ecl_file_type * ecl_file   = local_context_get_file( context , stringlist_iget(key_list , 0 ) );
+      int key_nr = 0;
+
+      if (stringlist_get_size( key_list ) == 3)
+        util_sscanf_int( stringlist_iget( key_list , 2 ) , &key_nr );
+    
+      ecl_kw = ecl_file_iget_named_kw( ecl_file , stringlist_iget( key_list , 1 ) , key_nr);
+      stringlist_free( key_list );
+    }
+
+    region = local_context_get_ecl_region( context , region_name );
+    
+    if (cmd == ECLREGION_SELECT_VALUE_EQUAL) {
+      int value;
+      util_sscanf_int( value_string , &value );
+      if (select)
+        ecl_region_select_equal( region , ecl_kw , value );
+      else
+        ecl_region_deselect_equal( region , ecl_kw , value);
+    } else {
+      double value;
+      util_sscanf_double( value_string , &value );
+      
+      if (cmd == ECLREGION_SELECT_VALUE_LESS) {
+        if (select)
+          ecl_region_select_smaller( region , ecl_kw , value );
+        else
+          ecl_region_deselect_smaller( region , ecl_kw , value);
+      } else if (cmd == ECLREGION_SELECT_VALUE_LESS) {
+        if (select)
+          ecl_region_select_larger( region , ecl_kw , value );
+        else
+          ecl_region_deselect_larger( region , ecl_kw , value);
+      }
+      
+    }
+  }
+  free( master_key );
+  free( value_string );
+  free(region_name);
+}
+
+
+static void local_config_ECLREGION_SELECT_PLANE( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  double normal_vec[3];
+  double p0[3];
+  double sign;
+  bool   select;
+  ecl_region_type * region;
+  char * region_name  = read_alloc_string( stream , binary );
+  
+  normal_vec[0] = read_double( stream , binary );
+  normal_vec[1] = read_double( stream , binary );
+  normal_vec[2] = read_double( stream , binary );
+  
+  p0[0]         = read_double( stream , binary );
+  p0[1]         = read_double( stream , binary );
+  p0[2]         = read_double( stream , binary );
+  
+  sign          = read_double( stream , binary);
+  select        = read_bool( stream , binary );
+  
+  region = local_context_get_ecl_region( context , region_name );
+  if (select) {
+    if (sign > 0)
+      ecl_region_select_above_plane( region , normal_vec , p0 );
+    else
+      ecl_region_select_below_plane( region , normal_vec , p0 );
+  } else {
+    if (sign > 0)
+      ecl_region_deselect_above_plane( region , normal_vec , p0 );
+    else
+      ecl_region_deselect_below_plane( region , normal_vec , p0 );
+  }
+
+  free( region_name );
+}
+
+
+static void local_config_CREATE_POLYGON( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * polygon_name = read_alloc_string( stream , binary );
+  local_context_add_polygon( context , polygon_name );
+  {
+    geo_polygon_type * polygon = local_context_get_polygon( context , polygon_name );
+    int num_points   = read_int( stream , binary );
+    
+    if (num_points < 2)
+      util_abort("%s: error when parsing CREATE_POLYGON - need at least 3 points in polygon\n",__func__);
+    
+    for (int i=0; i < num_points; i++) {
+      double x = read_double( stream , binary );
+      double y = read_double( stream , binary );
+      
+      geo_polygon_add_point( polygon , x , y );
+    }
+  }
+  free( polygon_name );
+}
+
+static void local_config_LOAD_POLYGON( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * polygon_name = read_alloc_string( stream , binary );
+  char * polygon_file = read_alloc_string( stream , binary );
+
+  local_context_load_polygon( context , polygon_name , polygon_file );
+
+  free( polygon_file );
+  free( polygon_name );
+}
+
+
+static void local_config_ECLREGION_SELECT_IN_POLYGON( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  
+  char * region_name  = read_alloc_string( stream , binary );
+  char * polygon_name = read_alloc_string( stream , binary );
+  bool select       = read_bool( stream , binary );
+  {
+    ecl_region_type * region;
+    geo_polygon_type * polygon;
+
+    polygon = local_context_get_polygon( context , polygon_name );
+    region  = local_context_get_ecl_region( context , region_name );
+    if (select) 
+      ecl_region_select_inside_polygon( region , polygon );
+    else
+      ecl_region_select_inside_polygon( region , polygon );
+  }
+  free( polygon_name );
+  free( region_name );
+}
+
+
+static void local_config_LOAD_SURFACE( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * surface_name = read_alloc_string( stream , binary );
+  char * surface_file = read_alloc_string( stream , binary );
+  
+  local_context_load_surface( context , surface_name , surface_file );
+  
+  free( surface_file );
+  free( surface_name );
+}
+
+
+static void local_config_CREATE_SURFACE_REGION( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * region_name       = read_alloc_string( stream , binary );
+  char * base_surface      = read_alloc_string( stream , binary );
+  bool preselect           = read_bool( stream , binary );                
+  
+  local_context_create_surface_region( context , base_surface , region_name ,  preselect);
+  
+  free( region_name );
+  free( base_surface);
+}
+
+
+static void local_config_SURFACE_REGION_SELECT_IN_POLYGON( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * region_name       = read_alloc_string( stream , binary );
+  char * polygon_name      = read_alloc_string( stream , binary );
+  bool select              = read_bool( stream , binary );        
+
+  geo_region_type * region   = local_context_get_surface_region( context , region_name );
+  geo_polygon_type * polygon = local_context_get_polygon( context , polygon_name );
+
+  if (select)
+    geo_region_select_inside_polygon( region , polygon );
+  else
+    geo_region_deselect_inside_polygon( region , polygon );
+
+}
+
+static void local_config_SURFACE_REGION_SELECT_LINE( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  double sign;
+  bool   select;
+  double xcoords[2];
+  double ycoords[2];
+  char * region_name        = read_alloc_string( stream , binary );
+  xcoords[0]                = read_double( stream  , binary );       
+  ycoords[0]                = read_double( stream  , binary );       
+  xcoords[1]                = read_double( stream  , binary );       
+  ycoords[1]                = read_double( stream  , binary );       
+  sign                      = read_double( stream , binary );
+  select                    = read_bool( stream , binary );        
+  
+  geo_region_type * region   = local_context_get_surface_region( context , region_name );
+
+  if (select) {
+    if (sign > 0)
+      geo_region_select_above_line( region , xcoords , ycoords );
+    else
+      geo_region_select_below_line( region , xcoords , ycoords );
+  } else {
+    if (sign > 0)
+      geo_region_deselect_above_line( region , xcoords , ycoords );
+    else
+      geo_region_deselect_below_line( region , xcoords , ycoords );
+  }
+}
+
+
+
+static void local_config_ADD_DATA_SURFACE( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+  char * dataset_name = read_alloc_string( stream , binary );
+  char * surface_name = read_alloc_string( stream , binary );
+  char * region_name  = read_alloc_string( stream , binary );
+
+  {
+    geo_region_type     * region  = local_context_get_surface_region( context , region_name );
+    local_dataset_type  * dataset = local_config_get_dataset( config , dataset_name );
+    local_dataset_add_node( dataset , surface_name );
+    {
+      active_list_type * active_list        = local_dataset_get_node_active_list( dataset , surface_name );
+      const int_vector_type * region_active = geo_region_get_index_list( region );
+      
+      for (int i=0; i < int_vector_size( region_active ); i++)
+        active_list_add_index( active_list , int_vector_iget( region_active , i ) );
+    }
+  }
+
+  free( surface_name );
+  free( dataset_name );
+  free( region_name );
+}
+
 /**
-   Currently the ensemble_config and enkf_obs objects are not used for
+   CURRENTLYy the ensemble_config and enkf_obs objects are not used for
    anything. These should be used for input validation.
 */
 
@@ -868,422 +1449,132 @@ static void local_config_load_file( local_config_type * local_config ,
                                     const char * config_file) {
   bool binary = false;
   local_config_instruction_type cmd;
-  hash_type * regions   = hash_alloc();
-  hash_type * files     = hash_alloc();
-  hash_type * cmd_table = hash_alloc();
 
-  FILE * stream       = util_fopen( config_file , "r");
-  char * update_name  = NULL;
-  char * mini_name    = NULL;
-  char * obs_name     = NULL;
-  char * obs_key      = NULL;
-  char * data_key     = NULL;
-  char * region_name  = NULL;
-  char * dataset_name = NULL;
-  int index;
-  int_vector_type * int_vector = int_vector_alloc(0,0);
+  hash_type * cmd_table = hash_alloc();
+  local_context_type * context = local_context_alloc( ecl_grid );
+  FILE * stream        = util_fopen( config_file , "r");
 
   local_config_init_cmd_table( cmd_table );
 
   while ( read_cmd( cmd_table , stream, binary , &cmd)) {
     switch(cmd) {
     case(CREATE_UPDATESTEP):
-      update_name = read_alloc_string( stream , binary );
-      local_config_alloc_updatestep( local_config , update_name );
+      local_config_CREATE_UPDATESTEP( local_config , context , stream , binary );
       break;
     case(CREATE_MINISTEP):
-      mini_name = read_alloc_string( stream , binary );
-      obs_name  = read_alloc_string( stream , binary );
-      local_config_alloc_ministep( local_config , mini_name , obs_name );
+      local_config_CREATE_MINISTEP( local_config , context , stream , binary );
       break;
     case(CREATE_OBSSET):
-      obs_name = read_alloc_string( stream , binary );
-      local_config_alloc_obsset( local_config , obs_name);
+      local_config_CREATE_OBSSET( local_config , context , stream , binary );
       break;
     case(ATTACH_MINISTEP):
-      update_name = read_alloc_string( stream , binary );
-      mini_name   = read_alloc_string( stream , binary );
-      {
-        local_updatestep_type * update   = local_config_get_updatestep( local_config , update_name );
-        local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
-        local_updatestep_add_ministep( update , ministep );
-      }
+      local_config_ATTACH_MINISTEP( local_config , context , stream , binary );
       break;
     case(CREATE_DATASET):
-      dataset_name = read_alloc_string( stream , binary );
-      local_config_alloc_dataset( local_config , dataset_name );
+      local_config_CREATE_DATASET( local_config , context , stream , binary );
       break;
     case(COPY_DATASET):
-      {
-        char * src_name     = read_alloc_string( stream , binary );
-        char * target_name = read_alloc_string( stream , binary );
-        local_config_alloc_dataset_copy( local_config , src_name , target_name );
-        free( target_name );
-        free( src_name );
-      }
+      local_config_COPY_DATASET( local_config , context , stream , binary );
       break;
     case(COPY_OBSSET):
-      {
-        char * src_name     = read_alloc_string( stream , binary );
-        char * target_name = read_alloc_string( stream , binary );
-        local_config_alloc_obsset_copy( local_config , src_name , target_name );
-        free( target_name );
-        free( src_name );
-      }
+      local_config_COPY_OBSSET( local_config , context , stream , binary );
       break;
     case(ATTACH_DATASET):
-      mini_name = read_alloc_string( stream , binary );
-      dataset_name = read_alloc_string( stream , binary );
-      {
-        local_ministep_type * ministep = local_config_get_ministep( local_config , mini_name );
-        local_dataset_type * dataset = local_config_get_dataset( local_config , dataset_name );
-        local_ministep_add_dataset( ministep , dataset );
-      }
+      local_config_ATTACH_DATASET( local_config , context , stream , binary );
       break;
     case(ADD_DATA):
-      dataset_name = read_alloc_string( stream , binary );
-      data_key = read_alloc_string( stream , binary );
-      {
-        local_dataset_type   * dataset = local_config_get_dataset( local_config , dataset_name );
-        local_dataset_add_node( dataset , data_key );
-      }
+      local_config_ADD_DATA( local_config , context , stream , binary );
       break;
     case(ADD_OBS):
-      obs_name = read_alloc_string( stream , binary );
-      obs_key  = read_alloc_string( stream , binary );
-      {
-        local_obsset_type * obsset = local_config_get_obsset( local_config , obs_name );
-        local_obsset_add_obs( obsset , obs_key );
-      }
+      local_config_ADD_OBS( local_config , context , stream , binary );
       break;
     case(ACTIVE_LIST_ADD_OBS_INDEX):
-      obs_name = read_alloc_string( stream , binary );
-      obs_key  = read_alloc_string( stream , binary );
-      index = read_int( stream , binary );
-      {
-        local_obsset_type * obsset  = local_config_get_obsset( local_config , obs_name );
-        active_list_type  * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
-        active_list_add_index( active_list , index );
-      }
+      local_config_ACTIVE_LIST_ADD_OBS_INDEX( local_config , context , stream , binary );
       break;
     case(ACTIVE_LIST_ADD_DATA_INDEX):
-      dataset_name = read_alloc_string( stream , binary );
-      data_key     = read_alloc_string( stream , binary );
-      index        = read_int( stream , binary );
-      {
-        local_dataset_type * dataset     = local_config_get_dataset( local_config , dataset_name );
-        active_list_type   * active_list = local_dataset_get_node_active_list( dataset , data_key );
-        active_list_add_index( active_list , index );
-      }
+      local_config_ADD_DATA_INDEX( local_config , context , stream , binary );
       break;
     case(ACTIVE_LIST_ADD_MANY_OBS_INDEX):
-      obs_name = read_alloc_string( stream , binary );
-      obs_key  = read_alloc_string( stream , binary );
-      read_int_vector( stream , binary , int_vector);
-      {
-        local_obsset_type * obsset  = local_config_get_obsset( local_config , obs_name );
-        active_list_type  * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
-        for (int i = 0; i < int_vector_size( int_vector ); i++)
-          active_list_add_index( active_list , int_vector_iget(int_vector , i));
-      }
+      local_config_ACTIVE_LIST_ADD_MANY_OBS_INDEX( local_config , context , stream , binary );
       break;
     case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
-      dataset_name = read_alloc_string( stream , binary );
-      data_key     = read_alloc_string( stream , binary );
-      read_int_vector( stream , binary , int_vector);
-      {
-        local_dataset_type * dataset     = local_config_get_dataset( local_config , dataset_name );
-        active_list_type   * active_list = local_dataset_get_node_active_list( dataset , data_key );
-        for (int i = 0; i < int_vector_size( int_vector ); i++)
-          active_list_add_index( active_list , int_vector_iget(int_vector , i));
-      }
+      local_config_ACTIVE_LIST_ADD_MANY_DATA_INDEX( local_config , context , stream , binary );
       break;
     case(INSTALL_UPDATESTEP):
-      update_name = read_alloc_string( stream , binary );
-      {
-        int step1,step2;
-
-        step1 = read_int( stream , binary );
-        step2 = read_int( stream , binary );
-        local_config_set_updatestep( local_config , step1 , step2 , update_name );
-      }
+      local_config_INSTALL_UPDATESTEP( local_config , context , stream , binary );
       break;
     case(INSTALL_DEFAULT_UPDATESTEP):
-      update_name = read_alloc_string( stream , binary );
-      local_config_set_default_updatestep( local_config , update_name );
+      local_config_INSTALL_DEFAULT_UPDATESTEP( local_config , context , stream , binary );
       break;
     case(DEL_DATA):
-      dataset_name = read_alloc_string( stream , binary );
-      data_key  = read_alloc_string( stream , binary );
-      {
-        local_dataset_type * dataset = local_config_get_dataset( local_config , dataset_name );
-        local_dataset_del_node( dataset , data_key );
-      }
+      local_config_DEL_DATA( local_config , context , stream , binary );
       break;
     case(DEL_OBS):
-      obs_name = read_alloc_string( stream , binary );
-      obs_key  = read_alloc_string( stream , binary );
-      {
-        local_obsset_type * obsset = local_config_get_obsset( local_config , obs_name );
-        local_obsset_del_obs( obsset , obs_key );
-      }
+      local_config_DEL_OBS( local_config , context , stream , binary );
       break;
     case(DATASET_DEL_ALL_DATA):
-      dataset_name = read_alloc_string( stream , binary );
-      {
-        local_dataset_type * dataset = local_config_get_dataset( local_config , dataset_name );
-        local_dataset_clear( dataset );
-      }
+      local_config_DATASET_DEL_ALL_DATA( local_config , context , stream , binary );
       break;
     case(OBSSET_DEL_ALL_OBS):
-      obs_name = read_alloc_string( stream , binary );
-      {
-        local_obsset_type   * obsset = local_config_get_obsset( local_config , obs_name );
-        local_obsset_clear( obsset );
-      }
+      local_config_OBSSET_DEL_ALL_OBS( local_config , context , stream , binary );
       break;
     case(ADD_FIELD):
-      {
-        char * field_name;
-        dataset_name = read_alloc_string( stream , binary );
-        field_name   = read_alloc_string( stream , binary );
-        region_name  = read_alloc_string( stream , binary );
-        {
-          ecl_region_type     * region  = hash_get( regions , region_name );
-          local_dataset_type  * dataset = local_config_get_dataset( local_config , dataset_name );
-          local_dataset_add_node( dataset , field_name );
-          {
-            active_list_type * active_list        = local_dataset_get_node_active_list( dataset , field_name );
-            const int_vector_type * region_active = ecl_region_get_active_list( region );
-
-            for (int i=0; i < int_vector_size( region_active ); i++)
-              active_list_add_index( active_list , int_vector_iget( region_active , i ) );
-          }
-        }
-        free( field_name );
-      }
+      local_config_ADD_FIELD( local_config , context , stream , binary );
       break;
-    case(CREATE_REGION):
-      {
-        region_name = read_alloc_string( stream , binary );
-        bool   preselect   = read_bool( stream , binary );
-        ecl_region_type * new_region = ecl_region_alloc( ecl_grid , preselect );
-        hash_insert_hash_owned_ref( regions , region_name , new_region , ecl_region_free__);
-      }
+    case(CREATE_ECLREGION):
+      local_config_CREATE_ECLREGION( local_config , context , stream , binary );
       break;
     case(LOAD_FILE):
-      {
-        char * file_key  = read_alloc_string( stream , binary );
-        char * file_name = read_alloc_string( stream , binary );
-        ecl_file_type * ecl_file = ecl_file_open( file_name );
-        hash_insert_hash_owned_ref( files , file_key , ecl_file , ecl_file_free__);
-        free( file_key );
-        free( file_name );
-      }
+      local_config_LOAD_FILE( local_config , context , stream , binary );
       break;
-    case( REGION_SELECT_BOX ):  /* The coordinates in the box are inclusive in both upper and lower limit,
-                                   and the counting starts at 1. */
-      {
-        region_name = read_alloc_string( stream , binary );
-        {
-          int i1          = read_int( stream , binary ) - 1;
-          int i2          = read_int( stream , binary ) - 1;
-          int j1          = read_int( stream , binary ) - 1;
-          int j2          = read_int( stream , binary ) - 1;
-          int k1          = read_int( stream , binary ) - 1;
-          int k2          = read_int( stream , binary ) - 1;
-          bool select     = read_bool( stream , binary );
-
-          ecl_region_type * region = hash_get( regions , region_name );
-
-          if (select)
-            ecl_region_select_from_ijkbox( region , i1 , i2 , j1 , j2 , k1 , k2);
-          else
-            ecl_region_deselect_from_ijkbox( region , i1 , i2 , j1 , j2 , k1 , k2);
-
-        }
-      }
+    case( ECLREGION_SELECT_BOX ):  /* The coordinates in the box are inclusive in both upper and lower limit,
+                                      and the counting starts at 1. */
+      local_config_ECLREGION_SELECT_BOX( local_config , context , stream , binary );
       break;
-    case( REGION_SELECT_SLICE ):
-      region_name = read_alloc_string( stream , binary );
-      {
-        char * dir       = read_alloc_string( stream , binary );
-        int n1           = read_int( stream , binary) - 1;
-        int n2           = read_int( stream , binary) - 1;
-        bool     select = read_bool( stream , binary );
-        ecl_region_type * region = hash_get( regions , region_name );
-
-        util_strupr( dir );
-
-        if (strcmp( dir , "X") == 0) {
-          if (select)
-            ecl_region_select_i1i2( region , n1 , n2 );
-          else
-            ecl_region_deselect_i1i2( region , n1 , n2 );
-        } else if (strcmp(dir , "Y") == 0) {
-          if (select)
-            ecl_region_select_j1j2( region , n1 , n2 );
-          else
-            ecl_region_deselect_j1j2( region , n1 , n2 );
-        } else if (strcmp(dir , "Z") == 0) {
-          if (select)
-            ecl_region_select_k1k2( region , n1 , n2 );
-          else
-            ecl_region_deselect_k1k2( region , n1 , n2 );
-        } else
-          util_abort("%s: slice direction:%s not recognized \n",__func__ , dir );
-
-        free(dir );
-      }
+    case( ECLREGION_SELECT_SLICE ):
+      local_config_ECLREGION_SELECT_SLICE( local_config , context , stream , binary );
       break;
-    case( REGION_SELECT_ALL ):
-      {
-        region_name = read_alloc_string( stream , binary );
-        bool select = read_bool( stream , binary );
-        ecl_region_type * region = hash_get( regions , region_name );
-        if (select)
-          ecl_region_select_all( region );
-        else
-          ecl_region_deselect_all( region );
-      }
+    case( ECLREGION_SELECT_ALL ):
+      local_config_ECLREGION_SELECT_ALL( local_config , context , stream , binary );
       break;
-    case( REGION_SELECT_VALUE_LESS  ):
-    case( REGION_SELECT_VALUE_EQUAL ):
-    case( REGION_SELECT_VALUE_MORE  ):
-      {
-        char * master_key;
-        ecl_kw_type * ecl_kw;
-        ecl_region_type * region;
-        char * value_string;
-        bool select;
-
-        region_name  = read_alloc_string( stream , binary );
-        master_key   = read_alloc_string( stream , binary );
-        value_string = read_alloc_string( stream , binary );
-        select       = read_bool( stream , binary );
-        
-        {
-          stringlist_type * key_list = stringlist_alloc_from_split( master_key , ":");
-          ecl_file_type * ecl_file   = hash_get( files , stringlist_iget(key_list , 0 ));
-          int key_nr = 0;
-          if (stringlist_get_size( key_list ) == 3)
-            util_sscanf_int( stringlist_iget( key_list , 2 ) , &key_nr );
-
-          ecl_kw = ecl_file_iget_named_kw( ecl_file , stringlist_iget( key_list , 1 ) , key_nr);
-          stringlist_free( key_list );
-        }
-
-        region = hash_get( regions , region_name );
-
-        if (cmd == REGION_SELECT_VALUE_EQUAL) {
-          int value;
-          util_sscanf_int( value_string , &value );
-          if (select)
-            ecl_region_select_equal( region , ecl_kw , value );
-          else
-            ecl_region_deselect_equal( region , ecl_kw , value);
-        } else {
-          double value;
-          util_sscanf_double( value_string , &value );
-
-          if (cmd == REGION_SELECT_VALUE_LESS) {
-            if (select)
-              ecl_region_select_smaller( region , ecl_kw , value );
-            else
-              ecl_region_deselect_smaller( region , ecl_kw , value);
-          } else if (cmd == REGION_SELECT_VALUE_LESS) {
-            if (select)
-              ecl_region_select_larger( region , ecl_kw , value );
-            else
-              ecl_region_deselect_larger( region , ecl_kw , value);
-          }
-
-        }
-        free( master_key );
-        free( value_string );
-      }
+    case( ECLREGION_SELECT_VALUE_LESS  ):
+    case( ECLREGION_SELECT_VALUE_EQUAL ):
+    case( ECLREGION_SELECT_VALUE_MORE  ):
+      local_config_ECLREGION_SELECT_VALUE( local_config , context , stream , binary , cmd);
       break;
-    case( REGION_SELECT_PLANE ):
-      {
-        double normal_vec[3];
-        double p0[3];
-        double sign;
-        bool   select;
-        ecl_region_type * region;
-        region_name  = read_alloc_string( stream , binary );
-        
-        normal_vec[0] = read_double( stream , binary );
-        normal_vec[1] = read_double( stream , binary );
-        normal_vec[2] = read_double( stream , binary );
-
-        p0[0]         = read_double( stream , binary );
-        p0[1]         = read_double( stream , binary );
-        p0[2]         = read_double( stream , binary );
-        
-        sign          = read_double( stream , binary);
-        select        = read_bool( stream , binary );
-        
-        region = hash_get( regions , region_name );
-        if (select) {
-          if (sign > 0)
-            ecl_region_select_above_plane( region , normal_vec , p0 );
-          else
-            ecl_region_select_below_plane( region , normal_vec , p0 );
-        } else {
-          if (sign > 0)
-            ecl_region_deselect_above_plane( region , normal_vec , p0 );
-          else
-            ecl_region_deselect_below_plane( region , normal_vec , p0 );
-        }
-      }
+    case( ECLREGION_SELECT_PLANE ):
+      local_config_ECLREGION_SELECT_PLANE( local_config , context , stream , binary );
       break;
-    case(REGION_SELECT_IN_POLYGON):
-      {
-        double * xlist; 
-        double * ylist;
-        int      num_points;
-        bool     select;
-        ecl_region_type * region;
-
-        region_name  = read_alloc_string( stream , binary );
-        num_points   = read_int( stream , binary );
-        
-        if (num_points < 2)
-          util_abort("%s: error when parsing REGION_SELECT_IN_POLYGON - need at least 3 points in polygon\n",__func__);
-        
-        xlist = util_malloc( num_points * sizeof * xlist , __func__);
-        ylist = util_malloc( num_points * sizeof * ylist , __func__);
-        for (int i=0; i < num_points; i++) {
-          xlist[i] = read_double( stream , binary );
-          ylist[i] = read_double( stream , binary );
-        }
-        select = read_bool( stream , binary );
-
-        region = hash_get( regions , region_name );
-        if (select) 
-          ecl_region_select_inside_polygon( region , num_points , xlist , ylist );
-        else
-          ecl_region_select_inside_polygon( region , num_points , xlist , ylist );
-        
-        free( xlist );
-        free( ylist );
-      }
+    case(CREATE_POLYGON):
+      local_config_CREATE_POLYGON( local_config , context , stream , binary );
+      break;
+    case(LOAD_POLYGON):
+      local_config_LOAD_POLYGON( local_config , context , stream , binary );
+      break;
+    case(ECLREGION_SELECT_IN_POLYGON):
+      local_config_ECLREGION_SELECT_IN_POLYGON( local_config , context , stream , binary );
+      break;
+    case(LOAD_SURFACE):
+      local_config_LOAD_SURFACE( local_config , context , stream , binary );
+      break;
+    case(CREATE_SURFACE_REGION):
+      local_config_CREATE_SURFACE_REGION( local_config , context , stream , binary );
+      break;
+    case(SURFACE_REGION_SELECT_IN_POLYGON):
+      local_config_SURFACE_REGION_SELECT_IN_POLYGON( local_config , context , stream , binary );
+      break;
+    case(SURFACE_REGION_SELECT_LINE):
+      local_config_SURFACE_REGION_SELECT_LINE( local_config , context , stream , binary );
+      break;
+    case(ADD_DATA_SURFACE):
+      local_config_ADD_DATA_SURFACE( local_config , context , stream , binary );
       break;
     default:
       util_abort("%s: invalid command:%d \n",__func__ , cmd);
     }
-
-    util_safe_free( region_name );  region_name = NULL;
-    util_safe_free( update_name );  update_name = NULL;
-    util_safe_free( mini_name );    mini_name   = NULL;
-    util_safe_free( obs_key );      obs_key     = NULL;
-    util_safe_free( data_key );     data_key    = NULL;
-    util_safe_free( obs_name );     obs_name    = NULL;
   }
   fclose(stream);
-  int_vector_free( int_vector );
-  hash_free( regions );
-  hash_free( files );
+  local_context_free( context );
   hash_free( cmd_table );
 }
 

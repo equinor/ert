@@ -16,32 +16,28 @@
 #  for more details. 
 
 
+def test_import( module ):
+    print "Importing: %s ..." % module , 
+    __import__( module )
+    print
 
 
+test_import( "ert" )
 
-print  "import ert" 
-import ert
+test_import( "ert.cwrap" )
+test_import( "ert.ecl" )
+test_import( "ert.util" )
+test_import( "ert.geo" )
+test_import( "ert.config" )
+test_import( "ert.job_queue" )
+test_import( "ert.rms" )
+test_import( "ert.enkf" )
+test_import( "ert.sched" )
 
-
-print "import ert.ecl"
-from ert.ecl.ecl import *
-g = EclGrid( "Bjarne" ) 
-
-
-print "import ert.job_queue"
-import ert.job_queue 
-
-
-print "import ert.util"
-import ert.util.stringlist
-import ert.util.tvector
-import ert.util.stat
-
-import ert.ecl.libecl
-import ert.config.libconfig
-import ert.rms.librms
-import ert.sched.libsched
-import ert.enkf.libenkf
-
-
+test_import("ert.ecl.ecl")
+test_import("ert.rms.rms")
+test_import("ert.enkf.enkf")
+test_import("ert.config.config")
+test_import("ert.job_queue.job_queue")
+test_import("ert.geo.geo")
 

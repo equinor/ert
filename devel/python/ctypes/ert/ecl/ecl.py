@@ -32,6 +32,7 @@ It is not necessary to use the this module. See the doc/import.txt
 document in the ert-python source distribution for more details of
 module import and namespace resolution.
 """
+import libecl
 from   ecl_kw                import EclKW
 from   ecl_case              import EclCase
 from   ecl_file              import EclFile
