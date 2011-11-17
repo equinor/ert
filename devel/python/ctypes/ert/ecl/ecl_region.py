@@ -29,6 +29,7 @@ import warnings
 import libecl
 from   ert.cwrap.cwrap       import *
 from   ert.util.tvector      import IntVector
+from   ert.geo.geo_polygon   import GeoPolygon
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_DOUBLE_TYPE
 import ecl_grid
 class EclRegion(object):
@@ -585,18 +586,6 @@ class EclRegion(object):
         (n_vec , p_vec) = self.__init_plane_deselect( n , p )
         cfunc.deselect_below_plane( self , n_vec , p_vec )
 
-    def __init_poly_select( self , points ):
-        x_list = ctypes.cast( (ctypes.c_double * len(points))() , ctypes.POINTER( ctypes.c_double ))
-        y_list = ctypes.cast( (ctypes.c_double * len(points))() , ctypes.POINTER( ctypes.c_double ))
-
-        index = 0
-        for (x,y) in points:
-            x_list[index] = x
-            y_list[index] = y
-            index += 1
-
-        return (x_list , y_list)
-        
 
     def select_inside_polygon( self , points ):
         """
@@ -617,8 +606,7 @@ class EclRegion(object):
         implies that the selection polygon will effectively be
         translated if the pillars are not vertical.
         """
-        (x_list , y_list) = self.__init_poly_select( points )
-        cfunc.select_inside_polygon( self , x_list , y_list , len( points ))
+        cfunc.select_inside_polygon( self , GeoPolygon( points ))
 
     def select_outside_polygon( self , points ):
         """
@@ -626,8 +614,7 @@ class EclRegion(object):
 
         See select_inside_polygon for more docuemntation.
         """
-        (x_list , y_list) = self.__init_poly_select( points )
-        cfunc.select_outside_polygon( self , x_list , y_list , len( points ))
+        cfunc.select_outside_polygon( self , GeoPolygon( points ))
 
     def deselect_outside_polygon( self , points ):
         """
@@ -635,8 +622,7 @@ class EclRegion(object):
 
         See select_inside_polygon for more docuemntation.
         """
-        (x_list , y_list) = self.__init_poly_select( points )
-        cfunc.deselect_inside_polygon( self , x_list , y_list , len( points ))
+        cfunc.deselect_inside_polygon( self , GeoPolygon( points ))
 
     def deselect_outside_polygon( self , points ):
         """
@@ -644,8 +630,7 @@ class EclRegion(object):
 
         See select_inside_polygon for more docuemntation.
         """
-        (x_list , y_list) = self.__init_poly_select( points )
-        cfunc.deselect_outside_polygon( self , x_list , y_list , len( points ))
+        cfunc.deselect_outside_polygon( self , GeoPolygon( points ))
 
 
 

@@ -49,10 +49,6 @@ import  fortio
 import  libecl
 
 
-
-        
-
-
 class EclKW(object):
     """
     The EclKW class contains the information from one ECLIPSE keyword.

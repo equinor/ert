@@ -16,7 +16,7 @@
 """
 Module doc
 """
-
+import libjob_queue
 from queue  import JobQueue
 from driver import Driver
 from job    import Job

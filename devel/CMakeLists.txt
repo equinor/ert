@@ -148,6 +148,7 @@ set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
 add_subdirectory( libutil )
 add_subdirectory( libgeometry )
 add_subdirectory( libecl )
+add_subdirectory( libwell )
 #-----------------------------------------------------------------
 
 
