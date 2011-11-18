@@ -333,11 +333,11 @@ has been used first to build a suitable region selection.
 I have added comments in the example - that is not actually supported (yet at least)
 
 -------------------------------------------------------------------------------------
-CREATE_MINISTEP MSTEP
+CREATE_DATASET     MSTEP
 CREATE_ECLREGION   FIPNUM3       FALSE              --- We create a region called FIPNUM3 with no elements
-                                                 --- selected from the start.
+                                                    --- selected from the start.
 CREATE_ECLREGION   WATER_FLOODED TRUE               --- We create a region called WATER_FLOEDED,
-                                                 --- which starts with all elements selected.
+                                                    --- which starts with all elements selected.
 CREATE_ECLREGION   MIDLLE        FALSE              --- Create a region called MIDDLE with
                                                  --- no elements initially.
 LOAD_FILE       INIT          /path/to/ECL.INIT  --- We load the INIT file and label
@@ -359,14 +359,48 @@ ECLREGION_SELECT_VALUE_LESS    WATER_FLOODED RESTART:SWAT:100   0.90    FALSE
 ECLREGION_SELECT_SLICE  MIDDLE   Z   4  6   TRUE
 
 
--- We add field data in the current ministep, corresponding to the two
--- selection region (poro is only updated in FIPNUM3, PERMX is only updated in
+-- We add field data in the current dataset, corresponding to the two
+-- selection regions (poro is only updated in FIPNUM3, PERMX is only updated in
 -- the water flooded region and NTG is only updates in the MIDDLE region).
 ADD_FIELD    MSTEP    PORO    FIPNUM3
 ADD_FIELD    MSTEP    PERMX   WATER_FLOODED
 ADD_FIELD    MSTEP    NTG     MIDDLE
 -------------------------------------------------------------------------------------
+Second example:
+CREATE_DATASET SURFACE_DATA
 
+-- We load a surface from file which will be used as a base-surface when
+-- selecting active elements in surfaces. We give the surface the name 
+-- 'BASE_SURFACE' - the surface should be in irap format.
+LOAD_SURFACE                         BASE_SURFACE Surface/base.irap
+
+
+-- We load two polygons in irap format; the polygons ire called 'North'
+-- and 'South'. Alternatively we can create a polygon with CREATE_POLYGON 
+-- command:
+LOAD_POLYGON                         North       Polygon/north.irap
+LOAD_POLYGON                         South       Polygon/south.irap
+
+
+-- We create a new surface region - a surface region is a set of 
+-- points in a surface; the region need not be mathematically connected.
+-- The surface region is called myRegion - it is based on 'BASE_SURFACE'
+-- surface, and we start out with no elements selected.
+CREATE_SURFACE_REGION                myRegion  BASE_SURFACE  False
+
+
+-- We update the region selection in 'myRegion' be selecting all the 
+-- points which are inside the two polygons 'North' and 'South':
+SURFACE_REGION_SELECT_IN_POLYGON     myRegion   North   True
+SURFACE_REGION_SELECT_IN_POLYGON     myRegion   South   True
+
+
+-- We add two enkf surface objects, called TOP and BOTTOM ('TOP' and
+-- 'BOTTOM' should be added in the enkf config file). For each of these
+-- surfaces we say that only the points within the region 'myRegion'
+-- should be updated:
+ADD_DATA_SURFACE               ALL_DATA    TOP         myRegion
+ADD_DATA_SURFACE               ALL_DATA    BOTTOM      myRegion
 
     _________________________________________________________________________
    /                                                                         \
@@ -1499,8 +1533,13 @@ static void local_config_ADD_DATA_SURFACE( local_config_type * config , local_co
       active_list_type * active_list        = local_dataset_get_node_active_list( dataset , surface_name );
       const int_vector_type * region_active = geo_region_get_index_list( region );
       
-      for (int i=0; i < int_vector_size( region_active ); i++)
+      printf("Active size: %d \n",int_vector_size( region_active ));
+      for (int i=0; i < int_vector_size( region_active ); i++) {
+        printf("%d ",int_vector_iget( region_active , i));
+        if ((i % 30) == 0)
+          printf("\n");
         active_list_add_index( active_list , int_vector_iget( region_active , i ) );
+      }
     }
   }
 
