@@ -13,3 +13,5 @@
 #cmakedefine MKDIR_POSIX
 #cmakedefine HAVE_FNMATCH
 #cmakedefine NEED_BLAS
+#cmakedefine HAVE_OPENMP
+

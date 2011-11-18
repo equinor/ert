@@ -100,6 +100,7 @@ class conf:
         
         # These are site-dependant; and should really be set OUTSIDE
         # the central build configuration.
+        self.USE_OPENMP          = False 
         self.SITE_CONFIG_FILE    = SITE_CONFIG_FILE
         self.INCLUDE_LSF         = INCLUDE_LSF
         self.LSF_INCLUDE_PATH    = LSF_INCLUDE_PATH
@@ -113,6 +114,8 @@ class conf:
             self.CCFLAGS = ""
         self.CCFLAGS = ""
         self.CCFLAGS            += "-O2 -std=gnu99 -g -Wall -pipe -DINTERNAL_LINK -DHAVE_FSYNC -DHAVE_GLOB -DHAVE_FNMATCH -DMKDIR_POSIX -DHAVE_LOCALTIME_R -DHAVE_LOCKF -DPOSIX_SETENV -DHAVE_GETUID -DHAVE_SYMLINK -DHAVE_REALPATH -DHAVE_EXECINFO -DHAVE_FORK -DHAVE_ZLIB -DHAVE_PTHREAD"
+        if self.USE_OPENMP:
+            self.CCFLAGS +=" -fopenmp -DHAVE_OPENMP"
         self.ARFLAGS             = "csr"
         
 
