@@ -35,13 +35,53 @@
 #include <well_ts.h>
 #include <stringlist.h>
 
+/*
+  The library libwell contains functionality to read and interpret
+  some of the well related keywords from an ECLIPSE restart
+  file. Roughly speaking the implementation is spread between three
+  datatypes:
+
+    well_info_type: This is the container type which holds information
+       about all the wells; at all times.
+
+    well_ts_type: The status and properties of a well can typically
+       change throughout the simulation; the datatype well_ts_type
+       contains a time series for one well.
+
+    well_state_type: The well_state_type datatype contains the
+       state/properties of one well at one particular instant of time.
+
+  Limitations
+
+     Read-only: The well properties for ECLIPSE is specified through
+       the SCHEDULE section of the ECLIPSE datafile; i.e. the
+       information found in restart files is only for
+       reporting/visaulization+++, and can not be used to alter the
+       simulation.
+
+     segmented wells: The segment information for multi segment wells
+       is completely ignored.  
+
+     lgr: Well information from lgr's is ignored; the code 'handles' a
+       restart file with lgr - but only the properties from the global
+       grid are considered.
+*/
+
+/*
+  Usage:
+  ------
+
+
+*/
+
+
 #define WELL_INFO_TYPE_ID 91777451
 
 
 
 struct well_info_struct {
-  hash_type       * wells;
-  stringlist_type * well_names;
+  hash_type       * wells;                /* Hash table of well_ts_type instances; indexed by well name. */
+  stringlist_type * well_names;           /* A list of all the well names. */
 };
 
 
@@ -58,7 +98,6 @@ bool well_info_has_well( well_info_type * well_info , const char * well_name ) {
   return hash_has_key( well_info->wells , well_name );
 }
 
-
 well_ts_type * well_info_get_ts( const well_info_type * well_info , const char *well_name) {
   return hash_get( well_info->wells , well_name );
 }
@@ -68,8 +107,6 @@ static void well_info_add_new_ts( well_info_type * well_info , const char * well
   hash_insert_hash_owned_ref( well_info->wells , well_name , well_ts , well_ts_free__);
   stringlist_append_ref( well_info->well_names , well_name );
 }
-
-
 
 static void well_info_add_state( well_info_type * well_info , well_state_type * well_state) {
   const char * well_name = well_state_get_name( well_state );
@@ -82,14 +119,13 @@ static void well_info_add_state( well_info_type * well_info , well_state_type * 
   }
 }  
 
-
 /**
    This function assumes that (sub)select_block() has been used on the
-   ecl_file instance @rst_file; and the file will load well
+   ecl_file instance @rst_file; and the function will load well
    information from the first block available in the file only. To
    load all the well information from a unified restart file it is
    easier to use the well_info_add_UNRST_wells() function; which works
-   by calling this function repeatedly.
+   by calling this function repeatedly.  
 */
 
 void well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr , int grid_nr) {
@@ -124,8 +160,6 @@ void well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst
   }
 }
 
-
-
 void well_info_load_file( well_info_type * well_info , const char * filename) {
   int report_nr;
   ecl_file_enum file_type = ecl_util_get_file_type( filename , NULL , &report_nr);
@@ -156,6 +190,8 @@ int well_info_get_well_size( const well_info_type * well_info , const char * wel
   return well_ts_get_size( well_ts );
 }
 
+/*****************************************************************/
+
 well_state_type * well_info_get_state_from_time( const well_info_type * well_info , const char * well_name , time_t sim_time) {
   well_ts_type * well_ts = well_info_get_ts( well_info , well_name );
   return well_ts_get_state_from_sim_time( well_ts , sim_time );
@@ -167,7 +203,22 @@ well_state_type * well_info_get_state_from_report( const well_info_type * well_i
   return well_ts_get_state_from_report( well_ts , report_step);
 }
 
-well_state_type * well_info_iget_state_from_report( const well_info_type * well_info , const char * well_name , int index) {
+well_state_type * well_info_iget_state( const well_info_type * well_info , const char * well_name , int time_index) {
   well_ts_type * well_ts = well_info_get_ts( well_info , well_name );
-  return well_ts_iget_state( well_ts , index);
+  return well_ts_iget_state( well_ts , time_index);
+}
+
+well_state_type * well_info_iiget_state( const well_info_type * well_info , int well_index , int time_index) {
+  const char * well_name = stringlist_iget( well_info->well_names , well_index );
+  return well_info_iget_state( well_info , well_name , time_index );
+}
+
+/*****************************************************************/
+
+int well_info_get_num_wells( const well_info_type * well_info ) {
+  return stringlist_get_size( well_info->well_names );
+}
+
+const char * well_info_iget_well_name( const well_info_type * well_info, int well_index) {
+  return stringlist_iget( well_info->well_names , well_index);
 }
