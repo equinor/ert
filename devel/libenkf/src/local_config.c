@@ -270,8 +270,64 @@ plane will be selected.
 
 ECLREGION_SELECT_IN_POLYGON [ECLREGION_NAME POLYGON_NAME SELECT]
 ---------------------------------------------------
+Well select all the points which are inside the polygon with name
+'POLYGON_NAME'. The polygon should have been created with command 
+CREATE_POLYGON or loaded with command 'LOAD_POLYGON' first.
 
 
+CREATE_POLYGON  [POLYGON_NAME  num_points x1 y1 x2 y2 x3 y3 ....]
+---------------------------------------------------------------
+Will create a geo_polygon instance based on the coordinate list: 
+(x1,y1), (x2,y2), (x3,y3), ... The polygon should not be explicitly 
+closed - i.e. you should in general have (x1,y1) != (xn,yn). The 
+polygon will be stored under the name 'POLYGON_NAME' - which should
+later be used when referring to the polygon in region select operations.
+
+
+LOAD_POLYGON  [POLYGON_NAME  FILENAME]
+--------------------------------------------------------------
+Will load a polygon instance from the file 'FILENAME' - the file should
+be in irap RMS format. The polygon will be stored under the name 'POLYGON_NAME'
+which can then later be used to refer to the polygon for e.g. select operations.
+
+
+LOAD_SURFACE  [SURFACE_NAME  SURFACE_FILE]
+---------------------------------------------------------------
+Will load an irap surface from file 'SURFACE_FILE'. The surface will be
+stored internally as 'SURFACE_NAME' - this function is mainly needed to
+have a base surface available for the CREATE_SURFACE_REGION command.
+
+
+CREATE_SURFACE_REGION  [REGION_NAME BASE_SURFACE  PRESELECT]
+----------------------------------------------------------------
+Will create a new surface region object which can be used to select
+and deselect parts of a surface. The region will be called 'REGION_NAME' 
+and it will be based on the surface given by 'BASE_SURFACE'. 'PRESELECT' 
+is a boolean 'TRUE' or 'FALSE' which determines whether the region is
+created with all points selected, or no points selected.
+
+
+SURFACE_REGION_SELECT_IN_POLYGON  [REGION_NAME  POLYGON_NAME SELECT]
+--------------------------------------------------------------------
+Well select|deselect all the points in the surface which are inside the 
+polygon.
+
+
+SURFACE_REGION_SELECT_LINE [ REGION_NAME  X1 Y1 X2 Y2 SIGN SELECT]
+------------------------------------------------------------------
+Well select|deselect all the points which are above|below the line: (x1,y1) -> (x2,y2)
+
+If SIGN is positive the select will apply to all points with a 
+positive (right hand system) distance to the line; if SIGN is negative 
+the selector will apply to all points with a negative distance to the line.
+
+
+ADD_DATA_SURFACE  [ DATASET_NAME  SURFACE_NAME   REGION NAME]
+-------------------------------------------------------------------
+Will add the node 'SURFACE_NAME' (not one of the loaded surfaces, but
+an enkf_node object) to the dataset 'DATASET_NAME'. Only the elements 
+in the region 'REGION_NAME' will be added. Typically SURFACE_REGION_SELECT_xxxx
+has been used first to build a suitable region selection.
 
 
 I have added comments in the example - that is not actually supported (yet at least)
@@ -725,6 +781,21 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
     break;
   case(LOAD_POLYGON):
     return LOAD_POLYGON_STRING;
+    break;
+  case(LOAD_SURFACE):
+    return LOAD_SURFACE_STRING;
+    break;
+  case(CREATE_SURFACE_REGION):
+    return CREATE_SURFACE_REGION_STRING;
+    break;
+  case(SURFACE_REGION_SELECT_IN_POLYGON):
+    return SURFACE_REGION_SELECT_IN_POLYGON_STRING;
+    break;
+  case(SURFACE_REGION_SELECT_LINE):
+    return SURFACE_REGION_SELECT_LINE_STRING;
+    break;
+  case(ADD_DATA_SURFACE):
+    return ADD_DATA_SURFACE_STRING;
     break;
   default:
     util_abort("%s: command:%d not recognized \n",__func__ , cmd);
@@ -1358,8 +1429,8 @@ static void local_config_LOAD_SURFACE( local_config_type * config , local_contex
 
 
 static void local_config_CREATE_SURFACE_REGION( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
-  char * region_name       = read_alloc_string( stream , binary );
-  char * base_surface      = read_alloc_string( stream , binary );
+  char * region_name       = read_alloc_string( stream , binary );  
+  char * base_surface      = read_alloc_string( stream , binary );  
   bool preselect           = read_bool( stream , binary );                
   
   local_context_create_surface_region( context , base_surface , region_name ,  preselect);
@@ -1415,6 +1486,7 @@ static void local_config_SURFACE_REGION_SELECT_LINE( local_config_type * config 
 
 
 static void local_config_ADD_DATA_SURFACE( local_config_type * config , local_context_type * context , FILE * stream , bool binary) {
+
   char * dataset_name = read_alloc_string( stream , binary );
   char * surface_name = read_alloc_string( stream , binary );
   char * region_name  = read_alloc_string( stream , binary );
