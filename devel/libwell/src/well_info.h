@@ -34,10 +34,14 @@ extern "C" {
   void              well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr , int grid_nr);
   void              well_info_load_file( well_info_type * well_info , const char * filename);
   void              well_info_free( well_info_type * well_info );
+
+  int               well_info_get_num_wells( const well_info_type * well_info );
+  const char      * well_info_iget_well_name( const well_info_type * well_info, int well_index);
+  
   well_state_type * well_info_get_state_from_time( const well_info_type * well_info , const char * well_name , time_t sim_time);
   well_state_type * well_info_get_state_from_report( const well_info_type * well_info , const char * well_name , int report_step );
-  well_state_type * well_info_iget_state_from_report( const well_info_type * well_info , const char * well_name , int index);
-  int               well_info_get_well_size( const well_info_type * well_info , const char * well_name );
+  well_state_type * well_info_iget_state_from_report( const well_info_type * well_info , const char * well_name , int time_index);
+  well_state_type * well_info_iiget_state( const well_info_type * well_info , int well_index , int time_index);
 
 #ifdef __cplusplus
 }

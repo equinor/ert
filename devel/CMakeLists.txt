@@ -145,6 +145,7 @@ set( libutil_src_path     ${CMAKE_SOURCE_DIR}/libutil/src )
 set( libconfig_src_path   ${CMAKE_SOURCE_DIR}/libconfig/src )
 set( libecl_src_path      ${CMAKE_SOURCE_DIR}/libecl/src )
 set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
+set( libwell_src_path     ${CMAKE_SOURCE_DIR}/libwell/src )
 
 add_subdirectory( libutil )
 add_subdirectory( libgeometry )
