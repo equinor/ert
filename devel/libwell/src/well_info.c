@@ -71,7 +71,31 @@
   Usage:
   ------
 
+  1. Create a new well_info_type instance with well_info_alloc().
 
+  2. Add restart data - using one of the three functions:
+
+       - well_info_add_wells()       - ecl_file: One report step
+       - well_info_add_UNRST_wells() - ecl_file: Many report steps
+       - well_info_load_file()       - Restart file name; single file or unified
+
+     The three different methods to add restart data can be
+     interchganged, and also called repeatedly. All the relevant data
+     is internalized in the well_xxx structures; and the restart files
+     can be discarded afterwards.
+
+  3. Query the well_info instance for information about the wells at
+     different times; either through the indirect function
+     well_info_get_ts() to get the full timeseries for one named well;
+     or one of the functions:
+     
+      - well_info_get_state_from_time()   
+      - well_info_get_state_from_report()
+      - well_info_iget_state()
+      - well_info_iiget_state()
+
+  4. well_info_free() before you go home.
+      
 */
 
 
