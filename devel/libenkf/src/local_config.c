@@ -1533,13 +1533,9 @@ static void local_config_ADD_DATA_SURFACE( local_config_type * config , local_co
       active_list_type * active_list        = local_dataset_get_node_active_list( dataset , surface_name );
       const int_vector_type * region_active = geo_region_get_index_list( region );
       
-      printf("Active size: %d \n",int_vector_size( region_active ));
-      for (int i=0; i < int_vector_size( region_active ); i++) {
-        printf("%d ",int_vector_iget( region_active , i));
-        if ((i % 30) == 0)
-          printf("\n");
+      for (int i=0; i < int_vector_size( region_active ); i++) 
         active_list_add_index( active_list , int_vector_iget( region_active , i ) );
-      }
+
     }
   }
 
