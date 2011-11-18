@@ -126,6 +126,7 @@ if (HAVE_SETENV)
   add_definitions( -DPOSIX_SETENV )
 endif()
 
+
 find_library( LAPACK_LIBRARY NAMES lapack)
 set(CMAKE_REQUIRED_LIBS LAPACK_LIBRARY)
 try_compile( BLAS0 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_blas.c )
