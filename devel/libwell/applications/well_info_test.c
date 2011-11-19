@@ -32,7 +32,7 @@
 #include <well_conn.h>
 
 int main( int argc , char ** argv) {
-  well_info_type * well_info = well_info_alloc();
+  well_info_type * well_info = well_info_alloc( NULL );
   for (int i=1; i < argc; i++) {
     printf("Loading file: %s \n",argv[i]);
     well_info_load_file( well_info , argv[i]);

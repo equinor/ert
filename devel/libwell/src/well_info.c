@@ -54,17 +54,17 @@
   Limitations
 
      Read-only: The well properties for ECLIPSE is specified through
-       the SCHEDULE section of the ECLIPSE datafile; i.e. the
-       information found in restart files is only for
-       reporting/visaulization+++, and can not be used to alter the
-       simulation.
+       the SCHEDULE section of the ECLIPSE datafile. The information
+       found in restart files is only for reporting/visaulization+++,
+       i.e. the code in libwell can unfortunately not be used for well
+       modelling.
 
      segmented wells: The segment information for multi segment wells
        is completely ignored.  
 
      lgr: Well information from lgr's is ignored; the code 'handles' a
-       restart file with lgr - but only the properties from the global
-       grid are considered.
+       restart file with lgr's - but only the properties from the
+       global grid are considered.  
 */
 
 /*
@@ -102,18 +102,23 @@
 #define WELL_INFO_TYPE_ID 91777451
 
 
-
 struct well_info_struct {
-  hash_type       * wells;                /* Hash table of well_ts_type instances; indexed by well name. */
-  stringlist_type * well_names;           /* A list of all the well names. */
+  hash_type           * wells;                /* Hash table of well_ts_type instances; indexed by well name. */
+  stringlist_type     * well_names;           /* A list of all the well names. */
+  const ecl_grid_type * grid;
 };
 
 
+/**
+   The grid pointer is currently not used; but the intention is to use
+   it to resolve lgr names.  
+*/
 
-well_info_type * well_info_alloc() {
+well_info_type * well_info_alloc( const ecl_grid_type * grid) {
   well_info_type * well_info = util_malloc( sizeof * well_info , __func__ );
   well_info->wells      = hash_alloc();
   well_info->well_names = stringlist_alloc_new();
+  well_info->grid       = grid;
   return well_info;
 }
 
