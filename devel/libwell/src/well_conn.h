@@ -29,7 +29,6 @@ extern "C" {
 #include <ecl_kw.h>
 #include <ecl_intehead.h>
 
-  // LGR Fuckup ....
   typedef struct  {
     int  i;
     int  j;
@@ -40,7 +39,7 @@ extern "C" {
   
   void             well_conn_free__( void * arg );
   well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , const ecl_intehead_type * header , int well_nr , int conn_nr);
-
+  
 #ifdef __cplusplus
 }
 #endif

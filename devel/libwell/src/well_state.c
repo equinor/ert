@@ -16,6 +16,12 @@
    for more details. 
 */
 
+/**
+   The well_state_type structure contains state information about one
+   well for one particular point in time.
+*/
+
+
 #include <time.h>
 #include <stdbool.h>
 
@@ -60,9 +66,6 @@ void well_state_add_conn( well_state_type * well_state , int grid_nr , well_conn
 }
 
 
-const char * well_state_get_name( const well_state_type * well ) {
-  return well->name;
-}
 
 
 well_state_type * well_state_alloc( const ecl_file_type * ecl_file , const ecl_intehead_type * header , int report_nr , int grid_nr , int well_nr) {
@@ -117,11 +120,17 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , const ecl_i
 }
 
 
+void well_state_free( well_state_type * well ) {
+  vector_free( well->connections );
+  free( well->name );
+  free( well );
+}
+
+/*****************************************************************/
 
 int well_state_get_report_nr( const well_state_type * well_state ) {
   return well_state->valid_from_report;
 }
-
 
 time_t well_state_get_sim_time( const well_state_type * well_state ) {
   return well_state->valid_from_time;
@@ -143,12 +152,8 @@ bool well_state_is_open( const well_state_type * well_state ) {
   return well_state->open;
 }
 
-
-void well_state_free( well_state_type * well ) {
-  vector_free( well->connections );
-  free( well->name );
-  free( well );
+const char * well_state_get_name( const well_state_type * well_state ) {
+  return well_state->name;
 }
-
 
 

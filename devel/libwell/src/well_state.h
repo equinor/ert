@@ -41,7 +41,6 @@ extern "C" {
   well_conn_type       * well_state_iget_connection( const well_state_type * well_state , int index);
   well_type_enum         well_state_get_type( const well_state_type * well_state);
   bool                   well_state_is_open( const well_state_type * well_state );   
-
   
 #ifdef __cplusplus
 }

@@ -25,11 +25,11 @@ extern "C" {
 #endif
 
 #include <ecl_file.h>
-
+#include <ecl_grid.h>
 
   typedef struct well_info_struct well_info_type;
   
-  well_info_type *  well_info_alloc();
+  well_info_type *  well_info_alloc(const ecl_grid_type * grid);
   void              well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst_file, int grid_nr);
   void              well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr , int grid_nr);
   void              well_info_load_file( well_info_type * well_info , const char * filename);
