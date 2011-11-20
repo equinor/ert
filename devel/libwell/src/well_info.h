@@ -32,7 +32,7 @@ extern "C" {
   well_info_type *  well_info_alloc(const ecl_grid_type * grid);
   void              well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst_file, int grid_nr);
   void              well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr , int grid_nr);
-  void              well_info_load_file( well_info_type * well_info , const char * filename);
+  void              well_info_load_rstfile( well_info_type * well_info , const char * filename);
   void              well_info_free( well_info_type * well_info );
 
   int               well_info_get_num_wells( const well_info_type * well_info );

@@ -35,7 +35,7 @@ int main( int argc , char ** argv) {
   well_info_type * well_info = well_info_alloc( NULL );
   for (int i=1; i < argc; i++) {
     printf("Loading file: %s \n",argv[i]);
-    well_info_load_file( well_info , argv[i]);
+    well_info_load_rstfile( well_info , argv[i]);
   }
   {
     well_state_type * well_state = well_info_get_state_from_report( well_info , "PG-P2" , 350 );

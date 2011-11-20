@@ -77,12 +77,10 @@
 
        - well_info_add_wells()       - ecl_file: One report step
        - well_info_add_UNRST_wells() - ecl_file: Many report steps
-       - well_info_load_file()       - Restart file name; single file or unified
-
-     The three different methods to add restart data can be
-     interchganged, and also called repeatedly. All the relevant data
-     is internalized in the well_xxx structures; and the restart files
-     can be discarded afterwards.
+       - well_info_load_rstfile()    - Restart file name; single file or unified
+       
+     There are more details about this in a comment section above the
+     well_info_add_wells() function.
 
   3. Query the well_info instance for information about the wells at
      different times; either through the indirect function
@@ -148,6 +146,39 @@ static void well_info_add_state( well_info_type * well_info , well_state_type * 
   }
 }  
 
+
+/**
+   Which function to use for adding wells?
+
+   There are three different functions which can be used to add wells
+   to the well_info structure:
+   
+     - well_info_add_wells()
+     - well_info_add_UNRST_wells()
+     - well_info_load_file()
+   
+   The two first functions expect an open ecl_file instance as input;
+   whereas the last funtion expects the name of a restart file as
+   input. 
+
+   If you need access ecl_file access to the restart files for another
+   reason it might be convenient to use one of the first functions;
+   however due to the workings of the ecl_file type it might not be
+   entirely obvious: The ecl_file structure will load the needed
+   keywords on demand; the keywords needed to initialize well
+   structures will typically not be loaded for other purposes, so the
+   only gain from using an existing ecl_file instance is that you do
+   not have to rebuild the index. The disadvantage of using an
+   existing ecl_file instance is that after the call to add_wells()
+   the well related kewywords will stay in (probaly unused) in memory.
+
+   The three different methods to add restart data can be
+   interchganged, and also called repeatedly. All the relevant data is
+   internalized in the well_xxx structures; and the restart files can
+   be discarded afterwards.
+*/
+
+
 /**
    This function assumes that (sub)select_block() has been used on the
    ecl_file instance @rst_file; and the function will load well
@@ -189,7 +220,14 @@ void well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst
   }
 }
 
-void well_info_load_file( well_info_type * well_info , const char * filename) {
+
+/**
+   The @filename argument should be the name of a restart file; in
+   unified or not-unified format - if that is not the case we will
+   have crash and burn.  
+*/
+
+void well_info_load_rstfile( well_info_type * well_info , const char * filename) {
   int report_nr;
   ecl_file_enum file_type = ecl_util_get_file_type( filename , NULL , &report_nr);
   if ((file_type == ECL_RESTART_FILE) || (file_type == ECL_UNIFIED_RESTART_FILE))
