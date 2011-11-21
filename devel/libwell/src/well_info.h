@@ -26,6 +26,7 @@ extern "C" {
 
 #include <ecl_file.h>
 #include <ecl_grid.h>
+#include <well_ts.h>
 
   typedef struct well_info_struct well_info_type;
   
@@ -35,6 +36,7 @@ extern "C" {
   void              well_info_load_rstfile( well_info_type * well_info , const char * filename);
   void              well_info_free( well_info_type * well_info );
 
+  well_ts_type    * well_info_get_ts( const well_info_type * well_info , const char *well_name);
   int               well_info_get_num_wells( const well_info_type * well_info );
   const char      * well_info_iget_well_name( const well_info_type * well_info, int well_index);
   
