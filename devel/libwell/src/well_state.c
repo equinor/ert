@@ -51,6 +51,8 @@ struct well_state_struct {
 };
 
 
+UTIL_IS_INSTANCE_FUNCTION( well_state , WELL_STATE_TYPE_ID)
+
 
 static well_state_type * well_state_alloc_empty() {
   well_state_type * well_state = util_malloc( sizeof * well_state , __func__ );

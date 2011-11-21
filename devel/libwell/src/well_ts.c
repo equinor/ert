@@ -303,9 +303,9 @@ int well_ts_get_size( const well_ts_type * well_ts) {
 }
 
 well_state_type * well_ts_iget_state( const well_ts_type * well_ts , int index) {
-  return vector_iget( well_ts->ts , index );
+  well_node_type * node = vector_iget( well_ts->ts , index );
+  return node->well_state;
 }
-
 
 
 
@@ -313,10 +313,8 @@ well_state_type * well_ts_get_state_from_report( const well_ts_type * well_ts , 
   int index = well_ts_get_index( well_ts , report_step , -1 , true );
   if (index < 0)
     return NULL;
-  else {
-    well_node_type * node = vector_iget( well_ts->ts , index );
-    return node->well_state;
-  }
+  else 
+    return well_ts_iget_state( well_ts , index );
 }
 
 
@@ -324,9 +322,7 @@ well_state_type * well_ts_get_state_from_sim_time( const well_ts_type * well_ts 
   int index = well_ts_get_index( well_ts , -1 , sim_time , false );
   if (index < 0)
     return NULL;
-  else {
-    well_node_type * node = vector_iget( well_ts->ts , index );
-    return node->well_state;
-  }
+  else
+    return well_ts_iget_state( well_ts , index );
 }
 

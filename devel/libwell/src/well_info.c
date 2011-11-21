@@ -132,7 +132,7 @@ well_ts_type * well_info_get_ts( const well_info_type * well_info , const char *
 static void well_info_add_new_ts( well_info_type * well_info , const char * well_name) {
   well_ts_type * well_ts = well_ts_alloc( well_name ) ;
   hash_insert_hash_owned_ref( well_info->wells , well_name , well_ts , well_ts_free__);
-  stringlist_append_ref( well_info->well_names , well_name );
+  stringlist_append_copy( well_info->well_names , well_name );
 }
 
 static void well_info_add_state( well_info_type * well_info , well_state_type * well_state) {
