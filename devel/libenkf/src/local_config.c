@@ -1233,7 +1233,7 @@ static void local_config_LOAD_FILE( local_config_type * config , local_context_t
   char * file_key  = read_alloc_string( stream , binary );
   char * file_name = read_alloc_string( stream , binary );
 
-  local_context_load_file( context , file_name , file_key );
+  local_context_load_file( context , file_name , file_key ); /*  */
   
   free( file_key );
   free( file_name );
