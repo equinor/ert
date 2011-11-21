@@ -44,6 +44,9 @@ if (USE_PTHREAD)
   add_definitions( -DHAVE_PTHREAD )
 endif()
 #-----------------------------------------------------------------
+option(USE_OPENMP "Include OpenMP support" ON)
+set( OPENMP USE_OPENMP)
+#-----------------------------------------------------------------
 option(USE_LSF "Include support for LSF" ON)
 if (USE_LSF)
   #find_path( LSF_HEADER lsf.h ENV{LSF_INCLUDE_PATH})
