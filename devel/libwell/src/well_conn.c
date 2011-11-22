@@ -22,13 +22,30 @@
 #include <well_conn.h>
 
 
+well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const ecl_intehead_type * header , int well_nr)  {
+  const int iwel_offset = header->niwelz * well_nr;
+  well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
+  
+  conn->i    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADI_ITEM ) - 1;
+  conn->j    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADJ_ITEM ) - 1;
+  conn->k    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADK_ITEM ) - 1;
+  conn->open = true;  // This is not really specified anywhere.
+
+  return conn;
+}
+
+
+/*
+  Observe that the (ijk) values are shifted to zero offset to be
+  aligned with the rest of the ert libraries.  
+*/
 well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , const ecl_intehead_type * header , int well_nr , int conn_nr) {
   const int icon_offset = header->niconz * ( header->ncwmax * well_nr + conn_nr );
   well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
   
-  conn->i = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM );
-  conn->j = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM );
-  conn->k = ecl_kw_iget_int( icon_kw , icon_offset + ICON_K_ITEM );
+  conn->i = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM ) - 1;
+  conn->j = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM ) - 1;
+  conn->k = ecl_kw_iget_int( icon_kw , icon_offset + ICON_K_ITEM ) - 1;
   {
     int int_status = ecl_kw_iget_int( icon_kw , icon_offset + ICON_STATUS_ITEM );
     if (int_status > 0)

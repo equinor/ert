@@ -42,12 +42,13 @@
 
 struct well_state_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char          * name;
-  time_t          valid_from_time;
-  int             valid_from_report;
-  bool            open;
-  vector_type   * connections;
-  well_type_enum  type;
+  char           * name;
+  time_t           valid_from_time;
+  int              valid_from_report;
+  bool             open;
+  well_conn_type * wellhead;
+  vector_type    * connections;
+  well_type_enum   type;
 };
 
 
@@ -83,6 +84,9 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , const ecl_i
     well_state->valid_from_report = report_nr;
     well_state->name              = util_alloc_strip_copy(ecl_kw_iget_ptr( zwel_kw , zwel_offset ));  // Hardwired max 8 characters in Well Name
     {
+      well_state->wellhead = well_conn_alloc_wellhead( iwel_kw , header , well_nr );
+    }
+    {
       int int_state = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_STATUS_ITEM );
       if (int_state > 0)
         well_state->open = true;
@@ -91,10 +95,12 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , const ecl_i
     }
     {
       int num_connections = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_CONNECTIONS_ITEM );
+      int lgr_index = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_LGR_ITEM );
       for (int conn_nr = 0; conn_nr < num_connections; conn_nr++) {
         well_conn_type * conn =  well_conn_alloc( icon_kw , header , well_nr , conn_nr );
         well_state_add_conn( well_state , grid_nr , conn );
       }
+      printf("lgr_index:%d \n",lgr_index);
     }
 
     {
@@ -124,6 +130,7 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , const ecl_i
 
 void well_state_free( well_state_type * well ) {
   vector_free( well->connections );
+  well_conn_free( well->wellhead );
   free( well->name );
   free( well );
 }
@@ -140,6 +147,10 @@ time_t well_state_get_sim_time( const well_state_type * well_state ) {
 
 int well_state_get_num_connections( const well_state_type * well_state ) {
   return vector_get_size( well_state->connections );
+}
+
+well_conn_type * well_get_wellhead( const well_state_type * well_state ) {
+  return well_state->wellhead;
 }
 
 well_conn_type * well_state_iget_connection( const well_state_type * well_state , int index) {

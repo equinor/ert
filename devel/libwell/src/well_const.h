@@ -30,15 +30,19 @@ extern "C" {
   added. 
 */
 
-
-#define IWEL_STATUS_ITEM       10
+#define IWEL_HEADI_ITEM         0
+#define IWEL_HEADJ_ITEM         1
+#define IWEL_HEADK_ITEM         2
 #define IWEL_CONNECTIONS_ITEM   4
 #define IWEL_TYPE_ITEM          6 
+#define IWEL_STATUS_ITEM       10
+#define IWEL_LGR_ITEM          42  
 
 #define ICON_I_ITEM         1
 #define ICON_J_ITEM         2
 #define ICON_K_ITEM         3    
 #define ICON_STATUS_ITEM    5  
+
 
 #define IWEL_PRODUCER       1
 #define IWEL_OIL_INJECTOR   2

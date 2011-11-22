@@ -32,6 +32,9 @@ if conf.INCLUDE_LSF:
 if conf.g2c:
    lib_list.append( "g2c" )
    
+fileH = open("site_config_file.h" , "w")
+fileH.write( "#define SITE_CONFIG_FILE \"%s\"\n" % conf.SITE_CONFIG_FILE)
+fileH.close()
 
 conf.update_env( env , [ LIBENKF , LIBRMS , LIBANALYSIS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBGEOMETRY , LIBPLOT , LIBCONFIG , LIBUTIL ] , lib_list , link = True)
 env.Append( CPPPATH = conf.PLPLOT_INCLUDE_PATH )
@@ -43,7 +46,7 @@ if conf.INCLUDE_LSF:
 tui_objects = env.Object( ["enkf_tui_main.c" , "enkf_tui_fs.c" , "enkf_tui_ranking.c" , "enkf_tui_misc.c" , "enkf_tui_table.c" , "enkf_tui_plot.c" , 
                            "enkf_tui_run.c", "enkf_tui_util.c" , "enkf_tui_init.c" , "enkf_tui_export.c" , "enkf_tui_analysis.c"])
 define_fmt = "\'%s=\"%s\"\'"
-main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE) ])
+main_object = env.Object( "main.c" )
 
 ert_test_object = env.Object( "ert_test.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE)])
 
