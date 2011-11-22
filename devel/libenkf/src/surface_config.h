@@ -32,7 +32,7 @@ extern "C" {
   const geo_surface_type * surface_config_get_base_surface( const surface_config_type * config );
   char                   * surface_config_alloc_init_file(const surface_config_type * config, int iens);
   void                     surface_config_free( surface_config_type * config );
-  int                      surface_config_get_data_size( const surface_config_type * config );
+  int                      surface_config_get_data_size(const surface_config_type * config );
   surface_config_type    * surface_config_alloc_empty( );
   void                     surface_config_set_init_file_fmt( surface_config_type * config , const char * init_file_fmt );
   void                     surface_config_set_base_surface( surface_config_type * config , const char * base_surface );

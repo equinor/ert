@@ -1,11 +1,10 @@
 cmake_minimum_required( VERSION 2.6 )
-
 include (CheckFunctionExists)
 project( ERT C )
 add_definitions( -g -O2 -Wall -std=gnu99 )
 
-set( INSTALL_GROUP "" CACHE STRING "Group to install as - blank to install as current group")
-set( INSTALL_ROOT "/tmp" CACHE STRING "Root path for installation")
+set( INSTALL_GROUP  ""     CACHE STRING "Group to install as - blank to install as current group")
+set( INSTALL_ROOT   "/tmp" CACHE STRING "Root path for installation")
 
 #-----------------------------------------------------------------
 option(USE_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
@@ -45,24 +44,9 @@ if (USE_PTHREAD)
 endif()
 #-----------------------------------------------------------------
 option(USE_OPENMP "Include OpenMP support" ON)
-set( OPENMP USE_OPENMP)
+set(OPENMP USE_OPENMP)
 #-----------------------------------------------------------------
 option(USE_LSF "Include support for LSF" ON)
-if (USE_LSF)
-  #find_path( LSF_HEADER lsf.h ENV{LSF_INCLUDE_PATH})
-  find_path( LSF_HEADER lsf.h /prog/LSF/8.0/include/lsf)
-  find_library( LSF_LIBRARY NAMES lsf PATHS /prog/LSF/8.0/linux2.6-glibc2.3-x86_64/lib )   
-  if (!LSF_HEADER)
-    set(USE_LSF OFF)
-  endif()
-  if (!LSF_LIBRARY)
-    set( USE_LSF OFF )
-  endif()
-endif()
-if (USE_LSF)
-  set( HAVE_LSF ON )
-  add_definitions( -DHAVE_LSF )
-endif()
 #-----------------------------------------------------------------
 find_path( EXECINFO_HEADER execinfo.h /usr/include )
 if (EXECINFO_HEADER)
@@ -145,7 +129,6 @@ configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
 
 set( libutil_build_path   ${CMAKE_BINARY_DIR}/libutil/src )
 set( libutil_src_path     ${CMAKE_SOURCE_DIR}/libutil/src )
-set( libconfig_src_path   ${CMAKE_SOURCE_DIR}/libconfig/src )
 set( libecl_src_path      ${CMAKE_SOURCE_DIR}/libecl/src )
 set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
 set( libwell_src_path     ${CMAKE_SOURCE_DIR}/libwell/src )
@@ -154,17 +137,31 @@ add_subdirectory( libutil )
 add_subdirectory( libgeometry )
 add_subdirectory( libecl )
 add_subdirectory( libwell )
+
+set( BUILD_ERT OFF )
+
 #-----------------------------------------------------------------
+if (BUILD_ERT)
+   set( libconfig_src_path    ${CMAKE_SOURCE_DIR}/libconfig/src )
+   set( libsched_src_path     ${CMAKE_SOURCE_DIR}/libsched/src )
+   set( librms_src_path       ${CMAKE_SOURCE_DIR}/librms/src )
+   set( libanalysis_src_path  ${CMAKE_SOURCE_DIR}/libanalysis/src )
+   set( libjob_queue_src_path ${CMAKE_SOURCE_DIR}/libjob_queue/src )
+   set( libplot_src_path ${CMAKE_SOURCE_DIR}/libplot/src )
+
+   add_subdirectory( libanalysis )
+   add_subdirectory( librms )
+   add_subdirectory( libsched )
+   add_subdirectory( libconfig )
+   add_subdirectory( libjob_queue )
+   add_subdirectory( libplot )
+   add_subdirectory( libenkf )
 
 
-#add_subdirectory( libconfig )
-#add_subdirectory( libjob_queue )
-
-
-#add_subdirectory( ${LIBSCHED_PATH} )
-#add_subdirectory( ${LIBECL_PATH} )
-#add_subdirectory( ${LIBCONFIG_PATH} )
-
-#add_subdirectory( ${LIBPLOT_PATH} )
-#add_subdirectory( ${LIBENKF_PATH} )
-
+   add_dependencies( geometry_static util_static )
+   add_dependencies( ecl_static geometry_static )
+   add_dependencies( rms_static ecl_static )
+   add_dependencies( config_static util_static )
+   add_dependencies( sched_static ecl_static )
+   add_dependencies( job_queue_static util_static config_static )
+endif()

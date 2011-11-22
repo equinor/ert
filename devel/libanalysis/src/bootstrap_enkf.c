@@ -524,7 +524,7 @@ bool bootstrap_enkf_set_bool( void * arg , const char * var_name , bool value) {
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE bootstrap_enkf_symbol_table
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_TABLE
+#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
 #endif
 
 

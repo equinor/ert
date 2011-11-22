@@ -230,7 +230,7 @@ long std_enkf_get_options( void * arg , long flag ) {
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE std_enkf_symbol_table
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_TABLE
+#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
 #endif
 
 analysis_table_type SYMBOL_TABLE = {

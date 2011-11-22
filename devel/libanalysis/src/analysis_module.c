@@ -153,7 +153,7 @@ analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const ch
 
 
 analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * user_name , const char * lib_name) {
-  return analysis_module_alloc( rng , lib_name , user_name , EXTERNAL_MODULE_TABLE );
+  return analysis_module_alloc( rng , lib_name , user_name , EXTERNAL_MODULE_NAME );
 }
 
 const char * analysis_module_get_name( const analysis_module_type * module ) {

@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ert_build_info.h>
-
+#include <site_config_file.h>
 
 
 

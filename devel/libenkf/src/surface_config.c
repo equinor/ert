@@ -39,6 +39,7 @@ surface_config_type  * surface_config_alloc_empty( ) {
   UTIL_TYPE_ID_INIT( config , SURFACE_CONFIG_TYPE_ID );
   config->init_file_fmt = NULL;
   config->base_surface  = NULL;
+  return config;
 }
 
 
@@ -51,6 +52,7 @@ void surface_config_free( surface_config_type * config ) {
     geo_surface_free( config->base_surface );
   
   free( config );
+
 }
 
 char * surface_config_alloc_init_file(const surface_config_type * config, int iens) {
