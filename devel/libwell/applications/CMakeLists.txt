@@ -4,6 +4,7 @@ add_executable( well_info_test.x well_info_test.c )
 include_directories( ${libecl_src_path} )
 include_directories( ${libwell_src_path} )
 include_directories( ${libutil_src_path} )
+include_directories( ${libutil_build_path} )
 
 set(program_list well_state_test.x well_info_test.x )
 foreach(prog ${program_list})
