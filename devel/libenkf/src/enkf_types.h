@@ -30,7 +30,7 @@ extern "C" {
   This enum signals the three different states a "cell" in
   observation/data node can be in:
 
-  ACTIVE: The cell is active ans should be used/updated in EnKF
+  ACTIVE: The cell is active and should be used/updated in EnKF
     analysis.
 
   LOCAL_INACTIVE: The cell is not included in the current local

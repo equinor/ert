@@ -51,7 +51,6 @@ gen_data_config_type       * gen_data_config_alloc_empty( const char * key );
 void                         gen_data_config_set_ens_size( gen_data_config_type * config , int ens_size );
 gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_config_type * );
 gen_data_file_format_type    gen_data_config_get_output_format ( const gen_data_config_type * );
-char                       * gen_data_config_alloc_initfile(const gen_data_config_type *  , int );
 ecl_type_enum                gen_data_config_get_internal_type(const gen_data_config_type * );
 gen_data_config_type       * gen_data_config_alloc_with_options(const char * key , bool , const stringlist_type *);
 void                         gen_data_config_free(gen_data_config_type * );
@@ -72,14 +71,11 @@ void gen_data_config_update(gen_data_config_type * config           ,
                             enkf_var_type var_type                  ,
                             gen_data_file_format_type input_format  ,
                             gen_data_file_format_type output_format ,
-                            const char * init_file_fmt              ,  
                             const char * template_ecl_file          , 
                             const char * template_data_key          );
 
 const char * gen_data_config_get_template_file( const gen_data_config_type * config );
 const char * gen_data_config_get_template_key( const gen_data_config_type * config );
-const char * gen_data_config_get_init_file_fmt( const gen_data_config_type * config );
-
 void gen_data_config_fprintf_config( const gen_data_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 
                                      const char * min_std_file , FILE * stream);
 

@@ -22,14 +22,12 @@
 #include <enkf_macros.h>
 #include <surface_config.h>
 #include <enkf_types.h>
-#include <path_fmt.h>
 
 #define SURFACE_CONFIG_TYPE_ID 853317
 
 struct surface_config_struct {
   UTIL_TYPE_ID_DECLARATION;
   geo_surface_type * base_surface;
-  path_fmt_type    * init_file_fmt;
 };
 
 
@@ -37,7 +35,6 @@ struct surface_config_struct {
 surface_config_type  * surface_config_alloc_empty( ) {
   surface_config_type * config = util_malloc( sizeof * config , __func__ );
   UTIL_TYPE_ID_INIT( config , SURFACE_CONFIG_TYPE_ID );
-  config->init_file_fmt = NULL;
   config->base_surface  = NULL;
   return config;
 }
@@ -45,23 +42,10 @@ surface_config_type  * surface_config_alloc_empty( ) {
 
 
 void surface_config_free( surface_config_type * config ) {
-  if (config->init_file_fmt != NULL)
-    path_fmt_free( config->init_file_fmt );
-
   if (config->base_surface != NULL)
     geo_surface_free( config->base_surface );
   
   free( config );
-
-}
-
-char * surface_config_alloc_init_file(const surface_config_type * config, int iens) {
-  return path_fmt_alloc_path(config->init_file_fmt , false , iens);
-}
-
-
-void surface_config_set_init_file_fmt( surface_config_type * config , const char * init_file_fmt ) {
-  config->init_file_fmt = path_fmt_realloc_path_fmt( config->init_file_fmt , init_file_fmt );
 }
 
 

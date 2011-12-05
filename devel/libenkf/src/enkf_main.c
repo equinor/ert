@@ -1322,7 +1322,6 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
       local_ministep_type * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
-      local_dataset_type  * dataset = NULL;
       local_obsset_type   * obsset  = local_ministep_get_obsset( ministep );
 
       obs_data_reset( obs_data );

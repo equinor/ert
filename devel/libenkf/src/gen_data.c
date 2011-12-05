@@ -345,12 +345,10 @@ bool gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const 
 
 
 
-bool gen_data_initialize(gen_data_type * gen_data , int iens , rng_type * rng) {
-  char * init_file = gen_data_config_alloc_initfile(gen_data->config , iens);
+bool gen_data_initialize(gen_data_type * gen_data , int iens , const char * init_file , rng_type * rng) {
   if (init_file != NULL) {
     if (!gen_data_fload_with_report_step(gen_data , init_file , 0))
       util_abort("%s: could not find file:%s \n",__func__ , init_file);
-    free(init_file);
     return true;
   } else
     return false; /* No init performed ... */

@@ -1459,12 +1459,11 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
   if (run_info->active) {  /* if the job is not active we just return .*/
     const shared_info_type    * shared_info   = enkf_state->shared_info;
     const member_config_type  * my_config     = enkf_state->my_config;
-    const forward_model_type  * forward_model = model_config_get_forward_model(shared_info->model_config);
     const site_config_type    * site_config   = shared_info->site_config;
     /*
       Prepare the job and submit it to the queue
     */
-    enkf_state_init_eclipse(enkf_state);
+    enkf_state_init_eclipse( enkf_state );
     run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
                                                   site_config_get_job_script( site_config ),
                                                   ecl_config_get_num_cpu( enkf_state->ecl_config ),

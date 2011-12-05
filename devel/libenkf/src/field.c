@@ -725,13 +725,9 @@ void field_ecl_write(const field_type * field , const char * run_path , const ch
 
 
 
-bool field_initialize(field_type *field , int iens , rng_type * rng) {
-  if (field_config_enkf_init(field->config)) {
-    {
-      char * filename = field_config_alloc_init_file(field->config , iens);
-      field_fload(field , filename );
-      free(filename);
-    }
+bool field_initialize(field_type *field , int iens , const char * init_file , rng_type * rng) {
+  if (init_file != NULL) {
+    field_fload(field , init_file );
     {
       field_func_type * init_transform   = field_config_get_init_transform(field->config);
       /* 
@@ -1345,7 +1341,7 @@ void field_update_sum(field_type * sum , const field_type * field , double lower
       } 
     } else if (ecl_type == ECL_DOUBLE_TYPE) {
         double * data       = (double *) field->data;
-        float * sum_data    = (double *) sum->data;
+        double * sum_data   = (double *) sum->data;
         for (i = 0; i < data_size; i++) {
           if (data[i] >= lower_limit)
             if (data[i] < upper_limit)

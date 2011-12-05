@@ -68,7 +68,7 @@ bool prefix ## _is_instance__(const void * __arg) {                        \
 #define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *arg);
 
 #define VOID_GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size__ (const void * arg) {\
-   prefix ## _config_type * config = prefix ## _config_safe_cast_const( arg ); \
+   const prefix ## _config_type * config = prefix ## _config_safe_cast_const( arg ); \
    return prefix ## _config_get_data_size( config );                     \
 }
 #define VOID_GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size__ (const void * arg);
@@ -227,11 +227,11 @@ void prefix ## _deserialize__(void *void_arg, const active_list_type * active_li
 /*****************************************************************/
 
 #define VOID_INITIALIZE(prefix)     \
-  bool prefix ## _initialize__(void *void_arg, int iens , rng_type * rng) {     \
+  bool prefix ## _initialize__(void *void_arg, int iens , const char * init_file, rng_type * rng) { \
    prefix ## _type  *arg = prefix ## _safe_cast(void_arg);       \
-   return prefix ## _initialize (arg , iens , rng);                  \
+   return prefix ## _initialize (arg , iens , init_file , rng);  \
 }
-#define VOID_INITIALIZE_HEADER(prefix) bool prefix ## _initialize__(void *, int , rng_type * );
+#define VOID_INITIALIZE_HEADER(prefix) bool prefix ## _initialize__(void *, int , const char * , rng_type * );
 
 /*****************************************************************/
 

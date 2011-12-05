@@ -54,11 +54,9 @@ static void surface_fload( surface_type * surface , const char * filename ) {
 }
 
 
-bool surface_initialize(surface_type *surface , int iens , rng_type * rng) {
-  char * filename = surface_config_alloc_init_file(surface->config , iens);
+
+bool surface_initialize(surface_type *surface , int iens , const char * filename , rng_type * rng) {
   surface_fload(surface , filename );
-  
-  free(filename);
   return true;
 }
 

@@ -430,44 +430,6 @@ bool enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool int
 }
 
 
-
-///**
-//   Returns true if data is written to disk. If no data is written to
-//   disk, and the function returns false, the calling scope is free
-//   to skip storage (i.e. unlink an empty file).
-//*/
-//
-//bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , bool internal_state , int report_step , int iens , state_enum state) {
-//  if (!enkf_node->__memory_allocated)
-//    util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
-//  {
-//    bool data_written = false;
-//    FUNC_ASSERT(enkf_node->fwrite_f);
-//    data_written = enkf_node->fwrite_f(enkf_node->data , stream , internal_state);
-//    
-//    enkf_node->__report_step = report_step;
-//    enkf_node->__state       = state;
-//    enkf_node->__modified    = false;
-//    enkf_node->__iens        = iens;
-//    return data_written;
-//  }
-//}
-
-
-
-void enkf_node_set_data(enkf_node_type *enkf_node , const void * data , int report_step , int iens , state_enum state) {
-  FUNC_ASSERT(enkf_node->set_data);
-  enkf_node->set_data(enkf_node->data , data);
-    
-  enkf_node->__report_step = report_step;
-  enkf_node->__state       = state;
-  enkf_node->__modified    = false;
-  enkf_node->__iens        = iens;
-}
-
-
-
-
 void enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state) {
   if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && (enkf_node->__iens == iens) && (!enkf_node->__modified)) 
     return;  /* The in memory representation agrees with the buffer values */
@@ -485,20 +447,18 @@ void enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int repor
 
 
 
-//void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step , int iens , state_enum state) {
-//  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && (enkf_node->__iens == iens) && (!enkf_node->__modified))
-//    return;  /* The in memory representation agrees with the disk image */
-//
-//  {
-//    FUNC_ASSERT(enkf_node->fread_f);
-//    enkf_node_ensure_memory(enkf_node);
-//    enkf_node->fread_f(enkf_node->data , stream);
-//    enkf_node->__modified    = false;
-//    enkf_node->__report_step = report_step;
-//    enkf_node->__state       = state;
-//    enkf_node->__iens        = iens;
-//  }
-//}
+void enkf_node_set_data(enkf_node_type *enkf_node , const void * data , int report_step , int iens , state_enum state) {
+  FUNC_ASSERT(enkf_node->set_data);
+  enkf_node->set_data(enkf_node->data , data);
+    
+  enkf_node->__report_step = report_step;
+  enkf_node->__state       = state;
+  enkf_node->__modified    = false;
+  enkf_node->__iens        = iens;
+}
+
+
+
 
 
 
@@ -570,13 +530,15 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
 
 bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , rng_type * rng) {
   if (enkf_node->initialize != NULL) {
-    if (enkf_node->initialize(enkf_node->data , iens , rng)) {
+    char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , iens );
+    bool   init = enkf_node->initialize(enkf_node->data , iens , init_file, rng);
+    if (init) {
       enkf_node->__report_step = 0;
       enkf_node->__state       = ANALYZED;
       enkf_node->__modified    = true;
-      return true;
-    } else 
-      return false; /* No init performed */
+    } 
+    util_safe_free( init_file );
+    return init;
   } else
     return false;  /* No init performed */
 }

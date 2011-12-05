@@ -70,7 +70,7 @@ typedef void          (set_inflation_ftype)             (void *       ,
 
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
 typedef void *        (alloc_ftype)                     (const void *);
-typedef bool          (initialize_ftype)                (      void *  , int , rng_type * );
+typedef bool          (initialize_ftype)                (      void *  , int , const char * , rng_type * );
 typedef bool          (ecl_load_ftype)                  (void *  , const char * , const ecl_sum_type * , const ecl_file_type * , int);
 typedef void          (realloc_data_ftype)              (void * );
 typedef void          (free_data_ftype)                 (void * );
@@ -115,7 +115,7 @@ enkf_node_type * enkf_node_copyc(const enkf_node_type * );
 */
 void             enkf_node_free_data(enkf_node_type * );
 void             enkf_node_free__(void *);
-void             enkf_initialize    (enkf_node_type * , int);
+void             enkf_initialize(enkf_node_type * , int);
 bool             enkf_node_include_type(const enkf_node_type * , int );
 void           * enkf_node_value_ptr(const enkf_node_type * );
 ert_impl_type    enkf_node_get_impl_type(const enkf_node_type * );
@@ -127,7 +127,7 @@ void             enkf_node_deserialize(enkf_node_type *enkf_node , const active_
 bool             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
 void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);
 void             enkf_node_ecl_write (const enkf_node_type *, const char * , fortio_type * , int);
-  bool             enkf_node_initialize(enkf_node_type *enkf_node , int , rng_type * );
+bool             enkf_node_initialize(enkf_node_type *enkf_node , int , rng_type * );
 void             enkf_node_printf(const enkf_node_type *);
 bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, bool , int , int , state_enum);
 void             enkf_node_clear     (enkf_node_type *);

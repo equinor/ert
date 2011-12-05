@@ -27,7 +27,6 @@
 #include <ecl_util.h>
 #include <rms_file.h>
 #include <rms_util.h>
-#include <path_fmt.h>
 #include <math.h>
 #include <field_trans.h>
 #include <field_common.h>
@@ -135,8 +134,6 @@ struct field_config_struct {
   int                     sizeof_ctype;
   ecl_type_enum           internal_ecl_type;
   ecl_type_enum           export_ecl_type;
-  path_fmt_type         * init_file_fmt;        /* The format for loading init_files - if this is NULL the initialization is done by the forward model. */
-
   bool                    __enkf_mode;          /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool                    write_compressed;  
 
@@ -427,7 +424,6 @@ field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_gri
   config->init_transform_name   = NULL;
   
   config->truncation       = TRUNCATE_NONE;
-  config->init_file_fmt    = NULL;
   config->min_std          = NULL;
   config->trans_table      = trans_table;
   
@@ -437,14 +433,6 @@ field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_gri
 }
                                               
 
-
-void field_config_set_init_file_fmt( field_config_type * field_config , const char * init_file_fmt ) {
-  field_config->init_file_fmt = path_fmt_realloc_path_fmt( field_config->init_file_fmt , init_file_fmt );
-}
-
-const char * field_config_get_init_file_fmt( const field_config_type * config ) {
-  return path_fmt_get_fmt( config->init_file_fmt );
-}
 
 
 static void field_config_set_init_transform( field_config_type * config , const char * __init_transform_name ) {
@@ -497,7 +485,6 @@ void field_config_update_state_field( field_config_type * config, int truncation
   /* Setting all the defaults for state_fields, i.e. PRESSURE / SGAS / SWAT ... */
   config->import_format = ECL_FILE;
   config->export_format = ECL_FILE;
-  field_config_set_init_file_fmt( config , NULL );
   
   field_config_set_output_transform( config , NULL );
   field_config_set_input_transform( config , NULL );
@@ -509,10 +496,8 @@ void field_config_update_state_field( field_config_type * config, int truncation
   
 void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value, 
                                           field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
-                                          const char * init_file_fmt, 
                                           const char * init_transform , const char * output_transform ) {
   field_config_set_truncation( config , truncation , min_value , max_value );
-  field_config_set_init_file_fmt( config , init_file_fmt);  
   config->type = ECLIPSE_PARAMETER;
   
   config->export_format = export_format;
@@ -528,12 +513,10 @@ void field_config_update_parameter_field( field_config_type * config , int trunc
 
 void field_config_update_general_field( field_config_type * config , int truncation, double min_value , double max_value, 
                                         field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
-                                        const char * init_file_fmt, 
                                         const char * init_transform , 
                                         const char * input_transform , 
                                         const char * output_transform ) {
   field_config_set_truncation( config , truncation , min_value , max_value );
-  field_config_set_init_file_fmt( config , init_file_fmt);  
   config->type = GENERAL;
   
   config->export_format = export_format;
@@ -549,12 +532,10 @@ void field_config_update_general_field( field_config_type * config , int truncat
    Requirements:
 
    ECLIPSE_PARAMETER: export_format != UNDEFINED_FORMAT
-                      init_file_fmt != NULL
 
    ECLIPSE_RESTART  : Validation can be finalized at the enkf_config_node level.
    
    GENERAL          : export_format != UNDEFINED_FORMAT
-                      init_file_fmt != NULL
 */
 
 bool field_config_is_valid( const field_config_type * field_config ) {
@@ -562,13 +543,13 @@ bool field_config_is_valid( const field_config_type * field_config ) {
 
   switch( field_config->type ) {
   case ECLIPSE_PARAMETER:
-    if ((field_config->export_format == UNDEFINED_FORMAT) || (field_config->init_file_fmt == NULL))
+    if (field_config->export_format == UNDEFINED_FORMAT)
       valid = false;
     break;
   case ECLIPSE_RESTART:
     break;
   case GENERAL:
-    if ((field_config->export_format == UNDEFINED_FORMAT) || (field_config->init_file_fmt == NULL))
+    if (field_config->export_format == UNDEFINED_FORMAT) 
       valid = false;
     break;
   default:
@@ -679,7 +660,6 @@ void field_config_free(field_config_type * config) {
   util_safe_free(config->input_transform_name);
   util_safe_free(config->output_transform_name);
   util_safe_free(config->init_transform_name);
-  if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
   if ((config->private_grid) && (config->grid != NULL)) ecl_grid_free( config->grid );
   free(config);
 }
@@ -733,21 +713,10 @@ bool field_config_active_cell(const field_config_type * config , int i , int j ,
 
 
 
-bool field_config_enkf_init(const field_config_type * config) {
-  if (config->init_file_fmt != NULL)
-    return true;
-  else
-    return false;
-}
 
 
 
 
-
-
-char * field_config_alloc_init_file(const field_config_type * config, int iens) {
-  return path_fmt_alloc_path(config->init_file_fmt , false , iens);
-}
 
 
 
@@ -1003,23 +972,27 @@ int field_config_parse_user_key(const field_config_type * config, const char * i
 const ecl_grid_type *field_config_get_grid(const field_config_type * config) { return config->grid; }
 
 
-void field_config_fprintf_config( const field_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 
-                                  const char * min_std_file , FILE * stream) {
+void field_config_fprintf_config( const field_config_type * config , 
+                                  enkf_var_type var_type , 
+                                  const char * outfile , 
+                                  const char * infile , 
+                                  const char * min_std_file , 
+                                  FILE * stream) {
+
   if (var_type == PARAMETER) {
     fprintf( stream , CONFIG_VALUE_FORMAT , PARAMETER_KEY );
     fprintf( stream , CONFIG_VALUE_FORMAT , outfile );
   } else {
-    if (config->init_file_fmt == NULL)
+    if (true)
       /* This is an ECLIPSE dynamic field. */
       fprintf( stream , CONFIG_VALUE_FORMAT , DYNAMIC_KEY );
     else {
+      /* Dynamic fields which are not ECLIPSE solution fields - not really very well supported. */
       fprintf( stream , CONFIG_VALUE_FORMAT , GENERAL_KEY );
       fprintf( stream , CONFIG_VALUE_FORMAT , outfile );
       fprintf( stream , CONFIG_VALUE_FORMAT , infile );
     }
   }
-  if (config->init_file_fmt != NULL)
-    fprintf( stream , CONFIG_OPTION_FORMAT , INIT_FILES_KEY , path_fmt_get_fmt( config->init_file_fmt ));
 
   if (config->init_transform != NULL)
     fprintf( stream , CONFIG_OPTION_FORMAT , INIT_TRANSFORM_KEY , config->init_transform_name );

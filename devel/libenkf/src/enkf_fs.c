@@ -885,7 +885,7 @@ static int __get_parameter_report_step( int report_step , state_enum state) {
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
   enkf_var_type var_type     = enkf_config_node_get_var_type(config_node);
-  fs_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) );
+  fs_driver_type * driver    = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) );
   int internal_report_step   = report_step;
   
   if (var_type == PARAMETER) {

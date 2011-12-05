@@ -47,6 +47,7 @@ struct enkf_config_node_struct {
   bool_vector_type      * internalize;      /* Should this node be internalized - observe that question of what to internalize is MOSTLY handled at a higher level - without consulting this variable. Can be NULL. */ 
   stringlist_type       * obs_keys;         /* Keys of observations which observe this node. */
   char                  * key;
+  path_fmt_type         * init_file_fmt;    /* Format used to create files for initialization. */
   path_fmt_type         * enkf_infile_fmt;  /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */
   path_fmt_type         * enkf_outfile_fmt; /* Name of file which is written by EnKF, and read by the forward model. */
   void                  * data;             /* This points to the config object of the actual implementation.        */
@@ -69,7 +70,7 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
   node->impl_type       = impl_type;
   node->key             = util_alloc_string_copy( key );
 
-
+  node->init_file_fmt    = NULL; 
   node->enkf_infile_fmt  = NULL;
   node->enkf_outfile_fmt = NULL;
   node->internalize      = NULL;
@@ -188,10 +189,12 @@ void enkf_config_node_update_min_std( enkf_config_node_type * config_node , cons
 
 
 static void enkf_config_node_update( enkf_config_node_type * config_node , 
-                              const char * enkf_outfile_fmt , 
-                              const char * enkf_infile_fmt ,
-                              const char * min_std_file ) {
+                                     const char * initfile_fmt , 
+                                     const char * enkf_outfile_fmt , 
+                                     const char * enkf_infile_fmt ,
+                                     const char * min_std_file ) {
 
+  config_node->init_file_fmt    = path_fmt_realloc_path_fmt( config_node->init_file_fmt    , initfile_fmt ); 
   config_node->enkf_infile_fmt  = path_fmt_realloc_path_fmt( config_node->enkf_infile_fmt  , enkf_infile_fmt ); 
   config_node->enkf_outfile_fmt = path_fmt_realloc_path_fmt( config_node->enkf_outfile_fmt , enkf_outfile_fmt ); 
   enkf_config_node_update_min_std( config_node , min_std_file );
@@ -203,12 +206,13 @@ static void enkf_config_node_update( enkf_config_node_type * config_node ,
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_type,
                                                ert_impl_type             impl_type,
                                                const char               * key , 
+                                               const char               * init_file_fmt , 
                                                const char               * enkf_outfile_fmt , 
                                                const char               * enkf_infile_fmt  , 
                                                void                     * data) {
 
   enkf_config_node_type * node = enkf_config_node_alloc__( var_type , impl_type , key );
-  enkf_config_node_update( node , enkf_outfile_fmt , enkf_infile_fmt , NULL );
+  enkf_config_node_update( node , init_file_fmt, enkf_outfile_fmt , enkf_infile_fmt , NULL );
   node->data = data;
   return node;
 }
@@ -223,10 +227,10 @@ void enkf_config_node_update_gen_kw( enkf_config_node_type * config_node ,
                                      const char * init_file_fmt ) {
 
   /* 1: Update the low level gen_kw_config stuff. */
-  gen_kw_config_update( config_node->data , template_file , parameter_file , init_file_fmt );    
+  gen_kw_config_update( config_node->data , template_file , parameter_file );    
 
   /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
-  enkf_config_node_update( config_node , enkf_outfile_fmt , NULL , min_std_file);
+  enkf_config_node_update( config_node , init_file_fmt , enkf_outfile_fmt , NULL , min_std_file);
 }
 
 
@@ -251,11 +255,10 @@ enkf_config_node_type * enkf_config_node_new_surface( const char * key ) {
 void enkf_config_node_update_surface( enkf_config_node_type * config_node , const char * base_surface, const char * init_file_fmt , const char * output_file , const char * min_std_file ) {
 
   /* 1: Update the date owned by the surface node. */
-  surface_config_set_init_file_fmt( config_node->data , init_file_fmt );
   surface_config_set_base_surface( config_node->data , base_surface );
   
   /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
-  enkf_config_node_update( config_node , output_file , NULL , min_std_file);
+  enkf_config_node_update( config_node , init_file_fmt , output_file , NULL , min_std_file);
 }
 
 
@@ -301,7 +304,7 @@ enkf_config_node_type * enkf_config_node_new_field( const char * key , ecl_grid_
 void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max ) {
   config_node->var_type = DYNAMIC_STATE;
   field_config_update_state_field( config_node->data , truncation , value_min , value_max );
-  enkf_config_node_update( config_node , NULL , NULL , NULL );
+  enkf_config_node_update( config_node , NULL , NULL , NULL , NULL );
 }
 
 
@@ -317,11 +320,10 @@ void enkf_config_node_update_parameter_field( enkf_config_node_type * config_nod
   field_file_format_type export_format = field_config_default_export_format( enkf_outfile_fmt ); /* Purely based on extension, recognizes ROFF and GRDECL, the rest will be ecl_kw format. */
   field_config_update_parameter_field( config_node->data , truncation , value_min , value_max ,
                                        export_format , 
-                                       init_file_fmt , 
                                        init_transform , 
                                        output_transform );
   config_node->var_type = PARAMETER;
-  enkf_config_node_update( config_node , enkf_outfile_fmt , NULL , min_std_file);
+  enkf_config_node_update( config_node , init_file_fmt , enkf_outfile_fmt , NULL , min_std_file);
 }
 
 
@@ -360,12 +362,11 @@ void enkf_config_node_update_general_field( enkf_config_node_type * config_node 
   field_config_update_general_field( config_node->data , 
                                      truncation , value_min , value_max ,
                                      export_format , 
-                                     init_file_fmt , 
                                      init_transform , 
                                      input_transform , 
                                      output_transform );
 
-  enkf_config_node_update( config_node , enkf_outfile_fmt , enkf_infile_fmt, min_std_file);
+  enkf_config_node_update( config_node , init_file_fmt , enkf_outfile_fmt , enkf_infile_fmt, min_std_file);
 }
 
   
@@ -423,11 +424,11 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
                            config_node->var_type , 
                            input_format , 
                            output_format ,          
-                           init_file_fmt , 
                            template_ecl_file , 
                            template_data_key);
     
     enkf_config_node_update( config_node ,               /* Generic update - needs the format settings from the special.*/
+                             init_file_fmt ,
                              enkf_outfile_fmt , 
                              enkf_infile_fmt, 
                              min_std_file); 
@@ -464,6 +465,9 @@ void enkf_config_node_free(enkf_config_node_type * node) {
   if (node->enkf_outfile_fmt != NULL) 
     path_fmt_free( node->enkf_outfile_fmt );
   
+  if (node->init_file_fmt != NULL)
+    path_fmt_free( node->init_file_fmt );
+
   if (node->internalize != NULL)
     bool_vector_free( node->internalize );
   
@@ -545,6 +549,12 @@ char * enkf_config_node_alloc_outfile(const enkf_config_node_type * node , int r
     return NULL;
 }
 
+char * enkf_config_node_alloc_initfile( const enkf_config_node_type * node , int iens) {
+  if (node->init_file_fmt == NULL)
+    return NULL;
+  else
+    return path_fmt_alloc_file( node->init_file_fmt , false , iens );
+}
 
 
 

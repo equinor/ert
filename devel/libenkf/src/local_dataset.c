@@ -57,7 +57,7 @@ local_dataset_type * local_dataset_alloc_copy( local_dataset_type * src_dataset 
 
   while (!hash_iter_is_complete( node_iter )) {
     const char * key = hash_iter_get_next_key( node_iter );
-    active_list_type * active_list = active_list_alloc_copy( hash_get( src_dataset , key ) );
+    active_list_type * active_list = active_list_alloc_copy( hash_get( src_dataset->nodes , key ) );
     hash_insert_hash_owned_ref( copy_dataset->nodes , key , active_list , active_list_free__);
   }
 
@@ -125,7 +125,6 @@ void local_dataset_fprintf( const local_dataset_type * dataset , FILE * stream) 
 
 
 int local_dataset_get_size( const local_dataset_type * dataset ) {
-  local_dataset_safe_cast( dataset );
   return hash_get_size( dataset->nodes );
 }
 

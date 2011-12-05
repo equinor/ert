@@ -26,7 +26,6 @@
 #include <enkf_defaults.h>
 #include <gen_kw_common.h>
 #include <gen_kw_config.h>
-#include <path_fmt.h>
 #include <trans_func.h>
 #include <vector.h>
 #include "config_keys.h"
@@ -50,7 +49,6 @@ struct gen_kw_config_struct {
   vector_type          * parameters;       /* Vector of gen_kw_parameter_type instances. */
   char                 * template_file;
   char                 * parameter_file;
-  path_fmt_type        * init_file_fmt;    /* The format for loading init_files - if this is NULL the initialization is done by sampling N(0,1) numbers. */
   const char           * tag_fmt;          /* Pointer to the tag_format owned by the ensemble config object. */ 
 };
 
@@ -106,21 +104,6 @@ static void gen_kw_parameter_set_trans_func( gen_kw_parameter_type * parameter ,
 
 /*****************************************************************/
 
-void gen_kw_config_set_init_file_fmt( gen_kw_config_type * gen_kw_config , const char * init_file_fmt ) {
-  gen_kw_config->init_file_fmt = path_fmt_realloc_path_fmt( gen_kw_config->init_file_fmt , init_file_fmt );
-}
-
-
-const char * gen_kw_config_get_init_file_fmt( const gen_kw_config_type * config ) {
-  return path_fmt_get_fmt( config->init_file_fmt );
-}
-
-char * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens ) {
-  if (gen_kw_config->init_file_fmt != NULL)
-    return path_fmt_alloc_path( gen_kw_config->init_file_fmt , false , iens);
-  else
-    return NULL;
-}
 
 const char * gen_kw_config_get_template_file(const gen_kw_config_type * config) {
   return config->template_file;
@@ -207,11 +190,9 @@ gen_kw_config_type * gen_kw_config_alloc_empty( const char * key , const char * 
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
 
   gen_kw_config->key                = NULL; 
-  gen_kw_config->init_file_fmt      = NULL;
   gen_kw_config->template_file      = NULL;
   gen_kw_config->parameter_file     = NULL;
   gen_kw_config->parameters         = vector_alloc_new();
-  gen_kw_config->init_file_fmt      = NULL;
   gen_kw_config->tag_fmt            = tag_fmt;
   gen_kw_config->key                = util_alloc_string_copy( key );  
 
@@ -220,10 +201,9 @@ gen_kw_config_type * gen_kw_config_alloc_empty( const char * key , const char * 
 
 
 
-void gen_kw_config_update( gen_kw_config_type * config , const char * template_file , const char * parameter_file , const char * init_file_fmt) {
+void gen_kw_config_update( gen_kw_config_type * config , const char * template_file , const char * parameter_file ) {
   gen_kw_config_set_template_file( config , template_file);
   gen_kw_config_set_parameter_file( config , parameter_file );
-  gen_kw_config_set_init_file_fmt( config , init_file_fmt );
 }
 
 
@@ -241,8 +221,6 @@ void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
   util_safe_free( gen_kw_config->parameter_file );
 
   vector_free( gen_kw_config->parameters );
-  if (gen_kw_config->init_file_fmt != NULL)
-    path_fmt_free( gen_kw_config->init_file_fmt );
   free(gen_kw_config);
 }
 
@@ -335,9 +313,6 @@ void gen_kw_config_fprintf_config( const gen_kw_config_type * config , const cha
 
   if (min_std_file != NULL) 
     fprintf( stream , CONFIG_OPTION_FORMAT , MIN_STD_KEY , min_std_file);
-  
-  if (config->init_file_fmt != NULL) 
-    fprintf( stream , CONFIG_OPTION_FORMAT , MIN_STD_KEY , path_fmt_get_fmt( config->init_file_fmt) );
   
 }
 

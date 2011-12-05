@@ -82,15 +82,15 @@ typedef enum {
 
 
 typedef enum { UNDEFINED_FORMAT         = 0,
-	       RMS_ROFF_FILE 		= 1,
-	       ECL_KW_FILE   		= 2,       /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
-	       ECL_KW_FILE_ACTIVE_CELLS = 3,       /* ecl_kw format, only active cells - used writing to file. */
-	       ECL_KW_FILE_ALL_CELLS    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
-	       ECL_GRDECL_FILE          = 5, 
+               RMS_ROFF_FILE            = 1,
+               ECL_KW_FILE              = 2,       /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
+               ECL_KW_FILE_ACTIVE_CELLS = 3,       /* ecl_kw format, only active cells - used writing to file. */
+               ECL_KW_FILE_ALL_CELLS    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
+               ECL_GRDECL_FILE          = 5, 
                ECL_FILE                 = 6,       /* Assumes packed on export. */
                FILE_FORMAT_NULL         = 7}       /* Used when the guess functions are given NULL to check -should never be read. */ field_file_format_type; 
 
-	        
+                
 /* active_cells currently not really implemented */
 
 
@@ -102,13 +102,11 @@ void                    field_config_update_state_field( field_config_type * con
 
 void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value, 
                                           field_file_format_type export_format , 
-                                          const char * init_file_fmt, 
                                           const char * init_transform , const char * output_transform );
 
 
 void field_config_update_general_field( field_config_type * config , int truncation, double min_value , double max_value, 
                                         field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
-                                        const char * init_file_fmt, 
                                         const char * init_transform , 
                                         const char * input_transform , 
                                         const char * output_transform );
@@ -117,7 +115,6 @@ void field_config_update_general_field( field_config_type * config , int truncat
 field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table );
 
 
-const char            * field_config_get_init_file_fmt( const field_config_type * config );
 void                    field_config_get_ijk( const field_config_type * config , int active_index , int *i , int * j , int * k);
 field_type            * field_config_get_min_std( const field_config_type * field_config );
 const char            * field_config_default_extension(field_file_format_type , bool );
@@ -143,7 +140,6 @@ void                    field_config_get_ijk(const field_config_type * , int , i
 bool                    field_config_ijk_valid(const field_config_type *  , int  , int  , int );
 bool                    field_config_ijk_active(const field_config_type * config , int i , int j , int k);
 bool                    field_config_active_cell(const field_config_type *  , int , int , int);
-bool                    field_config_enkf_init(const field_config_type * );
 char                  * field_config_alloc_init_file(const field_config_type * , int );
 field_file_format_type  field_config_get_export_format(const field_config_type * );
 field_file_format_type  field_config_get_import_format(const field_config_type * );
@@ -166,7 +162,7 @@ const char            * field_config_get_init_transform_name( const field_config
 const char            * field_config_get_input_transform_name( const field_config_type * field_config );
 const char            * field_config_get_output_transform_name( const field_config_type * field_config );
 
-void            	field_config_set_truncation(field_config_type * , int , double , double );
+void                    field_config_set_truncation(field_config_type * , int , double , double );
 int                     field_config_get_truncation_mode(const field_config_type * config );
 double                  field_config_get_truncation_min( const field_config_type * config );
 double                  field_config_get_truncation_max( const field_config_type * config );

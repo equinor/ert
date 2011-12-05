@@ -26,7 +26,6 @@
 #include <gen_data_config.h>
 #include <enkf_types.h>
 #include <pthread.h>
-#include <path_fmt.h>
 #include <gen_data_common.h>
 #include <int_vector.h>
 #include <bool_vector.h>
@@ -62,7 +61,6 @@ struct gen_data_config_struct {
   int                            template_data_offset;  /* The offset into the template buffer before the data should come. */
   int                            template_data_skip;    /* The length of data identifier in the template.*/ 
   int                            template_buffer_size;  /* The total size (bytes) of the template buffer .*/
-  path_fmt_type                * init_file_fmt;         /* file format for the file used to load the inital values - NULL if the instance is initialized from the forward model. */
   gen_data_file_format_type      input_format;          /* The format used for loading gen_data instances when the forward model has completed *AND* for loading the initial files.*/
   gen_data_file_format_type      output_format;         /* The format used when gen_data instances are written to disk for the forward model. */
   int_vector_type              * data_size_vector;      /* Data size, i.e. number of elements , indexed with report_step */
@@ -132,7 +130,6 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   UTIL_TYPE_ID_INIT( config , GEN_DATA_CONFIG_ID);
 
   config->key               = util_alloc_string_copy( key );
-  config->init_file_fmt     = NULL;
 
   config->template_file        = NULL;
   config->template_key         = NULL;
@@ -158,15 +155,6 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   return config;
 }
 
-
-static void gen_data_config_set_init_file_fmt( gen_data_config_type * gen_data_config , const char * init_file_fmt ) {
-  gen_data_config->init_file_fmt = path_fmt_realloc_path_fmt( gen_data_config->init_file_fmt , init_file_fmt );
-}
-
-
-const char * gen_data_config_get_init_file_fmt( const gen_data_config_type * config ) {
-  return path_fmt_get_fmt( config->init_file_fmt );
-}
 
 
 const bool_vector_type * gen_data_config_get_active_mask( const gen_data_config_type * config ) {
@@ -222,11 +210,6 @@ static void gen_data_config_set_io_format( gen_data_config_type * config , gen_d
 
 
 bool gen_data_config_is_valid( const gen_data_config_type * gen_data_config) {
-  // This is to strict?
-  //if (gen_data_config->init_file_fmt == NULL)
-  //return false;
-  
-
   return gen_data_config->update_valid;
 }
 
@@ -246,7 +229,6 @@ void gen_data_config_update(gen_data_config_type * config           ,
                             enkf_var_type var_type                  , /* This is ONLY included too be able to do a sensible consistency check. */
                             gen_data_file_format_type input_format  ,
                             gen_data_file_format_type output_format ,
-                            const char * init_file_fmt              ,  
                             const char * template_ecl_file          , 
                             const char * template_data_key) {
   bool valid = true;
@@ -274,7 +256,6 @@ void gen_data_config_update(gen_data_config_type * config           ,
   /*****************************************************************/
   if (valid) {
     gen_data_config_set_template( config , template_ecl_file , template_data_key );
-    gen_data_config_set_init_file_fmt( config , init_file_fmt );
     gen_data_config_set_io_format( config , output_format , input_format);
     
     if ((output_format == ASCII_TEMPLATE) && (config->template_buffer == NULL))
@@ -324,7 +305,6 @@ gen_data_file_format_type gen_data_config_check_format( const void * format_stri
 
    INPUT_FORMAT:(ASCII|ASCII_TEMPLATE|BINARY_DOUBLE|BINARY_FLOAT)
    OUTPUT_FORMAT:(ASCII|ASCII_TEMPLATE|BINARY_DOUBLE|BINARY_FLOAT)
-   INIT_FILES:/some/path/with/%d
    TEMPLATE:/some/template/file
    KEY:<SomeKeyFoundInTemplate>
    ECL_FILE:<filename to write EnKF ==> Forward model>  (In the case of gen_param - this is extracted in the calling scope).
@@ -336,7 +316,6 @@ gen_data_file_format_type gen_data_config_check_format( const void * format_stri
 
 
 void gen_data_config_free(gen_data_config_type * config) {
-  if (config->init_file_fmt != NULL) path_fmt_free(config->init_file_fmt);
   int_vector_free( config->data_size_vector );
   
   util_safe_free( config->key );
@@ -482,17 +461,6 @@ void gen_data_config_set_dynamic( gen_data_config_type * config , enkf_fs_type *
 }
 
 
-char * gen_data_config_alloc_initfile(const gen_data_config_type * config , int iens) {
-  if (config->init_file_fmt != NULL) {
-    char * initfile = path_fmt_alloc_path(config->init_file_fmt , false , iens);
-    return initfile;
-  } else 
-    return NULL; 
-}
-
-
-
-
 void gen_data_config_get_template_data( const gen_data_config_type * config , 
                                         char ** template_buffer    , 
                                         int * template_data_offset , 
@@ -546,9 +514,6 @@ void gen_data_config_fprintf_config( const gen_data_config_type * config , enkf_
   else
     fprintf( stream , CONFIG_OPTION_FORMAT , ECL_FILE_KEY , outfile );
   
-  if (config->init_file_fmt != NULL)
-    fprintf( stream , CONFIG_OPTION_FORMAT , INIT_FILES_KEY , path_fmt_get_fmt( config->init_file_fmt ));
-
   if (min_std_file != NULL)
     fprintf( stream , CONFIG_OPTION_FORMAT , MIN_STD_KEY , min_std_file );
 

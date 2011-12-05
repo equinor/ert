@@ -121,13 +121,10 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 
 
-bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , rng_type * rng ) {
-  char * init_file = gen_kw_config_alloc_initfile( gen_kw->config , iens);
-  
-  if (init_file != NULL) {
+bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , const char * init_file , rng_type * rng ) {
+  if (init_file != NULL) 
     gen_kw_fload(gen_kw , init_file );
-    free( init_file );
-  } else {
+  else {
     const double mean = 0.0; /* Mean and std are hardcoded - the variability should be in the transformation. */
     const double std  = 1.0; 
     const int    data_size = gen_kw_config_get_data_size( gen_kw->config );
