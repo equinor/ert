@@ -501,7 +501,6 @@ matrix_type * obs_data_allocD_kernel(const matrix_type * E  , const matrix_type 
 
 matrix_type * obs_data_allocR(const obs_data_type * obs_data , int active_size) {
   matrix_type * R = matrix_alloc( active_size , active_size );
-  
   {
     int obs_offset = 0;
     for (int block_nr = 0; block_nr < vector_get_size( obs_data->data ); block_nr++) {
