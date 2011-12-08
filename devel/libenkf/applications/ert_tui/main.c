@@ -56,6 +56,22 @@ void text_splash() {
 }
 
 
+void devel_warning() {
+#ifdef DEVEL_VERSION
+  printf("\n");
+  printf("  ***************************************************************\n");
+  printf("  ** You have started a development version of ERT. If you are **\n");
+  printf("  ** not an advanced user, it might be better to use a stable  **\n");
+  printf("  ** version which has been better tested. The stable version  **\n");
+  printf("  ** should be available with the command:                     **\n");
+  printf("  **                                                           **\n");
+  printf("  **      bash%% ert config_file                                **\n");
+  printf("  **                                                           **\n");
+  printf("  ***************************************************************\n");
+#endif
+}
+
+
 /*
   SVN_VERSION and COMPILE_TIME_STAMP are env variables set by the
   makefile. Will exit if the config file does not exist.
@@ -104,11 +120,13 @@ void enkf_usage() {
 
 
 int main (int argc , char ** argv) {
+  devel_warning();
   text_splash();
   printf("\n");
-  printf("svn version : %s \n",SVN_VERSION);
-  printf("compile time: %s \n",COMPILE_TIME_STAMP);
-  printf("site config : %s \n\n",SITE_CONFIG_FILE);
+  printf("Documentation : %s \n","http://ert.nr.no");
+  printf("svn version   : %s \n",SVN_VERSION);
+  printf("compile time  : %s \n",COMPILE_TIME_STAMP);
+  printf("site config   : %s \n\n",SITE_CONFIG_FILE);
   enkf_main_install_SIGNALS();                     /* Signals common to both tui and gui. */
   signal(SIGINT , util_abort_signal);              /* Control C - tui only.               */
   enkf_main_init_debug( NULL );
