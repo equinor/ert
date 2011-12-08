@@ -29,3 +29,6 @@ const char * splash_text[SPLASH_LENGTH] = {
   "   |                                 |",
   "   |  Ensemble based Reservoir Tool  |",
   "   \\_________________________________/"};
+
+
+
