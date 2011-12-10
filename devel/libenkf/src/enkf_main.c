@@ -1216,22 +1216,35 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_type * D       = NULL;
   matrix_type * localA  = NULL;
 
+
+
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
-  
-  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) {
-    printf("Using A \n");
-    localA = A;
-  }
 
+  obs_data_scale( obs_data , S , E , D , R , dObs );
+  /*
+    I would like to change to a convention where the S matrix is the actual S matrix;
+    and not the mean-shifted version. However some of the linear algebra still requires
+    the mean shifted version.
+  */
+  matrix_subtract_row_mean( S );
+
+  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
+    localA = A;
+
+  
   /*****************************************************************/
   
   analysis_module_init_update( module , S , R , dObs , E , D );
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
+
+    if (localA == NULL) 
+      analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
+
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
@@ -1244,7 +1257,9 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
         if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
           analysis_module_updateA( module , localA , S , R , dObs , E , D );
         else {
-          analysis_module_initX( module , X , localA , S , R , dObs , E , D );
+          if (analysis_module_get_option( module , ANALYSIS_USE_A)) 
+            analysis_module_initX( module , X , localA , S , R , dObs , E , D );
+
           matrix_inplace_matmul_mt2( A , X , tp );
         }
           
