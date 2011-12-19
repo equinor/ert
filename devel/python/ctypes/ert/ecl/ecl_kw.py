@@ -47,7 +47,7 @@ from    ecl_util              import ECL_CHAR_TYPE, ECL_DOUBLE_TYPE, ECL_INT_TYP
 import  ecl_util
 import  fortio
 import  libecl
-
+import  warnings
 
 class EclKW(object):
     """
@@ -64,6 +64,24 @@ class EclKW(object):
     argument; this should be a EclRegion instance which can be used to
     limit the operation to a part of the EclKW.
     """
+
+    int_kw_set = set( ["PVTNUM" , "FIPNUM" , "EQLNUM" , "FLUXNUM" , "MULTNUM" , "ACTNUM" , "SPECGRID"] )
+
+    @classmethod
+    def add_int_kw(cls , kw):
+        """Will add keyword @kw to the standard set of integer keywords."""
+        int_kw_set.add( kw )
+
+    @classmethod
+    def del_int_kw(cls , kw):
+        """Will remove keyword @kw from the standard set of integer keywords."""
+        int_kw_set.discard( kw )
+
+    @property
+    @classmethod
+    def int_kw( cls ):
+        """Will return the current set of integer keywords."""
+        return cls.int_kw_set
 
     @classmethod
     def new( cls , name, size , type):
@@ -126,7 +144,7 @@ class EclKW(object):
     
     
     @classmethod
-    def grdecl_load( cls , file , kw , ecl_type = ECL_FLOAT_TYPE):
+    def read_grdecl( cls , file , kw , ecl_type = None):
         """
         Function to load an EclKW instance from a grdecl file.
 
@@ -151,17 +169,39 @@ class EclKW(object):
         keywords in your file - sorry. A TypeError exception 
         will be raised if @kw has more than 8 characters.
 
-        The grdecl files have no datatype header, so this must be
-        supplied by the caller through the @ecl_type argument. The
-        default value of @ecl_type is ECL_FLOAT_TYPE. 
+        The implementation in ert can read integer and float type
+        keywords from grdecl files; however the grdecl files have no
+        datatype header, and it is impossible to determine the type
+        reliably by inspection. Hence the type must be known when
+        reading the file. The algorithm for specifying type, in order
+        of presedence, is as follows:
 
-           fileH =  open('ECLIPSE.PVT' , 'r')
-           pvtnum_kw = EclKW.grdecl_load( fileH , 'PVTNUM', ecl_type = ECL_INT_TYPE)
-           fileH.close()
+          1. The optional argument @ecl_type can be used to specify
+             the type: 
 
-           fileH = open('ECLIPSE.PETRO','r')
-           poro_kw = EclKW.grdecl_load( fileH , 'PORO' )
-           fileH.close()
+                 special_int_kw = EclKW.read_grdecl( fileH , 'INTKW' , ecl_type = ECL_INT_TYPE )
+
+             If ecl_type is different from ECL_INT_TYPE or
+             ECL_FLOAT_TYPE a TypeError exception will be raised.
+
+             If ecl_type == None (the default), the method will
+             continue to point 2. or 3. to determine the correct
+             type. 
+
+
+          2. If the keyword is included in the set built in set
+             'int_kw_set' the type will be ECL_INT_TYPE.
+
+                 pvtnum_kw = EclKW.read_grdecl( fileH , 'PVTNUM' )
+      
+             Observe that (currently) no type conversions take place
+             when checking the 'int_kw_set'. The current built in set
+             is accesible through the int_kw property.
+
+          3. Otherwise the default is float, i.e. ECL_FLOAT_TYPE.
+          
+                 poro_kw = EclKW.read_grdecl( fileH , 'PORO')
+ 
 
         Observe that since the grdecl files are quite weakly
         structured it is difficult to verify the integrity of the
@@ -177,7 +217,16 @@ class EclKW(object):
         if kw:
             if len(kw) > 8:
                 raise TypeError("Sorry keyword:%s is too long, must be eight characters or less." % kw)
-        
+    
+        if ecl_type is None:
+            if cls.int_kw_set.__contains__( kw ):
+                ecl_type = ECL_INT_TYPE
+            else:
+                ecl_type = ECL_FLOAT_TYPE
+
+        if not ecl_type in [ECL_FLOAT_TYPE , ECL_INT_TYPE]:
+            raise TypeError("The type:%d is invalid when loading keyword:%s" % (ecl_type , kw))
+    
         c_ptr  = cfunc.load_grdecl( cfile , kw , ecl_type )
         if c_ptr:
             obj = cls( )
@@ -188,6 +237,12 @@ class EclKW(object):
             return obj
         else:
             return None
+
+    @classmethod
+    def grdecl_load( cls , file , kw , ecl_type = ECL_FLOAT_TYPE):
+        """Use read_grdecl() instead."""
+        #warnings.warn("The grdecl_load method has been renamed to read_grdecl()" , DeprecationWarning)
+        return cls.read_grdecl(file , kw , ecl_type )
 
     @classmethod
     def fread( cls , fortio ):

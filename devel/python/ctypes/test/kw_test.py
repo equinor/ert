@@ -87,10 +87,9 @@ print fortio
 init_file.fwrite( fortio )
 fortio.close()
 
-
-poro   = ecl.EclKW.grdecl_load( open( "data/eclipse/case/include/example_poro.GRDECL" , "r") , "PORO" )
-eqlnum = ecl.EclKW.grdecl_load( open( "data/eclipse/case/include/example_eqlnum.GRDECL" , "r") , "EQLNUM" , ecl_type = ecl.ECL_INT_TYPE)
-dummy  = ecl.EclKW.grdecl_load( open( "data/eclipse/case/include/example_eqlnum.GRDECL" , "r") , "BJARNE" , ecl_type = ecl.ECL_INT_TYPE)
+poro   = ecl.EclKW.read_grdecl( open( "data/eclipse/case/include/example_poro.GRDECL" , "r") , "PORO" )
+eqlnum = ecl.EclKW.read_grdecl( open( "data/eclipse/case/include/example_eqlnum.GRDECL" , "r") , "EQLNUM" )
+dummy  = ecl.EclKW.read_grdecl( open( "data/eclipse/case/include/example_eqlnum.GRDECL" , "r") , "BJARNE" , ecl_type = ecl.ECL_INT_TYPE)
 
 if dummy:
     print "Loading BJARNE OK"
@@ -99,9 +98,12 @@ else:
 
 print "Poro[100] :%g  eqlnum[100]:%d" % (poro[100] , eqlnum[100]) 
 
+if not eqlnum.type == ecl.ECL_INT_TYPE:
+    sys.exit("Type error when loading eqlnum")
+
 p2 = poro[100:160]
 if p2:
     print p2.header
 print poro
 print pvt.str( max_lines = 8 )
-
+print eqlnum
