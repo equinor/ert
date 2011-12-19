@@ -49,6 +49,15 @@ import  fortio
 import  libecl
 import  warnings
 
+
+class classprop(object):
+    def __init__(self , f):
+        self.f = classmethod( f )
+
+    def __get__(self , *a):
+        return self.f.__get__(*a)()
+
+
 class EclKW(object):
     """
     The EclKW class contains the information from one ECLIPSE keyword.
@@ -70,15 +79,14 @@ class EclKW(object):
     @classmethod
     def add_int_kw(cls , kw):
         """Will add keyword @kw to the standard set of integer keywords."""
-        int_kw_set.add( kw )
+        cls.int_kw_set.add( kw )
 
     @classmethod
     def del_int_kw(cls , kw):
         """Will remove keyword @kw from the standard set of integer keywords."""
-        int_kw_set.discard( kw )
+        cls.int_kw_set.discard( kw )
 
-    @property
-    @classmethod
+    @classprop
     def int_kw( cls ):
         """Will return the current set of integer keywords."""
         return cls.int_kw_set
