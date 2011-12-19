@@ -1222,15 +1222,8 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
-
+  
   obs_data_scale( obs_data , S , E , D , R , dObs );
-  /*
-    I would like to change to a convention where the S matrix is the actual S matrix;
-    and not the mean-shifted version. However some of the linear algebra still requires
-    the mean shifted version.
-  */
-  matrix_subtract_row_mean( S );
-
   if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
     localA = A;
 

@@ -64,6 +64,10 @@ void enkf_linalg_genX2(matrix_type * X2 , const matrix_type * S , const matrix_t
    discarded. If you do not intend to use the right hand vectors at
    all, i.e. store_V0T == DGESVD_NONE, the V0T matrix will not be
    accessed.
+
+   The input S matrix should contain the actual simulated values, and
+   not be shifted to zero mean; the shift to zero mean will be handled
+   internally in this function.  
 */
 
 
@@ -82,11 +86,8 @@ void enkf_linalg_svdS(const matrix_type * S ,
       ((truncation < 0) && (ncomp > 0))) {
     int num_singular_values = util_int_min( matrix_get_rows( S ) , matrix_get_columns( S ));
     {
-      /* 
-         The svd routine will destroy the contents of the input matrix,
-         we therefor have to store a copy of S before calling it. 
-      */
       matrix_type * workS = matrix_alloc_copy( S );
+      matrix_subtract_row_mean( workS );           /* Shift away the mean */
       matrix_dgesvd(DGESVD_MIN_RETURN , store_V0T , workS , sig0 , U0 , V0T);  
       matrix_free( workS );
     }
