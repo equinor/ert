@@ -30,7 +30,8 @@ well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const e
   conn->j    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADJ_ITEM ) - 1;
   conn->k    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADK_ITEM ) - 1;
   conn->open = true;  // This is not really specified anywhere.
-
+  conn->branch  = 0;
+  conn->segment = 0;
   return conn;
 }
 
@@ -39,13 +40,19 @@ well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const e
   Observe that the (ijk) values are shifted to zero offset to be
   aligned with the rest of the ert libraries.  
 */
-well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , const ecl_intehead_type * header , int well_nr , int conn_nr) {
+well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , 
+                                  const ecl_kw_type * iseg_kw , 
+                                  const ecl_intehead_type * header , 
+                                  int well_nr , 
+                                  int conn_nr ) {
+  
   const int icon_offset = header->niconz * ( header->ncwmax * well_nr + conn_nr );
   well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
   
-  conn->i = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM ) - 1;
-  conn->j = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM ) - 1;
-  conn->k = ecl_kw_iget_int( icon_kw , icon_offset + ICON_K_ITEM ) - 1;
+  conn->i       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM ) - 1;
+  conn->j       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM ) - 1;
+  conn->k       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_K_ITEM ) - 1;
+  conn->segment = ecl_kw_iget_int( icon_kw , icon_offset + ICON_SEGMENT_ITEM ) - 1;
   {
     int int_status = ecl_kw_iget_int( icon_kw , icon_offset + ICON_STATUS_ITEM );
     if (int_status > 0)
@@ -53,6 +60,38 @@ well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , const ecl_intehe
     else
       conn->open = false;
   }
+
+  {
+    int int_direction = ecl_kw_iget_int( icon_kw , icon_offset + ICON_DIRECTION_ITEM );
+    if (int_direction == ICON_DEFAULT_DIR_VALUE)
+      int_direction = ICON_DEFAULT_DIR_TARGET;
+
+    switch (int_direction) {
+    case(ICON_DIRX):
+      conn->dir = well_conn_dirX;
+      break;
+    case(ICON_DIRY):
+      conn->dir = well_conn_dirY;
+      break;
+    case(ICON_DIRZ):
+      conn->dir = well_conn_dirZ;
+      break;
+    case(ICON_FRACX):
+      conn->dir = well_conn_fracX;
+      break;
+    case(ICON_FRACY):
+      conn->dir = well_conn_fracY;
+      break;
+    default:
+      util_abort("%s: icon direction value:%d not recognized\n",__func__ , int_direction);
+    }
+  }
+
+  if (iseg_kw != NULL) {
+    const int iseg_offset = header->nisegz * ( header->nsegmx * well_nr + conn_nr );
+    conn->branch = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );
+  } else
+    conn->branch = 0;
 
   return conn;
 }

@@ -38,16 +38,29 @@ extern "C" {
 #define IWEL_STATUS_ITEM       10
 #define IWEL_LGR_ITEM          42  
 
-#define ICON_I_ITEM         1
-#define ICON_J_ITEM         2
-#define ICON_K_ITEM         3    
-#define ICON_STATUS_ITEM    5  
+#define ISEG_BRANCH_ITEM        3
+
+#define ICON_IC_ITEM         0
+#define ICON_I_ITEM          1
+#define ICON_J_ITEM          2
+#define ICON_K_ITEM          3    
+#define ICON_STATUS_ITEM     5  
+#define ICON_DIRECTION_ITEM 13
+#define ICON_SEGMENT_ITEM   14
+
+#define ICON_DIRX                 1
+#define ICON_DIRY                 2
+#define ICON_DIRZ                 3
+#define ICON_FRACX                4
+#define ICON_FRACY                5      
+#define ICON_DEFAULT_DIR_VALUE    0
+#define ICON_DEFAULT_DIR_TARGET   ICON_DIRZ
 
 
-#define IWEL_PRODUCER       1
-#define IWEL_OIL_INJECTOR   2
-#define IWEL_WATER_INJECTOR 3
-#define IWEL_GAS_INJECTOR   4
+#define IWEL_PRODUCER        1
+#define IWEL_OIL_INJECTOR    2
+#define IWEL_WATER_INJECTOR  3
+#define IWEL_GAS_INJECTOR    4
   
   typedef enum {
     PRODUCER       = 10,
