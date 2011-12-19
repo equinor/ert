@@ -63,18 +63,20 @@ static well_state_type * well_state_alloc_empty() {
 }
 
 
+// This function could in principle inspect the branch field of the
+// conn input, and organize the connections into branches in the 
+// well_state structure.
 
 void well_state_add_conn( well_state_type * well_state , int grid_nr , well_conn_type * conn) {
   vector_append_owned_ref( well_state->connections , conn , well_conn_free__);
 }
 
 
-
-
 well_state_type * well_state_alloc( const ecl_file_type * ecl_file , const ecl_intehead_type * header , int report_nr , int grid_nr , int well_nr) {
   const ecl_kw_type * iwel_kw   = ecl_file_iget_named_kw( ecl_file , IWEL_KW   , grid_nr);
   const ecl_kw_type * zwel_kw   = ecl_file_iget_named_kw( ecl_file , ZWEL_KW   , grid_nr);
   const ecl_kw_type * icon_kw   = ecl_file_iget_named_kw( ecl_file , ICON_KW   , grid_nr);
+  ecl_kw_type * iseg_kw = NULL;
   {
     well_state_type * well_state = well_state_alloc_empty();
     const int iwel_offset = header->niwelz * well_nr;
@@ -86,6 +88,7 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , const ecl_i
     {
       well_state->wellhead = well_conn_alloc_wellhead( iwel_kw , header , well_nr );
     }
+  
     {
       int int_state = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_STATUS_ITEM );
       if (int_state > 0)
@@ -94,13 +97,21 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , const ecl_i
         well_state->open = false;
     }
     {
-      int num_connections = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_CONNECTIONS_ITEM );
-      int lgr_index = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_LGR_ITEM );
-      for (int conn_nr = 0; conn_nr < num_connections; conn_nr++) {
-        well_conn_type * conn =  well_conn_alloc( icon_kw , header , well_nr , conn_nr );
-        well_state_add_conn( well_state , grid_nr , conn );
+      bool MSW = false;   // MultiSegmentWell
+      if (ecl_file_get_num_named_kw( ecl_file , ISEG_KW) > grid_nr)
+        MSW = true;
+
+      if (MSW)
+        iseg_kw = ecl_file_iget_named_kw( ecl_file , ISEG_KW , grid_nr );
+
+      {
+        int num_connections = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_CONNECTIONS_ITEM );
+        int lgr_index = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_LGR_ITEM );
+        for (int conn_nr = 0; conn_nr < num_connections; conn_nr++) {
+          well_conn_type * conn =  well_conn_alloc( icon_kw , iseg_kw , header , well_nr , conn_nr );
+          well_state_add_conn( well_state , grid_nr , conn );
+        }
       }
-      printf("lgr_index:%d \n",lgr_index);
     }
 
     {
