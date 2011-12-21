@@ -46,7 +46,13 @@ class StringList:
         obj.c_ptr = None 
         return obj
 
-    def __init__( self , initial = None):
+    @classmethod
+    def wrap_ptr( cls , c_ptr ):
+        obj = cls( c_ptr = c_ptr )
+        return obj
+
+
+    def __init__( self , initial = None , c_ptr = None):
         """
         Creates a new stringlist instance.
         
@@ -60,13 +66,16 @@ class StringList:
         If an element in the @initial argument is not a string the
         TypeError exception will be raised.
         """
-        self.c_ptr = cfunc.stringlist_alloc( )
-        if initial:
-            for s in initial:
-                if isinstance( s , types.StringType):
-                    self.append( s )
-                else:
-                    raise TypeError("Item:%s not a string" % s)
+        if c_ptr:
+            self.c_ptr = c_ptr
+        else:
+            self.c_ptr = cfunc.stringlist_alloc( )
+            if initial:
+                for s in initial:
+                    if isinstance( s , types.StringType):
+                        self.append( s )
+                    else:
+                        raise TypeError("Item:%s not a string" % s)
                 
             
     def __del__( self ):
