@@ -609,12 +609,12 @@ class EclSum( object ):
                 if cfunc.check_sim_days( self , days ):
                     return cfunc.get_general_var_from_sim_days( self , days , key )
                 else:
-                    raise ValueError("days:%s is outside range of simulation: [0,%g]" % (days , self.sim_length))
+                    raise ValueError("days:%s is outside range of simulation: [%g,%g]" % (days , self.first_day , self.sim_length))
         elif date:
             if cfunc.check_sim_time( self , ctime(date) ):
                 return cfunc.get_general_var_from_sim_time( self , ctime(date) , key )
             else:
-                raise ValueError("date:%s is outside range of simulation" % date)
+                raise ValueError("date:%s is outside range of simulation data" % date)
         else:
             raise ValueError("Must supply either days or date")
 
@@ -639,15 +639,16 @@ class EclSum( object ):
             else:
                 vector = numpy.zeros( len(days_list ))
                 sim_length = self.sim_length
+                sim_start  = self.first_day
                 index = 0
                 for days in days_list:
-                    if days >= 0 and days < sim_length:
+                    if days >= sim_start and days < sim_length:
                         vector[index] = cfunc.get_general_var_from_sim_days( self , days , key)
                     else:
                         raise ValueError("Invalid days value")
                     index += 1
         elif date_list:
-            start_time = self.start_date
+            start_time = self.data_start_date
             end_time   = self.end_date
             vector = numpy.zeros( len(date_list ))
             index = 0
@@ -846,6 +847,7 @@ class EclSum( object ):
         """
         return cfunc.iget_report_step( self , time_index )
     
+
     @property
     def length(self):
         """
@@ -853,10 +855,19 @@ class EclSum( object ):
         """
         return cfunc.data_length( self )
 
+    @property
+    def first_day(self):
+        """
+        The first day we have simulation data for; normally 0.
+        """
+
     @property 
     def sim_length( self ):
         """
         The length of the current dataset in simulation days.
+
+        Will include the length of a leading restart section,
+        irrespective of whether we have data for this or not.
         """
         return cfunc.sim_length( self )
 
@@ -880,6 +891,15 @@ class EclSum( object ):
         """
         ctime = cfunc.get_end_date( self )
         return ctime.date()
+
+    @property
+    def data_start(self):
+        """
+        The first date we have data for.
+        """
+        ctime = cfunc.get_data_start( self )
+        return ctime.date()
+    
 
     @property
     def start_time(self):
@@ -1005,5 +1025,8 @@ cfunc.has_key                       = cwrapper.prototype("bool     ecl_sum_has_g
 cfunc.check_sim_time                = cwrapper.prototype("bool     ecl_sum_check_sim_time( ecl_sum , time_t )") 
 cfunc.check_sim_days                = cwrapper.prototype("bool     ecl_sum_check_sim_days( ecl_sum , double )") 
 cfunc.sim_length                    = cwrapper.prototype("double   ecl_sum_get_sim_length( ecl_sum )")
+cfunc.get_first_day                 = cwrapper.prototype("double   ecl_sum_get_first_day( ecl_sum )")
+cfunc.get_data_start                = cwrapper.prototype("time_t   ecl_sum_get_data_start( ecl_sum )")
+
 cfunc.get_unit                      = cwrapper.prototype("char*    ecl_sum_get_unit( ecl_sum , char*)") 
 cfunc.get_simcase                   = cwrapper.prototype("char*    ecl_sum_get_case( ecl_sum )")

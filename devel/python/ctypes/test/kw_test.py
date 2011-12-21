@@ -107,3 +107,7 @@ if p2:
 print poro
 print pvt.str( max_lines = 8 )
 print eqlnum
+
+print ecl.EclKW.int_kw
+poro.add_int_kw("BJARNE")
+print eqlnum.int_kw

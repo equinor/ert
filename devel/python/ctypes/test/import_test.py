@@ -33,6 +33,7 @@ test_import( "ert.job_queue" )
 test_import( "ert.rms" )
 test_import( "ert.enkf" )
 test_import( "ert.sched" )
+test_import("ert.well")
 
 test_import("ert.ecl.ecl")
 test_import("ert.rms.rms")
@@ -40,4 +41,6 @@ test_import("ert.enkf.enkf")
 test_import("ert.config.config")
 test_import("ert.job_queue.job_queue")
 test_import("ert.geo.geo")
+test_import("ert.well.well")
+
 

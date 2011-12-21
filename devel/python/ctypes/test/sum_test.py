@@ -45,3 +45,7 @@ print sum.get_mpl_dates()
 
 print len(sum.get_days())
 print len(sum.get_mpl_dates())
+
+print "Wells: %s" % sum.wells()
+print "Wells: %s" % sum.wells( pattern = "WI*")
+
