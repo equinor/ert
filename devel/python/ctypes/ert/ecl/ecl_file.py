@@ -145,6 +145,9 @@ class EclFile(object):
             report_steps.append( s[0] )
         return report_steps
 
+    def __str__(self):
+        return "EclFile: %s" % self.name
+
         
     def __init__( self , filename , read_only = True):
         """

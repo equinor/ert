@@ -200,6 +200,7 @@ class EclSumVector:
         """
         return self.__report_step
 
+    
     def __iget__( self , index ):
         """
         Will return an EclSumNode for element @index; should be called
@@ -475,6 +476,18 @@ class EclSum( object ):
             time_index = cfunc.get_report_end( self , report_step )
             index_list.append( time_index )
         return index_list
+
+
+    def wells( self , pattern = None ):
+        """
+        Will return a list of all the well names in case.
+
+        If the pattern variable is different from None only wells
+        matching the pattern will be returned; the matching is based
+        on fnmatch(), i.e. shell style wildcards.
+        """
+        c_ptr = cfunc.create_well_list( self , pattern )
+        return StringList.wrap_ptr( c_ptr )
 
     
     def get_values( self , key , report_only = False):
@@ -966,7 +979,7 @@ cwrapper.registerType( "ecl_sum" , EclSum )
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_sum")
 
-
+cfunc.create_well_list              = cwrapper.prototype("c_void_p ecl_sum_alloc_well_list( ecl_sum , char* )")
 cfunc.fread_alloc                   = cwrapper.prototype("c_void_p ecl_sum_fread_alloc_case__( char* , char* , bool)") 
 cfunc.iiget                         = cwrapper.prototype("double   ecl_sum_iiget( ecl_sum , int , int)")
 cfunc.free                          = cwrapper.prototype("void     ecl_sum_free( ecl_sum )")
