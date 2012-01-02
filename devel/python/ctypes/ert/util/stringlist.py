@@ -23,7 +23,7 @@ higher level than the (char ** string , int size) convention.
 For a pure Python application you should just stick with a normal
 Python list of string objects; but when interfacing with the C
 libraries there are situations where you might need to instantiate a
-StringList instance. 
+StringList object. 
 
 The StringList constructor can take an optional argument which should
 be an iterable consisting of strings, and the strings property will
@@ -76,12 +76,6 @@ class StringList:
                         self.append( s )
                     else:
                         raise TypeError("Item:%s not a string" % s)
-                
-            
-    def __del__( self ):
-        if self.c_ptr:
-            cfunc.stringlist_free( self )
-
 
     @classmethod
     def from_param( cls , obj ):
@@ -89,6 +83,11 @@ class StringList:
             return ctypes.c_void_p()
         else:
             return obj.c_ptr
+
+            
+    def __del__( self ):
+        if self.c_ptr:
+            cfunc.stringlist_free( self )
 
 
     def __getitem__(self , index):
@@ -108,6 +107,23 @@ class StringList:
                 return cfunc.stringlist_iget( self , index )
         else:
             raise TypeError("Index should be integer type")
+
+    def __contains__(self , s):
+        """
+        Implements the 'in' operator.
+
+        The 'in' check is based on string equality.
+        """
+        return cfunc.contains( self , s )
+
+    def contains(self , s):
+        """
+        Checks if the list contains @s.
+
+        Functionality also available through the 'in' builtin in
+        Python.
+        """
+        return self.__contains__( s )
 
 
     def __len__(self):
@@ -154,6 +170,20 @@ class StringList:
             slist.append( s )
         return slist
 
+    def sort(self , cmp_flag = 0):
+        """
+        Will sort the list inplace.
+
+        The string comparison can be altered with the value of the
+        optional cmp_flag parameter:
+        
+             0 : Normal strcmp() string comparison
+             1 : util_strcmp_int() string comparison
+             2 : util_strcmp_float() string comparison
+
+        """
+        cfunc.sort( self , cmp_flag )
+
 
 
 CWrapper.registerType( "stringlist" , StringList )
@@ -164,5 +194,6 @@ cfunc.stringlist_alloc      = cwrapper.prototype("c_void_p stringlist_alloc_new(
 cfunc.stringlist_free       = cwrapper.prototype("void stringlist_free( stringlist )")
 cfunc.stringlist_append     = cwrapper.prototype("void stringlist_append_copy( stringlist , char* )")
 cfunc.stringlist_iget       = cwrapper.prototype("char* stringlist_iget( stringlist , int )")
-cfunc.stringlist_get_size   = cwrapper.prototype("int stringlist_get_size( stringlist )") 
-
+cfunc.stringlist_get_size   = cwrapper.prototype("int  stringlist_get_size( stringlist )") 
+cfunc.contains              = cwrapper.prototype("bool stringlist_contains(stringlist , char*)")
+cfunc.sort                  = cwrapper.prototype("void stringlist_python_sort( stringlist , int)")

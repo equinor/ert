@@ -49,3 +49,7 @@ print len(sum.get_mpl_dates())
 print "Wells: %s" % sum.wells()
 print "Wells: %s" % sum.wells( pattern = "WI*")
 
+print sum.get_last_value("WWCT:OP_3")
+print sum.get_last("WWCT:OP_5")
+
+print sum.groups()
