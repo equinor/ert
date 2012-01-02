@@ -107,6 +107,14 @@ v[0] = 77
 v[5] = 99
 print v.str( max_lines = None )
 
-S = StringList()
+S = StringList(["A" , "list" ,"of" , "strings"])
+
+print S
+
+if "A" in S:
+    print "S contains A"
+
+if not "Bjarne" in S:
+    print "S does not contain BJARNE"
 
 

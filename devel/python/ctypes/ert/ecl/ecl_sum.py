@@ -268,6 +268,17 @@ class EclSumVector:
         
         index = len(self.__values) - 1
         return self.__iget__( index )
+
+    @property
+    def last_value( self ):
+        """
+        Will return the last value in this vector.
+        """
+        self.assert_values( )
+        
+        index = len(self.__values) - 1
+        return self.__iget__( index ).value
+
     
     
     def get_interp( self , days = None , date = None):
@@ -489,6 +500,18 @@ class EclSum( object ):
         c_ptr = cfunc.create_well_list( self , pattern )
         return StringList.wrap_ptr( c_ptr )
 
+
+    def groups( self , pattern = None ):
+        """
+        Will return a list of all the group names in case.
+
+        If the pattern variable is different from None only groups
+        matching the pattern will be returned; the matching is based
+        on fnmatch(), i.e. shell style wildcards.
+        """
+        c_ptr = cfunc.create_group_list( self , pattern )
+        return StringList.wrap_ptr( c_ptr )
+
     
     def get_values( self , key , report_only = False):
         """
@@ -543,7 +566,30 @@ class EclSum( object ):
         else:
             return None
 
-        
+
+    def get_last_value( self , key ):
+        """
+        Will return the last value corresponding to @key.
+
+        Typically useful to get the total production at end of
+        simulation:
+
+           total_production = sum.last_value("FOPT")
+
+        The alternative method 'last' will return a EclSumNode
+        instance with some extra time related information.
+        """
+        return self[key].last_value
+
+    def get_last( self , key ):
+        """
+        Will return the last EclSumNode corresponding to @key.
+
+        If you are only interested in the final value, you can use the
+        get_last_value() method.
+        """
+        return self[key].last
+
 
     def iiget(self , key_index , time_index):
         """
@@ -1000,6 +1046,7 @@ cwrapper.registerType( "ecl_sum" , EclSum )
 cfunc = CWrapperNameSpace("ecl_sum")
 
 cfunc.create_well_list              = cwrapper.prototype("c_void_p ecl_sum_alloc_well_list( ecl_sum , char* )")
+cfunc.create_group_list             = cwrapper.prototype("c_void_p ecl_sum_alloc_group_list( ecl_sum , char* )")
 cfunc.fread_alloc                   = cwrapper.prototype("c_void_p ecl_sum_fread_alloc_case__( char* , char* , bool)") 
 cfunc.iiget                         = cwrapper.prototype("double   ecl_sum_iiget( ecl_sum , int , int)")
 cfunc.free                          = cwrapper.prototype("void     ecl_sum_free( ecl_sum )")
