@@ -694,7 +694,7 @@ class EclSum( object ):
                         raise ValueError("Invalid days value")
                     index += 1
         elif date_list:
-            start_time = self.data_start_date
+            start_time = self.data_start
             end_time   = self.end_date
             vector = numpy.zeros( len(date_list ))
             index = 0
@@ -906,6 +906,7 @@ class EclSum( object ):
         """
         The first day we have simulation data for; normally 0.
         """
+        return cfunc.get_first_day( self )
 
     @property 
     def sim_length( self ):
