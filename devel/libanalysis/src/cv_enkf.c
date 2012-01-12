@@ -37,7 +37,11 @@
 #define DEFAULT_SUBSPACE_DIMENSION  INVALID_SUBSPACE_DIMENSION
 
 #define DEFAULT_NFOLDS              10
+#define DEFAULT_PEN_PRESS           false
 #define NFOLDS_KEY                  "CV_NFOLDS"
+#define CV_PEN_PRESS_KEY            "CV_PEN_PRESS"
+
+
 
 
 struct cv_enkf_data_struct {
@@ -76,6 +80,11 @@ void cv_enkf_set_nfolds( cv_enkf_data_type * data , int nfolds ) {
   data->nfolds = nfolds;
 }
 
+void cv_enkf_set_pen_press( cv_enkf_data_type * data , bool value ) {
+  printf("Inside set pen press\n");
+  data->penalised_press = value;
+}
+
 
 void * cv_enkf_data_alloc( rng_type * rng ) {
   cv_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
@@ -86,7 +95,7 @@ void * cv_enkf_data_alloc( rng_type * rng ) {
   data->Dp           = NULL;
   data->rng          = rng;
 
-  data->penalised_press = false;
+  data->penalised_press = DEFAULT_PEN_PRESS;
   data->option_flags    = ANALYSIS_NEED_ED + ANALYSIS_USE_A;
   data->nfolds          = DEFAULT_NFOLDS;
   cv_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
@@ -146,7 +155,7 @@ void cv_enkf_init_update( void * arg ,
       if ( inv_sig0[i] > 0 ) 
         sig0[i] = 1.0 / inv_sig0[i];
     
-    /*
+   /*
       Compute the actual principal components, Z = sig0 * VOT 
       NOTE: Z contains potentially alot of redundant zeros, but 
       we do not care about this for now
@@ -611,6 +620,21 @@ bool cv_enkf_set_int( void * arg , const char * var_name , int value) {
 }
 
 
+bool cv_enkf_set_bool( void * arg , const char * var_name , bool value) {
+  cv_enkf_data_type * module_data = cv_enkf_data_safe_cast( arg );
+  {
+    bool name_recognized = true;
+    printf("var_name = %s\n",var_name);
+    if (strcmp( var_name , CV_PEN_PRESS_KEY) == 0)
+      cv_enkf_set_pen_press( module_data , value );
+    else
+      name_recognized = false;
+    
+    return name_recognized;
+  }
+}
+
+
 long cv_enkf_get_options( void * arg , long flag) {
   cv_enkf_data_type * cv_data = cv_enkf_data_safe_cast( arg );
   {
@@ -633,7 +657,7 @@ analysis_table_type SYMBOL_TABLE = {
   .freef           = cv_enkf_data_free,
   .set_int         = cv_enkf_set_int , 
   .set_double      = cv_enkf_set_double , 
-  .set_bool        = NULL , 
+  .set_bool        = cv_enkf_set_bool , 
   .set_string      = NULL , 
   .get_options     = cv_enkf_get_options , 
   .initX           = cv_enkf_initX , 

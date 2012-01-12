@@ -40,7 +40,11 @@ void cv_enkf_initX(void * module_data ,
                    matrix_type * E ,
                    matrix_type * D);
 
+bool        cv_enkf_set_double( void * arg , const char * var_name , double value);
+bool        cv_enkf_set_int( void * arg , const char * var_name , int value);
+bool        cv_enkf_set_bool(  void * arg , const char * var_name , bool value );
 
 void        cv_enkf_set_truncation( cv_enkf_data_type * data , double truncation );
+void        cv_enkf_set_pen_press( cv_enkf_data_type * data , bool value );
 void        cv_enkf_set_subspace_dimension( cv_enkf_data_type * data , int subspace_dimension);
 
