@@ -373,6 +373,7 @@ void bootstrap_enkf_data_free( void * arg ) {
   bootstrap_enkf_data_type * boot_data = bootstrap_enkf_data_safe_cast( arg );
   {
     std_enkf_data_free( boot_data->std_enkf_data );
+    cv_enkf_data_free( boot_data->cv_enkf_data );
   }
 }
 
