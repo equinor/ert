@@ -87,7 +87,6 @@ void enkf_linalg_svdS(const matrix_type * S ,
     int num_singular_values = util_int_min( matrix_get_rows( S ) , matrix_get_columns( S ));
     {
       matrix_type * workS = matrix_alloc_copy( S );
-      matrix_subtract_row_mean( workS );           /* Shift away the mean */
       matrix_dgesvd(DGESVD_MIN_RETURN , store_V0T , workS , sig0 , U0 , V0T);  
       matrix_free( workS );
     }
@@ -433,7 +432,7 @@ void enkf_linalg_set_randrot( matrix_type * Q  , rng_type * rng) {
 
 /**
    Generates the mean preserving random rotation for the EnKF SQRT algorithm
-   using the algorithm from Sakov 2006-07.  I.e, generate rotation Up suceh that
+   using the algorithm from Sakov 2006-07.  I.e, generate rotation Up such that
    Up*Up^T=I and Up*1=1 (all rows have sum = 1)  see eq 17.
    From eq 18,    Up=B * Upb * B^T 
    B is a random orthonormal basis with the elements in the first column equals 1/sqrt(nrens)

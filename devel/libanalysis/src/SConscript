@@ -27,6 +27,7 @@ src_list.append("std_enkf.c")
 src_list.append("sqrt_enkf.c")
 src_list.append("cv_enkf.c")
 src_list.append("bootstrap_enkf.c")
+src_list.append("null_enkf.c")
 
 header_list = Split("analysis_module.h analysis_table.h enkf_linalg.h")
 
@@ -38,6 +39,7 @@ add_shared_library( env , conf , module_path , "std_enkf.so" , ["std_enkf.c"] )
 add_shared_library( env , conf , module_path , "sqrt_enkf.so" , ["sqrt_enkf.c"] )
 add_shared_library( env , conf , module_path , "cv_enkf.so" , ["cv_enkf.c"] )
 add_shared_library( env , conf , module_path , "bootstrap_enkf.so" , ["bootstrap_enkf.c"] )
+add_shared_library( env , conf , module_path , "null_enkf.so" , ["null_enkf.c"] )
 
 
 Default( include_path , slib_path , module_path)

@@ -319,8 +319,10 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
     bool bool_value;
     if (util_sscanf_bool( string_value , &bool_value))
       set_ok = analysis_module_set_bool( module , var_name , bool_value );
+
+    if (set_ok)
+      return true;
   }
-  
   
 
   set_ok = analysis_module_set_string( module , var_name , string_value );

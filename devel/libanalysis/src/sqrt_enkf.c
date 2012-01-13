@@ -118,10 +118,13 @@ void sqrt_enkf_initX(void * module_data ,
     matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
     double      * eig = util_malloc( sizeof * eig * nrmin , __func__);    
     
+    matrix_subtract_row_mean( S );   /* Shift away the mean */
     enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    
     enkf_linalg_init_sqrtX( X , S , data->randrot , dObs , W , eig , false);
     matrix_free( W );
     free( eig );
+
+    enkf_linalg_checkX( X , false );
   }
 }
 
