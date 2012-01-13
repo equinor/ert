@@ -99,6 +99,7 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
   module->set_int           = table->set_int;
   module->set_double        = table->set_double;
   module->set_string        = table->set_string;
+  module->set_bool          = table->set_bool;
   module->alloc             = table->alloc;
   module->freef             = table->freef;
   module->get_options       = table->get_options; 
