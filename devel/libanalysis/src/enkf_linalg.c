@@ -65,9 +65,8 @@ void enkf_linalg_genX2(matrix_type * X2 , const matrix_type * S , const matrix_t
    all, i.e. store_V0T == DGESVD_NONE, the V0T matrix will not be
    accessed.
 
-   The input S matrix should contain the actual simulated values, and
-   not be shifted to zero mean; the shift to zero mean will be handled
-   internally in this function.  
+   The input S matrix should have been shifted to zero mean prior to
+   calling this function.
 */
 
 
