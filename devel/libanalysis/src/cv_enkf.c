@@ -81,7 +81,6 @@ void cv_enkf_set_nfolds( cv_enkf_data_type * data , int nfolds ) {
 }
 
 void cv_enkf_set_pen_press( cv_enkf_data_type * data , bool value ) {
-  printf("Inside set pen press\n");
   data->penalised_press = value;
 }
 
@@ -624,7 +623,6 @@ bool cv_enkf_set_bool( void * arg , const char * var_name , bool value) {
   cv_enkf_data_type * module_data = cv_enkf_data_safe_cast( arg );
   {
     bool name_recognized = true;
-    printf("var_name = %s\n",var_name);
     if (strcmp( var_name , CV_PEN_PRESS_KEY) == 0)
       cv_enkf_set_pen_press( module_data , value );
     else
