@@ -18,6 +18,11 @@
 
 #ifndef __SUMMARY_CONFIG_H__
 #define __SUMMARY_CONFIG_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <enkf_macros.h>
@@ -28,13 +33,12 @@
 typedef struct summary_config_struct summary_config_type;
 typedef struct summary_struct        summary_type;
 
-
+bool                   summary_config_get_vector_storage( const summary_config_type * config);
 ecl_smspec_var_type    summary_config_get_var_type(summary_config_type * , const ecl_sum_type * ecl_sum);
 const           char * summary_config_get_var(const summary_config_type * );
 void                   summary_config_set_obs_config_file(summary_config_type * , const char * );
 const char           * summary_config_get_config_txt_file_ref(const summary_config_type * );
-summary_config_type  * summary_config_fscanf_alloc(const char * , const char * );
-summary_config_type  * summary_config_alloc(const char *);
+summary_config_type  * summary_config_alloc(const char * ,  bool vector_storage);
 void                   summary_config_free(summary_config_type * );
 int                    summary_config_get_active_mask(const summary_config_type *);
 int                    summary_config_get_var_index(const summary_config_type * , const char * );
@@ -50,4 +54,10 @@ UTIL_SAFE_CAST_HEADER_CONST(summary_config);
 GET_DATA_SIZE_HEADER(summary);
 VOID_GET_DATA_SIZE_HEADER(summary);
 VOID_CONFIG_FREE_HEADER(summary);
+
+
+
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -25,7 +25,7 @@
 
 typedef struct plain_driver_struct plain_driver_type;
 
-void                 plain_driver_fwrite_mount_info(FILE * stream , fs_driver_enum driver_type , const char * fmt);
-plain_driver_type  * plain_driver_fread_alloc(const char * root_path , FILE * stream);
+void                 plain_driver_create_fs( FILE * stream , fs_driver_enum driver_type , const char * node_fmt , const char * vector_fmt);
+void               * plain_driver_open(FILE * fstab_stream , const char * path);
 
 #endif

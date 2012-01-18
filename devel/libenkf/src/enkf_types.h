@@ -58,11 +58,12 @@ typedef enum { ACTIVE         = 1,
   must be a power of 2 series.
 */
 
-typedef enum {INVALID_VAR      =  0  , /**/
-              PARAMETER        =  1  , /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
-              DYNAMIC_STATE    =  2  , /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
-              DYNAMIC_RESULT   =  4  , /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
-              STATIC_STATE     =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
+typedef enum {INVALID_VAR      =  0  ,    /* */
+              PARAMETER        =  1  ,    /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
+              DYNAMIC_STATE    =  2  ,    /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
+              DYNAMIC_RESULT   =  4  ,    /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
+              STATIC_STATE     =  8  ,    /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
+              INDEX_STATE      = 16 }     /* Index data - enum value is used for storage classification */ 
 enkf_var_type; 
   
   
@@ -110,9 +111,8 @@ typedef enum {INVALID          = 0   ,
 */
 
 
-typedef enum   {UNDEFINED   = 0 , 
-                SERIALIZED  = 1,
-                FORECAST    = 2, 
+typedef enum   {UNDEFINED   = 0 ,
+                FORECAST    = 2,              /* FORECAST and ANALYZED must be 2^n */
                 ANALYZED    = 4,
                 BOTH        = 6} state_enum;  /* It is important that both == (forecast + analyzed) */
   /**
@@ -200,7 +200,13 @@ typedef enum {
 } active_mode_type; 
 
 
-
+  typedef struct {
+    int        report_step;
+    int        iens;  
+    state_enum state;
+  } node_id_type;
+  
+  
 
 /*****************************************************************/
 typedef struct enkf_obs_struct enkf_obs_type;

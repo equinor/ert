@@ -636,10 +636,10 @@ void obs_vector_iget_observations(const obs_vector_type * obs_vector , int repor
 }
 
 
-void obs_vector_measure(const obs_vector_type * obs_vector , int report_step , int iens , const enkf_node_type * enkf_node ,  meas_data_type * meas_data , const active_list_type * active_list) {
-  void * obs_node = vector_iget( obs_vector->nodes , report_step );
+void obs_vector_measure(const obs_vector_type * obs_vector , node_id_type node_id , const enkf_node_type * enkf_node ,  meas_data_type * meas_data , const active_list_type * active_list) {
+  void * obs_node = vector_iget( obs_vector->nodes , node_id.report_step );
   if ( obs_node != NULL) 
-    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , report_step , iens , meas_data , active_list);
+    obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , node_id , meas_data , active_list);
 }
 
 
@@ -664,62 +664,26 @@ void obs_vector_measure(const obs_vector_type * obs_vector , int report_step , i
 */
 
 
-static double obs_vector_chi2__(const obs_vector_type * obs_vector , int report_step , const enkf_node_type * node) { 
+static double obs_vector_chi2__(const obs_vector_type * obs_vector , int report_step , const enkf_node_type * node, node_id_type node_id) { 
   void * obs_node = vector_iget( obs_vector->nodes , report_step );
+
   if ( obs_node != NULL) 
-    return obs_vector->chi2( obs_node , enkf_node_value_ptr( node ));
+    return obs_vector->chi2( obs_node , enkf_node_value_ptr( node ), node_id);
   else
     return 0.0;  /* Observation not active for this report step. */
+
 }
 
 
 
-/**
-   This function will load the node from the filesystem. It will load
-   the state (analyzed | forecast) indicated by load_state. If
-   load_state == both, it will first try the analyzed and the
-   subsequently the forecast. The return value will be state actually
-   loaded, and 'undefined' if nothing was loaded.
-*/
-   
-static state_enum obs_vector_load_node__(enkf_fs_type * fs , enkf_node_type * node, state_enum load_state , int report_step , int iens) {
-  state_enum state = UNDEFINED;
-
-  if (load_state == FORECAST) {
-    if (enkf_fs_has_node(fs , enkf_node_get_config(node) , report_step , iens , FORECAST)) {
-      enkf_fs_fread_node( fs , node , report_step , iens , FORECAST );
-      state = FORECAST;    
-    }
-  } else if (load_state == ANALYZED) {
-    if (enkf_fs_has_node(fs , enkf_node_get_config(node) , report_step , iens , ANALYZED)) {
-      enkf_fs_fread_node( fs , node , report_step , iens , FORECAST );
-      state = ANALYZED;    
-    }
-  } else if (load_state == BOTH) {
-    /* Trying analyzed first */
-    if (enkf_fs_has_node(fs , enkf_node_get_config(node) , report_step , iens , ANALYZED)) {
-      enkf_fs_fread_node( fs , node , report_step , iens , ANALYZED);
-      state = ANALYZED;
-    } else if (enkf_fs_has_node(fs , enkf_node_get_config(node) , report_step , iens , FORECAST)) {
-      enkf_fs_fread_node( fs , node , report_step , iens , FORECAST );
-      state = FORECAST;
-    }
-  }
-
-  if (state == UNDEFINED)
-    fprintf(stderr , "** Warning could not locate: %s / %d / %d for misfit calculations - defaulting to ZERO misfit. \n",enkf_node_get_key(node) , report_step , iens);
-
-  return state;
-}
 
 
-
-double obs_vector_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , int report_step , int iens , state_enum load_state) {
+double obs_vector_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , node_id_type node_id) {
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
   double chi2 = 0;
-
-  if (obs_vector_load_node__(fs , enkf_node , load_state , report_step , iens) != UNDEFINED) 
-    chi2 = obs_vector_chi2__(obs_vector , report_step , enkf_node);
+  
+  if (enkf_node_try_load( enkf_node , fs , node_id)) 
+    chi2 = obs_vector_chi2__(obs_vector , node_id.report_step , enkf_node , node_id);
   
   enkf_node_free( enkf_node );
   return chi2;
@@ -742,13 +706,18 @@ void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type 
   int step;
 
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+  node_id_type node_id;
+  node_id.state = load_state;
   printf("** Warning: desperate fix \n");
   for (step = step1; step < (step2 - 1); step++) {
     int iens;
+    node_id.report_step = step;
     if (vector_iget( obs_vector->nodes , step) != NULL) {
       for (iens = iens1; iens < iens2; iens++) {
-        if (obs_vector_load_node__(fs , enkf_node , load_state ,step , iens) != UNDEFINED) 
-          chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node);
+        node_id.iens = iens;
+
+        if (enkf_node_try_load( enkf_node , fs , node_id)) 
+          chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node , node_id);
         else
           chi2[step][iens] = 0;
       }
@@ -771,11 +740,15 @@ double obs_vector_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type *
   int report_step;
   double sum_chi2 = 0;
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+  node_id_type node_id = {.report_step = 0, .iens = iens , .state = load_state };
 
   for (report_step = 0; report_step < vector_get_size( obs_vector->nodes ); report_step++) {
     if (vector_iget(obs_vector->nodes , report_step) != NULL) {
-      if (obs_vector_load_node__(fs , enkf_node , load_state , report_step , iens) != UNDEFINED) 
-        sum_chi2 += obs_vector_chi2__(obs_vector , report_step , enkf_node);
+      node_id.report_step = report_step;
+
+      if (enkf_node_try_load( enkf_node , fs , node_id)) 
+        sum_chi2 += obs_vector_chi2__(obs_vector , report_step , enkf_node, node_id);
+
     }
   }
   enkf_node_free( enkf_node );
@@ -793,6 +766,7 @@ void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs
   int report_step;
   int iens;
   char * msg_text = NULL;
+  
   for (iens = 0; iens < ens_size; iens++)
     sum_chi2[iens] = 0;
 
@@ -801,20 +775,28 @@ void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs
     msg_show(msg);
   }
 
-  enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
-  for (report_step = 0; report_step < vector_get_size( obs_vector->nodes); report_step++) { 
-    if (verbose) {
-      msg_text = util_realloc_sprintf( msg_text , "%s[%03d]" , obs_vector->obs_key , report_step);
-      msg_update(msg , msg_text);
-    }
-    if (vector_iget(obs_vector->nodes , report_step) != NULL) {
-      for (iens = 0; iens < ens_size; iens++) {
-        if (obs_vector_load_node__(fs , enkf_node , load_state , report_step , iens) != UNDEFINED) 
-          sum_chi2[iens] += obs_vector_chi2__(obs_vector , report_step , enkf_node);
+  {
+    node_id_type node_id = {.report_step = 0, .iens = iens , .state = load_state };
+    enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+    for (report_step = 0; report_step < vector_get_size( obs_vector->nodes); report_step++) { 
+      if (verbose) {
+        msg_text = util_realloc_sprintf( msg_text , "%s[%03d]" , obs_vector->obs_key , report_step);
+        msg_update(msg , msg_text);
+      }
+      if (vector_iget(obs_vector->nodes , report_step) != NULL) {
+        node_id.report_step = report_step;
+        for (iens = 0; iens < ens_size; iens++) {
+          node_id.iens = iens;
+
+          if (enkf_node_try_load( enkf_node , fs , node_id)) 
+            sum_chi2[iens] += obs_vector_chi2__(obs_vector , report_step , enkf_node, node_id);
+
+        }
       }
     }
+    enkf_node_free( enkf_node );
   }
-  enkf_node_free( enkf_node );
+
   if (verbose) {
     msg_free(msg , true);
     util_safe_free( msg_text );

@@ -246,6 +246,7 @@ analysis_module_type * analysis_config_get_active_module( analysis_config_type *
 
 void analysis_config_load_internal_modules( analysis_config_type * config , rng_type * rng) {
   analysis_config_load_internal_module( config , rng , "STD_ENKF"       , "std_enkf_symbol_table");
+  analysis_config_load_internal_module( config , rng , "NULL_ENKF"      , "null_enkf_symbol_table");
   analysis_config_load_internal_module( config , rng , "SQRT_ENKF"      , "sqrt_enkf_symbol_table");
   analysis_config_load_internal_module( config , rng , "CV_ENKF"        , "cv_enkf_symbol_table");
   analysis_config_load_internal_module( config , rng , "BOOTSTRAP_ENKF" , "bootstrap_enkf_symbol_table");

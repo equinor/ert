@@ -80,7 +80,6 @@ void surface_copy(const surface_type *src , surface_type * target) {
     const int data_size = surface_config_get_data_size( src->config );
     for (int k=0; k < data_size; k++)
       target->data[k] = src->data[k];
-    
   } else
     util_abort("%s: do not share config objects \n",__func__);
 }
@@ -88,7 +87,7 @@ void surface_copy(const surface_type *src , surface_type * target) {
 
 
 
-void surface_load(surface_type * surface , buffer_type * buffer, int report_step) {
+void surface_read_from_buffer(surface_type * surface , buffer_type * buffer, int report_step, state_enum state) {
   int  size = surface_config_get_data_size( surface->config );
   enkf_util_assert_buffer_type( buffer , SURFACE );
   buffer_fread( buffer , surface->data , sizeof * surface->data , size);
@@ -99,7 +98,7 @@ void surface_load(surface_type * surface , buffer_type * buffer, int report_step
 
 
 
-bool surface_store(const surface_type * surface , buffer_type * buffer, int report_step , bool internal_state) {
+bool surface_write_to_buffer(const surface_type * surface , buffer_type * buffer, int report_step , state_enum state) {
   int  size = surface_config_get_data_size( surface->config );
   buffer_fwrite_int( buffer , SURFACE );
   buffer_fwrite( buffer , surface->data , sizeof * surface->data , size);
@@ -115,7 +114,7 @@ void surface_free(surface_type *surface) {
 
 
 
-void surface_serialize(const surface_type * surface , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+void surface_serialize(const surface_type * surface , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const surface_config_type *config  = surface->config;
   const int                data_size = surface_config_get_data_size(config );
   
@@ -124,7 +123,7 @@ void surface_serialize(const surface_type * surface , const active_list_type * a
 
 
 
-void surface_deserialize(surface_type * surface , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void surface_deserialize(surface_type * surface , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const surface_config_type *config  = surface->config;
   const int                data_size = surface_config_get_data_size(config );
   
@@ -139,19 +138,20 @@ void surface_ecl_write(const surface_type * surface , const char * run_path , co
 }
 
 
-double surface_user_get(const surface_type * surface , const char * index_key , bool * valid) {
+bool surface_user_get(const surface_type * surface , const char * index_key , int report_step , state_enum state, double * value) {
   const int                data_size = surface_config_get_data_size( surface->config );
   int index;
 
-  *valid = false;
+  *value = 0.0;
+
   if (util_sscanf_int( index_key , &index)) 
     if ((index >= 0) && (index < data_size)) {
-      *valid = true;
-      return surface->data[index];
+      *value = surface->data[index];
+      return true;
     }
   
   // Not valid
-  return 0;
+  return false;
 }
 
 
@@ -209,8 +209,8 @@ VOID_FREE(surface)
 VOID_ECL_WRITE(surface)
 VOID_COPY(surface)
 VOID_USER_GET(surface)
-VOID_STORE(surface)
-VOID_LOAD(surface)
+VOID_WRITE_TO_BUFFER(surface)
+VOID_READ_FROM_BUFFER(surface)
 VOID_SERIALIZE(surface)
 VOID_DESERIALIZE(surface)
 VOID_INITIALIZE(surface)

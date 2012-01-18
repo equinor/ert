@@ -196,23 +196,23 @@ void field_obs_get_observations(const field_obs_type * field_obs,  obs_data_type
 
 
 
-void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, int report_step , int iens , meas_data_type * meas_data , const active_list_type * __active_list) {
+void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, node_id_type node_id , meas_data_type * meas_data , const active_list_type * __active_list) {
   int active_size = active_list_get_active_size( __active_list , field_obs->size );
-  meas_block_type * meas_block = meas_data_add_block( meas_data , field_obs->obs_key , report_step , field_obs->size );
+  meas_block_type * meas_block = meas_data_add_block( meas_data , field_obs->obs_key , node_id.report_step , field_obs->size );
   int iobs;
 
   active_mode_type active_mode = active_list_get_mode( __active_list );
   if (active_mode == ALL_ACTIVE) {
     for (iobs=0; iobs < field_obs->size; iobs++) {
       double value = field_iget_double(field_state , field_obs->index_list[iobs]);
-      meas_block_iset( meas_block , iens , iobs , value );
+      meas_block_iset( meas_block , node_id.iens , iobs , value );
     }
   } else if (active_mode == PARTLY_ACTIVE) {
     const int   * active_list    = active_list_get_active( __active_list ); 
     for (int i =0 ; i < active_size; i++) {
       iobs = active_list[i];
       double value = field_iget_double(field_state , field_obs->index_list[iobs]);
-      meas_block_iset( meas_block , iens , field_obs->index_list[ iobs ] , value );
+      meas_block_iset( meas_block , node_id.iens , field_obs->index_list[ iobs ] , value );
     }
   }
 }
@@ -221,7 +221,7 @@ void field_obs_measure(const field_obs_type * field_obs, const field_type * fiel
 
 
 
-double field_obs_chi2(const field_obs_type * field_obs,  const field_type     * field_state) {
+double field_obs_chi2(const field_obs_type * field_obs,  const field_type     * field_state, node_id_type node_id) {
   double sum_chi2 = 0;
   for (int i=0; i < field_obs->size; i++) {
     double x = (field_iget_double(field_state , field_obs->index_list[i]) - field_obs->obs_value[i]) / field_obs->obs_std[i];

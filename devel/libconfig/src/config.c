@@ -1286,6 +1286,7 @@ static void config_parse__(config_type * config ,
                            const char * comment_string , 
                            const char * include_kw ,
                            const char * define_kw , 
+                           bool warn_unrecognized,
                            bool auto_add , 
                            bool validate) {
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
@@ -1354,7 +1355,7 @@ static void config_parse__(config_type * config ,
                 free(tmp_path);
               }
 
-              config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , auto_add , false); /* Recursive call */
+              config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , warn_unrecognized, auto_add , false); /* Recursive call */
               util_safe_free(include_file);
               util_safe_free(include_path);
             }
@@ -1379,7 +1380,9 @@ static void config_parse__(config_type * config ,
               printf("%s \n",(char *) hash_get(config->messages , kw));
             
             if (!config_has_item(config , kw)) {
-              fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s --- \n" , kw , config_file);
+              if (warn_unrecognized)
+                fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s --- \n" , kw , config_file);
+
               if (auto_add) {
                 config_add_item(config , kw , true , false);                        /* Auto created items get append_arg == true, and required == true (which is trivially satisfied). */
                 hash_insert_hash_owned_ref( config->auto_items , kw , vector_alloc_new() , vector_free__ );
@@ -1414,6 +1417,7 @@ void config_parse(config_type * config ,
                   const char * comment_string , 
                   const char * include_kw ,
                   const char * define_kw , 
+                  bool warn_unrecognized,
                   bool auto_add , 
                   bool validate) {
   char * config_path;
@@ -1422,7 +1426,7 @@ void config_parse(config_type * config ,
   char * extension;
   util_alloc_file_components(filename , &config_path , &tmp_file , &extension);
   config_file = util_alloc_filename(NULL , tmp_file , extension);
-  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , auto_add , validate);
+  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , warn_unrecognized , auto_add , validate);
 
   util_safe_free(tmp_file);
   util_safe_free(extension);

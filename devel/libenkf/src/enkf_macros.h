@@ -73,8 +73,8 @@ bool prefix ## _is_instance__(const void * __arg) {                        \
 }
 #define VOID_GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size__ (const void * arg);
 
-
 /*****************************************************************/
+
 
 
 #define VOID_ALLOC(prefix)                                                            \
@@ -87,21 +87,30 @@ void * prefix ## _alloc__(const void *void_config) {                            
 
 /*****************************************************************/
 
-#define VOID_STORE(prefix)                                        \
-bool prefix ## _store__(const void * void_arg , buffer_type * buffer , int report_step , bool internal_state) {  \
+#define VOID_HAS_DATA(prefix) \
+  bool prefix ##_has_data__(const void * void_arg , int report_step , state_enum state) { \
+  const prefix ## _type * arg = prefix ## _safe_cast_const( void_arg ); \
+  return prefix ## _has_data(arg , report_step , state);                \
+}
+
+#define VOID_HAS_DATA_HEADER(prefix) bool prefix ##_has_data__(const void *  , int , state_enum );
+
+/*****************************************************************/
+#define VOID_WRITE_TO_BUFFER(prefix)                                        \
+  bool prefix ## _write_to_buffer__(const void * void_arg , buffer_type * buffer , int report_step , state_enum state) { \
    const prefix ## _type * arg = prefix ## _safe_cast_const( void_arg ); \
-   return prefix ## _store(arg , buffer , report_step , internal_state);        \
+   return prefix ## _write_to_buffer(arg , buffer , report_step , state);     \
 }
 
 
-#define VOID_LOAD(prefix)                                                          \
-void prefix ## _load__(void * void_arg , buffer_type * buffer , int report_step) { \
+#define VOID_READ_FROM_BUFFER(prefix)                                              \
+  void prefix ## _read_from_buffer__(void * void_arg , buffer_type * buffer , int report_step, state_enum state) { \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg );                       \
-   prefix ## _load(arg , buffer , report_step);                                     \
+   prefix ## _read_from_buffer(arg , buffer , report_step, state);            \
 }
 
-#define VOID_STORE_HEADER(prefix) bool prefix ## _store__(const void * , buffer_type * , int , bool);
-#define VOID_LOAD_HEADER(prefix) void prefix ## _load__(void * , buffer_type * , int);
+#define VOID_WRITE_TO_BUFFER_HEADER(prefix) bool prefix ## _write_to_buffer__(const void * , buffer_type * , int , state_enum);
+#define VOID_READ_FROM_BUFFER_HEADER(prefix) void prefix ## _read_from_buffer__(void * , buffer_type * , int, state_enum);
 
 #define VOID_FLOAD(prefix)                                                         \
 void prefix ## _fload__(void * void_arg , const char * filename) {                 \
@@ -131,6 +140,16 @@ bool prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_
 
 #define VOID_ECL_LOAD_HEADER(prefix) bool prefix ## _ecl_load__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int);
 
+  /*****************************************************************/
+
+#define VOID_ECL_LOAD_VECTOR(prefix) \
+  bool prefix ## _ecl_load_vector__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step1 , int report_step2) { \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );                         \
+   return prefix ## _ecl_load_vector(arg , ecl_file , ecl_sum , restart_file , report_step1 , report_step2); \
+}
+
+#define VOID_ECL_LOAD_VECTOR_HEADER(prefix) bool prefix ## _ecl_load_vector__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int , int);
+
 
 /*****************************************************************/
 
@@ -146,12 +165,12 @@ void prefix ## _free__(void * void_arg) {         \
 /*****************************************************************/
 
 #define VOID_USER_GET(prefix)                                                     \
-double prefix ## _user_get__(void * void_arg , const char * key , bool * valid) { \
+bool prefix ## _user_get__(void * void_arg , const char * key , int report_step , state_enum state , double * value) { \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg );                      \
-   return prefix ## _user_get(arg , key , valid);                                 \
+   return prefix ## _user_get(arg , key , report_step, state , value);   \
 }
 
-#define VOID_USER_GET_HEADER(prefix) double prefix ## _user_get__(void * , const char * , bool *);
+#define VOID_USER_GET_HEADER(prefix) bool prefix ## _user_get__(void * , const char * , int, state_enum , double *);
 
 
 
@@ -207,19 +226,19 @@ void prefix ## _copy__(const void * void_src, void * void_target) {   \
 /*****************************************************************/
 
 #define VOID_SERIALIZE(prefix)     \
-void prefix ## _serialize__(const void *void_arg, const active_list_type * active_list , matrix_type * A , int row_offset , int column) {\
+  void prefix ## _serialize__(const void *void_arg, node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) { \
    const prefix ## _type  *arg = prefix ## _safe_cast_const( void_arg );                                                              \
-   prefix ## _serialize (arg , active_list , A , row_offset , column);                                                \
+   prefix ## _serialize (arg , node_id , active_list , A , row_offset , column); \
 }
-#define VOID_SERIALIZE_HEADER(prefix) void prefix ## _serialize__(const void * , const active_list_type * , matrix_type *  , int , int);
+#define VOID_SERIALIZE_HEADER(prefix) void prefix ## _serialize__(const void * , node_id_type , const active_list_type * , matrix_type *  , int , int);
 
 
 #define VOID_DESERIALIZE(prefix)     \
-void prefix ## _deserialize__(void *void_arg, const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {\
+  void prefix ## _deserialize__(void *void_arg, node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) { \
    prefix ## _type  *arg = prefix ## _safe_cast( void_arg );                                                          \
-   prefix ## _deserialize (arg , active_list , A , row_offset , column);                                                      \
+   prefix ## _deserialize (arg , node_id , active_list , A , row_offset , column); \
 }
-#define VOID_DESERIALIZE_HEADER(prefix) void prefix ## _deserialize__(void * , const active_list_type * , const matrix_type *  , int , int);
+#define VOID_DESERIALIZE_HEADER(prefix) void prefix ## _deserialize__(void * , node_id_type , const active_list_type * , const matrix_type *  , int , int);
 
 
 
@@ -254,25 +273,25 @@ void prefix ## _get_observations__(const void * void_arg , obs_data_type * obs_d
 /*****************************************************************/
 
 #define VOID_MEASURE(obs_prefix, state_prefix) \
-void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state , int report_step , int iens , meas_data_type * meas_data , const active_list_type * __active_list) { \
+void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state , node_id_type node_id , meas_data_type * meas_data , const active_list_type * __active_list) { \
    const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast_const( void_obs );     \
    const state_prefix ## _type * state = state_prefix ## _safe_cast_const( void_state );       \
-   obs_prefix ## _measure(obs , state , report_step , iens , meas_data , __active_list);                    \
+   obs_prefix ## _measure(obs , state , node_id , meas_data , __active_list); \
 }
 
-#define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , int , int , meas_data_type * , const active_list_type *)
+#define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , node_id_type , meas_data_type * , const active_list_type *)
 
 
 /*****************************************************************/
 
 #define VOID_CHI2(obs_prefix, state_prefix) \
-double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {         \
+  double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state, node_id_type node_id) { \
    const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast_const( void_obs );     \
    const state_prefix ## _type * state = state_prefix ## _safe_cast_const( void_state ); \
-   return obs_prefix ## _chi2(obs , state);                                        \
+   return obs_prefix ## _chi2(obs , state , node_id);                           \
 }
 
-#define VOID_CHI2_HEADER(obs_prefix) double obs_prefix ## _chi2__(const void * ,  const void *);
+#define VOID_CHI2_HEADER(obs_prefix) double obs_prefix ## _chi2__(const void * ,  const void *, node_id_type);
 
 
 /*****************************************************************/

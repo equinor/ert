@@ -196,6 +196,9 @@ fs_driver_impl model_config_get_dbase_type(const model_config_type * model_confi
 }
 
 
+void * model_config_get_dbase_args( const model_config_type * model_config ) {
+  return NULL;
+}
 
  void model_config_set_max_resample( model_config_type * model_config , int max_resample ) {
    model_config->max_internal_submit = max_resample;

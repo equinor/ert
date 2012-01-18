@@ -135,7 +135,7 @@ void gen_data_free(gen_data_type * gen_data) {
 */
 
 
-bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , int report_step , bool internal_state) {
+bool gen_data_write_to_buffer(const gen_data_type * gen_data , buffer_type * buffer , int report_step , state_enum state) {
   const bool write_zero_size = true; /* true:ALWAYS write a file   false:only write files with size > 0. */
   {
     bool write    = write_zero_size;
@@ -158,7 +158,7 @@ bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , int 
 
 
 
-void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_step) {
+void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer , int report_step, state_enum state) {
   int size;
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
   size = buffer_fread_int(buffer);
@@ -180,7 +180,7 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_
 
 
 
-void gen_data_serialize(const gen_data_type * gen_data , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+void gen_data_serialize(const gen_data_type * gen_data , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const gen_data_config_type *config   = gen_data->config;
   const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
   ecl_type_enum ecl_type               = gen_data_config_get_internal_type( config );
@@ -189,7 +189,7 @@ void gen_data_serialize(const gen_data_type * gen_data , const active_list_type 
 }
 
 
-void gen_data_deserialize(gen_data_type * gen_data , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void gen_data_deserialize(gen_data_type * gen_data , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   {
     const gen_data_config_type *config   = gen_data->config;
     const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
@@ -467,21 +467,21 @@ double gen_data_iget_double(const gen_data_type * gen_data, int index) {
    false, and return silently in that case.
 */
 
-double gen_data_user_get(const gen_data_type * gen_data, const char * index_key, bool * valid)
+bool gen_data_user_get(const gen_data_type * gen_data, const char * index_key, int report_step , state_enum state, double * value)
 {
   int index;
+  *value = 0.0;
 
   if (index_key != NULL) {
     if (util_sscanf_int(index_key , &index)) {
       if (index < gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step )) {
-        *valid = true;
-        return gen_data_iget_double( gen_data , index );
+        *value = gen_data_iget_double( gen_data , index );
+        return true;
       }
     } 
   }
   
-  *valid = false;
-  return -1; /* Dummy to shut up compiler */
+  return false;
 }
 
 
@@ -670,8 +670,8 @@ VOID_COPY     (gen_data)
 VOID_INITIALIZE(gen_data)
 VOID_ECL_WRITE(gen_data)
 VOID_ECL_LOAD(gen_data)
-VOID_LOAD(gen_data);
-VOID_STORE(gen_data);
+VOID_READ_FROM_BUFFER(gen_data);
+VOID_WRITE_TO_BUFFER(gen_data);
 VOID_SERIALIZE(gen_data)
 VOID_DESERIALIZE(gen_data)
 VOID_SET_INFLATION(gen_data)

@@ -81,7 +81,7 @@ void ecl_static_kw_init(ecl_static_kw_type * ecl_static_kw, const ecl_kw_type * 
 
 
 
-void ecl_static_kw_load(ecl_static_kw_type * ecl_static_kw , buffer_type * buffer, int report_step) {
+void ecl_static_kw_read_from_buffer(ecl_static_kw_type * ecl_static_kw , buffer_type * buffer, int report_step, state_enum state) {
   enkf_util_assert_buffer_type( buffer , STATIC );
   if (ecl_static_kw->ecl_kw != NULL)
     util_abort("%s: internal error: trying to assign ecl_kw to ecl_static_kw which is already set.\n",__func__);
@@ -107,7 +107,7 @@ void ecl_static_kw_ecl_write(const ecl_static_kw_type * ecl_static, const char *
 
 
 
-bool ecl_static_kw_store(const ecl_static_kw_type * ecl_static_kw , buffer_type * buffer, int report_step , bool internal_state) {
+bool ecl_static_kw_write_to_buffer(const ecl_static_kw_type * ecl_static_kw , buffer_type * buffer, int report_step , state_enum state) {
   buffer_fwrite_int( buffer , STATIC );
   ecl_kw_buffer_store( ecl_static_kw->ecl_kw , buffer);
   return true;
@@ -126,5 +126,5 @@ UTIL_SAFE_CAST_FUNCTION_CONST(ecl_static_kw , STATIC)
 VOID_FREE(ecl_static_kw)
 VOID_ECL_WRITE (ecl_static_kw)
 VOID_COPY(ecl_static_kw)
-VOID_LOAD(ecl_static_kw)
-VOID_STORE(ecl_static_kw)
+VOID_READ_FROM_BUFFER(ecl_static_kw)
+VOID_WRITE_TO_BUFFER(ecl_static_kw)

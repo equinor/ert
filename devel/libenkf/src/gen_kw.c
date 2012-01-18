@@ -86,7 +86,7 @@ void gen_kw_copy(const gen_kw_type * src , gen_kw_type * target) {
 
 
 
-bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_step , bool internal_state) {
+bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_step, state_enum state) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   buffer_fwrite_int( buffer , GEN_KW );
   buffer_fwrite(buffer , gen_kw->data , sizeof *gen_kw->data , data_size);
@@ -95,17 +95,17 @@ bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_
 
 
 
+
 /**
    As of 17/03/09 (svn 1811) MULTFLT has been depreceated, and GEN_KW
    has been inserted as a 'drop-in-replacement'. This implies that
    existing storage labeled with implemantation type 'MULTFLT' should
    be silently 'upgraded' to 'GEN_KW'.
-
 */
 
 
 #define MULTFLT 102
-void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer, int report_step) {
+void gen_kw_read_from_buffer(gen_kw_type * gen_kw , buffer_type * buffer, int report_step, state_enum state) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   ert_impl_type file_type;
   file_type = buffer_fread_int(buffer);
@@ -141,13 +141,13 @@ bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , const char * init_file ,
 
 
 
-void gen_kw_serialize(const gen_kw_type *gen_kw , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+void gen_kw_serialize(const gen_kw_type *gen_kw , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   enkf_matrix_serialize( gen_kw->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
 }
 
 
-void gen_kw_deserialize(gen_kw_type *gen_kw , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void gen_kw_deserialize(gen_kw_type *gen_kw , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const int data_size = gen_kw_config_get_data_size( gen_kw->config );
   enkf_matrix_deserialize( gen_kw->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
 }
@@ -289,16 +289,16 @@ void gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
    Will return 0.0 on invalid input, and set valid -> false. It is the
    responsibility of the calling scope to check valid.
 */
-double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * valid) {
+bool gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , int report_step , state_enum state , double * value) {
   int index = gen_kw_config_get_index(gen_kw->config , key);
   
   if (index >= 0) {
-    *valid = true;
-    return gen_kw_config_transform(gen_kw->config , index , gen_kw->data[ index ] );
+    *value = gen_kw_config_transform(gen_kw->config , index , gen_kw->data[ index ] );
+    return true;
   } else {
-    *valid = false;
+    *value = 0.0;
     fprintf(stderr,"** Warning:could not lookup key:%s in gen_kw instance \n",key);
-    return 0.0;
+    return false;
   }
 }
 
@@ -367,8 +367,8 @@ VOID_COPY(gen_kw)
 VOID_FREE(gen_kw)
 VOID_ECL_WRITE(gen_kw)
 VOID_USER_GET(gen_kw)
-VOID_STORE(gen_kw)
-VOID_LOAD(gen_kw)
+VOID_WRITE_TO_BUFFER(gen_kw)
+VOID_READ_FROM_BUFFER(gen_kw)
 VOID_SERIALIZE(gen_kw)
 VOID_DESERIALIZE(gen_kw)
 VOID_SET_INFLATION(gen_kw)

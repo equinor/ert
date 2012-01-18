@@ -67,7 +67,7 @@ static well_state_type * well_state_alloc_empty() {
 // conn input, and organize the connections into branches in the 
 // well_state structure.
 
-void well_state_add_conn( well_state_type * well_state , int grid_nr , well_conn_type * conn) {
+void well_state_add_conn( well_state_type * well_state , int grid_nr , well_conn_type * conn ) {
   vector_append_owned_ref( well_state->connections , conn , well_conn_free__);
 }
 

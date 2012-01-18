@@ -654,7 +654,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_item(config , "MAX_RUNNING_MINUTES" , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
-    config_parse(config , config_file , "--" , NULL , NULL , false , true);
+    config_parse(config , config_file , "--" , NULL , NULL , true , false , true);
     {
       if (config_item_set(config , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
       if (config_item_set(config , "STDOUT"))                ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));

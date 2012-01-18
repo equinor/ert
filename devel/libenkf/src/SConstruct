@@ -1,1 +1,1 @@
-SConscript(["SConscript", "../applications/ert_tui/SConstruct"])
+SConscript(["SConscript", "test/SConstruct" , "../applications/ert_tui/SConstruct"])

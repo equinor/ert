@@ -34,6 +34,7 @@
 #include <enkf_obs.h>
 #include <gen_obs.h>
 #include <enkf_config_node.h>
+#include <enkf_fs.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -43,6 +44,7 @@ struct enkf_config_node_struct {
   UTIL_TYPE_ID_DECLARATION;
   ert_impl_type          impl_type;
   enkf_var_type           var_type; 
+  bool                    vector_storage; 
 
   bool_vector_type      * internalize;      /* Should this node be internalized - observe that question of what to internalize is MOSTLY handled at a higher level - without consulting this variable. Can be NULL. */ 
   stringlist_type       * obs_keys;         /* Keys of observations which observe this node. */
@@ -61,6 +63,17 @@ struct enkf_config_node_struct {
 
 
 
+bool enkf_config_node_has_node( const enkf_config_node_type * node , enkf_fs_type * fs , node_id_type node_id) {
+  return enkf_fs_has_node( fs , node->key , node->var_type , node_id.report_step , node_id.iens , node_id.state );
+}
+
+
+bool enkf_config_node_has_vector( const enkf_config_node_type * node , enkf_fs_type * fs , int iens , state_enum state) {
+  return enkf_fs_has_vector( fs , node->key , node->var_type , iens , state );
+}
+
+
+
 static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_type, 
                                                          ert_impl_type  impl_type, 
                                                          const char * key) {
@@ -69,6 +82,7 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
   node->var_type        = var_type;
   node->impl_type       = impl_type;
   node->key             = util_alloc_string_copy( key );
+  node->vector_storage  = false;
 
   node->init_file_fmt    = NULL; 
   node->enkf_infile_fmt  = NULL;
@@ -94,6 +108,7 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
       node->get_data_size     = gen_kw_config_get_data_size__;
       break;
     case(SUMMARY):
+      node->vector_storage    = true;
       node->freef             = summary_config_free__;
       node->get_data_size     = summary_config_get_data_size__;
       break;
@@ -110,6 +125,11 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
     }
   }
   return node;
+}
+
+
+bool enkf_config_node_vector_storage( const enkf_config_node_type * config_node) {
+  return config_node->vector_storage;
 }
 
 /**
@@ -266,7 +286,7 @@ void enkf_config_node_update_surface( enkf_config_node_type * config_node , cons
 
 enkf_config_node_type * enkf_config_node_alloc_summary( const char * key ) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_RESULT , SUMMARY , key );
-  config_node->data = summary_config_alloc( key );
+  config_node->data = summary_config_alloc( key , config_node->vector_storage);
   return config_node;
 }
 

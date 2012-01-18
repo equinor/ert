@@ -38,6 +38,8 @@ typedef enum {
   BLOCK_FS_DRIVER_ID         = 3001,
   BLOCK_FS_DRIVER_INDEX_ID   = 3002 } fs_driver_impl;
 
+
+
 /*
   SQLITE_DRIVER_ID           = 2001,    Removed 11.08.2010 (svn: 2957)
 */

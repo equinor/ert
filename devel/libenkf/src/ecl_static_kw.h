@@ -40,8 +40,8 @@ VOID_FREE_HEADER(ecl_static_kw);
 VOID_FREE_DATA_HEADER(ecl_static_kw);
 VOID_COPY_HEADER(ecl_static_kw);
 VOID_ECL_WRITE_HEADER(ecl_static_kw);
-VOID_LOAD_HEADER(ecl_static_kw);
-VOID_STORE_HEADER(ecl_static_kw);
+VOID_READ_FROM_BUFFER_HEADER(ecl_static_kw);
+VOID_WRITE_TO_BUFFER_HEADER(ecl_static_kw);
 
 #ifdef __cplusplus
 }

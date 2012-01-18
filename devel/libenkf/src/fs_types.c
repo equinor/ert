@@ -49,6 +49,9 @@ const char * fs_types_get_driver_name(fs_driver_enum driver_type) {
   case(DRIVER_DYNAMIC_ANALYZED):
     return "ANALYZED";
     break;
+  case(DRIVER_INDEX):
+    return "INDEX";
+    break;
   default:
     util_abort("%s: driver_id:%d not recognized. \n",__func__ , driver_type );
     return NULL;

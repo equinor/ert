@@ -300,7 +300,7 @@ int enkf_tui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
 /**
    This function runs through all the report steps [step1:step2] for
    member iens, and gets the value of the cell 'get_index'. Current
-   implementation assumes that the config_node/node comination are of
+   implementation assumes that the config_node/node combination are of
    field type - this should be generalized to use the enkf_node_iget()
    function.
 
@@ -316,11 +316,10 @@ void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * co
   for (report_step = step1; report_step <= step2; report_step++) {
     
     if (analysis_state & FORECAST) {
-      if (enkf_fs_has_node(fs , config_node , report_step , iens , FORECAST)) {
-        enkf_fs_fread_node(fs , node , report_step , iens , FORECAST); {
-          const field_type * field = enkf_node_value_ptr( node );
-          y[index] = field_iget_double(field , get_index);
-        }
+      node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
+      if (enkf_node_try_load(node , fs , node_id)) {
+        const field_type * field = enkf_node_value_ptr( node );
+        y[index] = field_iget_double(field , get_index);
       } else {
         fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key  , iens , report_step);
         y[index] = -1;
@@ -331,11 +330,10 @@ void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * co
     
     
     if (analysis_state & ANALYZED) {
-      if (enkf_fs_has_node(fs , config_node , report_step , iens , ANALYZED)) {
-        enkf_fs_fread_node(fs , node , report_step , iens , ANALYZED); {
-          const field_type * field = enkf_node_value_ptr( node );
-          y[index] = field_iget_double(field , get_index);
-        }
+      node_id_type node_id = {.report_step = report_step , .iens = iens , .state = ANALYZED };
+      if (enkf_node_try_load(node , fs , node_id)) {
+        const field_type * field = enkf_node_value_ptr( node );
+        y[index] = field_iget_double(field , get_index);
       } else {
         fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key , iens , report_step);
         y[index] = -1;

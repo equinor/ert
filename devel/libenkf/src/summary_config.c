@@ -33,6 +33,7 @@
 
 struct summary_config_struct {
   int                   __type_id;
+  bool                  vector_storage;
   ecl_smspec_var_type   var_type;    /* The type of the variable - according to ecl_summary nomenclature. */
   char * var;                        /* This is ONE variable of summary.x format - i.e. WOPR:OP_2, RPR:4, ... */
   set_type           *  obs_set;     /* Set of keys (which fit in enkf_obs) which are observations of this node. */ 
@@ -57,12 +58,19 @@ ecl_smspec_var_type summary_config_get_var_type(summary_config_type * config , c
 }
 
 
-summary_config_type * summary_config_alloc(const char * var) {
+bool summary_config_get_vector_storage( const summary_config_type * config) {
+  return config->vector_storage;
+}
+
+
+
+summary_config_type * summary_config_alloc(const char * var , bool vector_storage) {
   summary_config_type * config = util_malloc(sizeof *config , __func__);
   config->var                  = util_alloc_string_copy( var );
   config->var_type             = ECL_SMSPEC_INVALID_VAR;
   config->obs_set              = set_alloc_empty(); 
   config->__type_id            = SUMMARY_CONFIG_TYPE_ID;
+  config->vector_storage       = vector_storage;
   return config;
 }
 

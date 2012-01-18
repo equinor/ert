@@ -68,7 +68,8 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
     enkf_node_type * node = enkf_node_alloc(config_node);
 
     for (iens = iens1; iens <= iens2; iens++) {
-      if (enkf_fs_try_fread_node(fs , node , report_step , iens , BOTH)) {
+      node_id_type node_id = {.report_step = report_step , .iens = iens , .state = BOTH };
+      if (enkf_node_try_load(node , fs , node_id)) {
         char * filename = path_fmt_alloc_path( export_path , false , iens);
         {
           char * path;
@@ -153,7 +154,8 @@ void enkf_tui_export_gen_data(void * arg) {
       
       msg_show( msg );
       for (iens = iens1; iens <= iens2; iens++) {
-        if (enkf_fs_try_fread_node(fs , node , report_step , iens , state)) {
+        node_id_type node_id = {.report_step = report_step , .iens = iens , .state = state };
+        if (enkf_node_try_load(node , fs, node_id)) {
           char * full_path = path_fmt_alloc_path( file_fmt , false , iens);
           char * path;
           char * ext;
@@ -257,9 +259,9 @@ void enkf_tui_export_profile(void * enkf_main) {
         
         for (report_step = 0; report_step <= last_report; report_step++) {
           if (report_active[report_step]) {
-            for (iens = iens1; iens <= iens2; iens++) {
-              if (enkf_fs_has_node(fs , config_node , report_step , iens , analysis_state)) {
-                enkf_fs_fread_node(fs , node , report_step , iens , analysis_state);
+            for (iens = iens1; iens <= iens2; iens++) {              
+              node_id_type node_id = {.report_step = report_step , .iens = iens , .state = analysis_state };
+              if (enkf_node_try_load(node , fs, node_id)) {
                 {
                   const field_type * field = enkf_node_value_ptr( node );
                   int field_index;
@@ -319,10 +321,11 @@ void enkf_tui_export_cell(void * enkf_main) {
       
       for (report_step = 0; report_step <= last_report; report_step++) {
         if (report_active[report_step]) {
-          if (enkf_fs_has_node(fs , config_node , report_step , iens1 , analysis_state)) {
+          node_id_type node_id = {.report_step = report_step , .iens = iens1 , .state = analysis_state};
+          if (enkf_node_try_load(node , fs , node_id)) {
             for (iens = iens1; iens <= iens2; iens++) {
-              if (enkf_fs_has_node(fs , config_node , report_step , iens , analysis_state)) {
-                enkf_fs_fread_node(fs , node , report_step , iens , analysis_state);
+              node_id.iens = iens;
+              if (enkf_node_try_load(node , fs , node_id )) {
                 {
                   const field_type * field = enkf_node_value_ptr( node );
                   cell_data[iens] = field_iget_double(field , cell_nr);
@@ -449,17 +452,24 @@ void enkf_tui_export_python_module(void * arg ) {
         fprintf(stderr,"Warning: could not locate node: %s \n", kw_list[ikw]);
       else {
         enkf_node_type * node = enkf_node_alloc( config_node );
+        node_id_type node_id;
+
+        node_id.state = FORECAST;
         for (int istep = 0; istep < num_step; istep++) {
-          bool valid;
+          node_id.report_step = istep;
           int  step = step_list[istep];
           fprintf(stream , "(\"%s\" , %d , [" , kw_list[ikw] , step);
           for (int iens = 0; iens < ens_size; iens++) {
-            enkf_fs_fread_node(fs , node , step , iens , FORECAST);
-            fprintf(stream , "%g " , enkf_node_user_get( node , index_key , &valid));
+            double value;
+            node_id.iens = iens;
+            enkf_node_user_get( node , fs , index_key , node_id , &value);
+            
+            fprintf(stream , "%g " , value);
             if (iens < (ens_size -1 ))
               fprintf(stream , ",");
             else
               fprintf(stream , "]");
+            
           }
           if ((istep == (num_step - 1)) && (ikw == (num_kw - 1)))
             fprintf(stream , ")]");
@@ -500,7 +510,7 @@ void enkf_tui_export_fieldP(void * arg) {
   export_file = util_alloc_stdin_line();
   {
     enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
-    enkf_node_type ** ensemble = enkf_fs_fread_alloc_ensemble( fs , config_node , report_step , iens1 , iens2 , analysis_state );
+    enkf_node_type ** ensemble = enkf_node_load_alloc_ensemble( config_node , fs , report_step , iens1 , iens2 , analysis_state );
     enkf_node_type *  sum      = enkf_node_alloc( config_node );
     int active_ens_size        = 0;
     int iens;
@@ -628,33 +638,36 @@ void enkf_tui_export_scalar2csv(void * arg) {
       enkf_node_type * node = enkf_node_alloc( config_node );
       FILE * stream         = util_fopen( csv_file , "w");
       msg_type * msg        = msg_alloc("Exporting report_step/member: " , false);
+      node_id_type node_id;
       
+      node_id.state = BOTH;
+
       /* Header line */
       fprintf(stream , "\"Report step\"");
       for (iens = iens1; iens <= iens2; iens++) 
         fprintf(stream , "%s\"%s(%d)\"" , CSV_SEP , user_key , iens);
       fprintf(stream , CSV_NEWLINE);
-      
+
       msg_show(msg);
       for (report_step = first_report; report_step <= last_report; report_step++) {
         fprintf(stream , "%6d" , report_step);
+        node_id.report_step = report_step;
         for (iens = iens1; iens <= iens2; iens++) {
+          double value;
           char label[32];
           /* 
              Have not implemented a choice on forecast/analyzed. Tries
              analyzed first, then forecast.
           */
+          node_id.iens = iens;
           sprintf(label , "%03d/%03d" , report_step , iens);
           msg_update( msg , label);
-          if (enkf_fs_try_fread_node(fs , node , report_step , iens , BOTH)) {
-            bool   valid;
-            double value = enkf_node_user_get( node , key_index , &valid);
-            if (valid)
-              fprintf(stream , "%s%g" , CSV_SEP , value);
-            else
-              fprintf(stream , "%s%s" , CSV_SEP , CSV_MISSING_VALUE);
-          } else
+          
+          if (enkf_node_user_get( node , fs , key_index , node_id ,  &value)) 
+            fprintf(stream , "%s%g" , CSV_SEP , value);
+          else
             fprintf(stream , "%s%s" , CSV_SEP , CSV_MISSING_VALUE);
+          
         }
         fprintf(stream , CSV_NEWLINE);
       }
@@ -680,7 +693,6 @@ void enkf_tui_export_stat(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   {
     const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-    const bool output_transform = true;
     const enkf_config_node_type * config_node;
     state_enum analysis_state;
     const int ens_size = enkf_main_get_ensemble_size( enkf_main );

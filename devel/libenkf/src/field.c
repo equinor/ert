@@ -334,7 +334,7 @@ void field_copy(const field_type *src , field_type * target ) {
 
 
 
-void field_load(field_type * field , buffer_type * buffer, int report_step) {
+void field_read_from_buffer(field_type * field , buffer_type * buffer, int report_step, state_enum state) {
   int byte_size = field_config_get_byte_size( field->config );
   enkf_util_assert_buffer_type(buffer , FIELD);
   buffer_fread_compressed(buffer , buffer_get_remaining_size( buffer ) , field->data , byte_size);
@@ -473,7 +473,7 @@ void field_ROFF_export(const field_type * field , const char * filename) {
 
 
 
-bool field_store(const field_type * field , buffer_type * buffer , int report_step , bool internal_state) {
+bool field_write_to_buffer(const field_type * field , buffer_type * buffer , int report_step , state_enum state) {
   int byte_size = field_config_get_byte_size( field->config );
   buffer_fwrite_int( buffer , FIELD );
   buffer_fwrite_compressed( buffer , field->data , byte_size );
@@ -759,7 +759,7 @@ void field_free(field_type *field) {
 
 
 
-void field_serialize(const field_type * field , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+void field_serialize(const field_type * field , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config );
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
@@ -768,7 +768,7 @@ void field_serialize(const field_type * field , const active_list_type * active_
 }
 
 
-void field_deserialize(field_type * field , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+void field_deserialize(field_type * field , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config );
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
@@ -1362,17 +1362,17 @@ void field_update_sum(field_type * sum , const field_type * field , double lower
   [1..ny] , [1...nz], they are immediately converted to C-based zero
   offset indices.
 */
-double field_user_get(const field_type * field, const char * index_key, bool * valid)
+bool field_user_get(const field_type * field, const char * index_key, int report_step , state_enum state, bool * value)
 {
   const    bool internal_value = false;
-  double   val = 0.0;
+  bool     valid;
   int      i,j,k;
   int      parse_user_key = field_config_parse_user_key(field->config , index_key , &i, &j , &k);
 
   if (parse_user_key == 0) {
     int active_index = field_config_active_index(field->config , i,j,k);
-    val =  field_iget_double(field, active_index);
-    *valid = true;
+    *value =  field_iget_double(field, active_index);
+    valid = true;
   } else {
     if (parse_user_key == 1)
       fprintf(stderr,"Failed to parse \"%s\" as three integers \n",index_key);
@@ -1382,16 +1382,17 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
       fprintf(stderr," ijk: %d , %d, %d is an inactive cell. \n",i+1 , j + 1 , k + 1);
     else
       util_abort("%s: internal error -invalid value:%d \n",__func__ , parse_user_key);
-    *valid = false;
+    *value = 0.0;
+    valid = false;
   }
   
-  if (!internal_value && (*valid)) {
+  if (!internal_value && valid) {
     field_func_type * output_transform = field_config_get_output_transform(field->config);
     if (output_transform != NULL)
-      val = output_transform( val );
+      *value = output_transform( *value );
     /* Truncation - ignored for now */
   }
-  return val;
+  return valid;
 }
 
 
@@ -1440,7 +1441,6 @@ void field_set_inflation(field_type * inflation , const field_type * std , const
   field which is internally based on char *.
 
   MATH_OPS(field)
-  ENSEMBLE_MULX_VECTOR(field);
 */
 UTIL_SAFE_CAST_FUNCTION(field , FIELD)
 UTIL_SAFE_CAST_FUNCTION_CONST(field , FIELD)
@@ -1451,8 +1451,8 @@ VOID_ECL_LOAD(field)
 VOID_COPY     (field)
 VOID_INITIALIZE(field);
 VOID_USER_GET(field)
-VOID_LOAD(field)
-VOID_STORE(field)
+VOID_READ_FROM_BUFFER(field)
+VOID_WRITE_TO_BUFFER(field)
 VOID_CLEAR(field)
 VOID_SERIALIZE(field)
 VOID_DESERIALIZE(field)

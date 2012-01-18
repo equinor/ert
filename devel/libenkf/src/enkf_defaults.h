@@ -245,21 +245,27 @@
   Name of the default case.
 */
 
+#define CURRENT_CASE "current"
 #define DEFAULT_CASE "default"
 
-#define DEFAULT_PLAIN_PARAMETER_PATH           "%04d/mem%03d/Parameter"
-#define DEFAULT_PLAIN_STATIC_PATH              "%04d/mem%03d/Static"
-#define DEFAULT_PLAIN_DYNAMIC_FORECAST_PATH    "%04d/mem%03d/Forecast"
-#define DEFAULT_PLAIN_DYNAMIC_ANALYZED_PATH    "%04d/mem%03d/Analyzed"
-#define DEFAULT_PLAIN_INDEX_PATH               "%04d/mem%03d/INDEX"
+#define DEFAULT_PLAIN_NODE_PARAMETER_PATH           "tstep/%04d/mem%03d/Parameter"
+#define DEFAULT_PLAIN_NODE_STATIC_PATH              "tstep/%04d/mem%03d/Static"
+#define DEFAULT_PLAIN_NODE_DYNAMIC_FORECAST_PATH    "tstep/%04d/mem%03d/Forecast"
+#define DEFAULT_PLAIN_NODE_DYNAMIC_ANALYZED_PATH    "tstep/%04d/mem%03d/Analyzed"
+#define DEFAULT_PLAIN_NODE_INDEX_PATH               "tstep/%04d/mem%03d/Index"
+
+#define DEFAULT_PLAIN_VECTOR_PARAMETER_PATH           "vectors/mem%03d/Parameter"
+#define DEFAULT_PLAIN_VECTOR_STATIC_PATH              "vectors/mem%03d/Static"
+#define DEFAULT_PLAIN_VECTOR_DYNAMIC_FORECAST_PATH    "vectors/mem%03d/Forecast"
+#define DEFAULT_PLAIN_VECTOR_DYNAMIC_ANALYZED_PATH    "vectors/mem%03d/Analyzed"
+#define DEFAULT_PLAIN_VECTOR_INDEX_PATH               "vectors/mem%03d/Index"
 
 
-
-#define DEFAULT_CASE_PATH                        "%s/%s/files"              // ENSPATH/case
-#define DEFAULT_CASE_MEMBER_PATH                 "%s/%s/mem%03d/files"      // ENSPATH/case/member
-#define DEFAULT_CASE_TSTEP_PATH                  "%s/%s/%04d/files"         // ENSPATH/case/tstep
-#define DEFAULT_CASE_TSTEP_MEMBER_PATH           "%s/%s/%04d/mem%03d/files" // ENSPATH/case/tstep/member   
-
+#define DEFAULT_CASE_PATH                        "%s/files"              // mountpoint
+#define DEFAULT_CASE_MEMBER_PATH                 "%s/mem%03d/files"      // mountpoint/member
+#define DEFAULT_CASE_TSTEP_PATH                  "%s/%04d/files"         // mountpoint/tstep
+#define DEFAULT_CASE_TSTEP_MEMBER_PATH           "%s/%04d/mem%03d/files" // mountpoint/tstep/member   
+// mountpoint = ENSPATH/case
 
 
 

@@ -55,6 +55,7 @@ void * sqrt_enkf_data_alloc( rng_type * rng ) {
   data->std_data = std_enkf_data_alloc( rng );
   data->randrot  = NULL;
   data->rng      = rng;
+  data->options  = 0;
   return data;
 }
 

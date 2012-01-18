@@ -116,10 +116,10 @@
 */
 
 #define ENKF_MAIN_ID              8301
-#define ENKF_MOUNT_MAP           "enkf_mount_info"
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
+  char                 * current_fs_case;
   enkf_fs_type         * dbase;              /* The internalized information. */
   ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
   model_config_type    * model_config;
@@ -259,9 +259,6 @@ bool enkf_main_has_prediction( const enkf_main_type * enkf_main ) {
   return model_config_has_prediction( enkf_main->model_config );
 }
 
-enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
-  return enkf_main->dbase;
-}
 
 
 enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
@@ -342,6 +339,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   enkf_obs_free(enkf_main->obs);
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) enkf_fs_free( enkf_main->dbase );
+  util_safe_free( enkf_main->current_fs_case );
 
   log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
   log_close( enkf_main->logh );
@@ -454,7 +452,7 @@ static void * enkf_main_fwrite_sub_ensemble__(void *__arg) {
 }
 
 
-void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
+/*void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
   const   int cpu_threads = 4;
   int     sub_ens_size    = enkf_main_get_ensemble_size(enkf_main) / cpu_threads;
   int     icpu;
@@ -489,7 +487,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
     arg_pack_free( arg_pack_list[icpu]);
   free(arg_pack_list);
 }
-
+*/
 
 
 
@@ -519,11 +517,16 @@ enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main ,
   enkf_fs_type * fs               = enkf_main_get_fs( enkf_main );
   const int ens_size              = enkf_main_get_ensemble_size( enkf_main );
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
+  node_id_type node_id = {.report_step = report_step , 
+                          .state       = load_state , 
+                          .iens        = -1 };
   int iens;
+  
 
   for (iens = 0; iens < ens_size; iens++) {
     node_ensemble[iens] = enkf_state_get_node(enkf_main->ensemble[iens] , key);
-    enkf_fs_fread_node( fs , node_ensemble[iens] , report_step , iens ,load_state);
+    node_id.iens = iens;
+    enkf_node_load( node_ensemble[iens] , fs , node_id);
   }
   return node_ensemble;
 }
@@ -610,8 +613,9 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
 
   /* Add the mean back in - and store the updated node to disk.*/
   for (iens = 0; iens < ens_size; iens++) {
+    node_id_type node_id = {.report_step = report_step , .iens = iens , .state = ANALYZED };
     enkf_node_iadd( ensemble[iens] , mean );
-    enkf_fs_fwrite_node( enkf_main_get_fs( enkf_main ) , ensemble[iens] , report_step , iens , ANALYZED );
+    enkf_node_store( ensemble[iens] , enkf_main_get_fs( enkf_main ) , true , node_id);
   }
 
   enkf_node_free( mean );
@@ -660,7 +664,11 @@ static int __get_active_size(enkf_main_type * enkf_main , const char * key, int 
   {
     if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
       enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[0] , key);
-      enkf_fs_fread_node( enkf_main->dbase , node , report_step , 0 , FORECAST);
+      node_id_type node_id = {.report_step = report_step , 
+                              .iens        = 0,
+                              .state       = FORECAST };
+
+      enkf_node_load( node , enkf_main->dbase , node_id );
     }
   }
 
@@ -705,8 +713,8 @@ typedef struct {
 
 static void serialize_node( enkf_fs_type * fs , 
                             enkf_state_type ** ensemble , 
-                            int iens , 
                             const char * key , 
+                            int iens , 
                             int report_step , 
                             state_enum load_state , 
                             int row_offset , 
@@ -714,8 +722,8 @@ static void serialize_node( enkf_fs_type * fs ,
                             matrix_type * A) {
 
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  enkf_fs_fread_node( fs , node , report_step , iens , load_state);
-  enkf_node_serialize( node , active_list , A , row_offset , iens);
+  node_id_type node_id = {.report_step = report_step, .iens = iens , .state = load_state };
+  enkf_node_serialize( node , fs , node_id , active_list , A , row_offset , iens);
 }
 
 
@@ -723,7 +731,7 @@ static void * serialize_nodes_mt( void * arg ) {
   serialize_info_type * info = (serialize_info_type *) arg;
   int iens;
   for (iens = info->iens1; iens < info->iens2; iens++) 
-    serialize_node( info->fs , info->ensemble , iens , info->key , info->report_step , info->load_state , info->row_offset , info->active_list , info->A );
+    serialize_node( info->fs , info->ensemble , info->key , iens , info->report_step , info->load_state , info->row_offset , info->active_list , info->A );
   
   return NULL;
 }
@@ -791,7 +799,7 @@ static int enkf_main_serialize_dataset( enkf_main_type * enkf_main,
       state_enum load_state;
       
       if (hash_inc_counter( use_count , key) == 0)
-        load_state = FORECAST;   /* This is the first time this keyword is updated for this reportstep */
+        load_state = FORECAST;           /* This is the first time this keyword is updated for this reportstep */
       else
         load_state = ANALYZED;
       
@@ -809,17 +817,16 @@ static int enkf_main_serialize_dataset( enkf_main_type * enkf_main,
 
 static void deserialize_node( enkf_fs_type            * fs, 
                               enkf_state_type ** ensemble , 
-                              int iens, 
                               const char * key , 
+                              int iens, 
                               int report_step , 
                               int row_offset , 
                               const active_list_type * active_list,
                               matrix_type * A) {
   
   enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
-  enkf_node_deserialize(node , active_list , A , row_offset , iens);
-  enkf_fs_fwrite_node( fs , node , report_step , iens , ANALYZED);
-  
+  node_id_type node_id = { .report_step = report_step , .iens = iens , .state = ANALYZED };
+  enkf_node_deserialize(node , fs , node_id , active_list , A , row_offset , iens);
 }
 
 
@@ -828,7 +835,7 @@ static void * deserialize_nodes_mt( void * arg ) {
   serialize_info_type * info = (serialize_info_type *) arg;
   int iens;
   for (iens = info->iens1; iens < info->iens2; iens++) 
-    deserialize_node( info->fs , info->ensemble , iens , info->key , info->report_step , info->row_offset , info->active_list , info->A );
+    deserialize_node( info->fs , info->ensemble , info->key , iens , info->report_step , info->row_offset , info->active_list , info->A );
 
   return NULL;
 }
@@ -891,308 +898,6 @@ static serialize_info_type * serialize_info_alloc( enkf_main_type * enkf_main , 
 
 
 
-
-
-
-
-
-// Bootstrap + CVvoid enkf_main_update_mulX_prin_comp_cv(enkf_main_type * enkf_main , const local_dataset_type * dataset , int report_step , hash_type * use_count , meas_data_type * meas_data , obs_data_type * obs_data) {
-// Bootstrap + CV  const int num_cpu_threads          = 4;
-// Bootstrap + CV  int       matrix_size              = 1000;  /* Starting with this */
-// Bootstrap + CV  const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
-// Bootstrap + CV  matrix_type * A = matrix_alloc(matrix_size , ens_size);
-// Bootstrap + CV  msg_type  * msg = msg_alloc("Updating: " , false);
-// Bootstrap + CV  stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
-// Bootstrap + CV  const int num_kw  = stringlist_get_size( update_keys );
-// Bootstrap + CV  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
-// Bootstrap + CV  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
-// Bootstrap + CV  bool complete     = false;
-// Bootstrap + CV  serialize_info_type * serialize_info;
-// Bootstrap + CV  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
-// Bootstrap + CV  
-// Bootstrap + CV  int nrobs                = obs_data_get_active_size(obs_data);
-// Bootstrap + CV  int nrmin                = util_int_min( ens_size , nrobs);
-// Bootstrap + CV  enkf_mode_type enkf_mode = analysis_config_get_enkf_mode( enkf_main->analysis_config );
-// Bootstrap + CV  double truncation                     = analysis_config_get_truncation( enkf_main->analysis_config );  
-// Bootstrap + CV  matrix_type * S , *R , *E , *D , *innov;
-// Bootstrap + CV  matrix_type * randrot       = NULL;
-// Bootstrap + CV
-// Bootstrap + CV  
-// Bootstrap + CV  /*Allocate matrix for principal components and reduced error covariance matrix Rp */
-// Bootstrap + CV  matrix_type * Z    = matrix_alloc( nrmin , ens_size    );
-// Bootstrap + CV  matrix_type * Rp   = matrix_alloc( nrmin , nrmin       );
-// Bootstrap + CV  matrix_type * Dp   = matrix_alloc( nrmin , ens_size    );
-// Bootstrap + CV
-// Bootstrap + CV  
-// Bootstrap + CV  /*
-// Bootstrap + CV    Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
-// Bootstrap + CV    local CV below. This step is only performed once for each
-// Bootstrap + CV    ministep, whereas the the update code below (can) go in several
-// Bootstrap + CV    steps if memory is tight.
-// Bootstrap + CV  */
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV  enkf_analysis_alloc_matrices( enkf_main->rng , meas_data , obs_data , enkf_mode , &S , &R , &innov , &E , &D , true ); 
-// Bootstrap + CV  enkf_analysis_init_principal_components( truncation ,  S , R , innov , E , D , Z , Rp , Dp);
-// Bootstrap + CV  
-// Bootstrap + CV  if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-// Bootstrap + CV    randrot = enkf_analysis_alloc_mp_randrot( ens_size , enkf_main->rng );
-// Bootstrap + CV  
-// Bootstrap + CV  serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
-// Bootstrap + CV  msg_show( msg );
-// Bootstrap + CV  {
-// Bootstrap + CV    int ikw1 = 0;
-// Bootstrap + CV    do {
-// Bootstrap + CV      int ikw2;
-// Bootstrap + CV      int current_row_offset   = 0;
-// Bootstrap + CV      /* Recover full matrix size - after matrix_shrink_header() has been called. */
-// Bootstrap + CV      matrix_resize( A , matrix_size , ens_size , false);  
-// Bootstrap + CV      
-// Bootstrap + CV      ikw2 = enkf_main_serialize(enkf_main , 
-// Bootstrap + CV                                 A , 
-// Bootstrap + CV                                 report_step , 
-// Bootstrap + CV                                 use_count , 
-// Bootstrap + CV                                 ikw1 , 
-// Bootstrap + CV                                 active_size , 
-// Bootstrap + CV                                 row_offset , 
-// Bootstrap + CV                                 update_keys , 
-// Bootstrap + CV                                 dataset,
-// Bootstrap + CV                                 work_pool , 
-// Bootstrap + CV                                 serialize_info , 
-// Bootstrap + CV                                 &current_row_offset , 
-// Bootstrap + CV                                 msg );
-// Bootstrap + CV      
-// Bootstrap + CV      if (current_row_offset > 0) {
-// Bootstrap + CV        /* The actual update */
-// Bootstrap + CV        
-// Bootstrap + CV        /*Get the optimal update matrix - observe that the A matrix is input.*/
-// Bootstrap + CV        { 
-// Bootstrap + CV          matrix_type * X5 = matrix_alloc( ens_size , ens_size );
-// Bootstrap + CV
-// Bootstrap + CV          enkf_analysis_initX_principal_components_cv( analysis_config_get_nfolds_CV( enkf_main->analysis_config ),
-// Bootstrap + CV                                                       analysis_config_get_penalised_press( enkf_main->analysis_config ),
-// Bootstrap + CV                                                       X5 , 
-// Bootstrap + CV                                                       enkf_main->rng, 
-// Bootstrap + CV                                                       A  , 
-// Bootstrap + CV                                                       Z  , 
-// Bootstrap + CV                                                       Rp , 
-// Bootstrap + CV                                                       Dp );   
-// Bootstrap + CV          
-// Bootstrap + CV          msg_update(msg , " matrix multiplication");
-// Bootstrap + CV          matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
-// Bootstrap + CV          matrix_free( X5 );
-// Bootstrap + CV        }
-// Bootstrap + CV        
-// Bootstrap + CV        enkf_main_deserialize( update_keys , ikw1 , ikw2 , active_size , row_offset , dataset , serialize_info , num_cpu_threads , work_pool , msg );
-// Bootstrap + CV      }
-// Bootstrap + CV      ikw1 = ikw2;
-// Bootstrap + CV      if (ikw2 == num_kw)
-// Bootstrap + CV        complete = true;
-// Bootstrap + CV    } while ( !complete );
-// Bootstrap + CV  } 
-// Bootstrap + CV  
-// Bootstrap + CV  thread_pool_free( work_pool );
-// Bootstrap + CV  serialize_info_free( serialize_info );
-// Bootstrap + CV  free( active_size );
-// Bootstrap + CV  free( row_offset );
-// Bootstrap + CV  msg_free( msg , true );
-// Bootstrap + CV
-// Bootstrap + CV  matrix_free( R );
-// Bootstrap + CV  matrix_free( S );
-// Bootstrap + CV  matrix_free( innov );
-// Bootstrap + CV  
-// Bootstrap + CV  matrix_safe_free( E );
-// Bootstrap + CV  matrix_safe_free( D );
-// Bootstrap + CV  matrix_free( A );
-// Bootstrap + CV  matrix_free( Rp );
-// Bootstrap + CV  matrix_free( Dp );
-// Bootstrap + CV  matrix_free( Z );
-// Bootstrap + CV  matrix_safe_free( randrot );
-// Bootstrap + CV}
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV
-// Bootstrap + CV/* 
-// Bootstrap + CV   Perform Cross-Validation and update ensemble members one at a time
-// Bootstrap + CV   using BOOTSTRAP estimates for ensemble covariance for localised 
-// Bootstrap + CV   EnKF updating schemes.  Here we create the update matrix X5 within 
-// Bootstrap + CV   the function, rather than sending it as an input.
-// Bootstrap + CV*/
-// Bootstrap + CV
-// Bootstrap + CVvoid enkf_main_update_mulX_bootstrap(enkf_main_type * enkf_main , 
-// Bootstrap + CV                                     const local_dataset_type * dataset , 
-// Bootstrap + CV                                     const int_vector_type * step_list , 
-// Bootstrap + CV                                     hash_type * use_count , 
-// Bootstrap + CV                                     meas_data_type * meas_data , 
-// Bootstrap + CV                                     obs_data_type * obs_data, 
-// Bootstrap + CV                                     double std_cutoff, 
-// Bootstrap + CV                                     double alpha) {
-// Bootstrap + CV  const int num_cpu_threads          = 4;
-// Bootstrap + CV
-// Bootstrap + CV  int       matrix_size              = 1000;  /* Starting with this */
-// Bootstrap + CV  const int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
-// Bootstrap + CV  matrix_type * A = matrix_alloc(matrix_size , ens_size);
-// Bootstrap + CV  msg_type  * msg = msg_alloc("Updating: " , false);
-// Bootstrap + CV  stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
-// Bootstrap + CV  const int num_kw  = stringlist_get_size( update_keys );
-// Bootstrap + CV  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
-// Bootstrap + CV  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
-// Bootstrap + CV  bool complete     = false;
-// Bootstrap + CV  serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , num_cpu_threads );
-// Bootstrap + CV  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
-// Bootstrap + CV  
-// Bootstrap + CV  int nrobs                = obs_data_get_active_size(obs_data);
-// Bootstrap + CV  int nrmin                = util_int_min( ens_size , nrobs);
-// Bootstrap + CV  int report_step          = int_vector_get_last( step_list );
-// Bootstrap + CV  
-// Bootstrap + CV  matrix_type * randrot       = NULL;
-// Bootstrap + CV  
-// Bootstrap + CV  /*
-// Bootstrap + CV    Generating a matrix with random integers to be used for sampling
-// Bootstrap + CV    across serializing. This matrix will hold double values, but an
-// Bootstrap + CV    integer cast will give a random integer between 0 and ens_size-1.
-// Bootstrap + CV  */
-// Bootstrap + CV
-// Bootstrap + CV  matrix_type * randints = matrix_alloc( ens_size , ens_size);
-// Bootstrap + CV  for (int i = 0; i < ens_size; i++){
-// Bootstrap + CV    for (int j = 0; j < ens_size; j++){
-// Bootstrap + CV      double r = 1.0 * rng_get_int( enkf_main->rng , ens_size );
-// Bootstrap + CV      matrix_iset(randints, i , j , r);
-// Bootstrap + CV    }
-// Bootstrap + CV  }
-// Bootstrap + CV
-// Bootstrap + CV  if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-// Bootstrap + CV    randrot = enkf_analysis_alloc_mp_randrot( ens_size  , enkf_main->rng );
-// Bootstrap + CV  
-// Bootstrap + CV  msg_show( msg );
-// Bootstrap + CV  {
-// Bootstrap + CV    int ikw1 = 0;
-// Bootstrap + CV    do {
-// Bootstrap + CV      int ikw2;
-// Bootstrap + CV      int current_row_offset   = 0;
-// Bootstrap + CV      matrix_resize( A , matrix_size , ens_size , false);  /* Recover full matrix size - after matrix_shrink_header() has been called. */
-// Bootstrap + CV
-// Bootstrap + CV      ikw2 = enkf_main_serialize(enkf_main , 
-// Bootstrap + CV                                 A , 
-// Bootstrap + CV                                 report_step , 
-// Bootstrap + CV                                 use_count , 
-// Bootstrap + CV                                 ikw1 , 
-// Bootstrap + CV                                 active_size , 
-// Bootstrap + CV                                 row_offset , 
-// Bootstrap + CV                                 update_keys , 
-// Bootstrap + CV                                 dataset ,
-// Bootstrap + CV                                 work_pool , 
-// Bootstrap + CV                                 serialize_info , 
-// Bootstrap + CV                                 &current_row_offset , 
-// Bootstrap + CV                                 msg );
-// Bootstrap + CV  
-// Bootstrap + CV      if (current_row_offset > 0) {
-// Bootstrap + CV        /* The actual update */
-// Bootstrap + CV        
-// Bootstrap + CV        /* The updates are performed one at a time when using bootstrap. Hence the followin loop*/
-// Bootstrap + CV        { 
-// Bootstrap + CV          int ensemble_members_loop;
-// Bootstrap + CV          matrix_type * work_A                     = matrix_alloc_copy( A ); // Huge memory requirement. Is needed such that we do not resample updated ensemble members from A
-// Bootstrap + CV          meas_data_type * meas_data_resampled = meas_data_alloc_copy( meas_data );
-// Bootstrap + CV          matrix_type      * A_resampled       = matrix_alloc( matrix_get_rows(work_A) , matrix_get_columns( work_A ));
-// Bootstrap + CV
-// Bootstrap + CV          for ( ensemble_members_loop = 0; ensemble_members_loop < ens_size; ensemble_members_loop++) { 
-// Bootstrap + CV            int ensemble_counter;
-// Bootstrap + CV            /* Resample A and meas_data. Here we are careful to resample the working copy.*/
-// Bootstrap + CV            int_vector_type * bootstrap_components = int_vector_alloc( ens_size , 0);
-// Bootstrap + CV            for (ensemble_counter  = 0; ensemble_counter < ens_size; ensemble_counter++) {
-// Bootstrap + CV              double random_col = matrix_iget( randints , ensemble_members_loop , ensemble_counter );
-// Bootstrap + CV              int random_column = (int)random_col;
-// Bootstrap + CV              int_vector_iset( bootstrap_components , ensemble_counter , random_column );
-// Bootstrap + CV              matrix_copy_column( A_resampled , work_A , ensemble_counter , random_column );
-// Bootstrap + CV              meas_data_assign_vector( meas_data_resampled, meas_data , ensemble_counter , random_column);
-// Bootstrap + CV            }
-// Bootstrap + CV            int_vector_select_unique( bootstrap_components );
-// Bootstrap + CV            int unique_bootstrap_components = int_vector_size( bootstrap_components );
-// Bootstrap + CV            int_vector_free( bootstrap_components);
-// Bootstrap + CV            if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) { /* Bootstrapping and CV*/
-// Bootstrap + CV              matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
-// Bootstrap + CV              matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
-// Bootstrap + CV              matrix_type * Z    = matrix_alloc( nrmin , nrmin    );
-// Bootstrap + CV              double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);
-// Bootstrap + CV              /*
-// Bootstrap + CV                Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
-// Bootstrap + CV                local CV below. 
-// Bootstrap + CV              */
-// Bootstrap + CV              enkf_analysis_local_pre_cv( enkf_main->analysis_config , enkf_main->rng , meas_data_resampled , obs_data ,  V0T , Z , eig , U0 , meas_data );
-// Bootstrap + CV              matrix_type * X5_boot_cv = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , 
-// Bootstrap + CV                                                                      enkf_main->rng , 
-// Bootstrap + CV                                                                      meas_data_resampled , 
-// Bootstrap + CV                                                                      obs_data , 
-// Bootstrap + CV                                                                      randrot, 
-// Bootstrap + CV                                                                      A_resampled , 
-// Bootstrap + CV                                                                      V0T ,
-// Bootstrap + CV                                                                      Z , 
-// Bootstrap + CV                                                                      eig, 
-// Bootstrap + CV                                                                      U0, 
-// Bootstrap + CV                                                                      meas_data, 
-// Bootstrap + CV                                                                      unique_bootstrap_components);
-// Bootstrap + CV              
-// Bootstrap + CV              msg_update(msg , " matrix multiplication");
-// Bootstrap + CV              matrix_inplace_matmul_mt( A_resampled , X5_boot_cv , num_cpu_threads );
-// Bootstrap + CV              matrix_inplace_add( A_resampled , work_A ); 
-// Bootstrap + CV              matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
-// Bootstrap + CV              matrix_free( U0 );
-// Bootstrap + CV              matrix_free( V0T );
-// Bootstrap + CV              matrix_free( Z );
-// Bootstrap + CV              free( eig );
-// Bootstrap + CV              matrix_free( X5_boot_cv );
-// Bootstrap + CV            } else { /* Just Bootstrapping */
-// Bootstrap + CV              matrix_type * X5_boot = enkf_analysis_allocX_boot( enkf_main->analysis_config , 
-// Bootstrap + CV                                                                 enkf_main->rng , 
-// Bootstrap + CV                                                                 meas_data_resampled , 
-// Bootstrap + CV                                                                 obs_data , 
-// Bootstrap + CV                                                                 randrot , 
-// Bootstrap + CV                                                                 meas_data);
-// Bootstrap + CV              msg_update(msg , " matrix multiplication");
-// Bootstrap + CV              matrix_inplace_matmul_mt( A_resampled , X5_boot , num_cpu_threads );
-// Bootstrap + CV              matrix_free( X5_boot );
-// Bootstrap + CV              matrix_inplace_add( A_resampled , work_A );
-// Bootstrap + CV              matrix_copy_column( A , A_resampled, ensemble_members_loop, ensemble_members_loop);
-// Bootstrap + CV            }
-// Bootstrap + CV          }
-// Bootstrap + CV          matrix_free( A_resampled );
-// Bootstrap + CV          meas_data_free(meas_data_resampled);
-// Bootstrap + CV          matrix_free(work_A);
-// Bootstrap + CV        }
-// Bootstrap + CV        
-// Bootstrap + CV        enkf_main_deserialize( update_keys , ikw1 , ikw2 , active_size , 
-// Bootstrap + CV                               row_offset , dataset , serialize_info , 
-// Bootstrap + CV                               num_cpu_threads , work_pool , msg );
-// Bootstrap + CV        
-// Bootstrap + CV      }
-// Bootstrap + CV      ikw1 = ikw2;
-// Bootstrap + CV      if (ikw2 == num_kw)
-// Bootstrap + CV        complete = true;
-// Bootstrap + CV    } while ( !complete );
-// Bootstrap + CV  }
-// Bootstrap + CV
-// Bootstrap + CV  thread_pool_free( work_pool );
-// Bootstrap + CV  serialize_info_free( serialize_info );
-// Bootstrap + CV  free( active_size );
-// Bootstrap + CV  free( row_offset );
-// Bootstrap + CV  
-// Bootstrap + CV  msg_free( msg , true );
-// Bootstrap + CV  matrix_free( A );
-// Bootstrap + CV  matrix_free( randints );
-// Bootstrap + CV  matrix_safe_free( randrot );
-// Bootstrap + CV}
-
-
-
 void enkf_main_module_update( enkf_main_type * enkf_main , 
                               hash_type * use_count,
                               int report_step , 
@@ -1222,11 +927,9 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
-  
   obs_data_scale( obs_data , S , E , D , R , dObs );
   if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
     localA = A;
-
   
   /*****************************************************************/
   
@@ -1234,10 +937,9 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
-
     if (localA == NULL) 
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
-
+    
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
@@ -1262,9 +964,9 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
         free( row_offset );
       }
     }
+
     hash_iter_free( dataset_iter );
     serialize_info_free( serialize_info );
-      
   }
   analysis_module_complete_update( module );
     
@@ -1751,74 +1453,67 @@ bool enkf_main_run(enkf_main_type * enkf_main            ,
 
   enkf_main_init_run( enkf_main , run_mode);
   {
-    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
     if (run_mode == ENKF_ASSIMILATION) {
-      if (enkf_fs_rw_equal(fs)) {
-        bool analyzed_start = false;
-        bool prev_enkf_on;
-        const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
-        const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
-        const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
-        int inode;
-
-        if (start_state == ANALYZED)
-          analyzed_start = true;
-        else if (start_state == FORECAST)
-          analyzed_start = false;
-        else
-          util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
-
-        prev_enkf_on = analyzed_start;
-        for (inode = start_inode; inode < num_nodes; inode++) {
-          const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-          state_enum init_state_parameter;
-          state_enum init_state_dynamic;
-          int      init_step_parameter;
-          int      load_start;
-          int      report_step1;
-          int      report_step2;
-          bool enkf_on;
-
-          enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on );
-          if (inode == start_inode)
-            report_step1 = start_report;  /* If we are restarting from somewhere. */
-
-          if (rerun) {
-            /* rerun ... */
-            load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
-            init_step_parameter  = report_step1;
-            init_state_dynamic   = FORECAST;
-            init_state_parameter = ANALYZED;
-            report_step1         = rerun_start;
-          } else {
-            if (prev_enkf_on)
-              init_state_dynamic = ANALYZED;
-            else
-              init_state_dynamic = FORECAST;
-            /*
-               This is not a rerun - and then parameters and dynamic
-               data should be initialized from the same report step.
-            */
-            init_step_parameter  = report_step1;
-            init_state_parameter = init_state_dynamic;
-            load_start = report_step1;
-          }
-
-          if (load_start > 0)
-            load_start++;
-
-          {
-            bool runOK = enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter , 
-                                            init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on);
-            if (!runOK)
-              return false;   /* If the run did not succed we just return false. */
-          }
-          prev_enkf_on = enkf_on;
+      bool analyzed_start = false;
+      bool prev_enkf_on;
+      const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
+      const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
+      const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
+      int inode;
+      
+      if (start_state == ANALYZED)
+        analyzed_start = true;
+      else if (start_state == FORECAST)
+        analyzed_start = false;
+      else
+        util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
+      
+      prev_enkf_on = analyzed_start;
+      for (inode = start_inode; inode < num_nodes; inode++) {
+        const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
+        state_enum init_state_parameter;
+        state_enum init_state_dynamic;
+        int      init_step_parameter;
+        int      load_start;
+        int      report_step1;
+        int      report_step2;
+        bool enkf_on;
+        
+        enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on );
+        if (inode == start_inode)
+          report_step1 = start_report;  /* If we are restarting from somewhere. */
+        
+        if (rerun) {
+          /* rerun ... */
+          load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
+          init_step_parameter  = report_step1;
+          init_state_dynamic   = FORECAST;
+          init_state_parameter = ANALYZED;
+          report_step1         = rerun_start;
+        } else {
+          if (prev_enkf_on)
+            init_state_dynamic = ANALYZED;
+          else
+            init_state_dynamic = FORECAST;
+          /*
+            This is not a rerun - and then parameters and dynamic
+            data should be initialized from the same report step.
+          */
+          init_step_parameter  = report_step1;
+          init_state_parameter = init_state_dynamic;
+          load_start = report_step1;
         }
-      } else {
-        fprintf(stderr , "\n** Error: when running EnKF read and write cases must be equal.\n\n");
-        fprintf(stderr , "Current read case....: %s \n",enkf_fs_get_read_dir( fs ));
-        fprintf(stderr , "Current write case...: %s \n",enkf_fs_get_write_dir( fs ));
+        
+        if (load_start > 0)
+          load_start++;
+        
+        {
+          bool runOK = enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter , 
+                                          init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on);
+          if (!runOK)
+            return false;   /* If the run did not succed we just return false. */
+        }
+        prev_enkf_on = enkf_on;
       }
     } else {
       /* It is an experiment */
@@ -1856,13 +1551,8 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
   const int ens_size            = enkf_main_get_ensemble_size( enkf_main );
   
   {
-    /* Store current selections */
-    char * user_read_dir  = util_alloc_string_copy(enkf_fs_get_read_dir( enkf_main->dbase));
-    char * user_write_dir = util_alloc_string_copy(enkf_fs_get_write_dir(enkf_main->dbase));
-    
-    enkf_fs_select_write_dir(enkf_main->dbase , target_case, true , true);
-    enkf_fs_select_read_dir( enkf_main->dbase , source_case       , true);
-
+    enkf_fs_type * source_fs = enkf_main_get_alt_fs( enkf_main , source_case , true , false );
+    enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_case , false , true );
     {
       int * ranking_permutation;
       int inode , src_iens;
@@ -1880,9 +1570,13 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
         for (src_iens = 0; src_iens < enkf_main_get_ensemble_size( enkf_main ); src_iens++) {
           if (bool_vector_safe_iget(iens_mask , src_iens)) {
             int target_iens = ranking_permutation[src_iens];
-            enkf_fs_copy_node( enkf_main->dbase , config_node , 
-                               source_report_step , src_iens    , source_state, 
-                               target_report_step , target_iens , target_state );
+            node_id_type src_id    = {.report_step = source_report_step , .iens = src_iens    , .state = source_state };
+            node_id_type target_id = {.report_step = target_report_step , .iens = target_iens , .state = target_state };
+            
+            enkf_node_copy( config_node , 
+                            source_fs , target_fs , 
+                            src_id , target_id );
+            
           }
         }
       }
@@ -1890,11 +1584,9 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
       if (ranking_permutation == NULL) 
         free( ranking_permutation );
     }
-    /* Recover initial selections. */
-    enkf_fs_select_write_dir(enkf_main->dbase , user_write_dir, false , true);
-    enkf_fs_select_read_dir( enkf_main->dbase , user_read_dir         , true);
-    free(user_read_dir);
-    free(user_write_dir);
+
+    enkf_main_close_alt_fs( enkf_main , source_fs );
+    enkf_main_close_alt_fs( enkf_main , target_fs );
   }
 }
 
@@ -1907,8 +1599,8 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
    This is based on a general copy function, but a couple of variables
    have been set to default values because this is an initialization:
 
-     target_step  = 0
-     target_state = analyzed
+   target_step  = 0
+   target_state = analyzed
    
 */
 
@@ -1922,7 +1614,7 @@ void enkf_main_initialize_from_existing__(enkf_main_type * enkf_main ,
   
   const int target_report_step  = 0;
   const state_enum target_state = ANALYZED;
-  const char * target_case      = enkf_fs_get_write_dir( enkf_main->dbase );
+  const char * target_case      = NULL;
 
   enkf_main_copy_ensemble(enkf_main , 
                           source_case , source_report_step , source_state , 
@@ -2174,7 +1866,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   item = config_add_item(config , HISTORY_SOURCE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
   {
-    stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFCASE"} , 1);
+    stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) { REFCASE_KEY } , 1);
 
     config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
     config_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
@@ -2303,6 +1995,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 static enkf_main_type * enkf_main_alloc_empty( void ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main, __func__);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
+  enkf_main->current_fs_case    = NULL;
   enkf_main->dbase              = NULL;
   enkf_main->ensemble           = NULL;
   enkf_main->user_config_file   = NULL;
@@ -2459,41 +2152,167 @@ static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
 }
 
 
-void enkf_main_select_case( enkf_main_type * enkf_main , const char * select_case) {
-  enkf_fs_select_read_dir( enkf_main->dbase , select_case , true );
-  enkf_fs_select_write_dir( enkf_main->dbase , select_case , false , true);
-  model_config_set_select_case( enkf_main->model_config , select_case);
-}
 
-
-
-
-/**
-   This is (probably) not reentrant ...
-*/
-
-static void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case ) {
-  const model_config_type * model_config = enkf_main->model_config;
-  enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , ENKF_MOUNT_MAP , select_case , true , false);
-  {
-    char * case_key = enkf_util_alloc_tagged_string( "SELECTED_CASE" );
-    subst_list_append_ref( enkf_main->subst_list , case_key , enkf_fs_get_read_dir( enkf_main->dbase ) , "The case currently selected.");
-    free( case_key );
-  }
+void enkf_main_create_fs( enkf_main_type * enkf_main , const char * fs_path) {
+  fs_driver_impl driver_id = model_config_get_dbase_type( enkf_main->model_config );
+  void * arg = NULL;
   
-  if (enkf_main->ensemble != NULL)
-    enkf_main_invalidate_cache( enkf_main );
-
-  model_config_set_select_case( enkf_main->model_config , enkf_fs_get_read_dir( enkf_main->dbase ));
+  enkf_fs_create_fs( fs_path , driver_id , arg );
 }
 
 
-enkf_fs_type * enkf_main_mount_extra_fs( const enkf_main_type * enkf_main , const char * select_case ) {
-  const model_config_type * model_config = enkf_main->model_config;
-  enkf_fs_type * fs = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , ENKF_MOUNT_MAP , select_case , false , true );
-  return fs;
+static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char * case_path) {
+  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  char * current_link = util_alloc_filename( ens_path , CURRENT_CASE , NULL );
+  {
+    if (util_entry_exists( current_link ))
+      unlink( current_link );
+    symlink( case_path , current_link );
+  }
+  free( current_link );
 }
 
+static void enkf_main_close_fs( enkf_main_type * enkf_main ) {
+  enkf_fs_free( enkf_main->dbase );
+  enkf_main->dbase = NULL;
+}
+
+
+enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
+  return enkf_main->dbase;
+}
+
+char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path) {
+  char * mount_point;
+  if (util_is_abs_path( case_path ))
+    mount_point = util_alloc_string_copy( case_path );
+  else
+    mount_point = util_alloc_filename( model_config_get_enspath( enkf_main->model_config) , case_path , NULL);
+  return mount_point;
+}
+
+void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path ) {
+  if (enkf_main->dbase != NULL)
+    enkf_main_close_fs( enkf_main );
+  enkf_main->dbase = fs;
+
+  enkf_main_link_current_fs__( enkf_main , case_path);
+  enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
+}
+
+
+stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
+  stringlist_type * case_list = stringlist_alloc_new( );
+  {
+    const char * ens_path = model_config_get_enspath( enkf_main->model_config );
+    DIR * ens_dir = opendir( ens_path );
+    if (ens_dir != NULL) {
+      int ens_fd = dirfd( ens_dir );
+      if (ens_fd != -1) {
+        struct dirent * dp;
+        do {
+          dp = readdir( ens_dir );
+          if (dp != NULL) {
+            if (!(util_string_equal( dp->d_name , ".") || util_string_equal(dp->d_name , ".."))) {
+              if (!util_string_equal( dp->d_name , CURRENT_CASE)) {
+                char * full_path = util_alloc_filename( ens_path , dp->d_name , NULL);
+                if (util_is_directory( full_path ))
+                  stringlist_append_copy( case_list , dp->d_name );
+                free( full_path);
+              }
+            }
+          }
+        } while (dp != NULL);
+      }
+    }
+    closedir( ens_dir );
+  }
+  return case_list;
+}
+
+
+void enkf_main_close_alt_fs(enkf_main_type * enkf_main , enkf_fs_type * fs) {
+  if (fs != enkf_main->dbase)
+    enkf_fs_close( fs );
+}
+
+
+enkf_fs_type * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
+  enkf_fs_type * alt_fs = enkf_main->dbase;
+  if (case_path != NULL) {
+    char * mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
+    
+    if (!util_string_equal( mount_point , enkf_fs_get_mount_point( enkf_main->dbase ))) {
+      if (!enkf_fs_exists( mount_point )) {
+        if (create)
+          enkf_fs_create_fs( mount_point,
+                             model_config_get_dbase_type( enkf_main->model_config ) , 
+                             model_config_get_dbase_args( enkf_main->model_config ));
+      }
+      alt_fs = enkf_fs_open( mount_point , read_only );
+    }
+  }
+  return alt_fs;
+}
+
+
+
+void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
+  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
+  if ((enkf_main->dbase == NULL) || (!util_string_equal( mount_point , enkf_fs_get_mount_point( enkf_main->dbase )))) {
+    
+    // 1: Create filesystem if it does not exist
+    if (!enkf_fs_exists( mount_point ))
+      enkf_main_create_fs( enkf_main , mount_point );
+    
+    
+    // 2: Open the filesystem 
+    {
+      enkf_fs_type * new_fs = enkf_fs_open( mount_point , false );
+      if (new_fs != NULL)
+        enkf_main_set_fs( enkf_main , new_fs , case_path);
+      else {
+        const char * ens_path = model_config_get_enspath( enkf_main->model_config );
+        util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
+      }
+    }
+  }
+  free( mount_point );
+}
+
+
+const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
+  return enkf_main->current_fs_case;
+}
+
+
+
+
+void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_case ) {
+  const char * ens_path = model_config_get_enspath( enkf_main->model_config);      
+  int root_version = enkf_fs_get_version104( ens_path );
+  if (root_version == -1 || root_version == 105) {
+    if (input_case == NULL) {
+      char * current_mount_point = util_alloc_filename( ens_path , CURRENT_CASE , NULL);
+      
+      if (enkf_fs_exists( current_mount_point )) {
+        // We will mount the case under the 'current' link; we use
+        // readlink to get hold of the actual target before calling the 
+        // enkf_main_select_fs() function
+        char * target_case = util_alloc_atlink_target( ens_path , CURRENT_CASE );
+        enkf_main_select_fs( enkf_main , target_case );  // Selecting (a new) default case
+        free( target_case );
+      } else 
+        enkf_main_select_fs( enkf_main , DEFAULT_CASE );  // Selecting (a new) default case
+
+      free( current_mount_point );
+    } else
+      enkf_main_select_fs( enkf_main , input_case );
+  }  else {
+    fprintf(stderr,"Sorry: the filesystem located in %s must be upgraded before the current ERT version can read it.\n" , ens_path);
+    exit(1);
+  }
+}
 
 
 /******************************************************************/
@@ -2686,7 +2505,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
     
     {
       config_type * config = enkf_main_alloc_config( true , strict );
-      config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , false , true);
+      config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , true , false , true);
       site_config_init( enkf_main->site_config , config , false);                                /*  <---- site_config : first pass. */  
       config_free( config );
     }
@@ -2789,7 +2608,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     
     config = enkf_main_alloc_config( false , strict );
     site_config_init_user_mode( enkf_main->site_config );
-    config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , false , true);
+    config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , true , false , true);
     site_config_init( enkf_main->site_config , config , true );                                   /*  <---- model_config : second pass. */ 
 
     /*****************************************************************/
@@ -2892,8 +2711,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
             ecl_config_add_static_kw(enkf_main->ecl_config , stringlist_iget( static_kw_list , k));
         }
       }
-      
-      
+            
       /* Installing templates */
       {
         enkf_main->templates       = ert_templates_alloc( enkf_main->subst_list );
@@ -2946,7 +2764,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         if (config_item_set( config , SELECT_CASE_KEY))
           select_case = config_get_value( config , SELECT_CASE_KEY );
         
-        enkf_main_remount_fs( enkf_main , select_case );
+        enkf_main_user_select_fs( enkf_main , select_case );
       }
 
       /* Adding ensemble members */
@@ -3313,8 +3131,10 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
     const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
     int iens = 0;
     do {
-      if (bool_vector_safe_iget( mask , iens)) 
-        initialized = enkf_fs_has_node( enkf_main->dbase , config_node , 0 , iens , ANALYZED );
+      if (bool_vector_safe_iget( mask , iens)) {
+        node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
+        initialized = enkf_config_node_has_node( config_node , enkf_main->dbase , node_id);
+      }
       iens++;
     } while ((iens < enkf_main->ens_size) && (initialized));
     ikey++;

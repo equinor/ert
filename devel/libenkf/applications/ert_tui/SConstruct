@@ -41,7 +41,7 @@ env.Append( CPPPATH = conf.PLPLOT_INCLUDE_PATH )
 env.Append( LIBPATH = conf.PLPLOT_LIB_PATH )
 if conf.INCLUDE_LSF:
    env.Append( LIBPATH = conf.LSF_LIB_PATH ) 
-
+   
 
 tui_objects = env.Object( ["enkf_tui_main.c" , "enkf_tui_fs.c" , "enkf_tui_ranking.c" , "enkf_tui_misc.c" , "enkf_tui_table.c" , "enkf_tui_plot.c" , 
                            "enkf_tui_run.c", "enkf_tui_util.c" , "enkf_tui_init.c" , "enkf_tui_export.c" , "enkf_tui_analysis.c"])
@@ -50,11 +50,12 @@ main_object = env.Object( "main.c" , CPPDEFINES = "DEVEL_VERSION")
 
 ert_test_object = env.Object( "ert_test.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE)])
 
-local_config = env.Program( "local_config"              , ["local_config.c"])
-ert_test     = env.Program( "ert_test"                  , [ert_test_object, tui_objects])
-ert          = env.Program( "ert"                       , [main_object, tui_objects])
-ert_svn      = env.Program( "ert_%s" % conf.SVN_VERSION , [main_object, tui_objects])
+local_config  = env.Program( "local_config"              , ["local_config.c"])
+upgrade_fs104 = env.Program( "upgrade_fs104"             , ["upgrade_fs104.c"])
+ert_test      = env.Program( "ert_test"                  , [ert_test_object, tui_objects])
+ert           = env.Program( "ert"                       , [main_object, tui_objects])
+ert_svn       = env.Program( "ert_%s" % conf.SVN_VERSION , [main_object, tui_objects])
 
-env.Install( bin_path , [ert , ert_test , local_config])
+env.Install( bin_path , [ert , ert_test , local_config , upgrade_fs104])
 
 Default( bin_path )

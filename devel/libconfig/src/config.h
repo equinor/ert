@@ -55,7 +55,7 @@ char       **     config_alloc_active_list(const config_type *, int *);
 void              config_free(config_type *);
 config_type *     config_alloc( );
 char       **     config_alloc_active_list(const config_type * , int * );
-void              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool );
+  void              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool , bool );
 bool              config_has_item(const config_type * config , const char * kw);
 void              config_set_arg(config_type * config , const char * , int , const char **);
 

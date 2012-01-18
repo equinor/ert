@@ -288,8 +288,8 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
   
   if (active_count > 0) {
     /*2: Estimate a covariance matrix. */
-    auto_corrf_ftype * auto_corrf ;
-    double auto_corrf_param       ;
+    auto_corrf_ftype * auto_corrf;
+    double auto_corrf_param;
     {
       const summary_obs_type * summary_obs = obs_vector_iget_node( obs_vector , last_step );
       auto_corrf       = summary_obs_get_auto_corrf( summary_obs );
@@ -343,9 +343,14 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
           
           int iens;
           for (iens = 0; iens < ens_size; iens++) {
-            enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
-            enkf_fs_fread_node(fs , enkf_node , step , iens , state);
-            meas_block_iset(meas_block , iens , active_count , summary_get( enkf_node_value_ptr( enkf_node )));
+            const char * state_key = obs_vector_get_state_kw(obs_vector);
+            enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , state_key);
+            node_id_type node_id = {.report_step = step, 
+                                    .iens        = iens,
+                                    .state       = state };
+            
+            enkf_node_load( enkf_node , fs , node_id );
+            meas_block_iset(meas_block , iens , active_count , summary_get( enkf_node_value_ptr( enkf_node ) , node_id.report_step , node_id.state ));
           }
           active_count++;
         } 
@@ -397,8 +402,13 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                             work_value, 
                                             work_std);
     else {
+      node_id_type node_id;
+      node_id.state = state;
+
       for (int i=0; i < int_vector_size( step_list ); i++) {
         int report_step = int_vector_iget( step_list , i );
+        
+        node_id.report_step = report_step;
         if (obs_vector_iget_active(obs_vector , report_step)) {                             /* The observation is active for this report step.     */
           const active_list_type * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
           obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list);  /* Collect the observed data in the obs_data instance. */
@@ -407,9 +417,9 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
             int iens;
             for (iens = 0; iens < ens_size; iens++) {
               enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
-              
-              enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
-              obs_vector_measure(obs_vector , report_step , iens , enkf_node , meas_data , active_list);
+              node_id.iens = iens;
+              enkf_node_load(enkf_node , fs , node_id);
+              obs_vector_measure(obs_vector , node_id , enkf_node , meas_data , active_list);
             }
           }
         } 

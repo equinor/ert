@@ -400,7 +400,7 @@ misfit_table_type * misfit_table_fread_alloc( const char * filename , const enkf
 
 misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , enkf_fs_type * fs , int history_length , int ens_size , const enkf_obs_type * enkf_obs ) {
   misfit_table_type * table = misfit_table_alloc_empty( enkf_obs );
-  table->current_case       = util_alloc_string_copy( enkf_fs_get_read_dir( fs ));
+  table->current_case       = util_alloc_string_copy( enkf_fs_get_mount_point( fs ));
   table->history_length     = history_length;
   misfit_table_set_ens_size( table , ens_size );
   misfit_table_update(table , config , fs);

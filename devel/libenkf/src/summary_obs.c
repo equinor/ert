@@ -161,19 +161,20 @@ void summary_obs_get_observations(const summary_obs_type * summary_obs,
 
 
 
-void summary_obs_measure(const summary_obs_type * obs, const summary_type * summary, int report_step , int iens , meas_data_type * meas_data , const active_list_type * __active_list) {
+void summary_obs_measure(const summary_obs_type * obs, const summary_type * summary, node_id_type node_id , meas_data_type * meas_data , const active_list_type * __active_list) {
   int active_size = active_list_get_active_size( __active_list , OBS_SIZE );
   if (active_size == 1) {
-    meas_block_type * meas_block = meas_data_add_block( meas_data , obs->obs_key , report_step , active_size );
-    meas_block_iset( meas_block , iens , 0 , summary_get(summary));
+    meas_block_type * meas_block = meas_data_add_block( meas_data , obs->obs_key , node_id.report_step , active_size );
+    meas_block_iset( meas_block , node_id.iens , 0 , summary_get(summary, node_id.report_step , node_id.state));
   }
 }
 
  
 
 double summary_obs_chi2(const summary_obs_type * obs,
-                        const summary_type     * summary) {
-  double x = (summary_get(summary) - obs->value) / obs->std;
+                        const summary_type     * summary, 
+                        node_id_type node_id) {
+  double x = (summary_get(summary , node_id.report_step , node_id.state) - obs->value) / obs->std;
   return x*x;
 }
 
