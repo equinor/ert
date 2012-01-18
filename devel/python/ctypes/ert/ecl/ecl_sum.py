@@ -215,6 +215,13 @@ class EclSumVector:
                            self.__values[index])
     
 
+    def __len__(self):
+        """
+        The length of the vector - used for the len() builtin.
+        """
+        return len(self.__days)
+
+
     def __getitem__(self , index):
         """
         Implements the [] operator.

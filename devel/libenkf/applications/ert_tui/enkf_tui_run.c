@@ -240,6 +240,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
         arg_pack_append_int( arg_pack , step1 );      /* This will be the load start parameter for the run_info struct. */
         arg_pack_append_int( arg_pack , step1 );      /* Step1 */ 
         arg_pack_append_int( arg_pack , step2 );      /* Step2 For summary data it will load the whole goddamn thing anyway.*/
+        arg_pack_append_bool( arg_pack , true );      /* Verbose */
         thread_pool_add_job( tp , enkf_state_internalize_results_mt , arg_pack);
       }
     }
@@ -262,7 +263,7 @@ void enkf_tui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   menu_type       * menu;
   {
-    char            * title      = util_alloc_sprintf("Run menu [case:%s]" , enkf_fs_get_read_dir(  enkf_main_get_fs( enkf_main ))) ;
+    char            * title      = util_alloc_sprintf("Run menu [case:%s]" , enkf_main_get_current_fs( enkf_main ));
     menu = menu_alloc(title , "Back" , "bB");
     free(title);
   }

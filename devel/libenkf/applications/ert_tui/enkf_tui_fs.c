@@ -30,8 +30,8 @@
 
 
 void enkf_tui_fs_ls_case(void * arg) {
-  enkf_fs_type    * fs      = (enkf_fs_type * ) arg;
-  stringlist_type * dirlist = enkf_fs_alloc_dirlist( fs );
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
+  stringlist_type * dirlist    = enkf_main_alloc_caselist( enkf_main );
   int idir;
 
   printf("Avaliable cases: ");
@@ -46,32 +46,29 @@ void enkf_tui_fs_ls_case(void * arg) {
 void enkf_tui_fs_create_case(void * arg)
 {
   int prompt_len = 50;
-  char dir[256];
+  char new_case[256];
   char * menu_title;
 
-  arg_pack_type  * arg_pack = arg_pack_safe_cast( arg );
-  enkf_fs_type   * enkf_fs  = arg_pack_iget_ptr(arg_pack, 0);
-  menu_type      * menu     = arg_pack_iget_ptr(arg_pack, 1);
+  arg_pack_type  * arg_pack     = arg_pack_safe_cast( arg );
+  enkf_main_type   * enkf_main  = enkf_main_safe_cast( arg_pack_iget_ptr(arg_pack, 0) );
+  menu_type      * menu         = arg_pack_iget_ptr(arg_pack, 1);
 
   util_printf_prompt("Name of new case" , prompt_len , '=' , "=> ");
-  scanf("%s", dir);
+  scanf("%s", new_case);
   
-  if(enkf_fs_has_dir(enkf_fs, dir))
-    printf("** WARNING **: Case \"%s\" already exists, will only select it.\n", dir);
-
-  enkf_fs_select_write_dir(enkf_fs, dir, true , true);
-  enkf_fs_select_read_dir( enkf_fs, dir       , true);
-
-  menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_fs_get_read_dir(enkf_fs));
+  enkf_main_select_fs( enkf_main , new_case );
+  
+  menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_main_get_current_fs(enkf_main));
   menu_set_title(menu, menu_title);
   free(menu_title);
 }
 
 
+
 /**
    Return NULL if no action should be performed.
 */
-static char * enkf_tui_fs_alloc_existing_case(enkf_fs_type * fs , const char * prompt , int prompt_len) {
+static char * enkf_tui_fs_alloc_existing_case(enkf_main_type * enkf_main , const char * prompt , int prompt_len) {
   char * name;
   while (true) {
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
@@ -80,12 +77,16 @@ static char * enkf_tui_fs_alloc_existing_case(enkf_fs_type * fs , const char * p
     if (name == NULL)  /* The user entered a blank string */
       break;
     else {
-      if (enkf_fs_has_dir(fs , name)) 
+      char * mount_point = enkf_main_alloc_mount_point( enkf_main , name );
+
+      if (enkf_fs_exists( mount_point )) 
         break;
       else {
-        printf("** Can not find case: \"%s\" \n",name);
+        printf("** can not find case: \"%s\" \n",name);
         free(name);
       }
+
+      free( mount_point );
     } 
 
   }
@@ -102,15 +103,14 @@ void enkf_tui_fs_select_case(void * arg)
   char * new_case;
   char * menu_title;
 
-  arg_pack_type  * arg_pack = arg_pack_safe_cast( arg );
-  enkf_fs_type   * enkf_fs  = arg_pack_iget_ptr(arg_pack, 0);
-  menu_type      * menu     = arg_pack_iget_ptr(arg_pack, 1);
-  new_case = enkf_tui_fs_alloc_existing_case( enkf_fs , "Name of case" , prompt_len);
+  arg_pack_type  * arg_pack     = arg_pack_safe_cast( arg );
+  enkf_main_type * enkf_main    = enkf_main_safe_cast( arg_pack_iget_ptr(arg_pack, 0) );
+  menu_type      * menu         = arg_pack_iget_ptr(arg_pack, 1);
+  new_case = enkf_tui_fs_alloc_existing_case( enkf_main , "Name of case" , prompt_len);
   if (new_case != NULL) {
-    enkf_fs_select_write_dir(enkf_fs, new_case, false , true);
-    enkf_fs_select_read_dir( enkf_fs, new_case        , true);
+    enkf_main_select_fs( enkf_main ,  new_case );
     
-    menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_fs_get_read_dir(enkf_fs));
+    menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_main_get_current_fs( enkf_main ));
     menu_set_title(menu, menu_title);
     free(menu_title);
     free(new_case);
@@ -132,7 +132,6 @@ static void enkf_tui_fs_copy_ensemble__(
   state_enum       state_to,
   bool             only_parameters)
 {
-  enkf_fs_type   * fs           = enkf_main_get_fs(enkf_main);
   msg_type       * msg          = msg_alloc("Copying: " , false);
   ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
   int ens_size                  = enkf_main_get_ensemble_size(enkf_main);
@@ -164,34 +163,26 @@ static void enkf_tui_fs_copy_ensemble__(
   
 
   {
-    /* Store current selections */
-    char * user_read_dir  = util_alloc_string_copy(enkf_fs_get_read_dir( fs));
-    char * user_write_dir = util_alloc_string_copy(enkf_fs_get_write_dir(fs));
-    
     /* If the current target_case does not exist it is automatically created by the select_write_dir function */
-    if( !enkf_fs_has_dir(fs, target_case)) 
-      printf("Creating new case: %s \n",target_case);  
-    
-    enkf_fs_select_write_dir(fs, target_case, true , true);
-    enkf_fs_select_read_dir( fs, source_case       , true);
-
-    
+    enkf_fs_type * src_fs    = enkf_main_get_alt_fs( enkf_main , source_case , true , false );
+    enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_case , false, true );
     stringlist_type * nodes;
+    
     if(only_parameters)
       nodes = ensemble_config_alloc_keylist_from_var_type(config, PARAMETER);
     else {
       /* Must explicitly load the static nodes. */
-      
       stringlist_type * restart_kw_list = stringlist_alloc_new();
       int i;
-      enkf_fs_fread_restart_kw_list(fs , report_step_from , 0 , restart_kw_list);  
+
+      enkf_fs_fread_restart_kw_list(src_fs , report_step_from , 0 , restart_kw_list);  
       for (i = 0; i < stringlist_get_size( restart_kw_list ); i++) {
         const char * kw = stringlist_iget( restart_kw_list , i);
         if (!ensemble_config_has_key(config , kw)) 
           ensemble_config_add_node(config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL );
       }
       for (i=0; i < ens_size; i++) 
-        enkf_fs_fwrite_restart_kw_list(fs , report_step_to , i , restart_kw_list);
+        enkf_fs_fwrite_restart_kw_list(target_fs , report_step_to , i , restart_kw_list);
       
       stringlist_free( restart_kw_list );
       nodes = ensemble_config_alloc_keylist(config);
@@ -199,24 +190,22 @@ static void enkf_tui_fs_copy_ensemble__(
 
     /***/
     
-    int num_nodes = stringlist_get_size(nodes);
-    
-    msg_show(msg);
-    for(int i = 0; i < num_nodes; i++) {
-      const char * key = stringlist_iget(nodes, i);
-      enkf_config_node_type * config_node = ensemble_config_get_node(config , key);
-      msg_update(msg , key);
-      enkf_fs_copy_node_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , ens_size , ranking_permutation);
+    {
+      int num_nodes = stringlist_get_size(nodes);
+      msg_show(msg);
+      for(int i = 0; i < num_nodes; i++) {
+        const char * key = stringlist_iget(nodes, i);
+        enkf_config_node_type * config_node = ensemble_config_get_node(config , key);
+        msg_update(msg , key);
+        enkf_node_copy_ensemble(config_node, src_fs , target_fs , report_step_from, state_from, report_step_to , state_to , ens_size , ranking_permutation);
+      }
     }
+   
+    enkf_main_close_alt_fs( enkf_main , src_fs );
+    enkf_main_close_alt_fs( enkf_main , target_fs );
     
     msg_free(msg , true);
     stringlist_free(nodes);
-    
-    /* Recover initial selections. */
-    enkf_fs_select_write_dir(fs, user_write_dir, false , true);
-    enkf_fs_select_read_dir( fs, user_read_dir         , true);
-    free(user_read_dir);
-    free(user_write_dir);
   }
   free( identity_permutation );
 }
@@ -242,7 +231,7 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
   
   last_report  = enkf_main_get_history_length( enkf_main );
 
-  source_case = enkf_tui_fs_alloc_existing_case( fs , "Initialize from case" , prompt_len);
+  source_case = enkf_tui_fs_alloc_existing_case( enkf_main , "Initialize from case" , prompt_len);
   if (source_case != NULL) {                                              
     char * ranking_key  = NULL;
     bool_vector_type * iens_mask = bool_vector_alloc( 0 , true ); 
@@ -270,18 +259,18 @@ void enkf_tui_fs_copy_ensemble(void * arg)
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
 
-  source_case = util_alloc_string_copy(enkf_fs_get_read_dir(fs));
+  source_case = util_alloc_string_copy(enkf_main_get_current_fs( enkf_main ));
   last_report  = enkf_main_get_history_length( enkf_main );
 
-  report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
-  state_from       = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
+  report_step_from = util_scanf_int_with_limits("source report step",prompt_len , 0 , last_report);
+  state_from       = enkf_tui_util_scanf_state("source analyzed/forecast [a|f]" , prompt_len , false);
 
-  util_printf_prompt("Target case" , prompt_len , '=' , "=> ");
+  util_printf_prompt("target case" , prompt_len , '=' , "=> ");
   target_case = util_alloc_stdin_line();
 
 
-  report_step_to = util_scanf_int_with_limits("Target report step",prompt_len , 0 , last_report);
-  state_to       = enkf_tui_util_scanf_state("Target analyzed/forecast [A|F]" , prompt_len , false);
+  report_step_to = util_scanf_int_with_limits("target report step",prompt_len , 0 , last_report);
+  state_to       = enkf_tui_util_scanf_state("target analyzed/forecast [a|f]" , prompt_len , false);
 
   enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, false);
 
@@ -303,9 +292,8 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
   state_enum state_to;
 
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
 
-  source_case      = util_alloc_string_copy(enkf_fs_get_read_dir(fs));
+  source_case      = util_alloc_string_copy( NULL );
   last_report      = enkf_main_get_history_length( enkf_main );
 
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
@@ -335,8 +323,7 @@ void enkf_tui_fs_initialize_case_for_predictions(void * arg)
   state_enum state_to;
 
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
-
+  
   state_from       = ANALYZED;
   state_to         = ANALYZED;
   report_step_from = enkf_main_get_history_length( enkf_main ); 
@@ -344,7 +331,7 @@ void enkf_tui_fs_initialize_case_for_predictions(void * arg)
 
 
   {
-    char * target_case = util_alloc_string_copy(enkf_fs_get_write_dir(fs));
+    char * target_case = util_alloc_string_copy( NULL );
     
     util_printf_prompt("Source case" , prompt_len , '=' , "=> ");
     scanf("%s", source_case);
@@ -362,21 +349,21 @@ void enkf_tui_fs_menu(void * arg) {
    enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
    enkf_fs_type    * fs         = enkf_main_get_fs( enkf_main );
 
-   const char * menu_title = util_alloc_sprintf("Manage cases - current: %s", enkf_fs_get_read_dir(fs));
+   const char * menu_title = util_alloc_sprintf("Manage cases - current: %s", enkf_main_get_current_fs( enkf_main ));
    menu_type * menu = menu_alloc(menu_title , "Back" , "bB");
 
-   menu_add_item(menu , "List available cases" , "lL" , enkf_tui_fs_ls_case , fs , NULL);
+   menu_add_item(menu , "List available cases" , "lL" , enkf_tui_fs_ls_case , enkf_main , NULL);
    
    {
      arg_pack_type * arg_pack = arg_pack_alloc();
-     arg_pack_append_ptr(arg_pack  , fs);
+     arg_pack_append_ptr(arg_pack  , enkf_main);
      arg_pack_append_ptr(arg_pack  , menu);
      menu_add_item(menu , "Create and select new case" , "cC" , enkf_tui_fs_create_case, arg_pack , arg_pack_free__);
    }
 
    {
      arg_pack_type * arg_pack = arg_pack_alloc();
-     arg_pack_append_ptr(arg_pack  , fs);
+     arg_pack_append_ptr(arg_pack  , enkf_main);
      arg_pack_append_ptr(arg_pack  , menu);
      menu_add_item(menu , "Select case" , "sS" , enkf_tui_fs_select_case, arg_pack , arg_pack_free__);
    }

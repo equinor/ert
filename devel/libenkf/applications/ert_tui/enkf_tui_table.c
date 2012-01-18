@@ -155,18 +155,17 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
     for (iens = iens1; iens < iens2; iens ++) {
       for (step = step1; step < step2; step++) {
         int line_count = 0;
-        bool valid;
         
         for (ikey = 0; ikey < num_keys; ikey++) {
           if (active[ikey]) {
-            if (enkf_fs_has_node(fs , config_nodes[ikey] , step , iens , state)) {
-              enkf_fs_fread_node(fs , nodes[ikey] , step , iens , state);
-              line[ikey] = enkf_node_user_get( nodes[ikey] , index_keys[ikey] , &valid);
-              if (valid) 
-                line_count++;
-              else
-                line[ikey] = -1;
-            } 
+            const char * node_key = enkf_config_node_get_key( config_nodes[ikey] );
+            node_id_type node_id = {.report_step = step, 
+                                    .iens = iens , 
+                                    .state = state };
+            if (enkf_node_user_get( nodes[ikey] , fs , index_keys[ikey] , node_id , &line[ikey]))
+              line_count++;
+            else
+              line[ikey] = -1;
           }
         }
         
