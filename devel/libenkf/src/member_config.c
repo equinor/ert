@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <util.h>
 #include <member_config.h>
-#include <time_t_vector.h>
 #include <stdbool.h>
 #include <path_fmt.h>
 #include <subst_list.h>
@@ -46,7 +45,9 @@ struct member_config_struct {
   bool                    pre_clear_runpath;   /* Should the runpath directory be cleared before starting? */ 
   char                  * eclbase;             /* The ECLBASE string used for simulations of this member. */
   time_t_vector_type    * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. */
+  enkf_fs_type          * fs_cache;            /* UGly */ 
 };
+
 
 /*****************************************************************/
 /*
@@ -123,6 +124,29 @@ void member_config_iset_sim_time( member_config_type * member_config , int repor
 }
 
 
+static void member_config_fread_sim_time( member_config_type * member_config , enkf_fs_type * enkf_fs) {
+  FILE * stream = enkf_fs_open_excase_member_file( enkf_fs , "sim_time" , member_config->iens );
+  if (stream != NULL) {
+    time_t_vector_fread( member_config->report_time , stream );
+    fclose( stream );
+  } else {
+    /** Try loading the initial member - desp hack. */
+    stream = enkf_fs_open_excase_member_file( enkf_fs , "sim_time" , 0 );
+    if (stream != NULL) {
+      time_t_vector_fread( member_config->report_time , stream );
+      fclose( stream );
+    }
+  }
+  member_config->fs_cache = enkf_fs;
+}
+
+
+static void member_config_assert_fs( member_config_type * member_config , enkf_fs_type * fs) {
+  if (fs != member_config->fs_cache)
+    member_config_fread_sim_time( member_config , fs );
+}
+
+
 /**
    This function will return the default value (i.e. -1) if the input
    report_step is invalid. The calling scope must check for this.
@@ -144,34 +168,19 @@ void member_config_iset_sim_time( member_config_type * member_config , int repor
 
     3. The time_t vector of the member_config object is stored as an
        enkf_fs case_member file.
-
-   To support older cases, where the time_t vector has not been
-   stored, this function will fall back to the schedule file if it
-   does not have the report step which is asked for. In the latter
-   situation the time_t vector is updated. If the fs pointer is !=
-   NULL the updated vector is written to disk, i.e. the ensemble is
-   'upgraded'.
-
-   This is introduced at svn =~ 2300 = 23/11/2009, when this has been
-   in place for sufficiently long time, the fallback to schedule
-   should be removed.
-
-   ----------------------------------------------------------------
-   
-   At svn ~ 2933 (14/07/2010) the Schedule fallback support was
-   removed. Ensemble directories which have been simulated before this
-   will get problems.
-   
 */
 
 
 time_t member_config_iget_sim_time( member_config_type * member_config , int report_step , enkf_fs_type * fs) {
-  time_t sim_time = time_t_vector_safe_iget( member_config->report_time , report_step );
-  
-  if (sim_time == -1) 
-    util_exit("%s: Sorry - you seem to have a very old ensemble - not longer supported... \n", __func__);
-
-  return sim_time;
+  member_config_assert_fs( member_config , fs );
+  {
+    time_t sim_time = time_t_vector_safe_iget( member_config->report_time , report_step );
+    
+    if (sim_time == -1) 
+      util_exit("%s: Sorry - you seem to have a very old ensemble - not longer supported... \n", __func__);
+    
+    return sim_time;
+  }
 }
 
 
@@ -191,38 +200,15 @@ double member_config_iget_sim_days( member_config_type * member_config , int rep
 
 
 
-bool member_config_has_report_step( const member_config_type * member_config , int report_step) {
-  if (time_t_vector_size( member_config->report_time ) > report_step)
-    return false;
-  else {
-    time_t def_time = time_t_vector_get_default( member_config->report_time );
-    if ( time_t_vector_iget( member_config->report_time , report_step ) != def_time )
-      return true;
-    else
-      return false;
-  }
-}
-
-
-int member_config_get_sim_length( const member_config_type * member_config ) {
+int member_config_get_sim_length( const member_config_type * member_config , enkf_fs_type * fs) {
+  member_config_assert_fs( member_config , fs );
   return time_t_vector_size( member_config->report_time );
 }
 
 
-static void member_config_fread_sim_time( member_config_type * member_config , enkf_fs_type * enkf_fs) {
-  FILE * stream = enkf_fs_open_excase_member_file( enkf_fs , "sim_time" , member_config->iens );
-  if (stream != NULL) {
-    time_t_vector_fread( member_config->report_time , stream );
-    fclose( stream );
-  } else {
-    /** Try loading the initial member - desp hack. */
-    stream = enkf_fs_open_excase_member_file( enkf_fs , "sim_time" , 0 );
-    if (stream != NULL) {
-      time_t_vector_fread( member_config->report_time , stream );
-      fclose( stream );
-    }
-  }
-}
+
+
+
 
 
 void member_config_fwrite_sim_time( const member_config_type * member_config , enkf_fs_type * enkf_fs ) {
@@ -248,7 +234,8 @@ member_config_type * member_config_alloc(int iens ,
                                          keep_runpath_type            keep_runpath , 
                                          const ecl_config_type      * ecl_config , 
                                          const ensemble_config_type * ensemble_config,
-                                         enkf_fs_type               * fs) { 
+                                         enkf_fs_type * fs) {
+
                                                 
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
   member_config->casename            = util_alloc_string_copy( casename );
@@ -256,9 +243,9 @@ member_config_type * member_config_alloc(int iens ,
   member_config->eclbase             = NULL;
   member_config->pre_clear_runpath   = pre_clear_runpath;
   member_config_set_keep_runpath(member_config , keep_runpath);
-  member_config->report_time = time_t_vector_alloc( 0 , -1 );
 
+  member_config->report_time = time_t_vector_alloc( 0 , -1 );
   member_config_fread_sim_time( member_config , fs );
-  time_t_vector_iset( member_config->report_time , 0 , ecl_config_get_start_date( ecl_config ));  /* Must be after the fread because of faulty files around. 09.08.2010. */
+  time_t_vector_iset( member_config->report_time , 0 , ecl_config_get_start_date( ecl_config ));  
   return member_config;
 }

@@ -187,7 +187,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       msg_update( msg , msg_label);
       
       if (prediction_mode)
-        step2 = member_config_get_sim_length( enkf_main_iget_member_config( enkf_main , iens ) ) - 1;
+        step2 = member_config_get_sim_length( enkf_main_iget_member_config( enkf_main , iens ) , fs) - 1;
       
       for (step = step1; step <= step2; step++) {
         

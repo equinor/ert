@@ -372,7 +372,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
 static void enkf_main_load_sub_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state, int iens1 , int iens2) {
   int iens;
   for (iens = iens1; iens < iens2; iens++)
-    enkf_state_fread(enkf_main->ensemble[iens] , mask , report_step , state );
+    enkf_state_fread(enkf_main->ensemble[iens] , enkf_main_get_fs( enkf_main ) , mask , report_step , state );
 }
 
 
@@ -434,7 +434,7 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
 static void enkf_main_fwrite_sub_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state, int iens1 , int iens2) {
   int iens;
   for (iens = iens1; iens < iens2; iens++)
-    enkf_state_fwrite(enkf_main->ensemble[iens] , mask , report_step , state);
+    enkf_state_fwrite(enkf_main->ensemble[iens] , enkf_main_get_fs( enkf_main ), mask , report_step , state);
 }
 
 
@@ -1086,6 +1086,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
   const int num_load_threads      = 10;
   const int ens_size              = enkf_main_get_ensemble_size(enkf_main);
+  enkf_fs_type  * fs              = enkf_main_get_fs( enkf_main ); 
   job_queue_type * job_queue      = site_config_get_job_queue(enkf_main->site_config);                          
   arg_pack_type ** arg_list       = util_malloc( ens_size * sizeof * arg_list , __func__);
   job_status_type * status_list   = util_malloc( ens_size * sizeof * status_list , __func__);
@@ -1114,6 +1115,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
         if (status_list[iens] != status) {
           arg_pack_clear( arg_list[iens] );
           arg_pack_append_ptr( arg_list[iens] , enkf_state );
+          arg_pack_append_ptr( arg_list[iens] , fs );
           arg_pack_append_int( arg_list[iens] , status );
 
           /*
@@ -1325,6 +1327,8 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
 
       {
         thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
+        enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+
         for (iens = 0; iens < ens_size; iens++) {
           if (iactive[iens]) {
             int load_start = step1;
@@ -1341,9 +1345,14 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
                                 load_start ,
                                 step1 ,
                                 step2 );
-                                
+            {
+              arg_pack_type * arg_pack = arg_pack_alloc( );   // This is discarded by the enkf_state_start_forward_model__() function. */
+              
+              arg_pack_append_ptr( arg_pack , enkf_main->ensemble[iens] );
+              arg_pack_append_ptr( arg_pack , fs );
             
-            thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
+              thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , arg_pack);
+            }
           } else
             enkf_state_set_inactive( enkf_main->ensemble[iens] );
         }
@@ -1653,7 +1662,7 @@ static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
   
   for (iens = iens1; iens < iens2; iens++) {
     enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
-    enkf_state_initialize( state , param_list );
+    enkf_state_initialize( state , enkf_main_get_fs( enkf_main ) , param_list );
   }
 
   return NULL;
@@ -2192,12 +2201,14 @@ char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const cha
 }
 
 void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path ) {
-  if (enkf_main->dbase != NULL)
-    enkf_main_close_fs( enkf_main );
-  enkf_main->dbase = fs;
+  if (enkf_main->dbase != fs) {
+    if (enkf_main->dbase != NULL)
+      enkf_main_close_fs( enkf_main );
+    enkf_main->dbase = fs;
 
-  enkf_main_link_current_fs__( enkf_main , case_path);
-  enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
+    enkf_main_link_current_fs__( enkf_main , case_path);
+    enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
+  }
 }
 
 
@@ -2232,7 +2243,7 @@ stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
 
 
 void enkf_main_close_alt_fs(enkf_main_type * enkf_main , enkf_fs_type * fs) {
-  if (fs != enkf_main->dbase)
+  if (fs != enkf_main->dbase) 
     enkf_fs_close( fs );
 }
 
@@ -2240,17 +2251,22 @@ void enkf_main_close_alt_fs(enkf_main_type * enkf_main , enkf_fs_type * fs) {
 enkf_fs_type * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
   enkf_fs_type * alt_fs = enkf_main->dbase;
   if (case_path != NULL) {
-    char * mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
+    char * new_mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
+    const char * current_mount_point = NULL;
     
-    if (!util_string_equal( mount_point , enkf_fs_get_mount_point( enkf_main->dbase ))) {
-      if (!enkf_fs_exists( mount_point )) {
+    if (enkf_main->dbase != NULL)
+      current_mount_point = enkf_fs_get_mount_point( enkf_main->dbase );
+
+    if (!util_string_equal( new_mount_point , current_mount_point )) {
+      if (!enkf_fs_exists( new_mount_point )) {
         if (create)
-          enkf_fs_create_fs( mount_point,
+          enkf_fs_create_fs( new_mount_point,
                              model_config_get_dbase_type( enkf_main->model_config ) , 
                              model_config_get_dbase_args( enkf_main->model_config ));
       }
-      alt_fs = enkf_fs_open( mount_point , read_only );
+      alt_fs = enkf_fs_open( new_mount_point , read_only );
     }
+    free( new_mount_point );
   }
   return alt_fs;
 }
@@ -2258,26 +2274,14 @@ enkf_fs_type * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * ca
 
 
 void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
-  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
-  if ((enkf_main->dbase == NULL) || (!util_string_equal( mount_point , enkf_fs_get_mount_point( enkf_main->dbase )))) {
-    
-    // 1: Create filesystem if it does not exist
-    if (!enkf_fs_exists( mount_point ))
-      enkf_main_create_fs( enkf_main , mount_point );
-    
-    
-    // 2: Open the filesystem 
-    {
-      enkf_fs_type * new_fs = enkf_fs_open( mount_point , false );
-      if (new_fs != NULL)
-        enkf_main_set_fs( enkf_main , new_fs , case_path);
-      else {
-        const char * ens_path = model_config_get_enspath( enkf_main->model_config );
-        util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
-      }
-    }
+  enkf_fs_type * new_fs = enkf_main_get_alt_fs( enkf_main , case_path , false , true );
+  
+  if (new_fs != NULL)
+    enkf_main_set_fs( enkf_main , new_fs , case_path);
+  else {
+    const char * ens_path = model_config_get_enspath( enkf_main->model_config );
+    util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
   }
-  free( mount_point );
 }
 
 

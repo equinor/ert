@@ -238,8 +238,10 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_
   fs->parameter              = NULL;
   fs->dynamic_forecast       = NULL;
   fs->dynamic_analyzed       = NULL;
-  fs->mount_point            = util_alloc_string_copy( mount_point );
   fs->read_only              = read_only;
+  fs->mount_point            = util_alloc_string_copy( mount_point );
+  if (mount_point == NULL)
+    util_abort("%s: fatal internal error: mount_point == NULL \n",__func__);
   return fs;
 }
 
@@ -612,7 +614,7 @@ bool enkf_fs_has_vector(enkf_fs_type * enkf_fs , const char * node_key , enkf_va
 void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const char * node_key, enkf_var_type var_type,  
                          int report_step , int iens , state_enum state) {
   if (enkf_fs->read_only)
-    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
+    util_abort("%s: attempt to write to read_only filesystem mounted at:%s - aborting. \n",__func__ , enkf_fs->mount_point);
   {
     void * _driver = enkf_fs_select_driver(enkf_fs , var_type , state , node_key);
     {
@@ -626,7 +628,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const c
 void enkf_fs_fwrite_vector(enkf_fs_type * enkf_fs , buffer_type * buffer , const char * node_key, enkf_var_type var_type,  
                            int iens , state_enum state) {
   if (enkf_fs->read_only)
-    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
+    util_abort("%s: attempt to write to read_only filesystem mounted at:%s - aborting. \n",__func__ , enkf_fs->mount_point);
   {
     void * _driver = enkf_fs_select_driver(enkf_fs , var_type , state , node_key);
     {
@@ -653,6 +655,7 @@ void enkf_fs_close( enkf_fs_type * fs ) {
   path_fmt_free( fs->case_member_fmt );
   path_fmt_free( fs->case_tstep_fmt );
   path_fmt_free( fs->case_tstep_member_fmt );
+  free( fs->mount_point );
   free( fs );
 }
 
@@ -662,6 +665,18 @@ void enkf_fs_close( enkf_fs_type * fs ) {
 
 const char * enkf_fs_get_mount_point( const enkf_fs_type * fs ) {
   return fs->mount_point;
+}
+
+void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {
+  printf("-----------------------------------------------------------------\n");
+  printf("fs...................: %p \n",fs );
+  printf("Mount point..........: %s \n",fs->mount_point );
+  printf("Dynamic forecast.....: %p \n",fs->dynamic_forecast );
+  printf("Dynamic analyzed.....: %p \n",fs->dynamic_analyzed );
+  printf("Parameter............: %p \n",fs->parameter );
+  printf("Index................: %p \n",fs->index );
+  printf("Static...............: %p \n",fs->eclipse_static );
+  printf("-----------------------------------------------------------------\n");
 }
 
 

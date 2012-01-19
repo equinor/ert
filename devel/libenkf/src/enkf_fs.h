@@ -67,6 +67,8 @@ extern "C" {
   void              enkf_fs_fwrite_restart_kw_list(enkf_fs_type * , int , int , const stringlist_type *);
   void              enkf_fs_fread_restart_kw_list(enkf_fs_type * , int , int , stringlist_type *);
 
+  void              enkf_fs_debug_fprintf( const enkf_fs_type * fs);
+
   void              enkf_fs_create_fs( const char * mount_point , fs_driver_impl driver_id , void * arg);
 
   char             * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const char * input_name);

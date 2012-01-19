@@ -60,26 +60,25 @@ void             * enkf_state_complete_forward_model__(void * arg );
 job_status_type    enkf_state_get_run_status( const enkf_state_type * enkf_state );
 time_t             enkf_state_get_start_time( const enkf_state_type * enkf_state );
 time_t             enkf_state_get_submit_time( const enkf_state_type * enkf_state );
-bool               enkf_state_resubmit_simulation( enkf_state_type * enkf_state , bool resample);
-bool               enkf_state_kill_simulation( const enkf_state_type * enkf_state );
-void *             enkf_state_internalize_results_mt( void * arg );
-void               enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type * param_list);
-void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );
-enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
-bool               enkf_state_get_analyzed(const enkf_state_type * );
-void               enkf_state_set_analyzed(enkf_state_type * , bool );
-void               enkf_state_swapout_node(const enkf_state_type * , const char *);
-void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
-enkf_state_type  * enkf_state_copyc(const enkf_state_type * );
-void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
-enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
-void               enkf_state_del_node(enkf_state_type * , const char * );
-void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
+  bool               enkf_state_resubmit_simulation( enkf_state_type * enkf_state , enkf_fs_type * fs , bool resample);
+  bool               enkf_state_kill_simulation( const enkf_state_type * enkf_state );
+  void *             enkf_state_internalize_results_mt( void * arg );
+  void               enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs, const stringlist_type * param_list);
+  void               enkf_state_fread(enkf_state_type *  , enkf_fs_type * fs , int  , int  , state_enum );
+  bool               enkf_state_get_analyzed(const enkf_state_type * );
+  void               enkf_state_set_analyzed(enkf_state_type * , bool );
+  void               enkf_state_swapout_node(const enkf_state_type * , const char *);
+  void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
+  enkf_state_type  * enkf_state_copyc(const enkf_state_type * );
+  void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
+  enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
+  void               enkf_state_del_node(enkf_state_type * , const char * );
+  void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_forward_model__(void * );
 enkf_state_type  * enkf_state_alloc(int ,
                                     rng_type        * main_rng , 
-                                    enkf_fs_type   * fs, 
+                                    enkf_fs_type * fs, 
                                     const char * casename , 
                                     bool         pre_clear_runpath, 
                                     keep_runpath_type , 
@@ -96,9 +95,9 @@ void               enkf_state_invalidate_cache( enkf_state_type * enkf_state );
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
 void               enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
 void               enkf_state_sample(enkf_state_type * , int);
-void               enkf_state_fwrite(const enkf_state_type *  , int  , int  , state_enum );
-void               enkf_state_ens_read(       enkf_state_type * , const char * , int);
-void               enkf_state_ecl_write(enkf_state_type *);
+  void               enkf_state_fwrite(const enkf_state_type *  , enkf_fs_type * fs , int  , int  , state_enum );
+  void               enkf_state_ens_read(       enkf_state_type * , const char * , int);
+  void               enkf_state_ecl_write(enkf_state_type *, enkf_fs_type * fs);
 void               enkf_state_free(enkf_state_type * );
 void               enkf_state_apply(enkf_state_type * , enkf_node_ftype1 * , int );
 void               enkf_state_serialize(enkf_state_type * , size_t);
