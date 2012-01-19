@@ -205,6 +205,7 @@ void enkf_tui_run_full__(void * __enkf_main) {
 
 void enkf_tui_run_manual_load__( void * arg ) {
   enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg );
+  enkf_fs_type * fs                            = enkf_main_get_fs( enkf_main ); 
   const int last_report                        = enkf_main_get_history_length( enkf_main );
   const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
   int step1,step2;
@@ -237,6 +238,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
         enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
 
         arg_pack_append_ptr( arg_pack , enkf_state);
+        arg_pack_append_ptr( arg_pack , fs );
         arg_pack_append_int( arg_pack , step1 );      /* This will be the load start parameter for the run_info struct. */
         arg_pack_append_int( arg_pack , step1 );      /* Step1 */ 
         arg_pack_append_int( arg_pack , step2 );      /* Step2 For summary data it will load the whole goddamn thing anyway.*/

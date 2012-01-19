@@ -377,6 +377,7 @@ void enkf_tui_fs_menu(void * arg) {
    /* Are these two in use??? */
    menu_add_item(menu, "Copy full ensemble to another case", "eE", enkf_tui_fs_copy_ensemble, enkf_main, NULL); 
    menu_add_item(menu, "Copy ensemble of parameters to another case", "oO", enkf_tui_fs_copy_ensemble_of_parameters, enkf_main, NULL); 
+   
 
    menu_run(menu);
    menu_free(menu);
