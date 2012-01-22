@@ -158,7 +158,6 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
         
         for (ikey = 0; ikey < num_keys; ikey++) {
           if (active[ikey]) {
-            const char * node_key = enkf_config_node_get_key( config_nodes[ikey] );
             node_id_type node_id = {.report_step = step, 
                                     .iens = iens , 
                                     .state = state };

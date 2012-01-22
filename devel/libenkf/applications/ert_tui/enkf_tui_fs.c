@@ -136,7 +136,7 @@ static void enkf_tui_fs_copy_ensemble__(
   ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
   int ens_size                  = enkf_main_get_ensemble_size(enkf_main);
   char * ranking_key;
-  int  * ranking_permutation = NULL;
+  const int  * ranking_permutation = NULL;
   int  * identity_permutation;
 
   misfit_table_type * misfit_table = enkf_main_get_misfit( enkf_main );
@@ -221,11 +221,9 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
   int ens_size;
   int last_report;
   int src_step;
-  state_enum src_state, target_state;
+  state_enum src_state;
   enkf_main_type   * enkf_main = enkf_main_safe_cast( arg );
-  enkf_fs_type     * fs        = enkf_main_get_fs(enkf_main);
 
-  const ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
   ens_size = enkf_main_get_ensemble_size( enkf_main );
 
   
@@ -257,7 +255,6 @@ void enkf_tui_fs_copy_ensemble(void * arg)
   state_enum state_to;
 
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
 
   source_case = util_alloc_string_copy(enkf_main_get_current_fs( enkf_main ));
   last_report  = enkf_main_get_history_length( enkf_main );
@@ -347,7 +344,6 @@ void enkf_tui_fs_initialize_case_for_predictions(void * arg)
 void enkf_tui_fs_menu(void * arg) {
   
    enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
-   enkf_fs_type    * fs         = enkf_main_get_fs( enkf_main );
 
    const char * menu_title = util_alloc_sprintf("Manage cases - current: %s", enkf_main_get_current_fs( enkf_main ));
    menu_type * menu = menu_alloc(menu_title , "Back" , "bB");
