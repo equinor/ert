@@ -1362,7 +1362,7 @@ void field_update_sum(field_type * sum , const field_type * field , double lower
   [1..ny] , [1...nz], they are immediately converted to C-based zero
   offset indices.
 */
-bool field_user_get(const field_type * field, const char * index_key, int report_step , state_enum state, bool * value)
+bool field_user_get(const field_type * field, const char * index_key, int report_step , state_enum state, double * value)
 {
   const    bool internal_value = false;
   bool     valid;

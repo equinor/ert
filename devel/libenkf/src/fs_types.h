@@ -28,23 +28,23 @@
   must be updated.
 */
 
+// Version from ~ svn:3720
+//typedef enum {
+//  INVALID_DRIVER_ID          = 0,
+//  PLAIN_DRIVER_INDEX_ID      = 1001,
+//  PLAIN_DRIVER_STATIC_ID     = 1002,  /* Depreceated */
+//  PLAIN_DRIVER_DYNAMIC_ID    = 1003,  /* Depreceated */
+//  PLAIN_DRIVER_PARAMETER_ID  = 1004,  /* Depreceated */
+//  PLAIN_DRIVER_ID            = 1005,
+//  BLOCK_FS_DRIVER_ID         = 3001,
+//  BLOCK_FS_DRIVER_INDEX_ID   = 3002 } fs_driver_impl;
+
+
 typedef enum {
   INVALID_DRIVER_ID          = 0,
-  PLAIN_DRIVER_INDEX_ID      = 1001,
-  PLAIN_DRIVER_STATIC_ID     = 1002,  /* Depreceated */
-  PLAIN_DRIVER_DYNAMIC_ID    = 1003,  /* Depreceated */
-  PLAIN_DRIVER_PARAMETER_ID  = 1004,  /* Depreceated */
   PLAIN_DRIVER_ID            = 1005,
-  BLOCK_FS_DRIVER_ID         = 3001,
-  BLOCK_FS_DRIVER_INDEX_ID   = 3002 } fs_driver_impl;
-
-
-
-/*
-  SQLITE_DRIVER_ID           = 2001,    Removed 11.08.2010 (svn: 2957)
-*/
-
-
+  BLOCK_FS_DRIVER_ID         = 3001} fs_driver_impl;
+  
 
 
 
@@ -61,8 +61,7 @@ typedef enum {
 typedef enum {
   DRIVER_PARAMETER        = 1,
   DRIVER_STATIC           = 2,
-  DRIVER_DYNAMIC          = 3, /* Depreceated */
-  DRIVER_INDEX            = 4,  
+  DRIVER_INDEX            = 4,  // DRIVER_DYNAMIC = 3; removed at svn ~ 3720.
   DRIVER_DYNAMIC_FORECAST = 5,
   DRIVER_DYNAMIC_ANALYZED = 6} fs_driver_enum;
 

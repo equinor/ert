@@ -200,7 +200,7 @@ double member_config_iget_sim_days( member_config_type * member_config , int rep
 
 
 
-int member_config_get_sim_length( const member_config_type * member_config , enkf_fs_type * fs) {
+int member_config_get_sim_length( member_config_type * member_config , enkf_fs_type * fs) {
   member_config_assert_fs( member_config , fs );
   return time_t_vector_size( member_config->report_time );
 }

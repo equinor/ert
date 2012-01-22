@@ -44,6 +44,9 @@
 #include <fs_driver.h>
 #include <msg.h>
 
+#define BLOCK_FS_DRIVER_INDEX_ID 3002
+
+
 config_type * create_config( ) {
   config_type * config = config_alloc( );
   config_item_type * item;
@@ -62,8 +65,8 @@ config_type * create_config( ) {
 
 
 void fskip_block_fs( FILE * stream ) {
-  int type = util_fread_int( stream );
-  int num_drivers = util_fread_int( stream );
+  util_fread_int( stream );
+  util_fread_int( stream );
 }
 
 
@@ -75,16 +78,20 @@ void fskip_block_fs_index( FILE * stream ) {
 char * check_enspath( const char * ens_path , stringlist_type * case_list ) {
   char * mount_file = util_alloc_filename( ens_path , "enkf_mount_info" , NULL);
   FILE * stream = util_fopen( mount_file , "r");
-  long fs_tag = util_fread_long( stream );
-  int version = util_fread_int( stream );
+  int version;
+
+  util_fread_long( stream );
+  version = util_fread_int( stream );
 
   if (version != 104)
     util_exit("This application is only for upgrading fs from version 104\n");
   
   {
     for (int driver_nr = 0; driver_nr < 5; driver_nr++) {
-      fs_driver_enum driver_cat = util_fread_int( stream );
-      fs_driver_impl driver_id  = util_fread_int( stream );
+      int driver_id;
+      util_fread_int( stream );
+      
+      driver_id  = util_fread_int( stream );
       if (driver_id == BLOCK_FS_DRIVER_ID)
         fskip_block_fs(stream);
       else if (driver_id == BLOCK_FS_DRIVER_INDEX_ID)

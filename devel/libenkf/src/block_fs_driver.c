@@ -147,9 +147,6 @@ static bfs_type * bfs_alloc( const bfs_config_type * config ) {
 }
 
 
-
-
-
 static bfs_type * bfs_alloc_new( const bfs_config_type * config , char * mountfile) {
   bfs_type * bfs      = bfs_alloc( config );
 
@@ -178,16 +175,6 @@ static void * bfs_mount__( void * arg ) {
 }
 
 
-static void bfs_umount( bfs_type * bfs ) {
-  block_fs_close( bfs->block_fs , true );
-}
-
-
-static void * bfs_umount__( void * arg ) {
-  bfs_type * bfs = bfs_safe_cast( arg );
-  bfs_umount( bfs );
-  return NULL;
-}
 
 
 static void bfs_fsync( bfs_type * bfs ) {
@@ -459,14 +446,6 @@ static void block_fs_driver_mount( block_fs_driver_type * driver ) {
   printf("\n");
 }
 
-
-static void block_fs_driver_umount( block_fs_driver_type * driver ) {
-  thread_pool_type * tp         = thread_pool_alloc( 4 , true ); 
-  for (int ifs = 0; ifs < driver->num_fs; ifs++) 
-    thread_pool_add_job( tp , bfs_umount__ , driver->fs_list[ ifs ]);
-  thread_pool_join( tp );
-  thread_pool_free( tp );
-}
 
 
 

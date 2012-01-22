@@ -403,12 +403,7 @@ bool enkf_node_ecl_load_vector(enkf_node_type *enkf_node , const char * run_path
   bool loadOK;
   FUNC_ASSERT(enkf_node->ecl_load_vector);
   {
-    if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
-      /* Fast path for loading summary data. */
-      loadOK = enkf_node->ecl_load_vector(enkf_node->data , NULL  , ecl_sum , restart_block , report_step1 , report_step2);
-    else {
-      // 
-    }
+    loadOK = enkf_node->ecl_load_vector(enkf_node->data , NULL  , ecl_sum , restart_block , report_step1 , report_step2);
   }
   // This is broken ....
   enkf_node->__node_id.report_step = report_step1;
