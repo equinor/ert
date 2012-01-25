@@ -37,10 +37,8 @@ files. This module also has (some) support for working with GRDECL
 The ecl_kw.py implementation wraps the ecl_kw.c implementation from
 the libecl library.
 """
-
 import  types
 import  ctypes
-import  numpy
 from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cfile       import CFILE
 from    ecl_util              import ECL_CHAR_TYPE, ECL_DOUBLE_TYPE, ECL_INT_TYPE, ECL_BOOL_TYPE, ECL_MESS_TYPE, ECL_FLOAT_TYPE 
@@ -48,6 +46,16 @@ import  ecl_util
 import  fortio
 import  libecl
 import  warnings
+
+try:
+    import  numpy
+except ImportError:
+    import sys
+    sys.stderr.write("**WARNING** Loading numpy failed - the numpy_array() method will fail\n")
+    class numpy:
+        int32 = 1
+        float32 = 1
+        float64 = 1
 
 
 class classprop(object):
