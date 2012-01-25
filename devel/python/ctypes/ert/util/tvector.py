@@ -46,17 +46,7 @@ import ctypes
 import libutil
 from   ert.cwrap.cwrap       import *
 from   ert.cwrap.cfile       import CFILE
-
-try:
-    import  numpy
-except ImportError:
-    import sys
-    sys.stderr.write("**WARNING** Loading numpy failed - the numpy_copy() method will fail\n")
-    class numpy:
-        int32 = 1
-        float32 = 1
-        float64 = 1
-
+import  numpy
 
 
 class TVector(object):

@@ -31,18 +31,7 @@ from   ert.util.tvector      import DoubleVector  # Requires merging of typemaps
 import libecl
 import ecl_kw
 from   ert.cwrap.cfile       import CFILE
-
-try:
-    import  numpy
-except ImportError:
-    import sys
-    sys.stderr.write("**WARNING** Loading numpy failed - the create3D() method will fail\n")
-    class numpy:
-        int32 = 1
-        float32 = 1
-        float64 = 1
-
-
+import  numpy
 
 class EclGrid(object):
     """
