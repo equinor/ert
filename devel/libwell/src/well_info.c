@@ -155,27 +155,27 @@ static void well_info_add_state( well_info_type * well_info , well_state_type * 
    
      - well_info_add_wells()
      - well_info_add_UNRST_wells()
-     - well_info_load_file()
+     - well_info_load_rstfile()
    
    The two first functions expect an open ecl_file instance as input;
    whereas the last funtion expects the name of a restart file as
    input. 
 
-   If you need access ecl_file access to the restart files for another
-   reason it might be convenient to use one of the first functions;
-   however due to the workings of the ecl_file type it might not be
-   entirely obvious: The ecl_file structure will load the needed
-   keywords on demand; the keywords needed to initialize well
-   structures will typically not be loaded for other purposes, so the
-   only gain from using an existing ecl_file instance is that you do
-   not have to rebuild the index. The disadvantage of using an
-   existing ecl_file instance is that after the call to add_wells()
-   the well related kewywords will stay in (probaly unused) in memory.
+   If you need ecl_file access to the restart files for another reason
+   it might be convenient to use one of the first functions; however
+   due to the workings of the ecl_file type it might not be entirely
+   obvious: The ecl_file structure will load the needed keywords on
+   demand; the keywords needed to initialize well structures will
+   typically not be loaded for other purposes, so the only gain from
+   using an existing ecl_file instance is that you do not have to
+   rebuild the index. The disadvantage of using an existing ecl_file
+   instance is that after the call to add_wells() the well related
+   kewywords will stay in (probaly unused) in memory.
 
    The three different methods to add restart data can be
    interchganged, and also called repeatedly. All the relevant data is
    internalized in the well_xxx structures; and the restart files can
-   be discarded afterwards.
+   be discarded afterwards.  
 */
 
 
@@ -195,7 +195,8 @@ void well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file 
     
     for (well_nr = 0; well_nr < header->nwells; well_nr++) {
       well_state_type * well_state = well_state_alloc( rst_file , header , report_nr , grid_nr , well_nr );
-      well_info_add_state( well_info , well_state );
+      if (well_state != NULL)
+        well_info_add_state( well_info , well_state );
     }
   }
   ecl_intehead_free( header );
