@@ -1,5 +1,5 @@
 set( source_files well_state.c well_conn.c well_info.c well_ts.c)
-set( header_files well_state.c well_const.h well_conn.h well_info.h well_ts.h )
+set( header_files well_state.h well_const.h well_conn.h well_info.h well_ts.h )
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${libutil_build_path} )
