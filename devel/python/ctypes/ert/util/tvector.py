@@ -42,11 +42,22 @@ float and size_t not currently implemented in the Python version.
 
 import sys
 import types
-import numpy
 import ctypes
 import libutil
 from   ert.cwrap.cwrap       import *
 from   ert.cwrap.cfile       import CFILE
+
+try:
+    import  numpy
+except ImportError:
+    import sys
+    sys.stderr.write("**WARNING** Loading numpy failed - the numpy_copy() method will fail\n")
+    class numpy:
+        int32 = 1
+        float32 = 1
+        float64 = 1
+
+
 
 class TVector(object):
     
