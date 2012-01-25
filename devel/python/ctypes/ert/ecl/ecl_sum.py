@@ -33,20 +33,7 @@ from   ert.cwrap.cwrap       import *
 from   ert.util.stringlist   import StringList
 from   ert.util.ctime        import ctime 
 
-try:
-    import  numpy
-except ImportError:
-    import sys
-    sys.stderr.write("**WARNING** Loading numpy failed - the create3D() method will fail\n")
-    class numpy:
-        int32 = 1
-        float32 = 1
-        float64 = 1
-        
-        def zeros(N, type = None):
-            return [0] * N
-
-
+import  numpy
 
 
 #import ert.ecl_plot.sum_plot as sum_plot

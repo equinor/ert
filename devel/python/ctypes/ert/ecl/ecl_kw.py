@@ -46,17 +46,7 @@ import  ecl_util
 import  fortio
 import  libecl
 import  warnings
-
-try:
-    import  numpy
-except ImportError:
-    import sys
-    sys.stderr.write("**WARNING** Loading numpy failed - the numpy_array() method will fail\n")
-    class numpy:
-        int32 = 1
-        float32 = 1
-        float64 = 1
-
+import  numpy
 
 class classprop(object):
     def __init__(self , f):
