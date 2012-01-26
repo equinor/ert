@@ -250,6 +250,7 @@ void analysis_config_load_internal_modules( analysis_config_type * config , rng_
   analysis_config_load_internal_module( config , rng , "SQRT_ENKF"      , "sqrt_enkf_symbol_table");
   analysis_config_load_internal_module( config , rng , "CV_ENKF"        , "cv_enkf_symbol_table");
   analysis_config_load_internal_module( config , rng , "BOOTSTRAP_ENKF" , "bootstrap_enkf_symbol_table");
+  analysis_config_load_internal_module( config , rng , "FWD_STEP_ENKF"  , "fwd_step_enkf_symbol_table");
   analysis_config_select_module( config , DEFAULT_ANALYSIS_MODULE);
 }
 
