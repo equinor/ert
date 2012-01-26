@@ -908,7 +908,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   const int cpu_threads       = 4;
   const int matrix_start_size = 25000;
   thread_pool_type * tp       = thread_pool_alloc( cpu_threads , false );
-  
+  printf("inside enkf_main_module_update1\n");
   analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
   int ens_size          = meas_data_get_ens_size( forecast );
   int active_size       = obs_data_get_active_size( obs_data );
@@ -921,7 +921,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_type * D       = NULL;
   matrix_type * localA  = NULL;
 
-
+  printf("inside enkf_main_module_update2\n");
 
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
@@ -931,6 +931,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
     localA = A;
   
+  printf("inside enkf_main_module_update3\n");
   /*****************************************************************/
   
   analysis_module_init_update( module , S , R , dObs , E , D );
@@ -938,6 +939,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
     if (localA == NULL) 
+      printf("inside enkf_main_module_update4\n");
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
     
     while (!hash_iter_is_complete( dataset_iter )) {
@@ -948,7 +950,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
         int * row_offset  = util_malloc( local_dataset_get_size( dataset ) * sizeof * row_offset  , __func__);
         
         enkf_main_serialize_dataset( enkf_main , dataset , report_step ,  use_count , active_size , row_offset , tp , serialize_info);
-        
+        printf("We are here!\n");
         if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
           analysis_module_updateA( module , localA , S , R , dObs , E , D );
         else {
