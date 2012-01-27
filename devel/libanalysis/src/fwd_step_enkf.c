@@ -68,7 +68,7 @@ void * fwd_step_enkf_data_alloc( rng_type * rng ) {
   data->rng          = rng;
   data->nfolds       = DEFAULT_NFOLDS;
   data->r2_limit     = DEFAULT_R2_LIMIT;
-  data->option_flags = ANALYSIS_NEED_ED;
+  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A;
 
   return data;
 }
