@@ -131,12 +131,12 @@ static analysis_module_type * analysis_module_alloc( rng_type * rng ,
     if (analysis_table != NULL) {
       module = analysis_module_alloc__( rng , analysis_table , table_name , libname , user_name , lib_handle );
     } else
-      fprintf(stderr , "Failed to load symbol table:%s. Error:%s \n",table_name , dlerror());
+      fprintf(stderr , "Failed to load symbol table:%s Error:%s \n",table_name , dlerror());
     
     if (module == NULL) 
       dlclose( lib_handle );
   } else 
-    fprintf(stderr , "Failed to load library:%s. Error:%s \n",libname , dlerror());
+    fprintf(stderr , "Failed to load library:%s Error:%s \n",libname , dlerror());
   
   if (module != NULL) {
     if (libname == NULL)
@@ -336,7 +336,7 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
 
 bool analysis_module_get_option( const analysis_module_type * module , long flag) {
   printf("inside analysis_module_get_option\n");
-  printf("flag = %d\n",flag);
-  printf("module->get_options( module->module-data,flag) = %d\n",module->get_options( module->module_data , flag ));
+  printf("flag = %ld\n",flag);
+  printf("module->get_options( module->module-data,flag) = %ld\n",module->get_options( module->module_data , flag ));
   return (flag & module->get_options( module->module_data , flag ));
 }

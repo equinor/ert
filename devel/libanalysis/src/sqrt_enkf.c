@@ -165,11 +165,10 @@ void sqrt_enkf_complete_update( void * arg ) {
 
 /*****************************************************************/
 
-
 #ifdef INTERNAL_LINK
 #define SYMBOL_TABLE sqrt_enkf_symbol_table
 #else
-#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOl
+#define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
 #endif
 
 

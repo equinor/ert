@@ -32,7 +32,7 @@ src_list.append("fwd_step_enkf.c")
 
 header_list = Split("analysis_module.h analysis_table.h enkf_linalg.h")
 
-add_shared_library( env , conf , slib_path , package , src_list )
+add_shared_library( env , conf , slib_path , package , src_list)
 add_header( env , conf , include_path , header_list )
 
 env['SHLIBPREFIX'] = ""

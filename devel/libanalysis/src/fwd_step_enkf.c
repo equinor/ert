@@ -77,13 +77,13 @@ void * fwd_step_enkf_data_alloc( rng_type * rng ) {
 
 /*Main function: */
 void fwd_step_enkf_updateA(void * module_data , 
-			   matrix_type * A , 
-			   matrix_type * S , 
-			   matrix_type * R , 
-			   matrix_type * dObs , 
-			   matrix_type * E ,
-			   matrix_type * D ,
-			   matrix_type * randrot) {
+                           matrix_type * A , 
+                           matrix_type * S , 
+                           matrix_type * R , 
+                           matrix_type * dObs , 
+                           matrix_type * E ,
+                           matrix_type * D ) {
+                           
 
   
   printf("Inside fwd_step_enkf_updateA\n");
@@ -105,11 +105,11 @@ void fwd_step_enkf_updateA(void * module_data ,
       
       /*workS = S' */
       for (int i = 0; i < nd; i++) {
-	for (int j = 0; j < ens_size; j++) {
-	  matrix_iset( workS , j , i , matrix_iget( S , i , j ) );
-	}
+        for (int j = 0; j < ens_size; j++) {
+          matrix_iset( workS , j , i , matrix_iget( S , i , j ) );
+        }
       }
-						      
+                                                      
       /*This might be illigal???? */
       stepwise_set_X0( stepwise_data , workS );
       
@@ -119,37 +119,37 @@ void fwd_step_enkf_updateA(void * module_data ,
 
 
       for (int i = 0; i < nx; i++) {
-	/*Update values of y */
-	for (int j = 0; j < ens_size; j++) {
-	  matrix_iset(y , j , 1 , matrix_iget( A, i , j ) );
-	}
-	
-	/*This might be illigal???? */
-	stepwise_set_Y0( stepwise_data , y );
-	
-	stepwise_estimate(stepwise_data , fwd_step_data->r2_limit , fwd_step_data->nfolds );
-	
-	/*manipulate A directly*/
-	for (int j = 0; j < ens_size; j++) {
-	  for (int k = 0; k < nd; k++) {
-	    matrix_iset(di , 1 , k , matrix_iget( D , k , j ) );
-	  }
-	  
-	  xHat = stepwise_eval(stepwise_data , di );
-	  matrix_iset(A , i , j , xHat);
-	}
-	
-	
-	
+        /*Update values of y */
+        for (int j = 0; j < ens_size; j++) {
+          matrix_iset(y , j , 1 , matrix_iget( A, i , j ) );
+        }
+        
+        /*This might be illigal???? */
+        stepwise_set_Y0( stepwise_data , y );
+        
+        stepwise_estimate(stepwise_data , fwd_step_data->r2_limit , fwd_step_data->nfolds );
+        
+        /*manipulate A directly*/
+        for (int j = 0; j < ens_size; j++) {
+          for (int k = 0; k < nd; k++) {
+            matrix_iset(di , 1 , k , matrix_iget( D , k , j ) );
+          }
+          
+          xHat = stepwise_eval(stepwise_data , di );
+          matrix_iset(A , i , j , xHat);
+        }
+        
+        
+        
       }
-						      
+                                                      
       
       stepwise_free( stepwise_data );
       matrix_free( di );
       matrix_free( workS );
       matrix_free( y );
       
-	
+        
     }
     
     

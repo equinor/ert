@@ -30,8 +30,8 @@ void fwd_step_enkf_updateA(void * module_data ,
                             matrix_type * R , 
                             matrix_type * dObs , 
                             matrix_type * E ,
-                            matrix_type * D , 
-                            matrix_type * randrot);
+                            matrix_type * D );
+
 
 void        fwd_step_enkf_set_truncation( fwd_step_enkf_data_type * data , double truncation );
 void        fwd_step_enkf_set_subspace_dimension( fwd_step_enkf_data_type * data , int subspace_dimension);

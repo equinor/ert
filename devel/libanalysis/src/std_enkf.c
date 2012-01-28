@@ -234,6 +234,7 @@ long std_enkf_get_options( void * arg , long flag ) {
 #define SYMBOL_TABLE EXTERNAL_MODULE_SYMBOL
 #endif
 
+
 analysis_table_type SYMBOL_TABLE = {
     .alloc           = std_enkf_data_alloc,
     .freef           = std_enkf_data_free,
