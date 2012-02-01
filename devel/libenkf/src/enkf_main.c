@@ -921,26 +921,31 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_type * D       = NULL;
   matrix_type * localA  = NULL;
 
-  printf("inside enkf_main_module_update2\n");
 
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
   obs_data_scale( obs_data , S , E , D , R , dObs );
-  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
+  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) {
     localA = A;
+  }
   
-  printf("inside enkf_main_module_update3\n");
+
   /*****************************************************************/
   
   analysis_module_init_update( module , S , R , dObs , E , D );
+
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
+
+
+
     if (localA == NULL) 
-      printf("inside enkf_main_module_update4\n");
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
+
+
     
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
