@@ -302,11 +302,21 @@ int well_ts_get_size( const well_ts_type * well_ts) {
   return vector_get_size( well_ts->ts );
 }
 
+
+well_state_type * well_ts_get_first_state( const well_ts_type * well_ts) {
+  return well_ts_iget_state( well_ts , 0 );
+}
+
+
+well_state_type * well_ts_get_last_state( const well_ts_type * well_ts) {
+  return well_ts_iget_state( well_ts , vector_get_size( well_ts->ts ) - 1);
+}
+
+
 well_state_type * well_ts_iget_state( const well_ts_type * well_ts , int index) {
   well_node_type * node = vector_iget( well_ts->ts , index );
   return node->well_state;
 }
-
 
 
 well_state_type * well_ts_get_state_from_report( const well_ts_type * well_ts , int report_step) {

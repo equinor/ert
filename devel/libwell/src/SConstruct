@@ -1,7 +1,7 @@
 import os
 import os.path
 import sys
-sys.path += ["../../build"]
+sys.path += ["../../scons-config"]
 import global_config
 from   global_config import LIBUTIL
 from   global_config import LIBECL
@@ -21,10 +21,10 @@ conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
 conf.update_env( env , [ LIBGEOMETRY , LIBECL , LIBUTIL] , link = False)
 
-src_list = Split("well_state.c well_conn.c well_info.c well_ts.c")
+src_list = Split("well_state.c well_conn.c well_info.c well_ts.c well_branch.c well_path.c")
 
 # tetrahedron.h and point.h are not installed.
-header_list = Split("well_state.h  well_const.h well_conn.h well_info.h well_ts.h")
+header_list = Split("well_state.h  well_const.h well_conn.h well_info.h well_ts.h well_branch.h well_path.h")
 
 
 add_static_library( env , conf , lib_path , package , src_list)

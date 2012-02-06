@@ -1,7 +1,7 @@
 import os
 import os.path
 import sys
-sys.path += ["../../build"]
+sys.path += ["../../scons-config"]
 import global_config
 from   global_config import LIBUTIL
 from   global_config import LIBECL
@@ -27,7 +27,6 @@ conf.update_env( env , [ LIBWELL , LIBECL , LIBPLOT , LIBCONFIG , LIBGEOMETRY , 
 env.Append( CPPPATH = conf.PLPLOT_INCLUDE_PATH )
 env.Append( LIBPATH = conf.PLPLOT_LIB_PATH )
 
-add_program(env , conf ,  bin_path , "well_state_test.x"        , "well_state_test.c"        )
 add_program(env , conf ,  bin_path , "well_info_test.x"         , "well_info_test.c"        )
 Default( bin_path )
 

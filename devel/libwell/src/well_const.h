@@ -30,13 +30,14 @@ extern "C" {
   added. 
 */
 
-#define IWEL_HEADI_ITEM         0
-#define IWEL_HEADJ_ITEM         1
-#define IWEL_HEADK_ITEM         2
-#define IWEL_CONNECTIONS_ITEM   4
-#define IWEL_TYPE_ITEM          6 
-#define IWEL_STATUS_ITEM       10
-#define IWEL_LGR_ITEM          42  
+#define IWEL_HEADI_ITEM               0
+#define IWEL_HEADJ_ITEM               1
+#define IWEL_HEADK_ITEM               2
+#define IWEL_CONNECTIONS_ITEM         4
+#define IWEL_TYPE_ITEM                6 
+#define IWEL_STATUS_ITEM             10
+#define IWEL_LGR_ITEM                42     
+#define IWEL_SEGMENTED_WELL_NR_ITEM  70
 
 #define ISEG_BRANCH_ITEM        3
 
@@ -57,16 +58,27 @@ extern "C" {
 #define ICON_DEFAULT_DIR_TARGET   ICON_DIRZ
 
 
-#define IWEL_PRODUCER        1
-#define IWEL_OIL_INJECTOR    2
-#define IWEL_WATER_INJECTOR  3
-#define IWEL_GAS_INJECTOR    4
+/*
+  The ECLIPSE documentation says that a certain item in the IWEL array
+  should indicate the type of the well, the available types are the
+  ones given in the enum below. Unfortunately it turns out that when
+  the well is closed the integer value in the IWEL array can be 0, if
+  the well is indeed closed we accept this zero - otherwise we fail
+  hard. Theese hoops are in the well_state_alloc() routine.
+*/
+
+#define IWEL_UNDOCUMENTED_ZERO 0
+#define IWEL_PRODUCER          1
+#define IWEL_OIL_INJECTOR      2
+#define IWEL_WATER_INJECTOR    3
+#define IWEL_GAS_INJECTOR      4
   
   typedef enum {
-    PRODUCER       = 10,
-    WATER_INJECTOR = 22,
-    GAS_INJECTOR   = 21,
-    OIL_INJECTOR   = 78
+    UNDOCUMENTED_ZERO = 0,
+    PRODUCER          = 10,
+    WATER_INJECTOR    = 22,
+    GAS_INJECTOR      = 21,
+    OIL_INJECTOR      = 78
   } well_type_enum;
   
   

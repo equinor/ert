@@ -31,8 +31,8 @@ extern "C" {
   typedef struct well_info_struct well_info_type;
   
   well_info_type *  well_info_alloc(const ecl_grid_type * grid);
-  void              well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst_file, int grid_nr);
-  void              well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr , int grid_nr);
+  void              well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst_file);
+  void              well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr );
   void              well_info_load_rstfile( well_info_type * well_info , const char * filename);
   void              well_info_free( well_info_type * well_info );
 

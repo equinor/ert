@@ -50,7 +50,7 @@ extern "C" {
     int                j;
     int                k;
     int                branch;
-    int                segment;
+    int                segment;   // -1: Ordinary well
     bool               open;         
     well_conn_dir_enum dir;
   } well_conn_type;
@@ -59,7 +59,7 @@ extern "C" {
 
   void             well_conn_free( well_conn_type * conn);
   void             well_conn_free__( void * arg );
-  well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , const ecl_kw_type * iseg_kw , const ecl_intehead_type * header , int well_nr , int conn_nr);
+  well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , const ecl_kw_type * iseg_kw , const ecl_intehead_type * header , int well_nr , int seg_well_nr , int conn_nr);
   well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const ecl_intehead_type * header , int well_nr);
   
 #ifdef __cplusplus
