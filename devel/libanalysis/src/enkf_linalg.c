@@ -71,7 +71,7 @@ void enkf_linalg_genX2(matrix_type * X2 , const matrix_type * S , const matrix_t
 
 
 
-void enkf_linalg_svdS(const matrix_type * S , 
+int enkf_linalg_svdS(const matrix_type * S , 
                       double truncation , 
                       int ncomp ,
                       dgesvd_vector_enum store_V0T , 
@@ -80,6 +80,7 @@ void enkf_linalg_svdS(const matrix_type * S ,
                       matrix_type * V0T) {
   
   double * sig0 = inv_sig0;
+  int    num_significant;
   
   if (((truncation > 0) && (ncomp < 0)) ||
       ((truncation < 0) && (ncomp > 0))) {
@@ -91,7 +92,6 @@ void enkf_linalg_svdS(const matrix_type * S ,
     }
     
     {
-      int    num_significant;
       int i;
       
       if (ncomp > 0)
@@ -131,6 +131,7 @@ void enkf_linalg_svdS(const matrix_type * S ,
     }
   } else 
     util_abort("%s:  truncation:%g  ncomp:%d  - invalid ambigous input.\n",__func__ , truncation , ncomp );
+  return num_significant;
 }
 
 

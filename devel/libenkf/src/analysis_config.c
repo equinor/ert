@@ -40,7 +40,9 @@ struct analysis_config_struct {
 
   double                  overlap_alpha;
   double                  std_cutoff;
-    
+
+  char                  * PC_filename;
+  bool                    store_PC;
   bool                    update_results;              /* Should result values like e.g. WWCT be updated? */
   bool                    single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
 }; 
@@ -104,13 +106,29 @@ ANALYSIS_SELECT  ModuleName
 
 
 
-
 void analysis_config_set_alpha( analysis_config_type * config , double alpha) {
   config->overlap_alpha = alpha;
 }
 
+
 double analysis_config_get_alpha(const analysis_config_type * config) {
   return config->overlap_alpha;
+}
+
+void analysis_config_set_store_PC( analysis_config_type * config , bool store_PC) {
+  config->store_PC = store_PC;    
+}
+
+bool analysis_config_get_store_PC( const analysis_config_type * config ) {
+  return config->store_PC;
+}
+
+void analysis_config_set_PC_filename( analysis_config_type * config , const char * filename ) {
+  config->PC_filename = util_realloc_string_copy( config->PC_filename , filename );
+}
+
+const char * analysis_config_get_PC_filename( const analysis_config_type * config ) {
+  return config->PC_filename;
 }
 
 void analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff ) {
@@ -350,6 +368,7 @@ analysis_config_type * analysis_config_alloc_default( ) {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
   
   config->log_path                  = NULL;
+  config->PC_filename               = NULL;
 
   analysis_config_set_alpha( config                    , DEFAULT_ENKF_ALPHA );
   analysis_config_set_std_cutoff( config               , DEFAULT_ENKF_STD_CUTOFF );
@@ -359,6 +378,9 @@ analysis_config_type * analysis_config_alloc_default( ) {
   analysis_config_set_update_results( config           , DEFAULT_UPDATE_RESULTS);
   analysis_config_set_single_node_update( config       , DEFAULT_SINGLE_NODE_UPDATE );
   analysis_config_set_log_path( config                 , DEFAULT_UPDATE_LOG_PATH);
+
+  analysis_config_set_store_PC( config                 , DEFAULT_STORE_PC );
+  analysis_config_set_PC_filename( config              , DEFAULT_PC_FILENAME );
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();

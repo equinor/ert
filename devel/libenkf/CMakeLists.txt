@@ -13,5 +13,7 @@ include_directories( ${libanalysis_src_path} )
 include_directories( ${libsched_src_path} )
 include_directories( ${libgeometry_src_path} )
 
+link_directories( ${CMAKE_CURRENT_BINARY_DIR}/src )
+
 add_subdirectory( src )
 add_subdirectory( applications/ert_tui )

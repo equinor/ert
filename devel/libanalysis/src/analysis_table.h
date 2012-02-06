@@ -19,22 +19,29 @@ typedef void (analysis_updateA_ftype) (void * module_data ,
                                         matrix_type * D );
 
 
-typedef void (analysis_initX_ftype)       (void * module_data , 
-                                           matrix_type * X , 
-                                           matrix_type * A , 
-                                           matrix_type * S , 
-                                           matrix_type * R , 
-                                           matrix_type * dObs , 
-                                           matrix_type * E , 
-                                           matrix_type * D );
+  typedef void (analysis_get_PC_ftype) (void * module_data , 
+                                        const matrix_type * S , 
+                                        const matrix_type * dObs,
+                                        matrix_type * PC,
+                                        matrix_type * PC_obs);
 
 
-typedef bool (analysis_set_int_ftype)       (void * module_data , const char * flag , int value);
-typedef bool (analysis_set_bool_ftype)      (void * module_data , const char * flag , bool value);
-typedef bool (analysis_set_double_ftype)    (void * module_data , const char * var , double value);
-typedef bool (analysis_set_string_ftype)    (void * module_data , const char * var , const char * value);
-typedef void   (analysis_free_ftype) (void * );
-typedef void * (analysis_alloc_ftype) ( rng_type * rng );
+  typedef void (analysis_initX_ftype)       (void * module_data , 
+                                             matrix_type * X , 
+                                             matrix_type * A , 
+                                             matrix_type * S , 
+                                             matrix_type * R , 
+                                             matrix_type * dObs , 
+                                             matrix_type * E , 
+                                             matrix_type * D );
+  
+  
+  typedef bool (analysis_set_int_ftype)       (void * module_data , const char * flag , int value);
+  typedef bool (analysis_set_bool_ftype)      (void * module_data , const char * flag , bool value);
+  typedef bool (analysis_set_double_ftype)    (void * module_data , const char * var , double value);
+  typedef bool (analysis_set_string_ftype)    (void * module_data , const char * var , const char * value);
+  typedef void   (analysis_free_ftype) (void * );
+  typedef void * (analysis_alloc_ftype) ( rng_type * rng );
 
 
   typedef void (analysis_init_update_ftype) (void * module_data, 
@@ -60,6 +67,7 @@ typedef struct {
   analysis_initX_ftype           * initX;
   analysis_init_update_ftype     * init_update;
   analysis_complete_update_ftype * complete_update;
+  analysis_get_PC_ftype          * get_PC;
 
   analysis_free_ftype            * freef;
   analysis_alloc_ftype           * alloc;

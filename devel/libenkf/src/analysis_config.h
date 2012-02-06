@@ -74,6 +74,11 @@ bool                   analysis_config_get_update_results(const analysis_config_
 void                   analysis_config_set_single_node_update(analysis_config_type * config , bool single_node_update);
 bool                   analysis_config_get_single_node_update(const analysis_config_type * config);
 
+void                   analysis_config_set_store_PC( analysis_config_type * config , bool store_PC);
+bool                   analysis_config_get_store_PC( const analysis_config_type * config );
+void                   analysis_config_set_PC_filename( analysis_config_type * config , const char * filename );
+const char           * analysis_config_get_PC_filename( const analysis_config_type * config );
+
 
 
 #endif

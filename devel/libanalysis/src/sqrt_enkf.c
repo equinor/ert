@@ -56,6 +56,7 @@ void * sqrt_enkf_data_alloc( rng_type * rng ) {
   data->randrot  = NULL;
   data->rng      = rng;
   data->options  = 0;
+  
   return data;
 }
 
@@ -172,6 +173,8 @@ void sqrt_enkf_complete_update( void * arg ) {
 #endif
 
 
+
+
 analysis_table_type SYMBOL_TABLE = {
   .alloc           = sqrt_enkf_data_alloc,
   .freef           = sqrt_enkf_data_free,
@@ -183,6 +186,7 @@ analysis_table_type SYMBOL_TABLE = {
   .updateA         = NULL,
   .init_update     = sqrt_enkf_init_update,
   .complete_update = sqrt_enkf_complete_update,
-  .get_options     = sqrt_enkf_get_options 
+  .get_options     = sqrt_enkf_get_options ,
+  .get_PC          = NULL 
 };
 

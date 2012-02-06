@@ -43,8 +43,9 @@ struct analysis_module_struct {
   analysis_updateA_ftype         * updateA;
   analysis_init_update_ftype     * init_update;
   analysis_complete_update_ftype * complete_update;
+  analysis_get_PC_ftype          * get_PC;
+
   analysis_get_options_ftype     * get_options;
-    
   analysis_set_int_ftype         * set_int;
   analysis_set_double_ftype      * set_double;
   analysis_set_bool_ftype        * set_bool; 
@@ -71,6 +72,7 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
   module->module_data     = NULL;
   module->init_update     = NULL;
   module->complete_update = NULL;
+  module->get_PC          = NULL;
   module->user_name     = util_alloc_string_copy( user_name );
   module->symbol_table  = util_alloc_string_copy( symbol_table );
   module->lib_name      = util_alloc_string_copy( lib_name );
@@ -81,6 +83,7 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
 static bool analysis_module_internal_check( analysis_module_type * module ) {
   return true;
 }
+
 
 static analysis_module_type * analysis_module_alloc__( rng_type * rng , 
                                                        const analysis_table_type * table , 
@@ -103,6 +106,7 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
   module->alloc             = table->alloc;
   module->freef             = table->freef;
   module->get_options       = table->get_options; 
+  module->get_PC            = table->get_PC;
   
   if (module->alloc != NULL)
     module->module_data = module->alloc( rng );
@@ -121,22 +125,31 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
 
 
 static analysis_module_type * analysis_module_alloc( rng_type * rng , 
-                                                     const char * libname , 
                                                      const char * user_name , 
-                                                     const char * table_name ) {
+                                                     const char * libname , 
+                                                     const char * table_name ,
+                                                     bool  verbose, 
+                                                     analysis_module_load_status_enum * load_status) {
   analysis_module_type * module = NULL;
   void * lib_handle = dlopen( libname , RTLD_NOW );
   if (lib_handle != NULL) {
     analysis_table_type * analysis_table = (analysis_table_type *) dlsym( lib_handle , table_name );
     if (analysis_table != NULL) {
+      *load_status = LOAD_OK;
       module = analysis_module_alloc__( rng , analysis_table , table_name , libname , user_name , lib_handle );
-    } else
-      fprintf(stderr , "Failed to load symbol table:%s Error:%s \n",table_name , dlerror());
+    } else {
+      *load_status = LOAD_SYMBOL_TABLE_NOT_FOUND;
+      if (verbose)
+        fprintf(stderr , "Failed to load symbol table:%s Error:%s \n",table_name , dlerror());
+    }
     
     if (module == NULL) 
       dlclose( lib_handle );
-  } else 
-    fprintf(stderr , "Failed to load library:%s Error:%s \n",libname , dlerror());
+  } else {
+    *load_status = DLOPEN_FAILURE;
+    if (verbose)
+      fprintf(stderr , "Failed to load library:%s Error:%s \n",libname , dlerror());
+  }
   
   if (module != NULL) {
     if (libname == NULL)
@@ -148,14 +161,27 @@ static analysis_module_type * analysis_module_alloc( rng_type * rng ,
   return module;
 }
 
+analysis_module_type * analysis_module_alloc_internal__( rng_type * rng , const char * user_name , const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status) {
+  return analysis_module_alloc( rng , user_name , NULL , symbol_table , verbose ,  load_status);
+}
+
 analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * user_name , const char * symbol_table ) {
-  return analysis_module_alloc( rng , NULL , user_name , symbol_table );
+  analysis_module_load_status_enum load_status;
+  return analysis_module_alloc_internal__( rng , user_name , symbol_table , true , &load_status);
+}
+
+
+analysis_module_type * analysis_module_alloc_external__(rng_type * rng , const char * user_name , const char * lib_name , bool verbose , analysis_module_load_status_enum * load_status) {
+  return analysis_module_alloc( rng , user_name , lib_name , EXTERNAL_MODULE_NAME , verbose , load_status);
 }
 
 
 analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * user_name , const char * lib_name) {
-  return analysis_module_alloc( rng , lib_name , user_name , EXTERNAL_MODULE_NAME );
+  analysis_module_load_status_enum load_status;
+  return analysis_module_alloc_external__( rng , user_name , lib_name , true , &load_status);
 }
+
+/*****************************************************************/
 
 const char * analysis_module_get_name( const analysis_module_type * module ) {
   return module->user_name;
@@ -243,6 +269,14 @@ void analysis_module_complete_update( analysis_module_type * module ) {
     module->complete_update( module->module_data );
 }
 
+
+bool analysis_module_get_PC( analysis_module_type * module , const matrix_type * S , const matrix_type * dObs , matrix_type * PC, matrix_type * PC_obs) {
+  if (module->get_PC != NULL) {
+    module->get_PC( module->module_data , S , dObs , PC, PC_obs);
+    return true;
+  } else
+    return false;
+}
 
 
 /*****************************************************************/

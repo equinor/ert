@@ -939,14 +939,33 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
+    if (analysis_config_get_store_PC( enkf_main->analysis_config )) {
+      matrix_type * PC = matrix_alloc(1,1);
+      matrix_type * PC_obs = matrix_alloc(1,1);
+      
+      if (analysis_module_get_PC( module , S , dObs , PC , PC_obs )) {
+        char * filename = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , report_step , report_step , local_ministep_get_name( ministep ));
+        FILE * stream = util_mkdir_fopen(filename , "w");
 
-
+        // Transposed on output
+        for (int row = 0; row < matrix_get_columns( PC ); row++) {
+          fprintf(stream , "%10.6f " , matrix_iget( PC_obs , 0 , row));
+          for (int col = 0; col < matrix_get_rows( PC ); col++) 
+            fprintf(stream ,"%10.6f " , matrix_iget( PC , col , row ));
+          fprintf(stream , "\n");
+        }
+        
+        fclose( stream );
+        free( filename );
+      }
+      
+      matrix_free( PC );
+      matrix_free( PC_obs );
+    }
 
     if (localA == NULL) 
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
 
-
-    
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );

@@ -725,9 +725,9 @@ void enkf_tui_plot_all_summary(void * arg) {
   {
     /*
       This code is prepared for multithreaded creation of plots;
-      however the low level PLPlot library is unfortunately not thread
-      safe, we therefor must limit the the number of threads in the
-      thread pool to 1.
+      however the low level PLPlot library is not thread safe, we
+      therefor must limit the the number of threads in the thread pool
+      to 1.
     */
     thread_pool_type * tp = thread_pool_alloc( 1 , true );
     stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);

@@ -91,6 +91,8 @@ In practice all of is handled by the functions:
   analysis_module_type * analysis_module_alloc_internal( );
   analysis_module_type * analysis_module_alloc_external( );
 
+symbol_table
+------------
 
 Interacting with modules
 ------------------------

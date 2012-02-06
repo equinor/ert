@@ -32,32 +32,55 @@ extern "C" {
 #define EXTERNAL_MODULE_NAME      "analysis_table"
 #define EXTERNAL_MODULE_SYMBOL     analysis_table
 
-
+  typedef enum {
+    LOAD_OK = 0,
+    DLOPEN_FAILURE = 1,
+    LOAD_SYMBOL_TABLE_NOT_FOUND = 2
+  } analysis_module_load_status_enum;
+  
+  
 typedef struct analysis_module_struct analysis_module_type;
 
+  analysis_module_type * analysis_module_alloc_internal__( rng_type * rng , const char * user_name , const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status);
+  analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * user_name , const char * symbol_table );
+  
+  analysis_module_type * analysis_module_alloc_external__(rng_type * rng , const char * user_name , const char * lib_name , bool verbose , analysis_module_load_status_enum * load_status);
+  analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * user_name , const char * libname );
+  
+  void                   analysis_module_free( analysis_module_type * module );
+  void                   analysis_module_free__( void * arg);
 
-analysis_module_type * analysis_module_alloc_external( rng_type * rng , const char * user_name , const char * libname );
-analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * user_name , const char * symbol_table );
-void                   analysis_module_free( analysis_module_type * module );
-void                   analysis_module_free__( void * arg);
-
-void analysis_module_initX(analysis_module_type * module , 
-                           matrix_type * X , 
-                           matrix_type * A , 
-                           matrix_type * S , 
-                           matrix_type * R , 
-                           matrix_type * dObs , 
-                           matrix_type * E , 
-                           matrix_type * D);
-                           
-
-void analysis_module_updateA(analysis_module_type * module , 
+  void analysis_module_initX(analysis_module_type * module , 
+                             matrix_type * X , 
                              matrix_type * A , 
                              matrix_type * S , 
                              matrix_type * R , 
                              matrix_type * dObs , 
                              matrix_type * E , 
-                             matrix_type * D );
+                             matrix_type * D);
+  
+  
+  void analysis_module_updateA(analysis_module_type * module , 
+                               matrix_type * A , 
+                               matrix_type * S , 
+                               matrix_type * R , 
+                               matrix_type * dObs , 
+                             matrix_type * E , 
+                               matrix_type * D );
+  
+  void                   analysis_module_init_update( analysis_module_type * module , 
+                                                      matrix_type * S , 
+                                                      matrix_type * R , 
+                                                      matrix_type * dObs , 
+                                                      matrix_type * E , 
+                                                      matrix_type * D );
+  
+  bool                 analysis_module_get_PC( analysis_module_type * module , 
+                                               const matrix_type * S , 
+                                               const matrix_type * dObs , 
+                                               matrix_type * PC, 
+                                               matrix_type * PC_obs);
+                               
 
 
 const char           * analysis_module_get_lib_name( const analysis_module_type * module);
@@ -67,12 +90,7 @@ const char           * analysis_module_get_table_name( const analysis_module_typ
 const char           * analysis_module_get_name( const analysis_module_type * module );
 bool                   analysis_module_get_option( const analysis_module_type * module , long flag);
 void                   analysis_module_complete_update( analysis_module_type * module );
-void                   analysis_module_init_update( analysis_module_type * module , 
-                                                    matrix_type * S , 
-                                                    matrix_type * R , 
-                                                    matrix_type * dObs , 
-                                                    matrix_type * E , 
-                                                    matrix_type * D );
+
 
 #ifdef  __cplusplus
 }

@@ -135,6 +135,8 @@
 #define DEFAULT_IMAGE_VIEWER       "/usr/bin/display"
 #define DEFAULT_PLOT_LOGY          false  
 
+#define DEFAULT_STORE_PC           true
+#define DEFAULT_PC_FILENAME        "PC/%04d-%04d-%s"
 
 #define SUMMARY_KEY_JOIN_STRING ":"
 #define USER_KEY_JOIN_STRING    ":"
