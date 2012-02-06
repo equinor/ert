@@ -76,7 +76,7 @@ well_path_type * well_state_add_path( well_state_type * well_state , const ecl_f
     const ecl_kw_type * lgr_kw = ecl_file_iget_named_kw( ecl_file , LGR_KW , 0 );
     grid_name = util_alloc_strip_copy(ecl_kw_iget_ptr( lgr_kw , grid_nr -1 ));  
   }
-  well_path = well_path_alloc( grid_name );
+  well_path = well_path_alloc( grid_name , (grid_nr == 0) ? true : false);
     
   vector_safe_iset_owned_ref( well_state->index_lgr_path , grid_nr , well_path , well_path_free__);
   hash_insert_ref( well_state->name_lgr_path , grid_name , well_path );
@@ -114,6 +114,7 @@ static void well_state_add_connections( well_state_type * well_state ,  const ec
 
 
 static int well_state_get_lgr_well_nr( const well_state_type * well_state , const ecl_file_type * ecl_file , int grid_nr ) {
+  printf("Looking for well_nr  well:%s  grid:%d \n",well_state->name , grid_nr);
   const ecl_kw_type * zwel_kw = ecl_file_iget_named_kw( ecl_file , ZWEL_KW   , grid_nr);
   int num_lgr_wells = ecl_kw_get_size( zwel_kw );
   int well_nr = 0;
@@ -140,7 +141,9 @@ static int well_state_get_lgr_well_nr( const well_state_type * well_state , cons
   return well_nr;
 }
 
-
+// This is misleading because a grid can only be completed in one grid, i.e.
+// either the global grid or one of the LGRs. The only exception to this is
+// when several LGRs are amalgameted to one 'super' lgr.
 
 well_state_type * well_state_alloc( const ecl_file_type * ecl_file , int report_nr ,  int global_well_nr) {
   well_state_type * well_state = NULL;
@@ -170,7 +173,7 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , int report_
     {
       int int_type = ecl_kw_iget_int( global_iwel_kw , iwel_offset + IWEL_TYPE_ITEM);
       switch (int_type) {
-        /* See documentation of the 'IWEL_UNDOCUMENTED_ZERO' in well_const.h */
+      /* See documentation of the 'IWEL_UNDOCUMENTED_ZERO' in well_const.h */
       case(IWEL_UNDOCUMENTED_ZERO):
         well_state->type = UNDOCUMENTED_ZERO;
         if (well_state->open)
@@ -208,6 +211,7 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , int report_
       int num_grid = ecl_file_get_num_named_kw( ecl_file , INTEHEAD_KW );
       for (int grid_nr = 0; grid_nr < num_grid; grid_nr++) {
         int well_nr;
+        printf("grid:%d \n",grid_nr);
         if (grid_nr == 0)
           well_nr = global_well_nr;
         else
