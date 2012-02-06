@@ -900,7 +900,8 @@ static serialize_info_type * serialize_info_alloc( enkf_main_type * enkf_main , 
 
 void enkf_main_module_update( enkf_main_type * enkf_main , 
                               hash_type * use_count,
-                              int report_step , 
+                              int step1 ,
+                              int step2 , 
                               const local_ministep_type * ministep , 
                               const meas_data_type * forecast , 
                               obs_data_type * obs_data) {
@@ -938,13 +939,13 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
 
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
-    serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , report_step , A , cpu_threads);
+    serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , step2 , A , cpu_threads);
     if (analysis_config_get_store_PC( enkf_main->analysis_config )) {
       matrix_type * PC = matrix_alloc(1,1);
       matrix_type * PC_obs = matrix_alloc(1,1);
       
       if (analysis_module_get_PC( module , S , dObs , PC , PC_obs )) {
-        char * filename = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , report_step , report_step , local_ministep_get_name( ministep ));
+        char * filename = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , local_ministep_get_name( ministep ));
         FILE * stream = util_mkdir_fopen(filename , "w");
 
         // Transposed on output
@@ -973,7 +974,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
         int * active_size = util_malloc( local_dataset_get_size( dataset ) * sizeof * active_size , __func__);
         int * row_offset  = util_malloc( local_dataset_get_size( dataset ) * sizeof * row_offset  , __func__);
         
-        enkf_main_serialize_dataset( enkf_main , dataset , report_step ,  use_count , active_size , row_offset , tp , serialize_info);
+        enkf_main_serialize_dataset( enkf_main , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
         printf("We are here!\n");
         if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
           analysis_module_updateA( module , localA , S , R , dObs , E , D );
@@ -1080,7 +1081,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , log_stream );
 
       if (obs_data_get_active_size(obs_data) > 0)
-        enkf_main_module_update( enkf_main , use_count , int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
+        enkf_main_module_update( enkf_main , use_count , int_vector_get_first( step_list ), int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
 
     }
     fclose( log_stream );
