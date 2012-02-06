@@ -31,18 +31,32 @@ extern "C" {
 #include <well_const.h>
 
   typedef struct well_state_struct well_state_type;
-
+  
   well_conn_type       * well_get_wellhead( const well_state_type * well_state );
-  well_state_type      * well_state_alloc( const ecl_file_type * ecl_file , const ecl_intehead_type * header , int report_step , int grid_nr , int well_nr);
+  well_state_type      * well_state_alloc( const ecl_file_type * ecl_file , int report_step , int well_nr);
   void                   well_state_free( well_state_type * well );
   const char           * well_state_get_name( const well_state_type * well );
   int                    well_state_get_report_nr( const well_state_type * well_state );
   time_t                 well_state_get_sim_time( const well_state_type * well_state );
-  int                    well_state_get_num_connections( const well_state_type * well_state );
   well_conn_type       * well_state_iget_connection( const well_state_type * well_state , int index);
   well_type_enum         well_state_get_type( const well_state_type * well_state);
   bool                   well_state_is_open( const well_state_type * well_state );   
+  
+  
+  
+  const well_conn_type ** well_state_iget_lgr_connections(const well_state_type * well_state , int grid_nr , int branch_nr );
+  const well_conn_type ** well_state_get_lgr_connections(const well_state_type * well_state , const char * lgr_name , int branch_nr);
+  const well_conn_type ** well_state_get_connections(const well_state_type * well_state , int branch_nr );
 
+  int                     well_state_iget_num_lgr_connections(const well_state_type * well_state , int grid_nr , int branch_nr );
+  int                     well_state_get_num_lgr_connections(const well_state_type * well_state , const char * lgr_name , int branch_nr);
+  int                     well_state_get_num_connections(const well_state_type * well_state , int branch_nr );
+
+  int                     well_state_iget_lgr_num_branches( const well_state_type * well_state , int grid_nr);
+  int                     well_state_get_lgr_num_branches( const well_state_type * well_state , const char * lgr_name);
+  int                     well_state_get_num_branches(const well_state_type * well_state );
+
+  void                    well_state_summarize( const well_state_type * well_state , FILE * stream );
 
   UTIL_IS_INSTANCE_HEADER( well_state );
   

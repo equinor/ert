@@ -29,21 +29,23 @@ well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const e
   conn->i    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADI_ITEM ) - 1;
   conn->j    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADJ_ITEM ) - 1;
   conn->k    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADK_ITEM ) - 1;
-  conn->open = true;  // This is not really specified anywhere.
+  conn->open    = true;  // This is not really specified anywhere.
   conn->branch  = 0;
   conn->segment = 0;
   return conn;
+
 }
 
 
 /*
-  Observe that the (ijk) values are shifted to zero offset to be
+  Observe that the (ijk) and branch values are shifted to zero offset to be
   aligned with the rest of the ert libraries.  
 */
 well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , 
                                   const ecl_kw_type * iseg_kw , 
                                   const ecl_intehead_type * header , 
                                   int well_nr , 
+                                  int seg_well_nr , 
                                   int conn_nr ) {
   
   const int icon_offset = header->niconz * ( header->ncwmax * well_nr + conn_nr );
@@ -87,9 +89,9 @@ well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw ,
     }
   }
 
-  if (iseg_kw != NULL) {
-    const int iseg_offset = header->nisegz * ( header->nsegmx * well_nr + conn_nr );
-    conn->branch = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );
+  if (conn->segment >= 0) {
+    const int iseg_offset = header->nisegz * ( header->nsegmx * seg_well_nr + conn->segment );
+    conn->branch = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );  
   } else
     conn->branch = 0;
 

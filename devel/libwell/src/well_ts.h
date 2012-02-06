@@ -38,6 +38,9 @@ extern "C" {
   well_state_type     * well_ts_iget_state( const well_ts_type * well_ts , int index);
   int                   well_ts_get_size( const well_ts_type * well_ts);
 
+  well_state_type     * well_ts_get_first_state( const well_ts_type * well_ts);
+  well_state_type     * well_ts_get_last_state( const well_ts_type * well_ts);
+
 #ifdef __cplusplus
 }
 #endif

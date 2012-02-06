@@ -42,10 +42,15 @@ int main( int argc , char ** argv) {
   // List all wells:
   {
     int iwell;
-    for (iwell = 0; iwell < well_info_get_num_wells( well_info ); iwell++) 
-      printf("Well[%02d] : %s \n",iwell , well_info_iget_well_name( well_info , iwell));
+    for (iwell = 0; iwell < well_info_get_num_wells( well_info ); iwell++) {
+      well_ts_type * well_ts = well_info_get_ts( well_info , well_info_iget_well_name( well_info , iwell));
+      well_state_type * well_state = well_ts_get_last_state( well_ts );
+      
+      well_state_summarize( well_state , stdout );
+      printf("\n");
+    }
   }
-
+  exit(1);
 
   // Look at the timeseries for one well:
   {
@@ -66,8 +71,11 @@ int main( int argc , char ** argv) {
     well_state_type * well_state = well_info_iiget_state( well_info , 0 , 0 );
     printf("Well:%s  report:%04d \n",well_state_get_name( well_state ), well_state_get_report_nr( well_state ));
     {
-      for (int iconn = 0; iconn < well_state_get_num_connections( well_state ); iconn++) {
-        well_conn_type * conn = well_state_iget_connection( well_state , iconn);
+      const well_conn_type ** connections = well_state_get_connections( well_state , 0 );
+      printf("Branches: %d \n",well_state_get_num_branches( well_state ));
+      printf("num_connections: %d \n",well_state_get_num_connections( well_state , 0 ));
+      for (int iconn = 0; iconn < well_state_get_num_connections( well_state , 0 ); iconn++) {
+        well_conn_type * conn = connections[ iconn ];
         printf("Connection:%02d   i=%3d  j=%3d  k=%3d  State:",iconn , conn->i, conn->j , conn->k);
         if (conn->open)
           printf("Open\n");

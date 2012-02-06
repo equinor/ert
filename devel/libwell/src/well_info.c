@@ -1,19 +1,19 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
-    
-   The file 'well_info.c' is part of ERT - Ensemble based Reservoir Tool. 
-    
-   ERT is free software: you can redistribute it and/or modify 
-   it under the terms of the GNU General Public License as published by 
-   the Free Software Foundation, either version 3 of the License, or 
-   (at your option) any later version. 
-    
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-   FITNESS FOR A PARTICULAR PURPOSE.   
-    
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   Copyright (C) 2011  Statoil ASA, Norway.
+
+   The file 'well_info.c' is part of ERT - Ensemble based Reservoir Tool.
+
+   ERT is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
+   for more details.
 */
 
 #include <time.h>
@@ -39,7 +39,8 @@
   The library libwell contains functionality to read and interpret
   some of the well related keywords from an ECLIPSE restart
   file. Roughly speaking the implementation is spread between three
-  datatypes:
+  six datatypes; users of the libwell library are mainly conserned
+  with three first.
 
     well_info_type: This is the container type which holds information
        about all the wells; at all times.
@@ -51,7 +52,98 @@
     well_state_type: The well_state_type datatype contains the
        state/properties of one well at one particular instant of time.
 
+    well_path_type: The well_path_type datatype hold information about
+       the path of the well, i.e. which cells it goes through. The
+       well_path_type instance is for one grid only; and if the well
+       goes through LGRs the well_state instance contains one
+       well_path instance for the global grid and additional well_path
+       instances for each LGR.
+
+    well_branch_type: The wells can be split into several
+       branches. The well_branch_type datatype contain a collection of
+       well connections which form a 1-dimensional segment.
+
+    well_conn_type: This is the connection of a well to one cell. This
+      datatype is exported, i.e. calling scope can inspect
+      (read-only!) the members of a well_conn_type instance.
+
+              
+               WELL1
+
+                | |
+                | |
+                | |
+                | |
+           +----| |--------+---------------+---------------+
+    LGR1   |   :| |:   :   |               |               |
+           +···+| |+···+···+               |    (2,2)      |
+           |   :| |:   :   |               |               |
+           +···+| |+···+···+               |               |
+           |   :| |:   :   |               |               |
+           +----| |--------+---------------+---------------+
+           |   :| |:   :   |               |   :   :   :   |
+           +···+| \__________________________________ -+---+   LGR2
+           |   :\______________   ___________________| :   |
+           +···+···+···+···+   | |         +---+---+---+---+
+           |   :   :   :   |   | |         |   :   :   :   |
+           +---------------+---| |---------+---------------+
+           |               |   | |         |               |
+           |               |   | |         |               |
+           |   (0,0)       |   | |         |    (2,0)      |
+           |               |   |_|         |               |
+           |               |               |               |
+           +---------------+---------------+---------------+
+
+
+     This figure shows the following:
+
+       1. A global grid of 3 x 3 times cell; we assume numbering
+          starts with (i,j) = (0,0) in the lower left corner.
+
+       2. The grid contains two LGRs named LGR1 and LGR2
+          respectively. The LGR LGR1 has size (4,8) and the LGR2 has
+          size (4,4).
+
+       3. The grid contains one well called 'WELL1'; the well has the
+          following characteristics[*]:
+
+            a) It is perforated both in LGR1 and LGR2 in addition to
+               the global grid.
+           
+            b) It has two branches.
+
+          In the well_state instance this will be represented as:
+
+            i) There are three well_path instances corresponding to
+               the global grid and the two LGRs respectively.
+
+            ii) The well_path instances corresponding to the two LGRs
+                will have one branch only, whereas the well_path
+                corrseponding to the global grid will have two branches. 
+          
+           In pseudo json:
+
+ well_state =  {
+                  {well_path : GLOBAL
+                            {branch : 0 [ (0,2) , (0,1) , (1,1) , (2,1) ]},
+                            {branch : 1 [ (1,0) ] }
+                  },
+                  {well_path : LGR1
+                            {branch : 0 [(1,5),(1,4),(1,3),(1,2),(1,1),(2,1),(3,1)] }
+                  }
+                  {well_path : LGR2 : 
+                            {branch : 0 [(0,1),(1,1),(2,1)]}
+                  }
+               }
+                       
+                     
+ [*] Observe that wells in LGR is quite constrained in ECLIPSE; the
+     current libwell implementation handles the illustrated case - but
+     it might be too complex for ECLIPSE.
+
+
   Limitations
+  -----------
 
      Read-only: The well properties for ECLIPSE is specified through
        the SCHEDULE section of the ECLIPSE datafile. The information
@@ -59,12 +151,9 @@
        i.e. the code in libwell can unfortunately not be used for well
        modelling.
 
-     segmented wells: The segment information for multi segment wells
-       is completely ignored.  
+     segmented wells: The segment information is used to understand
+       the branch structure of the well - but nothing else.
 
-     lgr: Well information from lgr's is ignored; the code 'handles' a
-       restart file with lgr's - but only the properties from the
-       global grid are considered.  
 */
 
 /*
@@ -78,7 +167,7 @@
        - well_info_add_wells()       - ecl_file: One report step
        - well_info_add_UNRST_wells() - ecl_file: Many report steps
        - well_info_load_rstfile()    - Restart file name; single file or unified
-       
+
      There are more details about this in a comment section above the
      well_info_add_wells() function.
 
@@ -86,14 +175,14 @@
      different times; either through the indirect function
      well_info_get_ts() to get the full timeseries for one named well;
      or one of the functions:
-     
-      - well_info_get_state_from_time()   
+
+      - well_info_get_state_from_time()
       - well_info_get_state_from_report()
       - well_info_iget_state()
       - well_info_iiget_state()
 
   4. well_info_free() before you go home.
-      
+
 */
 
 
@@ -109,7 +198,7 @@ struct well_info_struct {
 
 /**
    The grid pointer is currently not used; but the intention is to use
-   it to resolve lgr names.  
+   it to resolve lgr names.
 */
 
 well_info_type * well_info_alloc( const ecl_grid_type * grid) {
@@ -137,14 +226,14 @@ static void well_info_add_new_ts( well_info_type * well_info , const char * well
 
 static void well_info_add_state( well_info_type * well_info , well_state_type * well_state) {
   const char * well_name = well_state_get_name( well_state );
-  if (!well_info_has_well( well_info , well_name)) 
+  if (!well_info_has_well( well_info , well_name))
     well_info_add_new_ts( well_info , well_name );
-  
+
   {
     well_ts_type * well_ts = well_info_get_ts( well_info , well_name );
     well_ts_add_well( well_ts , well_state );
   }
-}  
+}
 
 
 /**
@@ -152,14 +241,14 @@ static void well_info_add_state( well_info_type * well_info , well_state_type * 
 
    There are three different functions which can be used to add wells
    to the well_info structure:
-   
+
      - well_info_add_wells()
      - well_info_add_UNRST_wells()
      - well_info_load_rstfile()
-   
+
    The two first functions expect an open ecl_file instance as input;
    whereas the last funtion expects the name of a restart file as
-   input. 
+   input.
 
    If you need ecl_file access to the restart files for another reason
    it might be convenient to use one of the first functions; however
@@ -175,7 +264,7 @@ static void well_info_add_state( well_info_type * well_info , well_state_type * 
    The three different methods to add restart data can be
    interchganged, and also called repeatedly. All the relevant data is
    internalized in the well_xxx structures; and the restart files can
-   be discarded afterwards.  
+   be discarded afterwards.
 */
 
 
@@ -185,38 +274,41 @@ static void well_info_add_state( well_info_type * well_info , well_state_type * 
    information from the first block available in the file only. To
    load all the well information from a unified restart file it is
    easier to use the well_info_add_UNRST_wells() function; which works
-   by calling this function repeatedly.  
-*/
+   by calling this function repeatedly.
 
-void well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr , int grid_nr) {
-  ecl_intehead_type * header = ecl_intehead_alloc( ecl_file_iget_named_kw( rst_file , INTEHEAD_KW , grid_nr ));
-  {
-    int well_nr;
-    
-    for (well_nr = 0; well_nr < header->nwells; well_nr++) {
-      well_state_type * well_state = well_state_alloc( rst_file , header , report_nr , grid_nr , well_nr );
-      if (well_state != NULL)
-        well_info_add_state( well_info , well_state );
-    }
+   This function will go through all the wells by number and call the
+   well_state_alloc() function to create a well state object for each
+   well. The well_state_alloc() function will iterate through all the
+   grids and assign well properties corresponding to each of the
+   grids, the global grid special-cased to determine is consulted to
+   determine the number of wells.
+ */
+
+void well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr) {
+  ecl_intehead_type * global_header = ecl_intehead_alloc( ecl_file_iget_named_kw( rst_file , INTEHEAD_KW , 0 ));
+  for (int well_nr = 0; well_nr < global_header->nwells; well_nr++) {
+    well_state_type * well_state = well_state_alloc( rst_file , report_nr , well_nr );
+    if (well_state != NULL)
+      well_info_add_state( well_info , well_state );
   }
-  ecl_intehead_free( header );
+  ecl_intehead_free( global_header );
 }
 
 
-void well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst_file, int grid_nr) {
+void well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst_file) {
   {
     int num_blocks = ecl_file_get_num_named_kw( rst_file , SEQNUM_KW );
     for (int block_nr = 0; block_nr < num_blocks; block_nr++) {
       ecl_file_push_block( rst_file );      // <-------------------------------------------------------
       {                                                                                               //
-        ecl_file_subselect_block( rst_file , SEQNUM_KW , block_nr );                                  //  Ensure that the status 
-        {                                                                                             //  is not changed as a side 
+        ecl_file_subselect_block( rst_file , SEQNUM_KW , block_nr );                                  //  Ensure that the status
+        {                                                                                             //  is not changed as a side
           const ecl_kw_type * seqnum_kw = ecl_file_iget_named_kw( rst_file , SEQNUM_KW , 0);          //  effect.
-          int report_nr = ecl_kw_iget_int( seqnum_kw , 0 );                                           // 
-          well_info_add_wells( well_info , rst_file , report_nr , grid_nr);                           // 
+          int report_nr = ecl_kw_iget_int( seqnum_kw , 0 );                                           //
+          well_info_add_wells( well_info , rst_file , report_nr );                                    //
         }                                                                                             //
       }                                                                                               //
-      ecl_file_pop_block( rst_file );       // <-------------------------------------------------------           
+      ecl_file_pop_block( rst_file );       // <-------------------------------------------------------
     }
   }
 }
@@ -225,7 +317,7 @@ void well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst
 /**
    The @filename argument should be the name of a restart file; in
    unified or not-unified format - if that is not the case we will
-   have crash and burn.  
+   have crash and burn.
 */
 
 void well_info_load_rstfile( well_info_type * well_info , const char * filename) {
@@ -234,13 +326,12 @@ void well_info_load_rstfile( well_info_type * well_info , const char * filename)
   if ((file_type == ECL_RESTART_FILE) || (file_type == ECL_UNIFIED_RESTART_FILE))
   {
     ecl_file_type * ecl_file = ecl_file_open( filename );
-    int grid_nr = 0;
 
     if (file_type == ECL_RESTART_FILE)
-      well_info_add_wells( well_info , ecl_file , report_nr , grid_nr );
+      well_info_add_wells( well_info , ecl_file , report_nr );
     else
-      well_info_add_UNRST_wells( well_info , ecl_file , grid_nr );
-    
+      well_info_add_UNRST_wells( well_info , ecl_file );
+
     ecl_file_close( ecl_file );
   } else
     util_abort("%s: invalid file type:%s - must be a restart file\n",__func__ , filename);
