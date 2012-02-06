@@ -19,13 +19,6 @@ typedef void (analysis_updateA_ftype) (void * module_data ,
                                         matrix_type * D );
 
 
-  typedef void (analysis_get_PC_ftype) (void * module_data , 
-                                        const matrix_type * S , 
-                                        const matrix_type * dObs,
-                                        matrix_type * PC,
-                                        matrix_type * PC_obs);
-
-
   typedef void (analysis_initX_ftype)       (void * module_data , 
                                              matrix_type * X , 
                                              matrix_type * A , 
@@ -67,7 +60,6 @@ typedef struct {
   analysis_initX_ftype           * initX;
   analysis_init_update_ftype     * init_update;
   analysis_complete_update_ftype * complete_update;
-  analysis_get_PC_ftype          * get_PC;
 
   analysis_free_ftype            * freef;
   analysis_alloc_ftype           * alloc;

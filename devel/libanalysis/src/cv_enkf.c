@@ -661,6 +661,5 @@ analysis_table_type SYMBOL_TABLE = {
   .initX           = cv_enkf_initX , 
   .updateA         = NULL,
   .init_update     = cv_enkf_init_update , 
-  .complete_update = cv_enkf_complete_update,
-  .get_PC          = NULL
+  .complete_update = cv_enkf_complete_update
 };

@@ -65,7 +65,7 @@ typedef struct analysis_module_struct analysis_module_type;
                                matrix_type * S , 
                                matrix_type * R , 
                                matrix_type * dObs , 
-                             matrix_type * E , 
+                               matrix_type * E , 
                                matrix_type * D );
   
   void                   analysis_module_init_update( analysis_module_type * module , 
@@ -75,13 +75,6 @@ typedef struct analysis_module_struct analysis_module_type;
                                                       matrix_type * E , 
                                                       matrix_type * D );
   
-  bool                 analysis_module_get_PC( analysis_module_type * module , 
-                                               const matrix_type * S , 
-                                               const matrix_type * dObs , 
-                                               matrix_type * PC, 
-                                               matrix_type * PC_obs);
-                               
-
 
 const char           * analysis_module_get_lib_name( const analysis_module_type * module);
 bool                   analysis_module_internal( const analysis_module_type * module );

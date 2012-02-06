@@ -4,6 +4,15 @@
 #include <matrix_lapack.h>
 #include <matrix.h>
 
+
+void enkf_linalg_get_PC( const matrix_type * S0, 
+                         const matrix_type * dObs , 
+                         double truncation,
+                         int ncomp, 
+                         matrix_type * PC,
+                         matrix_type * PC_obs );
+
+
 void enkf_linalg_init_stdX( matrix_type * X , 
                             const matrix_type * S , 
                             const matrix_type * D , 

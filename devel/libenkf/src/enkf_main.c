@@ -83,6 +83,7 @@
 #include <rng_config.h>
 #include <analysis_module.h>
 #include <analysis_table.h>
+#include <enkf_linalg.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -897,6 +898,43 @@ static serialize_info_type * serialize_info_alloc( enkf_main_type * enkf_main , 
 }
 
 
+void enkf_main_get_PC(const enkf_main_type * enkf_main , 
+                      const matrix_type * S, 
+                      const matrix_type * dObs,
+                      const char * ministep_name , 
+                      int step1 , int step2 , 
+                      double truncation , 
+                      int ncomp , 
+                      matrix_type * PC , 
+                      matrix_type * PC_obs) {
+
+  enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
+  {
+    char * filename = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , ministep_name);
+    FILE * stream = util_mkdir_fopen(filename , "w");
+    {
+      const int num_PC   = matrix_get_rows( PC );
+      const int ens_size = matrix_get_columns( PC );
+      int ipc,iens;
+      
+      for (ipc = 0; ipc < num_PC; ipc++) 
+        fprintf(stream , "%10.6f " , matrix_iget( PC_obs , ipc , 0));
+      fprintf(stream , "\n");
+      
+      for (iens = 0; iens < ens_size; iens++) {
+        for (ipc = 0; ipc < num_PC; ipc++) 
+          fprintf(stream ,"%10.6f " , matrix_iget( PC , ipc, iens ));
+        fprintf(stream , "\n");
+      }
+    }
+    fclose( stream );
+    free( filename );
+  }
+
+}
+
+
+
 
 void enkf_main_module_update( enkf_main_type * enkf_main , 
                               hash_type * use_count,
@@ -940,32 +978,15 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , step2 , A , cpu_threads);
+    
+    // Store PC:
     if (analysis_config_get_store_PC( enkf_main->analysis_config )) {
-      matrix_type * PC = matrix_alloc(1,1);
+      double truncation = -1;
+      int ncomp         = ens_size - 1;
+      matrix_type * PC  = matrix_alloc(1,1);
       matrix_type * PC_obs = matrix_alloc(1,1);
       
-      if (analysis_module_get_PC( module , S , dObs , PC , PC_obs )) {
-        char * filename = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , local_ministep_get_name( ministep ));
-        FILE * stream = util_mkdir_fopen(filename , "w");
-        {
-          const int num_PC   = matrix_get_rows( PC );
-          const int ens_size = matrix_get_columns( PC );
-          int ipc,iens;
-
-          for (ipc = 0; ipc < num_PC; ipc++) 
-            fprintf(stream , "%10.6f " , matrix_iget( PC_obs , ipc , 0));
-          fprintf(stream , "\n");
-
-          for (iens = 0; iens < ens_size; iens++) {
-            for (ipc = 0; ipc < num_PC; ipc++) 
-              fprintf(stream ,"%10.6f " , matrix_iget( PC , ipc, iens ));
-            fprintf(stream , "\n");
-          }
-        }
-        
-        fclose( stream );
-        free( filename );
-      }
+      enkf_main_get_PC( enkf_main , S , dObs , local_ministep_get_name( ministep ) , step1 , step2 , truncation , ncomp , PC , PC_obs );
       
       matrix_free( PC );
       matrix_free( PC_obs );

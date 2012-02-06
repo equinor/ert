@@ -24,12 +24,14 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <well_conn.h>
 #include <well_branch.h>
+
   
   typedef struct          well_path_struct well_path_type;
   
-  well_path_type       *  well_path_alloc(const char * grid_name );
+  well_path_type       *  well_path_alloc(const char * grid_name , bool global_grid);
   void                    well_path_free( well_path_type * path );
   void                    well_path_add_conn( well_path_type * well_path , well_conn_type * conn);
   well_branch_type      * well_path_iget_branch( const well_path_type * well_path , int branch_nr);

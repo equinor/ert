@@ -43,7 +43,6 @@ struct analysis_module_struct {
   analysis_updateA_ftype         * updateA;
   analysis_init_update_ftype     * init_update;
   analysis_complete_update_ftype * complete_update;
-  analysis_get_PC_ftype          * get_PC;
 
   analysis_get_options_ftype     * get_options;
   analysis_set_int_ftype         * set_int;
@@ -72,7 +71,6 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
   module->module_data     = NULL;
   module->init_update     = NULL;
   module->complete_update = NULL;
-  module->get_PC          = NULL;
   module->user_name     = util_alloc_string_copy( user_name );
   module->symbol_table  = util_alloc_string_copy( symbol_table );
   module->lib_name      = util_alloc_string_copy( lib_name );
@@ -106,7 +104,6 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
   module->alloc             = table->alloc;
   module->freef             = table->freef;
   module->get_options       = table->get_options; 
-  module->get_PC            = table->get_PC;
   
   if (module->alloc != NULL)
     module->module_data = module->alloc( rng );
@@ -270,13 +267,6 @@ void analysis_module_complete_update( analysis_module_type * module ) {
 }
 
 
-bool analysis_module_get_PC( analysis_module_type * module , const matrix_type * S , const matrix_type * dObs , matrix_type * PC, matrix_type * PC_obs) {
-  if (module->get_PC != NULL) {
-    module->get_PC( module->module_data , S , dObs , PC, PC_obs);
-    return true;
-  } else
-    return false;
-}
 
 
 /*****************************************************************/

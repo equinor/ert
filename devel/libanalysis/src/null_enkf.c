@@ -78,7 +78,6 @@ analysis_table_type SYMBOL_TABLE = {
     .initX           = null_enkf_initX , 
     .updateA         = NULL,
     .init_update     = NULL,
-    .complete_update = NULL,
-    .get_PC          = NULL
+    .complete_update = NULL
 };
 

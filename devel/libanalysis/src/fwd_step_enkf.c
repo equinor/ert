@@ -228,8 +228,7 @@ analysis_table_type SYMBOL_TABLE = {
   .initX           = NULL , 
   .updateA         = fwd_step_enkf_updateA,
   .init_update     = NULL ,
-  .complete_update = NULL ,
-  .get_PC          = NULL 
+  .complete_update = NULL 
 };
 
 

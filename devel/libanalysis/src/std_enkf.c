@@ -184,71 +184,8 @@ void std_enkf_initX(void * module_data ,
 }
 
 
-void std_enkf_get_PC__( const matrix_type * S0, 
-                        const matrix_type * dObs , 
-                        double truncation,
-                        int ncomp, 
-                        matrix_type * PC,
-                        matrix_type * PC_obs ) {
-  
-  const int nrobs   = matrix_get_rows( S0 );
-  const int nrens   = matrix_get_columns( S0 );
-  const int nrmin   = util_int_min( nrobs , nrens );
-
-  matrix_type * U0  = matrix_alloc( nrobs , nrens );
-  matrix_type * S   = matrix_alloc_copy( S0 );
-  double * inv_sig0 = util_malloc( nrmin * sizeof * inv_sig0 , __func__);
-  
-  matrix_subtract_row_mean( S );
-  {
-    matrix_type * S_mean = matrix_alloc( nrobs , 1 );
-    int num_PC = enkf_linalg_svdS(S , truncation , ncomp, DGESVD_NONE , inv_sig0 , U0 , NULL); 
-    
-    matrix_assign( S , S0);  // The svd routine will overwrite S - we therefor must pick it up again from S0.
-    matrix_subtract_and_store_row_mean( S , S_mean);
-
-    /* Multiply with inverted singular values. */
-    matrix_resize( U0 , nrobs , num_PC , true);
-    for (int i=0; i < num_PC; i++)
-      matrix_imul_col( U0 , i , inv_sig0[i] );
-
-    /* The simulated components / projections */
-    {
-      matrix_resize( PC , num_PC , nrens , false );
-      matrix_dgemm( PC , U0 , S , true , false , 1.0 , 0.0 );
-    }
-
-    
-    /* The observer projections. */
-    {
-      matrix_scale( S_mean , -1.0);
-      matrix_inplace_add( S_mean , dObs );
-      matrix_resize( PC_obs , num_PC , 1 , false );
-      matrix_dgemm( PC_obs , U0 , S_mean , true , false , 1.0 , 0.0 );
-    }
 
 
-    matrix_free( S_mean );
-  }
-  free( inv_sig0 );
-  matrix_free( S );
-  matrix_free( U0 );
-}
-
-
-void std_enkf_get_PC( void * module_data, 
-                      const matrix_type * S0 , 
-                      const matrix_type * dObs , 
-                      matrix_type * PC, 
-                      matrix_type * PC_obs) {
-
-  std_enkf_data_type * data = std_enkf_data_safe_cast( module_data );
-  {
-    int ncomp         = data->subspace_dimension;
-    double truncation = data->truncation;
-    std_enkf_get_PC__(S0 , dObs , truncation , ncomp , PC , PC_obs);
-  }
-}
 
 
 
@@ -317,6 +254,5 @@ analysis_table_type SYMBOL_TABLE = {
     .updateA         = NULL,
     .init_update     = NULL,
     .complete_update = NULL,
-    .get_PC          = std_enkf_get_PC , 
 };
 
