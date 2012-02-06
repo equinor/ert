@@ -947,13 +947,20 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
       if (analysis_module_get_PC( module , S , dObs , PC , PC_obs )) {
         char * filename = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , local_ministep_get_name( ministep ));
         FILE * stream = util_mkdir_fopen(filename , "w");
+        {
+          const int num_PC   = matrix_get_rows( PC );
+          const int ens_size = matrix_get_columns( PC );
+          int ipc,iens;
 
-        // Transposed on output
-        for (int row = 0; row < matrix_get_columns( PC ); row++) {
-          fprintf(stream , "%10.6f " , matrix_iget( PC_obs , 0 , row));
-          for (int col = 0; col < matrix_get_rows( PC ); col++) 
-            fprintf(stream ,"%10.6f " , matrix_iget( PC , col , row ));
+          for (ipc = 0; ipc < num_PC; ipc++) 
+            fprintf(stream , "%10.6f " , matrix_iget( PC_obs , ipc , 0));
           fprintf(stream , "\n");
+
+          for (iens = 0; iens < ens_size; iens++) {
+            for (ipc = 0; ipc < num_PC; ipc++) 
+              fprintf(stream ,"%10.6f " , matrix_iget( PC , ipc, iens ));
+            fprintf(stream , "\n");
+          }
         }
         
         fclose( stream );
