@@ -130,6 +130,7 @@ stringlist_type * sched_util_alloc_line_tokens( const stringlist_type * tokens ,
   /** First part - identify the right start/end of the token list */
   stringlist_type * line_tokens = NULL;
   int token_index  = *__token_index;
+  int token_length = stringlist_get_size( tokens );
   int line_start;
   int line_end;
   bool at_eokw = false;
@@ -142,7 +143,13 @@ stringlist_type * sched_util_alloc_line_tokens( const stringlist_type * tokens ,
         current_token = stringlist_iget( tokens , token_index );
         if (strcmp( current_token , "/" ) == 0)
           at_eol = true;
+        
         token_index++;
+        
+        // The schedule file is not correctly terminated with a "/".
+        if (token_index == token_length) 
+          at_eol = true;
+
       } while (!at_eol);
     }
     line_end = token_index;

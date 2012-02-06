@@ -7,15 +7,6 @@ add_library( rms_shared  SHARED ${source_files} )
 set_target_properties( rms_static PROPERTIES OUTPUT_NAME rms )
 set_target_properties( rms_shared PROPERTIES OUTPUT_NAME rms )
 
-target_link_libraries( rms_static ${util_static} ${geometry_static} )
-target_link_libraries( rms_shared ${util_shared} ${geometry_shared})
-
-if (OPENMP)
-   target_link_libraries( rms_static gomp )
-   target_link_libraries( rms_shared gomp )
-endif()
-
-
 #-----------------------------------------------------------------
 if (RMS_INSTALL_PREFIX)
    install(TARGETS rms_static rms_shared DESTINATION ${INSTALL_ROOT}/${RMS_INSTALL_PREFIX}/lib)

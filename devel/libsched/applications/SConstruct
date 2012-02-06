@@ -1,7 +1,7 @@
 import os
 import os.path
 import sys
-sys.path += ["../../build"]
+sys.path += ["../../scons-config"]
 import global_config
 from   global_config import LIBUTIL
 from   global_config import LIBECL

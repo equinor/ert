@@ -13,8 +13,8 @@ add_library( sched_shared  SHARED ${source_files} )
 set_target_properties( sched_static PROPERTIES OUTPUT_NAME sched )
 set_target_properties( sched_shared PROPERTIES OUTPUT_NAME sched )
 
-target_link_libraries( sched_static ${util_static} ${ecl_static} )
-target_link_libraries( sched_shared ${util_shared} ${ecl_shared} )
+target_link_libraries( sched_static )
+target_link_libraries( sched_shared )
 
 #-----------------------------------------------------------------
 if (SCHED_INSTALL_PREFIX)
