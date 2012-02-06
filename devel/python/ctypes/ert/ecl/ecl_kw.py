@@ -200,7 +200,7 @@ class EclKW(object):
 
                  pvtnum_kw = EclKW.read_grdecl( fileH , 'PVTNUM' )
       
-             Observe that (currently) no type conversions take place
+             Observe that (currently) no case conversions take place
              when checking the 'int_kw_set'. The current built in set
              is accesible through the int_kw property.
 

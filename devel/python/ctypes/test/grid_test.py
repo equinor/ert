@@ -36,10 +36,10 @@ def load_egrid( egrid_file ):
 
 def load_grdecl( grdecl_file ):
     fileH = open( grdecl_file , "r")
-    specgrid = EclKW.grdecl_load( fileH , "SPECGRID" , ecl_type = ecl.ECL_INT_TYPE )
-    zcorn    = EclKW.grdecl_load( fileH , "ZCORN" )
-    coord    = EclKW.grdecl_load( fileH , "COORD" )
-    actnum   = EclKW.grdecl_load( fileH , "ACTNUM" , ecl_type = ecl.ECL_INT_TYPE )
+    specgrid = EclKW.read_grdecl( fileH , "SPECGRID" , ecl_type = ecl.ECL_INT_TYPE )
+    zcorn    = EclKW.read_grdecl( fileH , "ZCORN" )
+    coord    = EclKW.read_grdecl( fileH , "COORD" )
+    actnum   = EclKW.read_grdecl( fileH , "ACTNUM" , ecl_type = ecl.ECL_INT_TYPE )
 
     grid = ecl.EclGrid.create( specgrid , zcorn , coord , actnum )
     return grid

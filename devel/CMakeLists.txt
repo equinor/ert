@@ -133,12 +133,22 @@ set( libecl_src_path      ${CMAKE_SOURCE_DIR}/libecl/src )
 set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
 set( libwell_src_path     ${CMAKE_SOURCE_DIR}/libwell/src )
 
+
 add_subdirectory( libutil )
 add_subdirectory( libgeometry )
 add_subdirectory( libecl )
 add_subdirectory( libwell )
 
-set( BUILD_ERT OFF )
+add_dependencies( geometry_shared util_shared )
+add_dependencies( ecl_shared      util_shared geometry_shared )
+add_dependencies( well_shared     ecl_shared  util_shared geometry_shared )
+
+add_dependencies( geometry_static util_static )
+add_dependencies( ecl_static      util_static geometry_static )
+add_dependencies( well_static     ecl_static  util_static geometry_static )
+
+
+set( BUILD_ERT OFF)
 
 #-----------------------------------------------------------------
 if (BUILD_ERT)
@@ -147,21 +157,34 @@ if (BUILD_ERT)
    set( librms_src_path       ${CMAKE_SOURCE_DIR}/librms/src )
    set( libanalysis_src_path  ${CMAKE_SOURCE_DIR}/libanalysis/src )
    set( libjob_queue_src_path ${CMAKE_SOURCE_DIR}/libjob_queue/src )
-   set( libplot_src_path ${CMAKE_SOURCE_DIR}/libplot/src )
+   set( libplot_src_path      ${CMAKE_SOURCE_DIR}/libplot/src )
+   set( libenkf_src_path      ${CMAKE_SOURCE_DIR}/libenkf/src )
 
+   add_subdirectory( libconfig )
    add_subdirectory( libanalysis )
    add_subdirectory( librms )
    add_subdirectory( libsched )
-   add_subdirectory( libconfig )
    add_subdirectory( libjob_queue )
    add_subdirectory( libplot )
-   add_subdirectory( libenkf )
+   add_subdirectory( libenkf)
 
+   add_dependencies( config_shared util_shared )
+   #add_dependencies( analysis_shared util_shared )
+   add_dependencies( rms_shared geometry_shared util_shared )
+   add_dependencies( sched_shared util_shared ecl_shared )
+   add_dependencies( job_queue_shared config_shared util )
+   add_dependencies( plot_shared util_shared )
+   add_dependencies( enkf_shared plot_shared ecl_shared util_shared config_shared sched_shared rms_shared analysis job_queue_shared )
+   add_dependencies( ert_shared enkf_shared plot_shared )
 
-   add_dependencies( geometry_static util_static )
-   add_dependencies( ecl_static geometry_static )
-   add_dependencies( rms_static ecl_static )
    add_dependencies( config_static util_static )
-   add_dependencies( sched_static ecl_static )
-   add_dependencies( job_queue_static util_static config_static )
+   #add_dependencies( analysis_static util_static )
+   add_dependencies( rms_static geometry_static util_static )
+   add_dependencies( sched_static util_static ecl_static )
+   add_dependencies( job_queue_static config_static util )
+   add_dependencies( plot_static util_static )
+   add_dependencies( enkf_static plot_static ecl_static util_static config_static sched_static rms_static analysis job_queue_static )
+   add_dependencies( ert enkf_static plot_static )
+
+
 endif()
