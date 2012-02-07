@@ -78,6 +78,8 @@ void                   analysis_config_set_store_PC( analysis_config_type * conf
 bool                   analysis_config_get_store_PC( const analysis_config_type * config );
 void                   analysis_config_set_PC_filename( analysis_config_type * config , const char * filename );
 const char           * analysis_config_get_PC_filename( const analysis_config_type * config );
+void                   analysis_config_set_PC_path( analysis_config_type * config , const char * path );
+const char           * analysis_config_get_PC_path( const analysis_config_type * config );
 
 
 

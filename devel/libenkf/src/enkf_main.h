@@ -48,6 +48,7 @@ extern "C" {
 #include <bool_vector.h>
 #include <ert_template.h>
 #include <int_vector.h>
+#include <matrix.h>
 
 /*****************************************************************/
 
@@ -112,6 +113,7 @@ extern "C" {
   
   ert_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
   enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );
+  enkf_state_type            ** enkf_main_get_ensemble( enkf_main_type * enkf_main);
   
   const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
   const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
@@ -195,6 +197,17 @@ extern "C" {
   void                        enkf_main_fprintf_config( const enkf_main_type * enkf_main );
   int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 );
   
+  void enkf_main_get_PC( const enkf_main_type * enkf_main , 
+                         const matrix_type * S, 
+                         const matrix_type * dObs,
+                         const char * obsset_name , 
+                         int step1 , int step2 , 
+                         double truncation , 
+                         int ncomp , 
+                         matrix_type * PC , 
+                         matrix_type * PC_obs);
+  
+
 UTIL_SAFE_CAST_HEADER(enkf_main);
 
 #ifdef __cplusplus

@@ -69,7 +69,10 @@ bool enkf_config_node_has_node( const enkf_config_node_type * node , enkf_fs_typ
 
 
 bool enkf_config_node_has_vector( const enkf_config_node_type * node , enkf_fs_type * fs , int iens , state_enum state) {
-  return enkf_fs_has_vector( fs , node->key , node->var_type , iens , state );
+  printf("Looking for: key:%s   iens:%d \n",node->key , iens);
+  bool has_vector = enkf_fs_has_vector( fs , node->key , node->var_type , iens , state );
+  printf("has_vector:%d  key:%s   iens:%d \n",has_vector , node->key , iens);
+  return has_vector;
 }
 
 

@@ -42,6 +42,7 @@ struct analysis_config_struct {
   double                  std_cutoff;
 
   char                  * PC_filename;
+  char                  * PC_path;
   bool                    store_PC;
   bool                    update_results;              /* Should result values like e.g. WWCT be updated? */
   bool                    single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
@@ -129,6 +130,15 @@ void analysis_config_set_PC_filename( analysis_config_type * config , const char
 
 const char * analysis_config_get_PC_filename( const analysis_config_type * config ) {
   return config->PC_filename;
+}
+
+
+void analysis_config_set_PC_path( analysis_config_type * config , const char * path ) {
+  config->PC_path = util_realloc_string_copy( config->PC_path , path );
+}
+
+const char * analysis_config_get_PC_path( const analysis_config_type * config ) {
+  return config->PC_path;
 }
 
 void analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff ) {
@@ -369,6 +379,7 @@ analysis_config_type * analysis_config_alloc_default( ) {
   
   config->log_path                  = NULL;
   config->PC_filename               = NULL;
+  config->PC_path                   = NULL;
 
   analysis_config_set_alpha( config                    , DEFAULT_ENKF_ALPHA );
   analysis_config_set_std_cutoff( config               , DEFAULT_ENKF_STD_CUTOFF );
@@ -381,6 +392,7 @@ analysis_config_type * analysis_config_alloc_default( ) {
 
   analysis_config_set_store_PC( config                 , DEFAULT_STORE_PC );
   analysis_config_set_PC_filename( config              , DEFAULT_PC_FILENAME );
+  analysis_config_set_PC_path( config                  , DEFAULT_PC_PATH );
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();

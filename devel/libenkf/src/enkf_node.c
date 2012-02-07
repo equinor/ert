@@ -499,7 +499,6 @@ bool enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , bool force
 */
 
 bool enkf_node_try_load(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id) {
-
   if (node_id.state == BOTH) {
     node_id_type local_id = node_id;
     local_id.state = ANALYZED;
@@ -645,18 +644,18 @@ bool enkf_node_has_data( enkf_node_type * enkf_node , enkf_fs_type * fs , node_i
       int report_step  = node_id.report_step;
       int iens         = node_id.iens;
       state_enum state = node_id.state;
-      
-      if (!(enkf_node->__load_state & state))
+
+      if ((node_id.iens != enkf_node->__node_id.iens) || ((enkf_node->__load_state & state) == 0)) {
         // Try to load the vector.
         if (enkf_config_node_has_vector( enkf_node->config , fs , iens , state ))
           enkf_node_load_vector( enkf_node , fs , iens , state );
-
-      if (enkf_node->__load_state & state)
+      }
+      
+      if ((node_id.iens == enkf_node->__node_id.iens) && (enkf_node->__load_state & state)) 
         // The vector is loaded. Check if we have the report_step/state asked for:
         return enkf_node->has_data( enkf_node->data , report_step , state );
       else
-        return false;
-      
+        return false; 
     }
   } else 
     return enkf_config_node_has_node( enkf_node->config , fs , node_id );

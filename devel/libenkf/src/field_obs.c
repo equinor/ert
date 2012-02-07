@@ -53,7 +53,7 @@ typedef struct  {
 struct field_obs_struct {
   UTIL_TYPE_ID_DECLARATION;
   char   * field_name;                    /** The state keyword for the observed field - PRESSURE / SWAT / PORO /...   */
-  char   * obs_key;               /** A user provided label for the observation.      */
+  char   * obs_key;                       /** A user provided label for the observation.      */
   int      size;                          /** The number of field cells observed.             */
   int    * index_list;                    /** The list indices which are observed - (active indices). */
   int    * i;                             /** The vector of indices i,j,k are equivalent to those in index_list - i,j,k are only retained for RFT plotting. */

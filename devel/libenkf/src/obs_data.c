@@ -585,7 +585,7 @@ void obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_typ
     for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
       matrix_imul( dObs , iobs_active , 0 , scale_factor[iobs_active]);
   
-  {
+  if (R != NULL) {
     /* Scale the error covariance matrix*/
     for (int i=0; i < nrobs_active; i++)
       for (int j=0; j < nrobs_active; j++)

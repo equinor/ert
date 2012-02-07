@@ -126,6 +126,38 @@ static void __plot_show(plot_type * plot , const plot_config_type * plot_config 
 
 
 
+void enkf_tui_plot_PC( enkf_main_type * enkf_main , const char * plot_name , const matrix_type * PC , const matrix_type * PC_obs) {
+  plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
+  char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , enkf_main_get_current_fs( enkf_main ), plot_name );
+  plot_type * plot = __plot_alloc(plot_config , "PC number", /* y akse */ "???" , "Principle components" , plot_file);
+
+
+  {
+    const int num_PC   = matrix_get_rows( PC );
+    const int ens_size = matrix_get_columns( PC );
+    int ipc, iens;
+
+    {
+      plot_dataset_type * sim_data = plot_alloc_new_dataset( plot , "simulated" , PLOT_XY );
+      plot_dataset_set_style( sim_data , POINTS );
+      plot_dataset_set_point_color( sim_data , BLUE);
+      for (ipc = 0; ipc < num_PC; ipc++) 
+        for (iens =0; iens < ens_size; iens++)
+          plot_dataset_append_point_xy( sim_data , (ipc + 1) , matrix_iget( PC , ipc , iens ));
+    }
+
+    {
+      plot_dataset_type * obs_data = plot_alloc_new_dataset( plot , "observation" , PLOT_XY );
+      plot_dataset_set_style( obs_data , POINTS );
+      plot_dataset_set_point_color( obs_data , RED);
+      for (ipc = 0; ipc < num_PC; ipc++) 
+        plot_dataset_append_point_xy( obs_data , (ipc + 1) , matrix_iget( PC_obs , ipc , 0 ));
+    }
+  }
+  __plot_show( plot , plot_config , plot_file ); /* Frees the plot - logical ehhh. */
+  free( plot_file );
+}
+
 
 
 
@@ -449,11 +481,11 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       double_vector_free( refcase_value );
       double_vector_free( refcase_time );
     }
-    else {
+    else 
       printf("\nCannot find refcase data file: \n%s\n", data_file);
-    }
   }
   double_vector_free( x );    
+  
   plot_set_bottom_padding( plot , 0.05);
   plot_set_top_padding( plot    , 0.05);
   plot_set_left_padding( plot   , 0.05);

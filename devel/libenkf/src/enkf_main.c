@@ -898,20 +898,21 @@ static serialize_info_type * serialize_info_alloc( enkf_main_type * enkf_main , 
 }
 
 
-void enkf_main_get_PC(const enkf_main_type * enkf_main , 
-                      const matrix_type * S, 
-                      const matrix_type * dObs,
-                      const char * ministep_name , 
-                      int step1 , int step2 , 
-                      double truncation , 
-                      int ncomp , 
-                      matrix_type * PC , 
-                      matrix_type * PC_obs) {
+void enkf_main_get_PC( const enkf_main_type * enkf_main , 
+                       const matrix_type * S, 
+                       const matrix_type * dObs,
+                       const char * obsset_name , 
+                       int step1 , int step2 , 
+                       double truncation , 
+                       int ncomp , 
+                       matrix_type * PC , 
+                       matrix_type * PC_obs) {
 
   enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
   {
-    char * filename = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , ministep_name);
-    FILE * stream = util_mkdir_fopen(filename , "w");
+    char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsset_name);
+    char * full_path = util_alloc_filename( analysis_config_get_PC_path( enkf_main->analysis_config) , filename , NULL );
+    FILE * stream   = util_mkdir_fopen(full_path , "w");
     {
       const int num_PC   = matrix_get_rows( PC );
       const int ens_size = matrix_get_columns( PC );
@@ -929,6 +930,7 @@ void enkf_main_get_PC(const enkf_main_type * enkf_main ,
     }
     fclose( stream );
     free( filename );
+    free( full_path );
   }
 
 }
@@ -1003,7 +1005,6 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
         int * row_offset  = util_malloc( local_dataset_get_size( dataset ) * sizeof * row_offset  , __func__);
         
         enkf_main_serialize_dataset( enkf_main , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
-        printf("We are here!\n");
         if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
           analysis_module_updateA( module , localA , S , R , dObs , E , D );
         else {
@@ -1087,7 +1088,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
 
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
       local_ministep_type * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
-      local_obsset_type   * obsset  = local_ministep_get_obsset( ministep );
+      local_obsset_type   * obsset   = local_ministep_get_obsset( ministep );
 
       obs_data_reset( obs_data );
       meas_data_reset( meas_forecast );

@@ -597,18 +597,14 @@ void enkf_fs_fread_vector(enkf_fs_type * enkf_fs , buffer_type * buffer ,
 
 
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int report_step , int iens , state_enum state) {
-  {
-    fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , node_key));
-    return driver->has_node(driver , node_key , report_step , iens ); 
-  }
+  fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , node_key));
+  return driver->has_node(driver , node_key , report_step , iens ); 
 }
 
 
 bool enkf_fs_has_vector(enkf_fs_type * enkf_fs , const char * node_key , enkf_var_type var_type , int iens , state_enum state) {
-  {
-    fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , node_key));
-    return driver->has_vector(driver , node_key , iens ); 
-  }
+  fs_driver_type * driver = fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , node_key));
+  return driver->has_vector(driver , node_key , iens ); 
 }
 
 void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const char * node_key, enkf_var_type var_type,  

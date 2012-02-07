@@ -219,7 +219,7 @@ void enkf_tui_util_scanf_report_steps(int last_report , int prompt_len , int * _
 
     step1 = util_int_min(step1 , last_report);
     step2 = util_int_min(step2 , last_report);
-    if (step1 >= step2) 
+    if (step1 > step2) 
       util_exit("%s: ohh come on - must have a finite interval forward in time - no plots for you.\n",__func__);
     *__step1 = step1;
     *__step2 = step2;
