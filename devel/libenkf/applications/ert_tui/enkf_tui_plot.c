@@ -129,7 +129,7 @@ static void __plot_show(plot_type * plot , const plot_config_type * plot_config 
 void enkf_tui_plot_PC( enkf_main_type * enkf_main , const char * plot_name , const matrix_type * PC , const matrix_type * PC_obs) {
   plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
   char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , enkf_main_get_current_fs( enkf_main ), plot_name );
-  plot_type * plot = __plot_alloc(plot_config , "PC number", /* y akse */ "???" , "Principle components" , plot_file);
+  plot_type * plot = __plot_alloc(plot_config , "PC number", /* y akse */ "Standardized PC value " , "Principle components" , plot_file);
 
 
   {
