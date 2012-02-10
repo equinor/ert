@@ -123,7 +123,7 @@ void enkf_tui_QC_plot_PC( void * arg ) {
   double truncation;
   
   state_enum state = FORECAST;
-  local_updatestep_type * update_step;
+  const local_updatestep_type * update_step;
   local_obsset_type     * obsset;
   
 
@@ -154,8 +154,6 @@ void enkf_tui_QC_plot_PC( void * arg ) {
     free( input );
   }
   
-
-
   update_step = local_config_iget_updatestep( local_config , step2 );
   {
     int obsset_nr = 0;
