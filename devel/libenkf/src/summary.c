@@ -56,7 +56,7 @@ double_vector_type * SELECT_VECTOR(const summary_type * summary , state_enum sta
   else if (state == ANALYZED)
     return summary->analyzed_vector;
   else {
-    util_abort("%s: invalid state value:%d \n",state);
+    util_abort("%s: invalid state value:%d \n",__func__ , state);
     return NULL;
   }
 }

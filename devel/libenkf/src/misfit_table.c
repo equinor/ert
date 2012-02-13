@@ -277,9 +277,11 @@ static void  __2d_free(double ** d , int rows) {
 
 
 static void misfit_table_update( misfit_table_type * misfit_table , const ensemble_config_type * config , enkf_fs_type * fs ) {
+  state_enum cmp_state      = FORECAST;
   msg_type * msg            = msg_alloc("Evaluating misfit for observation: " , false);
   const int ens_size        = vector_get_size( misfit_table->ensemble );
   double ** chi2_work       = __2d_malloc( misfit_table->history_length + 1 , ens_size );
+
   hash_iter_type * obs_iter = enkf_obs_alloc_iter( misfit_table->enkf_obs );
   const char * obs_key      = hash_iter_get_next_key( obs_iter );
 
@@ -288,9 +290,8 @@ static void misfit_table_update( misfit_table_type * misfit_table , const ensemb
     obs_vector_type * obs_vector = enkf_obs_get_vector( misfit_table->enkf_obs , obs_key );
     
     msg_update( msg , obs_key );
-    obs_vector_ensemble_chi2( obs_vector , fs , 0 , misfit_table->history_length + 1 , 0 , ens_size , BOTH , chi2_work);
-    
-    
+
+    obs_vector_ensemble_chi2( obs_vector , fs , 0 , misfit_table->history_length, 0 , ens_size , cmp_state , chi2_work);
     /** 
         Internalizing the results from the chi2_work table into the misfit structure.
     */
@@ -298,7 +299,6 @@ static void misfit_table_update( misfit_table_type * misfit_table , const ensemb
       misfit_node_type * node = vector_iget( misfit_table->ensemble , iens);
       misfit_node_update( node , obs_key , misfit_table->history_length , iens , (const double **) chi2_work);
     }
-
     obs_key = hash_iter_get_next_key( obs_iter );
   }
   

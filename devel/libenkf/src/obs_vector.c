@@ -142,7 +142,7 @@ obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key
   vector->num_active         = 0;
   vector->nodes              = vector_alloc_new();
   vector->obs_time           = obs_time;
-  obs_vector_resize(vector , num_reports); /* +1 here ?? Ohh  - these fucking +/- problems. */
+  obs_vector_resize(vector , num_reports + 1); /* +1 here ?? Ohh  - these fucking +/- problems. */
   
   return vector;
 }
@@ -708,18 +708,18 @@ void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type 
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
   node_id_type node_id;
   node_id.state = load_state;
-  printf("** Warning: desperate fix \n");
-  for (step = step1; step < (step2 - 1); step++) {
+  for (step = step1; step <= step2; step++) {
     int iens;
     node_id.report_step = step;
     if (vector_iget( obs_vector->nodes , step) != NULL) {
       for (iens = iens1; iens < iens2; iens++) {
         node_id.iens = iens;
-
+        
         if (enkf_node_try_load( enkf_node , fs , node_id)) 
           chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node , node_id);
         else
           chi2[step][iens] = 0;
+        
       }
     } else {
       for (iens = iens1; iens < iens2; iens++) 
