@@ -52,7 +52,7 @@ struct well_state_struct {
   well_conn_type * wellhead;
   well_type_enum   type;
 
-  vector_type    * index_lgr_path;   // Contains the various well_path instances indexed by grid_nr - global has grid_nr == 0.
+  vector_type    * index_lgr_path;   // Contains the various   well_path instances indexed by grid_nr - global has grid_nr == 0.
   hash_type      * name_lgr_path;    // Contains the different well_path instances indexed by lgr_name  
 };
 
@@ -69,12 +69,17 @@ static well_state_type * well_state_alloc_empty() {
   return well_state;
 }
 
+/*
+  This function assumes that the ecl_file state has been restricted
+  to one LGR block with the ecl_file_subselect_block() function.
+*/
+
 well_path_type * well_state_add_path( well_state_type * well_state , const ecl_file_type * ecl_file , int grid_nr) {
   well_path_type * well_path;
   char * grid_name = util_alloc_string_copy( GLOBAL_GRID_NAME );
   if (grid_nr > 0) {
     const ecl_kw_type * lgr_kw = ecl_file_iget_named_kw( ecl_file , LGR_KW , 0 );
-    grid_name = util_alloc_strip_copy(ecl_kw_iget_ptr( lgr_kw , grid_nr -1 ));  
+    grid_name = util_alloc_strip_copy(ecl_kw_iget_ptr( lgr_kw , 0));  
   }
   well_path = well_path_alloc( grid_name , (grid_nr == 0) ? true : false);
     
@@ -85,13 +90,15 @@ well_path_type * well_state_add_path( well_state_type * well_state , const ecl_f
   return well_path;
 }
 
-
-
+/*
+  This function assumes that the ecl_file state has been restricted
+  to one LGR block with the ecl_file_subselect_block() function.
+*/
 
 static void well_state_add_connections( well_state_type * well_state ,  const ecl_file_type * ecl_file , int grid_nr, int well_nr ) {
-  ecl_intehead_type * header   = ecl_intehead_alloc( ecl_file_iget_named_kw( ecl_file , INTEHEAD_KW , grid_nr ));
-  const ecl_kw_type * icon_kw  = ecl_file_iget_named_kw( ecl_file , ICON_KW   , grid_nr);
-  const ecl_kw_type * iwel_kw  = ecl_file_iget_named_kw( ecl_file , IWEL_KW   , grid_nr);
+  ecl_intehead_type * header   = ecl_intehead_alloc( ecl_file_iget_named_kw( ecl_file , INTEHEAD_KW , 0 ));
+  const ecl_kw_type * icon_kw  = ecl_file_iget_named_kw( ecl_file , ICON_KW   , 0);
+  const ecl_kw_type * iwel_kw  = ecl_file_iget_named_kw( ecl_file , IWEL_KW   , 0);
   const int iwel_offset        = header->niwelz * well_nr;
   int num_connections          = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_CONNECTIONS_ITEM );
   ecl_kw_type * iseg_kw        = NULL;
@@ -103,49 +110,57 @@ static void well_state_add_connections( well_state_type * well_state ,  const ec
     MSW = true;
   
   if (MSW)
-    iseg_kw = ecl_file_iget_named_kw( ecl_file , ISEG_KW , grid_nr );
+    iseg_kw = ecl_file_iget_named_kw( ecl_file , ISEG_KW , 0 );
   
   for (int conn_nr = 0; conn_nr < num_connections; conn_nr++) {
     well_conn_type * conn =  well_conn_alloc( icon_kw , iseg_kw , header , well_nr , seg_well_nr , conn_nr );
-    well_path_add_conn( path , conn );
+    if (conn != NULL)
+      well_path_add_conn( path , conn );
   }
   ecl_intehead_free( header );
 }
 
+/*
+  This function assumes that the ecl_file state has been restricted
+  to one LGR block with the ecl_file_subselect_block() function.
 
-static int well_state_get_lgr_well_nr( const well_state_type * well_state , const ecl_file_type * ecl_file , int grid_nr ) {
-  printf("Looking for well_nr  well:%s  grid:%d \n",well_state->name , grid_nr);
-  const ecl_kw_type * zwel_kw = ecl_file_iget_named_kw( ecl_file , ZWEL_KW   , grid_nr);
-  int num_lgr_wells = ecl_kw_get_size( zwel_kw );
-  int well_nr = 0;
-  while (true) {
-    bool found = false;
+  Return value: -1 means that the well is not found in this LGR at
+  all.  
+*/
 
-    {
-      char * lgr_well_name = util_alloc_strip_copy( ecl_kw_iget_ptr( zwel_kw , well_nr) );
-      if ( strcmp( well_state->name , lgr_well_name) == 0)
-        found = true;
-      else
-        well_nr++;
+static int well_state_get_lgr_well_nr( const well_state_type * well_state , const ecl_file_type * ecl_file) {
+  int well_nr = -1;
+  
+  if (ecl_file_has_kw( ecl_file , ZWEL_KW)) {
+    const ecl_kw_type * zwel_kw = ecl_file_iget_named_kw( ecl_file , ZWEL_KW   , 0);
+    int num_wells = ecl_kw_get_size( zwel_kw );
+    well_nr = 0;
+    while (true) {
+      bool found = false;
       
-      free( lgr_well_name );
-    }
-    if (found)
-      break;
-    else if (well_nr == num_lgr_wells) {
-      // The well is not in this LGR at all.
-      well_nr = -1;
-      break;
+      {
+        char * lgr_well_name = util_alloc_strip_copy( ecl_kw_iget_ptr( zwel_kw , well_nr) );
+        if ( strcmp( well_state->name , lgr_well_name) == 0)
+          found = true;
+        else
+          well_nr++;
+        
+        free( lgr_well_name );
+      }
+      if (found)
+        break;
+      else if (well_nr == num_wells) {
+        // The well is not in this LGR at all.
+        well_nr = -1;
+        break;
+      }
     }
   }
   return well_nr;
 }
 
-// This is misleading because a grid can only be completed in one grid, i.e.
-// either the global grid or one of the LGRs. The only exception to this is
-// when several LGRs are amalgameted to one 'super' lgr.
 
-well_state_type * well_state_alloc( const ecl_file_type * ecl_file , int report_nr ,  int global_well_nr) {
+well_state_type * well_state_alloc( ecl_file_type * ecl_file , int report_nr ,  int global_well_nr) {
   well_state_type * well_state = NULL;
   ecl_intehead_type * global_header  = ecl_intehead_alloc( ecl_file_iget_named_kw( ecl_file , INTEHEAD_KW , 0 ));
   const ecl_kw_type * global_iwel_kw = ecl_file_iget_named_kw( ecl_file , IWEL_KW   , 0);
@@ -169,7 +184,7 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , int report_
       else
         well_state->open = false;
     }
-
+    
     {
       int int_type = ecl_kw_iget_int( global_iwel_kw , iwel_offset + IWEL_TYPE_ITEM);
       switch (int_type) {
@@ -196,6 +211,9 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , int report_
       }
     }
     
+    
+    // Add global connections:
+    well_state_add_connections( well_state , ecl_file , 0 , global_well_nr );
 
     
     // Go through all the LGRs and add connections.
@@ -208,21 +226,21 @@ well_state_type * well_state_alloc( const ecl_file_type * ecl_file , int report_
       structure.
     */
     {
-      int num_grid = ecl_file_get_num_named_kw( ecl_file , INTEHEAD_KW );
-      for (int grid_nr = 0; grid_nr < num_grid; grid_nr++) {
-        int well_nr;
-        printf("grid:%d \n",grid_nr);
-        if (grid_nr == 0)
-          well_nr = global_well_nr;
-        else
-          well_nr = well_state_get_lgr_well_nr( well_state , ecl_file , grid_nr );
-        
-        if (well_nr >= 0) 
-          well_state_add_connections( well_state , ecl_file , grid_nr , well_nr );
+      int num_lgr = ecl_file_get_num_named_kw( ecl_file , LGR_KW );
+      for (int lgr_nr = 0; lgr_nr < num_lgr; lgr_nr++) {
+        ecl_file_push_block( ecl_file );
+        {
+          ecl_file_subselect_block( ecl_file , LGR_KW , lgr_nr );  
+          {
+            int well_nr = well_state_get_lgr_well_nr( well_state , ecl_file);
+            
+            if (well_nr >= 0) 
+              well_state_add_connections( well_state , ecl_file , lgr_nr + 1, well_nr );
+          }
+        }
+        ecl_file_pop_block( ecl_file );
       }
     }
-    
-    
   } 
   ecl_intehead_free( global_header );
   return well_state;
@@ -364,12 +382,12 @@ void well_state_summarize( const well_state_type * well_state , FILE * stream ) 
               fprintf(stream , "      Branch %2d: [" , branch_nr );
               for (int iconn=0; iconn < num_connections; iconn++) {
                 const well_conn_type * conn = connections[ iconn ];
-                fprintf(stream, "(%2d,%2d,%2d)",conn->i,conn->j,conn->k);
+                fprintf(stream, "(%3d,%3d,%3d)",conn->i,conn->j,conn->k);
                 if (iconn == (num_connections - 1))
                   fprintf(stream , "]\n");
                 else {
                   fprintf(stream , ", ");
-                  if (iconn % 10 == 0)
+                  if ((iconn + 1) % 10 == 0)
                     fprintf(stream , "\n                  ");
                 }
               }

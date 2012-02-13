@@ -33,7 +33,7 @@ extern "C" {
   typedef struct well_state_struct well_state_type;
   
   well_conn_type       * well_get_wellhead( const well_state_type * well_state );
-  well_state_type      * well_state_alloc( const ecl_file_type * ecl_file , int report_step , int well_nr);
+  well_state_type      * well_state_alloc( ecl_file_type * ecl_file , int report_step , int well_nr);
   void                   well_state_free( well_state_type * well );
   const char           * well_state_get_name( const well_state_type * well );
   int                    well_state_get_report_nr( const well_state_type * well_state );

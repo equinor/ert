@@ -1,4 +1,3 @@
-add_executable( well_state_test.x well_state_test.c )
 add_executable( well_info_test.x well_info_test.c )
 
 include_directories( ${libecl_src_path} )

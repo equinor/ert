@@ -49,53 +49,57 @@ well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw ,
                                   int conn_nr ) {
   
   const int icon_offset = header->niconz * ( header->ncwmax * well_nr + conn_nr );
-  well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
+  int IC = ecl_kw_iget_int( icon_kw , icon_offset + ICON_IC_ITEM );
+  if (IC > 0) {
+    well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
   
-  conn->i       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM ) - 1;
-  conn->j       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM ) - 1;
-  conn->k       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_K_ITEM ) - 1;
-  conn->segment = ecl_kw_iget_int( icon_kw , icon_offset + ICON_SEGMENT_ITEM ) - 1;
-  {
-    int int_status = ecl_kw_iget_int( icon_kw , icon_offset + ICON_STATUS_ITEM );
-    if (int_status > 0)
-      conn->open = true;
-    else
-      conn->open = false;
-  }
-
-  {
-    int int_direction = ecl_kw_iget_int( icon_kw , icon_offset + ICON_DIRECTION_ITEM );
-    if (int_direction == ICON_DEFAULT_DIR_VALUE)
-      int_direction = ICON_DEFAULT_DIR_TARGET;
-
-    switch (int_direction) {
-    case(ICON_DIRX):
-      conn->dir = well_conn_dirX;
-      break;
-    case(ICON_DIRY):
-      conn->dir = well_conn_dirY;
-      break;
-    case(ICON_DIRZ):
-      conn->dir = well_conn_dirZ;
-      break;
-    case(ICON_FRACX):
-      conn->dir = well_conn_fracX;
-      break;
-    case(ICON_FRACY):
-      conn->dir = well_conn_fracY;
-      break;
-    default:
-      util_abort("%s: icon direction value:%d not recognized\n",__func__ , int_direction);
+    conn->i       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM ) - 1;
+    conn->j       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM ) - 1;
+    conn->k       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_K_ITEM ) - 1;
+    conn->segment = ecl_kw_iget_int( icon_kw , icon_offset + ICON_SEGMENT_ITEM ) - 1;
+    {
+      int int_status = ecl_kw_iget_int( icon_kw , icon_offset + ICON_STATUS_ITEM );
+      if (int_status > 0)
+        conn->open = true;
+      else
+        conn->open = false;
     }
-  }
+    
+    {
+      int int_direction = ecl_kw_iget_int( icon_kw , icon_offset + ICON_DIRECTION_ITEM );
+      if (int_direction == ICON_DEFAULT_DIR_VALUE)
+        int_direction = ICON_DEFAULT_DIR_TARGET;
+      
+      switch (int_direction) {
+      case(ICON_DIRX):
+        conn->dir = well_conn_dirX;
+        break;
+      case(ICON_DIRY):
+        conn->dir = well_conn_dirY;
+        break;
+      case(ICON_DIRZ):
+        conn->dir = well_conn_dirZ;
+        break;
+      case(ICON_FRACX):
+        conn->dir = well_conn_fracX;
+        break;
+      case(ICON_FRACY):
+        conn->dir = well_conn_fracY;
+        break;
+      default:
+        util_abort("%s: icon direction value:%d not recognized\n",__func__ , int_direction);
+      }
+    }
+    
+    if (conn->segment >= 0) {
+      const int iseg_offset = header->nisegz * ( header->nsegmx * seg_well_nr + conn->segment );
+      conn->branch = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );  
+    } else
+      conn->branch = 0;
 
-  if (conn->segment >= 0) {
-    const int iseg_offset = header->nisegz * ( header->nsegmx * seg_well_nr + conn->segment );
-    conn->branch = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );  
+    return conn;
   } else
-    conn->branch = 0;
-
-  return conn;
+    return NULL;  /* IC < 0: Connection not in current LGR. */
 }
 
 
