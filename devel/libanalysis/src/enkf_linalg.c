@@ -72,12 +72,12 @@ void enkf_linalg_genX2(matrix_type * X2 , const matrix_type * S , const matrix_t
 
 
 int enkf_linalg_svdS(const matrix_type * S , 
-                      double truncation , 
-                      int ncomp ,
-                      dgesvd_vector_enum store_V0T , 
-                      double * inv_sig0, 
-                      matrix_type * U0 , 
-                      matrix_type * V0T) {
+                     double truncation , 
+                     int ncomp ,
+                     dgesvd_vector_enum store_V0T , 
+                     double * inv_sig0, 
+                     matrix_type * U0 , 
+                     matrix_type * V0T) {
   
   double * sig0 = inv_sig0;
   int    num_significant;
@@ -542,9 +542,10 @@ void enkf_linalg_get_PC( const matrix_type * S0,
   double * inv_sig0 = util_malloc( nrmin * sizeof * inv_sig0 , __func__);
   
   matrix_subtract_row_mean( S );
+  ncomp = util_int_min( ncomp , nrmin );
   {
     matrix_type * S_mean = matrix_alloc( nrobs , 1 );
-    int num_PC = enkf_linalg_svdS(S , truncation , ncomp, DGESVD_NONE , inv_sig0 , U0 , NULL); 
+    int num_PC = enkf_linalg_svdS(S , truncation , ncomp, DGESVD_NONE , inv_sig0 , U0 , NULL);
     
     matrix_assign( S , S0);  // The svd routine will overwrite S - we therefor must pick it up again from S0.
     matrix_subtract_and_store_row_mean( S , S_mean);
