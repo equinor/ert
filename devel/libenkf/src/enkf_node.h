@@ -158,6 +158,7 @@ extern "C" {
   bool              enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , bool force_vectors , node_id_type node_id);
   bool              enkf_node_store_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens , state_enum state);
   bool              enkf_node_try_load(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id);
+  bool              enkf_node_try_load_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens , state_enum state);
   bool              enkf_node_exists( enkf_node_type *enkf_node , enkf_fs_type * fs , int report_step , int iens , state_enum state);
   bool              enkf_node_vector_storage( const enkf_node_type * node );
 

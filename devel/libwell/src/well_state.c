@@ -228,17 +228,17 @@ well_state_type * well_state_alloc( ecl_file_type * ecl_file , int report_nr ,  
     {
       int num_lgr = ecl_file_get_num_named_kw( ecl_file , LGR_KW );
       for (int lgr_nr = 0; lgr_nr < num_lgr; lgr_nr++) {
-        ecl_file_push_block( ecl_file );
-        {
-          ecl_file_subselect_block( ecl_file , LGR_KW , lgr_nr );  
-          {
-            int well_nr = well_state_get_lgr_well_nr( well_state , ecl_file);
-            
-            if (well_nr >= 0) 
-              well_state_add_connections( well_state , ecl_file , lgr_nr + 1, well_nr );
-          }
-        }
-        ecl_file_pop_block( ecl_file );
+        ecl_file_push_block( ecl_file );                                  // <--------------------
+        {                                                                                       //  
+          ecl_file_subselect_block( ecl_file , LGR_KW , lgr_nr );                               // 
+          {                                                                                     //  Restrict the file view 
+            int well_nr = well_state_get_lgr_well_nr( well_state , ecl_file);                   //  to one LGR block.   
+                                                                                                //
+            if (well_nr >= 0)                                                                   // 
+              well_state_add_connections( well_state , ecl_file , lgr_nr + 1, well_nr );        //
+          }                                                                                     //
+        }                                                                                       //
+        ecl_file_pop_block( ecl_file );                                   // <--------------------  
       }
     }
   } 

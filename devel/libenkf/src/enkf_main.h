@@ -98,13 +98,13 @@ extern "C" {
   void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
   void                          enkf_main_load_ecl_complete_mt(enkf_main_type *);
   void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
-  bool                          enkf_main_run(enkf_main_type * , run_mode_type , const bool * ,  int  , int , state_enum );
+  bool                          enkf_main_run(enkf_main_type * , run_mode_type , const bool_vector_type * ,  int  , int , state_enum );
   //void                          enkf_main_run_step(enkf_main_type *, run_mode_type , const bool * , int, state_enum , int , int, bool, forward_model_type *);
   void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
   void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
   void                          enkf_main_interactive_set_runpath__(void * );
-  enkf_main_type              * enkf_main_bootstrap(const char * , const char * , bool strict);
+  enkf_main_type              * enkf_main_bootstrap(const char * , const char * , bool strict, bool verbose);
   void                          enkf_main_create_new_config( const char * config_file , const char * storage_path , const char * case_name , const char * dbase_type , int num_realizations);
   
   enkf_node_type             ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key , int report_step , state_enum load_state);
@@ -207,6 +207,9 @@ extern "C" {
                          matrix_type * PC , 
                          matrix_type * PC_obs);
   
+  
+  void                   enkf_main_set_verbose( enkf_main_type * enkf_main , bool verbose);
+  bool                   enkf_main_get_verbose( const enkf_main_type * enkf_main );
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 

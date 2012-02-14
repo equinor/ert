@@ -170,7 +170,8 @@ static void bfs_mount( bfs_type * bfs ) {
 static void * bfs_mount__( void * arg ) {
   bfs_type * bfs = bfs_safe_cast( arg );
   bfs_mount( bfs );
-  printf("."); fflush( stdout );
+  //printf("."); 
+  //fflush( stdout );
   return NULL;
 }
 
@@ -438,12 +439,12 @@ static void * block_fs_driver_alloc_new( fs_driver_enum driver_type , bool read_
 
 static void block_fs_driver_mount( block_fs_driver_type * driver ) {
   thread_pool_type * tp = thread_pool_alloc( 4 , true ); 
-  printf("Mounting:  "); fflush(stdout);
+
   for (int ifs = 0; ifs < driver->num_fs; ifs++) 
     thread_pool_add_job( tp , bfs_mount__ , driver->fs_list[ ifs ]);
+
   thread_pool_join( tp );
   thread_pool_free( tp );
-  printf("\n");
 }
 
 

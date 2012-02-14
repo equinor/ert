@@ -612,6 +612,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
         
         stringlist_free( data_files );
         util_safe_free( header_file );
+        util_safe_free( unified_file );
 
         /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
         if (summary != NULL) {
@@ -630,6 +631,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
                 /* We internalize all DYNAMIC_RESULT nodes without any further ado. */
 
                 if (enkf_node_vector_storage( node )) {
+                  enkf_node_try_load_vector( node , fs , iens , FORECAST );  // Ensure that what is currently on file is loaded before we update.
                   enkf_node_ecl_load_vector( node , run_info->run_path , summary , NULL , load_start, step2 , iens);
                   enkf_node_store_vector( node , fs , iens , FORECAST );
                 } else {

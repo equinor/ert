@@ -797,7 +797,6 @@ FILE * enkf_fs_open_excase_member_file( const enkf_fs_type * fs , const char * i
 FILE * enkf_fs_open_excase_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep ) {
   char * filename = enkf_fs_alloc_case_tstep_filename( fs , tstep , input_name );
   FILE * stream   = enkf_fs_open_exfile( filename );
-  printf("Looking for:%s \n",filename);
   free( filename );
   return stream;
 }

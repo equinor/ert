@@ -20,7 +20,20 @@ Convenience module for loading enum symbols and values.
 import ctypes
 import sys
 
-def create_enum( lib, func_name , enum_name , dict):
+
+
+def make_enum(name , attrs):
+    class cls(object):
+        pass
+
+    cls.__name__ = name
+    for key in attrs.keys():
+        setattr(cls , key , attrs[key])
+    return cls
+
+
+
+def create_enum( lib, func_name , enum_name , name_space = None):
     """
     Create and insert enum values as integer constants.
 
@@ -82,8 +95,6 @@ def create_enum( lib, func_name , enum_name , dict):
 
       for enum_elm in file_enum.keys():
           print "%s -> %d" % ( enum_elm , file_enum[ enum_elm ] )
-       
-    The returned dictionary can very well be dropped.
     """
 
     try:
@@ -99,12 +110,15 @@ def create_enum( lib, func_name , enum_name , dict):
         value = ctypes.c_int()
         name  = func( index , ctypes.byref( value ))
         if name:
-            dict[ name ] = value.value
+            if name_space:
+                name_space[ name ] = value.value
             enum[ name ] = value.value
             index += 1
         else:
             break
-    dict[ enum_name ] = enum
+    enum = make_enum( enum_name , enum )
+    if name_space:
+        name_space[ enum_name ] = enum
     return enum
         
 

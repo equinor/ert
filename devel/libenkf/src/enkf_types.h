@@ -119,6 +119,13 @@ typedef enum   {UNDEFINED   = 0 ,
      The state == both is used for output purposes (getting both forecast and analyzed).
   */
 
+#define ENKF_STATE_ENUM_DEFS {.value = 0 , .name = "UNDEFINED"}, \
+                             {.value = 2 , .name = "FORECAST"} ,\
+                             {.value = 4 , .name = "ANALYZED"},\
+                             {.value = 6 , .name = "BOTH"}
+#define ENKF_STATE_ENUM_SIZE 4
+
+
 
 
 
@@ -165,7 +172,12 @@ typedef enum { ENKF_ASSIMILATION       = 1,
                INIT_ONLY               = 4} run_mode_type;
                
 
- 
+#define ENKF_RUN_ENUM_DEFS {.value = 1 , .name = "ENKF_ASSIMILATION"},   \
+                           {.value = 2 , .name = "ENSEMBLE_EXPERIMENT"}, \
+                           {.value = 3 , .name = "ENSEMBLE_PREDICTION"}, \
+                           {.value = 4 , .name = "INIT_ONLY"}
+#define ENKF_RUN_ENUM_SIZE 4 
+
 
 
 /**

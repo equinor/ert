@@ -575,6 +575,16 @@ void enkf_node_load(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_typ
   }
 }
 
+bool enkf_node_try_load_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens , state_enum state) {
+  if (enkf_config_node_has_vector( enkf_node->config , fs , iens, state)) {
+    enkf_node_load_vector( enkf_node , fs , iens , state );
+    return true;
+  } else 
+    return false;
+}
+
+
+
 
 
 /*

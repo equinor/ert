@@ -150,7 +150,7 @@ class EclKW(object):
     
     
     @classmethod
-    def read_grdecl( cls , file , kw , ecl_type = None):
+    def read_grdecl( cls , file , kw , strict = True , ecl_type = None):
         """
         Function to load an EclKW instance from a grdecl file.
 
@@ -182,32 +182,32 @@ class EclKW(object):
         reading the file. The algorithm for specifying type, in order
         of presedence, is as follows:
 
-          1. The optional argument @ecl_type can be used to specify
-             the type: 
+        1. The optional argument @ecl_type can be used to specify
+        the type: 
 
-                 special_int_kw = EclKW.read_grdecl( fileH , 'INTKW' , ecl_type = ECL_INT_TYPE )
+        special_int_kw = EclKW.read_grdecl( fileH , 'INTKW' , ecl_type = ECL_INT_TYPE )
 
-             If ecl_type is different from ECL_INT_TYPE or
-             ECL_FLOAT_TYPE a TypeError exception will be raised.
+        If ecl_type is different from ECL_INT_TYPE or
+        ECL_FLOAT_TYPE a TypeError exception will be raised.
 
-             If ecl_type == None (the default), the method will
-             continue to point 2. or 3. to determine the correct
-             type. 
+        If ecl_type == None (the default), the method will
+        continue to point 2. or 3. to determine the correct
+        type. 
 
 
-          2. If the keyword is included in the set built in set
-             'int_kw_set' the type will be ECL_INT_TYPE.
+        2. If the keyword is included in the set built in set
+        'int_kw_set' the type will be ECL_INT_TYPE.
 
-                 pvtnum_kw = EclKW.read_grdecl( fileH , 'PVTNUM' )
-      
-             Observe that (currently) no case conversions take place
-             when checking the 'int_kw_set'. The current built in set
-             is accesible through the int_kw property.
+        pvtnum_kw = EclKW.read_grdecl( fileH , 'PVTNUM' )
+        
+        Observe that (currently) no case conversions take place
+        when checking the 'int_kw_set'. The current built in set
+        is accesible through the int_kw property.
 
-          3. Otherwise the default is float, i.e. ECL_FLOAT_TYPE.
-          
-                 poro_kw = EclKW.read_grdecl( fileH , 'PORO')
- 
+        3. Otherwise the default is float, i.e. ECL_FLOAT_TYPE.
+        
+        poro_kw = EclKW.read_grdecl( fileH , 'PORO')
+        
 
         Observe that since the grdecl files are quite weakly
         structured it is difficult to verify the integrity of the
@@ -215,8 +215,8 @@ class EclKW(object):
         things blow up at a later stage.
         
         [1]: It is possible, but not recommended, to pass in None for
-             @kw, in which case the method will load the first keyword
-             it finds in the file.
+        @kw, in which case the method will load the first keyword
+        it finds in the file.
         """
         
         cfile  = CFILE( file )
@@ -233,7 +233,7 @@ class EclKW(object):
         if not ecl_type in [ECL_FLOAT_TYPE , ECL_INT_TYPE]:
             raise TypeError("The type:%d is invalid when loading keyword:%s" % (ecl_type , kw))
     
-        c_ptr  = cfunc.load_grdecl( cfile , kw , ecl_type )
+        c_ptr  = cfunc.load_grdecl( cfile , kw , strict , ecl_type )
         if c_ptr:
             obj = cls( )
             obj.c_ptr = c_ptr
@@ -854,7 +854,7 @@ cwrapper.registerType( "ecl_kw" , EclKW )
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_kw")
 cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
-cfunc.load_grdecl                = cwrapper.prototype("c_void_p ecl_kw_fscanf_alloc_grdecl_dynamic( FILE , char* , int )")
+cfunc.load_grdecl                = cwrapper.prototype("c_void_p ecl_kw_fscanf_alloc_grdecl_dynamic__( FILE , char* , bool , int )")
 cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_copy( ecl_kw )")
 cfunc.slice_copyc                = cwrapper.prototype("c_void_p ecl_kw_alloc_slice_copy( ecl_kw , int , int , int )")
 cfunc.fread_alloc                = cwrapper.prototype("c_void_p ecl_kw_fread_alloc( fortio )")

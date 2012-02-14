@@ -149,6 +149,7 @@ struct enkf_main_struct {
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;         /* The ensemble ... */
   int                    ens_size;         /* The size of the ensemble */  
+  bool                   verbose;
 };
 
 
@@ -286,8 +287,11 @@ void enkf_main_reload_obs( enkf_main_type * enkf_main) {
 */
 
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
-  if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs )))
+  if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs ))) {
     enkf_obs_load(enkf_main->obs , obs_config_file , ecl_config_get_sched_file( enkf_main->ecl_config ), enkf_main->ensemble_config );
+    if (enkf_main->verbose)
+      printf("Have loaded observations from: %s \n",obs_config_file );
+  }
 }
 
 
@@ -949,7 +953,6 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   const int cpu_threads       = 4;
   const int matrix_start_size = 25000;
   thread_pool_type * tp       = thread_pool_alloc( cpu_threads , false );
-  printf("inside enkf_main_module_update1\n");
   analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
   int ens_size          = meas_data_get_ens_size( forecast );
   int active_size       = obs_data_get_active_size( obs_data );
@@ -1105,8 +1108,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       
       enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
       
-      /* How the fuck does dup() work?? */
-      enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , stdout );
+      if (enkf_main->verbose)
+        enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , stdout );
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , log_stream );
 
       if (obs_data_get_active_size(obs_data) > 0)
@@ -1206,7 +1209,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
            thread to run the function enkf_state_complete_forward_model(). This
            again will (possibly) tell the queue system to try the job again.
 
-
+           
         2. This function will store status JOB_QUEUE_RUN_FAIL as status for this
            job.
 
@@ -1332,15 +1335,15 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
 */
 
 
-static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
-                               run_mode_type    run_mode       ,
-                               const bool * iactive            ,
-                               int load_start                  ,      /* For internalizing results, and the first step in the update when merging. */
-                               int init_step_parameter         ,
-                               state_enum init_state_parameter ,
-                               state_enum init_state_dynamic   ,
-                               int step1                       ,
-                               int step2                       ,      /* Discarded for predictions */
+static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
+                               run_mode_type    run_mode        ,
+                               const bool_vector_type * iactive ,
+                               int load_start                   ,      /* For internalizing results, and the first step in the update when merging. */
+                               int init_step_parameter          ,
+                               state_enum init_state_parameter  ,
+                               state_enum init_state_dynamic    ,
+                               int step1                        ,
+                               int step2                        ,      /* Discarded for predictions */
                                bool enkf_update) {
 
   {
@@ -1353,23 +1356,23 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
   }
   
   {
-    bool     verbose_queue   = true;
+    bool     verbose_queue   = enkf_main->verbose;
     int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
     const int ens_size       = enkf_main_get_ensemble_size( enkf_main );
     int   job_size;
     int iens;
 
-    if (run_mode == ENSEMBLE_PREDICTION)
-      printf("Starting predictions from step: %d\n",step1);
-    else
-      printf("Starting forward step: %d -> %d\n",step1 , step2);
-
+    if (enkf_main->verbose) {
+      if (run_mode == ENSEMBLE_PREDICTION)
+        printf("Starting predictions from step: %d\n",step1);
+      else
+        printf("Starting forward step: %d -> %d\n",step1 , step2);
+    }
+    
     log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
     log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
-    job_size = 0;
-    for (iens = 0; iens < ens_size; iens++)
-      if (iactive[iens]) job_size++;
-
+    bool_vector_safe_cast( iactive );
+    job_size = bool_vector_count_equal( iactive , true );
     {
       pthread_t        queue_thread;
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
@@ -1386,14 +1389,14 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
         enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
 
         for (iens = 0; iens < ens_size; iens++) {
-          if (iactive[iens]) {
+          if (bool_vector_iget(iactive , iens)) {
             int load_start = step1;
             if (step1 > 0)
               load_start++;
 
             enkf_state_init_run(enkf_main->ensemble[iens] ,
                                 run_mode ,
-                                iactive[iens] ,
+                                true , 
                                 max_internal_submit ,
                                 init_step_parameter ,
                                 init_state_parameter,
@@ -1508,7 +1511,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 */
 bool enkf_main_run(enkf_main_type * enkf_main            ,
                    run_mode_type    run_mode             ,
-                   const bool     * iactive              ,
+                   const bool_vector_type * iactive      , 
                    int              init_step_parameters ,
                    int              start_report         ,
                    state_enum       start_state) {
@@ -1516,6 +1519,7 @@ bool enkf_main_run(enkf_main_type * enkf_main            ,
   bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
   int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
 
+  bool_vector_safe_cast( iactive );
   enkf_main_init_run( enkf_main , run_mode);
   {
     if (run_mode == ENKF_ASSIMILATION) {
@@ -1951,6 +1955,15 @@ void enkf_main_iset_keep_runpath( enkf_main_type * enkf_main , int iens , keep_r
   enkf_state_set_keep_runpath( enkf_main->ensemble[iens] , keep_runpath);
 }
 
+void enkf_main_set_verbose( enkf_main_type * enkf_main , bool verbose) {
+  enkf_main->verbose = verbose;
+}
+
+
+bool enkf_main_get_verbose( const enkf_main_type * enkf_main ) {
+  return enkf_main->verbose;
+}
+
 /**
    Observe that this function parses and TEMPORARILY stores the keep_runpath
    information ion the enkf_main object. This is subsequently passed on the
@@ -2057,7 +2070,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 
 
 
-static enkf_main_type * enkf_main_alloc_empty( void ) {
+static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main, __func__);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   enkf_main->current_fs_case    = NULL;
@@ -2071,7 +2084,7 @@ static enkf_main_type * enkf_main_alloc_empty( void ) {
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
   
-
+  enkf_main_set_verbose( enkf_main , true );
   enkf_main->site_config      = site_config_alloc_empty();
   enkf_main->ensemble_config  = ensemble_config_alloc_empty();
   enkf_main->ecl_config       = ecl_config_alloc_empty();
@@ -2080,6 +2093,7 @@ static enkf_main_type * enkf_main_alloc_empty( void ) {
   enkf_main->plot_config      = plot_config_alloc_default();       /* This is ready for use. */
   return enkf_main;
 }
+
 
 
 
@@ -2489,7 +2503,8 @@ static void enkf_main_init_log( enkf_main_type * enkf_main , const config_type *
     free( log_file );
   }
   
-  printf("Activity will be logged to ..............: %s \n",log_get_filename( enkf_main->logh ));
+  if (enkf_main->verbose)
+    printf("Activity will be logged to ..............: %s \n",log_get_filename( enkf_main->logh ));
   log_add_message(enkf_main->logh , 1 , NULL , "ert configuration loaded" , false);
 }
 
@@ -2613,7 +2628,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
 
 
 
-enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _model_config, bool strict) {
+enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _model_config, bool strict , bool verbose) {
   const char     * site_config  = getenv("ERT_SITE_CONFIG");
   char           * model_config;
   enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
@@ -2640,8 +2655,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     if (path != NULL) {
       if (chdir(path) != 0)
         util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
-
-      printf("Changing to directory ...................: %s \n",path);
+      
+      if (verbose)
+        printf("Changing to directory ...................: %s \n",path);
       
       if (ext != NULL) 
         model_config = util_alloc_filename( NULL , base , ext );
@@ -2663,6 +2679,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main            = enkf_main_alloc_empty( );
     config_type * config;
     /* Parsing the site_config file first */
+    enkf_main_set_verbose( enkf_main , verbose );
     enkf_main_bootstrap_site( enkf_main , site_config , strict );
     
     

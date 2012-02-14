@@ -174,6 +174,10 @@ class EclFile(object):
         else:
             self.c_ptr = cfunc.open_writable( filename )
         
+
+    def __len__(self):
+        return self.size
+
         
     def __del__(self):
         if self.c_ptr:
@@ -262,6 +266,12 @@ class EclFile(object):
             else:
                 kw_c_ptr = cfunc.iget_kw( self , index )
                 return EclKW.ref( kw_c_ptr , self )
+        if isinstance( index , slice ):
+            indices = index.indices( len(self) )
+            kw_list = []
+            for i in range(*indices):
+                kw_list.append( self[i] )
+            return kw_list
         else:
             if isinstance( index , types.StringType):
                 if self.has_kw( index ):

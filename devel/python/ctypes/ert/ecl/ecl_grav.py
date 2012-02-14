@@ -26,7 +26,7 @@ import  libecl
 import  ecl_file 
 import  ecl_region 
 import  ecl_grid
-from    ecl_util              import ECL_WATER_PHASE , ECL_OIL_PHASE , ECL_GAS_PHASE
+from    ecl_util              import ECL_WATER_PHASE , ECL_OIL_PHASE , ECL_GAS_PHASE, ecl_phase_enum
 from    ert.cwrap.cwrap       import *
 
 class EclGrav:
