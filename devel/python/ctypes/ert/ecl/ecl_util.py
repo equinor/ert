@@ -34,10 +34,10 @@ import  libecl
 create_enum( libecl.lib , "ecl_util_file_enum_iget" , "ecl_file_enum" , globals())
 
 # ecl_phase_enum from ecl_util.h
-create_enum( libecl.lib , "ecl_util_phase_enum_iget" , "ecl_phase_enum" , globals())
+create_enum( libecl.lib , "ecl_util_phase_enum_iget" , "ecl_phase_enum" , name_space = globals())
 
 # ecl_type_enum defintion from ecl_util.h
-create_enum( libecl.lib , "ecl_util_type_enum_iget" , "ecl_type_enum" , globals())
+create_enum( libecl.lib , "ecl_util_type_enum_iget" , "ecl_type_enum" , name_space = globals())
 
 
 

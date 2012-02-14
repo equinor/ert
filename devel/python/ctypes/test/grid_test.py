@@ -36,7 +36,7 @@ def load_egrid( egrid_file ):
 
 def load_grdecl( grdecl_file ):
     fileH = open( grdecl_file , "r")
-    specgrid = EclKW.read_grdecl( fileH , "SPECGRID" , ecl_type = ecl.ECL_INT_TYPE )
+    specgrid = EclKW.read_grdecl( fileH , "SPECGRID" , ecl_type = ecl.ECL_INT_TYPE , strict = False)
     zcorn    = EclKW.read_grdecl( fileH , "ZCORN" )
     coord    = EclKW.read_grdecl( fileH , "COORD" )
     actnum   = EclKW.read_grdecl( fileH , "ACTNUM" , ecl_type = ecl.ECL_INT_TYPE )
@@ -63,3 +63,5 @@ permx_column.printf()
 print "top2    : %g   depth(10,10,0)    : %g " % (grid.top( 10, 10) , grid.depth( ijk=(10,10,0)))
 print "bottom2 : %g   depth(10,10,nz-1) : %g " % (grid.bottom( 10 , 10 ) , grid.depth( ijk=(10,10,grid.nz - 1)))
 
+kw_list = init_file[1:7]
+print kw_list

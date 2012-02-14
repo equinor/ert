@@ -34,7 +34,7 @@
 #include <enkf_tui_fs.h>
 #include <enkf_tui_analysis.h>
 #include <ert_tui_const.h>
-
+#include <bool_vector.h>
 
 
 static void enkf_tui_run_set_runpath(void * arg) {
@@ -57,15 +57,12 @@ static void enkf_tui_run_set_runpath(void * arg) {
 
 void enkf_tui_run_start__(void * enkf_main) {
   const int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
-  {
-    int iens;
-    for (iens= 0; iens < ens_size; iens++)
-      iactive[iens] = true;
-  }
+  bool_vector_type * iactive = bool_vector_alloc(0,true);
+  bool_vector_iset( iactive , ens_size - 1 , true );
 
   enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , 0 , 0 , ANALYZED);
-  free(iactive);
+  
+  bool_vector_free(iactive);
 }
 
 
@@ -75,18 +72,14 @@ void enkf_tui_run_restart__(void * enkf_main) {
   const int last_report = enkf_main_get_history_length( enkf_main );
   int start_report;
   state_enum state;
-  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
-  {
-    int iens;
-    for (iens= 0; iens < ens_size; iens++)
-      iactive[iens] = true;
-  }
-
+  bool_vector_type * iactive = bool_vector_alloc(0,true);
+  bool_vector_iset( iactive , ens_size - 1 , true );
+  
   start_report = util_scanf_int_with_limits("Report step",PROMPT_LEN , 0 , last_report);
   state        = enkf_tui_util_scanf_state("Analyzed/forecast" , PROMPT_LEN , false);
   
   enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , start_report , start_report  , state);
-  free(iactive);
+  bool_vector_free(iactive);
 }
 
 
@@ -103,7 +96,8 @@ void enkf_tui_run_restart__(void * enkf_main) {
 
 void enkf_tui_run_exp__(void * enkf_main) {
   const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
-  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+  bool_vector_type * iactive = bool_vector_alloc(0,true);
+  bool_vector_iset( iactive , ens_size - 1 , true );
 
   state_enum init_state    = ANALYZED; 
   int start_report         = 0;
@@ -114,19 +108,14 @@ void enkf_tui_run_exp__(void * enkf_main) {
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     if (select_string != NULL) {
-      util_sscanf_active_range( select_string , ens_size - 1 , iactive);
+      util_sscanf_active_range( select_string , ens_size - 1 , bool_vector_get_ptr( iactive) );
       free( select_string );
-    } else {
-      /* The user entered <return> : Run all realizations. */
-      int i;
-      for (i=0; i < ens_size; i++)
-        iactive[i] = true;
-    }
+    } 
     free( prompt );
   }
   
   enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
-  free(iactive);
+  bool_vector_free(iactive);
 }
 
 
@@ -134,7 +123,9 @@ void enkf_tui_run_exp__(void * enkf_main) {
 void enkf_tui_run_create_runpath__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
-  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+  bool_vector_type * iactive = bool_vector_alloc(0,true);
+  bool_vector_iset( iactive , ens_size - 1 , true );
+
 
   state_enum init_state    = ANALYZED; 
   int start_report         = 0;
@@ -144,13 +135,13 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
     char * select_string;
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
-    util_sscanf_active_range( select_string , ens_size - 1 , iactive);
+    util_sscanf_active_range( select_string , ens_size - 1 , bool_vector_get_ptr( iactive) );
     free( prompt );
     free( select_string );
   }
 
   enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
-  free(iactive);
+  bool_vector_free(iactive);
 }
 
 
@@ -162,16 +153,13 @@ void enkf_tui_run_predictions__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   if (enkf_main_has_prediction( enkf_main )) {
     const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
-    bool * iactive                               = util_malloc(ens_size * sizeof * iactive , __func__);
     int        history_end                       = enkf_main_get_history_length( enkf_main );
     state_enum start_state                       = ANALYZED;           
-    {
-      int iens;
-      for (iens= 0; iens < ens_size; iens++)
-        iactive[iens] = true;
-    }
+    bool_vector_type * iactive = bool_vector_alloc(0,true);
+    bool_vector_iset( iactive , ens_size - 1 , true );
+
     enkf_main_run(enkf_main , ENSEMBLE_PREDICTION , iactive , history_end , history_end  , start_state);
-    free( iactive );
+    bool_vector_free(iactive);
 
   } else
     fprintf(stderr,"** Sorry: you must set a schedule prediction file with configuration option SCHEDULE_PREDICTION_FILE to use this option.\n");

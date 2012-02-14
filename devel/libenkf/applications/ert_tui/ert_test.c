@@ -146,7 +146,7 @@ int main (int argc , char ** argv) {
     
     enkf_welcome( model_config_file );
     {
-      enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file , true);
+      enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file , true, true);
       printf("Bootstrap complete \n");
       /*****************************************************************/
       /* Test code of various kinds can be added here */
