@@ -68,6 +68,11 @@ if (HAVE_FORK)
   add_definitions( -DHAVE_FORK )
 endif()
 
+check_function_exists( readlinkat HAVE_READLINKAT )
+if (HAVE_READLINKAT)
+   add_definitions( -DHAVE_READLINKAT )
+endif()
+
 check_function_exists( symlink HAVE_SYMLINK )
 if (HAVE_SYMLINK)
   add_definitions( -DHAVE_SYMLINK )
