@@ -87,11 +87,19 @@ class EclRegion(object):
             
         return self
 
+
     def __isub__(self , other):
         """
-        Inplace "subtract" one selection from another == __iand__()
+        Inplace "subtract" one selection from another.
         """
-        return self.__iand__( other )
+        print "Running isub"
+        if hasattr( other , "ecl_region_instance"):
+            cfunc.subtract( self , other)
+        else:
+            raise TypeError("Ecl region can only subtract with other EclRegion instances")
+
+        return self
+        
 
     def __ior__(self , other):
         """
@@ -155,15 +163,20 @@ class EclRegion(object):
         """
         return self.__or__( other )
 
+
     def __sub__( self, other):
         """
-        Unary del operator for two regions - implemented by __and__().
+        Unary del operator for two regions.
         """
-        return self.__and__( other )
+        new_region = self.copy()
+        new_region.__isub__( other )
+        return new_region
+
 
     def __del__( self ):
         if self.c_ptr:
             cfunc.free( self )
+
 
     def union_with( self, other):
         """
@@ -227,6 +240,8 @@ class EclRegion(object):
 
         """
         cfunc.select_more( self , ecl_kw , limit )
+
+        
 
     def deselect_more( self , ecl_kw , limit):
         """
@@ -812,6 +827,8 @@ cfunc.copy_kw                    = cwrapper.prototype("void  ecl_region_kw_copy(
 cfunc.alloc_copy                 = cwrapper.prototype("c_void_p ecl_region_alloc_copy( ecl_region )")
 cfunc.intersect                  = cwrapper.prototype("void ecl_region_intersection( ecl_region , ecl_region )")
 cfunc.combine                    = cwrapper.prototype("void ecl_region_union( ecl_region , ecl_region )")
+cfunc.subtract                   = cwrapper.prototype("void ecl_region_subtract( ecl_region , ecl_region )")
+cfunc.xor                        = cwrapper.prototype("void ecl_region_xor( ecl_region , ecl_region )")
 
 cfunc.get_kw_index_list          = cwrapper.prototype("c_void_p ecl_region_get_kw_index_list( ecl_region , ecl_kw , bool )")
 cfunc.get_active_list            = cwrapper.prototype("c_void_p ecl_region_get_active_list( ecl_region )")

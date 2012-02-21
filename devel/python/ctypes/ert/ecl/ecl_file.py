@@ -232,6 +232,22 @@ class EclFile(object):
         return self
         
 
+    def select_last_restart( self ):
+        """
+        Will select the last SEQNUM block in restart file.
+
+        Works by searching for the last SEQNUM keyword; the SEQNUM
+        Keywords are only present in unified restart files. If this
+        is a non-unified restart file (or not a restart file at all),
+        the method will do nothing and return False.
+        """
+        if self.has_kw("SEQNUM"):
+            self.select_restart_section( index = self.num_report_steps() - 1)
+            return True
+        else:
+            return False
+
+
     def __getitem__(self , index):
         """
         Implements [] operator; index can be integer or key.

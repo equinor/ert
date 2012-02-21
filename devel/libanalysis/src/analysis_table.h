@@ -10,15 +10,15 @@ extern "C" {
 #include <rng.h>
 
 
-typedef void (analysis_updateA_ftype) (void * module_data , 
-                                        matrix_type * A , 
-                                        matrix_type * S , 
-                                        matrix_type * R , 
-                                        matrix_type * dObs , 
-                                        matrix_type * E ,
-                                        matrix_type * D );
-
-
+  typedef void (analysis_updateA_ftype) (void * module_data , 
+                                         matrix_type * A , 
+                                         matrix_type * S , 
+                                         matrix_type * R , 
+                                         matrix_type * dObs , 
+                                         matrix_type * E ,
+                                         matrix_type * D );
+  
+  
   typedef void (analysis_initX_ftype)       (void * module_data , 
                                              matrix_type * X , 
                                              matrix_type * A , 

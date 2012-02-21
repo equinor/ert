@@ -1,6 +1,6 @@
-#  Copyright (C) 2011  Statoil ASA, Norway. 
+#  Copyright (C) 2012  Statoil ASA, Norway. 
 #   
-#  The file 'libsched.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'sched.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -14,12 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import libsched
+from   sched_file import SchedFile
 
-import ctypes
-import ert.cwrap.clib as clib
-import ert.util.libutil               
-import ert.geo.libgeo
-import ert.ecl.libecl
-
-lib = clib.load("libsched.so")
-    

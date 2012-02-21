@@ -14,6 +14,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+import filecmp
 
 def is_number(x):
     try:
@@ -42,3 +43,6 @@ def approx_equalv(a,b):
                 break
     return equal
             
+
+def file_equal(f1,f2):
+    return filecmp.cmp(f1,f2,shallow = False)
