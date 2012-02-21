@@ -27,6 +27,7 @@ functions from ecl_util.c which are not bound to any class type.
 
 from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cenum       import create_enum
+from    ert.util.ctime        import ctime 
 import  libecl
 
 
@@ -63,10 +64,15 @@ def type_name( ecl_type ):
     return cfunc.get_type_name( ecl_type )
 
 
+def get_start_date( datafile ):
+    return cfunc.get_start_date( datafile ).datetime()
+
+
+
 cwrapper             = CWrapper( libecl.lib )
 cfunc                = CWrapperNameSpace("ecl_util")
 
-cfunc.get_num_cpu    = cwrapper.prototype("int   ecl_util_get_num_cpu( char* )")
-cfunc.get_file_type  = cwrapper.prototype("int   ecl_util_get_file_type( char* , bool* , int*)")
-cfunc.get_type_name  = cwrapper.prototype("char* ecl_util_get_type_name( int )")
-
+cfunc.get_num_cpu    = cwrapper.prototype("int    ecl_util_get_num_cpu( char* )")
+cfunc.get_file_type  = cwrapper.prototype("int    ecl_util_get_file_type( char* , bool* , int*)")
+cfunc.get_type_name  = cwrapper.prototype("char*  ecl_util_get_type_name( int )")
+cfunc.get_start_date = cwrapper.prototype("time_t ecl_util_get_start_date( char* )")

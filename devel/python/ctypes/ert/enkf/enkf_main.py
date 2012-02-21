@@ -15,9 +15,10 @@
 #  for more details. 
 
 import  ctypes
-from    ert.cwrap.cwrap       import *
-from    ert.util.tvector      import * 
-from    enkf_enum             import *
+from    ert.cwrap.cwrap         import *
+from    ert.util.tvector        import * 
+from    ert.job_queue.job_queue import JobQueue
+from    enkf_enum               import *
 import  ens_config
 import  libenkf
 import  ert_local
