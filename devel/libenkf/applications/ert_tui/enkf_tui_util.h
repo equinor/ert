@@ -37,6 +37,8 @@ bool                        * enkf_tui_util_scanf_alloc_iens_active(int , int , 
 void                          enkf_tui_util_get_time(enkf_fs_type * , const enkf_config_node_type * , enkf_node_type * , state_enum , int  , int  , int  , int  , double *  , double *  );
 void                          enkf_tui_util_scanf_iens_range(const char * , int  , int  , int *  , int * );
 int                           enkf_tui_util_scanf_report_step(int , const char *  , int );
+char *                        enkf_tui_util_scanf_report_step_as_char(int , const char *  , int );
 void                          enkf_tui_util_msg(const char * , ...);
 int                           enkf_tui_util_scanf_int_with_default(const char * prompt , int prompt_len , bool * default_used);
+int                          enkf_tui_util_scanf_int_with_default_return_to_menu(const char * prompt , int prompt_len , bool * default_used);
 #endif

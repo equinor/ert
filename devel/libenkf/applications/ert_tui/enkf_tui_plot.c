@@ -747,59 +747,62 @@ void enkf_tui_plot_all_summary(void * arg) {
   
   {
     bool default_used;
-    step1 = enkf_tui_util_scanf_int_with_default( "Starting plotting at report step [default: 0]"      , PROMPT_LEN , &default_used);
+    step1 = enkf_tui_util_scanf_int_with_default_return_to_menu( "Starting plotting at report step [Enter: default: 0] (M: return to menu)"      , PROMPT_LEN , &default_used);
+    
     if (default_used)
       step1 = 0;
-    step2 = enkf_tui_util_scanf_int_with_default( "Stop plotting at report step [default: everything]" , PROMPT_LEN , &prediction_mode);
-  }
-  enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d) [default: all]" , enkf_main_get_ensemble_size( enkf_main ) , PROMPT_LEN , &iens1 , &iens2);
-  
-  {
-    /*
-      This code is prepared for multithreaded creation of plots;
-      however the low level PLPlot library is not thread safe, we
-      therefor must limit the the number of threads in the thread pool
-      to 1.
-    */
-    thread_pool_type * tp = thread_pool_alloc( 1 , true );
-    stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
-    arg_pack_type ** arg_list = util_malloc( sizeof * arg_list * stringlist_get_size( summary_keys ) , __func__ );
-    {
-      char * plot_path = util_alloc_filename( plot_config_get_path( plot_config ) , enkf_main_get_current_fs( enkf_main ) , NULL );
-      util_make_path( plot_path );
-      free( plot_path );
-    }
     
-    for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
-      const char * key = stringlist_iget( summary_keys , ikey);
-
-      arg_list[ikey] = arg_pack_alloc( );
+    step2 = enkf_tui_util_scanf_int_with_default( "Stop plotting at report step [Enter: default: everything] (M: return to menu)" , PROMPT_LEN , &prediction_mode);
+  }
+  if (step1 != -2 && step2 != -2){
+    enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d) [default: all]" , enkf_main_get_ensemble_size( enkf_main ) , PROMPT_LEN , &iens1 , &iens2);
+    
+    {
+      /*
+	This code is prepared for multithreaded creation of plots;
+	however the low level PLPlot library is not thread safe, we
+	therefor must limit the the number of threads in the thread pool
+	to 1.
+      */
+      thread_pool_type * tp = thread_pool_alloc( 1 , true );
+      stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
+      arg_pack_type ** arg_list = util_malloc( sizeof * arg_list * stringlist_get_size( summary_keys ) , __func__ );
       {
-        arg_pack_type * arg = arg_list[ikey];
-        
-        arg_pack_append_ptr( arg , enkf_main );
-        arg_pack_append_ptr( arg , ensemble_config_get_node( ensemble_config , key ));
-        arg_pack_append_ptr( arg , key );
-        arg_pack_append_ptr( arg , NULL );
-        arg_pack_append_int( arg , step1 );
-        arg_pack_append_int( arg , step2 );
-        arg_pack_append_bool( arg , prediction_mode );
-        arg_pack_append_int( arg , iens1 );
-        arg_pack_append_int( arg , iens2 );
-        arg_pack_append_int( arg , BOTH );
-      
-        thread_pool_add_job( tp , enkf_tui_plot_ensemble_mt , arg );
+	char * plot_path = util_alloc_filename( plot_config_get_path( plot_config ) , enkf_main_get_current_fs( enkf_main ) , NULL );
+	util_make_path( plot_path );
+	free( plot_path );
       }
+      
+      for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
+	const char * key = stringlist_iget( summary_keys , ikey);
+	
+	arg_list[ikey] = arg_pack_alloc( );
+	{
+	  arg_pack_type * arg = arg_list[ikey];
+	  
+	  arg_pack_append_ptr( arg , enkf_main );
+	  arg_pack_append_ptr( arg , ensemble_config_get_node( ensemble_config , key ));
+	  arg_pack_append_ptr( arg , key );
+	  arg_pack_append_ptr( arg , NULL );
+	  arg_pack_append_int( arg , step1 );
+	  arg_pack_append_int( arg , step2 );
+	  arg_pack_append_bool( arg , prediction_mode );
+	  arg_pack_append_int( arg , iens1 );
+	  arg_pack_append_int( arg , iens2 );
+	  arg_pack_append_int( arg , BOTH );
+	  
+	  thread_pool_add_job( tp , enkf_tui_plot_ensemble_mt , arg );
+	}
+      }
+      thread_pool_join( tp );
+      for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) 
+	arg_pack_free( arg_list[ikey] );
+      free( arg_list );
+      stringlist_free( summary_keys );
+      thread_pool_free( tp );
     }
-    thread_pool_join( tp );
-    for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) 
-      arg_pack_free( arg_list[ikey] );
-    free( arg_list );
-    stringlist_free( summary_keys );
-    thread_pool_free( tp );
   }
 }
-
 
           
 

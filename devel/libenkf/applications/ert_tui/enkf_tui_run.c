@@ -71,15 +71,30 @@ void enkf_tui_run_restart__(void * enkf_main) {
   const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
   const int last_report = enkf_main_get_history_length( enkf_main );
   int start_report;
+  char * start_report_as_char;
+  bool wronginput = false;
   state_enum state;
   bool_vector_type * iactive = bool_vector_alloc(0,true);
   bool_vector_iset( iactive , ens_size - 1 , true );
   
-  start_report = util_scanf_int_with_limits("Report step",PROMPT_LEN , 0 , last_report);
-  state        = enkf_tui_util_scanf_state("Analyzed/forecast" , PROMPT_LEN , false);
+  start_report_as_char = util_scanf_int_with_limits_return_char("Report step",PROMPT_LEN , 0 , last_report);
+  if(strlen(start_report_as_char) != 0){
+    util_sscanf_int(start_report_as_char , &start_report);
+  }
+  else
+    wronginput = true;
   
-  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , start_report , start_report  , state);
+  if(!wronginput){
+    state        = enkf_tui_util_scanf_state("Analyzed/forecast" , PROMPT_LEN , false);
+    if(state == UNDEFINED)
+      wronginput = true;
+  }
+  
+  if(!wronginput)
+    enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , start_report , start_report  , state);
+  
   bool_vector_free(iactive);
+  free(start_report_as_char);
 }
 
 
@@ -102,9 +117,10 @@ void enkf_tui_run_exp__(void * enkf_main) {
   state_enum init_state    = ANALYZED; 
   int start_report         = 0;
   int init_step_parameters = 0;
+  char * select_string;
+  bool good_input = false;
   {
-    char * prompt = util_alloc_sprintf("Which realizations to simulate <default:all> : " , ens_size);
-    char * select_string;
+    char * prompt = util_alloc_sprintf("Which realizations to simulate (Ex: 1,3-5) <Enter for all> [M to return to menu] : " , ens_size);
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     if (select_string != NULL) {
@@ -113,8 +129,13 @@ void enkf_tui_run_exp__(void * enkf_main) {
     } 
     free( prompt );
   }
+  for(int value = 0; value < ens_size -1; value++){
+    if(bool_vector_iget(iactive, value) == true)
+      good_input = true;
+  }
+  if(good_input)
+    enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
   
-  enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
   bool_vector_free(iactive);
 }
 
