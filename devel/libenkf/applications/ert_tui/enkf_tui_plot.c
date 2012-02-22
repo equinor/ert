@@ -752,7 +752,8 @@ void enkf_tui_plot_all_summary(void * arg) {
     if (default_used)
       step1 = 0;
     
-    step2 = enkf_tui_util_scanf_int_with_default( "Stop plotting at report step [Enter: default: everything] (M: return to menu)" , PROMPT_LEN , &prediction_mode);
+    if(step1 != -2)
+      step2 = enkf_tui_util_scanf_int_with_default_return_to_menu( "Stop plotting at report step [Enter: default: everything] (M: return to menu)" , PROMPT_LEN , &prediction_mode);
   }
   if (step1 != -2 && step2 != -2){
     enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d) [default: all]" , enkf_main_get_ensemble_size( enkf_main ) , PROMPT_LEN , &iens1 , &iens2);
