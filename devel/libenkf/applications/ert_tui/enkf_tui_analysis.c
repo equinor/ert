@@ -44,15 +44,16 @@ void enkf_tui_analysis_analyze_selected__(void * arg) {
       FILE * stream = util_fopen( filename , "r");
       
       while (true) {
-        int step;
-        if (fscanf(stream , "%d" , &step) == 1) 
-          int_vector_append( step_list , step );
-        else
-          break;
+	int step;
+	if (fscanf(stream , "%d" , &step) == 1) 
+	  int_vector_append( step_list , step );
+	else
+	  break;
       }
       
       fclose( stream );
       free( filename );
+      
     }
     enkf_main_UPDATE(enkf_main , step_list );
     int_vector_free( step_list );
@@ -70,12 +71,20 @@ void enkf_tui_analysis_analyze_selected__(void * arg) {
 
 void enkf_tui_analysis_analyze__(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+  int report_step;
+  bool valid = false;
   {
-    int report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length(enkf_main) , "Which report step to analyze" , PROMPT_LEN);
-    int_vector_type * step_list = int_vector_alloc(0,0);
-    int_vector_append( step_list , report_step );
-    enkf_main_UPDATE(enkf_main , step_list );
-    int_vector_free( step_list );
+    char * report_step_as_char = enkf_tui_util_scanf_report_step_as_char(enkf_main_get_history_length(enkf_main) , "Which report step to analyze" , PROMPT_LEN);
+    if(strlen(report_step_as_char) !=0){
+      valid = util_sscanf_int(report_step_as_char , &report_step);
+    }
+    if(valid){      
+      int_vector_type * step_list = int_vector_alloc(0,0);
+      int_vector_append( step_list , report_step );
+      enkf_main_UPDATE(enkf_main , step_list );
+      int_vector_free( step_list );
+    }
+    free(report_step_as_char);
   }
 }
 
@@ -84,30 +93,49 @@ void enkf_tui_analysis_smooth__(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   {
     bool default_used;
-    int last_report = enkf_main_get_history_length( enkf_main ) ;
-    int step1       = enkf_tui_util_scanf_report_step(last_report , "First report step" , PROMPT_LEN);
-    int step2       = enkf_tui_util_scanf_report_step(last_report , "Last report step"  , PROMPT_LEN);
-    int stride      = enkf_tui_util_scanf_int_with_default( "Stride [default:1]" , PROMPT_LEN , &default_used);
-    
-    int_vector_type * step_list = int_vector_alloc(0,0);
-    
-    if (default_used)
-      stride = 1;
-    
-    {
-      int step = step1;
-      while (true) {
-        int_vector_append( step_list , step );
-        step += stride;
-        if (step > step2)
-          break;
-      }
-      if (int_vector_get_last( step_list ) != step2)
-        int_vector_append( step_list , step2 );
+    bool valid = false;
+    int last_report  = enkf_main_get_history_length( enkf_main );
+    int step1,step2;
+    char * step1_as_char = enkf_tui_util_scanf_report_step_as_char(last_report , "First report step" , PROMPT_LEN);
+    if(strlen(step1_as_char) !=0){
+      valid = util_sscanf_int(step1_as_char , &step1);
     }
-    enkf_main_UPDATE(enkf_main , step_list );
-    
-    int_vector_free( step_list );
+    if(valid){
+      valid = false;
+      char * step2_as_char = enkf_tui_util_scanf_report_step_as_char(last_report , "Last report step"  , PROMPT_LEN);
+      if(strlen(step2_as_char) !=0){
+	valid = util_sscanf_int(step2_as_char , &step2);
+	if(step2<step1){
+	  printf("Last report step has to be bigger than first\n");
+	  valid = false;
+	}
+      }
+      if(valid){
+	int stride           = enkf_tui_util_scanf_int_with_default( "Stride [default:1]" , PROMPT_LEN , &default_used);
+	
+	int_vector_type * step_list = int_vector_alloc(0,0);
+	
+	if (default_used)
+	  stride = 1;
+	
+	{
+	  int step = step1;
+	  while (true) {
+	    int_vector_append( step_list , step );
+	    step += stride;
+	    if (step > step2)
+	      break;
+	  }
+	  if (int_vector_get_last( step_list ) != step2)
+	    int_vector_append( step_list , step2 );
+	}
+	enkf_main_UPDATE(enkf_main , step_list );
+	
+	int_vector_free( step_list );
+      }
+      free(step2_as_char);
+    }
+    free(step1_as_char);
   }
 }
 

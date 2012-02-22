@@ -54,10 +54,17 @@ state_enum enkf_tui_util_scanf_state(const char * prompt, int prompt_len, bool a
   do {
     OK = true;
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-    scanf("%s" , analyzed_string);
-    getchar(); /* Discards trailing <RETURN> from standard input buffer? */
-    
-    if (strlen(analyzed_string) == 1) {
+    //scanf("%s" , analyzed_string);
+    fgets(analyzed_string, prompt_len, stdin);
+    char *newline = strchr(analyzed_string,'\n');
+    if(newline)
+      *newline = 0;
+    //getchar(); /* Discards trailing <RETURN> from standard input buffer? */
+    if (strlen(analyzed_string) == 0){
+      OK = true;
+      state = UNDEFINED;
+    }
+    else if (strlen(analyzed_string) == 1) {
       char c = toupper(analyzed_string[0]);
       if (c == 'A')
         state = ANALYZED;
@@ -107,7 +114,10 @@ const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type
     OK = true;
     util_printf_prompt("Keyword" , prompt_len , '=' , "=> ");
     kw = util_alloc_stdin_line();
-    if (ensemble_config_has_key(config , kw)) {
+    if(kw==NULL){
+      OK = true;
+  }
+    else if (ensemble_config_has_key(config , kw)) {
       config_node = ensemble_config_get_node(config , kw);
       
       if (impl_type != INVALID) 
@@ -350,6 +360,10 @@ int enkf_tui_util_scanf_report_step(int last_report, const char * prompt , int p
   return report_step;
 }
 
+char *  enkf_tui_util_scanf_report_step_as_char(int last_report, const char * prompt , int prompt_len) {
+  char * report_step = util_scanf_int_with_limits_return_char(prompt , prompt_len , 0 , last_report);
+  return report_step;
+}
 
 int enkf_tui_util_scanf_int_with_default(const char * prompt , int prompt_len , bool * default_used) {
   bool        OK;
@@ -372,6 +386,31 @@ int enkf_tui_util_scanf_int_with_default(const char * prompt , int prompt_len , 
   return value;
 }
 
+int enkf_tui_util_scanf_int_with_default_and_return_to_menu(const char * prompt , int prompt_len , bool * default_used) {
+  bool        OK;
+  int value;
+  *default_used = false;
+  do {
+    char * input;
+
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    input = util_alloc_stdin_line();
+    if (input == NULL) {
+      *default_used = true;
+      OK = true;
+      value = -1;
+    }
+    else if (input == "M" || input == "m"){
+      OK = true;
+      value = -2;
+    }
+    else {
+      OK = util_sscanf_int( input , &value ); 
+      free( input );
+    }
+  } while (!OK);
+  return value;
+}
 
 /*****************************************************************/
 
