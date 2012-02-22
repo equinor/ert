@@ -400,7 +400,7 @@ int enkf_tui_util_scanf_int_with_default_return_to_menu(const char * prompt , in
       OK = true;
       value = -1;
     }
-    else if (input == "M" || input == "m"){
+    else if (strcmp(input,"M")==0 || strcmp(input,"m")==0){
       OK = true;
       value = -2;
     }
