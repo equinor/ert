@@ -386,7 +386,7 @@ int enkf_tui_util_scanf_int_with_default(const char * prompt , int prompt_len , 
   return value;
 }
 
-int enkf_tui_util_scanf_int_with_default_and_return_to_menu(const char * prompt , int prompt_len , bool * default_used) {
+int enkf_tui_util_scanf_int_with_default_return_to_menu(const char * prompt , int prompt_len , bool * default_used) {
   bool        OK;
   int value;
   *default_used = false;

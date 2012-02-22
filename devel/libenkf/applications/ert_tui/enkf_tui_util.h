@@ -40,5 +40,5 @@ int                           enkf_tui_util_scanf_report_step(int , const char *
 char *                        enkf_tui_util_scanf_report_step_as_char(int , const char *  , int );
 void                          enkf_tui_util_msg(const char * , ...);
 int                           enkf_tui_util_scanf_int_with_default(const char * prompt , int prompt_len , bool * default_used);
-int                          enkf_tui_util_scanf_int_with_default_return_to_menu(const char * prompt , int prompt_len , bool * default_used);
+int                           enkf_tui_util_scanf_int_with_default_return_to_menu(const char * prompt , int prompt_len , bool * default_used);
 #endif
