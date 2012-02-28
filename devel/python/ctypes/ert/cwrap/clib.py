@@ -36,21 +36,25 @@ def load( *lib_list ):
     Will return a handle to the first successfull load, and raise
     ImportError if none of the loads succeed.
     """
+    error_list = {}
     dll = None
     for lib in lib_list:
         try:
             dll = ctypes.CDLL( lib , ctypes.RTLD_GLOBAL )
             return dll
-        except:
-            pass
-    
+        except Exception,exc:
+            error_list[lib] = exc
+
+    error_msg = "\nFailed to load shared library:%s\n\ndlopen() error:\n" % lib_list[0]
+    for lib in error_list.keys():
+        error_msg += "   %16s : %s\n" % (lib , error_list[lib])
+    error_msg += "\n"
+
     LD_LIBRARY_PATH = os.getenv("LD_LIBRARY_PATH")
     if not LD_LIBRARY_PATH:
         LD_LIBRARY_PATH = ""
 
-    error_msg = """
-Failed to load shared library:%s
-
+    error_msg += """
 The runtime linker has searched through the default location of shared
 libraries, and also the locations mentioned in your LD_LIBRARY_PATH
 variable. Your current LD_LIBRARY_PATH setting is:
@@ -58,5 +62,5 @@ variable. Your current LD_LIBRARY_PATH setting is:
    LD_LIBRARY_PATH: %s
 
 You might need to update this variable?
-""" % (lib_list[0] , LD_LIBRARY_PATH)
+""" % LD_LIBRARY_PATH
     raise ImportError( error_msg )

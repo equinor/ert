@@ -40,6 +40,7 @@ from   ecl_sum               import EclSum
 from   ecl_rft               import EclRFTFile , EclRFT , EclRFTCell
 from   ecl_grid              import EclGrid
 from   ecl_grav              import EclGrav
+from   ecl_subsidence        import EclSubsidence
 from   ecl_region            import EclRegion
 from   fortio                import FortIO
 from   ecl_queue             import EclQueue
@@ -47,6 +48,7 @@ import ecl_util
 from   ecl_util              import *  
 
 import ecl_default
+
 
 
         

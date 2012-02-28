@@ -183,30 +183,30 @@ class EclKW(object):
         of presedence, is as follows:
 
         1. The optional argument @ecl_type can be used to specify
-        the type: 
+           the type: 
 
-        special_int_kw = EclKW.read_grdecl( fileH , 'INTKW' , ecl_type = ECL_INT_TYPE )
+           special_int_kw = EclKW.read_grdecl( fileH , 'INTKW' , ecl_type = ECL_INT_TYPE )
 
-        If ecl_type is different from ECL_INT_TYPE or
-        ECL_FLOAT_TYPE a TypeError exception will be raised.
+           If ecl_type is different from ECL_INT_TYPE or
+           ECL_FLOAT_TYPE a TypeError exception will be raised.
 
-        If ecl_type == None (the default), the method will
-        continue to point 2. or 3. to determine the correct
-        type. 
+           If ecl_type == None (the default), the method will continue
+           to point 2. or 3. to determine the correct type.
 
 
         2. If the keyword is included in the set built in set
-        'int_kw_set' the type will be ECL_INT_TYPE.
+           'int_kw_set' the type will be ECL_INT_TYPE.
 
-        pvtnum_kw = EclKW.read_grdecl( fileH , 'PVTNUM' )
+           pvtnum_kw = EclKW.read_grdecl( fileH , 'PVTNUM' )
         
-        Observe that (currently) no case conversions take place
-        when checking the 'int_kw_set'. The current built in set
-        is accesible through the int_kw property.
+           Observe that (currently) no case conversions take place
+           when checking the 'int_kw_set'. The current built in set is
+           accesible through the int_kw property.
+
 
         3. Otherwise the default is float, i.e. ECL_FLOAT_TYPE.
         
-        poro_kw = EclKW.read_grdecl( fileH , 'PORO')
+           poro_kw = EclKW.read_grdecl( fileH , 'PORO')
         
 
         Observe that since the grdecl files are quite weakly
@@ -512,8 +512,8 @@ class EclKW(object):
             reg  = ecl.EclRegion( grid , false )
             init = ecl.EclFile("ECLIPSE.INIT")
 
-            poro = init.iget_named_kw( "PORO" , 0 )
-            eqlnum = init.iget_named_kw( "EQLNUM" , 0 )
+            poro = init["PORO"][0]
+            eqlnum = init["EQLNUM"][0]
             reg.select_below( poro , 0.10 )
             
             eqlnum.assign( 88 , mask = reg )

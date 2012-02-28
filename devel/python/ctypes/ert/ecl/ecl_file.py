@@ -476,6 +476,17 @@ class EclFile(object):
         """
         return cfunc.get_unique_size( self )
 
+    def keys():
+        """
+        Will return a list of unique kw names - like keys() on a dict.
+        """
+        header_list = []
+        for index in range(self.size):
+            kw = self[index]
+            if not header_list.contains( kw_name ):
+                header_list.append( kw.name )
+        return header_list
+    
     
     @property
     def headers(self):
