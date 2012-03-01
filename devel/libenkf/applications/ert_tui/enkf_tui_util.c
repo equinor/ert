@@ -218,11 +218,15 @@ void enkf_tui_util_scanf_report_steps(int last_report , int prompt_len , int * _
     const char * current_ptr = input;
     int step1 , step2;
     OK = true;
-
-    current_ptr = util_parse_int(current_ptr , &step1 , &OK);
-    current_ptr = util_skip_sep(current_ptr , " ,-:" , &OK);
-    current_ptr = util_parse_int(current_ptr , &step2 , &OK);
-    
+    if(input == NULL){
+      step1=0;
+      step2=last_report;
+    }
+    else{
+      current_ptr = util_parse_int(current_ptr , &step1 , &OK);
+      current_ptr = util_skip_sep(current_ptr , " ,-:" , &OK);
+      current_ptr = util_parse_int(current_ptr , &step2 , &OK);
+    }
     if (!OK) 
       printf("Failed to parse two integers from: \"%s\". Example: \"0 - 19\" to get the 20 first report steps.\n",input);
     free(input);

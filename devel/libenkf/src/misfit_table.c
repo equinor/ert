@@ -418,17 +418,26 @@ void misfit_table_display_ranking( const misfit_table_type * table , const char 
   const int ens_size                  = vector_get_size( table->ensemble );
   const misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
   const int * permutations            = ranking->sort_permutation;
+  hash_type * obs_hash                = vector_iget( ranking->ensemble , 0);
+  stringlist_type * obs_keys          = hash_alloc_stringlist( obs_hash );
+  int num_obs                         = stringlist_get_size( obs_keys );
   int i;
-  
+  int num_obs_total = num_obs * ens_size;
+  double summed_up = 0.0;
+
   printf("\n\n");
-  printf("  #    Realization    Total misfit\n");
-  printf("-----------------------------------\n");
+  printf("  #    Realization    Normalized misfit    Total misfit\n");
+  printf("-------------------------------------------------------\n");
   for (i = 0; i < ens_size; i++) {
     int    iens         = permutations[i];
     double total_misfit = double_vector_iget( ranking->total , iens );
-    printf("%3d    %3d               %10.3f  \n",i,iens,total_misfit);
+    double normalized_misfit = sqrt(total_misfit / num_obs_total);
+    summed_up = summed_up+total_misfit;
+    printf("%3d    %3d                   %10.3f      %10.3f  \n",i,iens,normalized_misfit,total_misfit);
   }
-  printf("-----------------------------------\n");
+  double normalized_summed_up = sqrt(summed_up / (num_obs_total * ens_size));
+  printf("        All                  %10.3f      %10.3f  \n",normalized_summed_up,summed_up);
+  printf("-------------------------------------------------------\n");
 }
 
 
@@ -438,32 +447,55 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
   const int ens_size                  = vector_get_size( table->ensemble );
   const misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
   const int * permutations            = ranking->sort_permutation;
+  double summed_up = 0.0;
   {
     // All this whitespace is finely tuned and highly significant .... 
-    const char * key_fmt       = " %13s ";                                
-    const char * value_fmt     = " %13.3f ";
-    const char * start_fmt     = " %3d       %3d           %10.3f     ";  
+    const char * key_fmt       = " %18s ";                                
+    const char * value_fmt     = " %10.3f %8.3f";
+    const char * start_fmt     = " %2d       %3d     %7.3f %8.3f";  
 
     hash_type * obs_hash       = vector_iget( ranking->ensemble , 0);
     stringlist_type * obs_keys = hash_alloc_stringlist( obs_hash );
     int num_obs                = stringlist_get_size( obs_keys );
     int iobs;
+    int num_obs_total = num_obs * ens_size;
 
     stringlist_sort( obs_keys , enkf_util_compare_keys__ );
-    fprintf(stream , "   #     Realization   Total-misfit     ");
+    fprintf(stream , "                       Overall  ");
     for (iobs =0; iobs < num_obs; iobs++) 
       fprintf(stream , key_fmt , stringlist_iget( obs_keys , iobs ));
-    fprintf(stream , "\n");
 
+    fprintf(stream , "\n");
+    fprintf(stream , "  #    Realization  Norm    Total");
+    for (iobs =0; iobs < num_obs; iobs++) 
+      fprintf(stream , "       Norm    Total");
+    
+    fprintf(stream , "\n");
     for (int i = 0; i < ens_size; i++) {
       int iens = permutations[i];
       hash_type * obs_hash = vector_iget( ranking->ensemble , iens );
       double total_value   = double_vector_iget( ranking->total , iens );
-      fprintf(stream , start_fmt , i , iens , total_value);
-      for (iobs =0; iobs < num_obs; iobs++) 
-        fprintf(stream , value_fmt , hash_get_double( obs_hash , stringlist_iget( obs_keys , iobs )));
+      double normalized_misfit = sqrt(total_value / num_obs_total);
+      summed_up = summed_up+total_value;
+      fprintf(stream , start_fmt , i , iens , normalized_misfit , total_value);
+      for (iobs =0; iobs < num_obs; iobs++){
+	double single_value = hash_get_double( obs_hash , stringlist_iget( obs_keys , iobs ));
+        double single_value_normalized = sqrt(single_value / (num_obs_total));
+        fprintf(stream , value_fmt , single_value_normalized , single_value);
+      }
       fprintf(stream , "\n");
     }
+    double summed_up_normalized = sqrt(summed_up / (num_obs_total * ens_size));
+    fprintf(stream , "           All    %7.3f %8.3f" , summed_up_normalized , summed_up);
+    for (iobs = 0; iobs < num_obs; iobs++){
+      double single_value_summed_up = 0.0;      
+      for (int i = 0; i < ens_size; i++) {  
+	single_value_summed_up = single_value_summed_up + hash_get_double( obs_hash , stringlist_iget( obs_keys , iobs ));
+      }
+      double single_value_summed_up_normalized=sqrt(single_value_summed_up / (num_obs_total * ens_size));
+      fprintf(stream , value_fmt , single_value_summed_up_normalized , single_value_summed_up);
+    }
+    fprintf(stream , "\n");
   }
   fclose( stream );
 }
