@@ -20,7 +20,7 @@ Calculate dynamic change in gravitational strength.
 The ecl_subsidence module contains functionality to load time-lapse ECLIPSE
 results and calculate the change in seafloor subsidence between the
 different surveys. The implementation is a thin wrapper around the
-ecl_subsidence.c implementation (not in the libecl library).
+ecl_subsidence.c implementation in the libecl library.
 """
 
 import  libecl
@@ -93,7 +93,7 @@ class EclSubsidence:
         cfunc.add_survey_PRESSURE( self , survey_name , restart_file )
 
                 
-    def eval(self , base_survey , monitor_survey , pos , compressibility , region = None):
+    def eval(self , base_survey , monitor_survey , pos , compressibility , poisson_ratio , region = None):
         """
         Calculates the subsidence change between two surveys.
         
@@ -117,7 +117,7 @@ class EclSubsidence:
 
         The argument @compressibility is the total reservoir compressibility.
         """
-        return cfunc.eval( self , base_survey , monitor_survey , region , pos[0] , pos[1] , pos[2] , compressibility)
+        return cfunc.eval( self , base_survey , monitor_survey , region , pos[0] , pos[1] , pos[2] , compressibility, poisson_ratio)
 
 # 2. Creating a wrapper object around the libecl library, 
 cwrapper = CWrapper( libecl.lib )
@@ -133,4 +133,4 @@ cfunc.free              = cwrapper.prototype("void       ecl_subsidence_free( ec
 
 # Return value ignored in the add_survey_xxx() functions:
 cfunc.add_survey_PRESSURE   = cwrapper.prototype("c_void_p  ecl_subsidence_add_survey_PRESSURE( ecl_subsidence , char* , ecl_file )")
-cfunc.eval                  = cwrapper.prototype("double    ecl_subsidence_eval( ecl_subsidence , char* , char* , ecl_region , double , double , double, int)")
+cfunc.eval                  = cwrapper.prototype("double    ecl_subsidence_eval( ecl_subsidence , char* , char* , ecl_region , double , double , double, double, double)")
