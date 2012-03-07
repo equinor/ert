@@ -41,58 +41,41 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
   const int prompt_len                         = 35;
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   int   ens_size                               = enkf_main_get_ensemble_size( enkf_main );
-  stringlist_type * param_list                 = stringlist_alloc_new();
   int iens1, iens2;
-  bool emptyinput = false;
+  bool iens_valid = false;
   
   /* iens2 should be interpreted as __inclusive__ */
   if ( all_members ) {
     iens1 = 0;
     iens2 = ens_size - 1;
-  }
-  else {
+    iens_valid = true;
+  } else {
     char * iens1char = util_scanf_int_with_limits_return_char("Initialize ensemble member" , prompt_len , 0 , ens_size - 1);
-    if(strlen(iens1char) != 0){
+    if (strlen(iens1char)) {
       util_sscanf_int(iens1char , &iens1);
       iens2 = iens1;
+      iens_valid = true;
     }
-    else
-      emptyinput = true;
     free(iens1char);
   }
-  if (all_parameters) {
-    if( !all_members && emptyinput){
-      printf("No initialization\n");
-    }
-    else{
-      stringlist_type * tmp_key_list = ensemble_config_alloc_keylist( ensemble_config);
-      int num_keys = stringlist_get_size(tmp_key_list);
-      for (int i = 0; i < num_keys; i++) {
-	if (ensemble_config_var_type(ensemble_config , stringlist_iget(tmp_key_list,i)) != STATIC_STATE)
-	  stringlist_append_copy(param_list , stringlist_iget(tmp_key_list,i ));
-      }
-      printf("Initialized\n");
-      stringlist_free(tmp_key_list);
-    }
-  } 
-  else {    
-    if( !all_members && emptyinput){
-      printf("No initialization\n");
-    }
-    else{
+  
+  if (iens_valid) {
+    stringlist_type * param_list = NULL;
+    if (all_parameters) 
+      param_list = ensemble_config_alloc_keylist_from_var_type( ensemble_config , PARAMETER );
+    else {
       const enkf_config_node_type * config_node = NULL;
+      param_list = stringlist_alloc_new();
       config_node = enkf_tui_util_scanf_key(ensemble_config , prompt_len , INVALID , INVALID_VAR);
-      if(config_node != NULL){
-	stringlist_append_copy( param_list , enkf_config_node_get_key(config_node));
-	enkf_main_initialize_from_scratch(enkf_main , param_list , iens1 , iens2);
-	printf("Initialized\n");
-      }
-      else{
-	printf("No initialization\n");
-      }
+      if( config_node != NULL )
+        stringlist_append_copy( param_list , enkf_config_node_get_key(config_node));
+    }
+
+    if (param_list != NULL) {
+      enkf_main_initialize_from_scratch(enkf_main , param_list , iens1 , iens2);
+      stringlist_free( param_list );
     }
   }
-  stringlist_free( param_list );
 }
 
 
