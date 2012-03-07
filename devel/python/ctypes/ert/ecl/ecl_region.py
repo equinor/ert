@@ -216,9 +216,24 @@ class EclRegion(object):
         cfunc.reset( self )
 
     ##################################################################
-    # Select functions
 
-    def select_more( self , ecl_kw , limit):
+    def select_method(select):
+
+        def select_wrapper(self , *args ,  **kwargs):
+            intersect = kwargs.has_key('intersect') and kwargs['intersect']
+            if intersect:
+                new_region = EclRegion( self.grid , False )
+                select(new_region , *args )
+                
+                self &= new_region
+            else:
+                select(self , *args )
+
+        return select_wrapper
+
+            
+    @select_method
+    def select_more( self , ecl_kw , limit , intersect = False):
         """
         Select all cells where keyword @ecl_kw is above @limit.
 
@@ -251,7 +266,8 @@ class EclRegion(object):
         """
         cfunc.deselect_more( self , ecl_kw , limit )
 
-    def select_less( self , ecl_kw , limit):
+    @select_method
+    def select_less( self , ecl_kw , limit , intersect = False):
         """
         Select all cells where keyword @ecl_kw is below @limit.
         
@@ -267,8 +283,8 @@ class EclRegion(object):
         """
         cfunc.deselect_less( self , ecl_kw , limit )
 
-    
-    def select_equal( self , ecl_kw , value ):
+    @select_method
+    def select_equal( self , ecl_kw , value , intersect = False):
         """
         Select all cells where @ecl_kw is equal to @value.
 
@@ -297,7 +313,8 @@ class EclRegion(object):
         """
         cfunc.deselect_equal( self , ecl_kw , value )
 
-    def select_in_range( self , ecl_kw , lower_limit , upper_limit):
+    @select_method
+    def select_in_range( self , ecl_kw , lower_limit , upper_limit , select = False):
         """
         Select all cells where @ecl_kw is in the half-open interval [ , ).
 
@@ -327,7 +344,9 @@ class EclRegion(object):
         """
         cfunc.deselect_in_interval( self , ecl_kw , lower_limit , upper_limit)
 
-    def select_cmp_less( self , kw1 , kw2):
+
+    @select_method
+    def select_cmp_less( self , kw1 , kw2 , intersect = False):
         """
         Will select all cells where kw2 < kw1.
 
@@ -356,7 +375,8 @@ class EclRegion(object):
         """
         cfunc.deselect_cmp_less( self , kw1 , kw2 )
 
-    def select_cmp_more( self , kw1 , kw2):
+    @select_method
+    def select_cmp_more( self , kw1 , kw2 , intersect = False):
         """
         Will select all cells where kw2 > kw1.
         
@@ -372,7 +392,8 @@ class EclRegion(object):
         """
         cfunc.deselect_cmp_more( self , kw1 , kw2 )
 
-    def select_active( self ):
+    @select_method
+    def select_active( self , intersect = False):
         """
         Will select all the active grid cells.
         """
@@ -384,17 +405,20 @@ class EclRegion(object):
         """
         cfunc.deselect_active( self )
 
-    def select_inactive( self ):
+    @select_method
+    def select_inactive( self , intersect = False):
         """
         Will select all the inactive grid cells.
         """
         cfunc.select_inactive( self )
+
 
     def deselect_inactive( self ):
         """
         Will deselect all the inactive grid cells.
         """
         cfunc.deselect_inactive( self )
+
 
     def select_all( self ):
         """
@@ -414,8 +438,8 @@ class EclRegion(object):
         """
         self.deselect_all()
 
-
-    def select_deep( self, depth):
+    @select_method 
+    def select_deep( self, depth , intersect = False):
         """
         Will select all cells below @depth.
         """
@@ -427,7 +451,8 @@ class EclRegion(object):
         """
         cfunc.deselect_deep_cells(self , depth)
 
-    def select_shallow( self, depth):
+    @select_method 
+    def select_shallow( self, depth , intersect = False):
         """
         Will select all cells above @depth.
         """
@@ -438,8 +463,9 @@ class EclRegion(object):
         Will deselect all cells above @depth.
         """
         cfunc.deselect_shallow_cells(self , depth)
-        
-    def select_small( self , size_limit ):
+
+    @select_method
+    def select_small( self , size_limit , intersect = False):
         """
         Will select all cells smaller than @size_limit.
         """
@@ -451,7 +477,8 @@ class EclRegion(object):
         """
         cfunc.deselect_small( self , size_limit )
 
-    def select_large( self , size_limit ):
+    @select_method
+    def select_large( self , size_limit , intersect = False):
         """
         Will select all cells larger than @size_limit.
         """
@@ -463,7 +490,8 @@ class EclRegion(object):
         """
         cfunc.deselect_large( self , size_limit )
 
-    def select_thin( self , size_limit ):
+    @select_method
+    def select_thin( self , size_limit , intersect = False):
         """
         Will select all cells thinner than @size_limit.
         """
@@ -475,7 +503,8 @@ class EclRegion(object):
         """
         cfunc.deselect_thin( self , size_limit )
 
-    def select_thick( self , size_limit ):
+    @select_method
+    def select_thick( self , size_limit , intersect = False):
         """
         Will select all cells thicker than @size_limit.
         """
@@ -487,7 +516,8 @@ class EclRegion(object):
         """
         cfunc.deselect_thick( self , size_limit )
 
-    def select_box( self , ijk1 , ijk2 ):
+    @select_method
+    def select_box( self , ijk1 , ijk2 , intersect = False):
         """
         Will select all cells in box.
 
@@ -510,7 +540,8 @@ class EclRegion(object):
         """
         cfunc.deselect_box( self , ijk1[0] , ijk2[0] , ijk1[1] , ijk2[1] , ijk1[2] , ijk2[2])
 
-    def select_islice( self , i1 , i2):
+    @select_method
+    def select_islice( self , i1 , i2, intersect = False):
         """
         Will select all cells with i in [@i1, @i2].
         """
@@ -522,7 +553,8 @@ class EclRegion(object):
         """
         cfunc.deselect_islice( self , i1,i2)
 
-    def select_jslice( self , j1 , j2):
+    @select_method
+    def select_jslice( self , j1 , j2 , intersect = False):
         """
         Will select all cells with j in [@j1, @j2].
         """
@@ -534,7 +566,8 @@ class EclRegion(object):
         """
         cfunc.deselect_islice( self , j1,j2)
 
-    def select_kslice( self , k1 , k2):
+    @select_method
+    def select_kslice( self , k1 , k2 , intersect = False):
         """
         Will select all cells with k in [@k1, @k2].
         """
@@ -560,7 +593,8 @@ class EclRegion(object):
             p_vec[i] = p[i]
         return ( n_vec , p_vec )
 
-    def select_above_plane( self , n , p):
+    @select_method
+    def select_above_plane( self , n , p , intersect = False):
         """
         Will select all the cells 'above' the plane defined by n & p.
 
@@ -574,7 +608,8 @@ class EclRegion(object):
         (n_vec , p_vec) = self.__init_plane_select( n , p )
         cfunc.select_above_plane( self , n_vec , p_vec )
 
-    def select_below_plane( self , n , p):
+    @select_method
+    def select_below_plane( self , n , p , interscet = False):
         """
         Will select all the cells 'below' the plane defined by n & p.
 
@@ -601,8 +636,8 @@ class EclRegion(object):
         (n_vec , p_vec) = self.__init_plane_deselect( n , p )
         cfunc.deselect_below_plane( self , n_vec , p_vec )
 
-
-    def select_inside_polygon( self , points ):
+    @select_method
+    def select_inside_polygon( self , points , intersect = False):
         """
         Will select all points inside polygon.
 
@@ -623,7 +658,8 @@ class EclRegion(object):
         """
         cfunc.select_inside_polygon( self , GeoPolygon( points ))
 
-    def select_outside_polygon( self , points ):
+    @select_method
+    def select_outside_polygon( self , points , intersect = False):
         """
         Will select all points outside polygon.
 
