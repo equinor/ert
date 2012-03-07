@@ -112,11 +112,13 @@ Will create a module 'my_module' based on the src files my_src1.c
 and my_src2.c; in addition the object files f90_object1.o and
 f90_object2.o will be included in the final module.
 
-By default the ert_module script will include some libraries 
-from the core ert distribution; if you are not interested in
-referencing these you can issue the option --exclude-ert. 
+By default the ert_module script will include some libraries from the
+core ert distribution; if you are not interested in referencing these
+you can issue the option --exclude-ert. Default flags:
 
-"""
+Compile: %s  %s 
+Link:    %s  %s
+""" % (make_XFLAG( "I" , include_path_list) , make_XFLAG( "D" , define_list) , make_XFLAG("L" , lib_path_list) , make_XFLAG("l" , lib_list))
 
 parser = OptionParser( usage ) 
 parser.add_option("-I" , dest = "include_path_list", action = "append")

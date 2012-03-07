@@ -44,6 +44,5 @@ add_shared_library( env , conf , module_path , "null_enkf.so" , ["null_enkf.c"] 
 add_shared_library( env , conf , module_path , "fwd_step_enkf.so" , ["fwd_step_enkf.c"] )
 
 
-
-Default( include_path , slib_path , module_path)
+Default( include_path , slib_path , module_path )
 

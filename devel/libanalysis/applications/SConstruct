@@ -19,7 +19,8 @@ if conf.g2c:
 
 conf.update_env( env , [ LIBANALYSIS , LIBUTIL ] , ext_liblist = lib_list , link = True)
 
-add_program(env , conf ,  bin_path , "analysis.x"        , "main_test.c"       )
+add_program(env , conf ,  bin_path , "analysis.x"         , "main_test.c"       )
+add_program(env , conf ,  bin_path , "module_test"        , "module_test.c"       )
 
 Default( bin_path )
 
