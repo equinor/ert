@@ -123,7 +123,7 @@ void * std_enkf_data_alloc( rng_type * rng) {
   
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   std_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
-  data->option_flags = ANALYSIS_NEED_ED;
+  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA;
   return data;
 }
 

@@ -52,7 +52,7 @@ class EclSubsidence:
         Creates a new EclSubsidence instance. 
 
         The input arguments @grid and @init_file should be instances
-        of EclSubsidence and EclFile respectively.
+        of EclGrid and EclFile respectively.
         """
         self.c_ptr     = cfunc.subsidence_alloc( grid , init_file )
         self.init_file = init_file   # Inhibit premature garbage collection of init_file

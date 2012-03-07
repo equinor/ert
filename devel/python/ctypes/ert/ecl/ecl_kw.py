@@ -673,6 +673,12 @@ class EclKW(object):
 
     @property    
     def min_max( self ):
+        """
+        Will return a touple (min,max) for numerical types.
+
+        Will raise TypeError exception if the keyword is not of
+        numerical type.
+        """
         if self.ecl_type == ECL_FLOAT_TYPE:
             min = ctypes.c_float()
             max = ctypes.c_float()
@@ -686,27 +692,18 @@ class EclKW(object):
             max = ctypes.c_int()
             cfunc.max_min_int( self , ctypes.byref( max ) , ctypes.byref( min ))
         else:
-            print self.type
-            return None
+            raise TypeError("min_max property not defined for keywords of type: %s" % self.type)
         return (min.value , max.value)
 
 
     @property
     def max( self ):
-        min_max = self.min_max
-        if min_max:
-            return min_max[1]
-        else:
-            return None
-
+        return self.min_max[1]
+    
     
     @property
     def min( self ):
-        min_max = self.min_max
-        if min_max:
-            return min_max[0]
-        else:
-            return None
+        return self.min_max[0]
         
     
     @property
@@ -895,5 +892,6 @@ cfunc.set_float                  = cwrapper.prototype("void     ecl_kw_scalar_se
 cfunc.max_min_int                = cwrapper.prototype("void     ecl_kw_max_min_int( ecl_kw , int* , int*)")
 cfunc.max_min_float              = cwrapper.prototype("void     ecl_kw_max_min_float( ecl_kw , float* , float*)")
 cfunc.max_min_double             = cwrapper.prototype("void     ecl_kw_max_min_double( ecl_kw , double* , double*)")
+
 
 

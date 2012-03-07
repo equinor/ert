@@ -28,6 +28,7 @@ extern "C" {
 #define ANALYSIS_NEED_ED              1
 #define ANALYSIS_USE_A                4       // The module will read the content of A - but not modify it.
 #define ANALYSIS_UPDATE_A             8
+#define ANALYSIS_SCALE_DATA          16
 
 #define EXTERNAL_MODULE_NAME      "analysis_table"
 #define EXTERNAL_MODULE_SYMBOL     analysis_table

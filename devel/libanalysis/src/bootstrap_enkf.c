@@ -361,7 +361,7 @@ void * bootstrap_enkf_data_alloc( rng_type * rng ) {
   bootstrap_enkf_set_truncation( boot_data , DEFAULT_TRUNCATION );
   bootstrap_enkf_set_subspace_dimension( boot_data , DEFAULT_NCOMP );
   bootstrap_enkf_set_doCV( boot_data , DEFAULT_DO_CV);
-  boot_data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A;
+  boot_data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_SCALE_DATA;
   return boot_data;
 }
 

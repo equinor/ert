@@ -95,7 +95,7 @@ void * cv_enkf_data_alloc( rng_type * rng ) {
   data->rng          = rng;
 
   data->penalised_press = DEFAULT_PEN_PRESS;
-  data->option_flags    = ANALYSIS_NEED_ED + ANALYSIS_USE_A;
+  data->option_flags    = ANALYSIS_NEED_ED + ANALYSIS_USE_A + ANALYSIS_SCALE_DATA;
   data->nfolds          = DEFAULT_NFOLDS;
   cv_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   
