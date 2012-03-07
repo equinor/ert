@@ -702,7 +702,7 @@ double obs_vector_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , 
 */
 
 
-void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, int step1 , int step2 , int iens1 , int iens2 , state_enum load_state , double ** chi2) {
+void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, bool_vector_type * valid , int step1 , int step2 , int iens1 , int iens2 , state_enum load_state , double ** chi2) {
   int step;
 
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
@@ -717,8 +717,11 @@ void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type 
         
         if (enkf_node_try_load( enkf_node , fs , node_id)) 
           chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node , node_id);
-        else
+        else {
           chi2[step][iens] = 0;
+          // Missing data - this member will be marked as invalid in the misfit calculations.
+          bool_vector_iset( valid , iens , false );
+        }
         
       }
     } else {
