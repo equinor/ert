@@ -24,24 +24,38 @@ extern "C" {
 
 #include <matrix.h>
 
-// Option flags:
+
+/* 
+   These are option flag values which are used by the core ert code to
+   query the module of it's needs and capabilities. For instance to to
+   determine whether the data should be scaled prior to analysis the
+   core code will issue the call:
+
+      if (analysis_module_get_option( module, ANALYSIS_SCALE_DATA))
+         obs_data_scale( obs_data , S , E , D , R , dObs );
+
+   It is the responsability of the module to set the various flags.  
+*/
+
+
 #define ANALYSIS_NEED_ED              1
 #define ANALYSIS_USE_A                4       // The module will read the content of A - but not modify it.
-#define ANALYSIS_UPDATE_A             8
+#define ANALYSIS_UPDATE_A             8       // The update will be based on modifying A directly, and not on an X matrix. 
 #define ANALYSIS_SCALE_DATA          16
 
-#define EXTERNAL_MODULE_NAME      "analysis_table"
-#define EXTERNAL_MODULE_SYMBOL     analysis_table
+
+#define EXTERNAL_MODULE_NAME "analysis_table" 
+#define EXTERNAL_MODULE_SYMBOL analysis_table
 
   typedef enum {
-    LOAD_OK = 0,
-    DLOPEN_FAILURE = 1,
+    LOAD_OK                     = 0,
+    DLOPEN_FAILURE              = 1,         
     LOAD_SYMBOL_TABLE_NOT_FOUND = 2
   } analysis_module_load_status_enum;
   
   
-typedef struct analysis_module_struct analysis_module_type;
-
+  typedef struct analysis_module_struct analysis_module_type;
+  
   analysis_module_type * analysis_module_alloc_internal__( rng_type * rng , const char * user_name , const char * symbol_table , bool verbose , analysis_module_load_status_enum * load_status);
   analysis_module_type * analysis_module_alloc_internal( rng_type * rng , const char * user_name , const char * symbol_table );
   
@@ -77,14 +91,13 @@ typedef struct analysis_module_struct analysis_module_type;
                                                       matrix_type * D );
   
 
-const char           * analysis_module_get_lib_name( const analysis_module_type * module);
-bool                   analysis_module_internal( const analysis_module_type * module );
-bool                   analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
-const char           * analysis_module_get_table_name( const analysis_module_type * module);
-const char           * analysis_module_get_name( const analysis_module_type * module );
-bool                   analysis_module_get_option( const analysis_module_type * module , long flag);
-void                   analysis_module_complete_update( analysis_module_type * module );
-
+  const char           * analysis_module_get_lib_name( const analysis_module_type * module);
+  bool                   analysis_module_internal( const analysis_module_type * module );
+  bool                   analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
+  const char           * analysis_module_get_table_name( const analysis_module_type * module);
+  const char           * analysis_module_get_name( const analysis_module_type * module );
+  bool                   analysis_module_get_option( const analysis_module_type * module , long flag);
+  void                   analysis_module_complete_update( analysis_module_type * module );
 
 #ifdef  __cplusplus
 }

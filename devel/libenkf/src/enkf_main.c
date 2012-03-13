@@ -970,6 +970,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
+
   if (analysis_module_get_option( module , ANALYSIS_SCALE_DATA))
     obs_data_scale( obs_data , S , E , D , R , dObs );
   

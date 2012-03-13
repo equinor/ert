@@ -50,6 +50,9 @@
 #include <ert_tui_const.h>
 #include <ecl_rft_file.h>
 #include <path_fmt.h>
+#include <enkf_tui_plot_rft.h>
+#include <enkf_tui_plot_util.h>
+
 /**
    The final plot path consists of three parts: 
 
@@ -60,47 +63,6 @@
     base_name: The filename of the current plot.
 */
 
-static char * enkf_tui_plot_alloc_plot_file(const plot_config_type * plot_config , const char * case_name , const char * base_name) {
-  char * path      = util_alloc_filename(plot_config_get_path( plot_config ) , case_name , NULL); /* It is really a path - but what the fuck. */ 
-  char * plot_file = util_alloc_filename(path , base_name , plot_config_get_image_type( plot_config ));
-
-  util_make_path( path );  /* Ensure that the path where the plots are stored exists. */
-  free(path);
-  return plot_file;
-}
-                                           
-
-
-static plot_type * __plot_alloc(const plot_config_type * plot_config , const char * x_label , const char * y_label , const char * title , const char * file) {
-  
-  arg_pack_type * arg_pack = arg_pack_alloc();
-  plot_type * plot;
-  
-  if (util_string_equal( plot_config_get_driver( plot_config ) , "PLPLOT")) {
-    arg_pack_append_ptr( arg_pack , file );
-    arg_pack_append_ptr( arg_pack , plot_config_get_image_type( plot_config ));
-  } else if (util_string_equal( plot_config_get_driver( plot_config ) , "TEXT")) {
-
-    char * plot_path, *basename;
-    char * path;
-    util_alloc_file_components( file , &plot_path , &basename , NULL);
-    
-    path = util_alloc_filename( plot_path , basename , NULL);
-    arg_pack_append_owned_ptr( arg_pack , path , free);
-    
-    free( plot_path );
-    free( basename );
-  } else 
-    util_abort("%s: unrecognized driver type: %s \n",__func__ , plot_config_get_driver( plot_config ));
-  
-  plot = plot_alloc(plot_config_get_driver( plot_config ) , arg_pack , false , plot_config_get_logy( plot_config ));
-  
-  plot_set_window_size(plot , plot_config_get_width( plot_config ) , plot_config_get_height( plot_config ));
-  plot_set_labels(plot, x_label , y_label , title);
-  arg_pack_free( arg_pack );
-  
-  return plot;
-}
 
 
 static void __plot_add_data(plot_type * plot , const char * label , int N , const double * x , const double *y) {
@@ -110,26 +72,13 @@ static void __plot_add_data(plot_type * plot , const char * label , int N , cons
 }
 
 
-static void __plot_show(plot_type * plot , const plot_config_type * plot_config , const char * file) {
-  plot_data(plot);
-  plot_free(plot);
-  if (util_file_exists( file )) {
-    const char * viewer = plot_config_get_viewer( plot_config );
-    printf("Plot saved in: %s \n",file);
-    if (viewer != NULL)
-      util_fork_exec(viewer , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
-  }
-  /*
-    else: the file does not exist - that might be OK?
-  */
-}
 
 
 
 void enkf_tui_plot_PC( enkf_main_type * enkf_main , const char * plot_name , const matrix_type * PC , const matrix_type * PC_obs) {
   plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
   char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , enkf_main_get_current_fs( enkf_main ), plot_name );
-  plot_type * plot = __plot_alloc(plot_config , "PC number", /* y akse */ "Standardized PC value " , "Principle components" , plot_file);
+  plot_type * plot = enkf_tui_plot_alloc(plot_config , "PC number", /* y akse */ "Standardized PC value " , "Principle components" , plot_file);
 
 
   {
@@ -154,7 +103,7 @@ void enkf_tui_plot_PC( enkf_main_type * enkf_main , const char * plot_name , con
         plot_dataset_append_point_xy( obs_data , (ipc + 1) , matrix_iget( PC_obs , ipc , 0 ));
     }
   }
-  __plot_show( plot , plot_config , plot_file ); /* Frees the plot - logical ehhh. */
+  enkf_tui_show_plot( plot , plot_config , plot_file ); /* Frees the plot - logical ehhh. */
   free( plot_file );
 }
 
@@ -194,9 +143,9 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
     plot_refcase = false;
 
   if (plot_dates)
-    plot =  __plot_alloc(plot_config , "" , /* y akse */ "" ,user_key,plot_file);
+    plot =  enkf_tui_plot_alloc(plot_config , "" , /* y akse */ "" ,user_key,plot_file);
   else
-    plot =  __plot_alloc(plot_config , "Simulation time (days) ", /* y akse */ "" ,user_key , plot_file);
+    plot =  enkf_tui_plot_alloc(plot_config , "Simulation time (days) ", /* y akse */ "" ,user_key , plot_file);
   
   node = enkf_node_alloc( config_node );
   {
@@ -494,7 +443,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   enkf_node_free( node );
   msg_free( msg , true );
   if ( show_plot ) {
-    __plot_show( plot , plot_config , plot_file ); /* Frees the plot - logical ehhh. */
+    enkf_tui_show_plot( plot , plot_config , plot_file ); /* Frees the plot - logical ehhh. */
   } else {
     printf( "No data to plot \n" );
     plot_free( plot );
@@ -617,7 +566,7 @@ void enkf_tui_plot_histogram(void * arg) {
       double * count        = util_malloc(ens_size * sizeof * count , __func__);
       int iens , report_step;
       char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , case_name , user_key );
-      plot_type * plot = __plot_alloc(plot_config , user_key , "#" ,user_key , plot_file);
+      plot_type * plot = enkf_tui_plot_alloc(plot_config , user_key , "#" ,user_key , plot_file);
 
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
       if (config_node == NULL) {
@@ -653,7 +602,7 @@ void enkf_tui_plot_histogram(void * arg) {
           plot_dataset_append_vector_hist(d , active_size , count);
         }
         
-        __plot_show(plot , plot_config , plot_file);
+        enkf_tui_show_plot(plot , plot_config , plot_file);
       }
       free(count);
       util_safe_free(key_index);
@@ -760,44 +709,44 @@ void enkf_tui_plot_all_summary(void * arg) {
     
     {
       /*
-	This code is prepared for multithreaded creation of plots;
-	however the low level PLPlot library is not thread safe, we
-	therefor must limit the the number of threads in the thread pool
-	to 1.
+        This code is prepared for multithreaded creation of plots;
+        however the low level PLPlot library is not thread safe, we
+        therefor must limit the the number of threads in the thread pool
+        to 1.
       */
       thread_pool_type * tp = thread_pool_alloc( 1 , true );
       stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
       arg_pack_type ** arg_list = util_malloc( sizeof * arg_list * stringlist_get_size( summary_keys ) , __func__ );
       {
-	char * plot_path = util_alloc_filename( plot_config_get_path( plot_config ) , enkf_main_get_current_fs( enkf_main ) , NULL );
-	util_make_path( plot_path );
-	free( plot_path );
+        char * plot_path = util_alloc_filename( plot_config_get_path( plot_config ) , enkf_main_get_current_fs( enkf_main ) , NULL );
+        util_make_path( plot_path );
+        free( plot_path );
       }
       
       for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
-	const char * key = stringlist_iget( summary_keys , ikey);
-	
-	arg_list[ikey] = arg_pack_alloc( );
-	{
-	  arg_pack_type * arg = arg_list[ikey];
-	  
-	  arg_pack_append_ptr( arg , enkf_main );
-	  arg_pack_append_ptr( arg , ensemble_config_get_node( ensemble_config , key ));
-	  arg_pack_append_ptr( arg , key );
-	  arg_pack_append_ptr( arg , NULL );
-	  arg_pack_append_int( arg , step1 );
-	  arg_pack_append_int( arg , step2 );
-	  arg_pack_append_bool( arg , prediction_mode );
-	  arg_pack_append_int( arg , iens1 );
-	  arg_pack_append_int( arg , iens2 );
-	  arg_pack_append_int( arg , BOTH );
-	  
-	  thread_pool_add_job( tp , enkf_tui_plot_ensemble_mt , arg );
-	}
+        const char * key = stringlist_iget( summary_keys , ikey);
+        
+        arg_list[ikey] = arg_pack_alloc( );
+        {
+          arg_pack_type * arg = arg_list[ikey];
+          
+          arg_pack_append_ptr( arg , enkf_main );
+          arg_pack_append_ptr( arg , ensemble_config_get_node( ensemble_config , key ));
+          arg_pack_append_ptr( arg , key );
+          arg_pack_append_ptr( arg , NULL );
+          arg_pack_append_int( arg , step1 );
+          arg_pack_append_int( arg , step2 );
+          arg_pack_append_bool( arg , prediction_mode );
+          arg_pack_append_int( arg , iens1 );
+          arg_pack_append_int( arg , iens2 );
+          arg_pack_append_int( arg , BOTH );
+          
+          thread_pool_add_job( tp , enkf_tui_plot_ensemble_mt , arg );
+        }
       }
       thread_pool_join( tp );
       for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) 
-	arg_pack_free( arg_list[ikey] );
+        arg_pack_free( arg_list[ikey] );
       free( arg_list );
       stringlist_free( summary_keys );
       thread_pool_free( tp );
@@ -827,7 +776,7 @@ void enkf_tui_plot_observation(void * arg) {
       obs_vector = enkf_obs_user_get_vector(enkf_obs , user_key , &index_key);
       if (obs_vector != NULL) {
         char * plot_file                    = enkf_tui_plot_alloc_plot_file(plot_config , enkf_main_get_current_fs( enkf_main ), user_key);
-        plot_type * plot                    = __plot_alloc(plot_config , "Member nr" , "Value" , user_key , plot_file);   
+        plot_type * plot                    = enkf_tui_plot_alloc(plot_config , "Member nr" , "Value" , user_key , plot_file);   
         const char * state_kw               = obs_vector_get_state_kw( obs_vector );
         enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
         int   num_active                    = obs_vector_get_num_active( obs_vector );
@@ -909,7 +858,7 @@ void enkf_tui_plot_observation(void * arg) {
           printf("\n");
           enkf_node_free(enkf_node);
         }
-        __plot_show(plot , plot_config , plot_file);
+        enkf_tui_show_plot(plot , plot_config , plot_file);
         free(plot_file);
       } 
       util_safe_free( index_key );
@@ -919,383 +868,6 @@ void enkf_tui_plot_observation(void * arg) {
 }
 
 
-int enkf_tui_plot_read_rft_obs(enkf_main_type * enkf_main, 
-                               char * wellname, 
-                               double_vector_type * UTM_x, 
-                               double_vector_type * UTM_y, 
-                               double_vector_type * MD, 
-                               double_vector_type * TVD_z, 
-                               double_vector_type * RFT_obs){
-  const model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
-  const char * pathname = model_config_get_rftpath( model_config );
-  path_fmt_type * pathname_fmt = path_fmt_alloc_directory_fmt(pathname);
-  strcat(wellname, ".txt"); /* This will append .txt to the wellname*/
-  char * pathandfilename = path_fmt_alloc_file(pathname_fmt, false, wellname);
-  FILE * stream = util_fopen( pathandfilename , "r" ); 
-  int lines = util_count_content_file_lines( stream );
-  rewind(stream);
-  double utm_x, utm_y, md, tvd_z, rft_obs;
-  bool at_eof;
-  char ** token_list;
-  int tokens;
-  for ( int i = 0; i < lines; i++ ) {
-    char * line = util_fscanf_alloc_line( stream , &at_eof );
-    util_split_string(line , " \t" , &tokens , &token_list);
-    if( tokens == 5 ){
-      if ( util_sscanf_double( token_list[0] , &utm_x ) && util_sscanf_double( token_list[1] , &utm_y ) && util_sscanf_double( token_list[2] , &md ) && util_sscanf_double( token_list[3] , &tvd_z ) && util_sscanf_double( token_list[4] , &rft_obs )){
-        double_vector_iset( UTM_x  , i, utm_x );
-        double_vector_iset( UTM_y  , i, utm_y );
-        double_vector_iset( MD     , i, md );
-        double_vector_iset( TVD_z  , i, tvd_z);
-        double_vector_iset( RFT_obs, i, rft_obs);
-      }
-      else{
-        util_abort("%s: RFT file has to be on the format UTM_X; UTM_Y; MD; TVD_Z; RFT \n",__func__ , pathandfilename);
-      }
-    }
-    else{
-      util_abort("%s: RFT file has to be on the format UTM_X; UTM_Y; MD; TVD_Z; RFT \n",__func__ , pathandfilename);
-    }
-    free( line );
-  }
-  free(pathandfilename);
-  path_fmt_free(pathname_fmt);
-  util_free_stringlist(token_list, tokens);
-  wellname=strtok(wellname,".");/* This will remove the appended .txt from the wellname*/
-  fclose(stream);
-  return lines;
-}
-
-
-
-void enkf_tui_plot_RFTS__(enkf_main_type * enkf_main , 
-                          const char * wellname   ,
-                          double_vector_type * MD, 
-                          double_vector_type * RFT_obs,
-                          double_vector_type * RFT_refcase,
-                          bool_vector_type * refcase_has_data,
-                          vector_type * pressure_container, 
-                          int_vector_type * active,
-                          bool rft_file_exists,
-                          vector_type * has_data_container,
-                          bool isMD) {
-                                     
-  const int ens_size                        = enkf_main_get_ensemble_size( enkf_main );
-  const plot_config_type     * plot_config  = enkf_main_get_plot_config( enkf_main );
-  bool  show_plot              = false;
-  char * plot_file             = enkf_tui_plot_alloc_plot_file( plot_config , enkf_main_get_current_fs(enkf_main), wellname );
-  plot_type * plot ;
-  if(isMD)
-    plot =  __plot_alloc(plot_config , "RFT pressure", "MD" , wellname, plot_file);
-  else
-    plot =  __plot_alloc(plot_config , "RFT pressure", "TVD" , wellname, plot_file);
-  
-  {
-    show_plot = true;
-  }
-  /*
-    Start with plotting the simulated rfts
-  */
-  if(rft_file_exists){
-    for (int iens=0; iens < ens_size; iens++){
-      const double_vector_type * simulated_pressure = vector_iget_const(pressure_container, iens);
-      const bool_vector_type * has_data = vector_iget_const(has_data_container, iens);
-      for (int nobs = 0; nobs < double_vector_size(RFT_obs); nobs++){
-        if (bool_vector_iget(has_data, nobs)){
-          plot_dataset_type * iplot  = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
-          double rft_sim_numeric     = double_vector_iget(simulated_pressure , nobs);
-          double md_numeric          = double_vector_iget(MD , nobs);
-          plot_dataset_append_point_xy( iplot, rft_sim_numeric , md_numeric);
-          plot_dataset_set_style( iplot , POINTS );
-          plot_dataset_set_point_color( iplot , (iens % 13)+1); /*Can choose between 16 colors, but we dont want 0 which is white or reserved 14 and 15*/ 
-        }
-      }
-    }
-  }
-  /*
-    Now continue with refcase and observations.
-  */ 
-  plot_dataset_type * rft_obs_value     = plot_alloc_new_dataset( plot , "observation"       , PLOT_XY );
-  plot_dataset_type * rft_refcase_value = plot_alloc_new_dataset( plot , "refcase"       , PLOT_XY );
-
-  plot_dataset_set_style( rft_obs_value , POINTS );
-  plot_dataset_set_style( rft_refcase_value , POINTS );
-          
-  plot_dataset_set_point_color( rft_obs_value , 15);
-  plot_dataset_set_point_color( rft_refcase_value , 14);
-
-  plot_dataset_set_symbol_type( rft_obs_value , 5);
-  plot_dataset_set_symbol_type( rft_refcase_value , 5);
-  
-  
-  for (int nobs = 0; nobs < double_vector_size(RFT_obs); nobs++){
-    double rft_obs_numeric     = double_vector_iget(RFT_obs , nobs);
-    double md_numeric          = double_vector_iget(MD , nobs);
-    plot_dataset_append_point_xy( rft_obs_value, rft_obs_numeric , md_numeric);
-    if( bool_vector_iget(refcase_has_data, nobs)){
-      double rft_refcase_numeric = double_vector_iget(RFT_refcase , nobs);
-      plot_dataset_append_point_xy( rft_refcase_value, rft_refcase_numeric , md_numeric);
-    }
-  }
-
-  plot_invert_y_axis(plot);
-  plot_set_bottom_padding( plot , 0.05);
-  plot_set_top_padding( plot    , 0.05);
-  plot_set_left_padding( plot   , 0.05);
-  plot_set_right_padding( plot  , 0.05);
-  
-  if (show_plot) {
-    __plot_show(plot , plot_config , plot_file); /* Frees the plot - logical ehhh. */
-  } else {
-    printf("No data to plot \n");
-    plot_free(plot);
-  }
-  
-  free(plot_file);
-}
-
-
-
-void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpathformat, const path_fmt_type * caseformat, char * wellname , time_t recording_time, bool isMD){
-  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
-  const plot_config_type    * plot_config      = enkf_main_get_plot_config( enkf_main );
-  const char * data_file       = plot_config_get_plot_refcase( plot_config );
-  bool plot_refcase = true;
-  if ( strcmp( data_file , "" ) == 0)
-    plot_refcase = false;
-  /*
-    Start by reading RFT measurment
-  */
-  double_vector_type * UTM_x   = double_vector_alloc( 0 , 0); /*At this stage unknown size, use 0*/
-  double_vector_type * UTM_y   = double_vector_alloc( 0 , 0); /*At this stage unknown size, use 0*/
-  double_vector_type * MD      = double_vector_alloc( 0 , 0); /*At this stage unknown size, use 0*/
-  double_vector_type * TVD_z   = double_vector_alloc( 0 , 0); /*At this stage unknown size, use 0*/
-  double_vector_type * RFT_obs = double_vector_alloc( 0 , 0); /*At this stage unknown size, use 0*/
-  int lines = enkf_tui_plot_read_rft_obs(enkf_main, wellname, UTM_x, UTM_y, MD, TVD_z, RFT_obs);
-  /*
-    Find ijk-list
-  */
-  char * caseending = path_fmt_alloc_path(caseformat, false, 0); //Use the grid in ensmember 0
-  char * casename = path_fmt_alloc_file(runpathformat , false, 0, caseending);//Use the grid in ensmember 0
-  ecl_grid_type * grid = ecl_grid_load_case( casename );
-  int_vector_type * i_values = int_vector_alloc( lines , 0 );
-  int_vector_type * j_values = int_vector_alloc( lines , 0 );
-  int_vector_type * k_values = int_vector_alloc( lines , 0 );
-  int_vector_type * active   = int_vector_alloc( lines , 0 );
-  for (int nobs =0; nobs<lines; nobs++){
-    int start_index = 0;
-    int i; int j; int k;
-    int global_index = ecl_grid_get_global_index_from_xyz(grid,double_vector_iget(UTM_x,nobs) ,double_vector_iget(UTM_y,nobs) ,double_vector_iget(TVD_z,nobs) ,start_index);
-    ecl_grid_get_ijk1(grid , global_index, &i, &j , &k);
-    int is_active = ecl_grid_get_active_index1(grid , global_index);
-    int_vector_iset(i_values, nobs, i);
-    int_vector_iset(j_values, nobs, j);
-    int_vector_iset(k_values, nobs, k);
-    int_vector_iset(active  , nobs, is_active);
-    start_index = global_index;
-  }
-  ecl_grid_free(grid);
-  /*
-    Find refcase rfts
-  */
-  double_vector_type * RFT_refcase = double_vector_alloc( 0 , 0);
-  bool_vector_type * refcase_has_data = bool_vector_alloc(0, false);
-  const char * refcase_file_name = ecl_rft_file_alloc_case_filename(data_file);
-  
-  if (refcase_file_name == NULL){
-    if( plot_refcase )
-      util_abort("%s: Cannot find eclipse RFT file",__func__ , refcase_file_name);
-
-  }
-  ecl_rft_file_type * rft_refcase_file = ecl_rft_file_alloc( refcase_file_name );
-  if (refcase_file_name == NULL){
-    if( plot_refcase )
-      util_abort("%s: Cannot find eclipse RFT file",__func__ , refcase_file_name);
-    
-  }
-  const ecl_rft_node_type * rft_refcase_node = ecl_rft_file_get_well_time_rft( rft_refcase_file , wellname , recording_time);  
-  if(rft_refcase_node == NULL){
-    if( plot_refcase )
-      printf("No RFT information exists for %s in refcase.\n", wellname);
-
-    for( int nobs = 0; nobs < lines; nobs++){
-      double_vector_append(RFT_refcase, 0.0);
-      bool_vector_append(refcase_has_data, false);
-    }
-  }
-  else{
-    for( int nobs = 0; nobs < lines; nobs++){
-      if( int_vector_iget(active,nobs) > -1){
-        int cell_index = ecl_rft_node_lookup_ijk( rft_refcase_node , int_vector_iget(i_values,nobs), int_vector_iget(j_values,nobs),int_vector_iget(k_values,nobs) ); //lookup cell
-        if(cell_index > -1){
-          double pressure_value = ecl_rft_node_iget_pressure( rft_refcase_node , cell_index); // Pressure
-          double_vector_append(RFT_refcase, pressure_value);
-          bool_vector_append(refcase_has_data, true);
-        }
-        else{
-          double_vector_append(RFT_refcase, 0.0);
-          bool_vector_append(refcase_has_data, false);
-        }
-      }
-      else {
-        double_vector_append(RFT_refcase, 0.0);
-        bool_vector_append(refcase_has_data, false);
-      }
-    }
-  }
-  ecl_rft_file_free(rft_refcase_file);
-  /*
-    Get the simulated RFTs
-  */
-  vector_type * pressure_container = vector_alloc_new();
-  vector_type * has_data_container = vector_alloc_new();
-  char * caseending1 = path_fmt_alloc_path(caseformat, false, 0);
-  char * casename1 = path_fmt_alloc_file(runpathformat , false, 0, caseending1);
-  const char * case_file_name1 = ecl_rft_file_alloc_case_filename(casename1 );
-  bool eclipse_rft_exists = false;
-  if (case_file_name1 == NULL){
-    util_abort("%s: Cannot find eclipse RFT file",__func__ , case_file_name1);
-  }
-  else{
-    eclipse_rft_exists = true;
-    for (int iens = 0; iens<ens_size; iens++){
-      double_vector_type * simulated_pressures = double_vector_alloc(lines, 0.0);
-      bool_vector_type * has_data = bool_vector_alloc(lines, true);
-      char * caseending = path_fmt_alloc_path(caseformat, false, iens);
-      char * casename = path_fmt_alloc_file(runpathformat , false, iens, caseending);
-      const char * case_file_name = ecl_rft_file_alloc_case_filename(casename );
-      ecl_rft_file_type * rftfile = ecl_rft_file_alloc( case_file_name );
-      const ecl_rft_node_type * rftnode = ecl_rft_file_get_well_time_rft( rftfile , wellname , recording_time);
-      if(rftnode == NULL){
-        printf("No RFT information exists for %s:\n", wellname);
-      }
-      else{
-        for( int nobs = 0; nobs < lines; nobs++){
-          if( int_vector_iget(active,nobs) > -1){
-            int cell_index = ecl_rft_node_lookup_ijk( rftnode , int_vector_iget(i_values,nobs), int_vector_iget(j_values,nobs),int_vector_iget(k_values,nobs) ); //lookup cell
-            double pressure_value = ecl_rft_node_iget_pressure( rftnode , cell_index); // Pressure
-            double_vector_iset(simulated_pressures,nobs , pressure_value);
-            if(cell_index > -1)
-              bool_vector_iset(has_data, nobs, true);
-            else
-              bool_vector_iset(has_data, nobs, false);
-          }
-          else {
-            double_vector_iset(simulated_pressures,nobs ,0.0);
-            bool_vector_iset(has_data, nobs, false);
-          }
-        }
-      }
-      ecl_rft_file_free(rftfile);
-      vector_append_owned_ref( pressure_container , simulated_pressures , double_vector_free__ );
-      vector_append_owned_ref( has_data_container , has_data , bool_vector_free__ );
-    }
-  }
-  /*
-    Do the actual plotting
-  */
-  if(isMD)
-    enkf_tui_plot_RFTS__( enkf_main , wellname , MD, RFT_obs, RFT_refcase, refcase_has_data, pressure_container, active, eclipse_rft_exists, has_data_container, isMD);
-  else
-    enkf_tui_plot_RFTS__( enkf_main , wellname , TVD_z, RFT_obs, RFT_refcase, refcase_has_data, pressure_container, active, eclipse_rft_exists, has_data_container, isMD);
-  double_vector_free( UTM_x );
-  double_vector_free( UTM_y );
-  double_vector_free( MD  );
-  double_vector_free( TVD_z );
-  double_vector_free( RFT_obs );
-  double_vector_free( RFT_refcase );
-  bool_vector_free( refcase_has_data );
-  vector_free( pressure_container );  
-  vector_free( has_data_container );
-  free( caseending );
-  free( caseending1 );
-  free( casename );
-  free( casename1 );
-  int_vector_free( i_values );
-  int_vector_free( j_values );
-  int_vector_free( k_values );
-  int_vector_free( active );
-};
-
-
-int enkf_tui_plot_read_rft_config(const char * rft_config_file, stringlist_type * wellnames, time_t_vector_type * dates){
-  int lines = 0;
-  int day, month, year;
-  if ( rft_config_file != NULL ){
-    printf( "Reading RFT wellnames and dates \n" );
-    FILE * stream = util_fopen( rft_config_file , "r" );
-    if(stream == NULL)
-      util_abort("%s: RFT config file is NULL \n",__func__ , rft_config_file);  
-    
-    lines = util_count_content_file_lines( stream );
-    rewind(stream);
-    bool at_eof;
-    char ** token_list;
-    int tokens;
-    for ( int i = 0; i < lines; i++ ) {
-      char * line = util_fscanf_alloc_line( stream , &at_eof );
-      util_split_string(line , " \t" , &tokens , &token_list);
-      char * name = token_list[0];
-      char * ownname = util_alloc_string_copy(name);
-      if( tokens == 4 ){
-        stringlist_append_owned_ref( wellnames , ownname );
-        if ( util_sscanf_int( token_list[1] , &day ) && util_sscanf_int( token_list[2] , &month ) && util_sscanf_int( token_list[3] , &year ) ){
-          time_t recording_time = util_make_date(day , month , year);
-          time_t_vector_append(dates, recording_time);
-        }
-        else{
-          util_abort("%s: RFT config file has to be on the format NAME DAY MONTH YEAR \n",__func__ , rft_config_file);
-        }
-      }
-      else{
-        util_abort("%s: RFT config file has to be on the format NAME DAY MONTH YEAR \n",__func__ , rft_config_file);
-      }
-      free( line );
-      free( name );
-    }
-    fclose(stream);  
-  }
-  else{
-    printf("RFT config file is not specified.");
-  }
-  return lines;
-}
-
-void enkf_tui_plot_RFT_sim_all_MD( void * arg) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
-  const char * rft_config_file = enkf_main_get_rft_config_file( enkf_main );
-  stringlist_type * wellnames = stringlist_alloc_new();
-  time_t_vector_type * dates = time_t_vector_alloc(0,0);
-  int lines = enkf_tui_plot_read_rft_config(rft_config_file, wellnames, dates);
-  path_fmt_type * runpathformat = model_config_get_runpath_fmt( model_config );
-  const path_fmt_type * caseformat = ecl_config_get_eclbase_fmt(enkf_main_get_ecl_config(enkf_main));
-  for (int i = 0; i<lines; i++){
-    char * wellname = stringlist_iget_copy(wellnames, i);
-    time_t  recording_time = time_t_vector_iget(dates, i);
-    enkf_tui_plot_RFT_simIn(enkf_main, runpathformat, caseformat, wellname, recording_time, true);
-  }
-  stringlist_free(wellnames);
-  time_t_vector_free(dates);
-}
-
-void enkf_tui_plot_RFT_sim_all_TVD( void * arg) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
-  const char * rft_config_file = enkf_main_get_rft_config_file( enkf_main );
-  stringlist_type * wellnames = stringlist_alloc_new();
-  time_t_vector_type * dates = time_t_vector_alloc(0,0);
-  int lines = enkf_tui_plot_read_rft_config(rft_config_file, wellnames, dates);
-  path_fmt_type * runpathformat = model_config_get_runpath_fmt( model_config );
-  const path_fmt_type * caseformat = ecl_config_get_eclbase_fmt(enkf_main_get_ecl_config(enkf_main));
-  for (int i = 0; i<lines; i++){
-    char * wellname = stringlist_iget_copy(wellnames, i);
-    time_t  recording_time = time_t_vector_iget(dates, i);
-    enkf_tui_plot_RFT_simIn(enkf_main, runpathformat, caseformat, wellname, recording_time, false);
-  }
-  stringlist_free(wellnames);
-  time_t_vector_free(dates);
-}
 
 
 
@@ -1418,7 +990,7 @@ void enkf_tui_plot_sensitivity(void * arg) {
     int valid_count           = 0;
     char * basename           = util_alloc_sprintf("%s-%s" , user_key_x , user_key_y);
     char * plot_file          = enkf_tui_plot_alloc_plot_file( plot_config , enkf_main_get_current_fs( enkf_main ), basename );
-    plot_type * plot          = __plot_alloc( plot_config ,  user_key_x , user_key_y , "Sensitivity plot" , plot_file);
+    plot_type * plot          = enkf_tui_plot_alloc( plot_config ,  user_key_x , user_key_y , "Sensitivity plot" , plot_file);
     plot_dataset_type  * data = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
     
     for (iens = 0; iens < ens_size; iens++) {
@@ -1436,7 +1008,7 @@ void enkf_tui_plot_sensitivity(void * arg) {
 
     if (valid_count > 0) {
       printf("Plot saved in: %s \n",plot_file);
-      __plot_show(plot , plot_config , plot_file); /* Frees the plot - logical ehhh. */
+      enkf_tui_show_plot(plot , plot_config , plot_file); /* Frees the plot - logical ehhh. */
     } else {
       printf("Ehh - no data to plot \n");
       plot_free( plot );
@@ -1469,6 +1041,49 @@ static void enkf_tui_toggle_logy(void * arg) {
 
 
 
+void enkf_tui_plot_RFT_time(void * arg) {
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
+  {
+    const char * state_kw;
+    char * index_key = NULL;
+    char * user_key  = NULL;
+    char * obs_key;
+    int report_step;
+    obs_vector_type       * obs_vector;
+    enkf_config_node_type * config_node;
+    int step1 , step2;
+    int iens1 , iens2;
+    state_enum plot_state;
+
+    enkf_tui_plot_select_RFT(enkf_main , &obs_key , &report_step);
+    obs_vector  = enkf_obs_get_vector( enkf_obs , obs_key );
+    config_node = obs_vector_get_config_node( obs_vector );
+
+    /* Could be user input ... */
+    step1      = 0;
+    step2      = enkf_main_get_history_length( enkf_main );
+    iens1      = 0;
+    iens2      = enkf_main_get_ensemble_size( enkf_main ) - 1;
+    plot_state = BOTH;
+    state_kw   = enkf_config_node_get_key( config_node );
+    {
+      int block_nr,i,j,k;
+      const field_obs_type * field_obs = obs_vector_iget_node( obs_vector , report_step );
+      for (block_nr = 0; block_nr < field_obs_get_size( field_obs ); block_nr++) {
+        field_obs_iget_ijk( field_obs , block_nr , &i , &j , &k);
+        index_key = util_realloc_sprintf( index_key , "%d,%d,%d"    , i+1,j+1,k+1);
+        user_key  = util_realloc_sprintf( user_key  , "%s:%d,%d,%d" , state_kw , i+1,j+1,k+1);
+        enkf_tui_plot_ensemble__(enkf_main , config_node , user_key , index_key , step1 , step2 , false , iens1 , iens2 , plot_state);
+      }
+    }
+    free( obs_key );
+    free( index_key );
+    free( user_key );
+  }
+}
+
+
 
 
 void enkf_tui_plot_menu(void * arg) {
@@ -1487,15 +1102,21 @@ void enkf_tui_plot_menu(void * arg) {
       menu = menu_alloc(title , "Back" , "bB");
       free(title);
     }
-    menu_add_item(menu , "Ensemble plot"    , "eE"                           , enkf_tui_plot_ensemble        , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of ALL summary variables"     , "aA" , enkf_tui_plot_all_summary     , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of GEN_KW parameter"          , "g"  , enkf_tui_plot_GEN_KW          , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of ALL ALL GEN_KW parameters" , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
-    menu_add_item(menu , "Observation plot" , "oO"                           , enkf_tui_plot_observation     , enkf_main , NULL);
-    menu_add_item(menu , "Plot RFT and simulated pressure vs. TVD" , "tT"    , enkf_tui_plot_RFT_sim_all_TVD , enkf_main , NULL);
-    menu_add_item(menu , "Plot RFT and simulated pressure vs. MD" , "mM"     , enkf_tui_plot_RFT_sim_all_MD  , enkf_main , NULL);
-    menu_add_item(menu , "Sensitivity plot"     , "sS"                       , enkf_tui_plot_sensitivity     , enkf_main , NULL); 
-    menu_add_item(menu , "Histogram"        , "hH"                           , enkf_tui_plot_histogram       , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot"                                   , "eE" , enkf_tui_plot_ensemble        , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL summary variables"          , "aA" , enkf_tui_plot_all_summary     , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of GEN_KW parameter"               , "g"  , enkf_tui_plot_GEN_KW          , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL ALL GEN_KW parameters"      , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
+    menu_add_item(menu , "Observation plot"                                , "oO" , enkf_tui_plot_observation     , enkf_main , NULL);
+    menu_add_separator( menu );
+    menu_add_item(menu , "Plot RFT and simulated pressure vs. TVD"         , "tT" , enkf_tui_plot_RFT_sim_all_TVD , enkf_main , NULL);
+    menu_add_item(menu , "Plot RFT and simulated pressure vs. MD"          , "mM" , enkf_tui_plot_RFT_sim_all_MD  , enkf_main , NULL);
+    menu_add_separator( menu );
+    menu_add_item(menu , "Plot block observation (~RFT) versus depth"      , "dD" , enkf_tui_plot_RFT_depth       , enkf_main , NULL);
+    menu_add_item(menu , "Plot block observation (~RFT) versus time"       , "iI" , enkf_tui_plot_RFT_time        , enkf_main , NULL);
+    menu_add_item(menu , "Plot all block observations (~RFT) versus depth" , "rR" , enkf_tui_plot_all_RFT         , enkf_main , NULL);
+    menu_add_separator( menu );
+    menu_add_item(menu , "Sensitivity plot"                                , "sS" , enkf_tui_plot_sensitivity     , enkf_main , NULL); 
+    menu_add_item(menu , "Histogram"                                       , "hH" , enkf_tui_plot_histogram       , enkf_main , NULL);
     menu_add_separator(menu);
     {
       menu_item_type * menu_item;
