@@ -294,7 +294,10 @@ const well_conn_type * well_state_iget_wellhead( const well_state_type * well_st
 
 
 const well_conn_type * well_state_get_wellhead( const well_state_type * well_state , const char * grid_name) {
-  return hash_get( well_state->name_wellhead , grid_name );
+  if (hash_has_key( well_state->name_wellhead , grid_name))
+    return hash_get( well_state->name_wellhead , grid_name );
+  else
+    return NULL;
 }
 
 
@@ -313,7 +316,10 @@ const char * well_state_get_name( const well_state_type * well_state ) {
 /*****************************************************************/
 
 well_path_type * well_state_get_path( const well_state_type * well_state , const char * lgr_name) {
-  return hash_get( well_state->name_lgr_path , lgr_name );
+  if (hash_has_key( well_state->name_lgr_path , lgr_name))
+    return hash_get( well_state->name_lgr_path , lgr_name );
+  else
+    return NULL;
 }
 
 well_path_type * well_state_iget_path( const well_state_type * well_state , int grid_nr) {
