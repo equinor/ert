@@ -328,20 +328,28 @@ well_path_type * well_state_iget_path( const well_state_type * well_state , int 
 
 const well_conn_type ** well_state_iget_lgr_connections(const well_state_type * well_state , int grid_nr , int branch_nr ) {
   well_path_type * well_path = well_state_iget_path( well_state , grid_nr );
-  well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
-  if (branch != NULL)
-    return well_branch_get_connections( branch );
-  else
-    return NULL; // Branch does not exist - or has 0 connections.
+
+  if (well_path != NULL) {
+    well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
+    if (branch != NULL)
+      return well_branch_get_connections( branch );
+    else
+      return NULL; // Branch does not exist - or has 0 connections.
+  } else
+    return NULL;   // Path does not exist
 }
+
 
 const well_conn_type ** well_state_get_lgr_connections(const well_state_type * well_state , const char * lgr_name , int branch_nr) {
   well_path_type * well_path = well_state_get_path( well_state , lgr_name );
-  well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
-  if (branch != NULL)
-    return well_branch_get_connections( branch );
-  else
-    return NULL; // Branch does not exist - or has 0 connections.
+  if (well_path != NULL) {
+    well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
+    if (branch != NULL)
+      return well_branch_get_connections( branch );
+    else
+      return NULL; // Branch does not exist - or has 0 connections.
+  } else
+    return NULL;   // Path does not exist
 }
 
 
