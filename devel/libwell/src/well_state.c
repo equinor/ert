@@ -361,19 +361,25 @@ const well_conn_type ** well_state_get_connections(const well_state_type * well_
 
 int well_state_iget_num_lgr_connections(const well_state_type * well_state , int grid_nr , int branch_nr ) {
   well_path_type * well_path = well_state_iget_path( well_state , grid_nr );
-  well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
-  if (branch != NULL)
-    return well_branch_get_length( branch );
-  else
+  if (well_path != NULL) {
+    well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
+    if (branch != NULL)
+      return well_branch_get_length( branch );
+    else
+      return 0;
+  } else
     return 0;
 }
 
 int well_state_get_num_lgr_connections(const well_state_type * well_state , const char * lgr_name , int branch_nr) {
   well_path_type * well_path = well_state_get_path( well_state , lgr_name );
-  well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
-  if (branch != NULL)
-    return well_branch_get_length( branch );
-  else
+  if (well_path != NULL) {
+    well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
+    if (branch != NULL)
+      return well_branch_get_length( branch );
+    else
+      return 0;
+  } else
     return 0;
 }
 
@@ -386,13 +392,20 @@ int well_state_get_num_connections(const well_state_type * well_state , int bran
 
 int well_state_iget_lgr_num_branches( const well_state_type * well_state , int grid_nr) {
   well_path_type * well_path = well_state_iget_path( well_state , grid_nr );
-  return well_path_get_max_branches( well_path );
+  if (well_path != NULL)
+    return well_path_get_max_branches( well_path );
+  else
+    return 0;
 }
 
 int well_state_get_lgr_num_branches( const well_state_type * well_state , const char * lgr_name) {
   well_path_type * well_path = well_state_get_path( well_state , lgr_name );
-  return well_path_get_max_branches( well_path );
+  if (well_path != NULL)
+    return well_path_get_max_branches( well_path );
+  else
+    return 0;
 }
+
 
 int well_state_get_num_branches(const well_state_type * well_state ) {
   return well_state_iget_lgr_num_branches( well_state , 0 );
