@@ -24,16 +24,21 @@
 
 well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const ecl_intehead_type * header , int well_nr)  {
   const int iwel_offset = header->niwelz * well_nr;
-  well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
+  int conn_i = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADI_ITEM );
   
-  conn->i    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADI_ITEM ) - 1;
-  conn->j    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADJ_ITEM ) - 1;
-  conn->k    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADK_ITEM ) - 1;
-  conn->open    = true;  // This is not really specified anywhere.
-  conn->branch  = 0;
-  conn->segment = 0;
-  return conn;
-
+  if (conn_i > 0) {
+    well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
+    
+    conn->i    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADI_ITEM ) - 1;
+    conn->j    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADJ_ITEM ) - 1;
+    conn->k    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADK_ITEM ) - 1;
+    conn->open    = true;  // This is not really specified anywhere.
+    conn->branch  = 0;
+    conn->segment = 0;
+    return conn;
+  } else
+    // The well is completed in this LGR - however the wellhead is in another LGR.
+    return NULL;
 }
 
 

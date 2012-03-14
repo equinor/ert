@@ -40,7 +40,6 @@
 #include <well_state.h>
 #include <well_path.h>
 
-#define GLOBAL_GRID_NAME   "GLOBAL" 
 #define WELL_STATE_TYPE_ID 613307832
 
 struct well_state_struct {
@@ -49,9 +48,11 @@ struct well_state_struct {
   time_t           valid_from_time;
   int              valid_from_report;
   bool             open;
-  well_conn_type * wellhead;
   well_type_enum   type;
 
+  vector_type    * index_wellhead;   // An well_conn_type instance representing the wellhead - indexed by grid_nr.
+  hash_type      * name_wellhead;    // An well_conn_type instance representing the wellhead - indexed by lgr_name.
+  
   vector_type    * index_lgr_path;   // Contains the various   well_path instances indexed by grid_nr - global has grid_nr == 0.
   hash_type      * name_lgr_path;    // Contains the different well_path instances indexed by lgr_name  
 };
@@ -66,6 +67,10 @@ static well_state_type * well_state_alloc_empty() {
   UTIL_TYPE_ID_INIT( well_state , WELL_STATE_TYPE_ID );
   well_state->index_lgr_path = vector_alloc_new();
   well_state->name_lgr_path  = hash_alloc();
+
+  well_state->index_wellhead = vector_alloc_new();
+  well_state->name_wellhead  = hash_alloc();
+
   return well_state;
 }
 
@@ -74,43 +79,61 @@ static well_state_type * well_state_alloc_empty() {
   to one LGR block with the ecl_file_subselect_block() function.
 */
 
-well_path_type * well_state_add_path( well_state_type * well_state , const ecl_file_type * ecl_file , int grid_nr) {
+well_path_type * well_state_add_path( well_state_type * well_state , const ecl_file_type * rst_file , const char * grid_name , int grid_nr) {
   well_path_type * well_path;
-  char * grid_name = util_alloc_string_copy( GLOBAL_GRID_NAME );
-  if (grid_nr > 0) {
-    const ecl_kw_type * lgr_kw = ecl_file_iget_named_kw( ecl_file , LGR_KW , 0 );
-    grid_name = util_alloc_strip_copy(ecl_kw_iget_ptr( lgr_kw , 0));  
-  }
   well_path = well_path_alloc( grid_name , (grid_nr == 0) ? true : false);
     
   vector_safe_iset_owned_ref( well_state->index_lgr_path , grid_nr , well_path , well_path_free__);
   hash_insert_ref( well_state->name_lgr_path , grid_name , well_path );
-  free( grid_name );
 
   return well_path;
 }
+
+
+void well_state_add_wellhead( well_state_type * well_state , const ecl_intehead_type * header , const ecl_kw_type * iwel_kw , int well_nr , const char * grid_name , int grid_nr) {
+  well_conn_type * wellhead = well_conn_alloc_wellhead( iwel_kw , header , well_nr );
+
+  if (wellhead != NULL) {
+    vector_safe_iset_owned_ref( well_state->index_wellhead , grid_nr , wellhead , well_conn_free__ );
+    hash_insert_ref( well_state->name_wellhead , grid_name , wellhead );
+  }
+  
+}
+
 
 /*
   This function assumes that the ecl_file state has been restricted
   to one LGR block with the ecl_file_subselect_block() function.
 */
 
-static void well_state_add_connections( well_state_type * well_state ,  const ecl_file_type * ecl_file , int grid_nr, int well_nr ) {
-  ecl_intehead_type * header   = ecl_intehead_alloc( ecl_file_iget_named_kw( ecl_file , INTEHEAD_KW , 0 ));
-  const ecl_kw_type * icon_kw  = ecl_file_iget_named_kw( ecl_file , ICON_KW   , 0);
-  const ecl_kw_type * iwel_kw  = ecl_file_iget_named_kw( ecl_file , IWEL_KW   , 0);
+static void well_state_add_connections( well_state_type * well_state ,  const ecl_file_type * rst_file , int grid_nr, int well_nr ) {
+  ecl_intehead_type * header   = ecl_intehead_alloc( ecl_file_iget_named_kw( rst_file , INTEHEAD_KW , 0 ));
+  const ecl_kw_type * icon_kw  = ecl_file_iget_named_kw( rst_file , ICON_KW   , 0);
+  const ecl_kw_type * iwel_kw  = ecl_file_iget_named_kw( rst_file , IWEL_KW   , 0);
   const int iwel_offset        = header->niwelz * well_nr;
   int num_connections          = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_CONNECTIONS_ITEM );
   ecl_kw_type * iseg_kw        = NULL;
   bool MSW                     = false;   // MultiSegmentWell
-  well_path_type * path        = well_state_add_path(well_state , ecl_file , grid_nr);
   int seg_well_nr              = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_SEGMENTED_WELL_NR_ITEM) - 1; // -1: Ordinary well.
-  
+  well_path_type * path;
+
+  {
+    char * grid_name = util_alloc_string_copy( GLOBAL_GRID_NAME );
+    if (grid_nr > 0) {
+      const ecl_kw_type * lgr_kw = ecl_file_iget_named_kw( rst_file , LGR_KW , 0 );
+      grid_name = util_alloc_strip_copy(ecl_kw_iget_ptr( lgr_kw , 0));  
+    }  
+
+    path = well_state_add_path( well_state , rst_file , grid_name , grid_nr );
+    well_state_add_wellhead( well_state , header , iwel_kw , well_nr , grid_name , grid_nr );
+    free( grid_name );
+  }
+
   if (seg_well_nr >= 0)
     MSW = true;
   
   if (MSW)
-    iseg_kw = ecl_file_iget_named_kw( ecl_file , ISEG_KW , 0 );
+    iseg_kw = ecl_file_iget_named_kw( rst_file , ISEG_KW , 0 );
   
   for (int conn_nr = 0; conn_nr < num_connections; conn_nr++) {
     well_conn_type * conn =  well_conn_alloc( icon_kw , iseg_kw , header , well_nr , seg_well_nr , conn_nr );
@@ -174,7 +197,6 @@ well_state_type * well_state_alloc( ecl_file_type * ecl_file , int report_nr ,  
     
     well_state->valid_from_time   = global_header->sim_time;
     well_state->valid_from_report = report_nr;
-    well_state->wellhead          = well_conn_alloc_wellhead( global_iwel_kw , global_header , global_well_nr );
     well_state->name              = util_alloc_strip_copy(ecl_kw_iget_ptr( global_zwel_kw , zwel_offset ));  // Hardwired max 8 characters in Well Name
     
     {
@@ -214,17 +236,12 @@ well_state_type * well_state_alloc( ecl_file_type * ecl_file , int report_nr ,  
     
     // Add global connections:
     well_state_add_connections( well_state , ecl_file , 0 , global_well_nr );
+    
 
     
-    // Go through all the LGRs and add connections.
+    // Go through all the LGRs and add connections; both in the bulk
+    // grid and as wellhead.
     
-    /*
-      This code block is unfortunately not complete/correct; it turns
-      out that in the case of nested LGRs the LGR based IWEL
-      information for all the amalgamated LGRS is assembled in one
-      IWEL keyword. The current code assumes a strict one IWEL pr LGR
-      structure.
-    */
     {
       int num_lgr = ecl_file_get_num_named_kw( ecl_file , LGR_KW );
       for (int lgr_nr = 0; lgr_nr < num_lgr; lgr_nr++) {
@@ -248,9 +265,12 @@ well_state_type * well_state_alloc( ecl_file_type * ecl_file , int report_nr ,  
 
 
 void well_state_free( well_state_type * well ) {
-  well_conn_free( well->wellhead );
   hash_free( well->name_lgr_path );
   vector_free( well->index_lgr_path );
+
+  hash_free( well->name_wellhead );
+  vector_free( well->index_wellhead );
+  
   free( well->name );
   free( well );
 }
@@ -265,9 +285,16 @@ time_t well_state_get_sim_time( const well_state_type * well_state ) {
   return well_state->valid_from_time;
 }
 
+/**
+   Will return NULL if no wellhead in this grid.
+*/
+const well_conn_type * well_state_iget_wellhead( const well_state_type * well_state , int grid_nr) {
+  return vector_safe_iget_const( well_state->index_wellhead , grid_nr );
+}
 
-well_conn_type * well_get_wellhead( const well_state_type * well_state ) {
-  return well_state->wellhead;
+
+const well_conn_type * well_state_get_wellhead( const well_state_type * well_state , const char * grid_name) {
+  return hash_get( well_state->name_wellhead , grid_name );
 }
 
 
@@ -372,6 +399,15 @@ void well_state_summarize( const well_state_type * well_state , FILE * stream ) 
       well_path_type * well_path = well_state_iget_path(well_state , grid_nr );
       if (well_path != NULL) {
         fprintf(stream , "   Grid: %-8s\n",well_path_get_grid_name( well_path ));
+
+        {
+          const well_conn_type * global_head = well_state_iget_wellhead( well_state , grid_nr );
+          if (global_head != NULL)
+            fprintf(stream , "   Wellhead: (%3d,%3d,%3d)\n" , global_head->i , global_head->j , global_head->k);
+          else
+            fprintf(stream , "   Wellhead: ------------\n" );
+        }
+
         {
           int num_branches = well_path_get_max_branches(well_path);
           for (int branch_nr = 0; branch_nr < num_branches; branch_nr++) {
