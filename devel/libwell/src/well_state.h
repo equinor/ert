@@ -30,9 +30,11 @@ extern "C" {
 #include <well_conn.h>
 #include <well_const.h>
 
+
+#define GLOBAL_GRID_NAME   "GLOBAL" // The name assigned to the global grid for name based lookup.
+
   typedef struct well_state_struct well_state_type;
   
-  well_conn_type       * well_get_wellhead( const well_state_type * well_state );
   well_state_type      * well_state_alloc( ecl_file_type * ecl_file , int report_step , int well_nr);
   void                   well_state_free( well_state_type * well );
   const char           * well_state_get_name( const well_state_type * well );
@@ -42,6 +44,8 @@ extern "C" {
   well_type_enum         well_state_get_type( const well_state_type * well_state);
   bool                   well_state_is_open( const well_state_type * well_state );   
   
+  const well_conn_type * well_state_iget_wellhead( const well_state_type * well_state , int grid_nr);
+  const well_conn_type * well_state_get_wellhead( const well_state_type * well_state , const char * grid_name);
   
   
   const well_conn_type ** well_state_iget_lgr_connections(const well_state_type * well_state , int grid_nr , int branch_nr );
