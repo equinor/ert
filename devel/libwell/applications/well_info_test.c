@@ -50,6 +50,7 @@ int main( int argc , char ** argv) {
       printf("\n");
     }
   }
+  well_info_free( well_info );
   exit(1);
 
   // Look at the timeseries for one well:

@@ -51,11 +51,10 @@
 
 struct well_path_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char              * grid_name;
+  char              * grid_name;     // Will be NULL for 'null_path' construction in the well_state object.
   well_branch_type ** branches;
   int                 max_branches;  // This might be misleading due to NULL pointers 'inside' the branches array.
   int                 alloc_size;
-  bool                global_grid;  // True if this path is in the global grid.
 };
 
 
@@ -70,14 +69,13 @@ static void well_path_resize( well_path_type * well_path , int new_size) {
 
 static UTIL_SAFE_CAST_FUNCTION( well_path , WELL_PATH_TYPE_ID )
 
-well_path_type * well_path_alloc(const char * grid_name, bool global_grid) {
+well_path_type * well_path_alloc(const char * grid_name) {
   well_path_type * well_path = util_malloc( sizeof * well_path , __func__ );
   UTIL_TYPE_ID_INIT( well_path , WELL_PATH_TYPE_ID );
   well_path->grid_name    = util_alloc_string_copy( grid_name );
   well_path->branches     = NULL;
   well_path->max_branches = 0;
   well_path->alloc_size   = 0;
-  well_path->global_grid  = global_grid;
   well_path_resize( well_path , 4 );
   return well_path;
 }
@@ -164,7 +162,7 @@ void well_path_free( well_path_type * well_path ) {
     if (well_path->branches[i] != NULL) 
       well_branch_free( well_path->branches[i] );
   }
-  free( well_path->grid_name );
+  util_safe_free( well_path->grid_name );
   free( well_path->branches );
   free( well_path );
 }
