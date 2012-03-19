@@ -21,9 +21,7 @@
 extern "C" {
 #endif
 
-#define  PROMPT_LEN   60
-
-
+#define  PROMPT_LEN   80
 
 
 
