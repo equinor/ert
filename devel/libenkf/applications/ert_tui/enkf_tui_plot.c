@@ -20,38 +20,46 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <util.h>
+#include <math.h>
+#include <time.h>
 #include <ctype.h>
+
+#include <util.h>
 #include <menu.h>
 #include <arg_pack.h>
+#include <msg.h>
+#include <vector.h>
+#include <bool_vector.h>
+#include <double_vector.h>
+#include <path_fmt.h>
+
+#include <plot.h>
+#include <plot_dataset.h> 
+
+#include <ecl_rft_file.h>
+#include <ecl_sum.h>
+
 #include <enkf_main.h>
-#include <enkf_tui_plot.h>
-#include <enkf_tui_fs.h>
 #include <enkf_obs.h>
 #include <field_obs.h>
 #include <gen_obs.h>
 #include <field_config.h>
 #include <obs_vector.h>
-#include <bool_vector.h>
-#include <plot.h>
-#include <plot_dataset.h> 
-#include <enkf_tui_util.h>
 #include <ensemble_config.h>
-#include <msg.h>
-#include <vector.h>
 #include <enkf_state.h>
 #include <gen_kw_config.h>
 #include <enkf_defaults.h>
-#include <math.h>
-#include <time.h>
 #include <plot_config.h>
 #include <member_config.h>
-#include <double_vector.h>
+#include <enkf_plot_data.h>
+
+
 #include <ert_tui_const.h>
-#include <ecl_rft_file.h>
-#include <path_fmt.h>
+#include <enkf_tui_util.h>
 #include <enkf_tui_plot_rft.h>
 #include <enkf_tui_plot_util.h>
+#include <enkf_tui_plot.h>
+#include <enkf_tui_fs.h>
 
 /**
    The final plot path consists of three parts: 
@@ -120,7 +128,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
                                      int iens1 , int iens2  , 
                                      state_enum plot_state) {
                                      
-  
+  enkf_plot_data_type        * plot_data    = enkf_main_alloc_plot_data( enkf_main );
   enkf_fs_type               * fs           = enkf_main_get_fs(enkf_main);
   enkf_obs_type              * enkf_obs     = enkf_main_get_obs( enkf_main );
   const plot_config_type     * plot_config  = enkf_main_get_plot_config( enkf_main );
@@ -139,6 +147,10 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   bool_vector_type * has_data = bool_vector_alloc( 0 , false );
   int     iens , step;
   bool plot_refcase = true;
+
+  enkf_plot_data_load( plot_data , config_node , fs , user_key , FORECAST , step1 , step2 );
+  
+
   if ( strcmp( data_file , "" ) == 0)
     plot_refcase = false;
 
@@ -155,7 +167,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   }
   msg_show(msg);
 
-      double_vector_type * x      = double_vector_alloc(0,0);
+  double_vector_type * x      = double_vector_alloc(0,0);
   {
 
     double_vector_type * y      = double_vector_alloc(0,0);
@@ -451,7 +463,10 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   
   free( plot_file );
   bool_vector_free( has_data );
+  enkf_plot_data_free( plot_data );
 }
+
+
 
 
 void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_type * config_node , int step1 , int step2 , int iens1 , int iens2) {
@@ -691,8 +706,6 @@ void enkf_tui_plot_all_summary(void * arg) {
   const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main ); 
   int iens1 , iens2 , step1 , step2;   
   bool prediction_mode;
-
-
   
   {
     bool default_used;

@@ -84,7 +84,7 @@
 #include <analysis_module.h>
 #include <analysis_table.h>
 #include <enkf_linalg.h>
-#include <enkf_plot_ens.h>
+#include <enkf_plot_data.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -3178,14 +3178,13 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 }
 
 
-enkf_plot_ens_type * enkf_main_alloc_plot_ens( enkf_main_type * enkf_main ) {
-  enkf_plot_ens_type * plot_ens = enkf_plot_ens_alloc( ecl_config_get_start_date( enkf_main_get_ecl_config( enkf_main )));
+enkf_plot_data_type * enkf_main_alloc_plot_data( enkf_main_type * enkf_main ) {
+  enkf_plot_data_type * plot_data = enkf_plot_data_alloc( ecl_config_get_start_date( enkf_main_get_ecl_config( enkf_main )));
 
   for (int iens = 0; iens < enkf_main_get_ensemble_size( enkf_main ); iens++)
-    enkf_plot_ens_append_member( plot_ens , enkf_main_iget_member_config(enkf_main , iens ));
+    enkf_plot_data_append_member( plot_data , enkf_main_iget_member_config(enkf_main , iens ));
   
-  
-  return plot_ens;
+  return plot_data;
 }
 
 /*****************************************************************/

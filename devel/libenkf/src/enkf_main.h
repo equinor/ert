@@ -54,7 +54,7 @@ extern "C" {
 #include <site_config.h>
 #include <local_config.h>
 #include <ert_template.h>
-#include <enkf_plot_ens.h>
+#include <enkf_plot_data.h>
 
 /*****************************************************************/
 
@@ -136,7 +136,7 @@ extern "C" {
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
   analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );
   void                          enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path );  
-  enkf_plot_ens_type          * enkf_main_alloc_plot_ens( enkf_main_type * enkf_main );
+  enkf_plot_data_type         * enkf_main_alloc_plot_data( enkf_main_type * enkf_main );
   
   void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
   void         enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
