@@ -193,6 +193,7 @@ struct enkf_node_struct {
   ecl_load_vector_ftype          * ecl_load_vector;
   free_data_ftype                * free_data;
   user_get_ftype                 * user_get;
+  user_get_vector_ftype          * user_get_vector;
   set_inflation_ftype            * set_inflation;
   fload_ftype                    * fload;
   has_data_ftype                 * has_data;
@@ -347,12 +348,23 @@ bool enkf_node_user_get(enkf_node_type * enkf_node , enkf_fs_type * fs , const c
 }
 
 
+bool enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int iens , state_enum state , double_vector_type * values) {
+  if (enkf_node->vector_storage) {
+    if (enkf_node_try_load_vector( enkf_node , fs , iens , state)) {
+      enkf_node->user_get_vector( enkf_node->data , key , state , values);
+      return true;
+    } else
+      return false;
+  } else 
+    util_abort("%s: internal error - function should only be called by nodes with vector storage.\n",__func__);
+}
+
+
+
 void enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
   FUNC_ASSERT( enkf_node->fload );
   enkf_node->fload( enkf_node->data , filename );
 }
-
-
 
 
 
@@ -526,10 +538,10 @@ bool enkf_node_try_load(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_
 static void enkf_node_buffer_load( enkf_node_type * enkf_node , enkf_fs_type * fs , int report_step , int iens , state_enum state) {
   FUNC_ASSERT(enkf_node->read_from_buffer);
   {
-    buffer_type * buffer                = buffer_alloc( 100 );
-    enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
-    const char * node_key               = enkf_config_node_get_key( config_node );
-    enkf_var_type var_type              = enkf_config_node_get_var_type( config_node );
+    buffer_type * buffer                      = buffer_alloc( 100 );
+    const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
+    const char * node_key                     = enkf_config_node_get_key( config_node );
+    enkf_var_type var_type                    = enkf_config_node_get_var_type( config_node );
     
     if (enkf_node->vector_storage)
       enkf_fs_fread_vector( fs , buffer , node_key , var_type , iens , state);
@@ -908,6 +920,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->freef              = NULL;
   node->free_data          = NULL;
   node->user_get           = NULL;
+  node->user_get_vector    = NULL;
   node->fload              = NULL; 
   node->read_from_buffer   = NULL;
   node->write_to_buffer    = NULL;
@@ -952,6 +965,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->copy               = summary_copy__;
     node->freef              = summary_free__;
     node->user_get           = summary_user_get__; 
+    node->user_get_vector    = summary_user_get_vector__;
     node->read_from_buffer   = summary_read_from_buffer__;
     node->write_to_buffer    = summary_write_to_buffer__;
     node->serialize          = summary_serialize__;

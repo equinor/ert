@@ -24,15 +24,20 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <enkf_types.h>
-#include <ecl_file.h>
-#include <ecl_sum.h>
-#include <enkf_serialize.h>
-#include <active_list.h>
+
 #include <matrix.h>
 #include <log.h>
-#include <meas_data.h>
 #include <rng.h>
+#include <double_vector.h>
+
+#include <ecl_file.h>
+#include <ecl_sum.h>
+
+#include <enkf_types.h>
+#include <enkf_serialize.h>
+#include <active_list.h>
+#include <meas_data.h>
+
 
 #define CONFIG_STD_FIELDS \
 int __type_id;            \
@@ -173,6 +178,15 @@ bool prefix ## _user_get__(void * void_arg , const char * key , int report_step 
 #define VOID_USER_GET_HEADER(prefix) bool prefix ## _user_get__(void * , const char * , int, state_enum , double *);
 
 
+/*****************************************************************/
+
+#define VOID_USER_GET_VECTOR(prefix)                                                     \
+void prefix ## _user_get_vector__(void * void_arg , const char * key , state_enum state , double_vector_type * value) { \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );                      \
+   prefix ## _user_get_vector(arg , key , state , value);   \
+}
+
+#define VOID_USER_GET_VECTOR_HEADER(prefix) void prefix ## _user_get_vector__(void * , const char * , state_enum , double_vector_type *);
 
 /*****************************************************************/
 
@@ -193,18 +207,6 @@ void prefix ## _free_data__(void * void_arg) {               \
 }
 
 #define VOID_FREE_DATA_HEADER(prefix) void prefix ## _free_data__(void * );
-
-/*****************************************************************/
-
-/*
-#define VOID_REALLOC_DATA(prefix)                            \
-void prefix ## _realloc_data__(void * void_arg) {            \
-   prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
-   prefix ## _realloc_data( arg );                           \
-}
-
-#define VOID_REALLOC_DATA_HEADER(prefix) void prefix ## _realloc_data__(void * );
-*/
 
 /*****************************************************************/
 

@@ -66,7 +66,7 @@ extern "C" {
                                                            const void * );     /* Node object with the minimum standard deviation - supplied by the user. */
 
 
-
+  typedef void          (user_get_vector_ftype)           (void * , const char * , state_enum , double_vector_type *);
   typedef bool          (user_get_ftype)                  (void * , const char * , int , state_enum , double *);
   typedef void *        (alloc_ftype)                     (const void *);
   typedef bool          (initialize_ftype)                (      void *  , int , const char * , rng_type * );
@@ -103,6 +103,7 @@ extern "C" {
   typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , arg_pack_type * );
 
 
+  bool             enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int iens , state_enum state , double_vector_type * values);
   bool             enkf_node_user_get(enkf_node_type *  , enkf_fs_type * , const char * , node_id_type , double * );
   enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);
   enkf_node_type * enkf_node_alloc_with_data(const enkf_config_node_type * config , void * data);

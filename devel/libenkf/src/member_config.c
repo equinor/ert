@@ -183,6 +183,13 @@ time_t member_config_iget_sim_time( member_config_type * member_config , int rep
   }
 }
 
+const time_t_vector_type * member_config_get_sim_time_ref( const member_config_type * member_config , enkf_fs_type * fs) {
+  member_config_assert_fs( member_config , fs );
+  return member_config->report_time;
+}
+
+
+
 
 /**
    Will return -1 if the data are not available. 

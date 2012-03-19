@@ -211,6 +211,16 @@ bool summary_user_get(const summary_type * summary , const char * index_key , in
 
 
 
+void summary_user_get_vector(const summary_type * summary , const char * index_key , state_enum state, double_vector_type * value) {
+  if (summary->vector_storage) {
+    double_vector_type * vector = SELECT_VECTOR( summary , state );
+    double_vector_memcpy( value , vector );
+  } else 
+    util_abort("%s: internal error - should not call the %s function when not using vector storage \n",__func__ , __func__);
+}
+
+
+
 /**
    There are three typical reasons why the node data can not be loaded:
 
@@ -384,6 +394,7 @@ VOID_COPY     (summary)
 VOID_ECL_LOAD(summary)
 VOID_ECL_LOAD_VECTOR(summary)
 VOID_USER_GET(summary)
+VOID_USER_GET_VECTOR(summary)
 VOID_WRITE_TO_BUFFER(summary)
 VOID_READ_FROM_BUFFER(summary)
 VOID_SERIALIZE(summary)

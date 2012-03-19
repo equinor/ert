@@ -23,36 +23,40 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+
+#include <util.h>
+#include <stringlist.h>
+#include <set.h>
+#include <subst_list.h>
+#include <log.h>  
+#include <bool_vector.h>
+#include <int_vector.h>
+#include <matrix.h>
+#include <path_fmt.h>
+
+#include <sched_file.h>
+
+#include <job_queue.h>
+#include <ext_joblist.h>
+
+#include <plot_config.h>
+
 #include <enkf_config_node.h>
 #include <enkf_types.h>
 #include <enkf_state.h>
 #include <obs_data.h>
-#include <path_fmt.h>
 #include <enkf_fs.h>
-#include <sched_file.h>
-#include <job_queue.h>
-#include <util.h>
-#include <ext_joblist.h>
-#include <stringlist.h>
+#include <member_config.h>
 #include <enkf_obs.h>
 #include <forward_model.h>
 #include <misfit_table.h>
-#include <plot_config.h>
-#include <set.h>
-#include <member_config.h>
 #include <analysis_config.h>
 #include <site_config.h>
-#include <subst_list.h>
 #include <local_config.h>
-#include <log.h>  
-#include <bool_vector.h>
 #include <ert_template.h>
-#include <int_vector.h>
-#include <matrix.h>
+#include <enkf_plot_ens.h>
 
 /*****************************************************************/
-
-
 
   typedef struct enkf_main_struct enkf_main_type;
   void                          enkf_main_close_alt_fs(enkf_main_type * enkf_main , enkf_fs_type * fs);
@@ -132,7 +136,8 @@ extern "C" {
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
   analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );
   void                          enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path );  
-
+  enkf_plot_ens_type          * enkf_main_alloc_plot_ens( enkf_main_type * enkf_main );
+  
   void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
   void         enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
   const char * enkf_main_get_image_viewer(const enkf_main_type * );

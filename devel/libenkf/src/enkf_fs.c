@@ -479,8 +479,8 @@ static void * select_dynamic_driver(enkf_fs_type * fs , state_enum state ) {
     driver = fs->dynamic_analyzed;
   else if (state == FORECAST) 
     driver = fs->dynamic_forecast;
-  else
-    util_abort("%s: fatal internal error \n",__func__);
+  else 
+    util_abort("%s: tried to select dynamic driver according to ID:%d - invalid \n",__func__ , state);
   
   return driver;
 }

@@ -18,12 +18,15 @@
 
 #ifndef __SUMMARY_H__
 #define __SUMMARY_H__
+#include <util.h>
+#include <double_vector.h>
+
 #include <ecl_sum.h>
 #include <ecl_file.h>
 #include <enkf_macros.h>
 #include <enkf_util.h>
 #include <summary_config.h>
-#include <util.h>
+
 
 double    summary_get(const summary_type * summary, int report_step , state_enum state);
 
@@ -36,6 +39,7 @@ VOID_COPY_HEADER(summary);
 VOID_ECL_LOAD_HEADER(summary);
 VOID_ECL_LOAD_VECTOR_HEADER(summary);
 VOID_USER_GET_HEADER(summary);
+VOID_USER_GET_VECTOR_HEADER(summary);
 VOID_WRITE_TO_BUFFER_HEADER(summary);
 VOID_READ_FROM_BUFFER_HEADER(summary);
 VOID_SERIALIZE_HEADER(summary)

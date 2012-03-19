@@ -35,31 +35,32 @@ extern "C" {
 
 typedef  struct member_config_struct member_config_type;
 
-  int                     member_config_get_sim_length(member_config_type * member_config , enkf_fs_type * fs);
-void                    member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath);
-keep_runpath_type       member_config_get_keep_runpath(const member_config_type * member_config);
-int                     member_config_get_iens( const member_config_type * member_config );
-void                    member_config_fwrite_sim_time( const member_config_type * member_config , enkf_fs_type * enkf_fs );
-void                    member_config_iset_sim_time( member_config_type * member_config , int report_step , time_t sim_time );
-double                  member_config_iget_sim_days( member_config_type * member_config , int report_step, enkf_fs_type * fs);
-time_t                  member_config_iget_sim_time( member_config_type * member_config , int report_step, enkf_fs_type * fs);
-const char *            member_config_update_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list);
-void                    member_config_free(member_config_type * member_config) ;
-const char *            member_config_get_eclbase( const member_config_type * member_config );
-const char *            member_config_get_casename( const member_config_type * member_config );
-
-bool                    member_config_pre_clear_runpath(const member_config_type * member_config);
-void                    member_config_set_pre_clear_runpath(member_config_type * member_config , bool pre_clear_runpath);
-
-
-member_config_type *    member_config_alloc(int iens , 
-                                            const char * casename , 
-                                            bool                         pre_clear_runpath , 
-                                            keep_runpath_type            keep_runpath      , 
-                                            const ecl_config_type      * ecl_config        , 
-                                            const ensemble_config_type * ensemble_config   ,
-                                            enkf_fs_type               * fs);
-
+  int                        member_config_get_sim_length(member_config_type * member_config , enkf_fs_type * fs);
+  void                       member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath);
+  keep_runpath_type          member_config_get_keep_runpath(const member_config_type * member_config);
+  int                        member_config_get_iens( const member_config_type * member_config );
+  void                       member_config_fwrite_sim_time( const member_config_type * member_config , enkf_fs_type * enkf_fs );
+  void                       member_config_iset_sim_time( member_config_type * member_config , int report_step , time_t sim_time );
+  double                     member_config_iget_sim_days( member_config_type * member_config , int report_step, enkf_fs_type * fs);
+  time_t                     member_config_iget_sim_time( member_config_type * member_config , int report_step, enkf_fs_type * fs);
+  const time_t_vector_type * member_config_get_sim_time_ref( const member_config_type * member_config , enkf_fs_type * fs);
+  const char *               member_config_update_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list);
+  void                       member_config_free(member_config_type * member_config) ;
+  const char *               member_config_get_eclbase( const member_config_type * member_config );
+  const char *               member_config_get_casename( const member_config_type * member_config );
+  
+  bool                       member_config_pre_clear_runpath(const member_config_type * member_config);
+  void                       member_config_set_pre_clear_runpath(member_config_type * member_config , bool pre_clear_runpath);
+  
+  
+  member_config_type *       member_config_alloc(int iens , 
+                                                 const char * casename , 
+                                                 bool                         pre_clear_runpath , 
+                                                 keep_runpath_type            keep_runpath      , 
+                                                 const ecl_config_type      * ecl_config        , 
+                                                 const ensemble_config_type * ensemble_config   ,
+                                                 enkf_fs_type               * fs);
+  
 
 #ifdef __cplusplus 
 }
