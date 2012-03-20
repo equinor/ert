@@ -49,8 +49,8 @@ struct well_state_struct {
   int              valid_from_report;
   bool             open;
   well_type_enum   type;
-
-  well_path_type * null_path;
+  
+  well_path_type * null_path;        // This is a valid - empty path instance returned when the well does not have any cells in a particular LGR.
 
   vector_type    * index_wellhead;   // An well_conn_type instance representing the wellhead - indexed by grid_nr.
   hash_type      * name_wellhead;    // An well_conn_type instance representing the wellhead - indexed by lgr_name.
