@@ -799,11 +799,33 @@ class EclRegion(object):
         """
         warnings.warn("The global_size property is deprecated - use \'global_list.size\' instead." , DeprecationWarning)
         return self.global_list.size    
+
+    def contains_ijk( self , i,j,k):
+        """
+        Will check if the cell given by i,j,k is part of the region.
+        """
+        return cfunc.contains_ijk( self , i , j , k )
+
+
+    def contains_global( self , global_index):
+        """
+        Will check if the cell given by @global_index is part of the region.
+        """
+        return cfunc.contains_global( self , global_index )
+
+
+    def contains_active( self , active_index):
+        """
+        Will check if the cell given by @active_index is part of the region.
+        """
+        return cfunc.contains_active( self , active_index )
+
     
     def kw_index_list(self , ecl_kw , force_active):
         c_ptr = cfunc.get_kw_index_list( self , ecl_kw , force_active)
         index_list = IntVector.ref( c_ptr , self )
         return index_list
+
 
     def set_name( self , name ):
         cfunc.set_name( self , name )
@@ -915,3 +937,8 @@ cfunc.deselect_outside_polygon  = cwrapper.prototype("void ecl_region_deselect_o
 
 cfunc.set_name                  = cwrapper.prototype("void  ecl_region_set_name( ecl_region , char*)")
 cfunc.get_name                  = cwrapper.prototype("char* ecl_region_get_name( ecl_region )")
+
+cfunc.contains_ijk              = cwrapper.prototype("ecl_region_contains_ijk( ecl_region , int , int , int)")
+cfunc.contains_global           = cwrapper.prototype("ecl_region_contains_global( ecl_region, int )")
+cfunc.contains_active           = cwrapper.prototype("ecl_region_contains_active( ecl_region , int )")
+
