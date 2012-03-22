@@ -50,8 +50,9 @@ wrap the content of the c-file ecl_xxx.c The main content is:
   ecl_grav/EclGrav: Class used to simplify evaluation of ECLIPSE
      modelling time-lapse gravitational surveys.
 
-  ecl_case/EclCase: Small class essentially wrapping one ECLIPSE
-     datafile.
+  ecl_subsidence/EclSubsidence: Small class used to evaluate simulated
+     subsidence from ECLIPSE simulations; analogous to the EcLGrav
+     functionality.
 
   ecl_queue/EclQueue: Class implementing a queue to run ECLIPSE
      simulations.

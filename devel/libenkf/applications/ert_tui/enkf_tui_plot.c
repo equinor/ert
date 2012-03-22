@@ -53,7 +53,6 @@
 #include <member_config.h>
 #include <enkf_plot_data.h>
 
-
 #include <ert_tui_const.h>
 #include <enkf_tui_util.h>
 #include <enkf_tui_plot_rft.h>
@@ -148,7 +147,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   int     iens , step;
   bool plot_refcase = true;
 
-  enkf_plot_data_load( plot_data , config_node , fs , user_key , FORECAST , step1 , step2 );
+  //enkf_plot_data_load( plot_data , config_node , fs , user_key , FORECAST , step1 , step2 );
   
 
   if ( strcmp( data_file , "" ) == 0)
