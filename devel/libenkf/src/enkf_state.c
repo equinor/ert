@@ -586,7 +586,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
         /* Should we load from a unified summary file, or from several non-unified files? */
         if (unified_file != NULL) 
           /* Use unified file: */
-          stringlist_append_owned_ref( data_files , unified_file);
+          stringlist_append_ref( data_files , unified_file);
         else {
           /* Use several non unified files. */       
           /* Bypassing the query to model_config_load_results() */
@@ -605,7 +605,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
               break;
           }
         }  
-
+        
 
         if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
           summary = ecl_sum_fread_alloc(header_file , data_files , SUMMARY_KEY_JOIN_STRING );
