@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
+   copyright (C) 2011  Statoil ASA, Norway. 
     
    The file 'fwd_step_enkf.c' is part of ERT - Ensemble based Reservoir Tool. 
     
@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <analysis_table.h>
 #include <analysis_module.h>
-#include <enkf_linalg.h>
+/*#include <enkf_linalg.h>*/
 #include <stepwise.h>
 #include <fwd_step_enkf.h>
 #include <math.h>
@@ -64,7 +64,8 @@ void fwd_step_enkf_set_r2_limit( fwd_step_enkf_data_type * data , double limit )
 void * fwd_step_enkf_data_alloc( rng_type * rng ) {
   fwd_step_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
   UTIL_TYPE_ID_INIT( data , FWD_STEP_ENKF_TYPE_ID );
-
+  
+  data->stepwise_data = NULL;
   data->rng          = rng;
   data->nfolds       = DEFAULT_NFOLDS;
   data->r2_limit     = DEFAULT_R2_LIMIT;
@@ -86,7 +87,6 @@ void fwd_step_enkf_updateA(void * module_data ,
                            
 
   
-  printf("Inside fwd_step_enkf_updateA\n");
   fwd_step_enkf_data_type * fwd_step_data = fwd_step_enkf_data_safe_cast( module_data );
   printf("Running Forward Stepwise regression:\n");
   {
@@ -96,10 +96,9 @@ void fwd_step_enkf_updateA(void * module_data ,
     int nd = matrix_get_rows( S );
     
     {
-      /*Start of the actual update */
-      matrix_type * y = matrix_alloc( ens_size , 1 );
 
       stepwise_type * stepwise_data = stepwise_alloc1(ens_size, nd , fwd_step_data->rng);
+
       matrix_type * workS = matrix_alloc( ens_size , nd  );
 
       
@@ -112,16 +111,18 @@ void fwd_step_enkf_updateA(void * module_data ,
                                                       
       /*This might be illigal???? */
       stepwise_set_X0( stepwise_data , workS );
-      
       double xHat;
 
       matrix_type * di = matrix_alloc( 1 , nd );
 
-
+      printf("nx = %d\n",nx);
       for (int i = 0; i < nx; i++) {
         /*Update values of y */
+	/*Start of the actual update */
+	matrix_type * y = matrix_alloc( ens_size , 1 );
+      
         for (int j = 0; j < ens_size; j++) {
-          matrix_iset(y , j , 1 , matrix_iget( A, i , j ) );
+          matrix_iset(y , j , 0 , matrix_iget( A, i , j ) );
         }
         
         /*This might be illigal???? */
@@ -132,7 +133,7 @@ void fwd_step_enkf_updateA(void * module_data ,
         /*manipulate A directly*/
         for (int j = 0; j < ens_size; j++) {
           for (int k = 0; k < nd; k++) {
-            matrix_iset(di , 1 , k , matrix_iget( D , k , j ) );
+            matrix_iset(di , 0 , k , matrix_iget( D , k , j ) );
           }
           
           xHat = stepwise_eval(stepwise_data , di );
@@ -142,12 +143,14 @@ void fwd_step_enkf_updateA(void * module_data ,
         
         
       }
-                                                      
-      
+       
+      printf("Done with stepwise regression enkf\n");
       stepwise_free( stepwise_data );
       matrix_free( di );
-      matrix_free( workS );
-      matrix_free( y );
+      
+      /*workS is freed in stepwise_free() */
+      /*matrix_free( workS ); */
+      /*matrix_free( y );*/
       
         
     }
@@ -165,7 +168,12 @@ void fwd_step_enkf_updateA(void * module_data ,
 void fwd_step_enkf_data_free( void * arg ) {
   fwd_step_enkf_data_type * fwd_step_data = fwd_step_enkf_data_safe_cast( arg );
   {
-    stepwise_free( fwd_step_data->stepwise_data );
+
+    if (fwd_step_data != NULL) {
+      if (fwd_step_data->stepwise_data != NULL) {
+	stepwise_free( fwd_step_data->stepwise_data );
+      }
+    }
   }
 }
 
