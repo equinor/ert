@@ -482,6 +482,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
             if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , sched_file , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff ))
               enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
             else {
+              fprintf(stderr,"** Could not load historical data for observation:%s - ignored\n",obs_key);
               obs_vector_free( obs_vector );
             }
           }
