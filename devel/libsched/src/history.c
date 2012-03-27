@@ -162,7 +162,9 @@ int history_get_num_restarts(const history_type * history)
 
 
 
-void history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid) {
+bool history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid) {
+  bool initOK = false;
+
   double_vector_reset( value );
   bool_vector_reset( valid );
   bool_vector_set_default( valid , false);
@@ -174,6 +176,7 @@ void history_init_ts( const history_type * history , const char * summary_key , 
       } else
         bool_vector_iset( valid , tstep , false );
     }
+    initOK = true;
   } else {
     char * local_key;
     if (history->source == REFCASE_HISTORY) {
@@ -184,8 +187,8 @@ void history_init_ts( const history_type * history , const char * summary_key , 
       local_key = util_alloc_sprintf( "%sH%s%s" , ecl_sum_get_keyword( history->ecl_sum , summary_key ) , join_string , ecl_sum_get_wgname( history->ecl_sum , summary_key ));
     } else
       local_key = (char *) summary_key;
-  
-    {
+
+    if (ecl_sum_has_general_var( history->ecl_sum , local_key )) {
       for (int tstep = 0; tstep <= sched_history_get_last_history(history->sched_history); tstep++) {
         int time_index = ecl_sum_iget_report_end( history->ecl_sum , tstep );
         if (time_index >= 0) {
@@ -194,12 +197,15 @@ void history_init_ts( const history_type * history , const char * summary_key , 
         } else
           bool_vector_iset( valid , tstep , false );    /* Did not have this report step */
       }
+      initOK = true;
     }
     
     if (history->source == REFCASE_HISTORY) 
       free( local_key );
   }
+  return initOK;
 }
+
 
 
 
