@@ -479,8 +479,11 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
         if (config_node != NULL) {
           obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ) , enkf_obs->obs_time , num_reports);
           if (obs_vector != NULL) {
-            obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , sched_file , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff );
-            enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+            if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , sched_file , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff ))
+              enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+            else {
+              obs_vector_free( obs_vector );
+            }
           }
         } else 
           fprintf(stderr,"** Warning: summary:%s does not exist - observation:%s not added. \n", obs_key , obs_key);
