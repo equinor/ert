@@ -51,7 +51,7 @@
 
 struct ecl_config_struct {
   ecl_io_config_type * io_config;                  /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
-  path_fmt_type      * eclbase;                    /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
+  path_fmt_type      * eclbase;                    /* A path_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be reflected. */
   sched_file_type    * sched_file;                 /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
   hash_type          * fixed_length_kw;            /* Set of user-added SCHEDULE keywords with fixed length. */
   bool                 include_all_static_kw;      /* If true all static keywords are stored.*/ 
@@ -353,7 +353,7 @@ ecl_config_type * ecl_config_alloc_empty( ) {
   ecl_config->include_all_static_kw    = false;
   ecl_config->static_kw_set            = set_alloc_empty();
   ecl_config->user_static_kw           = stringlist_alloc_new();
-  ecl_config->num_cpu                  = -1;
+  ecl_config->num_cpu                  = 1;                     /* This must get a valid default in case no ECLIPSE datafile is provided. */
   ecl_config->data_file                = NULL;
   ecl_config->input_init_section       = NULL; 
   ecl_config->init_section             = NULL;
@@ -584,10 +584,10 @@ bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)  { retur
 
 
 
-void ecl_config_add_config_items( config_type * config , bool strict ) {
+void ecl_config_add_config_items( config_type * config ) {
   config_item_type * item;
 
-  item = config_add_item(config , SCHEDULE_FILE_KEY , strict , false);
+  item = config_add_item(config , SCHEDULE_FILE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   /*
     Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
@@ -597,10 +597,10 @@ void ecl_config_add_config_items( config_type * config , bool strict ) {
   item = config_add_item( config , IGNORE_SCHEDULE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_BOOLEAN });
 
-  item = config_add_item(config , ECLBASE_KEY , strict , false);
+  item = config_add_item(config , ECLBASE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
-  item = config_add_item(config , DATA_FILE_KEY , strict , false);
+  item = config_add_item(config , DATA_FILE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , STATIC_KW_KEY , false , true);
@@ -610,7 +610,6 @@ void ecl_config_add_config_items( config_type * config , bool strict ) {
   config_item_set_argc_minmax(item , 2 , 2 , 2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_INT});
 
   item = config_add_item(config , REFCASE_KEY , false , false);
-  //config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
   config_item_set_argc_minmax(item , 1 , 1 , 1 , NULL );
   
   item = config_add_item(config , GRID_KEY , false , false);

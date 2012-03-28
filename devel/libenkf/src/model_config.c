@@ -19,24 +19,29 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <util.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <util.h>
 #include <path_fmt.h>
-#include <enkf_sched.h>
-#include <model_config.h>
 #include <hash.h>
+#include <menu.h>
+#include <bool_vector.h>
+
 #include <history.h>
-#include <config.h>
 #include <sched_file.h>
+
+#include <config.h>
+
 #include <ecl_sum.h>
 #include <ecl_util.h>
 #include <ecl_grid.h>
-#include <menu.h>
-#include <enkf_types.h>
-#include <plain_driver.h>
+
 #include <forward_model.h>
-#include <bool_vector.h>
+
+#include <enkf_sched.h>
+#include <model_config.h>
+#include <enkf_types.h>
 #include <fs_types.h>
 #include <enkf_defaults.h>
 #include "config_keys.h"
@@ -62,6 +67,7 @@ struct model_config_struct {
   forward_model_type   * forward_model;             /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
   history_type         * history;                   /* The history object. */
   path_fmt_type        * runpath;                   /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  char                 * jobname_fmt;               /* Format string with one '%d' for the jobname - can be NULL in which case the eclbase name will be used. */
   enkf_sched_type      * enkf_sched;                /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
   char                 * enkf_sched_file;           /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
   char                 * enspath;
@@ -82,10 +88,18 @@ struct model_config_struct {
 
 
 
+const char * model_config_get_jobname_fmt( const model_config_type * model_config ) {
+  return model_config->jobname_fmt;
+}
 
- path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
-   return model_config->runpath;
- }
+void model_config_set_jobname_fmt( model_config_type * model_config , const char * jobname_fmt) {
+  model_config->jobname_fmt = util_realloc_string_copy( model_config->jobname_fmt , jobname_fmt );
+}
+
+
+path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
+  return model_config->runpath;
+}
 
  const char * model_config_get_runpath_as_char( const model_config_type * model_config ) {
    return path_fmt_get_fmt( model_config->runpath );
@@ -154,7 +168,7 @@ void model_config_set_case_table( model_config_type * model_config , int ens_siz
                                                        model_config->last_history_restart  , 
                                                        run_mode);
                                                        
-                                                       
+   
  }
 
 
@@ -267,6 +281,7 @@ model_config_type * model_config_alloc_empty() {
   model_config->case_table_file           = NULL;
   model_config->select_case               = NULL;    
   model_config->history                   = NULL;
+  model_config->jobname_fmt               = NULL;
   model_config->last_history_restart      = 0;
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
   model_config->__load_state              = bool_vector_alloc( 0 , false ); 
@@ -353,6 +368,9 @@ void model_config_init(model_config_type * model_config ,
   if (config_item_set( config , ENSPATH_KEY))
     model_config_set_enspath( model_config , config_get_value(config , ENSPATH_KEY));
 
+  if (config_item_set( config , JOBNAME_KEY))
+    model_config_set_jobname_fmt( model_config , config_get_value(config , JOBNAME_KEY));
+
   if (config_item_set( config , RFTPATH_KEY))
     model_config_set_rftpath( model_config , config_get_value(config , RFTPATH_KEY));
   
@@ -380,6 +398,7 @@ void model_config_free(model_config_type * model_config) {
     enkf_sched_free( model_config->enkf_sched );
   free( model_config->enspath );
   free( model_config->rftpath );
+  util_safe_free( model_config->jobname_fmt );
   util_safe_free( model_config->enkf_sched_file );
   util_safe_free( model_config->select_case );
   util_safe_free( model_config->case_table_file );

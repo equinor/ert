@@ -18,16 +18,20 @@
 
 #include <stdlib.h>
 #include <util.h>
-#include <member_config.h>
 #include <stdbool.h>
+#include <time.h>
+
 #include <path_fmt.h>
 #include <subst_list.h>
+
 #include <sched_file.h>
+
 #include <ecl_config.h>
+
+#include <member_config.h>
 #include <enkf_fs.h>
 #include <enkf_types.h>
 #include <ensemble_config.h>
-#include <time.h>
 
 
 /**
@@ -43,6 +47,7 @@ struct member_config_struct {
   char                  * casename;            /* The name of this case - will mosttly be NULL. */
   keep_runpath_type       keep_runpath;        /* Should the run-path directory be left around (for this member)*/
   bool                    pre_clear_runpath;   /* Should the runpath directory be cleared before starting? */ 
+  char                  * jobname;             /* The jobname used for this job when submitting to the queue system. */
   char                  * eclbase;             /* The ECLBASE string used for simulations of this member. */
   time_t_vector_type    * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. */
   enkf_fs_type          * fs_cache;            /* UGly */ 
@@ -65,20 +70,35 @@ struct member_config_struct {
 */
 
 
+const char * member_config_update_jobname(member_config_type * member_config , const char * jobname_fmt , const subst_list_type * subst_list) {
+  if (jobname_fmt != NULL) {
+    util_safe_free( member_config->jobname );
+    {
+      char * tmp = util_alloc_sprintf( jobname_fmt , member_config->iens);
+      member_config->jobname = subst_list_alloc_filtered_string( subst_list , tmp );
+      free( tmp );
+    }
+  }
+  return member_config->jobname;
+}
+
+
 
 const char * member_config_update_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list) {
   util_safe_free( member_config->eclbase );
   {
     const path_fmt_type * eclbase_fmt = ecl_config_get_eclbase_fmt(ecl_config);
     if (eclbase_fmt != NULL) {
-      char * tmp = path_fmt_alloc_path(eclbase_fmt , false , member_config->iens);
-      member_config->eclbase = subst_list_alloc_filtered_string( subst_list , tmp );
-      free( tmp );
+      {
+        char * tmp = path_fmt_alloc_path(eclbase_fmt , false , member_config->iens);
+        member_config->eclbase = subst_list_alloc_filtered_string( subst_list , tmp );
+        free( tmp );
+      }
+
+      if (!ecl_util_valid_basename( member_config->eclbase )) 
+        util_exit("Sorry - the basename:%s is invalid. ECLIPSE does not handle mIxeD cAsE :-( \n" , member_config->eclbase);
     }
   }
-
-  if (!ecl_util_valid_basename( member_config->eclbase )) 
-    util_exit("Sorry - the basename:%s is invalid. ECLIPSE does not handle mIxeD cAsE :-( \n" , member_config->eclbase);
   
   return member_config->eclbase;
 }
@@ -230,13 +250,25 @@ const char * member_config_get_eclbase( const member_config_type * member_config
 }
 
 
+const char * member_config_get_jobname( const member_config_type * member_config ) {
+  if (member_config->jobname != NULL)
+    return member_config->jobname;
+  else {
+    if (member_config->eclbase != NULL)
+      return member_config->eclbase;
+    else
+      util_abort("%s: sorry can not submit JOB - must specify name with JOBNAME or ECLBASE config keys\n",__func__);
+  }
+}
+
+
 const char * member_config_get_casename( const member_config_type * member_config ) {
   return member_config->casename;
 }
 
 
 member_config_type * member_config_alloc(int iens , 
-                                         const char * casename , 
+                                         const char                 * casename , 
                                          bool                         pre_clear_runpath , 
                                          keep_runpath_type            keep_runpath , 
                                          const ecl_config_type      * ecl_config , 
@@ -248,6 +280,7 @@ member_config_type * member_config_alloc(int iens ,
   member_config->casename            = util_alloc_string_copy( casename );
   member_config->iens                = iens; /* Can only be changed in the allocater. */
   member_config->eclbase             = NULL;
+  member_config->jobname             = NULL;
   member_config->pre_clear_runpath   = pre_clear_runpath;
   member_config_set_keep_runpath(member_config , keep_runpath);
 

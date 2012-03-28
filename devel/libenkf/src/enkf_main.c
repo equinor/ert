@@ -22,68 +22,73 @@
 #include <stdio.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <pthread.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+#include <subst_list.h>
+#include <rng.h>
+#include <subst_func.h>
+#include <int_vector.h>
+#include <bool_vector.h>
 #include <util.h>
 #include <hash.h>
-#include <enkf_config_node.h>
-#include <ecl_util.h>
 #include <path_fmt.h>
-#include <enkf_types.h>
 #include <thread_pool.h>
-#include <obs_data.h>
-#include <history.h>
-#include <meas_data.h>
-#include <enkf_state.h>
-#include <enkf_obs.h>
-#include <sched_file.h>
-#include <enkf_fs.h>
 #include <arg_pack.h>
-#include <history.h>
-#include <node_ctype.h>
-#include <pthread.h>
-#include <job_queue.h>
 #include <msg.h>
 #include <stringlist.h>
-#include <enkf_main.h>
-#include <enkf_serialize.h>
+#include <set.h>
+#include <log.h>
+#include <node_ctype.h>
+
+#include <enkf_types.h>
+#include <enkf_config_node.h>
+#include <ecl_util.h>
+#include <ecl_io_config.h>
+#include <ecl_config.h>
+
 #include <config.h>
+
+#include <job_queue.h>
 #include <local_driver.h>
 #include <rsh_driver.h>
 #include <lsf_driver.h>
+#include <forward_model.h>
+#include <queue_driver.h>
+
 #include <history.h>
+#include <sched_file.h>
+
 #include <enkf_sched.h>
-#include <set.h>
-#include <ecl_io_config.h>
-#include <ecl_config.h>
+#include <obs_data.h>
+#include <meas_data.h>
+#include <enkf_state.h>
+#include <enkf_obs.h>
+#include <enkf_fs.h>
+#include <enkf_main.h>
+#include <enkf_serialize.h>
+
+#include <analysis_module.h>
+#include <analysis_table.h>
+#include <enkf_linalg.h>
+
+#include <plot_config.h>
 #include <ensemble_config.h>
 #include <model_config.h>
 #include <site_config.h>
 #include <active_config.h>
-#include <forward_model.h>
 #include <enkf_analysis.h>
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <local_config.h>
 #include <local_dataset.h>
 #include <misfit_table.h>
-#include <log.h>
-#include <plot_config.h>
 #include <ert_template.h>
-#include <dirent.h>
-#include <pwd.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <job_queue.h>
-#include <queue_driver.h>
-#include <subst_list.h>
-#include <subst_func.h>
-#include <int_vector.h>
 #include <ert_build_info.h>
-#include <bool_vector.h>
-#include <rng.h>
 #include <rng_config.h>
-#include <analysis_module.h>
-#include <analysis_table.h>
-#include <enkf_linalg.h>
 #include <enkf_plot_data.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
@@ -189,6 +194,19 @@ void enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fm
     enkf_state_update_eclbase( enkf_main->ensemble[iens] );
 }
 
+void enkf_main_init_jobname( enkf_main_type * enkf_main) {
+  for (int iens = 0; iens < enkf_main->ens_size; iens++) 
+    enkf_state_update_jobname( enkf_main->ensemble[iens] );
+}
+
+
+void enkf_main_set_jobname( enkf_main_type * enkf_main , const char * jobname_fmt) {
+  model_config_set_jobname_fmt( enkf_main->model_config , jobname_fmt );
+  enkf_main_init_jobname( enkf_main );
+}
+
+
+
 void enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
   ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
   model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
@@ -290,7 +308,7 @@ void enkf_main_reload_obs( enkf_main_type * enkf_main) {
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
   if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs ))) {
     enkf_obs_load(enkf_main->obs , obs_config_file , ecl_config_get_sched_file( enkf_main->ecl_config ), enkf_main->ensemble_config );
-    if (enkf_main->verbose)
+    if (enkf_main->verbose && obs_config_file != NULL)
       printf("Have loaded observations from: %s \n",obs_config_file );
   }
 }
@@ -1867,7 +1885,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   plot_config_add_config_items( config );
   analysis_config_add_config_items( config );
   ensemble_config_add_config_items(config);
-  ecl_config_add_config_items( config , strict );
+  ecl_config_add_config_items( config );
   rng_config_add_config_items( config );
 
   /*****************************************************************/
@@ -1900,6 +1918,9 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   item = config_add_item(config , ENSPATH_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
+  item = config_add_item( config , JOBNAME_KEY , false , false );
+  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  
   item = config_add_item(config , SELECT_CASE_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
@@ -2644,7 +2665,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ERT_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
   
   {
-
     char * path;
     char * base;
     char * ext;
@@ -2894,6 +2914,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     }
     config_free(config);
   }
+  enkf_main_init_jobname( enkf_main );
   enkf_main_gen_data_special( enkf_main );
   free( model_config );
   enkf_main->misfit_table = NULL;

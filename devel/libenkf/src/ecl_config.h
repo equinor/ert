@@ -46,9 +46,9 @@ bool                  ecl_config_include_static_kw(const ecl_config_type * , con
 void                  ecl_config_add_static_kw(ecl_config_type *, const char *); 
 ecl_io_config_type  * ecl_config_get_io_config(const ecl_config_type * );
 sched_file_type     * ecl_config_get_sched_file(const ecl_config_type * );
-bool 		      ecl_config_get_formatted(const ecl_config_type * );
-bool 		      ecl_config_get_unified_restart(const ecl_config_type * );
-bool 		      ecl_config_get_unified_summary(const ecl_config_type * );
+bool                  ecl_config_get_formatted(const ecl_config_type * );
+bool                  ecl_config_get_unified_restart(const ecl_config_type * );
+bool                  ecl_config_get_unified_summary(const ecl_config_type * );
 const char          * ecl_config_get_data_file(const ecl_config_type * );
 const char          * ecl_config_get_schedule_target(const ecl_config_type * );
 const char          * ecl_config_get_equil_init_file(const ecl_config_type * );
@@ -72,7 +72,7 @@ void                  ecl_config_clear_static_kw( ecl_config_type * ecl_config )
 stringlist_type     * ecl_config_get_static_kw_list( const ecl_config_type * ecl_config );
 void                  ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stream );
 ecl_config_type     * ecl_config_alloc_empty( );
-void                  ecl_config_add_config_items( config_type * config , bool strict );
+void                  ecl_config_add_config_items( config_type * config );
 
 #ifdef __cplusplus
 }

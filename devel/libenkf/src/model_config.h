@@ -22,23 +22,28 @@
 extern "C" {
 #endif
 
-
-#include <time.h>
-#include <config.h>
-#include <ext_joblist.h>
-#include <enkf_sched.h>
-#include <history.h>
-#include <ecl_sum.h>
-#include <sched_file.h>
-#include <path_fmt.h>
-#include <forward_model.h>
-#include <enkf_types.h>
-#include <sched_file.h>
 #include <stdbool.h>
+#include <time.h>
+#include <path_fmt.h>
+
+#include <config.h>
+
+#include <ext_joblist.h>
+#include <forward_model.h>
+
+#include <history.h>
+#include <sched_file.h>
+
+#include <ecl_sum.h>
+
+#include <enkf_sched.h>
+#include <enkf_types.h>
 #include <fs_types.h>
 
   typedef struct model_config_struct model_config_type;
 
+  const char *          model_config_get_jobname_fmt( const model_config_type * model_config );
+  void                  model_config_set_jobname_fmt( model_config_type * model_config , const char * jobname_fmt);
   void                   model_config_set_select_case( model_config_type * model_config , const char * select_case);
   const char *           model_config_get_case_table_file( const model_config_type * model_config );
   void                   model_config_set_case_table( model_config_type * model_config , int ens_size , const char * case_table_file );

@@ -87,6 +87,7 @@ extern "C" {
 #define  INIT_SECTION_KEY                  "INIT_SECTION"
 #define  INSTALL_JOB_KEY                   "INSTALL_JOB"
 #define  JOB_SCRIPT_KEY                    "JOB_SCRIPT"
+#define  JOBNAME_KEY                       "JOBNAME"
 #define  KEEP_RUNPATH_KEY                  "KEEP_RUNPATH"  
 #define  LICENSE_PATH_KEY                  "LICENSE_PATH"
 #define  LOCAL_CONFIG_KEY                  "LOCAL_CONFIG"

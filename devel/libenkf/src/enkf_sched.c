@@ -127,8 +127,8 @@
 
 
 struct enkf_sched_node_struct {
-  int    	       report_step1;
-  int    	       report_step2;
+  int                  report_step1;
+  int                  report_step2;
   bool                 enkf_active;
 };
 
@@ -229,33 +229,33 @@ static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE *
     util_split_string(line , " \t" , &tokens , &token_list);
     if (tokens >= 3) {
       if (util_sscanf_int(token_list[0] , &report_step1) && util_sscanf_int(token_list[1] , &report_step2)) {
-	util_strupr(token_list[2]);
-		  
-	report_stride = report_step2 - report_step1;
-	if (strcmp(token_list[2] , "ON") == 0) 
-	  enkf_active = true;
-	else if (strcmp(token_list[2] , "OFF") == 0) 
-	  enkf_active = false;
-	else 
-	  util_abort("%s: failed to interpret %s as ON || OFF \n",__func__ , token_list[2]);
-	
-	if (tokens > 3) 
-	  if (!util_sscanf_int(token_list[3] , &report_stride))
+        util_strupr(token_list[2]);
+                  
+        report_stride = report_step2 - report_step1;
+        if (strcmp(token_list[2] , "ON") == 0) 
+          enkf_active = true;
+        else if (strcmp(token_list[2] , "OFF") == 0) 
+          enkf_active = false;
+        else 
+          util_abort("%s: failed to interpret %s as ON || OFF \n",__func__ , token_list[2]);
+        
+        if (tokens > 3) 
+          if (!util_sscanf_int(token_list[3] , &report_stride))
             util_abort("%s: failed to interpret:%s as an integer stride \n",__func__ , token_list[3]);
       } else
-	util_abort("%s: failed to parse %s and %s as integers\n",__func__ , token_list[0] , token_list[1]);
+        util_abort("%s: failed to parse %s and %s as integers\n",__func__ , token_list[0] , token_list[1]);
 
       {
-	/* Adding node(s): */
-	int step1 = report_step1;
-	int step2;
-	
-	do {
-	  step2 = util_int_min(step1 + report_stride , report_step2);
-	  sched_node = enkf_sched_node_alloc(step1 , step2 , enkf_active);
-	  step1 = step2;
-	  enkf_sched_append_node( enkf_sched , sched_node);
-	} while (step2 < report_step2);
+        /* Adding node(s): */
+        int step1 = report_step1;
+        int step2;
+        
+        do {
+          step2 = util_int_min(step1 + report_stride , report_step2);
+          sched_node = enkf_sched_node_alloc(step1 , step2 , enkf_active);
+          step1 = step2;
+          enkf_sched_append_node( enkf_sched , sched_node);
+        } while (step2 < report_step2);
       }
     }
     util_free_stringlist(token_list , tokens);
@@ -371,7 +371,8 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int las
     
     fclose( stream );
   }
-  enkf_sched_verify__(enkf_sched);
+  fprintf(stderr,"** Warning: Dropping enkf_sched_verify__ \n");
+  //enkf_sched_verify__(enkf_sched);
   return enkf_sched;
 }
 
@@ -412,7 +413,7 @@ int enkf_sched_get_node_index(const enkf_sched_type * enkf_sched , int report_st
     while (1) {
       const enkf_sched_node_type * node = vector_iget_const(enkf_sched->nodes , index);
       if (node->report_step1 <= report_step && node->report_step2 > report_step)
-	break;
+        break;
       index++;
     }
     return index;
