@@ -313,9 +313,11 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
                                     instance will later be freed and discarded. */
     }
     free( full_path );
-  } else 
+  } else {
+    /* We take the chance that user will supply a valid subst key for this later. */
     ext_job->executable = util_realloc_string_copy(ext_job->executable , executable);
-  /* We take the chance that user will supply a valid subst key for this later. */
+    fprintf(stderr,"** Warning: the executable:%s does not exist at load time\n", executable);
+  }
 }
 
 
