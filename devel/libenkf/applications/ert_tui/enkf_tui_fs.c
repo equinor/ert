@@ -34,7 +34,7 @@ void enkf_tui_fs_ls_case(void * arg) {
   stringlist_type * dirlist    = enkf_main_alloc_caselist( enkf_main );
   int idir;
 
-  printf("Avaliable cases: ");
+  printf("Available cases: ");
   for (idir = 0; idir < stringlist_get_size( dirlist ); idir++)
     printf("%s ",stringlist_iget( dirlist , idir ));
   
