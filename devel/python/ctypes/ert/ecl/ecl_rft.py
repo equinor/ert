@@ -58,7 +58,7 @@ class EclRFTFile(object):
         if obj is None:
             return ctypes.c_void_p()
         else:
-            return obj.c_ptr
+            return ctypes.c_void_p( obj.c_ptr )
     
     @property
     def size( self , well = None , date = None):
@@ -99,8 +99,12 @@ class EclRFT:
     def __len__(self):
         return cfunc_rft.get_size( self )
 
-    def from_param( self ):
-        return self.c_ptr 
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return ctypes.c_void_p( obj.c_ptr )
 
     @property
     def type(self):

@@ -42,7 +42,7 @@ class EnKFMain:
         if obj is None:
             return ctypes.c_void_p()
         else:
-            return obj.c_ptr
+            return ctypes.c_void_p( obj.c_ptr )
 
 
     def __del__(self):

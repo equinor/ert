@@ -49,8 +49,12 @@ class Job:
     def kill( self ):
         self.driver.kill_job( self )
     
-    def from_param(self):
-        return ctypes.c_void_p( self.c_ptr )
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return ctypes.c_void_p( obj.c_ptr )
 
     @property
     def run_time( self ):

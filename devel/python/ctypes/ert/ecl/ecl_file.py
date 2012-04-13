@@ -301,13 +301,13 @@ class EclFile(object):
             else:
                 raise TypeError("Index must be integer or string (keyword)")
         
-    
+
     @classmethod
     def from_param( cls , obj ):
         if obj is None:
             return ctypes.c_void_p()
         else:
-            return obj.c_ptr
+            return ctypes.c_void_p( obj.c_ptr )
 
     def iget_kw( self , index , copy = False):
         """
@@ -388,6 +388,7 @@ class EclFile(object):
         """
         kw_c_ptr = cfunc.iget_named_kw( self , kw_name , index )
         ecl_kw = EclKW.ref( kw_c_ptr , self )
+        
         if copy:
             return EclKW.copy( ecl_kw )
         else:

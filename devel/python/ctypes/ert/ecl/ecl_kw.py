@@ -113,7 +113,7 @@ class EclKW(object):
     # value from the ecl_file_iget_xxx() methods?
     @classmethod
     def ref( cls , c_ptr , parent ):
-        obj = cls( )
+        obj            = cls( )
         obj.c_ptr      = c_ptr
         obj.data_owner = False
         obj.parent     = parent
@@ -298,7 +298,8 @@ class EclKW(object):
         if obj is None:
             return ctypes.c_void_p()
         else:
-            return obj.c_ptr
+            return ctypes.c_void_p( obj.c_ptr )
+
 
     def __len__( self ):
         """
@@ -652,6 +653,7 @@ class EclKW(object):
     def get_name( self ):
         return cfunc.get_header( self )
         
+
     name = property( get_name , set_name )
 
     @property

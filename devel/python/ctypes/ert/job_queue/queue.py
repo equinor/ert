@@ -173,8 +173,12 @@ class JobQueue:
         cfunc.free_queue( self )
 
 
-    def from_param( self ):
-        return ctypes.c_void_p( self.c_ptr )
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return ctypes.c_void_p( obj.c_ptr )
 
     def submit( self , cmd , run_path , job_name , argv , num_cpu = 1):
         c_argv = (ctypes.c_char_p * len(argv))()
