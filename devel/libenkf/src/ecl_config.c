@@ -73,6 +73,23 @@ struct ecl_config_struct {
 
 /*****************************************************************/
 
+/**
+   With this function we try to determine whether ECLIPSE is active
+   for this case, i.e. if ECLIPSE is part of the forward model. This
+   should ideally be inferred from the FORWARD model, but what we do
+   here is just to check if the core field ->eclbase and ->data_file
+   have been set. If they are both equal to NULL we assume that
+   ECLIPSE is not active and return false, otherwise we return true.
+   */
+
+
+bool ecl_config_active( const ecl_config_type * config ) {
+  if ((config->eclbase == NULL) && (config->data_file == NULL))
+    return false;
+  else
+    return true;
+}
+
 
 /**
    Could look up the sched_file instance directly - because the

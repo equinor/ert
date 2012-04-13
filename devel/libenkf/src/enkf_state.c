@@ -120,6 +120,7 @@ typedef struct shared_info_struct {
   const site_config_type      * site_config;
   log_type                    * logh;              /* The log handle. */
   ert_templates_type          * templates; 
+  const ecl_config_type       * ecl_config;
 } shared_info_type;
 
 
@@ -136,7 +137,6 @@ struct enkf_state_struct {
   subst_list_type       * subst_list;              /* This a list of key - value pairs which are used in a search-replace
                                                       operation on the ECLIPSE data file. Will at least contain the key INIT"
                                                       - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
-  const ecl_config_type * ecl_config;              /* ecl_config object - pure reference to the enkf_main object. */
   ensemble_config_type  * ensemble_config;         /* The config nodes for the enkf_node objects contained in node_hash. */
   
   run_info_type         * run_info;                /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
@@ -245,7 +245,7 @@ static void run_info_complete_run(run_info_type * run_info) {
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, log_type * logh , ert_templates_type * templates) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, const ecl_config_type * ecl_config , log_type * logh , ert_templates_type * templates) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
 
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
@@ -254,7 +254,7 @@ static shared_info_type * shared_info_alloc(const site_config_type * site_config
   shared_info->model_config = model_config;
   shared_info->logh         = logh;
   shared_info->templates    = templates;
-
+  shared_info->ecl_config   = ecl_config;
   return shared_info;
 }
 
@@ -348,7 +348,7 @@ static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * 
 */
 
 void enkf_state_update_eclbase( enkf_state_type * enkf_state ) {
-  const char * eclbase  = member_config_update_eclbase( enkf_state->my_config , enkf_state->ecl_config , enkf_state->subst_list);
+  const char * eclbase  = member_config_update_eclbase( enkf_state->my_config , enkf_state->shared_info->ecl_config , enkf_state->subst_list);
   const char * casename = member_config_get_casename( enkf_state->my_config ); /* Mostly NULL */
   {
     enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , eclbase , NULL);  
@@ -438,8 +438,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   UTIL_TYPE_ID_INIT( enkf_state , ENKF_STATE_TYPE_ID );
 
   enkf_state->ensemble_config   = ensemble_config;
-  enkf_state->ecl_config        = ecl_config;
-  enkf_state->shared_info       = shared_info_alloc(site_config , model_config , logh, templates);
+  enkf_state->shared_info       = shared_info_alloc(site_config , model_config , ecl_config , logh, templates);
   enkf_state->run_info          = run_info_alloc();
   
   enkf_state->node_hash         = hash_alloc();
@@ -565,9 +564,6 @@ void enkf_state_update_node( enkf_state_type * enkf_state , const char * node_ke
 
 
 static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK) {
-  /* IFF reservoir_simulator == ECLIPSE ... */
-  const char * eclbase          = member_config_get_eclbase( enkf_state->my_config );
-  if (eclbase != NULL) {
     const run_info_type   * run_info       = enkf_state->run_info;
     int        load_start                  = run_info->load_start;
     int        report_step;
@@ -577,10 +573,11 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
     {
       member_config_type * my_config         = enkf_state->my_config;
-      const ecl_config_type * ecl_config     = enkf_state->ecl_config;
+      const ecl_config_type * ecl_config     = enkf_state->shared_info->ecl_config;
       const bool fmt_file                    = ecl_config_get_formatted(ecl_config);
       ecl_sum_type          * summary        = NULL;
-      
+      const char * eclbase                   = member_config_get_eclbase( my_config );
+
       
       /* Looking for summary files on disk, and loading them. */
       {
@@ -668,7 +665,14 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
         } 
       }
     }
-  }
+}
+
+
+static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK) {
+  const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
+  
+  if (ecl_config_active( ecl_config ))
+    enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , loadOK);
 }
 
 
@@ -707,187 +711,190 @@ static char * __realloc_static_kw(char * kw , int occurence) {
 */
 
 static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , int report_step , bool store_vectors , bool * loadOK) {
-  member_config_type * my_config   = enkf_state->my_config;
-
-  if (member_config_get_eclbase( my_config ) != NULL) {
-    shared_info_type   * shared_info = enkf_state->shared_info;
-    run_info_type      * run_info    = enkf_state->run_info;
-    const int  iens                  = member_config_get_iens( my_config ); 
-    const bool fmt_file              = ecl_config_get_formatted(enkf_state->ecl_config);
-    const bool unified               = ecl_config_get_unified_restart(enkf_state->ecl_config);
-    const bool internalize_state     = model_config_internalize_state( model_config , report_step );
-    ecl_file_type  * restart_file;
-    
-    
-    /**
-       Loading the restart block.
-    */
-    
-    if (unified) 
-      util_abort("%s: sorry - unified restart files are not supported \n",__func__);
+  member_config_type * my_config     = enkf_state->my_config;
+  shared_info_type   * shared_info   = enkf_state->shared_info;
+  run_info_type      * run_info      = enkf_state->run_info;
+  const ecl_config_type * ecl_config = shared_info->ecl_config;
+  const int  iens                    = member_config_get_iens( my_config ); 
+  const bool fmt_file                = ecl_config_get_formatted( ecl_config );
+  const bool unified                 = ecl_config_get_unified_restart( ecl_config );
+  const bool internalize_state       = model_config_internalize_state( model_config , report_step );
+  ecl_file_type  * restart_file;
+  
+  
+  /**
+     Loading the restart block.
+  */
+  
+  if (unified) 
+    util_abort("%s: sorry - unified restart files are not supported \n",__func__);
+  {
+    char * file  = ecl_util_alloc_exfilename(run_info->run_path , member_config_get_eclbase(enkf_state->my_config) , ECL_RESTART_FILE , fmt_file , report_step);
+    if (file != NULL) {
+      restart_file = ecl_file_open( file );
+      free(file);
+    } else 
+      restart_file = NULL;  /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
+  }
+  
+  /*****************************************************************/
+  
+  
+  /**
+     Iterating through the restart file:
+     
+     1. Build up enkf_state->restart_kw_list.
+     2. Send static keywords straight out.
+  */
+  
+  if (restart_file != NULL) {
+    stringlist_clear( enkf_state->restart_kw_list );
     {
-      char * file  = ecl_util_alloc_exfilename(run_info->run_path , member_config_get_eclbase(enkf_state->my_config) , ECL_RESTART_FILE , fmt_file , report_step);
-      if (file != NULL) {
-        restart_file = ecl_file_open( file );
-        free(file);
-      } else 
-        restart_file = NULL;  /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
-    }
-    
-    /*****************************************************************/
-    
-    
-    /**
-       Iterating through the restart file:
-       
-       1. Build up enkf_state->restart_kw_list.
-       2. Send static keywords straight out.
-    */
-    
-    if (restart_file != NULL) {
-      stringlist_clear( enkf_state->restart_kw_list );
-      {
-        int ikw; 
-        for (ikw =0; ikw < ecl_file_get_size( restart_file ); ikw++) {
-          ert_impl_type impl_type;
-          const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
-          int occurence              = ecl_file_iget_occurence( restart_file , ikw ); /* This is essentially the static counter value. */
-          char * kw                  = util_alloc_string_copy( ecl_kw_get_header( ecl_kw ) );
-          /** 
-              Observe that this test will never succeed for static keywords,
-              because the internalized key has appended a _<occurence>.
+      int ikw; 
+      for (ikw =0; ikw < ecl_file_get_size( restart_file ); ikw++) {
+        ert_impl_type impl_type;
+        const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
+        int occurence              = ecl_file_iget_occurence( restart_file , ikw ); /* This is essentially the static counter value. */
+        char * kw                  = util_alloc_string_copy( ecl_kw_get_header( ecl_kw ) );
+        /** 
+            Observe that this test will never succeed for static keywords,
+            because the internalized key has appended a _<occurence>.
+        */
+        if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
+          /**
+             This is poor-mans treatment of LGR. When LGR is used the restart file
+             will contain repeated occurences of solution vectors, like
+             PRESSURE. The first occurence of PRESSURE will be for the ordinary
+             grid, and then there will be subsequent PRESSURE sections for each
+             LGR section. The way this is implemented here is as follows:
+             
+             1. The first occurence of pressure is internalized as the enkf_node
+                pressure (if we indeed have a pressure node).
+             
+             2. The consecutive pressure nodes are internalized as static
+                parameters.
+               
+                The variable 'occurence' is the key here.
           */
-          if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
-            /**
-               This is poor-mans treatment of LGR. When LGR is used the restart file
-               will contain repeated occurences of solution vectors, like
-               PRESSURE. The first occurence of PRESSURE will be for the ordinary
-               grid, and then there will be subsequent PRESSURE sections for each
-               LGR section. The way this is implemented here is as follows:
-               
-               1. The first occurence of pressure is internalized as the enkf_node
-               pressure (if we indeed have a pressure node).
-               
-               2. The consecutive pressure nodes are internalized as static
-               parameters.
-               
-               The variable 'occurence' is the key here.
+          
+          if (occurence == 0) {
+            const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
+            impl_type = enkf_config_node_get_impl_type(config_node);
+          } else 
+            impl_type = STATIC;
+        } else
+          impl_type = STATIC;
+        
+        
+        if (impl_type == FIELD) 
+          stringlist_append_copy(enkf_state->restart_kw_list , kw);
+        else if (impl_type == STATIC) {
+          if (ecl_config_include_static_kw(ecl_config , kw)) {
+            /* It is a static kw like INTEHEAD or SCON */
+            /* 
+               Observe that for static keywords we do NOT ask the node 'privately' if
+               internalize_state is false: It is impossible to single out static keywords for
+               internalization.
             */
             
-            if (occurence == 0) {
-              const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
-              impl_type = enkf_config_node_get_impl_type(config_node);
-            } else 
-              impl_type = STATIC;
-          } else
-            impl_type = STATIC;
-          
-          
-          if (impl_type == FIELD) 
-            stringlist_append_copy(enkf_state->restart_kw_list , kw);
-          else if (impl_type == STATIC) {
-            if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
-              /* It is a static kw like INTEHEAD or SCON */
+            /* Now we mangle the static keyword .... */
+            kw = __realloc_static_kw(kw , occurence);
+            
+            if (internalize_state) {  
+              stringlist_append_copy( enkf_state->restart_kw_list , kw);
+              
+              ensemble_config_ensure_static_key(enkf_state->ensemble_config , kw );
+              
+              if (!enkf_state_has_node(enkf_state , kw)) {
+                const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
+                enkf_state_add_node(enkf_state , kw , config_node); 
+              }
+              
               /* 
-                 Observe that for static keywords we do NOT ask the node 'privately' if
-                 internalize_state is false: It is impossible to single out static keywords for
-                 internalization.
+                 The following thing can happen:
+                 
+                 1. A static keyword appears at report step n, and is added to the enkf_state
+                    object.
+                 
+                 2. At report step n+k that static keyword is no longer active, and it is
+                    consequently no longer part of restart_kw_list().
+                 
+                 3. However it is still part of the enkf_state. Not loaded here, and subsequently
+                    purged from enkf_main.
+               
+                 One keyword where this occurs is FIPOIL, which at least might appear only in the
+                 first restart file. Unused static keywords of this type are purged from the
+                 enkf_main object by a call to enkf_main_del_unused_static(). The purge is based on
+                 looking at the internal __report_step state of the static kw.
               */
               
-              /* Now we mangle the static keyword .... */
-              kw = __realloc_static_kw(kw , occurence);
-              
-              if (internalize_state) {  
-                stringlist_append_copy( enkf_state->restart_kw_list , kw);
+              {
+                enkf_node_type * enkf_node  = enkf_state_get_node(enkf_state , kw);
+                node_id_type node_id        = {.report_step = report_step , .iens = iens , .state = FORECAST };
                 
-                ensemble_config_ensure_static_key(enkf_state->ensemble_config , kw );
-                
-                if (!enkf_state_has_node(enkf_state , kw)) {
-                  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
-                  enkf_state_add_node(enkf_state , kw , config_node); 
-                }
-                
-                /* 
-                   The following thing can happen:
-                   
-                   1. A static keyword appears at report step n, and is added to the enkf_state
-                      object.
-                 
-                   2. At report step n+k that static keyword is no longer active, and it is
-                      consequently no longer part of restart_kw_list().
-                 
-                   3. However it is still part of the enkf_state. Not loaded here, and subsequently
-                      purged from enkf_main.
-               
-                   One keyword where this occurs is FIPOIL, which at least might appear only in the
-                   first restart file. Unused static keywords of this type are purged from the
-                   enkf_main object by a call to enkf_main_del_unused_static(). The purge is based on
-                   looking at the internal __report_step state of the static kw.
+                enkf_node_ecl_load_static(enkf_node , ecl_kw , report_step , iens);
+                /*
+                  Static kewyords go straight out ....
                 */
-              
-                {
-                  enkf_node_type * enkf_node  = enkf_state_get_node(enkf_state , kw);
-                  node_id_type node_id        = {.report_step = report_step , .iens = iens , .state = FORECAST };
-                  
-                  enkf_node_ecl_load_static(enkf_node , ecl_kw , report_step , iens);
-                  /*
-                    Static kewyords go straight out ....
-                  */
-                  enkf_node_store(enkf_node , fs , true , node_id);
-                  enkf_node_free_data(enkf_node);
-                }
-              }
-            } 
-          } else
-            util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
-          free(kw);
-        }
-        enkf_fs_fwrite_restart_kw_list( fs , report_step , iens , enkf_state->restart_kw_list );
-      }
-    }
-    
-    /******************************************************************/
-    /** 
-        Starting on the enkf_node_ecl_load() function calls. This is where the
-        actual loading (apart from static keywords) is done. Observe that this
-        loading might involve other load functions than the ones used for
-        loading PRESSURE++ from ECLIPSE restart files (e.g. for loading seismic
-        results..)
-    */
-    
-    {
-      hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
-      while ( !hash_iter_is_complete(iter) ) {
-        enkf_node_type * enkf_node = hash_iter_get_next_value(iter);
-        if (enkf_node_get_var_type(enkf_node) == DYNAMIC_STATE) {
-          bool internalize_kw = internalize_state;
-          if (!internalize_kw)
-            internalize_kw = enkf_node_internalize(enkf_node , report_step);
-          
-          if (internalize_kw) {
-            if (enkf_node_has_func(enkf_node , ecl_load_func)) {
-              if (enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , iens )) {
-                node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
-                enkf_node_store( enkf_node , fs, store_vectors , node_id );
-              } else {
-                *loadOK = false;
-                log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
+                enkf_node_store(enkf_node , fs , true , node_id);
+                enkf_node_free_data(enkf_node);
               }
             }
           } 
-        } 
-      }                                                                      
-      hash_iter_free(iter);
+        } else
+          util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
+        free(kw);
+      }
+      enkf_fs_fwrite_restart_kw_list( fs , report_step , iens , enkf_state->restart_kw_list );
     }
-    
-    /*****************************************************************/
-    /* Cleaning up */
-    if (restart_file != NULL) ecl_file_close( restart_file );
   }
+  
+  /******************************************************************/
+  /** 
+      Starting on the enkf_node_ecl_load() function calls. This is where the
+      actual loading (apart from static keywords) is done. Observe that this
+      loading might involve other load functions than the ones used for
+      loading PRESSURE++ from ECLIPSE restart files (e.g. for loading seismic
+      results..)
+  */
+  
+  {
+    hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
+    while ( !hash_iter_is_complete(iter) ) {
+      enkf_node_type * enkf_node = hash_iter_get_next_value(iter);
+      if (enkf_node_get_var_type(enkf_node) == DYNAMIC_STATE) {
+        bool internalize_kw = internalize_state;
+        if (!internalize_kw)
+          internalize_kw = enkf_node_internalize(enkf_node , report_step);
+        
+        if (internalize_kw) {
+          if (enkf_node_has_func(enkf_node , ecl_load_func)) {
+            if (enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , iens )) {
+              node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
+              enkf_node_store( enkf_node , fs, store_vectors , node_id );
+            } else {
+              *loadOK = false;
+              log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
+            }
+          }
+        } 
+      } 
+    }                                                                      
+    hash_iter_free(iter);
+  }
+  
+  /*****************************************************************/
+  /* Cleaning up */
+  if (restart_file != NULL) ecl_file_close( restart_file );
 }
 
 
-
+static void enkf_state_internalize_state(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , int report_step , bool store_vectors , bool * loadOK) {
+  const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
+ 
+  if (ecl_config_active( ecl_config ))
+    enkf_state_internalize_eclipse_state( enkf_state , fs , model_config , report_step , store_vectors , loadOK);
+}
 
 
 
@@ -910,10 +917,10 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
     bool store_vectors = (report_step == run_info->step2) ? true : false;
 
     if (model_config_load_state( model_config , report_step)) 
-      enkf_state_internalize_eclipse_state(enkf_state , fs , model_config , report_step , store_vectors , loadOK);
+      enkf_state_internalize_state(enkf_state , fs , model_config , report_step , store_vectors , loadOK);
   }
   
-  enkf_state_internalize_dynamic_eclipse_results(enkf_state , fs , model_config , loadOK);
+  enkf_state_internalize_dynamic_results(enkf_state , fs , model_config , loadOK);
 }
 
 /**
@@ -962,7 +969,7 @@ void * enkf_state_internalize_results_mt( void * arg ) {
 static void enkf_state_write_restart_file(enkf_state_type * enkf_state , enkf_fs_type * fs) {
   const member_config_type * my_config = enkf_state->my_config;
   const run_info_type      * run_info  = enkf_state->run_info;
-  const bool fmt_file                  = ecl_config_get_formatted(enkf_state->ecl_config);
+  const bool fmt_file                  = ecl_config_get_formatted(enkf_state->shared_info->ecl_config);
   const int iens                       = member_config_get_iens( my_config );
   char * restart_file                  = ecl_util_alloc_filename(run_info->run_path , member_config_get_eclbase( enkf_state->my_config ) , ECL_RESTART_FILE , fmt_file , run_info->step1);
   fortio_type * fortio                 = fortio_open_writer(restart_file , ECL_ENDIAN_FLIP , fmt_file);
@@ -1313,7 +1320,8 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
 */
 
 static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const char * run_path , int step1 , int step2) {
-  const bool fmt_file      = ecl_config_get_formatted(enkf_state->ecl_config);
+  const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
+  const bool fmt_file      = ecl_config_get_formatted( ecl_config );
 
 
   if (run_path != NULL) {
@@ -1370,7 +1378,7 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const
      The <INIT> magic string:
   */
   if (step1 == 0) {
-    const char * init_file = ecl_config_get_equil_init_file(enkf_state->ecl_config);
+    const char * init_file = ecl_config_get_equil_init_file(ecl_config);
     if (init_file != NULL) {
       char * tmp_include = util_alloc_sprintf("INCLUDE\n   \'%s\' /\n",init_file);
       enkf_state_add_subst_kw(enkf_state , "INIT" , tmp_include , NULL);
@@ -1443,6 +1451,7 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
 
 static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * fs) {
   const member_config_type  * my_config = enkf_state->my_config;  
+  const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
   {
     const run_info_type * run_info    = enkf_state->run_info;
     if (!run_info->__ready) 
@@ -1453,15 +1462,15 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * 
 
     util_make_path(run_info->run_path);
     {
-      if (ecl_config_get_schedule_target( enkf_state->ecl_config ) != NULL) {
-        char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target( enkf_state->ecl_config ) , NULL);
+      if (ecl_config_get_schedule_target( ecl_config ) != NULL) {
+        char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target( ecl_config ) , NULL);
         bool   addEND;
         if (run_info->run_mode == ENSEMBLE_PREDICTION)
           addEND = false;
         else
           addEND = true;
         
-        sched_file_fprintf_i( ecl_config_get_sched_file( enkf_state->ecl_config ) , run_info->step2 , schedule_file , addEND);
+        sched_file_fprintf_i( ecl_config_get_sched_file( ecl_config ) , run_info->step2 , schedule_file , addEND);
         free(schedule_file);
       }
     }
@@ -1495,9 +1504,9 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * 
       }
 
       /* Writing the ECLIPSE data file. */
-      if (ecl_config_get_data_file( enkf_state->ecl_config ) != NULL) {
+      if (ecl_config_get_data_file( ecl_config ) != NULL) {
         char * data_file = ecl_util_alloc_filename(run_info->run_path , member_config_get_eclbase( my_config ) , ECL_DATA_FILE , true , -1);
-        subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(enkf_state->ecl_config) , data_file);
+        subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(ecl_config) , data_file);
         free( data_file );
       }
     }
@@ -1539,7 +1548,7 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_f
     enkf_state_init_eclipse( enkf_state , fs );
     run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
                                                   site_config_get_job_script( site_config ),
-                                                  ecl_config_get_num_cpu( enkf_state->ecl_config ),
+                                                  ecl_config_get_num_cpu( shared_info->ecl_config ),
                                                   run_info->run_path     , 
                                                   member_config_get_jobname(my_config) , 
                                                   1, 
