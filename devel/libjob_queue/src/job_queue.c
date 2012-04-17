@@ -33,9 +33,8 @@
 
 #define JOB_QUEUE_START_SIZE 16
 
-
 /**
-   The running of external jobs is handled thrugh an abstract
+   The running of external jobs is handled thruogh an abstract
    job_queue implemented in this file; the job_queue then contains a
    'driver' which actually runs the job. All drivers must support the
    following functions
@@ -49,9 +48,6 @@
 
      status: This will get the status of the job. 
 
-     display_info: [Optional] - this is only for the LSF layer to
-                   display the name of a possibly faulty node before 
-                   restarting.
 
    When calling the various driver functions the queue layer needs to
    dereference the driver structures, i.e. to get access to the
@@ -361,17 +357,17 @@ static int STATUS_INDEX( job_status_type status ) {
 */
 
 /* 
-   This extremely half-assed XML parsing should of course not be shown
-   to anyone ... 
+   This extremely half-assed XML "parsing" should of course be kept a
+   secret...  
 */
 
 static char * __alloc_tag_content( const char * xml_buffer , const char * tag) {
-  char * open_tag  = util_alloc_sprintf("<%s>"  , tag);
-  char * close_tag = util_alloc_sprintf("</%s>" , tag);
+  char * open_tag    = util_alloc_sprintf("<%s>"  , tag);
+  char * close_tag   = util_alloc_sprintf("</%s>" , tag);
   
-  char * start_ptr = strstr( xml_buffer , open_tag );
-  char * end_ptr   = strstr( xml_buffer , close_tag );
-  char * tag_content;
+  char * start_ptr   = strstr( xml_buffer , open_tag );
+  char * end_ptr     = strstr( xml_buffer , close_tag );
+  char * tag_content = NULL;
 
   if ((start_ptr != NULL) && (end_ptr != NULL)) {
     int length;
@@ -922,15 +918,6 @@ static void job_queue_print_summary(const job_queue_type *queue, bool status_cha
 
 
 
-static void job_queue_display_job_info( job_queue_type * job_queue , job_queue_node_type * job_node ) {
-  //if (job_queue->driver->display_info != NULL) {
-  //  pthread_rwlock_rdlock( &job_node->job_lock );
-  //  job_queue->driver->display_info( job_queue->driver , job_node->job_data );
-  //  pthread_rwlock_unlock( &job_node->job_lock );
-  //}
-  //printf("\n");
-}
-
 
 
 
@@ -1153,13 +1140,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                       not to dereference a NULL pointer, nor call free a second time.
                   */
                   
-                  if (node->job_data != NULL) {
-                    if (verbose) 
-                      job_queue_display_job_info( queue , node );
+                  if (node->job_data != NULL) 
                     job_queue_free_job(queue , node );                               /* This frees the storage allocated by the driver - 
                                                                                         the storage allocated by the queue layer is retained. */
-                  }
-
+                  
                   /* 
                      If the job has failed with status JOB_QUEUE_EXIT it
                      will always go via status JOB_QUEUE_WAITING first. The

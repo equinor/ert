@@ -257,8 +257,7 @@ void ext_job_free__(void * __ext_job) {
 
 
 static void __update_mode( const char * filename , mode_t add_mode) {
-  if (util_addmode_if_owner( filename , add_mode))
-    printf("Updated mode on \'%s\'.\n", filename );
+  util_addmode_if_owner( filename , add_mode);
 }
 
 
@@ -285,38 +284,77 @@ void ext_job_set_max_time( ext_job_type * ext_job , int max_time ) {
 
 
 
+/**
+   There are many different alternatives for what the @executable
+   variable points to. The main classification is whether the
+   @executable corresponds to an existing file or not:
 
+     @executable exists: We verify that the executable is indeed
+        executable for the current user; if this check fails the job
+        is marked as invalid and later discarded.
 
+     @executable does not exist: In this case we check whether the
+        @executable parameter corresponds to an absolute or relative
+        path:
+
+        @executable is an absolute path: Discard the job.
+        
+        @executable is a relative path: Try to check the PATH
+           variable, otherwise use the input value and hope that input
+           value should be interpreted as template key which will be
+           replaced upon execution.
+           
+   Finally it is checked that the current user indeed has execute
+   rights to the executable in question.
+*/
 
 void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
-  /**
 
-     The portable exe can be a <...> string, i.e. not ready yet. Then
-     we just have to trust the user to provide something sane in the
-     end. If on the other hand executable points to an existing file
-     we:
-
-      1. Call util_alloc_realpth() to get the full absolute path.
-      2. Require that it is a executable file.
-      3. If current user is owner we update the access rights to a+rx.
-  
-  */
-  if (util_file_exists( executable )) {
+  if (!util_file_exists(executable)) {
+    if (util_is_abs_path( executable )) {
+      /* 
+         If you have given an absolute path (i.e. starting with '/' to
+         a non existing job we mark it as invalid - no possibility to
+         provide context replacement afterwards. The job will
+         discarded by the calling scope.
+      */
+      fprintf(stderr , "** The executable:%s can not be found - job:%s will not be available.\n" , executable , ext_job->name );
+      ext_job->__valid = false;  
+    } else {
+      /* Go through the PATH variable to try to locate the executable. */
+      char * path_executable = util_alloc_PATH_executable( executable ); 
+      
+      if (path_executable != NULL) {
+        ext_job_set_executable( ext_job , path_executable );
+        free( path_executable );
+      } else {
+        /* We take the chance that user will supply a valid subst key for this later. */
+        ext_job->executable = util_realloc_string_copy(ext_job->executable , executable);
+        fprintf(stderr,"** Warning: the executable:%s in job:%s does not exist at load time.\n", executable , ext_job->name);
+      }
+    }
+  } else {
+    /* 
+       The @executable parameter points to an existing file; we store the
+       the full path as the executable field of the job.
+    */
     char * full_path = util_alloc_realpath( executable );
     __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
-    
-    if (util_is_executable( full_path )) 
-      ext_job->executable = util_realloc_string_copy(ext_job->executable , full_path);
-    else {
-      fprintf(stderr , "** You do not have execute rights to:%s - job will not be available.\n" , full_path);
-      ext_job->__valid = false;  /* Mark the job as NOT successfully installed - the ext_job 
-                                    instance will later be freed and discarded. */
-    }
+    ext_job->executable = util_realloc_string_copy(ext_job->executable , full_path);
     free( full_path );
-  } else {
-    /* We take the chance that user will supply a valid subst key for this later. */
-    ext_job->executable = util_realloc_string_copy(ext_job->executable , executable);
-    fprintf(stderr,"** Warning: the executable:%s in job:%s does not exist at load time.\n", executable , ext_job->name);
+  }
+  
+  /* 
+     If in the end we do not have execute rights to the executable : discard the job.
+  */
+  if (ext_job->executable != NULL) {
+    if (util_file_exists( ext_job->executable )) {
+      if (!util_is_executable( ext_job->executable )) {
+        fprintf(stderr , "** You do not have execute rights to:%s - job will not be available.\n" , ext_job->executable);
+        ext_job->__valid = false;  /* Mark the job as NOT successfully installed - the ext_job 
+                                      instance will later be freed and discarded. */
+      }
+    }
   }
 }
 
