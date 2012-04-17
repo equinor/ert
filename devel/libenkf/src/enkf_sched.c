@@ -269,39 +269,48 @@ static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE *
 
 
 static void enkf_sched_verify__(const enkf_sched_type * enkf_sched) {
-  int index;
-  const enkf_sched_node_type * first_node = vector_iget_const( enkf_sched->nodes , 0);
-  if (first_node->report_step1 != 0)
-    util_abort("%s: must start at report-step 0 \n",__func__);
-  
-  for (index = 0; index < (vector_get_size(enkf_sched->nodes) - 1); index++) {
-    const enkf_sched_node_type * node1 = vector_iget_const( enkf_sched->nodes , index );
-    const enkf_sched_node_type * node2 = vector_iget_const( enkf_sched->nodes , index + 1);
-    int report1      = node1->report_step1;
-    int report2      = node1->report_step2;
-    int next_report1 = node2->report_step1;
+  if (vector_get_size( enkf_sched->nodes ) == 0)
+    /*
+      In the case configurations with no dynamics at all, e.g. a pure
+      RMS forward model we allow for a enkf_sched instance with no
+      nodes.
+    */
+    return;
+  else {
+    int index;
+    const enkf_sched_node_type * first_node = vector_iget_const( enkf_sched->nodes , 0);
+    if (first_node->report_step1 != 0)
+      util_abort("%s: must start at report-step 0 \n",__func__);
     
-    if (report1 >= report2) {
-      enkf_sched_fprintf(enkf_sched , stdout);
-      util_abort("%s: enkf_sched step of zero/negative length:%d - %d - that is not allowed \n",__func__ , report1 , report2);
-    }
-
-    if (report2 != next_report1) {
-      enkf_sched_fprintf(enkf_sched , stdout);
-      util_abort("%s report steps must be continous - there is a gap.\n",__func__);
-    }
-  }
-
-  /* Verify that report_step2 > report_step1 also for the last node. */
-  {
-    index = vector_get_size(enkf_sched->nodes) - 1;
-    const enkf_sched_node_type * node1 = vector_iget_const( enkf_sched->nodes , index );
-    int report1      = node1->report_step1;
-    int report2      = node1->report_step2;
-    
-    if (report2 <= report1)
-      util_abort("%s: enkf_sched step of zero/negative length:%d - %d - that is not allowed \n",__func__ , report1 , report2);
+    for (index = 0; index < (vector_get_size(enkf_sched->nodes) - 1); index++) {
+      const enkf_sched_node_type * node1 = vector_iget_const( enkf_sched->nodes , index );
+      const enkf_sched_node_type * node2 = vector_iget_const( enkf_sched->nodes , index + 1);
+      int report1      = node1->report_step1;
+      int report2      = node1->report_step2;
+      int next_report1 = node2->report_step1;
       
+      if (report1 >= report2) {
+        enkf_sched_fprintf(enkf_sched , stdout);
+        util_abort("%s: enkf_sched step of zero/negative length:%d - %d - that is not allowed \n",__func__ , report1 , report2);
+      }
+      
+      if (report2 != next_report1) {
+        enkf_sched_fprintf(enkf_sched , stdout);
+        util_abort("%s report steps must be continous - there is a gap.\n",__func__);
+      }
+    }
+    
+    /* Verify that report_step2 > report_step1 also for the last node. */
+    {
+      index = vector_get_size(enkf_sched->nodes) - 1;
+      const enkf_sched_node_type * node1 = vector_iget_const( enkf_sched->nodes , index );
+      int report1      = node1->report_step1;
+      int report2      = node1->report_step2;
+      
+      if (report2 <= report1)
+        util_abort("%s: enkf_sched step of zero/negative length:%d - %d - that is not allowed \n",__func__ , report1 , report2);
+      
+    }
   }
 }
 
@@ -371,8 +380,7 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int las
     
     fclose( stream );
   }
-  fprintf(stderr,"** Warning: Dropping enkf_sched_verify__ \n");
-  //enkf_sched_verify__(enkf_sched);
+  enkf_sched_verify__(enkf_sched);
   return enkf_sched;
 }
 

@@ -30,6 +30,7 @@ libecl/src directory.
 
 import libecl
 from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cclass      import CClass
 from   ert.util.stringlist   import StringList
 from   ert.util.ctime        import ctime 
 
@@ -393,7 +394,7 @@ class EclSumVector:
 
     #################################################################
 
-class EclSum( object ):
+class EclSum( CClass ):
     
     def __new__( cls , load_case , join_string = ":" , include_restart = True):
         """
@@ -467,12 +468,12 @@ class EclSum( object ):
             cfunc.free( self )
         self.c_ptr = None
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
+    #@classmethod
+    #def from_param( cls , obj ):
+    #    if obj is None:
+    #        return ctypes.c_void_p()
+    #    else:
+    #        return ctypes.c_void_p( obj.c_ptr )
 
     def get_vector( self , key , report_only = False):
         """

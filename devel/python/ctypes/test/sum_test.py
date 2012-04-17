@@ -102,4 +102,14 @@ class SumTest( unittest.TestCase ):
 
 
 
-unittest.main()
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest( SumTest( 'test_load' ))
+    suite.addTest( SumTest( 'test_interp' ))
+    suite.addTest( SumTest( 'test_wells' ))
+    suite.addTest( SumTest( 'test_last' ))
+    suite.addTest( SumTest( 'test_dates' ))
+    suite.addTest( SumTest( 'test_keys' ))
+    return suite
+
+

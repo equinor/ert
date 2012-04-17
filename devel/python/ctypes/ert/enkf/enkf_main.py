@@ -16,6 +16,7 @@
 
 import  ctypes
 from    ert.cwrap.cwrap         import *
+from    ert.cwrap.cclass        import CClass
 from    ert.util.tvector        import * 
 from    ert.job_queue.job_queue import JobQueue
 from    enkf_enum               import *
@@ -23,7 +24,7 @@ import  ens_config
 import  libenkf
 import  ert_local
 
-class EnKFMain:
+class EnKFMain(CClass):
     
         
     def __init(self):
@@ -37,14 +38,6 @@ class EnKFMain:
         return obj
 
         
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
-
-
     def __del__(self):
         if self.c_ptr:
             cfunc.free( self )

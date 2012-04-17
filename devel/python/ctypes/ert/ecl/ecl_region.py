@@ -28,21 +28,16 @@ queried for the corresponding list of indices.
 import warnings
 import libecl
 from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cclass      import CClass
 from   ert.util.tvector      import IntVector
 from   ert.geo.geo_polygon   import GeoPolygon
 from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_DOUBLE_TYPE
 import ecl_grid
-class EclRegion(object):
+
+
+class EclRegion(CClass):
     
-
-    #@classmethod
-    #def NULL( cls ):
-    #    obj = object.__new__( cls )
-    #    obj.c_ptr = None 
-    #    obj.grid  = None
-    #    return obj
-
-
+    
     def __init__(self , grid , preselect , c_ptr = None):
         """
         Create a new region selector for cells in @grid.
@@ -194,12 +189,6 @@ class EclRegion(object):
         """
         return self.__iand__( other )
     
-    @classmethod 
-    def from_param(cls , obj):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     def copy( self ):
         return self.__deep_copy__( {} )

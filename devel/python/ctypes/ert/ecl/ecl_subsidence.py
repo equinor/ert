@@ -28,9 +28,10 @@ import  ecl_file
 import  ecl_region 
 import  ecl_grid
 from    ert.cwrap.cwrap       import *
+from    ert.cwrap.cclass      import CClass
 
 
-class EclSubsidence:
+class EclSubsidence(CClass):
     """
     Holding ECLIPSE results for calculating subsidence changes.
     
@@ -61,12 +62,6 @@ class EclSubsidence:
     def __del__( self ):
         cfunc.free( self )
         
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     def add_survey_PRESSURE( self , survey_name , restart_file ):
         """

@@ -23,8 +23,9 @@ Module implementing a queue for managing external jobs.
 import  time
 import  threading
 import  ctypes
-
 from    ert.cwrap.cwrap       import *
+from    ert.cwrap.cclass      import CClass
+
 
 # Need to import this to ensure that the ctime type is registered
 import  ert.util.ctime        
@@ -109,7 +110,7 @@ class runtimeList:
             return None
 
 
-class JobQueue:
+class JobQueue(CClass):
     
     # If the queue is created with size == 0 that means that it will
     # just grow as needed; for the queue layer to know when to exit
@@ -173,12 +174,6 @@ class JobQueue:
         cfunc.free_queue( self )
 
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     def submit( self , cmd , run_path , job_name , argv , num_cpu = 1):
         c_argv = (ctypes.c_char_p * len(argv))()
@@ -284,5 +279,5 @@ cfunc.num_pending     = cwrapper.prototype("int  job_queue_get_num_pending( job_
 cfunc.is_running      = cwrapper.prototype("int  job_queue_is_running( job_queue )")
 cfunc.submit_complete = cwrapper.prototype("void job_queue_submit_complete( job_queue )")
 cfunc.get_job_ptr     = cwrapper.prototype("c_void_p job_queue_iget_job_data( job_queue , int)")
-cfunc.iget_sim_start  = cwrapper.prototype("time_t job_queue_iget_sim_start( job_queue , int)")
-cfunc.get_active_size = cwrapper.prototype("int job_queue_get_active_size( job_queue )")
+cfunc.iget_sim_start  = cwrapper.prototype("time_t   job_queue_iget_sim_start( job_queue , int)")
+cfunc.get_active_size = cwrapper.prototype("int      job_queue_get_active_size( job_queue )")

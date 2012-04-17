@@ -21,13 +21,14 @@ import os.path
 import libjob_queue
 from   job                   import Job 
 from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cclass      import CClass
 from   ert.cwrap.cenum       import create_enum
 
 
 # job_driver_type defintion from queue_driver.h
 create_enum( libjob_queue.lib , "queue_driver_type_enum_iget" , "queue_driver_enum" , globals())
 
-class Driver:
+class Driver(CClass):
     def __init__( self , type , max_running = 1 , options = None):
         """
         Creates a new driver instance
@@ -43,13 +44,6 @@ class Driver:
         
     def is_driver_instance( self ):
         return True
-
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     def __del__( self ):
         cfunc.free_driver( self )

@@ -1456,19 +1456,20 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 
     {
       bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, and that the ert layer has loaded all data. */
-      
-      for (iens = 0; iens < ens_size; iens++) {
+      job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+
+      for (iens = 0; iens < ens_size; iens++) {    
         if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
           if ( runOK ) {
             log_add_fmt_message( enkf_main->logh , 1 , stderr , "Some models failed to integrate from DATES %d -> %d:",step1 , step2);
             runOK = false;
           }
-          log_add_fmt_message( enkf_main->logh , 1 , stderr , "** Error in: %s " , enkf_state_get_run_path(enkf_main->ensemble[iens]));
+          log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" , 
+                               job_queue_iget_run_path( job_queue , iens), 
+                               job_queue_iget_failed_job( job_queue , iens),
+                               job_queue_iget_error_reason( job_queue , iens ));
         }
       }
-      /* 
-         If !runOK the tui code used to call util_exit() here, now the code just returns false.
-      */
 
       if (runOK) {
         log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);

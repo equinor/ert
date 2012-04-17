@@ -53,8 +53,12 @@ class CFILE:
         self.py_file = py_file
 
 
-    def from_param( self ):
-        return ctypes.c_void_p( self.c_ptr )
+    @classmethod
+    def from_param( cls , obj ):
+        if obj is None:
+            return ctypes.c_void_p()
+        else:
+            return ctypes.c_void_p( obj.c_ptr )
 
 
     def __del__(self):

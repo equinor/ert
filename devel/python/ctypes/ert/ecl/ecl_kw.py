@@ -40,6 +40,7 @@ the libecl library.
 import  types
 import  ctypes
 from    ert.cwrap.cwrap       import *
+from    ert.cwrap.cclass      import CClass
 from    ert.cwrap.cfile       import CFILE
 from    ecl_util              import ECL_CHAR_TYPE, ECL_DOUBLE_TYPE, ECL_INT_TYPE, ECL_BOOL_TYPE, ECL_MESS_TYPE, ECL_FLOAT_TYPE 
 import  ecl_util
@@ -47,6 +48,7 @@ import  fortio
 import  libecl
 import  warnings
 import  numpy
+
 
 class classprop(object):
     def __init__(self , f):
@@ -56,7 +58,9 @@ class classprop(object):
         return self.f.__get__(*a)()
 
 
-class EclKW(object):
+
+
+class EclKW(CClass):
     """
     The EclKW class contains the information from one ECLIPSE keyword.
 
@@ -102,7 +106,7 @@ class EclKW(object):
            soil_kw = EclKW.new( "SOIL" , 10000 , ECL_FLOAT_TYPE )
            
         """
-        obj = cls()
+        obj            = cls()
         obj.c_ptr      = cfunc.alloc_new( name , size , type )
         obj.data_owner = True
         obj.parent     = None
@@ -293,12 +297,12 @@ class EclKW(object):
             self.str_fmt  = "%8s "
 
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
+    #@classmethod
+    #def from_param( cls , obj ):
+    #    if obj is None:
+    #        return ctypes.c_void_p()
+    #    else:
+    #        return ctypes.c_void_p( obj.c_ptr )
 
 
     def __len__( self ):

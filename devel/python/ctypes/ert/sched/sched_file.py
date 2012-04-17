@@ -20,9 +20,10 @@ import  ctypes
 import  libsched
 from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cfile       import CFILE
+from    ert.cwrap.cclass      import CClass
 from    ert.util.ctime        import ctime 
 
-class SchedFile:
+class SchedFile(CClass):
 
     def __init__(self , filename , start_time):
         self.c_ptr = cfunc.parse( filename , ctime( start_time ))
@@ -30,12 +31,6 @@ class SchedFile:
     def __del__(self):
         cfunc.free( self )
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     @property
     def length(self):

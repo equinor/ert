@@ -1594,12 +1594,12 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , enkf_fs_typ
       stringlist_free( init_keys );
     }
     
-    enkf_state_init_eclipse( enkf_state , fs );                              /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
-    job_queue_set_external_restart( shared_info->job_queue , run_info->queue_index );    /* Here we inform the queue system that it should pick up this job and try again. */
+    enkf_state_init_eclipse( enkf_state , fs );                                          /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
+    job_queue_iset_external_restart( shared_info->job_queue , run_info->queue_index );   /* Here we inform the queue system that it should pick up this job and try again. */
     run_info->num_internal_submit++;                                    
     return true;
   } else 
-    return false;                                                       /* No more internal retries. */
+    return false;                                                                        /* No more internal retries. */
 
 }
 
@@ -1614,7 +1614,7 @@ job_status_type enkf_state_get_run_status( const enkf_state_type * enkf_state ) 
   */
   if (run_info->active && run_info->queue_index >= 0) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
-    return job_queue_get_job_status(shared_info->job_queue , run_info->queue_index);
+    return job_queue_iget_job_status(shared_info->job_queue , run_info->queue_index);
   } else
     return JOB_QUEUE_NOT_ACTIVE;
 }
@@ -1667,7 +1667,7 @@ bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , enkf_fs_type
   const shared_info_type * shared_info = enkf_state->shared_info;
   const run_info_type * run_info       = enkf_state->run_info;             
   int iens                       = member_config_get_iens( enkf_state->my_config );
-  job_status_type current_status = job_queue_get_job_status(shared_info->job_queue , run_info->queue_index);
+  job_status_type current_status = job_queue_iget_job_status(shared_info->job_queue , run_info->queue_index);
   if (current_status & JOB_QUEUE_CAN_RESTART) { 
     /* Reinitialization of the nodes */
     if (resample) {
@@ -1679,7 +1679,7 @@ bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , enkf_fs_type
       stringlist_free( init_keys );
     }
     enkf_state_init_eclipse( enkf_state , fs );                              /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
-    job_queue_set_external_restart( shared_info->job_queue , run_info->queue_index );    /* Here we inform the queue system that it should pick up this job and try again. */
+    job_queue_iset_external_restart( shared_info->job_queue , run_info->queue_index );    /* Here we inform the queue system that it should pick up this job and try again. */
     return true;
   } else
     return false; /* The job was not resubmitted. */
@@ -1703,7 +1703,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enk
   const int iens                          = member_config_get_iens( my_config );
   bool loadOK  = true;
 
-  job_queue_set_external_load( shared_info->job_queue , run_info->queue_index );  /* Set the the status of to JOB_QUEUE_LOADING */
+  job_queue_iset_external_load( shared_info->job_queue , run_info->queue_index );  /* Set the the status of to JOB_QUEUE_LOADING */
   if (status == JOB_QUEUE_RUN_OK) {
     /**
        The queue system has reported that the run is OK, i.e. it has
@@ -1715,7 +1715,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enk
     enkf_state_internalize_results(enkf_state , fs , &loadOK); 
     if (loadOK) {
       status = JOB_QUEUE_ALL_OK;
-      job_queue_set_load_OK( shared_info->job_queue , run_info->queue_index);
+      job_queue_iset_load_OK( shared_info->job_queue , run_info->queue_index);
       log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_info->step1, run_info->step2);
     } else 
       if (!enkf_state_internal_retry( enkf_state , fs , true)) 
@@ -1725,7 +1725,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enk
            job_queue_run_FAIL and then it falls all the way through to
            runOK = false and no more attempts.
         */
-        job_queue_set_external_fail( shared_info->job_queue , run_info->queue_index );
+        job_queue_iset_external_fail( shared_info->job_queue , run_info->queue_index );
   } else if (status == JOB_QUEUE_RUN_FAIL) {
     /* 
        The external queue system has said that the job failed - we
@@ -1736,7 +1736,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enk
       run_info->runOK = false; /* OK - no more attempts. */
       log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
       /* We tell the queue system that we have really given up on this one */
-      job_queue_set_all_fail( shared_info->job_queue , run_info->queue_index);
+      job_queue_iset_all_fail( shared_info->job_queue , run_info->queue_index);
     } 
   } else 
     util_abort("%s: status:%d invalid - should only be called with status == [JOB_QUEUE_RUN_FAIL || JON_QUEUE_ALL_OK].",__func__ , status);

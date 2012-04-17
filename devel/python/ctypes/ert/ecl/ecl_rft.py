@@ -21,13 +21,14 @@ import libecl
 import ctypes
 import types
 from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cclass      import CClass
 from   ert.util.ctime        import ctime
 
 RFT = 1
 PLT = 2
         
 
-class EclRFTFile(object):
+class EclRFTFile(CClass):
     def __new__( cls , case ):
         c_ptr = cfunc_file.load( case )
         if c_ptr:
@@ -53,12 +54,7 @@ class EclRFTFile(object):
         else:
             raise TypeError("Index should be integer type")
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
+
     
     @property
     def size( self , well = None , date = None):
@@ -91,7 +87,7 @@ class EclRFTFile(object):
     
 
 
-class EclRFT:
+class EclRFT(CClass):
     def __init__(self , c_ptr , parent):
         self.c_ptr  = c_ptr
         self.parent = parent    # Inhibit GC
@@ -99,12 +95,7 @@ class EclRFT:
     def __len__(self):
         return cfunc_rft.get_size( self )
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
+
 
     @property
     def type(self):

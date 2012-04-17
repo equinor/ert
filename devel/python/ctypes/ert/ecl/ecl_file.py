@@ -42,11 +42,12 @@ import types
 import libecl
 
 from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cclass      import CClass
 from   ecl_kw                import EclKW
 from   ert.util.ctime        import ctime 
 from   ert.util.stringlist   import StringList
 
-class EclFile(object):
+class EclFile(CClass):
 
     @classmethod
     def restart_block( cls , filename , dtime = None , report_step = None):
@@ -302,12 +303,6 @@ class EclFile(object):
                 raise TypeError("Index must be integer or string (keyword)")
         
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     def iget_kw( self , index , copy = False):
         """
