@@ -43,7 +43,15 @@ class SchedFileTest( unittest.TestCase ):
         sched_file2 = sched.SchedFile( "/tmp/schedule1" , start_time)
         sched_file2.write( "/tmp/schedule2" , 62)
         self.assertTrue( file_equal( "/tmp/schedule1" , "/tmp/schedule2") ) 
+
+
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest( SchedFileTest( 'test_load' ))
+    suite.addTest( SchedFileTest( 'test_length' ))
+    suite.addTest( SchedFileTest( 'test_write_loop' ))
+    return suite
         
 
 
-unittest.main()
+#unittest.main()

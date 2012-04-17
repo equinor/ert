@@ -40,8 +40,9 @@ more extensive wrapping of the fortio implementation would be easy.
 import libecl
 import ctypes
 from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cclass      import CClass
 
-class FortIO:
+class FortIO(CClass):
     """
     Class to support binary IO of files created by the Fortran runtime.
 
@@ -88,16 +89,6 @@ class FortIO:
         obj.c_ptr = cfunc.fortio_open_writer( filename , endian_flip , fmt_file )
         return obj
     
-
-    
-        
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
-
 
     # Implements normal Python semantics - close on delete.
     def __del__(self):

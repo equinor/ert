@@ -33,8 +33,6 @@
 
 #define JOB_QUEUE_START_SIZE 16
 
-//job_queue_node_free_data: internal error - driver spesific job data has not been freed - will leak.
-
 
 /**
    The running of external jobs is handled thrugh an abstract
@@ -262,6 +260,11 @@ typedef struct {
   char                  *ok_file;         /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
   char                  *job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
+  /*-----------------------------------------------------------------*/
+  char                  *failed_job;      /* Name of the job (in the chain) which has failed. */
+  char                  *error_reason;    /* The error message from the failed job. */
+  char                  *stderr_capture;
+  /*-----------------------------------------------------------------*/
   void                  *job_data;        /* Driver specific data about this job - fully handled by the driver. */
   int                    argc;            /* The number of commandline arguments to pass when starting the job. */ 
   char                 **argv;            /* The commandline arguments. */
@@ -332,11 +335,101 @@ static int STATUS_INDEX( job_status_type status ) {
 
 /*****************************************************************/
 
+/*
+  When the job script has detected failure it will create a "EXIT"
+  file in the runpath directory; this function will inspect the EXIT
+  file and determine which job has failed, the reason the job script
+  has given to fail the job (typically missing TARGET_FILE) and
+  capture the stderr from the job.  
+
+  The file is XML formatted:
+
+  ------------------------------------------------
+  <error>
+     <time>HH:MM:SS</time>
+     <job> Name of job </job>
+     <reason> Reason why the job failed </reason>
+     <stderr>
+        Capture of stderr from the job, can typically be
+        a multiline string.
+     </stderr> 
+  </error>
+  ------------------------------------------------
+
+  This format is written by the dump_EXIT_file() function in the
+  job_dispatch.py script.
+*/
+
+/* 
+   This extremely half-assed XML parsing should of course not be shown
+   to anyone ... 
+*/
+
+static char * __alloc_tag_content( const char * xml_buffer , const char * tag) {
+  char * open_tag  = util_alloc_sprintf("<%s>"  , tag);
+  char * close_tag = util_alloc_sprintf("</%s>" , tag);
+  
+  char * start_ptr = strstr( xml_buffer , open_tag );
+  char * end_ptr   = strstr( xml_buffer , close_tag );
+  char * tag_content;
+
+  if ((start_ptr != NULL) && (end_ptr != NULL)) {
+    int length;
+    start_ptr += strlen(open_tag);
+    
+    length = end_ptr - start_ptr;
+    tag_content = util_alloc_substring_copy( start_ptr , length );
+  } else
+    util_abort("%s: xml \'parsing\' failed looking for tag:%s\n",__func__ , tag);
+
+  free( open_tag );
+  free( close_tag );
+  return tag_content;
+}
+
+
+static void job_queue_node_free_error_info( job_queue_node_type * node ) {
+  util_safe_free(node->error_reason);  
+  util_safe_free(node->stderr_capture);  
+  util_safe_free(node->failed_job);  
+}
+
+
+
+/**
+   This code is meant to capture which of the jobs has failed; why it
+   has failed and the stderr stream of the failing job. Depending on
+   the failure circumstances the EXIT file might not be around.  
+*/
+
+static void job_queue_node_fscanf_EXIT( job_queue_node_type * node ) {
+  job_queue_node_free_error_info( node );
+  if (util_file_exists( node->exit_file )) {
+    char * xml_buffer = util_fread_alloc_file_content( node->exit_file, NULL);
+    
+    node->failed_job     = __alloc_tag_content( xml_buffer , "job" );
+    node->error_reason   = __alloc_tag_content( xml_buffer , "reason" );
+    node->stderr_capture = __alloc_tag_content( xml_buffer , "stderr");
+    
+    free( xml_buffer );
+  }
+}
+
+
+
+static void job_queue_node_clear_error_info(job_queue_node_type * node) {
+  node->failed_job     = NULL;
+  node->error_reason   = NULL;
+  node->stderr_capture = NULL;  
+  node->run_path       = NULL;
+}
+
+
+
 static void job_queue_node_clear(job_queue_node_type * node) {
   node->job_status     = JOB_QUEUE_NOT_ACTIVE;
   node->submit_attempt = 0;
   node->job_name       = NULL;
-  node->run_path       = NULL;
   node->job_data       = NULL;
   node->exit_file      = NULL;
   node->ok_file        = NULL;
@@ -349,6 +442,7 @@ static void job_queue_node_clear(job_queue_node_type * node) {
 static job_queue_node_type * job_queue_node_alloc() {
   job_queue_node_type * node = util_malloc(sizeof * node , __func__);
   job_queue_node_clear(node);
+  job_queue_node_clear_error_info(node);
   pthread_rwlock_init( &node->job_lock , NULL);
   return node;
 }
@@ -358,8 +452,13 @@ static void job_queue_node_set_status(job_queue_node_type * node, job_status_typ
   node->job_status = status;
 }
 
+/*
+  The error information is retained even after the job has completede
+  completely, so that calling scope can ask for it - that is the
+  reason there are separte free() and clear functions for the error related fields. 
+*/
+  
 static void job_queue_node_free_data(job_queue_node_type * node) {
-  util_safe_free(node->run_path);  
   util_safe_free(node->job_name);  
   util_safe_free(node->exit_file); 
   util_safe_free(node->ok_file);   
@@ -372,6 +471,8 @@ static void job_queue_node_free_data(job_queue_node_type * node) {
 
 static void job_queue_node_free(job_queue_node_type * node) {
   job_queue_node_free_data(node);
+  job_queue_node_free_error_info(node);
+  util_safe_free(node->run_path);  
   free(node);
 }
 
@@ -404,6 +505,7 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
   node->argc           = argc;
   node->argv           = util_alloc_stringlist_copy( argv , argc );
 
+  util_safe_free(node->run_path); // Might have a value from previous run.
   if (util_is_abs_path(run_path)) 
     node->run_path = util_alloc_string_copy( run_path );
   else
@@ -460,8 +562,10 @@ static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node
       if (new_status == JOB_QUEUE_RUNNING) 
         node->sim_start = time( NULL );
       status_change = true;
-    } 
 
+      if (new_status == queue->exit_status)
+        job_queue_node_fscanf_EXIT( node );
+    }
   }
   pthread_mutex_unlock( &queue->status_mutex );
   return status_change;
@@ -593,11 +697,33 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 
 
 
+const char * job_queue_iget_run_path( const job_queue_type * queue , int job_index) {
+  job_queue_node_type * node = queue->jobs[job_index];
+  return node->run_path;
+}
+
+
+const char * job_queue_iget_failed_job( const job_queue_type * queue , int job_index) {
+  job_queue_node_type * node = queue->jobs[job_index];
+  return node->failed_job;
+}
+
+
+const char * job_queue_iget_error_reason( const job_queue_type * queue , int job_index) {
+  job_queue_node_type * node = queue->jobs[job_index];
+  return node->error_reason;
+}
+
+
+const char * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index) {
+  job_queue_node_type * node = queue->jobs[job_index];
+  return node->stderr_capture;
+}
 
 
 
 
-job_status_type job_queue_get_job_status(job_queue_type * queue , int job_index) {
+job_status_type job_queue_iget_job_status(const job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   return node->job_status;
 }
@@ -650,14 +776,14 @@ int job_queue_get_active_size( const job_queue_type * queue ) {
 }
 
 
-void job_queue_set_load_OK(job_queue_type * queue , int job_index) {
+void job_queue_iset_load_OK(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   job_queue_change_node_status( queue , node , JOB_QUEUE_ALL_OK);
 }
 
 
 
-void job_queue_set_all_fail(job_queue_type * queue , int job_index) {
+void job_queue_iset_all_fail(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   job_queue_change_node_status( queue , node , JOB_QUEUE_ALL_FAIL);
 }
@@ -715,7 +841,7 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
    of the calling scope.
 */
    
-void job_queue_set_external_restart(job_queue_type * queue , int job_index) {
+void job_queue_iset_external_restart(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   node->submit_attempt       = 0;
   job_queue_change_node_status( queue , node , JOB_QUEUE_WAITING );
@@ -737,7 +863,7 @@ void job_queue_set_external_restart(job_queue_type * queue , int job_index) {
    driver specific data before dereferencing.
 */
 
-void job_queue_set_external_fail(job_queue_type * queue , int job_index) {
+void job_queue_iset_external_fail(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   job_queue_change_node_status( queue , node , JOB_QUEUE_EXIT);
 }
@@ -746,7 +872,7 @@ void job_queue_set_external_fail(job_queue_type * queue , int job_index) {
    The external scope is loading results. Just for keeping track of status.
 */
 
-void job_queue_set_external_load(job_queue_type * queue , int job_index) {
+void job_queue_iset_external_load(job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   job_queue_change_node_status( queue , node , JOB_QUEUE_LOADING );
 }
@@ -883,8 +1009,8 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
         phase++;
         /*****************************************************************/
         if (queue->user_exit)  {/* An external thread has called the job_queue_user_exit() function, and we should kill
-                                  all jobs, do some clearing up and go home. Observe that we will go through the
-                                  queue handling codeblock below ONE LAST TIME before exiting. */
+                                   all jobs, do some clearing up and go home. Observe that we will go through the
+                                   queue handling codeblock below ONE LAST TIME before exiting. */
           job_queue_user_exit__( queue ); 
           local_user_exit = true;
         }

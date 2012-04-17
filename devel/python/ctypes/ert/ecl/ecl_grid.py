@@ -27,13 +27,14 @@ wrapper around the ecl_grid.c implementation from the libecl library.
 
 import ctypes
 from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cclass      import CClass
 from   ert.util.tvector      import DoubleVector  # Requires merging of typemaps ....
 import libecl
 import ecl_kw
 from   ert.cwrap.cfile       import CFILE
 import  numpy
 
-class EclGrid(object):
+class EclGrid(CClass):
     """
     Class for loading and internalizing ECLIPSE GRID/EGRID files.
     """
@@ -94,12 +95,6 @@ class EclGrid(object):
         if self.data_owner:
             cfunc.free( self )
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     @property
     def nx( self ):
@@ -535,9 +530,17 @@ class EclGrid(object):
         Observe that 3D numpy object is a copy of the data in the
         EclKW instance, i.e. modification to the numpy object will not
         be reflected in the ECLIPSE keyword.
-        
+
         The methods createKW() does the inverse operation; creating an
         EclKW instance from a 3D numpy object.
+
+        Alternative: Creating the numpy array object is not very
+        efficient; if you only need a limited number of elements from
+        the ecl_kw instance it might be wiser to use the grid_value()
+        method:
+
+           value = grid.grid_value( ecl_kw , i , j , k )
+           
         """
         if ecl_kw.size == self.nactive or ecl_kw.size == self.size:
             array = numpy.ones( [ self.nx , self.ny , self.nz] , dtype = ecl_kw.dtype) * default

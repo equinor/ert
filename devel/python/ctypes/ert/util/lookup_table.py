@@ -19,20 +19,15 @@ import sys
 import ctypes
 import libutil
 from   ert.cwrap.cwrap       import *
+from   ert.cwrap.cclass      import CClass
 
 
 
-class LookupTable(object):
+class LookupTable(CClass):
     
     def __init__(self):
         self.c_ptr = cfunc.alloc()
         
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
         
     @property 
     def max(self):

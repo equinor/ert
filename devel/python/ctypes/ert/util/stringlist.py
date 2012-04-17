@@ -34,11 +34,12 @@ hardly need to notice that the StringList class is at play.
 import libutil
 import types
 import ctypes
-from   ert.cwrap.cwrap import *
+from   ert.cwrap.cwrap  import *
+from   ert.cwrap.cclass import CClass
 
 
 
-class StringList:
+class StringList(CClass):
 
     @classmethod
     def NULL( cls ):
@@ -76,13 +77,6 @@ class StringList:
                         self.append( s )
                     else:
                         raise TypeError("Item:%s not a string" % s)
-
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
             
     def __del__( self ):

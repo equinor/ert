@@ -40,16 +40,17 @@ The C-level has implementations for several fundamental types like
 float and size_t not currently implemented in the Python version.
 """
 
-import sys
-import types
-import ctypes
-import libutil
-from   ert.cwrap.cwrap       import *
-from   ert.cwrap.cfile       import CFILE
+import  sys
+import  types
+import  ctypes
+import  libutil
+from    ert.cwrap.cwrap       import *
+from    ert.cwrap.cfile       import CFILE
+from    ert.cwrap.cclass      import CClass
 import  numpy
 
 
-class TVector(object):
+class TVector(CClass):
     
     @classmethod
     def strided_copy( cls , obj , slice ):
@@ -180,12 +181,6 @@ class TVector(object):
         """
         return self.str( max_lines = 10 , width = 5 )
 
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     def __del__(self):
         """

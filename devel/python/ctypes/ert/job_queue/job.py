@@ -18,6 +18,7 @@
 import time
 import datetime
 import ctypes
+from    ert.cwrap.cclass      import CClass
 
 # Enum values nicked from libjob_queue/src/basic_queue_driver.h
 STATUS_PENDING =  16
@@ -26,7 +27,7 @@ STATUS_DONE    =  64
 STATUS_EXIT    = 128 
 
 
-class Job:
+class Job(CClass):
     def __init__(self , driver , c_ptr , queue_index , blocking = False):
         self.driver      = driver
         self.c_ptr       = c_ptr
@@ -49,12 +50,6 @@ class Job:
     def kill( self ):
         self.driver.kill_job( self )
     
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     @property
     def run_time( self ):

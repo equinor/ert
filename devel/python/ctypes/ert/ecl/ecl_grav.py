@@ -28,8 +28,9 @@ import  ecl_region
 import  ecl_grid
 from    ecl_util              import ECL_WATER_PHASE , ECL_OIL_PHASE , ECL_GAS_PHASE, ecl_phase_enum
 from    ert.cwrap.cwrap       import *
+from    ert.cwrap.cclass      import CClass
 
-class EclGrav:
+class EclGrav(CClass):
     """
     Holding ECLIPSE results for calculating gravity changes.
     
@@ -60,12 +61,6 @@ class EclGrav:
     def __del__( self ):
         cfunc.free( self )
         
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
 
     def add_survey_RPORV( self , survey_name , restart_file ):
         """
