@@ -516,6 +516,7 @@ const char * site_config_get_lsf_request( const site_config_type * site_config )
   return queue_driver_get_option( site_config->lsf_driver, LSF_RESOURCE );
 }
 
+
 /*****************************************************************/
 
 void site_config_set_rsh_command( site_config_type * site_config , const char * rsh_command) {

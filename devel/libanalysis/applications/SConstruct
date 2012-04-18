@@ -13,7 +13,7 @@ package      = "analysis"
 
 conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
-lib_list = ["lapack" , "m" , "z" , "pthread" , "dl"]
+lib_list = ["lapack" , "blas" , "m" , "z" , "pthread" , "dl"]
 if conf.g2c:
    lib_list.append( "g2c" )
 
