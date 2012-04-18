@@ -19,7 +19,7 @@ bin_path     = "../bin"
 
 conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
-lib_list = ["lapack" ,  "plplotd" , "m" , "z" , "pthread"]
+lib_list = ["lapack" , "blas" , "plplotd" , "m" , "z" , "pthread"]
 if conf.g2c:
    lib_list.append( "g2c" )
 
