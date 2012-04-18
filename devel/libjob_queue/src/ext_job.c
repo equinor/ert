@@ -336,7 +336,8 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
   } else {
     /* 
        The @executable parameter points to an existing file; we store the
-       the full path as the executable field of the job.
+       the full path as the executable field of the job; we also try to update
+       the mode of the full_path executable to make sure it is executable.
     */
     char * full_path = util_alloc_realpath( executable );
     __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
@@ -345,7 +346,8 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
   }
   
   /* 
-     If in the end we do not have execute rights to the executable : discard the job.
+     If in the end we do not have execute rights to the executable :
+     discard the job.
   */
   if (ext_job->executable != NULL) {
     if (util_file_exists( ext_job->executable )) {
