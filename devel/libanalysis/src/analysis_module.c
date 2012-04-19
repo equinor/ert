@@ -359,8 +359,5 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
 
 
 bool analysis_module_get_option( const analysis_module_type * module , long flag) {
-  printf("inside analysis_module_get_option\n");
-  printf("flag = %ld\n",flag);
-  printf("module->get_options( module->module-data,flag) = %ld\n",module->get_options( module->module_data , flag ));
   return (flag & module->get_options( module->module_data , flag ));
 }

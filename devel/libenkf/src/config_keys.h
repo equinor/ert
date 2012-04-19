@@ -114,6 +114,7 @@ extern "C" {
 #define  PLOT_WIDTH_KEY                    "PLOT_WIDTH"        
 #define  PRE_CLEAR_RUNPATH_KEY             "PRE_CLEAR_RUNPATH"
 #define  QUEUE_SYSTEM_KEY                  "QUEUE_SYSTEM"
+#define  QUEUE_OPTION_KEY                  "QUEUE_OPTION" 
 #define  REFCASE_KEY                       "REFCASE"
 #define  RERUN_START_KEY                   "RERUN_START"
 #define  RSH_COMMAND_KEY                   "RSH_COMMAND"

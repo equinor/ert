@@ -49,12 +49,6 @@ void sched_blob_append_token( sched_blob_type * blob , const char * token ) {
 }
 
 
-void sched_blob_append_tokens( sched_blob_type * blob , const stringlist_type * tokens , int offset , int length ) {
-  char * new_buffer = stringlist_alloc_joined_segment_string( tokens , offset , length , " ");
-  sched_blob_append_buffer( blob , new_buffer );
-  free( new_buffer );
-}
-
 
 sched_blob_type * sched_blob_alloc() {
   sched_blob_type * blob = util_malloc( sizeof * blob , __func__);

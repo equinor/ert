@@ -18,11 +18,13 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+
+#include <util.h>
+
 #include <queue_driver.h>
 #include <lsf_driver.h>
 #include <local_driver.h>
 #include <rsh_driver.h>
-
 
 
 /**
@@ -50,9 +52,11 @@
 
 */
 
+#define QUEUE_DRIVER_ID 86516032
 
 
 struct queue_driver_struct {
+  UTIL_TYPE_ID_DECLARATION;
   /* 
      Function pointers - pointing to low level functions in the implementations of
      e.g. lsf_driver.
@@ -65,7 +69,7 @@ struct queue_driver_struct {
   set_option_ftype           * set_option;
   get_option_ftype           * get_option;
   has_option_ftype           * has_option; 
-
+  
   void                       * data;           /* Driver specific data - passed as first argument to the driver functions above. */
   
   /*
@@ -93,6 +97,7 @@ struct queue_driver_struct {
 
 static queue_driver_type * queue_driver_alloc_empty( ) {
   queue_driver_type * driver = util_malloc( sizeof * driver, __func__);
+  UTIL_TYPE_ID_INIT( driver , QUEUE_DRIVER_ID );
   driver->max_running = 0;
   driver->driver_type = NULL_DRIVER;
   driver->submit      = NULL;
@@ -108,6 +113,8 @@ static queue_driver_type * queue_driver_alloc_empty( ) {
   
   return driver;
 }
+
+static UTIL_SAFE_CAST_FUNCTION( queue_driver , QUEUE_DRIVER_ID )
 
 
 /**
@@ -165,10 +172,10 @@ queue_driver_type * queue_driver_alloc( job_driver_type type ) {
    Set option - can also be used to perform actions - not only setting
    of parameters. There is no limit :-) 
 */
-void queue_driver_set_option( queue_driver_type * driver , const char * option_key , const void * value) {
+bool queue_driver_set_option( queue_driver_type * driver , const char * option_key , const void * value) {
   if (driver->set_option != NULL) 
     /* The actual low level set functions can not fail! */
-    driver->set_option( driver->data , option_key , value );
+    return driver->set_option( driver->data , option_key , value );
   else
     util_abort("%s: driver:%s does not support run time setting of options\n",__func__ , driver->name );
 }
@@ -278,6 +285,12 @@ void queue_driver_free( queue_driver_type * driver ) {
   queue_driver_free_driver( driver );
   util_safe_free( driver->name );
   free( driver );
+}
+
+
+void queue_driver_free__( void * driver ) {
+  queue_driver_type * queue_driver = queue_driver_safe_cast( driver );
+  queue_driver_free( queue_driver );
 }
 
 

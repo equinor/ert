@@ -20,13 +20,18 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <config.h>
+
 #include <util.h>
+#include <stringlist.h>
+#include <rng.h>
+
+#include <config.h>
+
+#include <analysis_module.h>
+
 #include <enkf_types.h>
 #include <analysis_config.h>
 #include <enkf_defaults.h>
-#include <rng.h>
-#include <analysis_module.h>
 #include "config_keys.h"
 
 
@@ -341,7 +346,7 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
       const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_SET_VAR_KEY , i);
       const char * module_name = stringlist_iget( tokens , 0 );
       const char * var_name    = stringlist_iget( tokens , 1 );
-      char       * value       = stringlist_alloc_joined_segment_string( tokens , 2 , stringlist_get_size( tokens ) , " " );
+      char       * value       = stringlist_alloc_joined_substring( tokens , 2 , stringlist_get_size( tokens ) , " " );
       analysis_module_type * module = analysis_config_get_module( analysis , module_name );
       
       analysis_module_set_var( module , var_name , value );

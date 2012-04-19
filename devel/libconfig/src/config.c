@@ -20,13 +20,16 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+
 #include <util.h>
-#include <config.h>
+#include <parser.h>
 #include <hash.h>
-#include <vector.h>
 #include <stringlist.h>
 #include <set.h>
 #include <subst_list.h>
+#include <vector.h>
+
+#include <config.h>
 
 #define CLEAR_STRING "__RESET__"
 
@@ -321,9 +324,10 @@ static config_item_node_type * config_item_node_alloc() {
 }
 
 
-static void config_item_node_set(config_item_node_type * node , int argc , const char ** argv) {
+static void config_item_node_set(config_item_node_type * node , const stringlist_type * token_list) {
+  int argc = stringlist_get_size( token_list ) - 1;
   for (int iarg=0; iarg < argc; iarg++) 
-    stringlist_append_copy( node->stringlist , argv[iarg] );
+    stringlist_append_copy( node->stringlist , stringlist_iget( token_list , iarg + 1));
 }
 
 
@@ -631,8 +635,9 @@ static void config_item_clear( config_item_type * item ) {
    otherwise an error message is returned.
 */
 
-static bool config_item_validate_set(config_type * config , const config_item_type * item , int argc , char ** argv ,  const char * config_file, const char * config_cwd) {
+static bool config_item_validate_set(config_type * config , const config_item_type * item , stringlist_type * token_list , const char * config_file, const char * config_cwd) {
   bool OK = true;
+  int argc = stringlist_get_size( token_list ) - 1;
   if (item->validate->argc_min >= 0) {
     if (argc < item->validate->argc_min) {
       OK = false;
@@ -662,8 +667,8 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
     /* Validating selection set - first common, then indexed */
     if (item->validate->common_selection_set) {
       for (int iarg = 0; iarg < argc; iarg++) {
-        if (!set_has_key(item->validate->common_selection_set , argv[iarg])) {
-          config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
+        if (!set_has_key(item->validate->common_selection_set , stringlist_iget( token_list , iarg + 1))) {
+          config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",stringlist_iget( token_list , iarg + 1) , item->kw));
           OK = false;
         }
       }
@@ -671,8 +676,8 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
       for (int iarg = 0; iarg < argc; iarg++) {
         if ((item->validate->argc_max > 0) || (iarg < item->validate->argc_min)) {  /* Without this test we might go out of range on the indexed selection set. */
           if (item->validate->indexed_selection_set[iarg] != NULL) {
-            if (!set_has_key(item->validate->indexed_selection_set[iarg] , argv[iarg])) {
-              config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for item %d of \'%s\'.",argv[iarg] , iarg + 1 , item->kw));
+            if (!set_has_key(item->validate->indexed_selection_set[iarg] , stringlist_iget( token_list , iarg + 1))) {
+              config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for item %d of \'%s\'.",stringlist_iget( token_list , iarg + 1) , iarg + 1 , item->kw));
               OK = false;
             }
           }
@@ -690,7 +695,7 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
     if (item->validate->type_map != NULL) {
       for (int iarg = 0; iarg < argc; iarg++) {
         if (iarg < item->validate->type_map_size) {
-          const char * value = argv[iarg];
+          const char * value = stringlist_iget(token_list , iarg + 1);
           switch (item->validate->type_map[iarg]) {
           case(CONFIG_STRING): /* This never fails ... */
             break;
@@ -709,12 +714,12 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
                 
                 if (util_file_exists(relocated)) {
                   if (util_is_executable(relocated))
-                    argv[iarg] = util_realloc_string_copy(argv[iarg] , relocated);
+                    stringlist_iset_copy( token_list , iarg , relocated);
                 } else if (path_exe != NULL)
-                  argv[iarg] = util_realloc_string_copy(argv[iarg] , path_exe);
+                  stringlist_iset_copy( token_list , iarg , path_exe);
                 else
                   config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
-                
+
                 free(relocated);
                 util_safe_free(path_exe);
               } else {
@@ -734,17 +739,17 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
           case(CONFIG_EXISTING_FILE):
             {
               char * file = __alloc_relocated__(config_cwd , value);
-              if (!util_file_exists(file))
+              if (!util_file_exists(file)) 
                 config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
               else
-                argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
+                stringlist_iset_copy( token_list , iarg + 1 , file);  
               free( file );
             }
             break;
           case(CONFIG_FILE):
             {
               char * file = __alloc_relocated__(config_cwd , value);
-              argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
+              stringlist_iset_copy( token_list , iarg + 1 , file);  
               free( file );
             }
             break;
@@ -754,7 +759,8 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
               if (!util_is_directory(value))
                 config_add_and_free_error(config , util_alloc_sprintf("Can not find directory: %s. ",value));
               else
-                argv[iarg] = util_realloc_string_copy(argv[iarg] , dir);
+                stringlist_iset_copy( token_list , iarg + 1 , dir);  
+              free( dir );
             }
             break;
           case(CONFIG_BOOLEAN):
@@ -787,8 +793,10 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
   calling scope will free it.
 */
 
-static void config_item_set_arg__(config_type * config , config_item_type * item , int argc , char ** argv , const char * config_file , const char * config_cwd) {
-  if (argc == 1 && (strcmp(argv[0] , CLEAR_STRING) == 0)) {
+static void config_item_set_arg__(config_type * config , config_item_type * item , stringlist_type * token_list , const char * config_file , const char * config_cwd) {
+  int argc = stringlist_get_size( token_list ) - 1;
+
+  if (argc == 1 && (strcmp(stringlist_iget(token_list , 1) , CLEAR_STRING) == 0)) {
     config_item_clear(item);
   } else {
     config_item_node_type * node;
@@ -805,9 +813,8 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
     if (subst_list_get_size( config->define_list ) > 0) {
       int iarg;
       for (iarg = 0; iarg < argc; iarg++) {
-        char * filtered_copy = subst_list_alloc_filtered_string( config->define_list , argv[iarg] );
-        free( argv[iarg] );
-        argv[iarg] = filtered_copy;
+        char * filtered_copy = subst_list_alloc_filtered_string( config->define_list , stringlist_iget(token_list , iarg + 1));
+        stringlist_iset_owned_ref( token_list , iarg + 1 , filtered_copy);
       }
     }
 
@@ -819,12 +826,13 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
         int    env_offset = 0;
         char * env_var;
         do {
-          env_var = util_isscanf_alloc_envvar( argv[iarg] , env_offset );
+          env_var = util_isscanf_alloc_envvar(  stringlist_iget(token_list , iarg + 1) , env_offset );
           if (env_var != NULL) {
             const char * env_value = getenv( &env_var[1] );
-            if (env_value != NULL)
-              util_string_replace_inplace( &argv[iarg] , env_var , env_value);
-            else {
+            if (env_value != NULL) {
+              char * new_value = util_string_replace_alloc( stringlist_iget( token_list , iarg + 1 ) , env_var , env_value );
+              stringlist_iset_owned_ref( token_list , iarg + 1 , new_value );
+            } else {
               env_offset += 1;
               fprintf(stderr,"** Warning: environment variable: %s is not defined \n", env_var);
             }
@@ -833,8 +841,8 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
       }
     }
     
-    if (config_item_validate_set(config , item , argc , argv , config_file, config_cwd)) {
-      config_item_node_set(node , argc , (const char **) argv);
+    if (config_item_validate_set(config , item , token_list , config_file, config_cwd)) {
+      config_item_node_set(node , token_list);
       item->currently_set = true;
       
       if (config_cwd != NULL)
@@ -842,6 +850,7 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
       else
         node->config_cwd = util_alloc_cwd(  );  /* For use from external scope. */
     }
+
   }
 }
  
@@ -1099,26 +1108,6 @@ bool config_item_set(const config_type * config , const char * kw) {
 
 
 
-void config_set_arg(config_type * config , const char * kw, int argc , const char **__argv) {
-  char ** argv = util_alloc_stringlist_copy(__argv , argc);  
-  config_item_set_arg__( config , config_get_item(config , kw) , argc , argv , NULL , NULL );
-  util_free_stringlist(argv , argc);
-
-  {
-    int i;
-    printf("** Warning using config_set_arg() to set argument:%-20s =  [", kw );
-    for (i=0; i < argc; i++) {
-      printf("%s",__argv[i]);
-      if (i < (argc - 1))
-        printf(", ");
-    }
-    printf("]\n");
-  }
-
-  
-}
-
-
 
 void config_add_define( config_type * config , const char * key , const char * value ) {
   subst_list_append_copy( config->define_list , key , value , NULL );
@@ -1194,9 +1183,9 @@ hash_type * config_pop_auto_items( config_type * config ) {
 }
 
 
-static void config_append_auto_item( config_type * config , const char * key , int argc , const char ** argv) {
+static void config_append_auto_item( config_type * config , const char * key , const stringlist_type * token_list) {
   vector_type * v     = hash_get( config->auto_items , key );
-  stringlist_type * s = stringlist_alloc_argv_copy( argv , argc );
+  stringlist_type * s = stringlist_alloc_deep_copy_with_offset( token_list , 1);
   
   vector_append_owned_ref( v , s , stringlist_free__);
 }
@@ -1291,6 +1280,7 @@ static void config_parse__(config_type * config ,
                            bool validate) {
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
   char * abs_filename = util_alloc_realpath(config_file);
+  parser_type * parser = parser_alloc(" \t" , "\"", NULL , NULL , "--" , "\n");
 
   if (!set_add_key(config->parsed_files , abs_filename)) 
     util_exit("%s: file:%s already parsed - circular include ? \n",__func__ , config_file);
@@ -1299,15 +1289,18 @@ static void config_parse__(config_type * config ,
     bool   at_eof = false;
   
     while (!at_eof) {
-      int i , tokens;
-      int active_tokens;
-      char **token_list;
-      char  *line;
-    
-      line  = util_fscanf_alloc_line(stream , &at_eof);
-      if (line != NULL) {
-        util_split_string(line , " \t" , &tokens , &token_list);
+      int    active_tokens;
+      stringlist_type * token_list;
+      char  *line_buffer;
+
       
+      line_buffer  = util_fscanf_alloc_line(stream , &at_eof);
+      if (line_buffer != NULL) {
+        token_list = parser_tokenize_buffer(parser , line_buffer , true);
+        active_tokens = stringlist_get_size( token_list );
+
+        /*
+        util_split_string(line_buffer , " \t" , &tokens , &token_list);
         active_tokens = tokens;
         for (i = 0; i < tokens; i++) {
           char * comment_ptr = NULL;
@@ -1321,10 +1314,11 @@ static void config_parse__(config_type * config ,
               active_tokens = i + 1;
             break;
           }
-        }
+          }
+        */
 
         if (active_tokens > 0) {
-          const char * kw = token_list[0];
+          const char * kw = stringlist_iget( token_list , 0 );
 
           /*Treating the include keyword. */
           if (include_kw != NULL && (strcmp(include_kw , kw) == 0)) {
@@ -1338,7 +1332,7 @@ static void config_parse__(config_type * config ,
               {
                 char * tmp_path;
                 char * tmp_file;
-                util_alloc_file_components(token_list[1] , &tmp_path , &tmp_file , &extension);
+                util_alloc_file_components(stringlist_iget(token_list , 1) , &tmp_path , &tmp_file , &extension);
 
                 /* Allocating a new path with current config_cwd and the (relative) path to the new config_file */
                 if (tmp_path == NULL)
@@ -1363,8 +1357,8 @@ static void config_parse__(config_type * config ,
             if (active_tokens < 3) 
               util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
             {
-              char * key   = util_alloc_string_copy( token_list[1] );
-              char * value = util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ");
+              char * key   = util_alloc_string_copy( stringlist_iget(token_list ,1) );
+              char * value = stringlist_alloc_joined_substring( token_list , 2 , active_tokens , " ");
               
               {
                 char * filtered_value = subst_list_alloc_filtered_string( config->define_list , value);
@@ -1391,21 +1385,21 @@ static void config_parse__(config_type * config ,
             
             if (config_has_item(config , kw)) {
               config_item_type * item = config_get_item(config , kw);
-              config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd);
+              config_item_set_arg__(config , item , token_list , config_file , config_cwd);
             } 
-              
             
             if (auto_item)
-              config_append_auto_item( config , kw , active_tokens - 1,  (const char **) &token_list[1] );
+              config_append_auto_item( config , kw , token_list);
           }
         }
-        util_free_stringlist(token_list , tokens);
-        free(line);
+        stringlist_free(token_list);
+        free(line_buffer);
       }
     }
     if (validate) config_validate(config , config_file);
     fclose(stream);
   }
+  parser_free( parser );
   free(abs_filename);
   free(config_file);
 }
