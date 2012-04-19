@@ -411,8 +411,9 @@ void rsh_driver_add_host_from_string(rsh_driver_type * rsh_driver , const char *
 
 
 
-void rsh_driver_set_option( void * __driver , const char * option_key , const void * value ) {
+bool rsh_driver_set_option( void * __driver , const char * option_key , const void * value ) {
   rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
+  bool has_option = true;
   {
     if (strcmp(RSH_HOST , option_key) == 0)                 /* Add one host - value should be hostname:max */  
       rsh_driver_add_host_from_string( driver , value );
@@ -427,8 +428,9 @@ void rsh_driver_set_option( void * __driver , const char * option_key , const vo
     else if (strcmp( RSH_CMD , option_key) == 0)
       driver->rsh_command = util_realloc_string_copy( driver->rsh_command , value );
     else
-      util_abort("%s: unrecognized option_id:%s for RSH driver \n",__func__ , option_key );
+      has_option = false;
   }
+  return has_option;
 }
 
 

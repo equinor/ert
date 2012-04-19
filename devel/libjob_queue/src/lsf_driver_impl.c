@@ -582,8 +582,9 @@ static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char 
    LSF_RESOURCE
 */
 
-void lsf_driver_set_option( void * __driver , const char * option_key , const void * value) {
+bool lsf_driver_set_option( void * __driver , const char * option_key , const void * value) {
   lsf_driver_type * driver  = lsf_driver_safe_cast( __driver );
+  bool has_option = true;
   {
     if (strcmp( LSF_RESOURCE , option_key ) == 0)
       driver->resource_request = util_realloc_string_copy( driver->resource_request , value );
@@ -596,8 +597,9 @@ void lsf_driver_set_option( void * __driver , const char * option_key , const vo
     else if (strcmp( LSF_RSH_CMD , option_key) == 0)
       lsf_driver_set_rsh_cmd( driver , value );
     else 
-      util_abort("%s: option_id:%s not recognized for LSF driver \n",__func__ , option_key);
+      has_option = false;
   }
+  return has_option;
 }
 
 
