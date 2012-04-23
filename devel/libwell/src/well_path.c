@@ -60,7 +60,7 @@ struct well_path_struct {
 
 
 static void well_path_resize( well_path_type * well_path , int new_size) {
-  well_path->branches = util_malloc( new_size * sizeof * well_path->branches , __func__);
+  well_path->branches = util_realloc( well_path->branches , new_size * sizeof * well_path->branches , __func__);
   for (int i=well_path->alloc_size; i < new_size; i++)
     well_path->branches[i] = NULL;
   
@@ -87,7 +87,7 @@ well_branch_type * well_path_add_branch( well_path_type * well_path , int branch
   well_branch_type * new_branch = well_branch_alloc( branch_nr );
   if (branch_nr >= well_path->alloc_size)
     well_path_resize( well_path , 2 * branch_nr );
-  
+
   well_path->branches[ branch_nr ] = new_branch;
   if (branch_nr >= well_path->max_branches)
     well_path->max_branches = branch_nr + 1;
