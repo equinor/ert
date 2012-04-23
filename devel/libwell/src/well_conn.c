@@ -95,13 +95,22 @@ well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw ,
         util_abort("%s: icon direction value:%d not recognized\n",__func__ , int_direction);
       }
     }
-    
-    if (conn->segment >= 0) {
-      const int iseg_offset = header->nisegz * ( header->nsegmx * seg_well_nr + conn->segment );
-      conn->branch = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );  
+
+    /**
+       For multisegmented wells ONLY the global part of the restart
+       file has segment information, i.e. the ?SEG
+       keywords. Consequently iseg_kw will be NULL for the part of a
+       MSW + LGR well.
+    */
+    if (iseg_kw != NULL) {
+      if (conn->segment >= 0) {
+        const int iseg_offset = header->nisegz * ( header->nsegmx * seg_well_nr + conn->segment );
+        conn->branch = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );  
+      } else
+        conn->branch = 0;
     } else
       conn->branch = 0;
-
+    
     return conn;
   } else
     return NULL;  /* IC < 0: Connection not in current LGR. */

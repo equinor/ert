@@ -133,8 +133,9 @@ static void well_state_add_connections( well_state_type * well_state ,  const ec
     well_state_add_wellhead( well_state , header , iwel_kw , well_nr , grid_name , grid_nr );
     free( grid_name );
   }
-
-  if (seg_well_nr >= 0)
+  
+  /* The MSW information is only attached to the global grid. */
+  if (seg_well_nr >= 0 && grid_nr == 0)
     MSW = true;
   
   if (MSW)
@@ -436,6 +437,7 @@ void well_state_summarize( const well_state_type * well_state , FILE * stream ) 
             if (branch != NULL) {
               const well_conn_type ** connections = well_branch_get_connections( branch );
               int num_connections = well_branch_get_length( branch );
+              
               fprintf(stream , "      Branch %2d: [" , branch_nr );
               for (int iconn=0; iconn < num_connections; iconn++) {
                 const well_conn_type * conn = connections[ iconn ];
