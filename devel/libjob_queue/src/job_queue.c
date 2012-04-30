@@ -260,6 +260,7 @@ typedef struct {
   char                  *failed_job;      /* Name of the job (in the chain) which has failed. */
   char                  *error_reason;    /* The error message from the failed job. */
   char                  *stderr_capture;
+  char                  *stderr_file;     /* Name of the file containing stderr information. */
   /*-----------------------------------------------------------------*/
   void                  *job_data;        /* Driver specific data about this job - fully handled by the driver. */
   int                    argc;            /* The number of commandline arguments to pass when starting the job. */ 
@@ -375,8 +376,7 @@ static char * __alloc_tag_content( const char * xml_buffer , const char * tag) {
     
     length = end_ptr - start_ptr;
     tag_content = util_alloc_substring_copy( start_ptr , length );
-  } else
-    util_abort("%s: xml \'parsing\' failed looking for tag:%s\n",__func__ , tag);
+  } 
 
   free( open_tag );
   free( close_tag );
@@ -387,6 +387,7 @@ static char * __alloc_tag_content( const char * xml_buffer , const char * tag) {
 static void job_queue_node_free_error_info( job_queue_node_type * node ) {
   util_safe_free(node->error_reason);  
   util_safe_free(node->stderr_capture);  
+  util_safe_free(node->stderr_file);  
   util_safe_free(node->failed_job);  
 }
 
@@ -406,7 +407,8 @@ static void job_queue_node_fscanf_EXIT( job_queue_node_type * node ) {
     node->failed_job     = __alloc_tag_content( xml_buffer , "job" );
     node->error_reason   = __alloc_tag_content( xml_buffer , "reason" );
     node->stderr_capture = __alloc_tag_content( xml_buffer , "stderr");
-    
+    node->stderr_file    = __alloc_tag_content( xml_buffer , "stderr_file");
+
     free( xml_buffer );
   }
 }
@@ -417,6 +419,7 @@ static void job_queue_node_clear_error_info(job_queue_node_type * node) {
   node->failed_job     = NULL;
   node->error_reason   = NULL;
   node->stderr_capture = NULL;  
+  node->stderr_file    = NULL;  
   node->run_path       = NULL;
 }
 
@@ -714,6 +717,12 @@ const char * job_queue_iget_error_reason( const job_queue_type * queue , int job
 const char * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   return node->stderr_capture;
+}
+
+
+const char * job_queue_iget_stderr_file( const job_queue_type * queue , int job_index) {
+  job_queue_node_type * node = queue->jobs[job_index];
+  return node->stderr_file;
 }
 
 

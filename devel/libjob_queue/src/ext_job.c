@@ -303,19 +303,15 @@ void ext_job_set_max_time( ext_job_type * ext_job , int max_time ) {
            variable, otherwise use the input value and hope that input
            value should be interpreted as template key which will be
            replaced upon execution.
-           
-   Finally it is checked that the current user indeed has execute
-   rights to the executable in question.
 */
 
 void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
 
   if (!util_file_exists(executable)) {
     if (util_is_abs_path( executable )) {
-      /* 
-         If you have given an absolute path (i.e. starting with '/' to
+      /* If you have given an absolute path (i.e. starting with '/' to
          a non existing job we mark it as invalid - no possibility to
-         provide context replacement afterwards. The job will
+         provide context replacement afterwards. The job will be
          discarded by the calling scope.
       */
       fprintf(stderr , "** The executable:%s can not be found - job:%s will not be available.\n" , executable , ext_job->name );
@@ -327,17 +323,19 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
       if (path_executable != NULL) {
         ext_job_set_executable( ext_job , path_executable );
         free( path_executable );
-      } else {
-        /* We take the chance that user will supply a valid subst key for this later. */
+      } else 
+        /* We take the chance that user will supply a valid subst key for this later;
+           if the final executable is not an actually executable file when exporting the
+           job from ext_job_python_fprintf() a big warning will be written on stderr.
+        */
         ext_job->executable = util_realloc_string_copy(ext_job->executable , executable);
-        fprintf(stderr,"** Warning: the executable:%s in job:%s does not exist at load time.\n", executable , ext_job->name);
-      }
     }
   } else {
     /* 
-       The @executable parameter points to an existing file; we store the
-       the full path as the executable field of the job; we also try to update
-       the mode of the full_path executable to make sure it is executable.
+       The @executable parameter points to an existing file; we store
+       the full path as the executable field of the job; we also try
+       to update the mode of the full_path executable to make sure it
+       is executable.
     */
     char * full_path = util_alloc_realpath( executable );
     __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
@@ -350,7 +348,7 @@ void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
      discard the job.
   */
   if (ext_job->executable != NULL) {
-    if (util_file_exists( ext_job->executable )) {
+    if (util_file_exists(executable)) {
       if (!util_is_executable( ext_job->executable )) {
         fprintf(stderr , "** You do not have execute rights to:%s - job will not be available.\n" , ext_job->executable);
         ext_job->__valid = false;  /* Mark the job as NOT successfully installed - the ext_job 
@@ -569,23 +567,31 @@ static void __indent(FILE * stream, int indent) {
 
 
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
-  fprintf(stream," {");
-
-  __indent(stream, 0); __fprintf_python_string(stream , "name"                , ext_job->name                , ext_job->private_args , NULL);        __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "executable"          , ext_job->executable          , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "target_file"         , ext_job->target_file         , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "error_file"         , ext_job->error_file         , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "start_file"          , ext_job->start_file          , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stdout"              , ext_job->stdout_file         , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stderr"              , ext_job->stderr_file         , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stdin"               , ext_job->stdin_file          , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_list(stream   , "argList"             , ext_job->argv                , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_hash(stream   , "environment"         , ext_job->environment         , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "license_path"        , ext_job->license_path        , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_int( stream   , "max_running_minutes" , ext_job->max_running_minutes );                                      __end_line(stream);
-  __indent(stream, 2); __fprintf_python_int( stream   , "max_running"         , ext_job->max_running );                                              __end_line(stream);
+  char * executable;
+  executable = subst_list_alloc_filtered_string( ext_job->private_args , ext_job->executable );
+  if (global_args != NULL)
+    subst_list_update_string( global_args , &executable );
   
-  fprintf(stream,"}");
+  if (util_is_executable( executable )) {
+    fprintf(stream," {");
+    __indent(stream, 0); __fprintf_python_string(stream , "name"                , ext_job->name                , ext_job->private_args , NULL);        __end_line(stream);
+    __indent(stream, 2); __fprintf_python_string(stream , "executable"          , ext_job->executable          , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_string(stream , "target_file"         , ext_job->target_file         , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_string(stream , "error_file"          , ext_job->error_file          , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_string(stream , "start_file"          , ext_job->start_file          , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_string(stream , "stdout"              , ext_job->stdout_file         , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_string(stream , "stderr"              , ext_job->stderr_file         , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_string(stream , "stdin"               , ext_job->stdin_file          , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_list(stream   , "argList"             , ext_job->argv                , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_hash(stream   , "environment"         , ext_job->environment         , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_string(stream , "license_path"        , ext_job->license_path        , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); __fprintf_python_int( stream   , "max_running_minutes" , ext_job->max_running_minutes );                                      __end_line(stream);
+    __indent(stream, 2); __fprintf_python_int( stream   , "max_running"         , ext_job->max_running );                                              __end_line(stream);
+    fprintf(stream,"}");
+  } else
+    fprintf(stderr," ** WARNING: The executable:%s could not be located on host computer - job will most probably fail.\n", executable);
+  
+  free( executable );
 }
 
 
