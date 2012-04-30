@@ -146,6 +146,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   int     iens , step;
   bool plot_refcase = true;
   
+  /*
   {
     enkf_plot_data_type * plot_data    = enkf_main_alloc_plot_data( enkf_main );
     bool_vector_type * active = bool_vector_alloc( 0 , false );
@@ -157,7 +158,8 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
     bool_vector_free( active );
     enkf_plot_data_free( plot_data );
   }
-
+  */
+  
   if ( strcmp( data_file , "" ) == 0)
     plot_refcase = false;
 
