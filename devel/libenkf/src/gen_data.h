@@ -22,18 +22,19 @@
 extern "C" {
 #endif
 
-
-#include <ecl_sum.h>
-#include <enkf_macros.h>
-#include <ecl_file.h>
-#include <buffer.h>
-#include <gen_data_common.h>
-#include <gen_data_config.h>
 #include <util.h>
 #include <bool_vector.h>
+#include <buffer.h>
+
+#include <ecl_sum.h>
+#include <ecl_file.h>
+
+#include <enkf_macros.h>
+#include <gen_data_common.h>
+#include <gen_data_config.h>
 
 void                     gen_data_assert_size( gen_data_type * gen_data , int size , int report_step);
-bool                     gen_data_ecl_load(gen_data_type * , const char *  ,  const ecl_sum_type * , const ecl_file_type * , int );
+bool                     gen_data_forward_load(gen_data_type * , const char *  ,  const ecl_sum_type * , const ecl_file_type * , int );
 void                     gen_data_free(gen_data_type * );
 double                   gen_data_iget_double(const gen_data_type * , int );
 gen_data_config_type   * gen_data_get_config(const gen_data_type * );
@@ -53,7 +54,7 @@ VOID_ALLOC_HEADER(gen_data);
 VOID_FREE_HEADER(gen_data);
 VOID_COPY_HEADER      (gen_data);
 VOID_ECL_WRITE_HEADER(gen_data);
-VOID_ECL_LOAD_HEADER(gen_data);
+VOID_FORWARD_LOAD_HEADER(gen_data);
 VOID_INITIALIZE_HEADER(gen_data);
 VOID_READ_FROM_BUFFER_HEADER(gen_data);
 VOID_WRITE_TO_BUFFER_HEADER(gen_data);

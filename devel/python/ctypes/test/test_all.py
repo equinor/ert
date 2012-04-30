@@ -5,14 +5,23 @@ import sys
 import sum_test
 import sched_test
 import large_mem_test
+import file_test
 
 
-def run(name , suite):
+def run_suite(name , suite):
     print "Running tests from %12s:" % name,
     sys.stdout.flush()
     unittest.TextTestRunner().run( suite )
 
+def run(name , module):
+    if hasattr(module , "fast_suite"):
+        run_suite( name , getattr(module , "fast_suite")())
+
+    if hasattr(module , "slow_suite"):
+        run_suite( name , getattr(module , "slow_suite")())
     
-run("summary"    , sum_test.suite())
-run("sched_file" , sched_test.suite())
-run("large_mem"  , large_mem_test.suite())
+    
+run("summary"    , sum_test)
+run("sched_file" , sched_test)
+run("file_test"  , file_test)
+run("large_mem"  , large_mem_test)

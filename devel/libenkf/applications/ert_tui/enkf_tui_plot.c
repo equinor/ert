@@ -127,7 +127,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
                                      int iens1 , int iens2  , 
                                      state_enum plot_state) {
                                      
-  enkf_plot_data_type        * plot_data    = enkf_main_alloc_plot_data( enkf_main );
   enkf_fs_type               * fs           = enkf_main_get_fs(enkf_main);
   enkf_obs_type              * enkf_obs     = enkf_main_get_obs( enkf_main );
   const plot_config_type     * plot_config  = enkf_main_get_plot_config( enkf_main );
@@ -146,9 +145,18 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   bool_vector_type * has_data = bool_vector_alloc( 0 , false );
   int     iens , step;
   bool plot_refcase = true;
-
-  //enkf_plot_data_load( plot_data , config_node , fs , user_key , FORECAST , step1 , step2 );
   
+  {
+    enkf_plot_data_type * plot_data    = enkf_main_alloc_plot_data( enkf_main );
+    bool_vector_type * active = bool_vector_alloc( 0 , false );
+    
+    for (iens = iens1; iens <= iens2; iens++)
+      bool_vector_iset( active , iens , true );
+    
+    enkf_plot_data_load( plot_data , config_node , fs , user_key , FORECAST , active , false , step1 , step2 );
+    bool_vector_free( active );
+    enkf_plot_data_free( plot_data );
+  }
 
   if ( strcmp( data_file , "" ) == 0)
     plot_refcase = false;
@@ -462,7 +470,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   
   free( plot_file );
   bool_vector_free( has_data );
-  enkf_plot_data_free( plot_data );
 }
 
 

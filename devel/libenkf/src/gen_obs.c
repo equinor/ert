@@ -21,14 +21,16 @@
    enkf_obs.c
 */
 #include <stdlib.h>
+
+#include <util.h>
+
 #include <enkf_util.h>
 #include <enkf_types.h>
 #include <enkf_macros.h>
 #include <enkf_fs.h>
-#include <util.h>
+#include <meas_data.h>
 #include <gen_obs.h>
 #include <gen_data_config.h>
-#include <meas_data.h>
 #include <obs_data.h>
 #include <gen_data.h>
 #include <gen_obs.h>

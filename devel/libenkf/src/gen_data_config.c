@@ -19,16 +19,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
+
 #include <util.h>
+#include <int_vector.h>
+#include <bool_vector.h>
+
 #include <config.h>
+
 #include <ecl_util.h>
+
 #include <enkf_macros.h>
 #include <gen_data_config.h>
 #include <enkf_types.h>
-#include <pthread.h>
 #include <gen_data_common.h>
-#include <int_vector.h>
-#include <bool_vector.h>
 #include <enkf_fs.h>
 #include "config_keys.h"
 #include "enkf_defaults.h"
@@ -74,7 +78,7 @@ struct gen_data_config_struct {
   bool                           dynamic;
   enkf_fs_type                 * fs;   
   int                            ens_size;     
-  int                            load_count;   
+  bool                           mask_modified;
   bool_vector_type             * active_mask;
   int                            active_report_step;
 };
@@ -147,7 +151,6 @@ gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
   config->active_mask        = bool_vector_alloc(0 , true ); /* Elements are explicitly set to FALSE - this MUST default to true. */ 
   config->active_report_step = -1;
   config->ens_size           = -1;
-  config->load_count         = -1;
   config->fs                 = NULL;
   config->dynamic            = false;
   pthread_mutex_init( &config->update_lock , NULL );
@@ -355,7 +358,7 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
       int_vector_iset( config->data_size_vector , report_step , data_size );
       current_size = data_size;
     }
-
+    
     if (current_size != data_size) {
       util_abort("%s: Size mismatch when loading:%s from file - got %d elements - expected:%d [report_step:%d] \n",
                  __func__ , 
@@ -383,35 +386,37 @@ void gen_data_config_update_active(gen_data_config_type * config , int report_st
   pthread_mutex_lock( &config->update_lock );
   {
     if ( int_vector_iget( config->data_size_vector , report_step ) > 0) {
-      
       if (config->active_report_step != report_step) {
         /* This is the first ensemeble member loading for this
            particular report_step. */
         bool_vector_reset( config->active_mask );
         bool_vector_iset( config->active_mask , int_vector_iget( config->data_size_vector , report_step ) - 1 , true );
-        config->load_count = 0;
+        config->mask_modified = true;
       }
       
       {
         int i;
         for (i=0; i < bool_vector_size( data_mask ); i++) {
-          if (!bool_vector_iget( data_mask , i ))
+          if (!bool_vector_iget( data_mask , i )) {
             bool_vector_iset( config->active_mask , i , false );
+            config->mask_modified = true;
+          }
         }
       } 
       
-      config->load_count++;
-      if (config->load_count == config->ens_size) {
+      if (config->mask_modified) {
         /**
-           All ensemble members have been loaded, we save the current active_mask to disk.
+           The global mask has been modified after the last load;
+           i.e. we update the on-disk representation.
         */
         char * filename = util_alloc_sprintf("%s_active" , config->key );
-        FILE * stream = enkf_fs_open_case_tstep_file( config->fs , filename , report_step , "w");
+        FILE * stream   = enkf_fs_open_case_tstep_file( config->fs , filename , report_step , "w");
       
         bool_vector_fwrite( config->active_mask , stream );
-        
+
         fclose( stream );
         free( filename );
+        config->mask_modified = false;
       }
     }
     config->active_report_step = report_step;
@@ -435,11 +440,13 @@ void gen_data_config_load_active( gen_data_config_type * config , int report_ste
       if (config->active_report_step != report_step) {
         char * filename = util_alloc_sprintf("%s_active" , config->key );
         FILE * stream   = enkf_fs_open_excase_tstep_file( config->fs , filename , report_step);
+
         if (stream != NULL) {
           bool_vector_fread( config->active_mask , stream );
           fclose( stream );
         } else 
           fprintf(stderr,"** Warning: could not find file:%s \n",filename);
+
         free( filename );
       }
     }

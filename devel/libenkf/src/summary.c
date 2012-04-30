@@ -19,19 +19,22 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <enkf_macros.h>
-#include <enkf_util.h>
+
 #include <util.h>
-#include <summary.h>
-#include <summary_config.h>
+#include <log.h>
+#include <double_vector.h>
+
 #include <ecl_sum.h>
 #include <ecl_smspec.h> 
 #include <ecl_file.h>
+
 #include <enkf_types.h>
 #include <enkf_util.h>
 #include <enkf_serialize.h>
-#include <log.h>
-#include <double_vector.h>
+#include <enkf_macros.h>
+#include <enkf_util.h>
+#include <summary.h>
+#include <summary_config.h>
 
 /*****************************************************************/
 
@@ -234,7 +237,7 @@ void summary_user_get_vector(const summary_type * summary , const char * index_k
    which has not yet opened.
 */
 
-bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step) {
+bool summary_forward_load(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step) {
   bool loadOK = false;
   double load_value;
   if (ecl_sum != NULL) {
@@ -288,7 +291,7 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
 
 
 
-bool summary_ecl_load_vector(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step1, int report_step2) {
+bool summary_forward_load_vector(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step1, int report_step2) {
   bool loadOK = true;
 
   if (summary->vector_storage) {
@@ -391,8 +394,8 @@ UTIL_SAFE_CAST_FUNCTION_CONST(summary , SUMMARY)
 VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_COPY     (summary)
-VOID_ECL_LOAD(summary)
-VOID_ECL_LOAD_VECTOR(summary)
+VOID_FORWARD_LOAD(summary)
+VOID_FORWARD_LOAD_VECTOR(summary)
 VOID_USER_GET(summary)
 VOID_USER_GET_VECTOR(summary)
 VOID_WRITE_TO_BUFFER(summary)

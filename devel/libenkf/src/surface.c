@@ -19,16 +19,21 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+
+#include <util.h>
+#include <log.h>
+
+#include <geo_surface.h>
+
 #include <enkf_macros.h>
 #include <enkf_util.h>
-#include <util.h>
-#include <geo_surface.h>
+
 #include <surface.h>
 #include <surface_config.h>
 #include <enkf_types.h>
 #include <enkf_util.h>
 #include <enkf_serialize.h>
-#include <log.h>
+
 
 /*****************************************************************/
 

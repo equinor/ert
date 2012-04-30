@@ -137,23 +137,23 @@ void prefix ## _ecl_write__(const void * void_arg , const char * path , const ch
 
 /*****************************************************************/
 
-#define VOID_ECL_LOAD(prefix) \
-bool prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step) { \
+#define VOID_FORWARD_LOAD(prefix) \
+bool prefix ## _forward_load__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step) { \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg );                         \
-   return prefix ## _ecl_load(arg , ecl_file , ecl_sum , restart_file , report_step);      \
+   return prefix ## _forward_load(arg , ecl_file , ecl_sum , restart_file , report_step);      \
 }
 
-#define VOID_ECL_LOAD_HEADER(prefix) bool prefix ## _ecl_load__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int);
+#define VOID_FORWARD_LOAD_HEADER(prefix) bool prefix ## _forward_load__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int);
 
   /*****************************************************************/
 
-#define VOID_ECL_LOAD_VECTOR(prefix) \
-  bool prefix ## _ecl_load_vector__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step1 , int report_step2) { \
+#define VOID_FORWARD_LOAD_VECTOR(prefix) \
+  bool prefix ## _forward_load_vector__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step1 , int report_step2) { \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg );                         \
-   return prefix ## _ecl_load_vector(arg , ecl_file , ecl_sum , restart_file , report_step1 , report_step2); \
+   return prefix ## _forward_load_vector(arg , ecl_file , ecl_sum , restart_file , report_step1 , report_step2); \
 }
 
-#define VOID_ECL_LOAD_VECTOR_HEADER(prefix) bool prefix ## _ecl_load_vector__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int , int);
+#define VOID_FORWARD_LOAD_VECTOR_HEADER(prefix) bool prefix ## _forward_load_vector__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int , int);
 
 
 /*****************************************************************/

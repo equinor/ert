@@ -21,14 +21,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <util.h>
+
 #include <fortio.h>
 #include <ecl_kw.h>
+
 #include <enkf_macros.h>
 #include <enkf_util.h>
 #include <field_config.h>
 #include <enkf_serialize.h>
 #include <field_common.h>
-#include <util.h>
 
 /* Typedef field_type moved to field_config.h */
 
@@ -77,7 +79,7 @@ VOID_FREE_HEADER(field);
 VOID_COPY_HEADER      (field);
 VOID_INITIALIZE_HEADER(field);
 VOID_ECL_WRITE_HEADER (field);
-VOID_ECL_LOAD_HEADER(field);
+VOID_FORWARD_LOAD_HEADER(field);
 VOID_USER_GET_HEADER(field);
 VOID_READ_FROM_BUFFER_HEADER(field);
 VOID_WRITE_TO_BUFFER_HEADER(field);

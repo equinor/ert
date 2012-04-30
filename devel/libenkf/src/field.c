@@ -19,24 +19,26 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <field.h>
+
 #include <util.h>
-#include <string.h>
+#include <buffer.h>
+#include <rng.h>
+
 #include <fortio.h>
 #include <ecl_kw.h>
 #include <ecl_file.h>
 #include <ecl_util.h>
-#include <field_config.h>
+#include <ecl_endian_flip.h>
+
 #include <rms_file.h>
 #include <rms_tagkey.h>
-#include <ecl_util.h>
 #include <rms_type.h>
 #include <rms_util.h>
-#include <fortio.h>
+
+#include <field.h>
+#include <field_config.h>
 #include <enkf_serialize.h>
-#include <buffer.h>
-#include <ecl_endian_flip.h>
-#include <rng.h>
+
 
 GET_DATA_SIZE_HEADER(field);
 
@@ -1161,12 +1163,12 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
    handle that, but in principle other possibilities should be
    possible.
    
-   Observe that ecl_load loads from a (already loaded) restart_block,
+   Observe that forward_load loads from a (already loaded) restart_block,
    and not from a file.
 */
 
 
-bool field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
+bool field_forward_load(field_type * field , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
   bool loadOK                          = true;
   field_file_format_type import_format = field_config_get_import_format(field->config);
     
@@ -1447,7 +1449,7 @@ UTIL_SAFE_CAST_FUNCTION_CONST(field , FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_ECL_WRITE (field)
-VOID_ECL_LOAD(field)
+VOID_FORWARD_LOAD(field)
 VOID_COPY     (field)
 VOID_INITIALIZE(field);
 VOID_USER_GET(field)

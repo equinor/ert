@@ -25,47 +25,53 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <pthread.h>
+
+#include <path_fmt.h>
+#include <thread_pool.h>
 #include <hash.h>
-#include <fortio.h>
 #include <util.h>
+#include <arg_pack.h>
+#include <stringlist.h>
+#include <node_ctype.h>
+#include <subst_list.h>
+#include <log.h>
+#include <timer.h>
+#include <time_t_vector.h>
+#include <rng.h>
+
+#include <fortio.h>
 #include <ecl_kw.h>
 #include <ecl_io_config.h>
 #include <ecl_file.h>
+#include <ecl_util.h>
+#include <ecl_sum.h>
+#include <ecl_endian_flip.h>
+
+#include <sched_file.h>
+
+#include <forward_model.h>
+#include <job_queue.h>
+#include <queue_driver.h>
+#include <ext_joblist.h>
+
 #include <enkf_node.h>
 #include <enkf_state.h>
 #include <enkf_types.h>
 #include <ecl_static_kw.h>
 #include <field.h>
 #include <field_config.h>
-#include <ecl_util.h>
-#include <thread_pool.h>
-#include <path_fmt.h>
 #include <gen_kw.h>
-#include <ecl_sum.h>
 #include <summary.h>
-#include <arg_pack.h>
 #include <enkf_fs.h>
-#include <node_ctype.h>
-#include <job_queue.h>
-#include <sched_file.h>
-#include <queue_driver.h>
-#include <pthread.h>
-#include <ext_joblist.h>
-#include <stringlist.h>
 #include <ensemble_config.h>
 #include <model_config.h>
 #include <site_config.h>
 #include <ecl_config.h>
-#include <subst_list.h>
-#include <forward_model.h>
-#include <log.h>
-#include <ecl_endian_flip.h>
 #include <ert_template.h>
-#include <timer.h>
-#include <time_t_vector.h>
 #include <member_config.h>
 #include <enkf_defaults.h>
-#include <rng.h>
+
 #define  ENKF_STATE_TYPE_ID 78132
 
 
@@ -634,7 +640,7 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
                 if (enkf_node_vector_storage( node )) {
                   enkf_node_try_load_vector( node , fs , iens , FORECAST );  // Ensure that what is currently on file is loaded before we update.
-                  enkf_node_ecl_load_vector( node , run_info->run_path , summary , NULL , load_start, step2 , iens);
+                  enkf_node_forward_load_vector( node , run_info->run_path , summary , NULL , load_start, step2 , iens);
                   enkf_node_store_vector( node , fs , iens , FORECAST );
                 } else {
                   for (report_step = load_start; report_step <= step2; report_step++) {
@@ -643,7 +649,7 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                     else
                       store_vectors = false;
 
-                    if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))  { /* Loading/internalizing */
+                    if (enkf_node_forward_load(node , run_info->run_path , summary , NULL , report_step , iens))  { /* Loading/internalizing */
                       node_id_type node_id = {.report_step = report_step, .iens = iens , .state = FORECAST };
                       enkf_node_store(node , fs , store_vectors , node_id);                        /* Saving to disk */
                     } else {
@@ -734,7 +740,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , 
       restart_file = ecl_file_open( file );
       free(file);
     } else 
-      restart_file = NULL;  /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
+      restart_file = NULL;  /* No restart information was found; if that is expected the program will fail hard in the enkf_node_forward_load() functions. */
   }
   
   /*****************************************************************/
@@ -851,7 +857,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , 
   
   /******************************************************************/
   /** 
-      Starting on the enkf_node_ecl_load() function calls. This is where the
+      Starting on the enkf_node_forward_load() function calls. This is where the
       actual loading (apart from static keywords) is done. Observe that this
       loading might involve other load functions than the ones used for
       loading PRESSURE++ from ECLIPSE restart files (e.g. for loading seismic
@@ -868,14 +874,17 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , 
           internalize_kw = enkf_node_internalize(enkf_node , report_step);
         
         if (internalize_kw) {
-          if (enkf_node_has_func(enkf_node , ecl_load_func)) {
-            if (enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , iens )) {
+          if (enkf_node_has_func(enkf_node , forward_load_func)) {
+            if (enkf_node_forward_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , iens )) {
               node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
               enkf_node_store( enkf_node , fs, store_vectors , node_id );
             } else {
-              *loadOK = false;
-              log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
+              if (enkf_node_get_impl_type(enkf_node) != GEN_DATA) {
+                *loadOK = false;
+                log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
+              }
             }
+            
           }
         } 
       } 

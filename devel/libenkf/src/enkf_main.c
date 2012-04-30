@@ -1464,10 +1464,20 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
             log_add_fmt_message( enkf_main->logh , 1 , stderr , "Some models failed to integrate from DATES %d -> %d:",step1 , step2);
             runOK = false;
           }
-          log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" , 
-                               job_queue_iget_run_path( job_queue , iens), 
-                               job_queue_iget_failed_job( job_queue , iens),
-                               job_queue_iget_error_reason( job_queue , iens ));
+          {
+            const char * stderr_file = job_queue_iget_stderr_file( job_queue , iens );
+            if (stderr_file == NULL) 
+              log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" , 
+                                   job_queue_iget_run_path( job_queue , iens), 
+                                   job_queue_iget_failed_job( job_queue , iens),
+                                   job_queue_iget_error_reason( job_queue , iens ));
+            else
+              log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" , 
+                                   job_queue_iget_run_path( job_queue , iens), 
+                                   job_queue_iget_failed_job( job_queue , iens),
+                                   job_queue_iget_error_reason( job_queue , iens ),
+                                   job_queue_iget_stderr_file( job_queue , iens ));
+          }
         }
       }
 
@@ -3202,9 +3212,6 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 
 enkf_plot_data_type * enkf_main_alloc_plot_data( enkf_main_type * enkf_main ) {
   enkf_plot_data_type * plot_data = enkf_plot_data_alloc( ecl_config_get_start_date( enkf_main_get_ecl_config( enkf_main )));
-
-  for (int iens = 0; iens < enkf_main_get_ensemble_size( enkf_main ); iens++)
-    enkf_plot_data_append_member( plot_data , enkf_main_iget_member_config(enkf_main , iens ));
   
   return plot_data;
 }

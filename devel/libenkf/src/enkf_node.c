@@ -20,10 +20,16 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <util.h>
+#include <buffer.h>
+#include <msg.h>
+#include <rng.h>
+
 #include <enkf_node.h>
 #include <enkf_config_node.h>
 #include <enkf_fs.h>
-#include <util.h>
+
 #include <field.h>
 #include <surface.h>
 #include <summary.h>
@@ -32,9 +38,6 @@
 #include <path_fmt.h>
 #include <gen_data.h>
 #include <enkf_serialize.h>
-#include <buffer.h>
-#include <msg.h>
-#include <rng.h>
 
 /**
    A small illustration (says more than thousand words ...) of how the
@@ -126,7 +129,7 @@
 
         enkf_node_initialize()
         enkf_node_fread()
-        enkf_node_ecl_load()  
+        enkf_node_forward_load()  
 
       These functions should all start with a call to
       enkf_node_ensure_memory(). The (re)allocation of data is done at
@@ -189,8 +192,8 @@
 struct enkf_node_struct {
   alloc_ftype                    * alloc;
   ecl_write_ftype                * ecl_write;
-  ecl_load_ftype                 * ecl_load;
-  ecl_load_vector_ftype          * ecl_load_vector;
+  forward_load_ftype             * forward_load;
+  forward_load_vector_ftype      * forward_load_vector;
   free_data_ftype                * free_data;
   user_get_ftype                 * user_get;
   user_get_vector_ftype          * user_get_vector;
@@ -377,27 +380,27 @@ void enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
    passed to the specific load function, otherwise the run_path is sent
    to the load function.
 
-   If the node does not have a ecl_load function, the function just
+   If the node does not have a forward_load function, the function just
    returns.
 */
 
 
-bool enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step, int iens ) {
+bool enkf_node_forward_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step, int iens ) {
   bool loadOK;
-  FUNC_ASSERT(enkf_node->ecl_load);
+  FUNC_ASSERT(enkf_node->forward_load);
   {
     if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
       /* Fast path for loading summary data. */
-      loadOK = enkf_node->ecl_load(enkf_node->data , NULL  , ecl_sum , restart_block , report_step);
+      loadOK = enkf_node->forward_load(enkf_node->data , NULL  , ecl_sum , restart_block , report_step);
     else {
       char * input_file = enkf_config_node_alloc_infile(enkf_node->config , report_step);
       
       if (input_file != NULL) {
         char * file = util_alloc_filename( run_path , input_file , NULL);
-        loadOK = enkf_node->ecl_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
+        loadOK = enkf_node->forward_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
         free(file);
       } else
-        loadOK = enkf_node->ecl_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
+        loadOK = enkf_node->forward_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
       
       util_safe_free( input_file );
     }
@@ -411,11 +414,11 @@ bool enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
 }
 
 
-bool enkf_node_ecl_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step1, int report_step2 , int iens ) {
+bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step1, int report_step2 , int iens ) {
   bool loadOK;
-  FUNC_ASSERT(enkf_node->ecl_load_vector);
+  FUNC_ASSERT(enkf_node->forward_load_vector);
   {
-    loadOK = enkf_node->ecl_load_vector(enkf_node->data , NULL  , ecl_sum , restart_block , report_step1 , report_step2);
+    loadOK = enkf_node->forward_load_vector(enkf_node->data , NULL  , ecl_sum , restart_block , report_step1 , report_step2);
   }
   // This is broken ....
   enkf_node->__node_id.report_step = report_step1;
@@ -911,31 +914,31 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   /*
     Start by initializing all function pointers to NULL.
   */
-  node->alloc              = NULL;
-  node->ecl_write          = NULL;
-  node->ecl_load           = NULL;
-  node->ecl_load_vector    = NULL;
-  node->copy               = NULL;
-  node->initialize         = NULL;
-  node->freef              = NULL;
-  node->free_data          = NULL;
-  node->user_get           = NULL;
-  node->user_get_vector    = NULL;
-  node->fload              = NULL; 
-  node->read_from_buffer   = NULL;
-  node->write_to_buffer    = NULL;
-  node->serialize          = NULL; 
-  node->deserialize        = NULL;
-  node->clear              = NULL;
-  node->set_inflation      = NULL;
-  node->has_data           = NULL;
+  node->alloc                = NULL;
+  node->ecl_write            = NULL;
+  node->forward_load         = NULL;
+  node->forward_load_vector  = NULL;
+  node->copy                 = NULL;
+  node->initialize           = NULL;
+  node->freef                = NULL;
+  node->free_data            = NULL;
+  node->user_get             = NULL;
+  node->user_get_vector      = NULL;
+  node->fload                = NULL; 
+  node->read_from_buffer     = NULL;
+  node->write_to_buffer      = NULL;
+  node->serialize            = NULL; 
+  node->deserialize          = NULL;
+  node->clear                = NULL;
+  node->set_inflation        = NULL;
+  node->has_data             = NULL;
 
   /* Math operations: */
-  node->iadd               = NULL;
-  node->scale              = NULL;
-  node->isqrt              = NULL;
-  node->iaddsqr            = NULL;
-  node->imul               = NULL;
+  node->iadd                 = NULL;
+  node->scale                = NULL;
+  node->isqrt                = NULL;
+  node->iaddsqr              = NULL;
+  node->imul                 = NULL;
 
   switch (impl_type) {
   case(GEN_KW):
@@ -959,19 +962,19 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->fload              = gen_kw_fload__;
     break;
   case(SUMMARY):
-    node->ecl_load           = summary_ecl_load__;
-    node->ecl_load_vector    = summary_ecl_load_vector__;
-    node->alloc              = summary_alloc__;
-    node->copy               = summary_copy__;
-    node->freef              = summary_free__;
-    node->user_get           = summary_user_get__; 
-    node->user_get_vector    = summary_user_get_vector__;
-    node->read_from_buffer   = summary_read_from_buffer__;
-    node->write_to_buffer    = summary_write_to_buffer__;
-    node->serialize          = summary_serialize__;
-    node->deserialize        = summary_deserialize__;
-    node->clear              = summary_clear__;
-    node->has_data           = summary_has_data__;
+    node->forward_load         = summary_forward_load__;
+    node->forward_load_vector  = summary_forward_load_vector__;
+    node->alloc                = summary_alloc__;
+    node->copy                 = summary_copy__;
+    node->freef                = summary_free__;
+    node->user_get             = summary_user_get__; 
+    node->user_get_vector      = summary_user_get_vector__;
+    node->read_from_buffer     = summary_read_from_buffer__;
+    node->write_to_buffer      = summary_write_to_buffer__;
+    node->serialize            = summary_serialize__;
+    node->deserialize          = summary_deserialize__;
+    node->clear                = summary_clear__;
+    node->has_data             = summary_has_data__;
     /*
       node->iadd               = summary_iadd__;
       node->scale              = summary_scale__;
@@ -1001,7 +1004,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   case(FIELD):
     node->alloc              = field_alloc__;
     node->ecl_write          = field_ecl_write__; 
-    node->ecl_load           = field_ecl_load__;  
+    node->forward_load       = field_forward_load__;  
     node->copy               = field_copy__;
     node->initialize         = field_initialize__;
     node->freef              = field_free__;
@@ -1035,7 +1038,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->copy               = gen_data_copy__;
     node->freef              = gen_data_free__;
     node->ecl_write          = gen_data_ecl_write__;
-    node->ecl_load           = gen_data_ecl_load__;
+    node->forward_load       = gen_data_forward_load__;
     node->user_get           = gen_data_user_get__;
     node->read_from_buffer   = gen_data_read_from_buffer__;
     node->write_to_buffer    = gen_data_write_to_buffer__;
@@ -1065,7 +1068,7 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
   switch (function_type) {
     CASE_SET(alloc_func                     , node->alloc);
     CASE_SET(ecl_write_func                 , node->ecl_write);
-    CASE_SET(ecl_load_func                  , node->ecl_load);
+    CASE_SET(forward_load_func              , node->forward_load);
     CASE_SET(copy_func                      , node->copy);
     CASE_SET(initialize_func                , node->initialize);
     CASE_SET(free_func                      , node->freef);

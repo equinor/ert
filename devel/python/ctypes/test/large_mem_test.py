@@ -47,7 +47,7 @@ class MemTest( unittest.TestCase ):
         self.assertEqual( self.grid1.nactive , 34770 )
 
 
-def suite():
+def slow_suite():
     suite = unittest.TestSuite()
     suite.addTest( MemTest( 'test_nactive' ))
     return suite

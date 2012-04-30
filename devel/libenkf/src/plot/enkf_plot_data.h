@@ -23,20 +23,28 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include <stdbool.h>
 #include <time.h>
-#include <member_config.h>
 
-
+#include <bool_vector.h>
   
+#include <enkf_config_node.h>
+#include <enkf_fs.h>
+#include <enkf_types.h>
+
   typedef struct enkf_plot_data_struct enkf_plot_data_type;
   
   enkf_plot_data_type * enkf_plot_data_alloc( time_t start_time);
-  void                 enkf_plot_data_free( enkf_plot_data_type * plot_data );
-  void                 enkf_plot_data_append_member( enkf_plot_data_type * plot_data , member_config_type * member_config );
-  void                 enkf_plot_data_load( enkf_plot_data_type * plot_data , enkf_config_node_type * config_node , enkf_fs_type * fs , const char * user_key , state_enum state , int step1 , int step2);
-
-
+  void                  enkf_plot_data_free( enkf_plot_data_type * plot_data );
+  void                  enkf_plot_data_load( enkf_plot_data_type * plot_data , 
+                                             enkf_config_node_type * config_node , 
+                                             enkf_fs_type * fs , 
+                                             const char * user_key , 
+                                             state_enum state , 
+                                             const bool_vector_type * active, 
+                                             bool time_mode,
+                                             int step1 , 
+                                             int step2);
 #ifdef __cplusplus
 }
 #endif

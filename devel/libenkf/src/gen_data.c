@@ -20,11 +20,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
+
 #include <util.h>
+#include <matrix.h>
+#include <log.h>
+#include <bool_vector.h>
+#include <rng.h>
+
+#include <fortio.h>
 #include <ecl_sum.h>
 #include <ecl_file.h>
-#include <fortio.h>
 #include <ecl_util.h>
+
 #include <enkf_serialize.h>
 #include <enkf_types.h>
 #include <enkf_macros.h>
@@ -33,11 +41,6 @@
 #include <gen_data.h>
 #include <gen_data_common.h>
 #include <gen_common.h>
-#include <matrix.h>
-#include <math.h>
-#include <log.h>
-#include <bool_vector.h>
-#include <rng.h>
 
 /**
    The file implements a general data type which can be used to update
@@ -46,7 +49,7 @@
    on. Similarly to the field objects, the gen_data objects can be
    treated both as parameters and as dynamic data.
 
-   Whether the ecl_load function should be called (i.e. it is dynamic
+   Whether the forward_load function should be called (i.e. it is dynamic
    data) is determined at the enkf_node level, and no busissiness of
    the gen_data implementation.
 */
@@ -204,15 +207,16 @@ void gen_data_deserialize(gen_data_type * gen_data , node_id_type node_id , cons
 
 /*
   This function sets the data field of the gen_data instance after the
-  data has been loaded from file.
+  data has been loaded from file.  
 */ 
+
 static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_step , ecl_type_enum load_type , const void * data , const bool_vector_type * active_mask) {
   gen_data_assert_size(gen_data , size, report_step);
   if (active_mask != NULL) gen_data_config_update_active( gen_data->config , report_step , active_mask);
   gen_data_realloc_data(gen_data);
 
   if (size > 0) {
-    ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+    ecl_type_enum internal_type = gen_data_config_get_internal_type( gen_data->config );
     int byte_size = ecl_util_get_sizeof_ctype( internal_type ) * size ;
 
     if (load_type == internal_type)
@@ -258,7 +262,7 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
     ecl_type_enum internal_type            = gen_data_config_get_internal_type(gen_data->config);
     gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
     buffer = gen_common_fload_alloc( filename , input_format , internal_type , &load_type , &size);
-
+    
     /* 
        Look for file @filename_active - if that file is found it is
        interpreted as a an active|inactive mask created by the forward
@@ -306,24 +310,10 @@ void gen_data_fload( gen_data_type * gen_data , const char * filename) {
 }
 
 
-/**
-   The return value from the xxx_ecl_load() functions should be
-   true|false whether the load has worked out OK. The
-   summary_ecl_load() and field_ecl_load() functions should only be
-   called when we insist that there should be data waiting, and
-   consequently a false return value should be interpreted as a failure. 
-   
-   For the gen_data_ecl_load() function we do not know if we can
-   expect to find data (that should probably be internalized in the
-   config object ... ), hence the function must return true anyway, to
-   not signal false errors.
-*/
 
 
-
-bool gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
-  gen_data_fload_with_report_step( gen_data , ecl_file , report_step );
-  return true;
+bool gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
+  return gen_data_fload_with_report_step( gen_data , ecl_file , report_step );
 }
 
 
@@ -669,7 +659,7 @@ VOID_FREE(gen_data)
 VOID_COPY     (gen_data)
 VOID_INITIALIZE(gen_data)
 VOID_ECL_WRITE(gen_data)
-VOID_ECL_LOAD(gen_data)
+VOID_FORWARD_LOAD(gen_data)
 VOID_READ_FROM_BUFFER(gen_data);
 VOID_WRITE_TO_BUFFER(gen_data);
 VOID_SERIALIZE(gen_data)

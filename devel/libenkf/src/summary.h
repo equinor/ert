@@ -23,6 +23,7 @@
 
 #include <ecl_sum.h>
 #include <ecl_file.h>
+
 #include <enkf_macros.h>
 #include <enkf_util.h>
 #include <summary_config.h>
@@ -36,8 +37,8 @@ UTIL_SAFE_CAST_HEADER_CONST(summary);
 VOID_ALLOC_HEADER(summary);
 VOID_FREE_HEADER(summary);
 VOID_COPY_HEADER(summary);
-VOID_ECL_LOAD_HEADER(summary);
-VOID_ECL_LOAD_VECTOR_HEADER(summary);
+VOID_FORWARD_LOAD_HEADER(summary);
+VOID_FORWARD_LOAD_VECTOR_HEADER(summary);
 VOID_USER_GET_HEADER(summary);
 VOID_USER_GET_VECTOR_HEADER(summary);
 VOID_WRITE_TO_BUFFER_HEADER(summary);
