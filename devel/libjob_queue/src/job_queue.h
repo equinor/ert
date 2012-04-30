@@ -72,6 +72,7 @@ typedef struct job_queue_struct job_queue_type;
   const char        * job_queue_iget_failed_job( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_error_reason( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index);
+  const char        * job_queue_iget_stderr_file( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_run_path( const job_queue_type * queue , int job_index);
 
 
