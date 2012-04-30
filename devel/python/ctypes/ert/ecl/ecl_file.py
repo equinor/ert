@@ -175,9 +175,42 @@ class EclFile(CClass):
         else:
             self.c_ptr = cfunc.open_writable( filename )
         
+    def save_kw( self , kw ):
+        """
+        Will write the @kw back to file.
+
+        This function should typically be used in situations like this:
+
+          1. Create an EclFile instance around an ECLIPSE output file.
+          2. Extract a keyword of interest and modify it.
+          3. Call this method to save the modifications to disk.
+
+        There are several restrictions to the use of this function:
+        
+          1. The EclFile instance must have been created with the
+             optional read_only flag set to False.
+ 
+          2. You can only modify the content of the keyword; if you
+             try to modify the header in any way (i.e. size, datatype
+             or name) the function will fail.
+
+          3. The keyword you are trying to save must be exactly the
+             keyword you got from this EclFile instance, otherwise the
+             function will fail.
+        """
+        if cfunc.is_writable( self ):
+            cfunc.save_kw( self , kw )
+        else:
+            raise IOError("save_kw: the file:%s has been opened read only." % self.name)
+        
 
     def __len__(self):
         return self.size
+
+    
+    def close(self):
+        cfunc.close( self )
+        self.c_ptr = None
 
         
     def __del__(self):
@@ -638,8 +671,10 @@ cwrapper.registerType( "ecl_file" , EclFile )
 cfunc = CWrapperNameSpace("ecl_file")
 
 cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_open( char* )")
-cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_open_writable( char* )")
+cfunc.open_writable               = cwrapper.prototype("c_void_p    ecl_file_open_writable( char* )")
+cfunc.is_writable                 = cwrapper.prototype("bool        ecl_file_writable( ecl_file )")
 cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")
+cfunc.save_kw                     = cwrapper.prototype("void        ecl_file_save_kw( ecl_file , ecl_kw )")
 
 cfunc.select_block                = cwrapper.prototype("bool        ecl_file_select_block( ecl_file , char* , int )")
 cfunc.restart_block_time          = cwrapper.prototype("bool        ecl_file_select_rstblock_sim_time( ecl_file , time_t )")

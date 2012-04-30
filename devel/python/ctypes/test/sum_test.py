@@ -102,7 +102,7 @@ class SumTest( unittest.TestCase ):
 
 
 
-def suite():
+def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( SumTest( 'test_load' ))
     suite.addTest( SumTest( 'test_interp' ))

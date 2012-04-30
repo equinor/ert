@@ -45,7 +45,7 @@ class SchedFileTest( unittest.TestCase ):
         self.assertTrue( file_equal( "/tmp/schedule1" , "/tmp/schedule2") ) 
 
 
-def suite():
+def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( SchedFileTest( 'test_load' ))
     suite.addTest( SchedFileTest( 'test_length' ))

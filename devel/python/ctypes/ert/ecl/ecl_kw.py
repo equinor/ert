@@ -557,7 +557,7 @@ class EclKW(CClass):
                         else:
                             raise TypeError("Only muliplication with scalar supported")
 
-                        
+
     def add( self , other , mask = None , force_active = False):
         """
         See method assign() for documentation of optional arguments
@@ -638,8 +638,15 @@ class EclKW(CClass):
                     self.data_ptr[i] = func( self.data_ptr[i] )
                     
 
+    def equal(self,other):
+        """
+        Will check if the two keywords are (exactly) equal.
 
-
+        The check is based on the content of the keywords, and not
+        pointer comparison.
+        """
+        return cfunc.equal( self , other )
+    
 
     #################################################################
 
@@ -884,6 +891,7 @@ cfunc.iadd                       = cwrapper.prototype("void     ecl_kw_inplace_a
 cfunc.imul                       = cwrapper.prototype("void     ecl_kw_inplace_mul( ecl_kw , ecl_kw )")
 cfunc.idiv                       = cwrapper.prototype("void     ecl_kw_inplace_div( ecl_kw , ecl_kw )")
 cfunc.isub                       = cwrapper.prototype("void     ecl_kw_inplace_sub( ecl_kw , ecl_kw )")
+cfunc.equal                      = cwrapper.prototype("bool     ecl_kw_equal( ecl_kw , ecl_kw )")
 
 cfunc.assert_binary              = cwrapper.prototype("bool     ecl_kw_assert_binary_numeric( ecl_kw , ecl_kw )")
 cfunc.scale_int                  = cwrapper.prototype("void     ecl_kw_scale_int( ecl_kw , int )")
