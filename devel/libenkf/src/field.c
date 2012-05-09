@@ -675,7 +675,7 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
       fortio_type * fortio;
       bool fmt_file = false;                /* For formats which support both formatted and unformatted output this is hardwired to unformatted. */
       
-      fortio = fortio_open_writer(file , ECL_ENDIAN_FLIP , fmt_file);
+      fortio = fortio_open_writer(file , fmt_file , ECL_ENDIAN_FLIP);
 
       if (file_type == ECL_KW_FILE_ALL_CELLS)
         field_ecl_write3D_fortio(field , fortio);
@@ -1041,7 +1041,7 @@ void field_fload_ecl_kw(field_type * field , const char * filename ) {
   
   {
     bool fmt_file        = ecl_util_fmt_file(filename);
-    fortio_type * fortio = fortio_open_reader(filename , ECL_ENDIAN_FLIP , fmt_file);
+    fortio_type * fortio = fortio_open_reader(filename , fmt_file , ECL_ENDIAN_FLIP);
     ecl_kw_fseek_kw(key , true , true , fortio);
     ecl_kw = ecl_kw_fread_alloc( fortio );
     fortio_fclose(fortio);
