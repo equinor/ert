@@ -79,14 +79,14 @@ class FortIO(CClass):
     @classmethod
     def reader(cls , filename , fmt_file = False , endian_flip = True):
         obj = cls( )
-        obj.c_ptr = cfunc.fortio_open_reader( filename , endian_flip , fmt_file )
+        obj.c_ptr = cfunc.fortio_open_reader( filename , fmt_file , endian_flip )
         return obj
 
 
     @classmethod
     def writer(cls , filename , fmt_file = False , endian_flip = True):
         obj = cls( )
-        obj.c_ptr = cfunc.fortio_open_writer( filename , endian_flip , fmt_file )
+        obj.c_ptr = cfunc.fortio_open_writer( filename , fmt_file , endian_flip )
         return obj
     
 

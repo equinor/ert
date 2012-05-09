@@ -1,7 +1,10 @@
 cmake_minimum_required( VERSION 2.6 )
-include (CheckFunctionExists)
-project( ERT C )
-add_definitions( -g -O2 -Wall -std=gnu99 )
+include( CheckFunctionExists )
+project( ERT C CXX )
+
+set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99" )
+set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
+
 
 set( INSTALL_GROUP  ""     CACHE STRING "Group to install as - blank to install as current group")
 set( INSTALL_ROOT   "/tmp" CACHE STRING "Root path for installation")
@@ -154,7 +157,7 @@ add_dependencies( well_static     ecl_static  util_static geometry_static )
 
 
 set( BUILD_ERT OFF)
-
+set( BUILD_CXX OFF)
 #-----------------------------------------------------------------
 if (BUILD_ERT)
    set( libconfig_src_path    ${CMAKE_SOURCE_DIR}/libconfig/src )
@@ -190,6 +193,5 @@ if (BUILD_ERT)
    add_dependencies( plot_static util_static )
    add_dependencies( enkf_static plot_static ecl_static util_static config_static sched_static rms_static analysis job_queue_static )
    add_dependencies( ert enkf_static plot_static )
-
-
 endif()
+
