@@ -66,18 +66,19 @@ static sched_kw_tstep_type * sched_kw_tstep_alloc_empty(){
 
 sched_kw_tstep_type * sched_kw_tstep_alloc(const stringlist_type * tokens , int * token_index ) {
   sched_kw_tstep_type * kw = sched_kw_tstep_alloc_empty();
-  int eokw                    = false;
-  do {
-    stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , 0 , token_index );
-    if (line_tokens == NULL)
-      eokw = true;
-    else {
-      int i;
-      for (i=0; i < stringlist_get_size( line_tokens ); i++)
-        sched_kw_tstep_add_tstep_string( kw , stringlist_iget( line_tokens , i ));
-      stringlist_free( line_tokens );
-    } 
-  } while (!eokw);
+  stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , 0 , token_index );
+
+  if (line_tokens == NULL)
+    util_abort("%s: hmmmm - TSTEP keyword without and data \n",__func__);
+  else {
+    int i;
+    
+    for (i=0; i < stringlist_get_size( line_tokens ); i++)
+      sched_kw_tstep_add_tstep_string( kw , stringlist_iget( line_tokens , i ));
+    
+    stringlist_free( line_tokens );
+  } 
+  
   return kw;
 }
 

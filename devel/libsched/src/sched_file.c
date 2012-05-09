@@ -574,17 +574,23 @@ void sched_file_fprintf(const sched_file_type * sched_file, const char * file, b
 int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, time_t time)
 {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
-  for(int i=0; i<num_restart_files; i++)
-  {
+  for( int i=0; i<num_restart_files; i++ ) {
     time_t block_end_time = sched_file_iget_block_end_time(sched_file, i);
-    if(block_end_time > time)
-      util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
-    else if(block_end_time == time)
+
+    if (block_end_time > time) {
+      int mday,year,month;
+      util_set_date_values( time , &mday , &month , &year);
+      util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
+    } else if (block_end_time == time)
       return i; 
   }
   
   // If we are here, time did'nt correspond a restart file. Abort.
-  util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
+  {
+    int mday,year,month;
+    util_set_date_values( time , &mday , &month , &year);
+    util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
+  }
   return 0;
 }
 

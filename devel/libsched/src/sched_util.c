@@ -135,13 +135,13 @@ stringlist_type * sched_util_alloc_line_tokens( const stringlist_type * tokens ,
   int line_end;
   bool at_eokw = false;
   {
-    line_start       = token_index;
+    line_start = token_index;
     const char * current_token;
     {
       bool at_eol = false;
       do {
         current_token = stringlist_iget( tokens , token_index );
-        if (strcmp( current_token , "/" ) == 0)
+        if (strcmp( current_token , "/" ) == 0) 
           at_eol = true;
         
         token_index++;
