@@ -53,11 +53,16 @@
 
 
 char * enkf_tui_plot_alloc_plot_file(const plot_config_type * plot_config , const char * case_name , const char * base_name) {
+  char * base      = util_alloc_string_copy( base_name );
   char * path      = util_alloc_filename(plot_config_get_path( plot_config ) , case_name , NULL); /* It is really a path - but what the fuck. */ 
-  char * plot_file = util_alloc_filename(path , base_name , plot_config_get_image_type( plot_config ));
+  char * plot_file;
 
-  util_make_path( path );  /* Ensure that the path where the plots are stored exists. */
+  util_string_tr( base , '/' , '-');              /* Replace '/' -> '-' in the key name. */
+  plot_file = util_alloc_filename(path , base , plot_config_get_image_type( plot_config ));
+  util_make_path( path );                        /* Ensure that the path where the plots are stored exists. */
+
   free(path);
+  free(base);
   return plot_file;
 }
                                            
