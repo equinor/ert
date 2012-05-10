@@ -518,9 +518,10 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
         } else 
           fprintf(stderr,"** Warning: summary key:%s does not exist - observation key:%s not added.\n", sum_key , obs_key);
       }
-      
       stringlist_free(sum_obs_keys);
     }
+    
+
     
     
     
@@ -662,7 +663,6 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
     const char * help_item_spec_value = "The floating point number VALUE gives the observed value.";
     conf_item_spec_type * item_spec_value = conf_item_spec_alloc("VALUE", true, DT_FLOAT , help_item_spec_value);
 
-
     const char * help_item_spec_error = "The positive floating point number ERROR is the standard deviation of the observed value.";
     conf_item_spec_type * item_spec_error = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT ,help_item_spec_error );
 
@@ -677,6 +677,16 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
 
     const char * help_item_spec_sumkey = "The string SUMMARY_KEY is used to look up the simulated value in the summary file. It has the same format as the summary.x program, e.g. WOPR:P4";
     conf_item_spec_type * item_spec_sumkey = conf_item_spec_alloc("KEY", true, DT_STR , help_item_spec_sumkey);
+
+    conf_item_spec_type * item_spec_error_min = conf_item_spec_alloc("ERROR_MIN", true, DT_POSFLOAT , 
+                                                                     "The positive floating point number ERROR_MIN gives the minimum value for the standard deviation of the observation when RELMIN is used.");
+    conf_item_spec_type * item_spec_error_mode = conf_item_spec_alloc("ERROR_MODE", true, DT_STR , "The string ERROR_MODE gives the error mode for the observation.");
+    
+    conf_item_spec_add_restriction(item_spec_error_mode, "REL");
+    conf_item_spec_add_restriction(item_spec_error_mode, "ABS");
+    conf_item_spec_add_restriction(item_spec_error_mode, "RELMIN");
+    conf_item_spec_set_default_value(item_spec_error_mode, "ABS");
+    conf_item_spec_set_default_value(item_spec_error_min, "0.10");
 
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_value);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error);

@@ -356,11 +356,18 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
   {
     double       obs_value       = conf_instance_get_item_value_double(conf_instance, "VALUE" );
     double       obs_error       = conf_instance_get_item_value_double(conf_instance, "ERROR" );
+    double       min_error       = conf_instance_get_item_value_double(conf_instance, "ERROR_MIN");
+    const char * error_mode      = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
     const char * sum_key         = conf_instance_get_item_value_ref(   conf_instance, "KEY"   );
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
     int          size            = history_get_num_restarts(          history          );
     int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , sched_file , size);
-
+    
+    if (strcmp( error_mode , "REL") == 0)
+      obs_error *= obs_value;
+    else if (strcmp( error_mode , "RELMIN") == 0) 
+      obs_error  = util_double_max( min_error , obs_error * obs_value );
+    
     obs_vector_add_summary_obs( obs_vector , obs_restart_nr , sum_key , obs_key , obs_value , obs_error , NULL , 0);
   }
 }
@@ -449,8 +456,6 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
     const char * auto_corrf_name            = NULL;
     
     
-
-
     double         error      = conf_instance_get_item_value_double(conf_instance, "ERROR"     );
     double         error_min  = conf_instance_get_item_value_double(conf_instance, "ERROR_MIN" );
     const char *   error_mode = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
