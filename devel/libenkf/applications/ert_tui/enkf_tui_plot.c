@@ -41,7 +41,7 @@
 
 #include <enkf_main.h>
 #include <enkf_obs.h>
-#include <field_obs.h>
+#include <block_obs.h>
 #include <gen_obs.h>
 #include <field_config.h>
 #include <obs_vector.h>
@@ -1089,9 +1089,9 @@ void enkf_tui_plot_RFT_time(void * arg) {
     state_kw   = enkf_config_node_get_key( config_node );
     {
       int block_nr,i,j,k;
-      const field_obs_type * field_obs = obs_vector_iget_node( obs_vector , report_step );
-      for (block_nr = 0; block_nr < field_obs_get_size( field_obs ); block_nr++) {
-        field_obs_iget_ijk( field_obs , block_nr , &i , &j , &k);
+      const block_obs_type * block_obs = obs_vector_iget_node( obs_vector , report_step );
+      for (block_nr = 0; block_nr < block_obs_get_size( block_obs ); block_nr++) {
+        block_obs_iget_ijk( block_obs , block_nr , &i , &j , &k);
         index_key = util_realloc_sprintf( index_key , "%d,%d,%d"    , i+1,j+1,k+1);
         user_key  = util_realloc_sprintf( user_key  , "%s:%d,%d,%d" , state_kw , i+1,j+1,k+1);
         enkf_tui_plot_ensemble__(enkf_main , config_node , user_key , index_key , step1 , step2 , false , iens1 , iens2 , plot_state);

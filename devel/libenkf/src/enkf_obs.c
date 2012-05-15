@@ -18,18 +18,24 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
+
 #include <hash.h>
 #include <util.h>
+#include <msg.h>
+
 #include <conf.h>
+
+#include <ecl_grid.h>
+#include <ecl_sum.h>
+
 #include <summary_obs.h>
-#include <field_obs.h>
+#include <block_obs.h>
 #include <enkf_fs.h>
 #include <obs_vector.h>
-#include <msg.h>
 #include <enkf_state.h>
 #include <local_ministep.h>
 #include <local_config.h>
-#include <math.h>
 #include <meas_data.h>
 #include <enkf_obs.h>
 #include "enkf_defaults.h"
@@ -401,14 +407,10 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                             obsset , 
                                             work_value, 
                                             work_std);
-    else {
-      node_id_type node_id;
-      node_id.state = state;
 
+    else {
       for (int i=0; i < int_vector_size( step_list ); i++) {
         int report_step = int_vector_iget( step_list , i );
-        
-        node_id.report_step = report_step;
         if (obs_vector_iget_active(obs_vector , report_step)) {                             /* The observation is active for this report step.     */
           const active_list_type * active_list = local_obsset_get_obs_active_list( obsset , obs_key );
           obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list);  /* Collect the observed data in the obs_data instance. */
@@ -416,10 +418,9 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
             /* Could be multithreaded */
             int iens;
             for (iens = 0; iens < ens_size; iens++) {
-              enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
-              node_id.iens = iens;
-              enkf_node_load(enkf_node , fs , node_id);
-              obs_vector_measure(obs_vector , node_id , enkf_node , meas_data , active_list);
+
+              obs_vector_measure(obs_vector , fs , state , report_step , ensemble[iens] , meas_data , active_list);
+              
             }
           }
         } 
@@ -433,8 +434,8 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
 
 
 
-void enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_file , ensemble_config_type * ensemble_config ) {
-  enkf_obs_load( enkf_obs , enkf_obs->config_file , sched_file , ensemble_config );
+void enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_file , const ecl_grid_type * grid , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config ) {
+  enkf_obs_load( enkf_obs , enkf_obs->config_file , sched_file , grid , refcase , ensemble_config );
 }
 
 
@@ -449,7 +450,7 @@ void enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_f
 
 
 
-void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const sched_file_type * sched_file , ensemble_config_type * ensemble_config) {
+void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const sched_file_type * sched_file , const ecl_grid_type * grid , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config) {
   if (config_file == NULL)
     hash_clear( enkf_obs->obs_hash );
   else {
@@ -534,8 +535,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
         {
           const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
           const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-          
-          obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , sched_file , enkf_obs->history ,   ensemble_config , enkf_obs->obs_time);
+          obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , grid , refcase , sched_file , enkf_obs->history ,   ensemble_config , enkf_obs->obs_time);
           if (obs_vector != NULL)
             enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
         }
@@ -694,6 +694,8 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_days);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_restart);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_sumkey);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error_mode);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error_min);
 
     /** Create a mutex on DATE, DAYS and RESTART. */
     conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(summary_observation_class , true , false);
@@ -713,7 +715,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
     conf_class_type * block_observation_class = conf_class_alloc_empty("BLOCK_OBSERVATION", false , false, help_class_block_observation);
 
     const char * help_item_spec_field = "The item FIELD gives the observed field. E.g., ECLIPSE fields such as PRESSURE, SGAS or any user defined fields such as PORO or PERMX.";
-    conf_item_spec_type * item_spec_field = conf_item_spec_alloc("FIELD", true, DT_STR , help_item_spec_field);
+    conf_item_spec_type * item_spec_field = conf_item_spec_alloc("FIELD", false , DT_STR , help_item_spec_field);
 
     const char * help_item_spec_date = "The DATE item gives the observation time as the date date it occured. Format is dd/mm/yyyy.";
     conf_item_spec_type * item_spec_date = conf_item_spec_alloc("DATE", false, DT_DATE , help_item_spec_date);
@@ -723,18 +725,27 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
 
     const char * help_item_spec_restart = "The RESTART item gives the observation time as the ECLIPSE restart nr.";
     conf_item_spec_type * item_spec_restart = conf_item_spec_alloc("RESTART", false, DT_POSINT , help_item_spec_restart);
+
+    conf_item_spec_type * item_spec_source = conf_item_spec_alloc("SOURCE", false, DT_STR , "The simulated data can be taken from the field or summary keys.");
     
     
+    conf_item_spec_add_restriction(item_spec_source, "FIELD");
+    conf_item_spec_add_restriction(item_spec_source, "SUMMARY");
+    conf_item_spec_set_default_value(item_spec_source, "FIELD");
+
+    conf_class_insert_owned_item_spec(block_observation_class, item_spec_source);
     conf_class_insert_owned_item_spec(block_observation_class, item_spec_field);
     conf_class_insert_owned_item_spec(block_observation_class, item_spec_date);
     conf_class_insert_owned_item_spec(block_observation_class, item_spec_days);
     conf_class_insert_owned_item_spec(block_observation_class, item_spec_restart);
 
     /** Create a mutex on DATE, DAYS and RESTART. */
-    conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(block_observation_class , true , false);
-    conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
-    conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
-    conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
+    {
+      conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(block_observation_class , true , false);
+      conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
+      conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
+      conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
+    }
 
     /** Create and insert the sub class OBS. */
     {
@@ -756,12 +767,25 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
       const char * help_item_spec_error = "The positive floating point number ERROR is the standard deviation of the observed value.";
       conf_item_spec_type * item_spec_error = conf_item_spec_alloc("ERROR",  true, DT_POSFLOAT , help_item_spec_error);
 
+      conf_item_spec_type * item_spec_error_mode = conf_item_spec_alloc("ERROR_MODE", true, DT_STR , "The string ERROR_MODE gives the error mode for the observation.");
+
+      conf_item_spec_type * item_spec_error_min = conf_item_spec_alloc("ERROR_MIN", true, DT_POSFLOAT , 
+                                                                       "The positive floating point number ERROR_MIN gives the minimum value for the standard deviation of the observation when RELMIN is used.");
+      
+      conf_item_spec_add_restriction(item_spec_error_mode, "REL");
+      conf_item_spec_add_restriction(item_spec_error_mode, "ABS");
+      conf_item_spec_add_restriction(item_spec_error_mode, "RELMIN");
+      conf_item_spec_set_default_value(item_spec_error_mode, "ABS");
+      conf_item_spec_set_default_value(item_spec_error_min, "0.10" );
+
       conf_class_insert_owned_item_spec(obs_class, item_spec_i);
       conf_class_insert_owned_item_spec(obs_class, item_spec_j);
       conf_class_insert_owned_item_spec(obs_class, item_spec_k);
       conf_class_insert_owned_item_spec(obs_class, item_spec_value);
       conf_class_insert_owned_item_spec(obs_class, item_spec_error);
-
+      conf_class_insert_owned_item_spec(obs_class, item_spec_error_mode);
+      conf_class_insert_owned_item_spec(obs_class, item_spec_error_min);
+      
       conf_class_insert_owned_sub_class(block_observation_class, obs_class);
     }
 

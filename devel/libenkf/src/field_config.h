@@ -23,18 +23,22 @@ extern "C" {
 #endif
 #include <stdio.h>
 #include <stdbool.h>
+
+#include <path_fmt.h>
+#include <stringlist.h>
+#include <util.h>
+
+#include <ecl_kw.h>
+#include <ecl_grid.h>
+
+#include <rms_file.h>
+
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <enkf_types.h>
-#include <ecl_kw.h>
-#include <path_fmt.h>
-#include <rms_file.h>
-#include <ecl_grid.h>
 #include <active_list.h>
 #include <field_trans.h>
-#include <stringlist.h>
 #include <field_common.h>
-#include <util.h>
 
 
 /**
@@ -169,7 +173,8 @@ double                  field_config_get_truncation_max( const field_config_type
 const ecl_grid_type   * field_config_get_grid(const field_config_type * );
 const char            * field_config_get_grid_name( const field_config_type * );
 
-int                     field_config_parse_user_key(const field_config_type * config, const char * index_key , int *_i , int *_j , int *_k);
+  int                     field_config_parse_user_key(const field_config_type * config, const char * index_key , int *i , int *j , int *k);
+  bool                    field_config_parse_user_key__( const char * index_key , int *i , int *j , int *k);
 
 field_file_format_type    field_config_default_export_format(const char * filename);
 const char              * field_config_get_input_transform_name( const field_config_type * field_config ) ;

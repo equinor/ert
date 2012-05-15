@@ -1446,6 +1446,7 @@ void field_set_inflation(field_type * inflation , const field_type * std , const
 */
 UTIL_SAFE_CAST_FUNCTION(field , FIELD)
 UTIL_SAFE_CAST_FUNCTION_CONST(field , FIELD)
+UTIL_IS_INSTANCE_FUNCTION(field , FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_ECL_WRITE (field)

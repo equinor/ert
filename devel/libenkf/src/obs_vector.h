@@ -23,20 +23,27 @@
 extern "C" {
 #endif
 
+#include <time.h>
+
+#include <util.h>
+#include <bool_vector.h>
+
+#include <sched_file.h>
+#include <history.h>
+
+#include <conf.h>
+
+#include <ecl_sum.h>
+
 #include <enkf_fs.h>
 #include <enkf_types.h>
 #include <enkf_node.h>
-#include <sched_file.h>
+#include <enkf_state.h>
 #include <ensemble_config.h>
-#include <history.h>
-#include <time.h>
 #include <obs_data.h>
 #include <enkf_macros.h>
-#include <conf.h>
 #include <active_list.h>
-#include <ecl_sum.h>
-#include <util.h>
-#include <bool_vector.h>
+
 
   typedef void   (obs_free_ftype)                (void *);
   typedef void   (obs_get_ftype)                 (const void * , obs_data_type * , int , const active_list_type * );
@@ -46,8 +53,7 @@ extern "C" {
 
   typedef enum { GEN_OBS     = 1,
                  SUMMARY_OBS = 2,
-                 FIELD_OBS   = 3} obs_impl_type;
-  
+                 BLOCK_OBS   = 3} obs_impl_type;
   
   typedef struct obs_vector_struct obs_vector_type;
   
@@ -59,7 +65,7 @@ extern "C" {
   time_t               obs_vector_iget_obs_time( const obs_vector_type * vector , int index);
   bool                 obs_vector_iget_active(const obs_vector_type * , int );
   void                 obs_vector_iget_observations(const obs_vector_type *  , int  , obs_data_type * , const active_list_type * active_list);
-  void                 obs_vector_measure(const obs_vector_type *  , node_id_type node_id , const enkf_node_type *  ,  meas_data_type * , const active_list_type * active_list);
+  void                 obs_vector_measure(const obs_vector_type *  , enkf_fs_type * fs, state_enum state , int report_step , const enkf_state_type *  ,  meas_data_type * , const active_list_type * active_list);
   const char         * obs_vector_get_state_kw(const obs_vector_type * );
   obs_impl_type        obs_vector_get_impl_type(const obs_vector_type * );
   int                  obs_vector_get_active_report_step(const obs_vector_type * );
@@ -69,7 +75,7 @@ extern "C" {
   obs_vector_type    * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type *  , const sched_file_type * , const history_type * , const ensemble_config_type * , const time_t_vector_type * obs_time);
   void                 obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type *  , const sched_file_type * , const history_type * , ensemble_config_type * );
   bool                 obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector , const conf_instance_type *  , const sched_file_type * , const history_type * , ensemble_config_type * , double std_cutoff );
-  obs_vector_type    * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *    , const sched_file_type * , const history_type *   , const ensemble_config_type * , const time_t_vector_type * obs_time);
+  obs_vector_type    * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *    , const ecl_grid_type * grid , const ecl_sum_type * refcase , const sched_file_type * , const history_type *   , const ensemble_config_type * , const time_t_vector_type * obs_time);
   void                 obs_vector_set_config_node(obs_vector_type *  , const enkf_config_node_type * );
   obs_vector_type    * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node , const time_t_vector_type * obs_time , int num_reports);
   

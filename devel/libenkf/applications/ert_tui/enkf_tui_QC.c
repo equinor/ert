@@ -28,7 +28,7 @@
 #include <enkf_tui_plot.h>
 #include <enkf_tui_fs.h>
 #include <enkf_obs.h>
-#include <field_obs.h>
+#include <block_obs.h>
 #include <gen_obs.h>
 #include <field_config.h>
 #include <obs_vector.h>

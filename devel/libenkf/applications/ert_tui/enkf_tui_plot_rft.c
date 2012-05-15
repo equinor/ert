@@ -28,7 +28,7 @@
 #include <enkf_tui_plot.h>
 #include <enkf_tui_fs.h>
 #include <enkf_obs.h>
-#include <field_obs.h>
+#include <block_obs.h>
 #include <gen_obs.h>
 #include <field_config.h>
 #include <path_fmt.h>
@@ -471,17 +471,15 @@ void enkf_tui_plot_RFT__(enkf_main_type * enkf_main,
   const int ens_size                  = enkf_main_get_ensemble_size( enkf_main );
   enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
   field_config_type * field_config    = enkf_config_node_get_ref( config_node );
-  field_obs_type    * field_obs       = obs_vector_iget_node( obs_vector , report_step );
+  block_obs_type    * block_obs       = obs_vector_iget_node( obs_vector , report_step );
   char * plot_file;
   
   plot_file = enkf_tui_plot_alloc_plot_file(plot_config , enkf_main_get_current_fs(enkf_main), obs_key );
   plot = enkf_tui_plot_alloc(plot_config , state_kw , "Depth" , obs_key , plot_file);
   {
     msg_type * msg             = msg_alloc("Loading realization: ",false);
-    const int * i              = field_obs_get_i(field_obs);
-    const int * j              = field_obs_get_j(field_obs);
-    const int * k              = field_obs_get_k(field_obs);
-    const int   obs_size       = field_obs_get_size(field_obs);
+
+    const int   obs_size       = block_obs_get_size(block_obs);
     const ecl_grid_type * grid = field_config_get_grid( field_config );
     double * depth             = util_malloc( obs_size * sizeof * depth , __func__);
     double min_depth , max_depth;
@@ -496,7 +494,9 @@ void enkf_tui_plot_RFT__(enkf_main_type * enkf_main,
     
     for (l = 0; l < obs_size; l++) {
       double xpos, ypos,zpos;
-      ecl_grid_get_xyz3(grid , i[l] , j[l] , k[l] , &xpos , &ypos , &zpos);
+      ecl_grid_get_xyz3(grid , 
+                        block_obs_iget_i( block_obs ,l ), block_obs_iget_j( block_obs ,l ), block_obs_iget_k( block_obs , l ), 
+                        &xpos , &ypos , &zpos);
       depth[l] = zpos;
     }
     
@@ -522,7 +522,7 @@ void enkf_tui_plot_RFT__(enkf_main_type * enkf_main,
         plot_dataset_set_style( data , POINTS );
         plot_dataset_set_symbol_size( data , 1.00 );
         for (l = 0; l < obs_size; l++)  /* l : kind of ran out of indices ... */
-          plot_dataset_append_point_xy(data , field_ijk_get_double( field , i[l] , j[l] , k[l]) , depth[l]);
+          plot_dataset_append_point_xy(data , field_ijk_get_double( field , block_obs_iget_i( block_obs ,l ), block_obs_iget_j( block_obs ,l ), block_obs_iget_k( block_obs , l )) , depth[l]);
       } else 
         printf("No data found for :%d/%d \n",iens, report_step);
     }
@@ -532,7 +532,7 @@ void enkf_tui_plot_RFT__(enkf_main_type * enkf_main,
     for (l = 0; l < obs_size; l++) {
       double value , std;
       
-      field_obs_iget(field_obs , l , &value , &std);
+      block_obs_iget(block_obs , l , &value , &std);
       plot_dataset_append_point_x1x2y( obs , value - std , value + std , depth[l]);
     }
     
@@ -566,7 +566,7 @@ void enkf_tui_plot_select_RFT(const enkf_main_type * enkf_main , char ** _obs_ke
       if (obs_key != NULL) {
         if (enkf_obs_has_key(enkf_obs , obs_key)) {
           obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-          if (obs_vector_get_impl_type( obs_vector ) == FIELD_OBS)
+          if (obs_vector_get_impl_type( obs_vector ) == BLOCK_OBS)
             break; /* Jumping out with a valid obs_vector pointer. */
           else {
             fprintf(stderr,"Observation key:%s does not correspond to a field observation.\n",obs_key);
@@ -628,7 +628,7 @@ void enkf_tui_plot_all_RFT( void * arg) {
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   {
     int iobs , report_step;
-    stringlist_type * RFT_keys = enkf_obs_alloc_typed_keylist(enkf_obs , FIELD_OBS);
+    stringlist_type * RFT_keys = enkf_obs_alloc_typed_keylist(enkf_obs , BLOCK_OBS);
     
     for (iobs = 0; iobs < stringlist_get_size( RFT_keys ); iobs++) {
       const char * obs_key = stringlist_iget( RFT_keys , iobs);

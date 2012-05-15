@@ -19,15 +19,18 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+
+#include <util.h>
+#include <set.h>
+
+#include <ecl_sum.h>
+#include <ecl_smspec.h>
+
 #include <enkf_types.h>
 #include <enkf_util.h>
 #include <summary_config.h>
 #include <enkf_macros.h>
-#include <util.h>
-#include <ecl_sum.h>
-#include <ecl_smspec.h>
-#include <set.h>
-#include <summary_config.h>
+
 
 #define SUMMARY_CONFIG_TYPE_ID 63106
 

@@ -14,8 +14,8 @@ add_library( well_shared  SHARED ${source_files} )
 set_target_properties( well_static PROPERTIES OUTPUT_NAME well )
 set_target_properties( well_shared PROPERTIES OUTPUT_NAME well )
 
-target_link_libraries( well_static )
-target_link_libraries( well_shared )
+target_link_libraries( well_static ecl_static )
+target_link_libraries( well_shared ecl_shared )
 
 
 #-----------------------------------------------------------------

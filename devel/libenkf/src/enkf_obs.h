@@ -21,19 +21,22 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <time.h>
+
+#include <hash.h>
+
 #include <history.h>
+#include <sched_file.h>
+
+#include <ecl_sum.h>
+
 #include <enkf_fs.h>
 #include <enkf_state.h>
 #include <meas_data.h>
-#include <ecl_sum.h>
 #include <obs_data.h>
 #include <obs_vector.h>
-#include <hash.h>
 #include <local_obsset.h>
 #include <enkf_types.h>
-#include <time.h>
-#include <sched_file.h>
-
 
 
 const char    * enkf_obs_get_config_file( const enkf_obs_type * enkf_obs);
@@ -46,9 +49,11 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
 void              enkf_obs_load(enkf_obs_type * enkf_obs,
                                 const char         * config_file,
                                 const sched_file_type * sched_file, 
+                                const ecl_grid_type * grid , 
+                                const ecl_sum_type * refcase , 
                                 ensemble_config_type * ensemble_config);
 
-void              enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_file , ensemble_config_type * ensemble_config );                                
+  void            enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_file , const ecl_grid_type * grid , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config );                                
 
 void enkf_obs_get_obs_and_measure(
         const enkf_obs_type    * enkf_obs,

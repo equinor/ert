@@ -294,7 +294,11 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
 */
 
 void enkf_main_reload_obs( enkf_main_type * enkf_main) {
-  enkf_obs_reload(enkf_main->obs , ecl_config_get_sched_file( enkf_main->ecl_config ) , enkf_main->ensemble_config );
+  enkf_obs_reload(enkf_main->obs , 
+                  ecl_config_get_sched_file( enkf_main->ecl_config ) , 
+                  ecl_config_get_grid( enkf_main->ecl_config ),
+                  ecl_config_get_refcase( enkf_main->ecl_config ) , 
+                  enkf_main->ensemble_config );
 }
 
 
@@ -307,7 +311,13 @@ void enkf_main_reload_obs( enkf_main_type * enkf_main) {
 
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
   if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs ))) {
-    enkf_obs_load(enkf_main->obs , obs_config_file , ecl_config_get_sched_file( enkf_main->ecl_config ), enkf_main->ensemble_config );
+    enkf_obs_load(enkf_main->obs , 
+                  obs_config_file , 
+                  ecl_config_get_sched_file( enkf_main->ecl_config ) , 
+                  ecl_config_get_grid( enkf_main->ecl_config ),
+                  ecl_config_get_refcase( enkf_main->ecl_config ) , 
+                  enkf_main->ensemble_config );
+
     if (enkf_main->verbose && obs_config_file != NULL)
       printf("Have loaded observations from: %s \n",obs_config_file );
   }

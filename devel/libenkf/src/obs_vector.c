@@ -19,27 +19,34 @@
 /**
    See the overview documentation of the observation system in enkf_obs.c
 */
-#include <obs_vector.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <history.h>
-#include <conf.h>
-#include <enkf_fs.h>
-#include <sched_file.h>
-#include <util.h>
 #include <time.h>
-#include <summary_obs.h>
-#include <field_obs.h>
-#include <gen_obs.h>
-#include <ensemble_config.h>
-#include <msg.h>
-#include <active_list.h>
-#include <ecl_sum.h>
+
+#include <util.h>
 #include <vector.h>
 #include <double_vector.h>
 #include <bool_vector.h>
+#include <msg.h>
+
+#include <history.h>
 #include <sched_file.h>
+
+#include <conf.h>
+
+#include <ecl_sum.h>
+#include <ecl_grid.h>
+
+#include <obs_vector.h>
+#include <enkf_fs.h>
+#include <summary_obs.h>
+#include <block_obs.h>
+#include <gen_obs.h>
+#include <ensemble_config.h>
+#include <active_list.h>
+#include <enkf_state.h>
 
 #define OBS_VECTOR_TYPE_ID 120086
 
@@ -118,12 +125,12 @@ obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key
     vector->user_get   = summary_obs_user_get__;
     vector->chi2       = summary_obs_chi2__;
     break;
-  case(FIELD_OBS):
-    vector->freef      = field_obs_free__;
-    vector->measure    = field_obs_measure__;
-    vector->get_obs    = field_obs_get_observations__;
-    vector->user_get   = field_obs_user_get__;
-    vector->chi2       = field_obs_chi2__;
+  case(BLOCK_OBS):
+    vector->freef      = block_obs_free__;
+    vector->measure    = block_obs_measure__;
+    vector->get_obs    = block_obs_get_observations__;
+    vector->user_get   = block_obs_user_get__;
+    vector->chi2       = block_obs_chi2__;
     break;
   case(GEN_OBS):
     vector->freef      = gen_obs_free__;
@@ -182,8 +189,8 @@ static void obs_vector_assert_node_type( const obs_vector_type * obs_vector , co
   case(SUMMARY_OBS):
     type_OK = summary_obs_is_instance( node );
     break;
-  case(FIELD_OBS):
-    type_OK = field_obs_is_instance( node );
+  case(BLOCK_OBS):
+    type_OK = block_obs_is_instance( node );
     break;
   case(GEN_OBS):
     type_OK = gen_obs_is_instance( node );
@@ -573,16 +580,43 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
 
 
 
-obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance , const sched_file_type * sched_file , const history_type * history, const ensemble_config_type * ensemble_config, const time_t_vector_type * obs_time) {
+obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance , 
+                                                          const ecl_grid_type * grid , 
+                                                          const ecl_sum_type * refcase , 
+                                                          const sched_file_type * sched_file , 
+                                                          const history_type * history, 
+                                                          const ensemble_config_type * ensemble_config, 
+                                                          const time_t_vector_type * obs_time) {
+
   if(!conf_instance_is_of_class(conf_instance, "BLOCK_OBSERVATION"))
     util_abort("%s: internal error. expected \"BLOCK_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
+
+  block_obs_source_type source_type;
   const char * obs_label      = conf_instance_get_name_ref(conf_instance);
+  const char * source_string  = conf_instance_get_item_value_ref(conf_instance , "SOURCE");
   const char * field_name     = conf_instance_get_item_value_ref(conf_instance, "FIELD");
-  if (ensemble_config_has_key( ensemble_config , field_name )) {
-    obs_vector_type * obs_vector;
-    
-    int          size            = history_get_num_restarts( history );
+  bool  OK = true;
+  
+  if (strcmp(source_string , "FIELD") == 0) {
+    source_type = SOURCE_FIELD;
+    if (field_name == NULL) {
+      OK = false;
+      fprintf(stderr,"** When using SOURCE=FIELD you must specifiy a field as source. Observation:%s not added \n", obs_label);
+    } else {
+      if (!ensemble_config_has_key( ensemble_config , field_name)) {
+        OK = false;
+        fprintf(stderr,"** Warning the ensemble key:%s does not exist - observation:%s not added \n", field_name , obs_label);
+      }
+    }
+  } else if (strcmp( source_string , "SUMMARY") == 0) 
+    source_type = SOURCE_SUMMARY;
+  else 
+    util_abort("%s: internal error \n",__func__);
+  
+  if (OK) {
+    obs_vector_type * obs_vector = NULL;
+    int          size = history_get_num_restarts( history );
     int          obs_restart_nr ;
     
     stringlist_type * obs_pt_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "OBS");
@@ -598,28 +632,39 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     
     /** Build the observation. */
     for(int obs_pt_nr = 0; obs_pt_nr < num_obs_pts; obs_pt_nr++) {
-      const char * obs_key = stringlist_iget(obs_pt_keys, obs_pt_nr);
+      const char * obs_key    = stringlist_iget(obs_pt_keys, obs_pt_nr);
       const conf_instance_type * obs_instance = conf_instance_get_sub_instance_ref(conf_instance, obs_key);
+      const char * error_mode = conf_instance_get_item_value_ref(obs_instance, "ERROR_MODE");
+      double error     = conf_instance_get_item_value_double(obs_instance, "ERROR");
+      double value     = conf_instance_get_item_value_double(obs_instance, "VALUE");
+      double min_error = conf_instance_get_item_value_double(obs_instance, "ERROR_MIN");
       
-      obs_value[obs_pt_nr] = conf_instance_get_item_value_double(obs_instance, "VALUE");
-      obs_std  [obs_pt_nr] = conf_instance_get_item_value_double(obs_instance, "ERROR");
+      if (strcmp( error_mode , "REL"))
+        error *= value;
+      else
+        error = util_double_max( error * value , min_error );
+      
+      obs_value[obs_pt_nr] = value;
+      obs_std  [obs_pt_nr] = error;
       
       /**
          The input values i,j,k come from the user, and are offset 1. They
          are immediately shifted with -1 to become C-based offset zero.
       */
-      obs_i    [obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "I") - 1;
-      obs_j    [obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "J") - 1;
-      obs_k    [obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "K") - 1;
+      obs_i[obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "I") - 1;
+      obs_j[obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "J") - 1;
+      obs_k[obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "K") - 1;
     }
     
     {
       const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , field_name);
       const field_config_type     * field_config = enkf_config_node_get_ref( config_node ); 
-      field_obs_type * block_obs  = field_obs_alloc(obs_label, field_config , field_name, num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
-      obs_vector = obs_vector_alloc( FIELD_OBS , obs_label , ensemble_config_get_node(ensemble_config , field_name) , obs_time , size );
+      block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , grid , refcase , field_config , field_name, num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
       
-      obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
+      if (block_obs != NULL) {
+        obs_vector = obs_vector_alloc( BLOCK_OBS , obs_label , ensemble_config_get_node(ensemble_config , field_name) , obs_time , size );
+        obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
+      }
     }
     
     free(obs_value);
@@ -629,9 +674,9 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     free(obs_k);
     
     stringlist_free(obs_pt_keys);
-  
+    
     return obs_vector;
-  }  else {
+  } else {
     fprintf(stderr,"** Warning the ensemble key:%s does not exist - observation:%s not added \n", field_name , obs_label);
     return NULL;
   }
@@ -645,10 +690,19 @@ void obs_vector_iget_observations(const obs_vector_type * obs_vector , int repor
 }
 
 
-void obs_vector_measure(const obs_vector_type * obs_vector , node_id_type node_id , const enkf_node_type * enkf_node ,  meas_data_type * meas_data , const active_list_type * active_list) {
-  void * obs_node = vector_iget( obs_vector->nodes , node_id.report_step );
-  if ( obs_node != NULL) 
+void obs_vector_measure(const obs_vector_type * obs_vector , enkf_fs_type * fs , state_enum state , int report_step , const enkf_state_type * enkf_state ,  meas_data_type * meas_data , const active_list_type * active_list) {
+  
+  void * obs_node = vector_iget( obs_vector->nodes , report_step );
+  if ( obs_node != NULL) {
+    enkf_node_type * enkf_node = enkf_state_get_node( enkf_state , obs_vector_get_state_kw( obs_vector ));
+    node_id_type node_id = { .report_step = report_step , 
+                             .state       = state , 
+                             .iens        = enkf_state_get_iens( enkf_state ) };
+
+    enkf_node_load(enkf_node , fs , node_id);
     obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , node_id , meas_data , active_list);
+    
+  }
 }
 
 

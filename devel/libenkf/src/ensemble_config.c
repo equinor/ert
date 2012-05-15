@@ -817,12 +817,12 @@ enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * con
 
 enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key) {
   enkf_config_node_type * config_node = NULL;
+
   if (hash_has_key(ensemble_config->config_nodes, key)) {
     config_node = hash_get(ensemble_config->config_nodes, key);
     if (enkf_config_node_get_impl_type( config_node ) != SUMMARY)
       util_abort("%s: ensemble key:%s already exists - but it is not of summary type\n",__func__ , key);
   } else {
-    
     if ((ensemble_config->refcase == NULL) || (ecl_sum_has_general_var( ensemble_config->refcase , key ))) {
       config_node = enkf_config_node_alloc_summary( key );
       ensemble_config_add_node__(ensemble_config , config_node );

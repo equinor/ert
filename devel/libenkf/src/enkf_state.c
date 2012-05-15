@@ -325,7 +325,7 @@ const char * enkf_state_get_run_path(const enkf_state_type * enkf_state) {
   }
 */
 
-int  enkf_state_get_iens(const enkf_state_type * enkf_state) {
+int enkf_state_get_iens(const enkf_state_type * enkf_state) {
   return member_config_get_iens( enkf_state->my_config );
 }
 

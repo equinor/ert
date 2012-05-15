@@ -18,16 +18,20 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <enkf_types.h>
+#include <math.h>
+
 #include <util.h>
-#include <field_config.h>
-#include <enkf_macros.h>
+
 #include <ecl_grid.h>
 #include <ecl_kw.h>
 #include <ecl_util.h>
+
 #include <rms_file.h>
 #include <rms_util.h>
-#include <math.h>
+
+#include <enkf_types.h>
+#include <field_config.h>
+#include <enkf_macros.h>
 #include <field_trans.h>
 #include <field_common.h>
 #include "config_keys.h"  
@@ -937,33 +941,37 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 */
    
 
-
-int field_config_parse_user_key(const field_config_type * config, const char * index_key , int *_i , int *_j , int *_k) {
-  int      return_value = 0;
+bool field_config_parse_user_key__( const char * index_key , int *i , int *j , int *k) {
   int      length;
   int    * indices = util_sscanf_alloc_active_list(index_key, &length);
-  
-  if(length != 3)
-    return_value = 1;
+  if (length == 3) {
+    *i = indices[0] - 1;
+    *j = indices[1] - 1;
+    *k = indices[2] - 1;
+  } 
+
+  free( indices );
+  if (length == 3)
+    return true;
   else
-  {
+    return false;
+}
+
+
+int field_config_parse_user_key(const field_config_type * config, const char * index_key , int *i , int *j , int *k) {
+  int      return_value = 0;
+  
+  if (field_config_parse_user_key__( index_key , i , j , k)) {
     
-    int i = indices[0] - 1;
-    int j = indices[1] - 1;
-    int k = indices[2] - 1;
-    
-    if(field_config_ijk_valid(config, i, j, k)) {
-      int active_index = field_config_active_index(config , i,j,k);
+    if(field_config_ijk_valid(config, *i, *j, *k)) {
+      int active_index = field_config_active_index(config , *i,*j,*k);
       if (active_index < 0)
         return_value = 3;       /* ijk corresponds to an inactive cell. */
     }  else 
       return_value = 2;         /* ijk is outside the grid. */
+  } else
+    return_value = 0;
 
-    *_i = i;
-    *_j = j;
-    *_k = k;
-  }
-  free(indices);
   return return_value;
 }
 
