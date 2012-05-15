@@ -42,4 +42,7 @@ void container_config_free( container_config_type * container_config ) {
 }
 
 
+void container_config_add_node( container_config_type * container_config , const enkf_config_node_type * config_node) {
+  
+}
 
