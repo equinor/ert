@@ -158,7 +158,7 @@ add_dependencies( well_static     ecl_static  util_static geometry_static )
 
 
 set( BUILD_ERT OFF)
-set( BUILD_CXX OFF )
+set( BUILD_CXX ON )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
    set( libconfig_src_path    ${CMAKE_SOURCE_DIR}/libconfig/src )
