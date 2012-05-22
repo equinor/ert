@@ -159,8 +159,8 @@ static int well_ts_get_index__( const well_ts_type * well_ts , int report_step ,
       int lower_index  = 0;
       int upper_index  = size - 1;
       
-      const well_node_type * lower_node  = vector_iget_const( well_ts->ts , lower_index );
-      const well_node_type * upper_node  = vector_iget_const( well_ts->ts , upper_index );
+      well_node_type * lower_node  = vector_iget( well_ts->ts , lower_index );
+      well_node_type * upper_node  = vector_iget( well_ts->ts , upper_index );
       
       while (true) {
         int center_index = (lower_index + upper_index) / 2;
