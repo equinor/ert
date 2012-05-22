@@ -159,9 +159,6 @@ static int well_ts_get_index__( const well_ts_type * well_ts , int report_step ,
       int lower_index  = 0;
       int upper_index  = size - 1;
       
-      well_node_type * lower_node  = vector_iget( well_ts->ts , lower_index );
-      well_node_type * upper_node  = vector_iget( well_ts->ts , upper_index );
-      
       while (true) {
         int center_index = (lower_index + upper_index) / 2;
         const well_node_type * center_node = vector_iget_const( well_ts->ts , center_index );      
@@ -174,19 +171,15 @@ static int well_ts_get_index__( const well_ts_type * well_ts , int report_step ,
         if (cmp > 0) {
           if ((center_index - lower_index) == 1)    // We found an interval of length 1
             return lower_index;
-          else {
+          else 
             upper_index = center_index;
-            upper_node  = vector_iget_const( well_ts->ts , upper_index );
-          }
           
         } else {
           
           if ((upper_index - center_index) == 1)    // We found an interval of length 1
             return center_index;
-          else {
+          else 
             lower_index = center_index;
-            lower_node  = vector_iget_const( well_ts->ts , lower_index );
-          }
         }
       }
     }
