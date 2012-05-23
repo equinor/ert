@@ -24,12 +24,14 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <sched_macros.h>
+
+#include <type_macros.h>
 #include <hash.h>
 #include <stringlist.h>
-#include <sched_types.h>
 #include <time_t_vector.h>
-  
+
+#include <sched_types.h>
+#include <sched_macros.h> 
 typedef  struct  sched_kw_wconhist_struct sched_kw_wconhist_type;
 typedef  struct  wconhist_state_struct    wconhist_state_type;  
 

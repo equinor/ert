@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 #include <sched_types.h>
-
+#include <type_macros.h>
 
 typedef struct group_index_struct group_index_type;
 
