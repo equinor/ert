@@ -21,15 +21,21 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <queue_driver.h>
-#include <local_driver.h>
-#include <util.h>
 #include <pthread.h>
-#include <arg_pack.h>
 #include <errno.h>
 
+#include <util.h>
+#include <arg_pack.h>
+
+#include <queue_driver.h>
+#include <local_driver.h>
+
+
+
+
+
 struct local_job_struct {
-  UTIL_TYPE_ID_DECLARATION
+  UTIL_TYPE_ID_DECLARATION;
   bool            active;
   job_status_type status;
   pthread_t       run_thread;
@@ -41,7 +47,7 @@ struct local_job_struct {
 #define LOCAL_JOB_TYPE_ID    63056619
 
 struct local_driver_struct {
-  UTIL_TYPE_ID_DECLARATION
+  UTIL_TYPE_ID_DECLARATION;
   pthread_attr_t     thread_attr;
   pthread_mutex_t    submit_lock;
 };
