@@ -26,6 +26,7 @@ extern "C" {
 #endif
   
 #include <stdbool.h>
+
 #include <ecl_kw.h>
 #include <ecl_intehead.h>
 

@@ -34,6 +34,7 @@
 #include <ecl_kw.h>
 #include <ecl_kw_magic.h>
 #include <ecl_util.h>
+#include <type_macros.h>
 
 #include <well_const.h>
 #include <well_conn.h>
