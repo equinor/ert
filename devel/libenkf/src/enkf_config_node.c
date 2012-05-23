@@ -16,25 +16,30 @@
    for more details. 
 */
 
-#include <enkf_types.h>
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+
 #include <stringlist.h>
-#include <enkf_macros.h>
-#include <enkf_node.h>
 #include <util.h>
 #include <path_fmt.h>
 #include <bool_vector.h>
+#include <vector.h>
+
+#include <enkf_macros.h>
+#include <enkf_node.h>
 #include <field_config.h>
 #include <gen_data_config.h>
 #include <gen_kw_config.h>
 #include <summary_config.h>
 #include <surface_config.h>
+#include <container_config.h>
 #include <enkf_obs.h>
 #include <gen_obs.h>
 #include <enkf_config_node.h>
 #include <enkf_fs.h>
+#include <enkf_types.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -55,6 +60,8 @@ struct enkf_config_node_struct {
   void                  * data;             /* This points to the config object of the actual implementation.        */
   enkf_node_type        * min_std;
   char                  * min_std_file; 
+  
+  vector_type           * container_nodes;
   /*****************************************************************/
   /* Function pointers to methods working on the underlying config object. */
   get_data_size_ftype   * get_data_size;    /* Function pointer to ask the underlying config object of the size - i.e. number of elements. */
@@ -83,6 +90,7 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
   node->var_type        = var_type;
   node->impl_type       = impl_type;
   node->key             = util_alloc_string_copy( key );
+  node->container_nodes = vector_alloc_new();
   node->vector_storage  = false;
 
   node->init_file_fmt    = NULL; 
@@ -120,6 +128,10 @@ static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_typ
     case(SURFACE):
       node->freef             = surface_config_free__;
       node->get_data_size     = surface_config_get_data_size__;
+      break;
+    case(CONTAINER):
+      node->freef             = container_config_free__;
+      node->get_data_size     = container_config_get_data_size__;
       break;
     default:
       util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
@@ -275,7 +287,7 @@ enkf_config_node_type * enkf_config_node_new_surface( const char * key ) {
 
 void enkf_config_node_update_surface( enkf_config_node_type * config_node , const char * base_surface, const char * init_file_fmt , const char * output_file , const char * min_std_file ) {
 
-  /* 1: Update the date owned by the surface node. */
+  /* 1: Update the data owned by the surface node. */
   surface_config_set_base_surface( config_node->data , base_surface );
   
   /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
@@ -300,8 +312,17 @@ enkf_config_node_type * enkf_config_node_new_gen_data( const char * key ) {
   return config_node;
 }
 
+/*****************************************************************/
 
-                                       
+enkf_config_node_type * enkf_config_node_new_container( const char * key ) {
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( INVALID , CONTAINER , key );
+  config_node->data = container_config_alloc( key );
+  return config_node;
+}
+
+void enkf_config_node_update_container( enkf_config_node_type * config_node , const enkf_config_node_type * child_node) {
+  vector_append_ref( config_node->container_nodes , child_node );
+}                                       
                                        
 
 /*****************************************************************/
@@ -457,8 +478,15 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
   
 }
 
-                                       
+/*****************************************************************/                   
 
+const enkf_config_node_type * enkf_config_node_container_iget( const enkf_config_node_type * node , int index) {
+  return vector_iget_const( node->container_nodes , index );
+}
+
+int enkf_config_node_container_size( const enkf_config_node_type * node ) {
+  return vector_get_size( node->container_nodes );
+}
 
 
 /*****************************************************************/
@@ -494,7 +522,8 @@ void enkf_config_node_free(enkf_config_node_type * node) {
   
   if (node->min_std != NULL)
     enkf_node_free( node->min_std );
-  
+
+  vector_free( node->container_nodes );
   free(node);
 }
 

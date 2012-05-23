@@ -135,6 +135,7 @@ extern "C" {
 #define  STATIC_KW_KEY                     "ADD_STATIC_KW"
 #define  STD_CUTOFF_KEY                    "STD_CUTOFF"
 #define  SUMMARY_KEY                       "SUMMARY"  
+#define  CONTAINER_KEY                     "CONTAINER"
 #define  UMASK_KEY                         "UMASK"   
 #define  UPDATE_LOG_PATH_KEY               "UPDATE_LOG_PATH"
 #define  UPDATE_PATH_KEY                   "UPDATE_PATH"

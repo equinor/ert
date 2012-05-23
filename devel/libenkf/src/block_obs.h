@@ -48,10 +48,8 @@ typedef struct block_obs_struct block_obs_type;
 
   block_obs_type * block_obs_alloc(const char   * obs_label,
                                    block_obs_source_type source_type , 
+                                   const void * data_config , 
                                    const ecl_grid_type * grid , 
-                                   const ecl_sum_type * refcase , 
-                                   const field_config_type * field_config,
-                                   const char   * field_name,
                                    int            size,
                                    const int    * i,
                                    const int    * j,

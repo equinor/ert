@@ -109,7 +109,6 @@ extern "C" {
   bool             enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int iens , state_enum state , double_vector_type * values);
   bool             enkf_node_user_get(enkf_node_type *  , enkf_fs_type * , const char * , node_id_type , double * );
   enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);
-  enkf_node_type * enkf_node_alloc_with_data(const enkf_config_node_type * config , void * data);
   enkf_node_type * enkf_node_copyc(const enkf_node_type * );
   /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,

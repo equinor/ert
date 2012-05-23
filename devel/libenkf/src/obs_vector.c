@@ -38,6 +38,7 @@
 
 #include <ecl_sum.h>
 #include <ecl_grid.h>
+#include <smspec_node.h>
 
 #include <obs_vector.h>
 #include <enkf_fs.h>
@@ -47,6 +48,7 @@
 #include <ensemble_config.h>
 #include <active_list.h>
 #include <enkf_state.h>
+#include "enkf_defaults.h"
 
 #define OBS_VECTOR_TYPE_ID 120086
 
@@ -577,7 +579,16 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type * obs_vector ,
 
 
 
-
+static const char * __summary_kw( const char * field_name ) {
+  if (strcmp( field_name , "PRESSURE") == 0)
+    return "BPR";
+  else if (strcmp( field_name , "SWAT") == 0)
+    return "BSWAT";
+  else if (strcmp( field_name , "SGAS") == 0)
+    return "BSGAS";
+  else
+    util_abort("%s: sorry - could not \'translate\' field:%s to block summayr variable\n",__func__ , field_name);
+}
 
 
 obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance , 
@@ -595,23 +606,20 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
   block_obs_source_type source_type;
   const char * obs_label      = conf_instance_get_name_ref(conf_instance);
   const char * source_string  = conf_instance_get_item_value_ref(conf_instance , "SOURCE");
-  const char * field_name     = conf_instance_get_item_value_ref(conf_instance, "FIELD");
-  bool  OK = true;
+  const char * field_name     = conf_instance_get_item_value_ref(conf_instance , "FIELD");
+  char  * sum_kw;
+  bool    OK = true;
   
   if (strcmp(source_string , "FIELD") == 0) {
     source_type = SOURCE_FIELD;
-    if (field_name == NULL) {
+    if (!ensemble_config_has_key( ensemble_config , field_name)) {
       OK = false;
-      fprintf(stderr,"** When using SOURCE=FIELD you must specifiy a field as source. Observation:%s not added \n", obs_label);
-    } else {
-      if (!ensemble_config_has_key( ensemble_config , field_name)) {
-        OK = false;
-        fprintf(stderr,"** Warning the ensemble key:%s does not exist - observation:%s not added \n", field_name , obs_label);
-      }
+      fprintf(stderr,"** Warning the ensemble key:%s does not exist - observation:%s not added \n", field_name , obs_label);
     }
-  } else if (strcmp( source_string , "SUMMARY") == 0) 
+  } else if (strcmp( source_string , "SUMMARY") == 0) {
     source_type = SOURCE_SUMMARY;
-  else 
+    sum_kw = __summary_kw( field_name );
+  } else 
     util_abort("%s: internal error \n",__func__);
   
   if (OK) {
@@ -619,6 +627,7 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     int          size = history_get_num_restarts( history );
     int          obs_restart_nr ;
     
+    stringlist_type * summary_keys    = stringlist_alloc_new();
     stringlist_type * obs_pt_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "OBS");
     int               num_obs_pts = stringlist_get_size(obs_pt_keys);
     
@@ -654,26 +663,64 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
       obs_i[obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "I") - 1;
       obs_j[obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "J") - 1;
       obs_k[obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "K") - 1;
+
+      if (source_type == SOURCE_SUMMARY) {
+        char * summary_key = smspec_alloc_block_ijk_key( SUMMARY_KEY_JOIN_STRING , sum_kw , 
+                                                         obs_i[obs_pt_nr] + 1 , 
+                                                         obs_j[obs_pt_nr] + 1 , 
+                                                         obs_k[obs_pt_nr] + 1 );
+        
+        stringlist_append_owned_ref( summary_keys , summary_key );
+      }
     }
+
     
-    {
+    if (source_type == SOURCE_FIELD) {
       const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , field_name);
       const field_config_type     * field_config = enkf_config_node_get_ref( config_node ); 
-      block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , grid , refcase , field_config , field_name, num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
+      block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , field_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
       
       if (block_obs != NULL) {
         obs_vector = obs_vector_alloc( BLOCK_OBS , obs_label , ensemble_config_get_node(ensemble_config , field_name) , obs_time , size );
         obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
       }
-    }
+    } else if (source_type == SOURCE_SUMMARY) {
+      // Must call: ensemble_config_add_summary(ens_config , sum_key) to
+      // ensure that the new sum_key instances are added to the ensemble.
+      
+      
+      bool OK = true;
+      if (refcase != NULL) {
+        for (int i=0; i < stringlist_get_size( summary_keys ); i++) {
+          const char * sum_key = stringlist_iget( summary_keys , i );
+          if (!ecl_sum_has_key(refcase , sum_key)) {
+            fprintf(stderr,"** Warning missing summary %s for cell: (%d,%d,%d) in refcase - observation:%s not added\n" , 
+                    sum_key , obs_i[i]+1 , obs_j[i]+1 , obs_k[i]+1 , obs_label );
+            OK = false;
+          }
+        }
+      }
+      if (OK) {
+        // We can create the container node and add the summary nodes.
+        enkf_config_node_type * container = ensemble_config_add_container( ensemble_config , NULL );
+
+        for (int i=0; i < stringlist_get_size( summary_keys ); i++) {
+          const char * sum_key = stringlist_iget( summary_keys , i );
+          enkf_config_node_type * child_node = ensemble_config_add_summary( ensemble_config , sum_key );
+          enkf_config_node_update_container( container , child_node );
+        }
+      }
+      printf("Have create container and sum nodes \n");
+    } else
+      util_abort("%s: invalid source value \n",__func__);
     
     free(obs_value);
     free(obs_std);
     free(obs_i);
     free(obs_j);
     free(obs_k);
-    
     stringlist_free(obs_pt_keys);
+    stringlist_free(summary_keys);
     
     return obs_vector;
   } else {

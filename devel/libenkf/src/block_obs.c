@@ -32,6 +32,7 @@
 
 #include <enkf_util.h>
 #include <field_config.h>
+#include <container_config.h>
 #include <obs_data.h>
 #include <meas_data.h>
 #include <field_config.h>
@@ -59,13 +60,12 @@ typedef struct  {
 
 struct block_obs_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char   * field_name;                    /** The state keyword for the observed field - PRESSURE / SWAT / PORO /...   */
   char   * obs_key;                       /** A user provided label for the observation.      */
   int      size;                          /** The number of field cells observed.             */
   point_obs_type ** point_list;
   
   const ecl_grid_type     * grid;
-  const field_config_type * field_config; /* The config object of the field we are observing - shared reference. */
+  const void * data_config;
   block_obs_source_type source_type;
 };
 
@@ -118,16 +118,6 @@ static double point_obs_measure( const point_obs_type * point_obs , const field_
 /*****************************************************************/
 
 
-static const char * __summary_kw( const char * field_name ) {
-  if (strcmp( field_name , "PRESSURE") == 0)
-    return "BPR";
-  else if (strcmp( field_name , "SWAT") == 0)
-    return "BSWAT";
-  else if (strcmp( field_name , "SGAS") == 0)
-    return "BSGAS";
-  else
-    util_abort("%s: sorry - could not \'translate\' field:%s to block summayr variable\n",__func__ , field_name);
-}
 
 static void block_obs_validate_ijk( const ecl_grid_type * grid , int size, const int * i , const int * j , const int * k) {
   int l;
@@ -157,10 +147,8 @@ static void block_obs_resize( block_obs_type * block_obs , int new_size) {
 */
 block_obs_type * block_obs_alloc(const char   * obs_key,
                                  block_obs_source_type source_type , 
-                                 const ecl_grid_type * grid , 
-                                 const ecl_sum_type  * refcase , 
-                                 const field_config_type * field_config , 
-                                 const char   * field_name,
+                                 const void * data_config , 
+                                 const ecl_grid_type * grid ,
                                  int            size,
                                  const int    * i,
                                  const int    * j,
@@ -173,54 +161,24 @@ block_obs_type * block_obs_alloc(const char   * obs_key,
   {
     block_obs_type * block_obs = util_malloc(sizeof * block_obs, __func__);
     char           * sum_kw    = NULL;
-    bool             OK        = true; 
 
     UTIL_TYPE_ID_INIT( block_obs , BLOCK_OBS_TYPE_ID );
-    block_obs->field_name      = util_alloc_string_copy(field_name);
     block_obs->obs_key         = util_alloc_string_copy(obs_key);
-    block_obs->field_config    = field_config;
+    block_obs->data_config     = data_config;
     block_obs->source_type     = source_type; 
     block_obs->size            = 0;
     block_obs->point_list      = NULL;
     block_obs->grid            = grid;
     block_obs_resize( block_obs , size );
-
+    
     {
-      char * join_string = NULL;
-      if (source_type == SOURCE_SUMMARY) 
-        sum_kw = __summary_kw( field_name );
-
       for (int l=0; l < size; l++) {
-        int active_index = ecl_grid_get_active_index3( grid , i[l],j[l],k[l]);
+        int active_index = ecl_grid_get_active_index3( block_obs->grid , i[l],j[l],k[l]);
         char * sum_key   = NULL;
-
-        if (source_type == SOURCE_SUMMARY) {
-          sum_key = smspec_alloc_block_ijk_key( SUMMARY_KEY_JOIN_STRING , sum_kw , i[l] + 1 , j[l] + 1 , k[l] + 1);
-          
-          // Must call: ensemble_config_add_summary(ens_config , sum_key) to
-          // ensure that the new sum_key instances are added to the ensemble.
-          
-          
-          // The point_obs instance takes ownership of the sum_key pointer and discards it
-          // when going out of scope.
-          if (refcase != NULL) {
-            if (!ecl_sum_has_key(refcase , sum_key)) {
-              fprintf(stderr,"** Warning missing summary %s for cell: (%d,%d,%d) in refcase - observation:%s not added\n" , 
-                      sum_kw , i[l]+1 , j[l]+1 , k[l]+1 , block_obs->obs_key );
-              free( sum_key );
-              sum_key = NULL;
-
-              OK = false;
-            }
-          }
-        } 
+        
+        
         block_obs->point_list[l] = point_obs_alloc(i[l] , j[l] , k[l] , active_index , sum_key , obs_value[l] , obs_std[l]);
       }
-    }
-
-    if (!OK) {
-      block_obs_free( block_obs );
-      block_obs = NULL;
     }
     return block_obs;
   }
@@ -235,7 +193,6 @@ void block_obs_free( block_obs_type * block_obs) {
   }
   
   util_safe_free(block_obs->point_list );
-  free(block_obs->field_name);
   free(block_obs->obs_key);
   free(block_obs);
 }
@@ -303,9 +260,9 @@ static void block_obs_measure_summary(const block_obs_type * block_obs, const fi
 
 void block_obs_measure(const block_obs_type * block_obs, const void * state , node_id_type node_id , meas_data_type * meas_data , const active_list_type * __active_list) {
   if (field_is_instance( state ))
-    block_obs_measure_field( block_obs , state , node_id , meas_data , __active_list);
+    block_obs_measure_field( block_obs , field_safe_cast( state ) , node_id , meas_data , __active_list);
   else
-    block_obs_measure_summary( block_obs , state , node_id , meas_data , __active_list);
+    block_obs_measure_summary( block_obs , container_safe_cast( state ) , node_id , meas_data , __active_list);
 }
 
 

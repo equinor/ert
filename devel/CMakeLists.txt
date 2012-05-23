@@ -33,7 +33,7 @@ if (USE_PTHREAD)
   find_library( PTHREAD_LIBRARY NAMES pthread )
   find_path( PTHREAD_HEADER pthread.h /usr/include )
 
-  if (!PTHREAD_LIBRARY)
+  if (NOT PTHREAD_LIBRARY)
     set( USE_PTHREAD OFF )
   endif()
   
@@ -59,6 +59,13 @@ endif()
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
+try_compile( STDBOOL ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_stdbool.c )
+if (NOT STDBOOL)
+   message( "Creating internal stdbool function" )
+   configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/stdbool.h.in
+                   ${PROJECT_BINARY_DIR}/stdbool.h )
+endif()
+
 find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
 
 check_function_exists( realpath HAVE_REALPATH )

@@ -715,7 +715,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
     conf_class_type * block_observation_class = conf_class_alloc_empty("BLOCK_OBSERVATION", false , false, help_class_block_observation);
 
     const char * help_item_spec_field = "The item FIELD gives the observed field. E.g., ECLIPSE fields such as PRESSURE, SGAS or any user defined fields such as PORO or PERMX.";
-    conf_item_spec_type * item_spec_field = conf_item_spec_alloc("FIELD", false , DT_STR , help_item_spec_field);
+    conf_item_spec_type * item_spec_field = conf_item_spec_alloc("FIELD", true , DT_STR , help_item_spec_field);
 
     const char * help_item_spec_date = "The DATE item gives the observation time as the date date it occured. Format is dd/mm/yyyy.";
     conf_item_spec_type * item_spec_date = conf_item_spec_alloc("DATE", false, DT_DATE , help_item_spec_date);

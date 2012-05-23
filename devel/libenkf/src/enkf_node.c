@@ -25,6 +25,7 @@
 #include <buffer.h>
 #include <msg.h>
 #include <rng.h>
+#include <vector.h>
 
 #include <enkf_node.h>
 #include <enkf_config_node.h>
@@ -45,57 +46,57 @@
    are linked.
 
 
-     ================
-     |              |   o-----------
-     |  ================           |                =====================
-     |  |              |   o--------                |                   |
-     |  |  ================        |------------->  |                   |
-     |  |  |              |        |                |  enkf_config_node |
-     |  |  |              |        |                |                   |
-     ===|  |  enkf_node   |  o------                |                   |
-      o |  |              |                         |                   |
-      | ===|              |                         =====================
-      |  o |              |                                   o
-      |  | ================                                   |
-      |  |        o                                           |
-      |  \        |                                           |
-      |   \       |                                           |
-      |    |      |                                           |
-      |    |      |                                           |
-      |    |      |                                           |
-      |    |      |                                           |
-     \|/   |      |                                           |
-     ======|======|==                                        \|/
-     |    \|/     | |   o-----------
-     |  ==========|=====           |                =====================
-     |  |        \|/   |   o--------                |                   |
-     |  |  ================        |------------->  |                   |
-     |  |  |              |        |                |  field_config     |
-     |  |  |              |        |                |                   |
-     ===|  |  field       |  o------                |                   |
-        |  |              |                         |                   |
-        ===|              |                         =====================
-           |              |
-           ================
+   ================
+   |              |   o-----------
+   |  ================           |                =====================
+   |  |              |   o--------                |                   |
+   |  |  ================        |------------->  |                   |
+   |  |  |              |        |                |  enkf_config_node |
+   |  |  |              |        |                |                   |
+   ===|  |  enkf_node   |  o------                |                   |
+   o |  |              |                         |                   |
+   | ===|              |                         =====================
+   |  o |              |                                   o
+   |  | ================                                   |
+   |  |        o                                           |
+   |  \        |                                           |
+   |   \       |                                           |
+   |    |      |                                           |
+   |    |      |                                           |
+   |    |      |                                           |
+   |    |      |                                           |
+   \|/   |      |                                           |
+   ======|======|==                                        \|/
+   |    \|/     | |   o-----------
+   |  ==========|=====           |                =====================
+   |  |        \|/   |   o--------                |                   |
+   |  |  ================        |------------->  |                   |
+   |  |  |              |        |                |  field_config     |
+   |  |  |              |        |                |                   |
+   ===|  |  field       |  o------                |                   |
+   |  |              |                         |                   |
+   ===|              |                         =====================
+   |              |
+   ================
 
 
    To summarize in words:
 
    * The enkf_node object is an abstract object, which again contains
-     a spesific enkf_object, like e.g. the field objects shown
-     here. In general we have an ensemble of enkf_node objects.
+   a spesific enkf_object, like e.g. the field objects shown
+   here. In general we have an ensemble of enkf_node objects.
 
    * The enkf_node objects contain a pointer to a enkf_config_node
-     object.
+   object.
 
    * The enkf_config_node object contains a pointer to the spesific
-     config object, i.e. field_config in this case.
+   config object, i.e. field_config in this case.
 
    * All the field objects contain a pointer to a field_config object.
 
 
    [1]: field is just an example, and could be replaced with any of
-        the enkf object types.
+   the enkf object types.
 */
 
 /*-----------------------------------------------------------------*/
@@ -110,42 +111,42 @@
    situations are not really supported at the moment, but we have
    implemented some support for such problems:
 
-    o All enkf objects should have a xxx_realloc_data() function. This
-      function should be implemented in such a way that it is always
-      safe to call, i.e. if the object already has allocated data the
-      function should just return.
+   o All enkf objects should have a xxx_realloc_data() function. This
+   function should be implemented in such a way that it is always
+   safe to call, i.e. if the object already has allocated data the
+   function should just return.
 
-    o All enkf objects should implement a xxx_free_data()
-      function. This function free the data of the object, and set the
-      data pointer to NULL.
+   o All enkf objects should implement a xxx_free_data()
+   function. This function free the data of the object, and set the
+   data pointer to NULL.
 
 
    The following 'rules' apply to the memory treatment:
    ----------------------------------------------------
 
-    o Functions writing to memory can always be called, and it is their
-      responsibility to allocate memory before actually writing on it. The
-      writer functions are:
+   o Functions writing to memory can always be called, and it is their
+   responsibility to allocate memory before actually writing on it. The
+   writer functions are:
 
-        enkf_node_initialize()
-        enkf_node_fread()
-        enkf_node_forward_load()  
+   enkf_node_initialize()
+   enkf_node_fread()
+   enkf_node_forward_load()  
 
-      These functions should all start with a call to
-      enkf_node_ensure_memory(). The (re)allocation of data is done at
-      the enkf_node level, and **NOT** in the low level object
-      (altough that is where it is eventually done of course).
+   These functions should all start with a call to
+   enkf_node_ensure_memory(). The (re)allocation of data is done at
+   the enkf_node level, and **NOT** in the low level object
+   (altough that is where it is eventually done of course).
 
-    o When it comes to functions reading memory it is a bit more
-      tricky. It could be that if the functions are called without
-      memory, that just means that the object is not active or
-      something (and the function should just return). On the other
-      hand trying to read a NULL pointer does indicate that program
-      logic is not fully up to it? And should therefor maybe be
-      punished?
+   o When it comes to functions reading memory it is a bit more
+   tricky. It could be that if the functions are called without
+   memory, that just means that the object is not active or
+   something (and the function should just return). On the other
+   hand trying to read a NULL pointer does indicate that program
+   logic is not fully up to it? And should therefor maybe be
+   punished?
 
-    o The only memory operation which is exported to 'user-space'
-      (i.e. the enkf_state object) is enkf_node_free_data(). 
+   o The only memory operation which is exported to 'user-space'
+   (i.e. the enkf_state object) is enkf_node_free_data(). 
 
 */
 
@@ -162,28 +163,28 @@
    
 
 
-    1. The nodes are created with (modified, report_step, state, iens) ==
-       (true , -1 , undefined , -1).
+   1. The nodes are created with (modified, report_step, state, iens) ==
+   (true , -1 , undefined , -1).
 
-    2. After initialization we set: report_step -> 0 , state ->
-       analyzed, modified -> true, iens -> -1
+   2. After initialization we set: report_step -> 0 , state ->
+   analyzed, modified -> true, iens -> -1
 
-    3. After load (both from ensemble and ECLIPSE). We set modified ->
-       false, and report_step, state and iens according to the load
-       arguments.
+   3. After load (both from ensemble and ECLIPSE). We set modified ->
+   false, and report_step, state and iens according to the load
+   arguments.
       
-    4. After deserialize (i.e. update) we set modified -> true.
+   4. After deserialize (i.e. update) we set modified -> true.
       
-    5. After write (to ensemble) we set in the same way as after load.
+   5. After write (to ensemble) we set in the same way as after load.
   
-    6. After free_data we invalidate according to the newly allocated
-       status.
+   6. After free_data we invalidate according to the newly allocated
+   status.
 
-    7. In the ens_load routine we check if modified == false and the
-       report_step and state arguments agree with the current
-       values. IN THAT CASE WE JUST RETURN WITHOUT ACTUALLY HITTING
-       THE FILESYSTEM. This performance gain is the main point of the
-       whole excercise.
+   7. In the ens_load routine we check if modified == false and the
+   report_step and state arguments agree with the current
+   values. IN THAT CASE WE JUST RETURN WITHOUT ACTUALLY HITTING
+   THE FILESYSTEM. This performance gain is the main point of the
+   whole excercise.
 */
 
 
@@ -217,9 +218,12 @@ struct enkf_node_struct {
   
   /******************************************************************/
   bool                         vector_storage;
-  char                        *node_key;    /* The (hash)key this node is identified with. */
-  void                        *data;        /* A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or a field_type instance or ... */
-  const enkf_config_node_type *config;      /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
+  char                        *node_key;         /* The (hash)key this node is identified with. */
+  void                        *data;             /* A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or a field_type instance or ... */
+  const enkf_config_node_type *config;           /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
+  /*****************************************************************/
+  
+  vector_type                 *container_nodes;
   
   /*****************************************************************/
   /* The variables below this line are VERY INTERNAL.              */
@@ -688,7 +692,7 @@ bool enkf_node_has_data( enkf_node_type * enkf_node , enkf_fs_type * fs , node_i
 
 
 /**
-  Copy an ensemble of nodes. Note that the limits are inclusive.
+   Copy an ensemble of nodes. Note that the limits are inclusive.
 */
 
 void enkf_node_copy_ensemble(const enkf_config_node_type * config_node , 
@@ -909,8 +913,9 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->config             = config;
   node->node_key           = util_alloc_string_copy(node_key);
   node->data               = NULL;
+  node->container_nodes    = vector_alloc_new( );
   enkf_node_invalidate_cache( node );
-
+  
   /*
     Start by initializing all function pointers to NULL.
   */
@@ -941,6 +946,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->imul                 = NULL;
 
   switch (impl_type) {
+  case(CONTAINER):
+    break;
   case(GEN_KW):
     node->alloc              = gen_kw_alloc__;
     node->ecl_write          = gen_kw_ecl_write__;
@@ -1088,10 +1095,23 @@ enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
 }
 
 
-enkf_node_type * enkf_node_alloc_with_data(const enkf_config_node_type * config , void * data) {
-  enkf_node_type * node    = enkf_node_alloc_empty( config );
-  node->data               = data;
-  return node;
+static void enkf_node_container_add( enkf_node_type * node , const enkf_config_node_type * child_node ) {
+  vector_append_ref( node->container_nodes , child_node );
+}
+
+
+
+enkf_node_type * enkf_node_container_alloc(const enkf_config_node_type * config, hash_type * node_hash) {
+  enkf_node_type * container_node    = enkf_node_alloc_empty(config);
+  {
+    for (int i=0; i < enkf_config_node_container_size( config ); i++) {
+      const enkf_config_node_type * child_config = enkf_config_node_container_iget( config , i );
+      enkf_node_type * child_node = hash_get( node_hash , enkf_config_node_get_key( child_config ));
+
+      enkf_node_container_add( container_node , child_node );
+    }
+  }
+  return container_node;
 }
 
 

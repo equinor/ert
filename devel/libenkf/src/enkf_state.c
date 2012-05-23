@@ -397,16 +397,31 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
 
 
 static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_config_type * ensemble_config) {
+  stringlist_type * container_keys = stringlist_alloc_new();
   stringlist_type * keylist  = ensemble_config_alloc_keylist(ensemble_config);
   int keys        = stringlist_get_size(keylist);
 
+  // 1: Add all regular nodes
   for (int ik = 0; ik < keys; ik++) {
     const char * key = stringlist_iget(keylist, ik);
     const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , key);
-    enkf_state_add_node(enkf_state , key , config_node);
+    if (enkf_config_node_get_impl_type( config_node ) == CONTAINER)
+      stringlist_append_ref( container_keys , key );
+    else
+      enkf_state_add_node(enkf_state , key , config_node);
   }
-
+  
+  // 2: Add container nodes - must ensure that all other nodes have
+  //    been added already (this implies that containers of containers
+  //    will be victim of hash retrieval order problems ....
+  for (int ik = 0; ik < stringlist_get_size( container_keys ); ik++) {
+    const char * key = stringlist_iget(keylist, ik);
+    const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , key);
+    enkf_state_add_node( enkf_state , key , config_node );
+  }
+  
   stringlist_free(keylist);
+  stringlist_free( container_keys );
 }
 
 
@@ -545,7 +560,12 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
   if (enkf_state_has_node(enkf_state , node_key)) 
     enkf_state_del_node( enkf_state , node_key );   /* Deleting the old instance (if we had one). */
   {
-    enkf_node_type *enkf_node = enkf_node_alloc(config);
+    enkf_node_type *enkf_node;
+    if (enkf_config_node_get_impl_type( config ) == CONTAINER)
+      enkf_node = enkf_node_container_alloc( config , enkf_state->node_hash );
+    else
+      enkf_node = enkf_node_alloc( config );
+    
     hash_insert_hash_owned_ref(enkf_state->node_hash , node_key , enkf_node, enkf_node_free__);
   
     /* Setting the global subst list so that the GEN_KW templates can contain e.g. <IENS> and <CWD>. */
@@ -553,6 +573,8 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
       gen_kw_set_subst_parent( enkf_node_value_ptr( enkf_node ) , enkf_state->subst_list );
   }
 }
+
+
 
 
 void enkf_state_update_node( enkf_state_type * enkf_state , const char * node_key ) {

@@ -22,37 +22,42 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <time.h>
+#include <pthread.h>                /* must have rw locking on the config_nodes ... */
+
 #include <util.h>
 #include <hash.h>
 #include <set.h>
-#include <enkf_config_node.h>
 #include <path_fmt.h>
-#include <enkf_types.h>
-#include <field_config.h>
-#include <gen_data_config.h>
-#include <surface_config.h>
 #include <thread_pool.h>
-#include <meas_data.h>
-#include <enkf_types.h>
-#include <sched_file.h>
-#include <gen_kw_config.h>
+#include <stringlist.h>
+
 #include <ecl_grid.h>
-#include <time.h>
+
 #include <job_queue.h>
 #include <lsf_driver.h>
 #include <local_driver.h>
 #include <rsh_driver.h>
+#include <ext_joblist.h>
+
+#include <config.h>
+
+#include <enkf_config_node.h>
+#include <enkf_types.h>
+#include <field_config.h>
+#include <gen_data_config.h>
+#include <surface_config.h>
+#include <meas_data.h>
+#include <enkf_types.h>
+#include <sched_file.h>
+#include <gen_kw_config.h>
 #include <summary.h>
 #include <summary_config.h>
-#include <ext_joblist.h>
 #include <gen_data.h>
 #include <gen_kw_config.h>
 #include <gen_data_config.h>
-#include <stringlist.h>
 #include <ensemble_config.h>
-#include <config.h>
 #include <gen_data_config.h>
-#include <pthread.h>                /* must have rw locking on the config_nodes ... */
 #include <field_trans.h>
 #include <subst_func.h>
 #include <enkf_obs.h>
@@ -261,86 +266,6 @@ void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , 
 }
 
 
-///* 
-//   required options:
-//   * input_format 
-//   * input_files
-//   * init_files
-//   * output_format
-//       
-//   optional:
-//   * template
-//   * key
-//*/
-//
-//void ensemble_config_add_gen_param(ensemble_config_type * config , const char * key , const char * enkf_outfile , stringlist_type * options) {
-//  gen_data_config_type * node = gen_data_config_alloc_with_options( key , true , options );
-//  {
-//    //char                  * enkf_outfile   = gen_data_config_pop_enkf_outfile( node );
-//    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , parameter , gen_data , enkf_outfile , NULL , node );
-//    gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
-//
-//    if (gen_data_min_std != NULL) {
-//      enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
-//      enkf_config_node_set_min_std( config_node , min_std_node );
-//    }
-//
-//    //util_safe_free( enkf_outfile );
-//  }
-//}
-//
-//
-//
-//
-///* 
-//   for this datatype the cooperation between the enkf_node layer and
-//   the underlying type not particularly elegant.
-//   
-//   the problem is that the enkf_node layer owns the eclipse
-//   input/output filenames. however, the node itself knows whether it
-//   should import/export eclipse files (and therefore whether it
-//   needs the input/output filenames.
-//*/
-//
-//
-//void ensemble_config_add_gen_data(ensemble_config_type * config , const char * key , stringlist_type * options) {
-//  enkf_var_type var_type;
-//  char * enkf_outfile;
-//  char * enkf_infile;
-//  gen_data_config_type * node = gen_data_config_alloc_with_options( key , false , options);
-//  enkf_outfile = gen_data_config_pop_enkf_outfile( node );
-//  enkf_infile  = gen_data_config_pop_enkf_infile( node );
-//  
-//  if (enkf_outfile == NULL) 
-//    /* 
-//       enkf should not provide the forward model with an instance of this
-//       data => we have dynamic_result.
-//    */
-//    var_type = dynamic_result;
-//  else
-//    var_type = dynamic_state;   
-//
-//  {
-//    enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , var_type , gen_data , enkf_outfile , enkf_infile , node );
-//    gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
-//    
-//    if (gen_data_min_std != NULL) {
-//      enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
-//      enkf_config_node_set_min_std( config_node , min_std_node );
-//    }
-//  }
-//  
-//  util_safe_free( enkf_outfile );
-//  util_safe_free( enkf_infile );
-//}
-
-
-
-
-
-
-
-
 void ensemble_config_add_obs_key(ensemble_config_type * ensemble_config , const char * key, const char * obs_key) {
   enkf_config_node_type * config_node = hash_get(ensemble_config->config_nodes , key);
   enkf_config_node_add_obs_key(config_node , obs_key);
@@ -393,6 +318,9 @@ void ensemble_config_add_config_items(config_type * config) {
   item = config_add_item(config , SUMMARY_KEY , false , true);   /* can have several summary keys on each line. */
   config_item_set_argc_minmax(item , 1 , -1 ,  0 , NULL);
 
+  item = config_add_item(config , CONTAINER_KEY , false , true);   /* can have several summary keys on each line. */
+  config_item_set_argc_minmax(item , 2 , -1 ,  0 , NULL);
+  
   item = config_add_item( config , SURFACE_KEY , false , true );
   config_item_set_argc_minmax(item , 4 , 5 ,  0 , NULL);
   /* 
@@ -480,6 +408,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
       hash_free( options );
     }
   }
+
 
   /* surface */
   {
@@ -643,7 +572,21 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     
     stringlist_free( keys );
   }
-  
+
+  /* Containers - this must come last, to ensure that the other nodes have been added. */
+  {
+    for (i=0; i < config_get_occurences(config , CONTAINER_KEY ); i++) {
+      const stringlist_type * container_kw_list = config_iget_stringlist_ref(config , CONTAINER_KEY , i);
+      const char * container_key = stringlist_iget( container_kw_list , 0 );
+      enkf_config_node_type * container_node = ensemble_config_add_container( ensemble_config , container_key );
+      
+      for (int j= 1; j < stringlist_get_size( container_kw_list ); j++) {
+        const char * child_key = stringlist_iget( container_kw_list , j); 
+        enkf_config_node_update_container( container_node , ensemble_config_get_node( ensemble_config , child_key ));
+      }
+    }
+  }
+
   /*****************************************************************/
 }
 
@@ -839,6 +782,29 @@ enkf_config_node_type * ensemble_config_add_surface( ensemble_config_type * ense
   ensemble_config_add_node__( ensemble_config , config_node );
   return config_node;
 }
+
+
+/*
+  If key == NULL the function will create a random key.
+*/
+enkf_config_node_type * ensemble_config_add_container( ensemble_config_type * ensemble_config , const char * key) {
+  bool random_key = false;
+  if (key == NULL) {
+    key = util_malloc( 11 * sizeof * key  , __func__);
+    sprintf(key , "%d" , random() % 10000000 ); 
+    random_key = true;
+    printf("Adding container:%s \n",key);
+  }
+  {
+    enkf_config_node_type * config_node = enkf_config_node_new_container( key );
+    ensemble_config_add_node__( ensemble_config , config_node );
+    if (random_key)
+      free( key );
+    return config_node;
+  }
+}
+
+
 
 
 /*****************************************************************/

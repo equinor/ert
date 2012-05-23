@@ -100,8 +100,9 @@ typedef enum {INVALID          = 0   ,
               GEN_KW           = 107 ,       /* RELPERM has been removed & HAVANA_FAULT */
               SUMMARY          = 110 ,       /* TPGZONE has been removed */
               GEN_DATA         = 113 ,       /* PILOT_POINT has been removed */
-              SURFACE          = 114 } ert_impl_type;
-
+              SURFACE          = 114 ,
+              CONTAINER        = 115 } ert_impl_type;
+  
   
 
 /* 

@@ -19,11 +19,15 @@
 #include <stdlib.h>
 
 #include <vector.h>
+#include <util.h>
 
 #include <container_config.h>
+#include <enkf_macros.h>
 
+#define CONTAINER_CONFIG_TYPE_ID 51330852
 
 struct container_config_struct {
+  UTIL_TYPE_ID_DECLARATION;
   vector_type * nodes;
 };
 
@@ -43,6 +47,19 @@ void container_config_free( container_config_type * container_config ) {
 
 
 void container_config_add_node( container_config_type * container_config , const enkf_config_node_type * config_node) {
-  
+  vector_append_ref( container_config->nodes , config_node );
 }
+
+
+int container_config_get_data_size( const container_config_type * container_config ) {
+  util_exit("%s: not implemented \n",__func__);
+  return 0;
+}
+
+/*****************************************************************/
+
+UTIL_SAFE_CAST_FUNCTION(container_config , CONTAINER_CONFIG_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION_CONST(container_config , CONTAINER_CONFIG_TYPE_ID)
+VOID_GET_DATA_SIZE(container)
+VOID_CONFIG_FREE(container)
 

@@ -141,7 +141,12 @@ extern "C" {
   void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step);
   bool enkf_config_node_internalize(const enkf_config_node_type * node, int report_step);
   
-  void enkf_config_node_fprintf_config( const enkf_config_node_type * config_node , FILE * stream );
+  void                          enkf_config_node_fprintf_config( const enkf_config_node_type * config_node , FILE * stream );
+  const enkf_config_node_type * enkf_config_node_container_iget( const enkf_config_node_type * node , int index);
+  int                           enkf_config_node_container_size( const enkf_config_node_type * node );
+
+  enkf_config_node_type *       enkf_config_node_new_container( const char * key );
+  void                          enkf_config_node_update_container( enkf_config_node_type * config_node , const enkf_config_node_type * child_node);
 
   /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
