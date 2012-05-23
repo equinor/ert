@@ -20,6 +20,7 @@
 
 #include <double_vector.h>
 #include <vector.h>
+#include <thread_pool.h>
 
 #include <enkf_fs.h>
 #include <member_config.h>

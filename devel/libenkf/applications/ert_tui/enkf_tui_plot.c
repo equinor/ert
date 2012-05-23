@@ -32,6 +32,7 @@
 #include <bool_vector.h>
 #include <double_vector.h>
 #include <path_fmt.h>
+#include <thread_pool.h>
 
 #include <plot.h>
 #include <plot_dataset.h> 

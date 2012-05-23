@@ -21,15 +21,16 @@
 #ifdef __cplusplus 
 extern "C" {
 #endif
+#include <stdbool.h>
+
+#include <stringlist.h>
+#include <util.h>
+#include <bool_vector.h>
 
 #include <enkf_fs_type.h>
 #include <enkf_types.h>
 #include <enkf_macros.h>
-#include <stdbool.h>
-#include <stringlist.h>
 #include <gen_data_common.h>
-#include <util.h>
-#include <bool_vector.h>
 
 typedef enum { GEN_DATA_UNDEFINED = 0,  
                ASCII              = 1,   /*   The file is ASCII file with a vector of numbers formatted with "%g".       */
@@ -79,9 +80,9 @@ const char * gen_data_config_get_template_key( const gen_data_config_type * conf
 void gen_data_config_fprintf_config( const gen_data_config_type * config , enkf_var_type var_type , const char * outfile , const char * infile , 
                                      const char * min_std_file , FILE * stream);
 
-UTIL_SAFE_CAST_HEADER(gen_data_config)
-UTIL_SAFE_CAST_HEADER_CONST(gen_data_config)
-VOID_FREE_HEADER(gen_data_config)
+  UTIL_SAFE_CAST_HEADER(gen_data_config);
+  UTIL_SAFE_CAST_HEADER_CONST(gen_data_config);
+  VOID_FREE_HEADER(gen_data_config)
 
 #ifdef __cplusplus
 }

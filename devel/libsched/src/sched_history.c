@@ -15,12 +15,17 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
+#include <stdlib.h>
 
 #include <util.h>
+#include <hash.h>
+#include <time_t_vector.h>
+#include <bool_vector.h>
+#include <size_t_vector.h>
+#include <double_vector.h>
+
 #include <well_history.h>
 #include <group_history.h>
-#include <sched_history.h>
-#include <hash.h>
 #include <sched_kw.h>
 #include <sched_kw_wconhist.h>
 #include <sched_kw_welspecs.h>
@@ -30,11 +35,9 @@
 #include <sched_kw_gruptree.h>
 #include <sched_file.h>
 #include <sched_types.h>
-#include <time_t_vector.h>
-#include <bool_vector.h>
-#include <size_t_vector.h>
 #include <well_index.h>
 #include <group_index.h>
+#include <sched_history.h>
 
 
 struct sched_history_struct {

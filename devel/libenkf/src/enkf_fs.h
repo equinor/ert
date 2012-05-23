@@ -21,11 +21,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stdbool.h>
+
 #include <path_fmt.h>
+#include <stringlist.h>
+
 #include <fs_driver.h>
 #include <enkf_types.h>
-#include <stringlist.h>
-#include <stdbool.h>
 #include <stringlist.h>
 #include <fs_types.h>
 #include <enkf_fs_type.h>
@@ -87,8 +89,8 @@ extern "C" {
   FILE             * enkf_fs_open_excase_member_file( const enkf_fs_type * fs , const char * input_name , int iens );
   
 
-UTIL_SAFE_CAST_HEADER( enkf_fs );
-UTIL_IS_INSTANCE_HEADER( enkf_fs );
+  UTIL_SAFE_CAST_HEADER( enkf_fs );
+  UTIL_IS_INSTANCE_HEADER( enkf_fs );
 
 
 #ifdef __cplusplus

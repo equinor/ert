@@ -20,10 +20,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <hash.h>
 #include <ctype.h>
 #include <time.h>
+
+#include <hash.h>
 #include <util.h>
+#include <stringlist.h>
+
 #include <sched_kw.h>
 #include <sched_util.h>
 #include <sched_kw_gruptree.h>
@@ -39,7 +42,7 @@
 #include <sched_kw_untyped.h>
 #include <sched_kw_include.h>
 #include <sched_macros.h>
-#include <stringlist.h>
+
 
 /*
   The structure sched_kw_type is used for internalization

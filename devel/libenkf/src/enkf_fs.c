@@ -22,22 +22,24 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <dirent.h>
+
 #include <util.h>
-#include <enkf_fs.h>
-#include <enkf_defaults.h>
 #include <msg.h>
 #include <path_fmt.h>
-#include <fs_driver.h>
-#include <dirent.h>
-#include <fs_types.h>
 #include <menu.h>
 #include <arg_pack.h>
-#include <ecl_static_kw.h>
-#include <plain_driver.h>
-#include <block_fs_driver.h>
 #include <stringlist.h>
 #include <arg_pack.h>
-#include <pthread.h>
+#include <block_fs_driver.h>
+
+#include <enkf_fs.h>
+#include <enkf_defaults.h>
+#include <fs_driver.h>
+#include <fs_types.h>
+#include <ecl_static_kw.h>
+#include <plain_driver.h>
 #include <gen_data.h>
 
 

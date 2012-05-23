@@ -18,14 +18,16 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sched_types.h>
-#include <well_history.h>
-#include <group_history.h>
+
 #include <double_vector.h>
 #include <int_vector.h>
 #include <time_t_vector.h>
 #include <size_t_vector.h>
 #include <bool_vector.h>
+
+#include <sched_types.h>
+#include <well_history.h>
+#include <group_history.h>
 #include <sched_kw.h>
 #include <sched_kw_wconhist.h>
 #include <sched_kw_wconinje.h>
@@ -288,7 +290,7 @@ double well_history_iget_WGPRH( const well_history_type * well_history , int rep
 
 
 bool well_history_is_producer( const well_history_type * well_history , int report_step ) {
-  bool producer;
+  bool producer = false;
   sched_kw_type_enum current_type = int_vector_safe_iget( well_history->kw_type , report_step );
   switch( current_type ) {
   case( WCONHIST ):
