@@ -5,7 +5,6 @@
 #ifndef _STDBOOL_H
 #define _STDBOOL_H
 
-typedef  long  ssize_t;
 
 #ifndef __cplusplus
 
