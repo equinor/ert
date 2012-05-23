@@ -25,8 +25,10 @@ extern "C" {
 #endif
 
 #include <time.h>
+
 #include <ecl_file.h> 
 #include <ecl_intehead.h>
+
 #include <well_conn.h>
 #include <well_const.h>
 
