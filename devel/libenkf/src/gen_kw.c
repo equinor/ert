@@ -19,19 +19,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <enkf_types.h>
-#include <util.h>
-#include <enkf_util.h>
 #include <math.h>
-#include <enkf_macros.h>
-#include <subst_list.h>
+
+#include <util.h>
 #include <buffer.h>
 #include <matrix.h>
+#include <log.h>
+#include <rng.h>
+
+#include <enkf_types.h>
+#include <enkf_util.h>
+#include <enkf_macros.h>
+#include <subst_list.h>
 #include <gen_kw_common.h>
 #include <gen_kw_config.h>
 #include <gen_kw.h>
-#include <log.h>
-#include <rng.h>
+
 
 GET_DATA_SIZE_HEADER(gen_kw);
 
@@ -172,7 +175,7 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
       outside the realization root.
     */
     if (util_is_link( target_file ))
-      unlink( target_file );
+      remove( target_file );
     
     subst_list_filter_file( gen_kw->subst_list  , template_file  , target_file);
   } else 

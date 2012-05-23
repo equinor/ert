@@ -1275,7 +1275,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
         int max_running;
         fscanf( stream , "%d" , &max_running);
         fclose( stream );
-        unlink( "MAX_RUNNING" );
+        remove( "MAX_RUNNING" );
         job_queue_set_max_running( job_queue , max_running );
       }
     }
