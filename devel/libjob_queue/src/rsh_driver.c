@@ -22,12 +22,18 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <pthread.h>
+#include <errno.h>
+
+#include <util.h>
+#include <arg_pack.h>
+
 #include <queue_driver.h>
 #include <rsh_driver.h>
-#include <util.h>
-#include <pthread.h>
-#include <arg_pack.h>
-#include <errno.h>
+
+
+
+
 
 
 struct rsh_job_struct {
@@ -55,7 +61,7 @@ typedef struct {
 
 
 struct rsh_driver_struct {
-  UTIL_TYPE_ID_DECLARATION
+  UTIL_TYPE_ID_DECLARATION;
   pthread_mutex_t     submit_lock;
   pthread_attr_t      thread_attr;
   char              * rsh_command;
