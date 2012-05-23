@@ -64,6 +64,7 @@ if (NOT STDBOOL)
    message( "Creating internal stdbool function" )
    configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/stdbool.h.in
                    ${PROJECT_BINARY_DIR}/stdbool.h )
+   include_directories( ${PROJECT_BINARY_DIR} )
 endif()
 
 find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
