@@ -67,6 +67,14 @@ if (NOT STDBOOL)
    include_directories( ${PROJECT_BINARY_DIR} )
 endif()
 
+try_compile( INTTYPES ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_inttypes.c )
+if (NOT INTTYPES)
+   message( "Creating internal inttypes.h header file" )
+   configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/inttypes.h.in
+                   ${PROJECT_BINARY_DIR}/inttypes.h )
+   include_directories( ${PROJECT_BINARY_DIR} )
+endif()
+
 find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
 
 check_function_exists( realpath HAVE_REALPATH )
