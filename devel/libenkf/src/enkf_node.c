@@ -577,22 +577,35 @@ static void enkf_node_load_vector( enkf_node_type * enkf_node , enkf_fs_type * f
 
 
 
+static void enkf_node_load_container( enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id ) {
+  for (int inode=0; inode < vector_get_size( enkf_node->container_nodes ); inode++) {
+    enkf_node_type * child_node = vector_iget( enkf_node->container_nodes , inode );
+    enkf_node_load( child_node , fs , node_id );
+  }
+}
+
+
 void enkf_node_load(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id) {
-  if (enkf_node->vector_storage)
-    enkf_node_load_vector( enkf_node , fs , node_id.iens , node_id.state );
+  if (enkf_node_get_impl_type(enkf_node) == CONTAINER)
+    enkf_node_load_container( enkf_node , fs , node_id );
   else {
-    if ((node_id.iens        == enkf_node->__node_id.iens) && 
-        (node_id.state       == enkf_node->__node_id.state) && 
-        (node_id.report_step == enkf_node->__node_id.report_step) && 
-        (!enkf_node->__modified)) 
-      return;  /* The in memory representation agrees with the buffer values */
+    if (enkf_node->vector_storage)
+      enkf_node_load_vector( enkf_node , fs , node_id.iens , node_id.state );
     else {
-      enkf_node_buffer_load( enkf_node , fs , node_id.report_step, node_id.iens , node_id.state );
-      enkf_node->__node_id     = node_id;
-      enkf_node->__modified    = false;
+      if ((node_id.iens        == enkf_node->__node_id.iens) && 
+	  (node_id.state       == enkf_node->__node_id.state) && 
+	  (node_id.report_step == enkf_node->__node_id.report_step) && 
+	  (!enkf_node->__modified)) 
+	return;  /* The in memory representation agrees with the buffer values */
+      else {
+	enkf_node_buffer_load( enkf_node , fs , node_id.report_step, node_id.iens , node_id.state );
+	enkf_node->__node_id     = node_id;
+	enkf_node->__modified    = false;
+      }
     }
   }
 }
+
 
 bool enkf_node_try_load_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens , state_enum state) {
   if (enkf_config_node_has_vector( enkf_node->config , fs , iens, state)) {
