@@ -8,6 +8,9 @@
   The symbols defined in the stdbool header are actually correctly(?)
   defined by the VisualStudio compiler already, so this header file
   does not define any bool related symbols!
+  
+  To actually use this file you should copy it manually into the ert
+  include directory as used by VisualStudio. 
 */
 
 #ifndef __STDBOOL_H__
