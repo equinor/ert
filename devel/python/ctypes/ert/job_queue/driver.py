@@ -34,7 +34,6 @@ class Driver(CClass):
         Creates a new driver instance
         """
         self.c_ptr = cfunc.alloc_driver( type )
-        print options
         if options:
             for (key,value) in options:
                 print key,value

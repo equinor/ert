@@ -180,7 +180,6 @@ class JobQueue(CClass):
         c_argv[:] = argv
         job_index = self.jobs.size
         queue_index = cfunc.cadd_job_mt( self , cmd , num_cpu , run_path , job_name , len(argv) , c_argv)
-        print "This is job:%d " % queue_index
         job = Job( self.driver , cfunc.get_job_ptr( self , queue_index ) , queue_index , False )
         
         self.jobs.add_job( job , job_name )
