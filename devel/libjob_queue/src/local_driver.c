@@ -56,7 +56,7 @@ struct local_driver_struct {
 
 
 static UTIL_SAFE_CAST_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
-static UTIL_SAFE_CAST_FUNCTION( local_job    , LOCAL_JOB_TYPE_ID    )
+UTIL_SAFE_CAST_FUNCTION( local_job    , LOCAL_JOB_TYPE_ID    )
 
 
 local_job_type * local_job_alloc() {
@@ -195,7 +195,10 @@ void * local_driver_alloc() {
 }
 
 
-
+bool local_driver_set_option( void * __driver , const char * option_key , const void * value){ 
+  local_driver_type * driver = local_driver_safe_cast( __driver );
+  return false;
+}
 
 
 

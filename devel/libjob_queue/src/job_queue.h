@@ -22,10 +22,15 @@
 extern "C" {
 #endif
 #include <pthread.h>
-#include <queue_driver.h>
+
 #include <path_fmt.h>
 
-typedef struct job_queue_struct job_queue_type;
+#include <queue_driver.h>
+
+
+  typedef struct job_queue_struct      job_queue_type;
+  typedef struct job_queue_node_struct job_queue_node_type;
+
   void                job_queue_submit_complete( job_queue_type * queue );
   job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
   void                job_queue_set_driver(job_queue_type * queue , queue_driver_type * driver);
@@ -74,7 +79,7 @@ typedef struct job_queue_struct job_queue_type;
   const char        * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_stderr_file( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_run_path( const job_queue_type * queue , int job_index);
-
+  job_queue_node_type * job_queue_iget_job( job_queue_type * job_queue , int job_nr );
 
 #ifdef __cplusplus
 }

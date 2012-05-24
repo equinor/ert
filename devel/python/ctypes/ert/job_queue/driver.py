@@ -34,13 +34,27 @@ class Driver(CClass):
         Creates a new driver instance
         """
         self.c_ptr = cfunc.alloc_driver( type )
+        print options
         if options:
             for (key,value) in options:
-                if isinstance( value , int ):
-                    cfunc.set_int_option( self , key , value )
-                else:
-                    cfunc.set_str_option( self , key , value )
+                print key,value
+                self.set_option( key , value )
         self.set_max_running( max_running )
+
+
+    def set_option(self , option , value):
+        """
+        Set the driver option @option to @value.
+
+        If the option is sucessfully set the method will return True,
+        otherwise the method will return False. If the @option is not
+        recognized the method will return False. The supplied value
+        should be a string or integer.
+        """
+        if isinstance( value , int ):
+            return cfunc.set_int_option( self , option , value )
+        else:
+            return cfunc.set_str_option( self , option , str(value) )
         
     def is_driver_instance( self ):
         return True
@@ -63,7 +77,8 @@ class Driver(CClass):
         cfunc.free_job( self , job )
     
     def get_status( self , job ):
-        return cfunc.cget_status( self , job )
+        status = cfunc.cget_status( self , job )
+        return status
     
     def kill_job( self , job ):
         cfunc.ckill_job( self , job )
@@ -132,13 +147,13 @@ cfunc.alloc_driver_rsh       = cwrapper.prototype("c_void_p    queue_driver_allo
 cfunc.alloc_driver           = cwrapper.prototype("c_void_p    queue_driver_alloc( int )")
 cfunc.set_driver_option      = cwrapper.prototype("void        queue_driver_set_option(driver , char* , char*)")
 
-
 cfunc.free_driver     = cwrapper.prototype("void        queue_driver_free( driver )")
 cfunc.submit          = cwrapper.prototype("c_void_p    queue_driver_submit_job( driver , char* , int , char* , char* , int , char**)")
 cfunc.free_job        = cwrapper.prototype("void        queue_driver_free_job( driver , job )")
-cfunc.get_status      = cwrapper.prototype("int         queue_driver_get_status( driver , job)")
+cfunc.cget_status     = cwrapper.prototype("int         job_queue_get_status( driver , job)")
 cfunc.kill_job        = cwrapper.prototype("void        queue_driver_kill_job( driver , job )")
 cfunc.set_str_option  = cwrapper.prototype("void        queue_driver_set_string_option( driver , char* , char*)")
 cfunc.set_int_option  = cwrapper.prototype("void        queue_driver_set_int_option( driver , char* , int)")
 cfunc.set_max_running = cwrapper.prototype("void        queue_driver_set_max_running( driver , int )")
 cfunc.get_max_running = cwrapper.prototype("int         queue_driver_get_max_running( driver )")
+

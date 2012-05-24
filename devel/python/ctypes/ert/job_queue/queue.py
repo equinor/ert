@@ -180,10 +180,12 @@ class JobQueue(CClass):
         c_argv[:] = argv
         job_index = self.jobs.size
         queue_index = cfunc.cadd_job_mt( self , cmd , num_cpu , run_path , job_name , len(argv) , c_argv)
+        print "This is job:%d " % queue_index
         job = Job( self.driver , cfunc.get_job_ptr( self , queue_index ) , queue_index , False )
         
         self.jobs.add_job( job , job_name )
         return job
+
 
     def clear( self ):
         pass
@@ -278,6 +280,6 @@ cfunc.num_waiting     = cwrapper.prototype("int  job_queue_get_num_waiting( job_
 cfunc.num_pending     = cwrapper.prototype("int  job_queue_get_num_pending( job_queue )")
 cfunc.is_running      = cwrapper.prototype("int  job_queue_is_running( job_queue )")
 cfunc.submit_complete = cwrapper.prototype("void job_queue_submit_complete( job_queue )")
-cfunc.get_job_ptr     = cwrapper.prototype("c_void_p job_queue_iget_job_data( job_queue , int)")
+cfunc.get_job_ptr     = cwrapper.prototype("c_void_p job_queue_iget_job( job_queue , int)")
 cfunc.iget_sim_start  = cwrapper.prototype("time_t   job_queue_iget_sim_start( job_queue , int)")
 cfunc.get_active_size = cwrapper.prototype("int      job_queue_get_active_size( job_queue )")

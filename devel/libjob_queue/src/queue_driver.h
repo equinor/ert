@@ -22,7 +22,6 @@
 extern "C" {
 #endif
 
-#include <util.h>
 #include <hash.h>
 
 typedef enum { NULL_DRIVER  = 0,
@@ -132,7 +131,7 @@ typedef enum { JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in exter
   const char        * queue_driver_get_name( const queue_driver_type * driver );
   
   bool                queue_driver_set_option( queue_driver_type * driver , const char * option_key , const void * value);
-  void                queue_driver_set_int_option( queue_driver_type * driver , const char * option_key , int int_value);
+  bool                queue_driver_set_int_option( queue_driver_type * driver , const char * option_key , int int_value);
   const        void * queue_driver_get_option( queue_driver_type * driver , const char * option_key );
   
   void                queue_driver_free( queue_driver_type * driver );

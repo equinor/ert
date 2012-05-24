@@ -58,7 +58,8 @@ class Job(CClass):
 
     @property
     def status( self ):
-        return self.driver.get_status( self )
+        st =  self.driver.get_status( self )
+        return st
 
     @property
     def running( self ):
@@ -85,3 +86,4 @@ class Job(CClass):
         else:
             return False
         
+

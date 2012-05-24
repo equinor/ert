@@ -36,7 +36,7 @@ run_path_fmt  = "tmp/simulations/run%d"
 
 default_driver_string = "LOCAL"
 num_jobs              = 10
-max_running           = 3
+max_running           = 2
 
 
 def copy_case( target_path , src_files):
@@ -72,13 +72,21 @@ def get_lsf_server():
 #rsh_driver   = driver.RSHDriver( 1 , [("be-lx655082" , 2)])
 
 
-queue = ecl.EclQueue( driver_type = driver.LOCAL_DRIVER , max_running = 2)
-
+queue = ecl.EclQueue( driver_type = driver.LSF_DRIVER , max_running = 2)
+joblist = []
 case_list = []    
 for case_nr in range( num_jobs ):
     copy_case( run_path_fmt % case_nr , src_files )
     case = ecl.EclCase( run_path_fmt % case_nr + "/ECLIPSE.DATA" )
-    queue.submit( case.datafile )
+    joblist.append(queue.submit( case.datafile ))
+
+while 1:
+    print "Waiting:%02d  Running:%02d   Complete:%02d" % (queue.num_waiting , queue.num_running , queue.num_complete),
+    for job in joblist:
+        print "[%02d] " % job.status,
+    print
+    time.sleep( 1 )
+
 
 queue.block_waiting()
 
