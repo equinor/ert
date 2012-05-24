@@ -55,6 +55,15 @@ Building libecl / libutil
    :-)
 
 
+Using from VisualStudio
+-----------------------
+The ERT code itself can unfortunately not be compiled with the
+VisualStudio C++ compiler, however you can link against the ert
+libraries. In that case you will need the dummy header file
+VisualStudio/stdbool.h
+
+
+
 About the portabaility and features
 ----------------------------------- 
 
