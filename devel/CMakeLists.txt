@@ -6,8 +6,8 @@ set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99" )
 set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
 
-set( INSTALL_GROUP  ""     CACHE STRING "Group to install as - blank to install as current group")
-set( INSTALL_ROOT   "/tmp" CACHE STRING "Root path for installation")
+set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
+set( CMAKE_INSTALL_PREFIX   "/usr/local" )
 
 #-----------------------------------------------------------------
 option(USE_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
