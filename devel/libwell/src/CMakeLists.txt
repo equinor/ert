@@ -20,11 +20,11 @@ target_link_libraries( well_shared ecl_shared )
 
 #-----------------------------------------------------------------
 if (WELL_INSTALL_PREFIX)
-   install(TARGETS well_static well_shared DESTINATION ${INSTALL_ROOT}/${WELL_INSTALL_PREFIX}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/${WELL_INSTALL_PREFIX}/include)
+   install(TARGETS well_static well_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/lib)
+   install(FILES ${header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/include)
 else()
-   install(TARGETS well_static well_shared DESTINATION ${INSTALL_ROOT}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/include)
+   install(TARGETS well_static well_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+   install(FILES ${header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 endif()        
 
 

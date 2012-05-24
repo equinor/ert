@@ -10,9 +10,9 @@ foreach(prog ${program_list})
    target_link_libraries( ${prog} well_static ecl_static util_static )
    #-----------------------------------------------------------------
    if (ECL_INSTALL_PREFIX)
-      set (destination ${INSTALL_ROOT}/${WELL_INSTALL_PREFIX}/bin)
+      set (destination ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/bin)
    else()
-      set (destination ${INSTALL_ROOT}/bin)
+      set (destination ${CMAKE_INSTALL_PREFIX}/bin)
    endif()
 
    install(TARGETS ${prog} DESTINATION ${destination})
