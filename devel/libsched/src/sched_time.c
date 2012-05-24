@@ -18,8 +18,11 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <util.h>
 #include <time.h>
+
+#include <util.h>
+#include <type_macros.h>
+
 #include <sched_types.h>
 #include <sched_time.h>
 
