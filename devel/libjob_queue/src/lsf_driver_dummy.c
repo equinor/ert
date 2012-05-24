@@ -79,7 +79,8 @@ void lsf_driver_free__(void * driver ) {
 }
 
 
-void lsf_driver_set_option( void * driver , const char * option_key , const void * value) {
+bool lsf_driver_set_option( void * driver , const char * option_key , const void * value) {
+  return false;
 }
 
 
