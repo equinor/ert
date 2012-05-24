@@ -72,13 +72,13 @@ def get_lsf_server():
 #rsh_driver   = driver.RSHDriver( 1 , [("be-lx655082" , 2)])
 
 
-queue = ecl.EclQueue( driver_type = driver.LOCAL_DRIVER , size = num_jobs , max_running = 2)
+queue = ecl.EclQueue( driver_type = driver.LOCAL_DRIVER , max_running = 2)
 
 case_list = []    
 for case_nr in range( num_jobs ):
     copy_case( run_path_fmt % case_nr , src_files )
     case = ecl.EclCase( run_path_fmt % case_nr + "/ECLIPSE.DATA" )
-    case.submit( queue )
+    queue.submit( case.datafile )
 
 queue.block_waiting()
 
