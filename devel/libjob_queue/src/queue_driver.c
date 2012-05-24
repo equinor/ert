@@ -176,17 +176,19 @@ bool queue_driver_set_option( queue_driver_type * driver , const char * option_k
   if (driver->set_option != NULL) 
     /* The actual low level set functions can not fail! */
     return driver->set_option( driver->data , option_key , value );
-  else
+  else {
     util_abort("%s: driver:%s does not support run time setting of options\n",__func__ , driver->name );
+    return false;
+  }
 }
 
-void queue_driver_set_int_option( queue_driver_type * driver , const char * option_key , int int_value) {
+bool queue_driver_set_int_option( queue_driver_type * driver , const char * option_key , int int_value) {
   const void * void_value = &int_value;
-  queue_driver_set_option( driver , option_key , void_value );
+  return queue_driver_set_option( driver , option_key , void_value );
 }
 
-void queue_driver_set_string_option( queue_driver_type * driver , const char * option_key , const char * value) {
-  queue_driver_set_option( driver , option_key , value);
+bool queue_driver_set_string_option( queue_driver_type * driver , const char * option_key , const char * value) {
+  return queue_driver_set_option( driver , option_key , value);
 }
 
 /*****************************************************************/
@@ -271,8 +273,9 @@ void queue_driver_kill_job( queue_driver_type * driver , void * job_data ) {
   driver->kill_job( driver->data , job_data );
 }
 
-job_status_type  queue_driver_get_status( queue_driver_type * driver , void * job_data) {
-  return driver->get_status( driver->data , job_data );
+job_status_type queue_driver_get_status( queue_driver_type * driver , void * job_data) {
+  job_status_type status = driver->get_status( driver->data , job_data );
+  return status;
 }
 
 void queue_driver_free_driver( queue_driver_type * driver ) {

@@ -247,7 +247,7 @@ typedef enum {SUBMIT_OK           = 0 ,
        
 */
 
-typedef struct {
+struct job_queue_node_struct {
   job_status_type        job_status;      /* The current status of the job. */
   int                    submit_attempt;  /* Which attempt is this ... */
   int                    num_cpu;         /* How many cpu's will this job need - the driver is free to ignore if not relevant. */
@@ -268,7 +268,7 @@ typedef struct {
   time_t                 submit_time;     /* When was the job added to job_queue - the FIRST TIME. */
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
   pthread_rwlock_t       job_lock;        /* This lock provides read/write locking of the job_data field. */ 
-} job_queue_node_type;
+};
 
 
 
@@ -1295,7 +1295,7 @@ void job_queue_run_jobs_threaded(job_queue_type * queue , int num_total_run, boo
 
 static int job_queue_add_job__(job_queue_type * queue , const char * run_cmd , int num_cpu , const char * run_path , const char * job_name , int argc , const char ** argv, bool mt) {
   if (!queue->user_exit) {/* We do not accept new jobs if a user-shutdown has been iniated. */
-    int job_index;
+    int job_index;  // This should be better protected lockwise
     
     pthread_mutex_lock( &queue->queue_mutex );
     {
@@ -1539,6 +1539,11 @@ void * job_queue_iget_job_data( job_queue_type * job_queue , int job_nr ) {
 }
 
 
+job_queue_node_type * job_queue_iget_job( job_queue_type * job_queue , int job_nr ) {
+  job_queue_node_type * job = job_queue->jobs[ job_nr ];
+  return job;
+}
+
 
 
 void job_queue_free(job_queue_type * queue) {
@@ -1606,3 +1611,11 @@ const char * job_queue_status_name( job_status_type status ) {
     return NULL;
   }
 }
+
+
+/*****************************************************************/
+
+job_status_type job_queue_get_status( queue_driver_type * driver , job_queue_node_type * job) {
+  return queue_driver_get_status( driver , job->job_data );
+}
+
