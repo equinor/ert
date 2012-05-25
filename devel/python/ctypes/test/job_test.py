@@ -72,7 +72,7 @@ def get_lsf_server():
 #rsh_driver   = driver.RSHDriver( 1 , [("be-lx655082" , 2)])
 
 
-queue = ecl.EclQueue( driver_type = driver.LSF_DRIVER , max_running = 2)
+queue = ecl.EclQueue( driver_type = driver.LSF_DRIVER , max_running = 3)
 joblist = []
 case_list = []    
 for case_nr in range( num_jobs ):
