@@ -35,6 +35,7 @@ class GRDECLTest( unittest.TestCase ):
         kw = ecl.EclKW.read_grdecl( open( src_file , "r") , "PERMX")
         self.assertTrue( kw )
 
+
     def testReLoad( self ):
         kw = ecl.EclKW.read_grdecl( open( src_file , "r") , "PERMX")
         tmp_file1 = "/tmp/permx1.grdecl"
