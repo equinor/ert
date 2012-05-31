@@ -26,6 +26,7 @@
 #include <msg.h>
 #include <rng.h>
 #include <vector.h>
+#include <path_fmt.h>
 
 #include <enkf_node.h>
 #include <enkf_config_node.h>
@@ -36,8 +37,8 @@
 #include <summary.h>
 #include <ecl_static_kw.h>
 #include <gen_kw.h>
-#include <path_fmt.h>
 #include <gen_data.h>
+#include <container.h>
 #include <enkf_serialize.h>
 
 /**
@@ -259,7 +260,7 @@ bool enkf_node_vector_storage( const enkf_node_type * node ) {
 
 void enkf_node_alloc_domain_object(enkf_node_type * node) {
   if (node->data != NULL)
-    node->freef(node->data);
+    node->freef( node->data );
   node->data = node->alloc(enkf_config_node_get_ref(node->config));
 }
 
@@ -362,8 +363,10 @@ bool enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs ,
       return true;
     } else
       return false;
-  } else 
+  } else {
     util_abort("%s: internal error - function should only be called by nodes with vector storage.\n",__func__);
+    return false;
+  }
 }
 
 
@@ -593,14 +596,14 @@ void enkf_node_load(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_typ
       enkf_node_load_vector( enkf_node , fs , node_id.iens , node_id.state );
     else {
       if ((node_id.iens        == enkf_node->__node_id.iens) && 
-	  (node_id.state       == enkf_node->__node_id.state) && 
-	  (node_id.report_step == enkf_node->__node_id.report_step) && 
-	  (!enkf_node->__modified)) 
-	return;  /* The in memory representation agrees with the buffer values */
+          (node_id.state       == enkf_node->__node_id.state) && 
+          (node_id.report_step == enkf_node->__node_id.report_step) && 
+          (!enkf_node->__modified)) 
+        return;  /* The in memory representation agrees with the buffer values */
       else {
-	enkf_node_buffer_load( enkf_node , fs , node_id.report_step, node_id.iens , node_id.state );
-	enkf_node->__node_id     = node_id;
-	enkf_node->__modified    = false;
+        enkf_node_buffer_load( enkf_node , fs , node_id.report_step, node_id.iens , node_id.state );
+        enkf_node->__node_id     = node_id;
+        enkf_node->__modified    = false;
       }
     }
   }
@@ -960,6 +963,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
 
   switch (impl_type) {
   case(CONTAINER):
+    node->alloc              = container_alloc__;
+    node->freef              = container_free__;
     break;
   case(GEN_KW):
     node->alloc              = gen_kw_alloc__;
@@ -1108,20 +1113,22 @@ enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
 }
 
 
-static void enkf_node_container_add( enkf_node_type * node , const enkf_config_node_type * child_node ) {
+static void enkf_node_container_add( enkf_node_type * node , const enkf_node_type * child_node ) {
+  printf("Adding child node \n");
   vector_append_ref( node->container_nodes , child_node );
 }
 
 
 
 enkf_node_type * enkf_node_container_alloc(const enkf_config_node_type * config, hash_type * node_hash) {
-  enkf_node_type * container_node    = enkf_node_alloc_empty(config);
+  enkf_node_type * container_node = enkf_node_alloc( config );
   {
     for (int i=0; i < enkf_config_node_container_size( config ); i++) {
       const enkf_config_node_type * child_config = enkf_config_node_container_iget( config , i );
       enkf_node_type * child_node = hash_get( node_hash , enkf_config_node_get_key( child_config ));
-
+      
       enkf_node_container_add( container_node , child_node );
+      container_add_node( enkf_node_value_ptr( container_node ) , enkf_node_value_ptr( child_node ));
     }
   }
   return container_node;

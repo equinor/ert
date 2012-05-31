@@ -405,18 +405,24 @@ static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_c
   for (int ik = 0; ik < keys; ik++) {
     const char * key = stringlist_iget(keylist, ik);
     const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , key);
-    if (enkf_config_node_get_impl_type( config_node ) == CONTAINER)
+    if (enkf_config_node_get_impl_type( config_node ) == CONTAINER) {
       stringlist_append_ref( container_keys , key );
-    else
+      printf("%s is a container \n",key);
+    } else
       enkf_state_add_node(enkf_state , key , config_node);
   }
   
   // 2: Add container nodes - must ensure that all other nodes have
   //    been added already (this implies that containers of containers
   //    will be victim of hash retrieval order problems ....
+
+  stringlist_fprintf( container_keys , " " , stdout );
+  printf("\n");
+
   for (int ik = 0; ik < stringlist_get_size( container_keys ); ik++) {
-    const char * key = stringlist_iget(keylist, ik);
+    const char * key = stringlist_iget(container_keys, ik);
     const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , key);
+    printf("Adding container node:%s \n",key);
     enkf_state_add_node( enkf_state , key , config_node );
   }
   
@@ -564,6 +570,7 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
     if (enkf_config_node_get_impl_type( config ) == CONTAINER)
       enkf_node = enkf_node_container_alloc( config , enkf_state->node_hash );
     else
+
       enkf_node = enkf_node_alloc( config );
     
     hash_insert_hash_owned_ref(enkf_state->node_hash , node_key , enkf_node, enkf_node_free__);
@@ -680,7 +687,6 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                     }
                   } 
                 }
-
               }
             } 
             hash_iter_free(iter);

@@ -39,7 +39,7 @@ class SumTest( unittest.TestCase ):
 
     def test_load(self):
         self.assertTrue( self.sum , "Load failed")
-
+        
 
     def test_interp(self):
         sum = self.sum

@@ -232,9 +232,10 @@ void summary_user_get_vector(const summary_type * summary , const char * index_k
      3. The ecl_sum instance does not have the variable we are asking for.
 
    In the two first cases the function will return false, ultimately
-   signaling that the simulation has failed. In the last case we
-   return true, because this is a typical situation for e.g. a well
-   which has not yet opened.
+   signaling that the simulation has failed. In the last case we check
+   the required flag of the variable, and if this is set to false we
+   return true. This is done because this is a typical situation for
+   e.g. a well which has not yet opened.  
 */
 
 bool summary_forward_load(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step) {
@@ -242,31 +243,35 @@ bool summary_forward_load(summary_type * summary , const char * ecl_file_name , 
   double load_value;
   if (ecl_sum != NULL) {
     const char * var_key               = summary_config_get_var(summary->config);
-    const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config , ecl_sum);
+    bool required                      = summary_config_get_required(summary->config );
     
     /* Check if the ecl_sum instance has this report step. */
     if (ecl_sum_has_report_step( ecl_sum , report_step )) {
       int last_report_index = ecl_sum_iget_report_end( ecl_sum , report_step );
-
-      if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR)) {
-        /* .. check if the/group well is defined in the smspec file (i.e. if it is open). */
+      
+      
+      if (required) {
+        if (ecl_sum_has_general_var(ecl_sum , var_key)) {
+          load_value = ecl_sum_iget_general_var(ecl_sum , last_report_index  ,var_key );
+          loadOK = true;
+        }
+      } else {
         if (ecl_sum_has_general_var(ecl_sum , var_key)) 
           load_value = ecl_sum_iget_general_var(ecl_sum , last_report_index  , var_key);
-        else 
+        else {
           /* 
-             The summary object does not have this well/group - probably
-             meaning that it has not yet opened. We return loadOK ==
-             true in this case.
+             The summary object does not have this variable - probably
+             meaning that it is a well/group which has not yet
+             opened. When required == false we do not signal load
+             failure in this situation.
              
              If the user has misspelled the name, we will go through
              the whole simulation without detecting that error.
           */
           load_value = 0;
-        loadOK = true;   
-      } else if (ecl_sum_has_general_var(ecl_sum , var_key)) {
-        load_value = ecl_sum_iget_general_var(ecl_sum , last_report_index  ,var_key );
-        loadOK = true;
-      }
+          loadOK = true;   
+        }
+      } 
     } else if (report_step == 0) {
       load_value = 0;
       loadOK = true;  

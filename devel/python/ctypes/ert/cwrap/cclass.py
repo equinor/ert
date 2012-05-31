@@ -28,11 +28,12 @@ class CClass(object):
     which wrap a C 'class' should inherit from this class.
 
     Observe that this implementation makes a nasty assumption that the
-    actual implemntation, i.e. EclKW should store the underlying C
+    actual implementation, i.e. EclKW should store the underlying C
     pointer in the attribute 'c_ptr' - otherwise the from_param()
     method will blow up at first use.
     """
-    
+    c_ptr = None
+
     @classmethod
     def from_param( cls , obj ):
         if obj is None:

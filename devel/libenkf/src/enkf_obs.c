@@ -476,7 +476,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
         obs_vector_type * obs_vector;
         enkf_config_node_type * config_node;
         
-        config_node = ensemble_config_add_summary( ensemble_config , obs_key );
+        config_node = ensemble_config_add_summary( ensemble_config , obs_key , true);
         if (config_node != NULL) {
           obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ) , enkf_obs->obs_time , num_reports);
           if (obs_vector != NULL) {
@@ -509,7 +509,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const s
         obs_vector_type * obs_vector;
         enkf_config_node_type * config_node;
         
-        config_node = ensemble_config_add_summary( ensemble_config , sum_key );
+        config_node = ensemble_config_add_summary( ensemble_config , sum_key , true);
         if (config_node != NULL) {
           obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , sum_key ) , enkf_obs->obs_time , num_reports);
           if (obs_vector != NULL) {

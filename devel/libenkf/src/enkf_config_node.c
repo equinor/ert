@@ -297,9 +297,9 @@ void enkf_config_node_update_surface( enkf_config_node_type * config_node , cons
 
 /*****************************************************************/
 
-enkf_config_node_type * enkf_config_node_alloc_summary( const char * key ) {
+enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , bool required) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_RESULT , SUMMARY , key );
-  config_node->data = summary_config_alloc( key , config_node->vector_storage);
+  config_node->data = summary_config_alloc( key , config_node->vector_storage , required);
   return config_node;
 }
 
@@ -323,7 +323,15 @@ enkf_config_node_type * enkf_config_node_new_container( const char * key ) {
 void enkf_config_node_update_container( enkf_config_node_type * config_node , const enkf_config_node_type * child_node) {
   vector_append_ref( config_node->container_nodes , child_node );
 }                                       
-                                       
+  
+const char * enkf_config_node_iget_container_key( const enkf_config_node_type * config_node , int index) {
+  printf("%s  container size:%d \n",__func__ , vector_get_size( config_node->container_nodes ));
+  {
+    const enkf_config_node_type * child_node = vector_iget_const( config_node->container_nodes , index );
+    return child_node->key;
+  }
+}
+                                     
 
 /*****************************************************************/
 

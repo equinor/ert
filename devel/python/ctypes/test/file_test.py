@@ -24,11 +24,12 @@ import os
 import os.path
 import ert
 import ert.ecl.ecl as ecl
-from   test_util import approx_equal, approx_equalv
+from   test_util import approx_equal, approx_equalv, file_equal
 
 
-file = "data/eclipse/case/ECLIPSE.UNRST"
+file     = "data/eclipse/case/ECLIPSE.UNRST"
 fmt_file = "data/eclipse/case/ECLIPSE.FUNRST"
+
 
 
 class FileTest( unittest.TestCase ):
@@ -47,7 +48,7 @@ class FileTest( unittest.TestCase ):
         rst_file.fwrite( fortio )
         fortio.close()
         rst_file.close()
-        self.assertTrue( filecmp.cmp( "/tmp/ECLIPSE.UNRST" , file , shallow = False) ) 
+        self.assertTrue( file_equal( "/tmp/ECLIPSE.UNRST" , file ) ) 
         
 
     def test_save(self):
@@ -57,22 +58,22 @@ class FileTest( unittest.TestCase ):
         swat0.assign( 0.75 )
         rst_file.save_kw( swat0 )
         rst_file.close( )
-        self.assertFalse( filecmp.cmp( "/tmp/ECLIPSE.UNRST" , file , shallow = False) )
+        self.assertFalse( file_equal( "/tmp/ECLIPSE.UNRST" , file ) )
         
         rst_file1 = ecl.EclFile( file )
         rst_file2 = ecl.EclFile( "/tmp/ECLIPSE.UNRST" , read_only = False)
         
         swat1 = rst_file1["SWAT"][0]
         swat2 = rst_file2["SWAT"][0]
-
         swat2.assign( swat1 )
+
         rst_file2.save_kw( swat2 )
         self.assertTrue( swat1.equal( swat2 ))
         rst_file1.close()
         rst_file2.close()
 
         # Random failure ....
-        self.assertTrue( filecmp.cmp( "/tmp/ECLIPSE.UNRST" , file , shallow = False) ) 
+        self.assertTrue( file_equal( "/tmp/ECLIPSE.UNRST" , file ) ) 
         
 
     def test_save_fmt(self):
@@ -82,7 +83,7 @@ class FileTest( unittest.TestCase ):
         swat0.assign( 0.75 )
         rst_file.save_kw( swat0 )
         rst_file.close( )
-        self.assertFalse( filecmp.cmp( "/tmp/ECLIPSE.FUNRST" , fmt_file , shallow = False) )
+        self.assertFalse( file_equal( "/tmp/ECLIPSE.FUNRST" , fmt_file ) )
         
         rst_file1 = ecl.EclFile( fmt_file )
         rst_file2 = ecl.EclFile( "/tmp/ECLIPSE.FUNRST" , read_only = False)
@@ -92,13 +93,12 @@ class FileTest( unittest.TestCase ):
 
         swat2.assign( swat1 )
         rst_file2.save_kw( swat2 )
-        swat2[100] = 999
         self.assertTrue( swat1.equal( swat2 ))
         rst_file1.close()
         rst_file2.close()
 
         # Random failure ....
-        self.assertTrue( filecmp.cmp( "/tmp/ECLIPSE.FUNRST" , fmt_file , shallow = False) ) 
+        self.assertTrue( file_equal( "/tmp/ECLIPSE.FUNRST" , fmt_file ) ) 
         
 
 

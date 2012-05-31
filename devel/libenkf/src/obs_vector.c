@@ -586,8 +586,10 @@ static const char * __summary_kw( const char * field_name ) {
     return "BSWAT";
   else if (strcmp( field_name , "SGAS") == 0)
     return "BSGAS";
-  else
+  else {
     util_abort("%s: sorry - could not \'translate\' field:%s to block summayr variable\n",__func__ , field_name);
+    return NULL;
+  }
 }
 
 
@@ -607,8 +609,8 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
   const char * obs_label      = conf_instance_get_name_ref(conf_instance);
   const char * source_string  = conf_instance_get_item_value_ref(conf_instance , "SOURCE");
   const char * field_name     = conf_instance_get_item_value_ref(conf_instance , "FIELD");
-  char  * sum_kw;
-  bool    OK = true;
+  char  * sum_kw = NULL;
+  bool    OK     = true;
   
   if (strcmp(source_string , "FIELD") == 0) {
     source_type = SOURCE_FIELD;
@@ -648,11 +650,11 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
       double value     = conf_instance_get_item_value_double(obs_instance, "VALUE");
       double min_error = conf_instance_get_item_value_double(obs_instance, "ERROR_MIN");
       
-      if (strcmp( error_mode , "REL"))
+      if (strcmp( error_mode , "REL") == 0)
         error *= value;
-      else
+      else if (strcmp( error_mode , "RELMIN") == 0)
         error = util_double_max( error * value , min_error );
-      
+
       obs_value[obs_pt_nr] = value;
       obs_std  [obs_pt_nr] = error;
       
@@ -678,17 +680,13 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     if (source_type == SOURCE_FIELD) {
       const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , field_name);
       const field_config_type     * field_config = enkf_config_node_get_ref( config_node ); 
-      block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , field_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
+      block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , NULL , field_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
       
       if (block_obs != NULL) {
         obs_vector = obs_vector_alloc( BLOCK_OBS , obs_label , ensemble_config_get_node(ensemble_config , field_name) , obs_time , size );
         obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
       }
     } else if (source_type == SOURCE_SUMMARY) {
-      // Must call: ensemble_config_add_summary(ens_config , sum_key) to
-      // ensure that the new sum_key instances are added to the ensemble.
-      
-      
       bool OK = true;
       if (refcase != NULL) {
         for (int i=0; i < stringlist_get_size( summary_keys ); i++) {
@@ -702,12 +700,23 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
       }
       if (OK) {
         // We can create the container node and add the summary nodes.
-        enkf_config_node_type * container = ensemble_config_add_container( ensemble_config , NULL );
+        enkf_config_node_type * container_config = ensemble_config_add_container( ensemble_config , NULL );
 
         for (int i=0; i < stringlist_get_size( summary_keys ); i++) {
           const char * sum_key = stringlist_iget( summary_keys , i );
-          enkf_config_node_type * child_node = ensemble_config_add_summary( ensemble_config , sum_key );
-          enkf_config_node_update_container( container , child_node );
+          enkf_config_node_type * child_node = ensemble_config_add_summary( ensemble_config , sum_key , true);
+          enkf_config_node_update_container( container_config , child_node );
+        }
+        
+        for (int i=0; i < stringlist_get_size( summary_keys ); i++) 
+          printf("%02d : %s == %s \n", i , stringlist_iget( summary_keys , i ) , enkf_config_node_iget_container_key( container_config , i ));
+        
+        {
+          block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , summary_keys , container_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
+          if (block_obs != NULL) {
+            obs_vector = obs_vector_alloc( BLOCK_OBS , obs_label , container_config , obs_time , size );
+            obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
+          }
         }
       }
       printf("Have create container and sum nodes \n");
@@ -740,15 +749,14 @@ void obs_vector_iget_observations(const obs_vector_type * obs_vector , int repor
 void obs_vector_measure(const obs_vector_type * obs_vector , enkf_fs_type * fs , state_enum state , int report_step , const enkf_state_type * enkf_state ,  meas_data_type * meas_data , const active_list_type * active_list) {
   
   void * obs_node = vector_iget( obs_vector->nodes , report_step );
-  if ( obs_node != NULL) {
+  if ( obs_node != NULL ) {
     enkf_node_type * enkf_node = enkf_state_get_node( enkf_state , obs_vector_get_state_kw( obs_vector ));
     node_id_type node_id = { .report_step = report_step , 
                              .state       = state , 
                              .iens        = enkf_state_get_iens( enkf_state ) };
-
+    
     enkf_node_load(enkf_node , fs , node_id);
     obs_vector->measure(obs_node , enkf_node_value_ptr(enkf_node) , node_id , meas_data , active_list);
-    
   }
 }
 

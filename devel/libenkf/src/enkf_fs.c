@@ -41,7 +41,7 @@
 #include <ecl_static_kw.h>
 #include <plain_driver.h>
 #include <gen_data.h>
-
+#include <time_map.h>
 
 
 
@@ -215,7 +215,7 @@ struct enkf_fs_struct {
   fs_driver_type         * index ;
 
   bool                     read_only;             /* Whether this filesystem has been mounted read-only. */
-  
+  time_map_type          * time_map;
   /* 
      The variables below here are for storing arbitrary files within 
      the enkf_fs storage directory, but not as serialized enkf_nodes.
@@ -235,6 +235,7 @@ UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_only) {
   enkf_fs_type * fs          = util_malloc(sizeof * fs , __func__);
   UTIL_TYPE_ID_INIT( fs , ENKF_FS_TYPE_ID );
+  fs->time_map               = time_map_alloc();
   fs->index                  = NULL;
   fs->eclipse_static         = NULL;
   fs->parameter              = NULL;
@@ -469,6 +470,7 @@ void enkf_fs_free(enkf_fs_type * fs) {
   path_fmt_free( fs->case_member_fmt );
   path_fmt_free( fs->case_tstep_fmt );
   path_fmt_free( fs->case_tstep_member_fmt );
+  time_map_free( fs->time_map );
   free(fs);
 
 }

@@ -81,7 +81,7 @@ extern "C" {
                                                  void                * );
 
 
-  enkf_config_node_type * enkf_config_node_alloc_summary( const char * key );
+  enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , bool required );
 
 
   void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max );
@@ -147,7 +147,7 @@ extern "C" {
 
   enkf_config_node_type *       enkf_config_node_new_container( const char * key );
   void                          enkf_config_node_update_container( enkf_config_node_type * config_node , const enkf_config_node_type * child_node);
-
+  const char *                  enkf_config_node_iget_container_key( const enkf_config_node_type * config_node , int index);
   /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
     because the enkf_config_node needs to know how to free the min_std node.

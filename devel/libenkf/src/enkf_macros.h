@@ -281,6 +281,13 @@ void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state ,
    obs_prefix ## _measure(obs , state , node_id , meas_data , __active_list); \
 }
 
+#define VOID_MEASURE_UNSAFE(obs_prefix, state_prefix) \
+void obs_prefix ## _measure__(const void * void_obs ,  const void * state , node_id_type node_id , meas_data_type * meas_data , const active_list_type * __active_list) { \
+   const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast_const( void_obs );     \
+   obs_prefix ## _measure(obs , state , node_id , meas_data , __active_list); \
+}
+
+
 #define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , node_id_type , meas_data_type * , const active_list_type *)
 
 

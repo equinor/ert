@@ -18,7 +18,7 @@
 
 #include <util.h>
 #include <vector.h>
-
+#include <type_macros.h>
 
 #include <container_config.h>
 #include <container.h>
@@ -47,10 +47,19 @@ void container_free( container_type * container ) {
   free( container );
 }
 
+void container_add_node(container_type * container , void * child_node ) {
+  vector_append_ref( container->nodes , child_node );
+}
+
+const void * container_iget_node(const container_type * container , int index) {
+  return vector_iget_const( container->nodes , index );
+}
+
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
+UTIL_IS_INSTANCE_FUNCTION(container , CONTAINER)
 UTIL_SAFE_CAST_FUNCTION(container , CONTAINER)
 UTIL_SAFE_CAST_FUNCTION_CONST(container , CONTAINER)
 VOID_ALLOC(container)

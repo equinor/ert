@@ -562,11 +562,11 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
           if (ensemble_config->refcase != NULL) {
             ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* expanding the wildcard notatition with help of the refcase. */
             for (k=0; k < stringlist_get_size( keys ); k++) 
-              ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) );
+              ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) , false);
           } else
             util_exit("error: when using summary wildcards like: \"%s\" you must supply a valid refcase.\n",key);
         } else 
-          ensemble_config_add_summary(ensemble_config , key );
+          ensemble_config_add_summary(ensemble_config , key , false);
       }
     }
     
@@ -758,16 +758,20 @@ enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * con
    NULL.
 */
 
-enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key) {
+enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key , bool required) {
   enkf_config_node_type * config_node = NULL;
 
   if (hash_has_key(ensemble_config->config_nodes, key)) {
     config_node = hash_get(ensemble_config->config_nodes, key);
     if (enkf_config_node_get_impl_type( config_node ) != SUMMARY)
       util_abort("%s: ensemble key:%s already exists - but it is not of summary type\n",__func__ , key);
+    {
+      summary_config_type * summary_config = enkf_config_node_get_ref( config_node );
+      summary_config_update_required( summary_config , required );
+    }
   } else {
     if ((ensemble_config->refcase == NULL) || (ecl_sum_has_general_var( ensemble_config->refcase , key ))) {
-      config_node = enkf_config_node_alloc_summary( key );
+      config_node = enkf_config_node_alloc_summary( key , required );
       ensemble_config_add_node__(ensemble_config , config_node );
     } else
       fprintf(stderr,"** warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( ensemble_config->refcase ) , key);

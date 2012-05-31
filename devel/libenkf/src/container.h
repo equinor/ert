@@ -22,11 +22,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-  typedef struct container_struct container_type;
+#include <type_macros.h>
 
   
+  typedef struct container_struct container_type;
+
+  void         container_add_node(container_type * container , void * child_node );
+  const void * container_iget_node(const container_type * container , int index);
+  
+  VOID_ALLOC_HEADER(container);
+  VOID_FREE_HEADER(container);
+  UTIL_IS_INSTANCE_HEADER(container);
+  UTIL_SAFE_CAST_HEADER_CONST(container);
+
 #ifdef __cplusplus
 }
 #endif
