@@ -45,4 +45,11 @@ def approx_equalv(a,b):
             
 
 def file_equal(f1,f2):
-    return filecmp.cmp(f1,f2,shallow = False)
+    buffer1 = open(f1).read()
+    buffer2 = open(f2).read()
+    if buffer1 == buffer2:
+        return True
+    else:
+        return False
+
+

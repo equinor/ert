@@ -61,12 +61,7 @@ class EclGrid(CClass):
         If you are so inclined ...  
         """
         obj = object.__new__( cls )
-        gridhead = ecl_kw.EclKW.new( "GRIDHEAD" , 4 , 3 ) 
-        gridhead[0] = 1 
-        for i in (range(3)): 
-            gridhead[i+1] = specgrid[i]
-    
-        obj.c_ptr = cfunc.grdecl_create( gridhead , zcorn , coord , actnum , None) # , mapaxes) 
+        obj.c_ptr = cfunc.grdecl_create( specgrid[0] , specgrid[1] , specgrid[2] , zcorn , coord , actnum , None) # , mapaxes) 
         obj.data_owner = True
         obj.parent     = None
         return obj
@@ -561,6 +556,15 @@ class EclGrid(CClass):
         else:
             raise ValueError("Keyword: %s has invalid size(%d), must be either nactive:%d  or nx*ny*nz:%d" % (ecl_kw.name , ecl_kw.size , self.nactive ,self.size))
         
+    def save_grdecl(self , pyfile):
+        """
+        Will write the the grid content as grdecl formatted keywords.
+
+        Will only write the main grid.
+        """
+        cfile = CFILE( pyfile )
+        cfunc.fprintf_grdecl( self , cfile )
+
         
     def write_grdecl( self , ecl_kw , pyfile , default_value = 0):
         """
@@ -606,7 +610,7 @@ cfunc = CWrapperNameSpace("ecl_grid")
 
 
 cfunc.fread_alloc                  = cwrapper.prototype("c_void_p ecl_grid_load_case( char* )")
-cfunc.grdecl_create                = cwrapper.prototype("c_void_p ecl_grid_alloc_GRDECL_kw( ecl_kw , ecl_kw , ecl_kw , ecl_kw )") # MAPAXES not supported yet
+cfunc.grdecl_create                = cwrapper.prototype("c_void_p ecl_grid_alloc_GRDECL_kw( int , int , int , ecl_kw , ecl_kw , ecl_kw )") # MAPAXES not supported yet
 cfunc.get_lgr                      = cwrapper.prototype("c_void_p ecl_grid_get_lgr( ecl_grid , char* )")
 cfunc.get_cell_lgr                 = cwrapper.prototype("c_void_p ecl_grid_get_cell_lgr1( ecl_grid , int )")
 cfunc.exists                       = cwrapper.prototype("bool ecl_grid_exists( char* )")
@@ -638,3 +642,4 @@ cfunc.get_top                      = cwrapper.prototype("double ecl_grid_get_top
 cfunc.get_bottom                   = cwrapper.prototype("double ecl_grid_get_bottom2( ecl_grid , int , int )") 
 cfunc.locate_depth                 = cwrapper.prototype("int    ecl_grid_locate_depth( ecl_grid , double , int , int )") 
 cfunc.invalid_cell                 = cwrapper.prototype("bool   ecl_grid_cell_invalid1( ecl_grid , int)")
+cfunc.fprintf_grdecl               = cwrapper.prototype("void   ecl_grid_fprintf_grdecl( ecl_grid , FILE) ")

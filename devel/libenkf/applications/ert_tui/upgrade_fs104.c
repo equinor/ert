@@ -15,34 +15,40 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
-
-#include <enkf_fs.h>
-#include <enkf_main.h>
-#include <util.h>
-#include <config.h>
-#include <hash.h>
-#include <enkf_types.h>
-#include <string.h>
-#include <local_driver.h>
-#include <lsf_driver.h>
 #include <signal.h>
-#include <ext_joblist.h>
-#include <enkf_sched.h>
-#include <config_keys.h>
-#include <enkf_defaults.h>
-#include <stringlist.h>
-#include <enkf_tui_main.h>
+#include <unistd.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <ert_build_info.h>
-#include <site_config_file.h>
+
+#include <util.h>
+#include <hash.h>
+#include <stringlist.h>
 #include <block_fs.h>
+#include <msg.h>
+
 #include <ecl_sum.h>
 #include <ecl_smspec.h>
+
+#include <config.h>
+
+#include <local_driver.h>
+#include <lsf_driver.h>
+#include <ext_joblist.h>
+
+#include <enkf_fs.h>
+#include <enkf_main.h>
+#include <enkf_types.h>
+#include <enkf_sched.h>
+#include <config_keys.h>
+#include <enkf_defaults.h>
+#include <enkf_tui_main.h>
+#include <ert_build_info.h>
+#include <site_config_file.h>
 #include <block_fs_driver.h>
 #include <fs_driver.h>
-#include <msg.h>
+
 
 #define BLOCK_FS_DRIVER_INDEX_ID 3002
 

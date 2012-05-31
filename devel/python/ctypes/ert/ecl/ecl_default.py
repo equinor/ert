@@ -57,9 +57,6 @@ Depending on the computing environment some variables might be
 irrelevant; it is not necessary to set variables which will not be
 used.
 """ 
-#cmd                  = "/project/res/etc/ERT/Scripts/run_eclipse.py"
-#version              = "2009.2"   
-#lsf_resource_request = "select[cs && x86_64Linux] rusage[ecl100v2000=1:duration=5]"
 
 class EclDefault:
     __ecl_cmd = None
