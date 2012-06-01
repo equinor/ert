@@ -797,7 +797,6 @@ enkf_config_node_type * ensemble_config_add_container( ensemble_config_type * en
     key = util_malloc( 11 * sizeof * key  , __func__);
     sprintf(key , "%ld" , random() % 10000000 ); 
     random_key = true;
-    printf("Adding container:%s \n",key);
   }
   {
     enkf_config_node_type * config_node = enkf_config_node_new_container( key );

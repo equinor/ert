@@ -687,14 +687,17 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
         obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
       }
     } else if (source_type == SOURCE_SUMMARY) {
-      bool OK = true;
+      OK = true;
       if (refcase != NULL) {
         for (int i=0; i < stringlist_get_size( summary_keys ); i++) {
           const char * sum_key = stringlist_iget( summary_keys , i );
           if (!ecl_sum_has_key(refcase , sum_key)) {
-            fprintf(stderr,"** Warning missing summary %s for cell: (%d,%d,%d) in refcase - observation:%s not added\n" , 
-                    sum_key , obs_i[i]+1 , obs_j[i]+1 , obs_k[i]+1 , obs_label );
-            OK = false;
+            /*
+              If the 
+            */
+            fprintf(stderr,"** Warning missing summary %s for cell: (%d,%d,%d) in refcase - make sure that \"BPR  %d  %d  %d\" is included in ECLIPSE summary specification \n" , 
+                    sum_key , obs_i[i]+1 , obs_j[i]+1 , obs_k[i]+1 , obs_i[i]+1 , obs_j[i]+1 , obs_k[i]+1  );
+            //OK = false;
           }
         }
       }
@@ -708,9 +711,6 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
           enkf_config_node_update_container( container_config , child_node );
         }
         
-        for (int i=0; i < stringlist_get_size( summary_keys ); i++) 
-          printf("%02d : %s == %s \n", i , stringlist_iget( summary_keys , i ) , enkf_config_node_iget_container_key( container_config , i ));
-        
         {
           block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , summary_keys , container_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
           if (block_obs != NULL) {
@@ -719,7 +719,6 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
           }
         }
       }
-      printf("Have create container and sum nodes \n");
     } else
       util_abort("%s: invalid source value \n",__func__);
     

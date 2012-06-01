@@ -244,7 +244,7 @@ bool summary_forward_load(summary_type * summary , const char * ecl_file_name , 
   if (ecl_sum != NULL) {
     const char * var_key               = summary_config_get_var(summary->config);
     bool required                      = summary_config_get_required(summary->config );
-    
+
     /* Check if the ecl_sum instance has this report step. */
     if (ecl_sum_has_report_step( ecl_sum , report_step )) {
       int last_report_index = ecl_sum_iget_report_end( ecl_sum , report_step );
@@ -254,7 +254,7 @@ bool summary_forward_load(summary_type * summary , const char * ecl_file_name , 
         if (ecl_sum_has_general_var(ecl_sum , var_key)) {
           load_value = ecl_sum_iget_general_var(ecl_sum , last_report_index  ,var_key );
           loadOK = true;
-        }
+        } 
       } else {
         if (ecl_sum_has_general_var(ecl_sum , var_key)) 
           load_value = ecl_sum_iget_general_var(ecl_sum , last_report_index  , var_key);
@@ -297,31 +297,33 @@ bool summary_forward_load(summary_type * summary , const char * ecl_file_name , 
 
 
 bool summary_forward_load_vector(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step1, int report_step2) {
-  bool loadOK = true;
+  bool loadOK = false;
 
   if (summary->vector_storage) {
     if (ecl_sum != NULL) {
       double_vector_type * storage_vector = SELECT_VECTOR( summary , FORECAST );
       const char * var_key                = summary_config_get_var(summary->config);
       const ecl_smspec_var_type var_type  = summary_config_get_var_type(summary->config , ecl_sum);
+      bool required                       = summary_config_get_required(summary->config );
       bool normal_load = false;
 
-      if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR)) {
-        /* .. check if the/group well is defined in the smspec file (i.e. if it is open). */
+      
+
+      if (required) {
+        if (ecl_sum_has_general_var(ecl_sum , var_key)) 
+          normal_load = true;
+        else 
+          normal_load = false;
+      } else {
         if (!ecl_sum_has_general_var(ecl_sum , var_key)) {
           for (int report_step = report_step1; report_step <= report_step2; report_step++) 
             double_vector_iset( storage_vector , report_step , 0);
           loadOK = true;
         } else
           normal_load = true;
-      } else {
-        if (ecl_sum_has_general_var(ecl_sum , var_key)) 
-          normal_load = true;
-        else 
-          normal_load = false;
       }
+        
       
-
       if (normal_load) {
         int   sum_index  = ecl_sum_get_general_var_index( ecl_sum , var_key );
         for (int report_step = report_step1; report_step <= report_step2; report_step++) {
@@ -332,9 +334,13 @@ bool summary_forward_load_vector(summary_type * summary , const char * ecl_file_
             double_vector_iset( storage_vector , report_step , ecl_sum_iiget(ecl_sum , last_report_index  , sum_index ));
           }
         }
+        loadOK = true;
       }
+      if (!loadOK)
+        printf("Load failure: %s\n",var_key);
     } 
   }
+  
   
   return loadOK;
 }

@@ -95,9 +95,7 @@ static point_obs_type * point_obs_alloc( block_obs_source_type   source_type , i
   point_obs->std          = std;
   point_obs->sum_key      = util_alloc_string_copy( sum_key );
   
-  if (source_type == SOURCE_SUMMARY)
-    printf("key:%s   ijk = %d,%d,%d \n", sum_key , i , j , k);
-
+  
   return point_obs;
 }
 

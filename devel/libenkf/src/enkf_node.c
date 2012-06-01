@@ -895,7 +895,7 @@ void enkf_node_free__(void *void_node) {
   enkf_node_free((enkf_node_type *) void_node);
 }
 
-const char *enkf_node_get_key(const enkf_node_type * enkf_node) {
+const char * enkf_node_get_key(const enkf_node_type * enkf_node) {
   return enkf_node->node_key;
 }
 
@@ -1114,7 +1114,6 @@ enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
 
 
 static void enkf_node_container_add( enkf_node_type * node , const enkf_node_type * child_node ) {
-  printf("Adding child node \n");
   vector_append_ref( node->container_nodes , child_node );
 }
 

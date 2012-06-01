@@ -1068,7 +1068,7 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename ) {
   ecl_kw_type * ecl_kw   = NULL;
   {
     FILE * stream = util_fopen(filename , "r");
-    if (ecl_kw_grdecl_fseek_kw(key , false , false , stream))
+    if (ecl_kw_grdecl_fseek_kw(key , false , stream))
       ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , ecl_type);
     else 
       util_exit("%s: Can not locate %s keyword in %s \n",__func__ , key , filename);

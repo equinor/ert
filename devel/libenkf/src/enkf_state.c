@@ -407,7 +407,6 @@ static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_c
     const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , key);
     if (enkf_config_node_get_impl_type( config_node ) == CONTAINER) {
       stringlist_append_ref( container_keys , key );
-      printf("%s is a container \n",key);
     } else
       enkf_state_add_node(enkf_state , key , config_node);
   }
@@ -416,13 +415,9 @@ static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_c
   //    been added already (this implies that containers of containers
   //    will be victim of hash retrieval order problems ....
 
-  stringlist_fprintf( container_keys , " " , stdout );
-  printf("\n");
-
   for (int ik = 0; ik < stringlist_get_size( container_keys ); ik++) {
     const char * key = stringlist_iget(container_keys, ik);
     const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , key);
-    printf("Adding container node:%s \n",key);
     enkf_state_add_node( enkf_state , key , config_node );
   }
   
@@ -669,8 +664,12 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 
                 if (enkf_node_vector_storage( node )) {
                   enkf_node_try_load_vector( node , fs , iens , FORECAST );  // Ensure that what is currently on file is loaded before we update.
-                  enkf_node_forward_load_vector( node , run_info->run_path , summary , NULL , load_start, step2 , iens);
-                  enkf_node_store_vector( node , fs , iens , FORECAST );
+                  if (enkf_node_forward_load_vector( node , run_info->run_path , summary , NULL , load_start, step2 , iens))
+                    enkf_node_store_vector( node , fs , iens , FORECAST );
+                  else {
+                    *loadOK = false;
+                    log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
+                  }
                 } else {
                   for (report_step = load_start; report_step <= step2; report_step++) {
                     if (report_step == step2)

@@ -325,11 +325,8 @@ void enkf_config_node_update_container( enkf_config_node_type * config_node , co
 }                                       
   
 const char * enkf_config_node_iget_container_key( const enkf_config_node_type * config_node , int index) {
-  printf("%s  container size:%d \n",__func__ , vector_get_size( config_node->container_nodes ));
-  {
-    const enkf_config_node_type * child_node = vector_iget_const( config_node->container_nodes , index );
-    return child_node->key;
-  }
+  const enkf_config_node_type * child_node = vector_iget_const( config_node->container_nodes , index );
+  return child_node->key;
 }
                                      
 

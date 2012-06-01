@@ -153,7 +153,6 @@ extern "C" {
                       enkf_fs_type * target_case ,
                       node_id_type src_id , 
                       node_id_type target_id );
-
   enkf_node_type ** enkf_node_load_alloc_ensemble( const enkf_config_node_type * config_node , enkf_fs_type * fs , 
                                                    int report_step , int iens1 , int iens2 , state_enum state);
   enkf_node_type *  enkf_node_load_alloc( const enkf_config_node_type * config_node , enkf_fs_type * fs , node_id_type node_id);
