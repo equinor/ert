@@ -19,12 +19,13 @@ Utility function to map Python filehandle <-> FILE *
 
 import ctypes  
 from   cwrap   import *
+from   cclass  import CClass
 
-class CFILE:
+class CFILE(CClass):
     def __init__( self , py_file ):
         """
         Takes a python filehandle and looks up the underlying FILE * 
-
+        
         The purpose of the CFILE class is to be able to use python
         filehandles when calling C functions which expect a FILE
         pointer. A CFILE instance should be created based on the
@@ -34,31 +35,29 @@ class CFILE:
         The implementation is based on the ctypes object
         pythonapi which is ctypes wrapping of the CPython api.
 
-        C-function:
-           void fprintf_hello(FILE * stream , const char * msg);
-          
-        Python wrapper:
-           lib = clib.load( "lib.so" )
-           fprintf_hello = cwrap.prototype("void fprintf_hello( FILE , char* )")
-           cwrap.registerType("FILE" , CFILE)
-           
-        Python use:
-           py_fileH = open("file.txt" , "w")
-           fprintf_hello( CFILE( py_fileH ) , "Message ...")
-           py_fileH.close()
+          C-function:
+             void fprintf_hello(FILE * stream , const char * msg);
+            
+          Python wrapper:
+             lib = clib.load( "lib.so" )
+             fprintf_hello = cwrap.prototype("void fprintf_hello( FILE , char* )")
+             cwrap.registerType("FILE" , CFILE)
+             
+          Python use:
+             py_fileH = open("file.txt" , "w")
+             fprintf_hello( CFILE( py_fileH ) , "Message ...")
+             py_fileH.close()
+
+        If the supplied argument is not of type py_file the function
+        will raise a TypeException.
 
         Examples: ert.ecl.ecl_kw.EclKW.fprintf_grdecl()
         """
         self.c_ptr   = cfunc.as_file( py_file ) 
         self.py_file = py_file
 
-
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
+        if self.c_ptr is None:
+            raise TypeError("Sorry - the supplied argument is not a valid Python filehandle")
 
 
     def __del__(self):

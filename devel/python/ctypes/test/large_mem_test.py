@@ -52,4 +52,6 @@ def slow_suite():
     suite.addTest( MemTest( 'test_nactive' ))
     return suite
 
+if __name__ == "__main__":
+    unittest.TextTestRunner().run( slow_suite() )
 

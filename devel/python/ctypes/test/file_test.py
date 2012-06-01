@@ -108,8 +108,12 @@ def slow_suite():
     suite.addTest( FileTest( 'test_save_fmt' ))
     return suite
 
+
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( FileTest( 'test_fwrite' ))
     return suite
 
+
+if __name__ == "__main__":
+    unittest.TextTestRunner().run( fast_suite() )

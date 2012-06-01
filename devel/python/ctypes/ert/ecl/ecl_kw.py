@@ -249,6 +249,36 @@ class EclKW(CClass):
             return None
 
     @classmethod
+    def fseek_grdecl( cls , file , kw , rewind = False):
+        """
+        Will search through the open file and look for string @kw.
+
+        If the search succeeds the function will return and the file
+        pointer will be positioned at the start of the kw, if the
+        search fails the function will return false and the file
+        pointer will be repositioned at the position it had prior to
+        the call. 
+
+        Only @kw instances which are found at the beginning of a line
+        (with optional leading space characters) are considered,
+        i.e. searching for the string PERMX in the cases below will
+        fail:
+
+           -- PERMX
+           EQUIL   PERMX /
+           
+
+        The function will start searching from the current position in
+        the file and forwards, if the optional argument @rewind is
+        true the function rewind to the beginning of the file and
+        search from there after the initial search.
+        """
+        cfile = CFILE( file )
+        return cfunc.fseek_grdecl( kw , rewind , cfile)
+        
+
+
+    @classmethod
     def grdecl_load( cls , file , kw , ecl_type = ECL_FLOAT_TYPE):
         """Use read_grdecl() instead."""
         #warnings.warn("The grdecl_load method has been renamed to read_grdecl()" , DeprecationWarning)
@@ -863,8 +893,12 @@ cwrapper.registerType( "ecl_kw" , EclKW )
 #    These functions are used when implementing the EclKW class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_kw")
-cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
+
 cfunc.load_grdecl                = cwrapper.prototype("c_void_p ecl_kw_fscanf_alloc_grdecl_dynamic__( FILE , char* , bool , int )")
+cfunc.fprintf_grdecl             = cwrapper.prototype("void     ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
+cfunc.fseek_grdecl               = cwrapper.prototype("bool     ecl_kw_grdecl_fseek_kw(char* , bool , FILE )")
+
+cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
 cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_copy( ecl_kw )")
 cfunc.slice_copyc                = cwrapper.prototype("c_void_p ecl_kw_alloc_slice_copy( ecl_kw , int , int , int )")
 cfunc.fread_alloc                = cwrapper.prototype("c_void_p ecl_kw_fread_alloc( fortio )")
@@ -884,8 +918,6 @@ cfunc.free                       = cwrapper.prototype("void     ecl_kw_free( ecl
 cfunc.fwrite                     = cwrapper.prototype("void     ecl_kw_fwrite( ecl_kw , fortio )")
 cfunc.get_header                 = cwrapper.prototype("char*    ecl_kw_get_header ( ecl_kw )")
 cfunc.set_header                 = cwrapper.prototype("void     ecl_kw_set_header_name ( ecl_kw , char*)")
-cfunc.fprintf_grdecl             = cwrapper.prototype("void     ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
-cfunc.fseek_grdecl               = cwrapper.prototype("bool     ecl_kw_grdecl_fseek_kw(char* , bool, bool , FILE )")
 
 cfunc.iadd                       = cwrapper.prototype("void     ecl_kw_inplace_add( ecl_kw , ecl_kw )")
 cfunc.imul                       = cwrapper.prototype("void     ecl_kw_inplace_mul( ecl_kw , ecl_kw )")
