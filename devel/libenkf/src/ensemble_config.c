@@ -791,11 +791,11 @@ enkf_config_node_type * ensemble_config_add_surface( ensemble_config_type * ense
 /*
   If key == NULL the function will create a random key.
 */
-enkf_config_node_type * ensemble_config_add_container( ensemble_config_type * ensemble_config , const char * key) {
+enkf_config_node_type * ensemble_config_add_container( ensemble_config_type * ensemble_config , char * key) {
   bool random_key = false;
   if (key == NULL) {
     key = util_malloc( 11 * sizeof * key  , __func__);
-    sprintf(key , "%d" , random() % 10000000 ); 
+    sprintf(key , "%ld" , random() % 10000000 ); 
     random_key = true;
     printf("Adding container:%s \n",key);
   }

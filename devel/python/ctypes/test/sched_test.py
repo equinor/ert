@@ -53,5 +53,5 @@ def fast_suite():
     return suite
         
 
-
-#unittest.main()
+if __name__ == "__main__":
+    unittest.TextTestRunner().run( fast_suite() )

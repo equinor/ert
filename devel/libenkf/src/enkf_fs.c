@@ -26,9 +26,9 @@
 #include <dirent.h>
 
 #include <util.h>
+#include <type_macros.h>
 #include <msg.h>
 #include <path_fmt.h>
-#include <menu.h>
 #include <arg_pack.h>
 #include <stringlist.h>
 #include <arg_pack.h>
@@ -813,4 +813,9 @@ FILE * enkf_fs_open_excase_tstep_member_file( const enkf_fs_type * fs , const ch
   return stream;
 }
   
+/*****************************************************************/
+
+time_map_type * enkf_fs_get_time_map( const enkf_fs_type * fs ) {
+  return fs->time_map;
+}
 

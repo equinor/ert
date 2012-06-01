@@ -54,8 +54,74 @@ class GRDECLTest( unittest.TestCase ):
         self.assertTrue( file_equal( tmp_file1 , tmp_file2 ))
 
 
+
+    def test_fseek( self ):
+        file = open( src_file , "r")
+        self.assertTrue( ecl.EclKW.fseek_grdecl( file , "PERMX" ) )
+        self.assertFalse( ecl.EclKW.fseek_grdecl( file , "PERMY" ) )  
+        file.close()
+
+        file = open( src_file , "r")
+        kw1 = ecl.EclKW.read_grdecl( file , "PERMX") 
+        self.assertFalse( ecl.EclKW.fseek_grdecl( file , "PERMX" ) )
+        self.assertTrue( ecl.EclKW.fseek_grdecl( file , "PERMX" , rewind = True) )
+        file.close()
+
+        
+        
+    def test_fseek2(self):
+        test_src = "data/eclipse/test/test.grdecl"
+        # Test kw at the the very start
+        file = open( test_src , "r")
+        self.assertTrue( ecl.EclKW.fseek_grdecl( file , "PERMX" ) )
+        
+        # Test commented out kw:
+        self.assertFalse( ecl.EclKW.fseek_grdecl( file , "PERMY" ) )
+        self.assertFalse( ecl.EclKW.fseek_grdecl( file , "PERMZ" ) )
+
+        # Test ignore not start of line:
+        self.assertTrue( ecl.EclKW.fseek_grdecl( file , "MARKER" ) )
+        self.assertFalse( ecl.EclKW.fseek_grdecl( file , "PERMXYZ" ) )
+
+        # Test rewind 
+        self.assertFalse(ecl.EclKW.fseek_grdecl( file , "PERMX" , rewind = False) )
+        self.assertTrue(ecl.EclKW.fseek_grdecl( file , "PERMX" , rewind = True) )
+
+        # Test multiline comments + blanks
+        self.assertTrue(ecl.EclKW.fseek_grdecl( file , "LASTKW" ) )
+
+
+    def test_fseek_dos(self):
+        test_src = "data/eclipse/test/test.grdecl_dos"  # File formatted with \r\n line endings.
+        # Test kw at the the very start
+        file = open( test_src , "r")
+        self.assertTrue( ecl.EclKW.fseek_grdecl( file , "PERMX" ) )
+        
+        # Test commented out kw:
+        self.assertFalse( ecl.EclKW.fseek_grdecl( file , "PERMY" ) )
+        self.assertFalse( ecl.EclKW.fseek_grdecl( file , "PERMZ" ) )
+
+        # Test ignore not start of line:
+        self.assertTrue( ecl.EclKW.fseek_grdecl( file , "MARKER" ) )
+        self.assertFalse( ecl.EclKW.fseek_grdecl( file , "PERMXYZ" ) )
+
+        # Test rewind 
+        self.assertFalse(ecl.EclKW.fseek_grdecl( file , "PERMX" , rewind = False) )
+        self.assertTrue(ecl.EclKW.fseek_grdecl( file , "PERMX" , rewind = True) )
+
+        # Test multiline comments + blanks
+        self.assertTrue(ecl.EclKW.fseek_grdecl( file , "LASTKW" ) )
+
+
+
+
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( GRDECLTest( 'testLoad' ))
     suite.addTest( GRDECLTest( 'testReLoad' ))
+    suite.addTest( GRDECLTest( 'test_fseek' ))
+    suite.addTest( GRDECLTest( 'test_fseek_dos' ))
     return suite
+
+if __name__ == "__main__":
+    unittest.TextTestRunner().run( fast_suite() )
