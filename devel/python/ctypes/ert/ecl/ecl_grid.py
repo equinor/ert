@@ -61,7 +61,7 @@ class EclGrid(CClass):
         If you are so inclined ...  
         """
         obj = object.__new__( cls )
-        obj.c_ptr = cfunc.grdecl_create( specgrid[0] , specgrid[1] , specgrid[2] , zcorn , coord , actnum , None) # , mapaxes) 
+        obj.c_ptr = cfunc.grdecl_create( specgrid[0] , specgrid[1] , specgrid[2] , zcorn , coord , actnum , mapaxes) 
         obj.data_owner = True
         obj.parent     = None
         return obj
@@ -90,6 +90,14 @@ class EclGrid(CClass):
         if self.data_owner:
             cfunc.free( self )
 
+
+    def equal(self , other , include_lgr = True):
+        """
+        Compare the current grid with the other grid.
+        """
+        if not isinstance(other , EclGrid):
+            raise TypeError("The other argument must be an EclGrid instance")
+        return cfunc.equal( self , other , include_lgr )
 
     @property
     def nx( self ):
@@ -565,6 +573,18 @@ class EclGrid(CClass):
         cfile = CFILE( pyfile )
         cfunc.fprintf_grdecl( self , cfile )
 
+    def save_EGRID( self , filename ):
+        """
+        Will save the current grid as a EGRID file.
+        """
+        cfunc.fwrite_EGRID( self , filename )
+
+    def save_GRID( self , filename ):
+        """
+        Will save the current grid as a EGRID file.
+        """
+        cfunc.fwrite_GRID( self , filename )
+
         
     def write_grdecl( self , ecl_kw , pyfile , default_value = 0):
         """
@@ -610,7 +630,7 @@ cfunc = CWrapperNameSpace("ecl_grid")
 
 
 cfunc.fread_alloc                  = cwrapper.prototype("c_void_p ecl_grid_load_case( char* )")
-cfunc.grdecl_create                = cwrapper.prototype("c_void_p ecl_grid_alloc_GRDECL_kw( int , int , int , ecl_kw , ecl_kw , ecl_kw )") # MAPAXES not supported yet
+cfunc.grdecl_create                = cwrapper.prototype("c_void_p ecl_grid_alloc_GRDECL_kw( int , int , int , ecl_kw , ecl_kw , ecl_kw , ecl_kw)") 
 cfunc.get_lgr                      = cwrapper.prototype("c_void_p ecl_grid_get_lgr( ecl_grid , char* )")
 cfunc.get_cell_lgr                 = cwrapper.prototype("c_void_p ecl_grid_get_cell_lgr1( ecl_grid , int )")
 cfunc.exists                       = cwrapper.prototype("bool ecl_grid_exists( char* )")
@@ -642,4 +662,8 @@ cfunc.get_top                      = cwrapper.prototype("double ecl_grid_get_top
 cfunc.get_bottom                   = cwrapper.prototype("double ecl_grid_get_bottom2( ecl_grid , int , int )") 
 cfunc.locate_depth                 = cwrapper.prototype("int    ecl_grid_locate_depth( ecl_grid , double , int , int )") 
 cfunc.invalid_cell                 = cwrapper.prototype("bool   ecl_grid_cell_invalid1( ecl_grid , int)")
+
 cfunc.fprintf_grdecl               = cwrapper.prototype("void   ecl_grid_fprintf_grdecl( ecl_grid , FILE) ")
+cfunc.fwrite_GRID                  = cwrapper.prototype("void   ecl_grid_fwrite_GRID( ecl_grid , char* )")
+cfunc.fwrite_EGRID                 = cwrapper.prototype("void   ecl_grid_fwrite_EGRID( ecl_grid , char* )")
+cfunc.equal                        = cwrapper.prototype("bool   ecl_grid_compare(ecl_grid , ecl_grid , bool)")
