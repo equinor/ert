@@ -242,7 +242,7 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
     util_fprintf_string(index_name , width[0] - 1 , true , stream); fprintf(stream , "|");
     for (int column_nr = 0; column_nr < num_columns; column_nr++) {
       if (active[column_nr]) {
-        util_fprintf_string(column_names[column_nr] , width[column_nr + 1] , center , stream);
+        util_fprintf_string(column_names[column_nr] , width[column_nr + 1] , center_pad , stream);
         fprintf(stream , "|");
       }
     }
