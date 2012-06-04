@@ -6,7 +6,9 @@ import sum_test
 import sched_test
 import large_mem_test
 import file_test
+import grdecl_test
 import grid_test
+
 
 def run_suite(name , suite):
     print "Running tests from %12s:" % name,
