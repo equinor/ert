@@ -181,7 +181,13 @@ void sched_history_install_index( sched_history_type * sched_history ) {
         sched_history_install_well_index( sched_history , well_index , VAR_LIST("WWPT" , "WWPTH") , well_name);
       }
 
+      /* STAT */
+      {
+        well_index_type * well_index = well_index_alloc( well_name , "STAT" , well , WCONHIST , wconhist_state_iget_STAT );
+        sched_history_install_well_index( sched_history , well_index , VAR_LIST("STAT" ) , well_name);
+      }
 
+      
       /* WWIRH - this can be got from _either_ the WCONINJH keyowrord
          or the WCONINJE keyword (provided the latter is in rate
          controlled mode. ) */
@@ -341,7 +347,7 @@ double sched_history_iget( const sched_history_type * sched_history , const char
   else if (group_index_is_instance( index ))
     return group_history_iget( index , report_step );
   else {
-    util_abort("%s: can not determine interal type of:%s - fatal internal error\n", __func__ , key);
+    util_abort("%s: can not determine internal type of:%s - fatal internal error\n", __func__ , key);
     return 0;
   }
 }
@@ -719,22 +725,28 @@ void sched_history_fprintf_index_keys( const sched_history_type * sched_history 
 void sched_history_fprintf( const sched_history_type * sched_history , const stringlist_type * key_list , FILE * stream) {
   int step = 1;
   time_t start_time = time_t_vector_iget( sched_history->time , 0);
-  while( bool_vector_safe_iget( sched_history->historical , step)) {
-    {
-      int mday,month,year;
-      time_t t = time_t_vector_iget( sched_history->time , step );
-      double days = (t - start_time) * 1.0 / 86400;
-      util_set_date_values( t , &mday , &month , &year);
-      //fprintf(stream , "%02d-%02d-%4d  " , mday , month , year );
-      fprintf(stream , " %5.0f " , days);
-    }
-
-    for (int ikey =0; ikey < stringlist_get_size( key_list ); ikey++) 
-      fprintf(stream , "%16.3f " , sched_history_iget( sched_history , stringlist_iget( key_list , ikey) , step));
-
-    fprintf( stream, "\n");
-    
+  int total_length = bool_vector_size( sched_history->historical );
+  while (true) {
+    if (bool_vector_safe_iget( sched_history->historical , step)) {
+      {
+        int mday,month,year;
+        time_t t = time_t_vector_iget( sched_history->time , step );
+        double days = (t - start_time) * 1.0 / 86400;
+        util_set_date_values( t , &mday , &month , &year);
+        //fprintf(stream , "%02d-%02d-%4d  " , mday , month , year );
+        fprintf(stream , " %5.0f " , days);
+      }
+      
+      for (int ikey =0; ikey < stringlist_get_size( key_list ); ikey++) 
+        fprintf(stream , "%16.3f " , sched_history_iget( sched_history , stringlist_iget( key_list , ikey) , step));
+      
+      fprintf( stream, "\n");
+    } else
+      break; // We have completed the historical period - and switched to prediction
     step++;
+
+    if (step == total_length)
+      break;
   }
 }
 

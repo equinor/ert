@@ -980,7 +980,6 @@ double sched_file_well_wconhist_rate( const sched_file_type * sched_file ,
         }
       }
     }
-    
     block_nr--;
   } 
   return rate;

@@ -18,16 +18,19 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include <util.h>
-#include <sched_kw_wconhist.h>
-#include <sched_util.h>
 #include <vector.h>
 #include <hash.h>
 #include <stringlist.h>
-#include <sched_types.h>
 #include <buffer.h>
 #include <int_vector.h>
 #include <double_vector.h>
+
+#include <sched_types.h>
+#include <sched_kw_wconhist.h>
+#include <sched_util.h>
+
 
 /*
   Define the maximum number of keywords in a WCONHIST record.
@@ -598,10 +601,11 @@ well_cm_enum wconhist_state_iget_WMCTLH( const void * state , int report_step ) 
   return int_vector_iget( wconhist_state->cmode , report_step );
 }
 
-/**
-   Does not seem to be a suitbale summary memnonic for this one. 
-*/
-well_status_enum wconhist_state_iget_status( const void * state , int report_step ) {
+
+//well_status_enum wconhist_state_iget_status( const void * state , int report_step ) {
+
+// All callbacks return double ... should really be an enum value
+double wconhist_state_iget_STAT( const void * state , int report_step ) {
   const wconhist_state_type * wconhist_state = wconhist_state_safe_cast_const( state );
   return int_vector_iget( wconhist_state->state , report_step );
 }
