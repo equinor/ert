@@ -391,6 +391,35 @@ static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const cha
 }
 
 
+gen_data_file_format_type gen_data_guess_export_type( const gen_data_type * gen_data ) {
+  gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
+  if (export_type == GEN_DATA_UNDEFINED)
+    export_type = gen_data_config_get_input_format( gen_data->config );
+  
+  if (export_type == GEN_DATA_UNDEFINED)
+    util_abort("%s: both input_format and output_format are set to UNDEFINED \n",__func__);
+  return export_type;
+}
+
+
+void gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type , fortio_type * fortio) {
+  switch (export_type) {
+  case(ASCII):
+    gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
+    break;
+  case(ASCII_TEMPLATE):
+    gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
+    break;
+  case(BINARY_DOUBLE):
+    gen_data_ecl_write_binary(gen_data , full_path , ECL_DOUBLE_TYPE);
+    break;
+  case(BINARY_FLOAT):
+    gen_data_ecl_write_binary(gen_data , full_path , ECL_FLOAT_TYPE);
+    break;
+  default:
+    util_abort("%s: internal error - export type is not set.\n",__func__);
+  }
+}
 
 /** 
     It is the enkf_node layer which knows whether the node actually
@@ -403,25 +432,9 @@ static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const cha
 void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , fortio_type * fortio) {
   if (eclfile != NULL) {  
     char * full_path = util_alloc_filename( run_path , eclfile  , NULL);
-
+    
     gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
-    switch (export_type) {
-    case(ASCII):
-      gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
-      break;
-    case(ASCII_TEMPLATE):
-      gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
-      break;
-    case(BINARY_DOUBLE):
-      gen_data_ecl_write_binary(gen_data , full_path , ECL_DOUBLE_TYPE);
-      break;
-    case(BINARY_FLOAT):
-      gen_data_ecl_write_binary(gen_data , full_path , ECL_FLOAT_TYPE);
-      break;
-    default:
-      util_abort("%s: internal error - export type is not set.\n",__func__);
-    }
-
+    gen_data_export( gen_data , full_path , export_type , fortio );
     free( full_path );
   }
 }

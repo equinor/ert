@@ -20,21 +20,24 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <util.h>
 #include <ctype.h>
 #include <menu.h>
 #include <thread_pool.h>
+#include <arg_pack.h>
+#include <bool_vector.h>
+
 #include <enkf_main.h>
 #include <enkf_fs.h>
 #include <enkf_sched.h>
-#include <arg_pack.h>
 #include <ensemble_config.h>
 #include <enkf_analysis.h>
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
 #include <enkf_tui_analysis.h>
 #include <ert_tui_const.h>
-#include <bool_vector.h>
+
 
 
 static void enkf_tui_run_set_runpath(void * arg) {
@@ -194,22 +197,23 @@ void enkf_tui_run_full__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   if (enkf_main_has_prediction( enkf_main )) {
     const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
-    bool * iactive                               = util_malloc(ens_size * sizeof * iactive , __func__);
+    bool_vector_type * iactive                   = bool_vector_alloc(0,true);
     state_enum init_state                        = ANALYZED; 
     int start_report                             = 0;
     int init_step_parameters                     = 0;                
-    {
-      int iens;
-      for (iens= 0; iens < ens_size; iens++)
-        iactive[iens] = true;
-    }
+    
     enkf_main_run(enkf_main , ENSEMBLE_PREDICTION , iactive , init_step_parameters , start_report , init_state);
-    free( iactive );
+    bool_vector_free( iactive );
 
   } else
     fprintf(stderr,"** Sorry: you must set a schedule prediction file with configuration option SCHEDULE_PREDICTION_FILE to use this option.\n");
 }
 
+
+static void enkf_tui_display_load_msg( int iens , const stringlist_type * msg_list ) {
+  for (int i=0; i < stringlist_get_size( msg_list ); i++)
+    printf("[%03d] : %s \n", iens , stringlist_iget( msg_list , i ));
+}
 
 
 void enkf_tui_run_manual_load__( void * arg ) {
@@ -246,18 +250,29 @@ void enkf_tui_run_manual_load__( void * arg ) {
       if (iactive[iens]) {
         enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
 
-        arg_pack_append_ptr( arg_pack , enkf_state);
-        arg_pack_append_ptr( arg_pack , fs );
-        arg_pack_append_int( arg_pack , step1 );      /* This will be the load start parameter for the run_info struct. */
-        arg_pack_append_int( arg_pack , step1 );      /* Step1 */ 
-        arg_pack_append_int( arg_pack , step2 );      /* Step2 For summary data it will load the whole goddamn thing anyway.*/
-        arg_pack_append_bool( arg_pack , true );      /* Verbose */
+        arg_pack_append_ptr( arg_pack , enkf_state);                                        /* 0: */
+        arg_pack_append_ptr( arg_pack , fs );                                               /* 1: */
+        arg_pack_append_int( arg_pack , step1 );                                            /* 2: This will be the load start parameter for the run_info struct. */
+        arg_pack_append_int( arg_pack , step1 );                                            /* 3: Step1 */ 
+        arg_pack_append_int( arg_pack , step2 );                                            /* 4: Step2 For summary data it will load the whole goddamn thing anyway.*/
+        arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */                  
+        arg_pack_append_owned_ptr( arg_pack , stringlist_alloc_new() , stringlist_free__);  /* 6: List of interactive mode messages. */
         thread_pool_add_job( tp , enkf_state_internalize_results_mt , arg_pack);
       }
     }
     
     thread_pool_join( tp );
     thread_pool_free( tp );
+    printf("\n");
+    
+    for (iens = 0; iens < ens_size; iens++) {
+      if (iactive[iens]) {
+        stringlist_type * msg_list = arg_pack_iget_ptr( arg_list[iens] , 6 );
+        if (stringlist_get_size( msg_list ))
+          enkf_tui_display_load_msg( iens , msg_list );
+      }
+    }
+    
     
     for (iens = 0; iens < ens_size; iens++) 
       arg_pack_free( arg_list[iens]);

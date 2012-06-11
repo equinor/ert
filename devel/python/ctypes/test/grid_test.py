@@ -62,7 +62,6 @@ class GridTest( unittest.TestCase ):
         self.assertTrue( grid )
 
 
-
     def testSave(self):
         g1 = ecl.EclGrid( egrid_file )
 

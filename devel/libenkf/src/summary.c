@@ -336,8 +336,6 @@ bool summary_forward_load_vector(summary_type * summary , const char * ecl_file_
         }
         loadOK = true;
       }
-      if (!loadOK)
-        printf("Load failure: %s\n",var_key);
     } 
   }
   

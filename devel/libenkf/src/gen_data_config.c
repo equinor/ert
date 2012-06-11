@@ -46,9 +46,6 @@
    the function gen_data_ecl_load which will look for a file with
    extension "_data" and then activate / deactivate elements
    accordingly.
-
-   
-
 */
 
 

@@ -33,6 +33,7 @@
 #include <field_config.h>
 #include <msg.h>
 #include <gen_data.h>
+#include <gen_data_config.h>
 
 #define PROMPT_LEN  60
 
@@ -150,6 +151,7 @@ void enkf_tui_export_gen_data(void * arg) {
       msg_type * msg = msg_alloc("Writing file: " , false);
       enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
       enkf_node_type * node = enkf_node_alloc(config_node);
+      gen_data_file_format_type export_type = gen_data_guess_export_type( enkf_node_value_ptr(node) );
       int iens;
       
       msg_show( msg );
@@ -158,23 +160,17 @@ void enkf_tui_export_gen_data(void * arg) {
         if (enkf_node_try_load(node , fs, node_id)) {
           char * full_path = path_fmt_alloc_path( file_fmt , false , iens);
           char * path;
-          char * ext;
-          char * basename;
-          util_alloc_file_components(full_path , &path , &basename , &ext);
+          util_alloc_file_components(full_path , &path , NULL , NULL);
           if (path != NULL) util_make_path( path );
           
           {
             const gen_data_type * gen_data = enkf_node_value_ptr(node);
-            char * file_with_ext = util_alloc_filename(NULL , basename , ext);
-            msg_update(msg , file_with_ext );
-            gen_data_ecl_write(gen_data , path , file_with_ext , NULL);
-            free(file_with_ext);
+            msg_update(msg , full_path);
+            gen_data_export(gen_data , full_path , export_type , NULL);
           }
           
           free(full_path);
           util_safe_free(path);
-          util_safe_free(ext);
-          util_safe_free(basename);
         }
       } 
       enkf_node_free(node);

@@ -33,18 +33,19 @@ extern "C" {
 #include <gen_data_common.h>
 #include <gen_data_config.h>
 
-void                     gen_data_assert_size( gen_data_type * gen_data , int size , int report_step);
-bool                     gen_data_forward_load(gen_data_type * , const char *  ,  const ecl_sum_type * , const ecl_file_type * , int );
-void                     gen_data_free(gen_data_type * );
-double                   gen_data_iget_double(const gen_data_type * , int );
-gen_data_config_type   * gen_data_get_config(const gen_data_type * );
-const bool_vector_type * gen_data_get_forward_mask( const gen_data_type * gen_data );
-int                      gen_data_get_size(const gen_data_type * );
-double                   gen_data_iget_double(const gen_data_type * , int );
-void                     gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , fortio_type * fortio);
-const char  *            gen_data_get_key( const gen_data_type * gen_data);
-void                     gen_data_upgrade_103(const char * filename);
-int                      gen_data_get_size( const gen_data_type * gen_data );
+void                      gen_data_assert_size( gen_data_type * gen_data , int size , int report_step);
+bool                      gen_data_forward_load(gen_data_type * , const char *  ,  const ecl_sum_type * , const ecl_file_type * , int );
+void                      gen_data_free(gen_data_type * );
+double                    gen_data_iget_double(const gen_data_type * , int );
+gen_data_config_type   *  gen_data_get_config(const gen_data_type * );
+const bool_vector_type *  gen_data_get_forward_mask( const gen_data_type * gen_data );
+int                       gen_data_get_size(const gen_data_type * );
+double                    gen_data_iget_double(const gen_data_type * , int );
+void                      gen_data_export(const gen_data_type * gen_data , const char * full_path , gen_data_file_format_type export_type , fortio_type * fortio);
+gen_data_file_format_type gen_data_guess_export_type( const gen_data_type * gen_data );
+const char  *             gen_data_get_key( const gen_data_type * gen_data);
+void                      gen_data_upgrade_103(const char * filename);
+int                       gen_data_get_size( const gen_data_type * gen_data );
 
 
 UTIL_SAFE_CAST_HEADER(gen_data);

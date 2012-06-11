@@ -141,6 +141,8 @@ set( libecl_src_path      ${CMAKE_SOURCE_DIR}/libecl/src )
 set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
 set( libwell_src_path     ${CMAKE_SOURCE_DIR}/libwell/src )
 
+set( BUILD_CXX ON )
+set( BUILD_ERT OFF)
 
 add_subdirectory( libutil )
 add_subdirectory( libgeometry )
@@ -157,8 +159,6 @@ add_dependencies( well_static     ecl_static  util_static geometry_static )
 
 
 
-set( BUILD_ERT OFF)
-set( BUILD_CXX OFF )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
    set( libconfig_src_path    ${CMAKE_SOURCE_DIR}/libconfig/src )
