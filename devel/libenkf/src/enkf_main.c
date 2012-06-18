@@ -1465,15 +1465,17 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 
 
     {
-      bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, and that the ert layer has loaded all data. */
+      bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, 
+                               and that the ert layer has loaded all data. */
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-
+      
       for (iens = 0; iens < ens_size; iens++) {    
         if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
           if ( runOK ) {
             log_add_fmt_message( enkf_main->logh , 1 , stderr , "Some models failed to integrate from DATES %d -> %d:",step1 , step2);
             runOK = false;
           }
+
           {
             const char * stderr_file = job_queue_iget_stderr_file( job_queue , iens );
             if (stderr_file == NULL) 

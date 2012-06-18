@@ -410,7 +410,8 @@ static void job_queue_node_fscanf_EXIT( job_queue_node_type * node ) {
     node->stderr_file    = __alloc_tag_content( xml_buffer , "stderr_file");
 
     free( xml_buffer );
-  }
+  } else
+    node->failed_job = util_alloc_sprintf("EXIT file:%s not found - load failure?" , node->exit_file);
 }
 
 
