@@ -19,6 +19,7 @@
 import ert
 import ert.ecl.ecl as ecl
 import datetime
+import time
 import unittest
 import ert
 import ert.ecl.ecl as ecl
@@ -60,6 +61,15 @@ class GridTest( unittest.TestCase ):
     def testCreate(self):
         grid = self.create( grdecl_file )
         self.assertTrue( grid )
+
+
+    def testTime(self):
+        t0 = time.clock()
+        g1 = ecl.EclGrid( egrid_file )
+        t1 = time.clock()
+        t = t1 - t0
+        print t
+        self.assertTrue( True )
 
 
     def testSave(self):
@@ -120,6 +130,7 @@ def fast_suite():
     suite.addTest( GridTest( 'testEGRID' ))
     suite.addTest( GridTest( 'testCreate' ))
     suite.addTest( GridTest( 'testSave' ))
+    suite.addTest( GridTest( 'testTime' ))
     return suite
 
 
