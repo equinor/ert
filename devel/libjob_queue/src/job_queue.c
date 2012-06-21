@@ -441,9 +441,11 @@ static void job_queue_node_clear(job_queue_node_type * node) {
 
 static job_queue_node_type * job_queue_node_alloc() {
   job_queue_node_type * node = util_malloc(sizeof * node , __func__);
+
   job_queue_node_clear(node);
   job_queue_node_clear_error_info(node);
   pthread_rwlock_init( &node->job_lock , NULL);
+
   return node;
 }
 
