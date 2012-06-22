@@ -51,6 +51,7 @@ struct analysis_config_struct {
   bool                    store_PC;
   bool                    update_results;              /* Should result values like e.g. WWCT be updated? */
   bool                    single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
+  rng_type              * rng; 
 }; 
 
 
@@ -111,9 +112,12 @@ ANALYSIS_SELECT  ModuleName
 
 
 
-
 void analysis_config_set_alpha( analysis_config_type * config , double alpha) {
   config->overlap_alpha = alpha;
+}
+
+stringlist_type * analysis_config_alloc_module_names( analysis_config_type * config ) {
+  return hash_alloc_stringlist( config->analysis_modules );
 }
 
 
@@ -212,9 +216,9 @@ void analysis_config_set_merge_observations( analysis_config_type * config , boo
 
 /*****************************************************************/
 
-void analysis_config_load_internal_module( analysis_config_type * config , rng_type * rng , 
+void analysis_config_load_internal_module( analysis_config_type * config , 
                                            const char * user_name , const char * symbol_table ) {
-  analysis_module_type * module = analysis_module_alloc_internal( rng , user_name , symbol_table );
+  analysis_module_type * module = analysis_module_alloc_internal( config->rng , user_name , symbol_table );
   if (module != NULL)
     hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
   else
@@ -223,9 +227,9 @@ void analysis_config_load_internal_module( analysis_config_type * config , rng_t
 
 
 
-void analysis_config_load_external_module( analysis_config_type * config , rng_type * rng , 
+void analysis_config_load_external_module( analysis_config_type * config , 
                                            const char * user_name , const char * lib_name) {
-  analysis_module_type * module = analysis_module_alloc_external( rng , user_name , lib_name );
+  analysis_module_type * module = analysis_module_alloc_external( config->rng , user_name , lib_name );
   if (module != NULL)
     hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
   else
@@ -234,15 +238,60 @@ void analysis_config_load_external_module( analysis_config_type * config , rng_t
 
 
 void analysis_config_add_module_copy( analysis_config_type * config , 
-                                      rng_type * rng , 
                                       const char * src_name , 
                                       const char * target_name) {
   analysis_module_type * module = analysis_config_get_module( config , src_name );
   if (analysis_module_internal( module ))
-    analysis_config_load_internal_module( config , rng , target_name , analysis_module_get_table_name( module ));
+    analysis_config_load_internal_module( config , target_name , analysis_module_get_table_name( module ));
   else
-    analysis_config_load_external_module( config , rng , target_name , analysis_module_get_lib_name( module ));
+    analysis_config_load_external_module( config , target_name , analysis_module_get_lib_name( module ));
 }
+
+
+
+/*
+  If module_name == NULL we will reload the current module. Unloading
+  modules is based on the dlclose() system call; internally the
+  dlopen() / dlclose() systems implements a reference counting to the
+  shared objects, i.e. if you have several modules defined in the same
+  shared library the dlclose() call will not unload the module
+  completely, and a subsequent dlopen() call will be satisfied by the
+  stale shared objects still mapped. Practically this means that:
+
+  * Internal modules (all in libanalysis.so) can not be reloaded.
+
+  * Modules which have been involved in copy operations, either as
+    source or target can not be reloaded.
+*/
+
+void analysis_config_reload_module( analysis_config_type * config , const char * module_name) {
+  analysis_module_type * module;
+  if (module_name != NULL)
+    module = analysis_config_get_module( config , module_name );
+  else
+    module = config->analysis_module;
+  
+  if (!analysis_module_internal( module )) {
+    char * user_name = util_alloc_string_copy(analysis_module_get_name( module ));
+    char * lib_name  = util_alloc_string_copy(analysis_module_get_lib_name( module ));
+
+    bool is_current        = false;
+    if (module == config->analysis_module) {
+      config->analysis_module = NULL;
+      is_current = true;
+    }
+
+    hash_del( config->analysis_modules , user_name );
+    analysis_config_load_external_module( config , user_name , lib_name );
+    if (is_current)
+      analysis_config_select_module( config , user_name );
+
+    free( lib_name );
+    free( user_name );
+  } else
+    fprintf(stderr,"** Warning: Internal modules can not be reloaded.\n");
+}
+
 
 
 
@@ -277,12 +326,12 @@ analysis_module_type * analysis_config_get_active_module( analysis_config_type *
 /*****************************************************************/
 
 
-void analysis_config_load_internal_modules( analysis_config_type * config , rng_type * rng) {
-  analysis_config_load_internal_module( config , rng , "STD_ENKF"       , "std_enkf_symbol_table");
-  analysis_config_load_internal_module( config , rng , "NULL_ENKF"      , "null_enkf_symbol_table");
-  analysis_config_load_internal_module( config , rng , "SQRT_ENKF"      , "sqrt_enkf_symbol_table");
-  analysis_config_load_internal_module( config , rng , "CV_ENKF"        , "cv_enkf_symbol_table");
-  analysis_config_load_internal_module( config , rng , "BOOTSTRAP_ENKF" , "bootstrap_enkf_symbol_table");
+void analysis_config_load_internal_modules( analysis_config_type * config ) {
+  analysis_config_load_internal_module( config , "STD_ENKF"       , "std_enkf_symbol_table");
+  analysis_config_load_internal_module( config , "NULL_ENKF"      , "null_enkf_symbol_table");
+  analysis_config_load_internal_module( config , "SQRT_ENKF"      , "sqrt_enkf_symbol_table");
+  analysis_config_load_internal_module( config , "CV_ENKF"        , "cv_enkf_symbol_table");
+  analysis_config_load_internal_module( config , "BOOTSTRAP_ENKF" , "bootstrap_enkf_symbol_table");
   /*  analysis_config_load_internal_module( config , rng , "FWD_STEP_ENKF"  , "fwd_step_enkf_symbol_table");*/
   analysis_config_select_module( config , DEFAULT_ANALYSIS_MODULE);
 }
@@ -292,7 +341,7 @@ void analysis_config_load_internal_modules( analysis_config_type * config , rng_
    for enkf_defaults.h
 */
 
-void analysis_config_init( analysis_config_type * analysis , const config_type * config , rng_type * rng) {
+void analysis_config_init( analysis_config_type * analysis , const config_type * config ) {
   if (config_item_set( config , UPDATE_LOG_PATH_KEY ))
     analysis_config_set_log_path( analysis , config_get_value( config , UPDATE_LOG_PATH_KEY ));
   
@@ -324,7 +373,7 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
       const char * user_name = stringlist_iget( tokens , 0 );
       const char * lib_name  = stringlist_iget( tokens , 1 );
       
-      analysis_config_load_external_module( analysis , rng , user_name , lib_name);
+      analysis_config_load_external_module( analysis , user_name , lib_name);
     }
   }
   
@@ -335,7 +384,7 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
       const char * src_name    = stringlist_iget( tokens , 0 );
       const char * target_name = stringlist_iget( tokens , 1 );
       
-      analysis_config_add_module_copy( analysis , rng , src_name , target_name);
+      analysis_config_add_module_copy( analysis , src_name , target_name);
     }
   }
 
@@ -379,7 +428,7 @@ void analysis_config_free(analysis_config_type * config) {
 
 
 
-analysis_config_type * analysis_config_alloc_default( ) {
+analysis_config_type * analysis_config_alloc_default( rng_type * rng ) {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
   
   config->log_path                  = NULL;
@@ -401,6 +450,7 @@ analysis_config_type * analysis_config_alloc_default( ) {
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
+  config->rng              = rng; 
   return config;
 }
 

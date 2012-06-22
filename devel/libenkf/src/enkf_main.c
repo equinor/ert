@@ -1551,6 +1551,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 }
 
 
+
 /**
    The main RUN function - will run both enkf assimilations and experiments.
 */
@@ -2752,8 +2753,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_init_subst_list( enkf_main );
     enkf_main_init_data_kw( enkf_main , config );
     
-    analysis_config_load_internal_modules( enkf_main->analysis_config , enkf_main->rng );
-    analysis_config_init( enkf_main->analysis_config , config , enkf_main->rng);
+    analysis_config_load_internal_modules( enkf_main->analysis_config );
+    analysis_config_init( enkf_main->analysis_config , config );
     ecl_config_init( enkf_main->ecl_config , config );
     plot_config_init( enkf_main->plot_config , config );
     ensemble_config_init( enkf_main->ensemble_config , config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
