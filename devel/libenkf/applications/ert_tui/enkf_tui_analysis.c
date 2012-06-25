@@ -20,13 +20,16 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <util.h>
 #include <ctype.h>
 #include <menu.h>
 #include <thread_pool.h>
+#include <arg_pack.h>
+#include <stringlist.h>
+
 #include <enkf_main.h>
 #include <enkf_sched.h>
-#include <arg_pack.h>
 #include <ensemble_config.h>
 #include <analysis_config.h>
 #include <analysis_module.h>
@@ -44,11 +47,11 @@ void enkf_tui_analysis_analyze_selected__(void * arg) {
       FILE * stream = util_fopen( filename , "r");
       
       while (true) {
-	int step;
-	if (fscanf(stream , "%d" , &step) == 1) 
-	  int_vector_append( step_list , step );
-	else
-	  break;
+        int step;
+        if (fscanf(stream , "%d" , &step) == 1) 
+          int_vector_append( step_list , step );
+        else
+          break;
       }
       
       fclose( stream );
@@ -104,34 +107,34 @@ void enkf_tui_analysis_smooth__(void * arg) {
       valid = false;
       char * step2_as_char = enkf_tui_util_scanf_report_step_as_char(last_report , "Last report step"  , PROMPT_LEN);
       if(strlen(step2_as_char) !=0){
-	valid = util_sscanf_int(step2_as_char , &step2);
-	if(step2<step1){
-	  printf("Last report step has to be bigger than first\n");
-	  valid = false;
-	}
+        valid = util_sscanf_int(step2_as_char , &step2);
+        if(step2<step1){
+          printf("Last report step has to be bigger than first\n");
+          valid = false;
+        }
       }
       if(valid){
-	int stride           = enkf_tui_util_scanf_int_with_default( "Stride [default:1]" , PROMPT_LEN , &default_used);
-	
-	int_vector_type * step_list = int_vector_alloc(0,0);
-	
-	if (default_used)
-	  stride = 1;
-	
-	{
-	  int step = step1;
-	  while (true) {
-	    int_vector_append( step_list , step );
-	    step += stride;
-	    if (step > step2)
-	      break;
-	  }
-	  if (int_vector_get_last( step_list ) != step2)
-	    int_vector_append( step_list , step2 );
-	}
-	enkf_main_UPDATE(enkf_main , step_list );
-	
-	int_vector_free( step_list );
+        int stride           = enkf_tui_util_scanf_int_with_default( "Stride [default:1]" , PROMPT_LEN , &default_used);
+        
+        int_vector_type * step_list = int_vector_alloc(0,0);
+        
+        if (default_used)
+          stride = 1;
+        
+        {
+          int step = step1;
+          while (true) {
+            int_vector_append( step_list , step );
+            step += stride;
+            if (step > step2)
+              break;
+          }
+          if (int_vector_get_last( step_list ) != step2)
+            int_vector_append( step_list , step2 );
+        }
+        enkf_main_UPDATE(enkf_main , step_list );
+        
+        int_vector_free( step_list );
       }
       free(step2_as_char);
     }
@@ -163,6 +166,27 @@ void enkf_tui_analysis_select_module__(void * arg) {
     if (analysis_config_select_module( analysis_config , module_name ))
       enkf_tui_analysis_update_title( enkf_main , menu );
   }
+}
+
+
+void enkf_tui_analysis_list_modules__(void * arg) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+
+  printf("Available modules: ");
+  {
+    stringlist_type * modules = analysis_config_alloc_module_names( analysis_config );
+    stringlist_fprintf( modules , " " , stdout );
+    printf("\n");
+    stringlist_free( modules );
+  }
+}
+
+
+void enkf_tui_analysis_reload_module__(void * arg) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  analysis_config_reload_module( analysis_config , NULL );
 }
 
 
@@ -205,12 +229,14 @@ void enkf_tui_analysis_menu(void * arg) {
   
   {
     enkf_tui_analysis_update_title( enkf_main , menu );
-    menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_tui_analysis_analyze__ , enkf_main , NULL);
-    menu_add_item(menu , "Analyze interval manually" , "iI" , enkf_tui_analysis_smooth__  , enkf_main , NULL);
-    menu_add_item(menu , "Analyze selected steps manually" , "nN" , enkf_tui_analysis_analyze_selected__ , enkf_main , NULL);
+    menu_add_item(menu , "Analyze one step manually"              , "aA"  , enkf_tui_analysis_analyze__          , enkf_main , NULL);
+    menu_add_item(menu , "Analyze interval manually"              , "iI"  , enkf_tui_analysis_smooth__           , enkf_main , NULL);
+    menu_add_item(menu , "Analyze selected steps manually"        , "nN"  , enkf_tui_analysis_analyze_selected__ , enkf_main , NULL);
     menu_add_separator( menu );
-    menu_add_item(menu , "Select analysis module"            , "sS" , enkf_tui_analysis_select_module__ , arg_pack  , NULL);
-    menu_add_item(menu , "Modify analysis module parameters" , "mM" , enkf_tui_analysis_update_module__ , enkf_main , NULL);
+    menu_add_item(menu , "Select analysis module"                 , "sS" , enkf_tui_analysis_select_module__ , arg_pack  , NULL);
+    menu_add_item(menu , "List available modules"                 , "lL" , enkf_tui_analysis_list_modules__  , enkf_main , NULL);
+    menu_add_item(menu , "Modify analysis module parameters"      , "mM" , enkf_tui_analysis_update_module__ , enkf_main , NULL);
+    menu_add_item(menu , "Reload current module (external only)"  , "rR" , enkf_tui_analysis_reload_module__ , enkf_main , NULL);
   }
   menu_run(menu);
   menu_free(menu);
