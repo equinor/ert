@@ -39,30 +39,22 @@ extern "C" {
   } well_conn_dir_enum;
 
 
-
-  /*
-    Observe that when the (ijk) values are initialized they are
-    shifted to zero offset values, to be aligned with the rest of the
-    ert libraries. 
-  */
-
-  typedef struct  {
-    int                i;
-    int                j;
-    int                k;
-    int                branch;
-    int                segment;   // -1: Ordinary well
-    bool               open;         
-    well_conn_dir_enum dir;
-  } well_conn_type;
-  
+  typedef struct well_conn_struct well_conn_type;
 
 
   void             well_conn_free( well_conn_type * conn);
   void             well_conn_free__( void * arg );
   well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw , const ecl_kw_type * iseg_kw , const ecl_intehead_type * header , int well_nr , int seg_well_nr , int conn_nr);
   well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const ecl_intehead_type * header , int well_nr);
-  
+
+  int                well_conn_get_branch(const well_conn_type * conn);
+  int                well_conn_get_i(const well_conn_type * conn);
+  int                well_conn_get_j(const well_conn_type * conn);
+  int                well_conn_get_k(const well_conn_type * conn);
+  well_conn_dir_enum well_conn_get_dir(const well_conn_type * conn);
+  bool               well_conn_open( const well_conn_type * conn );
+  int                well_conn_get_segment( const well_conn_type * conn );
+
 #ifdef __cplusplus
 }
 #endif

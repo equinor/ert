@@ -426,7 +426,7 @@ void well_state_summarize( const well_state_type * well_state , FILE * stream ) 
         {
           const well_conn_type * global_head = well_state_iget_wellhead( well_state , grid_nr );
           if (global_head != NULL)
-            fprintf(stream , "   Wellhead: (%3d,%3d,%3d)\n" , global_head->i , global_head->j , global_head->k);
+            fprintf(stream , "   Wellhead: (%3d,%3d,%3d)\n" , well_conn_get_i( global_head ) , well_conn_get_j(global_head) , well_conn_get_k( global_head) );
           else
             fprintf(stream , "   Wellhead: ------------\n" );
         }
@@ -442,7 +442,7 @@ void well_state_summarize( const well_state_type * well_state , FILE * stream ) 
               fprintf(stream , "      Branch %2d: [" , branch_nr );
               for (int iconn=0; iconn < num_connections; iconn++) {
                 const well_conn_type * conn = connections[ iconn ];
-                fprintf(stream, "(%3d,%3d,%3d)",conn->i,conn->j,conn->k);
+                fprintf(stream, "(%3d,%3d,%3d)",well_conn_get_i( conn ) , well_conn_get_j( conn ), well_conn_get_k( conn ));
                 if (iconn == (num_connections - 1))
                   fprintf(stream , "]\n");
                 else {

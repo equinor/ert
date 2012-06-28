@@ -141,7 +141,7 @@ set( libecl_src_path      ${CMAKE_SOURCE_DIR}/libecl/src )
 set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
 set( libwell_src_path     ${CMAKE_SOURCE_DIR}/libwell/src )
 
-set( BUILD_CXX OFF )
+set( BUILD_CXX ON )
 set( BUILD_ERT OFF)
 
 add_subdirectory( libutil )
