@@ -39,6 +39,7 @@ extern "C" {
 #define IWEL_LGR_ITEM                42     
 #define IWEL_SEGMENTED_WELL_NR_ITEM  70
 
+#define ISEG_OUTLET_ITEM        1
 #define ISEG_BRANCH_ITEM        3
 
 #define ICON_IC_ITEM         0

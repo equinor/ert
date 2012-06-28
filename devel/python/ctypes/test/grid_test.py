@@ -68,8 +68,7 @@ class GridTest( unittest.TestCase ):
         g1 = ecl.EclGrid( egrid_file )
         t1 = time.clock()
         t = t1 - t0
-        print t
-        self.assertTrue( True )
+        self.assertTrue( t < 1.0 )
 
 
     def testSave(self):

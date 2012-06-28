@@ -147,7 +147,7 @@ well_branch_type * well_path_iget_branch( const well_path_type * well_path , int
 
 
 void well_path_add_conn( well_path_type * well_path , well_conn_type * conn) {
-  int branch_nr = conn->branch;
+  int branch_nr = well_conn_get_branch( conn );
   if (!well_path_has_branch( well_path , branch_nr)) 
     well_path_add_branch( well_path , branch_nr );
   {

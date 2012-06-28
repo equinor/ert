@@ -25,6 +25,30 @@
 #include <well_const.h>
 #include <well_conn.h>
 
+/*
+  Observe that when the (ijk) values are initialized they are
+  shifted to zero offset values, to be aligned with the rest of the
+  ert libraries. 
+*/
+
+struct  well_conn_struct {
+    int                i;
+    int                j;
+    int                k;
+    well_conn_dir_enum dir;
+    bool               open;         
+    int                segment;          // -1: Ordinary well
+    /*-----------------------------------------------------------------*/
+    /* If the segment field == -1 - i.e. an ordinary well, the
+       outlet_segment is rubbish and should not be consulted.
+    */
+    int                branch;
+    int                outlet_segment;   // -1: This segment flows to the wellhead.
+};
+  
+
+
+
 
 well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const ecl_intehead_type * header , int well_nr)  {
   const int iwel_offset = header->niwelz * well_nr;
@@ -36,15 +60,30 @@ well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const e
     conn->i    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADI_ITEM ) - 1;
     conn->j    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADJ_ITEM ) - 1;
     conn->k    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADK_ITEM ) - 1;
-    conn->open    = true;  // This is not really specified anywhere.
-    conn->branch  = 0;
-    conn->segment = 0;
+
+    conn->open           = true;  // This is not really specified anywhere.
+    conn->branch         = 0;
+    conn->segment        = 0;   
+    conn->outlet_segment = 0;
     return conn;
   } else
     // The well is completed in this LGR - however the wellhead is in another LGR.
     return NULL;
 }
 
+
+static well_conn_type * well_conn_alloc__( const ecl_kw_type * icon_kw , int icon_offset) {
+  well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
+  
+  conn->i       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM ) - 1;
+  conn->j       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM ) - 1;
+  conn->k       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_K_ITEM ) - 1;
+  conn->segment = ecl_kw_iget_int( icon_kw , icon_offset + ICON_SEGMENT_ITEM ) - 1;
+  
+  conn->outlet_segment = -999;
+  conn->branch         = -999;
+  return conn;
+}
 
 /*
   Observe that the (ijk) and branch values are shifted to zero offset to be
@@ -60,12 +99,7 @@ well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw ,
   const int icon_offset = header->niconz * ( header->ncwmax * well_nr + conn_nr );
   int IC = ecl_kw_iget_int( icon_kw , icon_offset + ICON_IC_ITEM );
   if (IC > 0) {
-    well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
-  
-    conn->i       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM ) - 1;
-    conn->j       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM ) - 1;
-    conn->k       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_K_ITEM ) - 1;
-    conn->segment = ecl_kw_iget_int( icon_kw , icon_offset + ICON_SEGMENT_ITEM ) - 1;
+    well_conn_type * conn = well_conn_alloc__( icon_kw , icon_offset );
     {
       int int_status = ecl_kw_iget_int( icon_kw , icon_offset + ICON_STATUS_ITEM );
       if (int_status > 0)
@@ -106,15 +140,21 @@ well_conn_type * well_conn_alloc( const ecl_kw_type * icon_kw ,
        keywords. Consequently iseg_kw will be NULL for the part of a
        MSW + LGR well.
     */
+    
     if (iseg_kw != NULL) {
       if (conn->segment >= 0) {
         const int iseg_offset = header->nisegz * ( header->nsegmx * seg_well_nr + conn->segment );
-        conn->branch = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );  
-      } else
+        conn->outlet_segment = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_OUTLET_ITEM );  
+        conn->branch         = ecl_kw_iget_int( iseg_kw , iseg_offset + ISEG_BRANCH_ITEM );  
+      } else {
         conn->branch = 0;
-    } else
+        conn->outlet_segment = 0;
+      }
+    } else {
       conn->branch = 0;
-    
+      conn->outlet_segment = 0;
+    }
+
     return conn;
   } else
     return NULL;  /* IC < 0: Connection not in current LGR. */
@@ -130,3 +170,38 @@ void well_conn_free__( void * arg ) {
   well_conn_type * conn = (well_conn_type *) arg;
   well_conn_free( conn );
 }
+
+
+
+/*****************************************************************/
+
+int well_conn_get_i(const well_conn_type * conn) {
+  return conn->i;
+}
+
+int well_conn_get_j(const well_conn_type * conn) {
+  return conn->j;
+}
+
+int well_conn_get_k(const well_conn_type * conn) {
+  return conn->k;
+}
+
+
+int well_conn_get_branch(const well_conn_type * conn) {
+  return conn->branch;
+}
+
+well_conn_dir_enum well_conn_get_dir(const well_conn_type * conn) {
+  return conn->dir;
+}
+
+bool well_conn_open( const well_conn_type * conn ) {
+  return conn->open;
+}
+
+int well_conn_get_segment( const well_conn_type * conn ) {
+  return conn->segment;
+}
+
+
