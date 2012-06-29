@@ -16,12 +16,11 @@ from   global_config import LIBGEOMETRY
 
 from   global_config import add_program
 
-package      = "enkf"
 lib_path     = "../lib"
 include_path = "../include"
 bin_path     = "../bin"  
 
-conf = global_config.get_conf(os.getcwd() , package , 3)
+conf = global_config.get_conf(os.getcwd() , 3)
 env  = Environment()
 
 lib_list = ["lapack" , "blas" , "plplotd" , "m" , "z" , "pthread" , "dl"]
