@@ -47,12 +47,16 @@ class GridTest( unittest.TestCase ):
         self.assertTrue( grid )
 
 
-    def create(self , filename):
+    def create(self , filename , load_actnum = True):
         fileH = open( filename , "r")
         specgrid = ecl.EclKW.read_grdecl( fileH , "SPECGRID" , ecl_type = ecl.ECL_INT_TYPE , strict = False)
         zcorn    = ecl.EclKW.read_grdecl( fileH , "ZCORN" )
         coord    = ecl.EclKW.read_grdecl( fileH , "COORD" )
-        actnum   = ecl.EclKW.read_grdecl( fileH , "ACTNUM" , ecl_type = ecl.ECL_INT_TYPE )
+        if load_actnum:
+            actnum   = ecl.EclKW.read_grdecl( fileH , "ACTNUM" , ecl_type = ecl.ECL_INT_TYPE )
+        else:
+            actnum   = None
+            
         mapaxes  = ecl.EclKW.read_grdecl( fileH , "MAPAXES" )
         grid = ecl.EclGrid.create( specgrid , zcorn , coord , actnum , mapaxes = mapaxes)
         return grid
@@ -61,6 +65,12 @@ class GridTest( unittest.TestCase ):
     def testCreate(self):
         grid = self.create( grdecl_file )
         self.assertTrue( grid )
+
+
+    def testACTNUM(self):
+        g1 = self.create( grdecl_file )
+        g2 = self.create( grdecl_file , load_actnum = False )
+        self.assertTrue( g1.equal( g2 ) )
 
 
     def testTime(self):
@@ -130,6 +140,7 @@ def fast_suite():
     suite.addTest( GridTest( 'testCreate' ))
     suite.addTest( GridTest( 'testSave' ))
     suite.addTest( GridTest( 'testTime' ))
+    suite.addTest( GridTest( 'testACTNUM') )
     return suite
 
 
