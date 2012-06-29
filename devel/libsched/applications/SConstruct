@@ -11,12 +11,11 @@ from   global_config import get_target
 
 SConscript(["perturb_history/SConstruct"])
 
-package      = "sched"
 lib_path     = "../lib"
 include_path = "../include"
 bin_path     = "../bin"  
 
-conf = global_config.get_conf(os.getcwd() , package , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
 lib_list =  ["lapack" , "blas" , "m" , "z" , "pthread"]
 if conf.g2c:

@@ -9,13 +9,12 @@ from   global_config import LIBJOB_QUEUE
 from   global_config import add_program
 from   global_config import get_target
 
-package      = "job_queue"
 lib_path     = "../lib"
 include_path = "../include"
 bin_path     = "../bin"  
 
 
-conf = global_config.get_conf(os.getcwd() , package , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 if conf.INCLUDE_LSF:
    env  = Environment()
    conf.update_env( env , [LIBJOB_QUEUE , LIBCONFIG , LIBUTIL] , [ "bat"  ,"lsf" , "nsl" , "z" , "m" , "pthread"] , link = True )

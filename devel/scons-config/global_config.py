@@ -93,7 +93,7 @@ LIBGEOMETRY  = 10
 LIBWELL      = 11
 
 class conf:
-    def __init__(self , cwd , package , sub_level_depth):
+    def __init__(self , cwd , sub_level_depth):
 
         self.SVN_VERSION      = commands.getoutput("svnversion ./")
         self.TIME_STAMP       = commands.getoutput("date")
@@ -126,7 +126,7 @@ class conf:
             self.BUILD_ROOT += "/%s" % path
             
         self.LIB = {}
-        self.LIB[LIBUTIL]       = {"home": "%s/libutil"      % self.BUILD_ROOT , "name": "util"}
+        self.LIB[LIBUTIL]       = {"home": "%s/libutil"      % self.BUILD_ROOT , "name": "ert_util"}
         self.LIB[LIBECL]        = {"home": "%s/libecl"       % self.BUILD_ROOT , "name": "ecl"}
         self.LIB[LIBANALYSIS]   = {"home": "%s/libanalysis"  % self.BUILD_ROOT , "name": "analysis"}
         self.LIB[LIBRMS]        = {"home": "%s/librms"       % self.BUILD_ROOT , "name": "rms"}
@@ -174,8 +174,8 @@ class conf:
 
                 
         
-def get_conf(cwd , package , sub_level_depth):
-    return conf( cwd , package , sub_level_depth )
+def get_conf(cwd ,  sub_level_depth):
+    return conf( cwd , sub_level_depth )
         
 
 

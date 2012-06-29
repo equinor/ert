@@ -32,5 +32,5 @@ except:
     clib.load("libblas.so" , "libblas.so.3")
     clib.load("liblapack.so")
 
-lib = clib.load("libutil.so")
+lib = clib.load("libert_util.so")
     

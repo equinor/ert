@@ -17,7 +17,7 @@ slib_path     = "../slib"
 include_path = "../include"
 bin_path     = "../bin"  
 
-conf = global_config.get_conf(os.getcwd() , package , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [ LIBGEOMETRY , LIBECL , LIBUTIL] , link = False)
 

@@ -9,9 +9,8 @@ from   global_config import get_target
 from   global_config import add_program
 
 bin_path     = "../bin"  
-package      = "analysis"
 
-conf = global_config.get_conf(os.getcwd() , package , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
 lib_list = ["lapack" , "blas" , "m" , "z" , "pthread" , "dl"]
 if conf.g2c:

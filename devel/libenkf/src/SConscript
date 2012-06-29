@@ -32,7 +32,7 @@ def make_build_info(conf , target_file):
     fileH.close()
 
 
-conf = global_config.get_conf(os.getcwd() , package , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 make_build_info( conf , "ert_build_info.h")
 env  = Environment()
 conf.update_env( env , [ LIBANALYSIS , LIBJOB_QUEUE , LIBCONFIG , LIBRMS , LIBSCHED , LIBECL , LIBGEOMETRY , LIBPLOT , LIBUTIL ] , link = False)

@@ -9,12 +9,12 @@ from   global_config import LIBRMS
 from   global_config import add_program
 from   global_config import get_target
 
-package      = "rms"
+
 lib_path     = "../lib"
 include_path = "../include"
 bin_path     = "../bin"  
 
-conf = global_config.get_conf(os.getcwd() , package , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [ LIBRMS , LIBECL , LIBUTIL ] ,  ext_liblist = ["m" , "z" , "pthread"] , link = True)
 

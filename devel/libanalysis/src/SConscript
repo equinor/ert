@@ -18,7 +18,7 @@ include_path = "../include"
 module_path  = "../modules"
 
 
-conf = global_config.get_conf(os.getcwd() , package , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [ LIBUTIL , LIBANALYSIS ] , link = False)
 

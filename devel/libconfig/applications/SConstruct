@@ -8,12 +8,11 @@ from   global_config import LIBCONFIG
 from   global_config import get_target
 from   global_config import add_program
 
-package      = "config"
 lib_path     = "../lib"
 include_path = "../include"
 bin_path     = "../bin"  
 
-conf = global_config.get_conf(os.getcwd() , package , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [LIBCONFIG , LIBUTIL] , ext_liblist = ["m","z","pthread"] , link = True)
 
