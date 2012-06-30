@@ -1,4 +1,4 @@
-set( SCHED_INSTALL_PREFIX "sched" CACHE STRING "Prefix for installation of libsched")
+set( SCHED_INSTALL_PREFIX "" CACHE STRING "Prefix for installation of libsched")
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src )
 include_directories( ${libutil_build_path} )
