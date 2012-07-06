@@ -33,6 +33,7 @@
 
 struct time_map_struct {
   time_t_vector_type * map;
+  time_t               start_time;
   pthread_rwlock_t     rw_lock;
 };
 
@@ -40,6 +41,7 @@ struct time_map_struct {
 time_map_type * time_map_alloc( ) {
   time_map_type * map = util_malloc( sizeof * map , __func__);
   map->map = time_t_vector_alloc(0 , DEFAULT_TIME );
+  map->start_time = DEFAULT_TIME;
   pthread_rwlock_init( &map->rw_lock , NULL);
   return map;
 }
@@ -57,12 +59,16 @@ void time_map_free( time_map_type * map ) {
 
 static void time_map_update__( time_map_type * map , int step , time_t time) {
   time_t current_time = time_t_vector_safe_iget( map->map , step);
-  if (current_time == DEFAULT_TIME)
+
+  if (current_time == DEFAULT_TIME) 
     time_t_vector_iset( map->map , step , time );
   else {
     if (current_time != time)
       util_abort("%s: time mismatch for step:%d \n",__func__ , step );
   }
+
+  if (step == 0)
+    map->start_time = time;
 }
 
 
@@ -85,6 +91,36 @@ static time_t time_map_iget__( const time_map_type * map , int step ) {
 }
 
 
+/*****************************************************************/
+
+double time_map_iget_sim_days( time_map_type * map , int step ) {
+  double days;
+
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    time_t start_time = time_map_iget__( map , 0 );
+    time_t sim_time   = time_map_iget__( map , step );
+    
+    if (sim_time >= start_time)
+      return 1.0 * (sim_time - start_time) / (3600 * 24);
+    else
+      return -1;
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+
+  return days;
+}
+
+
+time_t time_map_iget( time_map_type * map , int step ) {
+  time_t t;
+
+  pthread_rwlock_rdlock( &map->rw_lock );
+  t = time_map_iget__( map , step );
+  pthread_rwlock_unlock( &map->rw_lock );
+
+  return t;
+}
 
 void time_map_update( time_map_type * map , int step , time_t time) {
   pthread_rwlock_wrlock( &map->rw_lock );
@@ -99,3 +135,41 @@ void time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum
   pthread_rwlock_unlock( &map->rw_lock );
 }
 
+
+void time_map_fwrite( time_map_type * map , FILE * stream ) {
+  pthread_rwlock_rdlock( &map->rw_lock );
+  time_t_vector_fwrite( map->map , stream );
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
+
+void time_map_fread( time_map_type * map , FILE * stream ) {
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    time_t_vector_type * file_map = time_t_vector_fread_alloc( stream );
+
+    for (int step=0; step < time_t_vector_size( file_map ); step++) 
+      time_map_update__( map , step , time_t_vector_iget( file_map , step ));
+    
+    time_t_vector_free( file_map );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
+
+
+/*
+  Observe that the return value from this function is an inclusive
+  value; i.e. it should be permissible to ask for results at this report
+  step. 
+*/
+
+int time_map_get_last_step( const time_map_type * map) {
+  int last_step;
+  
+  pthread_rwlock_rdlock( &map->rw_lock );
+  last_step = time_t_vector_size( map->map ) - 1;
+  pthread_rwlock_unlock( &map->rw_lock );
+  
+  return last_step;
+}

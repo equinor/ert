@@ -102,8 +102,23 @@ extern "C" {
   void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
   void                          enkf_main_load_ecl_complete_mt(enkf_main_type *);
   void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
-  bool                          enkf_main_run(enkf_main_type * , run_mode_type , const bool_vector_type * ,  int  , int , state_enum );
+
+  void                          enkf_main_run_exp(enkf_main_type * enkf_main            ,
+                                                  const bool_vector_type * iactive      , 
+                                                  int              init_step_parameters ,
+                                                  int              start_report         ,
+                                                  state_enum       start_state);
+
+  
+  void                          enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
+                                                           const bool_vector_type * iactive      , 
+                                                           int              init_step_parameters ,
+                                                           int              start_report         ,
+                                                           state_enum       start_state);
+
+
   //void                          enkf_main_run_step(enkf_main_type *, run_mode_type , const bool * , int, state_enum , int , int, bool, forward_model_type *);
+  
   void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
   void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
@@ -134,6 +149,7 @@ extern "C" {
   void                          enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file );
   void                          enkf_main_reload_obs( enkf_main_type * enkf_main);
   enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
+  bool                          enkf_main_have_obs( const enkf_main_type * enkf_main );
   analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );
   void                          enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path );  
   enkf_plot_data_type         * enkf_main_alloc_plot_data( enkf_main_type * enkf_main );

@@ -203,6 +203,7 @@
 
 #define ENKF_FS_TYPE_ID   1089763
 #define ENKF_MOUNT_MAP   "enkf_mount_info"
+#define TIME_MAP_FILE    "time-map"
 
 struct enkf_fs_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -355,7 +356,7 @@ static void enkf_fs_assign_driver( enkf_fs_type * fs , fs_driver_type * driver ,
 
 
 static enkf_fs_type *  enkf_fs_mount_block_fs( FILE * fstab_stream , const char * mount_point , bool read_only ) {
-  enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point , read_only);
+  enkf_fs_type * fs = enkf_fs_alloc_empty( mount_point , read_only );
   {
     int driver_nr;
     for (driver_nr = 0; driver_nr < 5; driver_nr++) {
@@ -398,8 +399,26 @@ void enkf_fs_create_fs( const char * mount_point, fs_driver_impl driver_id , voi
       case( PLAIN_DRIVER_ID ):
         enkf_fs_create_plain_fs( stream , arg );
         break;
+      default:
+        util_abort("%s: Invalid driver_id value:%d \n",__func__ , driver_id );
       }
     }
+    fclose( stream );
+  }
+}
+
+
+static void enkf_fs_fsync_time_map( enkf_fs_type * fs ) {
+  FILE * stream = enkf_fs_open_case_file( fs , TIME_MAP_FILE , "w");
+  time_map_fwrite( fs->time_map , stream );
+  fclose( stream );
+}
+
+
+static void enkf_fs_fread_time_map( enkf_fs_type * fs ) {
+  FILE * stream = enkf_fs_open_excase_file( fs , TIME_MAP_FILE );
+  if (stream != NULL) {
+    time_map_fread( fs->time_map , stream );
     fclose( stream );
   }
 }
@@ -411,7 +430,7 @@ enkf_fs_type * enkf_fs_open( const char * mount_point , bool read_only) {
 
   if (stream != NULL) {
     fs_driver_assert_magic( stream );
-    fs_driver_assert_version( stream );
+    fs_driver_assert_version( stream , mount_point );
     {
       fs_driver_impl driver_id = util_fread_int( stream );
     
@@ -428,6 +447,7 @@ enkf_fs_type * enkf_fs_open( const char * mount_point , bool read_only) {
     }
     fclose( stream );
     enkf_fs_init_path_fmt( fs );
+    enkf_fs_fread_time_map( fs );
   }
   return fs;
 }
@@ -525,13 +545,13 @@ static void enkf_fs_fsync_driver( fs_driver_type * driver ) {
 
 
 void enkf_fs_fsync( enkf_fs_type * fs ) {
-  {
-    enkf_fs_fsync_driver( fs->parameter );
-    enkf_fs_fsync_driver( fs->eclipse_static );
-    enkf_fs_fsync_driver( fs->dynamic_forecast );
-    enkf_fs_fsync_driver( fs->dynamic_analyzed );
-    enkf_fs_fsync_driver( fs->index );
-  }
+  enkf_fs_fsync_driver( fs->parameter );
+  enkf_fs_fsync_driver( fs->eclipse_static );
+  enkf_fs_fsync_driver( fs->dynamic_forecast );
+  enkf_fs_fsync_driver( fs->dynamic_analyzed );
+  enkf_fs_fsync_driver( fs->index );
+
+  enkf_fs_fsync_time_map( fs );
 }
 
 
@@ -706,8 +726,6 @@ void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , in
   buffer_free( buffer );
 }
 
-
-/*****************************************************************/
 /*****************************************************************/
 /* write_dir / read_dir confusion. */
 

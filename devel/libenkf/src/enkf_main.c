@@ -286,6 +286,10 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
   return enkf_main->obs;
 }
 
+bool enkf_main_have_obs( const enkf_main_type * enkf_main ) {
+  return enkf_obs_have_obs( enkf_main->obs );
+}
+
 
 /**
    Will do a forced reload of the observtaions; if the user has edited
@@ -295,7 +299,6 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
 
 void enkf_main_reload_obs( enkf_main_type * enkf_main) {
   enkf_obs_reload(enkf_main->obs , 
-                  ecl_config_get_sched_file( enkf_main->ecl_config ) , 
                   ecl_config_get_grid( enkf_main->ecl_config ),
                   ecl_config_get_refcase( enkf_main->ecl_config ) , 
                   enkf_main->ensemble_config );
@@ -313,13 +316,9 @@ void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_fi
   if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs ))) {
     enkf_obs_load(enkf_main->obs , 
                   obs_config_file , 
-                  ecl_config_get_sched_file( enkf_main->ecl_config ) , 
                   ecl_config_get_grid( enkf_main->ecl_config ),
                   ecl_config_get_refcase( enkf_main->ecl_config ) , 
                   enkf_main->ensemble_config );
-
-    if (enkf_main->verbose && obs_config_file != NULL)
-      printf("Have loaded observations from: %s \n",obs_config_file );
   }
 }
 
@@ -382,9 +381,13 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   model_config_free( enkf_main->model_config);
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
-  local_config_free( enkf_main->local_config );
+  
+  if (enkf_main->local_config != NULL)
+    local_config_free( enkf_main->local_config );
+
   if (enkf_main->misfit_table != NULL)
     misfit_table_free( enkf_main->misfit_table );
+
   int_vector_free( enkf_main->keep_runpath );
   plot_config_free( enkf_main->plot_config );
   ert_templates_free( enkf_main->templates );
@@ -1291,6 +1294,30 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
 }
 
 
+static void enkf_main_report_run_failure( const enkf_main_type * enkf_main , int iens) {
+  job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+  const char * stderr_file = job_queue_iget_stderr_file( job_queue , iens );
+  if (stderr_file == NULL) 
+    log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" , 
+                         job_queue_iget_run_path( job_queue , iens), 
+                         job_queue_iget_failed_job( job_queue , iens),
+                         job_queue_iget_error_reason( job_queue , iens ));
+  else
+    log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" , 
+                         job_queue_iget_run_path( job_queue , iens), 
+                         job_queue_iget_failed_job( job_queue , iens),
+                         job_queue_iget_error_reason( job_queue , iens ),
+                         job_queue_iget_stderr_file( job_queue , iens ));
+}
+
+
+static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , int iens) {
+  job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+  log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s - Could not load all required data",
+                       job_queue_iget_run_path( job_queue , iens));
+}
+
+
 
 /**
    The function enkf_main_run_step() is quite heavily multithreaded
@@ -1367,7 +1394,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
 */
 
 
-static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
+static void enkf_main_run_step(enkf_main_type * enkf_main       ,
                                run_mode_type    run_mode        ,
                                const bool_vector_type * iactive ,
                                int load_start                   ,      /* For internalizing results, and the first step in the update when merging. */
@@ -1375,17 +1402,13 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
                                state_enum init_state_parameter  ,
                                state_enum init_state_dynamic    ,
                                int step1                        ,
-                               int step2                        ,      /* Discarded for predictions */
-                               bool enkf_update) {
+                               int step2                        ,
+                               bool enkf_update) {                     /* Only considered for ENKF_ASSIMILATION mode. */
 
-  {
-    const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
-    if ((step1 > 0) && (!ecl_config_can_restart(ecl_config))) {
-      fprintf(stderr,"** Warning - tried to restart case which is not properly set up for restart.\n");
-      fprintf(stderr,"** Need <INIT> in datafile and INIT_SECTION keyword in config file.\n");
-      util_exit("%s: exiting \n",__func__);
-    }
-  }
+
+  
+  if (step1 > 0)
+    ecl_config_assert_restart( enkf_main_get_ecl_config( enkf_main ) );
   
   {
     bool     verbose_queue   = enkf_main->verbose;
@@ -1395,14 +1418,16 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
     int iens;
 
     if (enkf_main->verbose) {
-      if (run_mode == ENSEMBLE_PREDICTION)
-        printf("Starting predictions from step: %d\n",step1);
-      else
+      if (run_mode == ENKF_ASSIMILATION)
         printf("Starting forward step: %d -> %d\n",step1 , step2);
     }
     
     log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
-    log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
+    if (run_mode == ENKF_ASSIMILATION)
+      log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
+    else
+      log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> ??? ",step1);
+
     bool_vector_safe_cast( iactive );
     job_size = bool_vector_count_equal( iactive , true );
     {
@@ -1425,7 +1450,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
             int load_start = step1;
             if (step1 > 0)
               load_start++;
-
+            
             enkf_state_init_run(enkf_main->ensemble[iens] ,
                                 run_mode ,
                                 true , 
@@ -1441,7 +1466,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
               
               arg_pack_append_ptr( arg_pack , enkf_main->ensemble[iens] );
               arg_pack_append_ptr( arg_pack , fs );
-            
+              
               thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , arg_pack);
             }
           } else
@@ -1456,55 +1481,46 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
         thread_pool_free(submit_threads);        
       }
       job_queue_submit_complete( job_queue );
-      log_add_message(enkf_main->logh , 1 , NULL , "All jobs ready for running - waiting for completion" ,  false);
+      log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
 
       enkf_main_run_wait_loop( enkf_main );      /* Waiting for all the jobs - and the loading of results - to complete. */
       pthread_join( queue_thread , NULL );       /* Wait for the job_queue_run_jobs() function to complete. */
     }
 
 
-
+    
     {
-      bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, 
-                               and that the ert layer has loaded all data. */
-      job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-      
+      bool totalOK = true;
       for (iens = 0; iens < ens_size; iens++) {    
-        if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
-          if ( runOK ) {
-            log_add_fmt_message( enkf_main->logh , 1 , stderr , "Some models failed to integrate from DATES %d -> %d:",step1 , step2);
-            runOK = false;
-          }
+        run_status_type run_status = enkf_state_get_simple_run_status( enkf_main->ensemble[iens] );
 
-          {
-            const char * stderr_file = job_queue_iget_stderr_file( job_queue , iens );
-            if (stderr_file == NULL) 
-              log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" , 
-                                   job_queue_iget_run_path( job_queue , iens), 
-                                   job_queue_iget_failed_job( job_queue , iens),
-                                   job_queue_iget_error_reason( job_queue , iens ));
-            else
-              log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" , 
-                                   job_queue_iget_run_path( job_queue , iens), 
-                                   job_queue_iget_failed_job( job_queue , iens),
-                                   job_queue_iget_error_reason( job_queue , iens ),
-                                   job_queue_iget_stderr_file( job_queue , iens ));
-          }
+        switch (run_status) {
+        case JOB_RUN_FAILURE:
+          enkf_main_report_run_failure( enkf_main , iens );
+          break;
+        case JOB_LOAD_FAILURE:
+          enkf_main_report_load_failure( enkf_main , iens );
+          break;
+        case JOB_RUN_OK:
+          break;
+        default:
+          util_abort("%s: invalid job status:%s \n",__func__ , run_status );
         }
-      }
 
-      if (runOK) {
-        log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
+        totalOK = totalOK && ( run_status == JOB_RUN_OK );
+      }
+        
+      if (totalOK) {
+        log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded.");
         
         if (enkf_update) {
           int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , step2 );
           enkf_main_UPDATE(enkf_main , step_list );
           int_vector_free( step_list );
         }
+        
       }
       enkf_fs_fsync( enkf_main->dbase );
-      
-      return runOK;
     }
   }
 }
@@ -1515,7 +1531,7 @@ int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_
   int_vector_type * step_list = int_vector_alloc( 0 , 0 );
   
   if (merge_observations) {
-    for (int step = util_int_max( 1 , load_start ); step <= step2; step++)
+    for (int step = util_int_max( 1 , load_start ); step <= step2; step++) 
       int_vector_append( step_list , step );
   } else
     int_vector_append( step_list , step2 );
@@ -1530,6 +1546,7 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
   enkf_config_node_type * config_node_type = ensemble_config_get_node(ensemble_config, key);
   return enkf_config_node_get_ref(config_node_type);
 }
+
 
 /**
    This function will initialize the necessary enkf_main structures
@@ -1552,96 +1569,98 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 
 
 
-/**
-   The main RUN function - will run both enkf assimilations and experiments.
-*/
-bool enkf_main_run(enkf_main_type * enkf_main            ,
-                   run_mode_type    run_mode             ,
-                   const bool_vector_type * iactive      , 
-                   int              init_step_parameters ,
-                   int              start_report         ,
-                   state_enum       start_state) {
+
+void enkf_main_run_exp(enkf_main_type * enkf_main            ,
+                       const bool_vector_type * iactive      , 
+                       int              init_step_parameters ,
+                       int              start_report         ,
+                       state_enum       start_state) {
+  
+  enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT );
+  {
+    const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
+    const int last_report              = -1;  // Should be fully ignored.
+    int load_start                  = start_report;
+    state_enum init_state_parameter = start_state;
+    state_enum init_state_dynamic   = start_state;
+    enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , -1 , false);
+  }
+}
+
+
+
+void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
+                                const bool_vector_type * iactive      , 
+                                int              init_step_parameters ,
+                                int              start_report         ,
+                                state_enum       start_state) {
 
   bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
   int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
-
-  bool_vector_safe_cast( iactive );
-  enkf_main_init_run( enkf_main , run_mode);
+  enkf_main_init_run( enkf_main , ENKF_ASSIMILATION);
   {
-    if (run_mode == ENKF_ASSIMILATION) {
-      bool analyzed_start = false;
-      bool prev_enkf_on;
-      const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
-      const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
-      const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
-      int inode;
+    bool analyzed_start = false;
+    bool prev_enkf_on;
+    const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
+    const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
+    const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
+    int inode;
+    
+    if (start_state == ANALYZED)
+      analyzed_start = true;
+    else if (start_state == FORECAST)
+      analyzed_start = false;
+    else
+      util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
+    
+    prev_enkf_on = analyzed_start;
+    for (inode = start_inode; inode < num_nodes; inode++) {
+      const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
+      state_enum init_state_parameter;
+      state_enum init_state_dynamic;
+      int      init_step_parameter;
+      int      load_start;
+      int      report_step1;
+      int      report_step2;
+      bool     enkf_on;
+
+
+      enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on );
+      if (inode == start_inode)
+        report_step1 = start_report;  /* If we are restarting from somewhere. */
       
-      if (start_state == ANALYZED)
-        analyzed_start = true;
-      else if (start_state == FORECAST)
-        analyzed_start = false;
-      else
-        util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
-      
-      prev_enkf_on = analyzed_start;
-      for (inode = start_inode; inode < num_nodes; inode++) {
-        const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-        state_enum init_state_parameter;
-        state_enum init_state_dynamic;
-        int      init_step_parameter;
-        int      load_start;
-        int      report_step1;
-        int      report_step2;
-        bool enkf_on;
-        
-        enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on );
-        if (inode == start_inode)
-          report_step1 = start_report;  /* If we are restarting from somewhere. */
-        
-        if (rerun) {
-          /* rerun ... */
-          load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
-          init_step_parameter  = report_step1;
-          init_state_dynamic   = FORECAST;
-          init_state_parameter = ANALYZED;
-          report_step1         = rerun_start;
-        } else {
-          if (prev_enkf_on)
-            init_state_dynamic = ANALYZED;
-          else
-            init_state_dynamic = FORECAST;
-          /*
-            This is not a rerun - and then parameters and dynamic
-            data should be initialized from the same report step.
-          */
-          init_step_parameter  = report_step1;
-          init_state_parameter = init_state_dynamic;
-          load_start = report_step1;
-        }
-        
-        if (load_start > 0)
-          load_start++;
-        
-        {
-          bool runOK = enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter , 
-                                          init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on);
-          if (!runOK)
-            return false;   /* If the run did not succed we just return false. */
-        }
-        prev_enkf_on = enkf_on;
+      if (rerun) {
+        /* rerun ... */
+        load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
+        init_step_parameter  = report_step1;
+        init_state_dynamic   = FORECAST;
+        init_state_parameter = ANALYZED;
+        report_step1         = rerun_start;
+      } else {
+        if (prev_enkf_on)
+          init_state_dynamic = ANALYZED;
+        else
+          init_state_dynamic = FORECAST;
+        /*
+          This is not a rerun - and then parameters and dynamic
+          data should be initialized from the same report step.
+        */
+        init_step_parameter  = report_step1;
+        init_state_parameter = init_state_dynamic;
+        load_start = report_step1;
       }
-    } else {
-      /* It is an experiment */
-      const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
-      const int last_report              = enkf_sched_get_last_report(enkf_sched);
-      int load_start = start_report;
-      state_enum init_state_parameter = start_state;
-      state_enum init_state_dynamic   = start_state;
-      enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false );
-    } 
+      
+      if (load_start > 0)
+        load_start++;
+      
+      enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter , 
+                         init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on);
+      
+      prev_enkf_on = enkf_on;
+    }
   }
-  return true;
 }
+
 
 /*****************************************************************/
 /*  Filesystem copy functions                                    */
@@ -2128,6 +2147,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->user_config_file   = NULL;
   enkf_main->site_config_file   = NULL;
   enkf_main->rft_config_file    = NULL;
+  enkf_main->local_config       = NULL;
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
@@ -2903,7 +2923,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
          loaded on top.
       */
 
-      {
+      if (model_config_has_history( enkf_main->model_config )) {
         enkf_main->local_config  = local_config_alloc( /*enkf_main->ensemble_config , enkf_main->enkf_obs , */ model_config_get_last_history_restart( enkf_main->model_config ));
         
         /* First create the default ALL_ACTIVE configuration. */
@@ -2934,7 +2954,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
           unlink( all_active_config_file );
           free(all_active_config_file);
         }
-      }
+      } else 
+        if (config_get_occurences( config , LOCAL_CONFIG_KEY) > 0) 
+          fprintf(stderr,"** Warning: Not possible to configure local analysis without SCHEDULE or REFCASE - %s keyword(s) ignored\n", LOCAL_CONFIG_KEY);
     }
     config_free(config);
   }
@@ -3118,7 +3140,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   model_config_set_internalize_state( enkf_main->model_config , 0);
 
   /* We internalize all the endpoints in the enkf_sched. */
-  {
+  if (run_mode == ENKF_ASSIMILATION) {
     int inode;
     enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
     for (inode = 0; inode < enkf_sched_get_num_nodes( enkf_sched ); inode++) {

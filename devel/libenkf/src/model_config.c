@@ -74,11 +74,9 @@ struct model_config_struct {
   char                 * rftpath;
   char                 * select_case;
   fs_driver_impl         dbase_type;
-  int                    last_history_restart;       /* The end of the history - this is inclusive.*/
   bool                   has_prediction; 
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
   history_source_type    history_source;
-  bool                   ignore_schedule; 
   const ecl_sum_type   * refcase;                    /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer 
                                                         to the ecl_sum instance owned and held by the ecl_config object. */
   /** The results are always loaded. */
@@ -145,18 +143,20 @@ void model_config_set_case_table( model_config_type * model_config , int ens_siz
 }
 
 
- void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
-   if (model_config->runpath != NULL)
-     path_fmt_free( model_config->runpath );
-
-   model_config->runpath  = path_fmt_alloc_directory_fmt( fmt );
- }
+void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
+  if (model_config->runpath != NULL)
+    path_fmt_free( model_config->runpath );
+  
+  model_config->runpath  = path_fmt_alloc_directory_fmt( fmt );
+}
 
  /**
-    This function is not called at bootstrap time, but rather as part of an initialization
-    just before the run. Can be called maaaanye times for one application invokation.
+    This function is not called at bootstrap time, but rather as part
+    of an initialization just before the run. Can be called maaaanye
+    times for one application invokation.
 
-    Observe that the 'total' length is set as as the return value from this function.
+    Observe that the 'total' length is set as as the return value from
+    this function.
  */
 
 
@@ -164,10 +164,10 @@ void model_config_set_case_table( model_config_type * model_config , int ens_siz
    if (model_config->enkf_sched != NULL)
      enkf_sched_free( model_config->enkf_sched );
 
-   model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file       , 
-                                                       model_config->last_history_restart  , 
-                                                       run_mode);
-                                                       
+   if (run_mode == ENKF_ASSIMILATION)
+     model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file                   , 
+                                                         history_get_last_restart(model_config->history) , 
+                                                         run_mode);
    
  }
 
@@ -214,14 +214,14 @@ void * model_config_get_dbase_args( const model_config_type * model_config ) {
   return NULL;
 }
 
- void model_config_set_max_resample( model_config_type * model_config , int max_resample ) {
-   model_config->max_internal_submit = max_resample;
- }
+void model_config_set_max_resample( model_config_type * model_config , int max_resample ) {
+  model_config->max_internal_submit = max_resample;
+}
 
 
- int model_config_get_max_resample(const model_config_type * model_config ) {
-   return model_config->max_internal_submit;
- }
+int model_config_get_max_resample(const model_config_type * model_config ) {
+  return model_config->max_internal_submit;
+}
 
 
 void model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase ) {
@@ -233,31 +233,32 @@ history_source_type model_config_get_history_source( const model_config_type * m
   return model_config->history_source;
 }
 
-/**
-   Current implementation is ONLY prepared to do a reload from a
-   schedule based history to a refcase based history.
-*/
 
-void model_config_set_history_source( model_config_type * model_config , history_source_type history_source ) {
-  if (model_config->history_source != history_source) {
-    bool use_history = false;
 
-    model_config->history_source = history_source;
-    if (history_source == REFCASE_HISTORY)
-      use_history = true;
-    if ((history_source != SCHEDULE) && (model_config->refcase == NULL))
-      util_abort("%s: when using a REFCASE based history you must have a refcase installed. \n",__func__);
-    
-    if (history_source != SCHEDULE) {
-      /* We want to use the REFCASE */
-      
-      if (model_config->refcase != NULL) 
-        history_use_summary( model_config->history , model_config->refcase , use_history);        
-      else
-        util_exit("%s: Invalid configuration. When using HISTORY_SOURCE != SCHEDULE you must supply a REFCASE.\n",__func__);
-    }
-  }
+void model_config_select_schedule_history( model_config_type * model_config , const sched_file_type * sched_file) {
+  if (model_config->history != NULL)
+    history_free( model_config->history );
+  
+  if (sched_file != NULL) {
+    model_config->history = history_alloc_from_sched_file( SUMMARY_KEY_JOIN_STRING , sched_file);  
+    model_config->history_source = SCHEDULE;
+  } else
+    util_abort("%s: internal error - trying to select HISTORY_SOURCE:SCHEDULE - but no Schedule file has been loaded.\n",__func__);
 }
+
+
+void model_config_select_refcase_history( model_config_type * model_config , const ecl_sum_type * refcase , bool use_history) {
+  if (model_config->history != NULL)
+    history_free( model_config->history );
+
+  if (refcase != NULL) {
+    model_config->history = history_alloc_from_refcase( refcase , use_history );  
+    model_config->history_source = SCHEDULE;
+  } else
+    util_abort("%s: internal error - trying to load history from REFCASE - but no REFCASE has been loaded.\n",__func__);
+}
+
+
 
 
 model_config_type * model_config_alloc_empty() {
@@ -271,7 +272,6 @@ model_config_type * model_config_alloc_empty() {
 
   */
   model_config->case_names                = NULL;
-  model_config->max_internal_submit       = DEFAULT_MAX_INTERNAL_SUBMIT;
   model_config->enspath                   = NULL;
   model_config->rftpath                   = NULL;
   model_config->dbase_type                = INVALID_DRIVER_ID;
@@ -282,16 +282,15 @@ model_config_type * model_config_alloc_empty() {
   model_config->select_case               = NULL;    
   model_config->history                   = NULL;
   model_config->jobname_fmt               = NULL;
-  model_config->last_history_restart      = 0;
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
   model_config->__load_state              = bool_vector_alloc( 0 , false ); 
-  model_config->ignore_schedule           = DEFAULT_IGNORE_SCHEDULE;
+  model_config->history_source            = HISTORY_SOURCE_INVALID;
 
-  model_config_set_history_source( model_config , DEFAULT_HISTORY_SOURCE );
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
   model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
   model_config_set_dbase_type( model_config     , DEFAULT_DBASE_TYPE );
   model_config_set_runpath_fmt( model_config    , DEFAULT_RUNPATH);
+  model_config_set_max_resample( model_config   , DEFAULT_MAX_INTERNAL_SUBMIT);
   
   return model_config;
 }
@@ -305,46 +304,54 @@ void model_config_init(model_config_type * model_config ,
                        int last_history_restart , 
                        const sched_file_type * sched_file , 
                        const ecl_sum_type * refcase) {
-  
+
   model_config->forward_model             = forward_model_alloc(  joblist );
   model_config_set_refcase( model_config , refcase );
+  
 
   if (config_item_set( config , FORWARD_MODEL_KEY )) {
     char * config_string = config_alloc_joined_string( config , FORWARD_MODEL_KEY , " ");
     forward_model_parse_init( model_config->forward_model , config_string );
     free(config_string);
   }
-  
 
   if (config_item_set( config , ENKF_SCHED_FILE_KEY))
     model_config_set_enkf_sched_file(model_config , config_get_value(config , ENKF_SCHED_FILE_KEY ));
   
   if (config_item_set( config, RUNPATH_KEY))
     model_config_set_runpath_fmt( model_config , config_get_value(config , RUNPATH_KEY) );
-
-  if (config_item_set( config, IGNORE_SCHEDULE_KEY))
-    model_config->ignore_schedule = config_get_value_as_bool(config , IGNORE_SCHEDULE_KEY);
   
   if (sched_file != NULL) {
-    model_config->history              = history_alloc_from_sched_file( SUMMARY_KEY_JOIN_STRING , sched_file , model_config->ignore_schedule);  
-    model_config->last_history_restart = last_history_restart;
+
   }
   
-  if (config_item_set( config , HISTORY_SOURCE_KEY)) {
-    const char * history_source = config_iget(config , HISTORY_SOURCE_KEY, 0,0);
-    bool  use_history;
-    history_source_type source_type = history_get_source_type( history_source );
+  {
+    history_source_type source_type = DEFAULT_HISTORY_SOURCE;
+
+    if (config_item_set( config , HISTORY_SOURCE_KEY)) {
+      const char * history_source = config_iget(config , HISTORY_SOURCE_KEY, 0,0);
+      source_type = history_get_source_type( history_source );
+    }
     
-    if (source_type == REFCASE_SIMULATED)
-      use_history = false;
-    else if (source_type == REFCASE_HISTORY)
-      use_history = true;
-    
-    model_config_set_history_source( model_config , source_type );
+    switch (source_type) {
+    case SCHEDULE:
+      model_config_select_schedule_history( model_config , sched_file ); 
+      break;
+    case REFCASE_HISTORY:
+      model_config_select_refcase_history( model_config , refcase , true); 
+      break;
+    case REFCASE_SIMULATED:
+      model_config_select_refcase_history( model_config , refcase , false); 
+      break;
+    default:
+      break;
+    }
   }
+      
+
 
   if (model_config->history != NULL) {
-    int num_restart = history_get_num_restarts( model_config->history );
+    int num_restart = history_get_last_restart( model_config->history );
     bool_vector_iset( model_config->internalize_state , num_restart - 1 , false );
     bool_vector_iset( model_config->__load_state      , num_restart - 1 , false );
   }
@@ -379,7 +386,7 @@ void model_config_init(model_config_type * model_config ,
   
   if (config_item_set( config , MAX_RESAMPLE_KEY))
     model_config_set_max_resample( model_config , config_get_value_as_int( config , MAX_RESAMPLE_KEY ));
-
+  
 }
 
 
@@ -421,28 +428,20 @@ enkf_sched_type * model_config_get_enkf_sched(const model_config_type * config) 
   return config->enkf_sched;
 }
 
+bool model_config_has_history(const model_config_type * config) {
+  if (config->history != NULL)
+    return true;
+  else
+    return false;
+}
+
+
 history_type * model_config_get_history(const model_config_type * config) {
   return config->history;
 }
 
-
-/**
-   Because the different enkf_state instances can have different
-   schedule prediction files they can in principle have different
-   number of dates. This variable only records the longest. Observe
-   that the input is assumed to be transformed to the "Number of last
-   restart file" domain. I.e. in the case of four restart files:
-   
-      num_restart_files = 4 => "0000","0001","0002","0003"
-
-   This function expects to get the input three.           
-
-*/
-
-
-
 int model_config_get_last_history_restart(const model_config_type * config) {
-  return config->last_history_restart;
+  return history_get_last_restart( config->history );
 }
 
 
@@ -511,11 +510,6 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
   }
   fprintf( stream , CONFIG_KEY_FORMAT      , FORWARD_MODEL_KEY);  
   forward_model_fprintf( model_config->forward_model , stream );
-
-  if (model_config->ignore_schedule != DEFAULT_IGNORE_SCHEDULE) {
-    fprintf( stream , CONFIG_KEY_FORMAT      , IGNORE_SCHEDULE_KEY);  
-    fprintf(stream  , CONFIG_ENDVALUE_FORMAT , CONFIG_BOOL_STRING( model_config->ignore_schedule ));
-  }
 
   fprintf( stream , CONFIG_KEY_FORMAT      , RUNPATH_KEY );
   fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( model_config->runpath ));

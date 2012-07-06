@@ -30,6 +30,7 @@ extern "C" {
 
 #include <config.h>
 
+#include <summary_config.h>
 #include <enkf_config_node.h>
 #include <enkf_types.h>
 
@@ -43,7 +44,7 @@ typedef struct ensemble_config_struct ensemble_config_type;
   enkf_config_node_type  * ensemble_config_add_container( ensemble_config_type * ensemble_config , char * key);
   enkf_config_node_type  * ensemble_config_add_surface( ensemble_config_type * ensemble_config , const char * key );
   enkf_config_node_type  * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key );
-  enkf_config_node_type  * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key, bool required);
+  enkf_config_node_type  * ensemble_config_add_summary(ensemble_config_type * ensemble_config , const char * key, load_fail_type load_fail);
   enkf_config_node_type  * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key );
   enkf_config_node_type  * ensemble_config_add_field( ensemble_config_type * config , const char * key , ecl_grid_type * ecl_grid );
   int                      ensemble_config_get_observations( const ensemble_config_type * config , enkf_obs_type * enkf_obs , const char * user_key , int obs_count , 

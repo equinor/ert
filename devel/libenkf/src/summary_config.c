@@ -37,7 +37,7 @@
 struct summary_config_struct {
   int                   __type_id;
   bool                  vector_storage;
-  bool                  required;         /* If required == true the program will signal "Load Failure" if the node is not found. */
+  load_fail_type        load_fail;
   ecl_smspec_var_type   var_type;         /* The type of the variable - according to ecl_summary nomenclature. */
   char * var;                             /* This is ONE variable of summary.x format - i.e. WOPR:OP_2, RPR:4, ... */
   set_type            * obs_set;          /* Set of keys (which fit in enkf_obs) which are observations of this node. */ 
@@ -63,8 +63,8 @@ bool summary_config_get_vector_storage( const summary_config_type * config) {
 }
 
 
-bool summary_config_get_required( const summary_config_type * config) {
-  return config->required;
+load_fail_type summary_config_get_load_fail_mode( const summary_config_type * config) {
+  return config->load_fail;
 }
 
 /**
@@ -75,36 +75,33 @@ bool summary_config_get_required( const summary_config_type * config) {
    will incorrectly(?) signal failure.
 */
    
-void summary_config_set_required( summary_config_type * config , bool required) {
-  if (required) {
-    if ((config->var_type == ECL_SMSPEC_WELL_VAR) || (config->var_type == ECL_SMSPEC_GROUP_VAR))
-      // For well and group variables required will be false - whatsoever :-(
-      config->required = false;
-    else
-      config->required = required;
-  } else
-    config->required = required;
+void summary_config_set_load_fail_mode( summary_config_type * config , load_fail_type load_fail) {
+  if ((config->var_type == ECL_SMSPEC_WELL_VAR) || (config->var_type == ECL_SMSPEC_GROUP_VAR))
+    // For well and group variables load_fail will be LOAD_FAIL_SILENT anyway. 
+    config->load_fail = LOAD_FAIL_SILENT;
+  else
+    config->load_fail = load_fail;
 }
 
 
 /**
-   This can only be used to set required to true; not to set required
-   to false.  
+   This can only be used to increase the load_fail strictness.
 */
-void summary_config_update_required( summary_config_type * config , bool required ) {
-  if (required)
-    summary_config_set_required( config , required );
+
+void summary_config_update_load_fail_mode( summary_config_type * config , load_fail_type load_fail) {
+  if (load_fail > config->load_fail)
+    summary_config_set_load_fail_mode( config , load_fail );
 }
 
 
-summary_config_type * summary_config_alloc(const char * var , bool vector_storage , bool required) {
+summary_config_type * summary_config_alloc(const char * var , bool vector_storage , load_fail_type load_fail) {
   summary_config_type * config = util_malloc(sizeof *config , __func__);
   config->__type_id            = SUMMARY_CONFIG_TYPE_ID;
   config->var                  = util_alloc_string_copy( var );
   config->var_type             = ecl_smspec_identify_var_type( var );
   config->obs_set              = set_alloc_empty(); 
   config->vector_storage       = vector_storage;
-  summary_config_set_required( config , required );
+  summary_config_set_load_fail_mode( config , load_fail);
   return config;
 }
 

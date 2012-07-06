@@ -36,23 +36,21 @@ extern "C" {
 #include <fortio.h>
 #include <ecl_file.h>
 
-#include <enkf_types.h>
-#include <enkf_node.h>
-#include <enkf_util.h>
-
 #include <forward_model.h>
 #include <ext_joblist.h>
 #include <job_queue.h>
 
-#include <enkf_serialize.h>
 #include <model_config.h>
 #include <site_config.h>
 #include <ecl_config.h>
-#include <enkf_fs.h>
+#include <member_config.h>
 #include <ensemble_config.h>
 #include <ert_template.h>
-#include <member_config.h>
-
+#include <enkf_fs.h>
+#include <enkf_types.h>
+#include <enkf_node.h>
+#include <enkf_util.h>
+#include <enkf_serialize.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
 
@@ -130,7 +128,7 @@ typedef struct enkf_state_struct    enkf_state_type;
                            int step2 );
   
   
-  bool enkf_state_runOK(const enkf_state_type * );
+  run_status_type enkf_state_get_simple_run_status(const enkf_state_type * state);
 #ifdef __cplusplus
 }
 #endif

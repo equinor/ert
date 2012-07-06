@@ -16,24 +16,29 @@
    for more details. 
 */
 
-#include <enkf_util.h>
 #include <time.h>
-#include <util.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ecl_io_config.h>
+
 #include <set.h>
 #include <path_fmt.h>
+#include <util.h>
+#include <parser.h>
+
+#include <sched_file.h>
+
+#include <config.h>
+
 #include <ecl_grid.h>
 #include <ecl_sum.h>
-#include <sched_file.h>
-#include <config.h>
+#include <ecl_io_config.h>
+
+#include <enkf_util.h>
 #include <ecl_config.h>
-#include <parser.h>
+
 #include "config_keys.h"
 #include "enkf_defaults.h"
-
 
 /**
   This file implements a struct which holds configuration information
@@ -103,6 +108,14 @@ int ecl_config_get_last_history_restart( const ecl_config_type * ecl_config ) {
 
 bool ecl_config_can_restart( const ecl_config_type * ecl_config ) {
   return ecl_config->can_restart;
+}
+
+void ecl_config_assert_restart( const ecl_config_type * ecl_config ) {
+  if (!ecl_config_can_restart(ecl_config)) {
+    fprintf(stderr,"** Warning - tried to restart case which is not properly set up for restart.\n");
+    fprintf(stderr,"** Need <INIT> in datafile and INIT_SECTION keyword in config file.\n");
+    util_exit("%s: exiting \n",__func__);
+  }
 }
 
 
@@ -179,7 +192,7 @@ void ecl_config_set_schedule_file( ecl_config_type * ecl_config , const char * s
     free(base);
   }
   ecl_config->sched_file = sched_file_alloc( ecl_config->start_date );
-
+  
   
   sched_file_parse(ecl_config->sched_file , schedule_file );
   ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the end of history */

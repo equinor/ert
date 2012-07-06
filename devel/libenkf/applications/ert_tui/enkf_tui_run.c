@@ -63,7 +63,7 @@ void enkf_tui_run_start__(void * enkf_main) {
   bool_vector_type * iactive = bool_vector_alloc(0,true);
   bool_vector_iset( iactive , ens_size - 1 , true );
 
-  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , 0 , 0 , ANALYZED);
+  enkf_main_run_assimilation(enkf_main , iactive , 0 , 0 , ANALYZED);
   
   bool_vector_free(iactive);
 }
@@ -94,11 +94,62 @@ void enkf_tui_run_restart__(void * enkf_main) {
   }
   
   if(!wronginput)
-    enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , start_report , start_report  , state);
+    enkf_main_run_assimilation(enkf_main ,  iactive , start_report , start_report  , state);
   
   bool_vector_free(iactive);
   free(start_report_as_char);
 }
+
+
+
+
+void enkf_tui_run_iterated_ES__(void * enkf_main) {
+  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
+  const int last_report = enkf_main_get_history_length( enkf_main );
+
+  {
+    model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
+    int step1 = 0;
+    int step2 = util_scanf_int_with_limits("Last report",PROMPT_LEN , 0 , last_report);  
+    int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , step1 , step2 );
+    bool_vector_type * iactive = bool_vector_alloc(0 , true);
+    int iter  = 0;
+    int num_iter = 10;
+    stringlist_type * node_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER );
+
+    bool_vector_iset( iactive , ens_size - 1 , true );
+    
+    while (true) {
+      {
+        char * user = getenv("USER");
+        char * runpath_fmt = util_alloc_sprintf("/scratch/ert/%s/iteratedES/%d/run%%d" , user , iter);
+        model_config_set_runpath_fmt( model_config , runpath_fmt );
+        free( runpath_fmt );
+      }
+      enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
+      enkf_main_UPDATE(enkf_main , step_list );
+      
+      enkf_main_copy_ensemble( enkf_main , 
+                               enkf_main_get_current_fs( enkf_main ),
+                               step2 , 
+                               ANALYZED , 
+                               enkf_main_get_current_fs( enkf_main ),
+                               step1 , 
+                               FORECAST , 
+                               iactive , 
+                               NULL , 
+                               node_list );
+      
+      iter++;
+      if (iter == num_iter)
+        break;
+    }
+    int_vector_free( step_list );
+  }
+  
+}
+
+
 
 
 /** 
@@ -121,7 +172,6 @@ void enkf_tui_run_exp__(void * enkf_main) {
   int start_report         = 0;
   int init_step_parameters = 0;
   char * select_string;
-  bool good_input = false;
   {
     char * prompt = util_alloc_sprintf("Which realizations to simulate (Ex: 1,3-5) <Enter for all> [M to return to menu] : " , ens_size);
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
@@ -132,12 +182,7 @@ void enkf_tui_run_exp__(void * enkf_main) {
     } 
     free( prompt );
   }
-  for(int value = 0; value < ens_size -1; value++){
-    if(bool_vector_iget(iactive, value) == true)
-      good_input = true;
-  }
-  if(good_input)
-    enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
+  enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
   
   bool_vector_free(iactive);
 }
@@ -164,50 +209,10 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
     free( select_string );
   }
 
-  enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
+  enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
   bool_vector_free(iactive);
 }
 
-
-
-
-
-
-void enkf_tui_run_predictions__(void * __enkf_main) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
-  if (enkf_main_has_prediction( enkf_main )) {
-    const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
-    int        history_end                       = enkf_main_get_history_length( enkf_main );
-    state_enum start_state                       = ANALYZED;           
-    bool_vector_type * iactive = bool_vector_alloc(0,true);
-    bool_vector_iset( iactive , ens_size - 1 , true );
-
-    enkf_main_run(enkf_main , ENSEMBLE_PREDICTION , iactive , history_end , history_end  , start_state);
-    bool_vector_free(iactive);
-
-  } else
-    fprintf(stderr,"** Sorry: you must set a schedule prediction file with configuration option SCHEDULE_PREDICTION_FILE to use this option.\n");
-}
-
-
-/**
-   Runs an ensemble experiment including both history and prediction period. 
-*/
-void enkf_tui_run_full__(void * __enkf_main) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
-  if (enkf_main_has_prediction( enkf_main )) {
-    const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
-    bool_vector_type * iactive                   = bool_vector_alloc(0,true);
-    state_enum init_state                        = ANALYZED; 
-    int start_report                             = 0;
-    int init_step_parameters                     = 0;                
-    
-    enkf_main_run(enkf_main , ENSEMBLE_PREDICTION , iactive , init_step_parameters , start_report , init_state);
-    bool_vector_free( iactive );
-
-  } else
-    fprintf(stderr,"** Sorry: you must set a schedule prediction file with configuration option SCHEDULE_PREDICTION_FILE to use this option.\n");
-}
 
 
 static void enkf_tui_display_load_msg( int iens , const stringlist_type * msg_list ) {
@@ -294,16 +299,28 @@ void enkf_tui_run_menu(void * arg) {
     free(title);
   }
   menu_add_item(menu , "Ensemble run: history"                , "xX" , enkf_tui_run_exp__         , enkf_main , NULL);
-  menu_add_item(menu , "Ensemble run: predictions"            , "pP" , enkf_tui_run_predictions__ , enkf_main , NULL);
-  menu_add_item(menu , "Ensemble run: history + predictions"  , "fF" , enkf_tui_run_full__        , enkf_main , NULL);
   menu_add_separator( menu );
-  menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start__       , enkf_main , NULL);
-  menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__     , enkf_main , NULL);
+  {
+    menu_item_type * enkf_item         = menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start__       , enkf_main , NULL);
+    menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__     , enkf_main , NULL);
+    menu_item_type * dean_item         = menu_add_item(menu , "Iterated smoother"                      , "iI" , enkf_tui_run_iterated_ES__     , enkf_main , NULL);
+
+    if (!enkf_main_have_obs( enkf_main )) {
+      menu_item_disable( enkf_item );
+      menu_item_disable( restart_enkf_item );
+    }
+
+  }
   menu_add_separator(menu);
   menu_add_item(menu , "Create runpath directories - NO simulation" , "cC" , enkf_tui_run_create_runpath__ , enkf_main , NULL );
   menu_add_item(menu , "Load results manually"                  , "lL"  , enkf_tui_run_manual_load__ , enkf_main , NULL);
   menu_add_separator(menu);
-  menu_add_item(menu , "Analysis menu"             , "aA" , enkf_tui_analysis_menu , enkf_main , NULL);
+  {
+    menu_item_type * analysis_item = menu_add_item(menu , "Analysis menu"             , "aA" , enkf_tui_analysis_menu , enkf_main , NULL);
+    
+    if (!enkf_main_have_obs( enkf_main )) 
+      menu_item_disable( analysis_item );
+  }
   menu_add_separator(menu);
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );

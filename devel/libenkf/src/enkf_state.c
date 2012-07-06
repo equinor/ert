@@ -1,4 +1,3 @@
-
 /*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
@@ -101,7 +100,7 @@ typedef struct run_info_struct {
   int                     queue_index;          /* The job will in general have a different index in the queue than the iens number. */
   /******************************************************************/
   /* Return value - set by the called routine!!  */
-  bool                    runOK;               /* Set to true when the run has completed - AND - the results have been loaded back. */
+  run_status_type         run_status;
 } run_info_type;
   
 
@@ -217,8 +216,8 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->active               = active;
   run_info->init_step_parameters = init_step_parameters;
   run_info->init_state_parameter = init_state_parameter;
-  run_info->init_state_dynamic = init_state_dynamic;
-  run_info->runOK                = false;
+  run_info->init_state_dynamic   = init_state_dynamic;
+  run_info->run_status           = JOB_NOT_STARTED;
   run_info->__ready              = true;
   run_info->run_mode             = run_mode;
   run_info->max_internal_submit  = max_internal_submit;
@@ -241,7 +240,7 @@ static void run_info_free(run_info_type * run_info) {
 
 
 static void run_info_complete_run(run_info_type * run_info) {
-  if (run_info->runOK) {
+  if (run_info->run_status == JOB_RUN_OK) {
     util_safe_free(run_info->run_path);
     run_info->run_path = NULL;
   }
@@ -613,21 +612,26 @@ static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state
     /* Use several non unified files. */       
     /* Bypassing the query to model_config_load_results() */
     int report_step = run_info->load_start;
+    if (report_step == 0)
+      report_step++;     // Ignore looking for the .S0000 summary file (it does not exist).
     while (true) {
       char * summary_file = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
-      if (summary_file == NULL) {
-        /* If in prediction mode, we jump ship when we reach the first non-existing file. */
-        if (run_info->run_mode == ENSEMBLE_PREDICTION)
-          break;
-      } else
-        stringlist_append_owned_ref( data_files , summary_file);
       
-      report_step++;
-      if ((run_info->run_mode != ENSEMBLE_PREDICTION) && (report_step > run_info->step2))
+      if (summary_file != NULL)
+        stringlist_append_owned_ref( data_files , summary_file);
+      else
+        /* 
+           We stop the loading at first 'hole' in the series of summary files;
+           the internalize layer must report failure if we are missing data.
+        */
         break;
+      
+      if ((run_info->run_mode == ENKF_ASSIMILATION) && (report_step == run_info->step2))
+        break;
+
+      report_step++;
     }
   }  
-  
   
   if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
     summary = ecl_sum_fread_alloc(header_file , data_files , SUMMARY_KEY_JOIN_STRING );
@@ -652,14 +656,14 @@ static void enkf_state_log_GEN_DATA_load( const enkf_node_type * enkf_node , int
 
 
 
-static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK, bool interactive , stringlist_type * msg_list) {
+static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK, bool interactive , stringlist_type * msg_list) {
   const run_info_type   * run_info       = enkf_state->run_info;
   int        load_start                  = run_info->load_start;
   int        report_step;
   
   if (load_start == 0)  /* Do not attempt to load the "S0000" summary results. */
     load_start++;
-
+  
   {
     /* Looking for summary files on disk, and loading them. */
     ecl_sum_type * summary = enkf_state_load_ecl_sum( enkf_state );
@@ -667,13 +671,11 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
     /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
     if (summary != NULL) {
       /* The actual loading internalizing - from ecl_sum -> enkf_node. */
-      bool  store_vectors;
       const shared_info_type   * shared_info = enkf_state->shared_info;
       const int iens                         = member_config_get_iens( enkf_state->my_config );
       const int step2                        = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
-      
       {
-        hash_iter_type * iter   = hash_iter_alloc( enkf_state->node_hash );
+        hash_iter_type * iter = hash_iter_alloc( enkf_state->node_hash );
         while ( !hash_iter_is_complete(iter) ) {
           
           enkf_node_type * node = hash_iter_get_next_value(iter);
@@ -695,6 +697,7 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                 }
               } else {
                 for (report_step = load_start; report_step <= step2; report_step++) {
+                  bool store_vectors = (report_step == step2) ? true : false;
                   if (enkf_node_forward_load(node , run_info->run_path , summary , NULL , report_step , iens))  { /* Loading/internalizing */
                     node_id_type node_id = {.report_step = report_step, .iens = iens , .state = FORECAST };
                     enkf_node_store(node , fs , store_vectors , node_id);                        /* Saving to disk */
@@ -713,21 +716,25 @@ static void enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
         } 
         hash_iter_free(iter);
       }
-      for (report_step = load_start; report_step <= step2; report_step++) 
-        member_config_iset_sim_time( enkf_state->my_config , report_step , ecl_sum_get_report_time( summary , report_step ));
-      member_config_fwrite_sim_time( enkf_state->my_config , fs );
-      
+      {
+        time_map_type * time_map = enkf_fs_get_time_map( fs );
+        time_map_summary_update( time_map , summary );
+      }
       ecl_sum_free( summary ); 
-    }
+      return true;
+    } else
+      return false;
   }
 }
 
 
-static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK, bool interactive , stringlist_type * msg_list) {
+static bool enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK, bool interactive , stringlist_type * msg_list) {
   const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
   
   if (ecl_config_active( ecl_config ))
-    enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , loadOK, interactive , msg_list);
+    return enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , loadOK, interactive , msg_list);
+  else
+    return false;
 }
 
 
@@ -986,15 +993,26 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
   run_info_type             * run_info   = enkf_state->run_info;
   const model_config_type * model_config = enkf_state->shared_info->model_config;
   int report_step;
+
+  /*
+    The timing information - i.e. mainly what is the last report step
+    in these reuslts are inferred from the loading of summary results,
+    hence we must load the summary results first.
+  */
   
-  for (report_step = run_info->load_start; report_step <= run_info->step2; report_step++) {
-    bool store_vectors = (report_step == run_info->step2) ? true : false;
+  if (enkf_state_internalize_dynamic_results(enkf_state , fs , model_config , loadOK, interactive , msg_list)) {
+    int last_report = time_map_get_last_step( enkf_fs_get_time_map( fs ));
+
+    /* Ensure that the last step is internalized? */
+    model_config_set_internalize_state( model_config , last_report);
     
-    if (model_config_load_state( model_config , report_step)) 
-      enkf_state_internalize_state(enkf_state , fs , model_config , report_step , store_vectors , loadOK , interactive , msg_list);
-  }
-  
-  enkf_state_internalize_dynamic_results(enkf_state , fs , model_config , loadOK, interactive , msg_list);
+    for (report_step = run_info->load_start; report_step <= last_report; report_step++) {
+      bool store_vectors = (report_step == last_report) ? true : false;
+      
+      if (model_config_load_state( model_config , report_step)) 
+        enkf_state_internalize_state(enkf_state , fs , model_config , report_step , store_vectors , loadOK , interactive , msg_list);
+    }
+  } 
 }
 
 /**
@@ -1570,13 +1588,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * 
     ert_templates_instansiate( enkf_state->shared_info->templates , run_info->run_path , enkf_state->subst_list );
     enkf_state_ecl_write( enkf_state , fs);
     
-    /* Writing the stdin file for ECLIPSE to read on startup. */
     if (member_config_get_eclbase( my_config ) != NULL) {
-      {
-        char * stdin_file = util_alloc_filename(run_info->run_path , "eclipse"  , "stdin");  /* The name eclipse.stdin must be mathched when the job is dispatched. */
-        ecl_util_init_stdin( stdin_file , member_config_get_eclbase( my_config ));
-        free(stdin_file);
-      }
 
       /* Writing the ECLIPSE data file. */
       if (ecl_config_get_data_file( ecl_config ) != NULL) {
@@ -1584,6 +1596,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * 
         subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(ecl_config) , data_file);
         free( data_file );
       }
+      
     }
     
     member_config_get_jobname( my_config );
@@ -1646,17 +1659,27 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_f
     resampled.
 */
 
-static bool enkf_state_internal_retry(enkf_state_type * enkf_state , enkf_fs_type * fs , bool load_failure) {
+static bool enkf_state_can_retry( const enkf_state_type * enkf_state ) {
+  run_info_type  * run_info    = enkf_state->run_info;
+
+  if (run_info->num_internal_submit < run_info->max_internal_submit)
+    return true;
+  else
+    return false;
+}
+
+
+static void enkf_state_internal_retry(enkf_state_type * enkf_state , enkf_fs_type * fs , bool load_failure) {
   const member_config_type  * my_config   = enkf_state->my_config;
   run_info_type             * run_info    = enkf_state->run_info;
   const shared_info_type    * shared_info = enkf_state->shared_info;
   const int iens                          = member_config_get_iens( my_config );
 
   if (load_failure)
-    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Failed to load all data.",iens , run_info->step1 , run_info->step2);
+    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d - %04d] Failed to load all data.",iens , run_info->step1 , run_info->step2);
   else
-    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Forward model failed.",iens, run_info->step1 , run_info->step2);
-
+    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d - %04d] Forward model failed.",iens, run_info->step1 , run_info->step2);
+  
   if (run_info->num_internal_submit < run_info->max_internal_submit) {
     log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d] Resampling and resubmitting realization." ,iens);
     {
@@ -1672,12 +1695,18 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , enkf_fs_typ
     enkf_state_init_eclipse( enkf_state , fs );                                          /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
     job_queue_iset_external_restart( shared_info->job_queue , run_info->queue_index );   /* Here we inform the queue system that it should pick up this job and try again. */
     run_info->num_internal_submit++;                                    
-    return true;
-  } else 
-    return false;                                                                        /* No more internal retries. */
-
+  } 
 }
 
+
+/**
+   Checks that both the run has completed OK - that also includes the
+   loading back of results.
+*/
+   
+run_status_type enkf_state_get_simple_run_status(const enkf_state_type * state) {
+  return state->run_info->run_status;
+}
 
    
 job_status_type enkf_state_get_run_status( const enkf_state_type * enkf_state ) {
@@ -1762,6 +1791,33 @@ bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , enkf_fs_type
 
 
 
+static void enkf_state_clear_runpath( const enkf_state_type * enkf_state ) {
+  const member_config_type  * my_config   = enkf_state->my_config;
+  const run_info_type * run_info          = enkf_state->run_info;
+  keep_runpath_type keep_runpath          = member_config_get_keep_runpath( my_config );
+
+  bool unlink_runpath;
+  if (keep_runpath == DEFAULT_KEEP) {
+    if (run_info->run_mode == ENKF_ASSIMILATION)
+      unlink_runpath = true;   /* For assimilation the default is to unlink. */
+    else
+      unlink_runpath = false;  /* For experiments the default is to keep the directories around. */
+  } else {
+    /* We have explcitly set a value for the keep_runpath variable - with either KEEP_RUNAPTH or DELETE_RUNPATH. */
+    if (keep_runpath == EXPLICIT_KEEP)
+      unlink_runpath = false;
+    else if (keep_runpath == EXPLICIT_DELETE)
+      unlink_runpath = true;
+    else {
+      util_abort("%s: internal error \n",__func__);
+      unlink_runpath = false; /* Compiler .. */
+      }
+  }
+  
+  if (unlink_runpath)
+    util_clear_directory(run_info->run_path , true , true);
+}
+
 
 /** 
     Observe that if run_info == false, this routine will return with
@@ -1778,7 +1834,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enk
   const int iens                          = member_config_get_iens( my_config );
   bool loadOK  = true;
 
-  job_queue_iset_external_load( shared_info->job_queue , run_info->queue_index );  /* Set the the status of to JOB_QUEUE_LOADING */
+  
   if (status == JOB_QUEUE_RUN_OK) {
     /**
        The queue system has reported that the run is OK, i.e. it has
@@ -1786,73 +1842,67 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enk
        in this scope whether the results can be loaded back; if that
        is OK the final status is updated, otherwise: restart.
     */
+    job_queue_iset_external_load( shared_info->job_queue , run_info->queue_index );  /* Set the the status of to JOB_QUEUE_LOADING */
     log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
     enkf_state_internalize_results(enkf_state , fs , &loadOK , false , NULL); 
     if (loadOK) {
+      /*
+        The loading succeded - so this is a howling success! We set
+        the main status to JOB_QUEUE_ALL_OK and inform the queue layer
+        about the success. In addition we set the simple status
+        (should be avoided) to JOB_RUN_OK.
+      */
       status = JOB_QUEUE_ALL_OK;
+      run_info->run_status = JOB_RUN_OK;
       job_queue_iset_load_OK( shared_info->job_queue , run_info->queue_index);
       log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_info->step1, run_info->step2);
-    } else 
-      if (!enkf_state_internal_retry( enkf_state , fs , true)) 
+      
+      enkf_state_clear_runpath( enkf_state );
+      run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
+      run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
+    } else {
+      /*
+        Loading of data failed. We try to issue another attempt from
+        this scope.
+      */
+      
+      if (enkf_state_can_retry( enkf_state )) 
+        enkf_state_internal_retry( enkf_state , fs , true);
+      else {
         /* 
+           We had used all our retries; this job will be marked with
+           internal status JOB_LOAD_FAILURE and no more attempts.
+           
            We tell the queue system that the job failed to load the
            data; it will immediately come back here with status
-           job_queue_run_FAIL and then it falls all the way through to
-           runOK = false and no more attempts.
+           job_queue_run_FAIL and then it falls all the way through.
         */
         job_queue_iset_external_fail( shared_info->job_queue , run_info->queue_index );
+        run_info->run_status = JOB_LOAD_FAILURE;
+      }
+    }
   } else if (status == JOB_QUEUE_RUN_FAIL) {
     /* 
        The external queue system has said that the job failed - we
-       give it another try from this scope, possibly involving a
+       might give it another try from this scope, possibly involving a
        resampling.
     */
-    if (!enkf_state_internal_retry( enkf_state , fs , false)) {
-      run_info->runOK = false; /* OK - no more attempts. */
+    if (enkf_state_can_retry( enkf_state )) 
+      enkf_state_internal_retry( enkf_state , fs , false);
+    else {
+      /* 
+         No more attempts for this job; we inform the queue system
+         that the job has failed completely and also set the
+         simplified internal status to JOB_RUN_FAILURE.
+      */
       log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
       /* We tell the queue system that we have really given up on this one */
       job_queue_iset_all_fail( shared_info->job_queue , run_info->queue_index);
+      if (run_info->run_status != JOB_LOAD_FAILURE)
+        run_info->run_status = JOB_RUN_FAILURE;
     } 
   } else 
     util_abort("%s: status:%d invalid - should only be called with status == [JOB_QUEUE_RUN_FAIL || JON_QUEUE_ALL_OK].",__func__ , status);
-  
-  /* 
-     Results have been successfully loaded, and we clear up the run
-     directory. Or alternatively the job has failed completely, and we
-     just leave the runpath directory hanging around.
-  */
-
-    
-  /* 
-     In case the job fails, we leave the run_path directory around
-     for debugging. 
-  */
-  if (status == JOB_QUEUE_ALL_OK) {
-    keep_runpath_type keep_runpath = member_config_get_keep_runpath( my_config );
-    bool unlink_runpath;
-    if (keep_runpath == DEFAULT_KEEP) {
-      if (run_info->run_mode == ENKF_ASSIMILATION)
-        unlink_runpath = true;   /* For assimilation the default is to unlink. */
-      else
-        unlink_runpath = false;  /* For experiments the default is to keep the directories around. */
-    } else {
-      /* We have explcitly set a value for the keep_runpath variable - with either KEEP_RUNAPTH or DELETE_RUNPATH. */
-      if (keep_runpath == EXPLICIT_KEEP)
-        unlink_runpath = false;
-      else if (keep_runpath == EXPLICIT_DELETE)
-        unlink_runpath = true;
-      else {
-        util_abort("%s: internal error \n",__func__);
-        unlink_runpath = false; /* Compiler .. */
-      }
-    }
-    if (unlink_runpath)
-      util_clear_directory(run_info->run_path , true , true);
-    
-    run_info->runOK   = true;
-    run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
-    run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
-  }
 }
 
 
@@ -1866,15 +1916,6 @@ void * enkf_state_complete_forward_model__(void * arg ) {
   return NULL;
 }
 
-
-/**
-   Checks that both the run has completed OK - that also includes the
-   loading back of results.
-*/
-   
-bool enkf_state_runOK(const enkf_state_type * state) {
-  return state->run_info->runOK;
-}
 
 
 

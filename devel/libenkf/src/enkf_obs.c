@@ -182,6 +182,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 
 struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
+  bool                  have_obs;
   char                * config_file;  /* The name of the config file which has been loaded. */ 
   hash_type           * obs_hash;
   double                std_cutoff;   /* (Dimensionfull) Std values below this limit are considered zero. */
@@ -199,6 +200,7 @@ struct enkf_obs_struct {
 enkf_obs_type * enkf_obs_alloc( const history_type * history , double std_cutoff )
 {
   enkf_obs_type * enkf_obs = util_malloc(sizeof * enkf_obs, __func__);
+  enkf_obs->have_obs       = false;
   enkf_obs->obs_hash       = hash_alloc();
   enkf_obs->std_cutoff     = std_cutoff;
   enkf_obs->history        = history;
@@ -207,6 +209,10 @@ enkf_obs_type * enkf_obs_alloc( const history_type * history , double std_cutoff
   return enkf_obs;
 }
 
+
+bool enkf_obs_have_obs( const enkf_obs_type * enkf_obs ) {
+  return enkf_obs->have_obs;
+}
 
 
 void enkf_obs_free(enkf_obs_type * enkf_obs) {
@@ -434,8 +440,8 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
 
 
 
-void enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_file , const ecl_grid_type * grid , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config ) {
-  enkf_obs_load( enkf_obs , enkf_obs->config_file , sched_file , grid , refcase , ensemble_config );
+void enkf_obs_reload( enkf_obs_type * enkf_obs , const ecl_grid_type * grid , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config ) {
+  enkf_obs_load( enkf_obs , enkf_obs->config_file , grid , refcase , ensemble_config );
 }
 
 
@@ -450,131 +456,135 @@ void enkf_obs_reload( enkf_obs_type * enkf_obs , const sched_file_type * sched_f
 
 
 
-void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const sched_file_type * sched_file , const ecl_grid_type * grid , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config) {
-  if (config_file == NULL)
+void enkf_obs_load(enkf_obs_type * enkf_obs , const char * config_file,  const ecl_grid_type * grid , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config) {
+  if (config_file == NULL) {
     hash_clear( enkf_obs->obs_hash );
-  else {
-    int num_reports                      = history_get_num_restarts( enkf_obs->history );
-    conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
-    conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file);
-    
-    if(conf_instance_validate(enkf_conf) == false) 
+    enkf_obs->have_obs = false;
+  }  else {
+    if ( enkf_obs->history == NULL) {
+      fprintf(stderr,"** ERROR: When loading obervations you must provide either REFCASE or a SCHEDULE file.\n");
+      fprintf(stderr,"**        The observations in obs file:%s will be ignored \n",config_file);
+      enkf_obs->have_obs = false;
+      return;
+    }  else {
+      int last_report                      = history_get_last_restart( enkf_obs->history );
+      conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
+      conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file);
+      
+      if(conf_instance_validate(enkf_conf) == false) 
       util_abort("Can not proceed with this configuration.\n");
-    
-    if (enkf_obs->config_file != NULL)      /* Clear current instance, observe that this function   */
-      hash_clear( enkf_obs->obs_hash );     /* will reload even if it is called repeatedly with the */
-                                            /* same config_file.                                    */ 
-    
-    /** Handle HISTORY_OBSERVATION instances. */
-    {
-      stringlist_type * hist_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "HISTORY_OBSERVATION");
-      int               num_hist_obs  = stringlist_get_size(hist_obs_keys);
       
-      for(int hist_obs_nr = 0; hist_obs_nr < num_hist_obs; hist_obs_nr++) {
-        const char               * obs_key       = stringlist_iget(hist_obs_keys, hist_obs_nr);
-        const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-        obs_vector_type * obs_vector;
-        enkf_config_node_type * config_node;
+      if (enkf_obs->config_file != NULL)      /* Clear current instance, observe that this function   */
+        hash_clear( enkf_obs->obs_hash );     /* will reload even if it is called repeatedly with the */
+                                              /* same config_file.                                    */ 
+      
+      /** Handle HISTORY_OBSERVATION instances. */
+      {
+        stringlist_type * hist_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "HISTORY_OBSERVATION");
+        int               num_hist_obs  = stringlist_get_size(hist_obs_keys);
         
-        config_node = ensemble_config_add_summary( ensemble_config , obs_key , true);
-        if (config_node != NULL) {
-          obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ) , enkf_obs->obs_time , num_reports);
-          if (obs_vector != NULL) {
-            if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , sched_file , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff ))
-              enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
-            else {
-              fprintf(stderr,"** Could not load historical data for observation:%s - ignored\n",obs_key);
-              obs_vector_free( obs_vector );
-            }
-          }
-        } else 
-          fprintf(stderr,"** Warning: summary:%s does not exist - observation:%s not added. \n", obs_key , obs_key);
-      }
-      
-      stringlist_free(hist_obs_keys);
-    }
-    
-    
-    
-    /** Handle SUMMARY_OBSERVATION instances. */
-    {
-      stringlist_type * sum_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "SUMMARY_OBSERVATION");
-      int               num_sum_obs  = stringlist_get_size(sum_obs_keys);
-      
-
-      for(int sum_obs_nr = 0; sum_obs_nr < num_sum_obs; sum_obs_nr++) {
-        const char               * obs_key      = stringlist_iget(sum_obs_keys, sum_obs_nr);
-        const conf_instance_type * sum_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-        const char               * sum_key      = conf_instance_get_item_value_ref(   sum_obs_conf , "KEY"   );
-        obs_vector_type * obs_vector;
-        enkf_config_node_type * config_node;
-        
-        config_node = ensemble_config_add_summary( ensemble_config , sum_key , true);
-        if (config_node != NULL) {
-          obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , sum_key ) , enkf_obs->obs_time , num_reports);
-          if (obs_vector != NULL) {
-            obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector , sum_obs_conf , sched_file , enkf_obs->history , ensemble_config);
-            enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
-          }
-        } else 
-          fprintf(stderr,"** Warning: summary key:%s does not exist - observation key:%s not added.\n", sum_key , obs_key);
-      }
-      stringlist_free(sum_obs_keys);
-    }
-    
-
-    
-    
-    
-    /** Handle BLOCK_OBSERVATION instances. */
-    {
-      stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "BLOCK_OBSERVATION");
-      int               num_block_obs  = stringlist_get_size(block_obs_keys);
-      
-      for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
-        {
-          const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
-          const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-          obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , grid , refcase , sched_file , enkf_obs->history ,   ensemble_config , enkf_obs->obs_time);
-          if (obs_vector != NULL)
-            enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
-        }
-      stringlist_free(block_obs_keys);
-    }
-    
-    
-    /** Handle GENERAL_OBSERVATION instances. */
-    {
-      stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "GENERAL_OBSERVATION");
-      int               num_block_obs  = stringlist_get_size(block_obs_keys);
-      
-      for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
-        {
-          const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
-          const conf_instance_type * gen_obs_conf   = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+        for(int hist_obs_nr = 0; hist_obs_nr < num_hist_obs; hist_obs_nr++) {
+          const char               * obs_key       = stringlist_iget(hist_obs_keys, hist_obs_nr);
+          const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+          obs_vector_type * obs_vector;
+          enkf_config_node_type * config_node;
           
-          obs_vector_type * obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(gen_obs_conf ,sched_file ,  enkf_obs->history  , ensemble_config , enkf_obs->obs_time);
-          if (obs_vector != NULL) 
-            enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          config_node = ensemble_config_add_summary( ensemble_config , obs_key , LOAD_FAIL_WARN );
+          if (config_node != NULL) {
+            obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ) , enkf_obs->obs_time , last_report);
+            if (obs_vector != NULL) {
+              if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , enkf_obs->history , ensemble_config , enkf_obs->std_cutoff ))
+                enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+              else {
+                fprintf(stderr,"** Could not load historical data for observation:%s - ignored\n",obs_key);
+                obs_vector_free( obs_vector );
+              }
+            }
+          } else 
+            fprintf(stderr,"** Warning: summary:%s does not exist - observation:%s not added. \n", obs_key , obs_key);
         }
-      stringlist_free(block_obs_keys);
-    }
-    
-    /* Initializing obs_time */
-    {
-      int step;
-      for (step =0; step < num_reports; step++) {
-        time_t obs_time = history_get_time_t_from_restart_nr( enkf_obs->history , step );
-        time_t_vector_iset( enkf_obs->obs_time , step , obs_time );
+        
+        stringlist_free(hist_obs_keys);
       }
-    }
-
+      
+      
+      
+      /** Handle SUMMARY_OBSERVATION instances. */
+      {
+        stringlist_type * sum_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "SUMMARY_OBSERVATION");
+        int               num_sum_obs  = stringlist_get_size(sum_obs_keys);
+        
+        
+        for(int sum_obs_nr = 0; sum_obs_nr < num_sum_obs; sum_obs_nr++) {
+          const char               * obs_key      = stringlist_iget(sum_obs_keys, sum_obs_nr);
+          const conf_instance_type * sum_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+          const char               * sum_key      = conf_instance_get_item_value_ref(   sum_obs_conf , "KEY"   );
+          obs_vector_type * obs_vector;
+          enkf_config_node_type * config_node;
+          
+          config_node = ensemble_config_add_summary( ensemble_config , sum_key , LOAD_FAIL_WARN );
+          if (config_node != NULL) {
+            obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , sum_key ) , enkf_obs->obs_time , last_report);
+            if (obs_vector != NULL) {
+              obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector , sum_obs_conf , enkf_obs->history , ensemble_config);
+              enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+            }
+          } else 
+            fprintf(stderr,"** Warning: summary key:%s does not exist - observation key:%s not added.\n", sum_key , obs_key);
+        }
+        stringlist_free(sum_obs_keys);
+      }
+      
     
-
-    conf_instance_free(enkf_conf      );
-    conf_class_free(   enkf_conf_class);
+      /** Handle BLOCK_OBSERVATION instances. */
+      {
+        stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "BLOCK_OBSERVATION");
+        int               num_block_obs  = stringlist_get_size(block_obs_keys);
+        
+        for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
+          {
+            const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
+            const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+            obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , grid , refcase , enkf_obs->history ,   ensemble_config , enkf_obs->obs_time);
+            if (obs_vector != NULL)
+              enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          }
+        stringlist_free(block_obs_keys);
+      }
+      
+      
+      /** Handle GENERAL_OBSERVATION instances. */
+      {
+        stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "GENERAL_OBSERVATION");
+        int               num_block_obs  = stringlist_get_size(block_obs_keys);
+        
+        for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
+          {
+            const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
+            const conf_instance_type * gen_obs_conf   = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+            
+            obs_vector_type * obs_vector = obs_vector_alloc_from_GENERAL_OBSERVATION(gen_obs_conf , enkf_obs->history  , ensemble_config , enkf_obs->obs_time);
+            if (obs_vector != NULL) 
+              enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
+          }
+        stringlist_free(block_obs_keys);
+      }
+      
+      /* Initializing obs_time */
+      {
+        int step;
+        for (step =0; step <= last_report; step++) {
+          time_t obs_time = history_get_time_t_from_restart_nr( enkf_obs->history , step );
+          time_t_vector_iset( enkf_obs->obs_time , step , obs_time );
+        }
+      }
+      
+      conf_instance_free(enkf_conf      );
+      conf_class_free(   enkf_conf_class);
+      enkf_obs->config_file = util_realloc_string_copy( enkf_obs->config_file , config_file );
+      enkf_obs->have_obs = true;
+    }
   }
-  enkf_obs->config_file = util_realloc_string_copy( enkf_obs->config_file , config_file );
 }
 
 

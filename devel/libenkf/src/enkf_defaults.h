@@ -71,15 +71,13 @@
 
 
 
-/* Where the history is coming from - default value for config item:
+/* 
+   Where the history is coming from - default value for config item:
    HISTORY_SOURCE Observe that the function:
    model_config_set_history_source() does currently not handle a
    default value different from SCHEDULE.
 */
-#define DEFAULT_HISTORY_SOURCE  SCHEDULE
-#define DEFAULT_IGNORE_SCHEDULE false   /* Should probably become true, on the way fuck Schedule out. */
-
-
+#define DEFAULT_HISTORY_SOURCE  HISTORY_SOURCE_INVALID
 
 
 #define DEFAULT_MAX_SUBMIT           2        /* The number of times to resubmit - default value for config item: MAX_SUBMIT */

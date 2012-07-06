@@ -28,7 +28,7 @@ extern "C" {
 
 #define FS_MAGIC_ID          123998L
 #define FSTAB_FILE          "ert_fstab"
-#define CURRENT_FS_VERSION   104
+#define CURRENT_FS_VERSION   105
 
 /**
    Version history:
@@ -46,6 +46,7 @@ extern "C" {
    104                            |   2127                |
                                   |   2140: block_fs_index added
                                   |   2190: started to distribute ert binary internally
+   105                            |   3918                |
    --------------------------------------------------------------------------
 
 
@@ -111,6 +112,20 @@ extern "C" {
 
 
    Observe that all the upgrade functions were removed at svn:3305.
+
+
+   Version 104B
+   ------------
+   Vector storage; each case is a seperate enkf_fs instance. Current
+   is stored with a symlink. Read about 104 -> 104B fuckup in the
+   function upgrade104B() in fs_driver.c
+
+
+   Version: 105
+   ------------
+   Using time_map to store time information; common to all members in
+   ensemble.
+   
 */
 
 
@@ -188,7 +203,7 @@ struct fs_driver_struct {
   FILE                     * fs_driver_open_fstab( const char * path , bool create);
   fs_driver_impl             fs_driver_fread_type( FILE * stream ); 
   void                       fs_driver_assert_magic( FILE * stream );
-  void                       fs_driver_assert_version( FILE * stream );
+  void                       fs_driver_assert_version( FILE * stream , const char * mount_point);
 
 
 #ifdef __cplusplus

@@ -27,7 +27,7 @@ extern "C" {
 #include <ecl_grid.h>
 #include <field_trans.h>
 #include <gen_data_config.h>
-
+#include <summary_config.h>
 
 
   typedef void   (config_free_ftype)    (void *);
@@ -81,7 +81,7 @@ extern "C" {
                                                  void                * );
 
 
-  enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , bool required );
+  enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , load_fail_type load_fail);
 
 
   void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max );

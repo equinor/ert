@@ -29,6 +29,10 @@
 #include <summary_config.h>
 
 
+
+
+
+
 double    summary_get(const summary_type * summary, int report_step , state_enum state);
 
 VOID_HAS_DATA_HEADER(summary);

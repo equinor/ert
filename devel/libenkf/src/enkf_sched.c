@@ -350,9 +350,11 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_hist
     /* Okay we are doing assimilation and prediction in one go - fair enough. */
   } else {
     /* 
-       experiment: Do the whole thing in two steps, 
-       first the whole history, and then subsequently the prediction part (if there is any).
+       experiment: Do the whole thing in two steps, first the whole
+       history, and then subsequently the prediction part (if there is
+       any).
     */
+    printf("Last: %d \n",last_history_restart);
     node = enkf_sched_node_alloc(0 , last_history_restart , false ); 
     enkf_sched_append_node(enkf_sched , node);
   }

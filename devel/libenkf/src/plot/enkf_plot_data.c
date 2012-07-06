@@ -102,6 +102,7 @@ void * enkf_plot_data_load__( void *arg ) {
   for (int index = index1; index < index2; index++) {
     int iens = int_vector_iget( iens_list , index );
     if (iens >= plot_data->alloc_size)
+      // This must be protected by a lock of some sort ....
       enkf_plot_data_resize( plot_data , 2*iens + 1);
     
     {

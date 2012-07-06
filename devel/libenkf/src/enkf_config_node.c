@@ -297,9 +297,9 @@ void enkf_config_node_update_surface( enkf_config_node_type * config_node , cons
 
 /*****************************************************************/
 
-enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , bool required) {
+enkf_config_node_type * enkf_config_node_alloc_summary( const char * key , load_fail_type load_fail) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_RESULT , SUMMARY , key );
-  config_node->data = summary_config_alloc( key , config_node->vector_storage , required);
+  config_node->data = summary_config_alloc( key , config_node->vector_storage , load_fail );
   return config_node;
 }
 

@@ -42,8 +42,8 @@ extern "C" {
 
   typedef struct model_config_struct model_config_type;
 
-  const char *          model_config_get_jobname_fmt( const model_config_type * model_config );
-  void                  model_config_set_jobname_fmt( model_config_type * model_config , const char * jobname_fmt);
+  const char *           model_config_get_jobname_fmt( const model_config_type * model_config );
+  void                   model_config_set_jobname_fmt( model_config_type * model_config , const char * jobname_fmt);
   void                   model_config_set_select_case( model_config_type * model_config , const char * select_case);
   const char *           model_config_get_case_table_file( const model_config_type * model_config );
   void                   model_config_set_case_table( model_config_type * model_config , int ens_size , const char * case_table_file );
@@ -59,6 +59,7 @@ extern "C" {
   void                   model_config_set_load_state( model_config_type *  , int );
   int                    model_config_get_history_length(const model_config_type * );
   bool                   model_config_has_prediction(const model_config_type * );
+  bool                   model_config_has_history(const model_config_type * config);
   int                    model_config_get_last_history_restart(const model_config_type * );
   void                   model_config_init(model_config_type * model_config , const config_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , const ecl_sum_type * refcase);
   void                   model_config_free(model_config_type *);
@@ -77,7 +78,6 @@ extern "C" {
   const char           * model_config_get_runpath_as_char( const model_config_type * model_config );
   history_source_type    model_config_get_history_source( const model_config_type * model_config );
   void                   model_config_set_refcase( model_config_type * model_config , const ecl_sum_type * refcase );
-  void                   model_config_set_history_source( model_config_type * model_config , history_source_type history_source );
   void                   model_config_fprintf_config( const model_config_type * model_config , int ens_size ,FILE * stream );
   model_config_type    * model_config_alloc_empty();
   

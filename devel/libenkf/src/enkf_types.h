@@ -77,7 +77,6 @@ keep_runpath_type;
 
 
 
-
 /* 
    ert_impl_type are the actual node implementation types. Observe
    that one ert_impl_type can be used in several ways as
@@ -169,15 +168,13 @@ typedef enum { TRUNCATE_NONE   = 0,
 
 typedef enum { ENKF_ASSIMILATION       = 1, 
                ENSEMBLE_EXPERIMENT     = 2,
-               ENSEMBLE_PREDICTION     = 3,
-               INIT_ONLY               = 4} run_mode_type;
+               ENSEMBLE_PREDICTION     = 3 } run_mode_type;
                
 
 #define ENKF_RUN_ENUM_DEFS {.value = 1 , .name = "ENKF_ASSIMILATION"},   \
                            {.value = 2 , .name = "ENSEMBLE_EXPERIMENT"}, \
-                           {.value = 3 , .name = "ENSEMBLE_PREDICTION"}, \
-                           {.value = 4 , .name = "INIT_ONLY"}
-#define ENKF_RUN_ENUM_SIZE 4 
+                           {.value = 3 , .name = "ENSEMBLE_PREDICTION"}
+#define ENKF_RUN_ENUM_SIZE 3
 
 
 
@@ -189,10 +186,18 @@ typedef enum { ENKF_ASSIMILATION       = 1,
 */
 
 
-typedef enum { NO_INFLATION     = 0,
-               SCALAR_INFLATION = 1,
-               LOCAL_INFLATION  = 2} inflation_mode_type;
+  typedef enum { NO_INFLATION     = 0,
+                 SCALAR_INFLATION = 1,
+                 LOCAL_INFLATION  = 2} inflation_mode_type;
 
+
+
+  typedef enum { JOB_NOT_STARTED  = 0,
+                 JOB_RUNNING      = 1,
+                 JOB_RUN_FAILURE  = 2,
+                 JOB_LOAD_FAILURE = 3,
+                 JOB_RUN_OK       = 4  } run_status_type;
+  
 
 /*****************************************************************/
 
