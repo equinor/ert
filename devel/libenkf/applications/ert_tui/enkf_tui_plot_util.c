@@ -66,7 +66,8 @@ char * enkf_tui_plot_alloc_plot_file(const plot_config_type * plot_config , cons
   return plot_file;
 }
                                            
- void enkf_tui_show_plot(plot_type * plot , const plot_config_type * plot_config , const char * file) {
+
+void enkf_tui_show_plot(plot_type * plot , const plot_config_type * plot_config , const char * file) {
   plot_data(plot);
   plot_free(plot);
   if (util_file_exists( file )) {
