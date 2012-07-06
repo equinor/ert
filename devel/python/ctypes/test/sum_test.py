@@ -101,6 +101,30 @@ class SumTest( unittest.TestCase ):
         self.assertEqual( len(v) , 63 )
 
 
+    def test_index(self):
+        sum = self.sum
+        index = sum.get_key_index( "TCPUDAY")
+        self.assertEqual( index , 10239 ) 
+
+    def test_report(self):
+        sum = self.sum
+        self.assertEqual( sum.get_report( date = datetime.date( 2000,10,1) ) , 10)
+        self.assertEqual( sum.get_report( date = datetime.date( 2000,10,3) ) , -1)
+        self.assertEqual( sum.get_report( date = datetime.date( 1980,10,3) ) , -1)
+        self.assertEqual( sum.get_report( date = datetime.date( 2012,10,3) ) , -1)
+
+        self.assertEqual( sum.get_report( days = 91 ) , 3)
+        self.assertEqual( sum.get_report( days = 92 ) , -1)
+        self.assertTrue( approx_equal( sum.get_interp( "FOPT" , days = 91 ) , sum.get_from_report( "FOPT" , 3 )) )
+
+        self.assertEqual( sum.first_report , 1 )
+        self.assertEqual( sum.last_report  , 62 )
+
+        self.assertEqual( sum.get_report_time( 10 ) , datetime.date( 2000 , 10 , 1))
+        self.assertTrue(  approx_equal( sum.get_from_report( "FOPT" , 10 ) , 6.67447e+06) )
+
+
+        
 
 def fast_suite():
     suite = unittest.TestSuite()
@@ -110,6 +134,8 @@ def fast_suite():
     suite.addTest( SumTest( 'test_last' ))
     suite.addTest( SumTest( 'test_dates' ))
     suite.addTest( SumTest( 'test_keys' ))
+    suite.addTest( SumTest( 'test_index' ))
+    suite.addTest( SumTest( 'test_report' ))
     return suite
 
 

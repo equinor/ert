@@ -677,6 +677,32 @@ class EclSum( CClass ):
             raise ValueError("Must supply either days or date")
 
 
+    def get_report( self , date = None , days = None):
+        """
+        Will return the report step corresponding to input @date or @days.
+
+        If the input argument does not correspond to any report steps
+        the function will return -1. Observe that the function
+        requires strict equality.
+        """
+        if date:
+            if days:
+                raise ValueError("Must supply either days or date")
+            step = cfunc.get_report_step_from_time( self , ctime(date))
+        elif days:
+            step = cfunc.get_report_step_from_days( self , days)
+            
+        return step
+
+
+    def get_report_time( self , report):
+        """
+        Will return the datetime corresponding to the report_step @report.
+        """
+        ctime = cfunc.get_report_time( self , report )
+        return ctime.date()
+
+
     def get_interp_vector( self , key , days_list = None , date_list = None):
         """
         Will return numpy vector with interpolated values.
@@ -1070,7 +1096,7 @@ cfunc.iget_mini_step                = cwrapper.prototype("int      ecl_sum_iget_
 cfunc.iget_sim_time                 = cwrapper.prototype("time_t   ecl_sum_iget_sim_time( ecl_sum , int) ")
 cfunc.get_report_end                = cwrapper.prototype("int      ecl_sum_iget_report_end( ecl_sum , int)")
 cfunc.iget_general_var              = cwrapper.prototype("double   ecl_sum_iget_general_var( ecl_sum , int , char*)")
-cfunc.get_general_var_index         = cwrapper.prototype("int      ecl_sum_get_general_var_index( ecl_sum , char*)")
+cfunc.get_general_var_index         = cwrapper.prototype("int      ecl_sum_get_general_var_params_index( ecl_sum , char*)")
 cfunc.get_general_var_from_sim_days = cwrapper.prototype("double   ecl_sum_get_general_var_from_sim_days( ecl_sum , double , char*)")
 cfunc.get_general_var_from_sim_time = cwrapper.prototype("double   ecl_sum_get_general_var_from_sim_time( ecl_sum , time_t , char*)")
 cfunc.get_first_gt                  = cwrapper.prototype("int      ecl_sum_get_first_gt( ecl_sum , int , double )")
@@ -1090,3 +1116,6 @@ cfunc.get_data_start                = cwrapper.prototype("time_t   ecl_sum_get_d
 
 cfunc.get_unit                      = cwrapper.prototype("char*    ecl_sum_get_unit( ecl_sum , char*)") 
 cfunc.get_simcase                   = cwrapper.prototype("char*    ecl_sum_get_case( ecl_sum )")
+cfunc.get_report_step_from_time     = cwrapper.prototype("int      ecl_sum_get_report_step_from_time( ecl_sum , time_t)")
+cfunc.get_report_step_from_days     = cwrapper.prototype("int      ecl_sum_get_report_step_from_days( ecl_sum , double)")
+cfunc.get_report_time               = cwrapper.prototype("time_t   ecl_sum_get_report_time(ecl_sum , int)")

@@ -9,9 +9,10 @@ ln -sf ../../../../libenkf/slib/libenkf.so lib/libenkf.so
 ln -sf ../../../../libjob_queue/slib/libjob_queue.so lib/libjob_queue.so
 ln -sf ../../../../libconfig/slib/libconfig.so lib/libconfig.so
 ln -sf ../../../../libwell/slib/libwell.so lib/libwell.so
-
-ln -sf ../../ert lib/ert
-
-export PYTHONPATH=$PWD/lib:$PYTHONPATH
 export LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH
+
+mkdir -p python
+ln -sf ../../ert python/ert
+export PYTHONPATH=$PWD/python:$PYTHONPATH
+
 
