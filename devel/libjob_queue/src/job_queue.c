@@ -899,10 +899,18 @@ time_t job_queue_iget_submit_time( job_queue_type * queue, int job_index) {
 
 
 
-
-static void job_queue_print_summary(const job_queue_type *queue, bool status_change , int phase) {
+static void job_queue_update_spinner( int * phase ) {
   const char * spinner = "-\\|/";
   int spinner_length   = strlen( spinner );
+
+  printf("%c\b" , spinner[ (*phase % spinner_length) ]);
+  fflush(stdout);
+  (*phase) += 1;
+}
+
+
+static void job_queue_print_summary(const job_queue_type *queue, bool status_change ) {
+  const char * spinner = "-\\|/";
   int string_length    = 97;
 
   if (status_change) {
@@ -924,8 +932,6 @@ static void job_queue_print_summary(const job_queue_type *queue, bool status_cha
       printf("Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b\b",waiting , pending , running , loading , failed , complete);
     }
   }
-  printf("%c\b" , spinner[ (phase % spinner_length) ]);
-  fflush(stdout);
 }
 
 
@@ -1005,7 +1011,6 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
       
       do {
         bool local_user_exit = false;
-        phase++;
         /*****************************************************************/
         if (queue->user_exit)  {/* An external thread has called the job_queue_user_exit() function, and we should kill
                                    all jobs, do some clearing up and go home. Observe that we will go through the
@@ -1016,8 +1021,11 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
         /*****************************************************************/
         {
           bool update_status = job_queue_update_status( queue );
-          if ((verbose) & (update_status || new_jobs))
-            job_queue_print_summary(queue , update_status , phase);
+          if (verbose) {
+            if (update_status || new_jobs)
+              job_queue_print_summary(queue , update_status );
+            job_queue_update_spinner( &phase );
+          }
         
           {
             int num_complete = queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_OK)    ] +   
