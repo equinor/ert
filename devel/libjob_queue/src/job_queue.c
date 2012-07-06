@@ -524,7 +524,8 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
 
   node->sim_start   = -1;
   node->submit_time = time( NULL );
-  job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);   /* Now the job is ready to be picked by the queue manager. */
+  /* Now the job is ready to be picked by the queue manager. */
+  job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);   
 }
 
 
@@ -584,7 +585,10 @@ static void job_queue_complete_node( job_queue_type * queue , job_queue_node_typ
 }
 
 
-
+/* 
+   This frees the storage allocated by the driver - the storage
+   allocated by the queue layer is retained.
+*/
 static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * node) {
   pthread_rwlock_wrlock( &node->job_lock );
   {
@@ -673,7 +677,7 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
             submit_status = SUBMIT_OK;
             /* 
                The status JOB_QUEUE_SUBMITTED is internal, and not exported anywhere. The job_queue_update_status() will
-               update this to PENDING or RUNNING at the next call. The important differnce between SUBMITTED and WAITING
+               update this to PENDING or RUNNING at the next call. The important difference between SUBMITTED and WAITING
                is that SUBMITTED have job_data != NULL and the job_queue_node free function must be called on it.
             */
           }
@@ -910,8 +914,8 @@ static void job_queue_update_spinner( int * phase ) {
 
 
 static void job_queue_print_summary(const job_queue_type *queue, bool status_change ) {
-  const char * spinner = "-\\|/";
-  int string_length    = 97;
+  const char * status_fmt = "Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b\b";
+  int string_length       = 97;
 
   if (status_change) {
     for (int i=0; i < string_length; i++)
@@ -929,7 +933,7 @@ static void job_queue_print_summary(const job_queue_type *queue, bool status_cha
       int failed   = queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_FAIL) ];
       int loading  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUN_OK) ];  
       
-      printf("Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b\b",waiting , pending , running , loading , failed , complete);
+      printf(status_fmt , waiting , pending , running , loading , failed , complete);
     }
   }
 }
@@ -1026,6 +1030,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
               job_queue_print_summary(queue , update_status );
             job_queue_update_spinner( &phase );
           }
+          
         
           {
             int num_complete = queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_OK)    ] +   
@@ -1061,15 +1066,16 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                                        Only to ensure that the waiting time before a status update is not too long. */
             int total_active   = queue->status_list[ STATUS_INDEX(JOB_QUEUE_PENDING) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUNNING) ];
             int num_submit_new;
-
+            
             {
               int max_running = job_queue_get_max_running( queue );
               if (max_running > 0)
                 num_submit_new = util_int_min( max_submit ,  max_running - total_active );
               else
-                /* If max_running == 0 that should be interpreted as no limit; i.e. the queue layer will
-                   attempt to send an unlimited number of jobs to the driver - the driver can reject the
-                   jobs. */
+                /* 
+                   If max_running == 0 that should be interpreted as no limit; i.e. the queue layer will
+                   attempt to send an unlimited number of jobs to the driver - the driver can reject the jobs.
+                */
                 num_submit_new = util_int_min( max_submit , queue->status_list[ STATUS_INDEX( JOB_QUEUE_WAITING )]);
             }
             
@@ -1115,11 +1121,16 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                     /* Check if the OK file has been produced. Wait and retry. */
                     if (node->ok_file != NULL) {
                       int  total_wait_time = 0;
-                    
+                      
+                      /* 
+                         The moment we enter the while loop here the thread managing the queue is blocked for
+                         other use. In the extreme case it will be blocking until the max_ok_wait_time
+                         timeout.
+                      */
                       while (true) {
                         if (util_file_exists( node->ok_file )) {
                           job_queue_complete_node( queue , node );
-                          job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
+                          job_queue_free_job(queue , node);  
                           break;
                         } else {
                           if (total_wait_time <  max_ok_wait_time) {
@@ -1135,7 +1146,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                     } else {
                       /* We have not set the ok_file - then we just assume that the job is OK. */
                       job_queue_complete_node( queue , node );
-                      job_queue_free_job(queue , node);   /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
+                      job_queue_free_job(queue , node);   
                     }
                   }
                   break;
@@ -1484,7 +1495,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
 
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
   queue->jobs            = NULL;
-  queue->usleep_time     = 1000000; /* 1 second */
+  queue->usleep_time     = 250000; /* 1000000 : 1 second */
   queue->max_submit      = max_submit;
   queue->driver          = NULL;
   queue->ok_file         = util_alloc_string_copy( ok_file );

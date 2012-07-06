@@ -53,7 +53,11 @@ typedef enum { JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in exter
                JOB_QUEUE_USER_KILLED   = 4096 ,   /* The job has been killed by the user - can restart. */
                JOB_QUEUE_USER_EXIT     = 8192 }   /* The whole job_queue has been exited by the user - the job can NOT be restarted. */
                job_status_type;
+
 #define JOB_QUEUE_MAX_STATE 14
+
+
+
 
 #define JOB_STATUS_ENUM_DEFS  \
 {.value =    1 , .name = "JOB_QUEUE_NOT_ACTIVE" }, \
