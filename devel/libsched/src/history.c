@@ -1,6 +1,5 @@
 /*
    Copyright (C) 2011  Statoil ASA, Norway. 
-    
    The file 'history.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
@@ -30,15 +29,15 @@
 
 
 struct history_struct{
-  const ecl_sum_type    * ecl_sum;        /* ecl_sum instance used when the data are taken from a summary instance. Observe that this is NOT owned by history instance.*/
+  const ecl_sum_type    * refcase;        /* ecl_sum instance used when the data are taken from a summary instance. Observe that this is NOT owned by history instance.*/
+  const sched_file_type * sched_file;     /* Not owned. */
   sched_history_type    * sched_history;
   history_source_type     source;
-  bool                    ignore_schedule;  /* I HATE SCHEDULE */
 };
 
 
 history_source_type history_get_source_type( const char * string_source ) {
-  history_source_type source_type;
+  history_source_type source_type = HISTORY_SOURCE_INVALID;
 
   if (strcmp( string_source , "REFCASE_SIMULATED") == 0)
     source_type = REFCASE_SIMULATED;
@@ -75,11 +74,12 @@ const char * history_get_source_string( history_source_type history_source ) {
 
 
 
-static history_type * history_alloc_empty( bool ignore_schedule )
+static history_type * history_alloc_empty(  )
 {
-  history_type * history   = util_malloc(sizeof * history, __func__);
-  history->ecl_sum         = NULL; 
-  history->ignore_schedule = ignore_schedule;
+  history_type * history = util_malloc(sizeof * history, __func__);
+  history->refcase       = NULL; 
+  history->sched_history = NULL;
+  history->sched_file    = NULL;
   return history;
 }
 
@@ -91,14 +91,17 @@ static history_type * history_alloc_empty( bool ignore_schedule )
 
 void history_free(history_type * history)
 {
-  sched_history_free( history->sched_history );
+  if (history->sched_history != NULL)
+    sched_history_free( history->sched_history );
+  
   free(history);
 }
 
 
-history_type * history_alloc_from_sched_file(const char * sep_string , const sched_file_type * sched_file, bool ignore_schedule)
+history_type * history_alloc_from_sched_file(const char * sep_string , const sched_file_type * sched_file)
 {
-  history_type * history = history_alloc_empty( ignore_schedule );
+  history_type * history = history_alloc_empty( );
+  history->sched_file    = sched_file;
   history->sched_history = sched_history_alloc( sep_string );
   sched_history_update( history->sched_history , sched_file );
   history->source = SCHEDULE;
@@ -107,16 +110,18 @@ history_type * history_alloc_from_sched_file(const char * sep_string , const sch
 }
 
 
+history_type * history_alloc_from_refcase(const ecl_sum_type * refcase , bool use_h_keywords) {
+  history_type * history = history_alloc_empty( true );
 
-void history_use_summary(history_type * history, const ecl_sum_type * refcase , bool use_h_keywords) {
-
-  history->ecl_sum = refcase;     /* This function does not really do anthing - it just sets the ecl_sum field of the history instance. */
+  history->refcase = refcase;     /* This function does not really do anthing - it just sets the ecl_sum field of the history instance. */
   if (use_h_keywords)
     history->source = REFCASE_HISTORY;
   else
     history->source = REFCASE_SIMULATED;
   
+  return history;
 }
+
 
 
 
@@ -127,33 +132,13 @@ void history_use_summary(history_type * history, const ecl_sum_type * refcase , 
 
 
 
-/**
-  Get the number of restart files the underlying schedule file would produce.
-  
-  Changed to always produce the schedule value at svn:3059. God I
-  haaaaaaate this stuff.  
-
-  Added the ignore_schedule switch at svn ~ 3170. GOD I HATE THIS STUFF.
-  
-*/
-
-int history_get_num_restarts(const history_type * history)
+int history_get_last_restart(const history_type * history)
 {
-  if (history->ignore_schedule) {
-    if (history->ecl_sum == NULL)
-      util_abort("%s: Need refcase \n",__func__);
-    return ecl_sum_get_last_report_step( history->ecl_sum);
-  } else
+  if (history->refcase != NULL)
+    return ecl_sum_get_last_report_step( history->refcase);
+  else
     return sched_history_get_last_history( history->sched_history );
-  
-  //if (history->source != SCHEDULE) 
-  //  return ecl_sum_get_last_report_step( history->ecl_sum);
-  //else 
-  //  return sched_history_get_last_history( history->sched_history );
 }
-
-
-
 
 
 
@@ -168,7 +153,9 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
   double_vector_reset( value );
   bool_vector_reset( valid );
   bool_vector_set_default( valid , false);
+
   if (history->source == SCHEDULE) {
+
     for (int tstep = 0; tstep <= sched_history_get_last_history(history->sched_history); tstep++) {
       if (sched_history_open( history->sched_history , summary_key , tstep)) {
         bool_vector_iset( valid , tstep , true );
@@ -177,22 +164,24 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
         bool_vector_iset( valid , tstep , false );
     }
     initOK = true;
+
   } else {
+
     char * local_key;
     if (history->source == REFCASE_HISTORY) {
       /* Must create a new key with 'H' for historical values. */
-      const ecl_smspec_type * smspec      = ecl_sum_get_smspec( history->ecl_sum );
+      const ecl_smspec_type * smspec      = ecl_sum_get_smspec( history->refcase );
       const char            * join_string = ecl_smspec_get_join_string( smspec ); 
         
-      local_key = util_alloc_sprintf( "%sH%s%s" , ecl_sum_get_keyword( history->ecl_sum , summary_key ) , join_string , ecl_sum_get_wgname( history->ecl_sum , summary_key ));
+      local_key = util_alloc_sprintf( "%sH%s%s" , ecl_sum_get_keyword( history->refcase , summary_key ) , join_string , ecl_sum_get_wgname( history->refcase , summary_key ));
     } else
       local_key = (char *) summary_key;
 
-    if (ecl_sum_has_general_var( history->ecl_sum , local_key )) {
-      for (int tstep = 0; tstep <= sched_history_get_last_history(history->sched_history); tstep++) {
-        int time_index = ecl_sum_iget_report_end( history->ecl_sum , tstep );
+    if (ecl_sum_has_general_var( history->refcase , local_key )) {
+      for (int tstep = 0; tstep <= history_get_last_restart(history); tstep++) {
+        int time_index = ecl_sum_iget_report_end( history->refcase , tstep );
         if (time_index >= 0) {
-          double_vector_iset( value , tstep , ecl_sum_iget_general_var( history->ecl_sum , time_index , local_key ));
+          double_vector_iset( value , tstep , ecl_sum_iget_general_var( history->refcase , time_index , local_key ));
           bool_vector_iset( valid , tstep , true );
         } else
           bool_vector_iset( valid , tstep , false );    /* Did not have this report step */
@@ -216,9 +205,43 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
    Changed to sched_history at svn ~2940
 */
 time_t history_get_time_t_from_restart_nr( const history_type * history , int restart_nr) {
-  return sched_history_iget_time_t( history->sched_history , restart_nr);
+  if (history->source == SCHEDULE)
+    return sched_history_iget_time_t( history->sched_history , restart_nr);
+  else 
+    return ecl_sum_get_report_time( history->refcase , restart_nr );
 }
 
+
+int history_get_restart_nr_from_time_t( const history_type * history , time_t time) {
+  if (history->source == SCHEDULE)
+    return sched_file_get_restart_nr_from_time_t( history->sched_file , time );
+  else {
+    int report_step = ecl_sum_get_report_step_from_time( history->refcase , time );
+    if (report_step >= 1)
+      return report_step;
+    else {
+      int mday,year,month;
+      util_set_date_values( time , &mday , &month , &year);
+      util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
+      return -1;
+    }
+  }
+}
+
+
+int history_get_restart_nr_from_days( const history_type * history , double sim_days) {
+  if (history->source == SCHEDULE)
+    return sched_file_get_restart_nr_from_days( history->sched_file , sim_days);
+  else {
+    int report_step = ecl_sum_get_report_step_from_days( history->refcase , sim_days);
+    if (report_step >= 1)
+      return report_step;
+    else {
+      util_abort("%s: Days:%g  does not cooincide with any report time. Aborting.\n", __func__ , sim_days);
+      return -1;
+    }
+  }
+}
 
 
 
