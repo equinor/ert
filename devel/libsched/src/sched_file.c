@@ -80,6 +80,7 @@ struct sched_file_struct {
   vector_type       * blocks;                /* A list of chronologically sorted sched_block_type's. */
   stringlist_type   * files;                 /* The name of the files which have been parsed to generate this sched_file instance. */
   time_t              start_time;            /* The start of the simulation. */
+  bool                hasEND;
 };
 
 
@@ -375,6 +376,7 @@ sched_file_type * sched_file_alloc(time_t start_time)
   sched_file->files              = stringlist_alloc_new();
   sched_file->start_time         = start_time;
   sched_file->fixed_length_table = hash_alloc();
+  sched_file->hasEND             = false;
   sched_file_init_fixed_length( sched_file );
   {
     char * fixed_length_file = getenv("SCHEDULE_FIXED_LENGTH");
@@ -453,12 +455,13 @@ static stringlist_type * sched_file_tokenize( const char * filename ) {
 */
 
 void sched_file_parse_append(sched_file_type * sched_file , const char * filename) {
+  bool foundEND = false;
   stringlist_type * token_list = sched_file_tokenize( filename );
   sched_kw_type    * current_kw;
   int token_index = 0;
   do {
     sched_util_skip_newline( token_list , &token_index );
-    current_kw = sched_kw_token_alloc(token_list , &token_index , sched_file->fixed_length_table);
+    current_kw = sched_kw_token_alloc(token_list , &token_index , sched_file->fixed_length_table, &foundEND);
     if (current_kw != NULL) {
       sched_kw_type_enum type = sched_kw_get_type(current_kw);
       if (type == DATES || type == TSTEP || type == TIME) {
@@ -474,7 +477,10 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
         sched_file_add_kw( sched_file , current_kw);
     }
   } while ( current_kw != NULL );
-
+  
+  if (foundEND)
+    sched_file->hasEND = true;
+  
   stringlist_append_copy( sched_file->files , filename );
   sched_file_build_block_dates(sched_file);
   sched_file_update_index( sched_file );
@@ -524,7 +530,7 @@ int sched_file_get_num_restart_files(const sched_file_type * sched_file)
 
 
 
-void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_file, const char * file , bool addEND)
+static void sched_file_fprintf_i__(const sched_file_type * sched_file, int last_restart_file, const char * file , bool addEND)
 {
   FILE * stream = util_fopen(file, "w");
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
@@ -543,21 +549,23 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
     sched_block_fprintf(sched_block, stream);
   }
 
-  /** 
-      When this is added the ECLIPSE simulation will stop when reacing this END, 
-      irrespective of what follows.
-  */
-      
   if (addEND)
     fprintf(stream, "END\n");
+  
   fclose(stream);
 }
 
+
+void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_file, const char * file) {
+  sched_file_fprintf_i__( sched_file , last_restart_file , file , true);
+}
+
+
 /* Writes the complete schedule file. */
-void sched_file_fprintf(const sched_file_type * sched_file, const char * file, bool addEND)
+void sched_file_fprintf(const sched_file_type * sched_file, const char * file)
 {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
-  sched_file_fprintf_i( sched_file , num_restart_files - 1 , file , addEND);
+  sched_file_fprintf_i__( sched_file , num_restart_files - 1 , file , sched_file->hasEND);
 }
 
 
@@ -836,12 +844,12 @@ int sched_file_step_count( const char * filename ) {
     sched_kw_type_enum kw_type = sched_kw_type_from_string( current_token );
 
     if (kw_type == DATES) {
-      sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL);
+      sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL , NULL);
       const sched_kw_dates_type * dates_kw = sched_kw_get_data( sched_kw );
       step_count += sched_kw_dates_get_size( dates_kw );
       sched_kw_free( sched_kw );
     } else if (kw_type == TSTEP ) {
-      sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL);
+      sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL , NULL);
       const sched_kw_tstep_type * tstep_kw = sched_kw_get_data( sched_kw );
       step_count += sched_kw_tstep_get_length( tstep_kw );
       sched_kw_free( sched_kw );

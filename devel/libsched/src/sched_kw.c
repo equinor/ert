@@ -309,16 +309,19 @@ static void sched_kw_alloc_data( sched_kw_type * kw , const stringlist_type * to
 }
 
 
-sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * token_index, hash_type * fixed_length_table) {
+sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * token_index, hash_type * fixed_length_table, bool * foundEND) {
   if (*token_index >= stringlist_get_size( token_list ))
     return NULL;
   else {
     const char * kw_name  = stringlist_iget( token_list , *token_index );
     (*token_index) += 1;
     sched_kw_name_assert(kw_name , NULL);
-    if (strcmp(kw_name,"END") == 0)
+    if (strcmp(kw_name,"END") == 0) {
+      if (foundEND != NULL)
+        *foundEND = true;
+      
       return NULL;
-    else {
+    } else {
       sched_kw_type * sched_kw = sched_kw_alloc_empty( kw_name );
       sched_kw->restart_nr     = -1;
       

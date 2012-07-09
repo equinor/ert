@@ -37,12 +37,12 @@ typedef void (sched_file_callback_ftype)( void * sched_kw , int restart_nr , voi
 void                 sched_file_add_fixed_length_kw( sched_file_type * sched_file , const char * kw , int length );
 sched_file_type *    sched_file_alloc(time_t);
 sched_file_type *    sched_file_safe_cast(void * );
-void 		     sched_file_free(sched_file_type *);
-void 		     sched_file_parse(sched_file_type *, const char *);
+void                 sched_file_free(sched_file_type *);
+void                 sched_file_parse(sched_file_type *, const char *);
 void                 sched_file_parse_append(sched_file_type *  , const char * );
 sched_file_type *    sched_file_parse_alloc(const char * , time_t);
-void                 sched_file_fprintf_i(const sched_file_type *, int, const char *, bool);
-void                 sched_file_fprintf(const sched_file_type * sched_file, const char * file , bool);
+void                 sched_file_fprintf_i(const sched_file_type *, int, const char *);
+void                 sched_file_fprintf(const sched_file_type * sched_file, const char * file);
 
 int                  sched_file_get_num_restart_files(const sched_file_type *);
 int                  sched_file_get_restart_nr_from_time_t(const sched_file_type *, time_t);
@@ -63,8 +63,8 @@ void                 sched_file_summarize(const sched_file_type *  , FILE * );
 sched_file_type    * sched_file_alloc_copy(const sched_file_type * , bool);
 time_t_vector_type * sched_file_alloc_time_t_vector( const sched_file_type * sched_file );
 
-void 		     sched_file_update_blocks(sched_file_type * sched_file, int restart1 , int restart2 , sched_kw_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
-void 		     sched_file_update(sched_file_type * sched_file, sched_kw_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
+void                 sched_file_update_blocks(sched_file_type * sched_file, int restart1 , int restart2 , sched_kw_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
+void                 sched_file_update(sched_file_type * sched_file, sched_kw_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
 bool                 sched_file_well_open( const sched_file_type * sched_file , int restart_nr , const char * well_name );
 const char         * sched_file_iget_filename( const sched_file_type * sched_file , int file_nr );
 
