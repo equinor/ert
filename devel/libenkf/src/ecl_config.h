@@ -63,6 +63,7 @@ extern "C" {
   void                  ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file );
   const char          * ecl_config_get_gridfile( const ecl_config_type * ecl_config );
   int                   ecl_config_get_last_history_restart( const ecl_config_type * );
+  bool                  ecl_config_has_schedule( const ecl_config_type * ecl_config );
   bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );
   void                  ecl_config_assert_restart( const ecl_config_type * ecl_config );
   void                  ecl_config_set_eclbase( ecl_config_type * ecl_config , const char * eclbase_fmt );

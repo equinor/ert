@@ -106,9 +106,11 @@ int ecl_config_get_last_history_restart( const ecl_config_type * ecl_config ) {
 }
 
 
+
 bool ecl_config_can_restart( const ecl_config_type * ecl_config ) {
   return ecl_config->can_restart;
 }
+
 
 void ecl_config_assert_restart( const ecl_config_type * ecl_config ) {
   if (!ecl_config_can_restart(ecl_config)) {
@@ -171,6 +173,14 @@ const char * ecl_config_get_schedule_file( const ecl_config_type * ecl_config ) 
     return sched_file_iget_filename( ecl_config->sched_file , 0 );
   else 
     return NULL;
+}
+
+
+bool ecl_config_has_schedule( const ecl_config_type * ecl_config ) {
+  if (ecl_config->sched_file == NULL)
+    return false;
+  else
+    return true;
 }
 
 

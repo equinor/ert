@@ -100,7 +100,7 @@ int main(int argc, char **argv)
   unlink( schedule_file );
   hash = parse_multir( multir_file );
   sched_file_update(sched_file , WCONINJE , scale_injectors , hash);
-  sched_file_fprintf(sched_file , schedule_file , false );
+  sched_file_fprintf(sched_file , schedule_file );
   sched_file_free( sched_file );
   hash_free( hash );
   

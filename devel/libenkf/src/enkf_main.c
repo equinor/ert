@@ -1043,6 +1043,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
         int * row_offset  = util_malloc( local_dataset_get_size( dataset ) * sizeof * row_offset  , __func__);
         
         enkf_main_serialize_dataset( enkf_main , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
+
         if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
           analysis_module_updateA( module , localA , S , R , dObs , E , D );
         else {

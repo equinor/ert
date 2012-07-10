@@ -167,14 +167,13 @@ typedef enum { TRUNCATE_NONE   = 0,
 */
 
 typedef enum { ENKF_ASSIMILATION       = 1, 
-               ENSEMBLE_EXPERIMENT     = 2,
-               ENSEMBLE_PREDICTION     = 3 } run_mode_type;
+               ENSEMBLE_EXPERIMENT     = 2 } run_mode_type;
                
 
 #define ENKF_RUN_ENUM_DEFS {.value = 1 , .name = "ENKF_ASSIMILATION"},   \
-                           {.value = 2 , .name = "ENSEMBLE_EXPERIMENT"}, \
-                           {.value = 3 , .name = "ENSEMBLE_PREDICTION"}
-#define ENKF_RUN_ENUM_SIZE 3
+                           {.value = 2 , .name = "ENSEMBLE_EXPERIMENT"} 
+
+#define ENKF_RUN_ENUM_SIZE 2
 
 
 
