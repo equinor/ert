@@ -50,6 +50,11 @@ struct analysis_module_struct {
   analysis_set_bool_ftype        * set_bool; 
   analysis_set_string_ftype      * set_string;
   
+  analysis_has_var_ftype         * has_var;
+  analysis_get_int_ftype         * get_int;
+  analysis_get_double_ftype      * get_double;
+  analysis_get_ptr_ftype         * get_ptr;
+  
   bool                             internal;  
   char                           * user_name;   /* String used to identify this module for the user; not used in 
                                                    the linking process. */
@@ -71,6 +76,10 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
   module->module_data     = NULL;
   module->init_update     = NULL;
   module->complete_update = NULL;
+  module->has_var         = NULL;
+  module->get_int         = NULL;
+  module->get_double      = NULL;
+  module->get_ptr         = NULL;
   module->user_name     = util_alloc_string_copy( user_name );
   module->symbol_table  = util_alloc_string_copy( symbol_table );
   module->lib_name      = util_alloc_string_copy( lib_name );
@@ -104,7 +113,11 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
   module->alloc             = table->alloc;
   module->freef             = table->freef;
   module->get_options       = table->get_options; 
-  
+  module->has_var           = table->has_var;
+  module->get_int           = table->get_int;
+  module->get_double        = table->get_double;
+  module->get_ptr           = table->get_ptr;
+
   if (module->alloc != NULL)
     module->module_data = module->alloc( rng );
 
@@ -360,4 +373,51 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
 
 bool analysis_module_get_option( const analysis_module_type * module , long flag) {
   return (flag & module->get_options( module->module_data , flag ));
+}
+
+
+bool analysis_module_has_var( const analysis_module_type * module , const char * var) {
+  if (module->has_var != NULL)
+    return module->has_var( module->module_data , var );
+  else
+    return false;
+}
+
+
+int analysis_module_get_int( const analysis_module_type * module , const char * var) {
+  if (analysis_module_has_var( module , var )) {
+    if (module->get_int != NULL)
+      return module->get_int( module->module_data , var );
+    else
+      util_exit("%s: Tried to get integer variable:%s from module:%s - get_int() method not implemented for this module\n" , __func__ , var , module->user_name);
+  } else 
+    util_exit("%s: Tried to get integer variable:%s from module:%s - module does not support this variable \n" , __func__ , var , module->user_name);
+
+  return 0;
+}
+
+
+double analysis_module_get_double( const analysis_module_type * module , const char * var) {
+  if (analysis_module_has_var( module , var )) {
+    if (module->get_double != NULL)
+      return module->get_double( module->module_data , var );
+    else
+      util_exit("%s: Tried to get double variable:%s from module:%s - get_double() method not implemented for this module\n" , __func__ , var , module->user_name);
+  } else 
+    util_exit("%s: Tried to get double variable:%s from module:%s - module does not support this variable \n" , __func__ , var , module->user_name);
+
+  return 0;
+}
+
+
+void * analysis_module_get_ptr( const analysis_module_type * module , const char * var) {
+  if (analysis_module_has_var( module , var )) {
+    if (module->get_double != NULL)
+      return module->get_ptr( module->module_data , var );
+    else
+      util_exit("%s: Tried to get pointer variable:%s from module:%s - get_ptr() method not implemented for this module\n" , __func__ , var , module->user_name);
+  } else 
+    util_exit("%s: Tried to get pointer variable:%s from module:%s - module does not support this variable \n" , __func__ , var , module->user_name);
+  
+  return NULL;
 }

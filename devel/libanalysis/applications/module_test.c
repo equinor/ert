@@ -35,7 +35,7 @@ void check_module( rng_type * rng , const char * lib_name ) {
       printf("The runtime linker could not open the library:%s.\n", lib_name);
       printf("For the runtime linker to succesfully open your library\n");
       printf("at least one of two must be satisfied: \n\n");
-      printf("  1. You give the full path to library - including .so extension\n\n");
+      printf("  1. You give the FULL PATH to library - including .so extension\n\n");
       printf("  2. The path containing the library is in LD_LIBRARY_PATH.\n\n");
       printf("In addition all libraries needed by your module must be found\n");
     } else if (load_status == LOAD_SYMBOL_TABLE_NOT_FOUND) {

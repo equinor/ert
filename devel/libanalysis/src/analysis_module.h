@@ -99,6 +99,11 @@ extern "C" {
   bool                   analysis_module_get_option( const analysis_module_type * module , long flag);
   void                   analysis_module_complete_update( analysis_module_type * module );
 
+  bool                   analysis_module_has_var( const analysis_module_type * module , const char * var );
+  double                 analysis_module_get_double( const analysis_module_type * module , const char * var);
+  int                    analysis_module_get_int( const analysis_module_type * module , const char * var);
+  void *                 analysis_module_get_ptr( const analysis_module_type * module , const char * var);
+
 #ifdef  __cplusplus
 }
 #endif

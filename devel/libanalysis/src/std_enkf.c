@@ -254,5 +254,9 @@ analysis_table_type SYMBOL_TABLE = {
     .updateA         = NULL,
     .init_update     = NULL,
     .complete_update = NULL,
+    .has_var         = NULL,
+    .get_int         = NULL,
+    .get_double      = NULL,
+    .get_ptr         = NULL, 
 };
 

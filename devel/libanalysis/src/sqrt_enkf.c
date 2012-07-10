@@ -186,6 +186,10 @@ analysis_table_type SYMBOL_TABLE = {
   .updateA         = NULL,
   .init_update     = sqrt_enkf_init_update,
   .complete_update = sqrt_enkf_complete_update,
-  .get_options     = sqrt_enkf_get_options 
+  .get_options     = sqrt_enkf_get_options,
+  .has_var         = NULL,
+  .get_int         = NULL,
+  .get_double      = NULL,
+  .get_ptr         = NULL
 };
 

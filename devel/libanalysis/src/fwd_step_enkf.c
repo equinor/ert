@@ -118,8 +118,8 @@ void fwd_step_enkf_updateA(void * module_data ,
       printf("nx = %d\n",nx);
       for (int i = 0; i < nx; i++) {
         /*Update values of y */
-	/*Start of the actual update */
-	matrix_type * y = matrix_alloc( ens_size , 1 );
+        /*Start of the actual update */
+        matrix_type * y = matrix_alloc( ens_size , 1 );
       
         for (int j = 0; j < ens_size; j++) {
           matrix_iset(y , j , 0 , matrix_iget( A, i , j ) );
@@ -171,7 +171,7 @@ void fwd_step_enkf_data_free( void * arg ) {
 
     if (fwd_step_data != NULL) {
       if (fwd_step_data->stepwise_data != NULL) {
-	stepwise_free( fwd_step_data->stepwise_data );
+        stepwise_free( fwd_step_data->stepwise_data );
       }
     }
   }
@@ -236,7 +236,11 @@ analysis_table_type SYMBOL_TABLE = {
   .initX           = NULL , 
   .updateA         = fwd_step_enkf_updateA,
   .init_update     = NULL ,
-  .complete_update = NULL 
+  .complete_update = NULL ,
+  .has_var         = NULL ,
+  .get_int         = NULL ,
+  .get_double      = NULL ,
+  .get_ptr         = NULL
 };
 
 

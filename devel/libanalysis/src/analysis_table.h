@@ -48,6 +48,10 @@ extern "C" {
   
   typedef long (analysis_get_options_ftype) (void * module_data , long option);
 
+  typedef bool   (analysis_has_var_ftype)    (const void * module_data , const char * var_name);
+  typedef int    (analysis_get_int_ftype)    (const void * module_data , const char * var_name );
+  typedef double (analysis_get_double_ftype) (const void * module_data , const char * var_name );
+  typedef void * (analysis_get_ptr_ftype)    (const void * module_data , const char * var_name );
 
 /*****************************************************************/
 
@@ -69,6 +73,11 @@ typedef struct {
   analysis_set_bool_ftype        * set_bool; 
   analysis_set_string_ftype      * set_string;
   analysis_get_options_ftype     * get_options;
+
+  analysis_has_var_ftype         * has_var;
+  analysis_get_int_ftype         * get_int;
+  analysis_get_double_ftype      * get_double;
+  analysis_get_ptr_ftype         * get_ptr;
 } analysis_table_type;
 
 
