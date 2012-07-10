@@ -106,6 +106,7 @@ class SumTest( unittest.TestCase ):
         index = sum.get_key_index( "TCPUDAY")
         self.assertEqual( index , 10239 ) 
 
+
     def test_report(self):
         sum = self.sum
         self.assertEqual( sum.get_report( date = datetime.date( 2000,10,1) ) , 10)
@@ -124,7 +125,10 @@ class SumTest( unittest.TestCase ):
         self.assertTrue(  approx_equal( sum.get_from_report( "FOPT" , 10 ) , 6.67447e+06) )
 
 
-        
+    def test_fwrite(self):
+        self.sum.fwrite(ecl_case = "/tmp/CASE" )
+        self.assertTrue( True )
+
 
 def fast_suite():
     suite = unittest.TestSuite()
@@ -136,6 +140,7 @@ def fast_suite():
     suite.addTest( SumTest( 'test_keys' ))
     suite.addTest( SumTest( 'test_index' ))
     suite.addTest( SumTest( 'test_report' ))
+    suite.addTest( SumTest( 'test_fwrite' ))
     return suite
 
 

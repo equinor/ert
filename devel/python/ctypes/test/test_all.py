@@ -23,7 +23,8 @@ def run(name , module):
     if hasattr(module , "slow_suite"):
         run_suite( name , getattr(module , "slow_suite")())
     
-    
+
+run("kw"         , kw_test)    
 run("summary"    , sum_test)
 run("sched_file" , sched_test)
 run("file_test"  , file_test)

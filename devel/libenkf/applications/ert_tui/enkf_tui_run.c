@@ -37,7 +37,7 @@
 #include <enkf_tui_fs.h>
 #include <enkf_tui_analysis.h>
 #include <ert_tui_const.h>
-
+#include <ecl_config.h>
 
 
 static void enkf_tui_run_set_runpath(void * arg) {
@@ -109,14 +109,23 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
 
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
+    const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
+    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+    analysis_module_type * module = analysis_config_get_active_module( analysis_config );
     int step1 = 0;
-    int step2 = util_scanf_int_with_limits("Last report",PROMPT_LEN , 0 , last_report);  
-    int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , step1 , step2 );
+    int step2 ;
+    int_vector_type * step_list;
     bool_vector_type * iactive = bool_vector_alloc(0 , true);
     int iter  = 0;
     int num_iter = 10;
     stringlist_type * node_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER );
 
+    if (ecl_config_has_schedule( ecl_config ))
+      step2 = util_scanf_int_with_limits("Last report",PROMPT_LEN , 0 , last_report);  
+    else
+      step2 = last_report;
+    
+    step_list = enkf_main_update_alloc_step_list( enkf_main , step1 , step2 );
     bool_vector_iset( iactive , ens_size - 1 , true );
     
     while (true) {
@@ -128,6 +137,9 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
       }
       enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
       enkf_main_UPDATE(enkf_main , step_list );
+      
+      if (analysis_module_has_var( module , "BJARNE" ))
+        printf("has var Bjarne\n");
       
       enkf_main_copy_ensemble( enkf_main , 
                                enkf_main_get_current_fs( enkf_main ),
@@ -228,7 +240,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
   int step1,step2;
   bool * iactive         = util_malloc(ens_size * sizeof * iactive , __func__);
-  run_mode_type run_mode = ENSEMBLE_EXPERIMENT; //ENSEMBLE_PREDICTION will induce the most powerfull load. ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */
+  run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
 
   enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
   /** Observe that for the summary data it will load all the available data anyway. */
@@ -301,15 +313,20 @@ void enkf_tui_run_menu(void * arg) {
   menu_add_item(menu , "Ensemble run: history"                , "xX" , enkf_tui_run_exp__         , enkf_main , NULL);
   menu_add_separator( menu );
   {
+    const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
+    const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+    
     menu_item_type * enkf_item         = menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start__       , enkf_main , NULL);
     menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__     , enkf_main , NULL);
-    menu_item_type * dean_item         = menu_add_item(menu , "Iterated smoother"                      , "iI" , enkf_tui_run_iterated_ES__     , enkf_main , NULL);
-
-    if (!enkf_main_have_obs( enkf_main )) {
+    menu_item_type * it_ES_item        = menu_add_item(menu , "Iterated smoother"                      , "iI" , enkf_tui_run_iterated_ES__     , enkf_main , NULL);
+    
+    if (!ecl_config_has_schedule( ecl_config )) {
       menu_item_disable( enkf_item );
       menu_item_disable( restart_enkf_item );
     }
 
+    if (!model_config_has_history( model_config )) 
+      menu_item_disable( it_ES_item );
   }
   menu_add_separator(menu);
   menu_add_item(menu , "Create runpath directories - NO simulation" , "cC" , enkf_tui_run_create_runpath__ , enkf_main , NULL );

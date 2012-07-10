@@ -1066,8 +1066,14 @@ class EclSum( CClass ):
         return s.strings
 
 
-
-
+    def fwrite(self , ecl_case = None):
+        if ecl_case:
+            cfunc.set_case( self , ecl_case )
+            
+        cfunc.fwrite_sum( self )
+        
+        
+        
 
 
 
@@ -1119,3 +1125,6 @@ cfunc.get_simcase                   = cwrapper.prototype("char*    ecl_sum_get_c
 cfunc.get_report_step_from_time     = cwrapper.prototype("int      ecl_sum_get_report_step_from_time( ecl_sum , time_t)")
 cfunc.get_report_step_from_days     = cwrapper.prototype("int      ecl_sum_get_report_step_from_days( ecl_sum , double)")
 cfunc.get_report_time               = cwrapper.prototype("time_t   ecl_sum_get_report_time(ecl_sum , int)")
+
+cfunc.fwrite_sum                    = cwrapper.prototype("void     ecl_sum_fwrite(ecl_sum)")
+cfunc.set_case                      = cwrapper.prototype("void     ecl_sum_set_case(ecl_sum, char*)")

@@ -141,7 +141,7 @@ void upgrade_case( int ens_size , const ecl_sum_type * refcase , const char * en
   
   {
     const ecl_smspec_type * smspec = ecl_sum_get_smspec( refcase );
-    int num_params = ecl_smspec_get_param_size( smspec );
+    int num_params = ecl_smspec_get_params_size( smspec );
     msg_type * msg;
     {
       char * prefix = util_alloc_sprintf("Upgrading %s/mod_nnn/%s: " , case_path , file );

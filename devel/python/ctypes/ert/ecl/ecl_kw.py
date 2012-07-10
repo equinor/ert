@@ -685,6 +685,13 @@ class EclKW(CClass):
         return ecl_kw
 
     @property
+    def fortio_size(self):
+        """
+        The number of bytes this keyword would occupy in a BINARY file.
+        """
+        return cfunc.get_fortio_size( self )
+
+    @property
     def size(self):
         return cfunc.get_size( self )
     
@@ -903,6 +910,7 @@ cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_cop
 cfunc.slice_copyc                = cwrapper.prototype("c_void_p ecl_kw_alloc_slice_copy( ecl_kw , int , int , int )")
 cfunc.fread_alloc                = cwrapper.prototype("c_void_p ecl_kw_fread_alloc( fortio )")
 cfunc.get_size                   = cwrapper.prototype("int      ecl_kw_get_size( ecl_kw )")
+cfunc.get_fortio_size            = cwrapper.prototype("size_t   ecl_kw_fortio_size( ecl_kw )")
 cfunc.get_type                   = cwrapper.prototype("int      ecl_kw_get_type( ecl_kw )")
 cfunc.iget_char_ptr              = cwrapper.prototype("char*    ecl_kw_iget_char_ptr( ecl_kw , int )")
 cfunc.iset_char_ptr              = cwrapper.prototype("void     ecl_kw_iset_char_ptr( ecl_kw , int , char*)")
