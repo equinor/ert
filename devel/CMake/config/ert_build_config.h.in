@@ -15,4 +15,4 @@
 #cmakedefine HAVE_FNMATCH
 #cmakedefine NEED_BLAS
 #cmakedefine HAVE_OPENMP
-
+#cmakedefine HAVE_FTRUNCATE
