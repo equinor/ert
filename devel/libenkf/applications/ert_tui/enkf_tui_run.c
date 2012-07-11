@@ -140,18 +140,24 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
       }
       enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
       enkf_main_UPDATE(enkf_main , step_list );
-      
-      enkf_main_copy_ensemble( enkf_main , 
-                               enkf_main_get_current_fs( enkf_main ),
-                               step2 , 
-                               ANALYZED , 
-                               enkf_main_get_current_fs( enkf_main ),
-                               step1 , 
-                               FORECAST , 
-                               iactive , 
-                               NULL , 
-                               node_list );
-      
+      {
+        char * target_fs = util_alloc_sprintf("smoother-%d" , iter);
+        
+        
+        enkf_main_copy_ensemble( enkf_main , 
+                                 enkf_main_get_current_fs( enkf_main ),
+                                 step2 , 
+                                 ANALYZED , 
+                                 target_fs, 
+                                 step1 , 
+                                 FORECAST , 
+                                 iactive , 
+                                 NULL , 
+                                 node_list );
+        
+        enkf_main_select_fs(enkf_main , target_fs );
+        free( target_fs );
+      }
       iter++;
       if (iter == num_iter)
         break;
