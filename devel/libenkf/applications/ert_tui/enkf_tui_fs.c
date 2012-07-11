@@ -59,9 +59,9 @@ void enkf_tui_fs_create_case(void * arg)
     if (newline)
       *newline = 0;
 
-    if(strlen(new_case) != 0){
+    if(strlen(new_case) != 0)
       enkf_main_select_fs( enkf_main , new_case );
-    }
+
   }
   menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_main_get_current_fs(enkf_main));
   menu_set_title(menu, menu_title);
@@ -273,20 +273,20 @@ void enkf_tui_fs_copy_ensemble(void * arg)
       util_printf_prompt("target case" , prompt_len , '=' , "=> ");
       char * target_case;
       if(fgets(target_case, prompt_len, stdin) != NULL);{
-	char *newline = strchr(target_case, '\n');
-	if (newline)
-	  *newline = 0;
+        char *newline = strchr(target_case, '\n');
+        if (newline)
+          *newline = 0;
       }
       if(strlen(target_case) !=0){
-	char * report_step_to_as_char = util_scanf_int_with_limits_return_char("target report step",prompt_len , 0 , last_report);
-	if(strlen(report_step_to_as_char) !=0){
-	  util_sscanf_int(report_step_to_as_char , &report_step_to);
-	  state_to       = enkf_tui_util_scanf_state("target analyzed/forecast [a|f]" , prompt_len , false);
-	  if(state_to != UNDEFINED){
-	    enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, false);
-	  }
-	}
-	free(report_step_to_as_char);
+        char * report_step_to_as_char = util_scanf_int_with_limits_return_char("target report step",prompt_len , 0 , last_report);
+        if(strlen(report_step_to_as_char) !=0){
+          util_sscanf_int(report_step_to_as_char , &report_step_to);
+          state_to       = enkf_tui_util_scanf_state("target analyzed/forecast [a|f]" , prompt_len , false);
+          if(state_to != UNDEFINED){
+            enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, false);
+          }
+        }
+        free(report_step_to_as_char);
       }
     }
   }
@@ -321,20 +321,20 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
       util_printf_prompt("target case" , prompt_len , '=' , "=> ");
       char * target_case;
       if(fgets(target_case, prompt_len, stdin) != NULL);{
-	char *newline = strchr(target_case, '\n');
-	if (newline)
-	  *newline = 0;
+        char *newline = strchr(target_case, '\n');
+        if (newline)
+          *newline = 0;
       }
       if(strlen(target_case) !=0){
-	char * report_step_to_as_char = util_scanf_int_with_limits_return_char("target report step",prompt_len , 0 , last_report);
-	if(strlen(report_step_to_as_char) !=0){
-	  util_sscanf_int(report_step_to_as_char , &report_step_to);
-	  state_to       = enkf_tui_util_scanf_state("target analyzed/forecast [a|f]" , prompt_len , false);
-	  if(state_to != UNDEFINED){
-	    enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, true);
-	  }
-	}
-	free(report_step_to_as_char);
+        char * report_step_to_as_char = util_scanf_int_with_limits_return_char("target report step",prompt_len , 0 , last_report);
+        if(strlen(report_step_to_as_char) !=0){
+          util_sscanf_int(report_step_to_as_char , &report_step_to);
+          state_to       = enkf_tui_util_scanf_state("target analyzed/forecast [a|f]" , prompt_len , false);
+          if(state_to != UNDEFINED){
+            enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, true);
+          }
+        }
+        free(report_step_to_as_char);
       }
     }
   }
