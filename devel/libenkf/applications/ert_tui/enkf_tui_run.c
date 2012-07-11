@@ -114,7 +114,7 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
     analysis_module_type * module = analysis_config_get_active_module( analysis_config );
     int step1 = 0;
     int step2 ;
-    int_vector_type * step_list;
+    int_vector_type * step_list = int_vector_alloc(0,0);
     bool_vector_type * iactive = bool_vector_alloc(0 , true);
     int iter  = 0;
     int num_iter = 10;
@@ -125,7 +125,10 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
     else
       step2 = last_report;
     
-    step_list = enkf_main_update_alloc_step_list( enkf_main , step1 , step2 );
+    {
+      for (int step=step1; step <= step2; step++)
+        int_vector_append( step_list , step );
+    }
     bool_vector_iset( iactive , ens_size - 1 , true );
     
     while (true) {
@@ -137,9 +140,6 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
       }
       enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
       enkf_main_UPDATE(enkf_main , step_list );
-      
-      if (analysis_module_has_var( module , "BJARNE" ))
-        printf("has var Bjarne\n");
       
       enkf_main_copy_ensemble( enkf_main , 
                                enkf_main_get_current_fs( enkf_main ),

@@ -16,6 +16,8 @@
 */
 
 
+// /d/proj/bg/enkf/rubsan/TESTCASE/SimpleEnKF/enkf_config
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -44,13 +46,14 @@
 #include <log.h>
 #include <node_ctype.h>
 
-#include <enkf_types.h>
-#include <enkf_config_node.h>
+#include <config.h>
+
 #include <ecl_util.h>
 #include <ecl_io_config.h>
-#include <ecl_config.h>
 
-#include <config.h>
+#include <enkf_types.h>
+#include <enkf_config_node.h>
+#include <ecl_config.h>
 
 #include <job_queue.h>
 #include <local_driver.h>
@@ -818,14 +821,13 @@ static int enkf_main_serialize_dataset( enkf_main_type * enkf_main,
   const int num_kw  = stringlist_get_size( update_keys );
   int ens_size      = matrix_get_columns( A );
   int current_row   = 0;
-
+  
   for (int ikw=0; ikw < num_kw; ikw++) {
     const char             * key              = stringlist_iget(update_keys , ikw);
     const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
       
     active_size[ikw] = __get_active_size( enkf_main , key , report_step , active_list );
     row_offset[ikw]  = current_row;
-
     {
       int matrix_rows = matrix_get_rows( A );
       if ((active_size[ikw] + current_row) > matrix_rows) 
@@ -1006,24 +1008,22 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   if (analysis_module_get_option( module , ANALYSIS_SCALE_DATA))
     obs_data_scale( obs_data , S , E , D , R , dObs );
   
-  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) {
+  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
     localA = A;
-  }
   
 
   /*****************************************************************/
   
   analysis_module_init_update( module , S , R , dObs , E , D );
-
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
     serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , step2 , A , cpu_threads);
     
     // Store PC:
     if (analysis_config_get_store_PC( enkf_main->analysis_config )) {
-      double truncation = -1;
-      int ncomp         = ens_size - 1;
-      matrix_type * PC  = matrix_alloc(1,1);
+      double truncation    = -1;
+      int ncomp            = ens_size - 1;
+      matrix_type * PC     = matrix_alloc(1,1);
       matrix_type * PC_obs = matrix_alloc(1,1);
       
       enkf_main_get_PC( enkf_main , S , dObs , local_ministep_get_name( ministep ) , step1 , step2 , truncation , ncomp , PC , PC_obs );
@@ -1031,7 +1031,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
       matrix_free( PC );
       matrix_free( PC_obs );
     }
-
+    
     if (localA == NULL) 
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
 
@@ -1124,7 +1124,6 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       free( log_file );
     }
     
-
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
       local_ministep_type * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
       local_obsset_type   * obsset   = local_ministep_get_obsset( ministep );
@@ -1132,16 +1131,17 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       obs_data_reset( obs_data );
       meas_data_reset( meas_forecast );
       
-      enkf_obs_get_obs_and_measure(enkf_main->obs, 
-                                   enkf_main_get_fs(enkf_main), 
-                                   step_list , 
-                                   FORECAST, 
-                                   ens_size,
-                                   (const enkf_state_type **) enkf_main->ensemble, 
-                                   meas_forecast, 
-                                   obs_data , 
-                                   obsset );
+      enkf_obs_get_obs_and_measure( enkf_main->obs, 
+                                    enkf_main_get_fs(enkf_main), 
+                                    step_list , 
+                                    FORECAST, 
+                                    ens_size,
+                                    (const enkf_state_type **) enkf_main->ensemble, 
+                                    meas_forecast, 
+                                    obs_data , 
+                                    obsset );
       
+
       enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
       
       if (enkf_main->verbose)

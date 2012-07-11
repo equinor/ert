@@ -71,6 +71,11 @@ if (HAVE_FORK)
   add_definitions( -DHAVE_FORK )
 endif()
 
+check_function_exists( ftruncate HAVE_FTRUNCATE )
+if (HAVE_FTRUNCATE)
+  add_definitions( -DHAVE_FTRUNCATE )
+endif()
+
 check_function_exists( readlinkat HAVE_READLINKAT )
 if (HAVE_READLINKAT)
    add_definitions( -DHAVE_READLINKAT )

@@ -98,7 +98,7 @@ int enkf_linalg_svdS(const matrix_type * S ,
         num_significant = ncomp;
       else {
         double total_sigma2    = 0;
-        for (i=0; i < num_singular_values; i++)
+        for (i=0; i < num_singular_values; i++) 
           total_sigma2 += sig0[i] * sig0[i];
         
         /* 
