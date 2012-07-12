@@ -83,6 +83,7 @@ static void time_map_summary_update__( time_map_type * map , const ecl_sum_type 
       time_map_update__( map , step , time );
     }
   }
+  time_map_update__(map , 0 , ecl_sum_get_start_time( ecl_sum ));
 }
 
 

@@ -9,7 +9,7 @@ extern "C" {
 #include <matrix.h>
 #include <rng.h>
 
-#define  DEFAULT_ENKF_TRUNCATION_  0.95
+#define  DEFAULT_ENKF_TRUNCATION_  0.98
 #define  ENKF_TRUNCATION_KEY_      "ENKF_TRUNCATION"
 #define  ENKF_NCOMP_KEY_           "ENKF_NCOMP" 
 

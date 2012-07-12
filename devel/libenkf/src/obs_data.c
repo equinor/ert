@@ -487,14 +487,6 @@ matrix_type * obs_data_allocD(const obs_data_type * obs_data , const matrix_type
 }
 
 
-matrix_type * obs_data_allocD_kernel(const matrix_type * E  , const matrix_type * S) {
-  matrix_type * D = matrix_alloc_copy( S );
-  matrix_inplace_sub( D , E );
-
-  matrix_set_name( D , "D");
-  matrix_assert_finite( D );
-  return D;
-}
 
 
 

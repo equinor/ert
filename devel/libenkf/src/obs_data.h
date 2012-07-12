@@ -56,7 +56,6 @@ obs_data_type      * obs_data_alloc();
 void                 obs_data_free(obs_data_type *);
 void                 obs_data_reset(obs_data_type * obs_data);
 matrix_type        * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S);
-matrix_type        * obs_data_allocD_kernel(const matrix_type * E  , const matrix_type * S);
 matrix_type        * obs_data_allocR(const obs_data_type * obs_data , int active_size );
 matrix_type        * obs_data_allocdObs(const obs_data_type * obs_data , int active_size );
 //matrix_type        * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_data_type * meas_data , int active_size);
