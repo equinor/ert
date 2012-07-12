@@ -132,12 +132,15 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
     bool_vector_iset( iactive , ens_size - 1 , true );
     
     while (true) {
+      /*
       {
         char * user = getenv("USER");
         char * runpath_fmt = util_alloc_sprintf("/scratch/ert/%s/iteratedES/%d/run%%d" , user , iter);
         model_config_set_runpath_fmt( model_config , runpath_fmt );
         free( runpath_fmt );
       }
+      */
+
       enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
       enkf_main_UPDATE(enkf_main , step_list );
       {
@@ -158,7 +161,8 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
         enkf_main_select_fs(enkf_main , target_fs );
         free( target_fs );
       }
-      iter++;
+
+      iter = analysis_module_get_int( module , "ITER" );
       if (iter == num_iter)
         break;
     }
