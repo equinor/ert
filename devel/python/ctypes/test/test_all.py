@@ -8,6 +8,7 @@ import large_mem_test
 import file_test
 import grdecl_test
 import grid_test
+import kw_test
 
 
 def run_suite(name , suite):
