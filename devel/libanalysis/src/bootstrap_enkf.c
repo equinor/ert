@@ -18,19 +18,20 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <math.h>
+
+#include <int_vector.h>
 #include <util.h>
 #include <rng.h>
 #include <matrix.h>
 #include <matrix_blas.h>
-#include <stdio.h>
+
 #include <std_enkf.h>
 #include <cv_enkf.h>
 #include <analysis_table.h>
 #include <analysis_module.h>
 #include <enkf_linalg.h>
-#include <std_enkf.h>
-#include <math.h>
-#include <int_vector.h>
 
 #define BOOTSTRAP_ENKF_TYPE_ID 741223
 

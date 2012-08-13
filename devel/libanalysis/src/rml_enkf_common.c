@@ -19,16 +19,18 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
+#include <string.h
+#include <stdio.h>
+#include <math.h>
+
 #include <util.h>
 #include <matrix.h>
 #include <matrix_blas.h>
-#include <stdio.h>
+#include <rng.h>
+
 #include <analysis_module.h>
 #include <analysis_table.h>
 #include <enkf_linalg.h>
-#include <rng.h>
-#include <math.h>
 #include <rml_enkf_common.h>
 
 

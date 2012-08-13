@@ -18,16 +18,18 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
+#include <stdio.h>
 
+#include <util.h>
 #include <matrix.h>
 #include <matrix_blas.h>
-#include <stdio.h>
+#include <rng.h>
+
 #include <analysis_module.h>
 #include <analysis_table.h>
 #include <enkf_linalg.h>
 #include <std_enkf.h>
-#include <rng.h>
+
 
 /*
   A random 'magic' integer id which is used for run-time type checking
