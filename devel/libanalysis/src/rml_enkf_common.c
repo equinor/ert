@@ -27,7 +27,6 @@
 #include <analysis_module.h>
 #include <analysis_table.h>
 #include <enkf_linalg.h>
-#include <rml_enkf.h>
 #include <rng.h>
 #include <math.h>
 #include <rml_enkf_common.h>
@@ -38,15 +37,15 @@
 /* This program contains common functions to both rml_enkf & rml_enkf_imodel*/
 
 void rml_enkf_common_initA__( matrix_type * A ,
-			      matrix_type * S , 
-			      matrix_type * Cd , 
-			      matrix_type * E , 
-			      matrix_type * D ,
-			      double truncation,
-			      double lamda,
-			      matrix_type * Udr,
-			      double * Wdr,
-			      matrix_type * VdTr) {
+                              matrix_type * S , 
+                              matrix_type * Cd , 
+                              matrix_type * E , 
+                              matrix_type * D ,
+                              double truncation,
+                              double lamda,
+                              matrix_type * Udr,
+                              double * Wdr,
+                              matrix_type * VdTr) {
 
   int nrobs         = matrix_get_rows( S );
   int ens_size      = matrix_get_columns( S );
