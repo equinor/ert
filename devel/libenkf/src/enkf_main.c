@@ -985,7 +985,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
                               obs_data_type * obs_data) {
 
   const int cpu_threads       = 4;
-  const int matrix_start_size = 25000;
+  const int matrix_start_size = 250000;
   thread_pool_type * tp       = thread_pool_alloc( cpu_threads , false );
   analysis_module_type * module = analysis_config_get_active_module( enkf_main->analysis_config );
   int ens_size          = meas_data_get_ens_size( forecast );
@@ -998,6 +998,8 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   matrix_type * E       = NULL;
   matrix_type * D       = NULL;
   matrix_type * localA  = NULL;
+
+  
 
 
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
@@ -1052,7 +1054,7 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
 
           matrix_inplace_matmul_mt2( A , X , tp );
         }
-          
+       
         enkf_main_deserialize_dataset( dataset , active_size , row_offset , serialize_info , tp);
         
         free( active_size );
