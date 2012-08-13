@@ -46,8 +46,14 @@ if (USE_PTHREAD)
   add_definitions( -DHAVE_PTHREAD )
 endif()
 #-----------------------------------------------------------------
-option(USE_OPENMP "Include OpenMP support" ON)
-set(OPENMP USE_OPENMP)
+option( BUILD_LATEX "Build small class for compiling LaTeX files" ON)
+if (BUILD_LATEX)
+   find_program(LATEX NAMES pdflatex)
+   if (NOT LATEX)
+      set( BUILD_LATEX OFF )
+   endif()
+endif()
+
 #-----------------------------------------------------------------
 option(USE_LSF "Include support for LSF" ON)
 #-----------------------------------------------------------------

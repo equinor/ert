@@ -152,7 +152,7 @@ void upgrade_case( int ens_size , const ecl_sum_type * refcase , const char * en
     
     for (int i=0; i < num_params; i++) {
       const smspec_node_type * smspec_node = ecl_smspec_iget_node( smspec , i );
-      const char * gen_key = smspec_node_get_gen_key( smspec_node );
+      const char * gen_key = smspec_node_get_gen_key1( smspec_node );
       {
         char * progress = util_alloc_sprintf("%4.1f %s" , i * 100.0 / num_params , "%");
         msg_update( msg , progress );
