@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
+
 #include <matrix.h>
 #include <matrix_blas.h>
 #include <stdio.h>

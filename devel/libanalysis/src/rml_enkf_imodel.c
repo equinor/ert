@@ -16,19 +16,24 @@
    for more details. 
 */
 
+
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
 #include <util.h>
+#include <type_macros.h>
+#include <rng.h>
 #include <matrix.h>
 #include <matrix_blas.h>
-#include <stdio.h>
+
+
 #include <analysis_module.h>
 #include <analysis_table.h>
 #include <enkf_linalg.h>
-#include <rml_enkf_imodel.h>
-#include <rng.h>
-#include <math.h>
 #include <rml_enkf_common.h>
+#include <std_enkf.h>
 
 /*
   A random 'magic' integer id which is used for run-time type checking
@@ -36,7 +41,7 @@
 */
 #define RML_ENKF_IMODEL_TYPE_ID 261123
 
-
+typedef struct rml_enkf_imodel_data_struct rml_enkf_imodel_data_type;
 
 
 /*
@@ -147,9 +152,9 @@ void rml_enkf_imodel_data_free( void * data ) {
 
 
 void rml_enkf_imodel_init1__( matrix_type * A,
-			      rml_enkf_imodel_data_type * data, 
-			      double truncation,
-			      double nsc) {
+                              rml_enkf_imodel_data_type * data, 
+                              double truncation,
+                              double nsc) {
   
 
   int nstate        = matrix_get_rows( A );
@@ -205,13 +210,30 @@ void  rml_enkf_imodel_Create_Csc(rml_enkf_imodel_data_type * data){
 
 }
 
+void rml_enkf_imodel_scalingA(matrix_type *A, double * Csc, bool invert ){
+  int nrows = matrix_get_rows(A);
+  if (invert)
+    for (int i=0; i< nrows ; i++)
+      {
+        double sc= 1/Csc[i];
+        matrix_scale_row(A, i, sc);
+      }
+  else
+    for (int i=0; i< nrows ; i++)
+      {
+        double sc= Csc[i];
+        matrix_scale_row(A, i, sc);
+      }
+}
+
+
 
 void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
-			      matrix_type *A,
-			      matrix_type *Acopy,
-			      double * Wdr,
-			      double nsc,
-			      matrix_type * VdTr) {
+                              matrix_type *A,
+                              matrix_type *Acopy,
+                              double * Wdr,
+                              double nsc,
+                              matrix_type * VdTr) {
 
 
   int nstate        = matrix_get_rows( Acopy );
@@ -279,30 +301,15 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
     
 }
 
-void rml_enkf_imodel_scalingA(matrix_type *A, double * Csc, bool invert ){
-  int nrows = matrix_get_rows(A);
-  if (invert)
-    for (int i=0; i< nrows ; i++)
-      {
-	double sc= 1/Csc[i];
-	matrix_scale_row(A, i, sc);
-      }
-  else
-    for (int i=0; i< nrows ; i++)
-      {
-	double sc= Csc[i];
-	matrix_scale_row(A, i, sc);
-      }
-}
 
 
 void rml_enkf_imodel_updateA(void * module_data , 
-		      matrix_type * A , 
-		      matrix_type * S , 
-		      matrix_type * R , 
-		      matrix_type * dObs , 
-		      matrix_type * E , 
-		      matrix_type * D) {
+                      matrix_type * A , 
+                      matrix_type * S , 
+                      matrix_type * R , 
+                      matrix_type * dObs , 
+                      matrix_type * E , 
+                      matrix_type * D) {
 
 
   rml_enkf_imodel_data_type * data = rml_enkf_imodel_data_safe_cast( module_data );
@@ -365,41 +372,41 @@ void rml_enkf_imodel_updateA(void * module_data ,
 
 
       if ((Sk_new< (data->Sk)) && (Std_new<= (data->Std)))
-	{
-	  if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
-	    data-> iteration_nr = 16;
+        {
+          if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
+            data-> iteration_nr = 16;
 
-	  fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
-	  data->lamda = data->lamda / 10 ;
-	  data->Std   = Std_new;
-	  data->state = matrix_alloc_copy(A);
-	  data->Sk = Sk_new;
-	  rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
-	  rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
-	}
+          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
+          data->lamda = data->lamda / 10 ;
+          data->Std   = Std_new;
+          data->state = matrix_alloc_copy(A);
+          data->Sk = Sk_new;
+          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+          rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
+        }
       else if((Sk_new< (data->Sk)) && (Std_new > (data->Std)))
-	{
-	  if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
-	    data-> iteration_nr = 16;
+        {
+          if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
+            data-> iteration_nr = 16;
 
-	  fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
-	  data->lamda = data->lamda;
-	  data->Std=Std_new;
-	  data->state = matrix_alloc_copy(A);
-	  data->Sk = Sk_new;
-	  rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
-	  rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
+          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
+          data->lamda = data->lamda;
+          data->Std=Std_new;
+          data->state = matrix_alloc_copy(A);
+          data->Sk = Sk_new;
+          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+          rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
 
-	}
+        }
       else {
-	  fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f     \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
-	printf("The previous step is rejected !!\n");
-	data->lamda = data ->lamda * 4;   
-	matrix_assign( A , data->state );
-	printf("matrix copied \n");
-	rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
-	rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
-	data->iteration_nr--;
+          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f     \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
+        printf("The previous step is rejected !!\n");
+        data->lamda = data ->lamda * 4;   
+        matrix_assign( A , data->state );
+        printf("matrix copied \n");
+        rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+        rml_enkf_imodel_init2__(data,A,Acopy,Wd,nsc,VdT);
+        data->iteration_nr--;
       }
       matrix_free(Acopy);
     }

@@ -18,17 +18,20 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <math.h>
+
+#include <type_macros.h>
 #include <util.h>
+#include <rng.h>
 #include <matrix.h>
 #include <matrix_blas.h>
-#include <stdio.h>
+
 #include <analysis_module.h>
 #include <analysis_table.h>
 #include <enkf_linalg.h>
-#include <rml_enkf.h>
-#include <rng.h>
-#include <math.h>
 #include <rml_enkf_common.h>
+#include <std_enkf.h>
 
 /*
   A random 'magic' integer id which is used for run-time type checking
@@ -76,7 +79,7 @@
 */
 
 
-
+typedef struct rml_enkf_data_struct rml_enkf_data_type;
 
 struct rml_enkf_data_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -148,12 +151,12 @@ void rml_enkf_data_free( void * data ) {
 
 
 void rml_enkf_updateA(void * module_data , 
-		      matrix_type * A , 
-		      matrix_type * S , 
-		      matrix_type * R , 
-		      matrix_type * dObs , 
-		      matrix_type * E , 
-		      matrix_type * D) {
+                      matrix_type * A , 
+                      matrix_type * S , 
+                      matrix_type * R , 
+                      matrix_type * dObs , 
+                      matrix_type * E , 
+                      matrix_type * D) {
 
 
   rml_enkf_data_type * data = rml_enkf_data_safe_cast( module_data );
@@ -203,38 +206,38 @@ void rml_enkf_updateA(void * module_data ,
   
 
       if ((Sk_new< (data->Sk)) && (Std_new< (data->Std)))
-	{
-	  if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
-	    data-> iteration_nr = 16;
+        {
+          if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
+            data-> iteration_nr = 16;
 
 
-	  fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
-	  data->lamda = data->lamda / 10 ;
-	  data->Std   = Std_new;
-	  data->state = matrix_alloc_copy(A);
-	  data->Sk = Sk_new;
-	  rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
-	}
+          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
+          data->lamda = data->lamda / 10 ;
+          data->Std   = Std_new;
+          data->state = matrix_alloc_copy(A);
+          data->Sk = Sk_new;
+          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+        }
       else if((Sk_new< (data->Sk)) && (Std_new > (data->Std)))
-	{
-	  if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
-	    data-> iteration_nr = 16;
+        {
+          if ( (1- (Sk_new/data->Sk)) < .0001)  // check convergence ** model change norm has to be added in this!!
+            data-> iteration_nr = 16;
 
 
-	  fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
-	  data->lamda = data->lamda;  // Here we are not updating lamda!
-	  data->Std=Std_new;
-	  data->state = matrix_alloc_copy(A);
-	  data->Sk = Sk_new;
-	  rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
-	}
+          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
+          data->lamda = data->lamda;  // Here we are not updating lamda!
+          data->Std=Std_new;
+          data->state = matrix_alloc_copy(A);
+          data->Sk = Sk_new;
+          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+        }
       else {
-	  fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
-	printf("The previous step is rejected !!\n");
-	data->lamda = data ->lamda * 4;   
-	matrix_assign( A , data->state );
-	rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
-	data->iteration_nr--;
+          fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
+        printf("The previous step is rejected !!\n");
+        data->lamda = data ->lamda * 4;   
+        matrix_assign( A , data->state );
+        rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+        data->iteration_nr--;
       }
     }
   data->iteration_nr++;
