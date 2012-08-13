@@ -100,7 +100,7 @@ class conf:
         
         # These are site-dependant; and should really be set OUTSIDE
         # the central build configuration.
-        self.USE_OPENMP          = False 
+        self.USE_OPENMP          = False
         self.SITE_CONFIG_FILE    = SITE_CONFIG_FILE
         self.INCLUDE_LSF         = INCLUDE_LSF
         self.LSF_INCLUDE_PATH    = LSF_INCLUDE_PATH 
@@ -166,6 +166,9 @@ class conf:
             LIBS += ext_liblist
         env.Replace( CPPPATH  = CPPPATH ,
                      CCFLAGS  = self.CCFLAGS )
+
+        if self.USE_OPENMP:
+            LIBS += ["gomp"]
         
         if link:
             env.Replace(LIBPATH  = LIBPATH ,

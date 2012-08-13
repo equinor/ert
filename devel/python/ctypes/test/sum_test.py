@@ -130,6 +130,22 @@ class SumTest( unittest.TestCase ):
         self.assertTrue( True )
 
 
+    def test_block(self):
+        sum = self.sum
+        index_ijk = sum.get_key_index("BPR:15,28,1")
+        index_num = sum.get_key_index("BPR:1095")
+        self.assertEqual( index_ijk , index_num )
+
+
+    def test_restart(self):
+        hist = ecl.EclSum( "data/eclipse/sum-restart/history/T07-4A-W2011-18-P1" )
+        base = ecl.EclSum( "data/eclipse/sum-restart/prediction/BASECASE" )
+        pred = ecl.EclSum( "data/eclipse/sum-restart/prediction/BASECASE" , include_restart = False)
+
+        self.assertTrue( True )
+
+
+
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( SumTest( 'test_load' ))
@@ -141,6 +157,8 @@ def fast_suite():
     suite.addTest( SumTest( 'test_index' ))
     suite.addTest( SumTest( 'test_report' ))
     suite.addTest( SumTest( 'test_fwrite' ))
+    suite.addTest( SumTest( 'test_block' ))
+    suite.addTest( SumTest( 'test_restart' ))
     return suite
 
 

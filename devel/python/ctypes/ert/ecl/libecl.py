@@ -23,4 +23,11 @@ import ert.util.libutil
 import ert.geo.libgeo
 
 import ert.cwrap.clib as clib
+
+try:
+    clib.load("libgomp" , "libgomp.so.1")
+    openmp = True
+except ImportError:
+    openmp = False
+    
 lib = clib.load("libecl.so")
