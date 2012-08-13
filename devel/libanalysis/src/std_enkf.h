@@ -1,5 +1,5 @@
-#ifndef __SIMPLE_ENKF_H__
-#define __SIMPLE_ENKF_H__
+#ifndef __STD_ENKF_H__
+#define __STD_ENKF_H__
 
 #ifdef __cplusplus
 extern "C" {
