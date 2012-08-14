@@ -15,14 +15,15 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
-
-#include <template.h>
 #include <stdbool.h>
 #include <stdlib.h>
+
+#include <template.h>
 #include <hash.h>
 #include <util.h>
-#include <ert_template.h>
 #include <subst_list.h>
+
+#include <ert_template.h>
 #include "config_keys.h"
 #include "enkf_defaults.h"
 

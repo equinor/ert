@@ -311,7 +311,7 @@ bool analysis_config_select_module( analysis_config_type * config , const char *
     if (config->analysis_module == NULL)
       util_abort("%s: sorry module:%s does not exist - and no module currently selected\n",__func__ , module_name);
     else
-      fprintf(stderr , "** Warning: analysis module:%s does not exists - current selection unchanged:%s\n", 
+      fprintf(stderr , "** Warning: analysis module:%s does not exist - current selection unchanged:%s\n", 
               module_name , 
               analysis_module_get_name( config->analysis_module ));
     return false;
@@ -332,7 +332,7 @@ void analysis_config_load_internal_modules( analysis_config_type * config ) {
   analysis_config_load_internal_module( config , "SQRT_ENKF"      , "sqrt_enkf_symbol_table");
   analysis_config_load_internal_module( config , "CV_ENKF"        , "cv_enkf_symbol_table");
   analysis_config_load_internal_module( config , "BOOTSTRAP_ENKF" , "bootstrap_enkf_symbol_table");
-  /*  analysis_config_load_internal_module( config , rng , "FWD_STEP_ENKF"  , "fwd_step_enkf_symbol_table");*/
+  analysis_config_load_internal_module( config , "FWD_STEP_ENKF"  , "fwd_step_enkf_symbol_table");
   analysis_config_select_module( config , DEFAULT_ANALYSIS_MODULE);
 }
 

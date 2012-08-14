@@ -93,6 +93,7 @@
 #include <ert_build_info.h>
 #include <rng_config.h>
 #include <enkf_plot_data.h>
+#include <ert_report_list.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -142,6 +143,7 @@ struct enkf_main_struct {
   plot_config_type     * plot_config;        /* Information about plotting. */
   rng_config_type      * rng_config;
   rng_type             * rng;
+  ert_report_list_type * report_list;
 
   /*---------------------------*/            /* Variables related to substitution. */
   subst_func_pool_type * subst_func_pool;
@@ -2014,6 +2016,13 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
 
     stringlist_free(refcase_dep);
   }
+  /*****************************************************************/
+  /* Report */
+  item = config_add_item(config , REPORT_LIST_KEY , false , true);
+  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  
+  item = config_add_item(config , REPORT_PATH_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
   return config;
 }
 
@@ -2155,6 +2164,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
+  enkf_main->report_list        = ert_report_list_alloc( DEFAULT_REPORT_PATH );
   
   enkf_main_set_verbose( enkf_main , true );
   enkf_main->site_config      = site_config_alloc_empty();
@@ -2204,7 +2214,7 @@ static void enkf_main_install_data_kw( enkf_main_type * enkf_main , hash_type * 
     subst_list_append_owned_ref( enkf_main->subst_list , cwd_key         , cwd , "The current working directory we are running from - the location of the config file.");
     subst_list_append_ref( enkf_main->subst_list , config_path_key , cwd , "The current working directory we are running from - the location of the config file.");
     subst_list_append_owned_ref( enkf_main->subst_list , date_key        , date_string , "The current date");
-    subst_list_append_ref( enkf_main->subst_list , num_cpu_key     , num_cpu_string , "The number of CPU used for one forward model.");
+    subst_list_append_ref( enkf_main->subst_list , num_cpu_key           , num_cpu_string , "The number of CPU used for one forward model.");
     
     
     free( num_cpu_key );
@@ -2883,6 +2893,28 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         }
       }
 
+      /*****************************************************************/
+      /* Installing report templates. */
+      {
+        /* Installing the directories to search in. */
+        for (int i=0; i < config_get_occurences( config , REPORT_SEARCH_PATH_KEY ); i++) {
+          const stringlist_type * path_list = config_iget_stringlist_ref( config , REPORT_SEARCH_PATH_KEY , i);
+          for (int j=0; j < stringlist_get_size( path_list ); j++) 
+            ert_report_list_add_path( enkf_main->report_list , stringlist_iget( path_list , j ));
+        }
+
+        /* Installing the list of reports. */
+        for (int i=0; i < config_get_occurences( config , REPORT_LIST_KEY ); i++) {
+          const stringlist_type * report_list = config_iget_stringlist_ref( config , REPORT_LIST_KEY , i);
+          for (int j=0; j < stringlist_get_size( report_list ); j++) 
+            ert_report_list_add_report( enkf_main->report_list , stringlist_iget( report_list , j ));
+        }
+        
+        /* Installing the target path for reports*/
+        if (config_has_set_item(config , REPORT_PATH_KEY))
+          ert_report_list_set_target_path( enkf_main->report_list , config_iget( config , REPORT_PATH_KEY , 0 , 0));
+      }
+      /*****************************************************************/
 
       {
         const char * obs_config_file;
@@ -3460,6 +3492,7 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     enkf_main_log_fprintf_config( enkf_main , stream );
     site_config_fprintf_config( enkf_main->site_config , stream );    
     rng_config_fprintf_config( enkf_main->rng_config , stream );
+    ert_report_list_free( enkf_main->report_list );
     fclose( stream );
   }
 }

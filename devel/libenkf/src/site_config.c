@@ -1064,4 +1064,8 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   
   item = config_add_item(config , INSTALL_JOB_KEY , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
+
+  /* Items related to the reports. */
+  item = config_add_item( config , REPORT_SEARCH_PATH_KEY , false , true );
+  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 }
