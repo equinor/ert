@@ -92,6 +92,7 @@ struct rml_enkf_data_struct {
   double    Sk;                    // Objective function value
   double    Std;                   // Standard Deviation of the Objective function
   matrix_type *state;
+  matrix_type *Cd;
 };
 
 
@@ -138,11 +139,21 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A;
   data->iteration_nr = 0;
   data->Std          = 0; 
+  data->Cd           = NULL; 
+  data->state        = NULL;
   return data;
 }
 
 
-void rml_enkf_data_free( void * data ) { 
+void rml_enkf_data_free( void * module_data ) { 
+  rml_enkf_data_type * data = rml_enkf_data_safe_cast( module_data );
+
+  if (data->Cd != NULL)
+    matrix_free( data->Cd );
+  
+  if (data->state != NULL)
+    matrix_free( data->state );
+
   free( data );
 }
 
@@ -166,8 +177,7 @@ void rml_enkf_updateA(void * module_data ,
   
   int ens_size      = matrix_get_columns( S );
   int nrobs         = matrix_get_rows( S );
-  matrix_type * Cd  = matrix_alloc( nrobs, nrobs );
-  double nsc = 1/sqrt(ens_size-1); 
+  double nsc        = 1/sqrt(ens_size-1); 
   matrix_type * Skm = matrix_alloc(matrix_get_columns(D),matrix_get_columns(D));
   FILE *fp = util_fopen("rml_enkf_output","a");
 
@@ -176,17 +186,19 @@ void rml_enkf_updateA(void * module_data ,
   matrix_type * VdT  = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
   double * Wd       = util_malloc( sizeof * Wd * nrmin , __func__); 
   
-  enkf_linalg_Covariance(Cd ,E ,nsc, nrobs);
 
-  matrix_inv(Cd);
   
   
   if (data->iteration_nr == 0) {
-    Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
+    data->Cd = matrix_alloc( nrobs, nrobs );
+    enkf_linalg_Covariance(data->Cd ,E ,nsc, nrobs);
+    matrix_inv(data->Cd);
+    
+    Sk_new = enkf_linalg_data_mismatch(D,data->Cd,Skm);  //Calculate the intitial data mismatch term
     Std_new= matrix_diag_std(Skm,Sk_new);
     data->lamda =pow(10,floor(log10(Sk_new/(2*nrobs))));
-    data->state = matrix_alloc_copy(A);
-    rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+    data->state = matrix_realloc_copy(data->state , A);
+    rml_enkf_common_initA__(A,S,data->Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
     data->Sk = Sk_new;
     data->Std=Std_new;
     printf("Prior Objective function value is %5.3f \n", data->Sk);
@@ -199,7 +211,7 @@ void rml_enkf_updateA(void * module_data ,
   
   else
     {
-      Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
+      Sk_new = enkf_linalg_data_mismatch(D,data->Cd,Skm);  //Calculate the intitial data mismatch term
       Std_new= matrix_diag_std(Skm,Sk_new);
       printf(" Current Objective function value is %5.3f \n\n",Sk_new);
       printf("The old Objective function value is %5.3f \n", data->Sk);
@@ -214,9 +226,9 @@ void rml_enkf_updateA(void * module_data ,
           fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
           data->lamda = data->lamda / 10 ;
           data->Std   = Std_new;
-          data->state = matrix_alloc_copy(A);
+          data->state = matrix_realloc_copy(data->state , A);
           data->Sk = Sk_new;
-          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+          rml_enkf_common_initA__(A,S,data->Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
         }
       else if((Sk_new< (data->Sk)) && (Std_new > (data->Std)))
         {
@@ -227,16 +239,16 @@ void rml_enkf_updateA(void * module_data ,
           fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
           data->lamda = data->lamda;  // Here we are not updating lamda!
           data->Std=Std_new;
-          data->state = matrix_alloc_copy(A);
+          data->state = matrix_realloc_copy(data->state , A);
           data->Sk = Sk_new;
-          rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+          rml_enkf_common_initA__(A,S,data->Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
         }
       else {
           fprintf(fp,"%d     \t\t      %5.5f      \t      %5.5f      \t    %5.5f    \t   %5.5f    \n",data->iteration_nr,data->lamda, Sk_new,data->Sk, Std_new);
         printf("The previous step is rejected !!\n");
         data->lamda = data ->lamda * 4;   
         matrix_assign( A , data->state );
-        rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
+        rml_enkf_common_initA__(A,S,data->Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
         data->iteration_nr--;
       }
     }
@@ -248,16 +260,14 @@ void rml_enkf_updateA(void * module_data ,
 
 
   printf ("The current iteration number is %d \n ", data->iteration_nr);
-
+  
 
 
   matrix_free(Ud);
   matrix_free(VdT);
   matrix_free(Skm);
-  matrix_free(Cd);
   free(Wd);
   fclose(fp);
-
 }
 
 
