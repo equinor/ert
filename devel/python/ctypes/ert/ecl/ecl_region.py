@@ -745,6 +745,10 @@ class EclRegion(CClass):
         else:
             raise Exception("scale_kw() only supported for INT/FLOAT/DOUBLE")
 
+    def imul_kw( self , target_kw , other , force_active = False):
+        #if isinstance(other , EclKW):
+        self.scale_kw( target_kw , other , force_active )
+
     #################################################################
 
     def ecl_region_instance( self ):
