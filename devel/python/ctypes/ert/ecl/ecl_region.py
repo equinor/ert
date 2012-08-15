@@ -707,7 +707,7 @@ class EclRegion(CClass):
         """
         See usage documentation on iadd_kw().
         """
-        type = ecl_kw.ecl_type
+        type = ecl_kw.type
         if type == ECL_INT_TYPE:
             cfunc.set_kw_int( self , ecl_kw , value , force_active)
         elif type == ECL_FLOAT_TYPE:
@@ -721,7 +721,7 @@ class EclRegion(CClass):
         """
         See usage documentation on iadd_kw().
         """
-        type = ecl_kw.__type__
+        type = ecl_kw.type
         if type == ECL_INT_TYPE:
             cfunc.shift_kw_int( self , ecl_kw , shift , force_active)
         elif type == ECL_FLOAT_TYPE:
@@ -735,7 +735,7 @@ class EclRegion(CClass):
         """
         See usage documentation on iadd_kw().
         """
-        type = ecl_kw.__type__
+        type = ecl_kw.type
         if type == ECL_INT_TYPE:
             cfunc.scale_kw_int( self , ecl_kw , scale , force_active)
         elif type == ECL_FLOAT_TYPE:
