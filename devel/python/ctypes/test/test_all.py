@@ -9,7 +9,8 @@ import file_test
 import grdecl_test
 import grid_test
 import kw_test
-
+import region_test
+import latex_test
 
 def run_suite(name , suite):
     print "Running tests from %12s:" % name,
@@ -32,3 +33,5 @@ run("file_test"  , file_test)
 run("large_mem"  , large_mem_test)
 run("grdecl"     , grdecl_test)
 run("grid"       , grid_test)
+run("region"     , region_test)
+run("latex"      , latex_test)
