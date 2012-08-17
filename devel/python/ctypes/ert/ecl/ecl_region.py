@@ -31,7 +31,7 @@ from   ert.cwrap.cwrap       import *
 from   ert.cwrap.cclass      import CClass
 from   ert.util.tvector      import IntVector
 from   ert.geo.geo_polygon   import GeoPolygon
-from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_DOUBLE_TYPE
+from   ecl_kw                import ECL_INT_TYPE , ECL_FLOAT_TYPE , ECL_DOUBLE_TYPE, EclKW
 import ecl_grid
 
 
@@ -75,7 +75,7 @@ class EclRegion(CClass):
            
         will eventually call this method.
         """
-        if hasattr( other , "ecl_region_instance"):
+        if isinstance(other , EclRegion):
             cfunc.intersect( self, other)
         else:
             raise TypeError("Ecl region can only intersect with other EclRegion instances")
@@ -86,9 +86,10 @@ class EclRegion(CClass):
     def __isub__(self , other):
         """
         Inplace "subtract" one selection from another.
+
+        Bound to reg -= reg2
         """
-        print "Running isub"
-        if hasattr( other , "ecl_region_instance"):
+        if isinstance( other , EclRegion ):
             cfunc.subtract( self , other)
         else:
             raise TypeError("Ecl region can only subtract with other EclRegion instances")
@@ -108,7 +109,7 @@ class EclRegion(CClass):
 
         to update reg1 with the selections from reg2.
         """
-        if hasattr( other , "ecl_region_instance"):
+        if isinstance( other , EclRegion):
             cfunc.combine( self, other)
         else:
             raise TypeError("Ecl region can only be combined with other EclRegion instances")
@@ -206,8 +207,33 @@ class EclRegion(CClass):
 
     ##################################################################
 
+    
     def select_method(select):
+        """
+        The select_method method decorator is applied to all the
+        select_xxx() methods. The purpose of this decorator is to
+        allow the select_xxx() methods to have an optional argument
+        @intersect. If the @intersect argument is True the results of
+        the current select method will be and'ed with the current
+        selection, instead of or'ed which is the default.
 
+        Consider this example:
+
+           region = EclRegion( grid , False )
+           region.select_islice(0 , 5)     # Selects all cells with i:[0:5]
+           region.select_jslice(0 , 5)     # Selects all cells with j:[0:5]
+
+        When these two calls have completed selection will contain all
+        the cells which are either in i-interval [0:5] or in
+        j-interval [0:5]. If we supply the @intersect argument in the
+        second call the j selection will only be applied to the cells
+        in i:[0:5] interval:
+
+           region = EclRegion( grid , False )
+           region.select_islice(0 , 5)     # Selects all cells with i:[0:5]
+           region.select_jslice(0 , 5)     # Selects all cells with j:[0:5] AND i:[0:5]
+        """
+        
         def select_wrapper(self , *args ,  **kwargs):
             intersect = kwargs.has_key('intersect') and kwargs['intersect']
             if intersect:
@@ -236,7 +262,7 @@ class EclRegion(CClass):
         above 0.85:
 
            restart_file = ecl.EclFile( "ECLIPSE.X0067" )
-           swat_kw = restart_file.iget_named_kw("SWAT" , 0)
+           swat_kw = restart_file["SWAT"][0]
            grid = ecl.EclGrid( "ECLIPSE.EGRID" )
            region = ecl.EclRegion( grid , False )
            
@@ -532,41 +558,41 @@ class EclRegion(CClass):
     @select_method
     def select_islice( self , i1 , i2, intersect = False):
         """
-        Will select all cells with i in [@i1, @i2].
+        Will select all cells with i in [@i1, @i2]. @i1 and @i2 are zero offset.
         """
         cfunc.select_islice( self , i1,i2)
 
     def deselect_islice( self , i1 , i2):
         """
-        Will deselect all cells with i in [@i1, @i2].
+        Will deselect all cells with i in [@i1, @i2]. @i1 and @i2 are zero offset.
         """
         cfunc.deselect_islice( self , i1,i2)
 
     @select_method
     def select_jslice( self , j1 , j2 , intersect = False):
         """
-        Will select all cells with j in [@j1, @j2].
+        Will select all cells with j in [@j1, @j2]. @i1 and @i2 are zero offset.
         """
-        cfunc.select_islice( self , j1,j2)
+        cfunc.select_jslice( self , j1,j2)
 
     def deselect_jslice( self , j1 , j2):
         """
-        Will deselect all cells with j in [@j1, @j2].
+        Will deselect all cells with j in [@j1, @j2]. @i1 and @i2 are zero offset.
         """
-        cfunc.deselect_islice( self , j1,j2)
+        cfunc.deselect_jslice( self , j1,j2)
 
     @select_method
     def select_kslice( self , k1 , k2 , intersect = False):
         """
-        Will select all cells with k in [@k1, @k2].
+        Will select all cells with k in [@k1, @k2]. @i1 and @i2 are zero offset. 
         """
-        cfunc.select_islice( self , k1,k2)
+        cfunc.select_kslice( self , k1,k2)
 
     def deselect_kslice( self , k1 , k2):
         """
-        Will deselect all cells with k in [@k1, @k2].
+        Will deselect all cells with k in [@k1, @k2]. @i1 and @i2 are zero offset.
         """
-        cfunc.deselect_islice( self , k1,k2)
+        cfunc.deselect_kslice( self , k1,k2)
 
     def invert( self ):
         """
@@ -677,6 +703,17 @@ class EclRegion(CClass):
 
 
     #################################################################
+
+    def scalar_apply_kw( self , target_kw , scalar , func_dict , force_active = False):
+        """
+        Helper function to apply a function with one scalar arg on target_kw.
+        """
+        type = target_kw.type
+        if func_dict.has_key( type ):
+            func = func_dict[ type ]
+            func( self , target_kw, scalar , force_active )
+        else:
+            raise Exception("scalar_apply_kw() only supported for INT/FLOAT/DOUBLE")
         
     def iadd_kw( self , target_kw , delta_kw , force_active = False):
         """
@@ -689,10 +726,60 @@ class EclRegion(CClass):
         argument. This applies to all the EclKW methods which take an
         optional "mask" argument.
         """
-        if target_kw.assert_binary( delta_kw ):
-            cfunc.iadd_kw( self , target_kw , delta_kw , force_active )
+        if isinstance(delta_kw , EclKW):
+            if target_kw.assert_binary( delta_kw ):
+                cfunc.iadd_kw( self , target_kw , delta_kw , force_active )
+            else:
+                raise TypeError("Type mismatch")
         else:
-            raise TypeError("Type mismatch")
+            self.shift_kw( target_kw , delta_kw , force_active = force_active)
+
+
+    def shift_kw( self , ecl_kw , shift , force_active = False):
+        """
+        See usage documentation on iadd_kw().
+        """
+        self.scalar_apply_kw( ecl_kw , shift , {ECL_INT_TYPE    : cfunc.shift_kw_int, 
+                                                ECL_FLOAT_TYPE  : cfunc.shift_kw_float , 
+                                                ECL_DOUBLE_TYPE : cfunc.shift_kw_double} , force_active)
+
+    def isub_kw( self , target_kw , delta_kw , force_active = False):
+        if isinstance(delta_kw , EclKW):
+            if target_kw.assert_binary( delta_kw ):
+                cfunc.isub_kw( self , target_kw , delta_kw , force_active )
+            else:
+                raise TypeError("Type mismatch")
+        else:
+            self.shift_kw( target_kw , -delta_kw , force_active = force_active)
+        
+
+    def scale_kw( self , ecl_kw , scale , force_active = False):
+        """
+        See usage documentation on iadd_kw().
+        """
+        self.scalar_apply_kw( ecl_kw , scale , {ECL_INT_TYPE    : cfunc.scale_kw_int, 
+                                                ECL_FLOAT_TYPE  : cfunc.scale_kw_float , 
+                                                ECL_DOUBLE_TYPE : cfunc.scale_kw_double} , force_active)
+
+    def imul_kw( self , target_kw , other , force_active = False):
+        if isinstance(other , EclKW):
+            if target_kw.assert_binary( other):
+                cfunc.imul_kw( self , target_kw , other )
+            else:
+                raise TypeError("Type mismatch")
+        else:
+            self.scale_kw( target_kw , other , force_active )
+
+
+    def idiv_kw( self , target_kw , other , force_active = False):
+        if isinstance(other , EclKW):
+            if target_kw.assert_binary( other):
+                cfunc.idiv_kw( self , target_kw , other )
+            else:
+                raise TypeError("Type mismatch")
+        else:
+            self.scale_kw( target_kw , 1/other , force_active )
+
 
     def copy_kw( self , target_kw , src_kw , force_active = False):
         """
@@ -707,47 +794,12 @@ class EclRegion(CClass):
         """
         See usage documentation on iadd_kw().
         """
-        type = ecl_kw.type
-        if type == ECL_INT_TYPE:
-            cfunc.set_kw_int( self , ecl_kw , value , force_active)
-        elif type == ECL_FLOAT_TYPE:
-            cfunc.set_kw_float( self , ecl_kw , value , force_active)
-        elif type == ECL_DOUBLE_TYPE:
-            cfunc.set_kw_double( self , ecl_kw , value , force_active )
-        else:
-            raise Exception("set_kw() only supported for INT/FLOAT/DOUBLE")
+        self.scalar_apply_kw( ecl_kw , value , {ECL_INT_TYPE    : cfunc.set_kw_int, 
+                                                ECL_FLOAT_TYPE  : cfunc.set_kw_float , 
+                                                ECL_DOUBLE_TYPE : cfunc.set_kw_double} , force_active)
 
-    def shift_kw( self , ecl_kw , shift , force_active = False):
-        """
-        See usage documentation on iadd_kw().
-        """
-        type = ecl_kw.type
-        if type == ECL_INT_TYPE:
-            cfunc.shift_kw_int( self , ecl_kw , shift , force_active)
-        elif type == ECL_FLOAT_TYPE:
-            cfunc.shift_kw_float( self , ecl_kw , shift , force_active)
-        elif type == ECL_DOUBLE_TYPE:
-            cfunc.shift_kw_double( self , ecl_kw , shift , force_active )
-        else:
-            raise Exception("shift_kw() only supported for INT/FLOAT/DOUBLE")
+    
 
-    def scale_kw( self , ecl_kw , scale , force_active = False):
-        """
-        See usage documentation on iadd_kw().
-        """
-        type = ecl_kw.type
-        if type == ECL_INT_TYPE:
-            cfunc.scale_kw_int( self , ecl_kw , scale , force_active)
-        elif type == ECL_FLOAT_TYPE:
-            cfunc.scale_kw_float( self , ecl_kw , scale , force_active)
-        elif type == ECL_DOUBLE_TYPE:
-            cfunc.scale_kw_double( self , ecl_kw , scale , force_active )
-        else:
-            raise Exception("scale_kw() only supported for INT/FLOAT/DOUBLE")
-
-    def imul_kw( self , target_kw , other , force_active = False):
-        #if isinstance(other , EclKW):
-        self.scale_kw( target_kw , other , force_active )
 
     #################################################################
 
@@ -871,6 +923,8 @@ cfunc.scale_kw_double              = cwrapper.prototype("void ecl_region_scale_k
 
 cfunc.select_box                 = cwrapper.prototype("void ecl_region_select_from_ijkbox(ecl_region , int , int , int , int , int , int)")     
 
+cfunc.imul_kw                    = cwrapper.prototype("void  ecl_region_kw_imul( ecl_region , ecl_kw , ecl_kw , bool)")
+cfunc.idiv_kw                    = cwrapper.prototype("void  ecl_region_kw_idiv( ecl_region , ecl_kw , ecl_kw , bool)")
 cfunc.iadd_kw                    = cwrapper.prototype("void  ecl_region_kw_iadd( ecl_region , ecl_kw , ecl_kw , bool)")
 cfunc.isub_kw                    = cwrapper.prototype("void  ecl_region_kw_isub( ecl_region , ecl_kw , ecl_kw , bool)")
 cfunc.copy_kw                    = cwrapper.prototype("void  ecl_region_kw_copy( ecl_region , ecl_kw , ecl_kw , bool)")
