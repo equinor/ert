@@ -17,18 +17,20 @@ if (USE_ZLIB)
   find_library( ZLIB_LIBRARY NAMES z )
   find_path( ZLIB_HEADER zlib.h /usr/include )
 
-  if (!ZLIB_LIBRARY)
+  if (NOT ZLIB_LIBRARY)
     set( USE_ZLIB OFF )
   endif()
   
-  if (!ZLIB_HEADER)
+  if (NOT ZLIB_HEADER)
     set( USE_ZLIB OFF )
   endif()
 endif()
+
 if (USE_ZLIB)
   set( HAVE_ZLIB ON )
   add_definitions( -DHAVE_ZLIB )
 else()
+  message( "zlib support will not be included" )      
   set( HAVE_ZLIB OFF )      
 endif()
 
