@@ -9,7 +9,7 @@ set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
 
 #-----------------------------------------------------------------
-find_path( STDBOOL_HEADER stdbool.h /usr/include )
+# find_path( STDBOOL_HEADER stdbool.h /usr/include )
 
 #-----------------------------------------------------------------
 option(USE_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
