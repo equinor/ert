@@ -28,7 +28,10 @@ endif()
 if (USE_ZLIB)
   set( HAVE_ZLIB ON )
   add_definitions( -DHAVE_ZLIB )
+else()
+  set( HAVE_ZLIB OFF )      
 endif()
+
 #-----------------------------------------------------------------
 option( USE_PTHREAD "Include support for pthreads" ON )
 if (USE_PTHREAD)
