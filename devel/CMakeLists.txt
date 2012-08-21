@@ -51,6 +51,8 @@ endif()
 if (USE_PTHREAD)
   set( HAVE_PTHREAD ON )
   add_definitions( -DHAVE_PTHREAD )
+else()
+    message("pthread library not found - pthread support will not be included")
 endif()
 #-----------------------------------------------------------------
 option( BUILD_LATEX "Build small class for compiling LaTeX files" ON)
