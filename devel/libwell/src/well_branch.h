@@ -30,7 +30,7 @@ extern "C" {
 
   well_branch_type       *  well_branch_alloc(int branch_nr);
   void                      well_branch_free( well_branch_type * branch );
-  void                      well_branch_add_conn( well_branch_type * branch , const well_conn_type * connection );
+  void                      well_branch_add_conn( well_branch_type * branch , well_conn_type * connection );
   int                       well_branch_get_length( const well_branch_type * branch );
   const well_conn_type   ** well_branch_get_connections( const well_branch_type * branch );
   int                       well_branch_get_nr( const well_branch_type * branch );

@@ -86,7 +86,7 @@ const well_conn_type ** well_branch_get_connections( const well_branch_type * br
 }
 
 
-void well_branch_add_conn( well_branch_type * branch, const well_conn_type * connection ) {
+void well_branch_add_conn( well_branch_type * branch, well_conn_type * connection ) {
   if (branch->size == branch->alloc_size)
     well_branch_resize(branch , 2*( 1 + branch->alloc_size ));
   branch->connections[ branch->size ] = connection;
