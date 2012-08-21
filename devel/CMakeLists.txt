@@ -134,6 +134,12 @@ if (HAVE_SETENV)
   add_definitions( -DPOSIX_SETENV )
 endif()
 
+check_function_exists( setenv HAVE_OPENDIR )
+if (HAVE_OPENDIR)
+  add_definitions( -DHAVE_OPENDIR )
+endif()
+
+
 
 find_library( LAPACK_LIBRARY NAMES lapack)
 set(CMAKE_REQUIRED_LIBS LAPACK_LIBRARY)
