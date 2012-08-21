@@ -55,6 +55,7 @@ extern "C" {
 #include <local_config.h>
 #include <ert_template.h>
 #include <enkf_plot_data.h>
+#include <ert_report_list.h>
 
 /*****************************************************************/
 
@@ -76,6 +77,7 @@ extern "C" {
   void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
   void                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
   
+  ert_report_list_type        * enkf_main_get_report_list( const enkf_main_type * enkf_main );
   ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
   void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
   const char                  * enkf_main_get_log_file( const enkf_main_type * enkf_main );
@@ -160,7 +162,7 @@ extern "C" {
   const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main );
   void         enkf_main_analysis_update(enkf_main_type * , int , int );
   const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
-  void         enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list);
+  void         enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, run_mode_type run_mode);
   void         enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2);
   
   void enkf_main_initialize_from_existing(enkf_main_type * enkf_main , 

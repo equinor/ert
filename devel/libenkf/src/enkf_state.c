@@ -1178,10 +1178,11 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, enkf_fs_type * fs) {
   }
 }
 
+
 /**
-   This function takes a report_step and a analyzed|forecast state as
+  This function takes a report_step and a analyzed|forecast state as
   input; the enkf_state instance is set accordingly and written to
-  disk.
+  disk.  
 */
 
 

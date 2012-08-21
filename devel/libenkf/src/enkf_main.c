@@ -16,7 +16,6 @@
 */
 
 
-// /d/proj/bg/enkf/rubsan/TESTCASE/SimpleEnKF/enkf_config
 
 #include <errno.h>
 #include <string.h>
@@ -623,7 +622,7 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
 }
 
 
-void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , const enkf_node_type * min_std) {
+void enkf_main_inflate_node(enkf_main_type * enkf_main , enkf_fs_type * target_fs , int report_step , const char * key , const enkf_node_type * min_std) {
   int ens_size                              = enkf_main_get_ensemble_size(enkf_main);
   enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , ANALYZED );
   enkf_node_type * mean                     = enkf_node_copyc( ensemble[0] );
@@ -632,7 +631,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
   
   /* Shifting away the mean */
   enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
-   enkf_node_scale( mean , -1 );
+  enkf_node_scale( mean , -1 );
   for (iens = 0; iens < ens_size; iens++)
     enkf_node_iadd( ensemble[iens] , mean );
   enkf_node_scale( mean , -1 );
@@ -657,7 +656,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
   for (iens = 0; iens < ens_size; iens++) {
     node_id_type node_id = {.report_step = report_step , .iens = iens , .state = ANALYZED };
     enkf_node_iadd( ensemble[iens] , mean );
-    enkf_node_store( ensemble[iens] , enkf_main_get_fs( enkf_main ) , true , node_id);
+    enkf_node_store( ensemble[iens] , target_fs , true , node_id);
   }
 
   enkf_node_free( mean );
@@ -667,8 +666,12 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
 
 
 
+/** 
+    Denne burde istedet loope gjennom noklene fra use_count
+    direkte.
+*/
 
-void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , hash_type * use_count) {
+void enkf_main_inflate(enkf_main_type * enkf_main , enkf_fs_type * target_fs , int report_step , hash_type * use_count) {
   stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE);
   msg_type * msg = msg_alloc("Inflating:" , false);
 
@@ -681,7 +684,7 @@ void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , hash_type 
       
       if (min_std != NULL) {
         msg_update( msg , key );
-        enkf_main_inflate_node(enkf_main , report_step , key , min_std );
+        enkf_main_inflate_node(enkf_main , target_fs , report_step , key , min_std );
       }
     }
   }
@@ -739,13 +742,15 @@ static int __get_active_size(enkf_main_type * enkf_main , const char * key, int 
 */
 
 typedef struct {
-  enkf_fs_type            * fs; 
+  enkf_fs_type            * src_fs; 
+  enkf_fs_type            * target_fs;
   enkf_state_type        ** ensemble;
   int                       iens1;    /* Inclusive lower limit. */
   int                       iens2;    /* NOT inclusive upper limit. */
   const char              * key;
   int                       report_step;
   state_enum                load_state;
+  run_mode_type             run_mode;  
   int                       row_offset;
   const active_list_type  * active_list;
   matrix_type             * A;
@@ -773,7 +778,7 @@ static void * serialize_nodes_mt( void * arg ) {
   serialize_info_type * info = (serialize_info_type *) arg;
   int iens;
   for (iens = info->iens1; iens < info->iens2; iens++) 
-    serialize_node( info->fs , info->ensemble , info->key , iens , info->report_step , info->load_state , info->row_offset , info->active_list , info->A );
+    serialize_node( info->src_fs , info->ensemble , info->key , iens , info->report_step , info->load_state , info->row_offset , info->active_list , info->A );
   
   return NULL;
 }
@@ -825,27 +830,36 @@ static int enkf_main_serialize_dataset( enkf_main_type * enkf_main,
   int current_row   = 0;
   
   for (int ikw=0; ikw < num_kw; ikw++) {
-    const char             * key              = stringlist_iget(update_keys , ikw);
-    const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
+    const char             * key         = stringlist_iget(update_keys , ikw);
+    enkf_config_node_type * config_node  = ensemble_config_get_node( enkf_main->ensemble_config , key );
+    if ((serialize_info[0].run_mode == SMOOTHER_UPDATE) && (enkf_config_node_get_var_type( config_node ) != PARAMETER)) {
+      /* We have tried to serialize a dynamic node when we are
+         smoother update mode; that does not make sense and we just
+         continue. */
+      active_size[ikw] = 0;
+      continue;
+    } else {
+      const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
       
-    active_size[ikw] = __get_active_size( enkf_main , key , report_step , active_list );
-    row_offset[ikw]  = current_row;
-    {
-      int matrix_rows = matrix_get_rows( A );
-      if ((active_size[ikw] + current_row) > matrix_rows) 
-        matrix_resize( A , matrix_rows + 2 * active_size[ikw] , ens_size , true );
-    }
-    
-    if (active_size[ikw] > 0) {
-      state_enum load_state;
+      active_size[ikw] = __get_active_size( enkf_main , key , report_step , active_list );
+      row_offset[ikw]  = current_row;
+      {
+        int matrix_rows = matrix_get_rows( A );
+        if ((active_size[ikw] + current_row) > matrix_rows) 
+          matrix_resize( A , matrix_rows + 2 * active_size[ikw] , ens_size , true );
+      }
       
-      if (hash_inc_counter( use_count , key) == 0)
-        load_state = FORECAST;           /* This is the first time this keyword is updated for this reportstep */
-      else
-        load_state = ANALYZED;
-      
-      enkf_main_serialize_node( key , load_state , active_list , row_offset[ikw] , work_pool , serialize_info );
-      current_row += active_size[ikw];
+      if (active_size[ikw] > 0) {
+        state_enum load_state;
+        
+        if (hash_inc_counter( use_count , key) == 0)
+          load_state = FORECAST;           /* This is the first time this keyword is updated for this reportstep */
+        else
+          load_state = ANALYZED;
+        
+        enkf_main_serialize_node( key , load_state , active_list , row_offset[ikw] , work_pool , serialize_info );
+        current_row += active_size[ikw];
+      }
     }
   } 
   matrix_shrink_header( A , current_row , ens_size );
@@ -876,13 +890,14 @@ static void * deserialize_nodes_mt( void * arg ) {
   serialize_info_type * info = (serialize_info_type *) arg;
   int iens;
   for (iens = info->iens1; iens < info->iens2; iens++) 
-    deserialize_node( info->fs , info->ensemble , info->key , iens , info->report_step , info->row_offset , info->active_list , info->A );
+    deserialize_node( info->target_fs , info->ensemble , info->key , iens , info->report_step , info->row_offset , info->active_list , info->A );
 
   return NULL;
 }
 
 
-static void enkf_main_deserialize_dataset( const local_dataset_type * dataset , 
+static void enkf_main_deserialize_dataset( ensemble_config_type * ensemble_config , 
+                                           const local_dataset_type * dataset , 
                                            const int * active_size , 
                                            const int * row_offset , 
                                            serialize_info_type * serialize_info , 
@@ -891,22 +906,32 @@ static void enkf_main_deserialize_dataset( const local_dataset_type * dataset ,
   int num_cpu_threads = thread_pool_get_max_running( work_pool );
   stringlist_type * update_keys = local_dataset_alloc_keys( dataset );
   for (int i = 0; i < stringlist_get_size( update_keys ); i++) {
-    if (active_size[i] > 0) {
-      const char             * key              = stringlist_iget(update_keys , i);
-      const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
-
-      {
-        /* Multithreaded */
-        int icpu;
-        thread_pool_restart( work_pool );
-        for (icpu = 0; icpu < num_cpu_threads; icpu++) {
-          serialize_info[icpu].key         = key;
-          serialize_info[icpu].active_list = active_list;
-          serialize_info[icpu].row_offset  = row_offset[i];
-          
-          thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
+    const char             * key         = stringlist_iget(update_keys , i);
+    enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , key );
+    if ((serialize_info[0].run_mode == SMOOTHER_UPDATE) && (enkf_config_node_get_var_type( config_node ) != PARAMETER))
+      /* 
+         We have tried to serialize a dynamic node when we are in
+         smoother update mode; that does not make sense and we just
+         continue. 
+      */
+      continue;
+    else {
+      if (active_size[i] > 0) {
+        const active_list_type * active_list      = local_dataset_get_node_active_list( dataset , key );
+        
+        {
+          /* Multithreaded */
+          int icpu;
+          thread_pool_restart( work_pool );
+          for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+            serialize_info[icpu].key         = key;
+            serialize_info[icpu].active_list = active_list;
+            serialize_info[icpu].row_offset  = row_offset[i];
+            
+            thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
+          }
+          thread_pool_join( work_pool );
         }
-        thread_pool_join( work_pool );
       }
     }
   }
@@ -918,15 +943,16 @@ static void serialize_info_free( serialize_info_type * serialize_info ) {
   free( serialize_info );
 }
 
-static serialize_info_type * serialize_info_alloc( enkf_main_type * enkf_main , int report_step , matrix_type * A , int num_cpu_threads ) {
+static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs, enkf_fs_type * target_fs , enkf_state_type ** ensemble , run_mode_type run_mode , int report_step , matrix_type * A , int num_cpu_threads ) {
   serialize_info_type * serialize_info = util_malloc( num_cpu_threads * sizeof * serialize_info , __func__ );
   int ens_size = matrix_get_columns( A );
   int icpu;
   int iens_offset = 0;
-  enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
   for (icpu = 0; icpu < num_cpu_threads; icpu++) {
-    serialize_info[icpu].fs          = fs;
-    serialize_info[icpu].ensemble    = enkf_main->ensemble;
+    serialize_info[icpu].run_mode    = run_mode;
+    serialize_info[icpu].src_fs      = src_fs;
+    serialize_info[icpu].target_fs   = target_fs;
+    serialize_info[icpu].ensemble    = ensemble;
     serialize_info[icpu].report_step = report_step;
     serialize_info[icpu].A           = A;
     serialize_info[icpu].iens1       = iens_offset;
@@ -978,13 +1004,14 @@ void enkf_main_get_PC( const enkf_main_type * enkf_main ,
 
 
 
-void enkf_main_module_update( enkf_main_type * enkf_main , 
-                              hash_type * use_count,
-                              int step1 ,
-                              int step2 , 
-                              const local_ministep_type * ministep , 
-                              const meas_data_type * forecast , 
-                              obs_data_type * obs_data) {
+static void enkf_main_module_update( enkf_main_type * enkf_main , 
+                                     hash_type * use_count,
+                                     run_mode_type run_mode , 
+                                     int step1 ,
+                                     int step2 , 
+                                     const local_ministep_type * ministep , 
+                                     const meas_data_type * forecast , 
+                                     obs_data_type * obs_data) {
 
   const int cpu_threads       = 4;
   const int matrix_start_size = 250000;
@@ -1014,14 +1041,15 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
   
   if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
     localA = A;
-  
 
   /*****************************************************************/
   
   analysis_module_init_update( module , S , R , dObs , E , D );
   {
     hash_iter_type * dataset_iter = local_ministep_alloc_dataset_iter( ministep );
-    serialize_info_type * serialize_info = serialize_info_alloc( enkf_main , step2 , A , cpu_threads);
+    enkf_fs_type * src_fs = enkf_main_get_fs( enkf_main );
+    enkf_fs_type * target_fs = src_fs;
+    serialize_info_type * serialize_info = serialize_info_alloc( src_fs , target_fs ,  enkf_main_get_ensemble( enkf_main ) , run_mode , step2 , A , cpu_threads);
     
     // Store PC:
     if (analysis_config_get_store_PC( enkf_main->analysis_config )) {
@@ -1057,7 +1085,8 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
           matrix_inplace_matmul_mt2( A , X , tp );
         }
        
-        enkf_main_deserialize_dataset( dataset , active_size , row_offset , serialize_info , tp);
+        // The deserialize also calls enkf_node_store() functions.
+        enkf_main_deserialize_dataset( enkf_main_get_ensemble_config( enkf_main ) , dataset , active_size , row_offset , serialize_info , tp);
         
         free( active_size );
         free( row_offset );
@@ -1087,7 +1116,10 @@ void enkf_main_module_update( enkf_main_type * enkf_main ,
    This is  T H E  EnKF update routine.
 **/
 
-void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list) {
+/* MUST HAVE enkf_main_smoother_update()   */
+/*           enkf_main_sequential_update() */
+
+void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, run_mode_type run_mode) {
   /*
      If merge_observations is true all observations in the time
      interval [step1+1,step2] will be used, otherwise only the last
@@ -1153,15 +1185,19 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , log_stream );
 
       if (obs_data_get_active_size(obs_data) > 0)
-        enkf_main_module_update( enkf_main , use_count , int_vector_get_first( step_list ), int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
-
+        enkf_main_module_update( enkf_main , use_count , run_mode , int_vector_get_first( step_list ), int_vector_get_last( step_list ) , ministep , meas_forecast , obs_data );
     }
     fclose( log_stream );
 
     obs_data_free( obs_data );
     meas_data_free( meas_forecast );
     meas_data_free( meas_analyzed );
-    enkf_main_inflate( enkf_main , int_vector_get_last( step_list ) , use_count);
+
+    // This should write to the target_fs.
+    {
+      enkf_fs_type * target_fs;
+      enkf_main_inflate( enkf_main , target_fs , int_vector_get_last( step_list ) , use_count);
+    }
     hash_free( use_count );
   }
 }
@@ -1520,7 +1556,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
         
         if (enkf_update) {
           int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , step2 );
-          enkf_main_UPDATE(enkf_main , step_list );
+          enkf_main_UPDATE(enkf_main , step_list , run_mode);
           int_vector_free( step_list );
         }
         
@@ -2164,7 +2200,6 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
-  enkf_main->report_list        = ert_report_list_alloc( DEFAULT_REPORT_PATH );
   
   enkf_main_set_verbose( enkf_main , true );
   enkf_main->site_config      = site_config_alloc_empty();
@@ -2173,6 +2208,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->model_config     = model_config_alloc_empty();
   enkf_main->analysis_config  = analysis_config_alloc_default( enkf_main->rng );   /* This is ready for use. */
   enkf_main->plot_config      = plot_config_alloc_default();       /* This is ready for use. */
+  enkf_main->report_list      = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ));
   return enkf_main;
 }
 
@@ -2906,8 +2942,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         /* Installing the list of reports. */
         for (int i=0; i < config_get_occurences( config , REPORT_LIST_KEY ); i++) {
           const stringlist_type * report_list = config_iget_stringlist_ref( config , REPORT_LIST_KEY , i);
-          for (int j=0; j < stringlist_get_size( report_list ); j++) 
-            ert_report_list_add_report( enkf_main->report_list , stringlist_iget( report_list , j ));
+          for (int j=0; j < stringlist_get_size( report_list ); j++) {
+            if (!ert_report_list_add_report( enkf_main->report_list , stringlist_iget( report_list , j )))
+              fprintf(stderr,"** Warning: Could not find report template:%s - ignored\n", stringlist_iget( report_list , j ));
+          }
         }
         
         /* Installing the target path for reports*/
@@ -3384,6 +3422,11 @@ ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
 
 void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file ) {
   model_config_set_case_table( enkf_main->model_config , enkf_main->ens_size , case_table_file );
+}
+
+
+ert_report_list_type * enkf_main_get_report_list( const enkf_main_type * enkf_main ) {
+  return enkf_main->report_list;
 }
 
 

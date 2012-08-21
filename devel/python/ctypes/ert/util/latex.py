@@ -38,7 +38,7 @@ class LaTeX(CClass):
     def compile(self , ignore_errors = False , with_xref = False):
         return cfunc.compile( self , ignore_errors , with_xref)
 
-
+    #-----------------------------------------------------------------
     def set_target( self , target_file):
         cfunc.set_target( self , target_file )
 
@@ -46,6 +46,17 @@ class LaTeX(CClass):
         return cfunc.get_target( self )
 
     target = property( get_target , set_target)
+    #-----------------------------------------------------------------
+
+    #-----------------------------------------------------------------
+    def get_timeout( self ):
+        return cfunc.get_timeout( self )
+    
+    def set_timeout( self , timeout):
+        cfunc.set_timeout( self , timeout)
+
+    timeout = property( get_timeout , set_timeout)
+    #-----------------------------------------------------------------
 
 
 cwrapper = CWrapper( libutil.lib )
@@ -59,3 +70,5 @@ cfunc.compile           = cwrapper.prototype("bool      latex_compile(latex , bo
 cfunc.get_runpath       = cwrapper.prototype("char*     latex_get_runpath( latex )") 
 cfunc.get_target        = cwrapper.prototype("char*     latex_get_target_file( latex )")
 cfunc.set_target        = cwrapper.prototype("void      latex_set_target_file( latex , char* )")
+cfunc.set_timeout       = cwrapper.prototype("void      latex_set_timeout( latex , int )")
+cfunc.get_timeout       = cwrapper.prototype("int       latex_get_timeout( latex )")

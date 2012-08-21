@@ -1123,8 +1123,16 @@ void enkf_tui_plot_RFT_time(void * arg) {
   }
 }
 
+/*****************************************************************/
+void enkf_tui_plot_reports( void * arg ) {
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  ert_report_list_type * report_list = enkf_main_get_report_list( enkf_main );
+  
+  ert_report_list_create( report_list , enkf_main_get_current_fs( enkf_main ) , true );
+}
 
 
+/*****************************************************************/
 
 void enkf_tui_plot_menu(void * arg) {
   
@@ -1167,6 +1175,17 @@ void enkf_tui_plot_menu(void * arg) {
       plot_config_toggle_logy( plot_config );
       enkf_tui_toggle_logy( arg_pack );   /* This sets the label */
     }
+
+    menu_add_separator(menu);
+    {
+      menu_item_type * menu_item = menu_add_item( menu , "Create pdf reports" , "pP" , enkf_tui_plot_reports , enkf_main , NULL );
+      ert_report_list_type * report_list = enkf_main_get_report_list( enkf_main );
+      
+      if (ert_report_list_get_num( report_list ) == 0)
+        menu_item_disable( menu_item );
+      
+    }
+
     menu_run(menu);
     menu_free(menu);
   }

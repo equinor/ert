@@ -58,7 +58,7 @@ void enkf_tui_analysis_analyze_selected__(void * arg) {
       free( filename );
       
     }
-    enkf_main_UPDATE(enkf_main , step_list );
+    enkf_main_UPDATE(enkf_main , step_list , ENKF_ASSIMILATION);
     int_vector_free( step_list );
   }
 }
@@ -84,7 +84,7 @@ void enkf_tui_analysis_analyze__(void * arg) {
     if(valid){      
       int_vector_type * step_list = int_vector_alloc(0,0);
       int_vector_append( step_list , report_step );
-      enkf_main_UPDATE(enkf_main , step_list );
+      enkf_main_UPDATE(enkf_main , step_list , ENKF_ASSIMILATION);
       int_vector_free( step_list );
     }
     free(report_step_as_char);
@@ -132,7 +132,7 @@ void enkf_tui_analysis_smooth__(void * arg) {
           if (int_vector_get_last( step_list ) != step2)
             int_vector_append( step_list , step2 );
         }
-        enkf_main_UPDATE(enkf_main , step_list );
+        enkf_main_UPDATE(enkf_main , step_list , ENKF_ASSIMILATION);
         
         int_vector_free( step_list );
       }

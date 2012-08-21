@@ -33,6 +33,8 @@ extern "C" {
   void                    ert_report_list_free( ert_report_list_type * report_list );
   bool                    ert_report_list_add_path( ert_report_list_type * report_list , const char * path );
   void                    ert_report_list_set_target_path( ert_report_list_type * report_list , const char * target_path );
+  void                    ert_report_list_set_plot_path( ert_report_list_type * report_list , const char * plot_path );
+  int                     ert_report_list_get_num( const ert_report_list_type * report_list );
   
 #ifdef __cplusplus
 }

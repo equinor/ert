@@ -133,18 +133,18 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
     
     while (true) {
       /* {
-        char * user = getenv("USER");
-        char * runpath_fmt = util_alloc_sprintf("/scratch/ert/%s/iteratedES/%d/run%%d" , user , iter);
-        model_config_set_runpath_fmt( model_config , runpath_fmt );
-        free( runpath_fmt );
-	}*/
+         char * user = getenv("USER");
+         char * runpath_fmt = util_alloc_sprintf("/scratch/ert/%s/iteratedES/%d/run%%d" , user , iter);
+         model_config_set_runpath_fmt( model_config , runpath_fmt );
+         free( runpath_fmt );
+         }
+      */
       
 
       enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
-      enkf_main_UPDATE(enkf_main , step_list );
+      enkf_main_UPDATE(enkf_main , step_list , ENKF_ASSIMILATION);
       {
         char * target_fs = util_alloc_sprintf("smoother-%d" , iter);
-        
         
         enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
