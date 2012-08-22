@@ -334,7 +334,7 @@ void enkf_tui_run_menu(void * arg) {
     menu_item_type * enkf_item         = menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start__         , enkf_main , NULL);
     menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__       , enkf_main , NULL);
     menu_item_type * ES_item           = menu_add_item(menu , "Integrated smoother update"             , "iI" , enkf_tui_run_smoother__      , enkf_main , NULL);
-    menu_item_type * it_ES_item        = menu_add_item(menu , "Iterated smoother"                      , "tT" , enkf_tui_run_iterated_ES__   , enkf_main , NULL);
+    menu_item_type * it_ES_item        = menu_add_item(menu , "Iterated smoother [RML-EnKF]"           , "tT" , enkf_tui_run_iterated_ES__   , enkf_main , NULL);
     
     if (!ecl_config_has_schedule( ecl_config )) {
       menu_item_disable( enkf_item );

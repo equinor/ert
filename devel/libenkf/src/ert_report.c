@@ -162,8 +162,8 @@ bool ert_report_create( ert_report_type * ert_report , const subst_list_type * c
     Unfortunately the latex class will return lot's of incorrect
     succes == True.
   */
-  if (success) 
-    ert_report_clear( ert_report , true);
+  //if (success) 
+  //  ert_report_clear( ert_report , true);
   return success;
 }
 
