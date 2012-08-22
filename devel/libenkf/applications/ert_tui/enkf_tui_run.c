@@ -71,7 +71,7 @@ void enkf_tui_run_start__(void * enkf_main) {
 
 
 void enkf_tui_run_restart__(void * enkf_main) {
-  const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
+  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   const int last_report = enkf_main_get_history_length( enkf_main );
   int start_report;
   char * start_report_as_char;
@@ -101,6 +101,11 @@ void enkf_tui_run_restart__(void * enkf_main) {
 }
 
 
+
+void enkf_tui_run_smoother__(void * arg) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+  enkf_main_run_smoother(enkf_main , true , "AUTO-SMOOTHER" , true );
+}
 
 
 void enkf_tui_run_iterated_ES__(void * enkf_main) {
@@ -140,11 +145,12 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
          }
       */
       
-
+      char * target_fs_name = util_alloc_sprintf("smoother-%d" , iter);
+      enkf_fs_type * target_fs = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
       enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
-      enkf_main_UPDATE(enkf_main , step_list , ENKF_ASSIMILATION);
+      enkf_main_smoother_update(enkf_main , step_list , target_fs);
       {
-        char * target_fs = util_alloc_sprintf("smoother-%d" , iter);
+        
         
         enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
@@ -158,8 +164,9 @@ void enkf_tui_run_iterated_ES__(void * enkf_main) {
                                  node_list );
         
         enkf_main_select_fs(enkf_main , target_fs );
-        free( target_fs );
       }
+      
+      free( target_fs_name );
       iter= analysis_module_get_int(module, "ITER");
       if (iter == num_iter)
         break;
@@ -324,17 +331,20 @@ void enkf_tui_run_menu(void * arg) {
     const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
     const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
     
-    menu_item_type * enkf_item         = menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start__       , enkf_main , NULL);
-    menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__     , enkf_main , NULL);
-    menu_item_type * it_ES_item        = menu_add_item(menu , "Iterated smoother"                      , "iI" , enkf_tui_run_iterated_ES__     , enkf_main , NULL);
+    menu_item_type * enkf_item         = menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start__         , enkf_main , NULL);
+    menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__       , enkf_main , NULL);
+    menu_item_type * ES_item           = menu_add_item(menu , "Integrated smoother update"             , "iI" , enkf_tui_run_smoother__      , enkf_main , NULL);
+    menu_item_type * it_ES_item        = menu_add_item(menu , "Iterated smoother"                      , "tT" , enkf_tui_run_iterated_ES__   , enkf_main , NULL);
     
     if (!ecl_config_has_schedule( ecl_config )) {
       menu_item_disable( enkf_item );
       menu_item_disable( restart_enkf_item );
     }
 
-    if (!model_config_has_history( model_config )) 
+    if (!model_config_has_history( model_config )) {
       menu_item_disable( it_ES_item );
+      menu_item_disable( ES_item );
+    }
   }
   menu_add_separator(menu);
   menu_add_item(menu , "Create runpath directories - NO simulation" , "cC" , enkf_tui_run_create_runpath__ , enkf_main , NULL );
