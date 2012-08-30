@@ -115,6 +115,7 @@ int                     config_get_value_as_int(const config_type * config , con
 double                  config_get_value_as_double(const config_type * config , const char * kw);
 const char *            config_get_value(const config_type * config , const char * kw);
 void                    config_fprintf_item_list(const config_type * config , FILE * stream);
+  const char *            config_get_config_file( const config_type * config , bool abs_path);
 
 #ifdef __cplusplus
 }

@@ -76,6 +76,11 @@ endif()
 #-----------------------------------------------------------------
 find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
 
+check_function_exists( regexec HAVE_REGEXP )
+if (HAVE_REGEXP)
+  add_definitions( -DHAVE_REGEXP )
+endif()
+
 check_function_exists( realpath HAVE_REALPATH )
 if (HAVE_REALPATH)
   add_definitions( -DHAVE_REALPATH )

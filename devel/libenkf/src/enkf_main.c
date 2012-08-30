@@ -1364,6 +1364,7 @@ static void enkf_main_report_run_failure( const enkf_main_type * enkf_main , int
 }
 
 
+
 static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , int iens) {
   job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
   log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s - Could not load all required data",
@@ -2105,9 +2106,18 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   /* Report */
   item = config_add_item(config , REPORT_LIST_KEY , false , true);
   config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+
+  item = config_add_item(config , REPORT_CONTEXT_KEY , false , true);
+  config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
   
   item = config_add_item(config , REPORT_PATH_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+
+  item = config_add_item( config , REPORT_WELL_LIST_KEY , false , true );
+  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  
+  item = config_add_item( config , REPORT_GROUP_LIST_KEY , false , true );
+  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
   return config;
 }
 
@@ -2257,7 +2267,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->model_config     = model_config_alloc_empty();
   enkf_main->analysis_config  = analysis_config_alloc_default( enkf_main->rng );   /* This is ready for use. */
   enkf_main->plot_config      = plot_config_alloc_default();       /* This is ready for use. */
-  enkf_main->report_list      = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ));
+  enkf_main->report_list      = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
   return enkf_main;
 }
 
@@ -2296,10 +2306,10 @@ static void enkf_main_install_data_kw( enkf_main_type * enkf_main , hash_type * 
     char * num_cpu_string  = "1";
     
 
-    subst_list_append_owned_ref( enkf_main->subst_list , cwd_key         , cwd , "The current working directory we are running from - the location of the config file.");
+    subst_list_append_owned_ref( enkf_main->subst_list , cwd_key   , cwd , "The current working directory we are running from - the location of the config file.");
     subst_list_append_ref( enkf_main->subst_list , config_path_key , cwd , "The current working directory we are running from - the location of the config file.");
-    subst_list_append_owned_ref( enkf_main->subst_list , date_key        , date_string , "The current date");
-    subst_list_append_ref( enkf_main->subst_list , num_cpu_key           , num_cpu_string , "The number of CPU used for one forward model.");
+    subst_list_append_owned_ref( enkf_main->subst_list , date_key  , date_string , "The current date");
+    subst_list_append_ref( enkf_main->subst_list , num_cpu_key     , num_cpu_string , "The number of CPU used for one forward model.");
     
     
     free( num_cpu_key );
@@ -2979,30 +2989,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
 
       /*****************************************************************/
-      /* Installing report templates. */
-      {
-        /* Installing the directories to search in. */
-        for (int i=0; i < config_get_occurences( config , REPORT_SEARCH_PATH_KEY ); i++) {
-          const stringlist_type * path_list = config_iget_stringlist_ref( config , REPORT_SEARCH_PATH_KEY , i);
-          for (int j=0; j < stringlist_get_size( path_list ); j++) 
-            ert_report_list_add_path( enkf_main->report_list , stringlist_iget( path_list , j ));
-        }
-
-        /* Installing the list of reports. */
-        for (int i=0; i < config_get_occurences( config , REPORT_LIST_KEY ); i++) {
-          const stringlist_type * report_list = config_iget_stringlist_ref( config , REPORT_LIST_KEY , i);
-          for (int j=0; j < stringlist_get_size( report_list ); j++) {
-            if (!ert_report_list_add_report( enkf_main->report_list , stringlist_iget( report_list , j )))
-              fprintf(stderr,"** Warning: Could not find report template:%s - ignored\n", stringlist_iget( report_list , j ));
-          }
-        }
-        
-        /* Installing the target path for reports*/
-        if (config_has_set_item(config , REPORT_PATH_KEY))
-          ert_report_list_set_target_path( enkf_main->report_list , config_iget( config , REPORT_PATH_KEY , 0 , 0));
-      }
-      /*****************************************************************/
-
+      ert_report_list_init( enkf_main->report_list , config , ecl_config_get_refcase( enkf_main->ecl_config ));
+      
       {
         const char * obs_config_file;
         if (config_has_set_item(config , OBS_CONFIG_KEY))

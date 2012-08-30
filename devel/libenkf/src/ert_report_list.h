@@ -28,13 +28,16 @@ extern "C" {
   
   typedef struct ert_report_list_struct ert_report_list_type;
 
-  ert_report_list_type  * ert_report_list_alloc();
+  ert_report_list_type  * ert_report_list_alloc(const char * target_path, const char * plot_path );
   bool                    ert_report_list_add_report( ert_report_list_type * report_list , const char * template_path);
   void                    ert_report_list_free( ert_report_list_type * report_list );
   bool                    ert_report_list_add_path( ert_report_list_type * report_list , const char * path );
   void                    ert_report_list_set_target_path( ert_report_list_type * report_list , const char * target_path );
   void                    ert_report_list_set_plot_path( ert_report_list_type * report_list , const char * plot_path );
   int                     ert_report_list_get_num( const ert_report_list_type * report_list );
+  void                    ert_report_list_add_groups( ert_report_list_type * report_list , const ecl_sum_type * ecl_sum , const char * group_pattern );
+  void                    ert_report_list_add_wells( ert_report_list_type * report_list , const ecl_sum_type * ecl_sum , const char * well_pattern );
+  void                    ert_report_list_add_global_context( ert_report_list_type * report_list , const char * key , const char * value);
   
 #ifdef __cplusplus
 }

@@ -298,7 +298,7 @@ char * enkf_util_alloc_tagged_string(const char * s) {
 
 char * enkf_util_alloc_detagged_string( const char * tagged_string) {
   const char * s = &tagged_string[ strlen( DEFAULT_START_TAG ) ];
-  return util_alloc_substring_copy( s , strlen( s ) - strlen( DEFAULT_END_TAG ));
+  return util_alloc_substring_copy( s , 0 , strlen( s ) - strlen( DEFAULT_END_TAG ));
 }
 
 

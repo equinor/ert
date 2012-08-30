@@ -95,7 +95,7 @@ void ert_template_free( ert_template_type * template ) {
 
 void ert_template_instantiate( ert_template_type * template , const char * path , const subst_list_type * arg_list) {
   char * target_file = util_alloc_filename( path , template->target_file , NULL );
-  template_instansiate( template->template , target_file , arg_list , true );
+  template_instantiate( template->template , target_file , arg_list , true );
   free( target_file );
 }
 

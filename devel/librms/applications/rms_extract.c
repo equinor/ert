@@ -38,7 +38,7 @@ void split_name(const char * arg, char **_old_name , char **_new_name) {
   }
 
   if (old_name_len > 0) {
-    old_name = util_alloc_substring_copy(arg , old_name_len);
+    old_name = util_alloc_substring_copy(arg , 0 , old_name_len);
     new_name = util_alloc_string_copy(&arg[old_name_len + 1]);
   } else {
     old_name = util_alloc_string_copy(arg);

@@ -172,6 +172,8 @@ struct config_struct {
   hash_type            * messages;                  /* Can print a (warning) message when a keyword is encountered. */
   subst_list_type      * define_list;
   hash_type            * auto_items;                /* This is a hash of vectors of stringlist instances of items which have been auto-add'ed while parsing. */
+  char                 * config_file;               /* The last parsed file - NULL if no file is parsed-. */
+  char                 * abs_path;
 };
 
 
@@ -1029,12 +1031,16 @@ config_type * config_alloc() {
   config->parsed_files    = set_alloc_empty();
   config->messages        = hash_alloc();
   config->define_list     = subst_list_alloc( NULL );
+  config->config_file     = NULL;
+  config->abs_path        = NULL;
   config->auto_items      = hash_alloc( );
   return config;
 }
 
 
 void config_free(config_type * config) {
+  util_safe_free( config->config_file );
+  util_safe_free( config->abs_path );
   hash_free(config->items);
   hash_free(config->messages);
   stringlist_free(config->parse_errors);
@@ -1406,6 +1412,22 @@ static void config_parse__(config_type * config ,
 
 
 
+static void config_set_config_file( config_type * config , const char * config_file ) {
+  config->config_file = util_realloc_string_copy( config->config_file , config_file );
+  
+  util_safe_free(config->abs_path);
+  config->abs_path = util_alloc_abs_path( config_file );
+}
+
+
+const char * config_get_config_file( const config_type * config , bool abs_path) {
+  if (abs_path)
+    return config->abs_path;
+  else
+    return config->config_file;
+}
+
+
 void config_parse(config_type * config , 
                   const char * filename, 
                   const char * comment_string , 
@@ -1419,6 +1441,7 @@ void config_parse(config_type * config ,
   char * tmp_file;
   char * extension;
   util_alloc_file_components(filename , &config_path , &tmp_file , &extension);
+  config_set_config_file( config , filename );
   config_file = util_alloc_filename(NULL , tmp_file , extension);
   config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , warn_unrecognized , auto_add , validate);
 

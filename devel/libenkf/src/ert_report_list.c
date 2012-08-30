@@ -26,8 +26,20 @@
 #include <vector.h>
 #include <subst_list.h>
 
+#include <config.h>
+
+#include <ecl_sum.h>
+
 #include <ert_report.h>
 #include <ert_report_list.h>
+#include <config_keys.h>
+
+#define WELL_LIST_TAG   "$WELL_LIST"
+#define GROUP_LIST_TAG  "$GROUP_LIST"
+#define PLOT_CASE_TAG   "$PLOT_CASE" 
+#define USER_TAG        "$USER"
+#define CONFIG_FILE_TAG "$CONFIG_FILE"
+
 
 
 struct ert_report_list_struct {
@@ -35,21 +47,33 @@ struct ert_report_list_struct {
   vector_type     * report_list;
   char            * target_path;
   char            * plot_path;
+  stringlist_type * well_list;
+  stringlist_type * group_list;
+  subst_list_type * global_context;
 };
 
 
 
-ert_report_list_type * ert_report_list_alloc(const char * target_path, const char * plot_path) {
+
+
+ert_report_list_type * ert_report_list_alloc(const char * target_path, const char * plot_path ) {
   ert_report_list_type * report_list = util_malloc( sizeof * report_list , __func__);
   report_list->path_list   = stringlist_alloc_new( );
   report_list->report_list = vector_alloc_new( );
   report_list->target_path = NULL;
-  report_list->plot_path = NULL;
-  ert_report_list_set_plot_path( report_list , plot_path ),
+  report_list->plot_path   = NULL;
+
+  report_list->well_list      = stringlist_alloc_new();
+  report_list->group_list     = stringlist_alloc_new();
+  report_list->global_context = subst_list_alloc( NULL );
+  ert_report_list_set_plot_path( report_list , plot_path );
   ert_report_list_set_target_path( report_list , target_path );
   return report_list;
 }
 
+void ert_report_list_add_global_context( ert_report_list_type * report_list , const char * key , const char * value) {
+  subst_list_append_copy( report_list->global_context , key , value , NULL );
+}
 
 void ert_report_list_set_target_path( ert_report_list_type * report_list , const char * target_path ) {
   report_list->target_path = util_realloc_string_copy( report_list->target_path , target_path );
@@ -107,6 +131,9 @@ bool ert_report_list_add_report( ert_report_list_type * report_list , const char
 
 void ert_report_list_free( ert_report_list_type * report_list ){ 
   stringlist_free( report_list->path_list );
+  stringlist_free( report_list->group_list );
+  stringlist_free( report_list->well_list );
+  subst_list_free( report_list->global_context );
   vector_free( report_list->report_list );
   free( report_list );
 }
@@ -116,16 +143,58 @@ int ert_report_list_get_num( const ert_report_list_type * report_list ) {
   return vector_get_size( report_list->report_list );
 }
 
+static void ert_report_list_add_well( ert_report_list_type * report_list , const char * well ) {
+  if (!stringlist_contains( report_list->well_list , well ))
+    stringlist_append_copy( report_list->well_list , well);
+}
+
+static void ert_report_list_add_group( ert_report_list_type * report_list , const char * group ) {
+  if (!stringlist_contains( report_list->group_list , group ))
+    stringlist_append_copy( report_list->group_list , group);
+}
+
+void ert_report_list_add_wells( ert_report_list_type * report_list , const ecl_sum_type * ecl_sum , const char * well_pattern ) {
+  if (ecl_sum != NULL) {
+    stringlist_type * well_list = ecl_sum_alloc_well_list( ecl_sum , well_pattern );
+    for (int i=0; i < stringlist_get_size( well_list ); i++)
+      ert_report_list_add_well( report_list , stringlist_iget( well_list , i ));
+    stringlist_free( well_list );
+  } else
+    ert_report_list_add_well( report_list , well_pattern);
+}
+
+
+void ert_report_list_add_groups( ert_report_list_type * report_list , const ecl_sum_type * ecl_sum , const char * group_pattern ) {
+  if (ecl_sum != NULL) {
+    stringlist_type * group_list = ecl_sum_alloc_group_list( ecl_sum , group_pattern );
+    for (int i=0; i < stringlist_get_size( group_list ); i++)
+      ert_report_list_add_group( report_list , stringlist_iget( group_list , i ));
+    stringlist_free( group_list );
+  } else
+    ert_report_list_add_group( report_list , group_pattern);
+}
+
+
+
+char * alloc_list(const stringlist_type * list) {
+  char * body = stringlist_alloc_joined_string( list , ",");
+  char * list_str = util_alloc_sprintf("[%s]" , body );
+  free( body );
+  return list_str;
+}
 
 /*****************************************************************/
 
 void ert_report_list_create( const ert_report_list_type * report_list , const char * current_case , bool verbose ) {
   if (vector_get_size( report_list->report_list ) > 0) {
-    subst_list_type * context = subst_list_alloc( NULL );
+    subst_list_type * context = subst_list_alloc( report_list->global_context );
     char * target_path = util_alloc_filename( report_list->target_path , current_case , NULL );
     util_make_path( target_path );
 
-    subst_list_append_ref( context , "$CASE" , current_case , "The value of the current case - used to pick up plot figures.");
+    subst_list_append_ref( context , PLOT_CASE_TAG , current_case , "The value of the current case - used to pick up plot figures.");
+    subst_list_append_owned_ref( context , WELL_LIST_TAG  , alloc_list( report_list->well_list ), "The list of wells for plotting");
+    subst_list_append_owned_ref( context , GROUP_LIST_TAG , alloc_list( report_list->group_list ), "The list of groups for plotting");
+
     for (int ir = 0; ir < vector_get_size( report_list->report_list ); ir++) {
       ert_report_type * ert_report = vector_iget( report_list->report_list , ir);
       
@@ -143,4 +212,52 @@ void ert_report_list_create( const ert_report_list_type * report_list , const ch
     }
     subst_list_free( context );
   }
+}
+
+
+void ert_report_list_init( ert_report_list_type * report_list , config_type * config , const ecl_sum_type * refcase) {
+  /* Installing the directories to search in. */
+  for (int i=0; i < config_get_occurences( config , REPORT_SEARCH_PATH_KEY ); i++) {
+    const stringlist_type * path_list = config_iget_stringlist_ref( config , REPORT_SEARCH_PATH_KEY , i);
+    for (int j=0; j < stringlist_get_size( path_list ); j++) 
+      ert_report_list_add_path( report_list , stringlist_iget( path_list , j ));
+  }
+  
+  /* Installing the list of reports. */
+  for (int i=0; i < config_get_occurences( config , REPORT_LIST_KEY ); i++) {
+    const stringlist_type * list = config_iget_stringlist_ref( config , REPORT_LIST_KEY , i);
+    for (int j=0; j < stringlist_get_size( list ); j++) {
+      if (!ert_report_list_add_report( report_list , stringlist_iget( list , j )))
+        fprintf(stderr,"** Warning: Could not find report template:%s - ignored\n", stringlist_iget( list , j ));
+    }
+  }
+  
+  /* Installing the list of report wells */
+  for (int i=0; i < config_get_occurences( config , REPORT_WELL_LIST_KEY ); i++) {
+    const stringlist_type * well_list = config_iget_stringlist_ref( config , REPORT_WELL_LIST_KEY , i);
+    for (int j=0; j < stringlist_get_size( well_list ); j++) 
+      ert_report_list_add_wells( report_list , refcase , stringlist_iget( well_list , j ));
+  }  
+  
+  /* Installing the list of report groups */
+  for (int i=0; i < config_get_occurences( config , REPORT_GROUP_LIST_KEY ); i++) {
+    const stringlist_type * group_list = config_iget_stringlist_ref( config , REPORT_GROUP_LIST_KEY , i);
+    for (int j=0; j < stringlist_get_size( group_list ); j++) 
+      ert_report_list_add_groups( report_list , refcase , stringlist_iget( group_list , j ));
+  }  
+  
+  /* Installing arbitrary context keys. */
+  for (int i=0; i < config_get_occurences( config , REPORT_CONTEXT_KEY ); i++) {
+    const char * key   = config_iget( config , REPORT_CONTEXT_KEY , i , 0 );
+    const char * value = config_iget( config , REPORT_CONTEXT_KEY , i , 1 );
+    ert_report_list_add_global_context( report_list , key , value );
+  }  
+  
+  /* Installing the target path for reports*/
+  if (config_has_set_item(config , REPORT_PATH_KEY))
+    ert_report_list_set_target_path( report_list , config_iget( config , REPORT_PATH_KEY , 0 , 0));
+
+  ert_report_list_add_global_context( report_list , CONFIG_FILE_TAG , config_get_config_file( config , true ));
+  ert_report_list_add_global_context( report_list , USER_TAG , getenv("USER"));
+
 }

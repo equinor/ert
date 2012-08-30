@@ -139,7 +139,7 @@ bool ert_report_create( ert_report_type * ert_report , const subst_list_type * c
   bool   success;
   {
     char * latex_file = util_alloc_filename( ert_report->work_path , ert_report->latex_basename , LATEX_EXTENSION );
-    template_instansiate( ert_report->template , latex_file , context , true );
+    template_instantiate( ert_report->template , latex_file , context , true );
     {
       latex_type * latex = latex_alloc( latex_file , true );
       char * target_file = util_alloc_filename( target_path , ert_report->latex_basename , "pdf");
