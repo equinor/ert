@@ -1349,26 +1349,32 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
 
 static void enkf_main_report_run_failure( const enkf_main_type * enkf_main , int iens) {
   job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-  const char * stderr_file = job_queue_iget_stderr_file( job_queue , iens );
+  const enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
+  int queue_index = enkf_state_get_queue_index( enkf_state );
+
+  const char * stderr_file = job_queue_iget_stderr_file( job_queue , queue_index );
   if (stderr_file == NULL) 
     log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s" , 
-                         job_queue_iget_run_path( job_queue , iens), 
-                         job_queue_iget_failed_job( job_queue , iens),
-                         job_queue_iget_error_reason( job_queue , iens ));
+                         job_queue_iget_run_path( job_queue , queue_index), 
+                         job_queue_iget_failed_job( job_queue , queue_index),
+                         job_queue_iget_error_reason( job_queue , queue_index ));
   else
     log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s  job:%s  reason:%s  Check file:%s" , 
-                         job_queue_iget_run_path( job_queue , iens), 
-                         job_queue_iget_failed_job( job_queue , iens),
-                         job_queue_iget_error_reason( job_queue , iens ),
-                         job_queue_iget_stderr_file( job_queue , iens ));
+                         job_queue_iget_run_path( job_queue , queue_index), 
+                         job_queue_iget_failed_job( job_queue , queue_index),
+                         job_queue_iget_error_reason( job_queue , queue_index ),
+                         job_queue_iget_stderr_file( job_queue , queue_index ));
 }
 
 
 
 static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , int iens) {
   job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+  const enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
+  int queue_index = enkf_state_get_queue_index( enkf_state );
+
   log_add_fmt_message( enkf_main->logh , 1 , stderr , "** ERROR ** path:%s - Could not load all required data",
-                       job_queue_iget_run_path( job_queue , iens));
+                       job_queue_iget_run_path( job_queue , queue_index));
 }
 
 
@@ -1542,7 +1548,8 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
     }
 
 
-    
+    /* This should be carefully checked for the situation where only a
+       subset (with offset > 0) of realisations are simulated. */
     {
       bool totalOK = true;
       for (iens = 0; iens < ens_size; iens++) {    
@@ -1562,6 +1569,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
             util_abort("%s: invalid job status:%s \n",__func__ , run_status );
           }
           totalOK = totalOK && ( run_status == JOB_RUN_OK );
+
         }
       }
         

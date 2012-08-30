@@ -247,7 +247,6 @@ static void run_info_complete_run(run_info_type * run_info) {
 }
 
 
-
 /*****************************************************************/
 
 static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, const ecl_config_type * ecl_config , log_type * logh , ert_templates_type * templates) {
@@ -1948,6 +1947,10 @@ void enkf_state_invalidate_cache( enkf_state_type * enkf_state ) {
 
 void enkf_state_set_inactive(enkf_state_type * state) {
   state->run_info->active = false;
+}
+
+int enkf_state_get_queue_index(const enkf_state_type * enkf_state) {
+  return enkf_state->run_info->queue_index;
 }
 
 

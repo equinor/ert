@@ -126,6 +126,7 @@ typedef struct enkf_state_struct    enkf_state_type;
                            int load_start , 
                            int step1 , 
                            int step2 );
+  int enkf_state_get_queue_index(const enkf_state_type * enkf_state);
   
   
   run_status_type enkf_state_get_simple_run_status(const enkf_state_type * state);
