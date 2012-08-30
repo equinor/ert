@@ -1546,22 +1546,23 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
     {
       bool totalOK = true;
       for (iens = 0; iens < ens_size; iens++) {    
-        run_status_type run_status = enkf_state_get_simple_run_status( enkf_main->ensemble[iens] );
+        if (bool_vector_iget(iactive , iens)) {
+          run_status_type run_status = enkf_state_get_simple_run_status( enkf_main->ensemble[iens] );
 
-        switch (run_status) {
-        case JOB_RUN_FAILURE:
-          enkf_main_report_run_failure( enkf_main , iens );
-          break;
-        case JOB_LOAD_FAILURE:
-          enkf_main_report_load_failure( enkf_main , iens );
-          break;
-        case JOB_RUN_OK:
-          break;
-        default:
-          util_abort("%s: invalid job status:%s \n",__func__ , run_status );
+          switch (run_status) {
+          case JOB_RUN_FAILURE:
+            enkf_main_report_run_failure( enkf_main , iens );
+            break;
+          case JOB_LOAD_FAILURE:
+            enkf_main_report_load_failure( enkf_main , iens );
+            break;
+          case JOB_RUN_OK:
+            break;
+          default:
+            util_abort("%s: invalid job status:%s \n",__func__ , run_status );
+          }
+          totalOK = totalOK && ( run_status == JOB_RUN_OK );
         }
-
-        totalOK = totalOK && ( run_status == JOB_RUN_OK );
       }
         
       if (totalOK) 
