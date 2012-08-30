@@ -142,7 +142,7 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
     int            job_index;          
     {
       int job_length  = strcspn(p1 , " (");  /* scanning until we meet ' ' or '(' */
-      job_name = util_alloc_substring_copy(p1 , job_length);
+      job_name = util_alloc_substring_copy(p1 , 0 , job_length);
       p1 += job_length;
     }
     job_index = vector_get_size( forward_model->jobs );
@@ -151,11 +151,11 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
     if (*p1 == '(') {  /* the function has arguments. */
       int arg_length = strcspn(p1 , ")");
       if (arg_length == strlen(p1))
-	util_abort("%s: paranthesis not terminated for job:%s \n",__func__ , job_name);
+        util_abort("%s: paranthesis not terminated for job:%s \n",__func__ , job_name);
       {
-	char  * arg_string          = util_alloc_substring_copy((p1 + 1) , arg_length - 1);
+        char  * arg_string          = util_alloc_substring_copy((p1 + 1) , 0 , arg_length - 1);
         ext_job_set_private_args_from_string( current_job , arg_string );
-	p1 += (1 + arg_length);
+        p1 += (1 + arg_length);
       }
     } 
     /*****************************************************************/
@@ -167,8 +167,8 @@ void forward_model_parse_init(forward_model_type * forward_model , const char * 
       int space_length = strspn(p1 , " ");
       p1 += space_length;
       if (*p1 == '(') 
-	/* detected lonesome '(' */
-	util_abort("%s: found space between job:%s and \'(\' - aborting \n",__func__ , job_name);
+        /* detected lonesome '(' */
+        util_abort("%s: found space between job:%s and \'(\' - aborting \n",__func__ , job_name);
     }
 
     /* 

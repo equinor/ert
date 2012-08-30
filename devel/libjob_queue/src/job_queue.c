@@ -375,7 +375,7 @@ static char * __alloc_tag_content( const char * xml_buffer , const char * tag) {
     start_ptr += strlen(open_tag);
     
     length = end_ptr - start_ptr;
-    tag_content = util_alloc_substring_copy( start_ptr , length );
+    tag_content = util_alloc_substring_copy( start_ptr , 0 , length );
   } 
 
   free( open_tag );
