@@ -215,13 +215,19 @@ void ert_report_list_create( const ert_report_list_type * report_list , const ch
 }
 
 
-void ert_report_list_init( ert_report_list_type * report_list , config_type * config , const ecl_sum_type * refcase) {
+void ert_report_list_site_init( ert_report_list_type * report_list , config_type * config ) {
+
   /* Installing the directories to search in. */
   for (int i=0; i < config_get_occurences( config , REPORT_SEARCH_PATH_KEY ); i++) {
     const stringlist_type * path_list = config_iget_stringlist_ref( config , REPORT_SEARCH_PATH_KEY , i);
     for (int j=0; j < stringlist_get_size( path_list ); j++) 
       ert_report_list_add_path( report_list , stringlist_iget( path_list , j ));
   }
+  
+}
+
+void ert_report_list_init( ert_report_list_type * report_list , config_type * config , const ecl_sum_type * refcase) {
+  ert_report_list_site_init( report_list , config );
   
   /* Installing the list of reports. */
   for (int i=0; i < config_get_occurences( config , REPORT_LIST_KEY ); i++) {

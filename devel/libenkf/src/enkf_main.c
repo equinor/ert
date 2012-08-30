@@ -2759,6 +2759,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
       config_type * config = enkf_main_alloc_config( true , strict );
       config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , true , false , true);
       site_config_init( enkf_main->site_config , config , false);                                /*  <---- site_config : first pass. */  
+      ert_report_list_site_init( enkf_main->report_list , config );
       config_free( config );
     }
 
