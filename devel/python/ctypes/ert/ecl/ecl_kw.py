@@ -311,21 +311,25 @@ class EclKW(CClass):
         if self.ecl_type == ECL_INT_TYPE:
             self.data_ptr = cfunc.int_ptr( self )
             self.dtype    = numpy.int32        
-            self.str_fmt  = "%8d "
+            self.str_fmt  = "%8d"
         elif self.ecl_type == ECL_FLOAT_TYPE:
             self.data_ptr = cfunc.float_ptr( self )
             self.dtype    = numpy.float32
-            self.str_fmt  = "%13.4f "
+            self.str_fmt  = "%13.4f"
         elif self.ecl_type == ECL_DOUBLE_TYPE:
             self.data_ptr = cfunc.double_ptr( self )
             self.dtype    = numpy.float64        
-            self.str_fmt  = "%13.4f "
+            self.str_fmt  = "%13.4f"
         else:
-            # Iteration not supported ...
+            # Iteration not supported for CHAR / BOOL
             self.data_ptr = None
             self.dtype    = None
-            self.str_fmt  = "%8s "
-
+            if self.ecl_type == ECL_CHAR_TYPE:
+                self.str_fmt  = "%8s"
+            elif self.ecl_type == ECL_BOOL_TYPE:
+                self.str_fmt  = "%d"
+            else:
+                self.str_fmt = "%s"  #"Message type"
 
     #@classmethod
     #def from_param( cls , obj ):
@@ -830,7 +834,7 @@ class EclKW(CClass):
         s = "%-8s %8d %-4s\n" % (self.name , self.size , self.type_name)
         lines = self.size / width
         if not fmt:
-            fmt = self.str_fmt
+            fmt = self.str_fmt + " "
 
         if max_lines is None or lines <= max_lines:
             s += self.str_data( width , 0 , self.size , fmt)
@@ -888,6 +892,28 @@ class EclKW(CClass):
 
 
 
+    def fprintf_data( self , file , fmt = None):
+        """
+        Will print the keyword data formatted to file.
+
+        The @file argument should be a python file handle to a file
+        opened for writing. The @fmt argument is used as fprintf()
+        format specifier, observe that the format specifier should
+        include a separation character between the elements. If no
+        @fmt argument is supplied the default str_fmt specifier is
+        used for every element, separated by a newline.
+
+        In the case of boolean data the function will print o and 1
+        for False and True respectively. For string data the function
+        will print the data as 8 characters long string with blank
+        padding on the right.
+        """
+        if fmt is None:
+            fmt = self.str_fmt + "\n"
+        cfile = CFILE( file )
+        cfunc.fprintf_data( self , fmt , cfile )
+
+
 
 #################################################################
 
@@ -902,8 +928,9 @@ cwrapper.registerType( "ecl_kw" , EclKW )
 cfunc = CWrapperNameSpace("ecl_kw")
 
 cfunc.load_grdecl                = cwrapper.prototype("c_void_p ecl_kw_fscanf_alloc_grdecl_dynamic__( FILE , char* , bool , int )")
-cfunc.fprintf_grdecl             = cwrapper.prototype("void     ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
 cfunc.fseek_grdecl               = cwrapper.prototype("bool     ecl_kw_grdecl_fseek_kw(char* , bool , FILE )")
+cfunc.fprintf_grdecl             = cwrapper.prototype("void     ecl_kw_fprintf_grdecl( ecl_kw , FILE )")
+cfunc.fprintf_data               = cwrapper.prototype("void     ecl_kw_fprintf_data( ecl_kw , char* , FILE )")
 
 cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
 cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_copy( ecl_kw )")
