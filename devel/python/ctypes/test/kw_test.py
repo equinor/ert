@@ -22,6 +22,7 @@ import math
 import ert
 import ert.ecl.ecl as ecl
 import sys
+from   test_util import *
 
 class KWTest( unittest.TestCase ):
     
@@ -38,10 +39,45 @@ class KWTest( unittest.TestCase ):
         stat = os.stat( unrst_file)
         self.assertTrue( size == stat.st_size )
         
+        
+    def test_kw( self , type , data , fmt ):
+        name1 = "/tmp/file1.txt"
+        name2 = "/tmp/file2.txt"
+        kw = ecl.EclKW.new( "TEST" , len(data) , type)
+        i = 0
+        for d in data:
+            kw[i] = d
+            i += 1
+
+        file1 = open(name1 , "w")
+        kw.fprintf_data( file1 , fmt )
+        file1.close()
+        
+        
+        file2 = open(name2 , "w")
+        for d in data:
+            file2.write( fmt % d )
+        file2.close()
+        self.assertTrue( file_equal( name1 , name2) )
+        os.unlink( name1 )
+        os.unlink( name2 )
+            
+
+    def fprintf_test( self ):
+        self.test_kw( ecl.ECL_INT_TYPE    , [0 , 1 , 2 , 3 , 4 , 5 ]              , "%4d\n")
+        self.test_kw( ecl.ECL_FLOAT_TYPE  , [0.0 , 1.1 , 2.2 , 3.3 , 4.4 , 5.5 ]  , "%12.6f\n")
+        self.test_kw( ecl.ECL_DOUBLE_TYPE , [0.0 , 1.1 , 2.2 , 3.3 , 4.4 , 5.5 ] , "%12.6f\n")
+        self.test_kw( ecl.ECL_BOOL_TYPE   , [True , True , True , False , True]   , "%4d\n")
+        self.test_kw( ecl.ECL_CHAR_TYPE   , ["1" , "22" , "4444" , "666666" , "88888888" ] , "%-8s\n")
+        
+
+
+
 
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( KWTest( 'fortio_size' ))
+    suite.addTest( KWTest( 'fprintf_test' ))
     return suite
 
                    
