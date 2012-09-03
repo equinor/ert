@@ -331,13 +331,6 @@ class EclKW(CClass):
             else:
                 self.str_fmt = "%s"  #"Message type"
 
-    #@classmethod
-    #def from_param( cls , obj ):
-    #    if obj is None:
-    #        return ctypes.c_void_p()
-    #    else:
-    #        return ctypes.c_void_p( obj.c_ptr )
-
 
     def __len__( self ):
         """
