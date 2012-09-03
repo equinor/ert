@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 2.6 )
 include( CheckFunctionExists )
 project( ERT C CXX )
 
-set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99" )
+set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99 -fno-leading-underscore" )
 set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
 
