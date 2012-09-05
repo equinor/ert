@@ -1202,7 +1202,7 @@ bool conf_instance_has_required_sub_instances(
 
   /** This first part is just concerned with creating the function __instance_has_sub_instance_of_type. */
   int                   num_sub_instances = hash_get_size(conf_instance->sub_instances);
-  conf_class_type  ** class_signatures  = util_malloc(num_sub_instances * sizeof * class_signatures, __func__);
+  conf_class_type  ** class_signatures  = util_calloc(num_sub_instances , sizeof * class_signatures, __func__);
   {
     char ** sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
     for(int sub_instance_nr = 0; sub_instance_nr < num_sub_instances; sub_instance_nr++)

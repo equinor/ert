@@ -629,11 +629,11 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     stringlist_type * obs_pt_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "OBS");
     int               num_obs_pts = stringlist_get_size(obs_pt_keys);
     
-    double * obs_value = util_malloc(num_obs_pts * sizeof * obs_value, __func__);
-    double * obs_std   = util_malloc(num_obs_pts * sizeof * obs_std  , __func__);
-    int    * obs_i     = util_malloc(num_obs_pts * sizeof * obs_i    , __func__);
-    int    * obs_j     = util_malloc(num_obs_pts * sizeof * obs_j    , __func__);
-    int    * obs_k     = util_malloc(num_obs_pts * sizeof * obs_k    , __func__);
+    double * obs_value = util_calloc(num_obs_pts , sizeof * obs_value, __func__);
+    double * obs_std   = util_calloc(num_obs_pts , sizeof * obs_std  , __func__);
+    int    * obs_i     = util_calloc(num_obs_pts , sizeof * obs_i    , __func__);
+    int    * obs_j     = util_calloc(num_obs_pts , sizeof * obs_j    , __func__);
+    int    * obs_k     = util_calloc(num_obs_pts , sizeof * obs_k    , __func__);
 
     obs_restart_nr = __conf_instance_get_restart_nr(conf_instance , obs_label , history  , size);  
     

@@ -278,9 +278,9 @@ static misfit_node_type * misfit_node_buffer_fread_alloc( buffer_type * buffer )
 
 
 static double ** __2d_malloc(int rows , int columns) {
-  double ** d = util_malloc( rows * sizeof * d , __func__);
+  double ** d = util_calloc( rows , sizeof * d , __func__);
   for (int i =0; i < rows; i++)
-    d[i] = util_malloc( columns * sizeof * d[i] , __func__);
+    d[i] = util_calloc( columns , sizeof * d[i] , __func__);
   return d;
 }
 

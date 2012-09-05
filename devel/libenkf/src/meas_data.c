@@ -77,8 +77,8 @@ static meas_block_type * meas_block_alloc( const char * obs_key , int report_ste
   meas_block->ens_size    = ens_size;
   meas_block->obs_size    = obs_size;
   meas_block->obs_key     = util_alloc_string_copy( obs_key );
-  meas_block->data        = util_malloc( (ens_size + 2)     * obs_size * sizeof * meas_block->data , __func__);
-  meas_block->active      = util_malloc(  obs_size * sizeof * meas_block->active , __func__);
+  meas_block->data        = util_calloc( (ens_size + 2)     * obs_size , sizeof * meas_block->data , __func__);
+  meas_block->active      = util_calloc(                      obs_size , sizeof * meas_block->active , __func__);
   meas_block->ens_stride  = 1;
   meas_block->obs_stride  = ens_size + 2; 
   meas_block->data_size   = (ens_size + 2) * obs_size;

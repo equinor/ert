@@ -297,7 +297,7 @@ static field_type * __field_alloc(const field_config_type * field_config , void 
   field->private_config = false;
   if (shared_data == NULL) {
     field->shared_data = false;
-    field->data        = util_malloc(field_config_get_byte_size(field->config) , __func__);
+    field->data        = util_calloc(field_config_get_byte_size(field->config) , sizeof * field->data , __func__);
   } else {
     field->data             = shared_data;
     field->shared_data      = true;
@@ -930,7 +930,7 @@ void field_indexed_add(field_type * field, ecl_type_enum src_type , int len , co
 
 double * field_indexed_get_alloc(const field_type * field, int len, const int * index_list)
 {
-  double * export_data = util_malloc(len * sizeof * export_data, __func__);
+  double * export_data = util_calloc(len , sizeof * export_data, __func__);
   ecl_type_enum src_type = field_config_get_ecl_type(field->config);
   
   if(src_type == ECL_DOUBLE_TYPE) {

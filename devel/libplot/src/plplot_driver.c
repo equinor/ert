@@ -309,9 +309,9 @@ void plplot_plot_hist( plot_driver_type * driver, const char * label , double_ve
         Could for some fuxxxing reason not get the plhist() function
           to work, and had to resort to the low level plbin function.
       */
-      double * limits  = util_malloc(sizeof * limits * (bins + 1) , __func__);
-      double * x_      = util_malloc(sizeof * x_ * bins , __func__); 
-      double * y_      = util_malloc(sizeof * y_ * bins , __func__);
+      double * limits  = util_calloc(bins + 1 , sizeof * limits  , __func__);
+      double * x_      = util_calloc(bins     , sizeof * x_  , __func__); 
+      double * y_      = util_calloc(bins     , sizeof * y_  , __func__);
       int i;
       double delta = (xmax - xmin) / bins;
       

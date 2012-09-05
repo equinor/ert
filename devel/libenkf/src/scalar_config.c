@@ -29,7 +29,7 @@
 
 struct scalar_config_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int 		     data_size;
+  int                data_size;
   active_list_type * active_list;
 
   trans_func_type ** transform;  
@@ -41,10 +41,10 @@ struct scalar_config_struct {
 scalar_config_type * scalar_config_alloc_empty(int size) {
   scalar_config_type *scalar_config    = util_malloc(sizeof *scalar_config, __func__);
   UTIL_TYPE_ID_INIT( scalar_config , SCALAR_CONFIG_TYPE_ID );
-  scalar_config->data_size   	       = size;
+  scalar_config->data_size             = size;
   scalar_config->active_list           = active_list_alloc( ALL_ACTIVE );
   
-  scalar_config->transform             = util_malloc(scalar_config->data_size * sizeof * scalar_config->transform             , __func__);
+  scalar_config->transform             = util_calloc(scalar_config->data_size ,  sizeof * scalar_config->transform  , __func__);
   return scalar_config;
 }
 

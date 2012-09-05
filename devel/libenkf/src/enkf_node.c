@@ -740,7 +740,7 @@ void enkf_node_copy_ensemble(const enkf_config_node_type * config_node ,
 
 enkf_node_type ** enkf_node_load_alloc_ensemble( const enkf_config_node_type * config_node , enkf_fs_type * fs , 
                                                  int report_step , int iens1 , int iens2 , state_enum state) {
-  enkf_node_type ** ensemble = util_malloc( (iens2 - iens1) * sizeof * ensemble , __func__);
+  enkf_node_type ** ensemble = util_calloc( (iens2 - iens1) , sizeof * ensemble , __func__);
   for (int iens = iens1; iens < iens2; iens++) {
     node_id_type node_id = {.report_step = report_step , .iens = iens };
     state_enum load_state;

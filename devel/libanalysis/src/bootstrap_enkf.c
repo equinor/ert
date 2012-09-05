@@ -383,7 +383,7 @@ static int ** alloc_iens_resample( rng_type * rng , int ens_size ) {
   int ** iens_resample;
   int iens;
 
-  iens_resample = util_malloc( ens_size * sizeof * iens_resample , __func__);
+  iens_resample = util_calloc( ens_size , sizeof * iens_resample , __func__);
   for (iens = 0; iens < ens_size; iens++)
     iens_resample[iens] = util_malloc( ens_size * sizeof( ** iens_resample ) , __func__);
   

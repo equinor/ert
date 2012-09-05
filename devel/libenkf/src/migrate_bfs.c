@@ -26,7 +26,7 @@
 
 
 static void migrate_file( const char * src_case, int num_src_drivers , const char * target_case, int num_target_drivers, const char * file, int block_size , msg_type * msg) {
-  block_fs_type ** target_fs = util_malloc( sizeof * target_fs * num_target_drivers , __func__); 
+  block_fs_type ** target_fs = util_calloc( num_target_drivers , sizeof * target_fs  , __func__); 
   int itarget;
   for (itarget = 0; itarget < num_target_drivers; itarget++) {
     char * path       = util_alloc_sprintf("%s/mod_%d" , target_case , itarget );

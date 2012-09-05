@@ -79,7 +79,7 @@ int enkf_linalg_svd_truncation(const matrix_type * S ,
                      dgesvd_vector_enum store_V0T , 
                      double * sig0, 
                      matrix_type * U0 , 
-		     matrix_type * V0T) {
+                     matrix_type * V0T) {
   
   int  num_significant;
   int nrows = matrix_get_rows(S);
@@ -91,9 +91,9 @@ int enkf_linalg_svd_truncation(const matrix_type * S ,
 
       int num_singular_values = util_int_min( matrix_get_rows( S ) , matrix_get_columns( S ));
       {   
-	matrix_type * workS = matrix_alloc_copy( S );
-	matrix_dgesvd(DGESVD_MIN_RETURN , store_V0T , workS , sig0 , U0 , V0T);  
-	matrix_free( workS );
+        matrix_type * workS = matrix_alloc_copy( S );
+        matrix_dgesvd(DGESVD_MIN_RETURN , store_V0T , workS , sig0 , U0 , V0T);  
+        matrix_free( workS );
       }
         
       int i;
@@ -142,16 +142,16 @@ int enkf_linalg_svdS(const matrix_type * S ,
                      matrix_type * V0T) {
   
   double * sig0 = inv_sig0;
-  int    num_significant;
+  int    num_significant = 0;
 
   
   if (((truncation > 0) && (ncomp < 0)) ||
       ((truncation < 0) && (ncomp > 0))) {
       int num_singular_values = util_int_min( matrix_get_rows( S ) , matrix_get_columns( S ));
       {   
-	matrix_type * workS = matrix_alloc_copy( S );
-	matrix_dgesvd(DGESVD_MIN_RETURN , store_V0T , workS , sig0 , U0 , V0T);  
-	matrix_free( workS );
+        matrix_type * workS = matrix_alloc_copy( S );
+        matrix_dgesvd(DGESVD_MIN_RETURN , store_V0T , workS , sig0 , U0 , V0T);  
+        matrix_free( workS );
       }
       int i;
 
@@ -240,7 +240,7 @@ void enkf_linalg_lowrankCinv__(const matrix_type * S ,
   const int nrens = matrix_get_columns( S );
   const int nrmin = util_int_min( nrobs , nrens );
   
-  double * inv_sig0      = util_malloc( nrmin * sizeof * inv_sig0 , __func__);
+  double * inv_sig0      = util_calloc( nrmin , sizeof * inv_sig0 , __func__);
 
   if (V0T != NULL)
     enkf_linalg_svdS(S , truncation , ncomp , DGESVD_MIN_RETURN , inv_sig0 , U0 , V0T );
@@ -301,7 +301,7 @@ void enkf_linalg_meanX5(const matrix_type * S ,
   const int nrens = matrix_get_columns( S );
   const int nrobs = matrix_get_rows( S );
   const int nrmin = util_int_min( nrobs , nrens );
-  double * work   = util_malloc( (2 * nrmin + nrobs + nrens) * sizeof * work , __func__);
+  double * work   = util_calloc( (2 * nrmin + nrobs + nrens) , sizeof * work , __func__);
   matrix_type * innov = enkf_linalg_alloc_innov( dObs , S );
   {
     double * y1 = &work[0];
@@ -339,8 +339,8 @@ void enkf_linalg_X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type 
   const int nrens   = matrix_get_columns( X5 );
   const int nrmin   = util_int_min( nrobs , nrens );
   matrix_type * VT  = matrix_alloc( nrens , nrens );
-  double * sig      = util_malloc( nrmin * sizeof * sig , __func__);
-  double * isig     = util_malloc( nrmin * sizeof * sig , __func__);
+  double * sig      = util_calloc( nrmin , sizeof * sig , __func__);
+  double * isig     = util_calloc( nrmin , sizeof * sig , __func__);
 
   matrix_dgesvd(DGESVD_NONE , DGESVD_ALL , X2 , sig , NULL , VT);
   {
@@ -465,8 +465,8 @@ void enkf_linalg_init_sqrtX(matrix_type * X5      ,
 
 void enkf_linalg_set_randrot( matrix_type * Q  , rng_type * rng) {
   int ens_size       = matrix_get_rows( Q );
-  double      * tau  = util_malloc( sizeof * tau  * ens_size , __func__);
-  int         * sign = util_malloc( sizeof * sign * ens_size , __func__);
+  double      * tau  = util_calloc( ens_size , sizeof * tau , __func__);
+  int         * sign = util_calloc( ens_size , sizeof * sign, __func__);
 
   for (int i = 0; i < ens_size; i++) 
     for (int j = 0; j < ens_size; j++) 
@@ -600,7 +600,7 @@ void enkf_linalg_get_PC( const matrix_type * S0,
 
   matrix_type * U0  = matrix_alloc( nrobs , nrens );
   matrix_type * S   = matrix_alloc_copy( S0 );
-  double * inv_sig0 = util_malloc( nrmin * sizeof * inv_sig0 , __func__);
+  double * inv_sig0 = util_calloc( nrmin , sizeof * inv_sig0 , __func__);
   
   matrix_subtract_row_mean( S );
   ncomp = util_int_min( ncomp , nrmin );
@@ -659,8 +659,8 @@ void enkf_linalg_rml_enkfX2(matrix_type *X2, double *Wdr, matrix_type * X1 ,doub
 {
   /*This routine computes X2 for RML_EnKF module as X2 = ((a*Ipd)+Wd^2)^-1  * X1   */
   /* Since a+Ipd & Wd are diagonal in nature the computation is reduced to array operations*/
-  double * tmp = util_malloc(sizeof tmp*nsign , __func__);
- 
+  double * tmp = util_calloc(nsign , sizeof * tmp , __func__);
+  
   for (int i=0; i< nsign ; i++)
     {
       tmp[i] = 1/ (a+ (Wdr[i]*Wdr[i]));
@@ -705,7 +705,7 @@ double enkf_linalg_data_mismatch(matrix_type *D , matrix_type *R , matrix_type *
   matrix_dgemm(Sk, tmp, D, false, false, 1.0, 0.0);
 
   printf("The data mismatch computed");
-				  
+                                  
   // Calculate the mismatch 
   mean = matrix_trace(Sk)/(matrix_get_columns(D));
 
@@ -720,11 +720,11 @@ void enkf_linalg_Covariance(matrix_type *Cd, matrix_type *E, double nsc ,int nro
   for (int i=0; i< nrobs; i++)
     {
       for (int j=0;j< nrobs; j++)
-	{
-	  if (i!=j)
-	    matrix_iset(Cd, i, j, 0.0);
+        {
+          if (i!=j)
+            matrix_iset(Cd, i, j, 0.0);
 
-	}
+        }
     }
   nsc= nsc*nsc;
   printf("nsc = %5.3f\n",nsc);

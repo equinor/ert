@@ -105,9 +105,9 @@ static obs_block_type * obs_block_alloc( const char * obs_key , int obs_size , m
   UTIL_TYPE_ID_INIT( obs_block , OBS_BLOCK_TYPE_ID );
   obs_block->size        = obs_size;
   obs_block->obs_key     = util_alloc_string_copy( obs_key );
-  obs_block->value       = util_malloc( sizeof * obs_block->value * obs_size , __func__);
-  obs_block->std         = util_malloc( sizeof * obs_block->std * obs_size , __func__);
-  obs_block->active_mode = util_malloc( sizeof * obs_block->active_mode * obs_size , __func__);
+  obs_block->value       = util_calloc( obs_size , sizeof * obs_block->value , __func__);
+  obs_block->std         = util_calloc( obs_size , sizeof * obs_block->std , __func__);
+  obs_block->active_mode = util_calloc( obs_size , sizeof * obs_block->active_mode , __func__);
   obs_block->error_covar = error_covar;
   obs_block->error_covar_owner = error_covar_owner;
   {
@@ -366,10 +366,10 @@ matrix_type * obs_data_allocE(const obs_data_type * obs_data , rng_type * rng , 
   
   E         = matrix_alloc( active_size , ens_size);
 
-  pert_mean = util_malloc(active_size * sizeof * pert_mean , __func__);
-  pert_var  = util_malloc(active_size * sizeof * pert_var  , __func__);
+  pert_mean = util_calloc(active_size , sizeof * pert_mean , __func__);
+  pert_var  = util_calloc(active_size , sizeof * pert_var  , __func__);
   {
-    double * tmp = util_malloc( active_size * ens_size * sizeof * tmp , __func__);
+    double * tmp = util_calloc( active_size * ens_size , sizeof * tmp , __func__);
     int i,j;
     int k = 0;
     

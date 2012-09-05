@@ -419,7 +419,7 @@ static block_fs_driver_type * block_fs_driver_alloc(int num_fs) {
   driver->__id          = BLOCK_FS_DRIVER_ID;
   driver->num_fs        = num_fs;
 
-  driver->fs_list       = util_malloc( driver->num_fs * sizeof * driver->fs_list , __func__); 
+  driver->fs_list       = util_calloc( driver->num_fs , sizeof * driver->fs_list , __func__); 
   return driver;
 }
 

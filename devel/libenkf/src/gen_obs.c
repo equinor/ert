@@ -111,7 +111,7 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
   if (gen_obs->obs_file != NULL)
     buffer = gen_common_fload_alloc(gen_obs->obs_file , gen_obs->obs_format , ECL_DOUBLE_TYPE , &load_type , &gen_obs->obs_size);
   else {
-    double * double_buffer = util_malloc(2 * sizeof * double_buffer , __func__);
+    double * double_buffer = util_calloc(2 , sizeof * double_buffer , __func__);
     buffer = double_buffer;
     double_buffer[0] = scalar_value;
     double_buffer[1] = scalar_error;
@@ -121,7 +121,7 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
   
   /** Ensure that the data is of type double. */
   if (load_type == ECL_FLOAT_TYPE) {
-    double * double_data = util_malloc(gen_obs->obs_size * sizeof * double_data , __func__);
+    double * double_data = util_calloc(gen_obs->obs_size , sizeof * double_data , __func__);
     util_float_to_double(double_data , (const float *) buffer , gen_obs->obs_size);
     free(buffer);
     buffer = double_data;
@@ -186,7 +186,7 @@ gen_obs_type * gen_obs_alloc(const gen_data_config_type * data_config , const ch
        check is needed is indicated by the boolean flag
        observe_all_data.
     */
-    obs->data_index_list = util_malloc( obs->obs_size * sizeof * obs->data_index_list , __func__);
+    obs->data_index_list = util_calloc( obs->obs_size , sizeof * obs->data_index_list , __func__);
     for (int i =0; i < obs->obs_size; i++)
       obs->data_index_list[i] = i;
     obs->observe_all_data = true;

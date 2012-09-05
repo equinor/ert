@@ -145,7 +145,7 @@ void cv_enkf_init_update( void * arg ,
     matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
     matrix_type * V0T  = matrix_alloc( nrmin , nrens );    /* Right singular vectors. */
     
-    double * inv_sig0  = util_malloc( nrmin * sizeof * inv_sig0 , __func__);
+    double * inv_sig0  = util_calloc( nrmin , sizeof * inv_sig0 , __func__);
     double * sig0      = inv_sig0;
     
     printf("Computing svd using truncation %0.4f\n",cv_data->truncation);
@@ -324,8 +324,8 @@ int cv_enkf_get_optimal_numb_comp(cv_enkf_data_type * cv_data ,
                                         const int maxP ) {
                                         
 
-  double * cvMean = util_malloc( sizeof * cvMean * maxP, __func__);
-  double * cvStd  = util_malloc( sizeof * cvStd * maxP, __func__);
+  double * cvMean = util_calloc( maxP , sizeof * cvMean , __func__);
+  double * cvStd  = util_calloc( maxP , sizeof * cvStd  , __func__);
   int optP;
 
   {
@@ -397,7 +397,7 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
 
 
   matrix_type * cvError;
-  int * randperms     = util_malloc( sizeof * randperms * nrens, __func__);
+  int * randperms     = util_calloc( nrens , sizeof * randperms, __func__);
   
   int maxP  = nrmin;
   int optP;
@@ -432,8 +432,8 @@ static int get_optimal_principal_components( cv_enkf_data_type * cv_data ,
   cvError = matrix_alloc( maxP , cv_data->nfolds );
   {
     int ntest, ntrain, k,j,i;
-    int * indexTest  = util_malloc( sizeof * indexTest * nrens, __func__);
-    int * indexTrain = util_malloc( sizeof * indexTrain * nrens, __func__);
+    int * indexTest  = util_calloc( nrens , sizeof * indexTest  , __func__);
+    int * indexTrain = util_calloc( nrens , sizeof * indexTrain , __func__);
     for (i = 0; i < cv_data->nfolds; i++) {
       ntest = 0;
       ntrain = 0;

@@ -164,7 +164,7 @@ void rml_enkf_imodel_init1__( matrix_type * A,
   
   matrix_type * Um  = matrix_alloc( nstate , nrmin  ); /* Left singular vectors.  */
   matrix_type * VmT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
-  double * Wm       = util_malloc( sizeof * Wm * nrmin , __func__); 
+  double * Wm       = util_calloc( nrmin , sizeof * Wm , __func__); 
 
  
    matrix_subtract_row_mean(Dm);
@@ -243,7 +243,7 @@ void rml_enkf_imodel_init2__( rml_enkf_imodel_data_type * data,
   double a = data->lamda + 1;
   matrix_type *Am= matrix_alloc_copy(data->Am);
   matrix_type *Apr= matrix_alloc_copy(data->prior);
-  double *Csc = util_malloc(sizeof * Csc * nstate, __func__); 
+  double *Csc = util_calloc(nstate , sizeof * Csc , __func__); 
   for (int i=0; i< nstate ; i++)
     {
       Csc[i]= data->Csc[i];
@@ -331,7 +331,7 @@ void rml_enkf_imodel_updateA(void * module_data ,
   int nrmin         = util_int_min( ens_size , nrobs); 
   matrix_type * Ud  = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
   matrix_type * VdT = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
-  double * Wd       = util_malloc( sizeof * Wd * nrmin , __func__); 
+  double * Wd       = util_calloc( nrmin , sizeof * Wd , __func__); 
   
   enkf_linalg_Covariance(Cd ,E ,nsc, nrobs);
   matrix_inv(Cd);
@@ -345,7 +345,7 @@ void rml_enkf_imodel_updateA(void * module_data ,
     data->prior = matrix_alloc_copy(A);
     data->state = matrix_alloc_copy(A);
 
-    data->Csc     = util_malloc(sizeof * data->Csc * nstate, __func__);
+    data->Csc     = util_calloc(nstate , sizeof * data->Csc, __func__);
     rml_enkf_imodel_Create_Csc(data);
     rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lamda,Ud,Wd,VdT);
     printf("\n model scaling matrix computed\n");

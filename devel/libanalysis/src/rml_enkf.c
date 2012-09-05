@@ -184,7 +184,7 @@ void rml_enkf_updateA(void * module_data ,
   int nrmin         = util_int_min( ens_size , nrobs); 
   matrix_type * Ud   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
   matrix_type * VdT  = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
-  double * Wd       = util_malloc( sizeof * Wd * nrmin , __func__); 
+  double * Wd       = util_calloc( nrmin , sizeof * Wd  , __func__); 
   
 
   

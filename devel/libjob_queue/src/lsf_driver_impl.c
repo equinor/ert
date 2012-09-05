@@ -247,7 +247,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
     }
     buffer_terminate_char_ptr( remote_cmd );
     {
-      char ** argv = util_malloc( 2 * sizeof * argv , __func__ );
+      char ** argv = util_calloc( 2 , sizeof * argv , __func__ );
       argv[0] = driver->remote_lsf_server;
       argv[1] = buffer_get_data( remote_cmd );
       util_fork_exec(driver->rsh_cmd , 2 , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
@@ -281,7 +281,7 @@ static int lsf_driver_get_status__(lsf_driver_type * driver , const char * statu
 static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
   {
-    char ** argv = util_malloc( sizeof * argv * 2 , __func__ );
+    char ** argv = util_calloc( 2 , sizeof * argv, __func__ );
     argv[0] = driver->remote_lsf_server;
     argv[1] = "bjobs -a";
     util_fork_exec(driver->rsh_cmd , 2 , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
@@ -439,7 +439,7 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
     if (driver->use_library_calls)
       lsb_forcekilljob(job->lsf_jobnr);
     else {
-      char ** argv = util_malloc( sizeof * argv * 2 , __func__ );
+      char ** argv = util_calloc( 2, sizeof * argv , __func__ );
       argv[0] = driver->remote_lsf_server;
       argv[1] = util_alloc_sprintf("bkill %s" , job->lsf_jobnr_char);
       
