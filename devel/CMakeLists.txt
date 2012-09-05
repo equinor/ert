@@ -121,6 +121,11 @@ if (MKDIR_POSIX)
   add_definitions( -DMKDIR_POSIX )
 endif()
 
+try_compile( ISREG_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_isreg.c )
+if (ISREG_POSIX)
+  add_definitions( -DHAVE_ISREG )
+endif()
+
 check_function_exists( lockf HAVE_LOCKF )
 if (HAVE_LOCKF)
   add_definitions( -DHAVE_LOCKF )
