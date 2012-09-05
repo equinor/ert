@@ -251,16 +251,16 @@ static void enkf_tui_display_load_msg( int iens , const stringlist_type * msg_li
 void enkf_tui_run_manual_load__( void * arg ) {
   enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg );
   enkf_fs_type * fs                            = enkf_main_get_fs( enkf_main ); 
-  const int last_report                        = enkf_main_get_history_length( enkf_main );
+  const int last_report                        = -1;
   const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
   int step1,step2;
   bool * iactive         = util_malloc(ens_size * sizeof * iactive , __func__);
   run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
 
   enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
-  /** Observe that for the summary data it will load all the available data anyway. */
+  
   step1 = 0;
-  step2 = last_report;
+  step2 = last_report;  /** Observe that for the summary data it will load all the available data anyway. */
   {
     char * prompt = util_alloc_sprintf("Which realizations to load [ensemble size:%d] : " , ens_size);
     char * select_string;
