@@ -131,6 +131,11 @@ if (HAVE_LOCKF)
   add_definitions( -DHAVE_LOCKF )
 endif()
 
+check_function_exists( lockf HAVE_GETPID )
+if (HAVE_GETPID)
+  add_definitions( -DHAVE_GETPID )
+endif()
+
 check_function_exists( glob HAVE_GLOB )
 if (HAVE_GLOB)
   add_definitions( -DHAVE_GLOB )
