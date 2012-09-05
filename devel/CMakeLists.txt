@@ -146,11 +146,15 @@ if (HAVE_SETENV)
   add_definitions( -DPOSIX_SETENV )
 endif()
 
-check_function_exists( setenv HAVE_OPENDIR )
+check_function_exists( opendir HAVE_OPENDIR )
 if (HAVE_OPENDIR)
   add_definitions( -DHAVE_OPENDIR )
 endif()
 
+check_function_exists( usleep HAVE_USLEEP )
+if (HAVE_OPENDIR)
+  add_definitions( -DHAVE_USLEEP )
+endif()
 
 
 find_library( LAPACK_LIBRARY NAMES lapack)
