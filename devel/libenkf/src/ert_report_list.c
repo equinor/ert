@@ -84,10 +84,14 @@ void ert_report_list_set_plot_path( ert_report_list_type * report_list , const c
   report_list->plot_path = util_realloc_string_copy( report_list->plot_path , plot_path );
 }
 
-
+/**
+   Observe that the new path is added to the front of the list; this is to ensure
+   that it is possible to insert user specifed report paths which come before the
+   system wide search path.
+*/
 bool ert_report_list_add_path( ert_report_list_type * report_list , const char * path ) {
   if (util_is_directory( path )) {
-    stringlist_append_copy( report_list->path_list , path );
+    stringlist_insert_copy( report_list->path_list , 0 , path );
     return true;
   } else {
     fprintf(stderr,"** Warning: Path:%s does not exist - not added to report template search path.\n",path);
