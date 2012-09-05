@@ -131,7 +131,7 @@ if (HAVE_LOCKF)
   add_definitions( -DHAVE_LOCKF )
 endif()
 
-check_function_exists( lockf HAVE_GETPID )
+check_function_exists( getpid HAVE_GETPID )
 if (HAVE_GETPID)
   add_definitions( -DHAVE_GETPID )
 endif()
