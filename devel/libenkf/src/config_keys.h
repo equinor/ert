@@ -56,6 +56,7 @@ extern "C" {
 #define  DBASE_TYPE_KEY                    "DBASE_TYPE"
 #define  DELETE_RUNPATH_KEY                "DELETE_RUNPATH"  
 #define  ECLBASE_KEY                       "ECLBASE"
+#define  END_DATE_KEY                      "END_DATE"
 #define  ENKF_ALPHA_KEY                    "ENKF_ALPHA"
 #define  ENKF_CROSS_VALIDATION_KEY         "ENKF_CROSS_VALIDATION"
 #define  ENKF_CV_FOLDS_KEY                 "ENKF_CV_FOLDS"     

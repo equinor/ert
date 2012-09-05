@@ -590,7 +590,7 @@ void enkf_state_update_node( enkf_state_type * enkf_state , const char * node_ke
 }
 
 
-static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state ) {
+static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state , stringlist_type * messages , bool * loadOK) {
   member_config_type * my_config         = enkf_state->my_config;
   const run_info_type * run_info         = enkf_state->run_info;
   const ecl_config_type * ecl_config     = enkf_state->shared_info->ecl_config;
@@ -632,9 +632,32 @@ static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state
     }
   }  
   
-  if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
+  if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) {
     summary = ecl_sum_fread_alloc(header_file , data_files , SUMMARY_KEY_JOIN_STRING );
-  
+    {
+      time_t end_time = ecl_config_get_end_date( ecl_config );
+      if (end_time > 0) {
+        if (ecl_sum_get_end_time( summary ) < end_time) {
+          /* The summary vector was shorter than expected; we interpret this as
+             a simulation failure and discard the current summary instance. */
+          {
+            int end_day,end_month,end_year;
+            int sum_day,sum_month,sum_year;
+            
+            util_set_date_values( end_time , &end_day , &end_month , &end_year );
+            util_set_date_values( ecl_sum_get_end_time( summary ) , &sum_day , &sum_month , &sum_year );
+            stringlist_append_owned_ref( messages , 
+                                         util_alloc_sprintf("Summary ended at %02d/%02d/%4d - expected at least END_DATE: %02d/%02d/%4d" , 
+                                                            sum_day , sum_month , sum_year , 
+                                                            end_day , end_month , end_year ));
+          }
+          ecl_sum_free( summary );
+          summary = NULL;
+          *loadOK = false;
+        }
+      }
+    }
+  }
   stringlist_free( data_files );
   util_safe_free( header_file );
   util_safe_free( unified_file );
@@ -665,7 +688,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
   
   {
     /* Looking for summary files on disk, and loading them. */
-    ecl_sum_type * summary = enkf_state_load_ecl_sum( enkf_state );
+    ecl_sum_type * summary = enkf_state_load_ecl_sum( enkf_state , msg_list , loadOK );
     
     /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
     if (summary != NULL) {

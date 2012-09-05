@@ -54,6 +54,7 @@
 #include <member_config.h>
 #include <enkf_plot_data.h>
 #include <time_map.h>
+#include <ert_report_list.h>
 
 #include <ert_tui_const.h>
 #include <enkf_tui_util.h>
@@ -170,6 +171,11 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
     plot =  enkf_tui_plot_alloc(plot_config , "" , /* y akse */ "" ,user_key,plot_file);
   else
     plot =  enkf_tui_plot_alloc(plot_config , "Simulation time (days) ", /* y akse */ "" ,user_key , plot_file);
+  
+  /* Initial data on summary plots is just bogus.
+   */
+  if ((enkf_config_node_get_impl_type( config_node ) == SUMMARY) && (step1 == 0))
+    step1 = 1;
   
   node = enkf_node_alloc( config_node );
   {

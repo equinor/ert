@@ -64,6 +64,7 @@ struct ecl_config_struct {
   stringlist_type    * user_static_kw;
   char               * data_file;                  /* Eclipse data file. */
   time_t               start_date;                 /* The start date of the ECLIPSE simulation - parsed from the data_file. */
+  time_t               end_date;                   /* An optional date value which can be used to check if the ECLIPSE simulation has been 'long enough'. */
   ecl_sum_type       * refcase;                    /* Refcase - can be NULL. */
   ecl_grid_type      * grid;                       /* The grid which is active for this model. */
   char               * schedule_prediction_file;   /* Name of schedule prediction file - observe that this is internally handled as a gen_kw node. */
@@ -146,6 +147,14 @@ const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
 
 time_t ecl_config_get_start_date( const ecl_config_type * ecl_config ) {
   return ecl_config->start_date;
+}
+
+time_t ecl_config_get_end_date( const ecl_config_type * ecl_config ) {
+  return ecl_config->end_date;
+}
+
+static void ecl_config_set_end_date( ecl_config_type * ecl_config , time_t end_date ) {
+  ecl_config->end_date = end_date;
 }
 
 
@@ -401,6 +410,7 @@ ecl_config_type * ecl_config_alloc_empty( ) {
   ecl_config->grid                     = NULL;
   ecl_config->can_restart              = false;
   ecl_config->start_date               = -1;
+  ecl_config->end_date                 = -1;
   ecl_config->sched_file               = NULL;
   ecl_config->schedule_prediction_file = NULL;
   ecl_config->schedule_target_file     = NULL;
@@ -466,6 +476,14 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
       IFF the user has no intentitions of any form of restart, this is
       perfectly legitemate.
   */
+  if (config_item_set( config , END_DATE_KEY )) {
+    const char * date_string = config_get_value( config , END_DATE_KEY );
+    time_t end_date;
+    if (util_sscanf_date( date_string , &end_date))
+      ecl_config_set_end_date( ecl_config , end_date );
+    else
+      fprintf(stderr,"** WARNING **: Failed to parse %s as a date - should be in format dd/mm/yyyy \n",date_string);
+  }
 }
 
 
@@ -658,9 +676,12 @@ void ecl_config_add_config_items( config_type * config ) {
   item = config_add_item(config , INIT_SECTION_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
   config_add_alias(config , INIT_SECTION_KEY , "EQUIL_INIT_FILE");
-
   
+  item = config_add_item(config , END_DATE_KEY , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL );
 }
+
+
 
 
 void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stream ) {
