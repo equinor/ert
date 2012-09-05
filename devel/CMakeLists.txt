@@ -131,6 +131,11 @@ if (HAVE_LOCKF)
   add_definitions( -DHAVE_LOCKF )
 endif()
 
+check_function_exists( isfinite HAVE_ISFINITE )
+if (HAVE_ISFINITE)
+  add_definitions( -DHAVE_ISFINITE )
+endif()
+
 check_function_exists( getpid HAVE_GETPID )
 if (HAVE_GETPID)
   add_definitions( -DHAVE_GETPID )
