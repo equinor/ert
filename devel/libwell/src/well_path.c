@@ -61,8 +61,11 @@ struct well_path_struct {
 
 static void well_path_resize( well_path_type * well_path , int new_size) {
   well_path->branches = util_realloc( well_path->branches , new_size * sizeof * well_path->branches , __func__);
-  for (int i=well_path->alloc_size; i < new_size; i++)
-    well_path->branches[i] = NULL;
+  {
+    int i;
+    for (i=well_path->alloc_size; i < new_size; i++)
+      well_path->branches[i] = NULL;
+  }
   
   well_path->alloc_size = new_size;
 }
@@ -158,7 +161,8 @@ void well_path_add_conn( well_path_type * well_path , well_conn_type * conn) {
 
 
 void well_path_free( well_path_type * well_path ) {
-  for (int i=0; i < well_path->alloc_size; i++) {
+  int i;
+  for (i=0; i < well_path->alloc_size; i++) {
     if (well_path->branches[i] != NULL) 
       well_branch_free( well_path->branches[i] );
   }

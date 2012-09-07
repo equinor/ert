@@ -141,11 +141,14 @@ static void well_state_add_connections( well_state_type * well_state ,  const ec
   
   if (MSW)
     iseg_kw = ecl_file_iget_named_kw( rst_file , ISEG_KW , 0 );
-  
-  for (int conn_nr = 0; conn_nr < num_connections; conn_nr++) {
-    well_conn_type * conn =  well_conn_alloc( icon_kw , iseg_kw , header , well_nr , seg_well_nr , conn_nr );
-    if (conn != NULL)
-      well_path_add_conn( path , conn );
+
+  {
+    int conn_nr;
+    for (conn_nr = 0; conn_nr < num_connections; conn_nr++) {
+      well_conn_type * conn =  well_conn_alloc( icon_kw , iseg_kw , header , well_nr , seg_well_nr , conn_nr );
+      if (conn != NULL)
+        well_path_add_conn( path , conn );
+    }
   }
   ecl_intehead_free( header );
 }
@@ -251,7 +254,8 @@ well_state_type * well_state_alloc( ecl_file_type * ecl_file , int report_nr ,  
     
     {
       int num_lgr = ecl_file_get_num_named_kw( ecl_file , LGR_KW );
-      for (int lgr_nr = 0; lgr_nr < num_lgr; lgr_nr++) {
+      int lgr_nr;
+      for (lgr_nr = 0; lgr_nr < num_lgr; lgr_nr++) {
         ecl_file_push_block( ecl_file );                                  // <--------------------
         {                                                                                       //  
           ecl_file_subselect_block( ecl_file , LGR_KW , lgr_nr );                               // 
@@ -418,7 +422,8 @@ int well_state_get_num_paths( const well_state_type * well_state ) {
 void well_state_summarize( const well_state_type * well_state , FILE * stream ) {
   fprintf(stream , "Well: %s \n" , well_state->name );
   {
-    for (int grid_nr=0; grid_nr < well_state_get_num_paths( well_state ); grid_nr++) {
+    int grid_nr;
+    for (grid_nr=0; grid_nr < well_state_get_num_paths( well_state ); grid_nr++) {
       well_path_type * well_path = well_state_iget_path(well_state , grid_nr );
       if (well_path_get_grid_name( well_path ) != NULL) {
         fprintf(stream , "   Grid: %-8s\n",well_path_get_grid_name( well_path ));
@@ -433,14 +438,16 @@ void well_state_summarize( const well_state_type * well_state , FILE * stream ) 
 
         {
           int num_branches = well_path_get_max_branches(well_path);
-          for (int branch_nr = 0; branch_nr < num_branches; branch_nr++) {
+          int branch_nr;
+          for (branch_nr = 0; branch_nr < num_branches; branch_nr++) {
             well_branch_type * branch = well_path_iget_branch( well_path , branch_nr );
             if (branch != NULL) {
               const well_conn_type ** connections = well_branch_get_connections( branch );
               int num_connections = well_branch_get_length( branch );
-              
+              int iconn;
+
               fprintf(stream , "      Branch %2d: [" , branch_nr );
-              for (int iconn=0; iconn < num_connections; iconn++) {
+              for (iconn=0; iconn < num_connections; iconn++) {
                 const well_conn_type * conn = connections[ iconn ];
                 fprintf(stream, "(%3d,%3d,%3d)",well_conn_get_i( conn ) , well_conn_get_j( conn ), well_conn_get_k( conn ));
                 if (iconn == (num_connections - 1))
