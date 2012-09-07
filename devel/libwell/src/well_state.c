@@ -201,9 +201,8 @@ well_state_type * well_state_alloc( ecl_file_type * ecl_file , int report_nr ,  
 
   const int iwel_offset = global_header->niwelz * global_well_nr;
   {
+	const int zwel_offset         = global_header->nzwelz * global_well_nr;
     well_state = well_state_alloc_empty();
-    
-    const int zwel_offset         = global_header->nzwelz * global_well_nr;
     
     well_state->valid_from_time   = global_header->sim_time;
     well_state->valid_from_report = report_nr;
