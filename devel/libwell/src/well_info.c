@@ -286,7 +286,8 @@ static void well_info_add_state( well_info_type * well_info , well_state_type * 
 
 void well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file , int report_nr) {
   ecl_intehead_type * global_header = ecl_intehead_alloc( ecl_file_iget_named_kw( rst_file , INTEHEAD_KW , 0 ));
-  for (int well_nr = 0; well_nr < global_header->nwells; well_nr++) {
+  int well_nr;
+  for (well_nr = 0; well_nr < global_header->nwells; well_nr++) {
     well_state_type * well_state = well_state_alloc( rst_file , report_nr , well_nr );
     if (well_state != NULL)
       well_info_add_state( well_info , well_state );
@@ -298,7 +299,8 @@ void well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file 
 void well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst_file) {
   {
     int num_blocks = ecl_file_get_num_named_kw( rst_file , SEQNUM_KW );
-    for (int block_nr = 0; block_nr < num_blocks; block_nr++) {
+    int block_nr;
+	for (block_nr = 0; block_nr < num_blocks; block_nr++) {
       ecl_file_push_block( rst_file );      // <-------------------------------------------------------
       {                                                                                               //
         ecl_file_subselect_block( rst_file , SEQNUM_KW , block_nr );                                  //  Ensure that the status
