@@ -63,7 +63,8 @@ well_branch_type * well_branch_alloc(int branch_nr) {
 
 
 void well_branch_free( well_branch_type * branch ) {
-  for (int i=0; i < branch->alloc_size; i++) {
+  int i;
+  for ( i=0; i < branch->alloc_size; i++) {
     well_conn_type * conn = branch->connections[i];
     if (conn != NULL)
       well_conn_free( conn );
