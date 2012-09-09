@@ -287,6 +287,28 @@ class EclGrid(CClass):
         cfunc.get_xyz1( self , gi , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
         return (x.value , y.value , z.value)
 
+
+
+    def get_corner_xyz(self, corner_nr , active_index = None , global_index = None , ijk = None):
+        """
+        Will look up xyz of corner nr @corner_nr
+
+        
+        lower layer:   upper layer  
+                    
+         2---3           6---7
+         |   |           |   |
+         0---1           4---5
+
+        """
+        gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
+        x = ctypes.c_double()
+        y = ctypes.c_double()
+        z = ctypes.c_double()
+        cfunc.get_xyz1_corner( self , gi , corner_nr , ctypes.byref(x) , ctypes.byref(y) , ctypes.byref(z))
+        return (x.value , y.value , z.value)
+
+
     def depth( self , active_index = None , global_index = None , ijk = None):
         """
         Depth of the center of a cell.
@@ -648,6 +670,7 @@ cfunc.get_ijk1                     = cwrapper.prototype("void ecl_grid_get_ijk1(
 cfunc.get_ijk1A                    = cwrapper.prototype("void ecl_grid_get_ijk1A( ecl_grid , int , int* , int* , int*)") 
 cfunc.get_xyz3                     = cwrapper.prototype("void ecl_grid_get_xyz3( ecl_grid , int , int , int , double* , double* , double*)")
 cfunc.get_xyz1                     = cwrapper.prototype("void ecl_grid_get_xyz1( ecl_grid , int , double* , double* , double*)")
+cfunc.get_xyz1_corner              = cwrapper.prototype("void ecl_grid_get_corner_xyz1( ecl_grid , int , int , double* , double* , double*)")
 cfunc.get_xyz1A                    = cwrapper.prototype("void ecl_grid_get_xyz1A( ecl_grid , int , double* , double* , double*)")
 cfunc.get_ijk_xyz                  = cwrapper.prototype("int  ecl_grid_get_global_index_from_xyz( ecl_grid , double , double , double , int)")
 cfunc.num_lgr                      = cwrapper.prototype("int  ecl_grid_get_num_lgr( ecl_grid )")
