@@ -771,10 +771,32 @@ class EclSum( CClass ):
     @property
     def case(self):
         """
-        Will return the case name of the current instance - including path.
+        Will return the case name of the current instance - optionally including path.
         """
         return cfunc.get_simcase( self )
 
+
+    @property
+    def path(self):
+        """
+        Will return the path to the current case. Will be None for 
+        case in CWD. See also abs_path.
+        """
+        return cfunc.get_path( self )
+
+    @property
+    def base(self):
+        """
+        Will return the basename of the current case - no path.
+        """
+        return cfunc.get_base( self )
+
+    @property
+    def abs_path(self):
+        """
+        Will return the absolute path to the current case.
+        """
+        return cfunc.get_abs_path( self )
 
     #-----------------------------------------------------------------
     # Here comes functions for getting vectors of the time
@@ -1122,6 +1144,9 @@ cfunc.get_data_start                = cwrapper.prototype("time_t   ecl_sum_get_d
 
 cfunc.get_unit                      = cwrapper.prototype("char*    ecl_sum_get_unit( ecl_sum , char*)") 
 cfunc.get_simcase                   = cwrapper.prototype("char*    ecl_sum_get_case( ecl_sum )")
+cfunc.get_base                      = cwrapper.prototype("char*    ecl_sum_get_base( ecl_sum )")
+cfunc.get_path                      = cwrapper.prototype("char*    ecl_sum_get_path( ecl_sum )")
+cfunc.get_abs_path                  = cwrapper.prototype("char*    ecl_sum_get_abs_path( ecl_sum )")
 cfunc.get_report_step_from_time     = cwrapper.prototype("int      ecl_sum_get_report_step_from_time( ecl_sum , time_t)")
 cfunc.get_report_step_from_days     = cwrapper.prototype("int      ecl_sum_get_report_step_from_days( ecl_sum , double)")
 cfunc.get_report_time               = cwrapper.prototype("time_t   ecl_sum_get_report_time(ecl_sum , int)")
