@@ -15,14 +15,16 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import os
 import datetime
 import unittest
 import ert
 import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv
 
-
-case = "data/eclipse/case/ECLIPSE"
+base = "ECLIPSE"
+path = "data/eclipse/case"
+case = "%s/%s" % (path , base)
 
 
 def sum_get(*args):
@@ -145,10 +147,29 @@ class SumTest( unittest.TestCase ):
         self.assertTrue( True )
 
 
+    def test_case1(self ):
+        self.assertTrue( self.sum.path     == path )
+        self.assertTrue( self.sum.base     == base )
+        self.assertTrue( self.sum.case     == case )
+        self.assertTrue( self.sum.abs_path == os.path.realpath(os.path.join( os.getcwd() , path )))
+
+
+    def test_case2( self ):
+        cwd = os.getcwd()
+        os.chdir( path )
+        sum = ecl.EclSum( base )
+        self.assertTrue( sum.path is None )
+        self.assertTrue( sum.base     == base )
+        self.assertTrue( sum.case     == base )
+        self.assertTrue( sum.abs_path == os.path.realpath(os.path.join( cwd , path )))
+        os.chdir( cwd )
+
 
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( SumTest( 'test_load' ))
+    suite.addTest( SumTest( 'test_case1' ))
+    suite.addTest( SumTest( 'test_case2' ))
     suite.addTest( SumTest( 'test_interp' ))
     suite.addTest( SumTest( 'test_wells' ))
     suite.addTest( SumTest( 'test_last' ))

@@ -2,6 +2,7 @@
 import unittest
 import sys
 
+import troll_test
 import sum_test
 import sched_test
 import large_mem_test
@@ -28,6 +29,7 @@ def run(name , module):
 
 run("kw"         , kw_test)    
 run("summary"    , sum_test)
+run("troll"      , troll_test)
 run("sched_file" , sched_test)
 run("file_test"  , file_test)
 run("large_mem"  , large_mem_test)
