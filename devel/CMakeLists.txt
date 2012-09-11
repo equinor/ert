@@ -1,6 +1,14 @@
 cmake_minimum_required( VERSION 2.6 )
-include( CheckFunctionExists )
 project( ERT C CXX )
+include( CheckFunctionExists )
+
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+   set(LINUX_HOST TRUE )
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+   set(WINDOWS_HOST TRUE)
+endif()    
+
 
 set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99 -fno-leading-underscore" )
 set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
@@ -116,16 +124,6 @@ if (HAVE_LOCALTIME_R)
   add_definitions( -DHAVE_LOCALTIME_R )
 endif()
 
-try_compile( MKDIR_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_mkdir.c )
-if (MKDIR_POSIX)
-  add_definitions( -DMKDIR_POSIX )
-endif()
-
-try_compile( ISREG_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_isreg.c )
-if (ISREG_POSIX)
-  add_definitions( -DHAVE_ISREG )
-endif()
-
 check_function_exists( lockf HAVE_LOCKF )
 if (HAVE_LOCKF)
   add_definitions( -DHAVE_LOCKF )
@@ -171,6 +169,21 @@ if (HAVE_OPENDIR)
   add_definitions( -DHAVE_USLEEP )
 endif()
 
+try_compile( MKDIR_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_mkdir.c )
+if (MKDIR_POSIX)
+  add_definitions( -DMKDIR_POSIX )
+endif()
+
+try_compile( ISREG_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_isreg.c )
+if (ISREG_POSIX)
+  add_definitions( -DHAVE_ISREG )
+endif()
+
+if (LINUX_HOST)
+   set( NEED_LIBM TRUE )
+else()
+   set( NEED_LIBM FALSE )
+endif()
 
 find_library( LAPACK_LIBRARY NAMES lapack)
 if (LAPACK_LIBRARY)
