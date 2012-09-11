@@ -95,7 +95,7 @@ static void ert_report_set_work_path( ert_report_type * report ) {
 }
 
 ert_report_type * ert_report_alloc( const char * source_file , const char * target_file ) {
-  ert_report_type * report = util_malloc( sizeof * report , __func__ );
+  ert_report_type * report = util_malloc( sizeof * report );
   report->template = template_alloc( source_file , false , NULL );
   
   {

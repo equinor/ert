@@ -55,7 +55,7 @@ static void sched_kw_tstep_add_tstep_string( sched_kw_tstep_type * kw, const cha
 
 
 static sched_kw_tstep_type * sched_kw_tstep_alloc_empty(){
-  sched_kw_tstep_type *tstep = util_malloc(sizeof * tstep , __func__ );
+  sched_kw_tstep_type *tstep = util_malloc(sizeof * tstep );
   tstep->tstep_list          = double_vector_alloc(0 , 0);
   return tstep;
 }

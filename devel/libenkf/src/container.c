@@ -34,7 +34,7 @@ typedef struct container_struct {
 
 
 container_type * container_alloc( container_config_type * config ) {
-  container_type * container = util_malloc( sizeof * container , __func__ );
+  container_type * container = util_malloc( sizeof * container );
   UTIL_TYPE_ID_INIT( container , CONTAINER );
   container->config = config;
   container->nodes  = vector_alloc_new();

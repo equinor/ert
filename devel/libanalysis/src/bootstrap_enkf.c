@@ -352,7 +352,7 @@ void bootstrap_enkf_set_subspace_dimension( bootstrap_enkf_data_type * boot_data
 
 
 void * bootstrap_enkf_data_alloc( rng_type * rng ) {
-  bootstrap_enkf_data_type * boot_data = util_malloc( sizeof * boot_data , __func__);
+  bootstrap_enkf_data_type * boot_data = util_malloc( sizeof * boot_data );
   UTIL_TYPE_ID_INIT( boot_data , BOOTSTRAP_ENKF_TYPE_ID );
 
   boot_data->std_enkf_data = std_enkf_data_alloc( NULL );
@@ -383,9 +383,9 @@ static int ** alloc_iens_resample( rng_type * rng , int ens_size ) {
   int ** iens_resample;
   int iens;
 
-  iens_resample = util_calloc( ens_size , sizeof * iens_resample , __func__);
+  iens_resample = util_calloc( ens_size , sizeof * iens_resample );
   for (iens = 0; iens < ens_size; iens++)
-    iens_resample[iens] = util_malloc( ens_size * sizeof( ** iens_resample ) , __func__);
+    iens_resample[iens] = util_calloc( ens_size , sizeof( ** iens_resample ) );
   
   {
     int i,j;

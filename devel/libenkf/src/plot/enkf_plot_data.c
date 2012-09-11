@@ -43,7 +43,7 @@ struct enkf_plot_data_struct {
 
 
 static void enkf_plot_data_resize( enkf_plot_data_type * plot_data , int new_size ) {
-  plot_data->ensemble = util_realloc( plot_data->ensemble , sizeof * plot_data->ensemble * new_size , __func__);
+  plot_data->ensemble = util_realloc( plot_data->ensemble , sizeof * plot_data->ensemble * new_size );
   {
     int iens;
     for (iens = plot_data->alloc_size; iens < new_size; iens++) 
@@ -69,7 +69,7 @@ void enkf_plot_data_free( enkf_plot_data_type * plot_data ) {
 
 
 enkf_plot_data_type * enkf_plot_data_alloc( time_t start_time ) {
-  enkf_plot_data_type * plot_data = util_malloc( sizeof * plot_data , __func__ );
+  enkf_plot_data_type * plot_data = util_malloc( sizeof * plot_data);
   
   plot_data->start_time = start_time;
   plot_data->time_mode  = false;
@@ -146,7 +146,7 @@ void enkf_plot_data_load( enkf_plot_data_type * plot_data ,
     int active_size = int_vector_size( iens_list );
     int num_threads = 4;
     int block_size  = active_size / num_threads;
-    arg_pack_type ** arg_list = util_malloc( num_threads * sizeof * arg_list , __func__ );
+    arg_pack_type ** arg_list = util_calloc( num_threads , sizeof * arg_list );
     thread_pool_type * tp = thread_pool_alloc( num_threads , true );
   
     if (block_size == 0)  /* Fewer tasks than threads */

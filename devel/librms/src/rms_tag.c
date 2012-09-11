@@ -85,12 +85,12 @@ const char * rms_tag_get_name(const rms_tag_type *tag) {
 void rms_tag_fread_header(rms_tag_type *tag , FILE *stream , bool *eof_tag) {
   char *buffer;
   *eof_tag = false;
-  buffer = util_malloc(4 , __func__);
+  buffer = util_calloc( 4 , sizeof * buffer);
   if (rms_util_fread_string(buffer , 4 , stream )) {
     if (strcmp(buffer , rms_starttag_string) == 0) {
       /* OK */
       {
-        char *tmp = malloc(rms_util_fread_strlen(stream) + 1);
+        char *tmp = util_calloc( rms_util_fread_strlen(stream) + 1 , sizeof * tmp);
         rms_util_fread_string(tmp , 0 , stream);
         tag->name = tmp;
         if (strcmp(tag->name , rms_eof_tag) == 0)

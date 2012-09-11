@@ -99,7 +99,7 @@ conf_class_type * conf_class_alloc_empty(
 {
   assert(class_name != NULL);
 
-  conf_class_type * conf_class = util_malloc(sizeof *conf_class, __func__);
+  conf_class_type * conf_class = util_malloc(sizeof *conf_class);
   
   conf_class->super_class      = NULL;
   conf_class->class_name       = util_alloc_string_copy(class_name);
@@ -145,7 +145,7 @@ conf_instance_type * conf_instance_alloc_default(
   assert(conf_class != NULL);
   assert(name       != NULL);
 
-  conf_instance_type * conf_instance = util_malloc(sizeof * conf_instance, __func__);
+  conf_instance_type * conf_instance = util_malloc(sizeof * conf_instance);
 
   conf_instance->conf_class  = conf_class;
   conf_instance->name          = util_alloc_string_copy(name);
@@ -221,7 +221,7 @@ void conf_instance_copy_sub_instances(
 conf_instance_type * conf_instance_copyc(
   const conf_instance_type * conf_instance)
 {
-  conf_instance_type * conf_instance_copy = util_malloc(sizeof * conf_instance_copy, __func__);
+  conf_instance_type * conf_instance_copy = util_malloc(sizeof * conf_instance_copy);
 
   conf_instance_copy->conf_class  = conf_instance->conf_class;
   conf_instance_copy->name          = util_alloc_string_copy(conf_instance->name);
@@ -263,7 +263,7 @@ conf_item_spec_type * conf_item_spec_alloc(
 {
   assert(name != NULL);
 
-  conf_item_spec_type * conf_item_spec = util_malloc(sizeof * conf_item_spec, __func__);
+  conf_item_spec_type * conf_item_spec = util_malloc(sizeof * conf_item_spec);
 
   conf_item_spec->super_class   = NULL;
   conf_item_spec->name          = util_alloc_string_copy(name);
@@ -302,7 +302,7 @@ conf_item_type * conf_item_alloc(
   const conf_item_spec_type * conf_item_spec,
   const char                * value)
 {
-  conf_item_type * conf_item = util_malloc(sizeof * conf_item, __func__);
+  conf_item_type * conf_item = util_malloc(sizeof * conf_item);
 
   assert(conf_item_spec != NULL);
   assert(value            != NULL);
@@ -346,7 +346,7 @@ conf_item_mutex_type * conf_item_mutex_alloc(
   bool require_one,
   bool inverse)
 {
-  conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex, __func__);
+  conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex);
   
   conf_item_mutex->super_class    = super_class;
   conf_item_mutex->require_one    = require_one;
@@ -1202,7 +1202,7 @@ bool conf_instance_has_required_sub_instances(
 
   /** This first part is just concerned with creating the function __instance_has_sub_instance_of_type. */
   int                   num_sub_instances = hash_get_size(conf_instance->sub_instances);
-  conf_class_type  ** class_signatures  = util_calloc(num_sub_instances , sizeof * class_signatures, __func__);
+  conf_class_type  ** class_signatures  = util_calloc(num_sub_instances , sizeof * class_signatures);
   {
     char ** sub_instance_keys = hash_alloc_keylist(conf_instance->sub_instances);
     for(int sub_instance_nr = 0; sub_instance_nr < num_sub_instances; sub_instance_nr++)

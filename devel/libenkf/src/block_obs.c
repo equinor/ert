@@ -84,7 +84,7 @@ UTIL_IS_INSTANCE_FUNCTION(block_obs , BLOCK_OBS_TYPE_ID);
 
 
 static point_obs_type * point_obs_alloc( block_obs_source_type   source_type , int i , int j , int k , int active_index , char * sum_key , double value , double std) {
-  point_obs_type * point_obs = util_malloc( sizeof * point_obs , __func__);
+  point_obs_type * point_obs = util_malloc( sizeof * point_obs );
   UTIL_TYPE_ID_INIT( point_obs , POINT_OBS_TYPE_ID );
   point_obs->source_type  = source_type;
   point_obs->i            = i;
@@ -144,7 +144,7 @@ static void block_obs_validate_ijk( const ecl_grid_type * grid , int size, const
 
 static void block_obs_resize( block_obs_type * block_obs , int new_size) {
   int i;
-  block_obs->point_list = util_realloc( block_obs->point_list , new_size * sizeof * block_obs->point_list , __func__);
+  block_obs->point_list = util_realloc( block_obs->point_list , new_size * sizeof * block_obs->point_list );
 
   for (i=block_obs->size; i < new_size; i++)
     block_obs->point_list[i] = NULL;
@@ -170,7 +170,7 @@ block_obs_type * block_obs_alloc(const char   * obs_key,
   block_obs_validate_ijk( grid , size , i,j,k);
   
   {
-    block_obs_type * block_obs = util_malloc(sizeof * block_obs, __func__);
+    block_obs_type * block_obs = util_malloc(sizeof * block_obs);
     char           * sum_kw    = NULL;
 
     UTIL_TYPE_ID_INIT( block_obs , BLOCK_OBS_TYPE_ID );

@@ -170,7 +170,7 @@ member_config_type * member_config_alloc(int iens ,
                                          enkf_fs_type * fs) {
 
                                                 
-  member_config_type * member_config = util_malloc( sizeof * member_config , __func__);
+  member_config_type * member_config = util_malloc( sizeof * member_config );
   member_config->casename            = util_alloc_string_copy( casename );
   member_config->iens                = iens; /* Can only be changed in the allocater. */
   member_config->eclbase             = NULL;

@@ -89,7 +89,7 @@ struct well_ts_struct {
 /******************************************************************/
 
 static well_node_type * well_node_alloc( well_state_type * well_state) {
-  well_node_type * node = util_malloc( sizeof * node , __func__ );
+  well_node_type * node = util_malloc( sizeof * node );
   UTIL_TYPE_ID_INIT( node , WELL_NODE_TYPE_ID );
   node->report_nr  = well_state_get_report_nr( well_state );
   node->sim_time   = well_state_get_sim_time( well_state );
@@ -114,7 +114,7 @@ static void well_node_free__( void * arg ) {
 /*****************************************************************/
 
 static well_ts_type * well_ts_alloc_empty( ) {
-  well_ts_type * well_ts = util_malloc( sizeof * well_ts , __func__ );
+  well_ts_type * well_ts = util_malloc( sizeof * well_ts );
   UTIL_TYPE_ID_INIT( well_ts , WELL_TS_TYPE_ID );
 
   well_ts->ts         = vector_alloc_new();

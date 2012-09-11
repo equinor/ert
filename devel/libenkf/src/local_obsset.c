@@ -37,7 +37,7 @@ struct local_obsset_struct {
 static UTIL_SAFE_CAST_FUNCTION( local_obsset , LOCAL_OBSSET_TYPE_ID )
 
 local_obsset_type * local_obsset_alloc( const char * name ) {
-  local_obsset_type * obsset = util_malloc( sizeof * obsset, __func__);
+  local_obsset_type * obsset = util_malloc( sizeof * obsset);
   UTIL_TYPE_ID_INIT( obsset , LOCAL_OBSSET_TYPE_ID );
   obsset->name = util_alloc_string_copy( name );
   obsset->observations = hash_alloc();

@@ -254,7 +254,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   const int last_report                        = -1;
   const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
   int step1,step2;
-  bool * iactive         = util_malloc(ens_size * sizeof * iactive , __func__);
+  bool * iactive         = util_calloc(ens_size , sizeof * iactive );
   run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
 
   enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
@@ -272,7 +272,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   }
   {
     int iens;
-    arg_pack_type ** arg_list = util_malloc( ens_size * sizeof * arg_list , __func__);
+    arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
     thread_pool_type * tp = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
 
     for (iens = 0; iens < ens_size; iens++) {

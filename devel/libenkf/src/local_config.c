@@ -548,7 +548,7 @@ static void local_config_clear( local_config_type * local_config ) {
    Observe that history_length is *INCLUSIVE*
 */
 local_config_type * local_config_alloc( int history_length ) {
-  local_config_type * local_config = util_malloc( sizeof * local_config , __func__);
+  local_config_type * local_config = util_malloc( sizeof * local_config );
 
   local_config->default_updatestep  = NULL;
   local_config->updatestep_storage  = hash_alloc();
@@ -883,7 +883,7 @@ static char * read_alloc_string(FILE * stream , bool binary) {
   if (binary)
     return util_fread_alloc_string( stream );
   else {
-    char * string = util_malloc(256 * sizeof * string ,__func__); /* 256 - outht to be enough for everyone ... */
+    char * string = util_calloc(256 , sizeof * string ); /* 256 - outht to be enough for everyone ... */
     fscanf(stream , "%s" , string);
     return string;
   }

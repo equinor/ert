@@ -40,7 +40,7 @@ static void well_branch_resize( well_branch_type * branch , int new_size) {
   if (new_size < branch->alloc_size)
     util_abort("%s: sorry - can only grow \n",__func__);
   
-  branch->connections = util_realloc( branch->connections , new_size * sizeof * branch->connections , __func__);
+  branch->connections = util_realloc( branch->connections , new_size * sizeof * branch->connections );
   {
     int i;
     for (i=branch->alloc_size; i < new_size; i++)
@@ -51,7 +51,7 @@ static void well_branch_resize( well_branch_type * branch , int new_size) {
 
 
 well_branch_type * well_branch_alloc(int branch_nr) {
-  well_branch_type * branch = util_malloc( sizeof * branch , __func__ );
+  well_branch_type * branch = util_malloc( sizeof * branch );
   branch->branch_nr   = branch_nr;
   branch->connections = NULL;
   branch->alloc_size = 0;

@@ -321,7 +321,7 @@ static void welspec_sched_fprintf(const welspec_type * ws, FILE * stream)
 
 static welspec_type * welspec_alloc_empty()
 {
-  welspec_type *ws = util_malloc(sizeof *ws,__func__);
+  welspec_type *ws = util_malloc(sizeof *ws);
   
   ws->name      = NULL;
   ws->group     = NULL;
@@ -395,7 +395,7 @@ static welspec_type * welspec_alloc_from_tokens(const stringlist_type * line_tok
 
 static sched_kw_welspecs_type * sched_kw_welspecs_alloc_empty()
 {
-  sched_kw_welspecs_type * kw = util_malloc(sizeof * kw,__func__);
+  sched_kw_welspecs_type * kw = util_malloc(sizeof * kw );
   kw->welspec_list = vector_alloc_new();
   return kw;
 };
@@ -474,8 +474,8 @@ void sched_kw_welspecs_init_child_parent_list( const sched_kw_welspecs_type * kw
 void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw, char *** __children, char *** __parents, int * num_pairs)
 {
   int num_wells    = vector_get_size(kw->welspec_list);
-  char ** children = util_malloc(num_wells * sizeof * children, __func__);
-  char ** parents  = util_malloc(num_wells * sizeof * parents, __func__);
+  char ** children = util_malloc(num_wells * sizeof * children);
+  char ** parents  = util_malloc(num_wells * sizeof * parents);
 
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
   {

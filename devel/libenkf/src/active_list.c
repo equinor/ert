@@ -80,7 +80,7 @@ UTIL_SAFE_CAST_FUNCTION(active_list , ACTIVE_LIST_TYPE_ID)
    The newly created active_list default to setting all indices actiove.
 */
 active_list_type * active_list_alloc(active_mode_type mode) {
-  active_list_type * active_list = util_malloc(sizeof * active_list , __func__);
+  active_list_type * active_list = util_malloc(sizeof * active_list);
   UTIL_TYPE_ID_INIT( active_list , ACTIVE_LIST_TYPE_ID );
   active_list->index_list  = int_vector_alloc(0 , -1);
   active_list->mode        = mode;

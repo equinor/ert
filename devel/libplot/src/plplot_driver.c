@@ -65,7 +65,7 @@ static void plplot_state_set_log( plplot_state_type * state , bool logx , bool l
 
 
 static plplot_state_type * plplot_state_alloc( void * init_arg ) {
-  plplot_state_type * state = util_malloc( sizeof * state , __func__);
+  plplot_state_type * state = util_malloc( sizeof * state );
   state->stream     = 0;
   {
     arg_pack_type * arg_pack = arg_pack_safe_cast( init_arg );
@@ -309,9 +309,9 @@ void plplot_plot_hist( plot_driver_type * driver, const char * label , double_ve
         Could for some fuxxxing reason not get the plhist() function
           to work, and had to resort to the low level plbin function.
       */
-      double * limits  = util_calloc(bins + 1 , sizeof * limits  , __func__);
-      double * x_      = util_calloc(bins     , sizeof * x_  , __func__); 
-      double * y_      = util_calloc(bins     , sizeof * y_  , __func__);
+      double * limits  = util_calloc(bins + 1 , sizeof * limits );
+      double * x_      = util_calloc(bins     , sizeof * x_     ); 
+      double * y_      = util_calloc(bins     , sizeof * y_     );
       int i;
       double delta = (xmax - xmin) / bins;
       

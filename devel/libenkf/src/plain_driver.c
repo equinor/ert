@@ -214,7 +214,7 @@ void plain_driver_free(void *_driver) {
 */
 
 void * plain_driver_alloc(const char * mount_point , const char * node_fmt, const char * vector_fmt) {
-  plain_driver_type * driver = util_malloc(sizeof * driver , __func__);
+  plain_driver_type * driver = util_malloc(sizeof * driver );
   {
     fs_driver_type * fs_driver = (fs_driver_type *) driver;
     fs_driver_init(fs_driver);

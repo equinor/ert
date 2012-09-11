@@ -57,7 +57,7 @@ struct ert_report_list_struct {
 
 
 ert_report_list_type * ert_report_list_alloc(const char * target_path, const char * plot_path ) {
-  ert_report_list_type * report_list = util_malloc( sizeof * report_list , __func__);
+  ert_report_list_type * report_list = util_malloc( sizeof * report_list );
   report_list->path_list   = stringlist_alloc_new( );
   report_list->report_list = vector_alloc_new( );
   report_list->target_path = NULL;

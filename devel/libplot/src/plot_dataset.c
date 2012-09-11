@@ -179,7 +179,7 @@ void plot_dataset_fprintf(const plot_dataset_type * dataset , FILE * stream) {
 plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , const char* label , bool logx , bool logy) {
   plot_dataset_type *d;
   
-  d                = util_malloc(sizeof *d , __func__);
+  d                = util_malloc(sizeof *d );
   UTIL_TYPE_ID_INIT(d , PLOT_DATASET_TYPE_ID);
   d->data_type     = data_type;
   d->data_mask     = __make_data_mask(data_type);

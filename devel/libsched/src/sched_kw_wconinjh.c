@@ -75,7 +75,7 @@ struct wconinjh_state_struct {
 
 static wconinjh_well_type * wconinjh_well_alloc_empty()
 {
-  wconinjh_well_type * well = util_malloc(sizeof * well, __func__);
+  wconinjh_well_type * well = util_malloc(sizeof * well);
   well->name = NULL;
   return well;
 }
@@ -191,7 +191,7 @@ static void sched_kw_wconinjh_add_well( sched_kw_wconinjh_type * kw , wconinjh_w
 
 static sched_kw_wconinjh_type * sched_kw_wconinjh_alloc_empty()
 {
-  sched_kw_wconinjh_type * kw = util_malloc(sizeof * kw, __func__);
+  sched_kw_wconinjh_type * kw = util_malloc(sizeof * kw);
   kw->wells = vector_alloc_new();
   return kw;
 }
@@ -287,7 +287,7 @@ void sched_kw_wconinjh_init_well_list( const sched_kw_wconinjh_type * kw , strin
 /*****************************************************************/
 
 wconinjh_state_type * wconinjh_state_alloc( const time_t_vector_type* time) {
-  wconinjh_state_type * wconinjh = util_malloc( sizeof * wconinjh , __func__);
+  wconinjh_state_type * wconinjh = util_malloc( sizeof * wconinjh);
   UTIL_TYPE_ID_INIT( wconinjh , WCONINJH_TYPE_ID );
 
   wconinjh->time           = time;

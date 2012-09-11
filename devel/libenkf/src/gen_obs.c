@@ -111,7 +111,7 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
   if (gen_obs->obs_file != NULL)
     buffer = gen_common_fload_alloc(gen_obs->obs_file , gen_obs->obs_format , ECL_DOUBLE_TYPE , &load_type , &gen_obs->obs_size);
   else {
-    double * double_buffer = util_calloc(2 , sizeof * double_buffer , __func__);
+    double * double_buffer = util_calloc(2 , sizeof * double_buffer );
     buffer = double_buffer;
     double_buffer[0] = scalar_value;
     double_buffer[1] = scalar_error;
@@ -121,15 +121,15 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
   
   /** Ensure that the data is of type double. */
   if (load_type == ECL_FLOAT_TYPE) {
-    double * double_data = util_calloc(gen_obs->obs_size , sizeof * double_data , __func__);
+    double * double_data = util_calloc(gen_obs->obs_size , sizeof * double_data );
     util_float_to_double(double_data , (const float *) buffer , gen_obs->obs_size);
     free(buffer);
     buffer = double_data;
   }
   
   gen_obs->obs_size /= 2; /* Originally contains BOTH data and std. */
-  gen_obs->obs_data = util_realloc(gen_obs->obs_data , gen_obs->obs_size * sizeof * gen_obs->obs_data , __func__);
-  gen_obs->obs_std  = util_realloc(gen_obs->obs_std  , gen_obs->obs_size * sizeof * gen_obs->obs_std , __func__);
+  gen_obs->obs_data = util_realloc(gen_obs->obs_data , gen_obs->obs_size * sizeof * gen_obs->obs_data );
+  gen_obs->obs_std  = util_realloc(gen_obs->obs_std  , gen_obs->obs_size * sizeof * gen_obs->obs_std  );
   {
     int iobs;
     double * double_buffer = (double * ) buffer;
@@ -165,7 +165,7 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
 
 
 gen_obs_type * gen_obs_alloc(const gen_data_config_type * data_config , const char * obs_key , const char * obs_file , double scalar_value , double scalar_error , const char * data_index_file , const char * data_index_string , const char * error_covar_file) {
-  gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
+  gen_obs_type * obs = util_malloc(sizeof * obs);
   
   UTIL_TYPE_ID_INIT( obs , GEN_OBS_TYPE_ID );
   obs->obs_data         = NULL;
@@ -186,7 +186,7 @@ gen_obs_type * gen_obs_alloc(const gen_data_config_type * data_config , const ch
        check is needed is indicated by the boolean flag
        observe_all_data.
     */
-    obs->data_index_list = util_calloc( obs->obs_size , sizeof * obs->data_index_list , __func__);
+    obs->data_index_list = util_calloc( obs->obs_size , sizeof * obs->data_index_list );
     for (int i =0; i < obs->obs_size; i++)
       obs->data_index_list[i] = i;
     obs->observe_all_data = true;

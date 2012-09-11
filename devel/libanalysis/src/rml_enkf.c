@@ -131,7 +131,7 @@ void rml_enkf_set_subspace_dimension( rml_enkf_data_type * data , int subspace_d
 
 
 void * rml_enkf_data_alloc( rng_type * rng) {
-  rml_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
+  rml_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , RML_ENKF_TYPE_ID );
   
   rml_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
@@ -184,7 +184,7 @@ void rml_enkf_updateA(void * module_data ,
   int nrmin         = util_int_min( ens_size , nrobs); 
   matrix_type * Ud   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
   matrix_type * VdT  = matrix_alloc( nrmin , ens_size );    /* Right singular vectors. */
-  double * Wd       = util_calloc( nrmin , sizeof * Wd  , __func__); 
+  double * Wd       = util_calloc( nrmin , sizeof * Wd  ); 
   
 
   

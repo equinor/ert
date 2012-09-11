@@ -440,7 +440,7 @@ static void job_queue_node_clear(job_queue_node_type * node) {
 
 
 static job_queue_node_type * job_queue_node_alloc() {
-  job_queue_node_type * node = util_malloc(sizeof * node , __func__);
+  job_queue_node_type * node = util_malloc(sizeof * node );
 
   job_queue_node_clear(node);
   job_queue_node_clear_error_info(node);
@@ -1454,7 +1454,7 @@ int job_queue_get_max_submit(const job_queue_type * job_queue ) {
 
 
 static void job_queue_grow( job_queue_type * queue , int alloc_size ) {
-  job_queue_node_type ** new_jobs = util_malloc(alloc_size * sizeof * queue->jobs , __func__);
+  job_queue_node_type ** new_jobs = util_malloc(alloc_size * sizeof * queue->jobs );
   job_queue_node_type ** old_jobs = queue->jobs;
   if (old_jobs != NULL)
     memcpy( new_jobs , queue->jobs , queue->alloc_size * sizeof * queue->jobs );
@@ -1493,7 +1493,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
 
                                  
 
-  job_queue_type * queue = util_malloc(sizeof * queue , __func__);
+  job_queue_type * queue = util_malloc(sizeof * queue );
   queue->jobs            = NULL;
   queue->usleep_time     = 250000; /* 1000000 : 1 second */
   queue->max_submit      = max_submit;

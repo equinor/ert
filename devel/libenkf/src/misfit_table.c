@@ -108,7 +108,7 @@ struct misfit_vector_struct {
 */
 
 static misfit_vector_type * misfit_vector_alloc(int history_length) {
-  misfit_vector_type * misfit_vector = util_malloc( sizeof * misfit_vector , __func__);
+  misfit_vector_type * misfit_vector = util_malloc( sizeof * misfit_vector );
   UTIL_TYPE_ID_INIT(misfit_vector , MISFIT_VECTOR_TYPE_ID);
 
   if (history_length > 0)
@@ -201,7 +201,7 @@ static void misfit_node_free__( void * node ) {
 }
 
 static misfit_node_type * misfit_node_alloc(int iens) {
-  misfit_node_type * node = util_malloc( sizeof * node , __func__);
+  misfit_node_type * node = util_malloc( sizeof * node );
   UTIL_TYPE_ID_INIT( node , MISFIT_NODE_TYPE_ID);
   node->my_iens    = iens;
   node->obs        = hash_alloc();
@@ -278,9 +278,9 @@ static misfit_node_type * misfit_node_buffer_fread_alloc( buffer_type * buffer )
 
 
 static double ** __2d_malloc(int rows , int columns) {
-  double ** d = util_calloc( rows , sizeof * d , __func__);
+  double ** d = util_calloc( rows , sizeof * d );
   for (int i =0; i < rows; i++)
-    d[i] = util_calloc( columns , sizeof * d[i] , __func__);
+    d[i] = util_calloc( columns , sizeof * d[i]);
   return d;
 }
 
@@ -367,7 +367,7 @@ void misfit_table_fwrite( const misfit_table_type * misfit_table , FILE * stream
 */
 
 static misfit_table_type * misfit_table_alloc_empty(const enkf_obs_type * enkf_obs) {
-  misfit_table_type * table    = util_malloc( sizeof * table , __func__);
+  misfit_table_type * table    = util_malloc( sizeof * table );
   table->enkf_obs              = enkf_obs;
   table->ensemble              = vector_alloc_new();
   table->ranking_list          = hash_alloc();
@@ -559,7 +559,7 @@ static UTIL_SAFE_CAST_FUNCTION( misfit_ranking , MISFIT_RANKING_TYPE_ID )
 
 
 static misfit_ranking_type * misfit_ranking_alloc( ) {
-  misfit_ranking_type * misfit_ranking = util_malloc( sizeof * misfit_ranking , __func__);
+  misfit_ranking_type * misfit_ranking = util_malloc( sizeof * misfit_ranking );
   UTIL_TYPE_ID_INIT( misfit_ranking , MISFIT_RANKING_TYPE_ID );
   misfit_ranking->sort_permutation = NULL;
   misfit_ranking->ensemble = vector_alloc_new();

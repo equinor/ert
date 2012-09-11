@@ -394,7 +394,7 @@ static void ecl_config_init_static_kw( ecl_config_type * ecl_config ) {
 
 
 ecl_config_type * ecl_config_alloc_empty( ) {
-  ecl_config_type * ecl_config         = util_malloc(sizeof * ecl_config , __func__);
+  ecl_config_type * ecl_config         = util_malloc(sizeof * ecl_config );
 
   ecl_config->io_config                = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
   ecl_config->fixed_length_kw          = hash_alloc();

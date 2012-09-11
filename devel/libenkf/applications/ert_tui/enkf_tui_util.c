@@ -147,7 +147,7 @@ const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type
 
 
 bool * enkf_tui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int * _iens1 , int * _iens2) {
-  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+  bool * iactive = util_calloc(ens_size , sizeof * iactive );
   int iens1 = util_scanf_int_with_limits("First ensemble member" , prompt_len , 0 , ens_size - 1);
   int iens2 = util_scanf_int_with_limits("Last ensemble member" , prompt_len , iens1 , ens_size - 1);
   int iens;
@@ -249,7 +249,7 @@ void enkf_tui_util_scanf_report_steps(int last_report , int prompt_len , int * _
 */
 
 bool * enkf_tui_util_scanf_alloc_report_active(int last_step, int prompt_len) {
-  bool * iactive = util_malloc((last_step + 1) * sizeof * iactive , __func__);
+  bool * iactive = util_calloc((last_step + 1) , sizeof * iactive );
   int step1 = util_scanf_int_with_limits("First report step" , prompt_len , 0 , last_step);
   int step2 = util_scanf_int_with_limits("Last report step" , prompt_len , step1 , last_step);
   int step;

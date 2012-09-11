@@ -61,11 +61,11 @@ void gen_kw_free(gen_kw_type *gen_kw) {
 
 
 gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
-  gen_kw_type * gen_kw  = util_malloc(sizeof *gen_kw , __func__);
+  gen_kw_type * gen_kw  = util_malloc(sizeof *gen_kw );
   gen_kw->__type_id     = GEN_KW;
   gen_kw->config        = config;
   gen_kw->subst_list    = subst_list_alloc( NULL );
-  gen_kw->data          = util_calloc( gen_kw_config_get_data_size( config ) , sizeof * gen_kw->data ,  __func__); 
+  gen_kw->data          = util_calloc( gen_kw_config_get_data_size( config ) , sizeof * gen_kw->data ); 
   return gen_kw;
 }
 

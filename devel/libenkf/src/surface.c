@@ -67,12 +67,12 @@ bool surface_initialize(surface_type *surface , int iens , const char * filename
 
 
 surface_type * surface_alloc(const surface_config_type * surface_config) {
-  surface_type * surface  = util_malloc(sizeof *surface , __func__);
+  surface_type * surface  = util_malloc(sizeof *surface);
   surface->__type_id      = SURFACE;
   surface->config         = (surface_config_type *) surface_config;
   {
     const int data_size = surface_config_get_data_size( surface_config );
-    surface->data       = util_malloc( data_size * sizeof * surface->data , __func__ );
+    surface->data       = util_calloc( data_size , sizeof * surface->data );
   }
   return surface;
 }

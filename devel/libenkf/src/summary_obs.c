@@ -96,7 +96,7 @@ summary_obs_type * summary_obs_alloc(const char   * summary_key,
                                      const char * auto_corrf_name , 
                                      double auto_corrf_param) {
   
-  summary_obs_type * obs = util_malloc(sizeof * obs , __func__);
+  summary_obs_type * obs = util_malloc(sizeof * obs );
   UTIL_TYPE_ID_INIT( obs , SUMMARY_OBS_TYPE_ID )
 
   obs->summary_key      = util_alloc_string_copy( summary_key );

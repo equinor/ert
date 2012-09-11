@@ -411,7 +411,7 @@ const char * field_config_get_grid_name( const field_config_type * config) {
 */
 field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table ) {
 
-  field_config_type * config = util_malloc(sizeof *config, __func__);
+  field_config_type * config = util_malloc(sizeof *config);
   UTIL_TYPE_ID_INIT( config , FIELD_CONFIG_ID);
   
   config->ecl_kw_name      = util_alloc_string_copy( ecl_kw_name );

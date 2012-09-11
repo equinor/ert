@@ -135,7 +135,7 @@ void ensemble_config_set_refcase( ensemble_config_type * ensemble_config , const
 
 ensemble_config_type * ensemble_config_alloc_empty( ) {
 
-  ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config , __func__);
+  ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config );
   ensemble_config->config_nodes          = hash_alloc();
   ensemble_config->refcase               = NULL;
   ensemble_config->gen_kw_format_string  = util_alloc_string_copy( DEFAULT_GEN_KW_TAG_FORMAT );
@@ -794,7 +794,7 @@ enkf_config_node_type * ensemble_config_add_surface( ensemble_config_type * ense
 enkf_config_node_type * ensemble_config_add_container( ensemble_config_type * ensemble_config , char * key) {
   bool random_key = false;
   if (key == NULL) {
-    key = util_calloc( 11 , sizeof * key  , __func__);
+    key = util_calloc( 11 , sizeof * key  );
     sprintf(key , "%ld" , random() % 10000000 ); 
     random_key = true;
   }

@@ -234,7 +234,7 @@ UTIL_SAFE_CAST_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 
 static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_only) {
-  enkf_fs_type * fs          = util_malloc(sizeof * fs , __func__);
+  enkf_fs_type * fs          = util_malloc(sizeof * fs );
   UTIL_TYPE_ID_INIT( fs , ENKF_FS_TYPE_ID );
   fs->time_map               = time_map_alloc();
   fs->index                  = NULL;

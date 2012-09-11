@@ -131,7 +131,7 @@ static UTIL_SAFE_CAST_FUNCTION( ext_job , EXT_JOB_TYPE_ID)
 
 
 static ext_job_type * ext_job_alloc__(const char * name , const char * license_root_path , bool private_job) {
-  ext_job_type * ext_job = util_malloc(sizeof * ext_job , __func__);
+  ext_job_type * ext_job = util_malloc(sizeof * ext_job );
   
   UTIL_TYPE_ID_INIT( ext_job , EXT_JOB_TYPE_ID);
   ext_job->name                = util_alloc_string_copy( name );

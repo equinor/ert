@@ -376,6 +376,18 @@ class EclGrid(CClass):
         else:
             return None
 
+    def cell_contains( self , x , y , z , active_index = None , global_index = None , ijk = None):
+        """
+        Will check if the cell contains point given by world
+        coordinates (x,y,z).
+
+        See method get_xyz() for documentation of @active_index,
+        @global_index and @ijk.
+        """
+        gi = self.__global_index( ijk = ijk , active_index = active_index , global_index = global_index)
+        return cfunc.cell_contains( self , gi , x,y,z)
+
+
     def cell_volume( self, active_index = None , global_index = None , ijk = None):
         """
         Calculate the volume of a cell.
@@ -673,6 +685,7 @@ cfunc.get_xyz1                     = cwrapper.prototype("void ecl_grid_get_xyz1(
 cfunc.get_xyz1_corner              = cwrapper.prototype("void ecl_grid_get_corner_xyz1( ecl_grid , int , int , double* , double* , double*)")
 cfunc.get_xyz1A                    = cwrapper.prototype("void ecl_grid_get_xyz1A( ecl_grid , int , double* , double* , double*)")
 cfunc.get_ijk_xyz                  = cwrapper.prototype("int  ecl_grid_get_global_index_from_xyz( ecl_grid , double , double , double , int)")
+cfunc.cell_contains                = cwrapper.prototype("bool ecl_grid_cell_contains_xyz1( ecl_grid , int , double , double , double )")
 cfunc.num_lgr                      = cwrapper.prototype("int  ecl_grid_get_num_lgr( ecl_grid )")
 cfunc.has_lgr                      = cwrapper.prototype("bool ecl_grid_has_lgr( ecl_grid , char* )")
 cfunc.grid_value                   = cwrapper.prototype("double ecl_grid_get_property( ecl_grid , ecl_kw , int , int , int)")

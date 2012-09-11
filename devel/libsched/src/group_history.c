@@ -47,7 +47,7 @@ UTIL_SAFE_CAST_FUNCTION_CONST( group_history , GROUP_HISTORY_TYPE_ID )
 UTIL_IS_INSTANCE_FUNCTION( group_history , GROUP_HISTORY_TYPE_ID)
 
 group_history_type * group_history_alloc( const char * group_name , const time_t_vector_type * time , int report_step) {
-  group_history_type * group_history = util_malloc( sizeof * group_history , __func__ );
+  group_history_type * group_history = util_malloc( sizeof * group_history );
 
   UTIL_TYPE_ID_INIT( group_history , GROUP_HISTORY_TYPE_ID );
 

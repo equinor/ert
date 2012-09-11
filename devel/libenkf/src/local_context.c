@@ -37,7 +37,7 @@ struct local_context_struct {
 
 
 local_context_type * local_context_alloc( const ecl_grid_type * ecl_grid ) {
-  local_context_type * context = util_malloc( sizeof * context , __func__ );
+  local_context_type * context = util_malloc( sizeof * context );
   context->surface_regions = hash_alloc();
   context->ecl_regions   = hash_alloc();
   context->files     = hash_alloc();

@@ -96,7 +96,7 @@ struct queue_driver_struct {
 */
 
 static queue_driver_type * queue_driver_alloc_empty( ) {
-  queue_driver_type * driver = util_malloc( sizeof * driver, __func__);
+  queue_driver_type * driver = util_malloc( sizeof * driver);
   UTIL_TYPE_ID_INIT( driver , QUEUE_DRIVER_ID );
   driver->max_running = 0;
   driver->driver_type = NULL_DRIVER;

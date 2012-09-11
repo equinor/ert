@@ -54,7 +54,7 @@ struct sched_time_struct {
 
 
 sched_time_type * sched_time_alloc( time_t date , double tstep_length , sched_time_enum  time_type ) {
-  sched_time_type * time_node = util_malloc( sizeof * time_node , __func__);
+  sched_time_type * time_node = util_malloc( sizeof * time_node );
   UTIL_TYPE_ID_INIT( time_node , SCHED_TIME_TYPE_ID );
   time_node->time_type    = time_type;
   time_node->tstep_length = tstep_length;

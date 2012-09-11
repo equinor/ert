@@ -59,7 +59,7 @@ struct sched_kw_untyped_struct {
 
 
 sched_kw_untyped_type * sched_kw_untyped_alloc_empty(const char * kw_name , int rec_len) {
-  sched_kw_untyped_type * kw = util_malloc(sizeof *kw , __func__);
+  sched_kw_untyped_type * kw = util_malloc(sizeof *kw );
   kw->kw_name   = util_alloc_string_copy(kw_name);
   kw->rec_len   = rec_len;
   kw->buffer    = NULL; 

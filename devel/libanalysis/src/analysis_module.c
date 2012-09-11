@@ -63,7 +63,7 @@ struct analysis_module_struct {
 
 
 static analysis_module_type * analysis_module_alloc_empty( const char * user_name , const char * symbol_table , const char * lib_name) {
-  analysis_module_type * module = util_malloc( sizeof * module , __func__ );
+  analysis_module_type * module = util_malloc( sizeof * module );
   UTIL_TYPE_ID_INIT( module , ANALYSIS_MODULE_TYPE_ID );
 
   module->lib_handle      = NULL;

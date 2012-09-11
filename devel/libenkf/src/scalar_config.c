@@ -39,12 +39,12 @@ struct scalar_config_struct {
 
 
 scalar_config_type * scalar_config_alloc_empty(int size) {
-  scalar_config_type *scalar_config    = util_malloc(sizeof *scalar_config, __func__);
+  scalar_config_type *scalar_config    = util_malloc(sizeof *scalar_config);
   UTIL_TYPE_ID_INIT( scalar_config , SCALAR_CONFIG_TYPE_ID );
   scalar_config->data_size             = size;
   scalar_config->active_list           = active_list_alloc( ALL_ACTIVE );
   
-  scalar_config->transform             = util_calloc(scalar_config->data_size ,  sizeof * scalar_config->transform  , __func__);
+  scalar_config->transform             = util_calloc(scalar_config->data_size ,  sizeof * scalar_config->transform  );
   return scalar_config;
 }
 

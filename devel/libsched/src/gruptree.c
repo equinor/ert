@@ -137,7 +137,7 @@ struct gruptree_struct{
 
 static grup_type * grup_alloc(const char * name, const grup_type * parent)
 {
-   grup_type * grup = util_malloc(sizeof * grup, __func__);
+   grup_type * grup = util_malloc(sizeof * grup);
 
    grup->isleaf   = true;
    grup->isfield  = false;
@@ -178,7 +178,7 @@ static const char * grup_get_parent_name(const grup_type * grup)
 
 static well_type * well_alloc(const char * name, const grup_type * parent)
 {
-  well_type * well = util_malloc(sizeof * well, __func__);
+  well_type * well = util_malloc(sizeof * well);
   well->name = util_alloc_string_copy(name);
   well->parent = parent;
   return well;
@@ -247,7 +247,7 @@ static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * gru
 
 static gruptree_type * gruptree_alloc_empty()
 {
-  gruptree_type * gruptree = util_malloc(sizeof * gruptree, __func__);
+  gruptree_type * gruptree = util_malloc(sizeof * gruptree);
   gruptree->grups = hash_alloc();
   gruptree->wells = hash_alloc();
   return gruptree;

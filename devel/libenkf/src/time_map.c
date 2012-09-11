@@ -39,7 +39,7 @@ struct time_map_struct {
 
 
 time_map_type * time_map_alloc( ) {
-  time_map_type * map = util_malloc( sizeof * map , __func__);
+  time_map_type * map = util_malloc( sizeof * map );
   map->map = time_t_vector_alloc(0 , DEFAULT_TIME );
   map->start_time = DEFAULT_TIME;
   pthread_rwlock_init( &map->rw_lock , NULL);

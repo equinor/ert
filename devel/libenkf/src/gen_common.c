@@ -42,7 +42,7 @@ void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int
   if (buffer_elements == 0)
     buffer_elements = 100;
   
-  buffer = util_malloc( buffer_elements * sizeof_ctype , __func__);
+  buffer = util_calloc( buffer_elements , sizeof_ctype );
   {
     do {
       if (load_type == ECL_FLOAT_TYPE) {
@@ -62,7 +62,7 @@ void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int
       
       if (current_size == buffer_elements) {
         buffer_elements *= 2;
-        buffer = util_realloc( buffer , buffer_elements * sizeof_ctype , __func__);
+        buffer = util_realloc( buffer , buffer_elements * sizeof_ctype );
       }
     } while (fscanf_return == 1);
   }
@@ -88,7 +88,7 @@ void * gen_common_fread_alloc(const char * file , ecl_type_enum load_type , int 
   
   
   buffer_elements = read_size;
-  buffer = util_malloc( buffer_elements * sizeof_ctype , __func__);
+  buffer = util_calloc( buffer_elements , sizeof_ctype );
   {
     do {
       fread_return  = fread( &buffer[ current_size * sizeof_ctype] , sizeof_ctype , read_size , stream);
@@ -100,7 +100,7 @@ void * gen_common_fread_alloc(const char * file , ecl_type_enum load_type , int 
           read_size *= 2;
           read_size = util_int_min(read_size , max_read_size);
           buffer_elements += read_size;
-          buffer = util_realloc( buffer , buffer_elements * sizeof_ctype , __func__);
+          buffer = util_realloc( buffer , buffer_elements * sizeof_ctype );
         } else 
           util_abort("%s: internal error ?? \n",__func__);
       }

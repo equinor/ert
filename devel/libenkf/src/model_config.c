@@ -262,7 +262,7 @@ void model_config_select_refcase_history( model_config_type * model_config , con
 
 
 model_config_type * model_config_alloc_empty() {
-  model_config_type * model_config  = util_malloc(sizeof * model_config , __func__);
+  model_config_type * model_config  = util_malloc(sizeof * model_config );
   /**
      There are essentially three levels of initialisation:
 

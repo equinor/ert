@@ -121,7 +121,7 @@ struct sched_kw_struct {
 */
 
 static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
-  sched_kw_type * kw = util_malloc(sizeof * kw, __func__);
+  sched_kw_type * kw = util_malloc(sizeof * kw);
   kw->kw_name = util_alloc_string_copy( kw_name );
   kw->type    = sched_kw_type_from_string( kw_name );
   
@@ -256,7 +256,7 @@ static void sched_kw_name_assert(const char * kw_name , FILE * stream)
 static sched_kw_type ** sched_kw_tstep_split_alloc(const sched_kw_type * sched_kw, int * num_steps)
 {
   *num_steps = sched_kw_tstep_get_size(sched_kw->data);
-  sched_kw_type ** sched_kw_tsteps = util_malloc(*num_steps * sizeof * sched_kw_tsteps, __func__);
+  sched_kw_type ** sched_kw_tsteps = util_malloc(*num_steps * sizeof * sched_kw_tsteps);
   
   for(int i=0; i<*num_steps; i++) {
     sched_kw_tsteps[i] = sched_kw_alloc_empty( "TSTEP" );
@@ -272,7 +272,7 @@ static sched_kw_type ** sched_kw_tstep_split_alloc(const sched_kw_type * sched_k
 static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_kw, int * num_steps) 
 {
   *num_steps = sched_kw_dates_get_size(sched_kw->data);
-  sched_kw_type ** sched_kw_dates = util_malloc(*num_steps * sizeof * sched_kw_dates, __func__);
+  sched_kw_type ** sched_kw_dates = util_malloc(*num_steps * sizeof * sched_kw_dates);
   
   for(int i=0; i<*num_steps; i++) {
     sched_kw_dates[i] = sched_kw_alloc_empty( "DATES" );

@@ -227,7 +227,7 @@ static void run_info_set(run_info_type * run_info        ,
 
 
 static run_info_type * run_info_alloc() {
-  run_info_type * run_info = util_malloc(sizeof * run_info , __func__);
+  run_info_type * run_info = util_malloc(sizeof * run_info );
   run_info->run_path = NULL;
   return run_info;
 }
@@ -250,7 +250,7 @@ static void run_info_complete_run(run_info_type * run_info) {
 /*****************************************************************/
 
 static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, const ecl_config_type * ecl_config , log_type * logh , ert_templates_type * templates) {
-  shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
+  shared_info_type * shared_info = util_malloc(sizeof * shared_info );
 
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
@@ -454,7 +454,7 @@ enkf_state_type * enkf_state_alloc(int iens,
                                    ert_templates_type        * templates,
                                    subst_list_type           * subst_parent) { 
   
-  enkf_state_type * enkf_state  = util_malloc(sizeof *enkf_state , __func__);
+  enkf_state_type * enkf_state  = util_malloc(sizeof *enkf_state );
   UTIL_TYPE_ID_INIT( enkf_state , ENKF_STATE_TYPE_ID );
 
   enkf_state->ensemble_config   = ensemble_config;

@@ -43,7 +43,7 @@ struct sched_kw_dates_struct {
 
 static sched_kw_dates_type * sched_kw_dates_alloc_empty()
 {
-  sched_kw_dates_type *dates = util_malloc(sizeof *dates , __func__);
+  sched_kw_dates_type *dates = util_malloc(sizeof *dates);
   dates->time_list           = vector_alloc_new();
   return dates;
 }

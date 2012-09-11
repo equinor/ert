@@ -95,7 +95,7 @@ void summary_config_update_load_fail_mode( summary_config_type * config , load_f
 
 
 summary_config_type * summary_config_alloc(const char * var , bool vector_storage , load_fail_type load_fail) {
-  summary_config_type * config = util_malloc(sizeof *config , __func__);
+  summary_config_type * config = util_malloc(sizeof *config );
   config->__type_id            = SUMMARY_CONFIG_TYPE_ID;
   config->var                  = util_alloc_string_copy( var );
   config->var_type             = ecl_smspec_identify_var_type( var );

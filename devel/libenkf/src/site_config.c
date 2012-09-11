@@ -170,7 +170,7 @@ static void site_config_set_queue_option( site_config_type * site_config , const
    This site_config object is not really ready for prime time.
 */
 site_config_type * site_config_alloc_empty() {
-  site_config_type * site_config = util_malloc( sizeof * site_config , __func__);
+  site_config_type * site_config = util_malloc( sizeof * site_config);
   
   site_config->joblist                = ext_joblist_alloc( );
   site_config->job_queue              = NULL;

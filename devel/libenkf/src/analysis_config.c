@@ -429,7 +429,7 @@ void analysis_config_free(analysis_config_type * config) {
 
 
 analysis_config_type * analysis_config_alloc_default( rng_type * rng ) {
-  analysis_config_type * config = util_malloc( sizeof * config , __func__);
+  analysis_config_type * config = util_malloc( sizeof * config );
   
   config->log_path                  = NULL;
   config->PC_filename               = NULL;

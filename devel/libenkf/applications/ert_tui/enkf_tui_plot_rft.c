@@ -481,7 +481,7 @@ void enkf_tui_plot_RFT__(enkf_main_type * enkf_main,
 
     const int   obs_size       = block_obs_get_size(block_obs);
     const ecl_grid_type * grid = field_config_get_grid( field_config );
-    double * depth             = util_malloc( obs_size * sizeof * depth , __func__);
+    double * depth             = util_calloc( obs_size , sizeof * depth );
     double min_depth , max_depth;
     
     int l;

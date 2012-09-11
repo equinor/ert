@@ -86,13 +86,13 @@ int gen_data_get_size( const gen_data_type * gen_data ) {
 */
 void gen_data_realloc_data(gen_data_type * gen_data) {
   int byte_size  = gen_data_config_get_byte_size(gen_data->config , gen_data->current_report_step );
-  gen_data->data = util_realloc(gen_data->data , byte_size , __func__);
+  gen_data->data = util_realloc(gen_data->data , byte_size );
 }
 
 
 
 gen_data_type * gen_data_alloc(const gen_data_config_type * config) {
-  gen_data_type * gen_data = util_malloc(sizeof * gen_data, __func__);
+  gen_data_type * gen_data = util_malloc(sizeof * gen_data);
   gen_data->config              = (gen_data_config_type *) config;
   gen_data->data                = NULL;   
   gen_data->__type_id           = GEN_DATA;
@@ -108,7 +108,7 @@ void gen_data_copy(const gen_data_type * src , gen_data_type * target) {
     
     if (src->data != NULL) {
       int byte_size  = gen_data_config_get_byte_size( src->config , src->current_report_step );
-      target->data   = util_realloc_copy(target->data , src->data , byte_size , __func__);
+      target->data   = util_realloc_copy(target->data , src->data , byte_size );
     }
   } else
     util_abort("%s: do not share config object \n",__func__);
@@ -169,7 +169,7 @@ void gen_data_read_from_buffer(gen_data_type * gen_data , buffer_type * buffer ,
   {
     size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
     size_t compressed_size = buffer_get_remaining_size( buffer ); 
-    gen_data->data         = util_realloc( gen_data->data , byte_size , __func__);
+    gen_data->data         = util_realloc( gen_data->data , byte_size );
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
   }
   gen_data_assert_size( gen_data , size , report_step );

@@ -74,7 +74,7 @@ const char * ert_template_get_args_as_string( const ert_template_type * ert_temp
 
 
 ert_template_type * ert_template_alloc( const char * template_file , const char * target_file , subst_list_type * parent_subst) {
-  ert_template_type * template = util_malloc( sizeof * template , __func__);
+  ert_template_type * template = util_malloc( sizeof * template);
   UTIL_TYPE_ID_INIT(template , ERT_TEMPLATE_TYPE_ID);
   template->template    = template_alloc( template_file , false , parent_subst);  /* The templates are instantiated with internalize_template == false;
                                                                                      this means that substitutions are performed on the filename of the 
@@ -135,7 +135,7 @@ static void ert_template_fprintf_config( const ert_template_type * template , FI
 
 
 ert_templates_type * ert_templates_alloc( subst_list_type * parent_subst  ) {
-  ert_templates_type * templates = util_malloc( sizeof * templates , __func__);
+  ert_templates_type * templates = util_malloc( sizeof * templates );
   UTIL_TYPE_ID_INIT( templates , ERT_TEMPLATES_TYPE_ID );
   templates->templates       = hash_alloc();
   templates->parent_subst    = parent_subst; 

@@ -42,7 +42,7 @@ UTIL_IS_INSTANCE_FUNCTION(local_dataset , LOCAL_DATASET_TYPE_ID)
 
 
 local_dataset_type * local_dataset_alloc( const char * name ) {
-  local_dataset_type * dataset = util_malloc( sizeof * dataset , __func__ );
+  local_dataset_type * dataset = util_malloc( sizeof * dataset);
 
   UTIL_TYPE_ID_INIT( dataset , LOCAL_DATASET_TYPE_ID );
   dataset->nodes = hash_alloc();

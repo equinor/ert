@@ -91,7 +91,7 @@ struct sched_file_struct {
 
 static sched_block_type * sched_block_alloc_empty()
 {
-  sched_block_type * block = util_malloc(sizeof * block, __func__);
+  sched_block_type * block = util_malloc(sizeof * block);
   block->kw_list = vector_alloc_new();
   block->kw_hash = hash_alloc();
   return block;
@@ -368,7 +368,7 @@ static void sched_file_init_fixed_length( sched_file_type * sched_file ) {
 
 sched_file_type * sched_file_alloc(time_t start_time)
 {
-  sched_file_type * sched_file = util_malloc(sizeof * sched_file, __func__);
+  sched_file_type * sched_file = util_malloc(sizeof * sched_file);
   UTIL_TYPE_ID_INIT( sched_file , SCHED_FILE_TYPE_ID);
   sched_file->kw_list            = vector_alloc_new();
   sched_file->kw_list_by_type    = NULL;

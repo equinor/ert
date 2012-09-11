@@ -141,7 +141,7 @@ void plain_driver_obs_README(const char * root_path) {
   in the calling scope after calling plain_driver_obs_alloc().
 */
 void * plain_driver_obs_alloc(const char * root_path , const char * obs_path ) {
-  plain_driver_obs_type * driver = util_malloc(sizeof * driver , __func__);
+  plain_driver_obs_type * driver = util_malloc(sizeof * driver );
   driver->load        = plain_driver_obs_load_node;
   driver->save        = plain_driver_obs_save_node;
   driver->has_node    = plain_driver_obs_has_node;

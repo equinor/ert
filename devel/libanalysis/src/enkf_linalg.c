@@ -240,7 +240,7 @@ void enkf_linalg_lowrankCinv__(const matrix_type * S ,
   const int nrens = matrix_get_columns( S );
   const int nrmin = util_int_min( nrobs , nrens );
   
-  double * inv_sig0      = util_calloc( nrmin , sizeof * inv_sig0 , __func__);
+  double * inv_sig0      = util_calloc( nrmin , sizeof * inv_sig0);
 
   if (V0T != NULL)
     enkf_linalg_svdS(S , truncation , ncomp , DGESVD_MIN_RETURN , inv_sig0 , U0 , V0T );
@@ -301,7 +301,7 @@ void enkf_linalg_meanX5(const matrix_type * S ,
   const int nrens = matrix_get_columns( S );
   const int nrobs = matrix_get_rows( S );
   const int nrmin = util_int_min( nrobs , nrens );
-  double * work   = util_calloc( (2 * nrmin + nrobs + nrens) , sizeof * work , __func__);
+  double * work   = util_calloc( (2 * nrmin + nrobs + nrens) , sizeof * work );
   matrix_type * innov = enkf_linalg_alloc_innov( dObs , S );
   {
     double * y1 = &work[0];
@@ -339,8 +339,8 @@ void enkf_linalg_X5sqrt(matrix_type * X2 , matrix_type * X5 , const matrix_type 
   const int nrens   = matrix_get_columns( X5 );
   const int nrmin   = util_int_min( nrobs , nrens );
   matrix_type * VT  = matrix_alloc( nrens , nrens );
-  double * sig      = util_calloc( nrmin , sizeof * sig , __func__);
-  double * isig     = util_calloc( nrmin , sizeof * sig , __func__);
+  double * sig      = util_calloc( nrmin , sizeof * sig );
+  double * isig     = util_calloc( nrmin , sizeof * sig );
 
   matrix_dgesvd(DGESVD_NONE , DGESVD_ALL , X2 , sig , NULL , VT);
   {
@@ -465,8 +465,8 @@ void enkf_linalg_init_sqrtX(matrix_type * X5      ,
 
 void enkf_linalg_set_randrot( matrix_type * Q  , rng_type * rng) {
   int ens_size       = matrix_get_rows( Q );
-  double      * tau  = util_calloc( ens_size , sizeof * tau , __func__);
-  int         * sign = util_calloc( ens_size , sizeof * sign, __func__);
+  double      * tau  = util_calloc( ens_size , sizeof * tau );
+  int         * sign = util_calloc( ens_size , sizeof * sign);
 
   for (int i = 0; i < ens_size; i++) 
     for (int j = 0; j < ens_size; j++) 
@@ -600,7 +600,7 @@ void enkf_linalg_get_PC( const matrix_type * S0,
 
   matrix_type * U0  = matrix_alloc( nrobs , nrens );
   matrix_type * S   = matrix_alloc_copy( S0 );
-  double * inv_sig0 = util_calloc( nrmin , sizeof * inv_sig0 , __func__);
+  double * inv_sig0 = util_calloc( nrmin , sizeof * inv_sig0 );
   
   matrix_subtract_row_mean( S );
   ncomp = util_int_min( ncomp , nrmin );
@@ -659,7 +659,7 @@ void enkf_linalg_rml_enkfX2(matrix_type *X2, double *Wdr, matrix_type * X1 ,doub
 {
   /*This routine computes X2 for RML_EnKF module as X2 = ((a*Ipd)+Wd^2)^-1  * X1   */
   /* Since a+Ipd & Wd are diagonal in nature the computation is reduced to array operations*/
-  double * tmp = util_calloc(nsign , sizeof * tmp , __func__);
+  double * tmp = util_calloc(nsign , sizeof * tmp );
   
   for (int i=0; i< nsign ; i++)
     {

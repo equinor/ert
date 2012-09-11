@@ -437,7 +437,7 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
   int     sub_ens_size    = enkf_main_get_ensemble_size(enkf_main) / cpu_threads;
   int     icpu;
   thread_pool_type * tp          = thread_pool_alloc( cpu_threads , true );
-  arg_pack_type ** arg_pack_list = util_calloc( cpu_threads , sizeof * arg_pack_list , __func__);
+  arg_pack_type ** arg_pack_list = util_calloc( cpu_threads , sizeof * arg_pack_list );
 
   for (icpu = 0; icpu < cpu_threads; icpu++) {
     arg_pack_type * arg = arg_pack_alloc();
@@ -557,7 +557,7 @@ static void * enkf_main_fwrite_sub_ensemble__(void *__arg) {
 enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key , int report_step , state_enum load_state) {
   enkf_fs_type * fs               = enkf_main_get_fs( enkf_main );
   const int ens_size              = enkf_main_get_ensemble_size( enkf_main );
-  enkf_node_type ** node_ensemble = util_calloc(ens_size , sizeof * node_ensemble , __func__ );
+  enkf_node_type ** node_ensemble = util_calloc(ens_size , sizeof * node_ensemble );
   node_id_type node_id = {.report_step = report_step , 
                           .state       = load_state , 
                           .iens        = -1 };
@@ -945,7 +945,7 @@ static void serialize_info_free( serialize_info_type * serialize_info ) {
 }
 
 static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs, enkf_fs_type * target_fs , int target_step , enkf_state_type ** ensemble , run_mode_type run_mode , int report_step , matrix_type * A , int num_cpu_threads ) {
-  serialize_info_type * serialize_info = util_calloc( num_cpu_threads , sizeof * serialize_info , __func__ );
+  serialize_info_type * serialize_info = util_calloc( num_cpu_threads , sizeof * serialize_info );
   int ens_size = matrix_get_columns( A );
   int icpu;
   int iens_offset = 0;
@@ -1074,8 +1074,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
       const local_dataset_type * dataset = local_ministep_get_dataset( ministep , dataset_name );
       if (local_dataset_get_size( dataset )) {
-        int * active_size = util_calloc( local_dataset_get_size( dataset ) , sizeof * active_size , __func__);
-        int * row_offset  = util_calloc( local_dataset_get_size( dataset ) , sizeof * row_offset  , __func__);
+        int * active_size = util_calloc( local_dataset_get_size( dataset ) , sizeof * active_size );
+        int * row_offset  = util_calloc( local_dataset_get_size( dataset ) , sizeof * row_offset  );
         
         enkf_main_serialize_dataset( enkf_main , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
 
@@ -1235,8 +1235,8 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
   const int ens_size              = enkf_main_get_ensemble_size(enkf_main);
   enkf_fs_type  * fs              = enkf_main_get_fs( enkf_main ); 
   job_queue_type * job_queue      = site_config_get_job_queue(enkf_main->site_config);                          
-  arg_pack_type ** arg_list       = util_calloc( ens_size , sizeof * arg_list , __func__);
-  job_status_type * status_list   = util_calloc( ens_size , sizeof * status_list , __func__);
+  arg_pack_type ** arg_list       = util_calloc( ens_size , sizeof * arg_list    );
+  job_status_type * status_list   = util_calloc( ens_size , sizeof * status_list );
   thread_pool_type * load_threads = thread_pool_alloc( num_load_threads , true);
   const int usleep_time           = 2500000; 
   const int load_start_usleep     =   10000;
@@ -1794,7 +1794,7 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
       if (ranking_key != NULL) 
         ranking_permutation = (int *) enkf_main_get_ranking_permutation( enkf_main , ranking_key );
       else {
-        ranking_permutation = util_calloc( ens_size , sizeof * ranking_permutation , __func__);
+        ranking_permutation = util_calloc( ens_size , sizeof * ranking_permutation );
         for (src_iens = 0; src_iens < ens_size; src_iens++)
           ranking_permutation[src_iens] = src_iens;
       }
@@ -1898,7 +1898,7 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const string
   int num_cpu               = 4;
   thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
   int ens_sub_size          = (iens2 - iens1 + 1) / num_cpu;
-  arg_pack_type ** arg_list = util_calloc( num_cpu , sizeof * arg_list , __func__ );
+  arg_pack_type ** arg_list = util_calloc( num_cpu , sizeof * arg_list );
   int i;
   
   printf("Initializing .... "); fflush( stdout );
@@ -2255,7 +2255,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 
 
 static enkf_main_type * enkf_main_alloc_empty( ) {
-  enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main, __func__);
+  enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   enkf_main->current_fs_case    = NULL;
   enkf_main->dbase              = NULL;
@@ -2354,7 +2354,7 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
       enkf_state_free( enkf_main->ensemble[iens] );
     
     /*2: Shrink the ensemble pointer. */
-    enkf_main->ensemble = util_realloc(enkf_main->ensemble , new_ens_size * sizeof * enkf_main->ensemble , __func__);
+    enkf_main->ensemble = util_realloc(enkf_main->ensemble , new_ens_size * sizeof * enkf_main->ensemble );
     enkf_main->ens_size = new_ens_size;
     return;
   }
@@ -2363,7 +2363,7 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
   /* The ensemble is expanding */
   if (new_ens_size > enkf_main->ens_size) {
     /*1: Grow the ensemble pointer. */
-    enkf_main->ensemble = util_realloc(enkf_main->ensemble , new_ens_size * sizeof * enkf_main->ensemble , __func__);
+    enkf_main->ensemble = util_realloc(enkf_main->ensemble , new_ens_size * sizeof * enkf_main->ensemble );
 
     /*2: Allocate the new ensemble members. */
     for (iens = enkf_main->ens_size; iens < new_ens_size; iens++) 

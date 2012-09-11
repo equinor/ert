@@ -108,7 +108,7 @@ static void obs_vector_resize(obs_vector_type * vector , int new_size) {
 
 
 obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node , const time_t_vector_type * obs_time , int num_reports) {
-  obs_vector_type * vector = util_malloc(sizeof * vector , __func__);
+  obs_vector_type * vector = util_malloc(sizeof * vector );
   
   UTIL_TYPE_ID_INIT( vector , OBS_VECTOR_TYPE_ID);
   vector->freef      = NULL;
@@ -629,11 +629,11 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     stringlist_type * obs_pt_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "OBS");
     int               num_obs_pts = stringlist_get_size(obs_pt_keys);
     
-    double * obs_value = util_calloc(num_obs_pts , sizeof * obs_value, __func__);
-    double * obs_std   = util_calloc(num_obs_pts , sizeof * obs_std  , __func__);
-    int    * obs_i     = util_calloc(num_obs_pts , sizeof * obs_i    , __func__);
-    int    * obs_j     = util_calloc(num_obs_pts , sizeof * obs_j    , __func__);
-    int    * obs_k     = util_calloc(num_obs_pts , sizeof * obs_k    , __func__);
+    double * obs_value = util_calloc(num_obs_pts , sizeof * obs_value);
+    double * obs_std   = util_calloc(num_obs_pts , sizeof * obs_std  );
+    int    * obs_i     = util_calloc(num_obs_pts , sizeof * obs_i    );
+    int    * obs_j     = util_calloc(num_obs_pts , sizeof * obs_j    );
+    int    * obs_k     = util_calloc(num_obs_pts , sizeof * obs_k    );
 
     obs_restart_nr = __conf_instance_get_restart_nr(conf_instance , obs_label , history  , size);  
     

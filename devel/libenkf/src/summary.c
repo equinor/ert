@@ -98,7 +98,7 @@ void summary_clear(summary_type * summary) {
 
 
 summary_type * summary_alloc(const summary_config_type * summary_config) {
-  summary_type * summary   = util_malloc(sizeof *summary , __func__);
+  summary_type * summary   = util_malloc(sizeof *summary );
   summary->__type_id       = SUMMARY;
   summary->vector_storage  = summary_config_get_vector_storage( summary_config );
   summary->config          = (summary_config_type *) summary_config;
@@ -106,7 +106,7 @@ summary_type * summary_alloc(const summary_config_type * summary_config) {
   summary->analyzed_vector = double_vector_alloc(0 , SUMMARY_UNDEF_ANALYZED);  
   {
     const int data_size = summary_config_get_data_size( summary_config );
-    summary->data       = util_calloc( data_size , sizeof * summary->data , __func__ );
+    summary->data       = util_calloc( data_size , sizeof * summary->data );
   }
   return summary;
 }

@@ -85,7 +85,7 @@ bool enkf_config_node_has_vector( const enkf_config_node_type * node , enkf_fs_t
 static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_type, 
                                                          ert_impl_type  impl_type, 
                                                          const char * key) {
-  enkf_config_node_type * node = util_malloc( sizeof *node , __func__);
+  enkf_config_node_type * node = util_malloc( sizeof *node );
   UTIL_TYPE_ID_INIT( node , ENKF_CONFIG_NODE_TYPE_ID );
   node->var_type        = var_type;
   node->impl_type       = impl_type;

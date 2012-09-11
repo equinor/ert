@@ -38,7 +38,7 @@ struct enkf_plot_member_struct {
 UTIL_SAFE_CAST_FUNCTION( enkf_plot_member , ENKF_PLOT_MEMBER_ID )
      
 enkf_plot_member_type * enkf_plot_member_alloc( enkf_plot_arg_type * shared_arg , time_t start_time) {
-  enkf_plot_member_type * plot_member = util_malloc( sizeof * plot_member , __func__ );
+  enkf_plot_member_type * plot_member = util_malloc( sizeof * plot_member);
   UTIL_TYPE_ID_INIT( plot_member , ENKF_PLOT_MEMBER_ID );
 
   plot_member->data          = double_vector_alloc( 0 , 0 );

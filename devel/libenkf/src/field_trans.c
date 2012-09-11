@@ -53,7 +53,7 @@ typedef struct {
 /*****************************************************************/
 
 static field_func_node_type * field_func_node_alloc(const char * key , const char * description , field_func_type * func) {
-  field_func_node_type * node = util_malloc( sizeof * node , __func__);
+  field_func_node_type * node = util_malloc( sizeof * node );
 
   node->key         = util_alloc_string_copy( key );
   node->description = util_alloc_string_copy( description );
@@ -258,7 +258,7 @@ static float field_trans_exp0( float x ) {
 
 
 field_trans_table_type * field_trans_table_alloc() {
-  field_trans_table_type * table = util_malloc( sizeof * table , __func__);
+  field_trans_table_type * table = util_malloc( sizeof * table);
   table->function_table = hash_alloc();
   field_trans_table_add( table , "POW10"       , "This function will raise x to the power of 10: y = 10^x." ,                            field_trans_pow10);
   field_trans_table_add( table , "TRUNC_POW10" , "This function will raise x to the power of 10 - and truncate lower values at 0.001." , trunc_pow10f);

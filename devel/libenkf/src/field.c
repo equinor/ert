@@ -292,12 +292,12 @@ void field_clear(field_type * field) {
 
 
 static field_type * __field_alloc(const field_config_type * field_config , void * shared_data , int shared_byte_size) {
-  field_type * field  = util_malloc(sizeof *field, __func__);
+  field_type * field  = util_malloc(sizeof *field);
   field->config = field_config;
   field->private_config = false;
   if (shared_data == NULL) {
     field->shared_data = false;
-    field->data        = util_calloc(field_config_get_byte_size(field->config) , sizeof * field->data , __func__);
+    field->data        = util_calloc(field_config_get_byte_size(field->config) , sizeof * field->data );
   } else {
     field->data             = shared_data;
     field->shared_data      = true;
@@ -347,7 +347,7 @@ void field_read_from_buffer(field_type * field , buffer_type * buffer, int repor
 
 
 static void * __field_alloc_3D_data(const field_type * field , int data_size , bool rms_index_order , ecl_type_enum ecl_type , ecl_type_enum target_type) {
-  void * data = util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
+  void * data = util_calloc(data_size , ecl_util_get_sizeof_ctype(target_type) );
   if (ecl_type == ECL_DOUBLE_TYPE) {
     double fill;
     if (rms_index_order)
@@ -629,7 +629,7 @@ static void field_output_transform(field_type * field) {
   field_func_type * output_transform = field_config_get_output_transform(field->config);
   truncation_type   truncation       = field_config_get_truncation_mode( field->config );
   if ((output_transform != NULL) || (truncation != TRUNCATE_NONE)) {
-    field->export_data = util_alloc_copy(field->data , field_config_get_byte_size(field->config) , __func__);
+    field->export_data = util_alloc_copy(field->data , field_config_get_byte_size(field->config) );
     field->__data = field->data;  /* Storing a pointer to the original data. */
     field->data   = field->export_data;
     
@@ -930,7 +930,7 @@ void field_indexed_add(field_type * field, ecl_type_enum src_type , int len , co
 
 double * field_indexed_get_alloc(const field_type * field, int len, const int * index_list)
 {
-  double * export_data = util_calloc(len , sizeof * export_data, __func__);
+  double * export_data = util_calloc(len , sizeof * export_data);
   ecl_type_enum src_type = field_config_get_ecl_type(field->config);
   
   if(src_type == ECL_DOUBLE_TYPE) {

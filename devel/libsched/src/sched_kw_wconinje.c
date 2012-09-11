@@ -97,7 +97,7 @@ struct wconinje_state_struct {
 
 static wconinje_well_type * wconinje_well_alloc_empty()
 {
-  wconinje_well_type * well = util_malloc(sizeof * well, __func__);
+  wconinje_well_type * well = util_malloc(sizeof * well);
   well->name = NULL;
   return well;
 }
@@ -166,7 +166,7 @@ static void wconinje_well_fprintf(const wconinje_well_type * well, FILE * stream
 
 
 static sched_kw_wconinje_type * sched_kw_wconinje_alloc_empty() {
-  sched_kw_wconinje_type * kw = util_malloc(sizeof * kw, __func__);
+  sched_kw_wconinje_type * kw = util_malloc(sizeof * kw);
   kw->wells     = vector_alloc_new();
   kw->__type_id = SCHED_KW_WCONINJE_ID;
   return kw;
@@ -235,7 +235,7 @@ void sched_kw_wconinje_fprintf(const sched_kw_wconinje_type * kw , FILE * stream
 char ** sched_kw_wconinje_alloc_wells_copy( const sched_kw_wconinje_type * kw , int * num_wells) {
   int size = vector_get_size(kw->wells);
   
-  char ** well_names = util_malloc( size * sizeof * well_names , __func__);
+  char ** well_names = util_malloc( size * sizeof * well_names );
   for(int i=0; i<size; i++)
   {
     const wconinje_well_type * well = vector_iget_const(kw->wells, i);
@@ -346,7 +346,7 @@ bool sched_kw_wconinje_well_open( const sched_kw_wconinje_type * kw, const char 
 /*****************************************************************/
 
 wconinje_state_type * wconinje_state_alloc( const char * well_name , const time_t_vector_type * time) {
-  wconinje_state_type * wconinje = util_malloc( sizeof * wconinje , __func__);
+  wconinje_state_type * wconinje = util_malloc( sizeof * wconinje);
   UTIL_TYPE_ID_INIT( wconinje , WCONINJE_TYPE_ID );
 
   wconinje->phase          = int_vector_alloc( 0 , 0 );

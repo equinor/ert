@@ -121,7 +121,7 @@ void std_enkf_set_subspace_dimension( std_enkf_data_type * data , int subspace_d
 
 
 void * std_enkf_data_alloc( rng_type * rng) {
-  std_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
+  std_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , STD_ENKF_TYPE_ID );
   
   std_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
@@ -152,7 +152,7 @@ void std_enkf_initX__( matrix_type * X ,
   int nrmin         = util_int_min( ens_size , nrobs); 
   
   matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
-  double      * eig = util_malloc( sizeof * eig * nrmin , __func__);    
+  double      * eig = util_calloc( nrmin , sizeof * eig);    
   
   matrix_subtract_row_mean( S );           /* Shift away the mean */
   enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    

@@ -34,7 +34,7 @@ struct ecl_static_kw_struct {
 
 
 ecl_static_kw_type * ecl_static_kw_alloc( ) {  
-  ecl_static_kw_type * static_kw = util_malloc(sizeof *static_kw , __func__);
+  ecl_static_kw_type * static_kw = util_malloc(sizeof *static_kw );
   UTIL_TYPE_ID_INIT( static_kw , STATIC );
   static_kw->ecl_kw        = NULL;
   return static_kw;

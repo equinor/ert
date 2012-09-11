@@ -41,7 +41,7 @@ static UTIL_SAFE_CAST_FUNCTION( enkf_plot_arg , ENKF_PLOT_ARG_ID )
 
 
 enkf_plot_arg_type * enkf_plot_arg_alloc( bool time_mode , time_t start_time) {
-  enkf_plot_arg_type * plot_arg = util_malloc( sizeof * plot_arg , __func__ );
+  enkf_plot_arg_type * plot_arg = util_malloc( sizeof * plot_arg);
 
   UTIL_TYPE_ID_INIT( plot_arg , ENKF_PLOT_ARG_ID );
   plot_arg->arg_vector = double_vector_alloc(0,0);

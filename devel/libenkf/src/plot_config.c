@@ -170,7 +170,7 @@ void plot_config_free( plot_config_type * plot_config) {
    The plot_config object is instantiated with the default values from enkf_defaults.h
 */
 plot_config_type * plot_config_alloc_default() {
-  plot_config_type * info        = util_malloc( sizeof * info , __func__);
+  plot_config_type * info        = util_malloc( sizeof * info );
   info->plot_path                = NULL;
   info->plot_refcase             = NULL;
   info->image_type               = NULL;

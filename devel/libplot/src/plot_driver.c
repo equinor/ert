@@ -82,12 +82,12 @@
 
 
 plot_driver_type * plot_driver_alloc_empty(const char * driver_name) {
-  plot_driver_type * driver = util_malloc(sizeof * driver , __func__);
+  plot_driver_type * driver = util_malloc( sizeof * driver );
   driver->driver_name       = util_alloc_string_copy( driver_name );
 
-  driver->state       	    = NULL;	       
-  driver->set_labels  	    = NULL;     
-  driver->close_driver 	    = NULL;    
+  driver->state             = NULL;            
+  driver->set_labels        = NULL;     
+  driver->close_driver      = NULL;    
   driver->set_window_size   = NULL;
   driver->set_axis          = NULL;
 

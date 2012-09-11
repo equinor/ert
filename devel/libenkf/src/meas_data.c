@@ -72,13 +72,13 @@ static UTIL_SAFE_CAST_FUNCTION( meas_block , MEAS_BLOCK_TYPE_ID )
 */
 
 static meas_block_type * meas_block_alloc( const char * obs_key , int report_step , int ens_size , int obs_size) {
-  meas_block_type * meas_block = util_malloc( sizeof * meas_block , __func__ );
+  meas_block_type * meas_block = util_malloc( sizeof * meas_block );
   UTIL_TYPE_ID_INIT( meas_block , MEAS_BLOCK_TYPE_ID );
   meas_block->ens_size    = ens_size;
   meas_block->obs_size    = obs_size;
   meas_block->obs_key     = util_alloc_string_copy( obs_key );
-  meas_block->data        = util_calloc( (ens_size + 2)     * obs_size , sizeof * meas_block->data , __func__);
-  meas_block->active      = util_calloc(                      obs_size , sizeof * meas_block->active , __func__);
+  meas_block->data        = util_calloc( (ens_size + 2)     * obs_size , sizeof * meas_block->data   );
+  meas_block->active      = util_calloc(                      obs_size , sizeof * meas_block->active );
   meas_block->ens_stride  = 1;
   meas_block->obs_stride  = ens_size + 2; 
   meas_block->data_size   = (ens_size + 2) * obs_size;
@@ -222,7 +222,7 @@ int meas_block_get_total_size( const meas_block_type * meas_block ) {
 
 
 meas_data_type * meas_data_alloc(int ens_size) {
-  meas_data_type * meas = util_malloc(sizeof * meas , __func__);
+  meas_data_type * meas = util_malloc(sizeof * meas );
   if (ens_size <= 0) 
     util_abort("%s: ens_size must be > 0 - aborting \n",__func__);
 

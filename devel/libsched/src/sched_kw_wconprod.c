@@ -51,7 +51,7 @@ struct sched_kw_wconprod_struct {
 
 static sched_kw_wconprod_type * sched_kw_wconprod_alloc_empty(bool alloc_untyped)
 {
-  sched_kw_wconprod_type * kw = util_malloc(sizeof * kw, __func__);
+  sched_kw_wconprod_type * kw = util_malloc(sizeof * kw);
   kw->wells      = stringlist_alloc_new();
   if (alloc_untyped)
     kw->untyped_kw = sched_kw_untyped_alloc_empty("WCONPROD" , -1 /* -1: Variable length keyword */);

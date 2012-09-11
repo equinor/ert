@@ -127,7 +127,7 @@ int gen_data_config_get_byte_size( const gen_data_config_type * config , int rep
 
 
 gen_data_config_type * gen_data_config_alloc_empty( const char * key ) {
-  gen_data_config_type * config = util_malloc(sizeof * config , __func__);
+  gen_data_config_type * config = util_malloc(sizeof * config );
   UTIL_TYPE_ID_INIT( config , GEN_DATA_CONFIG_ID);
 
   config->key               = util_alloc_string_copy( key );

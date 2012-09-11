@@ -106,7 +106,7 @@ struct wconhist_state_struct {
 
 static wconhist_well_type * wconhist_well_alloc_empty( ) 
 {
-  wconhist_well_type * well = util_malloc(sizeof * well, __func__);
+  wconhist_well_type * well = util_malloc(sizeof * well);
   well->name   = NULL;
   well->status = WCONHIST_DEFAULT_STATUS;
   return well;
@@ -241,7 +241,7 @@ static void sched_kw_wconhist_add_well( sched_kw_wconhist_type * kw , wconhist_w
 
 static sched_kw_wconhist_type * sched_kw_wconhist_alloc_empty()
 {
-  sched_kw_wconhist_type * kw = util_malloc(sizeof * kw, __func__);
+  sched_kw_wconhist_type * kw = util_malloc(sizeof * kw);
   UTIL_TYPE_ID_INIT( kw , SCHED_KW_WCONHIST_ID );
   kw->wells     = vector_alloc_new();
   return kw;
@@ -613,7 +613,7 @@ double wconhist_state_iget_STAT( const void * state , int report_step ) {
 
 
 wconhist_state_type * wconhist_state_alloc( const time_t_vector_type * time) {
-  wconhist_state_type * wconhist = util_malloc( sizeof * wconhist , __func__);
+  wconhist_state_type * wconhist = util_malloc( sizeof * wconhist );
   UTIL_TYPE_ID_INIT( wconhist , WCONHIST_TYPE_ID );
   
   wconhist->time       = time;

@@ -47,7 +47,7 @@ struct forward_model_struct {
 
 
 forward_model_type * forward_model_alloc(const ext_joblist_type * ext_joblist) {
-  forward_model_type * forward_model = util_malloc( sizeof * forward_model , __func__);
+  forward_model_type * forward_model = util_malloc( sizeof * forward_model );
   
   forward_model->jobs        = vector_alloc_new();
   forward_model->ext_joblist = ext_joblist;

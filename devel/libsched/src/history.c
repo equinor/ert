@@ -76,7 +76,7 @@ const char * history_get_source_string( history_source_type history_source ) {
 
 static history_type * history_alloc_empty(  )
 {
-  history_type * history = util_malloc(sizeof * history, __func__);
+  history_type * history = util_malloc(sizeof * history);
   history->refcase       = NULL; 
   history->sched_history = NULL;
   history->sched_file    = NULL;

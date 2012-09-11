@@ -107,7 +107,7 @@ UTIL_IS_INSTANCE_FUNCTION( well_history , WELL_HISTORY_TYPE_ID)
 
 
 well_history_type * well_history_alloc( const char * well_name , const time_t_vector_type * time) {
-   well_history_type * well_history = util_malloc( sizeof * well_history , __func__);
+   well_history_type * well_history = util_malloc( sizeof * well_history );
    UTIL_TYPE_ID_INIT( well_history , WELL_HISTORY_TYPE_ID );
    well_history->well_name       = util_alloc_string_copy( well_name );
    well_history->kw_type         = int_vector_alloc(0 , NONE);

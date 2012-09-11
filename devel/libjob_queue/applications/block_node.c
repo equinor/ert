@@ -43,7 +43,7 @@ typedef struct {
 
 
 lsf_job_type * lsf_job_alloc(char * queue_name) { 
-  lsf_job_type * lsf_job = util_malloc( sizeof * lsf_job , __func__);
+  lsf_job_type * lsf_job = util_malloc( sizeof * lsf_job );
   
   memset(&lsf_job->lsf_request , 0 , sizeof (lsf_job->lsf_request));
   lsf_job->lsf_request.queue            = queue_name;

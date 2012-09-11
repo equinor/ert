@@ -61,7 +61,7 @@ UTIL_SAFE_CAST_FUNCTION( local_job    , LOCAL_JOB_TYPE_ID    )
 
 local_job_type * local_job_alloc() {
   local_job_type * job;
-  job = util_malloc(sizeof * job , __func__);
+  job = util_malloc(sizeof * job );
   UTIL_TYPE_ID_INIT( job , LOCAL_JOB_TYPE_ID );
   job->active = false;
   job->status = JOB_QUEUE_WAITING;
@@ -185,7 +185,7 @@ void local_driver_free__(void * __driver) {
 
 
 void * local_driver_alloc() {
-  local_driver_type * local_driver = util_malloc(sizeof * local_driver , __func__);
+  local_driver_type * local_driver = util_malloc(sizeof * local_driver );
   UTIL_TYPE_ID_INIT( local_driver , LOCAL_DRIVER_TYPE_ID);
   pthread_mutex_init( &local_driver->submit_lock , NULL );
   pthread_attr_init( &local_driver->thread_attr );

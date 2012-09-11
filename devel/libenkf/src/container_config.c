@@ -33,7 +33,7 @@ struct container_config_struct {
 
 
 container_config_type * container_config_alloc( const char * key ) {
-  container_config_type * container = util_malloc( sizeof * container , __func__ );
+  container_config_type * container = util_malloc( sizeof * container );
   UTIL_TYPE_ID_INIT( container , CONTAINER_CONFIG_TYPE_ID );
   container->nodes = vector_alloc_new();
   return container;

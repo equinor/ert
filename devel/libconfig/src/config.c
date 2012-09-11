@@ -209,7 +209,7 @@ static void config_add_and_free_error(config_type * config , char * error_messag
 
 /*****************************************************************/
 static validate_type * validate_alloc() {
-  validate_type * validate = util_malloc(sizeof * validate , __func__);
+  validate_type * validate = util_malloc(sizeof * validate );
   validate->argc_min = -1;
   validate->argc_max = -1;
   validate->common_selection_set    = NULL;
@@ -256,7 +256,7 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
       internal_type_size = argc_min;
 
     if (internal_type_size > 0) {
-      validate->indexed_selection_set = util_calloc( internal_type_size , sizeof * validate->indexed_selection_set , __func__);
+      validate->indexed_selection_set = util_calloc( internal_type_size , sizeof * validate->indexed_selection_set );
       for (int iarg=0; iarg < internal_type_size; iarg++)
         validate->indexed_selection_set[iarg] = NULL;
     }
@@ -264,7 +264,7 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
   
   if (type_map != NULL) {
     validate->type_map_size = type_map_size;
-    validate->type_map = util_alloc_copy(type_map , type_map_size * sizeof * type_map , __func__);
+    validate->type_map = util_alloc_copy(type_map , type_map_size * sizeof * type_map );
   }
 
 }
@@ -319,7 +319,7 @@ static void config_item_node_fprintf(config_item_node_type * node , int node_nr 
 
 
 static config_item_node_type * config_item_node_alloc() {
-  config_item_node_type * node = util_malloc(sizeof * node , __func__);
+  config_item_node_type * node = util_malloc(sizeof * node );
   node->stringlist = stringlist_alloc_new();
   node->config_cwd = NULL;
   return node;
@@ -352,7 +352,7 @@ static void config_item_node_free(config_item_node_type * node) {
 
 static void config_item_realloc_nodes(config_item_type * item , int new_size) {
   const int old_size = item->alloc_size;
-  item->nodes      = util_realloc(item->nodes , sizeof * item->nodes * new_size , __func__);
+  item->nodes      = util_realloc(item->nodes , sizeof * item->nodes * new_size );
   item->alloc_size = new_size;
   {
     int i;
@@ -569,7 +569,7 @@ static hash_type * config_item_alloc_hash(const config_item_type * item , bool c
 
 
 config_item_type * config_item_alloc(const char * kw , bool required , bool append_arg) {
-  config_item_type * item = util_malloc(sizeof * item , __func__);
+  config_item_type * item = util_malloc(sizeof * item );
 
   item->__id       = CONFIG_ITEM_ID;
   item->kw         = util_alloc_string_copy(kw);
@@ -1025,7 +1025,7 @@ void config_item_set_envvar_expansion( config_item_type * item , bool expand_env
 
 
 config_type * config_alloc() {
-  config_type *config     = util_malloc(sizeof * config  , __func__);
+  config_type *config     = util_malloc(sizeof * config );
   config->items           = hash_alloc();
   config->parse_errors    = stringlist_alloc_new();
   config->parsed_files    = set_alloc_empty();

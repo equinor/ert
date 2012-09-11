@@ -60,7 +60,7 @@ void rng_config_set_seed_store_file( rng_config_type * rng_config , const char *
 
 
 rng_config_type * rng_config_alloc( ) {
-  rng_config_type * rng_config = util_malloc( sizeof * rng_config , __func__ );
+  rng_config_type * rng_config = util_malloc( sizeof * rng_config);
 
   rng_config_set_type( rng_config , MZRAN );  /* Only type ... */
   rng_config->seed_store_file = NULL;

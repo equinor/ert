@@ -205,11 +205,11 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
   const int float_width     =  9;
   const int float_precision =  4;
 
-  int      * width = util_malloc((num_columns + 1) * sizeof * width , __func__);
+  int      * width = util_calloc((num_columns + 1) , sizeof * width );
   int        total_width;
 
-  double   * mean   = util_malloc(num_columns * sizeof * mean,   __func__);
-  double   * stddev = util_malloc(num_columns * sizeof * stddev, __func__);
+  double   * mean   = util_calloc(num_columns , sizeof * mean  );
+  double   * stddev = util_calloc(num_columns , sizeof * stddev);
 
   /* Check the column_names. */
   for(int column_nr = 0; column_nr < num_columns; column_nr++)

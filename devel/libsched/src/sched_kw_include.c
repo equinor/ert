@@ -51,7 +51,7 @@ struct sched_kw_include_struct {
 
 
 static sched_kw_include_type * sched_kw_include_alloc_empty() {
-  sched_kw_include_type * kw = util_malloc( sizeof * kw , __func__);
+  sched_kw_include_type * kw = util_malloc( sizeof * kw );
   UTIL_TYPE_ID_INIT(kw , SCHED_KW_INCLUDE_ID);
   kw->include_file           = NULL;
   return kw;

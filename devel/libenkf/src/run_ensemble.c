@@ -87,7 +87,7 @@ int main (int argc , char ** argv) {
       printf("ENS_SIZE: %d\n", ens_size);
       //const int enopt_start = util_scanf_int("Restart Step",argv[2]);
       //const int ens_size    = ensemble_config_get_size(ensemble_config);
-      bool * iactive        = util_malloc(ens_size * sizeof * iactive , __func__);
+      bool * iactive        = util_calloc(ens_size , sizeof * iactive );
       {
         int iens;
         for (iens= 0; iens < ens_size; iens++)

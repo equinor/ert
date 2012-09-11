@@ -85,7 +85,7 @@ bfs_config_type * bfs_config_alloc( fs_driver_enum driver_type , bool read_only)
   const double fragmentation_limit = 1.0;     /* 1.0 => NO defrag is run. */
 
   {
-    bfs_config_type * config = util_malloc( sizeof * config , __func__ );
+    bfs_config_type * config = util_malloc( sizeof * config );
     config->max_cache_size      = max_cache_size;
     config->fsync_interval      = fsync_interval;
     config->fragmentation_limit = fragmentation_limit;
@@ -136,7 +136,7 @@ static void * bfs_close__( void * arg ) {
 }
 
 static bfs_type * bfs_alloc( const bfs_config_type * config ) {
-  bfs_type * fs = util_malloc( sizeof * fs , __func__);
+  bfs_type * fs = util_malloc( sizeof * fs );
   UTIL_TYPE_ID_INIT( fs , BFS_TYPE_ID );
   fs->config         = config;
   
@@ -399,7 +399,7 @@ static void block_fs_driver_fsync( void * _driver ) {
 
 
 static block_fs_driver_type * block_fs_driver_alloc(int num_fs) {
-  block_fs_driver_type * driver = util_malloc(sizeof * driver , __func__);
+  block_fs_driver_type * driver = util_malloc(sizeof * driver );
   {
     fs_driver_type * fs_driver = (fs_driver_type *) driver;
     fs_driver_init(fs_driver);
@@ -419,7 +419,7 @@ static block_fs_driver_type * block_fs_driver_alloc(int num_fs) {
   driver->__id          = BLOCK_FS_DRIVER_ID;
   driver->num_fs        = num_fs;
 
-  driver->fs_list       = util_calloc( driver->num_fs , sizeof * driver->fs_list , __func__); 
+  driver->fs_list       = util_calloc( driver->num_fs , sizeof * driver->fs_list ); 
   return driver;
 }
 

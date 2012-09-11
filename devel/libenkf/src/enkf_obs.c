@@ -199,7 +199,7 @@ struct enkf_obs_struct {
 
 enkf_obs_type * enkf_obs_alloc( const history_type * history , double std_cutoff )
 {
-  enkf_obs_type * enkf_obs = util_malloc(sizeof * enkf_obs, __func__);
+  enkf_obs_type * enkf_obs = util_malloc(sizeof * enkf_obs);
   enkf_obs->have_obs       = false;
   enkf_obs->obs_hash       = hash_alloc();
   enkf_obs->std_cutoff     = std_cutoff;

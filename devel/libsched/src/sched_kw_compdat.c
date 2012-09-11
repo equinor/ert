@@ -59,9 +59,9 @@ typedef struct  {
   int               sat_table;    
   double            conn_factor;
   double            well_diameter;     
-  double            eff_perm;	       
+  double            eff_perm;          
   double            skin_factor;       
-  double            D_factor;	       
+  double            D_factor;          
   double            r0;                   
   
   /*
@@ -159,20 +159,20 @@ static comp_state_type comp_get_state_from_string(const char * state) {
 
 static void comp_sched_fprintf(const comp_type * comp , FILE *stream) {
   fprintf(stream , " ");
-  sched_util_fprintf_qst(comp->def[0] , comp->well 	      		     , 8  , stream);
-  sched_util_fprintf_int(comp->def[1] , comp->i    	      		     , 4  , stream);
-  sched_util_fprintf_int(comp->def[2] , comp->j    	      		     , 4  , stream);
-  sched_util_fprintf_int(comp->def[3] , comp->k1   	      		     , 4  , stream);
-  sched_util_fprintf_int(comp->def[4] , comp->k2   	      		     , 4  , stream);
+  sched_util_fprintf_qst(comp->def[0] , comp->well                           , 8  , stream);
+  sched_util_fprintf_int(comp->def[1] , comp->i                              , 4  , stream);
+  sched_util_fprintf_int(comp->def[2] , comp->j                              , 4  , stream);
+  sched_util_fprintf_int(comp->def[3] , comp->k1                             , 4  , stream);
+  sched_util_fprintf_int(comp->def[4] , comp->k2                             , 4  , stream);
   sched_util_fprintf_qst(comp->def[5] , comp_get_state_string( comp->state ) , 4  , stream);
-  sched_util_fprintf_int(comp->def[6] , comp->sat_table       		     , 6  ,     stream);
-  sched_util_fprintf_dbl(comp->def[7] , comp->conn_factor     		     , 9  , 3 , stream);
-  sched_util_fprintf_dbl(comp->def[8] , comp->well_diameter   		     , 9  , 3 , stream);
-  sched_util_fprintf_dbl(comp->def[9] , comp->eff_perm        		     , 9  , 3 , stream);
-  sched_util_fprintf_dbl(comp->def[10], comp->skin_factor     		     , 9  , 3 , stream);
-  sched_util_fprintf_dbl(comp->def[11], comp->D_factor        		     , 9  , 3 , stream);
+  sched_util_fprintf_int(comp->def[6] , comp->sat_table                      , 6  ,     stream);
+  sched_util_fprintf_dbl(comp->def[7] , comp->conn_factor                    , 9  , 3 , stream);
+  sched_util_fprintf_dbl(comp->def[8] , comp->well_diameter                  , 9  , 3 , stream);
+  sched_util_fprintf_dbl(comp->def[9] , comp->eff_perm                       , 9  , 3 , stream);
+  sched_util_fprintf_dbl(comp->def[10], comp->skin_factor                    , 9  , 3 , stream);
+  sched_util_fprintf_dbl(comp->def[11], comp->D_factor                       , 9  , 3 , stream);
   sched_util_fprintf_qst(comp->def[12], comp_get_dir_string( comp->well_dir) , 2  , stream);
-  sched_util_fprintf_dbl(comp->def[13], comp->r0              		     , 9  , 3 , stream);
+  sched_util_fprintf_dbl(comp->def[13], comp->r0                             , 9  , 3 , stream);
   fprintf(stream , " /\n");
 }
 
@@ -180,7 +180,7 @@ static void comp_sched_fprintf(const comp_type * comp , FILE *stream) {
 
 
 static comp_type * comp_alloc_empty( ) {
-  comp_type *node = util_malloc(sizeof * node , __func__);
+  comp_type *node = util_malloc(sizeof * node);
   node->well      = NULL;
   return node;
 }
@@ -205,9 +205,9 @@ static comp_type * comp_alloc_from_tokens( const stringlist_type * line_tokens )
   comp->sat_table       = sched_util_atoi(stringlist_iget( line_tokens , 6));
   comp->conn_factor     = sched_util_atof(stringlist_iget( line_tokens , 7));
   comp->well_diameter   = sched_util_atof(stringlist_iget( line_tokens , 8));     
-  comp->eff_perm        = sched_util_atof(stringlist_iget( line_tokens , 9));	       
+  comp->eff_perm        = sched_util_atof(stringlist_iget( line_tokens , 9));          
   comp->skin_factor     = sched_util_atof(stringlist_iget( line_tokens , 10));       
-  comp->D_factor        = sched_util_atof(stringlist_iget( line_tokens , 11));	       
+  comp->D_factor        = sched_util_atof(stringlist_iget( line_tokens , 11));         
 
   if (comp->def[12]) 
     comp->well_dir = WELL_DIR_DEFAULT;
@@ -250,7 +250,7 @@ void sched_kw_compdat_fprintf(const sched_kw_compdat_type *kw , FILE *stream) {
 
 
 sched_kw_compdat_type * sched_kw_compdat_alloc_empty( ) {
-  sched_kw_compdat_type * kw = util_malloc(sizeof *kw , __func__);
+  sched_kw_compdat_type * kw = util_malloc(sizeof *kw );
   kw->completions = vector_alloc_new();
   UTIL_TYPE_ID_INIT( kw , SCHED_KW_COMPDAT_ID );
   return kw;

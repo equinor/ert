@@ -187,7 +187,7 @@ static void trans_logunif_check(const char * func_name , const arg_pack_type * a
 /*****************************************************************/
 
 static trans_func_type * trans_func_alloc_empty( const char * func_name ) {
-  trans_func_type * trans_func = util_malloc( sizeof * trans_func , __func__);
+  trans_func_type * trans_func = util_malloc( sizeof * trans_func );
   
 
   trans_func->params      = arg_pack_alloc();

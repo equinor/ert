@@ -58,7 +58,7 @@ void well_index_add_type( well_index_type * index , sched_kw_type_enum kw_type ,
 
 
 well_index_type * well_index_alloc( const char * well_name , const char * variable , const void * state_ptr , sched_kw_type_enum kw_type , sched_history_callback_ftype * func ) {
-  well_index_type * well_index = util_malloc( sizeof * well_index , __func__ );
+  well_index_type * well_index = util_malloc( sizeof * well_index );
   
   UTIL_TYPE_ID_INIT( well_index , WELL_INDEX_TYPE_ID );
   

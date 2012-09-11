@@ -49,7 +49,7 @@ static UTIL_SAFE_CAST_FUNCTION( sqrt_enkf_data , SQRT_ENKF_TYPE_ID )
 
 
 void * sqrt_enkf_data_alloc( rng_type * rng ) {
-  sqrt_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
+  sqrt_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , SQRT_ENKF_TYPE_ID );
 
   data->std_data = std_enkf_data_alloc( rng );
@@ -118,7 +118,7 @@ void sqrt_enkf_initX(void * module_data ,
     int ens_size      = matrix_get_columns( S );
     int nrmin         = util_int_min( ens_size , nrobs); 
     matrix_type * W   = matrix_alloc(nrobs , nrmin);                      
-    double      * eig = util_malloc( sizeof * eig * nrmin , __func__);    
+    double      * eig = util_calloc( nrmin , sizeof * eig );    
     
     matrix_subtract_row_mean( S );   /* Shift away the mean */
     enkf_linalg_lowrankCinv( S , R , W , eig , truncation , ncomp);    

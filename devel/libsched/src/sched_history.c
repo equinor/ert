@@ -397,7 +397,7 @@ time_t sched_history_iget_time_t( const sched_history_type * sched_history , int
 
 
 sched_history_type * sched_history_alloc( const char * sep_string ) {
-  sched_history_type * sched_history = util_malloc( sizeof * sched_history , __func__ );
+  sched_history_type * sched_history = util_malloc( sizeof * sched_history );
 
   sched_history->well_history  = NULL;
   sched_history->group_history = NULL;

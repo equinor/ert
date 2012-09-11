@@ -62,7 +62,7 @@ void fwd_step_enkf_set_r2_limit( fwd_step_enkf_data_type * data , double limit )
 
 
 void * fwd_step_enkf_data_alloc( rng_type * rng ) {
-  fwd_step_enkf_data_type * data = util_malloc( sizeof * data , __func__ );
+  fwd_step_enkf_data_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , FWD_STEP_ENKF_TYPE_ID );
   
   data->stepwise_data = NULL;

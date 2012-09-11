@@ -69,7 +69,7 @@ static void gen_kw_parameter_update_tagged_name( gen_kw_parameter_type * paramet
 
 
 static gen_kw_parameter_type * gen_kw_parameter_alloc( const char * parameter_name , const char * tag_fmt ) {
-  gen_kw_parameter_type * parameter = util_malloc( sizeof * parameter , __func__ );
+  gen_kw_parameter_type * parameter = util_malloc( sizeof * parameter );
   UTIL_TYPE_ID_INIT( parameter , GEN_KW_PARAMETER_TYPE_ID); 
   parameter->name        = util_alloc_string_copy( parameter_name );
   parameter->tagged_name = NULL;
@@ -186,7 +186,7 @@ bool gen_kw_config_is_valid( const gen_kw_config_type * config ) {
    afterwards, otherwise all tagged strings will just be NULL.
 */
 gen_kw_config_type * gen_kw_config_alloc_empty( const char * key , const char * tag_fmt ) {
-  gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config , __func__);
+  gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config);
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
 
   gen_kw_config->key                = NULL; 

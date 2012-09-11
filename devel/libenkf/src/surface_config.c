@@ -33,7 +33,7 @@ struct surface_config_struct {
 
 
 surface_config_type  * surface_config_alloc_empty( ) {
-  surface_config_type * config = util_malloc( sizeof * config , __func__ );
+  surface_config_type * config = util_malloc( sizeof * config );
   UTIL_TYPE_ID_INIT( config , SURFACE_CONFIG_TYPE_ID );
   config->base_surface  = NULL;
   return config;

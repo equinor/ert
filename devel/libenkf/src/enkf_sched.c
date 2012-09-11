@@ -145,7 +145,7 @@ struct enkf_sched_struct {
 
 
 static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int report_step2 , bool enkf_active) {
-  enkf_sched_node_type * node = util_malloc(sizeof * node , __func__);
+  enkf_sched_node_type * node = util_malloc(sizeof * node );
   node->report_step1  = report_step1;
   node->report_step2  = report_step2;
   node->enkf_active   = enkf_active;
@@ -328,7 +328,7 @@ void enkf_sched_free( enkf_sched_type * enkf_sched) {
 
 
 static enkf_sched_type * enkf_sched_alloc_empty( ) {
-  enkf_sched_type * enkf_sched      = util_malloc(sizeof * enkf_sched , __func__);
+  enkf_sched_type * enkf_sched      = util_malloc(sizeof * enkf_sched );
   enkf_sched->nodes                 = vector_alloc_new();  
   enkf_sched->last_report           = 0;
   return enkf_sched;

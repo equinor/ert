@@ -44,7 +44,7 @@ UTIL_SAFE_CAST_FUNCTION_CONST( group_index , GROUP_INDEX_TYPE_ID )
 
 
 group_index_type * group_index_alloc( const char * group_name , const char * variable , const void * group_history , sched_history_callback_ftype * func ) {
-  group_index_type * group_index = util_malloc( sizeof * group_index , __func__ );
+  group_index_type * group_index = util_malloc( sizeof * group_index );
   
   UTIL_TYPE_ID_INIT( group_index , GROUP_INDEX_TYPE_ID );
   

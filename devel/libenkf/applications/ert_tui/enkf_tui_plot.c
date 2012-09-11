@@ -600,7 +600,7 @@ void enkf_tui_plot_histogram(void * arg) {
       state_enum plot_state = ANALYZED; /* Compiler shut up */
       char * key_index;
       const int last_report = time_map_get_last_step( time_map );
-      double * count        = util_calloc(ens_size , sizeof * count , __func__);
+      double * count        = util_calloc(ens_size , sizeof * count );
       int iens , report_step;
       char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , case_name , user_key );
       plot_type * plot = enkf_tui_plot_alloc(plot_config , user_key , "#" ,user_key , plot_file);
@@ -754,7 +754,7 @@ void enkf_tui_plot_all_summary(void * arg) {
       //thread_pool_type * tp = thread_pool_alloc( 0 , true );
 
       stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
-      arg_pack_type ** arg_list = util_calloc( stringlist_get_size( summary_keys ) , sizeof * arg_list , __func__ );
+      arg_pack_type ** arg_list = util_calloc( stringlist_get_size( summary_keys ) , sizeof * arg_list );
       {
         char * plot_path = util_alloc_filename( plot_config_get_path( plot_config ) , enkf_main_get_current_fs( enkf_main ) , NULL );
         util_make_path( plot_path );
@@ -931,9 +931,9 @@ void enkf_tui_plot_sensitivity(void * arg) {
   const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
   const enkf_config_node_type * config_node_x;
   const enkf_config_node_type * config_node_y;
-  double * x     = util_calloc( ens_size , sizeof * x , __func__);
-  double * y     = util_calloc( ens_size , sizeof * y , __func__);
-  bool   * valid = util_calloc( ens_size , sizeof * valid , __func__);
+  double * x     = util_calloc( ens_size , sizeof * x );
+  double * y     = util_calloc( ens_size , sizeof * y );
+  bool   * valid = util_calloc( ens_size , sizeof * valid);
   state_enum state_x = BOTH;
   state_enum state_y = BOTH; 
   int report_step_x = 0;

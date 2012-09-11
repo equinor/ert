@@ -63,7 +63,7 @@ UTIL_SAFE_CAST_FUNCTION(local_ministep , LOCAL_MINISTEP_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(local_ministep , LOCAL_MINISTEP_TYPE_ID)
 
 local_ministep_type * local_ministep_alloc(const char * name , local_obsset_type * observations) {
-  local_ministep_type * ministep = util_malloc( sizeof * ministep , __func__ );
+  local_ministep_type * ministep = util_malloc( sizeof * ministep );
 
   ministep->name         = util_alloc_string_copy( name );
   ministep->observations = observations;
