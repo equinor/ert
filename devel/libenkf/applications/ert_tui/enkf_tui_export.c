@@ -234,7 +234,7 @@ void enkf_tui_export_profile(void * enkf_main) {
         util_abort("%s: internal error \n",__func__);
       }
       total_cells = (i2 - i1 + 1) * (j2 - j1 + 1) * (k2 - k1 + 1);
-      cell_list = util_malloc(total_cells * sizeof * cell_list , __func__);
+      cell_list = util_calloc(total_cells , sizeof * cell_list );
       {
         int cell_index = 0;
         int i,j,k;
@@ -248,7 +248,7 @@ void enkf_tui_export_profile(void * enkf_main) {
     
       file_fmt = path_fmt_scanf_alloc("Give filename to store profiles (with TWO %d specifiers) =>" , 0 , NULL , false);
       {
-        double * profile      = util_malloc(total_cells * sizeof * profile , __func__);
+        double * profile      = util_calloc(total_cells , sizeof * profile );
         int iens , report_step;
         enkf_node_type * node = enkf_node_alloc( config_node );
         enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
@@ -308,7 +308,7 @@ void enkf_tui_export_cell(void * enkf_main) {
       int iens1 , iens2;   
       bool * iens_active    = enkf_tui_util_scanf_alloc_iens_active( ens_size , PROMPT_LEN , &iens1 , &iens2); /* Not used yet ... */
       bool * report_active  = enkf_tui_util_scanf_alloc_report_active( last_report , PROMPT_LEN);
-      double * cell_data    = util_malloc(ens_size * sizeof * cell_data , __func__);
+      double * cell_data    = util_calloc(ens_size , sizeof * cell_data);
       int iens , report_step; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node = enkf_node_alloc( config_node );
       enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
@@ -379,11 +379,11 @@ void enkf_tui_export_time(void * enkf_main) {
       
       
       if (analysis_state == BOTH) {
-        x = util_malloc( 2 * (step2 - step1 + 1) * sizeof * x, __func__);
-        y = util_malloc( 2 * (step2 - step1 + 1) * sizeof * y, __func__);
+        x = util_calloc( 2 * (step2 - step1 + 1) , sizeof * x);
+        y = util_calloc( 2 * (step2 - step1 + 1) , sizeof * y);
       } else {
-        x = util_malloc( (step2 - step1 + 1) * sizeof * x, __func__);
-        y = util_malloc( (step2 - step1 + 1) * sizeof * y, __func__);
+        x = util_calloc( (step2 - step1 + 1)  , sizeof * x);
+        y = util_calloc( (step2 - step1 + 1)  , sizeof * y);
       }
         
       

@@ -76,7 +76,7 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
         gen_kw_config_type *  gen_kw_config = enkf_config_node_get_ref( config_node );
         num_keys                            = gen_kw_config_get_data_size( gen_kw_config );
         
-        user_keys = util_malloc( num_keys * sizeof * user_keys , __func__);
+        user_keys = util_calloc( num_keys , sizeof * user_keys );
         for (int i=0; i < num_keys; i++) 
           user_keys[i] = gen_kw_config_alloc_user_key( gen_kw_config , i);
         
@@ -108,10 +108,10 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
     free( filename );
   }
 
-  active       = util_malloc( num_keys * sizeof * active       , __func__);
-  nodes        = util_malloc( num_keys * sizeof * nodes        , __func__);
-  config_nodes = util_malloc( num_keys * sizeof * config_nodes , __func__);
-  index_keys   = util_malloc( num_keys * sizeof * index_keys   , __func__);
+  active       = util_calloc( num_keys , sizeof * active       );
+  nodes        = util_calloc( num_keys , sizeof * nodes        );
+  config_nodes = util_calloc( num_keys , sizeof * config_nodes );
+  index_keys   = util_calloc( num_keys , sizeof * index_keys   );
   for (ikey  = 0; ikey < num_keys; ikey++) {
     config_nodes[ikey] = (enkf_config_node_type *) ensemble_config_user_get_node( ensemble_config , user_keys[ikey] , &index_keys[ikey]);
     if (config_nodes[ikey] != NULL) {
@@ -137,12 +137,12 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
     step2  = last_report + 1;
     length = (step2 - step1);
   }
-  index = util_malloc( length   * sizeof * index , __func__);
-  data  = util_malloc( num_keys * sizeof * data  , __func__);
+  index = util_calloc( length   , sizeof * index );
+  data  = util_calloc( num_keys , sizeof * data  );
   {
     int i;
     for (i = 0; i < num_keys; i++)
-      data[i] = util_malloc( length * sizeof * data[i] , __func__);
+      data[i] = util_calloc( length , sizeof * data[i] );
   }
   
   {

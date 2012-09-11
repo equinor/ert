@@ -60,7 +60,7 @@ struct well_path_struct {
 
 
 static void well_path_resize( well_path_type * well_path , int new_size) {
-  well_path->branches = util_realloc( well_path->branches , new_size * sizeof * well_path->branches , __func__);
+  well_path->branches = util_realloc( well_path->branches , new_size * sizeof * well_path->branches );
   {
     int i;
     for (i=well_path->alloc_size; i < new_size; i++)
@@ -73,7 +73,7 @@ static void well_path_resize( well_path_type * well_path , int new_size) {
 static UTIL_SAFE_CAST_FUNCTION( well_path , WELL_PATH_TYPE_ID )
 
 well_path_type * well_path_alloc(const char * grid_name) {
-  well_path_type * well_path = util_malloc( sizeof * well_path , __func__ );
+  well_path_type * well_path = util_malloc( sizeof * well_path );
   UTIL_TYPE_ID_INIT( well_path , WELL_PATH_TYPE_ID );
   well_path->grid_name    = util_alloc_string_copy( grid_name );
   well_path->branches     = NULL;

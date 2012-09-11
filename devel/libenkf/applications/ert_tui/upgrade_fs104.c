@@ -127,7 +127,7 @@ char * check_enspath( const char * ens_path , stringlist_type * case_list ) {
 void upgrade_case( int ens_size , const ecl_sum_type * refcase , const char * enspath , const char * case_path , const char * file) {
   int num_drivers = 32;
   int length = ecl_sum_get_last_report_step( refcase );
-  block_fs_type ** fs_list = util_malloc( num_drivers * sizeof * fs_list , __func__ );
+  block_fs_type ** fs_list = util_calloc( num_drivers , sizeof * fs_list );
   buffer_type * buffer = buffer_alloc(100);
   double_vector_type * vector = double_vector_alloc( 0,0 );
   int driver_nr;

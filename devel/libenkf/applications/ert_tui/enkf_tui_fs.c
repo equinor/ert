@@ -156,7 +156,7 @@ static void enkf_tui_fs_copy_ensemble__(
       return;
     }
   }
-  identity_permutation = util_malloc( ens_size * sizeof * identity_permutation , __func__ );
+  identity_permutation = util_calloc( ens_size , sizeof * identity_permutation );
   {
     int iens;
     for (iens =0; iens < ens_size; iens++) 

@@ -202,7 +202,7 @@ struct well_info_struct {
 */
 
 well_info_type * well_info_alloc( const ecl_grid_type * grid) {
-  well_info_type * well_info = util_malloc( sizeof * well_info , __func__ );
+  well_info_type * well_info = util_malloc( sizeof * well_info );
   well_info->wells      = hash_alloc();
   well_info->well_names = stringlist_alloc_new();
   well_info->grid       = grid;
@@ -300,7 +300,7 @@ void well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst
   {
     int num_blocks = ecl_file_get_num_named_kw( rst_file , SEQNUM_KW );
     int block_nr;
-	for (block_nr = 0; block_nr < num_blocks; block_nr++) {
+        for (block_nr = 0; block_nr < num_blocks; block_nr++) {
       ecl_file_push_block( rst_file );      // <-------------------------------------------------------
       {                                                                                               //
         ecl_file_subselect_block( rst_file , SEQNUM_KW , block_nr );                                  //  Ensure that the status

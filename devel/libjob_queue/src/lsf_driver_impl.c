@@ -149,7 +149,7 @@ static UTIL_SAFE_CAST_FUNCTION( lsf_job , LSF_JOB_TYPE_ID)
 
 lsf_job_type * lsf_job_alloc() {
   lsf_job_type * job;
-  job                = util_malloc(sizeof * job , __func__);
+  job                = util_malloc(sizeof * job);
   job->num_exec_host = 0;
   job->exec_host     = NULL;
 
@@ -247,7 +247,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
     }
     buffer_terminate_char_ptr( remote_cmd );
     {
-      char ** argv = util_calloc( 2 , sizeof * argv , __func__ );
+      char ** argv = util_calloc( 2 , sizeof * argv );
       argv[0] = driver->remote_lsf_server;
       argv[1] = buffer_get_data( remote_cmd );
       util_fork_exec(driver->rsh_cmd , 2 , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
@@ -281,7 +281,7 @@ static int lsf_driver_get_status__(lsf_driver_type * driver , const char * statu
 static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
   {
-    char ** argv = util_calloc( 2 , sizeof * argv, __func__ );
+    char ** argv = util_calloc( 2 , sizeof * argv);
     argv[0] = driver->remote_lsf_server;
     argv[1] = "bjobs -a";
     util_fork_exec(driver->rsh_cmd , 2 , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
@@ -439,7 +439,7 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
     if (driver->use_library_calls)
       lsb_forcekilljob(job->lsf_jobnr);
     else {
-      char ** argv = util_calloc( 2, sizeof * argv , __func__ );
+      char ** argv = util_calloc( 2, sizeof * argv );
       argv[0] = driver->remote_lsf_server;
       argv[1] = util_alloc_sprintf("bkill %s" , job->lsf_jobnr_char);
       
@@ -641,7 +641,7 @@ bool lsf_driver_has_option( const void * __driver , const char * option_key) {
 */
 
 void * lsf_driver_alloc( ) {
-  lsf_driver_type * lsf_driver     = util_malloc(sizeof * lsf_driver , __func__);
+  lsf_driver_type * lsf_driver     = util_malloc(sizeof * lsf_driver );
   lsf_driver->login_shell          = NULL;
   lsf_driver->queue_name           = NULL;
   lsf_driver->remote_lsf_server    = NULL; 

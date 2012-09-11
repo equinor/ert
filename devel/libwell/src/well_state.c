@@ -66,7 +66,7 @@ UTIL_IS_INSTANCE_FUNCTION( well_state , WELL_STATE_TYPE_ID)
 
 
 static well_state_type * well_state_alloc_empty() {
-  well_state_type * well_state = util_malloc( sizeof * well_state , __func__ );
+  well_state_type * well_state = util_malloc( sizeof * well_state );
   UTIL_TYPE_ID_INIT( well_state , WELL_STATE_TYPE_ID );
   well_state->index_lgr_path = vector_alloc_new();
   well_state->name_lgr_path  = hash_alloc();
@@ -201,7 +201,7 @@ well_state_type * well_state_alloc( ecl_file_type * ecl_file , int report_nr ,  
 
   const int iwel_offset = global_header->niwelz * global_well_nr;
   {
-	const int zwel_offset         = global_header->nzwelz * global_well_nr;
+        const int zwel_offset         = global_header->nzwelz * global_well_nr;
     well_state = well_state_alloc_empty();
     
     well_state->valid_from_time   = global_header->sim_time;

@@ -269,7 +269,7 @@ void plot_range_invert_y_axis(plot_range_type * range, bool invert) {
 */
 
 plot_range_type * plot_range_alloc() {
-  plot_range_type * range = util_malloc(sizeof * range , __func__);
+  plot_range_type * range = util_malloc(sizeof * range );
   int i;
   
   for (i=0; i < 4; i++) {

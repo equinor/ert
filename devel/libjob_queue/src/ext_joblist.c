@@ -76,7 +76,7 @@ struct ext_joblist_struct {
 
 
 ext_joblist_type * ext_joblist_alloc( ) {
-  ext_joblist_type * joblist = util_malloc( sizeof * joblist , __func__ );
+  ext_joblist_type * joblist = util_malloc( sizeof * joblist );
   joblist->jobs = hash_alloc();
   return joblist; 
 }

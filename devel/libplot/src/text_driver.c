@@ -34,7 +34,7 @@ typedef struct {
 
 
 static text_state_type * text_state_alloc( void * init_arg ) {
-  text_state_type * state = util_malloc( sizeof * state , __func__);
+  text_state_type * state = util_malloc( sizeof * state );
   {
     arg_pack_type * arg_pack = arg_pack_safe_cast( init_arg );
     state->plot_path         = util_alloc_string_copy( arg_pack_iget_ptr( arg_pack , 0) );
@@ -185,7 +185,7 @@ plot_driver_type * text_driver_alloc(void * init_arg) {
   plot_driver_type * driver = plot_driver_alloc_empty("TEXT");
   driver->state             = text_state_alloc( init_arg );
   
-  driver->close_driver 	    = text_close_driver;
+  driver->close_driver      = text_close_driver;
   driver->plot_xy           = text_plot_xy;
   driver->plot_xy1y2        = text_plot_xy1y2;
   driver->plot_x1x2y        = text_plot_x1x2y;

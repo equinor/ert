@@ -90,7 +90,7 @@ static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) 
   if (max_running > 0) {
     struct addrinfo * result;
     if (getaddrinfo(host_name , NULL , NULL , &result) == 0) {
-      rsh_host_type * host = util_malloc(sizeof * host , __func__);
+      rsh_host_type * host = util_malloc(sizeof * host );
       
       host->host_name   = util_alloc_string_copy(host_name);
       host->max_running = max_running;
@@ -139,7 +139,7 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
      in the rsh_host_available function.
   */
   int argc           = job_argc + 2;
-  const char ** argv = util_malloc( argc * sizeof * argv , __func__);
+  const char ** argv = util_malloc( argc * sizeof * argv );
   
   argv[0] = rsh_host->host_name;
   argv[1] = submit_cmd;
@@ -194,7 +194,7 @@ static void * rsh_host_submit_job__(void * __arg_pack) {
 
 rsh_job_type * rsh_job_alloc(const char * run_path) {
   rsh_job_type * job;
-  job = util_malloc(sizeof * job , __func__);
+  job = util_malloc(sizeof * job );
   job->active     = false;
   job->status     = JOB_QUEUE_WAITING;
   job->run_path   = util_alloc_string_copy(run_path);
@@ -359,7 +359,7 @@ void rsh_driver_set_host_list( rsh_driver_type * rsh_driver , const hash_type * 
 */
 
 void * rsh_driver_alloc( ) {
-  rsh_driver_type * rsh_driver = util_malloc( sizeof * rsh_driver , __func__ );
+  rsh_driver_type * rsh_driver = util_malloc( sizeof * rsh_driver );
   UTIL_TYPE_ID_INIT( rsh_driver , RSH_DRIVER_TYPE_ID );
   pthread_mutex_init( &rsh_driver->submit_lock , NULL );
   pthread_attr_init( &rsh_driver->thread_attr );
@@ -384,7 +384,7 @@ void rsh_driver_add_host(rsh_driver_type * rsh_driver , const char * hostname , 
   rsh_host_type * new_host = rsh_host_alloc(hostname , host_max_running);  /* Could in principle update an existing node if the host name is old. */
   if (new_host != NULL) {
     rsh_driver->num_hosts++;
-    rsh_driver->host_list = util_realloc(rsh_driver->host_list , rsh_driver->num_hosts * sizeof * rsh_driver->host_list , __func__);
+    rsh_driver->host_list = util_realloc(rsh_driver->host_list , rsh_driver->num_hosts * sizeof * rsh_driver->host_list );
     rsh_driver->host_list[(rsh_driver->num_hosts - 1)] = new_host;
   }
 }

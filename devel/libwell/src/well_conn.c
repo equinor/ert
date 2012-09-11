@@ -55,7 +55,7 @@ well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const e
   int conn_i = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADI_ITEM );
   
   if (conn_i > 0) {
-    well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
+    well_conn_type * conn = util_malloc( sizeof * conn );
     
     conn->i    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADI_ITEM ) - 1;
     conn->j    = ecl_kw_iget_int( iwel_kw , iwel_offset + IWEL_HEADJ_ITEM ) - 1;
@@ -73,7 +73,7 @@ well_conn_type * well_conn_alloc_wellhead( const ecl_kw_type * iwel_kw , const e
 
 
 static well_conn_type * well_conn_alloc__( const ecl_kw_type * icon_kw , int icon_offset) {
-  well_conn_type * conn = util_malloc( sizeof * conn , __func__ );
+  well_conn_type * conn = util_malloc( sizeof * conn );
   
   conn->i       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_I_ITEM ) - 1;
   conn->j       = ecl_kw_iget_int( icon_kw , icon_offset + ICON_J_ITEM ) - 1;
