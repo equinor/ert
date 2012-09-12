@@ -9,21 +9,27 @@ include_directories( ${libecl_src_path} )
 
 
 add_library( well_static  STATIC ${source_files} )
-add_library( well_shared  SHARED ${source_files} )
-
 set_target_properties( well_static PROPERTIES OUTPUT_NAME well )
-set_target_properties( well_shared PROPERTIES OUTPUT_NAME well )
-
 target_link_libraries( well_static ecl_static )
-target_link_libraries( well_shared ecl_shared )
 
+if (BUILD_SHARED)
+   add_library( well_shared  SHARED ${source_files} )
+   set_target_properties( well_shared PROPERTIES OUTPUT_NAME well )
+   target_link_libraries( well_shared ecl_shared )
+endif()
 
 #-----------------------------------------------------------------
 if (WELL_INSTALL_PREFIX)
-   install(TARGETS well_static well_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/lib)
+   if (BUILD_SHARED)
+      install(TARGETS well_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/lib)
+   endif()
+   install(TARGETS well_static DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/lib)
    install(FILES ${header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/include)
 else()
-   install(TARGETS well_static well_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+   if (BUILD_SHARED)
+      install(TARGETS well_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+   endif()
+   install(TARGETS well_static DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
    install(FILES ${header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 endif()        
 

@@ -92,6 +92,9 @@ endif()
 #-----------------------------------------------------------------
 if (ERT_WINDOWS)
    find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
+   set( BUILD_SHARED FALSE )
+else()
+   set( BUILD_SHARED TRUE )
 endif()
 
 if (MSVC)
