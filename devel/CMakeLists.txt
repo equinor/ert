@@ -107,6 +107,11 @@ if (HAVE_FORK)
   add_definitions( -DHAVE_FORK )
 endif()
 
+check_function_exists( round HAVE_ROUND )
+if (HAVE_ROUND)
+  add_definitions( -DHAVE_ROUND )
+endif()
+
 check_function_exists( ftruncate HAVE_FTRUNCATE )
 if (HAVE_FTRUNCATE)
   add_definitions( -DHAVE_FTRUNCATE )
