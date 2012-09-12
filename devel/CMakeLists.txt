@@ -4,9 +4,11 @@ include( CheckFunctionExists )
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-   set(LINUX_HOST TRUE )
+   set(ERT_LINUX TRUE )
+   add_definitions( -DERT_LINUX )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-   set(WINDOWS_HOST TRUE)
+   set(ERT_WINDOWS TRUE)
+   add_definitions( -DERT_WINDOWS )
 endif()    
 
 
@@ -82,7 +84,13 @@ endif()
 #-----------------------------------------------------------------
 
 #-----------------------------------------------------------------
-find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
+if (ERT_WINDOWS)
+   find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
+endif()
+
+if (MSVC)
+   add_definitions( -D__func__"\\"????\\"")
+endif()
 
 check_function_exists( regexec HAVE_REGEXP )
 if (HAVE_REGEXP)
@@ -174,12 +182,19 @@ if (MKDIR_POSIX)
   add_definitions( -DMKDIR_POSIX )
 endif()
 
+try_compile( HAVE_VA_COPY ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_va_copy.c )
+if (HAVE_VA_COPY)
+   message("Have va_copy() macro")
+   add_definitions( -DHAVE_VA_COPY )
+endif()
+
+
 try_compile( ISREG_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_isreg.c )
 if (ISREG_POSIX)
   add_definitions( -DHAVE_ISREG )
 endif()
 
-if (LINUX_HOST)
+if (ERT_LINUX)
    set( NEED_LIBM TRUE )
 else()
    set( NEED_LIBM FALSE )

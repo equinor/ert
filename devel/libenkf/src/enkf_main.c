@@ -1278,7 +1278,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
           {
             job_status_type new_status;
             do {
-              usleep( load_start_usleep );
+              util_usleep( load_start_usleep );
               new_status = enkf_state_get_run_status( enkf_state );
             } while ( new_status == status );
             status = new_status;
@@ -1321,7 +1321,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
       status_list[iens] = status;
     }
     if (jobs_remaining > 0)
-      usleep( usleep_time );
+      util_usleep( usleep_time );
     
 
     /* A poor man's /proc interface .... */

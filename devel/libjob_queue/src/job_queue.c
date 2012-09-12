@@ -1201,7 +1201,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
               job_queue_grow( queue , alloc_size );
             } else 
               if (!new_jobs && cont)
-                usleep(queue->usleep_time);
+                util_usleep(queue->usleep_time);
           }
         }
         
