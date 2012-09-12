@@ -251,14 +251,14 @@ add_subdirectory( libgeometry )
 add_subdirectory( libecl )
 add_subdirectory( libwell )
 
-add_dependencies( geometry_shared util_shared )
-add_dependencies( ecl_shared      util_shared geometry_shared )
-add_dependencies( well_shared     ecl_shared  util_shared geometry_shared )
-
-add_dependencies( geometry_static util_static )
-add_dependencies( ecl_static      util_static geometry_static )
-add_dependencies( well_static     ecl_static  util_static geometry_static )
-
+#add_dependencies( geometry_shared util_shared )
+#add_dependencies( ecl_shared      util_shared geometry_shared )
+#add_dependencies( well_shared     ecl_shared  util_shared geometry_shared )
+#
+#add_dependencies( geometry_static util_static )
+#add_dependencies( ecl_static      util_static geometry_static )
+#add_dependencies( well_static     ecl_static  util_static geometry_static )
+#
 
 
 #-----------------------------------------------------------------
