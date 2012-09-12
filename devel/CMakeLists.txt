@@ -142,11 +142,6 @@ if (HAVE_ISFINITE)
   add_definitions( -DHAVE_ISFINITE )
 endif()
 
-check_function_exists( getpid HAVE_GETPID )
-if (HAVE_GETPID)
-  add_definitions( -DHAVE_GETPID )
-endif()
-
 check_function_exists( glob HAVE_GLOB )
 if (HAVE_GLOB)
   add_definitions( -DHAVE_GLOB )
@@ -180,6 +175,11 @@ endif()
 try_compile( MKDIR_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_mkdir.c )
 if (MKDIR_POSIX)
   add_definitions( -DMKDIR_POSIX )
+endif()
+
+try_compile( HAVE_PID_T ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_pid_t.c )
+if (HAVE_PID_T)
+  add_definitions( -DHAVE_PID_T )
 endif()
 
 try_compile( HAVE_VA_COPY ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_va_copy.c )
