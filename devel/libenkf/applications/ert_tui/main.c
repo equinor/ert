@@ -48,7 +48,7 @@ void text_splash() {
     printf("\n\n");
     for (i = 0; i < SPLASH_LENGTH; i++) {
       printf("%s\n" , splash_text[i]);
-      usleep(usleep_time);
+      util_usleep(usleep_time);
     }
     printf("\n\n");
 
