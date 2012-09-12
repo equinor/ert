@@ -45,6 +45,12 @@ else()
 endif()
 
 #-----------------------------------------------------------------
+find_path( GETOPT_HEADER getopt.h /usr/include )
+if (GETOPT_HEADER)
+   add_definitions( -DHAVE_GETOPT )
+endif()
+
+#-----------------------------------------------------------------
 option( USE_PTHREAD "Include support for pthreads" ON )
 if (USE_PTHREAD)
   find_library( PTHREAD_LIBRARY NAMES pthread )
