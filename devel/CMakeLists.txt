@@ -89,7 +89,7 @@ if (ERT_WINDOWS)
 endif()
 
 if (MSVC)
-   add_definitions( -D__func__"\\"????\\"")
+   ##add_definitions( -D__func__"\\"????\\"")
 endif()
 
 check_function_exists( regexec HAVE_REGEXP )
