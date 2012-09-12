@@ -10,7 +10,9 @@ foreach(prog ${program_list})
    if (LINK_STATIC)          
       target_link_libraries( ${prog} well_static ecl_static util_static )
    else()
-      target_link_libraries( ${prog} well_shared ecl_shared util_shared )
+      if (BUILD_SHARED)
+         target_link_libraries( ${prog} well_shared ecl_shared util_shared )
+      endif()
    endif()
 
    #-----------------------------------------------------------------
