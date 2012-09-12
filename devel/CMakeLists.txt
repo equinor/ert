@@ -196,8 +196,10 @@ endif()
 
 if (ERT_LINUX)
    set( NEED_LIBM TRUE )
+   set( LINK_STATIC FALSE )
 else()
    set( NEED_LIBM FALSE )
+   set( LINK_STATIC TRUE )
 endif()
 
 find_library( LAPACK_LIBRARY NAMES lapack)
