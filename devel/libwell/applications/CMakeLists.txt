@@ -7,17 +7,11 @@ include_directories( ${libutil_build_path} )
 
 set(program_list well_info_test.x )
 foreach(prog ${program_list})
-   if (LINK_STATIC)          
-      target_link_libraries( ${prog} well_static ecl_static util_static )
-   else()
-      if (BUILD_SHARED)
-         target_link_libraries( ${prog} well_shared ecl_shared util_shared )
-      endif()
-   endif()
-
+   target_link_libraries( ${prog} well ecl util )
+   
    #-----------------------------------------------------------------
 
-   if (ECL_INSTALL_PREFIX)
+   if (WELL_INSTALL_PREFIX)
       set (destination ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/bin)
    else()
       set (destination ${CMAKE_INSTALL_PREFIX}/bin)
