@@ -17,78 +17,77 @@ set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
-
-#-----------------------------------------------------------------
-# find_path( STDBOOL_HEADER stdbool.h /usr/include )
-
-#-----------------------------------------------------------------
-option(USE_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
-if (USE_ZLIB)
-  find_library( ZLIB_LIBRARY NAMES z )
-  find_path( ZLIB_HEADER zlib.h /usr/include )
-
-  if (NOT ZLIB_LIBRARY)
-    set( USE_ZLIB OFF )
-  endif()
-  
-  if (NOT ZLIB_HEADER)
-    set( USE_ZLIB OFF )
-  endif()
-endif()
-
-if (USE_ZLIB)
-  set( HAVE_ZLIB ON )
-  add_definitions( -DHAVE_ZLIB )
+option( SHARED_LIB "Build shared libraries" OFF)
+if (SHARED_LIB)
+   set( LIBRARY_TYPE SHARED )
 else()
-  message( "ZLib not found - zlib support will not be included." )      
-  set( HAVE_ZLIB OFF )      
-endif()
+   set( LIBRARY_TYPE STATIC )
+endif()     
 
+#-----------------------------------------------------------------
+find_library( ZLIB_LIBRARY NAMES z )
+find_path( ZLIB_HEADER zlib.h /usr/include )
+
+if (ZLIB_LIBRARY AND ZLIB_HEADER)
+   option(WITH_ZLIB "Include support for zlib functions compress()/uncompress()" ON)
+   if (WITH_ZLIB)
+      add_definitions( -DWITH_ZLIB )
+   endif()
+else()
+   set( WITH_ZLIB FALSE )
+   message( "ZLib not found - zlib support will not be included." )       
+endif()
+#-----------------------------------------------------------------
+find_library( PTHREAD_LIBRARY NAMES pthread )
+if (PTHREAD_LIBRARY)
+   option( WITH_PTHREAD "Include support for pthreads" ON )
+   if (WITH_PTHREAD)
+     add_definitions( -DWITH_PTHREAD )
+   endif()
+else()
+   set( WITH_PTHREAD FALSE )
+   message("pthread library not found - pthread support will not be included")
+endif()
+#-----------------------------------------------------------------
+find_library( LAPACK_LIBRARY NAMES lapack)
+if (LAPACK_LIBRARY)
+   set(CMAKE_REQUIRED_LIBS LAPACK_LIBRARY)
+   try_compile( BLAS0 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_blas.c )
+   if (BLAS0)
+      set(NEED_BLAS OFF)    
+   else()
+      set(NEED_BLAS ON)
+      find_library( BLAS_LIBRARY NAMES blas)
+   endif()
+   option(WITH_LAPACK "Build LAPACK enabled code" ON)
+   if (WITH_LAPACK)
+      add_definitions( -DWITH_LAPACK )
+   endif()
+else()
+   set( WITH_LAPACK OFF)     
+   message("LAPACK library not found - lapack support will not be included")
+endif()
+#-----------------------------------------------------------------
+find_program(LATEX_PATH NAMES pdflatex)
+if (LATEX_PATH)
+   option( WITH_LATEX "Build small class for compiling LaTeX files" ON)
+   if (WITH_LATEX)
+      set( WITH_LATEX ON)
+      add_definitions( -DWITH_LATEX )
+   endif()
+else()
+   set( WITH_LATEX OFF )
+endif()
+#-----------------------------------------------------------------
+find_path( EXECINFO_HEADER execinfo.h /usr/include )
+if (EXECINFO_HEADER)
+  add_definitions( -DHAVE_EXECINFO )
+endif()
 #-----------------------------------------------------------------
 find_path( GETOPT_HEADER getopt.h /usr/include )
 if (GETOPT_HEADER)
    add_definitions( -DHAVE_GETOPT )
 endif()
-
-#-----------------------------------------------------------------
-option( USE_PTHREAD "Include support for pthreads" ON )
-if (USE_PTHREAD)
-  find_library( PTHREAD_LIBRARY NAMES pthread )
-  find_path( PTHREAD_HEADER pthread.h /usr/include )
-
-  if (NOT PTHREAD_LIBRARY)
-    set( USE_PTHREAD OFF )
-  endif()
-  
-  if (!PTHREAD_HEADER)
-    set( USE_PTHREAD OFF )
-  endif()
-endif()
-if (USE_PTHREAD)
-  set( HAVE_PTHREAD ON )
-  add_definitions( -DHAVE_PTHREAD )
-else()
-    message("pthread library not found - pthread support will not be included")
-endif()
-#-----------------------------------------------------------------
-option( BUILD_LATEX "Build small class for compiling LaTeX files" ON)
-if (BUILD_LATEX)
-   find_program(LATEX NAMES pdflatex)
-   if (NOT LATEX)
-      set( BUILD_LATEX OFF )
-   endif()
-endif()
-
-#-----------------------------------------------------------------
-option(USE_LSF "Include support for LSF" ON)
-#-----------------------------------------------------------------
-find_path( EXECINFO_HEADER execinfo.h /usr/include )
-if (EXECINFO_HEADER)
-  set( HAVE_EXECINFO ON )   
-  add_definitions( -DHAVE_EXECINFO )
-endif()
-#-----------------------------------------------------------------
-
 #-----------------------------------------------------------------
 if (ERT_WINDOWS)
    find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
@@ -216,23 +215,6 @@ else()
    set( LINK_STATIC TRUE )
 endif()
 
-find_library( LAPACK_LIBRARY NAMES lapack)
-if (LAPACK_LIBRARY)
-   set(CMAKE_REQUIRED_LIBS LAPACK_LIBRARY)
-   try_compile( BLAS0 ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_blas.c )
-   if (BLAS0)
-      set(NEED_BLAS OFF)    
-   else()
-      set(NEED_BLAS ON)
-      find_library( BLAS_LIBRARY NAMES blas)
-   endif()
-   set(HAVE_LAPACK ON)
-   add_definitions( -DHAVE_LAPACK )
-else()
-   set(HAVE_LAPACK OFF)     
-   message("LAPACK library not found - lapack support will not be included")
-endif()
-
 
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
@@ -251,18 +233,10 @@ add_subdirectory( libgeometry )
 add_subdirectory( libecl )
 add_subdirectory( libwell )
 
-#add_dependencies( geometry_shared util_shared )
-#add_dependencies( ecl_shared      util_shared geometry_shared )
-#add_dependencies( well_shared     ecl_shared  util_shared geometry_shared )
-#
-#add_dependencies( geometry_static util_static )
-#add_dependencies( ecl_static      util_static geometry_static )
-#add_dependencies( well_static     ecl_static  util_static geometry_static )
-#
-
-
 #-----------------------------------------------------------------
 if (BUILD_ERT)
+#-----------------------------------------------------------------
+   option(USE_LSF "Include support for LSF" ON)
    set( libconfig_src_path    ${CMAKE_SOURCE_DIR}/libconfig/src )
    set( libsched_src_path     ${CMAKE_SOURCE_DIR}/libsched/src )
    set( librms_src_path       ${CMAKE_SOURCE_DIR}/librms/src )

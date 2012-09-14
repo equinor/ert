@@ -8,28 +8,15 @@ include_directories( ${libgeometry_src_path} )
 include_directories( ${libecl_src_path} )
 
 
-add_library( well_static  STATIC ${source_files} )
-set_target_properties( well_static PROPERTIES OUTPUT_NAME well )
-target_link_libraries( well_static ecl_static )
-
-if (BUILD_SHARED)
-   add_library( well_shared  SHARED ${source_files} )
-   set_target_properties( well_shared PROPERTIES OUTPUT_NAME well )
-   target_link_libraries( well_shared ecl_shared )
-endif()
+add_library( well ${LIBRARY_TYPE} ${source_files} )
+target_link_libraries( well ecl )
 
 #-----------------------------------------------------------------
 if (WELL_INSTALL_PREFIX)
-   if (BUILD_SHARED)
-      install(TARGETS well_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/lib)
-   endif()
-   install(TARGETS well_static DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/lib)
+   install(TARGETS well DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/lib)
    install(FILES ${header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/${WELL_INSTALL_PREFIX}/include)
 else()
-   if (BUILD_SHARED)
-      install(TARGETS well_shared DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-   endif()
-   install(TARGETS well_static DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+   install(TARGETS well DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
    install(FILES ${header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 endif()        
 
