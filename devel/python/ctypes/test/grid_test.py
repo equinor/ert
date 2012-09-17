@@ -62,6 +62,14 @@ class GridTest( unittest.TestCase ):
         return grid
 
 
+    def testRect(self):
+        grid = ecl.EclGrid.create_rectangular((200,100,10) , (10,10,2))
+        grid.save_EGRID( "/tmp/rect.EGRID" )
+        grid2 = ecl.EclGrid( "/tmp/rect.EGRID")
+        self.assertTrue( grid )
+        self.assertTrue( grid2 )
+
+
     def testCreate(self):
         grid = self.create( grdecl_file )
         self.assertTrue( grid )
@@ -141,6 +149,7 @@ def fast_suite():
     suite.addTest( GridTest( 'testSave' ))
     suite.addTest( GridTest( 'testTime' ))
     suite.addTest( GridTest( 'testACTNUM') )
+    suite.addTest( GridTest( 'testRect' ))
     return suite
 
 

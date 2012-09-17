@@ -67,6 +67,20 @@ class EclGrid(CClass):
         return obj
 
 
+    @classmethod
+    def create_rectangular(cls , dims , dV , actnum = None):
+        """
+        Will create a new rectangular grid. @dims = (nx,ny,nz)  @dVg = (dx,dy,dz)
+        
+        With the default value @actnum == None all cells will be active, 
+        """
+        obj = object.__new__( cls )
+        obj.c_ptr = cfunc.alloc_rectangular( dims[0] , dims[1] , dims[2] , dV[0] , dV[1] , dV[2] , actnum )
+        obj.data_owner = True
+        obj.parent     = None
+        return obj
+        
+
     def __new__(cls , filename , lgr = None , parent = None):
         if filename:
             c_ptr = cfunc.fread_alloc( filename )
@@ -667,6 +681,8 @@ cfunc.fread_alloc                  = cwrapper.prototype("c_void_p ecl_grid_load_
 cfunc.grdecl_create                = cwrapper.prototype("c_void_p ecl_grid_alloc_GRDECL_kw( int , int , int , ecl_kw , ecl_kw , ecl_kw , ecl_kw)") 
 cfunc.get_lgr                      = cwrapper.prototype("c_void_p ecl_grid_get_lgr( ecl_grid , char* )")
 cfunc.get_cell_lgr                 = cwrapper.prototype("c_void_p ecl_grid_get_cell_lgr1( ecl_grid , int )")
+cfunc.alloc_rectangular            = cwrapper.prototype("c_void_p ecl_grid_alloc_rectangular( int , int , int , double , double , double , int*)")
+
 cfunc.exists                       = cwrapper.prototype("bool ecl_grid_exists( char* )")
 cfunc.free                         = cwrapper.prototype("void ecl_grid_free( ecl_grid )")     
 cfunc.get_nx                       = cwrapper.prototype("int ecl_grid_get_nx( ecl_grid )")
