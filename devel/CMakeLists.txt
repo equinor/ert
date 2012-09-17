@@ -17,7 +17,12 @@ set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
-option( SHARED_LIB "Build shared libraries" OFF)
+if (MSVC)
+   set(SHARED_LIB OFF)
+else()
+   option( SHARED_LIB "Build shared libraries" OFF)
+endif()
+
 if (SHARED_LIB)
    set( LIBRARY_TYPE SHARED )
 else()
