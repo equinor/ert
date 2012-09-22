@@ -50,7 +50,7 @@ class TrollTest( unittest.TestCase ):
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( TrollTest( 'testBPROD' ))
-    #suite.addTest( TrollTest( 'testDUMP' ))
+    suite.addTest( TrollTest( 'testDUMP' ))
     return suite
 
 

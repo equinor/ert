@@ -158,6 +158,12 @@ class EclGrid(CClass):
         """
         return cfunc.get_name( self )
 
+    def global_index( self , active_index = None, ijk = None):
+        """
+        Will convert either active_index or (i,j,k) to global index.
+        """
+        return self.__global_index( active_index = active_index , ijk = ijk )
+
     def __global_index( self , active_index = None , global_index = None , ijk = None):
         """
         Will convert @active_index or @ijk to global_index.
@@ -323,6 +329,14 @@ class EclGrid(CClass):
         return (x.value , y.value , z.value)
 
 
+    def distance( self , global_index1 , global_index2):
+        dx = ctypes.c_double()
+        dy = ctypes.c_double()
+        dz = ctypes.c_double()
+        cfunc.get_distance( self , global_index1 , global_index2 , ctypes.byref(dx) , ctypes.byref(dy) , ctypes.byref(dz))
+        return (dx.value , dy.value , dz.value)
+
+
     def depth( self , active_index = None , global_index = None , ijk = None):
         """
         Depth of the center of a cell.
@@ -360,6 +374,7 @@ class EclGrid(CClass):
         the function will return -nz.
         """
         return cfunc.locate_depth( self , depth , i , j)
+
 
     def find_cell( self , x , y , z , start_ijk = None):
         """
@@ -714,7 +729,7 @@ cfunc.get_top                      = cwrapper.prototype("double ecl_grid_get_top
 cfunc.get_bottom                   = cwrapper.prototype("double ecl_grid_get_bottom2( ecl_grid , int , int )") 
 cfunc.locate_depth                 = cwrapper.prototype("int    ecl_grid_locate_depth( ecl_grid , double , int , int )") 
 cfunc.invalid_cell                 = cwrapper.prototype("bool   ecl_grid_cell_invalid1( ecl_grid , int)")
-
+cfunc.get_distance                 = cwrapper.prototype("void   ecl_grid_get_distance( ecl_grid , int , int , double* , double* , double*)")
 cfunc.fprintf_grdecl               = cwrapper.prototype("void   ecl_grid_fprintf_grdecl( ecl_grid , FILE) ")
 cfunc.fwrite_GRID                  = cwrapper.prototype("void   ecl_grid_fwrite_GRID( ecl_grid , char* )")
 cfunc.fwrite_EGRID                 = cwrapper.prototype("void   ecl_grid_fwrite_EGRID( ecl_grid , char* )")

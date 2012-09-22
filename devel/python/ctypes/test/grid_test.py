@@ -63,11 +63,34 @@ class GridTest( unittest.TestCase ):
 
 
     def testRect(self):
-        grid = ecl.EclGrid.create_rectangular((200,100,10) , (10,10,2))
+        a1 = 1.0
+        a2 = 2.0
+        a3 = 3.0
+        grid = ecl.EclGrid.create_rectangular((9,9,9) , (a1,a2,a3))
         grid.save_EGRID( "/tmp/rect.EGRID" )
         grid2 = ecl.EclGrid( "/tmp/rect.EGRID")
         self.assertTrue( grid )
         self.assertTrue( grid2 )
+        
+        (x,y,z) = grid.get_xyz( ijk=(4,4,4) )
+        self.assertTrue( approx_equalv( [x,y,z],[4.5 * a1,4.5*a2,4.5*a3] ))
+
+        v = grid.cell_volume( ijk=(4,4,4) )
+        self.assertTrue( approx_equal( v , a1*a2*a3 ))
+
+        z = grid.depth( ijk = (4,4,4 ))
+        self.assertTrue( approx_equal( z , 4.5*a3 ))
+
+        g1 = grid.global_index( ijk = (2,2,2) )
+        g2 = grid.global_index( ijk = (4,4,4) )
+        (dx,dy,dz) = grid.distance( g2 , g1 )
+        self.assertTrue( approx_equalv([dx,dy,dz],[2*a1,2*a2,2*a3] ) )
+
+        self.assertTrue( grid.cell_contains(2.5*a1 , 2.5*a2, 2.5*a3 , ijk=(2,2,2)))
+
+        ijk = grid.find_cell( 1.5*a1 , 2.5*a2, 3.5*a3 )
+        self.assertTrue( approx_equalv( ijk , [1 , 2 , 3]))
+
 
 
     def testCreate(self):
