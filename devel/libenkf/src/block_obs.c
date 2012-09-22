@@ -109,14 +109,12 @@ static void point_obs_free( point_obs_type * point_obs ) {
 
 
 static double point_obs_measure( const point_obs_type * point_obs , const void * state , int iobs , node_id_type node_id) {
-  printf("Point measure \n");
   if (point_obs->source_type == SOURCE_FIELD) {
     const field_type * field = field_safe_cast_const( state );
     return field_iget_double(field , point_obs->active_index);
   } else if (point_obs->source_type == SOURCE_SUMMARY) {
     const container_type * container = container_safe_cast_const( state );
     const summary_type * summary = summary_safe_cast_const( container_iget_node( container , iobs ));
-    printf("Going to summary node \n");
     return summary_get( summary , node_id.report_step , node_id.state );    
   } else {
     util_abort("%s: unknown source type: %d \n",__func__, point_obs->source_type );
@@ -236,6 +234,7 @@ void block_obs_get_observations(const block_obs_type * block_obs,  obs_data_type
   }
 }
 
+
 static void block_obs_assert_data( const block_obs_type * block_obs , const void * state ) {
   if (block_obs->source_type == SOURCE_FIELD) {
     if (!field_is_instance( state ))
@@ -319,7 +318,6 @@ void block_obs_user_get(const block_obs_type * block_obs , const char * index_ke
       }
       l++;
     }
-
   }
 }
 

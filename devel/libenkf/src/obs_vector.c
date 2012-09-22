@@ -815,6 +815,8 @@ double obs_vector_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , 
 */
 
 
+//This will not work for container observations .....
+
 void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, bool_vector_type * valid , int step1 , int step2 , int iens1 , int iens2 , state_enum load_state , double ** chi2) {
   int step;
 

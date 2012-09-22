@@ -70,8 +70,26 @@ struct enkf_config_node_struct {
 
 
 
+static bool enkf_config_node_has_container(const enkf_config_node_type * node , enkf_fs_type * fs , node_id_type node_id) {
+  bool has_container = true;
+
+  for (int inode=0; inode < vector_get_size( node->container_nodes ); inode++) {
+    enkf_config_node_type * child_node = vector_iget( node->container_nodes , inode );
+    if (!enkf_config_node_has_node( child_node , fs , node_id )) {
+      has_container = false;
+      break;
+    }
+  }
+  return has_container;
+}
+
+
+
 bool enkf_config_node_has_node( const enkf_config_node_type * node , enkf_fs_type * fs , node_id_type node_id) {
-  return enkf_fs_has_node( fs , node->key , node->var_type , node_id.report_step , node_id.iens , node_id.state );
+  if (node->impl_type == CONTAINER) 
+    return enkf_config_node_has_container( node , fs , node_id );
+  else
+    return enkf_fs_has_node( fs , node->key , node->var_type , node_id.report_step , node_id.iens , node_id.state );
 }
 
 

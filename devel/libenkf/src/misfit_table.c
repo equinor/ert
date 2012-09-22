@@ -18,17 +18,21 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
+
 #include <util.h>
 #include <hash.h>
 #include <vector.h>
-#include <enkf_obs.h>
 #include <double_vector.h>
-#include <misfit_table.h>
-#include <enkf_fs.h>
-#include <enkf_util.h>
 #include <msg.h>
 #include <buffer.h>
-#include <math.h>
+
+#include <enkf_obs.h>
+#include <enkf_fs.h>
+#include <enkf_util.h>
+#include <misfit_table.h>
+#include <misfit_ranking.h>
+
 /**
    This file implements a type misfit_table which is used to rank the
    different realization according to various criteria.
@@ -43,28 +47,12 @@
 
 typedef struct misfit_node_struct    misfit_node_type;
 typedef struct misfit_vector_struct  misfit_vector_type;
-typedef struct misfit_ranking_struct misfit_ranking_type;
 
 
-#define INVALID_MISFIT              INFINITY
+
 #define MISFIT_TABLE_TYPE_ID        441066
 #define MISFIT_NODE_TYPE_ID         541066
 #define MISFIT_VECTOR_TYPE_ID       641066
-#define MISFIT_RANKING_TYPE_ID      671108
-
-
-/**
-   This struct contains the misfits & sort keys for one particular
-   ranking. I.e. all the RFT measurements.
-*/
-
-
-struct misfit_ranking_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  vector_type        * ensemble;             /* An ensemble of hash instances. Each hash instance is populated like this: hash_insert_double(hash , "WGOR" , 1.09); */
-  double_vector_type * total;                /* An enemble of total misfit values (for this ranking). */
-  int                * sort_permutation;     /* This is how the ens members should be permuted to be sorted under this ranking.                                     */
-};
 
 
 
@@ -87,8 +75,7 @@ struct misfit_node_struct {
   int          my_iens;
   bool         valid;         /* If the realization is missing data - i.e. the simulation has failed; this will be set to false. */
   hash_type   *obs;           /* hash table of misfit_vector_type instances - indexed by observation keys. The structure
-                                 of this hash table is duplicated for each ensemble member; that feels like a violation
-                                 of the DRY principle ... */
+                                 of this hash table is duplicated for each ensemble member.*/
 };
 
 
@@ -177,6 +164,16 @@ static double misfit_vector_eval( const misfit_vector_type * vector , int step1 
 /*****************************************************************/
 
 
+void misfit_table_display_ranking( const misfit_table_type * table , const char * ranking_key ) {
+  const ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
+  ranking_display( ranking );
+}
+
+
+void misfit_table_fprintf_ranking( const misfit_table_type * table , const char * ranking_key , const char * filename) {
+  const ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
+  ranking_fprintf( ranking , filename );
+}
 
 
 static UTIL_SAFE_CAST_FUNCTION(misfit_node , MISFIT_NODE_TYPE_ID);
@@ -420,7 +417,6 @@ misfit_table_type * misfit_table_fread_alloc( const char * filename , const enkf
 }
 
 
-
 misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , enkf_fs_type * fs , int history_length , int ens_size , const enkf_obs_type * enkf_obs ) {
   misfit_table_type * table = misfit_table_alloc_empty( enkf_obs );
   table->current_case       = util_alloc_string_copy( enkf_fs_get_mount_point( fs ));
@@ -437,116 +433,11 @@ misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , en
 
 
 
-void misfit_table_display_ranking( const misfit_table_type * table , const char * ranking_key ) {
-  const int ens_size                  = vector_get_size( table->ensemble );
-  const misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
-  const int * permutations            = ranking->sort_permutation;
-
-  hash_type * obs_hash = NULL;
-  {
-    // The ensemble vector can contain invalid nodes with NULL.
-    int index = 0;
-    while ((obs_hash == NULL) && (index < vector_get_size( ranking->ensemble))) {
-      obs_hash = vector_iget( ranking->ensemble , index );
-      index++;
-    }
-    if (obs_hash == NULL) {
-      fprintf(stderr,"Sorry: no valid misfit results loaded - returning\n");
-      return;
-    }
-  }
-  
-  {
-    int i;
-    double summed_up = 0.0;
-    stringlist_type * obs_keys          = hash_alloc_stringlist( obs_hash );
-    int num_obs                         = stringlist_get_size( obs_keys );
-    int num_obs_total                   = num_obs * ens_size;  // SHould not count failed/missing members ...
-    printf("\n\n");
-    printf("  #    Realization    Normalized misfit    Total misfit\n");
-    printf("-------------------------------------------------------\n");
-    for (i = 0; i < ens_size; i++) {
-      int    iens         = permutations[i];
-      double total_misfit = double_vector_iget( ranking->total , iens );
-      double normalized_misfit = sqrt(total_misfit / num_obs_total);
-      summed_up = summed_up+total_misfit;
-      printf("%3d    %3d                   %10.3f      %10.3f  \n",i,iens,normalized_misfit,total_misfit);
-    }
-    
-    {
-      double normalized_summed_up = sqrt(summed_up / (num_obs_total * ens_size));
-      printf("        All                  %10.3f      %10.3f  \n",normalized_summed_up,summed_up);
-    }
-    printf("-------------------------------------------------------\n");
-  }
-
-}
-
-
-
-void misfit_table_fprintf_ranking( const misfit_table_type * table , const char * ranking_key , const char * filename) {
-  FILE * stream                       = util_mkdir_fopen( filename , "w");
-  const int ens_size                  = vector_get_size( table->ensemble );
-  const misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
-  const int * permutations            = ranking->sort_permutation;
-  double summed_up = 0.0;
-  {
-    // All this whitespace is finely tuned and highly significant .... 
-    const char * key_fmt       = " %18s ";                                
-    const char * value_fmt     = " %10.3f %8.3f";
-    const char * start_fmt     = " %2d       %3d     %7.3f %8.3f";  
-
-    hash_type * obs_hash       = vector_iget( ranking->ensemble , 0);
-    stringlist_type * obs_keys = hash_alloc_stringlist( obs_hash );
-    int num_obs                = stringlist_get_size( obs_keys );
-    int iobs;
-    int num_obs_total = num_obs * ens_size;
-
-    stringlist_sort( obs_keys , enkf_util_compare_keys__ );
-    fprintf(stream , "                       Overall  ");
-    for (iobs =0; iobs < num_obs; iobs++) 
-      fprintf(stream , key_fmt , stringlist_iget( obs_keys , iobs ));
-
-    fprintf(stream , "\n");
-    fprintf(stream , "  #    Realization  Norm    Total");
-    for (iobs =0; iobs < num_obs; iobs++) 
-      fprintf(stream , "       Norm    Total");
-    
-    fprintf(stream , "\n");
-    for (int i = 0; i < ens_size; i++) {
-      int iens = permutations[i];
-      hash_type * obs_hash = vector_iget( ranking->ensemble , iens );
-      double total_value   = double_vector_iget( ranking->total , iens );
-      double normalized_misfit = sqrt(total_value / num_obs_total);
-      summed_up = summed_up+total_value;
-      fprintf(stream , start_fmt , i , iens , normalized_misfit , total_value);
-      for (iobs =0; iobs < num_obs; iobs++){
-        double single_value = hash_get_double( obs_hash , stringlist_iget( obs_keys , iobs ));
-        double single_value_normalized = sqrt(single_value / (num_obs_total));
-        fprintf(stream , value_fmt , single_value_normalized , single_value);
-      }
-      fprintf(stream , "\n");
-    }
-    double summed_up_normalized = sqrt(summed_up / (num_obs_total * ens_size));
-    fprintf(stream , "           All    %7.3f %8.3f" , summed_up_normalized , summed_up);
-    for (iobs = 0; iobs < num_obs; iobs++){
-      double single_value_summed_up = 0.0;      
-      for (int i = 0; i < ens_size; i++) {  
-        single_value_summed_up = single_value_summed_up + hash_get_double( obs_hash , stringlist_iget( obs_keys , iobs ));
-      }
-      double single_value_summed_up_normalized=sqrt(single_value_summed_up / (num_obs_total * ens_size));
-      fprintf(stream , value_fmt , single_value_summed_up_normalized , single_value_summed_up);
-    }
-    fprintf(stream , "\n");
-  }
-  fclose( stream );
-}
-
 
 
 const int * misfit_table_get_ranking_permutation( const misfit_table_type * table , const char * ranking_key ) {
-  misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
-  return ranking->sort_permutation;
+  ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
+  return ranking_get_permutation( ranking );
 }
 
 
@@ -555,32 +446,32 @@ bool misfit_table_has_ranking( const misfit_table_type * table , const char * ra
 }
 
 
-static UTIL_SAFE_CAST_FUNCTION( misfit_ranking , MISFIT_RANKING_TYPE_ID )
 
 
-static misfit_ranking_type * misfit_ranking_alloc( ) {
-  misfit_ranking_type * misfit_ranking = util_malloc( sizeof * misfit_ranking );
-  UTIL_TYPE_ID_INIT( misfit_ranking , MISFIT_RANKING_TYPE_ID );
-  misfit_ranking->sort_permutation = NULL;
-  misfit_ranking->ensemble = vector_alloc_new();
-  misfit_ranking->total    = double_vector_alloc( 0 , 0 );
-  return misfit_ranking;
+void misfit_table_create_data_ranking(misfit_table_type * table , enkf_fs_type * fs , int ens_size , enkf_config_node_type * config_node, const char * user_key , const char * key_index , int step , state_enum state , const char * ranking_key , const char * filename) {
+  enkf_node_type * enkf_node = enkf_node_alloc( config_node );
+  int iens;
+  ranking_type * ranking = ranking_alloc();
+  for (iens = 0; iens < ens_size; iens++) {
+
+    double value;
+    node_id_type node_id = {.report_step = step , 
+                            .iens = iens , 
+                            .state = state };
+
+    if (enkf_node_user_get( enkf_node , fs , key_index , node_id , &value)) {
+      hash_type * data_hash = hash_alloc();
+      hash_insert_double( data_hash , user_key , value );
+      ranking_iset( ranking , iens , data_hash , value );
+    } else 
+      ranking_iset_invalid( ranking , iens );
+  }
+  enkf_node_free( enkf_node );
+  ranking_init_sort( ranking );
+  hash_insert_hash_owned_ref(table->ranking_list , ranking_key , ranking , ranking_free__);
+  if (filename != NULL)
+    misfit_table_fprintf_ranking( table , ranking_key , filename );
 }
-
-
-static void misfit_ranking_free( misfit_ranking_type * misfit_ranking ) {
-  vector_free( misfit_ranking->ensemble );
-  double_vector_free( misfit_ranking->total );
-  util_safe_free( misfit_ranking->sort_permutation );
-  free( misfit_ranking );
-}
-
-
-static void misfit_ranking_free__( void * arg ) {
-  misfit_ranking_type * ranking = misfit_ranking_safe_cast( arg );
-  misfit_ranking_free( ranking );
-}
-
 
 /**
    Step and step2 are inclusive. The time direction is flattened.
@@ -588,7 +479,7 @@ static void misfit_ranking_free__( void * arg ) {
 void misfit_table_create_ranking(misfit_table_type * table , const stringlist_type * sort_keys , int step1 , int step2, const char * ranking_key , const char * filename) {
   const int ens_size = vector_get_size( table->ensemble );
   int iens;
-  misfit_ranking_type * ranking = misfit_ranking_alloc();
+  ranking_type * ranking = ranking_alloc();
 
   for (iens = 0; iens < ens_size; iens++) {
     const misfit_node_type * misfit_node = vector_iget( table->ensemble , iens );  /* Lookup in the master ensemble. */
@@ -602,21 +493,21 @@ void misfit_table_create_ranking(misfit_table_type * table , const stringlist_ty
         hash_insert_double( obs_hash , obs_key , value);
         total += value;
       }
-      vector_append_owned_ref( ranking->ensemble , obs_hash , hash_free__);
-      double_vector_append( ranking->total , total );
-    } else {
-      vector_append_ref( ranking->ensemble , NULL);
-      double_vector_append( ranking->total , INVALID_MISFIT );
-    }
+      ranking_iset( ranking , iens , obs_hash , total );
+    } else 
+      ranking_iset_invalid( ranking , iens );
   }
-
-  ranking->sort_permutation = double_vector_alloc_sort_perm( ranking->total );
-  hash_insert_hash_owned_ref(table->ranking_list , ranking_key , ranking , misfit_ranking_free__);
+  ranking_init_sort( ranking );
+  hash_insert_hash_owned_ref(table->ranking_list , ranking_key , ranking , ranking_free__);
   if (filename != NULL)
     misfit_table_fprintf_ranking( table , ranking_key , filename );
 }
 
 
+void misfit_table_clear( misfit_table_type * table) {
+  hash_clear( table->ranking_list );
+  vector_clear( table->ensemble );
+}
 
 
 void misfit_table_free(misfit_table_type * table ) {
