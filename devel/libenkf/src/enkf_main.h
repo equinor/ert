@@ -40,7 +40,6 @@ extern "C" {
 #include <ext_joblist.h>
 
 #include <plot_config.h>
-
 #include <enkf_config_node.h>
 #include <enkf_types.h>
 #include <enkf_state.h>
@@ -56,9 +55,10 @@ extern "C" {
 #include <ert_template.h>
 #include <enkf_plot_data.h>
 #include <ert_report_list.h>
+#include <ranking_table.h>
 
-/*****************************************************************/
-
+  /*****************************************************************/
+  
   typedef struct enkf_main_struct enkf_main_type;
   void                          enkf_main_close_alt_fs(enkf_main_type * enkf_main , enkf_fs_type * fs);
   enkf_fs_type                * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
@@ -140,6 +140,7 @@ extern "C" {
   
   const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
   const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
+  ranking_table_type          * enkf_main_get_ranking_table( const enkf_main_type * enkf_main );
   ecl_config_type             * enkf_main_get_ecl_config(const enkf_main_type * enkf_main);
   ensemble_config_type        * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main);
   int                           enkf_main_get_ensemble_size( const enkf_main_type * enkf_main );

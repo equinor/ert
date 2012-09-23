@@ -165,14 +165,14 @@ static double misfit_vector_eval( const misfit_vector_type * vector , int step1 
 
 
 void misfit_table_display_ranking( const misfit_table_type * table , const char * ranking_key ) {
-  const ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
-  ranking_display( ranking );
+  const misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
+  misfit_ranking_display( ranking );
 }
 
 
 void misfit_table_fprintf_ranking( const misfit_table_type * table , const char * ranking_key , const char * filename) {
-  const ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
-  ranking_fprintf( ranking , filename );
+  const misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
+  misfit_ranking_fprintf( ranking , filename );
 }
 
 
@@ -436,8 +436,8 @@ misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , en
 
 
 const int * misfit_table_get_ranking_permutation( const misfit_table_type * table , const char * ranking_key ) {
-  ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
-  return ranking_get_permutation( ranking );
+  misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
+  return misfit_ranking_get_permutation( ranking );
 }
 
 
@@ -451,7 +451,7 @@ bool misfit_table_has_ranking( const misfit_table_type * table , const char * ra
 void misfit_table_create_data_ranking(misfit_table_type * table , enkf_fs_type * fs , int ens_size , enkf_config_node_type * config_node, const char * user_key , const char * key_index , int step , state_enum state , const char * ranking_key , const char * filename) {
   enkf_node_type * enkf_node = enkf_node_alloc( config_node );
   int iens;
-  ranking_type * ranking = ranking_alloc();
+  misfit_ranking_type * ranking = misfit_ranking_alloc( ens_size );
   for (iens = 0; iens < ens_size; iens++) {
 
     double value;
@@ -462,13 +462,13 @@ void misfit_table_create_data_ranking(misfit_table_type * table , enkf_fs_type *
     if (enkf_node_user_get( enkf_node , fs , key_index , node_id , &value)) {
       hash_type * data_hash = hash_alloc();
       hash_insert_double( data_hash , user_key , value );
-      ranking_iset( ranking , iens , data_hash , value );
+      misfit_ranking_iset( ranking , iens , data_hash , value );
     } else 
-      ranking_iset_invalid( ranking , iens );
+      misfit_ranking_iset_invalid( ranking , iens );
   }
   enkf_node_free( enkf_node );
-  ranking_init_sort( ranking );
-  hash_insert_hash_owned_ref(table->ranking_list , ranking_key , ranking , ranking_free__);
+  misfit_ranking_init_sort( ranking );
+  hash_insert_hash_owned_ref(table->ranking_list , ranking_key , ranking , misfit_ranking_free__);
   if (filename != NULL)
     misfit_table_fprintf_ranking( table , ranking_key , filename );
 }
@@ -479,7 +479,7 @@ void misfit_table_create_data_ranking(misfit_table_type * table , enkf_fs_type *
 void misfit_table_create_ranking(misfit_table_type * table , const stringlist_type * sort_keys , int step1 , int step2, const char * ranking_key , const char * filename) {
   const int ens_size = vector_get_size( table->ensemble );
   int iens;
-  ranking_type * ranking = ranking_alloc();
+  misfit_ranking_type * ranking = misfit_ranking_alloc(ens_size);
 
   for (iens = 0; iens < ens_size; iens++) {
     const misfit_node_type * misfit_node = vector_iget( table->ensemble , iens );  /* Lookup in the master ensemble. */
@@ -493,12 +493,12 @@ void misfit_table_create_ranking(misfit_table_type * table , const stringlist_ty
         hash_insert_double( obs_hash , obs_key , value);
         total += value;
       }
-      ranking_iset( ranking , iens , obs_hash , total );
+      misfit_ranking_iset( ranking , iens , obs_hash , total );
     } else 
-      ranking_iset_invalid( ranking , iens );
+      misfit_ranking_iset_invalid( ranking , iens );
   }
-  ranking_init_sort( ranking );
-  hash_insert_hash_owned_ref(table->ranking_list , ranking_key , ranking , ranking_free__);
+  misfit_ranking_init_sort( ranking );
+  hash_insert_hash_owned_ref(table->ranking_list , ranking_key , ranking , misfit_ranking_free__);
   if (filename != NULL)
     misfit_table_fprintf_ranking( table , ranking_key , filename );
 }

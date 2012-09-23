@@ -93,6 +93,7 @@
 #include <rng_config.h>
 #include <enkf_plot_data.h>
 #include <ert_report_list.h>
+#include <ranking_table.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -143,6 +144,7 @@ struct enkf_main_struct {
   rng_config_type      * rng_config;
   rng_type             * rng;
   ert_report_list_type * report_list;
+  ranking_table_type   * ranking_table;
 
   /*---------------------------*/            /* Variables related to substitution. */
   subst_func_pool_type * subst_func_pool;
@@ -272,6 +274,10 @@ plot_config_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main )
   return enkf_main->plot_config;
 }
 
+ranking_table_type * enkf_main_get_ranking_table( const enkf_main_type * enkf_main ) {
+  return enkf_main->ranking_table;
+}
+
 ecl_config_type *enkf_main_get_ecl_config(const enkf_main_type * enkf_main) {
         return enkf_main->ecl_config;
 }
@@ -374,6 +380,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   rng_free( enkf_main->rng );
   rng_config_free( enkf_main->rng_config );
   enkf_obs_free(enkf_main->obs);
+  ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) enkf_fs_free( enkf_main->dbase );
   util_safe_free( enkf_main->current_fs_case );
@@ -2277,6 +2284,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->analysis_config  = analysis_config_alloc_default( enkf_main->rng );   /* This is ready for use. */
   enkf_main->plot_config      = plot_config_alloc_default();       /* This is ready for use. */
   enkf_main->report_list      = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
+  enkf_main->ranking_table    = ranking_table_alloc( 0 );
   return enkf_main;
 }
 
@@ -2343,6 +2351,7 @@ void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) 
   if (new_ens_size == enkf_main->ens_size)
     return ;
 
+  ranking_table_set_ens_size( enkf_main->ranking_table , new_ens_size );
   /* Tell the site_config object (i.e. the queue drivers) about the new ensemble size: */
   site_config_set_ens_size( enkf_main->site_config , new_ens_size );
   

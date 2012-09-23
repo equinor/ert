@@ -24,6 +24,7 @@
 #include <hash.h>
 #include <vector.h>
 #include <double_vector.h>
+#include <type_macros.h>
 #include <msg.h>
 #include <buffer.h>
 
@@ -31,6 +32,7 @@
 #include <enkf_fs.h>
 #include <enkf_util.h>
 #include <misfit_ranking.h>
+#include <ranking_common.h>
 
 /**
    This struct contains the misfits & sort keys for one particular
@@ -46,31 +48,11 @@ struct misfit_ranking_struct {
   vector_type        * ensemble;             /* An ensemble of hash instances. Each hash instance is populated like this: hash_insert_double(hash , "WGOR" , 1.09); */
   double_vector_type * total;                /* An enemble of total misfit values (for this misfit_ranking). */
   int                * sort_permutation;     /* This is how the ens members should be permuted to be sorted under this misfit_ranking.                                     */
+  int                  ens_size;
 };
 
 static UTIL_SAFE_CAST_FUNCTION( misfit_ranking , MISFIT_RANKING_TYPE_ID )
-
-static void misfit_ranking_display_misfit__( const misfit_ranking_type * misfit_ranking , FILE * stream) {
-  fprintf(stream,"\n\n");
-  fprintf(stream,"  #    Realization    Normalized misfit    Total misfit\n");
-  fprintf(stream,"-------------------------------------------------------\n");
-  for (i = 0; i < ens_size; i++) {
-    int    iens         = permutations[i];
-    double total_misfit = double_vector_iget( misfit_ranking->total , iens );
-    double normalized_misfit = sqrt(total_misfit / num_obs_total);
-    summed_up = summed_up+total_misfit;
-    fprintf(stream,"%3d    %3d                   %10.3f      %10.3f  \n",i,iens,normalized_misfit,total_misfit);
-  }
-  
-  {
-    double normalized_summed_up = sqrt(summed_up / (num_obs_total * ens_size));
-    fprintf(stream,"        All                  %10.3f      %10.3f  \n",normalized_summed_up,summed_up);
-  }
-  fprintf(stream,"-------------------------------------------------------\n");
-}
-
-
-
+     UTIL_IS_INSTANCE_FUNCTION( misfit_ranking , MISFIT_RANKING_TYPE_ID)
 
 void misfit_ranking_display( const misfit_ranking_type * misfit_ranking ) {
   FILE * stream = stdout;
@@ -96,7 +78,23 @@ void misfit_ranking_display( const misfit_ranking_type * misfit_ranking ) {
     stringlist_type * obs_keys          = hash_alloc_stringlist( obs_hash );
     int num_obs                         = stringlist_get_size( obs_keys );
     int num_obs_total                   = num_obs * ens_size;  // SHould not count failed/missing members ...
-    misfit_ranking_display_misfit__( misfit_ranking , stream );
+
+    fprintf(stream,"\n\n");
+    fprintf(stream,"  #    Realization    Normalized misfit    Total misfit\n");
+    fprintf(stream,"-------------------------------------------------------\n");
+    for (i = 0; i < ens_size; i++) {
+      int    iens         = permutations[i];
+      double total_misfit = double_vector_iget( misfit_ranking->total , iens );
+      double normalized_misfit = sqrt(total_misfit / num_obs_total);
+      summed_up = summed_up+total_misfit;
+      fprintf(stream,"%3d    %3d                   %10.3f      %10.3f  \n",i,iens,normalized_misfit,total_misfit);
+    }
+    
+    {
+      double normalized_summed_up = sqrt(summed_up / (num_obs_total * ens_size));
+      fprintf(stream,"        All                  %10.3f      %10.3f  \n",normalized_summed_up,summed_up);
+    }
+    fprintf(stream,"-------------------------------------------------------\n");
   }
   
 }
@@ -161,12 +159,13 @@ void misfit_ranking_fprintf( const misfit_ranking_type * misfit_ranking , const 
 }
 
 
-misfit_ranking_type * misfit_ranking_alloc( ) {
+misfit_ranking_type * misfit_ranking_alloc( int ens_size ) {
   misfit_ranking_type * misfit_ranking = util_malloc( sizeof * misfit_ranking );
   UTIL_TYPE_ID_INIT( misfit_ranking , MISFIT_RANKING_TYPE_ID );
   misfit_ranking->sort_permutation = NULL;
   misfit_ranking->ensemble = vector_alloc_new();
-  misfit_ranking->total    = double_vector_alloc( 0 , INVALID_MISFIT );
+  misfit_ranking->total    = double_vector_alloc( 0 , INVALID_RANKING_VALUE );
+  misfit_ranking->ens_size = ens_size;
   return misfit_ranking;
 }
 
@@ -197,7 +196,7 @@ void misfit_ranking_iset( misfit_ranking_type * misfit_ranking , int iens , hash
 
 
 void misfit_ranking_iset_invalid( misfit_ranking_type * misfit_ranking , int iens ) {
-  misfit_ranking_iset( misfit_ranking , iens , NULL , INVALID_MISFIT );
+  misfit_ranking_iset( misfit_ranking , iens , NULL , INVALID_RANKING_VALUE );
 }
 
 void misfit_ranking_init_sort( misfit_ranking_type * misfit_ranking ) {

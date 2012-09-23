@@ -18,7 +18,8 @@
 
 #ifndef __MISFIT_RANKING_H__
 #define __MISFIT_RANKING_H__
-#include <math.h>
+
+#include <type_macros.h>
 
 #include <enkf_obs.h>
 #include <ensemble_config.h>
@@ -28,21 +29,21 @@
 extern "C" {
 #endif
 
+  UTIL_IS_INSTANCE_HEADER( misfit_ranking );
 
-#define INVALID_MISFIT              INFINITY
-
+  
   typedef struct misfit_ranking_struct misfit_ranking_type;
-
+  
   void                  misfit_ranking_fprintf( const misfit_ranking_type * misfit_ranking , const char * filename);
   void                  misfit_ranking_display( const misfit_ranking_type * misfit_ranking );
-  misfit_ranking_type * misfit_ranking_alloc( );
+  misfit_ranking_type * misfit_ranking_alloc( int ens_size );
   void                  misfit_ranking_free( misfit_ranking_type * misfit_ranking );
   void                  misfit_ranking_free__( void * arg );
   const int           * misfit_ranking_get_permutation( const misfit_ranking_type * misfit_ranking );
   void                  misfit_ranking_iset_invalid( misfit_ranking_type * misfit_ranking , int iens );
   void                  misfit_ranking_iset( misfit_ranking_type * misfit_ranking , int iens , hash_type * obs_hash , double total_misfit);
   void                  misfit_ranking_init_sort( misfit_ranking_type * misfit_ranking );
-
+  
 #ifdef __cplusplus
 }
 #endif
