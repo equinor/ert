@@ -55,6 +55,7 @@ typedef struct history_struct history_type;
   bool           history_init_ts( const history_type * history , const char * summary_key , double_vector_type * value, bool_vector_type * valid);
   
 // Accessors.
+  time_t         history_get_start_time( const history_type * history );
   int            history_get_last_restart(const history_type *);
   double         history_get_var_from_sum_key(const history_type *, int, const char *, bool *);
   double         history_get_well_var(const history_type * , int, const char *, const char *, bool *);

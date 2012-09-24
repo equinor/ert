@@ -196,6 +196,12 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
 }
 
 
+time_t history_get_start_time( const history_type * history ) {
+  if (history->source == SCHEDULE)
+    return sched_history_iget_time_t( history->sched_history , 0);
+  else
+    return ecl_sum_get_start_time( history->refcase );
+}
 
 
 
@@ -207,23 +213,31 @@ bool history_init_ts( const history_type * history , const char * summary_key , 
 time_t history_get_time_t_from_restart_nr( const history_type * history , int restart_nr) {
   if (history->source == SCHEDULE)
     return sched_history_iget_time_t( history->sched_history , restart_nr);
-  else 
-    return ecl_sum_get_report_time( history->refcase , restart_nr );
+  else {
+    if (restart_nr == 0)
+      return ecl_sum_get_start_time( history->refcase );
+    else
+      return ecl_sum_get_report_time( history->refcase , restart_nr );
+  }
 }
 
 
 int history_get_restart_nr_from_time_t( const history_type * history , time_t time) {
-  if (history->source == SCHEDULE)
-    return sched_file_get_restart_nr_from_time_t( history->sched_file , time );
+  if (time == history_get_start_time( history ))
+    return 0;
   else {
-    int report_step = ecl_sum_get_report_step_from_time( history->refcase , time );
-    if (report_step >= 1)
-      return report_step;
+    if (history->source == SCHEDULE)
+      return sched_file_get_restart_nr_from_time_t( history->sched_file , time );
     else {
-      int mday,year,month;
-      util_set_date_values( time , &mday , &month , &year);
-      util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
-      return -1;
+      int report_step = ecl_sum_get_report_step_from_time( history->refcase , time );
+      if (report_step >= 1)
+        return report_step;
+      else {
+        int mday,year,month;
+        util_set_date_values( time , &mday , &month , &year);
+        util_abort("%s: Date: %02d/%02d/%04d  does not cooincide with any report time. Aborting.\n", __func__ , mday , month , year);
+        return -1;
+      }
     }
   }
 }
