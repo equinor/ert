@@ -123,9 +123,11 @@ const int * ranking_table_get_permutation( const ranking_table_type * ranking_ta
     } else if (misfit_ranking_is_instance( ranking )) {
       misfit_ranking_type * misfit_ranking = misfit_ranking_safe_cast( ranking );
       return misfit_ranking_get_permutation( misfit_ranking );
-    } else
+    } else {
       util_abort("%s: internal error \n");
-    
+      return NULL;
+    }
+
   } else
     return NULL;
 }

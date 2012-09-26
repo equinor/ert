@@ -32,7 +32,9 @@
 #include <enkf_fs.h>
 #include <enkf_util.h>
 #include <misfit_ensemble.h>
-#include <misfit_ranking.h>
+#include <misfit_member.h>
+#include <misfit_ts.h>
+
 
 /**
    This file implements a type misfit_ensemble which is used to rank the
@@ -49,12 +51,7 @@
 
 
 
-#define MISFIT_ENSEMBLE_TYPE_ID        441066
-#define MISFIT_MEMBER_TYPE_ID         541066
-#define MISFIT_TS_TYPE_ID       641066
-
-
-
+#define MISFIT_ENSEMBLE_TYPE_ID   441066
 
 struct misfit_ensemble_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -65,189 +62,7 @@ struct misfit_ensemble_struct {
 };
 
 
-
-
-struct misfit_member_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  int          my_iens;
-  hash_type   *obs;           /* hash table of misfit_ts_type instances - indexed by observation keys. The structure
-                                 of this hash table is duplicated for each ensemble member.*/
-};
-
-
-
-struct misfit_ts_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  double_vector_type  * data;    /* A double vector of length 'history_length' with actual misfit values. */
-};
-
-
-
-/******************************************************************/
-/* 
-   Implementation of the misfit_ts type. Contains the full
-   timeseries of misfit for one member/one observation key. The
-   implementation is fully static.
-*/
-
-static misfit_ts_type * misfit_ts_alloc(int history_length) {
-  misfit_ts_type * misfit_ts = util_malloc( sizeof * misfit_ts );
-  UTIL_TYPE_ID_INIT(misfit_ts , MISFIT_TS_TYPE_ID);
-
-  if (history_length > 0)
-    misfit_ts->data = double_vector_alloc( history_length + 1 , 0 );
-  else
-    misfit_ts->data = NULL;  /* Used by the xxx_fread_alloc() function below. */
-
-  return misfit_ts;
-}
-
-
-static misfit_ts_type * misfit_ts_buffer_fread_alloc( buffer_type * buffer ) {
-  misfit_ts_type * misfit_ts = misfit_ts_alloc( 0 );
-  if (misfit_ts->data == NULL)
-    misfit_ts->data = double_vector_buffer_fread_alloc( buffer);
-  return misfit_ts;
-}
-
-
-static void misfit_ts_buffer_fwrite( const misfit_ts_type * misfit_ts , buffer_type * buffer ) {
-  double_vector_buffer_fwrite( misfit_ts->data , buffer );
-}
-
-
-static UTIL_SAFE_CAST_FUNCTION(misfit_ts , MISFIT_TS_TYPE_ID);
-
-static void misfit_ts_free( misfit_ts_type * misfit_ts) {
-  double_vector_free( misfit_ts->data );
-  free( misfit_ts );
-}
-
-
-static void misfit_ts_free__( void * vector ) {
-  misfit_ts_free( misfit_ts_safe_cast( vector ));
-}
-
-
-/**
-   Will return the sum over the half-open interval [step1, step2).
-*/
-
-static double misfit_ts_sum( const misfit_ts_type * vector , int step1 , int step2 ) {
-  double sum = 0;
-  const double * data = double_vector_get_const_ptr( vector->data );
-  for (int step = step1; step < step2; step++) 
-    sum += data[step];
-  return sum;
-}
-
-
-static void misfit_ts_iset( misfit_ts_type * vector , int time_index , double value ) {
-  double_vector_iset( vector->data , time_index , value );
-}
-
-/** Step2 is inclusive - what a fucking mess. */
-double misfit_ts_eval( const misfit_ts_type * vector , int step1 , int step2 ) {
-  double misfit_sum = 0;
-  int step;
-  
-  for (step = step1; step <= step2; step++)
-    misfit_sum += double_vector_iget(vector->data , step );
-  
-  return misfit_sum;
-}
-
 /*****************************************************************/
-
-
-
-
-
-static UTIL_SAFE_CAST_FUNCTION(misfit_member , MISFIT_MEMBER_TYPE_ID);
-
-
-static void misfit_member_free( misfit_member_type * node ) {
-  hash_free( node->obs );
-  free( node );
-}
-
-
-static void misfit_member_free__( void * node ) {
-  misfit_member_free( misfit_member_safe_cast( node ));
-}
-
-static misfit_member_type * misfit_member_alloc(int iens) {
-  misfit_member_type * node = util_malloc( sizeof * node );
-  UTIL_TYPE_ID_INIT( node , MISFIT_MEMBER_TYPE_ID);
-  node->my_iens    = iens;
-  node->obs        = hash_alloc();
-  return node;
-}
-
-
-static void misfit_member_install_vector( misfit_member_type * node , const char * key , misfit_ts_type * vector ) {
-  hash_insert_hash_owned_ref( node->obs, key , vector , misfit_ts_free__ );
-}
-
-
-static misfit_ts_type * misfit_member_safe_get_vector( misfit_member_type * node , const char * obs_key , int history_length) {
-  if (!hash_has_key( node->obs , obs_key ))
-    misfit_member_install_vector(node , obs_key , misfit_ts_alloc( history_length ) );
-  return hash_get( node->obs , obs_key );
-}
-
-
-misfit_ts_type * misfit_member_get_ts( const misfit_member_type * node , const char * obs_key ) {
-  return hash_get( node->obs , obs_key );
-}
-
-bool misfit_member_has_ts( const misfit_member_type * node , const char * obs_key ) {
-  return hash_has_key( node->obs , obs_key );
-}
-
-
-static void misfit_member_update( misfit_member_type * node , const char * obs_key , int history_length , int iens , const double ** work_chi2) {
-  misfit_ts_type * vector = misfit_member_safe_get_vector( node , obs_key , history_length );
-  for (int step = 0; step <= history_length; step++) 
-    misfit_ts_iset( vector , step , work_chi2[step][iens]);
-}
-
-
-static void misfit_member_buffer_fwrite( const misfit_member_type * node , buffer_type * buffer ) {
-  buffer_fwrite_int( buffer , node->my_iens );
-  buffer_fwrite_int( buffer , hash_get_size( node->obs ));
-  {
-    hash_iter_type * obs_iter = hash_iter_alloc( node->obs );
-    while ( !hash_iter_is_complete( obs_iter )) {
-      const char * key                   = hash_iter_get_next_key( obs_iter );
-      misfit_ts_type * misfit_ts = hash_get( node->obs , key );
-      buffer_fwrite_string( buffer , key );
-      misfit_ts_buffer_fwrite( misfit_ts , buffer);
-    }
-    hash_iter_free( obs_iter );
-  }
-}
-
-
-static misfit_member_type * misfit_member_buffer_fread_alloc( buffer_type * buffer ) {
-  int my_iens             = buffer_fread_int( buffer );
-  misfit_member_type * node = misfit_member_alloc( my_iens );
-  int hash_size = buffer_fread_int( buffer );
-  {
-    int iobs;
-    for (iobs = 0; iobs < hash_size; iobs++) {
-      const char         * key           = buffer_fread_string( buffer );
-      misfit_ts_type * misfit_ts = misfit_ts_buffer_fread_alloc( buffer );
-      misfit_member_install_vector( node , key , misfit_ts );
-    }
-  }
-  return node;
-}
-
-
-
-/*****************************************************************/
-
 
 static double ** __2d_malloc(int rows , int columns) {
   double ** d = util_calloc( rows , sizeof * d );

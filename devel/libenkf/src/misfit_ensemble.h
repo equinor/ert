@@ -21,19 +21,21 @@
 
 #include <stdbool.h>
 
-#include <enkf_obs.h>
-#include <ensemble_config.h>
-#include <enkf_fs.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <enkf_obs.h>
+#include <ensemble_config.h>
+#include <enkf_fs.h>
+#include <misfit_member.h>
+
 #define MISFIT_DEFAULT_RANKING_KEY "DEFAULT"
 #include <misfit_ensemble_typedef.h>
 
-typedef struct misfit_member_struct    misfit_member_type;
-typedef struct misfit_ts_struct        misfit_ts_type;
+
+
 
   void                misfit_ensemble_clear( misfit_ensemble_type * table);
   misfit_ensemble_type * misfit_ensemble_alloc( );
@@ -45,9 +47,7 @@ typedef struct misfit_ts_struct        misfit_ts_type;
   int                 misfit_ensemble_get_ens_size( const misfit_ensemble_type * misfit_ensemble );
 
   misfit_member_type * misfit_ensemble_iget_member( const misfit_ensemble_type * table , int iens);
-  misfit_ts_type     * misfit_member_get_ts( const misfit_member_type * node , const char * obs_key );
-  bool                 misfit_member_has_ts( const misfit_member_type * node , const char * obs_key );
-  double               misfit_ts_eval( const misfit_ts_type * ts , int step1 , int step2 );
+
   
   
 #ifdef __cplusplus
