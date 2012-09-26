@@ -48,7 +48,7 @@ extern "C" {
 #include <member_config.h>
 #include <enkf_obs.h>
 #include <forward_model.h>
-#include <misfit_table.h>
+#include <misfit_ensemble.h>
 #include <analysis_config.h>
 #include <site_config.h>
 #include <local_config.h>
@@ -85,7 +85,6 @@ extern "C" {
   int                           enkf_main_get_log_level( const enkf_main_type * enkf_main );
   log_type                    * enkf_main_get_logh( const enkf_main_type * enkf_main );
   member_config_type          * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens);
-  misfit_table_type           * enkf_main_get_misfit(const enkf_main_type * enkf_main);
   void                          enkf_main_del_unused_static(enkf_main_type * , int );
   const char                  * enkf_main_get_data_file(const enkf_main_type * );
   const char                 ** enkf_main_get_well_list_ref(const enkf_main_type * , int *);
@@ -193,9 +192,6 @@ extern "C" {
                                             const stringlist_type * node_list);
   
   
-  const int         * enkf_main_get_ranking_permutation( const enkf_main_type * enkf_main , const char * ranking_key);
-  void                enkf_main_set_misfit_table( enkf_main_type * enkf_main , misfit_table_type * misfit);
-  misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main );
   void                     enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file );
   void                     enkf_main_list_users(  set_type * users , const char * executable );
   const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );

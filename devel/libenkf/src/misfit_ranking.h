@@ -29,14 +29,14 @@
 extern "C" {
 #endif
 
-  UTIL_IS_INSTANCE_HEADER( misfit_ranking );
-
-  
   typedef struct misfit_ranking_struct misfit_ranking_type;
+
+  UTIL_IS_INSTANCE_HEADER( misfit_ranking );
+  UTIL_SAFE_CAST_HEADER( misfit_ranking );
   
   void                  misfit_ranking_fprintf( const misfit_ranking_type * misfit_ranking , const char * filename);
-  void                  misfit_ranking_display( const misfit_ranking_type * misfit_ranking );
-  misfit_ranking_type * misfit_ranking_alloc( int ens_size );
+  void                  misfit_ranking_display( const misfit_ranking_type * misfit_ranking , FILE * stream);
+  misfit_ranking_type * misfit_ranking_alloc(const misfit_ensemble_type * ensemble , const stringlist_type * sort_keys , int step1 , int step2, const char * ranking_key);
   void                  misfit_ranking_free( misfit_ranking_type * misfit_ranking );
   void                  misfit_ranking_free__( void * arg );
   const int           * misfit_ranking_get_permutation( const misfit_ranking_type * misfit_ranking );

@@ -22,8 +22,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-  #include <type_macros.h>
+#include <stdio.h>
+#include <type_macros.h>
+#include <stdbool.h>
 
 #include <enkf_fs.h>
 
@@ -32,10 +33,11 @@ extern "C" {
   UTIL_IS_INSTANCE_HEADER( data_ranking );
   UTIL_SAFE_CAST_HEADER(data_ranking);
 
-  data_ranking_type * data_ranking_alloc( int ens_size , const char * user_key , const char * key_index , enkf_fs_type * fs , enkf_config_node_type * config_node , int step , state_enum state);
+  const int         * data_ranking_get_permutation( const data_ranking_type * data_ranking );
+  data_ranking_type * data_ranking_alloc( bool sort_increasing , int ens_size , const char * user_key , const char * key_index , enkf_fs_type * fs , const enkf_config_node_type * config_node , int step , state_enum state);
   void                data_ranking_free__( void * arg );
-
-
+  void                data_ranking_display( const data_ranking_type * data_ranking , FILE * stream);
+  
 #ifdef __cplusplus
 }
 #endif

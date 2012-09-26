@@ -79,7 +79,15 @@ extern "C" {
   obs_vector_type    * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node , const time_t_vector_type * obs_time , int num_reports);
   
   double                  obs_vector_chi2(const obs_vector_type *  , enkf_fs_type *  , node_id_type node_id);
-  void                    obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, bool_vector_type * valid , int step1 , int step2 , int iens1 , int iens2 , state_enum load_state , double ** chi2);
+  
+  void                    obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , 
+                                                   enkf_fs_type * fs, 
+                                                   bool_vector_type * valid , 
+                                                   int step1 , int step2 , 
+                                                   int iens1 , int iens2 , 
+                                                   state_enum load_state , 
+                                                   double ** chi2);
+
   double                  obs_vector_total_chi2(const obs_vector_type * , enkf_fs_type * , int , state_enum  );
   void                    obs_vector_ensemble_total_chi2(const obs_vector_type *  , enkf_fs_type *  , int  , state_enum , double * );
   enkf_config_node_type * obs_vector_get_config_node(obs_vector_type * );

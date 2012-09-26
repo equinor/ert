@@ -31,6 +31,7 @@
 #include <enkf_obs.h>
 #include <enkf_fs.h>
 #include <enkf_util.h>
+#include <misfit_ensemble.h>
 #include <misfit_ranking.h>
 #include <ranking_common.h>
 
@@ -51,11 +52,10 @@ struct misfit_ranking_struct {
   int                  ens_size;
 };
 
-static UTIL_SAFE_CAST_FUNCTION( misfit_ranking , MISFIT_RANKING_TYPE_ID )
-     UTIL_IS_INSTANCE_FUNCTION( misfit_ranking , MISFIT_RANKING_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION( misfit_ranking , MISFIT_RANKING_TYPE_ID )
+UTIL_IS_INSTANCE_FUNCTION( misfit_ranking , MISFIT_RANKING_TYPE_ID)
 
-void misfit_ranking_display( const misfit_ranking_type * misfit_ranking ) {
-  FILE * stream = stdout;
+void misfit_ranking_display( const misfit_ranking_type * misfit_ranking , FILE * stream) {
   const int ens_size                  = double_vector_size( misfit_ranking->total );
   const int * permutations            = misfit_ranking->sort_permutation;
   hash_type * obs_hash = NULL;
@@ -78,7 +78,7 @@ void misfit_ranking_display( const misfit_ranking_type * misfit_ranking ) {
     stringlist_type * obs_keys          = hash_alloc_stringlist( obs_hash );
     int num_obs                         = stringlist_get_size( obs_keys );
     int num_obs_total                   = num_obs * ens_size;  // SHould not count failed/missing members ...
-
+    
     fprintf(stream,"\n\n");
     fprintf(stream,"  #    Realization    Normalized misfit    Total misfit\n");
     fprintf(stream,"-------------------------------------------------------\n");
@@ -103,7 +103,7 @@ void misfit_ranking_display( const misfit_ranking_type * misfit_ranking ) {
 
 void misfit_ranking_fprintf( const misfit_ranking_type * misfit_ranking , const char * filename) {
   FILE * stream                       = util_mkdir_fopen( filename , "w");
-  const int ens_size                  = vector_get_size( misfit_ranking->sort_permutation );
+  const int ens_size                  = misfit_ranking->ens_size;
   const int * permutations            = misfit_ranking->sort_permutation;
   double summed_up = 0.0;
   {
@@ -159,7 +159,7 @@ void misfit_ranking_fprintf( const misfit_ranking_type * misfit_ranking , const 
 }
 
 
-misfit_ranking_type * misfit_ranking_alloc( int ens_size ) {
+static misfit_ranking_type * misfit_ranking_alloc_empty( int ens_size ) {
   misfit_ranking_type * misfit_ranking = util_malloc( sizeof * misfit_ranking );
   UTIL_TYPE_ID_INIT( misfit_ranking , MISFIT_RANKING_TYPE_ID );
   misfit_ranking->sort_permutation = NULL;
@@ -168,6 +168,47 @@ misfit_ranking_type * misfit_ranking_alloc( int ens_size ) {
   misfit_ranking->ens_size = ens_size;
   return misfit_ranking;
 }
+
+
+/**
+   Step and step2 are inclusive. The time direction is flattened.
+*/
+
+misfit_ranking_type *  misfit_ranking_alloc(const misfit_ensemble_type * misfit_ensemble , const stringlist_type * sort_keys , int step1 , int step2, const char * ranking_key) {
+  const int ens_size = misfit_ensemble_get_ens_size( misfit_ensemble );
+  int iens;
+  misfit_ranking_type * ranking = misfit_ranking_alloc_empty(ens_size);
+  
+  for (iens = 0; iens < ens_size; iens++) {
+    const misfit_member_type * misfit_member = misfit_ensemble_iget_member( misfit_ensemble , iens );  /* Lookup in the master ensemble. */
+    
+    {
+      double iens_valid = true;
+      double total = 0;
+      hash_type * obs_hash = hash_alloc();
+      for (int ikey = 0; ikey < stringlist_get_size( sort_keys ); ikey++) {
+        const char * obs_key        = stringlist_iget( sort_keys , ikey );
+        if (misfit_member_has_ts( misfit_member , obs_key )) {
+          misfit_ts_type * ts = misfit_member_get_ts( misfit_member , obs_key );
+          double value        = misfit_ts_eval( ts , step1 , step2 );  /* Sum up the misfit for this key - and these timesteps. */
+          hash_insert_double( obs_hash , obs_key , value);
+          total += value;
+        } else
+          iens_valid = true;
+      }
+      if (iens_valid) 
+        misfit_ranking_iset( ranking , iens , obs_hash , total );
+      else
+        misfit_ranking_iset_invalid( ranking , iens );
+    }
+  }
+  ranking->sort_permutation = double_vector_alloc_sort_perm( ranking->total );
+
+  return ranking;
+}
+
+
+
 
 
 void misfit_ranking_free( misfit_ranking_type * misfit_ranking ) {
@@ -190,7 +231,11 @@ void misfit_ranking_iset( misfit_ranking_type * misfit_ranking , int iens , hash
   if (iens > vector_get_size(misfit_ranking->ensemble))
     vector_grow_NULL( misfit_ranking->ensemble , iens );
   
-  vector_iset_owned_ref( misfit_ranking->ensemble , iens , obs_hash , hash_free__ );
+  if (obs_hash != NULL)
+    vector_iset_owned_ref( misfit_ranking->ensemble , iens , obs_hash , hash_free__ );
+  else
+    vector_iset_ref( misfit_ranking->ensemble , iens , NULL );
+  
   double_vector_iset( misfit_ranking->total , iens , total_misfit );
 }
 
@@ -199,9 +244,6 @@ void misfit_ranking_iset_invalid( misfit_ranking_type * misfit_ranking , int ien
   misfit_ranking_iset( misfit_ranking , iens , NULL , INVALID_RANKING_VALUE );
 }
 
-void misfit_ranking_init_sort( misfit_ranking_type * misfit_ranking ) {
-  misfit_ranking->sort_permutation = double_vector_alloc_sort_perm( misfit_ranking->total );
-}
 
 const int * misfit_ranking_get_permutation( const misfit_ranking_type * misfit_ranking ) {
   return misfit_ranking->sort_permutation;

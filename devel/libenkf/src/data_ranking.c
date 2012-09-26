@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include <util.h>
 #include <hash.h>
@@ -44,7 +45,7 @@ struct data_ranking_struct {
   int                * sort_permutation;
   bool_vector_type   * valid;
   char               * user_key;
-  bool                 sort_ascending;
+  bool                 sort_increasing;
 };
 
 
@@ -86,22 +87,23 @@ static void data_ranking_init(data_ranking_type * ranking ,
     }
   }
 
-  if (ranking->sort_ascending)
+  if (ranking->sort_increasing) 
     ranking->sort_permutation = double_vector_alloc_sort_perm( ranking->data_ensemble );
-  else
-    ranking->sort_permutation = double_vector_alloc_rsort_perm( ranking->data_ensemble );
-
+  else 
+     ranking->sort_permutation = double_vector_alloc_rsort_perm( ranking->data_ensemble );
+  
   enkf_node_free( enkf_node );
 }
 
 
 
-data_ranking_type * data_ranking_alloc( int ens_size , const char * user_key , const char * key_index , enkf_fs_type * fs , enkf_config_node_type * config_node , int step , state_enum state) {
+data_ranking_type * data_ranking_alloc( bool sort_increasing , int ens_size , const char * user_key , const char * key_index , enkf_fs_type * fs , const enkf_config_node_type * config_node , int step , state_enum state) {
   data_ranking_type * ranking = util_malloc( sizeof * ranking );
   UTIL_TYPE_ID_INIT( ranking , DATA_RANKING_TYPE_ID );
   ranking->ens_size = ens_size;
-  ranking->sort_ascending = true;
-  if (ranking->sort_ascending)
+  ranking->sort_increasing = sort_increasing;
+
+  if (ranking->sort_increasing)
     ranking->data_ensemble = double_vector_alloc( ens_size ,  INFINITY);  // To ensure it comes last when sorting
   else
     ranking->data_ensemble = double_vector_alloc( ens_size , -INFINITY);  // To ensure it comes last when sorting
@@ -110,12 +112,9 @@ data_ranking_type * data_ranking_alloc( int ens_size , const char * user_key , c
   ranking->sort_permutation = NULL;
   ranking->user_key = util_alloc_string_copy( user_key );
 
-
   data_ranking_init( ranking , fs , config_node , key_index , step , state );
   return ranking;
 }
-
-
 
 
 
@@ -124,6 +123,10 @@ void data_ranking_free__( void * arg) {
   data_ranking_free( ranking );
 }
 
+
+const int * data_ranking_get_permutation( const data_ranking_type * data_ranking ) {
+  return data_ranking->sort_permutation;
+}
 
 
 void data_ranking_display( const data_ranking_type * data_ranking , FILE * stream) {
@@ -138,9 +141,9 @@ void data_ranking_display( const data_ranking_type * data_ranking , FILE * strea
     for (i = 0; i < ens_size; i++) {
       if (bool_vector_iget( data_ranking->valid , permutations[i])) {
         int    iens         = permutations[i];
-        fprintf(stream,"%3d    %3d                   %10.3f\n",i,iens,double_vector_iget(data_ranking->data_ensemble , iens));
+        fprintf(stream,"%3d    %3d          %14.3f\n",i,iens,double_vector_iget(data_ranking->data_ensemble , iens));
       }
     }
+    fprintf(stream,"----------------------------------\n");
   }
-  
 }

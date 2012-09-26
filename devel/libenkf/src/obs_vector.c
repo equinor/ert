@@ -68,6 +68,9 @@ struct obs_vector_struct {
 };
 
 
+UTIL_IS_INSTANCE_FUNCTION(obs_vector , OBS_VECTOR_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(obs_vector , OBS_VECTOR_TYPE_ID)
+
 /*****************************************************************/
 
 
@@ -81,7 +84,6 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
   } else if(conf_instance_has_item(conf_instance, "DATE")) {
     time_t obs_date = conf_instance_get_item_value_time_t(conf_instance, "DATE"  );
     obs_restart_nr  = history_get_restart_nr_from_time_t( history , obs_date );
-    //obs_restart_nr  = history_get_restart_nr_from_time_t(history, obs_date);
   } else if (conf_instance_has_item(conf_instance, "DAYS")) {
     double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
     obs_restart_nr  = history_get_restart_nr_from_days( history , days );
@@ -367,15 +369,26 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type * obs_vector , con
     const char * error_mode      = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
     const char * sum_key         = conf_instance_get_item_value_ref(   conf_instance, "KEY"   );
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
-    int          size            = history_get_last_restart(          history          );
+    int          size            = history_get_last_restart( history );
     int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
-    
-    if (strcmp( error_mode , "REL") == 0)
-      obs_error *= obs_value;
-    else if (strcmp( error_mode , "RELMIN") == 0) 
-      obs_error  = util_double_max( min_error , obs_error * obs_value );
-    
-    obs_vector_add_summary_obs( obs_vector , obs_restart_nr , sum_key , obs_key , obs_value , obs_error , NULL , 0);
+
+    if (obs_restart_nr == 0) {
+      int day,month,year;
+      time_t start_time = history_get_time_t_from_restart_nr( history , 0 );
+      util_set_date_values( start_time , &day , &month , &year);
+      
+      fprintf(stderr,"** ERROR: It is unfortunately not possible to use summary observations from the\n");
+      fprintf(stderr,"          start of the simulation. Problem with observation:%s at %02d/%02d/%4d\n",obs_key , day,month,year);
+      exit(1);
+    } 
+    {
+      if (strcmp( error_mode , "REL") == 0)
+        obs_error *= obs_value;
+      else if (strcmp( error_mode , "RELMIN") == 0) 
+        obs_error  = util_double_max( min_error , obs_error * obs_value );
+      
+      obs_vector_add_summary_obs( obs_vector , obs_restart_nr , sum_key , obs_key , obs_value , obs_error , NULL , 0);
+    }
   }
 }
 
@@ -817,35 +830,46 @@ double obs_vector_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , 
 
 //This will not work for container observations .....
 
-void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, bool_vector_type * valid , int step1 , int step2 , int iens1 , int iens2 , state_enum load_state , double ** chi2) {
+void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , 
+                              enkf_fs_type * fs, 
+                              bool_vector_type * valid , 
+                              int step1 , 
+                              int step2 , 
+                              int iens1 , 
+                              int iens2 , 
+                              state_enum load_state , 
+                              double ** chi2) {
+  
   int step;
-
   enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
   node_id_type node_id;
   node_id.state = load_state;
   for (step = step1; step <= step2; step++) {
     int iens;
     node_id.report_step = step;
-    if (vector_iget( obs_vector->nodes , step) != NULL) {
-      for (iens = iens1; iens < iens2; iens++) {
-        node_id.iens = iens;
-        
-        if (enkf_node_try_load( enkf_node , fs , node_id)) 
-          chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node , node_id);
-        else {
+    {
+      void * obs_node = vector_iget( obs_vector->nodes , step);
+
+      if (obs_node == NULL) {
+        for (iens = iens1; iens < iens2; iens++) 
           chi2[step][iens] = 0;
-          // Missing data - this member will be marked as invalid in the misfit calculations.
-          bool_vector_iset( valid , iens , false );
+      } else {
+        for (iens = iens1; iens < iens2; iens++) {
+          node_id.iens = iens;
+          if (enkf_node_try_load( enkf_node , fs , node_id)) 
+            chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node , node_id);
+          else {
+            chi2[step][iens] = 0;
+            // Missing data - this member will be marked as invalid in the misfit calculations.
+            bool_vector_iset( valid , iens , false );
+          }
         }
-        
       }
-    } else {
-      for (iens = iens1; iens < iens2; iens++) 
-        chi2[step][iens] = 0;
     }
   }
   enkf_node_free( enkf_node );
 }
+
 
 
 /**
@@ -929,7 +953,5 @@ const char * obs_vector_get_obs_key( const obs_vector_type * obs_vector) {
 /*****************************************************************/
 
 
-
-UTIL_SAFE_CAST_FUNCTION(obs_vector , OBS_VECTOR_TYPE_ID)
 VOID_FREE(obs_vector)
      

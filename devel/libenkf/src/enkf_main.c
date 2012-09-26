@@ -29,6 +29,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#define HAVE_THREAD_POOL 1
+#include <matrix.h>
+
 #include <subst_list.h>
 #include <rng.h>
 #include <subst_func.h>
@@ -87,7 +90,7 @@
 #include <local_updatestep.h>
 #include <local_config.h>
 #include <local_dataset.h>
-#include <misfit_table.h>
+#include <misfit_ensemble.h>
 #include <ert_template.h>
 #include <ert_build_info.h>
 #include <rng_config.h>
@@ -96,6 +99,8 @@
 #include <ranking_table.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
+
+
 
 /**
    This object should contain **everything** needed to run a enkf
@@ -158,7 +163,6 @@ struct enkf_main_struct {
   char                 * user_config_file;   
   char                 * rft_config_file;       /* File giving the configuration to the RFTwells*/  
   enkf_obs_type        * obs;
-  misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;         /* The ensemble ... */
   int                    ens_size;         /* The size of the ensemble */  
   bool                   verbose;
@@ -358,9 +362,6 @@ void enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_fil
 
 
 
-misfit_table_type * enkf_main_get_misfit(const enkf_main_type * enkf_main) {
-  return enkf_main->misfit_table;
-}
 
 
 
@@ -396,8 +397,6 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   if (enkf_main->local_config != NULL)
     local_config_free( enkf_main->local_config );
 
-  if (enkf_main->misfit_table != NULL)
-    misfit_table_free( enkf_main->misfit_table );
 
   int_vector_free( enkf_main->keep_runpath );
   plot_config_free( enkf_main->plot_config );
@@ -1798,9 +1797,10 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
       int * ranking_permutation;
       int inode , src_iens;
       
-      if (ranking_key != NULL) 
-        ranking_permutation = (int *) enkf_main_get_ranking_permutation( enkf_main , ranking_key );
-      else {
+      if (ranking_key != NULL) {
+        ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
+        ranking_permutation = (int *) ranking_table_get_permutation( ranking_table , ranking_key );
+      } else {
         ranking_permutation = util_calloc( ens_size , sizeof * ranking_permutation );
         for (src_iens = 0; src_iens < ens_size; src_iens++)
           ranking_permutation[src_iens] = src_iens;
@@ -3092,7 +3092,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   enkf_main_init_jobname( enkf_main );
   enkf_main_gen_data_special( enkf_main );
   free( model_config );
-  enkf_main->misfit_table = NULL;
   return enkf_main;
 }
 
@@ -3131,48 +3130,8 @@ void enkf_main_create_new_config( const char * config_file , const char * storag
 }
 
 
-/**
-   Sets the misfit_table of the enkf_main object. If a misfit table is
-   already installed the currently installed misfit table is freed first.
-
-   The enkf_main object takes ownership of the input misfit table,
-   i.e. the calling scope should not free the table.
-*/
-
-void enkf_main_set_misfit_table( enkf_main_type * enkf_main , misfit_table_type * misfit) {
-  if (enkf_main->misfit_table != NULL)
-    misfit_table_free( enkf_main->misfit_table );
-
-  enkf_main->misfit_table = misfit;
-}
 
 
-misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main ) {
-  return enkf_main->misfit_table;
-}
-
-
-/**
-   o If enkf_main->misfit_table == NULL (i.e. no misfit table has been
-     calculated) the ranking key must also be NULL, otherwise it will
-     fail hard.
-
-   o ranking_key == NULL the function will return NULL:
-   
-   o If ranking_key != NULL and NOT an existing ranking key the function will fail hard.
-
-*/
-
-const int * enkf_main_get_ranking_permutation( const enkf_main_type * enkf_main , const char * ranking_key) {
-  if (enkf_main->misfit_table == NULL) {
-    if (ranking_key != NULL) {
-      util_abort("%s: This is a logical error - asking for ranking_key:%s - when no misfit table has been calculated\n",__func__ , ranking_key);
-      return NULL;
-    } else
-      return NULL;
-  } else
-    return misfit_table_get_ranking_permutation( enkf_main->misfit_table , ranking_key );
-}
 
 
 

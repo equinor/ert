@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include <util.h>
 #include <hash.h>
@@ -34,7 +35,7 @@
 #include <ranking_common.h>
 #include <data_ranking.h>
 #include <misfit_ranking.h>
-#include <misfit_table.h>
+#include <misfit_ensemble.h>
 #include <ranking_table.h>
 
 
@@ -66,17 +67,29 @@ ranking_table_type * ranking_table_alloc( int ens_size ) {
 }
 
 
-void ranking_table_add_data_ranking( ranking_table_type * ranking_table , const char * ranking_key , const char * user_key , const char * key_index , 
-                                     enkf_fs_type * fs , enkf_config_node_type * config_node , int step , state_enum state) {
-  
-  data_ranking_type * ranking = data_ranking_alloc( ranking_table->ens_size , user_key , key_index , fs , config_node , step , state );
-  hash_insert_hash_owned_ref( ranking_table->ranking_table , ranking_key , ranking, data_ranking_free__ );
+void ranking_table_add_data_ranking( ranking_table_type * ranking_table , bool sort_increasing , const char * ranking_key , const char * user_key , const char * key_index , 
+                                     enkf_fs_type * fs , const enkf_config_node_type * config_node , int step , state_enum state) {
 
+  data_ranking_type * ranking = data_ranking_alloc( sort_increasing , ranking_table->ens_size , user_key , key_index , fs , config_node , step , state );
+  hash_insert_hash_owned_ref( ranking_table->ranking_table , ranking_key , ranking, data_ranking_free__ );
 }
+
+
+
+void ranking_table_add_misfit_ranking( ranking_table_type * ranking_table , const misfit_ensemble_type * misfit_ensemble , const stringlist_type * obs_keys , int step1 , int step2 , const char * ranking_key) {
+  misfit_ranking_type * ranking = misfit_ranking_alloc( misfit_ensemble , obs_keys , step1 , step2 , ranking_key );
+  hash_insert_hash_owned_ref( ranking_table->ranking_table , ranking_key , ranking , misfit_ranking_free__ );
+}
+
 
 
 bool ranking_table_has_ranking( const ranking_table_type * ranking_table , const char * ranking_key ) {
   return hash_has_key( ranking_table->ranking_table , ranking_key );
+}
+
+
+int ranking_table_get_size( const ranking_table_type * ranking_table ) {
+  return hash_get_size( ranking_table->ranking_table );
 }
 
 
@@ -87,11 +100,36 @@ bool ranking_table_display_ranking( const ranking_table_type * ranking_table , c
     
     if (data_ranking_is_instance( ranking )) {
       data_ranking_type * data_ranking = data_ranking_safe_cast( ranking );
-      data_ranking_display( data_ranking );
-    }
+      data_ranking_display( data_ranking , stdout );
+    } else if (misfit_ranking_is_instance( ranking )) {
+      misfit_ranking_type * misfit_ranking = misfit_ranking_safe_cast( ranking );
+      misfit_ranking_display( misfit_ranking , stdout );
+    } else
+      util_abort("%s: internal error \n",__func__);
     
 
     return true;
   } else
     return false;
 }
+
+const int * ranking_table_get_permutation( const ranking_table_type * ranking_table , const char * ranking_key) {
+  if (hash_has_key( ranking_table->ranking_table , ranking_key)) {
+    void * ranking = hash_get( ranking_table->ranking_table , ranking_key );
+    
+    if (data_ranking_is_instance( ranking )) {
+      data_ranking_type * data_ranking = data_ranking_safe_cast( ranking );
+      return data_ranking_get_permutation( data_ranking );
+    } else if (misfit_ranking_is_instance( ranking )) {
+      misfit_ranking_type * misfit_ranking = misfit_ranking_safe_cast( ranking );
+      return misfit_ranking_get_permutation( misfit_ranking );
+    } else
+      util_abort("%s: internal error \n");
+    
+  } else
+    return NULL;
+}
+
+
+
+

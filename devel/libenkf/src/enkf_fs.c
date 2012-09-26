@@ -42,7 +42,7 @@
 #include <plain_driver.h>
 #include <gen_data.h>
 #include <time_map.h>
-
+#include <misfit_ensemble.h>
 
 
 /**
@@ -201,9 +201,10 @@
 */
 
 
-#define ENKF_FS_TYPE_ID   1089763
-#define ENKF_MOUNT_MAP   "enkf_mount_info"
-#define TIME_MAP_FILE    "time-map"
+#define ENKF_FS_TYPE_ID       1089763
+#define ENKF_MOUNT_MAP        "enkf_mount_info"
+#define TIME_MAP_FILE         "time-map"
+#define MISFIT_ENSEMBLE_FILE  "misfit-ensemble"
 
 struct enkf_fs_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -217,6 +218,7 @@ struct enkf_fs_struct {
 
   bool                     read_only;             /* Whether this filesystem has been mounted read-only. */
   time_map_type          * time_map;
+  misfit_ensemble_type   * misfit_ensemble;
   /* 
      The variables below here are for storing arbitrary files within 
      the enkf_fs storage directory, but not as serialized enkf_nodes.
@@ -237,6 +239,7 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_
   enkf_fs_type * fs          = util_malloc(sizeof * fs );
   UTIL_TYPE_ID_INIT( fs , ENKF_FS_TYPE_ID );
   fs->time_map               = time_map_alloc();
+  fs->misfit_ensemble        = misfit_ensemble_alloc();
   fs->index                  = NULL;
   fs->eclipse_static         = NULL;
   fs->parameter              = NULL;
@@ -835,5 +838,10 @@ FILE * enkf_fs_open_excase_tstep_member_file( const enkf_fs_type * fs , const ch
 
 time_map_type * enkf_fs_get_time_map( const enkf_fs_type * fs ) {
   return fs->time_map;
+}
+
+
+misfit_ensemble_type * enkf_fs_get_misfit_ensemble( const enkf_fs_type * fs ) {
+  return fs->misfit_ensemble;
 }
 

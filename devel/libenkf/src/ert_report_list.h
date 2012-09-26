@@ -43,6 +43,7 @@ extern "C" {
   void                    ert_report_list_add_global_context( ert_report_list_type * report_list , const char * key , const char * value);
   void                    ert_report_list_site_init( ert_report_list_type * report_list , config_type * config );
   void                    ert_report_list_init( ert_report_list_type * report_list , config_type * config , const ecl_sum_type * refcase);
+  void                    ert_report_list_create( const ert_report_list_type * report_list , const char * current_case , bool verbose );
   
 #ifdef __cplusplus
 }
