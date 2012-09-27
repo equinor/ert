@@ -119,7 +119,7 @@ void * gen_common_fread_alloc(const char * file , ecl_type_enum load_type , int 
 
 void * gen_common_fload_alloc(const char * file , gen_data_file_format_type load_format , ecl_type_enum ASCII_type , ecl_type_enum * load_type , int * size) { 
   void * buffer = NULL;
-
+  
   if (load_format == ASCII) {
     *load_type = ASCII_type;
     buffer =  gen_common_fscanf_alloc(file , ASCII_type , size);
@@ -130,7 +130,7 @@ void * gen_common_fload_alloc(const char * file , gen_data_file_format_type load
     *load_type = ECL_DOUBLE_TYPE;
     buffer = gen_common_fread_alloc(file , ECL_DOUBLE_TYPE , size);
   } else 
-    util_abort("%s: trying to load with unsupported format ... \n");
+    util_abort("%s: trying to load with unsupported format:%s... \n" , load_format);
   
   return buffer;
 }

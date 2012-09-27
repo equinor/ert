@@ -73,7 +73,7 @@ struct gen_data_config_struct {
      instance. See documentation above.
   */
   bool                           dynamic;
-  enkf_fs_type                 * fs;   
+  enkf_fs_type                 * fs;                   /* NBNB This will be NULL in the case of instances which are used as parameters. */
   int                            ens_size;     
   bool                           mask_modified;
   bool_vector_type             * active_mask;
@@ -408,7 +408,7 @@ void gen_data_config_update_active(gen_data_config_type * config , int report_st
         */
         char * filename = util_alloc_sprintf("%s_active" , config->key );
         FILE * stream   = enkf_fs_open_case_tstep_file( config->fs , filename , report_step , "w");
-      
+        
         bool_vector_fwrite( config->active_mask , stream );
 
         fclose( stream );
@@ -464,6 +464,11 @@ void gen_data_config_set_dynamic( gen_data_config_type * config , enkf_fs_type *
   config->fs      = fs;
 }
 
+
+bool gen_data_config_is_dynamic( const gen_data_config_type * config ) {
+  printf("%s: %d \n",__func__ , config->dynamic);
+  return config->dynamic;
+}
 
 void gen_data_config_get_template_data( const gen_data_config_type * config , 
                                         char ** template_buffer    , 

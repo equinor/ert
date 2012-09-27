@@ -62,7 +62,7 @@ struct gen_data_struct {
   gen_data_config_type  * config;               /* Thin config object - mainly contains filename for remote load */
   char                  * data;                 /* Actual storage - will be casted to double or float on use. */
   int                     current_report_step;  /* Need this to look up the correct size in the config object. */
-  bool_vector_type      * active_mask;          /* Mask of active/not active - loaded from a "_active" file created by the forward model. */
+  bool_vector_type      * active_mask;          /* Mask of active/not active - loaded from a "_active" file created by the forward model. Not used when used as parameter*/
 };
 
 
@@ -210,9 +210,12 @@ void gen_data_deserialize(gen_data_type * gen_data , node_id_type node_id , cons
   data has been loaded from file.  
 */ 
 
-static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_step , ecl_type_enum load_type , const void * data , const bool_vector_type * active_mask) {
+static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_step , ecl_type_enum load_type , const void * data) {
   gen_data_assert_size(gen_data , size, report_step);
-  if (active_mask != NULL) gen_data_config_update_active( gen_data->config , report_step , active_mask);
+  if (gen_data_config_is_dynamic( gen_data->config )) {
+    printf("Dynamic:%d \n",gen_data_config_is_dynamic( gen_data ));
+    gen_data_config_update_active( gen_data->config , report_step , gen_data->active_mask);
+  }
   gen_data_realloc_data(gen_data);
 
   if (size > 0) {
@@ -275,30 +278,32 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
        If the file is not found the gen_data->active_mask is set to
        all-true (i.e. the default true value is invoked).
     */
-    bool_vector_reset( gen_data->active_mask );  
-    bool_vector_iset( gen_data->active_mask , size - 1, true );
-    {
-      char * active_file = util_alloc_sprintf("%s_active" , filename );
-      if (util_file_exists( active_file )) {
-        FILE * stream = util_fopen( active_file , "r");
-        int active_int;
-        for (int index=0; index < size; index++) {
-          if (fscanf( stream ,  "%d" , &active_int) == 1) {
-            if (active_int == 1)
-              bool_vector_iset( gen_data->active_mask , index , true);
-            else if (active_int == 0)
-              bool_vector_iset( gen_data->active_mask , index , false);
-            else
-              util_abort("%s: error when loading active mask from:%s only 0 and 1 allowed \n",__func__ , active_file);
-          } else
-            util_abort("%s: error when loading active mask from:%s - file not long enough.\n",__func__ , active_file );
+    if (gen_data_config_is_dynamic( gen_data->config )) {
+      bool_vector_reset( gen_data->active_mask );  
+      bool_vector_iset( gen_data->active_mask , size - 1, true );
+      {
+        char * active_file = util_alloc_sprintf("%s_active" , filename );
+        if (util_file_exists( active_file )) {
+          FILE * stream = util_fopen( active_file , "r");
+          int active_int;
+          for (int index=0; index < size; index++) {
+            if (fscanf( stream ,  "%d" , &active_int) == 1) {
+              if (active_int == 1)
+                bool_vector_iset( gen_data->active_mask , index , true);
+              else if (active_int == 0)
+                bool_vector_iset( gen_data->active_mask , index , false);
+              else
+                util_abort("%s: error when loading active mask from:%s only 0 and 1 allowed \n",__func__ , active_file);
+            } else
+              util_abort("%s: error when loading active mask from:%s - file not long enough.\n",__func__ , active_file );
+          }
+          fclose( stream );
         }
-        fclose( stream );
+        free( active_file );
       }
-      free( active_file );
     }
   } 
-  gen_data_set_data__(gen_data , size , report_step , load_type , buffer , gen_data->active_mask);
+  gen_data_set_data__(gen_data , size , report_step , load_type , buffer );
   util_safe_free(buffer);
   return has_file;
 }

@@ -383,10 +383,13 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
     int    iens        = member_config_get_iens( enkf_state->my_config );
     char * iens_s      = util_alloc_sprintf("%d"   , iens);
     char * iens4_s     = util_alloc_sprintf("%04d" , iens);
+    char * iensp1_s    = util_alloc_sprintf("%d"   , iens + 1);
 
     enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s      , NULL);
+    enkf_state_add_subst_kw(enkf_state , "IENSP1"      , iensp1_s    , NULL);
     enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s     , NULL);
     
+    free(iensp1_s);
     free(iens_s);
     free(iens4_s);
   }
@@ -1924,7 +1927,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enk
         run_info->run_status = JOB_RUN_FAILURE;
     } 
   } else 
-    util_abort("%s: status:%d invalid - should only be called with status == [JOB_QUEUE_RUN_FAIL || JON_QUEUE_ALL_OK].",__func__ , status);
+    util_abort("%s: status:%d invalid - should only be called with status == [JOB_QUEUE_RUN_FAIL || JON_QUEUE_RUN_OK].",__func__ , status);
 }
 
 

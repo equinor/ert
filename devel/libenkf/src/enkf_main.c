@@ -1279,6 +1279,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
              the queue system (should probably be split in two).
           */
           
+          printf("Starting enkf_state_complete_forward_model__:%d \n",iens);
           thread_pool_add_job( load_threads , enkf_state_complete_forward_model__ , arg_list[iens] );
           /* This will block until the enkf_state_complete_forward_model() has actually started executing. */
           {
@@ -2078,7 +2079,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_item_set_argc_minmax(item , 1, 1 , 0 , NULL);
   config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
 
-  item = config_add_item(config , FORWARD_MODEL_KEY , strict , true);
+  item = config_add_item(config , FORWARD_MODEL_KEY , false , true);
   config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 
   item = config_add_item(config , DATA_KW_KEY , false , true);
@@ -2965,6 +2966,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         util_safe_free( keep_runpath_string   );
         util_safe_free( delete_runpath_string );
       }
+
       /* This is really in the wrong place ... */
       {
         enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
