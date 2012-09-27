@@ -1279,7 +1279,6 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
              the queue system (should probably be split in two).
           */
           
-          printf("Starting enkf_state_complete_forward_model__:%d \n",iens);
           thread_pool_add_job( load_threads , enkf_state_complete_forward_model__ , arg_list[iens] );
           /* This will block until the enkf_state_complete_forward_model() has actually started executing. */
           {
@@ -1579,7 +1578,6 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 
         }
       }
-        
       if (totalOK) 
         log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded.");
       
@@ -1589,17 +1587,25 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
   }
 }
 
-
-int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 ) {
-  bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
+/**
+   The special value stride == 0 means to just include step2.
+*/
+int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride) {
   int_vector_type * step_list = int_vector_alloc( 0 , 0 );
   
-  if (merge_observations) {
-    for (int step = util_int_max( 1 , load_start ); step <= step2; step++) 
-      int_vector_append( step_list , step );
-  } else
+  if (stride == 0) 
     int_vector_append( step_list , step2 );
-  
+  else {
+    int step = util_int_max( 1 , load_start );
+    while (true) {
+      int_vector_append( step_list , step );
+      step += stride;
+      if (step >= step2) {
+        int_vector_append( step_list , step );
+        break;
+      }
+    }
+  }
   return step_list;
 }
 
@@ -1723,7 +1729,17 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
         
         if (runOK) {
           if (enkf_on) {
-            int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , report_step2 );
+            bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
+            int_vector_type * step_list;
+            int stride;
+
+            if (merge_observations)
+              stride = 1;
+            else
+              stride = 0;
+            
+            step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , report_step2 , stride );
+
             enkf_main_assimilation_update(enkf_main , step_list);
             int_vector_free( step_list );
             enkf_fs_fsync( enkf_main->dbase );
@@ -1754,7 +1770,9 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const
       time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
       enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_fs_name , false , true );
       {
-        int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ));
+        int stride = 1;
+        int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
+        int_vector_fprintf( step_list , stdout , "step_list" , "%04d ");
         enkf_main_smoother_update( enkf_main , step_list , target_fs );
         int_vector_free( step_list );
       }
