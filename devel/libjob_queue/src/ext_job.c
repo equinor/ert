@@ -115,6 +115,7 @@ struct ext_job_struct {
   char            * argv_string;
   stringlist_type * argv;                  /* This should *NOT* start with the executable */
   hash_type       * environment;
+  hash_type       * default_mapping; 
   char            * help_text;
   
   bool              private_job;           /* Can the current user/delete this job? (private_job == true) means the user can edit it. */
@@ -144,6 +145,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->stdin_file          = NULL;
   ext_job->stderr_file         = NULL;
   ext_job->environment         = hash_alloc();
+  ext_job->default_mapping     = hash_alloc(); 
   ext_job->argv                = stringlist_alloc_new();
   ext_job->argv_string         = NULL;
   ext_job->__valid             = true;
@@ -211,6 +213,7 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   new_job->max_running_minutes   = src_job->max_running_minutes;
   new_job->max_running           = src_job->max_running;
   new_job->private_args          = subst_list_alloc_deep_copy( src_job->private_args );
+
   /* Copying over all the keys in the environment hash table */
   {
     hash_iter_type * iter     = hash_iter_alloc( src_job->environment );
@@ -222,6 +225,22 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
     }
     hash_iter_free(iter); 
   }
+  
+
+  /* The default mapping. */
+  {
+    hash_iter_type * iter     = hash_iter_alloc( src_job->default_mapping );
+    const char * key = hash_iter_get_next_key(iter);
+    while (key != NULL) {
+      char * value = hash_get( src_job->default_mapping , key);
+      hash_insert_hash_owned_ref( new_job->default_mapping , key , util_alloc_string_copy(value) , free);
+      key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter); 
+  }
+  
+
+
   stringlist_deep_copy( new_job->argv , src_job->argv );
   
   return new_job;
@@ -245,6 +264,7 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->help_text);
   util_safe_free(ext_job->private_args_string);
   
+  hash_free( ext_job->default_mapping);
   hash_free( ext_job->environment );
   stringlist_free(ext_job->argv);
   subst_list_free( ext_job->private_args );
@@ -475,17 +495,25 @@ hash_type * ext_job_get_environment( ext_job_type * ext_job ) {
 
 /*****************************************************************/
 
-static void __fprintf_string(FILE * stream , const char * s , const subst_list_type * private_args, const subst_list_type * global_args) {
-  char * tmp = subst_list_alloc_filtered_string( private_args , s ); /* internal filtering first */
-  
-  if (global_args != NULL) {
-    fprintf(stream,"\"");
-    subst_list_filtered_fprintf( global_args , tmp , stream );
-    fprintf(stream,"\"");
-  } else
-    fprintf(stream,"\"%s\"" , tmp);
 
-  free( tmp );
+static char * __alloc_filtered_string( const char * src_string , const subst_list_type * private_args, const subst_list_type * global_args) {
+  char * tmp1 = subst_list_alloc_filtered_string( private_args , src_string ); /* internal filtering first */
+  char * tmp2;
+
+  if (global_args != NULL) {
+    tmp2 = subst_list_alloc_filtered_string( global_args , tmp1 );        /* Global filtering. */
+    free( tmp1 );
+  } else
+    tmp2 = tmp1;
+    
+  return tmp2;
+  
+}
+
+static void __fprintf_string(FILE * stream , const char * s , const subst_list_type * private_args, const subst_list_type * global_args) {
+  char * filtered_string = __alloc_filtered_string(s , private_args , global_args );
+  fprintf(stream , "\"%s\"" , filtered_string );
+  free( filtered_string );
 }
 
  
@@ -498,11 +526,20 @@ static void __fprintf_python_string(FILE * stream , const char * id , const char
 }
 
 
+static void __fprintf_init_python_list( FILE * stream , const char * id ) {
+  fprintf(stream , "\"%s\" : " , id);
+  fprintf(stream,"[");
+}
+
+static void   __fprintf_close_python_list( FILE * stream ) {
+  fprintf(stream,"]");
+}
+
+
 static void __fprintf_python_list(FILE * stream , const char * id , const stringlist_type * list , const subst_list_type * private_args, const subst_list_type * global_args ) {
   int size;
   int i;
-  fprintf(stream , "\"%s\" : " , id);
-  fprintf(stream,"[");
+  __fprintf_init_python_list( stream , id );
   if (list == NULL)
     size = 0;
   else
@@ -511,10 +548,11 @@ static void __fprintf_python_list(FILE * stream , const char * id , const string
   for (i = 0; i < size; i++) {
     const char * value = stringlist_iget(list , i);
     __fprintf_string(stream , value , private_args , global_args);
+
     if (i < (size - 1))
       fprintf(stream,",");
   }
-  fprintf(stream,"]");
+  __fprintf_close_python_list( stream );
 }
 
 
@@ -564,6 +602,29 @@ static void __indent(FILE * stream, int indent) {
 }
 
 
+/* 
+   This is special cased to support the default mapping. 
+*/
+
+static void ext_job_fprintf_python_argList( const ext_job_type * ext_job , FILE * stream , const subst_list_type * global_args) {
+  __fprintf_init_python_list( stream , "argList" );
+  {
+    for (int index = 0; index < stringlist_get_size( ext_job->argv ); index++) {
+      const char * src_string = stringlist_iget( ext_job->argv , index );
+      char * filtered_string = __alloc_filtered_string(src_string , ext_job->private_args , global_args );
+      if (hash_has_key( ext_job->default_mapping , filtered_string ))
+        filtered_string = util_realloc_string_copy( filtered_string , hash_get( ext_job->default_mapping , filtered_string ));
+      
+      fprintf(stream , "\"%s\"" , filtered_string );
+      if (index < (stringlist_get_size( ext_job->argv) - 1))
+        fprintf(stream , "," );
+      
+      free( filtered_string );
+    }
+  }
+  __fprintf_close_python_list( stream );
+}
+
 
 
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
@@ -582,7 +643,7 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const s
     __indent(stream, 2); __fprintf_python_string(stream , "stdout"              , ext_job->stdout_file         , ext_job->private_args, global_args);  __end_line(stream);
     __indent(stream, 2); __fprintf_python_string(stream , "stderr"              , ext_job->stderr_file         , ext_job->private_args, global_args);  __end_line(stream);
     __indent(stream, 2); __fprintf_python_string(stream , "stdin"               , ext_job->stdin_file          , ext_job->private_args, global_args);  __end_line(stream);
-    __indent(stream, 2); __fprintf_python_list(stream   , "argList"             , ext_job->argv                , ext_job->private_args, global_args);  __end_line(stream);
+    __indent(stream, 2); ext_job_fprintf_python_argList(ext_job , stream , global_args);                                                               __end_line(stream); 
     __indent(stream, 2); __fprintf_python_hash(stream   , "environment"         , ext_job->environment         , ext_job->private_args, global_args);  __end_line(stream);
     __indent(stream, 2); __fprintf_python_string(stream , "license_path"        , ext_job->license_path        , ext_job->private_args, global_args);  __end_line(stream);
     __indent(stream, 2); __fprintf_python_int( stream   , "max_running_minutes" , ext_job->max_running_minutes );                                      __end_line(stream);
@@ -619,7 +680,7 @@ if (value != 0)                               \
 
 void ext_job_save( const ext_job_type * ext_job ) {
   FILE * stream = util_mkdir_fopen( ext_job->config_file , "w" );
-  
+
   PRINT_KEY_STRING( stream , "EXECUTABLE"       , ext_job->executable);
   PRINT_KEY_STRING( stream , "STDIN"            , ext_job->stdin_file);
   PRINT_KEY_STRING( stream , "STDERR"           , ext_job->stderr_file);
@@ -698,6 +759,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_item(config , "ERROR_FILE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
       item = config_add_item(config , "START_FILE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
       item = config_add_item(config , "ENV"                 , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , 0 , NULL);
+      item = config_add_item(config , "DEFAULT"             , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , 0 , NULL);
       item = config_add_item(config , "ARGLIST"             , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , 0 , NULL);
       item = config_add_item(config , "MAX_RUNNING_MINUTES" , false , false); config_item_set_argc_minmax(item  , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     }
@@ -714,6 +776,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       if (config_item_set(config , "MAX_RUNNING"))           ext_job_set_max_running(ext_job      , config_iget_as_int(config  , "MAX_RUNNING" , 0,0));
       if (config_item_set(config , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job         , config_iget_as_int(config  , "MAX_RUNNING_MINUTES" , 0,0));
  
+      
+
       if (config_item_set(config , "ARGLIST")) {
         stringlist_type *argv = config_iget_stringlist_ref( config , "ARGLIST" , 0);
         stringlist_deep_copy( ext_job->argv , argv );
@@ -724,11 +788,25 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
          The code assumes that the hash tables are valid, can not be NULL:
       */
       if (config_item_set(config , "ENV")) {
-        stringlist_type *key_value = config_iget_stringlist_ref( config , "ENV" , 0);
-        for (int i=0; i < stringlist_get_size( key_value ); i+= 2) 
-          hash_insert_hash_owned_ref( ext_job->environment, 
-                                      stringlist_iget( key_value , i ) , 
-                                      util_alloc_string_copy( stringlist_iget( key_value , i + 1)) , free);
+        for (int occ_nr = 0; occ_nr < config_get_occurences( config , "ENV"); occ_nr++) {
+          const stringlist_type *key_value = config_iget_stringlist_ref( config , "ENV" , occ_nr);
+          for (int i=0; i < stringlist_get_size( key_value ); i+= 2) 
+            hash_insert_hash_owned_ref( ext_job->environment, 
+                                        stringlist_iget( key_value , i ) , 
+                                        util_alloc_string_copy( stringlist_iget( key_value , i + 1)) , free);
+        }
+      }
+      
+      /* Default mappings; these are used to set values in the argList
+         which have not been supplied by the calling context. */
+      if (config_item_set(config , "DEFAULT")) {
+        for (int occ_nr = 0; occ_nr < config_get_occurences( config , "DEFAULT"); occ_nr++) {
+          const stringlist_type *key_value = config_iget_stringlist_ref( config , "DEFAULT" , occ_nr);
+          for (int i=0; i < stringlist_get_size( key_value ); i+= 2) 
+            hash_insert_hash_owned_ref( ext_job->default_mapping, 
+                                        stringlist_iget( key_value , i ) , 
+                                        util_alloc_string_copy( stringlist_iget( key_value , i + 1)) , free);
+        }
       }
     }
     config_free(config);
