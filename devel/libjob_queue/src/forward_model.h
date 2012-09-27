@@ -22,25 +22,28 @@
 extern "C" {
 #endif
 
-#include <subst_list.h>
-#include <ext_joblist.h>
 #include <stdbool.h>
+
 #include <stringlist.h>
+#include <subst_list.h>
+
+#include <ext_joblist.h>
 
 typedef struct  forward_model_struct forward_model_type ;
 
 
-stringlist_type        * forward_model_alloc_joblist( const forward_model_type * forward_model );
-const ext_joblist_type * forward_model_get_joblist(const forward_model_type * );
-void                     forward_model_clear( forward_model_type * forward_model );
-void                   	 forward_model_fprintf(const forward_model_type *  , FILE * );
-forward_model_type     * forward_model_alloc(const ext_joblist_type * ext_joblist);
-void                     forward_model_parse_init(forward_model_type * forward_model , const char * input_string );
-void 	               	 forward_model_python_fprintf(const forward_model_type *  , const char * , const subst_list_type * );
-void                   	 forward_model_free( forward_model_type * );
-forward_model_type *   	 forward_model_alloc_copy(const forward_model_type * forward_model);
-void                     forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value);
-ext_job_type           * forward_model_iget_job( forward_model_type * forward_model , int index);
+  stringlist_type        * forward_model_alloc_joblist( const forward_model_type * forward_model );
+  const ext_joblist_type * forward_model_get_joblist(const forward_model_type * );
+  void                     forward_model_clear( forward_model_type * forward_model );
+  void                     forward_model_fprintf(const forward_model_type *  , FILE * );
+  forward_model_type     * forward_model_alloc(const ext_joblist_type * ext_joblist);
+  void                     forward_model_parse_init(forward_model_type * forward_model , const char * input_string );
+  void                     forward_model_python_fprintf(const forward_model_type *  , const char * , const subst_list_type * );
+  void                     forward_model_free( forward_model_type * );
+  forward_model_type *     forward_model_alloc_copy(const forward_model_type * forward_model);
+  void                     forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value);
+  ext_job_type           * forward_model_iget_job( forward_model_type * forward_model , int index);
+  int                      forward_model_get_length( const forward_model_type * forward_model );
 
 
 #ifdef __cplusplus

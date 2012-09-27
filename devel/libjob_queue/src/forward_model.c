@@ -17,21 +17,22 @@
 */
 
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
-#include <util.h>
 #include <stdio.h>
-#include <ext_job.h>
-#include <ext_joblist.h>
-#include <forward_model.h>
+
+#include <ctype.h>
+#include <util.h>
 #include <subst_list.h>
 #include <vector.h> 
 #include <parser.h>
+
+#include <ext_job.h>
+#include <ext_joblist.h>
+#include <forward_model.h>
+
 /**
    This file implements a 'forward-model' object. I
 */
-
-
 
 struct forward_model_struct {
   vector_type               * jobs;         /* The actual jobs in this forward model. */
@@ -40,8 +41,6 @@ struct forward_model_struct {
 
 #define DEFAULT_JOB_MODULE   "jobs.py"
 #define DEFAULT_JOBLIST_NAME "jobList"
-
-
 
 
 
@@ -249,3 +248,6 @@ const ext_joblist_type * forward_model_get_joblist(const forward_model_type * fo
   return forward_model->ext_joblist;
 }
 
+int forward_model_get_length( const forward_model_type * forward_model ) {
+  return vector_get_size( forward_model->jobs );
+}
