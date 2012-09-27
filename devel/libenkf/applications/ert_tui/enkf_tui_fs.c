@@ -18,15 +18,18 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include <menu.h>
+#include <arg_pack.h>
+#include <util.h>
+#include <msg.h>
+
 #include <enkf_tui_util.h>
 #include <enkf_tui_init.h>
 #include <enkf_main.h>
 #include <enkf_types.h>
 #include <enkf_fs.h>
-#include <arg_pack.h>
-#include <util.h>
-#include <msg.h>
+#include <ranking_table.h>
 
 
 void enkf_tui_fs_ls_case(void * arg) {
@@ -143,14 +146,14 @@ static void enkf_tui_fs_copy_ensemble__(
   char * ranking_key;
   const int  * ranking_permutation = NULL;
   int  * identity_permutation;
-
-  misfit_table_type * misfit_table = enkf_main_get_misfit( enkf_main );
+  ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
   
-  if (misfit_table != NULL) {
+
+  if (ranking_table_get_size( ranking_table ) > 0) {
     util_printf_prompt("Name of ranking to resort by (or blank)" , 50  , '=' , "=> ");
     ranking_key = util_alloc_stdin_line();
-    if (misfit_table_has_ranking( misfit_table , ranking_key )) 
-      ranking_permutation = misfit_table_get_ranking_permutation( misfit_table , ranking_key );
+    if (ranking_table_has_ranking( ranking_table , ranking_key )) 
+      ranking_permutation = ranking_table_get_permutation( ranking_table , ranking_key );
     else {
       fprintf(stderr," Sorry: ranking:%s does not exist \n", ranking_key );
       return;
