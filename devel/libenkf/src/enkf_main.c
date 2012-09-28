@@ -1754,7 +1754,7 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
 }
 
 
-void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const char * target_fs_name , bool rerun) {
+void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const char * target_fs_name , bool rerun, const char * rerun_path_fmt) {
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   if (initialize) {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
@@ -1772,14 +1772,18 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const
       {
         int stride = 1;
         int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
-        int_vector_fprintf( step_list , stdout , "step_list" , "%04d ");
         enkf_main_smoother_update( enkf_main , step_list , target_fs );
         int_vector_free( step_list );
       }
       enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
-
-      if (rerun) 
+      
+      if (rerun) { 
+        // Should update the runpath.....
+        if (rerun_path_fmt != NULL)
+          model_config_set_runpath_fmt( enkf_main_get_model_config( enkf_main ) , rerun_path_fmt );
+        
         enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
+      }
     }
 
     bool_vector_free( iactive );
