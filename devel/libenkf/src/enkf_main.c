@@ -1599,13 +1599,20 @@ int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_
     int step = util_int_max( 1 , load_start );
     while (true) {
       int_vector_append( step_list , step );
-      step += stride;
-      if (step >= step2) {
-        int_vector_append( step_list , step );
+      
+      if (step == step2)
         break;
+      else {
+        step += stride;
+        if (step >= step2) {
+          int_vector_append( step_list , step2 );
+          break;
+        }
       }
+      
     }
-  }
+  }  
+  int_vector_fprintf(step_list , stdout , "step_list" , "%03d");
   return step_list;
 }
 
@@ -2569,6 +2576,19 @@ enkf_fs_type * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * ca
   return alt_fs;
 }
 
+void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
+  stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( enkf_main->ensemble_config , GEN_DATA);
+  for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
+    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( gen_data_keys , i));
+    enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
+    if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
+      gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+      gen_data_config_set_dynamic( gen_data_config , enkf_main->dbase );
+      gen_data_config_set_ens_size( gen_data_config , enkf_main->ens_size );
+    }
+  }
+  stringlist_free( gen_data_keys );
+}
 
 
 void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
@@ -2746,19 +2766,6 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * c
 
     
 
-void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
-  stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( enkf_main->ensemble_config , GEN_DATA);
-  for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
-    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( gen_data_keys , i));
-    enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-    if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
-      gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-      gen_data_config_set_dynamic( gen_data_config , enkf_main->dbase );
-      gen_data_config_set_ens_size( gen_data_config , enkf_main->ens_size );
-    }
-  }
-  stringlist_free( gen_data_keys );
-}
 
 
 /*****************************************************************/

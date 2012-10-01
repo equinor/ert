@@ -267,8 +267,8 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
                                           const int_vector_type    * step_list , 
                                           state_enum                 state,
                                           int                        ens_size,
-                                          const enkf_state_type   **   ensemble ,
-                                          meas_data_type           *   meas_data,
+                                          const enkf_state_type     **   ensemble ,
+                                          meas_data_type             *   meas_data,
                                           obs_data_type              * obs_data,
                                           const local_obsset_type    * obsset , 
                                           double_vector_type         * obs_value , 
@@ -279,6 +279,8 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
   int active_count          = 0;
   int last_step = -1;
   int step;
+
+  printf("obs:vector:%s \n",obs_vector_get_state_kw( obs_vector ));
 
   /*1: Determine which report_steps have active observations; and collect the observed values. */
   double_vector_reset( obs_std );
@@ -335,10 +337,10 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
     }
     
     
-    /*3: Fill up the obs_block and meas_block structures with this
-         time-aggregated summary observation.  Passing in the
-         error_covar matrix (which can be NULL) to the obs_block
-         instance. 
+    /*
+      3: Fill up the obs_block and meas_block structures with this
+      time-aggregated summary observation.  Passing in the error_covar
+      matrix (which can be NULL) to the obs_block instance.
     */
 
     {
@@ -360,9 +362,11 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
             node_id_type node_id = {.report_step = step, 
                                     .iens        = iens,
                                     .state       = state };
-            
+      
+            printf("Looking at node:%s iens:%d/%d step:%d \n",state_key , iens , ens_size, step);
             enkf_node_load( enkf_node , fs , node_id );
             meas_block_iset(meas_block , iens , active_count , summary_get( enkf_node_value_ptr( enkf_node ) , node_id.report_step , node_id.state ));
+            printf("Loop finished \n\n");
           }
           active_count++;
         } 

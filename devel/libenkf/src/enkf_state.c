@@ -756,9 +756,11 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 static bool enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK, bool interactive , stringlist_type * msg_list) {
   const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
   
-  if (ecl_config_active( ecl_config ))
-    return enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , loadOK, interactive , msg_list);
-  else
+  if (ecl_config_active( ecl_config )) {
+    bool eclipse_load = enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , loadOK, interactive , msg_list);
+    fprintf("** Warning: could not load ECLIPSE summary data from %s - this will probably fail later ...\n" , enkf_state->run_info->run_path);
+    return eclipse_load;
+  } else
     return false;
 }
 
@@ -1021,7 +1023,7 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
 
   /*
     The timing information - i.e. mainly what is the last report step
-    in these reuslts are inferred from the loading of summary results,
+    in these results are inferred from the loading of summary results,
     hence we must load the summary results first.
   */
   
