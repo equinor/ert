@@ -40,6 +40,9 @@
 #include <ecl_config.h>
 
 
+/*
+Set runpath runtime - disabled.
+
 static void enkf_tui_run_set_runpath(void * arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   model_config_type * model_config = arg_pack_iget_ptr(arg_pack , 0);
@@ -54,7 +57,7 @@ static void enkf_tui_run_set_runpath(void * arg) {
     free(menu_label);
   }
 }
-
+*/
 
 
 
@@ -104,9 +107,7 @@ void enkf_tui_run_restart__(void * enkf_main) {
 
 void enkf_tui_run_smoother__(void * arg) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
-  const char * rerun_path_fmt = NULL;
-  
-  enkf_main_run_smoother(enkf_main , true , "AUTO-SMOOTHER" , true , rerun_path_fmt);
+  enkf_main_run_smoother(enkf_main , true , "AUTO-SMOOTHER" , true );
 }
 
 
@@ -358,8 +359,11 @@ void enkf_tui_run_menu(void * arg) {
     if (!enkf_main_have_obs( enkf_main )) 
       menu_item_disable( analysis_item );
   }
-  menu_add_separator(menu);
-  {
+  /*
+    Option to set runpath runtime - currently dismantled.
+    
+    menu_add_separator(menu);
+    {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );
     path_fmt_type     * runpath_fmt  = model_config_get_runpath_fmt( model_config );
     arg_pack_type * arg_pack = arg_pack_alloc();  
@@ -369,7 +373,8 @@ void enkf_tui_run_menu(void * arg) {
     arg_pack_append_ptr(arg_pack , menu_add_item(menu , runpath_label , "dD" , enkf_tui_run_set_runpath , arg_pack , arg_pack_free__));
     
     free(runpath_label);
-  }
+    }
+  */
   menu_run(menu);
   menu_free(menu);
 
