@@ -51,6 +51,14 @@ void container_config_add_node( container_config_type * container_config , const
   vector_append_ref( container_config->nodes , config_node );
 }
 
+const void * container_config_iget_node(const container_config_type * container_config , int index) {
+  return vector_iget_const( container_config->nodes , index );
+}
+
+int container_config_get_size( const container_config_type * container_config ) {
+  return vector_get_size( container_config->nodes );
+}
+
 
 int container_config_get_data_size( const container_config_type * container_config ) {
   util_exit("%s: not implemented \n",__func__);

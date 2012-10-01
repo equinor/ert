@@ -61,12 +61,25 @@
 */
 
 
+/*
+  The runpath format is governed by a hash table where new runpaths
+  are added with model_config_add_runpath() and then current runpath
+  is selected with model_config_select_runpath(). However this
+  implementation is quite different from the way manipulation of the
+  runpath is exposed to the user: The runpath is controlled through
+  the RUNPATH config key (key DEFAULT_RUNPATH_KEY in the hash table),
+  and the optional RERUN_PATH config key (key RERUN_PATH_KEY in the
+  hash table). These two semantically predefined runpaths are the two
+  only options visible to the user.
+ */
+
 struct model_config_struct {
   stringlist_type      * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
   char                 * case_table_file; 
   forward_model_type   * forward_model;             /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
   history_type         * history;                   /* The history object. */
-  path_fmt_type        * runpath;                   /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  path_fmt_type        * current_runpath;           /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  hash_type            * runpath_map;                 
   char                 * jobname_fmt;               /* Format string with one '%d' for the jobname - can be NULL in which case the eclbase name will be used. */
   enkf_sched_type      * enkf_sched;                /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
   char                 * enkf_sched_file;           /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
@@ -96,11 +109,11 @@ void model_config_set_jobname_fmt( model_config_type * model_config , const char
 
 
 path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
-  return model_config->runpath;
+  return model_config->current_runpath;
 }
 
  const char * model_config_get_runpath_as_char( const model_config_type * model_config ) {
-   return path_fmt_get_fmt( model_config->runpath );
+   return path_fmt_get_fmt( model_config->current_runpath );
  }
 
 
@@ -143,12 +156,31 @@ void model_config_set_case_table( model_config_type * model_config , int ens_siz
 }
 
 
-void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
-  if (model_config->runpath != NULL)
-    path_fmt_free( model_config->runpath );
-  
-  model_config->runpath  = path_fmt_alloc_directory_fmt( fmt );
+void model_config_add_runpath( model_config_type * model_config , const char * path_key , const char * fmt) {
+  path_fmt_type * path_fmt = path_fmt_alloc_directory_fmt( fmt );
+  hash_insert_hash_owned_ref( model_config->runpath_map , path_key , path_fmt , path_fmt_free__ );
 }
+
+
+/*
+  If the path_key does not exists it will return false and stay
+  silent.  
+*/
+
+bool model_config_select_runpath( model_config_type * model_config , const char * path_key) {
+  if (hash_has_key( model_config->runpath_map , path_key )) {
+    model_config->current_runpath = hash_get( model_config->runpath_map , path_key );
+    return true;
+  } else {
+    if (model_config->current_runpath != NULL)  // OK - we already have a valid selection - stick to that and return False.
+      return false;
+    else {
+      util_abort("%s: path_key:%s does not exist - and currently no valid runpath selected \n",__func__ , path_key);
+      return false;
+    }
+  }
+}
+
 
  /**
     This function is not called at bootstrap time, but rather as part
@@ -275,7 +307,7 @@ model_config_type * model_config_alloc_empty() {
   model_config->enspath                   = NULL;
   model_config->rftpath                   = NULL;
   model_config->dbase_type                = INVALID_DRIVER_ID;
-  model_config->runpath                   = NULL;
+  model_config->current_runpath           = NULL;
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;   
   model_config->case_table_file           = NULL;
@@ -285,12 +317,14 @@ model_config_type * model_config_alloc_empty() {
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
   model_config->__load_state              = bool_vector_alloc( 0 , false ); 
   model_config->history_source            = HISTORY_SOURCE_INVALID;
-
+  model_config->runpath_map               = hash_alloc(); 
+  
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
   model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
   model_config_set_dbase_type( model_config     , DEFAULT_DBASE_TYPE );
-  model_config_set_runpath_fmt( model_config    , DEFAULT_RUNPATH);
   model_config_set_max_resample( model_config   , DEFAULT_MAX_INTERNAL_SUBMIT);
+  model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , DEFAULT_RUNPATH);
+  model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
   
   return model_config;
 }
@@ -318,9 +352,14 @@ void model_config_init(model_config_type * model_config ,
   if (config_item_set( config , ENKF_SCHED_FILE_KEY))
     model_config_set_enkf_sched_file(model_config , config_get_value(config , ENKF_SCHED_FILE_KEY ));
   
-  if (config_item_set( config, RUNPATH_KEY))
-    model_config_set_runpath_fmt( model_config , config_get_value(config , RUNPATH_KEY) );
+  if (config_item_set( config, RUNPATH_KEY)) {
+    model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , config_get_value(config , RUNPATH_KEY) );
+    model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
+  }
   
+  if (config_item_set( config, RERUN_PATH_KEY)) 
+    model_config_add_runpath( model_config , RERUN_PATH_KEY , config_get_value(config , RERUN_PATH_KEY) );
+
   if (sched_file != NULL) {
 
   }
@@ -400,7 +439,7 @@ const char * model_config_iget_casename( const model_config_type * model_config 
 
 
 void model_config_free(model_config_type * model_config) {
-  path_fmt_free(  model_config->runpath );
+  path_fmt_free(  model_config->current_runpath );
   if (model_config->enkf_sched != NULL)
     enkf_sched_free( model_config->enkf_sched );
   free( model_config->enspath );
@@ -512,7 +551,7 @@ void model_config_fprintf_config( const model_config_type * model_config , int e
   forward_model_fprintf( model_config->forward_model , stream );
 
   fprintf( stream , CONFIG_KEY_FORMAT      , RUNPATH_KEY );
-  fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( model_config->runpath ));
+  fprintf( stream , CONFIG_ENDVALUE_FORMAT , path_fmt_get_fmt( model_config->current_runpath ));
 
   if (model_config->enkf_sched_file != NULL) {
     fprintf( stream , CONFIG_KEY_FORMAT      , ENKF_SCHED_FILE_KEY );

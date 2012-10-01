@@ -1754,7 +1754,7 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
 }
 
 
-void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const char * target_fs_name , bool rerun, const char * rerun_path_fmt) {
+void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const char * target_fs_name , bool rerun) {
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   if (initialize) {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
@@ -1766,6 +1766,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const
     bool_vector_type * iactive = bool_vector_alloc( 0 , true );
     bool_vector_iset( iactive , ens_size - 1 , true );
 
+    enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT );
     if (enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0)) {
       time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
       enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_fs_name , false , true );
@@ -1778,10 +1779,18 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const
       enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
       
       if (rerun) { 
-        // Should update the runpath.....
-        if (rerun_path_fmt != NULL)
-          model_config_set_runpath_fmt( enkf_main_get_model_config( enkf_main ) , rerun_path_fmt );
-        
+        /* 
+           IFF a rerun path has been added with the RERUN_PATH config
+           key the model_config object will select that runpath as the
+           currently active one. If no path has been created with the
+           RERUN_PATH config option the model_config_select_runpath()
+           call will fail silently.
+
+           The runpath select with this call will remain the currently
+           active runpath for the remaining part of this program
+           invocation.
+        */
+        model_config_select_runpath( enkf_main_get_model_config( enkf_main ) , RERUN_PATH_KEY );  
         enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
       }
     }
@@ -2087,7 +2096,8 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_item_set_argc_minmax(item , 2 , -1 , 2 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
 
   config_add_key_value(config , RUNPATH_KEY , false , CONFIG_STRING);
-
+  config_add_key_value(config , RERUN_PATH_KEY , false , CONFIG_STRING);
+  
   item = config_add_item(config , ENSPATH_KEY , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 

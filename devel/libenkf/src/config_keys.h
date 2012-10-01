@@ -127,7 +127,7 @@ extern "C" {
 #define  RSH_COMMAND_KEY                   "RSH_COMMAND"
 #define  RSH_HOST_KEY                      "RSH_HOST"
 #define  RUNPATH_KEY                       "RUNPATH"
-#define  RUNPATH_KEY                       "RUNPATH"
+#define  RERUN_PATH_KEY                    "RERUN_PATH"
 #define  RUN_TEMPLATE_KEY                  "RUN_TEMPLATE"
 #define  RFT_CONFIG_KEY                    "RFT_CONFIG"
 #define  RFTPATH_KEY                       "RFTPATH"

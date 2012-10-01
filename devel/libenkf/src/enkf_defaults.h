@@ -12,6 +12,8 @@
 #define __ENKF_DEFAULT__
 #include <stdbool.h>
 
+#define DEFAULT_RUNPATH_KEY  "DEFAULT_RUNPATH"
+#define RERUN_RUNPATH_KEY    "DEFAULT_RERUN_PATH" 
 
 
 /**

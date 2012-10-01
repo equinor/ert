@@ -466,7 +466,6 @@ void gen_data_config_set_dynamic( gen_data_config_type * config , enkf_fs_type *
 
 
 bool gen_data_config_is_dynamic( const gen_data_config_type * config ) {
-  printf("%s: %d \n",__func__ , config->dynamic);
   return config->dynamic;
 }
 
