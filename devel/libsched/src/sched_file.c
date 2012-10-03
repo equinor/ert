@@ -363,6 +363,7 @@ static void sched_file_init_fixed_length( sched_file_type * sched_file ) {
   sched_file_add_fixed_length_kw(sched_file , "VFPTABL"  , 1);
   sched_file_add_fixed_length_kw(sched_file , "GUIDERAT" , 1);
   sched_file_add_fixed_length_kw(sched_file , "MESSAGES" , 1);
+  sched_file_add_fixed_length_kw(sched_file , "LIFTOPT"  , 1);
 }
 
 
