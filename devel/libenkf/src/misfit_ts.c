@@ -52,16 +52,16 @@ misfit_ts_type * misfit_ts_alloc(int history_length) {
 }
 
 
-misfit_ts_type * misfit_ts_buffer_fread_alloc( buffer_type * buffer ) {
+misfit_ts_type * misfit_ts_fread_alloc( FILE * stream ) {
   misfit_ts_type * misfit_ts = misfit_ts_alloc( 0 );
   if (misfit_ts->data == NULL)
-    misfit_ts->data = double_vector_buffer_fread_alloc( buffer);
+    misfit_ts->data = double_vector_fread_alloc( stream );
   return misfit_ts;
 }
 
 
-void misfit_ts_buffer_fwrite( const misfit_ts_type * misfit_ts , buffer_type * buffer ) {
-  double_vector_buffer_fwrite( misfit_ts->data , buffer );
+void misfit_ts_fwrite( const misfit_ts_type * misfit_ts , FILE * stream ) {
+  double_vector_fwrite( misfit_ts->data , stream );
 }
 
 

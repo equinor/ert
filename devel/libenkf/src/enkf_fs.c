@@ -427,6 +427,24 @@ static void enkf_fs_fread_time_map( enkf_fs_type * fs ) {
 }
 
 
+static void enkf_fs_fread_misfit( enkf_fs_type * fs ) {
+  FILE * stream = enkf_fs_open_excase_file( fs , MISFIT_ENSEMBLE_FILE );
+  if (stream != NULL) {
+    misfit_ensemble_fread( fs->misfit_ensemble , stream );
+    fclose( stream );
+  }
+}
+
+
+static void enkf_fs_fwrite_misfit( enkf_fs_type * fs ) {
+  if (misfit_ensemble_initialized( fs->misfit_ensemble )) {
+    FILE * stream = enkf_fs_open_case_file( fs , MISFIT_ENSEMBLE_FILE , "w");
+    misfit_ensemble_fwrite( fs->misfit_ensemble , stream );
+    fclose( stream );
+  }
+}
+
+
 enkf_fs_type * enkf_fs_open( const char * mount_point , bool read_only) {
   enkf_fs_type * fs = NULL;
   FILE * stream = fs_driver_open_fstab( mount_point , false );
@@ -451,6 +469,7 @@ enkf_fs_type * enkf_fs_open( const char * mount_point , bool read_only) {
     fclose( stream );
     enkf_fs_init_path_fmt( fs );
     enkf_fs_fread_time_map( fs );
+    enkf_fs_fread_misfit( fs );
   }
   return fs;
 }
@@ -480,23 +499,26 @@ static void enkf_fs_free_driver(fs_driver_type * driver) {
 }
 
 
-void enkf_fs_free(enkf_fs_type * fs) {
-  
-  enkf_fs_free_driver(fs->dynamic_forecast);
-  enkf_fs_free_driver(fs->dynamic_analyzed);
-  enkf_fs_free_driver(fs->parameter);
-  enkf_fs_free_driver(fs->eclipse_static);
-  enkf_fs_free_driver(fs->index);
-  
-  util_safe_free(fs->mount_point);
+void enkf_fs_close( enkf_fs_type * fs ) {
+  enkf_fs_fsync( fs );
+  enkf_fs_fwrite_misfit( fs );
+
+  enkf_fs_free_driver( fs->dynamic_forecast );
+  enkf_fs_free_driver( fs->dynamic_analyzed );
+  enkf_fs_free_driver( fs->parameter );
+  enkf_fs_free_driver( fs->eclipse_static );
+  enkf_fs_free_driver( fs->index );
+
+  util_safe_free( fs->mount_point );
   path_fmt_free( fs->case_fmt );
   path_fmt_free( fs->case_member_fmt );
   path_fmt_free( fs->case_tstep_fmt );
   path_fmt_free( fs->case_tstep_member_fmt );
-  time_map_free( fs->time_map );
-  free(fs);
 
+  time_map_free( fs->time_map );
+  free( fs );
 }
+
 
 
 static void * select_dynamic_driver(enkf_fs_type * fs , state_enum state ) {
@@ -667,20 +689,6 @@ void enkf_fs_fwrite_vector(enkf_fs_type * enkf_fs , buffer_type * buffer , const
 /*****************************************************************/
 
 
-void enkf_fs_close( enkf_fs_type * fs ) {
-  enkf_fs_free_driver( fs->dynamic_forecast );
-  enkf_fs_free_driver( fs->dynamic_analyzed );
-  enkf_fs_free_driver( fs->parameter );
-  enkf_fs_free_driver( fs->eclipse_static );
-  enkf_fs_free_driver( fs->index );
-  
-  path_fmt_free( fs->case_fmt );
-  path_fmt_free( fs->case_member_fmt );
-  path_fmt_free( fs->case_tstep_fmt );
-  path_fmt_free( fs->case_tstep_member_fmt );
-  free( fs->mount_point );
-  free( fs );
-}
 
 
 

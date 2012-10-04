@@ -58,7 +58,6 @@ struct misfit_ensemble_struct {
   bool                  initialized;
   int                   history_length;  
   vector_type         * ensemble;           /* Vector of misfit_member_type instances - one for each ensemble member. */
-  char                * current_case;       /* The (filesystem) case which was used when building the misfit table. */
 };
 
 
@@ -130,33 +129,21 @@ void misfit_ensemble_update( misfit_ensemble_type * misfit_ensemble , const ense
 }
 
 
-void misfit_ensemble_buffer_fwrite( const misfit_ensemble_type * misfit_ensemble , buffer_type * buffer ) {
+void misfit_ensemble_fwrite( const misfit_ensemble_type * misfit_ensemble , FILE * stream ) {
   int ens_size = vector_get_size( misfit_ensemble->ensemble);
-  buffer_fwrite_string(buffer , misfit_ensemble->current_case );
-  buffer_fwrite_int( buffer , misfit_ensemble->history_length );
-  buffer_fwrite_int( buffer , vector_get_size( misfit_ensemble->ensemble ));
+  util_fwrite_int( misfit_ensemble->history_length , stream );
+  util_fwrite_int( vector_get_size( misfit_ensemble->ensemble ) , stream);
 
   /* Writing the nodes - one for each ensemble member */
   {
     int iens;
     for (iens = 0; iens < ens_size; iens++) 
-      misfit_member_buffer_fwrite( vector_iget( misfit_ensemble->ensemble , iens ) , buffer ); 
+      misfit_member_fwrite( vector_iget( misfit_ensemble->ensemble , iens ) , stream ); 
   }
   
-  /* Does not store rankings currently */
 }
 
 
-/**
-   Dumps a misfit table to file.
-*/
-
-void misfit_ensemble_fwrite( const misfit_ensemble_type * misfit_ensemble , FILE * stream) {
-  buffer_type * buffer = buffer_alloc( 1024 );
-  misfit_ensemble_buffer_fwrite( misfit_ensemble , buffer );
-  buffer_stream_fwrite( buffer , stream );
-  buffer_free( buffer );
-}
 
 
 /**
@@ -197,24 +184,23 @@ void misfit_ensemble_set_ens_size( misfit_ensemble_type * misfit_ensemble , int 
 }
 
 
-
-misfit_ensemble_type * misfit_ensemble_fread_alloc( const char * filename , const enkf_obs_type * enkf_obs) {
-  misfit_ensemble_type * misfit_ensemble = misfit_ensemble_alloc_empty( enkf_obs );
-  buffer_type * buffer = buffer_fread_alloc( filename );
-  int ens_size;
-  
-  misfit_ensemble->current_case   = buffer_fread_alloc_string( buffer );
-  misfit_ensemble->history_length = buffer_fread_int( buffer );
-  ens_size                     = buffer_fread_int( buffer );
-  misfit_ensemble_set_ens_size( misfit_ensemble , ens_size );
+void misfit_ensemble_fread( misfit_ensemble_type * misfit_ensemble , FILE * stream ) {
+  misfit_ensemble_clear( misfit_ensemble );
   {
-    for (int iens = 0; iens < ens_size; iens++) {
-      misfit_member_type * node = misfit_member_buffer_fread_alloc( buffer );
-      vector_iset_owned_ref( misfit_ensemble->ensemble , iens , node , misfit_member_free__);
+    int ens_size;
+    
+    misfit_ensemble->history_length = util_fread_int( stream );
+    ens_size                        = util_fread_int( stream );
+    misfit_ensemble_set_ens_size( misfit_ensemble , ens_size );
+    {
+      for (int iens = 0; iens < ens_size; iens++) {
+        misfit_member_type * node = misfit_member_fread_alloc( stream );
+        vector_iset_owned_ref( misfit_ensemble->ensemble , iens , node , misfit_member_free__);
+      }
     }
+    
   }
-
-  buffer_free( buffer );
+  misfit_ensemble->initialized = true;
   return misfit_ensemble;
 }
 
@@ -222,8 +208,6 @@ misfit_ensemble_type * misfit_ensemble_fread_alloc( const char * filename , cons
 
 misfit_ensemble_type * misfit_ensemble_alloc( ) {
   misfit_ensemble_type * table = misfit_ensemble_alloc_empty( );
-  table->current_case       = util_alloc_string_copy( "????" );
-  
   return table;
 }
 
@@ -244,7 +228,6 @@ void misfit_ensemble_clear( misfit_ensemble_type * table) {
 
 void misfit_ensemble_free(misfit_ensemble_type * table ) {
   vector_free( table->ensemble );
-  free( table->current_case );
   free( table );
 }
 

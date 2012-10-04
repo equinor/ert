@@ -88,32 +88,33 @@ void misfit_member_update( misfit_member_type * node , const char * obs_key , in
 }
 
 
-void misfit_member_buffer_fwrite( const misfit_member_type * node , buffer_type * buffer ) {
-  buffer_fwrite_int( buffer , node->my_iens );
-  buffer_fwrite_int( buffer , hash_get_size( node->obs ));
+void misfit_member_fwrite( const misfit_member_type * node , FILE * stream) {
+  util_fwrite_int( node->my_iens , stream);
+  util_fwrite_int( hash_get_size( node->obs ) , stream);
   {
     hash_iter_type * obs_iter = hash_iter_alloc( node->obs );
     while ( !hash_iter_is_complete( obs_iter )) {
-      const char * key                   = hash_iter_get_next_key( obs_iter );
+      const char * key           = hash_iter_get_next_key( obs_iter );
       misfit_ts_type * misfit_ts = hash_get( node->obs , key );
-      buffer_fwrite_string( buffer , key );
-      misfit_ts_buffer_fwrite( misfit_ts , buffer);
+      util_fwrite_string( key , stream );
+      misfit_ts_fwrite( misfit_ts , stream);
     }
     hash_iter_free( obs_iter );
   }
 }
 
 
-misfit_member_type * misfit_member_buffer_fread_alloc( buffer_type * buffer ) {
-  int my_iens             = buffer_fread_int( buffer );
+misfit_member_type * misfit_member_fread_alloc( FILE * stream ) {
+  int my_iens                = util_fread_int( stream );
   misfit_member_type * node = misfit_member_alloc( my_iens );
-  int hash_size = buffer_fread_int( buffer );
+  int hash_size = util_fread_int( stream );
   {
     int iobs;
     for (iobs = 0; iobs < hash_size; iobs++) {
-      const char         * key           = buffer_fread_string( buffer );
-      misfit_ts_type * misfit_ts = misfit_ts_buffer_fread_alloc( buffer );
+      const char         * key   = util_fread_alloc_string( stream );
+      misfit_ts_type * misfit_ts = misfit_ts_fread_alloc( stream );
       misfit_member_install_vector( node , key , misfit_ts );
+      free( key );
     }
   }
   return node;
