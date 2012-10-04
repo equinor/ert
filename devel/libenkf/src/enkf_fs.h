@@ -40,7 +40,6 @@ extern "C" {
 
   void              enkf_fs_fsync( enkf_fs_type * fs );
   enkf_fs_type *    enkf_fs_mount(const char * , fs_driver_impl , const char * select_case, bool update_map, bool read_only);
-  void              enkf_fs_free(enkf_fs_type *);
   void              enkf_fs_add_index_node(enkf_fs_type *  , int , int , const char * , enkf_var_type, ert_impl_type);
 
   void              enkf_fs_close( enkf_fs_type * fs );

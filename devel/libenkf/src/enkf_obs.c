@@ -280,8 +280,6 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
   int last_step = -1;
   int step;
 
-  printf("obs:vector:%s \n",obs_vector_get_state_kw( obs_vector ));
-
   /*1: Determine which report_steps have active observations; and collect the observed values. */
   double_vector_reset( obs_std );
   double_vector_reset( obs_value );
@@ -363,10 +361,8 @@ void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf_obs,
                                     .iens        = iens,
                                     .state       = state };
       
-            printf("Looking at node:%s iens:%d/%d step:%d \n",state_key , iens , ens_size, step);
             enkf_node_load( enkf_node , fs , node_id );
             meas_block_iset(meas_block , iens , active_count , summary_get( enkf_node_value_ptr( enkf_node ) , node_id.report_step , node_id.state ));
-            printf("Loop finished \n\n");
           }
           active_count++;
         } 

@@ -1649,6 +1649,8 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * 
    thread for each ensemble member. This is handled by the calling scope.
 */
 
+bool enkf_state_complete_forward_modelOK__(void * arg );
+bool enkf_state_complete_forward_modelEXIT__(void * arg );
 
 
 static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_fs_type * fs) {
@@ -1657,12 +1659,20 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_f
     const shared_info_type    * shared_info   = enkf_state->shared_info;
     const member_config_type  * my_config     = enkf_state->my_config;
     const site_config_type    * site_config   = shared_info->site_config;
+    arg_pack_type             * load_arg      = arg_pack_alloc();
+
     /*
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse( enkf_state , fs );
+    arg_pack_append_ptr( load_arg , enkf_state );
+    arg_pack_append_ptr( load_arg , fs );
+    
     run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
                                                   site_config_get_job_script( site_config ),
+                                                  enkf_state_complete_forward_modelOK__ , 
+                                                  enkf_state_complete_forward_modelEXIT__ , 
+                                                  load_arg , 
                                                   ecl_config_get_num_cpu( shared_info->ecl_config ),
                                                   run_info->run_path     , 
                                                   member_config_get_jobname(my_config) , 
@@ -1809,7 +1819,7 @@ bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , enkf_fs_type
       }
       stringlist_free( init_keys );
     }
-    enkf_state_init_eclipse( enkf_state , fs );                              /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
+    enkf_state_init_eclipse( enkf_state , fs );                                           /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
     job_queue_iset_external_restart( shared_info->job_queue , run_info->queue_index );    /* Here we inform the queue system that it should pick up this job and try again. */
     return true;
   } else
@@ -1854,7 +1864,7 @@ static void enkf_state_clear_runpath( const enkf_state_type * enkf_state ) {
     be called several times - MUST BE REENTRANT.
 */
 
-static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enkf_fs_type * fs , job_status_type status) {
+static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , enkf_fs_type * fs) {
   const shared_info_type    * shared_info = enkf_state->shared_info;
   run_info_type             * run_info    = enkf_state->run_info;
   const member_config_type  * my_config   = enkf_state->my_config;
@@ -1862,85 +1872,89 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , enk
   bool loadOK  = true;
 
   
-  if (status == JOB_QUEUE_RUN_OK) {
-    /**
-       The queue system has reported that the run is OK, i.e. it has
-       completed and produced the targetfile it should. We then check
-       in this scope whether the results can be loaded back; if that
-       is OK the final status is updated, otherwise: restart.
+  /**
+     The queue system has reported that the run is OK, i.e. it has
+     completed and produced the targetfile it should. We then check
+     in this scope whether the results can be loaded back; if that
+     is OK the final status is updated, otherwise: restart.
+  */
+  log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
+  enkf_state_internalize_results(enkf_state , fs , &loadOK , false , NULL); 
+  if (loadOK) {
+    /*
+      The loading succeded - so this is a howling success! We set
+      the main status to JOB_QUEUE_ALL_OK and inform the queue layer
+      about the success. In addition we set the simple status
+      (should be avoided) to JOB_RUN_OK.
     */
-    job_queue_iset_external_load( shared_info->job_queue , run_info->queue_index );  /* Set the the status of to JOB_QUEUE_LOADING */
-    log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
-    enkf_state_internalize_results(enkf_state , fs , &loadOK , false , NULL); 
-    if (loadOK) {
-      /*
-        The loading succeded - so this is a howling success! We set
-        the main status to JOB_QUEUE_ALL_OK and inform the queue layer
-        about the success. In addition we set the simple status
-        (should be avoided) to JOB_RUN_OK.
-      */
-      status = JOB_QUEUE_ALL_OK;
-      run_info->run_status = JOB_RUN_OK;
-      job_queue_iset_load_OK( shared_info->job_queue , run_info->queue_index);
-      log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_info->step1, run_info->step2);
-      
-      enkf_state_clear_runpath( enkf_state );
-      run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
-      run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
-    } else {
-      /*
-        Loading of data failed. We try to issue another attempt from
-        this scope.
-      */
-      
-      if (enkf_state_can_retry( enkf_state )) 
-        enkf_state_internal_retry( enkf_state , fs , true);
-      else {
-        /* 
-           We had used all our retries; this job will be marked with
-           internal status JOB_LOAD_FAILURE and no more attempts.
-           
-           We tell the queue system that the job failed to load the
-           data; it will immediately come back here with status
-           job_queue_run_FAIL and then it falls all the way through.
-        */
-        job_queue_iset_external_fail( shared_info->job_queue , run_info->queue_index );
-        run_info->run_status = JOB_LOAD_FAILURE;
-      }
-    }
-  } else if (status == JOB_QUEUE_RUN_FAIL) {
-    /* 
-       The external queue system has said that the job failed - we
-       might give it another try from this scope, possibly involving a
-       resampling.
-    */
-    if (enkf_state_can_retry( enkf_state )) 
-      enkf_state_internal_retry( enkf_state , fs , false);
-    else {
-      /* 
-         No more attempts for this job; we inform the queue system
-         that the job has failed completely and also set the
-         simplified internal status to JOB_RUN_FAILURE.
-      */
-      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
-      /* We tell the queue system that we have really given up on this one */
-      job_queue_iset_all_fail( shared_info->job_queue , run_info->queue_index);
-      if (run_info->run_status != JOB_LOAD_FAILURE)
-        run_info->run_status = JOB_RUN_FAILURE;
-    } 
-  } else 
-    util_abort("%s: status:%d invalid - should only be called with status == [JOB_QUEUE_RUN_FAIL || JON_QUEUE_RUN_OK].",__func__ , status);
+    run_info->run_status = JOB_RUN_OK;
+    log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_info->step1, run_info->step2);
+    
+    enkf_state_clear_runpath( enkf_state );
+    run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
+    run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
+  } 
+  return loadOK;
 }
 
 
-void * enkf_state_complete_forward_model__(void * arg ) {
-  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
-  enkf_state_type * enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
-  enkf_fs_type    * fs         = arg_pack_iget_ptr( arg_pack , 1 );
-  job_status_type   status     = arg_pack_iget_int( arg_pack , 2 );
 
-  enkf_state_complete_forward_model( enkf_state , fs , status );
-  return NULL;
+
+static bool enkf_state_complete_forward_modelEXIT(enkf_state_type * enkf_state , enkf_fs_type * fs) {
+  const shared_info_type    * shared_info = enkf_state->shared_info;
+  run_info_type             * run_info    = enkf_state->run_info;
+  const member_config_type  * my_config   = enkf_state->my_config;
+  const int iens                          = member_config_get_iens( my_config );
+  /* 
+     The external queue system has said that the job failed - we
+     might give it another try from this scope, possibly involving a
+     resampling.
+  */
+
+  if (enkf_state_can_retry( enkf_state )) {
+    enkf_state_internal_retry( enkf_state , fs , false);
+    return true;
+  } else {
+    /* 
+       No more attempts for this job.
+    */
+    log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
+    if (run_info->run_status != JOB_LOAD_FAILURE)
+      run_info->run_status = JOB_RUN_FAILURE;
+    
+    return false;
+  }
+}
+
+
+
+
+
+bool enkf_state_complete_forward_modelOK__(void * arg ) {
+  enkf_state_type * enkf_state;
+  enkf_fs_type * fs;
+  {
+    arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+    enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
+    fs         = arg_pack_iget_ptr( arg_pack , 1 );
+    arg_pack_free( arg_pack );
+  }
+  
+  return enkf_state_complete_forward_modelOK( enkf_state , fs );
+}
+
+
+bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
+  enkf_state_type * enkf_state;
+  enkf_fs_type * fs;
+  {
+    arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+    enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
+    fs         = arg_pack_iget_ptr( arg_pack , 1 );
+    arg_pack_free( arg_pack );
+  }
+  
+  return enkf_state_complete_forward_modelEXIT( enkf_state , fs );
 }
 
 

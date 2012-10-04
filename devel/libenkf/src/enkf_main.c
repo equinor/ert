@@ -383,7 +383,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   enkf_obs_free(enkf_main->obs);
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
-  if (enkf_main->dbase != NULL) enkf_fs_free( enkf_main->dbase );
+  if (enkf_main->dbase != NULL) enkf_fs_close( enkf_main->dbase );
   util_safe_free( enkf_main->current_fs_case );
 
   log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
@@ -1224,133 +1224,6 @@ void enkf_main_smoother_update(enkf_main_type * enkf_main , const int_vector_typ
 }
 
 
-/**
-   This function will spin while it is periodically checking the
-   status of the forward model simulations. Everytime a completed
-   simulation is detected a seperate thread is spawned (via a
-   thread_pool) to actually load the results.
-   
-   The function will return when all the results have been loaded, or
-   alternatively the jobs have given up completely.
-*/
-
-
-
-static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
-  const int num_load_threads      = 10;
-  const int ens_size              = enkf_main_get_ensemble_size(enkf_main);
-  enkf_fs_type  * fs              = enkf_main_get_fs( enkf_main ); 
-  job_queue_type * job_queue      = site_config_get_job_queue(enkf_main->site_config);                          
-  arg_pack_type ** arg_list       = util_calloc( ens_size , sizeof * arg_list    );
-  job_status_type * status_list   = util_calloc( ens_size , sizeof * status_list );
-  thread_pool_type * load_threads = thread_pool_alloc( num_load_threads , true);
-  const int usleep_time           = 2500000; 
-  const int load_start_usleep     =   10000;
-  int jobs_remaining;
-  int iens;
-
-  for (iens = 0; iens < ens_size; iens++) {
-    arg_list[iens]    = arg_pack_alloc();
-    status_list[iens] = JOB_QUEUE_NOT_ACTIVE;
-  }
-
-  do {
-    job_status_type status;
-    jobs_remaining = 0;
-
-    for (iens = 0; iens < ens_size; iens++) {
-      enkf_state_type * enkf_state = enkf_main->ensemble[iens];
-      status = enkf_state_get_run_status( enkf_state );
-      if ((status & JOB_QUEUE_CAN_FINALIZE) == 0)
-        jobs_remaining += 1;  /* OK - the job is still running/loading. */
-
-      if ((status == JOB_QUEUE_RUN_OK) || (status == JOB_QUEUE_RUN_FAIL)) {
-        if (status_list[iens] != status) {
-          arg_pack_clear( arg_list[iens] );
-          arg_pack_append_ptr( arg_list[iens] , enkf_state );
-          arg_pack_append_ptr( arg_list[iens] , fs );
-          arg_pack_append_int( arg_list[iens] , status );
-
-          /*
-             Dispatch a separate thread to load the results from this job. This
-             must be done also for the jobs with status JOB_QUEUE_RUN_FAIL -
-             because it is the enkf_state_complete_forward_model() function
-             which does a resubmit, or alternatively signal complete failure to
-             the queue system (should probably be split in two).
-          */
-          
-          thread_pool_add_job( load_threads , enkf_state_complete_forward_model__ , arg_list[iens] );
-          /* This will block until the enkf_state_complete_forward_model() has actually started executing. */
-          {
-            job_status_type new_status;
-            do {
-              util_usleep( load_start_usleep );
-              new_status = enkf_state_get_run_status( enkf_state );
-            } while ( new_status == status );
-            status = new_status;
-          }
-        }
-      }
-
-      /*
-        The code in the {} above is an attempt to solve this race:
-        ----------------------------------------------------------
-
-        In the case of jobs failing with status == JOB_QUEUE_RUN_FAIL this code
-        has the following race-condition:
-
-        1. This function detects the JOB_QUEUE_RUN_FAIL state and dispatches a
-           thread to run the function enkf_state_complete_forward_model(). This
-           again will (possibly) tell the queue system to try the job again.
-
-           
-        2. This function will store status JOB_QUEUE_RUN_FAIL as status for this
-           job.
-
-
-        3. The code dispatching the enkf_state_complete_forward_model() function
-           is enclosed in a
-
-             if (status_list[iens] != status) {
-                ....
-             }
-
-           i.e. it reacts to state *changes*. Now if the job immediately fails
-           again with status JOB_QUEUE_RUN_FAIL, without this scope getting the
-           chance to temporarily register a different status, there will no
-           state *change*, and the second failure will not be registered.
-
-        The same applies to jobs which suceed with JOB_QUEUE_RUN_OK, but then
-        subsequently fail to load.
-      */
-
-      status_list[iens] = status;
-    }
-    if (jobs_remaining > 0)
-      util_usleep( usleep_time );
-    
-
-    /* A poor man's /proc interface .... */
-    {
-      if (util_file_exists("MAX_RUNNING")) {
-        FILE * stream = util_fopen("MAX_RUNNING" , "r");
-        int max_running;
-        fscanf( stream , "%d" , &max_running);
-        fclose( stream );
-        remove( "MAX_RUNNING" );
-        job_queue_set_max_running( job_queue , max_running );
-      }
-    }
-    
-  } while (jobs_remaining > 0);
-  thread_pool_join( load_threads );
-  thread_pool_free( load_threads );
-
-  for (iens = 0; iens < ens_size; iens++)
-    arg_pack_free( arg_list[iens] );
-  free( arg_list );
-  free( status_list );
-}
 
 
 static void enkf_main_report_run_failure( const enkf_main_type * enkf_main , int iens) {
@@ -1499,18 +1372,17 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
     {
       pthread_t        queue_thread;
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-      arg_pack_type * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__()
-                                                           function after the content has been unpacked. */
+      arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
+      
       arg_pack_append_ptr(queue_args  , job_queue);
       arg_pack_append_int(queue_args  , job_size);
       arg_pack_append_bool(queue_args , verbose_queue);
-      
       pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
-
+      
       {
         thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
         enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-
+        
         for (iens = 0; iens < ens_size; iens++) {
           if (bool_vector_iget(iactive , iens)) {
             int load_start = step1;
@@ -1548,9 +1420,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
       }
       job_queue_submit_complete( job_queue );
       log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
-
-      enkf_main_run_wait_loop( enkf_main );      /* Waiting for all the jobs - and the loading of results - to complete. */
-      pthread_join( queue_thread , NULL );       /* Wait for the job_queue_run_jobs() function to complete. */
+      pthread_join( queue_thread , NULL );   /* Wait for the job_queue_run_jobs() function to complete. */
     }
 
 
@@ -1612,7 +1482,6 @@ int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_
       
     }
   }  
-  int_vector_fprintf(step_list , stdout , "step_list" , "%03d");
   return step_list;
 }
 
@@ -2487,7 +2356,7 @@ static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char
 }
 
 static void enkf_main_close_fs( enkf_main_type * enkf_main ) {
-  enkf_fs_free( enkf_main->dbase );
+  enkf_fs_close( enkf_main->dbase );
   enkf_main->dbase = NULL;
 }
 

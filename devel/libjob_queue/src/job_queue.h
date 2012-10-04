@@ -22,11 +22,13 @@
 extern "C" {
 #endif
 #include <pthread.h>
+#include <stdbool.h>
 
 #include <path_fmt.h>
 
 #include <queue_driver.h>
 
+  typedef bool (job_callback_ftype)   (void *);
 
   typedef struct job_queue_struct      job_queue_type;
   typedef struct job_queue_node_struct job_queue_node_type;
@@ -36,19 +38,35 @@ extern "C" {
   void                job_queue_set_driver(job_queue_type * queue , queue_driver_type * driver);
   //void                job_queue_set_size( job_queue_type * job_queue , int size );
   void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-  job_queue_type   *  job_queue_alloc( int  , bool , const char * ok_file , const char * exit_file);
+  job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * exit_file);
   void                job_queue_free(job_queue_type *);
-  int                 job_queue_add_job_mt(job_queue_type * , const char * run_cmd , int num_cpu , const char * , const char * , int argc , const char ** argv );
-  int                 job_queue_add_job_st(job_queue_type * , const char * run_cmd , int num_cpu , const char * , const char * , int argc , const char ** argv );
+  
+  int                 job_queue_add_job_mt(job_queue_type * , 
+                                           const char * run_cmd , 
+                                           job_callback_ftype * done_callback, 
+                                           job_callback_ftype * retry_callback , 
+                                           void * callback_arg , 
+                                           int num_cpu , 
+                                           const char * , 
+                                           const char * , 
+                                           int argc , 
+                                           const char ** argv );
+
+  int                 job_queue_add_job_st(job_queue_type * , 
+                                           const char * run_cmd , 
+                                           job_callback_ftype * done_callback, 
+                                           job_callback_ftype * retry_callback , 
+                                           void * callback_arg , 
+                                           int num_cpu , 
+                                           const char * , 
+                                           const char * , 
+                                           int argc , 
+                                           const char ** argv );
+
   void                job_queue_run_jobs(job_queue_type * , int , bool verbose);
   void                job_queue_run_jobs_threaded(job_queue_type * queue , int num_total_run, bool verbose);
   void *              job_queue_run_jobs__(void * );
   job_status_type     job_queue_iget_job_status(const job_queue_type * , int );
-  void                job_queue_iset_load_OK(job_queue_type * queue , int job_index);
-  void                job_queue_iset_all_fail(job_queue_type * queue , int job_index);
-  void                job_queue_iset_external_restart(job_queue_type * queue , int job_index);
-  void                job_queue_iset_external_fail(job_queue_type * queue , int job_index);
-  void                job_queue_iset_external_load(job_queue_type * queue , int job_index);
   const char        * job_queue_status_name( job_status_type status );
   void                job_queue_set_max_running( job_queue_type * queue , int max_running );
   int                 job_queue_inc_max_runnning( job_queue_type * queue, int delta );

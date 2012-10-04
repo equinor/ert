@@ -60,7 +60,7 @@ typedef struct enkf_state_struct    enkf_state_type;
   keep_runpath_type  enkf_state_get_keep_runpath( const enkf_state_type * enkf_state );
   void               enkf_state_set_keep_runpath( enkf_state_type * enkf_state , keep_runpath_type keep_runpath);
   keep_runpath_type  member_config_get_keep_runpath(const member_config_type * member_config);
-  void             * enkf_state_complete_forward_model__(void * arg );
+  //void             * enkf_state_complete_forward_model__(void * arg );
   job_status_type    enkf_state_get_run_status( const enkf_state_type * enkf_state );
   time_t             enkf_state_get_start_time( const enkf_state_type * enkf_state );
   time_t             enkf_state_get_submit_time( const enkf_state_type * enkf_state );
