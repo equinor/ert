@@ -38,7 +38,7 @@
 #include <enkf_tui_analysis.h>
 #include <ert_tui_const.h>
 #include <ecl_config.h>
-
+#include <enkf_tui_help.h>
 
 /*
 Set runpath runtime - disabled.
@@ -375,6 +375,7 @@ void enkf_tui_run_menu(void * arg) {
     free(runpath_label);
     }
   */
+  menu_add_item(menu , "Help"                                  , "hH" , enkf_tui_help_menu_run   , enkf_main , NULL); 
   menu_run(menu);
   menu_free(menu);
 

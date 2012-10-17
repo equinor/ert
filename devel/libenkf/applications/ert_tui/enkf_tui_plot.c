@@ -62,7 +62,7 @@
 #include <enkf_tui_plot_util.h>
 #include <enkf_tui_plot.h>
 #include <enkf_tui_fs.h>
-
+#include <enkf_tui_help.h>
 /**
    The final plot path consists of three parts: 
 
@@ -1170,7 +1170,7 @@ void enkf_tui_plot_menu(void * arg) {
     menu_add_item(menu , "Plot all block observations (~RFT) versus depth" , "rR" , enkf_tui_plot_all_RFT         , enkf_main , NULL);
     menu_add_separator( menu );
     menu_add_item(menu , "Sensitivity plot"                                , "sS" , enkf_tui_plot_sensitivity     , enkf_main , NULL); 
-    menu_add_item(menu , "Histogram"                                       , "hH" , enkf_tui_plot_histogram       , enkf_main , NULL);
+    menu_add_item(menu , "Histogram"                                       , "H" , enkf_tui_plot_histogram       , enkf_main , NULL);
     menu_add_separator(menu);
     {
       menu_item_type * menu_item;
@@ -1191,7 +1191,7 @@ void enkf_tui_plot_menu(void * arg) {
         menu_item_disable( menu_item );
       
     }
-
+    menu_add_item(menu , "Help"                                , "h" , enkf_tui_help_menu_plot     , enkf_main , NULL);
     menu_run(menu);
     menu_free(menu);
   }
