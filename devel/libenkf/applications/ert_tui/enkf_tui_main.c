@@ -30,6 +30,7 @@
 #include <enkf_tui_fs.h>
 #include <enkf_tui_ranking.h>
 #include <enkf_tui_QC.h>
+#include <enkf_tui_help.h>
 #include <enkf_tui_misc.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
@@ -61,7 +62,7 @@ void enkf_tui_main_menu(enkf_main_type * enkf_main) {
   menu_add_item(menu , "Export data to other formats"          , "eE" , enkf_tui_export_menu , enkf_main , NULL);
   menu_add_item(menu , "Table of results"                      , "tT" , enkf_tui_table_menu  , enkf_main , NULL);
   menu_add_item(menu , "Miscellanous"                          , "mM" , enkf_tui_misc_menu   , enkf_main , NULL);
-  
+  menu_add_item(menu , "Help"                                  , "hH" , enkf_tui_help_menu_main   , enkf_main , NULL);  
   menu_run(menu);
   menu_free(menu);
 }
