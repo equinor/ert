@@ -1,0 +1,11 @@
+*.o
+*.so
+.svn/
+*/.svn/
+
+
+# /devel/libenkf/src/
+/devel/libenkf/src/.faultlist
+
+# /develbranch/libenkf/src/
+/develbranch/libenkf/src/.faultlist
