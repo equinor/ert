@@ -105,13 +105,13 @@ class EclGrid(CClass):
             cfunc.free( self )
 
 
-    def equal(self , other , include_lgr = True):
+    def equal(self , other , include_lgr = True , verbose = False):
         """
         Compare the current grid with the other grid.
         """
         if not isinstance(other , EclGrid):
             raise TypeError("The other argument must be an EclGrid instance")
-        return cfunc.equal( self , other , include_lgr )
+        return cfunc.equal( self , other , include_lgr , verbose)
 
     @property
     def nx( self ):
@@ -587,7 +587,20 @@ class EclGrid(CClass):
         raise ValueError("Wrong size / dimension on array")
 
     
-    
+    def coarse_groups(self):
+        """
+        Will return the number of coarse groups in this grid. 
+        """
+        return cfunc.num_coarse_groups( self )
+
+
+    def in_coarse_group(self , global_index = None , ijk = None , active_index = None):
+        """
+        Will return True or False if the cell is part of coarse group.
+        """
+        global_index = self.__global_index( active_index = active_index , ijk = ijk , global_index = global_index)
+        return cfunc.in_coarse_group1( self , global_index )
+
 
     def create3D( self , ecl_kw , default = 0):
         """
@@ -698,6 +711,9 @@ cfunc.get_lgr                      = cwrapper.prototype("c_void_p ecl_grid_get_l
 cfunc.get_cell_lgr                 = cwrapper.prototype("c_void_p ecl_grid_get_cell_lgr1( ecl_grid , int )")
 cfunc.alloc_rectangular            = cwrapper.prototype("c_void_p ecl_grid_alloc_rectangular( int , int , int , double , double , double , int*)")
 
+cfunc.num_coarse_groups            = cwrapper.prototype("int  ecl_grid_get_num_coarse_groups( ecl_grid )")
+cfunc.in_coarse_group1             = cwrapper.prototype("bool ecl_grid_cell_in_coarse_group1( ecl_grid , int)")
+
 cfunc.exists                       = cwrapper.prototype("bool ecl_grid_exists( char* )")
 cfunc.free                         = cwrapper.prototype("void ecl_grid_free( ecl_grid )")     
 cfunc.get_nx                       = cwrapper.prototype("int ecl_grid_get_nx( ecl_grid )")
@@ -733,4 +749,4 @@ cfunc.get_distance                 = cwrapper.prototype("void   ecl_grid_get_dis
 cfunc.fprintf_grdecl               = cwrapper.prototype("void   ecl_grid_fprintf_grdecl( ecl_grid , FILE) ")
 cfunc.fwrite_GRID                  = cwrapper.prototype("void   ecl_grid_fwrite_GRID( ecl_grid , char* )")
 cfunc.fwrite_EGRID                 = cwrapper.prototype("void   ecl_grid_fwrite_EGRID( ecl_grid , char* )")
-cfunc.equal                        = cwrapper.prototype("bool   ecl_grid_compare(ecl_grid , ecl_grid , bool)")
+cfunc.equal                        = cwrapper.prototype("bool   ecl_grid_compare(ecl_grid , ecl_grid , bool, bool)")
