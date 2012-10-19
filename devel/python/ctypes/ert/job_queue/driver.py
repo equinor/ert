@@ -36,7 +36,6 @@ class Driver(CClass):
         self.c_ptr = cfunc.alloc_driver( type )
         if options:
             for (key,value) in options:
-                print key,value
                 self.set_option( key , value )
         self.set_max_running( max_running )
 

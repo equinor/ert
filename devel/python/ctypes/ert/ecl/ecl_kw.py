@@ -386,6 +386,10 @@ class EclKW(CClass):
         """
         if isinstance( index , types.IntType):
             length = self.__len__()
+            if index < 0:
+                # Will only wrap backwards once
+                index = self.size + index
+
             if index < 0 or index >= length:
                 raise IndexError
             else:
@@ -672,8 +676,25 @@ class EclKW(CClass):
         The check is based on the content of the keywords, and not
         pointer comparison.
         """
-        return cfunc.equal( self , other )
+        if isinstance(other , EclKW):
+            print "Running "
+            return cfunc.equal( self , other )
+        else:
+            raise TypeError("Can only compare with another EclKW")
     
+
+    def equal_numeric(self , other , epsilon = 1e-6):
+        """
+        Will check if two numerical keywords are ~nearly equal.
+
+        If the keywords are of type integer, the comparison is
+        absolute.
+        """
+        if isinstance(other , EclKW):
+            return cfunc.equal_numeric( self , other , epsilon )
+        else:
+            raise TypeError("Can only compare with another EclKW")
+
 
     #################################################################
 
@@ -952,6 +973,7 @@ cfunc.imul                       = cwrapper.prototype("void     ecl_kw_inplace_m
 cfunc.idiv                       = cwrapper.prototype("void     ecl_kw_inplace_div( ecl_kw , ecl_kw )")
 cfunc.isub                       = cwrapper.prototype("void     ecl_kw_inplace_sub( ecl_kw , ecl_kw )")
 cfunc.equal                      = cwrapper.prototype("bool     ecl_kw_equal( ecl_kw , ecl_kw )")
+cfunc.equal_numeric              = cwrapper.prototype("bool     ecl_kw_numeric_equal( ecl_kw , ecl_kw , double )")
 
 cfunc.assert_binary              = cwrapper.prototype("bool     ecl_kw_assert_binary_numeric( ecl_kw , ecl_kw )")
 cfunc.scale_int                  = cwrapper.prototype("void     ecl_kw_scale_int( ecl_kw , int )")

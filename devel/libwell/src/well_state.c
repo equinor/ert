@@ -78,6 +78,7 @@ static well_state_type * well_state_alloc_empty() {
   return well_state;
 }
 
+
 /*
   This function assumes that the ecl_file state has been restricted
   to one LGR block with the ecl_file_subselect_block() function.
