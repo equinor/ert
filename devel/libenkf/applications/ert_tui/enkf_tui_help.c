@@ -36,7 +36,19 @@
 
 
 void enkf_tui_help_manual_main( void * arg) {
-  system("firefox http://ert.nr.no/index.php/User_Manual &");
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  const site_config_type * site_config = enkf_main_get_site_config ( enkf_main );
+  const char * manual_url = site_config_get_manual_url( site_config );
+  const char * browser = getenv("BROWSER");
+
+  if (browser == NULL)
+    browser = site_config_get_default_browser( site_config );
+  
+  {
+    char * cmd = util_alloc_sprintf("%s %s &" , browser , manual_url);
+    system(cmd);
+    free( cmd );
+  }
 }
 
 void enkf_tui_help_menu_main(void * arg) {

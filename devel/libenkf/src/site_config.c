@@ -111,6 +111,9 @@ struct site_config_struct {
   int                     max_submit_site;             
   char                  * job_script;            
   char                  * job_script_site;            
+
+  char                  * manual_url;
+  char                  * default_browser;
   
   queue_driver_type       * current_driver;
   hash_type               * queue_drivers; 
@@ -184,14 +187,17 @@ site_config_type * site_config_alloc_empty() {
   site_config->__license_root_path    = NULL;
   site_config->job_script             = NULL;  
   site_config->job_script_site        = NULL;  
-
+  site_config->manual_url             = NULL;
+  site_config->default_browser        = NULL;
   site_config->user_mode              = false;
   site_config->driver_type            = NULL_DRIVER;
 
   /* Some hooops to get the current umask. */ 
   site_config->umask                  = umask( 0 );
   site_config_set_umask( site_config , site_config->umask );
-
+  site_config_set_manual_url( site_config , DEFAULT_MANUAL_URL );
+  site_config_set_default_browser( site_config , DEFAULT_BROWSER );
+  
   site_config->env_variables_user     = hash_alloc();
   site_config->env_variables_site     = hash_alloc();
   
@@ -207,6 +213,7 @@ site_config_type * site_config_alloc_empty() {
 const char * site_config_get_license_root_path( const site_config_type * site_config ) {
   return site_config->license_root_path;
 }
+
 
 
 /**
@@ -628,6 +635,22 @@ const char * site_config_get_job_script( const site_config_type * site_config ) 
   return site_config->job_script;
 }
 
+const char * site_config_get_manual_url( const site_config_type * site_config ) {
+  return site_config->manual_url;
+}
+
+void site_config_set_manual_url( site_config_type * site_config , const char * manual_url ) {
+  site_config->manual_url = util_realloc_string_copy( site_config->manual_url , manual_url );
+}
+
+const char * site_config_get_default_browser( const site_config_type * site_config ) {
+  return site_config->default_browser;
+}
+
+void site_config_set_default_browser( site_config_type * site_config , const char * default_browser ) {
+  site_config->default_browser = util_realloc_string_copy( site_config->default_browser , default_browser );
+}
+
 
 void site_config_set_max_submit( site_config_type * site_config , int max_submit ) {
   site_config->max_submit = max_submit;
@@ -818,6 +841,7 @@ void site_config_free(site_config_type * site_config) {
   if (site_config->__license_root_path != NULL)
     util_clear_directory( site_config->__license_root_path , true , true );
   
+  util_safe_free( site_config->manual_url );
   util_safe_free( site_config->license_root_path );
   util_safe_free( site_config->license_root_path_site );
   util_safe_free( site_config->__license_root_path );
