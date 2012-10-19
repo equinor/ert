@@ -1,6 +1,7 @@
 cmake_minimum_required( VERSION 2.6 )
 project( ERT C CXX )
 include( CheckFunctionExists )
+ENABLE_TESTING()
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

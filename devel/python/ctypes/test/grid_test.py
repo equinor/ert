@@ -15,7 +15,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
+import sys
 import ert
 import ert.ecl.ecl as ecl
 import datetime
@@ -25,7 +25,7 @@ import ert
 import ert.ecl.ecl as ecl
 from   ert.util.tvector import DoubleVector
 from   ert.util.tvector import DoubleVector
-
+from   numpy import isnan
 from   test_util import approx_equal, approx_equalv
 
 egrid_file  = "data/eclipse/case/ECLIPSE.EGRID"
@@ -43,7 +43,8 @@ class GridTest( unittest.TestCase ):
 
 
     def testEGRID( self ):
-        grid = ecl.EclGrid( egrid_file )
+        #grid = ecl.EclGrid( egrid_file )
+        grid = ecl.EclGrid( "/tmp/ECLIPSE.EGRID" )
         self.assertTrue( grid )
 
 
@@ -123,14 +124,28 @@ class GridTest( unittest.TestCase ):
         g2 = ecl.EclGrid( "/tmp/test.GRID" )
         self.assertTrue( g1.equal( g2 ) )
         
-        fileH = open("/tmp/test.grdecl" , "w")
+        fileH = open("/tmp/test.grdecl" , "w")                                                  
         g1.save_grdecl( fileH )
         fileH.close()
         g2 = self.create( "/tmp/test.grdecl" )
         self.assertTrue( g1.equal( g2 ) )
 
-        
 
+    def testCoarse(self):
+        testGRID = True
+        g1 = ecl.EclGrid( "data/eclipse/Coarse/LGC_TESTCASE2.EGRID" )
+        
+        g1.save_EGRID( "/tmp/LGC.EGRID" )
+        g2 = ecl.EclGrid( "/tmp/LGC.EGRID")
+        self.assertTrue( g1.equal(g2, verbose = True) )
+        
+        if testGRID:
+            g1.save_GRID( "/tmp/LGC.GRID" )
+            g3 = ecl.EclGrid( "/tmp/LGC.GRID")
+            self.assertTrue( g1.equal(g3 , verbose = True) )
+
+        self.assertTrue( g1.coarse_groups() == 3384)
+        
 
 
 # def save_grdecl(grid , grdecl_file):
@@ -173,6 +188,7 @@ def fast_suite():
     suite.addTest( GridTest( 'testTime' ))
     suite.addTest( GridTest( 'testACTNUM') )
     suite.addTest( GridTest( 'testRect' ))
+    suite.addTest( GridTest( 'testCoarse' ))
     return suite
 
 

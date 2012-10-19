@@ -39,7 +39,48 @@ class KWTest( unittest.TestCase ):
         stat = os.stat( unrst_file)
         self.assertTrue( size == stat.st_size )
         
+
+    def test_equal(self):
+        kw1 = ecl.EclKW.new( "TEST" , 3 , ecl.ECL_CHAR_TYPE )
+        kw1[0] = "Test1"
+        kw1[1] = "Test13"
+        kw1[2] = "Test15"
+
+        kw2 = ecl.EclKW.new( "TEST" , 3 , ecl.ECL_CHAR_TYPE )
+        kw2[0] = "Test1"
+        kw2[1] = "Test13"
+        kw2[2] = "Test15"
         
+        self.assertTrue( kw1.equal(kw2) )
+        self.assertTrue( kw1.equal_numeric( kw2 ))
+        
+        kw2[2] = "Test15X"
+        self.assertFalse( kw1.equal(kw2) )
+        self.assertFalse( kw1.equal_numeric( kw2 ))
+        
+        unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+        file = ecl.EclFile( unrst_file )
+        kw1 = file["PRESSURE"][0]
+        kw2 = kw1.deep_copy()
+        
+        self.assertTrue( kw1.equal(kw2) )
+        self.assertTrue( kw1.equal_numeric( kw2 ))
+        
+        kw2 *= 1.00001
+        self.assertFalse( kw1.equal(kw2) )
+        self.assertFalse( kw1.equal_numeric( kw2 , epsilon = 1e-8))
+        self.assertTrue( kw1.equal_numeric( kw2 , epsilon = 1e-2))
+
+        kw1 = file["ICON"][10]
+        kw2 = kw1.deep_copy()
+        self.assertTrue( kw1.equal(kw2) )
+        self.assertTrue( kw1.equal_numeric( kw2 ))
+        
+        kw1[-1] += 1
+        self.assertFalse( kw1.equal(kw2) )
+        self.assertFalse( kw1.equal_numeric( kw2 ))
+        
+
     def test_kw( self , type , data , fmt ):
         name1 = "/tmp/file1.txt"
         name2 = "/tmp/file2.txt"
@@ -78,6 +119,7 @@ def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( KWTest( 'fortio_size' ))
     suite.addTest( KWTest( 'fprintf_test' ))
+    suite.addTest( KWTest( 'test_equal' ))
     return suite
 
                    

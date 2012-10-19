@@ -1259,77 +1259,8 @@ static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , in
 
 
 /**
-   The function enkf_main_run_step() is quite heavily multithreaded
-   involving one designated worker thread (queue_thread) and two
-   thread_pools. In the diagram below we have attempted to illustrate
-   the multithreaded behaviour of the function enkf_main_run_step():
-
-    o The execution path does not leave a 'box' before the thread / thread_pool
-      has been joined.
-
-    o An 'X' is meant to indicate a join.
-
-    o Dotted lines indicate communication; specifically the queue_thread running
-      the queue is "the owner" of all the job status information.
-
-    o The thread pool spawns many individual worker threads, these are
-      administrated by the thread_pool and not shown in the diagram.
-
-
-   main_thread: enkf_main_run_step
-   -------------------------------
-               |
-               |
-               |------------------------------------->--------------------------+
-               |                                                                |
-               |                                                                |
-               |                                                                |
-               |                                                                |
-               |                                                                |
-               |                                                   _____________|____________________
-    ___________|_______ thread pool __________________            /                                  \
-   /                                                  \           | queue_thread: job_queue_run_jobs |
-   |  submit_threads: enkf_state_start_forward_model  |...........\__________________________________/
-   \__________________________________________________/              .     .    |
-               |                                                     .     .    |
-               |                                                     .     .    |
-               |                                                     .     .    |
-               |                                                     .     .    |
-               |                                                     .     .    |
-               +---------+                                           .     .    |
-                         |                                           .     .    |
-                         |                                           .     .    |
-                         |                                           .     .    |
-                                                                     .     .    |
-              main_thread: enkf_main_wait_loop()......................     .    |
-              ----------------------------------                           .    |
-                         |                                                 .    |
-                         |                                                 .    |
-        _________________| thread pool ____________________                .    |
-       /                                                   \               .    |
-       | load_threads: enkf_state_complete_forward_model() |................    |
-       \___________________________________________________/                    |
-                         |                                                      |
-                         |                                                      |
-                         |                                                      |
-               +---------+                                                      |
-               |                                                                |
-               |                                                                |
-               X---------------------------------------<------------------------+
-               |
-               |
-              \|/
-
-         Some single threaded clean up.
-
-
-  In addition to the trivial speed up (on a multi CPU box) the
-  multithreading allows for asyncronous treatmeant of the queue,
-  loading of results e.t.c. The latter is probably the most important
-  argument for using a multithreaded approach.
-
   If all simulations have completed successfully the function will
-  return true, otherwise it will return false.
+  return true, otherwise it will return false.  
 */
 
 
