@@ -174,7 +174,12 @@ class EclFile(CClass):
             self.c_ptr = cfunc.open( filename )
         else:
             self.c_ptr = cfunc.open_writable( filename )
+            
+        if self.c_ptr is None:
+            raise IOError("Failed to open file file:%s" % filename)
         
+
+
     def save_kw( self , kw ):
         """
         Will write the @kw back to file.
@@ -670,7 +675,7 @@ cwrapper.registerType( "ecl_file" , EclFile )
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_file")
 
-cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_open( char* )")
+cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_try_open( char* )")
 cfunc.open_writable               = cwrapper.prototype("c_void_p    ecl_file_open_writable( char* )")
 cfunc.is_writable                 = cwrapper.prototype("bool        ecl_file_writable( ecl_file )")
 cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")
