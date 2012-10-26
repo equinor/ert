@@ -145,6 +145,34 @@ class GridTest( unittest.TestCase ):
             self.assertTrue( g1.equal(g3 , verbose = True) )
 
         self.assertTrue( g1.coarse_groups() == 3384)
+
+
+
+    def testDual(self):
+        grid = ecl.EclGrid( egrid_file )
+        self.assertFalse( grid.dual_grid )
+        self.assertTrue( grid.nactive_fracture == 0 )
+        
+        dgrid = ecl.EclGrid( "data/eclipse/DualPoro/DUALPOR_MSW.EGRID" )
+        self.assertTrue( dgrid.nactive == dgrid.nactive_fracture )
+        self.assertTrue( dgrid.nactive == 46118 )
+
+        # The DUAL_DIFF grid has been manipulated to create a
+        # situation where some cells are only matrix active, and some
+        # cells are only fracture active.
+        dgrid = ecl.EclGrid( "data/eclipse/DualPoro/DUAL_DIFF.EGRID" )
+        self.assertTrue( dgrid.nactive == 106 )
+        self.assertTrue( dgrid.nactive_fracture == 105 )
+
+        self.assertTrue( dgrid.get_active_fracture_index( global_index = 0 ) == -1 )
+        self.assertTrue( dgrid.get_active_fracture_index( global_index = 2 ) == -1 )
+        self.assertTrue( dgrid.get_active_fracture_index( global_index = 3 ) ==  0 )
+        self.assertTrue( dgrid.get_active_fracture_index( global_index = 107 ) ==  104)
+
+        self.assertTrue( dgrid.get_active_index( global_index = 1 )   == 1)
+        self.assertTrue( dgrid.get_active_index( global_index = 105 ) == 105)
+        self.assertTrue( dgrid.get_active_index( global_index = 106 ) == -1)
+        self.assertTrue( dgrid.get_global_index1F( 2 ) == 5 )
         
 
 
@@ -181,9 +209,11 @@ class GridTest( unittest.TestCase ):
 
 def fast_suite():
     suite = unittest.TestSuite()
+    suite.addTest( GridTest( 'testDual' ))
     suite.addTest( GridTest( 'testGRID' ))
     suite.addTest( GridTest( 'testEGRID' ))
     suite.addTest( GridTest( 'testCreate' ))
+    
     suite.addTest( GridTest( 'testSave' ))
     suite.addTest( GridTest( 'testTime' ))
     suite.addTest( GridTest( 'testACTNUM') )
