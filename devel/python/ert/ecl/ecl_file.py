@@ -416,6 +416,12 @@ class EclFile(CClass):
         Observe that the returned EclKW instance is only a reference
         to the data owned by the EclFile instance.
         
+        Observe that syntactically this is equivalent to
+        file[kw_name][index], however the latter form will imply that
+        all the keywords of this type are loaded from the file. If you
+        know that only a few will actually be used it will be faster
+        to use this method.
+
         [1]: For working with summary data you are probably better off
              using the EclSum class.
         """
