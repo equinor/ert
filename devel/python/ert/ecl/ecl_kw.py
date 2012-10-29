@@ -677,7 +677,6 @@ class EclKW(CClass):
         pointer comparison.
         """
         if isinstance(other , EclKW):
-            print "Running "
             return cfunc.equal( self , other )
         else:
             raise TypeError("Can only compare with another EclKW")
