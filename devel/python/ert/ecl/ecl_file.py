@@ -174,7 +174,12 @@ class EclFile(CClass):
             self.c_ptr = cfunc.open( filename )
         else:
             self.c_ptr = cfunc.open_writable( filename )
+            
+        if self.c_ptr is None:
+            raise IOError("Failed to open file file:%s" % filename)
         
+
+
     def save_kw( self , kw ):
         """
         Will write the @kw back to file.
@@ -315,7 +320,7 @@ class EclFile(CClass):
                 raise IndexError
             else:
                 kw_c_ptr = cfunc.iget_kw( self , index )
-                return EclKW.ref( kw_c_ptr , self )
+                return EclKW.wrap( kw_c_ptr , parent = self , data_owner = False)
         if isinstance( index , slice ):
             indices = index.indices( len(self) )
             kw_list = []
@@ -411,11 +416,17 @@ class EclFile(CClass):
         Observe that the returned EclKW instance is only a reference
         to the data owned by the EclFile instance.
         
+        Observe that syntactically this is equivalent to
+        file[kw_name][index], however the latter form will imply that
+        all the keywords of this type are loaded from the file. If you
+        know that only a few will actually be used it will be faster
+        to use this method.
+
         [1]: For working with summary data you are probably better off
              using the EclSum class.
         """
         kw_c_ptr = cfunc.iget_named_kw( self , kw_name , index )
-        ecl_kw = EclKW.ref( kw_c_ptr , self )
+        ecl_kw = EclKW.wrap( kw_c_ptr , parent = self , data_owner = False)
         
         if copy:
             return EclKW.copy( ecl_kw )
@@ -670,7 +681,7 @@ cwrapper.registerType( "ecl_file" , EclFile )
 #    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_file")
 
-cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_open( char* )")
+cfunc.open                        = cwrapper.prototype("c_void_p    ecl_file_try_open( char* )")
 cfunc.open_writable               = cwrapper.prototype("c_void_p    ecl_file_open_writable( char* )")
 cfunc.is_writable                 = cwrapper.prototype("bool        ecl_file_writable( ecl_file )")
 cfunc.new                         = cwrapper.prototype("c_void_p    ecl_file_alloc_empty(  )")

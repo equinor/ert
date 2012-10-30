@@ -114,6 +114,12 @@ class EclGrid(CClass):
         return cfunc.equal( self , other , include_lgr , verbose)
 
     @property
+    def dual_grid( self ):
+        """Is this grid dual porosity model?"""
+        return cfunc.dual_grid( self ) 
+
+
+    @property
     def nx( self ):
         """The number of cells in the i direction - nx."""
         return cfunc.get_nx( self )
@@ -137,6 +143,12 @@ class EclGrid(CClass):
     def nactive( self ):
         """The number of active cells in the grid."""
         return cfunc.get_active( self )
+
+
+    @property
+    def nactive_fracture( self ):
+        """The number of active cells fracture in the grid - for dual porosity."""
+        return cfunc.get_active_fracture( self )
 
     @property
     def dims( self ):
@@ -209,7 +221,22 @@ class EclGrid(CClass):
         gi = self.__global_index( global_index = global_index , ijk = ijk)
         return cfunc.get_active_index1( self , gi)
 
-    
+
+    def get_active_fracture_index( self , ijk = None , global_index = None):
+        """
+        For dual porosity - get the active fracture index.
+        """
+        gi = self.__global_index( global_index = global_index , ijk = ijk)
+        return cfunc.get_active_fracture_index1( self , gi )
+
+
+    def get_global_index1F( self , active_fracture_index):
+        """
+        Will return the global index corresponding to active fracture index.
+        """
+        return cfunc.get_global_index1F( self , active_fracture_index )
+
+
     def cell_invalid( self , ijk = None , global_index = None , active_index = None):
         """
         Tries to check if a cell is invalid.
@@ -720,11 +747,14 @@ cfunc.get_nx                       = cwrapper.prototype("int ecl_grid_get_nx( ec
 cfunc.get_ny                       = cwrapper.prototype("int ecl_grid_get_ny( ecl_grid )")
 cfunc.get_nz                       = cwrapper.prototype("int ecl_grid_get_nz( ecl_grid )")
 cfunc.get_active                   = cwrapper.prototype("int ecl_grid_get_active_size( ecl_grid )")
+cfunc.get_active_fracture          = cwrapper.prototype("int ecl_grid_get_nactive_fracture( ecl_grid )")
 cfunc.get_name                     = cwrapper.prototype("char* ecl_grid_get_name( ecl_grid )")
 cfunc.get_active_index3            = cwrapper.prototype("int ecl_grid_get_active_index3( ecl_grid , int , int , int)")
 cfunc.get_global_index3            = cwrapper.prototype("int ecl_grid_get_global_index3( ecl_grid , int , int , int)") 
 cfunc.get_active_index1            = cwrapper.prototype("int ecl_grid_get_active_index1( ecl_grid , int )") 
+cfunc.get_active_fracture_index1   = cwrapper.prototype("int ecl_grid_get_active_fracture_index1( ecl_grid , int )") 
 cfunc.get_global_index1A           = cwrapper.prototype("int ecl_grid_get_global_index1A( ecl_grid , int )") 
+cfunc.get_global_index1F           = cwrapper.prototype("int ecl_grid_get_global_index1F( ecl_grid , int )") 
 cfunc.get_ijk1                     = cwrapper.prototype("void ecl_grid_get_ijk1( ecl_grid , int , int* , int* , int*)")
 cfunc.get_ijk1A                    = cwrapper.prototype("void ecl_grid_get_ijk1A( ecl_grid , int , int* , int* , int*)") 
 cfunc.get_xyz3                     = cwrapper.prototype("void ecl_grid_get_xyz3( ecl_grid , int , int , int , double* , double* , double*)")
@@ -750,3 +780,4 @@ cfunc.fprintf_grdecl               = cwrapper.prototype("void   ecl_grid_fprintf
 cfunc.fwrite_GRID                  = cwrapper.prototype("void   ecl_grid_fwrite_GRID( ecl_grid , char* )")
 cfunc.fwrite_EGRID                 = cwrapper.prototype("void   ecl_grid_fwrite_EGRID( ecl_grid , char* )")
 cfunc.equal                        = cwrapper.prototype("bool   ecl_grid_compare(ecl_grid , ecl_grid , bool, bool)")
+cfunc.dual_grid                    = cwrapper.prototype("bool   ecl_grid_dual_grid( ecl_grid )")
