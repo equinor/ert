@@ -320,7 +320,7 @@ class EclFile(CClass):
                 raise IndexError
             else:
                 kw_c_ptr = cfunc.iget_kw( self , index )
-                return EclKW.ref( kw_c_ptr , self )
+                return EclKW.wrap( kw_c_ptr , parent = self , data_owner = False)
         if isinstance( index , slice ):
             indices = index.indices( len(self) )
             kw_list = []
@@ -426,7 +426,7 @@ class EclFile(CClass):
              using the EclSum class.
         """
         kw_c_ptr = cfunc.iget_named_kw( self , kw_name , index )
-        ecl_kw = EclKW.ref( kw_c_ptr , self )
+        ecl_kw = EclKW.wrap( kw_c_ptr , parent = self , data_owner = False)
         
         if copy:
             return EclKW.copy( ecl_kw )
