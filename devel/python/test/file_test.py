@@ -30,7 +30,9 @@ from   test_util import approx_equal, approx_equalv, file_equal
 file     = "data/eclipse/case/ECLIPSE.UNRST"
 fmt_file = "data/eclipse/case/ECLIPSE.FUNRST"
 
-
+def load_missing():
+    ecl.EclFile( "No/Does/not/exist")
+    
 
 class FileTest( unittest.TestCase ):
 
@@ -40,6 +42,10 @@ class FileTest( unittest.TestCase ):
     #def tearDown(self):
     #    if os.path.exists( "/tmp/ECLIPSE.UNRST"):
     #        os.unlink("/tmp/ECLIPSE.UNRST")
+
+
+    def testIOError(self):
+        self.assertRaises( IOError , load_missing)
 
     
     def test_fwrite( self ):
@@ -111,6 +117,7 @@ def slow_suite():
 
 def fast_suite():
     suite = unittest.TestSuite()
+    suite.addTest( FileTest( 'testIOError' )) 
     suite.addTest( FileTest( 'test_fwrite' ))
     return suite
 

@@ -93,8 +93,9 @@ class EclKW(CClass):
         """Will return the current set of integer keywords."""
         return cls.int_kw_set
 
+    
     @classmethod
-    def new( cls , name, size , type):
+    def create( cls , name, size , type):
         """
         Creates a brand new EclKW instance.
 
@@ -112,11 +113,17 @@ class EclKW(CClass):
         obj.parent     = None
         obj.__init( )
         return obj
+
+
+    @classmethod
+    def new( cls , name, size , type):
+        return cls.create( name , size , type )
     
+
     # Could this method be avoided totally by using an ecl_kw return
     # value from the ecl_file_iget_xxx() methods?
     @classmethod
-    def ref( cls , c_ptr , parent ):
+    def wrap( cls , c_ptr , parent = None , data_owner = False):
         obj            = cls( )
         obj.c_ptr      = c_ptr
         obj.data_owner = False
@@ -125,6 +132,7 @@ class EclKW(CClass):
         return obj
 
 
+    
     @classmethod
     def slice_copy( cls , src , slice ):
         (start , stop , step) = slice.indices( src.size )
@@ -151,7 +159,8 @@ class EclKW(CClass):
         obj.__init( )
         return obj
     
-    
+
+
     
     @classmethod
     def read_grdecl( cls , file , kw , strict = True , ecl_type = None):
@@ -284,6 +293,8 @@ class EclKW(CClass):
         #warnings.warn("The grdecl_load method has been renamed to read_grdecl()" , DeprecationWarning)
         return cls.read_grdecl(file , kw , ecl_type )
 
+
+
     @classmethod
     def fread( cls , fortio ):
         """
@@ -299,6 +310,35 @@ class EclKW(CClass):
             return obj
         else:
             return None
+
+
+    def sub_copy(self , offset , count , new_header = None):
+        """
+        Will create a new block copy of the src keyword.
+
+        If @new_header == None the copy will get the same 'name' as
+        the src, otherwise the keyword will get the @new_header as
+        header.
+
+        The copy will start at @block of the src keyword and copy
+        @count elements; a negative value of @count is interpreted as
+        'the rest of the elements'
+
+           new1 = src.sub_copy(0 , 10, new_header = "NEW1")
+           new2 = src.sub_copy(10 , -1 , new_header = "NEW2")
+           
+        If the count or index arguments are in some way invalid the
+        method will raise IndexError.
+        """
+        if offset < 0 or offset >= self.size:
+            raise IndexError("Offset:%d invalid - valid range:[0,%d)" % (offset , self.size))
+
+        if offset + count > self.size:
+            raise IndexError("Invalid value of (offset + count):%d" % (offset + count))
+
+        new_c_ptr = cfunc.sub_copy( self , new_header , offset , count )
+        return EclKW.wrap( new_c_ptr , data_owner = True )
+    
 
 
     def ecl_kw_instance( self ):
@@ -677,7 +717,6 @@ class EclKW(CClass):
         pointer comparison.
         """
         if isinstance(other , EclKW):
-            print "Running "
             return cfunc.equal( self , other )
         else:
             raise TypeError("Can only compare with another EclKW")
@@ -948,6 +987,7 @@ cfunc.fprintf_data               = cwrapper.prototype("void     ecl_kw_fprintf_d
 
 cfunc.alloc_new                  = cwrapper.prototype("c_void_p ecl_kw_alloc( char* , int , int )")
 cfunc.copyc                      = cwrapper.prototype("c_void_p ecl_kw_alloc_copy( ecl_kw )")
+cfunc.sub_copy                   = cwrapper.prototype("c_void_p ecl_kw_alloc_sub_copy( ecl_kw , char*, int , int)")
 cfunc.slice_copyc                = cwrapper.prototype("c_void_p ecl_kw_alloc_slice_copy( ecl_kw , int , int , int )")
 cfunc.fread_alloc                = cwrapper.prototype("c_void_p ecl_kw_fread_alloc( fortio )")
 cfunc.get_size                   = cwrapper.prototype("int      ecl_kw_get_size( ecl_kw )")

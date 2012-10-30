@@ -24,6 +24,18 @@ import ert.ecl.ecl as ecl
 import sys
 from   test_util import *
 
+def copy_long():
+    src = ecl.EclKW.create("NAME" , 100 , ecl.ECL_FLOAT_TYPE )
+    copy = src.sub_copy( 0 , 2000 )
+    
+
+def copy_offset():
+    src = ecl.EclKW.create("NAME" , 100 , ecl.ECL_FLOAT_TYPE )
+    copy = src.sub_copy( 200 , 100 )
+
+    
+
+
 class KWTest( unittest.TestCase ):
     
     def setUp( self ):
@@ -102,7 +114,35 @@ class KWTest( unittest.TestCase ):
         self.assertTrue( file_equal( name1 , name2) )
         os.unlink( name1 )
         os.unlink( name2 )
+
+
             
+    def testSubCopy(self):
+        unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+        file = ecl.EclFile( unrst_file )
+        swat = file["SWAT"][0]
+        
+        swat1 = swat.sub_copy( 0 , -1 )
+        swat2 = swat.sub_copy( 0 , swat.size )
+
+        self.assertTrue( swat.equal( swat1 ))
+        self.assertTrue( swat.equal( swat2 ))
+
+        swat3 = swat.sub_copy(20000 , 100 , new_header = "swat")
+        self.assertTrue( swat3.name == "swat" )
+        self.assertTrue( swat3.size == 100 )
+        equal = True
+        for i in range(swat3.size):
+            if swat3[i] != swat[i + 20000]:
+                equal = False
+        self.assertTrue( equal )
+        
+        self.assertRaises( IndexError , copy_long )
+        self.assertRaises( IndexError , copy_offset )
+        
+
+
+        
 
     def fprintf_test( self ):
         self.test_kw( ecl.ECL_INT_TYPE    , [0 , 1 , 2 , 3 , 4 , 5 ]              , "%4d\n")
@@ -120,6 +160,7 @@ def fast_suite():
     suite.addTest( KWTest( 'fortio_size' ))
     suite.addTest( KWTest( 'fprintf_test' ))
     suite.addTest( KWTest( 'test_equal' ))
+    suite.addTest( KWTest( 'testSubCopy' ))
     return suite
 
                    
