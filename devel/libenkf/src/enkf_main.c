@@ -1981,7 +1981,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   /* QC */
   item = config_add_item( config , QC_PATH_KEY , false , false );
   config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
-
+  
   return config;
 }
 
