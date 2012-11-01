@@ -230,13 +230,16 @@ set( libutil_src_path     ${CMAKE_SOURCE_DIR}/libutil/src )
 set( libecl_src_path      ${CMAKE_SOURCE_DIR}/libecl/src )
 set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
 set( libwell_src_path     ${CMAKE_SOURCE_DIR}/libwell/src )
+set( libplot_src_path     ${CMAKE_SOURCE_DIR}/libplot/src )
 
-option( BUILD_ERT "Build the full ERT application - Linux only" OFF)
 
 add_subdirectory( libutil )
 add_subdirectory( libgeometry )
 add_subdirectory( libecl )
 add_subdirectory( libwell )
+
+option( BUILD_ERT      "Build the full ERT application - Linux only" OFF)
+option( BUILD_ENS_PLOT "Build small Eclipse plotting program - no" OFF)
 
 #-----------------------------------------------------------------
 if (BUILD_ERT)
@@ -247,7 +250,6 @@ if (BUILD_ERT)
    set( librms_src_path       ${CMAKE_SOURCE_DIR}/librms/src )
    set( libanalysis_src_path  ${CMAKE_SOURCE_DIR}/libanalysis/src )
    set( libjob_queue_src_path ${CMAKE_SOURCE_DIR}/libjob_queue/src )
-   set( libplot_src_path      ${CMAKE_SOURCE_DIR}/libplot/src )
    set( libenkf_src_path      ${CMAKE_SOURCE_DIR}/libenkf/src )
 
    add_subdirectory( libconfig )
