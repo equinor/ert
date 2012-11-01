@@ -4,8 +4,6 @@ set( header_files ert_report.h time_map.h rng_config.h enkf_fs_type.h trans_func
 
 add_library( enkf  ${LIBRARY_TYPE} ${source_files} )
 
-exec_program( svnversion ${PROJECT_SOURCE_DIR} OUTPUT_VARIABLE SVN_VERSION)
-exec_program( date OUTPUT_VARIABLE COMPILE_TIME_STAMP)
 
 #configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/CMake/config/ert_build_info.h.in
 #                ${CMAKE_CURRENT_BINARY_DIR}/ert_build_info.h )

@@ -93,7 +93,6 @@
 #include <local_dataset.h>
 #include <misfit_ensemble.h>
 #include <ert_template.h>
-#include <ert_build_info.h>
 #include <rng_config.h>
 #include <enkf_plot_data.h>
 #include <ert_report_list.h>
@@ -3268,20 +3267,6 @@ void enkf_main_install_SIGNALS(void) {
 }
 
 
-void enkf_main_init_debug( const char * executable ) {
-  char * svn_version      = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
-  char * compile_time     = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
-
-  /* This will be printed if/when util_abort() is called on a later stage. */
-  util_abort_append_version_info( svn_version );
-  util_abort_append_version_info( compile_time );
-  
-  free(svn_version);
-  free(compile_time);
-
-  if (executable != NULL)
-    util_abort_set_executable( executable );
-}  
 
 
 ert_templates_type * enkf_main_get_templates( enkf_main_type * enkf_main ) {
