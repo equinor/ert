@@ -83,6 +83,7 @@
 #include <plot_config.h>
 #include <ensemble_config.h>
 #include <model_config.h>
+#include <qc_config.h>
 #include <site_config.h>
 #include <active_config.h>
 #include <enkf_analysis.h>
@@ -138,6 +139,7 @@ struct enkf_main_struct {
   char                 * current_fs_case;
   enkf_fs_type         * dbase;              /* The internalized information. */
   ensemble_config_type * ensemble_config;    /* The config objects for the various enkf nodes.*/
+  qc_config_type       * qc_config;
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
@@ -391,6 +393,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
+  qc_config_free( enkf_main->qc_config );
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
   
@@ -1974,6 +1977,11 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   
   item = config_add_item( config , REPORT_GROUP_LIST_KEY , false , true );
   config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  /*****************************************************************/
+  /* QC */
+  item = config_add_item( config , QC_PATH_KEY , false , false );
+  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+
   return config;
 }
 
@@ -2120,6 +2128,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->site_config      = site_config_alloc_empty();
   enkf_main->ensemble_config  = ensemble_config_alloc_empty();
   enkf_main->ecl_config       = ecl_config_alloc_empty();
+  enkf_main->qc_config        = qc_config_alloc( DEFAULT_QC_PATH );
   enkf_main->model_config     = model_config_alloc_empty();
   enkf_main->analysis_config  = analysis_config_alloc_default( enkf_main->rng );   /* This is ready for use. */
   enkf_main->plot_config      = plot_config_alloc_default();       /* This is ready for use. */
@@ -2747,6 +2756,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     ecl_config_init( enkf_main->ecl_config , config );
     plot_config_init( enkf_main->plot_config , config );
     ensemble_config_init( enkf_main->ensemble_config , config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
+    qc_config_init( enkf_main->qc_config , config );
     model_config_init( enkf_main->model_config , 
                        config , 
                        enkf_main_get_ensemble_size( enkf_main ),
