@@ -8,8 +8,13 @@ set( SITE_CONFIG_FILE "/project/res/etc/ERT/site-config" CACHE FILEPATH "Path to
 set( src_list main.c enkf_tui_main.c  enkf_tui_fs.c  enkf_tui_ranking.c  enkf_tui_misc.c  enkf_tui_table.c  enkf_tui_plot.c enkf_tui_plot_rft.c enkf_tui_plot_util.c
               enkf_tui_run.c enkf_tui_util.c  enkf_tui_init.c  enkf_tui_export.c  enkf_tui_analysis.c enkf_tui_QC.c enkf_tui_help.c)
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/CMake/config/site_config_file.h.in
-                ${CMAKE_CURRENT_BINARY_DIR}/site_config_file.h )
+
+
+exec_program( svnversion ${PROJECT_SOURCE_DIR} OUTPUT_VARIABLE SVN_VERSION)
+exec_program( date OUTPUT_VARIABLE COMPILE_TIME_STAMP)
+
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/CMake/config/ert_build_config_file.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/ert_build_info.h )
 
 add_executable( ert ${src_list} )
 
