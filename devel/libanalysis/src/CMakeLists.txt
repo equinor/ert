@@ -15,11 +15,11 @@ add_library( sqrt_enkf MODULE sqrt_enkf.c )
 #-----------------------------------------------------------------
 
 if (ANALYSIS_INSTALL_PREFIX)
-   install(TARGETS analysis DESTINATION ${INSTALL_ROOT}/${ANALYSIS_INSTALL_PREFIX}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/${ANALYSIS_INSTALL_PREFIX}/include)
+   install(TARGETS analysis DESTINATION ${ANALYSIS_INSTALL_PREFIX}/lib)
+   install(FILES ${header_files} DESTINATION ${ANALYSIS_INSTALL_PREFIX}/include)
 else()
-   install(TARGETS analysis DESTINATION ${INSTALL_ROOT}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/include)
+   install(TARGETS analysis DESTINATION lib)
+   install(FILES ${header_files} DESTINATION include)
 endif()        
 
 

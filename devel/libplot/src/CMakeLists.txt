@@ -6,11 +6,11 @@ add_library( plot ${LIBRARY_TYPE} ${source_files} )
 target_link_libraries( plot util ${PLPLOT_LIBRARY} )
 #-----------------------------------------------------------------
 if (PLOT_INSTALL_PREFIX)
-   install(TARGETS plot DESTINATION ${INSTALL_ROOT}/${PLOT_INSTALL_PREFIX}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/${PLOT_INSTALL_PREFIX}/include)
+   install(TARGETS plot DESTINATION ${PLOT_INSTALL_PREFIX}/lib)
+   install(FILES ${header_files} DESTINATION ${PLOT_INSTALL_PREFIX}/include)
 else()
-   install(TARGETS plot DESTINATION ${INSTALL_ROOT}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/include)
+   install(TARGETS plot DESTINATION lib)
+   install(FILES ${header_files} DESTINATION include)
 endif()        
 
 

@@ -13,11 +13,11 @@ target_link_libraries( sched util ecl)
 
 #-----------------------------------------------------------------
 if (SCHED_INSTALL_PREFIX)
-   install(TARGETS sched DESTINATION ${INSTALL_ROOT}/${SCHED_INSTALL_PREFIX}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/${SCHED_INSTALL_PREFIX}/include)
+   install(TARGETS sched DESTINATION ${SCHED_INSTALL_PREFIX}/lib)
+   install(FILES ${header_files} DESTINATION ${SCHED_INSTALL_PREFIX}/include)
 else()
-   install(TARGETS sched DESTINATION ${INSTALL_ROOT}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/include)
+   install(TARGETS sched DESTINATION lib)
+   install(FILES ${header_files} DESTINATION include)
 endif()        
 
 

@@ -5,11 +5,11 @@ add_library( rms ${LIBRARY_TYPE} ${source_files} )
 
 #-----------------------------------------------------------------
 if (RMS_INSTALL_PREFIX)
-   install(TARGETS rms DESTINATION ${INSTALL_ROOT}/${RMS_INSTALL_PREFIX}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/${RMS_INSTALL_PREFIX}/include)
+   install(TARGETS rms DESTINATION ${RMS_INSTALL_PREFIX}/lib)
+   install(FILES ${header_files} DESTINATION ${RMS_INSTALL_PREFIX}/include)
 else()
-   install(TARGETS rms DESTINATION ${INSTALL_ROOT}/lib)
-   install(FILES ${header_files} DESTINATION ${INSTALL_ROOT}/include)
+   install(TARGETS rms DESTINATION lib)
+   install(FILES ${header_files} DESTINATION include)
 endif()        
 
 

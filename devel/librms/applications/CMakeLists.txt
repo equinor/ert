@@ -10,9 +10,9 @@ foreach(prog ${program_list})
    target_link_libraries( ${prog} rms ecl util )
    #-----------------------------------------------------------------
    if (RMS_INSTALL_PREFIX)
-      set (destination ${INSTALL_ROOT}/${RMS_INSTALL_PREFIX}/bin)
+      set (destination ${RMS_INSTALL_PREFIX}/bin)
    else()
-      set (destination ${INSTALL_ROOT}/bin)
+      set (destination bin)
    endif()
 
    install(TARGETS ${prog} DESTINATION ${destination})
