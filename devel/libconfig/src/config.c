@@ -140,7 +140,7 @@ typedef struct validate_struct validate_type;
         o That the values match the selection set.
       
        The second validation step is done when the pasing is complete,
-       in this pass we check dependencies - i.e. required_chldren and
+       in this pass we check dependencies - i.e. required_children and
        required_children_on_value.
 
 
@@ -1038,15 +1038,36 @@ config_type * config_alloc() {
 }
 
 
-void config_free(config_type * config) {
-  util_safe_free( config->config_file );
-  util_safe_free( config->abs_path );
-  hash_free(config->items);
-  hash_free(config->messages);
+static void config_clear_items( config_type * config ) {
+  hash_iter_type * item_iter = hash_iter_alloc( config->items );
+  while (!hash_iter_is_complete( item_iter )) {
+    config_item_type * item = hash_iter_get_next_value( item_iter );
+    config_item_clear( item );
+  }
+  hash_iter_free( item_iter );
+}
+
+
+void config_clear(config_type * config) {
   stringlist_free(config->parse_errors);
   set_free(config->parsed_files);
   subst_list_free( config->define_list );
   hash_free( config->auto_items );
+  config_clear_items( config );
+  
+  util_safe_free( config->config_file );
+  util_safe_free( config->abs_path );    
+  config->config_file = NULL;
+  config->abs_path = NULL;
+}
+
+
+
+void config_free(config_type * config) {
+  config_clear( config );
+  
+  hash_free(config->items);
+  hash_free(config->messages);
   free(config);
 }
 
