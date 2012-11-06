@@ -1858,10 +1858,10 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main ,
 
 static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_type * config = config_alloc();
-  config_item_type * item;
+  config_schema_item_type * item;
 
   /*****************************************************************/
-  /* config_add_item():                                            */
+  /* config_add_schema_item():                                            */
   /*                                                               */
   /*  1. boolean - required?                                       */
   /*  2. boolean - append?                                         */
@@ -1882,8 +1882,8 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   /*****************************************************************/
   /* Required keywords from the ordinary model_config file */
 
-  item = config_add_item(config , CASE_TABLE_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1, (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , CASE_TABLE_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1, (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
   config_add_key_value( config , LOG_LEVEL_KEY , false , CONFIG_INT);
   config_add_key_value( config , LOG_FILE_KEY  , false , CONFIG_STRING); 
@@ -1891,8 +1891,8 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_add_key_value(config , MAX_RESAMPLE_KEY , false , CONFIG_INT);
   
   
-  item = config_add_item(config , NUM_REALIZATIONS_KEY , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1, (const config_item_types [1]) {CONFIG_INT});
+  item = config_add_schema_item(config , NUM_REALIZATIONS_KEY , true , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1, (const config_item_types [1]) {CONFIG_INT});
   config_add_alias(config , NUM_REALIZATIONS_KEY , "SIZE");
   config_add_alias(config , NUM_REALIZATIONS_KEY , "NUM_REALISATIONS");
   config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
@@ -1901,85 +1901,85 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   /*****************************************************************/
   /* Optional keywords from the model config file */
 
-  item = config_add_item( config , RUN_TEMPLATE_KEY , false , true );
-  config_item_set_argc_minmax(item , 2 , -1 , 2 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
+  item = config_add_schema_item( config , RUN_TEMPLATE_KEY , false , true );
+  config_schema_item_set_argc_minmax(item , 2 , -1 , 2 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
 
   config_add_key_value(config , RUNPATH_KEY , false , CONFIG_STRING);
   config_add_key_value(config , RERUN_PATH_KEY , false , CONFIG_STRING);
   
-  item = config_add_item(config , ENSPATH_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item(config , ENSPATH_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
-  item = config_add_item( config , JOBNAME_KEY , false , false );
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item( config , JOBNAME_KEY , false , false );
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
   
-  item = config_add_item(config , SELECT_CASE_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item(config , SELECT_CASE_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
-  item = config_add_item(config , DBASE_TYPE_KEY , false , false);
-  config_item_set_argc_minmax(item , 1, 1 , 0 , NULL);
-  config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
+  item = config_add_schema_item(config , DBASE_TYPE_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1, 1 , 0 , NULL);
+  config_schema_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
 
-  item = config_add_item(config , FORWARD_MODEL_KEY , false , true);
-  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  item = config_add_schema_item(config , FORWARD_MODEL_KEY , false , true);
+  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 
-  item = config_add_item(config , DATA_KW_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
+  item = config_add_schema_item(config , DATA_KW_KEY , false , true);
+  config_schema_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
 
-  item = config_add_item(config , KEEP_RUNPATH_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  item = config_add_schema_item(config , KEEP_RUNPATH_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 
   config_add_key_value(config , PRE_CLEAR_RUNPATH_KEY , false , CONFIG_BOOLEAN);
 
-  item = config_add_item(config , DELETE_RUNPATH_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  item = config_add_schema_item(config , DELETE_RUNPATH_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 
-  item = config_add_item(config , OBS_CONFIG_KEY  , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , OBS_CONFIG_KEY  , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , RFT_CONFIG_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , RFT_CONFIG_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , RFTPATH_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item(config , RFTPATH_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
-  item = config_add_item(config , LOCAL_CONFIG_KEY  , false , true);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , LOCAL_CONFIG_KEY  , false , true);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , ENKF_SCHED_FILE_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , ENKF_SCHED_FILE_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , HISTORY_SOURCE_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item(config , HISTORY_SOURCE_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
   {
     stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) { REFCASE_KEY } , 1);
 
-    config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
-    config_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
-    config_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
+    config_schema_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
+    config_schema_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
+    config_schema_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
 
     stringlist_free(refcase_dep);
   }
   /*****************************************************************/
   /* Report */
-  item = config_add_item(config , REPORT_LIST_KEY , false , true);
-  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  item = config_add_schema_item(config , REPORT_LIST_KEY , false , true);
+  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 
-  item = config_add_item(config , REPORT_CONTEXT_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
+  item = config_add_schema_item(config , REPORT_CONTEXT_KEY , false , true);
+  config_schema_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
   
-  item = config_add_item(config , REPORT_PATH_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item(config , REPORT_PATH_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
-  item = config_add_item( config , REPORT_WELL_LIST_KEY , false , true );
-  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  item = config_add_schema_item( config , REPORT_WELL_LIST_KEY , false , true );
+  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
   
-  item = config_add_item( config , REPORT_GROUP_LIST_KEY , false , true );
-  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  item = config_add_schema_item( config , REPORT_GROUP_LIST_KEY , false , true );
+  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
   /*****************************************************************/
   /* QC */
-  item = config_add_item( config , QC_PATH_KEY , false , false );
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item( config , QC_PATH_KEY , false , false );
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
   
   return config;
 }

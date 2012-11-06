@@ -46,28 +46,25 @@ typedef enum {CONFIG_STRING        = 0,
               CONFIG_EXECUTABLE    = 8 ,
               CONFIG_INVALID       = 1000  } config_item_types;
 
-typedef struct config_struct           config_type;
-typedef struct config_item_struct      config_item_type;
-typedef struct config_item_node_struct config_item_node_type;
+typedef struct config_struct                  config_type;
+typedef struct config_schema_item_struct      config_schema_item_type;
 
-
-  config_item_node_type * config_iget_item_node( const config_type * config , const char * kw , int item_index);
   char       **     config_alloc_active_list(const config_type *, int *);
   void              config_free(config_type *);
   config_type *     config_alloc( );
   char       **     config_alloc_active_list(const config_type * , int * );
   void              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool );
-  bool              config_has_item(const config_type * config , const char * kw);
+  bool              config_has_schema_item(const config_type * config , const char * kw);
   void              config_clear(config_type * config);
 
 /*****************************************************************/
   
-  void               config_item_set_envvar_expansion( config_item_type * item , bool expand_envvar );
+  void               config_schema_item_set_envvar_expansion( config_schema_item_type * item , bool expand_envvar );
   bool               config_item_set(const config_type * , const char * );
-  void               config_item_free__ (void * );
-  void               config_item_free( config_item_type * );
-  config_item_type * config_item_alloc(const char * , bool , bool);
-  config_item_type * config_get_item(const config_type *, const char *);
+  void               config_schema_item_free__ (void * );
+  void               config_schema_item_free( config_schema_item_type * );
+  config_schema_item_type * config_schema_item_alloc(const char * , bool , bool);
+  config_schema_item_type * config_get_schema_item(const config_type *, const char *);
   void               config_add_alias(config_type * , const char * , const char * );
   void               config_install_message(config_type * , const char * , const char * );
   const char       * config_safe_get(const config_type * , const char *);
@@ -75,15 +72,15 @@ typedef struct config_item_node_struct config_item_node_type;
   
   void               config_add_define( config_type * config , const char * key , const char * value );
   
-  bool               config_item_is_set(const config_item_type * );
-  void               config_item_set_argc_minmax(config_item_type * , int  , int , int type_map_size , const config_item_types * );
-  void               config_item_set_common_selection_set(config_item_type * , int argc , const char ** argv);
-  void               config_item_set_indexed_selection_set(config_item_type * item , int  , int  , const char ** );
-  void               config_item_set_required_children(config_item_type * , stringlist_type * );
-  void               config_item_set_required_children_on_value(config_item_type * , const char * , stringlist_type * );
-  void               config_item_add_required_children(config_item_type * item , const char * child_key);
+  bool               config_schema_item_is_set(const config_schema_item_type * );
+  void               config_schema_item_set_argc_minmax(config_schema_item_type * , int  , int , int type_map_size , const config_item_types * );
+  void               config_schema_item_set_common_selection_set(config_schema_item_type * , int argc , const char ** argv);
+  void               config_schema_item_set_indexed_selection_set(config_schema_item_type * item , int  , int  , const char ** );
+  void               config_schema_item_set_required_children(config_schema_item_type * , stringlist_type * );
+  void               config_schema_item_set_required_children_on_value(config_schema_item_type * , const char * , stringlist_type * );
+  void               config_schema_item_add_required_children(config_schema_item_type * item , const char * child_key);
   
-  config_item_type * config_add_item(config_type *, 
+  config_schema_item_type * config_add_schema_item(config_type *, 
                                      const char * ,
                                      bool         ,
                                      bool);
@@ -94,7 +91,6 @@ typedef struct config_item_node_struct config_item_node_type;
                        int                ,
                        bool               );
   
-  hash_type             * config_pop_auto_items( config_type * config );
   const char            * config_safe_iget(const config_type * config , const char *kw, int occurence , int index);
   const char            * config_iget(const config_type * , const char * , int occurence , int index);
   bool                    config_iget_as_bool(const config_type * , const char * , int occurence , int index);
@@ -111,7 +107,7 @@ typedef struct config_item_node_struct config_item_node_type;
   int                     config_get_occurence_size( const config_type * config , const char * kw , int occurence);
   
   
-  config_item_type      * config_add_key_value( config_type * config , const char * key , bool required , config_item_types item_type);  
+  config_schema_item_type      * config_add_key_value( config_type * config , const char * key , bool required , config_item_types item_type);  
   bool                    config_get_value_as_bool(const config_type * config , const char * kw);
   int                     config_get_value_as_int(const config_type * config , const char * kw);
   double                  config_get_value_as_double(const config_type * config , const char * kw);

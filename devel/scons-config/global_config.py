@@ -106,7 +106,7 @@ class conf:
         self.LSF_INCLUDE_PATH    = LSF_INCLUDE_PATH 
         self.LSF_LIB_PATH        = LSF_LIB_PATH
         self.g2c                 = g2c
-        self.PLPLOT_INCLUDE_PATH = PLPLOT_INCLUDE_PATH + "/plplot"
+        self.PLPLOT_INCLUDE_PATH = PLPLOT_INCLUDE_PATH 
         self.PLPLOT_LIB_PATH     = PLPLOT_LIB_PATH
         if M64:
             self.CCFLAGS = "-m64 "
