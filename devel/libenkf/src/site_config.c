@@ -800,7 +800,7 @@ void site_config_init(site_config_type * site_config , const config_type * confi
   /* Parsing local options */
   if (config_item_set( config , MAX_RUNNING_LOCAL_KEY))
     site_config_set_max_running_local( site_config , config_iget_as_int( config , MAX_RUNNING_LOCAL_KEY , 0,0));
-  
+
   if (config_item_set(config , JOB_SCRIPT_KEY))
     site_config_set_job_script( site_config , config_iget( config , JOB_SCRIPT_KEY , 0 , 0));
   
