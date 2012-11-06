@@ -41,7 +41,7 @@ int main(void) {
   item = config_add_item(config , "CHILD1"  , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
   
-  config_parse(config , config_file , "--" , "INCLUDE" , NULL , true, true , true);
+  config_parse(config , config_file , "--" , "INCLUDE" , NULL , true, true);
   
 
 
