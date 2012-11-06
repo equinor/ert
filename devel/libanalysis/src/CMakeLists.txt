@@ -1,5 +1,5 @@
 # Common libanalysis library
-set( source_files analysis_module.c enkf_linalg.c std_enkf.c sqrt_enkf.c cv_enkf.c bootstrap_enkf.c null_enkf.c)
+set( source_files analysis_module.c enkf_linalg.c std_enkf.c sqrt_enkf.c cv_enkf.c bootstrap_enkf.c null_enkf.c fwd_step_enkf.c )
 set( header_files analysis_module.h enkf_linalg.h analysis_table.h)
 add_library( analysis  SHARED ${source_files} )
 set_target_properties( analysis PROPERTIES COMPILE_DEFINITIONS INTERNAL_LINK)
