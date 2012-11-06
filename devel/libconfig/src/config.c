@@ -1252,9 +1252,6 @@ static void config_append_auto_item( config_type * config , const char * key , c
    work as well, but the problem is that it very quickly becomes
    dependant on 'arbitrariness' in the parsing configuration.
 
-   auto_add: whether unrecognized keywords should be added to the the
-             config object.  
-
    validate: whether we should validate when complete, that should
              typically only be done at the last parsing.
 
@@ -1303,7 +1300,6 @@ static void config_parse__(config_type * config ,
                            const char * include_kw ,
                            const char * define_kw , 
                            bool warn_unrecognized,
-                           bool auto_add , 
                            bool validate) {
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
   char * abs_filename = util_alloc_realpath(config_file);
@@ -1376,7 +1372,7 @@ static void config_parse__(config_type * config ,
                 free(tmp_path);
               }
 
-              config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , warn_unrecognized, auto_add , false); /* Recursive call */
+              config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , warn_unrecognized, false); /* Recursive call */
               util_safe_free(include_file);
               util_safe_free(include_path);
             }
@@ -1403,11 +1399,6 @@ static void config_parse__(config_type * config ,
             if (!config_has_item(config , kw)) {
               if (warn_unrecognized)
                 fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s --- \n" , kw , config_file);
-
-              if (auto_add) {
-                config_add_item(config , kw , true , false);                        /* Auto created items get append_arg == true, and required == true (which is trivially satisfied). */
-                hash_insert_hash_owned_ref( config->auto_items , kw , vector_alloc_new() , vector_free__ );
-              }
             }
             
             if (config_has_item(config , kw)) {
@@ -1455,7 +1446,6 @@ void config_parse(config_type * config ,
                   const char * include_kw ,
                   const char * define_kw , 
                   bool warn_unrecognized,
-                  bool auto_add , 
                   bool validate) {
   char * config_path;
   char * config_file;
@@ -1464,7 +1454,7 @@ void config_parse(config_type * config ,
   util_alloc_file_components(filename , &config_path , &tmp_file , &extension);
   config_set_config_file( config , filename );
   config_file = util_alloc_filename(NULL , tmp_file , extension);
-  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , warn_unrecognized , auto_add , validate);
+  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , warn_unrecognized , validate);
 
   util_safe_free(tmp_file);
   util_safe_free(extension);

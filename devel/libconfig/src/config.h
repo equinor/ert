@@ -43,7 +43,8 @@ typedef enum {CONFIG_STRING        = 0,
               CONFIG_BOOLEAN       = 5,
               CONFIG_CONFIG        = 6,
               CONFIG_BYTESIZE      = 7,
-              CONFIG_EXECUTABLE    = 8 } config_item_types;
+              CONFIG_EXECUTABLE    = 8 ,
+              CONFIG_INVALID       = 1000  } config_item_types;
 
 typedef struct config_struct           config_type;
 typedef struct config_item_struct      config_item_type;
@@ -55,7 +56,7 @@ typedef struct config_item_node_struct config_item_node_type;
   void              config_free(config_type *);
   config_type *     config_alloc( );
   char       **     config_alloc_active_list(const config_type * , int * );
-  void              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool , bool );
+  void              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool );
   bool              config_has_item(const config_type * config , const char * kw);
   void              config_clear(config_type * config);
 
