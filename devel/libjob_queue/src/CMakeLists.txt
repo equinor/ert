@@ -4,6 +4,7 @@ set(source_files forward_model.c queue_driver.c job_queue.c lsf_driver.c local_d
 set(header_files job_queue.h queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h forward_model.h )
 
 add_library( job_queue ${LIBRARY_TYPE} ${source_files} )
+target_link_libraries( job_queue util config )
 if (HAVE_LSF)
    target_link_libraries( job_queue bat ${LSF_LIBRARY} nsl)
 endif()                                                   
