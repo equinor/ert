@@ -1081,7 +1081,7 @@ config_type * config_alloc() {
 }
 
 
-static void config_clear_items( config_type * config ) {
+static void config_clear_content_items( config_type * config ) {
   hash_iter_type * item_iter = hash_iter_alloc( config->content_items );
   while (!hash_iter_is_complete( item_iter )) {
     config_content_item_type * item = hash_iter_get_next_value( item_iter );
@@ -1092,10 +1092,11 @@ static void config_clear_items( config_type * config ) {
 
 
 void config_clear(config_type * config) {
-  stringlist_free(config->parse_errors);
-  set_free(config->parsed_files);
-  subst_list_free( config->define_list );
-  config_clear_items( config );
+  stringlist_clear(config->parse_errors);
+
+  set_clear(config->parsed_files);
+  subst_list_clear( config->define_list );
+  config_clear_content_items( config );
   
   util_safe_free( config->config_file );
   util_safe_free( config->abs_path );    
@@ -1106,11 +1107,14 @@ void config_clear(config_type * config) {
 
 
 void config_free(config_type * config) {
-  config_clear( config );
+  stringlist_free( config->parse_errors );
+  set_free(config->parsed_files);
+  subst_list_free( config->define_list );
   
   hash_free(config->schema_items);
   hash_free(config->content_items);
   hash_free(config->messages);
+
   free(config);
 }
 
