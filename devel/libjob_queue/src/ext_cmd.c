@@ -43,6 +43,7 @@
 #define FUNCTION_KEY   "FUNCTION"
 #define EXECUTABLE_KEY "EXECUTABLE"
 
+#define NULL_STRING         "NULL"
 #define EXT_CMD_STRING_TYPE "STRING"
 #define EXT_CMD_INT_TYPE    "INT"
 #define EXT_CMD_FLOAT_TYPE  "FLOAT"
@@ -131,6 +132,9 @@ void ext_cmd_set_executable( ext_cmd_type * ext_cmd , const char * executable ) 
 
 
 void ext_cmd_set_module( ext_cmd_type * ext_cmd , const char * module) {
+  if (strcmp(module  ,NULL_STRING) == 0)
+    module = NULL;
+
   ext_cmd->module = util_realloc_string_copy( ext_cmd->module , module );
 }
 
@@ -171,9 +175,13 @@ static void ext_cmd_iset_argtype_string( ext_cmd_type * ext_cmd , int iarg , con
 
 
 static void ext_cmd_validate( ext_cmd_type * ext_cmd ) {
-  if (ext_cmd->internal) {
-    if (util_is_executable( ext_cmd->executable ) && (ext_cmd->module == ext_cmd->function) && (ext_cmd == NULL))
-      ext_cmd->valid = true;
+  if (!ext_cmd->internal) {
+    if (ext_cmd->executable != NULL) {
+      if (util_is_executable( ext_cmd->executable ) && 
+          (ext_cmd->module == ext_cmd->function) && 
+          (ext_cmd == NULL))
+        ext_cmd->valid = true;
+    }
   } else {
     if ((ext_cmd->executable == NULL) && (ext_cmd->function != NULL)) {
       ext_cmd->lib_handle = dlopen( ext_cmd->module , RTLD_NOW );
@@ -197,41 +205,48 @@ ext_cmd_type * ext_cmd_config_alloc( config_type * config , const char * config_
   config_clear( config );
   config_parse( config , config_file , "--", NULL , NULL , true , true);
   {
-    ext_cmd_type * ext_cmd = NULL;
-
-    if (config_item_set( config , MIN_ARG_KEY))
-      ext_cmd_set_min_arg( ext_cmd , config_iget_as_int( config , MIN_ARG_KEY , 0 , 0 ));
-
-    if (config_item_set( config , MAX_ARG_KEY))
-      ext_cmd_set_max_arg( ext_cmd , config_iget_as_int( config , MAX_ARG_KEY , 0 , 0 ));
-
+    
+    bool internal = DEFAULT_INTERNAL;
+    if (config_item_set( config , INTERNAL_KEY))
+      internal = config_iget_as_bool( config , INTERNAL_KEY , 0 , 0 );
+    
     {
-      int i;
-      for (i=0; i < config_get_occurences( config , ARG_TYPE_KEY); i++) {
-        int iarg = config_iget_as_int( config , ARG_TYPE_KEY , i , 0 );
-        const char * arg_type = config_iget( config , ARG_TYPE_KEY , i , 1 );
-
-        ext_cmd_iset_argtype_string( ext_cmd , iarg , arg_type );
+      ext_cmd_type * ext_cmd = ext_cmd_alloc( internal );
+      
+      if (config_item_set( config , MIN_ARG_KEY))
+        ext_cmd_set_min_arg( ext_cmd , config_iget_as_int( config , MIN_ARG_KEY , 0 , 0 ));
+      
+      if (config_item_set( config , MAX_ARG_KEY))
+        ext_cmd_set_max_arg( ext_cmd , config_iget_as_int( config , MAX_ARG_KEY , 0 , 0 ));
+      
+      {
+        int i;
+        for (i=0; i < config_get_occurences( config , ARG_TYPE_KEY); i++) {
+          int iarg = config_iget_as_int( config , ARG_TYPE_KEY , i , 0 );
+          const char * arg_type = config_iget( config , ARG_TYPE_KEY , i , 1 );
+          
+          ext_cmd_iset_argtype_string( ext_cmd , iarg , arg_type );
+        }
       }
+      
+      if (config_item_set( config , MODULE_KEY))
+        ext_cmd_set_module( ext_cmd , config_iget( config , MODULE_KEY , 0 , 0 ));
+      
+      if (config_item_set( config , FUNCTION_KEY))
+        ext_cmd_set_function( ext_cmd , config_iget( config , FUNCTION_KEY , 0 , 0 ));
+      
+      if (config_item_set( config , EXECUTABLE_KEY))
+        ext_cmd_set_executable( ext_cmd , config_iget( config , EXECUTABLE_KEY , 0 , 0 ));
+      
+      ext_cmd_validate( ext_cmd );
+      
+      if (!ext_cmd->valid) {
+        ext_cmd_free( ext_cmd );
+        ext_cmd = NULL;
+      }
+      
+      return ext_cmd;
     }
-    
-    if (config_item_set( config , MODULE_KEY))
-      ext_cmd_set_module( ext_cmd , config_iget( config , MODULE_KEY , 0 , 0 ));
-
-    if (config_item_set( config , FUNCTION_KEY))
-      ext_cmd_set_function( ext_cmd , config_iget( config , FUNCTION_KEY , 0 , 0 ));
-
-    if (config_item_set( config , EXECUTABLE_KEY))
-      ext_cmd_set_executable( ext_cmd , config_iget( config , EXECUTABLE_KEY , 0 , 0 ));
-
-    ext_cmd_validate( ext_cmd );
-
-    if (!ext_cmd->valid) {
-      ext_cmd_free( ext_cmd );
-      ext_cmd = NULL;
-    }
-    
-    return ext_cmd;
   }
 }
 
