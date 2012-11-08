@@ -29,8 +29,13 @@ int main( int argc , char ** argv) {
   int status = 0;
   {
     config_type * config = ext_cmd_alloc_config();
-    
-    
+    ext_cmd_type * cmd = ext_cmd_config_alloc( config , argv[1]);
+
+    if (cmd != NULL) {
+      status = 0;
+      ext_cmd_free( cmd );
+    } else 
+      status = 1;
 
     config_free(config);
   }
