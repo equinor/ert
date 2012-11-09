@@ -634,7 +634,7 @@ class EclSum( CClass ):
         This is a quite low level function, in most cases it will be
         natural to go via e.g. an EclSumVector instance.
         """
-        return cfunc.iget_general_var( self , time_index , key )
+        return cfunc.get_general_var( self , time_index , key )
 
 
     def __getitem__(self , key):
@@ -753,7 +753,7 @@ class EclSum( CClass ):
         Return summary value of @key at time @report_step.
         """
         time_index = cfunc.get_report_end( self , report_step )
-        return cfunc.iget_general_var( self , time_index , key )
+        return cfunc.get_general_var( self , time_index , key )
     
 
     def has_key( self , key):
@@ -1123,7 +1123,7 @@ cfunc.iget_report_step              = cwrapper.prototype("int      ecl_sum_iget_
 cfunc.iget_mini_step                = cwrapper.prototype("int      ecl_sum_iget_mini_step( ecl_sum , int) ")
 cfunc.iget_sim_time                 = cwrapper.prototype("time_t   ecl_sum_iget_sim_time( ecl_sum , int) ")
 cfunc.get_report_end                = cwrapper.prototype("int      ecl_sum_iget_report_end( ecl_sum , int)")
-cfunc.iget_general_var              = cwrapper.prototype("double   ecl_sum_iget_general_var( ecl_sum , int , char*)")
+cfunc.get_general_var               = cwrapper.prototype("double   ecl_sum_get_general_var( ecl_sum , int , char*)")
 cfunc.get_general_var_index         = cwrapper.prototype("int      ecl_sum_get_general_var_params_index( ecl_sum , char*)")
 cfunc.get_general_var_from_sim_days = cwrapper.prototype("double   ecl_sum_get_general_var_from_sim_days( ecl_sum , double , char*)")
 cfunc.get_general_var_from_sim_time = cwrapper.prototype("double   ecl_sum_get_general_var_from_sim_time( ecl_sum , time_t , char*)")
