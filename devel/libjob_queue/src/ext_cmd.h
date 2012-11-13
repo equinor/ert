@@ -37,6 +37,7 @@ extern "C" {
   void           ext_cmd_set_executable( ext_cmd_type * ext_cmd , const char * executable );
   ext_cmd_type * ext_cmd_config_alloc( const char * name , config_type * config , const char * config_file);
 
+  void           ext_cmd_update_config_compiler( const ext_cmd_type * ext_cmd , config_type * config_compiler );
   void           ext_cmd_set_executable( ext_cmd_type * ext_cmd , const char * executable);
   void           ext_cmd_set_function( ext_cmd_type * ext_cmd , const char * function);
   void           ext_cmd_set_module( ext_cmd_type * ext_cmd , const char * module);
