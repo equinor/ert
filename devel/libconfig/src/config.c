@@ -163,8 +163,7 @@ struct validate_struct {
   int                  argc_max;                /* The maximum number of arguments: -1 means no upper limit. */ 
   set_type          *  common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */ 
   set_type          ** indexed_selection_set;   /* A selection set which will apply for specifi (indexed) arguments. */
-  config_item_types *  type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
-  int                  type_map_size;
+  int_vector_type   *  type_map;                /* A list of types for the items. Set along with argc_minmax(); */
   stringlist_type   *  required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
   hash_type         *  required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
 };
@@ -228,14 +227,13 @@ static void config_add_and_free_error(config_type * config , char * error_messag
 /*****************************************************************/
 static validate_type * validate_alloc() {
   validate_type * validate = util_malloc(sizeof * validate );
-  validate->argc_min = CONFIG_DEFAULT_ARG_MIN;
-  validate->argc_max = CONFIG_DEFAULT_ARG_MAX;
+  validate->argc_min                = CONFIG_DEFAULT_ARG_MIN;
+  validate->argc_max                = CONFIG_DEFAULT_ARG_MAX;
   validate->common_selection_set    = NULL;
   validate->indexed_selection_set   = NULL;
-  validate->type_map                = NULL;
-  validate->type_map_size           = 0;
   validate->required_children       = NULL;
   validate->required_children_value = NULL;
+  validate->type_map                = NULL;
 
   return validate;
 }
@@ -249,11 +247,15 @@ static void validate_free(validate_type * validate) {
         set_free(validate->indexed_selection_set[i]);
     free(validate->indexed_selection_set);
   }
-  if (validate->type_map != NULL) free(validate->type_map);
+  
+  if (validate->type_map != NULL)
+    int_vector_free( validate->type_map );
   if (validate->required_children != NULL) stringlist_free(validate->required_children);
   if (validate->required_children_value != NULL) hash_free(validate->required_children_value);
   free(validate);
 }
+
+
 
 static void validate_set_argc_minmax(validate_type * validate , int argc_min , int argc_max, int type_map_size , const config_item_types * type_map) {
   if (validate->argc_min != CONFIG_DEFAULT_ARG_MIN)
@@ -264,6 +266,9 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
 
   validate->argc_min = argc_min;
   validate->argc_max = argc_max;
+  
+  if ((argc_max != CONFIG_DEFAULT_ARG_MAX) && (argc_max < argc_min))
+    util_abort("%s invalid arg min/max values. argc_min:%d  argc_max:%d \n",argc_min , argc_max);
   
   {
     int internal_type_size = 0;  /* Should end up in the range [argc_min,argc_max] */
@@ -280,11 +285,31 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
     }
   }
   
+  
   if (type_map != NULL) {
-    validate->type_map_size = type_map_size;
-    validate->type_map = util_alloc_copy(type_map , type_map_size * sizeof * type_map );
-  }
+    int i;
+    validate->type_map = int_vector_alloc( 0 , CONFIG_STRING );
+    for (i=0; i < type_map_size; i++)
+      int_vector_iset( validate->type_map , i , type_map[i]);
 
+
+    /*
+      If a maximum number of arguments has been explicitly set, AND
+      this maximum value is greated than the number of arguments with
+      an explicit type we right-pad the type map with CONFIG_STRING values.
+
+      Alternatively if no explicit max has been set, we ensure that
+      the type map is at least as large as the minimum number of
+      arguments.
+    */
+    if (validate->argc_max != CONFIG_DEFAULT_ARG_MAX) {
+      if (validate->argc_max > type_map_size) 
+        int_vector_iset(validate->type_map , validate->argc_max -1 , CONFIG_STRING); 
+    } else {
+      if (validate->argc_min > type_map_size) 
+        int_vector_iset(validate->type_map , validate->argc_min -1 , CONFIG_STRING); 
+    }
+  }
 }
 
 
@@ -373,13 +398,12 @@ static void config_item_node_clear(config_item_node_type * node) {
 
 
 
-void config_schema_item_assure_type(const config_schema_item_type * item , int index , config_item_types item_type) {
-  if (index < item->validate->type_map_size) {
+static void config_schema_item_assure_type(const config_schema_item_type * item , int index , config_item_types item_type) {
+  if (item->validate->type_map != NULL) {
     bool OK = false;
     
-    if (item->validate->type_map != NULL)
-      if (item->validate->type_map[index] == item_type)
-        OK = true;
+    if (int_vector_safe_iget( item->validate->type_map , index) == item_type)
+      OK = true;
     
     if (!OK)
       util_abort("%s: failed - wrong installed type \n" , __func__);
@@ -499,86 +523,84 @@ static bool config_schema_item_validate_set(config_type * config , const config_
     /* Validate the TYPE of the various argumnents */
     if (item->validate->type_map != NULL) {
       for (int iarg = 0; iarg < argc; iarg++) {
-        if (iarg < item->validate->type_map_size) {
-          const char * value = stringlist_iget(token_list , iarg + 1);
-          switch (item->validate->type_map[iarg]) {
-          case(CONFIG_STRING): /* This never fails ... */
-            break;
-          case(CONFIG_EXECUTABLE):
-            {
-              /*
-                1. If the supplied value is an abolute path - do nothing.
-                2. If the supplied is _not_ an absolute path:
-                
-                a. Try if the relocated exists - then use that.
-                b. Else - try if the util_alloc_PATH_executable() exists.
-              */
-              if (!util_is_abs_path( value )) {
-                char * relocated  = __alloc_relocated__(config_cwd , value);
-                char * path_exe   = util_alloc_PATH_executable( value );
-                
-                if (util_file_exists(relocated)) {
-                  if (util_is_executable(relocated))
-                    stringlist_iset_copy( token_list , iarg , relocated);
-                } else if (path_exe != NULL)
-                  stringlist_iset_copy( token_list , iarg , path_exe);
-                else
-                  config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
-
-                free(relocated);
-                util_safe_free(path_exe);
-              } else {
-                if (!util_is_executable( value ))
-                  config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
-              }
-            }
-            break;
-          case(CONFIG_INT):
-            if (!util_sscanf_int( value , NULL ))
-              config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
-            break;
-          case(CONFIG_FLOAT):
-            if (!util_sscanf_double( value , NULL ))
-              config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
-            break;
-          case(CONFIG_EXISTING_FILE):
-            {
-              char * file = __alloc_relocated__(config_cwd , value);
-              if (!util_file_exists(file)) 
-                config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
+        const char * value = stringlist_iget(token_list , iarg + 1);
+        switch (int_vector_safe_iget( item->validate->type_map , iarg)) {
+        case(CONFIG_STRING): /* This never fails ... */
+          break;
+        case(CONFIG_EXECUTABLE):
+          {
+            /*
+              1. If the supplied value is an abolute path - do nothing.
+              2. If the supplied is _not_ an absolute path:
+              
+              a. Try if the relocated exists - then use that.
+              b. Else - try if the util_alloc_PATH_executable() exists.
+            */
+            if (!util_is_abs_path( value )) {
+              char * relocated  = __alloc_relocated__(config_cwd , value);
+              char * path_exe   = util_alloc_PATH_executable( value );
+              
+              if (util_file_exists(relocated)) {
+                if (util_is_executable(relocated))
+                  stringlist_iset_copy( token_list , iarg , relocated);
+              } else if (path_exe != NULL)
+                stringlist_iset_copy( token_list , iarg , path_exe);
               else
-                stringlist_iset_copy( token_list , iarg + 1 , file);  
-              free( file );
+                config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+              
+              free(relocated);
+              util_safe_free(path_exe);
+            } else {
+              if (!util_is_executable( value ))
+                config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
             }
-            break;
-          case(CONFIG_FILE):
-            {
-              char * file = __alloc_relocated__(config_cwd , value);
-              stringlist_iset_copy( token_list , iarg + 1 , file);  
-              free( file );
-            }
-            break;
-          case(CONFIG_EXISTING_DIR):
-            {
-              char * dir = __alloc_relocated__(config_cwd , value);
-              if (!util_is_directory(value))
-                config_add_and_free_error(config , util_alloc_sprintf("Can not find directory: %s. ",value));
-              else
-                stringlist_iset_copy( token_list , iarg + 1 , dir);  
-              free( dir );
-            }
-            break;
-          case(CONFIG_BOOLEAN):
-            if (!util_sscanf_bool( value , NULL ))
-              config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
-            break;
-          case(CONFIG_BYTESIZE):
-            if (!util_sscanf_bytesize( value , NULL))
-              config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
-            break;
-          default:
-            util_abort("%s: config_item_type:%d not recognized \n",__func__ , item->validate->type_map[iarg]);
           }
+          break;
+        case(CONFIG_INT):
+          if (!util_sscanf_int( value , NULL ))
+            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
+          break;
+        case(CONFIG_FLOAT):
+          if (!util_sscanf_double( value , NULL ))
+            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
+          break;
+        case(CONFIG_EXISTING_FILE):
+          {
+            char * file = __alloc_relocated__(config_cwd , value);
+            if (!util_file_exists(file)) 
+              config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
+            else
+              stringlist_iset_copy( token_list , iarg + 1 , file);  
+            free( file );
+          }
+          break;
+        case(CONFIG_FILE):
+          {
+            char * file = __alloc_relocated__(config_cwd , value);
+            stringlist_iset_copy( token_list , iarg + 1 , file);  
+            free( file );
+          }
+          break;
+        case(CONFIG_EXISTING_DIR):
+          {
+            char * dir = __alloc_relocated__(config_cwd , value);
+            if (!util_is_directory(value))
+              config_add_and_free_error(config , util_alloc_sprintf("Can not find directory: %s. ",value));
+            else
+              stringlist_iset_copy( token_list , iarg + 1 , dir);  
+            free( dir );
+          }
+          break;
+        case(CONFIG_BOOLEAN):
+          if (!util_sscanf_bool( value , NULL ))
+            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
+          break;
+        case(CONFIG_BYTESIZE):
+          if (!util_sscanf_bytesize( value , NULL))
+            config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
+          break;
+        default:
+          util_abort("%s: config_item_type:%d not recognized \n",__func__ , int_vector_safe_iget(item->validate->type_map , iarg));
         }
       }
     }
@@ -668,8 +690,14 @@ void config_schema_item_set_required_children_on_value(config_schema_item_type *
 */
 
 
-void config_schema_item_set_argc_minmax(config_schema_item_type * item , int argc_min , int argc_max, int type_map_size , const config_item_types * type_map) {
+void config_schema_item_set_argc_minmax(config_schema_item_type * item , 
+                                        int argc_min , 
+                                        int argc_max, 
+                                        int type_map_size , 
+                                        const config_item_types * type_map) {
+
   validate_set_argc_minmax(item->validate , argc_min , argc_max , type_map_size , type_map);
+
 }
   
 
