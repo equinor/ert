@@ -46,6 +46,10 @@ typedef enum {CONFIG_STRING        = 0,
               CONFIG_EXECUTABLE    = 8 ,
               CONFIG_INVALID       = 1000  } config_item_types;
 
+#define CONFIG_DEFAULT_ARG_MIN -1
+#define CONFIG_DEFAULT_ARG_MAX -1
+
+
 typedef struct config_struct                  config_type;
 typedef struct config_schema_item_struct      config_schema_item_type;
 

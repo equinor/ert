@@ -228,8 +228,8 @@ static void config_add_and_free_error(config_type * config , char * error_messag
 /*****************************************************************/
 static validate_type * validate_alloc() {
   validate_type * validate = util_malloc(sizeof * validate );
-  validate->argc_min = -1;
-  validate->argc_max = -1;
+  validate->argc_min = CONFIG_DEFAULT_ARG_MIN;
+  validate->argc_max = CONFIG_DEFAULT_ARG_MAX;
   validate->common_selection_set    = NULL;
   validate->indexed_selection_set   = NULL;
   validate->type_map                = NULL;
@@ -256,10 +256,10 @@ static void validate_free(validate_type * validate) {
 }
 
 static void validate_set_argc_minmax(validate_type * validate , int argc_min , int argc_max, int type_map_size , const config_item_types * type_map) {
-  if (validate->argc_min != -1)
+  if (validate->argc_min != CONFIG_DEFAULT_ARG_MIN)
     util_abort("%s: sorry - current implementation does not allow repeated calls to: %s \n",__func__ , __func__);
   
-  if (argc_min == -1)
+  if (argc_min == CONFIG_DEFAULT_ARG_MIN)
     argc_min = 0;
 
   validate->argc_min = argc_min;

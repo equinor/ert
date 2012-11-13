@@ -310,16 +310,16 @@ void ensemble_config_add_config_items(config_type * config) {
   config_schema_item_set_argc_minmax(item , 1 , 3 ,  3 , (const config_item_types [3]) { CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
 
   item = config_add_schema_item(config , GEN_PARAM_KEY , false , true);
-  config_schema_item_set_argc_minmax(item , 5 , -1 ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 5 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
   
   item = config_add_schema_item(config , GEN_DATA_KEY , false , true);
-  config_schema_item_set_argc_minmax(item , 1 , -1 ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
 
   item = config_add_schema_item(config , SUMMARY_KEY , false , true);   /* can have several summary keys on each line. */
-  config_schema_item_set_argc_minmax(item , 1 , -1 ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
 
   item = config_add_schema_item(config , CONTAINER_KEY , false , true);   /* can have several summary keys on each line. */
-  config_schema_item_set_argc_minmax(item , 2 , -1 ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
   
   item = config_add_schema_item( config , SURFACE_KEY , false , true );
   config_schema_item_set_argc_minmax(item , 4 , 5 ,  0 , NULL);
@@ -330,7 +330,7 @@ void ensemble_config_add_config_items(config_type * config) {
   */
   
   item = config_add_schema_item(config , FIELD_KEY , false , true);
-  config_schema_item_set_argc_minmax(item , 2 , -1 ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
   config_schema_item_add_required_children(item , GRID_KEY);   /* if you are using a field - you must have a grid. */
 }
 

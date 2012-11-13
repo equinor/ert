@@ -27,14 +27,15 @@ extern "C" {
 
 
   typedef struct ext_cmd_struct ext_cmd_type;
-
+  
+  const char   * ext_cmd_get_name( const ext_cmd_type * ext_cmd );
   bool           ext_cmd_internal( const ext_cmd_type * ext_cmd );
   config_type  * ext_cmd_alloc_config();
-  ext_cmd_type * ext_cmd_alloc(bool internal);
+  ext_cmd_type * ext_cmd_alloc(const char * name , bool internal);
   void           ext_cmd_free( ext_cmd_type * ext_cmd );
   void           ext_cmd_free__( void * arg);
   void           ext_cmd_set_executable( ext_cmd_type * ext_cmd , const char * executable );
-  ext_cmd_type * ext_cmd_config_alloc( config_type * config , const char * config_file);
+  ext_cmd_type * ext_cmd_config_alloc( const char * name , config_type * config , const char * config_file);
 
   void           ext_cmd_set_executable( ext_cmd_type * ext_cmd , const char * executable);
   void           ext_cmd_set_function( ext_cmd_type * ext_cmd , const char * function);

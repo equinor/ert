@@ -1063,7 +1063,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
   item = config_add_schema_item(config , LSF_RESOURCES_KEY  , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
 
   item = config_add_schema_item(config , MAX_RUNNING_LSF_KEY , false , false);
   config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
@@ -1086,7 +1086,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
 
   /*****************************************************************/
   item = config_add_schema_item(config , QUEUE_OPTION_KEY , false , true);
-  config_schema_item_set_argc_minmax(item , 3 , -1 , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 3 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
 
   item = config_add_schema_item(config , JOB_SCRIPT_KEY , site_only , false);
   config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
@@ -1096,5 +1096,5 @@ void site_config_add_config_items( config_type * config , bool site_only) {
 
   /* Items related to the reports. */
   item = config_add_schema_item( config , REPORT_SEARCH_PATH_KEY , false , true );
-  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
 }
