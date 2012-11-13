@@ -45,7 +45,7 @@ int main( int argc , char ** argv) {
     bool OK = true;
 
     for (iarg = 1; iarg < argc; iarg++) 
-      OK = OK && loadConfig(  config , argv[iarg]); 
+      OK = OK && (loadConfig(  config , argv[iarg]) == false);
     
     if (!OK)
       status = 1;
