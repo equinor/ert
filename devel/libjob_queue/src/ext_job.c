@@ -760,7 +760,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , "START_FILE"          , false , false); config_schema_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
       item = config_add_schema_item(config , "ENV"                 , false , true ); config_schema_item_set_argc_minmax(item  , 2 , 2 , 0 , NULL);
       item = config_add_schema_item(config , "DEFAULT"             , false , true ); config_schema_item_set_argc_minmax(item  , 2 , 2 , 0 , NULL);
-      item = config_add_schema_item(config , "ARGLIST"             , false , true ); config_schema_item_set_argc_minmax(item  , 1 ,-1 , 0 , NULL);
+      item = config_add_schema_item(config , "ARGLIST"             , false , true ); config_schema_item_set_argc_minmax(item  , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
       item = config_add_schema_item(config , "MAX_RUNNING_MINUTES" , false , false); config_schema_item_set_argc_minmax(item  , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");

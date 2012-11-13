@@ -30,8 +30,6 @@
 
 
 /* The default values are interepreted as no limit. */
-#define ARG_MIN_DEFAULT     -1
-#define ARG_MAX_DEFAULT     -1
 #define DEFAULT_INTERNAL false
 
 
@@ -50,6 +48,7 @@
 
 #define EXT_CMD_TYPE_ID 614441
 
+
 struct ext_cmd_struct {
   UTIL_TYPE_ID_DECLARATION;
   bool              internal;
@@ -59,6 +58,7 @@ struct ext_cmd_struct {
   char            * executable;
   char            * module;
   char            * function;
+  char            * name;
   void            * lib_handle;
   void            * dl_func;
   bool              valid;
@@ -67,6 +67,10 @@ struct ext_cmd_struct {
 
 bool ext_cmd_internal( const ext_cmd_type * ext_cmd ) {
   return ext_cmd->internal;
+}
+
+const char * ext_cmd_get_name( const ext_cmd_type * ext_cmd ) {
+  return ext_cmd->name;
 }
 
 
@@ -107,21 +111,46 @@ config_type * ext_cmd_alloc_config() {
 
 
 
-static UTIL_SAFE_CAST_FUNCTION(ext_cmd , EXT_CMD_TYPE_ID )
+static UTIL_SAFE_CAST_FUNCTION(ext_cmd , EXT_CMD_TYPE_ID );
 
-ext_cmd_type * ext_cmd_alloc( bool internal ) {
+void ext_cmd_update_config_compiler( const ext_cmd_type * ext_cmd , config_type * config_compiler ) {
+  config_schema_item_type * item = config_add_schema_item( config_compiler , ext_cmd->name , false , true );
+  int argc_max , argc_min;
+
+  /* 
+     Ensure that the arg_types mapping is at least as large as the
+     max_arg value. The arg_type vector will be left padded with
+     CONFIG_STRING values.
+  */
+  
+
+  if (int_vector_size( ext_cmd->arg_types ) < argc_max)
+    int_vector_iset( ext_cmd->arg_types , ext_cmd->max_arg - 1 , CONFIG_STRING );
+  
+  //config_schema_item_set_argc_minmax( item , argc_min , argc_max , 
+  
+}
+
+
+ext_cmd_type * ext_cmd_alloc( const char * name , bool internal ) {
   ext_cmd_type * ext_cmd = util_malloc( sizeof * ext_cmd );
   UTIL_TYPE_ID_INIT( ext_cmd , EXT_CMD_TYPE_ID );
-  ext_cmd->internal   = internal;      // This can NOT be changed run-time.
-  ext_cmd->min_arg    = ARG_MIN_DEFAULT;
-  ext_cmd->max_arg    = ARG_MAX_DEFAULT;
+  ext_cmd->internal   = internal;      // this can not be changed run-time.
+  ext_cmd->min_arg    = CONFIG_DEFAULT_ARG_MIN;
+  ext_cmd->max_arg    = CONFIG_DEFAULT_ARG_MAX;
   ext_cmd->arg_types  = int_vector_alloc( 0 , CONFIG_STRING );
 
   ext_cmd->executable = NULL;
   ext_cmd->module     = NULL;
   ext_cmd->function   = NULL;
+
+  if (name == NULL)
+    util_abort("%s: trying to create ext_cmd with name == NULL - illegal\n",__func__);
+  else
+    ext_cmd->name       = util_alloc_string_copy( name );
+
   ext_cmd->valid      = false;
-  
+
   return ext_cmd;
 }
 
@@ -157,6 +186,15 @@ void ext_cmd_set_max_arg( ext_cmd_type * ext_cmd , int max_arg) {
   ext_cmd->max_arg = max_arg;
 }
 
+int ext_cmd_get_min_arg( const ext_cmd_type * ext_cmd ) {
+  return ext_cmd->min_arg;
+}
+ 
+int ext_cmd_get_max_arg( ext_cmd_type * ext_cmd ) {
+  return ext_cmd->max_arg;
+}
+
+
 
 static void ext_cmd_iset_argtype_string( ext_cmd_type * ext_cmd , int iarg , const char * arg_type) {
   config_item_types type = CONFIG_INVALID;
@@ -179,7 +217,7 @@ static void ext_cmd_validate( ext_cmd_type * ext_cmd ) {
     if (ext_cmd->executable != NULL) {
       if (util_is_executable( ext_cmd->executable ) && 
           (ext_cmd->module == ext_cmd->function) && 
-          (ext_cmd == NULL))
+          (ext_cmd->module == NULL))
         ext_cmd->valid = true;
     }
   } else {
@@ -201,7 +239,7 @@ static void ext_cmd_validate( ext_cmd_type * ext_cmd ) {
 
 
 
-ext_cmd_type * ext_cmd_config_alloc( config_type * config , const char * config_file) {
+ext_cmd_type * ext_cmd_config_alloc( const char * name , config_type * config , const char * config_file) {
   config_clear( config );
   config_parse( config , config_file , "--", NULL , NULL , true , true);
   {
@@ -211,7 +249,7 @@ ext_cmd_type * ext_cmd_config_alloc( config_type * config , const char * config_
       internal = config_iget_as_bool( config , INTERNAL_KEY , 0 , 0 );
     
     {
-      ext_cmd_type * ext_cmd = ext_cmd_alloc( internal );
+      ext_cmd_type * ext_cmd = ext_cmd_alloc( name , internal );
       
       if (config_item_set( config , MIN_ARG_KEY))
         ext_cmd_set_min_arg( ext_cmd , config_iget_as_int( config , MIN_ARG_KEY , 0 , 0 ));
@@ -257,6 +295,7 @@ void ext_cmd_free( ext_cmd_type * ext_cmd ) {
   util_safe_free( ext_cmd->function );
   util_safe_free( ext_cmd->executable );
   int_vector_free( ext_cmd->arg_types );
+  free( ext_cmd->name );
   free( ext_cmd );
 }
 
