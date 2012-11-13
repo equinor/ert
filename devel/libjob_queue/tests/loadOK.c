@@ -23,12 +23,13 @@
 
 
 
-bool loadConfig(config_type * config , const char * config_file) {
+bool loadConfig(config_type * config , const char * config_file , config_type * config_compiler) {
   bool OK = false;
   ext_cmd_type * cmd = ext_cmd_config_alloc( "NAME" , config , config_file);
   
   if (cmd != NULL) {
     OK = true;
+    ext_cmd_update_config_compiler( cmd , config_compiler );
     ext_cmd_free( cmd );
   } 
   
@@ -41,15 +42,17 @@ int main( int argc , char ** argv) {
   int status = 0;
   {
     config_type * config = ext_cmd_alloc_config();
+    config_type * config_compiler = config_alloc();
     int iarg;
     bool OK = true;
 
     for (iarg = 1; iarg < argc; iarg++) 
-      OK = OK && loadConfig(  config , argv[iarg]); 
+      OK = OK && loadConfig(  config , argv[iarg] , config_compiler); 
     
     if (!OK)
       status = 1;
     
+    config_free(config_compiler);
     config_free(config);
   }
   exit( status );

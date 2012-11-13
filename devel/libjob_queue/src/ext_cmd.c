@@ -115,20 +115,17 @@ static UTIL_SAFE_CAST_FUNCTION(ext_cmd , EXT_CMD_TYPE_ID );
 
 void ext_cmd_update_config_compiler( const ext_cmd_type * ext_cmd , config_type * config_compiler ) {
   config_schema_item_type * item = config_add_schema_item( config_compiler , ext_cmd->name , false , true );
-  int argc_max , argc_min;
-
   /* 
      Ensure that the arg_types mapping is at least as large as the
      max_arg value. The arg_type vector will be left padded with
      CONFIG_STRING values.
   */
-  
-
-  if (int_vector_size( ext_cmd->arg_types ) < argc_max)
-    int_vector_iset( ext_cmd->arg_types , ext_cmd->max_arg - 1 , CONFIG_STRING );
-  
-  //config_schema_item_set_argc_minmax( item , argc_min , argc_max , 
-  
+  {
+    int argc_types = int_vector_size( ext_cmd->arg_types );
+    config_item_types * arg_types = (config_item_types *) int_vector_get_ptr( ext_cmd->arg_types );
+    
+    config_schema_item_set_argc_minmax( item , ext_cmd->min_arg , ext_cmd->max_arg , argc_types , arg_types);
+  }
 }
 
 
