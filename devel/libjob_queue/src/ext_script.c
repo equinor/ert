@@ -23,6 +23,9 @@
 #include <int_vector.h>
 #include <util.h>
 #include <type_macros.h>
+#include <stringlist.h>
+#include <arg_pack.h>
+#include <vector.h>
 
 #include <config.h>
 
@@ -30,6 +33,15 @@
 #include <ext_script.h>
 
 
+
+struct cmd_struct {
+  const ext_cmd_type * ext_cmd;
+  stringlist_type    * arglist;
+};
+
+
+
 struct ext_script_struct {
-  bool valid;
+  config_type * config_compiler;
+  vector_type * cmd_list;
 };
