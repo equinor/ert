@@ -2321,6 +2321,7 @@ void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const ch
 
     enkf_main_link_current_fs__( enkf_main , case_path);
     enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
+    enkf_main_gen_data_special( enkf_main );
   }
 }
 
@@ -2402,10 +2403,8 @@ void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
 void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
   enkf_fs_type * new_fs = enkf_main_get_alt_fs( enkf_main , case_path , false , true );
   
-  if (new_fs != NULL) {
+  if (new_fs != NULL) 
     enkf_main_set_fs( enkf_main , new_fs , case_path);
-    enkf_main_gen_data_special( enkf_main );
-  }
   else {
     const char * ens_path = model_config_get_enspath( enkf_main->model_config );
     util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
