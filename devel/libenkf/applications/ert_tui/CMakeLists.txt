@@ -29,10 +29,7 @@ string(STRIP ${BUILD_TIME} BUILD_TIME)
 execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/git_commit.sh ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE GIT_COMMIT)
 string(STRIP ${GIT_COMMIT} GIT_COMMIT)
 
-set_source_files_properties( main.c PROPERTIES COMPILE_DEFINITIONS COMPILE_TIME_STAMP=\"${BUILD_TIME}\")
-
-add_definitions( -DSITE_CONFIG_FILE=\"${SITE_CONFIG_FILE}\")
-add_definitions( -DGIT_COMMIT=\"${GIT_COMMIT}\")
+set_source_files_properties( main.c PROPERTIES COMPILE_DEFINITIONS "COMPILE_TIME_STAMP=\"${BUILD_TIME}\";GIT_COMMIT=\"${GIT_COMMIT}\";SITE_CONFIG_FILE=\"${SITE_CONFIG_FILE}\"")
 
 add_executable( ert ${src_list} )
 target_link_libraries( ert enkf sched rms ecl geometry config plot job_queue analysis util )
