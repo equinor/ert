@@ -30,6 +30,9 @@ else()
    set( LIBRARY_TYPE STATIC )
 endif()     
 
+set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/lib)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/bin)
+
 #-----------------------------------------------------------------
 find_library( ZLIB_LIBRARY NAMES z )
 find_path( ZLIB_HEADER zlib.h /usr/include )

@@ -18,21 +18,26 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <job_queue.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <util.h>
+#include <stringlist.h>
+#include <vector.h>
+
+#include <job_queue.h>
 #include <ext_job.h>
 #include <ext_joblist.h>
-#include <stringlist.h>
-#include <config.h>
-#include <site_config.h>
-#include <local_driver.h>
 #include <lsf_driver.h>
 #include <rsh_driver.h>
+#include <local_driver.h>
 #include <queue_driver.h>
-#include <sys/types.h>
-#include <vector.h>
-#include <sys/stat.h>
-#include <lsf_driver.h>
+
+
+#include <config.h>
+
+#include <site_config.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
 
@@ -795,7 +800,7 @@ void site_config_init(site_config_type * site_config , const config_type * confi
   /* Parsing local options */
   if (config_item_set( config , MAX_RUNNING_LOCAL_KEY))
     site_config_set_max_running_local( site_config , config_iget_as_int( config , MAX_RUNNING_LOCAL_KEY , 0,0));
-  
+
   if (config_item_set(config , JOB_SCRIPT_KEY))
     site_config_set_job_script( site_config , config_iget( config , JOB_SCRIPT_KEY , 0 , 0));
   
@@ -1000,20 +1005,20 @@ void site_config_fprintf_config( const site_config_type * site_config , FILE * s
 
 
 void site_config_add_config_items( config_type * config , bool site_only) {
-  config_item_type * item;
+  config_schema_item_type * item;
 
-  item = config_add_item(config , QUEUE_SYSTEM_KEY , site_only , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item(config , QUEUE_SYSTEM_KEY , site_only , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
   {
     stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[2]) {"LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 2);
     stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST"  , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
     stringlist_type * local_dep  = stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1);
 
     if (site_only) {
-      config_item_set_common_selection_set( item , 3 , (const char *[3]) {LSF_DRIVER_NAME , LOCAL_DRIVER_NAME , RSH_DRIVER_NAME});
-      config_item_set_required_children_on_value( item , LSF_DRIVER_NAME   , lsf_dep);
-      config_item_set_required_children_on_value( item , RSH_DRIVER_NAME   , rsh_dep);
-      config_item_set_required_children_on_value( item , LOCAL_DRIVER_NAME , local_dep);
+      config_schema_item_set_common_selection_set( item , 3 , (const char *[3]) {LSF_DRIVER_NAME , LOCAL_DRIVER_NAME , RSH_DRIVER_NAME});
+      config_schema_item_set_required_children_on_value( item , LSF_DRIVER_NAME   , lsf_dep);
+      config_schema_item_set_required_children_on_value( item , RSH_DRIVER_NAME   , rsh_dep);
+      config_schema_item_set_required_children_on_value( item , LOCAL_DRIVER_NAME , local_dep);
     }
 
     stringlist_free(lsf_dep);
@@ -1021,8 +1026,8 @@ void site_config_add_config_items( config_type * config , bool site_only) {
     stringlist_free(local_dep);
   }
 
-  item = config_add_item(config , MAX_SUBMIT_KEY , false , false);   
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  item = config_add_schema_item(config , MAX_SUBMIT_KEY , false , false);   
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
   /*
@@ -1030,66 +1035,66 @@ void site_config_add_config_items( config_type * config , bool site_only) {
      run-time environment. Can unfortunately not use constructions
      like PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
   */
-  item = config_add_item(config , SETENV_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
-  config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
+  item = config_add_schema_item(config , SETENV_KEY , false , true);
+  config_schema_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
+  config_schema_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
   
-  item = config_add_item(config , UMASK_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item(config , UMASK_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
   /**
      UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
 
      Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
   */
-  item = config_add_item(config , UPDATE_PATH_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
-  config_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
+  item = config_add_schema_item(config , UPDATE_PATH_KEY , false , true);
+  config_schema_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
+  config_schema_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
 
-  item = config_add_item( config , LICENSE_PATH_KEY , site_only , false );
-  config_item_set_argc_minmax(item , 1 , 1, 0 , NULL );
+  item = config_add_schema_item( config , LICENSE_PATH_KEY , site_only , false );
+  config_schema_item_set_argc_minmax(item , 1 , 1, 0 , NULL );
 
 
   /*****************************************************************/
   /* Items related to running jobs with lsf/rsh/local ...          */
 
   /* These must be set IFF QUEUE_SYSTEM == LSF */
-  item = config_add_item(config , LSF_QUEUE_KEY     , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  item = config_add_schema_item(config , LSF_QUEUE_KEY     , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
-  item = config_add_item(config , LSF_RESOURCES_KEY  , false , false);
-  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  item = config_add_schema_item(config , LSF_RESOURCES_KEY  , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 
-  item = config_add_item(config , MAX_RUNNING_LSF_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  item = config_add_schema_item(config , MAX_RUNNING_LSF_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
-  item = config_add_item(config , LSF_SERVER_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_STRING});
+  item = config_add_schema_item(config , LSF_SERVER_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_STRING});
   
   /* These must be set IFF QUEUE_SYSTEM == RSH */
   if (!site_only)
-    config_add_item(config , RSH_HOST_KEY , false , false);  /* Only added when user parse. */
-  item = config_add_item(config , RSH_COMMAND_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
-  item = config_add_item(config , MAX_RUNNING_RSH_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+    config_add_schema_item(config , RSH_HOST_KEY , false , false);  /* Only added when user parse. */
+  item = config_add_schema_item(config , RSH_COMMAND_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
+  item = config_add_schema_item(config , MAX_RUNNING_RSH_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
   /* These must be set IFF QUEUE_SYSTEM == LOCAL */
-  item = config_add_item(config , MAX_RUNNING_LOCAL_KEY , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  item = config_add_schema_item(config , MAX_RUNNING_LOCAL_KEY , false , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
   /*****************************************************************/
-  item = config_add_item(config , QUEUE_OPTION_KEY , false , true);
-  config_item_set_argc_minmax(item , 3 , -1 , 0 , NULL);
+  item = config_add_schema_item(config , QUEUE_OPTION_KEY , false , true);
+  config_schema_item_set_argc_minmax(item , 3 , -1 , 0 , NULL);
 
-  item = config_add_item(config , JOB_SCRIPT_KEY , site_only , false);
-  config_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , JOB_SCRIPT_KEY , site_only , false);
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   
-  item = config_add_item(config , INSTALL_JOB_KEY , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , INSTALL_JOB_KEY , false , true);
+  config_schema_item_set_argc_minmax(item , 2 , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
 
   /* Items related to the reports. */
-  item = config_add_item( config , REPORT_SEARCH_PATH_KEY , false , true );
-  config_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
+  item = config_add_schema_item( config , REPORT_SEARCH_PATH_KEY , false , true );
+  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
 }

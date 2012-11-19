@@ -28,6 +28,6 @@ include_directories( ${libconfig_src_path} )
 
 add_subdirectory( src )
 add_subdirectory( applications )
-
+add_subdirectory( tests )
 #-----------------------------------------------------------------
 
