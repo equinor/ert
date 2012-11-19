@@ -1185,7 +1185,7 @@ void enkf_tui_plot_menu(void * arg) {
     menu_add_item(menu , "Ensemble plot"                                   , "eE" , enkf_tui_plot_ensemble        , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of ALL summary variables"          , "aA" , enkf_tui_plot_all_summary     , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of GEN_KW parameter"               , "g"  , enkf_tui_plot_GEN_KW          , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of ALL ALL GEN_KW parameters"      , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL GEN_KW parameters"      , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
     menu_add_item(menu , "Observation plot"                                , "oO" , enkf_tui_plot_observation     , enkf_main , NULL);
     menu_add_separator( menu );
     menu_add_item(menu , "Plot RFT and simulated pressure vs. TVD"         , "tT" , enkf_tui_plot_RFT_sim_all_TVD , enkf_main , NULL);
