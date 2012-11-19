@@ -9,7 +9,7 @@ add_executable( sched_summary.x sched_summary.c )
 
 set(program_list sched_summary.x)
 foreach(prog ${program_list})
-   target_link_libraries( ${prog} sched ecl util )
+   target_link_libraries( ${prog} sched ecl ert_util )
    #-----------------------------------------------------------------
    if (SCHED_INSTALL_PREFIX)
       set (destination ${SCHED_INSTALL_PREFIX}/bin)
