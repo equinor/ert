@@ -577,34 +577,68 @@ void enkf_tui_plot_all_GEN_KW(void * arg) {
 
 
 
+void enkf_tui_plot_histogram__(enkf_main_type * enkf_main , enkf_fs_type * fs , char * user_key , state_enum plot_state , int report_step){
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main );
+  const char                 * case_name       = enkf_main_get_current_fs( enkf_main );     
+  {
+    const enkf_config_node_type * config_node;
+    const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
+    char * key_index;
+    double * count        = util_calloc(ens_size , sizeof * count );
+    int iens;
+    char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , case_name , user_key );
+    plot_type * plot = enkf_tui_plot_alloc(plot_config , user_key , "#" ,user_key , plot_file);
+    
+    config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
+    if (config_node == NULL) {
+      fprintf(stderr,"** Sorry - could not find any nodes with the key:%s \n",user_key);
+      util_safe_free(key_index);
+      return;
+    }
+    {
+      int active_size = 0;
+      enkf_node_type * node = enkf_node_alloc( config_node );
+      node_id_type node_id = {.report_step = report_step , 
+			      .iens = 0 , 
+			      .state = plot_state };
+      for (iens = 0; iens < ens_size; iens++) {
+	node_id.iens = iens;
+	if (enkf_node_user_get( node , fs , key_index , node_id , &count[active_size]))
+	  active_size++;
+      }
+      enkf_node_free( node );
+      
+      {
+	plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , PLOT_HIST);
+	plot_dataset_append_vector_hist(d , active_size , count);
+      }
+      
+      enkf_tui_show_plot(plot , plot_config , plot_file);
+    }
+    free(count);
+    util_safe_free(key_index);
+  }
+}
 
 
 
 void enkf_tui_plot_histogram(void * arg) {
   enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
-  const time_map_type        * time_map        = enkf_fs_get_time_map( fs );
-  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main );
-  const char                 * case_name       = enkf_main_get_current_fs( enkf_main );     
+  enkf_fs_type  * fs                     = enkf_main_get_fs( enkf_main );
+  const time_map_type * time_map               = enkf_fs_get_time_map( fs );
   {
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
     const enkf_config_node_type * config_node;
     char       * user_key;
-    
-    
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     user_key = util_alloc_stdin_line();
     if (user_key != NULL) {
-      const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
       state_enum plot_state = ANALYZED; /* Compiler shut up */
       char * key_index;
       const int last_report = time_map_get_last_step( time_map );
-      double * count        = util_calloc(ens_size , sizeof * count );
-      int iens , report_step;
-      char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , case_name , user_key );
-      plot_type * plot = enkf_tui_plot_alloc(plot_config , user_key , "#" ,user_key , plot_file);
-
+      int report_step;
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
       if (config_node == NULL) {
         fprintf(stderr,"** Sorry - could not find any nodes with the key:%s \n",user_key);
@@ -614,34 +648,26 @@ void enkf_tui_plot_histogram(void * arg) {
       report_step = util_scanf_int_with_limits("Report step: ", PROMPT_LEN , 0 , last_report);
       {
         enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-        if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) 
+        if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
           plot_state = enkf_tui_util_scanf_state("Plot Forecast/Analyzed: [F|A]" , PROMPT_LEN , false);
-        else if (var_type == PARAMETER)
+	  enkf_tui_plot_histogram__(enkf_main , fs , user_key , plot_state, report_step);
+	}
+        else if (var_type == PARAMETER){
           plot_state = ANALYZED;
+	  gen_kw_config_type * gen_kw_config        = enkf_config_node_get_ref( config_node );
+	  stringlist_type * key_list                = gen_kw_config_alloc_name_list( gen_kw_config );
+	  int ikw;
+	  for (ikw = 0; ikw < stringlist_get_size( key_list ); ikw++) {
+	    char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , ikw );
+	    enkf_tui_plot_histogram__(enkf_main , fs , user_key , plot_state, report_step);
+	    free( user_key );
+	  }
+	  stringlist_free( key_list );
+	}
         else
           util_abort("%s: can not plot this type \n",__func__);
       }
-      {
-        int active_size = 0;
-        enkf_node_type * node = enkf_node_alloc( config_node );
-        node_id_type node_id = {.report_step = report_step , 
-                                .iens = 0 , 
-                                .state = plot_state };
-        for (iens = 0; iens < ens_size; iens++) {
-          node_id.iens = iens;
-          if (enkf_node_user_get( node , fs , key_index , node_id , &count[active_size]))
-            active_size++;
-        }
-        enkf_node_free( node );
-        
-        {
-          plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , PLOT_HIST);
-          plot_dataset_append_vector_hist(d , active_size , count);
-        }
-        
-        enkf_tui_show_plot(plot , plot_config , plot_file);
-      }
-      free(count);
+      
       util_safe_free(key_index);
     }
     util_safe_free( user_key );
@@ -1159,7 +1185,7 @@ void enkf_tui_plot_menu(void * arg) {
     menu_add_item(menu , "Ensemble plot"                                   , "eE" , enkf_tui_plot_ensemble        , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of ALL summary variables"          , "aA" , enkf_tui_plot_all_summary     , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of GEN_KW parameter"               , "g"  , enkf_tui_plot_GEN_KW          , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of ALL ALL GEN_KW parameters"      , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL GEN_KW parameters"      , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
     menu_add_item(menu , "Observation plot"                                , "oO" , enkf_tui_plot_observation     , enkf_main , NULL);
     menu_add_separator( menu );
     menu_add_item(menu , "Plot RFT and simulated pressure vs. TVD"         , "tT" , enkf_tui_plot_RFT_sim_all_TVD , enkf_main , NULL);
