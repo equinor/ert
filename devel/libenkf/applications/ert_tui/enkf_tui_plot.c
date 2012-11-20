@@ -612,9 +612,11 @@ void enkf_tui_plot_histogram__(enkf_main_type * enkf_main , enkf_fs_type * fs , 
       {
 	plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , PLOT_HIST);
 	plot_dataset_append_vector_hist(d , active_size , count);
+	if(plot_dataset_get_size(d) > 0){
+	  enkf_tui_show_plot(plot , plot_config , plot_file);}
+	else{
+	  fprintf(stderr,"** There is no data to plot. Are you trying to plot analyzed data after a forward run with option x? \n");}
       }
-      
-      enkf_tui_show_plot(plot , plot_config , plot_file);
     }
     free(count);
     util_safe_free(key_index);
