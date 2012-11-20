@@ -33,15 +33,42 @@
 #include <ext_script.h>
 
 
+#define CMD_TYPE_ID           66153
+#define EXT_SCRIPT_TYPE_ID  6762081
 
 struct cmd_struct {
+  UTIL_TYPE_ID_DECLARATION;
   const ext_cmd_type * ext_cmd;
   stringlist_type    * arglist;
-};
+} cmd_type;
 
 
 
 struct ext_script_struct {
+  UTIL_TYPE_ID_DECLARATION;
   config_type * config_compiler;
   vector_type * cmd_list;
 };
+
+
+static cmd_type * cmd_alloc( const ext_cmd_type * ext_cmd , const stringlist_type * arglist) {
+  cmd_type * cmd = util_malloc( sizeof * cmd );
+  UTIL_TYTPE_ID_INIT(cmd , CMD_TYPE_ID );
+  cmd->ext_cmd = ext_cmd;
+  cmd->arglist = stringlist_alloc_deep_copy( arglist );
+  return cmd;
+}
+
+static UTIL_SAFE_CAST_FUNCTION( cmd , CMD_TYPE_ID );
+
+static void cmd_free( cmd_type * cmd ){ 
+  stringlist_free( cmd->arglist );
+  free( cmd );
+}
+
+static void cmd_free__( void * arg ) {
+  cmd_type * cmd = cmd_safe_cast( arg );
+  cmd_free( cmd );
+}
+
+/*****************************************************************/
