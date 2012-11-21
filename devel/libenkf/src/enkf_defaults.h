@@ -252,6 +252,7 @@
   Name of the default case.
 */
 
+#define CASE_LOG     "case-log"
 #define CURRENT_CASE "current"
 #define DEFAULT_CASE "default"
 
