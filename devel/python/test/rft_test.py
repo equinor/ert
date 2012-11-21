@@ -19,7 +19,7 @@
 import ert.ecl.ecl as ecl
 
 
-rft = ecl.EclRFTFile( "data/eclipse/case/ECLIPSE.RFT" )
+rft = ecl.EclRFTFile( "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.RFT" )
 
 for node in rft:
     print rft

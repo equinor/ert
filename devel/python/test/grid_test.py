@@ -28,9 +28,9 @@ from   ert.util.tvector import DoubleVector
 from   numpy import isnan
 from   test_util import approx_equal, approx_equalv
 
-egrid_file  = "data/eclipse/case/ECLIPSE.EGRID"
-grid_file   = "data/eclipse/case/ECLIPSE.GRID"
-grdecl_file = "data/eclipse/case/include/example_grid_sim.GRDECL"    
+egrid_file  = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
+grid_file   = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.GRID"
+grdecl_file = "test-data/Statoil/ECLIPSE/Gurbat/include/example_grid_sim.GRDECL"    
 
 class GridTest( unittest.TestCase ):
     def setUp(self):
@@ -43,8 +43,7 @@ class GridTest( unittest.TestCase ):
 
 
     def testEGRID( self ):
-        #grid = ecl.EclGrid( egrid_file )
-        grid = ecl.EclGrid( "/tmp/ECLIPSE.EGRID" )
+        grid = ecl.EclGrid( egrid_file )
         self.assertTrue( grid )
 
 
@@ -133,7 +132,7 @@ class GridTest( unittest.TestCase ):
 
     def testCoarse(self):
         testGRID = True
-        g1 = ecl.EclGrid( "data/eclipse/Coarse/LGC_TESTCASE2.EGRID" )
+        g1 = ecl.EclGrid( "test-data/Statoil/ECLIPSE/LGCcase/LGC_TESTCASE2.EGRID" )
         
         g1.save_EGRID( "/tmp/LGC.EGRID" )
         g2 = ecl.EclGrid( "/tmp/LGC.EGRID")
@@ -157,11 +156,11 @@ class GridTest( unittest.TestCase ):
         self.assertFalse( grid.dual_grid )
         self.assertTrue( grid.nactive_fracture == 0 )
         
-        dgrid = ecl.EclGrid( "data/eclipse/DualPoro/DUALPOR_MSW.EGRID" )
+        dgrid = ecl.EclGrid( "test-data/Statoil/ECLIPSE/DualPoro/DUALPOR_MSW.EGRID" )
         self.assertTrue( dgrid.nactive == dgrid.nactive_fracture )
         self.assertTrue( dgrid.nactive == 46118 )
 
-        dgrid2 = ecl.EclGrid( "data/eclipse/DualPoro/DUALPOR_MSW.GRID" )
+        dgrid2 = ecl.EclGrid( "test-data/Statoil/ECLIPSE/DualPoro/DUALPOR_MSW.GRID" )
         self.assertTrue( dgrid.nactive == dgrid.nactive_fracture )
         self.assertTrue( dgrid.nactive == 46118 )        
         self.assertTrue( dgrid.equal( dgrid2 ))
@@ -170,7 +169,7 @@ class GridTest( unittest.TestCase ):
         # The DUAL_DIFF grid has been manipulated to create a
         # situation where some cells are only matrix active, and some
         # cells are only fracture active.
-        dgrid = ecl.EclGrid( "data/eclipse/DualPoro/DUAL_DIFF.EGRID" )
+        dgrid = ecl.EclGrid( "test-data/Statoil/ECLIPSE/DualPoro/DUAL_DIFF.EGRID" )
         self.assertTrue( dgrid.nactive == 106 )
         self.assertTrue( dgrid.nactive_fracture == 105 )
 
@@ -193,35 +192,6 @@ class GridTest( unittest.TestCase ):
         
 
 
-# def save_grdecl(grid , grdecl_file):
-#     fileH = open(grdecl_file , "w")
-#     grid.save_grdecl( fileH )
-#     fileH.close()
-# 
-#     load_grdecl( grdecl_file )
-# 
-# init_file   = EclFile( "data/eclipse/case/ECLIPSE.INIT" )
-# egrid_file  = "data/eclipse/case/ECLIPSE.EGRID"
-# grid_file   = "data/eclipse/case/ECLIPSE.GRID"
-# grdecl_file = "data/eclipse/case/include/example_grid_sim.GRDECL"    
-# 
-# grid = load_grdecl( grdecl_file )
-# grid = load_grid( grid_file )
-# grid = load_egrid( egrid_file )
-# 
-# save_grdecl( grid , "/tmp/eclipse.grdecl" )
-# 
-# #print "Thickness(10,11,12): %g" % grid.cell_dz( ijk=(10,11,12) )
-# #
-# #permx_column = DoubleVector( -999 )
-# #grid.load_column( init_file.iget_named_kw( "PERMX" , 0 ) , 5 , 5 , permx_column)
-# #permx_column.printf()
-# #
-# #print "top2    : %g   depth(10,10,0)    : %g " % (grid.top( 10, 10) , grid.depth( ijk=(10,10,0)))
-# #print "bottom2 : %g   depth(10,10,nz-1) : %g " % (grid.bottom( 10 , 10 ) , grid.depth( ijk=(10,10,grid.nz - 1)))
-# #
-# #kw_list = init_file[1:7]
-# #print kw_list
 
 
 def fast_suite():
