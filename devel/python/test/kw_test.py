@@ -70,7 +70,7 @@ class KWTest( unittest.TestCase ):
         self.assertFalse( kw1.equal(kw2) )
         self.assertFalse( kw1.equal_numeric( kw2 ))
         
-        unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
         file = ecl.EclFile( unrst_file )
         kw1 = file["PRESSURE"][0]
         kw2 = kw1.deep_copy()
@@ -118,7 +118,7 @@ class KWTest( unittest.TestCase ):
 
             
     def testSubCopy(self):
-        unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
         file = ecl.EclFile( unrst_file )
         swat = file["SWAT"][0]
         
