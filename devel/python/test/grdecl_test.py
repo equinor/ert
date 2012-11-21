@@ -22,7 +22,7 @@ import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv, file_equal
 
 
-src_file = "data/eclipse/case/include/example_permx.GRDECL"
+src_file = "test-data/Statoil/ECLIPSE/Gurbat/include/example_permx.GRDECL"
 
 
 class GRDECLTest( unittest.TestCase ):
@@ -70,7 +70,7 @@ class GRDECLTest( unittest.TestCase ):
         
         
     def test_fseek2(self):
-        test_src = "data/eclipse/test/test.grdecl"
+        test_src = "test-data/local/ECLIPSE/grdecl-test/test.grdecl"
         # Test kw at the the very start
         file = open( test_src , "r")
         self.assertTrue( ecl.EclKW.fseek_grdecl( file , "PERMX" ) )
@@ -92,7 +92,7 @@ class GRDECLTest( unittest.TestCase ):
 
 
     def test_fseek_dos(self):
-        test_src = "data/eclipse/test/test.grdecl_dos"  # File formatted with \r\n line endings.
+        test_src = "test-data/local/ECLIPSE/grdecl-test/test.grdecl_dos"  # File formatted with \r\n line endings.
         # Test kw at the the very start
         file = open( test_src , "r")
         self.assertTrue( ecl.EclKW.fseek_grdecl( file , "PERMX" ) )
