@@ -22,7 +22,8 @@ import ert
 import ert.util.latex as latex
 from   test_util import approx_equal, approx_equalv
 
-path = "data/util/latex"
+local_path   = "test-data/local/util/latex"
+statoil_path = "test-data/Statoil/util/latex"
 
 class LaTeXTest( unittest.TestCase ):
     def setUp(self):
@@ -30,21 +31,21 @@ class LaTeXTest( unittest.TestCase ):
 
 
     def test1(self):
-        lx = latex.LaTeX( "%s/test_OK.tex" % path )
+        lx = latex.LaTeX( "%s/test_OK.tex" % local_path )
         self.assertTrue( lx.compile( ) )
 
-        lx = latex.LaTeX( "%s/test_error.tex" % path )
+        lx = latex.LaTeX( "%s/test_error.tex" % local_path )
         self.assertFalse( lx.compile( ) )
 
 
 
     def test_cleanup( self ):
-        lx = latex.LaTeX( "%s/report_OK.tex" % path , in_place = True )
+        lx = latex.LaTeX( "%s/report_OK.tex" % statoil_path , in_place = True )
         self.assertTrue( lx.compile() )
         for ext in ["log" , "aux" , "nav" , "out" , "snm" , "toc"]:
-            self.assertFalse( os.path.exists( "%s/report_OK.%s" % (path , ext) ))
+            self.assertFalse( os.path.exists( "%s/report_OK.%s" % (statoil_path , ext) ))
 
-        lx = latex.LaTeX( "%s/report_OK.tex" % path , in_place = False )
+        lx = latex.LaTeX( "%s/report_OK.tex" % statoil_path , in_place = False )
         run_path = lx.runpath
         self.assertTrue( lx.compile() )
         self.assertFalse( os.path.exists( run_path ) )
@@ -52,11 +53,11 @@ class LaTeXTest( unittest.TestCase ):
 
 
     def test_report(self):
-        lx = latex.LaTeX( "%s/report_error.tex" % path )
+        lx = latex.LaTeX( "%s/report_error.tex" % statoil_path )
         lx.timeout = 4
         self.assertFalse( lx.compile() )
 
-        lx = latex.LaTeX( "%s/report_OK.tex" % path  )
+        lx = latex.LaTeX( "%s/report_OK.tex" % statoil_path  )
         self.assertTrue( lx.compile() )
                               
 
