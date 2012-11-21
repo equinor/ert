@@ -44,12 +44,18 @@ struct cmd_struct {
 
 
 
+
+
 struct ext_script_struct {
   UTIL_TYPE_ID_DECLARATION;
-  config_type * config_compiler;
-  vector_type * cmd_list;
+  time_t                 compile_time;
+  bool                   compiled;
+  char                 * src_file; 
+  config_type          * config_compiler;
+  vector_type          * cmd_list;
 };
 
+/*****************************************************************/
 
 static cmd_type * cmd_alloc( const ext_cmd_type * ext_cmd , const stringlist_type * arglist) {
   cmd_type * cmd = util_malloc( sizeof * cmd );
@@ -72,3 +78,8 @@ static void cmd_free__( void * arg ) {
 }
 
 /*****************************************************************/
+
+
+ext_script_type * ext_script_alloc( const char * src_file ) {
+  
+}
