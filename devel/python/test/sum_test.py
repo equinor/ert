@@ -33,11 +33,22 @@ def sum_get(*args):
     vec = sum[key]
 
 
+
+
 class SumTest( unittest.TestCase ):
+
     def setUp(self):
         self.case = case
         self.sum = ecl.EclSum( self.case )
+        self.file_list = []
 
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
 
     def test_load(self):
         self.assertTrue( self.sum , "Load failed")

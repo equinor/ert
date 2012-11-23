@@ -20,6 +20,7 @@ import ert
 import ert.ecl.ecl as ecl
 import datetime
 import time
+import os
 import unittest
 import ert
 import ert.ecl.ecl as ecl
@@ -33,9 +34,17 @@ grid_file   = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.GRID"
 grdecl_file = "test-data/Statoil/ECLIPSE/Gurbat/include/example_grid_sim.GRDECL"    
 
 class GridTest( unittest.TestCase ):
-    def setUp(self):
-        pass
 
+    def setUp(self):
+        self.file_list = []
+
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
 
     def testGRID( self ):
         grid = ecl.EclGrid( grid_file )
@@ -69,6 +78,7 @@ class GridTest( unittest.TestCase ):
         grid = ecl.EclGrid.create_rectangular((9,9,9) , (a1,a2,a3))
         grid.save_EGRID( "/tmp/rect.EGRID" )
         grid2 = ecl.EclGrid( "/tmp/rect.EGRID")
+        self.addFile( "/tmp/rect.EGRID" )
         self.assertTrue( grid )
         self.assertTrue( grid2 )
         
@@ -113,6 +123,10 @@ class GridTest( unittest.TestCase ):
 
 
     def testSave(self):
+        self.addFile( "/tmp/test.EGRID" )
+        self.addFile( "/tmp/test.GRID" )
+        self.addFile( "/tmp/test.grdecl" )
+
         g1 = ecl.EclGrid( egrid_file )
 
         g1.save_EGRID( "/tmp/test.EGRID" )
@@ -131,6 +145,9 @@ class GridTest( unittest.TestCase ):
 
 
     def testCoarse(self):
+        self.addFile( "/tmp/LGC.EGRID" )
+        self.addFile( "/tmp/LGC.GRID" )
+
         testGRID = True
         g1 = ecl.EclGrid( "test-data/Statoil/ECLIPSE/LGCcase/LGC_TESTCASE2.EGRID" )
         
@@ -183,6 +200,7 @@ class GridTest( unittest.TestCase ):
         self.assertTrue( dgrid.get_active_index( global_index = 106 ) == -1)
         self.assertTrue( dgrid.get_global_index1F( 2 ) == 5 )
 
+        self.addFile( "/tmp/DUAL_DIFF.GRID" )
         dgrid.save_GRID("/tmp/DUAL_DIFF.GRID")
         dgrid2 = ecl.EclGrid( "/tmp/DUAL_DIFF.GRID" )
         self.assertTrue( dgrid.equal( dgrid2 ))
