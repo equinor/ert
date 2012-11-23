@@ -42,7 +42,7 @@ class KWTest( unittest.TestCase ):
         pass
 
     def fortio_size( self ):
-        unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
         file = ecl.EclFile( unrst_file )
         size = 0
         for kw in file:

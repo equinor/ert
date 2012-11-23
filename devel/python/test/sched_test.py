@@ -22,7 +22,7 @@ import ert.sched.sched as sched
 from   test_util import approx_equal, approx_equalv, file_equal
 
 
-src_file = "data/eclipse/case/target.SCH"
+src_file = "test-data/Statoil/ECLIPSE/Gurbat/target.SCH"
 start_time = datetime.date(2000 , 1, 1)
 
 class SchedFileTest( unittest.TestCase ):

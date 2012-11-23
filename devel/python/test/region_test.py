@@ -22,7 +22,7 @@ import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv
 
 
-case = "data/eclipse/case/ECLIPSE"
+case = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE"
 
 
 class RegionTest( unittest.TestCase ):

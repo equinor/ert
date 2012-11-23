@@ -27,8 +27,8 @@ import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv, file_equal
 
 
-file     = "data/eclipse/case/ECLIPSE.UNRST"
-fmt_file = "data/eclipse/case/ECLIPSE.FUNRST"
+file     = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
+fmt_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.FUNRST"
 
 def load_missing():
     ecl.EclFile( "No/Does/not/exist")
@@ -39,10 +39,14 @@ class FileTest( unittest.TestCase ):
     def setUp(self):
         pass
 
-    #def tearDown(self):
-    #    if os.path.exists( "/tmp/ECLIPSE.UNRST"):
-    #        os.unlink("/tmp/ECLIPSE.UNRST")
 
+    def tearDown(self):
+        if os.path.exists( "/tmp/ECLIPSE.UNRST"):
+            os.unlink("/tmp/ECLIPSE.UNRST")
+
+        if os.path.exists( "/tmp/ECLIPSE.FUNRST"):
+            os.unlink("/tmp/ECLIPSE.FUNRST")
+            
 
     def testIOError(self):
         self.assertRaises( IOError , load_missing)
