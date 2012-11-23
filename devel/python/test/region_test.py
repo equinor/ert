@@ -26,6 +26,7 @@ case = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE"
 
 
 class RegionTest( unittest.TestCase ):
+    
     def setUp(self):
         self.grid      = ecl.EclGrid( case )
         self.rst_file  = ecl.EclFile( "%s.UNRST" % case )
