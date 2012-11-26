@@ -24,16 +24,25 @@ import ert.ecl.ecl as ecl
 import sys
 
 
-unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
 
 def open_noex():
     f = ecl.FortIO.reader("/tmp/does/notExist")
 
 
 class FortIOTest( unittest.TestCase ):
-    
-    def setUp( self ):
-        pass
+
+    def setUp(self):
+        self.file_list = []
+
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
+
 
     def test_open_read(self):
         f = ecl.FortIO.reader(unrst_file)
@@ -41,15 +50,16 @@ class FortIOTest( unittest.TestCase ):
 
 
     def test_open_write(self):
+        self.addFile( "/tmp/newfile" )
         f = ecl.FortIO.writer("/tmp/newfile")
         f.close()
-        os.unlink("/tmp/newfile")
         self.assertTrue( True )
 
     def test_noex(self):
         self.assertRaises( IOError , open_noex)
 
     def test_kw(self):
+        self.addFile( "/tmp/test" )
         kw1 = ecl.EclKW.create( "KW1" , 2 , ecl.ECL_INT_TYPE )
         kw2 = ecl.EclKW.create( "KW2" , 2 , ecl.ECL_INT_TYPE )
 
@@ -70,7 +80,6 @@ class FortIOTest( unittest.TestCase ):
         k1 = ecl.EclKW.fread( f )
         k2 = ecl.EclKW.fread( f )
         f.close()
-        os.unlink( "/tmp/test" )
         
         self.assertTrue( k1.equal( kw1 ))
         self.assertTrue( k2.equal( kw2 ))
@@ -79,9 +88,9 @@ class FortIOTest( unittest.TestCase ):
 
 def fast_suite():
     suite = unittest.TestSuite()
-    #suite.addTest( FortIOTest('test_open_read'))
-    #suite.addTest( FortIOTest('test_open_write'))
-    #suite.addTest( FortIOTest('test_noex'))
+    suite.addTest( FortIOTest('test_open_read'))
+    suite.addTest( FortIOTest('test_open_write'))
+    suite.addTest( FortIOTest('test_noex'))
     suite.addTest( FortIOTest('test_kw'))
     return suite
 
