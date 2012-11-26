@@ -56,7 +56,7 @@ void enkf_tui_simple_menu(void * arg) {
     menu_item_disable( ES_item );
   }
   menu_add_separator( menu );
-  menu_add_item(menu , "Plot results"                          , "pP" , enkf_tui_plot_menu   , enkf_main , NULL);
+  menu_add_item(menu , "Plot results"                          , "pP" , enkf_tui_plot_simple_menu   , enkf_main , NULL);
   {
       menu_item_type * menu_item = menu_add_item( menu , "Create pdf reports" , "rR" , enkf_tui_plot_reports , enkf_main , NULL );
       ert_report_list_type * report_list = enkf_main_get_report_list( enkf_main );
