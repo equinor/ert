@@ -120,7 +120,7 @@ extern "C" {
                                                            int              start_report         ,
                                                            state_enum       start_state);
 
-  void enkf_main_run_smoother(enkf_main_type * enkf_main , bool initialize , const char * target_fs_name , bool rerun);
+  void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool rerun);
 
   void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );

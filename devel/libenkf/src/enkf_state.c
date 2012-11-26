@@ -148,6 +148,7 @@ struct enkf_state_struct {
   shared_info_type      * shared_info;             /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;               /* Private config information for this member; not updated during a simulation. */
   rng_type              * rng;
+  bool                    initialized;
 };
 
 /*****************************************************************/
@@ -278,7 +279,9 @@ static void shared_info_free(shared_info_type * shared_info) {
 /*****************************************************************/
 /** Helper classes complete - starting on the enkf_state proper object. */
 /*****************************************************************/
-
+void enkf_state_set_initialized(enkf_state_type * enkf_state){
+  enkf_state->initialized = true;
+}
 
 
 void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list) {
@@ -291,6 +294,7 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
       enkf_node_store( param_node , fs , true , node_id);
     }
   }
+  enkf_state_set_initialized(enkf_state);
 }
 
 
@@ -331,7 +335,9 @@ member_config_type * enkf_state_get_member_config(const enkf_state_type * enkf_s
   return enkf_state->my_config;
 }
 
-
+bool enkf_state_get_initialized(const enkf_state_type * enkf_state) {
+  return enkf_state->initialized;
+}
 
 static UTIL_SAFE_CAST_FUNCTION( enkf_state , ENKF_STATE_TYPE_ID )
 
@@ -469,7 +475,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->subst_list        = subst_list_alloc( subst_parent );
   enkf_state->rng               = rng_alloc( rng_get_type( main_rng ) , INIT_DEFAULT ); 
   rng_rng_init( enkf_state->rng , main_rng );  /* <- Not thread safe */
-  
+  enkf_state->initialized       = false;
   /*
     The user MUST specify an INIT_FILE, and for the first timestep the
     <INIT> tag in the data file will be replaced by an 
