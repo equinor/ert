@@ -107,7 +107,7 @@ void enkf_tui_run_restart__(void * enkf_main) {
 
 void enkf_tui_run_smoother__(void * arg) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
-  enkf_main_run_smoother(enkf_main , true , "AUTO-SMOOTHER" , true );
+  enkf_main_run_smoother(enkf_main , "AUTO-SMOOTHER" , true );
 }
 
 
