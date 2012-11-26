@@ -238,7 +238,7 @@
 #define DEFAULT_START_TAG "<"
 #define DEFAULT_END_TAG   ">"
 
-#define DEFAULT_MANUAL_URL "http://ert.nr.no/index.php/User_Manual"
+#define DEFAULT_MANUAL_URL "http://ert.nr.no/wiki/index.php/User_Manual"
 #define DEFAULT_BROWSER    "firefox"
 
 /*****************************************************************/
