@@ -29,4 +29,5 @@ void    enkf_tui_help_menu_rank(void * );
 void    enkf_tui_help_menu_export(void * );
 void    enkf_tui_help_menu_table(void * );
 void    enkf_tui_help_menu_misc(void * );
+void    enkf_tui_help_menu_simple(void * );
 #endif
