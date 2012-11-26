@@ -27,8 +27,8 @@ import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv, file_equal
 
 
-file     = "data/eclipse/case/ECLIPSE.UNRST"
-fmt_file = "data/eclipse/case/ECLIPSE.FUNRST"
+file     = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
+fmt_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.FUNRST"
 
 def load_missing():
     ecl.EclFile( "No/Does/not/exist")
@@ -37,27 +37,34 @@ def load_missing():
 class FileTest( unittest.TestCase ):
 
     def setUp(self):
-        pass
+        self.file_list = []
 
-    #def tearDown(self):
-    #    if os.path.exists( "/tmp/ECLIPSE.UNRST"):
-    #        os.unlink("/tmp/ECLIPSE.UNRST")
 
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
+            
 
     def testIOError(self):
         self.assertRaises( IOError , load_missing)
 
     
     def test_fwrite( self ):
+        self.addFile( "/tmp/ECLIPSE.UNRST" )
         rst_file = ecl.EclFile( file )
         fortio = ecl.FortIO.writer("/tmp/ECLIPSE.UNRST")
         rst_file.fwrite( fortio )
         fortio.close()
         rst_file.close()
         self.assertTrue( file_equal( "/tmp/ECLIPSE.UNRST" , file ) ) 
-        
+
 
     def test_save(self):
+        self.addFile( "/tmp/ECLIPSE.UNRST" )
         shutil.copyfile( file , "/tmp/ECLIPSE.UNRST" )
         rst_file = ecl.EclFile( "/tmp/ECLIPSE.UNRST" , read_only = False )
         swat0 = rst_file["SWAT"][0]
@@ -83,6 +90,7 @@ class FileTest( unittest.TestCase ):
         
 
     def test_save_fmt(self):
+        self.addFile( "/tmp/ECLIPSE.FUNRST" )
         shutil.copyfile( fmt_file , "/tmp/ECLIPSE.FUNRST" )
         rst_file = ecl.EclFile( "/tmp/ECLIPSE.FUNRST" , read_only = False )
         swat0 = rst_file["SWAT"][0]

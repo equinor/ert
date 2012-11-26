@@ -15,6 +15,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import os
 import datetime
 import unittest
 import ert
@@ -22,13 +23,21 @@ import ert.sched.sched as sched
 from   test_util import approx_equal, approx_equalv, file_equal
 
 
-src_file = "data/eclipse/case/target.SCH"
+src_file = "test-data/Statoil/ECLIPSE/Gurbat/target.SCH"
 start_time = datetime.date(2000 , 1, 1)
 
 class SchedFileTest( unittest.TestCase ):
     def setUp(self):
         self.sched_file = sched.SchedFile( src_file , start_time )
+        self.file_list = []
 
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
 
     def test_load(self):
         self.assertTrue( self.sched_file , "Load failed")
@@ -43,6 +52,9 @@ class SchedFileTest( unittest.TestCase ):
         sched_file2 = sched.SchedFile( "/tmp/schedule1" , start_time)
         sched_file2.write( "/tmp/schedule2" , 62)
         self.assertTrue( file_equal( "/tmp/schedule1" , "/tmp/schedule2") ) 
+
+        self.addFile( "/tmp/schedule1" )
+        self.addFile( "/tmp/schedule2" )
 
 
 def fast_suite():
