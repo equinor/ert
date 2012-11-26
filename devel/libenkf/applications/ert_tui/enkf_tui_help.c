@@ -70,7 +70,19 @@ void enkf_tui_help_menu_main(void * arg) {
 }
 
 void enkf_tui_help_manual_cases( void * arg) {
-  system("firefox http://ert.nr.no/index.php/User_Manual#Manage_cases &");
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  const site_config_type * site_config = enkf_main_get_site_config ( enkf_main );
+  const char * manual_url = site_config_get_manual_url( site_config );
+  const char * browser = getenv("BROWSER");
+
+  if (browser == NULL)
+    browser = site_config_get_default_browser( site_config );
+  
+  {
+    char * cmd = util_alloc_sprintf("%s %s%s &" , browser , manual_url , "#Manage_cases");
+    system(cmd);
+    free( cmd );
+  } 
 }
 
 void enkf_tui_help_menu_cases(void * arg) {
@@ -92,7 +104,19 @@ void enkf_tui_help_menu_cases(void * arg) {
 }
 
 void enkf_tui_help_manual_run( void * arg) {
-  system("firefox http://ert.nr.no/index.php/User_Manual#Run_or_restart_experiment &");
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  const site_config_type * site_config = enkf_main_get_site_config ( enkf_main );
+  const char * manual_url = site_config_get_manual_url( site_config );
+  const char * browser = getenv("BROWSER");
+  
+  if (browser == NULL)
+    browser = site_config_get_default_browser( site_config );
+  
+  {
+    char * cmd = util_alloc_sprintf("%s %s%s &" , browser , manual_url , "#Run_or_restart_experiment");
+    system(cmd);
+    free( cmd );
+  } 
 }
 
 void enkf_tui_help_menu_run(void * arg) {
@@ -114,7 +138,19 @@ void enkf_tui_help_menu_run(void * arg) {
 }
 
 void enkf_tui_help_manual_plot( void * arg) {
-  system("firefox http://ert.nr.no/index.php/User_Manual#Plot_Results &");
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  const site_config_type * site_config = enkf_main_get_site_config ( enkf_main );
+  const char * manual_url = site_config_get_manual_url( site_config );
+  const char * browser = getenv("BROWSER");
+  
+  if (browser == NULL)
+    browser = site_config_get_default_browser( site_config );
+  
+  {
+    char * cmd = util_alloc_sprintf("%s %s%s &" , browser , manual_url , "#Plot_Results");
+    system(cmd);
+    free( cmd );
+  } 
 }
 
 void enkf_tui_help_menu_plot(void * arg) {
@@ -136,7 +172,19 @@ void enkf_tui_help_menu_plot(void * arg) {
 }
 
 void enkf_tui_help_manual_rank( void * arg) {
-  system("firefox http://ert.nr.no/index.php/User_Manual#Rank_Results &");
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  const site_config_type * site_config = enkf_main_get_site_config ( enkf_main );
+  const char * manual_url = site_config_get_manual_url( site_config );
+  const char * browser = getenv("BROWSER");
+  
+  if (browser == NULL)
+    browser = site_config_get_default_browser( site_config );
+  
+  {
+    char * cmd = util_alloc_sprintf("%s %s%s &" , browser , manual_url , "#Rank_Results");
+    system(cmd);
+    free( cmd );
+  } 
 }
 
 void enkf_tui_help_menu_rank(void * arg) {
@@ -158,7 +206,19 @@ void enkf_tui_help_menu_rank(void * arg) {
 }
 
 void enkf_tui_help_manual_export( void * arg) {
-  system("firefox http://ert.nr.no/index.php/User_Manual#Export_data_to_other_formats &");
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  const site_config_type * site_config = enkf_main_get_site_config ( enkf_main );
+  const char * manual_url = site_config_get_manual_url( site_config );
+  const char * browser = getenv("BROWSER");
+  
+  if (browser == NULL)
+    browser = site_config_get_default_browser( site_config );
+  
+  {
+    char * cmd = util_alloc_sprintf("%s %s%s &" , browser , manual_url , "#Export_data_to_other_formats");
+    system(cmd);
+    free( cmd );
+  } 
 }
 
 void enkf_tui_help_menu_export(void * arg) {
@@ -180,7 +240,19 @@ void enkf_tui_help_menu_export(void * arg) {
 }
 
 void enkf_tui_help_manual_table( void * arg) {
-  system("firefox http://ert.nr.no/index.php/User_Manual#Table_of_results &");
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  const site_config_type * site_config = enkf_main_get_site_config ( enkf_main );
+  const char * manual_url = site_config_get_manual_url( site_config );
+  const char * browser = getenv("BROWSER");
+  
+  if (browser == NULL)
+    browser = site_config_get_default_browser( site_config );
+  
+  {
+    char * cmd = util_alloc_sprintf("%s %s%s &" , browser , manual_url , "#Table_of_results");
+    system(cmd);
+    free( cmd );
+  } 
 }
 
 void enkf_tui_help_menu_table(void * arg) {
@@ -202,7 +274,19 @@ void enkf_tui_help_menu_table(void * arg) {
 }
 
 void enkf_tui_help_manual_misc( void * arg) {
-  system("firefox http://ert.nr.no/index.php/User_Manual#Table_of_results &");
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  const site_config_type * site_config = enkf_main_get_site_config ( enkf_main );
+  const char * manual_url = site_config_get_manual_url( site_config );
+  const char * browser = getenv("BROWSER");
+  
+  if (browser == NULL)
+    browser = site_config_get_default_browser( site_config );
+  
+  {
+    char * cmd = util_alloc_sprintf("%s %s%s &" , browser , manual_url , "#Miscellaneous");
+    system(cmd);
+    free( cmd );
+  } 
 }
 
 void enkf_tui_help_menu_misc(void * arg) {
@@ -222,4 +306,3 @@ void enkf_tui_help_menu_misc(void * arg) {
     menu_free(menu);
   }
 }
-
