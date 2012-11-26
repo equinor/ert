@@ -306,3 +306,22 @@ void enkf_tui_help_menu_misc(void * arg) {
     menu_free(menu);
   }
 }
+
+void enkf_tui_help_menu_simple(void * arg) {
+  
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
+  {
+    const char * plot_path  =  plot_config_get_path( plot_config );
+    util_make_path( plot_path );
+  }
+  
+  {
+    menu_type * menu = menu_alloc("Help: Simple menu" , "Back" , "bB");
+    menu_add_helptext(menu , "The top four options in the simple menu will run eclipse simulations. Option s: Sensitivity run: No data conditioning, will initialize all parameters and run one eclipse simulation for each set of different parameters. e: Assimilation run: EnKF updates, will initialize all parameters and run one eclipse simulation for each set of different parameters. The eclipse simulations will run until the first data time step is encountered and condition on data before continuing. a: Assimilation run: Smoother update, will do one pass of the sensitivity run, then condition the parameters to all the data and rerun all experiments. i: Assimilation run: Iterated smoother [RML-EnKF] will iterate the smoother run several times.");
+    menu_add_item(menu , "Open manual (firefox)"    , "mM"  , enkf_tui_help_manual_main , enkf_main , NULL);
+    menu_run(menu);
+    menu_free(menu);
+  }
+}
+
