@@ -202,6 +202,7 @@ void enkf_tui_run_exp(void * enkf_main) {
   int start_report         = 0;
   int init_step_parameters = 0;
   char * select_string;
+  
   {
     char * prompt = util_alloc_sprintf("Which realizations to simulate (Ex: 1,3-5) <Enter for all> [M to return to menu] : " , ens_size);
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
@@ -265,7 +266,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   step1 = 0;
   step2 = last_report;  /** Observe that for the summary data it will load all the available data anyway. */
   {
-    char * prompt = util_alloc_sprintf("Which realizations to load [ensemble size:%d] : " , ens_size);
+    char * prompt = util_alloc_sprintf("Which realizations to load  (Ex: 1,3-5) <Enter for all> [M to return to menu] : [ensemble size:%d] : " , ens_size);
     char * select_string;
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
@@ -273,6 +274,10 @@ void enkf_tui_run_manual_load__( void * arg ) {
     free( prompt );
     free( select_string );
   }
+
+
+
+
   {
     int iens;
     arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
