@@ -40,6 +40,7 @@ more extensive wrapping of the fortio implementation would be easy.
 import libecl
 import ctypes
 from   ert.cwrap.cwrap       import *
+from    ert.cwrap.cfile      import CFILE
 from   ert.cwrap.cclass      import CClass
 
 class FortIO(CClass):
@@ -75,34 +76,67 @@ class FortIO(CClass):
     #    is not touched by the FortIO instance.
     #    """
 
+
+    # The fundamental open functions use a normal Python open() call
+    # and pass the filehandle to the C layer, instead of letting the C
+    # layer open the file. This way normal Python exception handling
+    # will be invoked if there are problems with opening the file.
+
+    @classmethod
+    def __wrap(cls , filename, pyfile , fmt_file , endian_flip ):
+        obj = cls( )
+
+        obj.pyfile = pyfile
+        obj.c_ptr = cfunc.fortio_wrap_FILE( filename , endian_flip , fmt_file , CFILE(obj.pyfile))
+        return obj
+
+
+    @classmethod
+    def open(cls , filename, mode = "r" , fmt_file = False , endian_flip = True):
+        """
+        Will open of FortIO instance. 
+        """
+        pyfile = open( filename , mode)
+        return cls.__wrap( filename , pyfile , fmt_file , endian_flip )
+    
         
     @classmethod
     def reader(cls , filename , fmt_file = False , endian_flip = True):
-        obj = cls( )
-        obj.c_ptr = cfunc.fortio_open_reader( filename , fmt_file , endian_flip )
-        return obj
-
+        """
+        Will open a FortIO handle for reading.
+        """
+        return cls.open( filename , "r" , fmt_file , endian_flip )
+    
 
     @classmethod
     def writer(cls , filename , fmt_file = False , endian_flip = True):
-        obj = cls( )
-        obj.c_ptr = cfunc.fortio_open_writer( filename , fmt_file , endian_flip )
-        return obj
-    
+        """
+        Will open a FortIO handle for writing.
+        """
+        return cls.open( filename , "w" , fmt_file , endian_flip )
 
+    
     # Implements normal Python semantics - close on delete.
     def __del__(self):
         """
         Desctructor - will close the filehandle.
         """
         if self.c_ptr:
-            cfunc.fortio_close( self )
+            self.close( )
+
             
     def close( self ):
         """
         Close the filehandle.
         """
-        cfunc.fortio_close( self )
+
+        # Seems Python itself allows close() calls on already closed file handles,
+        # so we take care to ensure that also the FortIO class supports that.
+        if self.pyfile:
+            self.pyfile.close()
+            cfunc.free_wrapper( self )
+
+        self.pyfile = None
         self.c_ptr = None
 
 
@@ -117,8 +151,6 @@ cwrapper.registerType("fortio" , FortIO )
 #    These functions are used when implementing the FortIO class, not
 #    used outside this scope.
 cfunc = CWrapperNameSpace("fortio")
-cfunc.fortio_open_reader = cwrapper.prototype("c_void_p fortio_open_reader(char* , bool , bool)")
-cfunc.fortio_open_writer = cwrapper.prototype("c_void_p fortio_open_writer(char* , bool , bool)")
-cfunc.fortio_close        = cwrapper.prototype("void     fortio_fclose( fortio )")
-
+cfunc.fortio_wrap_FILE    = cwrapper.prototype("c_void_p fortio_alloc_FILE_wrapper( char* , bool , bool , FILE )")
+cfunc.free_wrapper        = cwrapper.prototype("void     fortio_free_FILE_wrapper( fortio )")
 

@@ -30,6 +30,9 @@ else()
    set( LIBRARY_TYPE STATIC )
 endif()     
 
+set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/lib)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/bin)
+
 #-----------------------------------------------------------------
 find_library( ZLIB_LIBRARY NAMES z )
 find_path( ZLIB_HEADER zlib.h /usr/include )
@@ -225,15 +228,17 @@ endif()
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
 
-set( libutil_build_path   ${CMAKE_BINARY_DIR}/libutil/src )
-set( libutil_src_path     ${CMAKE_SOURCE_DIR}/libutil/src )
-set( libecl_src_path      ${CMAKE_SOURCE_DIR}/libecl/src )
-set( libgeometry_src_path ${CMAKE_SOURCE_DIR}/libgeometry/src )
-set( libwell_src_path     ${CMAKE_SOURCE_DIR}/libwell/src )
-set( libplot_src_path     ${CMAKE_SOURCE_DIR}/libplot/src )
+set( libert_util_build_path   ${CMAKE_BINARY_DIR}/libert_util/src )
+set( libert_util_src_path     ${CMAKE_SOURCE_DIR}/libert_util/src )
+set( libecl_src_path          ${CMAKE_SOURCE_DIR}/libecl/src )
+set( libgeometry_src_path     ${CMAKE_SOURCE_DIR}/libgeometry/src )
+set( libwell_src_path         ${CMAKE_SOURCE_DIR}/libwell/src )
+set( libplot_src_path         ${CMAKE_SOURCE_DIR}/libplot/src )
 
+include_directories( ${libert_util_build_path}) 
+include_directories( ${libert_util_src_path} )
 
-add_subdirectory( libutil )
+add_subdirectory( libert_util )
 add_subdirectory( libgeometry )
 add_subdirectory( libecl )
 add_subdirectory( libwell )
