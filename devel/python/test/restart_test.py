@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
-#  The file 'restart_test.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'sum_test.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -15,43 +15,94 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
+import filecmp
 import datetime
+import unittest
+import shutil
+import time
+import os
+import os.path
+import ert
 import ert.ecl.ecl as ecl
-
-file = ecl.EclFile( "data/eclipse/case/ECLIPSE.UNRST" )
-
-bl = ecl.EclFile.restart_block( "data/eclipse/case/ECLIPSE.UNRST" , dtime = datetime.datetime( 2001 , 6 , 1 ))
+from   test_util import approx_equal, approx_equalv, file_equal
 
 
-for (step,date) in zip( file.report_steps , file.report_dates):
-    print step,date
+file     = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
+fmt_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.FUNRST"
 
-kw = file["SWAT"][4]
-if file.has_report_step( 4 ):
-    print "Has report 4"
-
-if file.has_sim_time( datetime.datetime( 2001 , 6 , 1 )):
-    print "Har 1. juni 2001"
-
-if ecl.EclFile.contains_report_step( "data/eclipse/case/ECLIPSE.UNRST" , 4 ):
-    print "OK"
-
-if ecl.EclFile.contains_sim_time( "data/eclipse/case/ECLIPSE.UNRST" , datetime.datetime( 2002 , 6 , 7) ):
-    print "OK"
-
-file.select_restart_section( report_step = 40 )
-file.select_restart_section( sim_time = datetime.datetime( 2002 , 6 , 1) )
-print file.headers
-
-
-f2 = ecl.EclFile( "data/eclipse/case/ECLIPSE.UNRST")
-print f2["SWAT"][10]
-
-print ecl.EclFile.file_report_steps( "data/eclipse/case/ECLIPSE.UNRST" )
-
-midF = ecl.EclFile( "midgard/MD7_BA11.UNRST" )
-for index in range(len(midF["SEQNUM"])):
-    midF.select_block( "SEQNUM" , index )
-    print midF["SEQNUM"][0][0]
+def load_missing():
+    ecl.EclFile( "No/Does/not/exist")
     
+
+class RestartTest( unittest.TestCase ):
+
+    def setUp(self):
+        self.file_list = []
+
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
+
+
+    def test_report(self):
+        self.assertTrue( ecl.EclFile.contains_report_step( file , 4 ))
+        self.assertTrue( ecl.EclFile.contains_report_step( file , 0 ))
+        self.assertTrue( ecl.EclFile.contains_report_step( file , 62 ))
+        self.assertFalse( ecl.EclFile.contains_report_step( file , -1 ))
+        self.assertFalse( ecl.EclFile.contains_report_step( file , 100 ))
+        
+        f = ecl.EclFile( file )
+        self.assertTrue( f.has_report_step( 4 ))
+        self.assertTrue( f.has_report_step( 0 ))
+        self.assertTrue( f.has_report_step( 62 ))
+
+        self.assertFalse( f.has_report_step( -1 ))
+        self.assertFalse( f.has_report_step( 100 ))
+
+
+
+
+    def test_dates(self):
+        f = ecl.EclFile( file )
+        self.assertTrue( f.has_sim_time( datetime.datetime( 2001 , 6 , 1) ))
+        self.assertFalse( f.has_sim_time( datetime.datetime( 2005 , 6 , 1) ))
+        self.assertFalse( f.has_sim_time( datetime.datetime( 1999 , 6 , 1) ))
+        self.assertFalse( f.has_sim_time( datetime.datetime( 2001 , 6 , 11) ))
+
+        self.assertTrue(  ecl.EclFile.contains_sim_time( file , datetime.datetime( 2001 , 6 , 1) ))
+        self.assertFalse( ecl.EclFile.contains_sim_time( file , datetime.datetime( 2005 , 6 , 1) ))
+        self.assertFalse( ecl.EclFile.contains_sim_time( file , datetime.datetime( 1999 , 6 , 1) ))
+        self.assertFalse( ecl.EclFile.contains_sim_time( file , datetime.datetime( 2001 , 6 , 11) ))
+
+        
+    def test_kw( self ):
+        f = ecl.EclFile( file )
+        kw1 = f["SWAT"][40]
+        kw2 = f.restart_get_kw( "SWAT" , datetime.datetime( 2003 , 3 , 1 ))
+        kw3 = f.restart_get_kw( "SWAT" , datetime.datetime( 2003 , 3 , 1 ) , copy = True)
+
+        self.assertTrue( kw1.equal( kw2 ))
+        self.assertTrue( kw1.equal( kw3 ))
+
+    
+        kw4 = f.restart_get_kw( "SWAT" , datetime.datetime( 2009 , 3 , 1 ))
+        self.assertTrue( kw4 is None )
+
+
+                     
+
+def fast_suite():
+    suite = unittest.TestSuite()
+    suite.addTest( RestartTest( 'test_report' )) 
+    suite.addTest( RestartTest( 'test_dates' )) 
+    suite.addTest( RestartTest( 'test_kw' )) 
+    return suite
+
+
+
+if __name__ == "__main__":
+    unittest.TextTestRunner().run( fast_suite() )

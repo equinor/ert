@@ -13,6 +13,7 @@ import kw_test
 import region_test
 import latex_test
 import fortio_test
+import restart_test
 
 def run_suite(name , suite):
     print "Running tests from %12s:" % name,
@@ -28,6 +29,7 @@ def run(name , module):
         run_suite( name , getattr(module , "slow_suite")())
     
 
+run("restart"    , restart_test)
 run("kw"         , kw_test)    
 run("summary"    , sum_test)
 run("troll"      , troll_test)
