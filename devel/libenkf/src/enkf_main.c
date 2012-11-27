@@ -1795,9 +1795,11 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const string
       int start_iens = i * ens_sub_size;
       int end_iens   = start_iens + ens_sub_size;
       
-      if (i == (num_cpu - 1))
+      if (i == (num_cpu - 1)){
         end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
-
+	if(ens_sub_size == 0)
+	  start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
+      }
       arg_pack_append_int( arg_list[i] , start_iens );
       arg_pack_append_int( arg_list[i] , end_iens );
     }
