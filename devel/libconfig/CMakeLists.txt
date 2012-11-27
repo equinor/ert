@@ -3,3 +3,4 @@ include_directories( ${libutil_build_path} )
 include_directories( ${libutil_src_path} )
 
 add_subdirectory( src )
+add_subdirectory( tests )

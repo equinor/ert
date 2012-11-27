@@ -26,20 +26,28 @@ int main(int argc , char ** argv) {
   const char * config_file = argv[1];
   config_type * config = config_alloc();
   
-  config_schema_item_type * item = config_add_schema_item(config , "APPEND" , false , true );
+  config_schema_item_type * item = config_add_schema_item(config , "APPEND" , false );
   
   bool OK = config_parse(config , config_file , "--" , NULL , NULL , false , true );
   
   if (OK) {
-    if (config_get_occcurences( config , "APPEND" ) == 1) {
+    if (config_get_occurences( config , "APPEND" ) == 1) {
       const char * value = config_get_value( config , "APPEND");
       
       if (strcmp( value , "VALUE3") == 0)
         exit(0);
+      else {
+        printf("Value error \n");
+        exit(1);
+      }
     }
-    else
+    else {
+      printf("Count error \n");
       exit(1);
-  } else
+    }
+  } else {
+    printf("Parse error\n");
     exit(1);
+  }
   
 }

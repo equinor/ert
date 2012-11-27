@@ -79,30 +79,30 @@ config_type * ext_cmd_alloc_config() {
   {
     config_schema_item_type * item;
   
-    item = config_add_schema_item( config , MIN_ARG_KEY , false , false);
+    item = config_add_schema_item( config , MIN_ARG_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_INT});
 
-    item = config_add_schema_item( config , MAX_ARG_KEY , false , false);
+    item = config_add_schema_item( config , MAX_ARG_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_INT});
 
-    item = config_add_schema_item( config , ARG_TYPE_KEY , false , true );
+    item = config_add_schema_item( config , ARG_TYPE_KEY , false );
     config_schema_item_set_argc_minmax( item , 2 , 2 , 2 , (const config_item_types[2]) {CONFIG_INT , CONFIG_STRING});
     config_schema_item_set_indexed_selection_set( item , 1 , 3 , (const char *[3]) {EXT_CMD_STRING_TYPE , EXT_CMD_INT_TYPE , EXT_CMD_FLOAT_TYPE});
 
     /*****************************************************************/
-    item = config_add_schema_item( config , EXECUTABLE_KEY , false , false );
+    item = config_add_schema_item( config , EXECUTABLE_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_EXECUTABLE});
 
     /*---------------------------------------------------------------*/
     
-    item = config_add_schema_item( config , FUNCTION_KEY , false , false );
+    item = config_add_schema_item( config , FUNCTION_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_STRING});
 
-    item = config_add_schema_item( config , MODULE_KEY , false , false );
+    item = config_add_schema_item( config , MODULE_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_STRING});
     /*****************************************************************/
 
-    item = config_add_schema_item( config , INTERNAL_KEY , false , false);
+    item = config_add_schema_item( config , INTERNAL_KEY , false );
     config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_BOOLEAN});    
     
   }
@@ -114,7 +114,7 @@ config_type * ext_cmd_alloc_config() {
 static UTIL_SAFE_CAST_FUNCTION(ext_cmd , EXT_CMD_TYPE_ID );
 
 void ext_cmd_update_config_compiler( const ext_cmd_type * ext_cmd , config_type * config_compiler ) {
-  config_schema_item_type * item = config_add_schema_item( config_compiler , ext_cmd->name , false , true );
+  config_schema_item_type * item = config_add_schema_item( config_compiler , ext_cmd->name , false );
   /* 
      Ensure that the arg_types mapping is at least as large as the
      max_arg value. The arg_type vector will be left padded with

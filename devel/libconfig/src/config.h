@@ -57,7 +57,7 @@ typedef struct config_schema_item_struct      config_schema_item_type;
   void              config_free(config_type *);
   config_type *     config_alloc( );
   char       **     config_alloc_active_list(const config_type * , int * );
-  void              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool );
+  bool              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool );
   bool              config_has_schema_item(const config_type * config , const char * kw);
   void              config_clear(config_type * config);
 
@@ -67,7 +67,7 @@ typedef struct config_schema_item_struct      config_schema_item_type;
   bool               config_item_set(const config_type * , const char * );
   void               config_schema_item_free__ (void * );
   void               config_schema_item_free( config_schema_item_type * );
-  config_schema_item_type * config_schema_item_alloc(const char * , bool , bool);
+  config_schema_item_type * config_schema_item_alloc(const char * kw, bool required);
   config_schema_item_type * config_get_schema_item(const config_type *, const char *);
   void               config_add_alias(config_type * , const char * , const char * );
   void               config_install_message(config_type * , const char * , const char * );
@@ -84,10 +84,9 @@ typedef struct config_schema_item_struct      config_schema_item_type;
   void               config_schema_item_set_required_children_on_value(config_schema_item_type * , const char * , stringlist_type * );
   void               config_schema_item_add_required_children(config_schema_item_type * item , const char * child_key);
   
-  config_schema_item_type * config_add_schema_item(config_type *, 
-                                     const char * ,
-                                     bool         ,
-                                     bool);
+  config_schema_item_type * config_add_schema_item(config_type * config, 
+                                     const char * kw,
+                                     bool required);
   
   
   bool config_has_keys(const config_type *,

@@ -113,10 +113,7 @@ In this case the whole config object will contain three items,
 corresponding to the keywords OUTFILE, INPUT and OPTIONS. The two
 first will again only contain one node each, whereas the OPTIONS item
 will contain three nodes, corresponding to the three times the keyword
-"OPTIONS" appear in the config file. Observe that *IF* the OPTIONS
-item had been added with append_arg == false, only the last occurence,
-corresponding to 'optimize cache=1' would be present.
-
+"OPTIONS" appear in the config file. 
 */
 
 typedef struct validate_struct validate_type;
@@ -176,7 +173,6 @@ struct config_schema_item_struct {
   char                        * kw;                      /* The kw which identifies this item· */
   
 
-  bool                          append_arg;              /* Should the values be appended if a keyword appears several times in the config file. */
   bool                          required_set;            
   stringlist_type             * required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
   hash_type                   * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) */
@@ -206,6 +202,7 @@ struct config_item_node_struct {
 
 
 struct config_struct {
+  vector_type          * content_list;
   hash_type            * content_items;
   hash_type            * schema_items;              
   stringlist_type      * parse_errors;              /* A stringlist containg the errors found when parsing.*/
@@ -222,7 +219,8 @@ struct config_struct {
 
 /*****************************************************************/
 
-static void config_add_and_free_error(config_type * config , char * error_message);
+static void                    config_add_and_free_error(config_type * config , char * error_message);
+static config_item_node_type * config_content_item_get_last_node(const config_content_item_type * item);
 
 /*****************************************************************/
 static validate_type * validate_alloc() {
@@ -427,12 +425,11 @@ static void config_schema_item_assure_type(const config_schema_item_type * item 
 
 
 
-config_schema_item_type * config_schema_item_alloc(const char * kw , bool required , bool append_arg) {
+config_schema_item_type * config_schema_item_alloc(const char * kw , bool required) {
   config_schema_item_type * item = util_malloc(sizeof * item );
   UTIL_TYPE_ID_INIT( item , CONFIG_SCHEMA_ITEM_ID);
   item->kw         = util_alloc_string_copy(kw);
 
-  item->append_arg              = append_arg;
   item->required_set            = required;
   item->required_children       = NULL;
   item->required_children_value = NULL;
@@ -717,8 +714,7 @@ void config_schema_item_set_envvar_expansion( config_schema_item_type * item , b
 
      config_content_item_get_occurences( "KEY1" )
 
-   will return 2. However, if the item has been added with append_arg
-   set to false, this function can only return zero or one.
+   will return 2. 
 */
 
 
@@ -761,9 +757,8 @@ static stringlist_type * config_content_item_iget_stringlist_ref(const config_co
 
 
 static const stringlist_type * config_content_item_get_stringlist_ref(const config_content_item_type * item) {
-  if (item->schema->append_arg) 
-    util_abort("%s: this function can only be used on items added with append_arg == FALSE\n" , __func__);
-  return config_content_item_iget_stringlist_ref(item , 0);
+  config_item_node_type * node = config_content_item_get_last_node( item );  
+  return node->stringlist;
 }
 
 
@@ -794,19 +789,13 @@ static stringlist_type * config_content_item_alloc_complete_stringlist(const con
 */
 
 static stringlist_type * config_content_item_alloc_stringlist(const config_content_item_type * item, bool copy) {
-  if (item->schema->append_arg) {
-    util_abort("%s: item:%s must be initialized with append_arg == false for this call. \n",__func__);
-    return NULL;
-  } else {
-    stringlist_type * stringlist = stringlist_alloc_new();
-
-    if (copy)
-      stringlist_append_stringlist_copy( stringlist , item->nodes[0]->stringlist );
-    else
-      stringlist_append_stringlist_ref( stringlist , item->nodes[0]->stringlist );  
-    
-    return stringlist;
-  }
+  config_item_node_type * node = config_content_item_get_last_node( item );
+  stringlist_type * stringlist = stringlist_alloc_new();
+  
+  if (copy)
+    stringlist_append_stringlist_copy( stringlist , node->stringlist );
+  else
+    stringlist_append_stringlist_ref( stringlist , node->stringlist );  
 }
 
 
@@ -851,10 +840,6 @@ static void config_content_item_realloc_nodes(config_content_item_type * item , 
 
 
 
-/*
-  This function will fail item has not been allocated 
-  append_arg == false.
-*/
 
 static const char * config_content_item_iget(const config_content_item_type * item , int occurence , int index) {
   config_item_node_type * node = config_content_item_iget_node(item , occurence);  
@@ -947,13 +932,14 @@ static config_item_node_type * config_content_item_get_new_node(config_content_i
 
 
 
-static config_item_node_type * config_content_item_get_first_node(config_content_item_type * item) {
-
-  if (item->node_size == 0)
-    config_content_item_get_new_node(item); 
-  
-  return config_content_item_iget_node(item , 0);
+static config_item_node_type * config_content_item_get_last_node(const config_content_item_type * item) {
+  return config_content_item_iget_node(item , item->node_size - 1);
 }
+
+static int config_content_item_get_last_index( const config_content_item_type * item) {
+  return item->node_size - 1;
+}
+
 
 /**
    Used to reset an item is the special string 'CLEAR_STRING'
@@ -1035,14 +1021,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
     config_item_node_type * node;
     const config_schema_item_type * schema_item = item->schema;
     
-    if (schema_item->append_arg)
-      node = config_content_item_get_new_node(item);
-    else {
-      node = config_content_item_get_first_node(item);
-      config_item_node_clear(node);
-    }
-
-
+    node = config_content_item_get_new_node(item);
     /* Filtering based on DEFINE statements */
     if (subst_list_get_size( config->define_list ) > 0) {
       int iarg;
@@ -1097,6 +1076,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
 
 config_type * config_alloc() {
   config_type *config     = util_malloc(sizeof * config );
+  config->content_list    = vector_alloc_new();
   config->schema_items    = hash_alloc();
   config->content_items   = hash_alloc(); 
   config->parse_errors    = stringlist_alloc_new();
@@ -1116,6 +1096,8 @@ static void config_clear_content_items( config_type * config ) {
     config_content_item_clear( item );
   }
   hash_iter_free( item_iter );
+
+  vector_clear( config->content_list );
 }
 
 
@@ -1139,6 +1121,7 @@ void config_free(config_type * config) {
   set_free(config->parsed_files);
   subst_list_free( config->define_list );
   
+  vector_free( config->content_list );
   hash_free(config->schema_items);
   hash_free(config->content_items);
   hash_free(config->messages);
@@ -1167,10 +1150,9 @@ static void config_insert_schema_item(config_type * config , const char * kw , c
 
 config_schema_item_type * config_add_schema_item(config_type * config , 
                                                  const char  * kw, 
-                                                 bool  required  , 
-                                                 bool  append_arg) {
+                                                 bool  required) { 
   
-  config_schema_item_type * item = config_schema_item_alloc( kw , required , append_arg);
+  config_schema_item_type * item = config_schema_item_alloc( kw , required );
   config_insert_schema_item(config , kw , item , false);
   return item;
 }
@@ -1181,14 +1163,13 @@ config_schema_item_type * config_add_schema_item(config_type * config ,
   This is a minor wrapper for adding an item with the properties. 
 
     1. It has argc_minmax = {1,1}
-    2. It has append == false.
     
    The value can than be extracted with config_get_value() and
    config_get_value_as_xxxx functions. 
 */
 
 config_schema_item_type * config_add_key_value( config_type * config , const char * key , bool required , config_item_types item_type) {
-  config_schema_item_type * item = config_add_schema_item( config , key , required , false );
+  config_schema_item_type * item = config_add_schema_item( config , key , required );
   config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types  [1]) { item_type });
   return item;
 }
@@ -1436,6 +1417,7 @@ static void config_parse__(config_type * config ,
               util_safe_free(include_path);
             }
           } else if ((define_kw != NULL) && (strcmp(define_kw , kw) == 0)) {
+            /* Treating the define keyword. */
             if (active_tokens < 3) 
               util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
             {
@@ -1495,13 +1477,14 @@ const char * config_get_config_file( const config_type * config , bool abs_path)
 }
 
 
-void config_parse(config_type * config , 
+bool config_parse(config_type * config , 
                   const char * filename, 
                   const char * comment_string , 
                   const char * include_kw ,
                   const char * define_kw , 
                   bool warn_unrecognized,
                   bool validate) {
+
   char * config_path;
   char * config_file;
   char * tmp_file;
@@ -1515,6 +1498,11 @@ void config_parse(config_type * config ,
   util_safe_free(extension);
   util_safe_free(config_path);
   util_safe_free(config_file);
+
+  if (stringlist_get_size( config->parse_errors ) == 0)
+    return true;   // No errors
+  else
+    return false;  // There were parse errors.
 }
 
 
@@ -1563,7 +1551,6 @@ bool config_has_keys(const config_type * config, const char **ext_keys, int ext_
    parameter. But to ensure that the get is unambigous we set the
    following requirements to the item corresponding to 'kw':
 
-    * It has been added with append_arg == false.
     * argc_minmax has been set to 1,1
 
    If this is not the case - we die.
@@ -1635,9 +1622,6 @@ const char * config_safe_iget(const config_type * config , const char *kw, int o
 static void assert_key_value(const config_schema_item_type * item) {
   if (!((item->validate->argc_min == 1) && (item->validate->argc_min == 1)))
     util_abort("%s: item:%s before calling config_get_value() functions *without* index you must set argc_min == argc_max = 1 \n",__func__ , item->kw);
-  
-  if (item->append_arg) 
-    util_abort("%s: must have append_arg == false for _get_value functions \n",__func__);
 }
 
 /**
@@ -1651,31 +1635,41 @@ static void assert_key_value(const config_schema_item_type * item) {
        set to 0.
 */
 
+/* 
+   The _value_ functions and also the config_get_stringlist_ref()
+   function will get _the last_ occurence in the case of functions set
+   several times.
+*/
+
+
 bool config_get_value_as_bool(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
+  int last_occurence = config_content_item_get_last_index( item );
   assert_key_value( item->schema );
-  return config_content_item_iget_as_bool(item , 0 , 0);
+  return config_content_item_iget_as_bool(item , last_occurence , 0);
 }
 
 int config_get_value_as_int(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
+  int last_occurence = config_content_item_get_last_index( item );
   assert_key_value( item->schema );
-  return config_content_item_iget_as_int(item , 0 , 0);
+  return config_content_item_iget_as_int(item , last_occurence , 0);
 }
 
 double config_get_value_as_double(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
+  int last_occurence = config_content_item_get_last_index( item );
   assert_key_value( item->schema );
-  return config_content_item_iget_as_double(item , 0 , 0);
+  return config_content_item_iget_as_double(item , last_occurence , 0);
 }
+
 
 const char * config_get_value(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
+  int last_occurence = config_content_item_get_last_index( item );
   assert_key_value( item->schema );
-  return config_content_item_iget(item , 0 , 0);
+  return config_content_item_iget(item , last_occurence , 0);
 }
-
-
 
 
 
@@ -1716,7 +1710,8 @@ stringlist_type * config_alloc_complete_stringlist(const config_type* config , c
 
 
 /**
-   It is enforced that kw-item has been added with append_arg == false.
+   In the case the keyword has been mentioned several times the last
+   occurence will be returned.
 */
 stringlist_type * config_alloc_stringlist(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
@@ -1738,8 +1733,12 @@ char * config_alloc_joined_string(const config_type * config , const char * kw, 
 
 
 /**
-   Return the number of times a keyword has been set - dies on unknown 'kw';
+   Return the number of times a keyword has been set - dies on unknown
+   'kw'. If the append_arg attribute has been set to false the
+   function will return 0 or 1 irrespective of how many times the item
+   has been set in the config file.
 */
+
 
 int config_get_occurences(const config_type * config, const char * kw) {
   return config_content_item_get_occurences(config_get_content_item(config , kw));
@@ -1762,7 +1761,7 @@ ENV   LD_LIBARRY_PATH   /some/other/path
 ENV   MALLOC            STRICT
 ....
 
-the returned hash table will be: {"PATH": "/som/path", "LD_LIBARRY_PATH": "/some/other_path" , "MALLOC": "STRICT"}
+the returned hash table will be: {"PATH": "/some/path", "LD_LIBARRY_PATH": "/some/other_path" , "MALLOC": "STRICT"}
 
 It is enforced that:
 
