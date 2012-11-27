@@ -25,13 +25,14 @@
 int main(int argc , char ** argv) {
   const char * config_file = argv[1];
   config_type * config = config_alloc();
-  
+  bool OK;
   config_schema_item_type * item = config_add_schema_item(config , "APPEND" , false );
-  
-  bool OK = config_parse(config , config_file , "--" , NULL , NULL , false , true );
-  
+  config_schema_item_set_argc_minmax( item , 1 , 1 , 0 , NULL);
+
+  OK = config_parse(config , config_file , "--" , NULL , NULL , false , true );
+
   if (OK) {
-    if (config_get_occurences( config , "APPEND" ) == 1) {
+    if (config_get_occurences( config , "APPEND" ) == 3) {
       const char * value = config_get_value( config , "APPEND");
       
       if (strcmp( value , "VALUE3") == 0)

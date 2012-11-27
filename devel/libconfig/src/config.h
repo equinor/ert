@@ -18,6 +18,7 @@
 
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,31 +28,17 @@ extern "C" {
 #include <stringlist.h>
 #include <hash.h>
 
+#include <config_schema_item.h>
+
 #define ECL_COM_KW "--"
 #define ENKF_COM_KW "--"
 
 
-/** 
-    Types used for validation of config items.
-*/
-typedef enum {CONFIG_STRING        = 0,
-              CONFIG_INT           = 1,
-              CONFIG_FLOAT         = 2,   
-              CONFIG_FILE          = 9,  /* These file does not need to exist - but includes are handled. */
-              CONFIG_EXISTING_FILE = 3,
-              CONFIG_EXISTING_DIR  = 4,
-              CONFIG_BOOLEAN       = 5,
-              CONFIG_CONFIG        = 6,
-              CONFIG_BYTESIZE      = 7,
-              CONFIG_EXECUTABLE    = 8 ,
-              CONFIG_INVALID       = 1000  } config_item_types;
 
-#define CONFIG_DEFAULT_ARG_MIN -1
-#define CONFIG_DEFAULT_ARG_MAX -1
 
 
 typedef struct config_struct                  config_type;
-typedef struct config_schema_item_struct      config_schema_item_type;
+
 
   char       **     config_alloc_active_list(const config_type *, int *);
   void              config_free(config_type *);
@@ -63,12 +50,8 @@ typedef struct config_schema_item_struct      config_schema_item_type;
 
 /*****************************************************************/
   
-  void               config_schema_item_set_envvar_expansion( config_schema_item_type * item , bool expand_envvar );
-  bool               config_item_set(const config_type * , const char * );
-  void               config_schema_item_free__ (void * );
-  void               config_schema_item_free( config_schema_item_type * );
-  config_schema_item_type * config_schema_item_alloc(const char * kw, bool required);
   config_schema_item_type * config_get_schema_item(const config_type *, const char *);
+  bool               config_item_set(const config_type * , const char * );
   void               config_add_alias(config_type * , const char * , const char * );
   void               config_install_message(config_type * , const char * , const char * );
   const char       * config_safe_get(const config_type * , const char *);
