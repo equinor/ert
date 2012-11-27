@@ -39,7 +39,6 @@ class FileTest( unittest.TestCase ):
     def setUp(self):
         self.file_list = []
 
-
     def addFile( self , file ):
         self.file_list.append( file )
 
