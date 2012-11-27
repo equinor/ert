@@ -18,17 +18,27 @@
 import datetime
 import unittest
 import ert
+import os
 import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv, file_equal
 
 
-src_file = "data/eclipse/case/include/example_permx.GRDECL"
+src_file = "test-data/Statoil/ECLIPSE/Gurbat/include/example_permx.GRDECL"
 
 
 class GRDECLTest( unittest.TestCase ):
 
     def setUp(self):
-        pass
+        self.file_list = []
+
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
+
 
 
     def testLoad( self ):
@@ -40,6 +50,8 @@ class GRDECLTest( unittest.TestCase ):
         kw = ecl.EclKW.read_grdecl( open( src_file , "r") , "PERMX")
         tmp_file1 = "/tmp/permx1.grdecl"
         tmp_file2 = "/tmp/permx2.grdecl"
+        self.addFile( tmp_file1 )
+        self.addFile( tmp_file2 )
 
         fileH = open( tmp_file1 , "w")
         kw.write_grdecl( fileH )
@@ -70,7 +82,7 @@ class GRDECLTest( unittest.TestCase ):
         
         
     def test_fseek2(self):
-        test_src = "data/eclipse/test/test.grdecl"
+        test_src = "test-data/local/ECLIPSE/grdecl-test/test.grdecl"
         # Test kw at the the very start
         file = open( test_src , "r")
         self.assertTrue( ecl.EclKW.fseek_grdecl( file , "PERMX" ) )
@@ -92,7 +104,7 @@ class GRDECLTest( unittest.TestCase ):
 
 
     def test_fseek_dos(self):
-        test_src = "data/eclipse/test/test.grdecl_dos"  # File formatted with \r\n line endings.
+        test_src = "test-data/local/ECLIPSE/grdecl-test/test.grdecl_dos"  # File formatted with \r\n line endings.
         # Test kw at the the very start
         file = open( test_src , "r")
         self.assertTrue( ecl.EclKW.fseek_grdecl( file , "PERMX" ) )

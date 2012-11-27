@@ -39,10 +39,19 @@ def copy_offset():
 class KWTest( unittest.TestCase ):
     
     def setUp( self ):
-        pass
+        self.file_list = []
+
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
+
 
     def fortio_size( self ):
-        unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
         file = ecl.EclFile( unrst_file )
         size = 0
         for kw in file:
@@ -70,7 +79,7 @@ class KWTest( unittest.TestCase ):
         self.assertFalse( kw1.equal(kw2) )
         self.assertFalse( kw1.equal_numeric( kw2 ))
         
-        unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
         file = ecl.EclFile( unrst_file )
         kw1 = file["PRESSURE"][0]
         kw2 = kw1.deep_copy()
@@ -106,19 +115,19 @@ class KWTest( unittest.TestCase ):
         kw.fprintf_data( file1 , fmt )
         file1.close()
         
-        
+
+
         file2 = open(name2 , "w")
         for d in data:
             file2.write( fmt % d )
         file2.close()
         self.assertTrue( file_equal( name1 , name2) )
-        os.unlink( name1 )
-        os.unlink( name2 )
-
+        self.addFile( name1 )
+        self.addFile( name2 )
 
             
     def testSubCopy(self):
-        unrst_file = "data/eclipse/case/ECLIPSE.UNRST"
+        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
         file = ecl.EclFile( unrst_file )
         swat = file["SWAT"][0]
         

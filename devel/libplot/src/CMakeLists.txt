@@ -3,7 +3,7 @@ set( header_files plot.h plot_dataset.h  plot_range.h plot_const.h plot_driver.h
 
 add_library( plot ${LIBRARY_TYPE} ${source_files} )
 
-target_link_libraries( plot util ${PLPLOT_LIBRARY} )
+target_link_libraries( plot ert_util ${PLPLOT_LIBRARY} )
 #-----------------------------------------------------------------
 if (PLOT_INSTALL_PREFIX)
    install(TARGETS plot DESTINATION ${PLOT_INSTALL_PREFIX}/lib)

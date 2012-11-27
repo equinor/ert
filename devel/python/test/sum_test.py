@@ -23,7 +23,7 @@ import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv
 
 base = "ECLIPSE"
-path = "data/eclipse/case"
+path = "test-data/Statoil/ECLIPSE/Gurbat"
 case = "%s/%s" % (path , base)
 
 
@@ -33,11 +33,22 @@ def sum_get(*args):
     vec = sum[key]
 
 
+
+
 class SumTest( unittest.TestCase ):
+
     def setUp(self):
         self.case = case
         self.sum = ecl.EclSum( self.case )
+        self.file_list = []
 
+    def addFile( self , file ):
+        self.file_list.append( file )
+
+    def tearDown(self):
+        for file in self.file_list:
+            if os.path.exists( file ):
+                os.unlink( file )
 
     def test_load(self):
         self.assertTrue( self.sum , "Load failed")
@@ -140,9 +151,9 @@ class SumTest( unittest.TestCase ):
 
 
     def test_restart(self):
-        hist = ecl.EclSum( "data/eclipse/sum-restart/history/T07-4A-W2011-18-P1" )
-        base = ecl.EclSum( "data/eclipse/sum-restart/prediction/BASECASE" )
-        pred = ecl.EclSum( "data/eclipse/sum-restart/prediction/BASECASE" , include_restart = False)
+        hist = ecl.EclSum( "test-data/ECLIPSE/sum-restart/history/T07-4A-W2011-18-P1" )
+        base = ecl.EclSum( "test-data/ECLIPSE/sum-restart/prediction/BASECASE" )
+        pred = ecl.EclSum( "test-data/ECLIPSE/sum-restart/prediction/BASECASE" , include_restart = False)
 
         self.assertTrue( True )
 
