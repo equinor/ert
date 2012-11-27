@@ -1447,18 +1447,30 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 }
 
 
-bool enkf_main_get_is_initialized(enkf_main_type * enkf_main){
-  bool initialized = true;
-  int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  int iens;
-  bool state_init;
-  for (iens = 0; iens < ens_size; iens++){
-    state_init = enkf_state_get_initialized( enkf_main->ensemble[iens]);
-    if(!state_init)
-      initialized = false;
+/*
+This function checks if no parameters have been initialized. If as much as one parameter
+has been initialized the function will return false.
+*/
+
+
+bool enkf_main_is_not_initialized_at_all( const enkf_main_type * enkf_main ) {
+  stringlist_type  * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+  bool initialized;
+  bool not_initialized_at_all = true;
+  int ikey, iens;
+  for (ikey = 0 ; ikey < stringlist_get_size( parameter_keys ) ; ikey++){
+    const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
+    for ( iens = 0 ; iens < enkf_main->ens_size ; iens++ ){
+      node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
+      initialized = enkf_config_node_has_node( config_node , enkf_main->dbase , node_id);
+      if (initialized)
+	not_initialized_at_all = false;
+    }
+    
   }
-  return initialized;
+  return not_initialized_at_all;
 }
+
 
 
 void enkf_main_run_exp(enkf_main_type * enkf_main            ,
@@ -1466,9 +1478,9 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
                        int              init_step_parameters ,
                        int              start_report         ,
                        state_enum       start_state) {
-  bool initialize = enkf_main_get_is_initialized( enkf_main );
+  bool initialize = enkf_main_is_not_initialized_at_all( enkf_main );
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  if (!initialize) {
+  if (initialize) {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
     enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1);
     stringlist_free( param_list );
@@ -1491,9 +1503,9 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
                                 int              init_step_parameters ,
                                 int              start_report         ,
                                 state_enum       start_state) {
-  bool initialize = enkf_main_get_is_initialized( enkf_main );
+  bool initialize = enkf_main_is_not_initialized_at_all( enkf_main );
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  if (!initialize) {
+  if (initialize) {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
     enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1);
     stringlist_free( param_list );
@@ -1588,7 +1600,7 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
 
 
 void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool rerun) {
-  bool initialize = enkf_main_get_is_initialized( enkf_main ); 
+  bool initialize = enkf_main_is_not_initialized_at_all( enkf_main ); 
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   if (initialize) {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
@@ -3308,6 +3320,8 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
     bool_vector_free( mask );
   return initialized;
 }
+
+
 
 
 void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
