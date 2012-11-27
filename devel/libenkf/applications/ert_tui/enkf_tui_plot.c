@@ -612,9 +612,11 @@ void enkf_tui_plot_histogram__(enkf_main_type * enkf_main , enkf_fs_type * fs , 
       {
 	plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , PLOT_HIST);
 	plot_dataset_append_vector_hist(d , active_size , count);
+	if(plot_dataset_get_size(d) > 0){
+	  enkf_tui_show_plot(plot , plot_config , plot_file);}
+	else{
+	  fprintf(stderr,"** There is no data to plot. Are you trying to plot analyzed data after a forward run with option x? \n");}
       }
-      
-      enkf_tui_show_plot(plot , plot_config , plot_file);
     }
     free(count);
     util_safe_free(key_index);
@@ -1161,6 +1163,66 @@ void enkf_tui_plot_reports( void * arg ) {
   ert_report_list_type * report_list = enkf_main_get_report_list( enkf_main );
   
   ert_report_list_create( report_list , enkf_main_get_current_fs( enkf_main ) , true );
+}
+
+
+/*****************************************************************/
+
+void enkf_tui_plot_simple_menu(void * arg) {
+  
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  plot_config_type * plot_config = enkf_main_get_plot_config( enkf_main );
+  {
+    const char * plot_path  =  plot_config_get_path( plot_config );
+    util_make_path( plot_path );
+  }
+  
+  {
+    menu_type * menu;
+    {
+      char            * title      = util_alloc_sprintf("Plot results [case:%s]" , enkf_main_get_current_fs( enkf_main ));
+      menu = menu_alloc(title , "Back" , "bB");
+      free(title);
+    }
+    menu_add_item(menu , "Ensemble plot"                                   , "eE" , enkf_tui_plot_ensemble        , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL summary variables"          , "aA" , enkf_tui_plot_all_summary     , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of GEN_KW parameter"               , "g"  , enkf_tui_plot_GEN_KW          , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL GEN_KW parameters"      , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
+    menu_add_item(menu , "Observation plot"                                , "oO" , enkf_tui_plot_observation     , enkf_main , NULL);
+    /*    menu_add_separator( menu );
+    menu_add_item(menu , "Plot RFT and simulated pressure vs. TVD"         , "tT" , enkf_tui_plot_RFT_sim_all_TVD , enkf_main , NULL);
+    menu_add_item(menu , "Plot RFT and simulated pressure vs. MD"          , "mM" , enkf_tui_plot_RFT_sim_all_MD  , enkf_main , NULL);
+    menu_add_separator( menu );
+    menu_add_item(menu , "Plot block observation (~RFT) versus depth"      , "dD" , enkf_tui_plot_RFT_depth       , enkf_main , NULL);
+    menu_add_item(menu , "Plot block observation (~RFT) versus time"       , "iI" , enkf_tui_plot_RFT_time        , enkf_main , NULL);
+    menu_add_item(menu , "Plot all block observations (~RFT) versus depth" , "rR" , enkf_tui_plot_all_RFT         , enkf_main , NULL);
+    menu_add_separator( menu );*/
+    menu_add_item(menu , "Sensitivity plot"                                , "sS" , enkf_tui_plot_sensitivity     , enkf_main , NULL); 
+    menu_add_item(menu , "Histogram"                                       , "H" , enkf_tui_plot_histogram       , enkf_main , NULL);
+    menu_add_separator(menu);
+    {
+      menu_item_type * menu_item;
+      arg_pack_type * arg_pack = arg_pack_alloc();
+      menu_item = menu_add_item(menu , "" , "lL" , enkf_tui_toggle_logy , arg_pack , arg_pack_free__);
+      arg_pack_append_ptr( arg_pack , plot_config );
+      arg_pack_append_ptr( arg_pack , menu_item );
+      plot_config_toggle_logy( plot_config );
+      enkf_tui_toggle_logy( arg_pack );   /* This sets the label */
+    }
+
+    /*    menu_add_separator(menu);
+    {
+      menu_item_type * menu_item = menu_add_item( menu , "Create pdf reports" , "pP" , enkf_tui_plot_reports , enkf_main , NULL );
+      ert_report_list_type * report_list = enkf_main_get_report_list( enkf_main );
+      
+      if (ert_report_list_get_num( report_list ) == 0)
+        menu_item_disable( menu_item );
+      
+	}*/
+    menu_add_item(menu , "Help"                                , "h" , enkf_tui_help_menu_plot     , enkf_main , NULL);
+    menu_run(menu);
+    menu_free(menu);
+  }
 }
 
 
