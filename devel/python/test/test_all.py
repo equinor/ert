@@ -12,6 +12,7 @@ import grid_test
 import kw_test
 import region_test
 import latex_test
+import fortio_test
 
 def run_suite(name , suite):
     print "Running tests from %12s:" % name,
@@ -37,3 +38,4 @@ run("grdecl"     , grdecl_test)
 run("grid"       , grid_test)
 run("region"     , region_test)
 run("latex"      , latex_test)
+run("fortio"     , fortio_test)

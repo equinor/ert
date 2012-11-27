@@ -1029,6 +1029,12 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
   
   if (enkf_state_internalize_dynamic_results(enkf_state , fs , model_config , loadOK, interactive , msg_list)) {
     int last_report = time_map_get_last_step( enkf_fs_get_time_map( fs ));
+    
+    /*
+      If we are in true assimilation mode we use the step2 setting, otherwise we are
+      just in plain gready-load-mode. */
+    if (run_info->run_mode == ENKF_ASSIMILATION)
+      last_report = run_info->step2;
 
     /* Ensure that the last step is internalized? */
     model_config_set_internalize_state( model_config , last_report);
@@ -1933,14 +1939,18 @@ static bool enkf_state_complete_forward_modelEXIT(enkf_state_type * enkf_state ,
 bool enkf_state_complete_forward_modelOK__(void * arg ) {
   enkf_state_type * enkf_state;
   enkf_fs_type * fs;
-  {
-    arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
-    enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
-    fs         = arg_pack_iget_ptr( arg_pack , 1 );
-    arg_pack_free( arg_pack );
-  }
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   
-  return enkf_state_complete_forward_modelOK( enkf_state , fs );
+  enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
+  fs         = arg_pack_iget_ptr( arg_pack , 1 );
+
+  {
+    bool callbackOK = enkf_state_complete_forward_modelOK( enkf_state , fs );
+    if (callbackOK)
+      arg_pack_free( arg_pack );
+    
+    return callbackOK;
+  }
 }
 
 

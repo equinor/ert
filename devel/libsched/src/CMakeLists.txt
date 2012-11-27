@@ -9,7 +9,7 @@ include_directories( ${libecl_src_path} )
 
 add_library( sched ${LIBRARY_TYPE} ${source_files} )
 
-target_link_libraries( sched util ecl)
+target_link_libraries( sched ert_util ecl)
 
 #-----------------------------------------------------------------
 if (SCHED_INSTALL_PREFIX)

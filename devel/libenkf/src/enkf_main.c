@@ -2284,14 +2284,57 @@ void enkf_main_create_fs( enkf_main_type * enkf_main , const char * fs_path) {
 
 static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char * case_path) {
   const char * ens_path = model_config_get_enspath( enkf_main->model_config);
-  char * current_link = util_alloc_filename( ens_path , CURRENT_CASE , NULL );
+  
+  /* 1: Create a symlink pointing to the currently open case. */
   {
-    if (util_entry_exists( current_link ))
-      unlink( current_link );
-    symlink( case_path , current_link );
+    char * current_link = util_alloc_filename( ens_path , CURRENT_CASE , NULL );
+    {
+      if (util_entry_exists( current_link ))
+        unlink( current_link );
+      symlink( case_path , current_link );
+    }
+    free( current_link );
   }
-  free( current_link );
+
+
+  /* 2: Update a small text file with the name of the host currently
+        running ert, the pid number of the process, the active case
+        and when it started. 
+        
+        If the previous shutdown was unclean the file will be around,
+        and we will need the info from the previous invocation which
+        is in the file. For that reason we open with mode 'a' instead
+        of 'w'.
+  */
+  {
+    int buffer_size = 256;
+    char * current_host = util_alloc_filename( ens_path , CASE_LOG , NULL );
+    FILE * stream = util_fopen( current_host , "a");
+    
+    fprintf(stream , "CASE:%-16s  " , case_path ); 
+    fprintf(stream , "PID:%-8d  " , getpid());
+    {
+      char hostname[buffer_size];
+      gethostname( hostname , buffer_size );
+      fprintf(stream , "HOST:%-16s  " , hostname );
+    }
+
+    
+    {
+      int year,month,day,hour,minute,second;
+      time_t now = time( NULL );
+      
+      util_set_datetime_values( now , &second , &minute , &hour , &day , &month , &year );
+      
+      fprintf(stream , "TIME:%02d/%02d/%4d-%02d.%02d.%02d\n" , day , month ,  year , hour , minute , second);
+    }
+    fclose( stream );
+    free( current_host );
+  }
 }
+
+
+
 
 static void enkf_main_close_fs( enkf_main_type * enkf_main ) {
   enkf_fs_close( enkf_main->dbase );
@@ -2302,6 +2345,7 @@ static void enkf_main_close_fs( enkf_main_type * enkf_main ) {
 enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
   return enkf_main->dbase;
 }
+
 
 char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path) {
   char * mount_point;
