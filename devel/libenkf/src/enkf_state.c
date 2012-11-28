@@ -279,8 +279,6 @@ static void shared_info_free(shared_info_type * shared_info) {
 /** Helper classes complete - starting on the enkf_state proper object. */
 /*****************************************************************/
 
-
-
 void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list) {
   int ip;
   for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
@@ -330,7 +328,6 @@ int enkf_state_get_iens(const enkf_state_type * enkf_state) {
 member_config_type * enkf_state_get_member_config(const enkf_state_type * enkf_state) {
   return enkf_state->my_config;
 }
-
 
 
 static UTIL_SAFE_CAST_FUNCTION( enkf_state , ENKF_STATE_TYPE_ID )
@@ -469,7 +466,6 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->subst_list        = subst_list_alloc( subst_parent );
   enkf_state->rng               = rng_alloc( rng_get_type( main_rng ) , INIT_DEFAULT ); 
   rng_rng_init( enkf_state->rng , main_rng );  /* <- Not thread safe */
-  
   /*
     The user MUST specify an INIT_FILE, and for the first timestep the
     <INIT> tag in the data file will be replaced by an 
