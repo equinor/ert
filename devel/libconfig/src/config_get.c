@@ -44,30 +44,29 @@ static void assert_key_value(const config_schema_item_type * item) {
 
 bool config_get_value_as_bool(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
-  int last_occurence = config_content_item_get_last_index( item );
+  config_content_node_type * node = config_content_item_get_last_node( item );
   assert_key_value( item->schema );
-  return config_content_item_iget_as_bool(item , last_occurence , 0);
+  return config_content_node_iget_as_bool(node , 0);
 }
 
 int config_get_value_as_int(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
-  int last_occurence = config_content_item_get_last_index( item );
+  config_content_node_type * node = config_content_item_get_last_node( item );
   assert_key_value( item->schema );
-  return config_content_item_iget_as_int(item , last_occurence , 0);
+  return config_content_node_iget_as_int(node , 0);
 }
 
 double config_get_value_as_double(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
-  int last_occurence = config_content_item_get_last_index( item );
+  config_content_node_type * node = config_content_item_get_last_node( item );
   assert_key_value( item->schema );
-  return config_content_item_iget_as_double(item , last_occurence , 0);
+  return config_content_node_iget_as_double(node , 0);
 }
-
 
 const char * config_get_value(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
-  int last_occurence = config_content_item_get_last_index( item );
+  config_content_node_type * node = config_content_item_get_last_node( item );
   assert_key_value( item->schema );
-  return config_content_item_iget(item , last_occurence , 0);
+  return config_content_node_iget(node , 0);
 }
 

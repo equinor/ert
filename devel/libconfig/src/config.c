@@ -134,7 +134,6 @@ struct config_content_item_struct {
 struct config_content_node_struct {
   UTIL_TYPE_ID_DECLARATION;
   const config_schema_item_type * schema;         
-  char                          * kw;                      /* The kw corresponding to this item node. */
   stringlist_type               * stringlist;              /* The values which have been set. */
   char                          * config_cwd;              /* The currently active cwd (relative or absolute) of the parser when this item is set. */
 };
@@ -166,11 +165,12 @@ static config_content_node_type * config_content_item_get_last_node(const config
 
 static UTIL_SAFE_CAST_FUNCTION( config_content_node , CONFIG_CONTENT_NODE_ID )
 
-static config_content_node_type * config_content_node_alloc() {
+static config_content_node_type * config_content_node_alloc( const config_schema_item_type * schema ) {
   config_content_node_type * node = util_malloc(sizeof * node );
   UTIL_TYPE_ID_INIT( node , CONFIG_CONTENT_NODE_ID );
   node->stringlist = stringlist_alloc_new();
   node->config_cwd = NULL;
+  node->schema = schema;
   return node;
 }
 
@@ -202,6 +202,36 @@ static void config_content_node_free__(void * arg) {
   config_content_node_free( node );
 }
 
+
+
+static const char * config_content_node_iget(const config_content_node_type * node , int index) {
+  return stringlist_iget( node->stringlist , index );
+}
+
+
+static bool config_content_node_iget_as_bool(const config_content_node_type * node , int index) {
+  bool value;
+  config_schema_item_assure_type(node->schema , index , CONFIG_BOOLEAN);
+  util_sscanf_bool( config_content_node_iget(node , index) , &value );
+  return value;
+}
+
+
+static int config_content_node_iget_as_int(const config_content_node_type * node , int index) {
+  int value;
+  config_schema_item_assure_type(node->schema , index , CONFIG_INT);
+  util_sscanf_int( config_content_node_iget(node , index) , &value );
+  return value;
+}
+
+
+
+static double config_content_node_iget_as_double(const config_content_node_type * node , double index) {
+  double value;
+  config_schema_item_assure_type(node->schema , index , CONFIG_FLOAT);
+  util_sscanf_double( config_content_node_iget(node , index) , &value );
+  return value;
+}
 
 
 /*****************************************************************/
@@ -353,6 +383,8 @@ static hash_type * config_content_item_alloc_hash(const config_content_item_type
 }
 
 
+/******************************************************************/
+
 
 
 
@@ -361,14 +393,14 @@ static const char * config_content_item_iget(const config_content_item_type * it
   return stringlist_iget( node->stringlist , index );
 }
 
-
-
 static bool config_content_item_iget_as_bool(const config_content_item_type * item, int occurence , int index) {
   bool value;
   config_schema_item_assure_type(item->schema , index , CONFIG_BOOLEAN);
   util_sscanf_bool( config_content_item_iget(item , occurence ,index) , &value );
   return value;
 }
+
+
 
 
 static int config_content_item_iget_as_int(const config_content_item_type * item, int occurence , int index) {
@@ -421,7 +453,6 @@ static void config_content_item_validate(config_type * config , const config_con
               }
             }
           }
-
         }
       }
     }
@@ -436,10 +467,11 @@ static void config_content_item_validate(config_type * config , const config_con
 /** 
     Adds a new node as side-effect ... 
 */
-static config_content_node_type * config_content_item_get_new_node(config_content_item_type * item) {
+static config_content_node_type * config_get_new_content_node(config_type * config , config_content_item_type * item) {
   {
-    config_content_node_type * new_node = config_content_node_alloc();
+    config_content_node_type * new_node = config_content_node_alloc( item->schema );
     vector_append_owned_ref( item->nodes , new_node , config_content_node_free__);
+    vector_append_ref( config->content_list , new_node );
     return new_node;
   }
 }
@@ -521,10 +553,8 @@ static void config_content_item_set_arg__(config_type * config , config_content_
   if (argc == 1 && (strcmp(stringlist_iget(token_list , 1) , CLEAR_STRING) == 0)) {
     config_content_item_clear(item);
   } else {
-    config_content_node_type * node;
     const config_schema_item_type * schema_item = item->schema;
     
-    node = config_content_item_get_new_node(item);
     /* Filtering based on DEFINE statements */
     if (subst_list_get_size( config->define_list ) > 0) {
       int iarg;
@@ -556,15 +586,20 @@ static void config_content_item_set_arg__(config_type * config , config_content_
         } while (env_var != NULL);
       }
     }
-    
-    if (config_schema_item_validate_set(schema_item , token_list , config_file, config_cwd , config->parse_errors)) {
-      config_content_node_set(node , token_list);
-      item->currently_set = true;
 
-      if (config_cwd != NULL)
-        node->config_cwd = util_alloc_string_copy( config_cwd );
-      else
-        node->config_cwd = util_alloc_cwd(  );  /* For use from external scope. */
+    {
+      if (config_schema_item_validate_set(schema_item , token_list , config_file, config_cwd , config->parse_errors)) {
+        config_content_node_type * node = config_get_new_content_node(config , item);
+        
+        config_content_node_set(node , token_list);
+        item->currently_set = true;
+        
+        if (config_cwd != NULL)
+          node->config_cwd = util_alloc_string_copy( config_cwd );
+        else
+          node->config_cwd = util_alloc_cwd(  );  /* For use from external scope. */
+        
+      }
     }
   }
 }
