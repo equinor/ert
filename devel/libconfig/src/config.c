@@ -115,7 +115,7 @@ will contain three nodes, corresponding to the three times the keyword
 */
 
 
-typedef struct config_item_node_struct config_item_node_type;
+typedef struct config_content_node_struct config_content_node_type;
 typedef struct config_content_item_struct config_content_item_type;
 
 
@@ -125,16 +125,14 @@ typedef struct config_content_item_struct config_content_item_type;
 struct config_content_item_struct {
   UTIL_TYPE_ID_DECLARATION;
   const config_schema_item_type  * schema;
-  int                              alloc_size;              /* The number of nodes which have been allocated. */  
-  int                              node_size;               /* The number of active nodes.*/
-  config_item_node_type         ** nodes;                   /* A vector of config_item_node_type instances. */
-  bool                          currently_set;              /* Has a value been assigned to this keyword. */
-
+  vector_type                    * nodes;
+  bool                             currently_set;              /* Has a value been assigned to this keyword. */
 };
 
 
-
-struct config_item_node_struct {
+#define CONFIG_CONTENT_NODE_ID 6752887
+struct config_content_node_struct {
+  UTIL_TYPE_ID_DECLARATION;
   const config_schema_item_type * schema;         
   char                          * kw;                      /* The kw corresponding to this item node. */
   stringlist_type               * stringlist;              /* The values which have been set. */
@@ -162,19 +160,22 @@ struct config_struct {
 
 /*****************************************************************/
 
-static config_item_node_type * config_content_item_get_last_node(const config_content_item_type * item);
+static config_content_node_type * config_content_item_get_last_node(const config_content_item_type * item);
 
 
 
-static config_item_node_type * config_item_node_alloc() {
-  config_item_node_type * node = util_malloc(sizeof * node );
+static UTIL_SAFE_CAST_FUNCTION( config_content_node , CONFIG_CONTENT_NODE_ID )
+
+static config_content_node_type * config_content_node_alloc() {
+  config_content_node_type * node = util_malloc(sizeof * node );
+  UTIL_TYPE_ID_INIT( node , CONFIG_CONTENT_NODE_ID );
   node->stringlist = stringlist_alloc_new();
   node->config_cwd = NULL;
   return node;
 }
 
 
-static void config_item_node_set(config_item_node_type * node , const stringlist_type * token_list) {
+static void config_content_node_set(config_content_node_type * node , const stringlist_type * token_list) {
   int argc = stringlist_get_size( token_list ) - 1;
   for (int iarg=0; iarg < argc; iarg++) 
     stringlist_append_copy( node->stringlist , stringlist_iget( token_list , iarg + 1));
@@ -182,17 +183,25 @@ static void config_item_node_set(config_item_node_type * node , const stringlist
 
 
 
-static char * config_item_node_alloc_joined_string(const config_item_node_type * node, const char * sep) {
+static char * config_content_node_alloc_joined_string(const config_content_node_type * node, const char * sep) {
   return stringlist_alloc_joined_string(node->stringlist , sep);
 }
 
 
 
-static void config_item_node_free(config_item_node_type * node) {
+static void config_content_node_free(config_content_node_type * node) {
   stringlist_free(node->stringlist);
   util_safe_free(node->config_cwd);
   free(node);
 }
+
+
+
+static void config_content_node_free__(void * arg) {
+  config_content_node_type * node = config_content_node_safe_cast( arg );
+  config_content_node_free( node );
+}
+
 
 
 /*****************************************************************/
@@ -239,20 +248,18 @@ bool config_content_item_is_set(const config_content_item_type * item) {
 
 
 static int config_content_item_get_occurences(const config_content_item_type * item) {
-  return item->node_size;
+  return vector_get_size( item->nodes );
 }
 
 
-static config_item_node_type * config_content_item_iget_node(const config_content_item_type * item , int index) {
-  if (index < 0 || index >= item->node_size)
-    util_abort("%s: error - asked for node nr:%d available: [0,%d> \n",__func__ , index , item->node_size);
-  return item->nodes[index];
+static config_content_node_type * config_content_item_iget_node(const config_content_item_type * item , int index) {
+  return vector_iget( item->nodes , index );
 }
 
 
 static char * config_content_item_ialloc_joined_string(const config_content_item_type * item , const char * sep , int occurence) {
-  config_item_node_type * node = config_content_item_iget_node(item , occurence);  
-  return config_item_node_alloc_joined_string(node , sep);
+  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
+  return config_content_node_alloc_joined_string(node , sep);
 }
 
 
@@ -271,13 +278,13 @@ static char * config_content_item_alloc_joined_string(const config_content_item_
 }
 
 static stringlist_type * config_content_item_iget_stringlist_ref(const config_content_item_type * item, int occurence) {
-  config_item_node_type * node = config_content_item_iget_node(item , occurence);  
+  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
   return node->stringlist;
 }
 
 
 static const stringlist_type * config_content_item_get_stringlist_ref(const config_content_item_type * item) {
-  config_item_node_type * node = config_content_item_get_last_node( item );  
+  config_content_node_type * node = config_content_item_get_last_node( item );  
   return node->stringlist;
 }
 
@@ -290,12 +297,13 @@ static const stringlist_type * config_content_item_get_stringlist_ref(const conf
 static stringlist_type * config_content_item_alloc_complete_stringlist(const config_content_item_type * item, bool copy) {
   int inode;
   stringlist_type * stringlist = stringlist_alloc_new();
-  for (inode = 0; inode < item->node_size; inode++) {
-
+  for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
+    config_content_node_type * node = config_content_item_iget_node(item , inode);
+    
     if (copy)
-      stringlist_append_stringlist_copy( stringlist , item->nodes[inode]->stringlist );
+      stringlist_append_stringlist_copy( stringlist , node->stringlist );
     else
-      stringlist_append_stringlist_ref( stringlist , item->nodes[inode]->stringlist );  
+      stringlist_append_stringlist_ref( stringlist , node->stringlist );  
     
   }
 
@@ -309,7 +317,7 @@ static stringlist_type * config_content_item_alloc_complete_stringlist(const con
 */
 
 static stringlist_type * config_content_item_alloc_stringlist(const config_content_item_type * item, bool copy) {
-  config_item_node_type * node = config_content_item_get_last_node( item );
+  config_content_node_type * node = config_content_item_get_last_node( item );
   stringlist_type * stringlist = stringlist_alloc_new();
   
   if (copy)
@@ -329,8 +337,8 @@ static stringlist_type * config_content_item_alloc_stringlist(const config_conte
 static hash_type * config_content_item_alloc_hash(const config_content_item_type * item , bool copy) {
   hash_type * hash = hash_alloc();
   int inode;
-  for (inode = 0; inode < item->node_size; inode++) {
-    const config_item_node_type * node = item->nodes[inode];
+  for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
+    const config_content_node_type * node = config_content_item_iget_node(item , inode);
 
     if (copy) {
       hash_insert_hash_owned_ref(hash , 
@@ -347,24 +355,9 @@ static hash_type * config_content_item_alloc_hash(const config_content_item_type
 
 
 
-static void config_content_item_realloc_nodes(config_content_item_type * item , int new_size) {
-  const int old_size = item->alloc_size;
-  item->nodes      = util_realloc(item->nodes , sizeof * item->nodes * new_size );
-  item->alloc_size = new_size;
-  {
-    int i;
-    for (i=old_size; i < new_size; i++)
-      item->nodes[i] = NULL;
-  }
-}
-
-
-
-
-
 
 static const char * config_content_item_iget(const config_content_item_type * item , int occurence , int index) {
-  config_item_node_type * node = config_content_item_iget_node(item , occurence);  
+  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
   return stringlist_iget( node->stringlist , index );
 }
 
@@ -410,7 +403,7 @@ static void config_content_item_validate(config_type * config , const config_con
     if (config_schema_item_has_required_children_value( schema_item )) {
       int inode;
       for (inode = 0; inode < config_content_item_get_occurences(item); inode++) {
-        config_item_node_type * node   = config_content_item_iget_node(item , inode);
+        config_content_node_type * node   = config_content_item_iget_node(item , inode);
         stringlist_type       * values = node->stringlist;
         int is;
 
@@ -443,25 +436,22 @@ static void config_content_item_validate(config_type * config , const config_con
 /** 
     Adds a new node as side-effect ... 
 */
-static config_item_node_type * config_content_item_get_new_node(config_content_item_type * item) {
-  if (item->node_size == item->alloc_size)
-    config_content_item_realloc_nodes(item , item->alloc_size * 2);
+static config_content_node_type * config_content_item_get_new_node(config_content_item_type * item) {
   {
-    config_item_node_type * new_node = config_item_node_alloc();
-    item->nodes[item->node_size] = new_node;
-    item->node_size++;
+    config_content_node_type * new_node = config_content_node_alloc();
+    vector_append_owned_ref( item->nodes , new_node , config_content_node_free__);
     return new_node;
   }
 }
 
 
 
-static config_item_node_type * config_content_item_get_last_node(const config_content_item_type * item) {
-  return config_content_item_iget_node(item , item->node_size - 1);
+static config_content_node_type * config_content_item_get_last_node(const config_content_item_type * item) {
+  return vector_get_last( item->nodes );
 }
 
 static int config_content_item_get_last_index( const config_content_item_type * item) {
-  return item->node_size - 1;
+  return vector_get_size( item->nodes ) - 1;
 }
 
 
@@ -481,28 +471,21 @@ static int config_content_item_get_last_index( const config_content_item_type * 
 */
 
 static void config_content_item_clear( config_content_item_type * item ) {
-  int i;
-  for (i = 0; i < item->node_size; i++)
-    config_item_node_free( item->nodes[i] );
-  util_safe_free(item->nodes);
-  item->nodes = NULL;
-  item->node_size     = 0;
+  vector_clear( item->nodes );
   item->currently_set = false;
-  config_content_item_realloc_nodes(item , 1);
 }
 
 
 
 static void config_content_item_free( config_content_item_type * item ) {
-  int i;
-  for (i = 0; i < item->node_size; i++)
-    config_item_node_free( item->nodes[i] );
-  free(item->nodes);
+  vector_free( item->nodes );
   free(item);
 }
 
 
+
 static UTIL_SAFE_CAST_FUNCTION( config_content_item , CONFIG_CONTENT_ITEM_ID);
+
 
 
 static void config_content_item_free__( void * arg ) {
@@ -515,12 +498,8 @@ static config_content_item_type * config_content_item_alloc( const config_schema
   config_content_item_type * content_item = util_malloc( sizeof * content_item );
   UTIL_TYPE_ID_INIT( content_item , CONFIG_CONTENT_ITEM_ID );
   content_item->schema = schema;
-
-  content_item->alloc_size = 0;
-  content_item->node_size  = 0;
-  content_item->nodes      = NULL;
+  content_item->nodes = vector_alloc_new();
   content_item->currently_set = false;
-  config_content_item_realloc_nodes(content_item , 1);
   return content_item;
 }
 
@@ -542,7 +521,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
   if (argc == 1 && (strcmp(stringlist_iget(token_list , 1) , CLEAR_STRING) == 0)) {
     config_content_item_clear(item);
   } else {
-    config_item_node_type * node;
+    config_content_node_type * node;
     const config_schema_item_type * schema_item = item->schema;
     
     node = config_content_item_get_new_node(item);
@@ -579,7 +558,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
     }
     
     if (config_schema_item_validate_set(schema_item , token_list , config_file, config_cwd , config->parse_errors)) {
-      config_item_node_set(node , token_list);
+      config_content_node_set(node , token_list);
       item->currently_set = true;
 
       if (config_cwd != NULL)
@@ -1136,7 +1115,7 @@ const char * config_safe_iget(const config_type * config , const char *kw, int o
   config_content_item_type * item = config_get_content_item(config , kw);
   if (config_content_item_is_set(item)) {
     if (occurence < config_content_item_get_occurences( item )) {
-      config_item_node_type * node = config_content_item_iget_node( item , occurence );
+      config_content_node_type * node = config_content_item_iget_node( item , occurence );
       value = stringlist_safe_iget( node->stringlist , index);
     }
   }
@@ -1221,7 +1200,7 @@ int config_get_occurences(const config_type * config, const char * kw) {
 
 int config_get_occurence_size( const config_type * config , const char * kw , int occurence) {
   config_content_item_type      * item = config_get_content_item(config , kw);
-  config_item_node_type * node = config_content_item_iget_node( item , occurence );
+  config_content_node_type * node = config_content_item_iget_node( item , occurence );
   return stringlist_get_size( node->stringlist );
 }
 
