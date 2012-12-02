@@ -351,7 +351,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   
   /* gen_param  - should be unified with the gen_data*/
   for (i=0; i < config_get_occurences(config , GEN_PARAM_KEY); i++) {
-    stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_PARAM_KEY , i);
+    const stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_PARAM_KEY , i);
     const char * key                          = stringlist_iget(tokens , 0);
     const char * ecl_file                     = stringlist_iget(tokens , 1);  /* only difference from gen_data is that the ecl_file is not a ":" keyword. */
     enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
@@ -377,7 +377,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   
   /* gen_data */
   for (i=0; i < config_get_occurences(config , GEN_DATA_KEY); i++) {
-    stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_DATA_KEY , i);
+    const stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_DATA_KEY , i);
     const char * key                          = stringlist_iget(tokens , 0);
     enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
     {
@@ -413,7 +413,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   /* surface */
   {
     for (i=0; i < config_get_occurences( config , SURFACE_KEY ); i++) {
-      stringlist_type * tokens   = config_iget_stringlist_ref(config , SURFACE_KEY , i);
+      const stringlist_type * tokens   = config_iget_stringlist_ref(config , SURFACE_KEY , i);
       const char * key           = stringlist_iget(tokens , 0);
       {
         hash_type * options = hash_alloc_from_options( tokens );  /* INIT_FILE:<init_files>  OUTPUT_FILE:<outfile>  BASE_SURFACE:<base_file> */
@@ -447,7 +447,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   /* field */
   {
     for (i=0; i < config_get_occurences(config , FIELD_KEY); i++) {
-      stringlist_type * tokens            = config_iget_stringlist_ref(config , FIELD_KEY , i);
+      const stringlist_type * tokens            = config_iget_stringlist_ref(config , FIELD_KEY , i);
       const char *  key                   = stringlist_iget(tokens , 0);
       const char *  var_type_string       = stringlist_iget(tokens , 1);
       enkf_config_node_type * config_node = ensemble_config_add_field( ensemble_config , key , grid );
@@ -519,7 +519,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
 
   /* gen_kw */
   for (i=0; i < config_get_occurences(config , GEN_KW_KEY); i++) {
-    stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_KW_KEY , i);
+    stringlist_type * tokens = stringlist_alloc_deep_copy( config_iget_stringlist_ref(config , GEN_KW_KEY , i) );
     char * key            = stringlist_iget_copy(tokens , 0);
     char * template_file  = stringlist_iget_copy(tokens , 1);
     char * enkf_outfile   = stringlist_iget_copy(tokens , 2);
@@ -540,11 +540,12 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
                                       hash_safe_get( opt_hash , INIT_FILES_KEY));
       hash_free( opt_hash );
     }
-  
+
     free(key);
     free(template_file);
     free(enkf_outfile);
     free(parameter_file);
+    stringlist_free( tokens );
   }
 
 

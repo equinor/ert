@@ -779,7 +779,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       
 
       if (config_item_set(config , "ARGLIST")) {
-        stringlist_type *argv = config_iget_stringlist_ref( config , "ARGLIST" , 0);
+        const stringlist_type *argv = config_iget_stringlist_ref( config , "ARGLIST" , 0);
         stringlist_deep_copy( ext_job->argv , argv );
       }
 

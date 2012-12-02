@@ -29,6 +29,7 @@ extern "C" {
 #include <hash.h>
 
 #include <config_schema_item.h>
+#include <config_content_node.h>
 
 #define ECL_COM_KW "--"
 #define ENKF_COM_KW "--"
@@ -37,7 +38,7 @@ extern "C" {
 
 
 
-typedef struct config_struct                  config_type;
+typedef struct config_struct              config_type;
 
 
   char       **     config_alloc_active_list(const config_type *, int *);
@@ -86,7 +87,7 @@ typedef struct config_struct                  config_type;
   stringlist_type       * config_alloc_stringlist(const config_type * config , const char * );
   hash_type             * config_alloc_hash(const config_type *  , const char * );
   const stringlist_type * config_get_stringlist_ref(const config_type *  , const char * );
-  stringlist_type       * config_iget_stringlist_ref(const config_type *  , const char * , int );
+  const stringlist_type       * config_iget_stringlist_ref(const config_type *  , const char * , int );
   bool                    config_has_set_item(const config_type *  , const char * );
   
   int                     config_get_occurences(const config_type * , const char * );
@@ -100,6 +101,11 @@ typedef struct config_struct                  config_type;
   const char *            config_get_value(const config_type * config , const char * kw);
   void                    config_fprintf_item_list(const config_type * config , FILE * stream);
   const char *            config_get_config_file( const config_type * config , bool abs_path);
+
+
+
+  int   config_get_content_size( const config_type * config );
+  const config_content_node_type * config_iget_content_node( const config_type * config , int index );
   
 #ifdef __cplusplus
 }

@@ -70,3 +70,14 @@ const char * config_get_value(const config_type * config , const char * kw) {
   return config_content_node_iget(node , 0);
 }
 
+
+/*****************************************************************/
+
+int config_get_content_size( const config_type * config ) {
+  return vector_get_size( config->content_list);
+}
+
+
+const config_content_node_type * config_iget_content_node( const config_type * config , int index) {
+  return vector_iget_const( config->content_list , index );
+}

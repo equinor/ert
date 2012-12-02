@@ -1464,7 +1464,7 @@ bool enkf_main_is_not_initialized_at_all( const enkf_main_type * enkf_main ) {
       node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
       initialized = enkf_config_node_has_node( config_node , enkf_main->dbase , node_id);
       if (initialized)
-	not_initialized_at_all = false;
+        not_initialized_at_all = false;
     }
     
   }
@@ -1797,8 +1797,8 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const string
       
       if (i == (num_cpu - 1)){
         end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
-	if(ens_sub_size == 0)
-	  start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
+        if(ens_sub_size == 0)
+          start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
       }
       arg_pack_append_int( arg_list[i] , start_iens );
       arg_pack_append_int( arg_list[i] , end_iens );
@@ -2847,7 +2847,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_update_num_cpu( enkf_main );
     {
       if (config_item_set( config , SCHEDULE_PREDICTION_FILE_KEY)) {
-        stringlist_type * tokens = config_iget_stringlist_ref(config , SCHEDULE_PREDICTION_FILE_KEY , 0);
+        const stringlist_type * tokens = config_iget_stringlist_ref(config , SCHEDULE_PREDICTION_FILE_KEY , 0);
         const char * template_file = stringlist_iget(tokens , 0);
         {
           hash_type * opt_hash                = hash_alloc_from_options( tokens );
