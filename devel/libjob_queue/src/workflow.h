@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2012  Statoil ASA, Norway. 
     
-   The file 'ext_script.h' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'workflow.h' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#ifndef __EXT_SCRIPT_H__
-#define __EXT_SCRIPT_H__
+#ifndef __WORKFLOW_H__
+#define __WORKFLOW_H__
 
 
 #ifdef __cplusplus
@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 
-  typedef struct ext_script_struct ext_script_type;
+  typedef struct workflow_struct workflow_type;
 
 
 

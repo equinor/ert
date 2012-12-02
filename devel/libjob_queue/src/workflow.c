@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2012  Statoil ASA, Norway. 
     
-   The file 'ext_script.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'workflow.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -30,11 +30,11 @@
 #include <config.h>
 
 #include <ext_cmd.h>
-#include <ext_script.h>
+#include <workflow.h>
 
 
 #define CMD_TYPE_ID           66153
-#define EXT_SCRIPT_TYPE_ID  6762081
+#define WORKFLOW_TYPE_ID  6762081
 
 typedef struct cmd_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -46,7 +46,7 @@ typedef struct cmd_struct {
 
 
 
-struct ext_script_struct {
+struct workflow_struct {
   UTIL_TYPE_ID_DECLARATION;
   time_t                 compile_time;
   bool                   compiled;
@@ -80,7 +80,7 @@ static void cmd_free__( void * arg ) {
 /*****************************************************************/
 
 
-static bool ext_script_try_compile( ext_script_type * script ) {
+static bool workflow_try_compile( workflow_type * script ) {
   if (util_file_exists( script->src_file )) {
     time_t src_mtime = util_file_mtime( script->src_file );
     if (script->compiled && (util_difftime( src_mtime , script->compile_time , NULL , NULL , NULL, NULL) > 0 ))
@@ -99,16 +99,16 @@ static bool ext_script_try_compile( ext_script_type * script ) {
 }
 
 
-ext_script_type * ext_script_alloc( const char * src_file , config_type * config_compiler) {
-  ext_script_type * script = util_malloc( sizeof * script );
-  UTIL_TYPE_ID_INIT( script , EXT_SCRIPT_TYPE_ID );
+workflow_type * workflow_alloc( const char * src_file , config_type * config_compiler) {
+  workflow_type * script = util_malloc( sizeof * script );
+  UTIL_TYPE_ID_INIT( script , WORKFLOW_TYPE_ID );
 
   script->src_file        = util_alloc_string_copy( src_file );
   script->config_compiler = config_compiler;
   script->cmd_list        = vector_alloc_new();
   script->compiled        = false;
   
-  ext_script_try_compile( script );
+  workflow_try_compile( script );
 
   return script;
 }
