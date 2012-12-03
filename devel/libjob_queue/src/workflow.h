@@ -23,11 +23,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+  
+#include <workflow_joblist.h>
 
   typedef struct workflow_struct workflow_type;
 
-
+  workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * joblist);
+  bool            workflow_run( const workflow_type * workflow , void * self );
 
 #ifdef __cplusplus
 }
