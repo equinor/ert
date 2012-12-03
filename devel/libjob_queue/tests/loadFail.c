@@ -19,18 +19,18 @@
 #include <stdbool.h>
 
 #include <config.h>
-#include <wflow_job.h>
+#include <workflow_job.h>
 
 
 
 bool loadConfig(config_type * config , const char * config_file, config_type * config_compiler) {
   bool OK = false;
-  wflow_job_type * cmd = wflow_job_config_alloc( "NAME" , config , config_file);
+  workflow_job_type * cmd = workflow_job_config_alloc( "NAME" , config , config_file);
   
   if (cmd != NULL) {
     OK = true;
-    wflow_job_update_config_compiler( cmd , config_compiler );
-    wflow_job_free( cmd );
+    workflow_job_update_config_compiler( cmd , config_compiler );
+    workflow_job_free( cmd );
   } 
   
   return OK;
@@ -41,7 +41,7 @@ bool loadConfig(config_type * config , const char * config_file, config_type * c
 int main( int argc , char ** argv) {
   int status = 0;
   {
-    config_type * config = wflow_job_alloc_config();
+    config_type * config = workflow_job_alloc_config();
     config_type * config_compiler = config_alloc();
     int iarg;
     bool OK = true;
