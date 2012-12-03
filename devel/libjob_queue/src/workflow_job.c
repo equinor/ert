@@ -51,17 +51,17 @@
 
 struct workflow_job_struct {
   UTIL_TYPE_ID_DECLARATION;
-  bool              internal;
-  int               min_arg;
-  int               max_arg;   
-  int_vector_type * arg_types;     // Should contain values from the config_item_types enum in config.h.
-  char            * executable;
-  char            * module;
-  char            * function;
-  char            * name;
-  void            * lib_handle;
-  void            * dl_func;
-  bool              valid;
+  bool                 internal;
+  int                  min_arg;
+  int                  max_arg;   
+  int_vector_type    * arg_types;     // Should contain values from the config_item_types enum in config.h.
+  char               * executable;
+  char               * module;
+  char               * function;
+  char               * name;
+  void               * lib_handle;
+  workflow_job_ftype * dl_func;
+  bool                 valid;
 };
 
 
@@ -221,7 +221,7 @@ static void workflow_job_validate( workflow_job_type * workflow_job ) {
     if ((workflow_job->executable == NULL) && (workflow_job->function != NULL)) {
       workflow_job->lib_handle = dlopen( workflow_job->module , RTLD_NOW );
       if (workflow_job->lib_handle != NULL) {
-        workflow_job->dl_func = dlsym( workflow_job->lib_handle , workflow_job->function );
+        workflow_job->dl_func = (workflow_job_ftype *) dlsym( workflow_job->lib_handle , workflow_job->function );
         if (workflow_job->dl_func != NULL)
           workflow_job->valid = true;
         else 
@@ -238,8 +238,7 @@ static void workflow_job_validate( workflow_job_type * workflow_job ) {
 
 workflow_job_type * workflow_job_config_alloc( const char * name , config_type * config , const char * config_file) {
   config_clear( config );
-  if (config_parse( config , config_file , "--", NULL , NULL , true , true)) {
-    
+  if (config_parse( config , config_file , "--", NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true)) {
     bool internal = DEFAULT_INTERNAL;
     if (config_item_set( config , INTERNAL_KEY))
       internal = config_iget_as_bool( config , INTERNAL_KEY , 0 , 0 );
@@ -281,11 +280,10 @@ workflow_job_type * workflow_job_config_alloc( const char * name , config_type *
       
       return workflow_job;
     }
-  } else {
-    config_fprintf_errors( config , stderr );
-    exit(1);
-  }
+  } else
+    return NULL;
 }
+
 
 
 
@@ -302,4 +300,40 @@ void workflow_job_free( workflow_job_type * workflow_job ) {
 void workflow_job_free__( void * arg) {
   workflow_job_type * workflow_job = workflow_job_safe_cast( arg );
   workflow_job_free( workflow_job );
+}
+
+
+
+static void workflow_job_run_internal( workflow_job_type * job , void * self , const stringlist_type * arg) {
+  job->dl_func( self , arg );
+}
+
+
+static void workflow_job_run_external( workflow_job_type * job  , const stringlist_type * arg) {
+  char ** argv = stringlist_alloc_char_copy( arg );
+  
+  util_fork_exec( job->executable , 
+                  stringlist_get_size( arg ),
+                  argv , 
+                  true ,
+                  NULL , 
+                  NULL , 
+                  NULL , 
+                  NULL , 
+                  NULL );
+  
+  {
+    int i;
+    for (i=0; stringlist_get_size( arg ); i++)
+      free( argv[i] );
+    free( argv );
+  }
+}
+
+
+void workflow_job_run( workflow_job_type * job , void * self , const stringlist_type * arg) {
+  if (job->internal)
+    workflow_job_run_internal( job , self , arg );
+  else
+    workflow_job_run_external( job , arg );
 }
