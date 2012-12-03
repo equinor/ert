@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <stringlist.h>
 #include <hash.h>
@@ -101,9 +102,9 @@ typedef struct config_struct              config_type;
   const char *            config_get_value(const config_type * config , const char * kw);
   void                    config_fprintf_item_list(const config_type * config , FILE * stream);
   const char *            config_get_config_file( const config_type * config , bool abs_path);
+  void                    config_fprintf_errors( const config_type * config , FILE * stream );
 
-
-
+  
   int   config_get_content_size( const config_type * config );
   const config_content_node_type * config_iget_content_node( const config_type * config , int index );
   

@@ -31,8 +31,10 @@
 #include <vector.h>
 
 #include <config.h>
+#include <config_error.h>
 #include <config_schema_item.h>
 #include <config_content_node.h>
+#include <config_content_item.h>
 
 #define  CLEAR_STRING "__RESET__"
 
@@ -117,18 +119,10 @@ will contain three nodes, corresponding to the three times the keyword
 
 
 
-typedef struct config_content_item_struct config_content_item_type;
+
 
 
  
-
-#define CONFIG_CONTENT_ITEM_ID 8876752
-struct config_content_item_struct {
-  UTIL_TYPE_ID_DECLARATION;
-  const config_schema_item_type  * schema;
-  vector_type                    * nodes;
-  bool                             currently_set;              /* Has a value been assigned to this keyword. */
-};
 
 
 
@@ -137,7 +131,7 @@ struct config_struct {
   vector_type          * content_list;              /* Vector of content_content_node instances. */
   hash_type            * content_items;
   hash_type            * schema_items;              
-  stringlist_type      * parse_errors;              /* A stringlist containg the errors found when parsing.*/
+  config_error_type    * parse_errors;
   set_type             * parsed_files;              /* A set of config files whcih have been parsed - to protect against circular includes. */
   hash_type            * messages;                  /* Can print a (warning) message when a keyword is encountered. */
   subst_list_type      * define_list;
@@ -149,240 +143,8 @@ struct config_struct {
 
 
 
-/*****************************************************************/
 
 
-
-
-
-
-
-
-bool config_content_item_is_set(const config_content_item_type * item) {
-  return item->currently_set;
-}
-
-
-
-
-/**
-   This works in the following way: 
-
-     if item == value {
-        All children in child_list must also be set.
-     }
-
-     
-*/        
-
-
-
-/*****************************************************************/
-/* section:content_item */
-
-/**
-   This function counts the number of times a config item has been
-   set. Referring again to the example at the top:
-
-     config_content_item_get_occurences( "KEY1" )
-
-   will return 2. 
-*/
-
-
-static int config_content_item_get_occurences(const config_content_item_type * item) {
-  return vector_get_size( item->nodes );
-}
-
-static config_content_node_type * config_content_item_get_last_node(const config_content_item_type * item) {
-  return vector_get_last( item->nodes );
-}
-
-static config_content_node_type * config_content_item_iget_node(const config_content_item_type * item , int index) {
-  return vector_iget( item->nodes , index );
-}
-
-
-static char * config_content_item_ialloc_joined_string(const config_content_item_type * item , const char * sep , int occurence) {
-  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
-  return config_content_node_alloc_joined_string(node , sep);
-}
-
-
-
-static char * config_content_item_alloc_joined_string(const config_content_item_type * item , const char * sep) {
-  const int occurences = config_content_item_get_occurences( item );
-  char * joined_string = NULL;
-  
-  for (int i =0; i < occurences ; i++) {
-    joined_string = util_strcat_realloc( joined_string , config_content_item_ialloc_joined_string(item , sep , i));
-    if (i < (occurences - 1))
-      joined_string = util_strcat_realloc( joined_string , sep );
-  }
-  
-  return joined_string;
-}
-
-static const stringlist_type * config_content_item_iget_stringlist_ref(const config_content_item_type * item, int occurence) {
-  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
-  return config_content_node_get_stringlist( node );
-}
-
-
-static const stringlist_type * config_content_item_get_stringlist_ref(const config_content_item_type * item) {
-  config_content_node_type * node = config_content_item_get_last_node( item );  
-  return config_content_node_get_stringlist( node );
-}
-
-
-/**
-   If copy == false - the stringlist will break down when/if the
-   config object is freed - your call.
-*/
-
-static stringlist_type * config_content_item_alloc_complete_stringlist(const config_content_item_type * item, bool copy) {
-  int inode;
-  stringlist_type * stringlist = stringlist_alloc_new();
-  for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
-    config_content_node_type * node = config_content_item_iget_node(item , inode);
-    const stringlist_type * src_list = config_content_node_get_stringlist( node );
-    
-    if (copy)
-      stringlist_append_stringlist_copy( stringlist , src_list );
-    else
-      stringlist_append_stringlist_ref( stringlist , src_list );  
-    
-  }
-
-  return stringlist;
-}
-
-
-/**
-   If copy == false - the stringlist will break down when/if the
-   config object is freed - your call.
-*/
-
-static stringlist_type * config_content_item_alloc_stringlist(const config_content_item_type * item, bool copy) {
-  config_content_node_type * node = config_content_item_get_last_node( item );
-  stringlist_type * stringlist = stringlist_alloc_new();
-  const stringlist_type * src_list = config_content_node_get_stringlist( node );
-  
-  if (copy)
-    stringlist_append_stringlist_copy( stringlist , src_list );
-  else
-    stringlist_append_stringlist_ref( stringlist , src_list );  
-  
-  return stringlist;
-}
-
-
-/**
-   If copy == false - the hash will break down when/if the
-   config object is freed - your call.
-*/
-
-static hash_type * config_content_item_alloc_hash(const config_content_item_type * item , bool copy) {
-  hash_type * hash = hash_alloc();
-  int inode;
-  for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
-    const config_content_node_type * node = config_content_item_iget_node(item , inode);
-    const stringlist_type * src_list = config_content_node_get_stringlist( node );
-    const char * key = stringlist_iget(src_list , 0);
-    const char * value = stringlist_iget(src_list , 1);
-
-    if (copy) {
-      hash_insert_hash_owned_ref(hash , 
-                                 key ,
-                                 util_alloc_string_copy(value) , 
-                                 free);
-    } else
-      hash_insert_ref(hash , key , value );
-    
-  }
-  return hash;
-}
-
-
-/******************************************************************/
-
-
-
-
-static const char * config_content_item_iget(const config_content_item_type * item , int occurence , int index) {
-  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
-  const stringlist_type * src_list = config_content_node_get_stringlist( node );
-  return stringlist_iget( src_list , index );
-}
-
-static bool config_content_item_iget_as_bool(const config_content_item_type * item, int occurence , int index) {
-  bool value;
-  config_schema_item_assure_type(item->schema , index , CONFIG_BOOLEAN);
-  util_sscanf_bool( config_content_item_iget(item , occurence ,index) , &value );
-  return value;
-}
-
-
-
-
-static int config_content_item_iget_as_int(const config_content_item_type * item, int occurence , int index) {
-  int value;
-  config_schema_item_assure_type(item->schema , index , CONFIG_INT);
-  util_sscanf_int( config_content_item_iget(item , occurence , index) , &value );
-  return value;
-}
-
-
-static double  config_content_item_iget_as_double(const config_content_item_type * item, int occurence , int index) {
-  double value;
-  config_schema_item_assure_type(item->schema , index , CONFIG_FLOAT);
-  util_sscanf_double( config_content_item_iget(item , occurence , index) , &value );
-  return value;
-}
-
-
-static void config_content_item_validate(config_type * config , const config_content_item_type * item) {
-  const config_schema_item_type *  schema_item = item->schema;
-  const char * schema_kw = config_schema_item_get_kw( schema_item );
-  if (item->currently_set) {
-    int i;
-    for (i = 0; i < config_schema_item_num_required_children(schema_item); i++) {
-      const char * required_child = config_schema_item_iget_required_child( schema_item , i );
-      if (!config_has_set_item(config , required_child)) {
-        char * error_message = util_alloc_sprintf("When:%s is set - you also must set:%s.",schema_kw , required_child);
-        stringlist_append_owned_ref( config->parse_errors , error_message );
-      }
-    }
-    
-    if (config_schema_item_has_required_children_value( schema_item )) {
-      int inode;
-      for (inode = 0; inode < config_content_item_get_occurences(item); inode++) {
-        config_content_node_type * node   = config_content_item_iget_node(item , inode);
-        const stringlist_type * values = config_content_node_get_stringlist( node );
-        int is;
-
-        for (is = 0; is < stringlist_get_size(values); is++) {
-          const char * value = stringlist_iget(values , is);
-          stringlist_type * required_children = config_schema_item_get_required_children_value( schema_item , value );
-          
-          if (required_children != NULL) {
-            int ic;
-            for (ic = 0; ic < stringlist_get_size( required_children ); ic++) {
-              const char * req_child = stringlist_iget( required_children , ic );
-              if (!config_has_set_item(config , req_child )) {
-                char * error_message = util_alloc_sprintf("When:%s is set to:%s - you also must set:%s.",schema_kw , value , req_child );
-                stringlist_append_owned_ref( config->parse_errors , error_message );
-              }
-            }
-          }
-        }
-      }
-    }
-  } else if (config_schema_item_required( schema_item)) {  /* The item is not set ... */
-    char * error_message = util_alloc_sprintf("Item:%s must be set - parsing:%s",schema_kw , config->abs_path);
-    stringlist_append_owned_ref( config->parse_errors , error_message );
-  }
-}
 
 
 
@@ -390,66 +152,15 @@ static void config_content_item_validate(config_type * config , const config_con
     Adds a new node as side-effect ... 
 */
 static config_content_node_type * config_get_new_content_node(config_type * config , config_content_item_type * item) {
-  {
-    config_content_node_type * new_node = config_content_node_alloc( item->schema );
-    vector_append_owned_ref( item->nodes , new_node , config_content_node_free__);
-    vector_append_ref( config->content_list , new_node );
-    return new_node;
-  }
+  config_content_node_type * new_node = config_content_item_alloc_node( item );
+  vector_append_ref( config->content_list , new_node );
+  return new_node;
 }
 
 
 
 
 
-
-/**
-   Used to reset an item is the special string 'CLEAR_STRING'
-   is found as the only argument:
-
-   OPTION V1
-   OPTION V2 V3 V4
-   OPTION __RESET__ 
-   OPTION V6
-
-   In this case OPTION will get the value 'V6'. The example given
-   above is a bit contrived; this option is designed for situations
-   where several config files are parsed serially; and the user can
-   not/will not update the first.
-*/
-
-static void config_content_item_clear( config_content_item_type * item ) {
-  vector_clear( item->nodes );
-  item->currently_set = false;
-}
-
-
-
-static void config_content_item_free( config_content_item_type * item ) {
-  vector_free( item->nodes );
-  free(item);
-}
-
-
-
-static UTIL_SAFE_CAST_FUNCTION( config_content_item , CONFIG_CONTENT_ITEM_ID);
-
-
-
-static void config_content_item_free__( void * arg ) {
-  config_content_item_type * content_item = config_content_item_safe_cast( arg );
-  config_content_item_free( content_item );
-}
-
-
-static config_content_item_type * config_content_item_alloc( const config_schema_item_type * schema ) {
-  config_content_item_type * content_item = util_malloc( sizeof * content_item );
-  UTIL_TYPE_ID_INIT( content_item , CONFIG_CONTENT_ITEM_ID );
-  content_item->schema = schema;
-  content_item->nodes = vector_alloc_new();
-  content_item->currently_set = false;
-  return content_item;
-}
 
 
 
@@ -469,7 +180,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
   if (argc == 1 && (strcmp(stringlist_iget(token_list , 1) , CLEAR_STRING) == 0)) {
     config_content_item_clear(item);
   } else {
-    const config_schema_item_type * schema_item = item->schema;
+    const config_schema_item_type * schema_item = config_content_item_get_schema( item );
     
     /* Filtering based on DEFINE statements */
     if (subst_list_get_size( config->define_list ) > 0) {
@@ -510,7 +221,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
           config_content_node_set(node , token_list);
           config_content_node_set_cwd( node , config_cwd );
         }
-        item->currently_set = true;
+        config_content_item_set( item );
       }
     }
   }
@@ -529,7 +240,7 @@ config_type * config_alloc() {
   config->content_list    = vector_alloc_new();
   config->schema_items    = hash_alloc();
   config->content_items   = hash_alloc(); 
-  config->parse_errors    = stringlist_alloc_new();
+  config->parse_errors    = config_error_alloc();
   config->parsed_files    = set_alloc_empty();
   config->messages        = hash_alloc();
   config->define_list     = subst_list_alloc( NULL );
@@ -552,7 +263,7 @@ static void config_clear_content_items( config_type * config ) {
 
 
 void config_clear(config_type * config) {
-  stringlist_clear(config->parse_errors);
+  config_error_clear(config->parse_errors);
 
   set_clear(config->parsed_files);
   subst_list_clear( config->define_list );
@@ -567,7 +278,7 @@ void config_clear(config_type * config) {
 
 
 void config_free(config_type * config) {
-  stringlist_free( config->parse_errors );
+  config_error_free( config->parse_errors );
   set_free(config->parsed_files);
   subst_list_free( config->define_list );
   
@@ -690,22 +401,61 @@ char ** config_alloc_active_list(const config_type * config, int * _active_size)
 
 
 
+static void config_validate_content_item(const config_type * config , const config_content_item_type * item) {
+  const config_schema_item_type *  schema_item = config_content_item_get_schema( item );
+  const char * schema_kw = config_schema_item_get_kw( schema_item );
+  
+  if (config_content_item_is_set(item)) {
+    int i;
+    for (i = 0; i < config_schema_item_num_required_children(schema_item); i++) {
+      const char * required_child = config_schema_item_iget_required_child( schema_item , i );
+      if (!config_has_set_item(config , required_child)) {
+        char * error_message = util_alloc_sprintf("When:%s is set - you also must set:%s.",schema_kw , required_child);
+        config_error_add( config->parse_errors , error_message );
+      }
+    }
+    
+    if (config_schema_item_has_required_children_value( schema_item )) {
+      int inode;
+      for (inode = 0; inode < config_content_item_get_occurences(item); inode++) {
+        config_content_node_type * node   = config_content_item_iget_node(item , inode);
+        const stringlist_type * values = config_content_node_get_stringlist( node );
+        int is;
+
+        for (is = 0; is < stringlist_get_size(values); is++) {
+          const char * value = stringlist_iget(values , is);
+          stringlist_type * required_children = config_schema_item_get_required_children_value( schema_item , value );
+          
+          if (required_children != NULL) {
+            int ic;
+            for (ic = 0; ic < stringlist_get_size( required_children ); ic++) {
+              const char * req_child = stringlist_iget( required_children , ic );
+              if (!config_has_set_item(config , req_child )) {
+                char * error_message = util_alloc_sprintf("When:%s is set to:%s - you also must set:%s.",schema_kw , value , req_child );
+                config_error_add( config->parse_errors , error_message );
+              }
+            }
+          }
+        }
+      }
+    }
+  } else if (config_schema_item_required( schema_item)) {  /* The item is not set ... */
+    char * error_message = util_alloc_sprintf("Item:%s must be set - parsing:%s",schema_kw , config->abs_path);
+    config_error_add( config->parse_errors , error_message );
+  }
+}
+
+
+
 static void config_validate(config_type * config, const char * filename) {
   int size = hash_get_size(config->schema_items);
   char ** key_list = hash_alloc_keylist(config->schema_items);
   int ikey;
   for (ikey = 0; ikey < size; ikey++) {
     const config_content_item_type * item = config_get_content_item(config , key_list[ikey]);
-    config_content_item_validate(config , item );
+    config_validate_content_item(config , item );
   }
   util_free_stringlist(key_list , size);
-
-  if (stringlist_get_size(config->parse_errors) > 0) {
-    fprintf(stderr,"Parsing errors in configuration file \'%s\':\n" , filename);
-    stringlist_fprintf(config->parse_errors , "\n", stderr);
-    util_exit("");
-  }
-  
 }
 
 
@@ -791,6 +541,7 @@ static void config_parse__(config_type * config ,
                            const char * define_kw , 
                            bool warn_unrecognized,
                            bool validate) {
+
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
   char * abs_filename = util_alloc_realpath(config_file);
   parser_type * parser = parser_alloc(" \t" , "\"", NULL , NULL , "--" , "\n");
@@ -901,7 +652,8 @@ static void config_parse__(config_type * config ,
         free(line_buffer);
       }
     }
-    if (validate) config_validate(config , config_file);
+    if (validate) 
+      config_validate(config , config_file);
     fclose(stream);
   }
   parser_free( parser );
@@ -927,6 +679,11 @@ const char * config_get_config_file( const config_type * config , bool abs_path)
 }
 
 
+void config_fprintf_errors( const config_type * config , FILE * stream ) {
+  config_error_fprintf( config->parse_errors , stderr );
+}
+
+
 bool config_parse(config_type * config , 
                   const char * filename, 
                   const char * comment_string , 
@@ -942,6 +699,7 @@ bool config_parse(config_type * config ,
   util_alloc_file_components(filename , &config_path , &tmp_file , &extension);
   config_set_config_file( config , filename );
   config_file = util_alloc_filename(NULL , tmp_file , extension);
+
   config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , warn_unrecognized , validate);
 
   util_safe_free(tmp_file);
@@ -949,7 +707,7 @@ bool config_parse(config_type * config ,
   util_safe_free(config_path);
   util_safe_free(config_file);
 
-  if (stringlist_get_size( config->parse_errors ) == 0)
+  if (config_error_count( config->parse_errors ) == 0)
     return true;   // No errors
   else
     return false;  // There were parse errors.

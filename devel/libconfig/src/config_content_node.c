@@ -136,3 +136,12 @@ void config_content_node_set_cwd( config_content_node_type * node , const char *
 int config_content_node_get_size( const config_content_node_type * node ) {
   return stringlist_get_size( node->stringlist );
 }
+
+
+void config_content_node_assert_key_value( const config_content_node_type * node ) {
+  int argc_min , argc_max;
+  config_schema_item_get_argc( node->schema , &argc_min , &argc_max);
+
+  if (!((argc_min == 1) && (argc_min == 1)))
+    util_abort("%s: item:%s before calling config_get_value() functions *without* index you must set argc_min == argc_max = 1 \n",__func__ , config_schema_item_get_kw( node->schema ));
+}

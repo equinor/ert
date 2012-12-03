@@ -764,8 +764,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_schema_item(config , "MAX_RUNNING_MINUTES" , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
-    config_parse(config , config_file , "--" , NULL , NULL , true , true);
-    {
+
+    if (config_parse(config , config_file , "--" , NULL , NULL , true , true)) {
       if (config_item_set(config , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
       if (config_item_set(config , "STDOUT"))                ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
       if (config_item_set(config , "STDERR"))                ext_job_set_stderr_file(ext_job      , config_iget(config  , "STDERR" , 0,0));
@@ -808,6 +808,9 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
                                         util_alloc_string_copy( stringlist_iget( key_value , i + 1)) , free);
         }
       }
+    } else {
+      config_fprintf_errors( config , stderr );
+      exit(1);
     }
     config_free(config);
     

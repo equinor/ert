@@ -238,8 +238,7 @@ static void ext_cmd_validate( ext_cmd_type * ext_cmd ) {
 
 ext_cmd_type * ext_cmd_config_alloc( const char * name , config_type * config , const char * config_file) {
   config_clear( config );
-  config_parse( config , config_file , "--", NULL , NULL , true , true);
-  {
+  if (config_parse( config , config_file , "--", NULL , NULL , true , true)) {
     
     bool internal = DEFAULT_INTERNAL;
     if (config_item_set( config , INTERNAL_KEY))
@@ -282,6 +281,9 @@ ext_cmd_type * ext_cmd_config_alloc( const char * name , config_type * config , 
       
       return ext_cmd;
     }
+  } else {
+    config_fprintf_errors( config , stderr );
+    exit(1);
   }
 }
 

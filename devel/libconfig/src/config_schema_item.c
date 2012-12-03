@@ -30,6 +30,7 @@
 #include <subst_list.h>
 #include <vector.h>
 
+#include <config_error.h>
 #include <config_schema_item.h>
 
 
@@ -258,26 +259,36 @@ static char * __alloc_relocated__(const char * config_cwd , const char * value) 
 }
 
 
-bool config_schema_item_validate_set(const config_schema_item_type * item , stringlist_type * token_list , const char * config_file, const char * config_cwd, stringlist_type * error_list) {
+bool config_schema_item_validate_set(const config_schema_item_type * item , stringlist_type * token_list , const char * config_file, const char * config_cwd, config_error_type * error_list) {
   bool OK = true;
   int argc = stringlist_get_size( token_list ) - 1;
   if (item->validate->argc_min >= 0) {
     if (argc < item->validate->argc_min) {
       OK = false;
-      if (config_file != NULL) 
-        stringlist_append_owned_ref( error_list , util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have at least %d arguments.",config_file , item->kw , item->validate->argc_min));
-      else
-        stringlist_append_owned_ref( error_list , util_alloc_sprintf("Error:: Keyword:%s must have at least %d arguments.",item->kw , item->validate->argc_min));
+      {
+        char * error_message;
+        if (config_file != NULL) 
+          error_message = util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have at least %d arguments.",config_file , item->kw , item->validate->argc_min);
+        else
+          error_message = util_alloc_sprintf("Error:: Keyword:%s must have at least %d arguments.",item->kw , item->validate->argc_min);
+        
+        config_error_add( error_list , error_message );
+      }
     }
   }
 
   if (item->validate->argc_max >= 0) {
     if (argc > item->validate->argc_max) {
       OK = false;
-      if (config_file != NULL)
-        stringlist_append_owned_ref( error_list , util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have maximum %d arguments.",config_file , item->kw , item->validate->argc_max));
-      else
-        stringlist_append_owned_ref( error_list ,  util_alloc_sprintf("Error:: Keyword:%s must have maximum %d arguments.",item->kw , item->validate->argc_max));
+      {
+        char * error_message;
+        
+        if (config_file != NULL)
+          error_message = util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have maximum %d arguments.",config_file , item->kw , item->validate->argc_max);
+        else
+          error_message = util_alloc_sprintf("Error:: Keyword:%s must have maximum %d arguments.",item->kw , item->validate->argc_max);
+        config_error_add( error_list , error_message );
+      }
     }
   }
 
@@ -291,7 +302,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
     if (item->validate->common_selection_set) {
       for (int iarg = 0; iarg < argc; iarg++) {
         if (!set_has_key(item->validate->common_selection_set , stringlist_iget( token_list , iarg + 1))) {
-          stringlist_append_owned_ref( error_list , util_alloc_sprintf("%s: is not a valid value for: %s.",stringlist_iget( token_list , iarg + 1) , item->kw));
+          config_error_add( error_list , util_alloc_sprintf("%s: is not a valid value for: %s.",stringlist_iget( token_list , iarg + 1) , item->kw));
           OK = false;
         }
       }
@@ -300,7 +311,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
         if ((item->validate->argc_max > 0) || (iarg < item->validate->argc_min)) {  /* Without this test we might go out of range on the indexed selection set. */
           if (item->validate->indexed_selection_set[iarg] != NULL) {
             if (!set_has_key(item->validate->indexed_selection_set[iarg] , stringlist_iget( token_list , iarg + 1))) {
-              stringlist_append_owned_ref( error_list , util_alloc_sprintf("%s: is not a valid value for item %d of \'%s\'.",stringlist_iget( token_list , iarg + 1) , iarg + 1 , item->kw));
+              config_error_add( error_list , util_alloc_sprintf("%s: is not a valid value for item %d of \'%s\'.",stringlist_iget( token_list , iarg + 1) , iarg + 1 , item->kw));
               OK = false;
             }
           }
@@ -340,29 +351,29 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
               } else if (path_exe != NULL)
                 stringlist_iset_copy( token_list , iarg , path_exe);
               else
-                stringlist_append_owned_ref( error_list , util_alloc_sprintf("Could not locate executable:%s ", value));
+                config_error_add( error_list , util_alloc_sprintf("Could not locate executable:%s ", value));
               
               free(relocated);
               util_safe_free(path_exe);
             } else {
               if (!util_is_executable( value ))
-                stringlist_append_owned_ref( error_list , util_alloc_sprintf("Could not locate executable:%s ", value));
+                config_error_add( error_list , util_alloc_sprintf("Could not locate executable:%s ", value));
             }
           }
           break;
         case(CONFIG_INT):
           if (!util_sscanf_int( value , NULL ))
-            stringlist_append_owned_ref( error_list , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
+            config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
           break;
         case(CONFIG_FLOAT):
           if (!util_sscanf_double( value , NULL ))
-            stringlist_append_owned_ref( error_list , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
+            config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
           break;
         case(CONFIG_EXISTING_FILE):
           {
             char * file = __alloc_relocated__(config_cwd , value);
             if (!util_file_exists(file)) 
-              stringlist_append_owned_ref( error_list , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
+              config_error_add( error_list , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
             else
               stringlist_iset_copy( token_list , iarg + 1 , file);  
             free( file );
@@ -379,7 +390,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           {
             char * dir = __alloc_relocated__(config_cwd , value);
             if (!util_is_directory(value))
-              stringlist_append_owned_ref( error_list , util_alloc_sprintf("Can not find directory: %s. ",value));
+              config_error_add( error_list , util_alloc_sprintf("Can not find directory: %s. ",value));
             else
               stringlist_iset_copy( token_list , iarg + 1 , dir);  
             free( dir );
@@ -387,11 +398,11 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           break;
         case(CONFIG_BOOLEAN):
           if (!util_sscanf_bool( value , NULL ))
-            stringlist_append_owned_ref( error_list , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
+            config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
           break;
         case(CONFIG_BYTESIZE):
           if (!util_sscanf_bytesize( value , NULL))
-            stringlist_append_owned_ref( error_list , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
+            config_error_add( error_list , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
           break;
         default:
           util_abort("%s: config_item_type:%d not recognized \n",__func__ , int_vector_safe_iget(item->validate->type_map , iarg));

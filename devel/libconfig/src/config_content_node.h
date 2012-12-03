@@ -40,7 +40,8 @@ typedef struct config_content_node_struct config_content_node_type;
          void                       config_content_node_set_cwd( config_content_node_type * node , const char * config_cwd );
          const char               * config_content_node_safe_iget(const config_content_node_type * node , int index);
          int                        config_content_node_get_size( const config_content_node_type * node );
-         const char * config_content_node_get_kw( const config_content_node_type * node );
+         const char               * config_content_node_get_kw( const config_content_node_type * node );
+         void                       config_content_node_assert_key_value( const config_content_node_type * node );
 
 #ifdef __cplusplus
 }

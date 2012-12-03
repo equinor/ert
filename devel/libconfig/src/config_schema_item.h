@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <config_error.h>
 
 /** 
     Types used for validation of config items.
@@ -49,7 +50,7 @@ typedef enum {CONFIG_STRING        = 0,
   
   
   config_schema_item_type * config_schema_item_alloc(const char * kw , bool required);
-  bool                      config_schema_item_validate_set(const config_schema_item_type * item , stringlist_type * token_list , const char * config_file, const char * config_cwd, stringlist_type * error_list);
+  bool                      config_schema_item_validate_set(const config_schema_item_type * item , stringlist_type * token_list , const char * config_file, const char * config_cwd, config_error_type * error_list);
   void                      config_schema_item_free( config_schema_item_type * item);
   void                      config_schema_item_free__ (void * void_item);
 

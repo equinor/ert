@@ -32,41 +32,32 @@
 */
 
 
-static void assert_key_value(const config_schema_item_type * item) {
-  int argc_min , argc_max;
-  config_schema_item_get_argc( item , &argc_min , &argc_max);
-
-  if (!((argc_min == 1) && (argc_min == 1)))
-    util_abort("%s: item:%s before calling config_get_value() functions *without* index you must set argc_min == argc_max = 1 \n",__func__ , config_schema_item_get_kw( item ));
-}
-
-
 
 bool config_get_value_as_bool(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
   config_content_node_type * node = config_content_item_get_last_node( item );
-  assert_key_value( item->schema );
+  config_content_node_assert_key_value( node );
   return config_content_node_iget_as_bool(node , 0);
 }
 
 int config_get_value_as_int(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
   config_content_node_type * node = config_content_item_get_last_node( item );
-  assert_key_value( item->schema );
+  config_content_node_assert_key_value( node );
   return config_content_node_iget_as_int(node , 0);
 }
 
 double config_get_value_as_double(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
   config_content_node_type * node = config_content_item_get_last_node( item );
-  assert_key_value( item->schema );
+  config_content_node_assert_key_value( node );
   return config_content_node_iget_as_double(node , 0);
 }
 
 const char * config_get_value(const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
   config_content_node_type * node = config_content_item_get_last_node( item );
-  assert_key_value( item->schema );
+  config_content_node_assert_key_value( node );
   return config_content_node_iget(node , 0);
 }
 

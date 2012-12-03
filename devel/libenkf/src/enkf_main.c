@@ -2811,7 +2811,12 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     
     config = enkf_main_alloc_config( false , strict );
     site_config_init_user_mode( enkf_main->site_config );
-    config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , true , true);
+
+    if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , true , true)) {
+      config_fprintf_errors( config , stderr );
+      exit(1);
+    }
+
     site_config_init( enkf_main->site_config , config , true );                                   /*  <---- model_config : second pass. */ 
 
     /*****************************************************************/
