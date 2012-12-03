@@ -29,7 +29,7 @@
 
 #include <config.h>
 
-#include <ext_cmd.h>
+#include <wflow_job.h>
 #include <workflow.h>
 
 
@@ -38,7 +38,7 @@
 
 typedef struct cmd_struct {
   UTIL_TYPE_ID_DECLARATION;
-  const ext_cmd_type * ext_cmd;
+  const wflow_job_type * wflow_job;
   stringlist_type    * arglist;
 } cmd_type;
 
@@ -57,10 +57,10 @@ struct workflow_struct {
 
 /*****************************************************************/
 
-static cmd_type * cmd_alloc( const ext_cmd_type * ext_cmd , const stringlist_type * arglist) {
+static cmd_type * cmd_alloc( const wflow_job_type * wflow_job , const stringlist_type * arglist) {
   cmd_type * cmd = util_malloc( sizeof * cmd );
   UTIL_TYPE_ID_INIT(cmd , CMD_TYPE_ID );
-  cmd->ext_cmd = ext_cmd;
+  cmd->wflow_job = wflow_job;
   cmd->arglist = stringlist_alloc_deep_copy( arglist );
   return cmd;
 }
