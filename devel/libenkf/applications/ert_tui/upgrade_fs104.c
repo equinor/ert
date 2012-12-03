@@ -268,7 +268,7 @@ int main (int argc , char ** argv) {
     ecl_sum_type * refcase;
     {
       config_type * config = create_config();
-      if (!config_parse( config , model_config_file , "--" , "INCLUDE" , "DEFINE" , false , true )) {
+      if (!config_parse( config , model_config_file , "--" , "INCLUDE" , "DEFINE" , CONFIG_UNRECOGNIZED_IGNORE , true )) {
         config_fprintf_erors( config , stderr );
         exit(1);
       }

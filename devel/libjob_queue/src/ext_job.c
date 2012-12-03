@@ -765,7 +765,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
 
-    if (config_parse(config , config_file , "--" , NULL , NULL , true , true)) {
+    if (config_parse(config , config_file , "--" , NULL , NULL , CONFIG_UNRECOGNIZED_WARN , true)) {
       if (config_item_set(config , "STDIN"))                 ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
       if (config_item_set(config , "STDOUT"))                ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
       if (config_item_set(config , "STDERR"))                ext_job_set_stderr_file(ext_job      , config_iget(config  , "STDERR" , 0,0));
