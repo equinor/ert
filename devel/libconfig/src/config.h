@@ -35,6 +35,11 @@ extern "C" {
 #define ECL_COM_KW "--"
 #define ENKF_COM_KW "--"
 
+  typedef enum  {
+    CONFIG_UNRECOGNIZED_IGNORE = 0,
+    CONFIG_UNRECOGNIZED_WARN = 1,
+    CONFIG_UNRECOGNIZED_ERROR = 2
+  } config_unrecognized_enum;
 
 
 
@@ -46,7 +51,7 @@ typedef struct config_struct              config_type;
   void              config_free(config_type *);
   config_type *     config_alloc( );
   char       **     config_alloc_active_list(const config_type * , int * );
-  bool              config_parse(config_type * , const char * , const char * , const char * , const char * , bool , bool );
+  bool              config_parse(config_type * , const char * , const char * , const char * , const char * , config_unrecognized_enum unrecognized_behaviour , bool );
   bool              config_has_schema_item(const config_type * config , const char * kw);
   void              config_clear(config_type * config);
 

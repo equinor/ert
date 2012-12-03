@@ -539,7 +539,7 @@ static void config_parse__(config_type * config ,
                            const char * comment_string , 
                            const char * include_kw ,
                            const char * define_kw , 
-                           bool warn_unrecognized,
+                           config_unrecognized_enum unrecognized,
                            bool validate) {
 
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
@@ -613,7 +613,7 @@ static void config_parse__(config_type * config ,
                 free(tmp_path);
               }
 
-              config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , warn_unrecognized, false); /* Recursive call */
+              config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , unrecognized, false); /* Recursive call */
               util_safe_free(include_file);
               util_safe_free(include_path);
             }
@@ -638,8 +638,11 @@ static void config_parse__(config_type * config ,
               printf("%s \n", (const char *) hash_get(config->messages , kw));
             
             if (!config_has_schema_item(config , kw)) {
-              if (warn_unrecognized)
+              if (unrecognized == CONFIG_UNRECOGNIZED_WARN)
                 fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s --- \n" , kw , config_file);
+              else if (unrecognized == CONFIG_UNRECOGNIZED_ERROR) 
+                config_error_add(config->parse_errors , util_alloc_sprintf("Keyword:%s is not recognized" , kw));
+              
             }
             
             if (config_has_schema_item(config , kw)) {
@@ -689,7 +692,7 @@ bool config_parse(config_type * config ,
                   const char * comment_string , 
                   const char * include_kw ,
                   const char * define_kw , 
-                  bool warn_unrecognized,
+                  config_unrecognized_enum unrecognized_behaviour,
                   bool validate) {
 
   char * config_path;
@@ -699,8 +702,8 @@ bool config_parse(config_type * config ,
   util_alloc_file_components(filename , &config_path , &tmp_file , &extension);
   config_set_config_file( config , filename );
   config_file = util_alloc_filename(NULL , tmp_file , extension);
-
-  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , warn_unrecognized , validate);
+  
+  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , unrecognized_behaviour , validate);
 
   util_safe_free(tmp_file);
   util_safe_free(extension);

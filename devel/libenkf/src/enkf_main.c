@@ -2706,7 +2706,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
     
     {
       config_type * config = enkf_main_alloc_config( true , strict );
-      config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , true , false);
+      config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
       site_config_init( enkf_main->site_config , config , false);                                /*  <---- site_config : first pass. */  
       ert_report_list_site_init( enkf_main->report_list , config );
       config_free( config );
@@ -2812,7 +2812,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config = enkf_main_alloc_config( false , strict );
     site_config_init_user_mode( enkf_main->site_config );
 
-    if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , true , true)) {
+    if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN, true)) {
       config_fprintf_errors( config , stderr );
       exit(1);
     }
