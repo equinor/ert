@@ -49,7 +49,6 @@ struct cmd_struct {
 
 
 
-
 struct workflow_struct {
   UTIL_TYPE_ID_DECLARATION;
   time_t                 compile_time;
@@ -156,3 +155,17 @@ workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * 
   return script;
 }
 
+
+static UTIL_SAFE_CAST_FUNCTION( workflow , WORKFLOW_TYPE_ID )
+
+
+void workflow_free( workflow_type * workflow ) {
+  free( workflow->src_file );
+  vector_free( workflow->cmd_list );
+}
+
+
+void workflow_free__( void * arg ) {
+  workflow_type * workflow = workflow_safe_cast( arg );
+  workflow_free( workflow );
+}
