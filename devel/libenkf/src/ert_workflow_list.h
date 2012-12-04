@@ -27,7 +27,8 @@ extern "C" {
 
   typedef struct ert_workflow_list_struct ert_workflow_list_type;
   
-  
+  void                       ert_workflow_list_free( ert_workflow_list_type * workflow_list );
+  ert_workflow_list_type  *  ert_workflow_list_alloc();
 
 #ifdef __cplusplus
 }

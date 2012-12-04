@@ -22,16 +22,39 @@
 #include <string.h>
 
 #include <hash.h>
+#include <stringlist.h>
+#include <util.h>
 
 #include <workflow.h>
 #include <workflow_job.h>
 #include <workflow_joblist.h>
 
+#include <ert_workflow_list.h>
 
 struct ert_workflow_list_struct {
-  hash_type     * workflows;
+  stringlist_type       * path_list;
+  hash_type             * workflows;
+  workflow_joblist_type * joblist;
 };
 
+
+
+ert_workflow_list_type * ert_workflow_list_alloc() {
+  ert_workflow_list_type * workflow_list = util_malloc( sizeof * workflow_list );
+  workflow_list->path_list = stringlist_alloc_new();
+  workflow_list->workflows = hash_alloc();
+  workflow_list->joblist   = workflow_joblist_alloc();
+  return workflow_list;
+}
+
+
+
+void ert_workflow_list_free( ert_workflow_list_type * workflow_list ) {
+  hash_free( workflow_list->workflows );
+  stringlist_free( workflow_list->path_list );
+  workflow_joblist_free( workflow_list->joblist );
+  free( workflow_list );
+}
 
 
 

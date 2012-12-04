@@ -96,6 +96,7 @@
 #include <rng_config.h>
 #include <enkf_plot_data.h>
 #include <ert_report_list.h>
+#include <ert_workflow_list.h>
 #include <ranking_table.h>
 #include "enkf_defaults.h"
 #include "config_keys.h"
@@ -150,6 +151,7 @@ struct enkf_main_struct {
   rng_config_type      * rng_config;
   rng_type             * rng;
   ert_report_list_type * report_list;
+  ert_workflow_list_type * workflow_list;
   ranking_table_type   * ranking_table;
 
   /*---------------------------*/            /* Variables related to substitution. */
@@ -398,6 +400,9 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   
   if (enkf_main->local_config != NULL)
     local_config_free( enkf_main->local_config );
+
+  ert_report_list_free( enkf_main->report_list );
+  ert_workflow_list_free( enkf_main->workflow_list );
 
 
   int_vector_free( enkf_main->keep_runpath );
@@ -2170,6 +2175,7 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->analysis_config  = analysis_config_alloc_default( enkf_main->rng );   /* This is ready for use. */
   enkf_main->plot_config      = plot_config_alloc_default();       /* This is ready for use. */
   enkf_main->report_list      = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
+  enkf_main->workflow_list    = ert_workflow_list_alloc( );
   enkf_main->ranking_table    = ranking_table_alloc( 0 );
   return enkf_main;
 }
@@ -2812,7 +2818,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config = enkf_main_alloc_config( false , strict );
     site_config_init_user_mode( enkf_main->site_config );
 
-    if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN, true)) {
+    if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true)) {
       config_fprintf_errors( config , stderr );
       exit(1);
     }
@@ -3476,7 +3482,6 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
     enkf_main_log_fprintf_config( enkf_main , stream );
     site_config_fprintf_config( enkf_main->site_config , stream );    
     rng_config_fprintf_config( enkf_main->rng_config , stream );
-    ert_report_list_free( enkf_main->report_list );
     fclose( stream );
   }
 }
