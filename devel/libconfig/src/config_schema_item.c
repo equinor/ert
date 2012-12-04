@@ -145,7 +145,7 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
   validate->argc_max = argc_max;
   
   if ((argc_max != CONFIG_DEFAULT_ARG_MAX) && (argc_max < argc_min))
-    util_abort("%s invalid arg min/max values. argc_min:%d  argc_max:%d \n",argc_min , argc_max);
+    util_abort("%s invalid arg min/max values. argc_min:%d  argc_max:%d \n",__func__ , argc_min , argc_max);
   
   {
     int internal_type_size = 0;  /* Should end up in the range [argc_min,argc_max] */
@@ -296,7 +296,6 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
      OK - now we have verified that the number of arguments is correct. Then
      we start actually looking at the values. 
   */
-
   if (OK) { 
     /* Validating selection set - first common, then indexed */
     if (item->validate->common_selection_set) {
@@ -408,7 +407,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           util_abort("%s: config_item_type:%d not recognized \n",__func__ , int_vector_safe_iget(item->validate->type_map , iarg));
         }
       }
-    }
+    } 
   }
   return OK;
 }
