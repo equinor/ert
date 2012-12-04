@@ -18,6 +18,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
+
+#include <test_util.h>
+#include <util.h>
 
 #include <config.h>
 #include <workflow.h>
@@ -25,9 +29,13 @@
 #include <workflow_joblist.h>
 
 
-void error(char * msg) {
-  fprintf(stderr , msg);
-  exit(1);
+void create_workflow( const char * workflow_file , const char * tmp_file , int value) {
+  FILE * stream  = util_fopen( workflow_file , "w");
+  fprintf(stream , "CREATE_FILE   %s   %d\n" , tmp_file , value);
+  fprintf(stream , "READ_FILE     %s\n" , tmp_file );
+  fclose( stream );
+  
+  printf("Have created:%s \n",workflow_file );
 }
 
 
@@ -37,41 +45,47 @@ void read_file( void * self , const stringlist_type * args) {
   FILE * stream = util_fopen(stringlist_iget(args , 0 ) , "r");
   fscanf(stream , "%d" , value );
   fclose( stream );
-  
 }
 
 
 int main( int argc , char ** argv) {
-  int int_value = 9999;
+  int int_value = rand();
+  int read_value = 100;
   workflow_joblist_type * joblist = workflow_joblist_alloc();
 
   if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , argv[1])) 
-    error("Loading job CREATE_FILE failed\n");
+    test_error_exit("Loading job CREATE_FILE failed\n");
 
   if (!workflow_joblist_add_job_from_file( joblist , "READ_FILE"   , argv[2]))
-    error("Loading job READ_FILE failed\n");
+    test_error_exit("Loading job READ_FILE failed\n");
 
   {
     config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
     
     if (config_get_schema_size( workflow_compiler ) != 2)
-      error("Config compiler - wrong size \n");
+      test_error_exit("Config compiler - wrong size \n");
   }
   
 
   {
     const char * workflow_file = "/tmp/workflow";
-    workflow_type * workflow = workflow_alloc(workflow_file , joblist );
+    const char * tmp_file = "/tmp/fileX";
+    workflow_type * workflow;
     
-    if (!workflow_run( workflow , &int_value )) {
+    create_workflow( workflow_file , tmp_file , int_value );
+    workflow = workflow_alloc(workflow_file , joblist );
+    //unlink( workflow_file );
+    
+    if (!workflow_run( workflow , &read_value )) {
       config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
       config_fprintf_errors( workflow_compiler , stdout);
-      error("Workflow did not run\n");
+      unlink( tmp_file );
+      test_error_exit("Workflow did not run\n");
     }
+    unlink( tmp_file );
   }
-  
   workflow_joblist_free( joblist );
-  if (int_value != 10000)
-    error("Wrong numeric value read back \n");
+  if (int_value != read_value)
+    test_error_exit("Wrong numeric value read back \n");
   exit(0);
 }

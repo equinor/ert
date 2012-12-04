@@ -97,7 +97,7 @@ static bool workflow_try_compile( workflow_type * script ) {
         return true;
       else {
         // Script has been compiled succesfully, but then changed afterwards. 
-        // We tro to recompile; if that fails we are left with 'nothing'.
+        // We try to recompile; if that fails we are left with 'nothing'.
       }
     }
     
@@ -118,19 +118,19 @@ static bool workflow_try_compile( workflow_type * script ) {
             
             workflow_add_cmd( script , cmd );
           }
-          return true;
-        } else
-          return false;
+          script->compiled = true;
+        } 
       }
     }
-  } else
-    return script->compiled;  // It is legal to remove the script after 
-                              // successfull compilation.
+  } 
+  // It is legal to remove the script after successfull compilation.
 }
 
 
 bool workflow_run(workflow_type * workflow , void * self ) {
-  if (workflow_try_compile( workflow )) {
+  workflow_try_compile( workflow );
+
+  if (workflow->compiled) {
     int icmd;
     for (icmd = 0; icmd < vector_get_size( workflow->cmd_list ); icmd++) {
       const cmd_type * cmd = vector_iget_const( workflow->cmd_list , icmd );
@@ -153,7 +153,6 @@ workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * 
   script->compiled        = false;
   
   workflow_try_compile( script );
-
   return script;
 }
 
