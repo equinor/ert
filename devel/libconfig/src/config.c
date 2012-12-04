@@ -972,17 +972,7 @@ void config_install_message(config_type * config , const char * kw, const char *
 }
 
 
-void config_fprintf_item_list(const config_type * config , FILE * stream) {
-  stringlist_type * items = hash_alloc_stringlist( config->schema_items );
-  stringlist_sort( items , NULL );
-  {
-    int i; 
-    for (i=0; i < stringlist_get_size( items ); i++) 
-      fprintf(stream , "%s \n",stringlist_iget( items , i));
-  }
 
-  stringlist_free( items );
-}
 
 #include "config_get.c"
 

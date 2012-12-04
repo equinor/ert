@@ -72,3 +72,15 @@ int config_get_content_size( const config_type * config ) {
 const config_content_node_type * config_iget_content_node( const config_type * config , int index) {
   return vector_iget_const( config->content_list , index );
 }
+
+
+int config_get_schema_size( const config_type * config ) {
+  return hash_get_size( config->schema_items );
+}
+
+
+
+
+config_error_type * config_get_errors( const config_type * config ) {
+  return config->parse_errors;
+}

@@ -58,6 +58,10 @@ int config_error_count( const config_error_type * error )  {
 }
 
 
+const char * config_error_iget( const config_error_type * error , int index) {
+  return stringlist_iget( error->error_list , index );
+}
+
 
 void config_error_fprintf( const config_error_type * error , FILE * stream ) {
   stringlist_fprintf( error->error_list , "\n", stream);
