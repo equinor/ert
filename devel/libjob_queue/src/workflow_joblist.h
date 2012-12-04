@@ -27,8 +27,7 @@ extern "C" {
 #endif
 
 #include <workflow_job.h>
-
-  typedef struct workflow_joblist_struct workflow_joblist_type;
+typedef struct workflow_joblist_struct workflow_joblist_type;
 
   workflow_joblist_type   * workflow_joblist_alloc();
   void                      workflow_joblist_free( workflow_joblist_type * joblist);

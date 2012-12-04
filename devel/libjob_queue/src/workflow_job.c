@@ -91,7 +91,7 @@ config_type * workflow_job_alloc_config() {
 
     /*****************************************************************/
     item = config_add_schema_item( config , EXECUTABLE_KEY , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_EXECUTABLE});
+    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_FILE});
 
     /*---------------------------------------------------------------*/
     
@@ -211,6 +211,7 @@ static void workflow_job_iset_argtype_string( workflow_job_type * workflow_job ,
 
 static void workflow_job_validate( workflow_job_type * workflow_job ) {
   if (!workflow_job->internal) {
+    printf("Executable : %s \n",workflow_job->executable);
     if (workflow_job->executable != NULL) {
       if (util_is_executable( workflow_job->executable ) && 
           (workflow_job->module == workflow_job->function) && 
@@ -230,7 +231,8 @@ static void workflow_job_validate( workflow_job_type * workflow_job ) {
         if (workflow_job->module != NULL)
           fprintf(stderr,"Failed to load module:%s Error:%s \n",workflow_job->module , dlerror());
       }
-    }
+    } else
+      fprintf(stderr,"Must have executable == NULL and function != NULL for internal jobs \n");
   }
 }
 
@@ -304,17 +306,17 @@ void workflow_job_free__( void * arg) {
 
 
 
-static void workflow_job_run_internal( workflow_job_type * job , void * self , const stringlist_type * arg) {
+static void workflow_job_run_internal( const workflow_job_type * job , void * self , const stringlist_type * arg) {
   job->dl_func( self , arg );
 }
 
 
-static void workflow_job_run_external( workflow_job_type * job  , const stringlist_type * arg) {
+static void workflow_job_run_external( const workflow_job_type * job  , const stringlist_type * arg) {
   char ** argv = stringlist_alloc_char_copy( arg );
-  
+
   util_fork_exec( job->executable , 
                   stringlist_get_size( arg ),
-                  argv , 
+                  (const char **) argv , 
                   true ,
                   NULL , 
                   NULL , 
@@ -322,16 +324,17 @@ static void workflow_job_run_external( workflow_job_type * job  , const stringli
                   NULL , 
                   NULL );
   
-  {
+  
+  if (argv != NULL) {
     int i;
-    for (i=0; stringlist_get_size( arg ); i++)
+    for (i=0; i < stringlist_get_size( arg ); i++)
       free( argv[i] );
     free( argv );
   }
 }
 
 
-void workflow_job_run( workflow_job_type * job , void * self , const stringlist_type * arg) {
+void workflow_job_run( const workflow_job_type * job , void * self , const stringlist_type * arg) {
   if (job->internal)
     workflow_job_run_internal( job , self , arg );
   else
