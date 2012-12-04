@@ -38,13 +38,13 @@
 #define WORKFLOW_COMMENT_STRING     "--"
 #define WORKFLOW_INCLUDE       "INCLUDE"
 
+typedef struct cmd_struct cmd_type;
 
-
-typedef struct cmd_struct {
+struct cmd_struct {
   UTIL_TYPE_ID_DECLARATION;
   const workflow_job_type * workflow_job;
   stringlist_type         * arglist;
-} cmd_type;
+};
 
 
 
@@ -129,8 +129,16 @@ static bool workflow_try_compile( workflow_type * script ) {
 }
 
 
-bool workflow_run( const workflow_type * workflow , void * self ) {
-  return false;
+bool workflow_run(workflow_type * workflow , void * self ) {
+  if (workflow_try_compile( workflow )) {
+    int icmd;
+    for (icmd = 0; icmd < vector_get_size( workflow->cmd_list ); icmd++) {
+      const cmd_type * cmd = vector_iget_const( workflow->cmd_list , icmd );
+      workflow_job_run( cmd->workflow_job , self , cmd->arglist );
+    }
+    return true;
+  } else
+    return false;
 }
 
 
@@ -148,3 +156,4 @@ workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * 
 
   return script;
 }
+

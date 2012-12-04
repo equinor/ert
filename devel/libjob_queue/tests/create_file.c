@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2012  Statoil ASA, Norway. 
     
-   The file 'workflow.h' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'create_file.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -15,24 +15,15 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
+#include <stdlib.h>
+#include <stdio.h>
 
-#ifndef __WORKFLOW_H__
-#define __WORKFLOW_H__
 
+int main( int argc , char ** argv) {
+  char * filename = argv[1];
+  int value = atoi( argv[2] );
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-  
-#include <workflow_joblist.h>
-
-  typedef struct workflow_struct workflow_type;
-
-  workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * joblist);
-  bool            workflow_run(  workflow_type * workflow , void * self );
-
-#ifdef __cplusplus
+  FILE * stream = fopen( filename , "w");
+  fprintf(stream , "%d\n", value );
+  fclose( stream );
 }
-#endif
-
-#endif
