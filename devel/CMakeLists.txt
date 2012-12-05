@@ -249,6 +249,14 @@ option( BUILD_ENS_PLOT "Build small Eclipse plotting program - no" OFF)
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
+
+   try_compile( DLOPEN ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_dlopen.c )
+   if (DLOPEN)
+      set(NEED_LIBDL OFF)    
+   else()
+      set(NEED_LIBDL ON)
+   endif()
+
    option(USE_LSF "Include support for LSF" ON)
    set( libconfig_src_path    ${CMAKE_SOURCE_DIR}/libconfig/src )
    set( libsched_src_path     ${CMAKE_SOURCE_DIR}/libsched/src )
