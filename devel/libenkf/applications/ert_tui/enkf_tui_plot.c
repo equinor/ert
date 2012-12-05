@@ -751,8 +751,7 @@ static void * enkf_tui_plot_ensemble_mt( void * void_arg ) {
   return NULL;
 }
     
-
-static void enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 , int iens2 , int step1 , int step2 , bool prediction_mode) {
+void enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 , int iens2 , int step1 , int step2 , bool prediction_mode) {
   /*
     This code is prepared for multithreaded creation of plots;
     however the low level PLPlot library is not thread safe, we
@@ -802,17 +801,6 @@ static void enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 
   //thread_pool_free( tp );
 } 
 
-void enkf_tui_plot_all_summary_JOB(void * self , const stringlist_type * args ) {
-  enkf_main_type             * enkf_main       = enkf_main_safe_cast( self );
-  int iens1 , iens2 , step1 , step2;   
-  bool prediction_mode;
-  iens1 = 0;
-  iens2 = enkf_main_get_ensemble_size( enkf_main );
-  step1 = 0;
-  step2 = 0;
-  prediction_mode = true;
-  enkf_tui_plot_all_summary__( enkf_main , iens1 , iens2 , step1 , step2 , prediction_mode );
-}
 
 
 
@@ -834,9 +822,7 @@ void enkf_tui_plot_all_summary(void * arg) {
   
   if (step1 != -2 && step2 != -2){
     enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d) [default: all]" , enkf_main_get_ensemble_size( enkf_main ) , PROMPT_LEN , &iens1 , &iens2);
-
     enkf_tui_plot_all_summary__( enkf_main , iens1 , iens2 , step1 , step2 , prediction_mode );
-    
   }
 }
     

@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
-   The file 'enkf_tui_plot.h' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'ert_tui_jobs.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -16,15 +16,20 @@
    for more details. 
 */
 
-#ifndef __ENKF_TUI_PLOT_H__
-#define __ENKF_TUI_PLOT_H__
+#include <stringlist.h>
 
-
-#include <matrix.h>
 #include <enkf_main.h>
-void    enkf_tui_plot_simple_menu(void * );
-void    enkf_tui_plot_menu(void * );
-void    enkf_tui_plot_PC( enkf_main_type * enkf_main , const char * plot_name , const matrix_type * PC , const matrix_type * PC_obs);
-void    enkf_tui_plot_reports(void *);
-void    enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 , int iens2 , int step1 , int step2 , bool prediction_mode);
-#endif
+#include <enkf_tui_plot.h>
+
+void enkf_tui_plot_all_summary_JOB(void * self , const stringlist_type * args ) {
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( self );
+  int iens1 , iens2 , step1 , step2;   
+  bool prediction_mode;
+  iens1 = 0;
+  iens2 = enkf_main_get_ensemble_size( enkf_main );
+  step1 = 0;
+  step2 = 0;
+  prediction_mode = true;
+  enkf_tui_plot_all_summary__( enkf_main , iens1 , iens2 , step1 , step2 , prediction_mode );
+}
+
