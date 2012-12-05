@@ -750,7 +750,63 @@ static void * enkf_tui_plot_ensemble_mt( void * void_arg ) {
                            arg_pack_iget_int( arg  , 9 ));
   return NULL;
 }
+<<<<<<< Updated upstream
      
+=======
+    
+
+static void enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 , int iens2 , int step1 , int step2 , bool prediction_mode) {
+  /*
+    This code is prepared for multithreaded creation of plots;
+    however the low level PLPlot library is not thread safe, we
+    therefor must limit the the number of threads in the thread pool
+    to 0 - i.e. serial excution.
+  */
+  //thread_pool_type * tp = thread_pool_alloc( 0 , true );
+  
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main ); 
+  stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
+  arg_pack_type ** arg_list = util_calloc( stringlist_get_size( summary_keys ) , sizeof * arg_list );
+  {
+    char * plot_path = util_alloc_filename( plot_config_get_path( plot_config ) , enkf_main_get_current_fs( enkf_main ) , NULL );
+    util_make_path( plot_path );
+    free( plot_path );
+  }
+  
+  for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
+    const char * key = stringlist_iget( summary_keys , ikey);
+    
+    arg_list[ikey] = arg_pack_alloc( );
+    {
+      arg_pack_type * arg = arg_list[ikey];
+      
+      arg_pack_append_ptr( arg  , enkf_main );
+      arg_pack_append_ptr( arg  , ensemble_config_get_node( ensemble_config , key ));
+      arg_pack_append_ptr( arg  , key );
+      arg_pack_append_ptr( arg  , NULL );
+      arg_pack_append_int( arg  , step1 );
+      arg_pack_append_int( arg  , step2 );
+      arg_pack_append_bool( arg , prediction_mode );
+      arg_pack_append_int( arg  , iens1 );
+      arg_pack_append_int( arg  , iens2 );
+      arg_pack_append_int( arg  , BOTH );
+      
+      enkf_tui_plot_ensemble_mt( arg );
+      //thread_pool_add_job( tp , enkf_tui_plot_ensemble_mt , arg );
+    }
+  }
+  //thread_pool_join( tp );
+  for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) 
+    arg_pack_free( arg_list[ikey] );
+  free( arg_list );
+  stringlist_free( summary_keys );
+  
+  //thread_pool_free( tp );
+} 
+
+
+>>>>>>> Stashed changes
 
 void enkf_tui_plot_all_summary(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
