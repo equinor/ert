@@ -4,7 +4,11 @@ set( header_files analysis_module.h enkf_linalg.h analysis_table.h)
 add_library( analysis  SHARED ${source_files} )
 set_target_properties( analysis PROPERTIES COMPILE_DEFINITIONS INTERNAL_LINK)
 
-target_link_libraries( analysis  )
+target_link_libraries( analysis ert_util )
+if (NEED_LIBDL)
+   target_link_libraries( analysis dl )
+endif()
+
 
 
 # List of modules

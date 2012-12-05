@@ -8,3 +8,7 @@ target_link_libraries( job_queue config ert_util )
 if (HAVE_LSF)
    target_link_libraries( job_queue bat ${LSF_LIBRARY} nsl)
 endif()                                                   
+
+if (NEED_LIBDL)
+   target_link_libraries( job_queue dl )
+endif()
