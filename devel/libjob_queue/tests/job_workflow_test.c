@@ -48,6 +48,7 @@ void read_file( void * self , const stringlist_type * args) {
 }
 
 
+
 int main( int argc , char ** argv) {
   int int_value = rand();
   int read_value = 100;
@@ -74,7 +75,7 @@ int main( int argc , char ** argv) {
     
     create_workflow( workflow_file , tmp_file , int_value );
     workflow = workflow_alloc(workflow_file , joblist );
-    //unlink( workflow_file );
+    unlink( workflow_file );
     
     if (!workflow_run( workflow , &read_value )) {
       config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );

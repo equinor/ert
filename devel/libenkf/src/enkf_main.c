@@ -1911,6 +1911,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   /*****************************************************************/
   
   site_config_add_config_items( config , site_only );
+  ert_workflow_list_update_config( config );
   if (site_only)                                                   
     return config;                                                  /* <---------------- return statement here! */
 
@@ -1961,7 +1962,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
 
   item = config_add_schema_item(config , DBASE_TYPE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1, 1 , 0 , NULL);
-  config_schema_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
+  config_schema_item_set_common_selection_set(item , 2 , (const char *[2]) {"PLAIN" , "BLOCK_FS"});
 
   item = config_add_schema_item(config , FORWARD_MODEL_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
@@ -2953,6 +2954,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       /*****************************************************************/
       ert_report_list_init( enkf_main->report_list , config , ecl_config_get_refcase( enkf_main->ecl_config ));
+      ert_workflow_list_init( enkf_main->workflow_list , config );
       
       {
         const char * obs_config_file;
@@ -3036,6 +3038,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   enkf_main_init_jobname( enkf_main );
   enkf_main_gen_data_special( enkf_main );
   free( model_config );
+  
+
+  ert_workflow_list_run_workflow( enkf_main->workflow_list , "PLOT_ALL_SUMMARY" , enkf_main );
   return enkf_main;
 }
 

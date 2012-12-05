@@ -24,11 +24,19 @@
 extern "C" {
 #endif
 
+#include <config.h>
+
 
   typedef struct ert_workflow_list_struct ert_workflow_list_type;
   
   void                       ert_workflow_list_free( ert_workflow_list_type * workflow_list );
   ert_workflow_list_type  *  ert_workflow_list_alloc();
+  void                       ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path);
+  void                       ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const char * job_name , const char * config_file );
+  void                       ert_workflow_list_update_config( config_type * config );
+  void                       ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config );
+  void                       ert_workflow_list_add_workflow( ert_workflow_list_type * workflow_list , const char * workflow_file , const char * workflow_name);
+  void                       ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self);
 
 #ifdef __cplusplus
 }

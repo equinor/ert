@@ -731,7 +731,7 @@ void site_config_init(site_config_type * site_config , const config_type * confi
      prefix characters).
   */
   if (config_item_set(config , UMASK_KEY)) {
-    const char * string_mask = config_iget( config , UMASK_KEY , 0 , 0);
+    const char * string_mask = config_get_value( config , UMASK_KEY);
     mode_t umask_value;
     if (util_sscanf_octal_int( string_mask , &umask_value))
       site_config_set_umask( site_config , umask_value);
@@ -742,7 +742,7 @@ void site_config_init(site_config_type * site_config , const config_type * confi
   /* LSF options */
   {
     if (config_item_set(config , LSF_QUEUE_KEY))
-      site_config_set_lsf_queue( site_config , config_iget( config , LSF_QUEUE_KEY , 0 , 0));
+      site_config_set_lsf_queue( site_config , config_get_value( config , LSF_QUEUE_KEY ));
     
     if (config_item_set(config , LSF_RESOURCES_KEY)) {
       char * lsf_resource_request = config_alloc_joined_string(config , LSF_RESOURCES_KEY , " ");
@@ -751,20 +751,20 @@ void site_config_init(site_config_type * site_config , const config_type * confi
     }
     
     if (config_item_set(config , MAX_RUNNING_LSF_KEY))
-      site_config_set_max_running_lsf( site_config , config_iget_as_int( config , MAX_RUNNING_LSF_KEY , 0 , 0));
+      site_config_set_max_running_lsf( site_config , config_get_value_as_int( config , MAX_RUNNING_LSF_KEY));
 
     if (config_item_set(config , LSF_SERVER_KEY))
-      site_config_set_lsf_server( site_config , config_iget( config , LSF_SERVER_KEY , 0 , 0));
+      site_config_set_lsf_server( site_config , config_get_value( config , LSF_SERVER_KEY));
   }
 
 
   /* RSH options */
   {
     if (config_item_set( config , RSH_COMMAND_KEY ))
-      site_config_set_rsh_command( site_config , config_iget(config , RSH_COMMAND_KEY , 0,0));
+      site_config_set_rsh_command( site_config , config_get_value(config , RSH_COMMAND_KEY));
     
     if (config_item_set( config , MAX_RUNNING_RSH_KEY))
-      site_config_set_max_running_rsh( site_config , config_iget_as_int( config , MAX_RUNNING_RSH_KEY , 0,0));
+      site_config_set_max_running_rsh( site_config , config_get_value_as_int( config , MAX_RUNNING_RSH_KEY));
 
     /* Parsing the "host1:4" strings. */
     if (user_config) {
@@ -782,7 +782,7 @@ void site_config_init(site_config_type * site_config , const config_type * confi
   if (config_item_set( config , QUEUE_SYSTEM_KEY)) {
     job_driver_type driver_type;
     {
-      const char * queue_system = config_iget(config , QUEUE_SYSTEM_KEY , 0,0);
+      const char * queue_system = config_get_value(config , QUEUE_SYSTEM_KEY);
       if (strcmp(queue_system , LSF_DRIVER_NAME) == 0) {
         driver_type = LSF_DRIVER;
       } else if (strcmp(queue_system , RSH_DRIVER_NAME) == 0) 
@@ -814,7 +814,7 @@ void site_config_init(site_config_type * site_config , const config_type * confi
   { 
     int i;
     for (i=0; i < config_get_occurences(config , QUEUE_OPTION_KEY); i++) {
-      stringlist_type * tokens   = config_iget_stringlist_ref(config , QUEUE_OPTION_KEY , i);
+      const stringlist_type * tokens   = config_iget_stringlist_ref(config , QUEUE_OPTION_KEY , i);
       const char * driver_name   = stringlist_iget( tokens , 0 );
       const char * option_key    = stringlist_iget( tokens , 1 );
       const char * option_value  = stringlist_alloc_joined_substring( tokens , 2 , stringlist_get_size( tokens ), " ");

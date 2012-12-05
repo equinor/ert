@@ -600,22 +600,22 @@ void enkf_tui_plot_histogram__(enkf_main_type * enkf_main , enkf_fs_type * fs , 
       int active_size = 0;
       enkf_node_type * node = enkf_node_alloc( config_node );
       node_id_type node_id = {.report_step = report_step , 
-			      .iens = 0 , 
-			      .state = plot_state };
+                              .iens = 0 , 
+                              .state = plot_state };
       for (iens = 0; iens < ens_size; iens++) {
-	node_id.iens = iens;
-	if (enkf_node_user_get( node , fs , key_index , node_id , &count[active_size]))
-	  active_size++;
+        node_id.iens = iens;
+        if (enkf_node_user_get( node , fs , key_index , node_id , &count[active_size]))
+          active_size++;
       }
       enkf_node_free( node );
       
       {
-	plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , PLOT_HIST);
-	plot_dataset_append_vector_hist(d , active_size , count);
-	if(plot_dataset_get_size(d) > 0){
-	  enkf_tui_show_plot(plot , plot_config , plot_file);}
-	else{
-	  fprintf(stderr,"** There is no data to plot. Are you trying to plot analyzed data after a forward run with option x? \n");}
+        plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , PLOT_HIST);
+        plot_dataset_append_vector_hist(d , active_size , count);
+        if(plot_dataset_get_size(d) > 0){
+          enkf_tui_show_plot(plot , plot_config , plot_file);}
+        else{
+          fprintf(stderr,"** There is no data to plot. Are you trying to plot analyzed data after a forward run with option x? \n");}
       }
     }
     free(count);
@@ -652,20 +652,20 @@ void enkf_tui_plot_histogram(void * arg) {
         enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
         if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
           plot_state = enkf_tui_util_scanf_state("Plot Forecast/Analyzed: [F|A]" , PROMPT_LEN , false);
-	  enkf_tui_plot_histogram__(enkf_main , fs , user_key , plot_state, report_step);
-	}
+          enkf_tui_plot_histogram__(enkf_main , fs , user_key , plot_state, report_step);
+        }
         else if (var_type == PARAMETER){
           plot_state = ANALYZED;
-	  gen_kw_config_type * gen_kw_config        = enkf_config_node_get_ref( config_node );
-	  stringlist_type * key_list                = gen_kw_config_alloc_name_list( gen_kw_config );
-	  int ikw;
-	  for (ikw = 0; ikw < stringlist_get_size( key_list ); ikw++) {
-	    char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , ikw );
-	    enkf_tui_plot_histogram__(enkf_main , fs , user_key , plot_state, report_step);
-	    free( user_key );
-	  }
-	  stringlist_free( key_list );
-	}
+          gen_kw_config_type * gen_kw_config        = enkf_config_node_get_ref( config_node );
+          stringlist_type * key_list                = gen_kw_config_alloc_name_list( gen_kw_config );
+          int ikw;
+          for (ikw = 0; ikw < stringlist_get_size( key_list ); ikw++) {
+            char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , ikw );
+            enkf_tui_plot_histogram__(enkf_main , fs , user_key , plot_state, report_step);
+            free( user_key );
+          }
+          stringlist_free( key_list );
+        }
         else
           util_abort("%s: can not plot this type \n",__func__);
       }
@@ -750,12 +750,74 @@ static void * enkf_tui_plot_ensemble_mt( void * void_arg ) {
                            arg_pack_iget_int( arg  , 9 ));
   return NULL;
 }
-     
+    
+
+static void enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 , int iens2 , int step1 , int step2 , bool prediction_mode) {
+  /*
+    This code is prepared for multithreaded creation of plots;
+    however the low level PLPlot library is not thread safe, we
+    therefor must limit the the number of threads in the thread pool
+    to 0 - i.e. serial excution.
+  */
+  //thread_pool_type * tp = thread_pool_alloc( 0 , true );
+  
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main ); 
+  stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
+  arg_pack_type ** arg_list = util_calloc( stringlist_get_size( summary_keys ) , sizeof * arg_list );
+  {
+    char * plot_path = util_alloc_filename( plot_config_get_path( plot_config ) , enkf_main_get_current_fs( enkf_main ) , NULL );
+    util_make_path( plot_path );
+    free( plot_path );
+  }
+  
+  for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
+    const char * key = stringlist_iget( summary_keys , ikey);
+    
+    arg_list[ikey] = arg_pack_alloc( );
+    {
+      arg_pack_type * arg = arg_list[ikey];
+      
+      arg_pack_append_ptr( arg  , enkf_main );
+      arg_pack_append_ptr( arg  , ensemble_config_get_node( ensemble_config , key ));
+      arg_pack_append_ptr( arg  , key );
+      arg_pack_append_ptr( arg  , NULL );
+      arg_pack_append_int( arg  , step1 );
+      arg_pack_append_int( arg  , step2 );
+      arg_pack_append_bool( arg , prediction_mode );
+      arg_pack_append_int( arg  , iens1 );
+      arg_pack_append_int( arg  , iens2 );
+      arg_pack_append_int( arg  , BOTH );
+      
+      enkf_tui_plot_ensemble_mt( arg );
+      //thread_pool_add_job( tp , enkf_tui_plot_ensemble_mt , arg );
+    }
+  }
+  //thread_pool_join( tp );
+  for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) 
+    arg_pack_free( arg_list[ikey] );
+  free( arg_list );
+  stringlist_free( summary_keys );
+  
+  //thread_pool_free( tp );
+} 
+
+void enkf_tui_plot_all_summary_JOB(void * self , const stringlist_type * args ) {
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( self );
+  int iens1 , iens2 , step1 , step2;   
+  bool prediction_mode;
+  iens1 = 0;
+  iens2 = enkf_main_get_ensemble_size( enkf_main );
+  step1 = 0;
+  step2 = 0;
+  prediction_mode = true;
+  enkf_tui_plot_all_summary__( enkf_main , iens1 , iens2 , step1 , step2 , prediction_mode );
+}
+
+
 
 void enkf_tui_plot_all_summary(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main ); 
   int iens1 , iens2 , step1 , step2;   
   bool prediction_mode;
   
@@ -769,59 +831,16 @@ void enkf_tui_plot_all_summary(void * arg) {
     if(step1 != -2)
       step2 = enkf_tui_util_scanf_int_with_default_return_to_menu( "Stop plotting at report step [Enter: default: everything] (M: return to menu)" , PROMPT_LEN , &prediction_mode);
   }
+  
   if (step1 != -2 && step2 != -2){
     enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d) [default: all]" , enkf_main_get_ensemble_size( enkf_main ) , PROMPT_LEN , &iens1 , &iens2);
+
+    enkf_tui_plot_all_summary__( enkf_main , iens1 , iens2 , step1 , step2 , prediction_mode );
     
-    {
-      /*
-        This code is prepared for multithreaded creation of plots;
-        however the low level PLPlot library is not thread safe, we
-        therefor must limit the the number of threads in the thread pool
-        to 0 - i.e. serial excution.
-      */
-      //thread_pool_type * tp = thread_pool_alloc( 0 , true );
-
-      stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
-      arg_pack_type ** arg_list = util_calloc( stringlist_get_size( summary_keys ) , sizeof * arg_list );
-      {
-        char * plot_path = util_alloc_filename( plot_config_get_path( plot_config ) , enkf_main_get_current_fs( enkf_main ) , NULL );
-        util_make_path( plot_path );
-        free( plot_path );
-      }
-      
-      for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
-        const char * key = stringlist_iget( summary_keys , ikey);
-        
-        arg_list[ikey] = arg_pack_alloc( );
-        {
-          arg_pack_type * arg = arg_list[ikey];
-          
-          arg_pack_append_ptr( arg , enkf_main );
-          arg_pack_append_ptr( arg , ensemble_config_get_node( ensemble_config , key ));
-          arg_pack_append_ptr( arg , key );
-          arg_pack_append_ptr( arg , NULL );
-          arg_pack_append_int( arg , step1 );
-          arg_pack_append_int( arg , step2 );
-          arg_pack_append_bool( arg , prediction_mode );
-          arg_pack_append_int( arg , iens1 );
-          arg_pack_append_int( arg , iens2 );
-          arg_pack_append_int( arg , BOTH );
-          
-          enkf_tui_plot_ensemble_mt( arg );
-          //thread_pool_add_job( tp , enkf_tui_plot_ensemble_mt , arg );
-        }
-      }
-      //thread_pool_join( tp );
-      for (int ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) 
-        arg_pack_free( arg_list[ikey] );
-      free( arg_list );
-      stringlist_free( summary_keys );
-
-      //thread_pool_free( tp );
-    }
   }
 }
-
+    
+    
           
 
 
@@ -1218,7 +1237,7 @@ void enkf_tui_plot_simple_menu(void * arg) {
       if (ert_report_list_get_num( report_list ) == 0)
         menu_item_disable( menu_item );
       
-	}*/
+        }*/
     menu_add_item(menu , "Help"                                , "h" , enkf_tui_help_menu_plot     , enkf_main , NULL);
     menu_run(menu);
     menu_free(menu);

@@ -66,6 +66,7 @@ const workflow_job_type * workflow_joblist_get_job( const workflow_joblist_type 
 
 void workflow_joblist_add_job( workflow_joblist_type * joblist , const workflow_job_type * job) {
   hash_insert_hash_owned_ref( joblist->joblist , workflow_job_get_name( job ) , job , workflow_job_free__ );
+  workflow_job_update_config_compiler( job , joblist->workflow_compiler );
 }
 
 
@@ -73,7 +74,6 @@ bool workflow_joblist_add_job_from_file( workflow_joblist_type * joblist , const
   workflow_job_type * job = workflow_job_config_alloc( job_name , joblist->job_config , config_file );
   if (job != NULL) {
     workflow_joblist_add_job( joblist , job );
-    workflow_job_update_config_compiler( job , joblist->workflow_compiler );
     return true;
   } else {
     fprintf(stderr,"** Warning: job:%s in file:%s was invalid - not added to list of jobs \n", job_name , config_file );
