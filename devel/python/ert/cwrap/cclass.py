@@ -112,6 +112,8 @@ class CClass(object):
 
     def __del__(self):
         if self.cfree:
+            # Important to check the c_ptr; in the case of failed object creation
+            # we can have a Python object with c_ptr == None.
             if self.c_ptr:
                 self.cfree( self )
                 
