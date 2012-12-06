@@ -139,7 +139,12 @@ workflow_type *  workflow_list_get_workflow(ert_workflow_list_type * workflow_li
   return hash_get( workflow_list->workflows , workflow_name );
 }
 
-void ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self) {
+bool  ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name ) {
+  return hash_has_key( workflow_list->workflows , workflow_name );
+}
+
+
+bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self) {
   workflow_type * workflow = workflow_list_get_workflow( workflow_list , workflow_name );
-  workflow_run( workflow , self );
+  return workflow_run( workflow , self );
 }

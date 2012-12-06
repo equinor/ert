@@ -380,7 +380,7 @@ static void enkf_main_free_ensemble( enkf_main_type * enkf_main ) {
 }
 
 
-void enkf_main_free(enkf_main_type * enkf_main) {
+void enkf_main_free(enkf_main_type * enkf_main){ 
   rng_free( enkf_main->rng );
   rng_config_free( enkf_main->rng_config );
   enkf_obs_free(enkf_main->obs);
@@ -417,6 +417,12 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   free(enkf_main);
 }
 
+
+
+void enkf_main_exit(enkf_main_type * enkf_main) {
+  enkf_main_free( enkf_main );
+  exit(0);
+}
 
 
 /*****************************************************************/
@@ -3038,9 +3044,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   enkf_main_init_jobname( enkf_main );
   enkf_main_gen_data_special( enkf_main );
   free( model_config );
-  
 
-  ert_workflow_list_run_workflow( enkf_main->workflow_list , "PLOT_ALL_SUMMARY" , enkf_main );
   return enkf_main;
 }
 
@@ -3491,3 +3495,9 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
   }
 }
 
+
+/*****************************************************************/
+
+ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main ) {
+  return enkf_main->workflow_list;
+}

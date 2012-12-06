@@ -56,6 +56,7 @@ extern "C" {
 #include <enkf_plot_data.h>
 #include <ert_report_list.h>
 #include <ranking_table.h>
+#include <ert_workflow_list.h>
 
   /*****************************************************************/
   
@@ -98,6 +99,7 @@ extern "C" {
   void                          enkf_main_add_well(enkf_main_type * , const char * , int , const char ** );
   void                          enkf_main_analysis(enkf_main_type * );
   void                          enkf_main_free(enkf_main_type * );
+  void                          enkf_main_exit(enkf_main_type * enkf_main);
   void                          enkf_main_init_eclipse(enkf_main_type * , int , int );
   void                          enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode);
   void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
@@ -229,6 +231,8 @@ extern "C" {
   
   void                   enkf_main_set_verbose( enkf_main_type * enkf_main , bool verbose);
   bool                   enkf_main_get_verbose( const enkf_main_type * enkf_main );
+
+  ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main );
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 
