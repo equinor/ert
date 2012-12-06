@@ -32,11 +32,31 @@ class CClass(object):
     pointer in the attribute 'c_ptr' - otherwise the from_param()
     method will blow up at first use.
     """
-    c_ptr = None
-
+    c_ptr  = None
+    cfree  = None
+    parent = None
+    
     @classmethod
     def from_param( cls , obj ):
         if obj is None:
             return ctypes.c_void_p()
         else:
             return ctypes.c_void_p( obj.c_ptr )
+
+
+    def init_cref(self , c_ptr , parent):
+        self.c_ptr = c_ptr
+        self.parent = parent
+        self.cfree = None
+
+
+    def init_cobj( self , c_ptr , cfree):
+        self.c_ptr = c_ptr
+        self.parent = None
+        self.cfree = cfree
+
+
+    def __del__(self):
+        if self.cfree:
+            self.cfree( self )
+    
