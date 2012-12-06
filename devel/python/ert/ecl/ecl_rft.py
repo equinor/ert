@@ -33,16 +33,15 @@ class EclRFTFile(CClass):
         c_ptr = cfunc_file.load( case )
         if c_ptr:
             obj = object.__new__( cls )
-            obj.c_ptr = c_ptr
+            self.init_cobj( c_ptr , cfunc_file.free )
             return obj
         else:
             return None
-
-    def __del__(self):
-        cfunc_file.free( self )
+        
 
     def __len__(self):
         return cfunc_file.get_size( self , None , -1)
+
 
     def __getitem__(self , index):
         if isinstance( index , types.IntType):
@@ -89,8 +88,8 @@ class EclRFTFile(CClass):
 
 class EclRFT(CClass):
     def __init__(self , c_ptr , parent):
-        self.c_ptr  = c_ptr
-        self.parent = parent    # Inhibit GC
+        self.init_cref( c_ptr , parent )
+
 
     def __len__(self):
         return cfunc_rft.get_size( self )
