@@ -58,5 +58,6 @@ class CClass(object):
 
     def __del__(self):
         if self.cfree:
-            self.cfree( self )
-    
+            if self.c_ptr:
+                self.cfree( self )
+                
