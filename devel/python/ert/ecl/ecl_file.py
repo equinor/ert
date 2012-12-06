@@ -171,11 +171,12 @@ class EclFile(CClass):
         FIPNUM from an INIT file.
         """
         if read_only:
-            self.c_ptr = cfunc.open( filename )
+            c_ptr = cfunc.open( filename )
         else:
-            self.c_ptr = cfunc.open_writable( filename )
-            
-        if self.c_ptr is None:
+            c_ptr = cfunc.open_writable( filename )
+
+        self.init_cobj( c_ptr , cfunc.close )
+        if c_ptr is None:
             raise IOError("Failed to open file file:%s" % filename)
         
 
@@ -211,16 +212,12 @@ class EclFile(CClass):
 
     def __len__(self):
         return self.size
-
     
+        
     def close(self):
         cfunc.close( self )
         self.c_ptr = None
-
         
-    def __del__(self):
-        if self.c_ptr:
-            cfunc.close( self )
 
     def select_block( self, kw , kw_index):
         OK = cfunc.select_block( self , kw , kw_index )
