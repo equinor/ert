@@ -325,6 +325,9 @@ void enkf_tui_run_manual_load__( void * arg ) {
 
 
 
+
+/*****************************************************************/
+
 void enkf_tui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   menu_type       * menu;
