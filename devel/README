@@ -1,0 +1,72 @@
+
+                    _________________________________ 
+                   /                                 \ 
+                   |   ______   ______   _______     |
+                   |  |  ____| |  __  \ |__   __|    |
+                   |  | |__    | |__) |    | |       |
+                   |  |  __|   |  _  /     | |       |
+                   |  | |____  | | \ \     | |       |
+                   |  |______| |_|  \_\    |_|       |
+                   |                                 |
+                   |  Ensemble based Reservoir Tool  |
+                   \_________________________________/
+
+
+---------------------------------------------
+
+   1. ERT
+   2. ECLIPSE utilities.
+   3. Building ERT
+   4. The code:
+     4.1 The different libraries
+     4.1 The general structure
+     4.2 Python wrappers
+   5. Tests
+
+---------------------------------------------
+
+1. ERT
+
+ERT - Ensemble based Reservoir Tool is a tool for managing en ensemble
+of reservoir models. The initial motivation for creating ERT was a as
+tool to do assisted history matching with Ensemble Kalman Filter
+(EnKF). Very briefly use of EnKF can be summarized as:
+
+   1. Sample initial reservoir parameters from a (Gaussian) prior
+      distribution.
+
+   2. Simulate the ensemble of of reservoir forward in time through
+      part of the historical period.
+
+   3. Load the results, compare with observed data, update the
+      parameters and the state of reservoir and restart the
+      simulations.
+
+This recipe is quite complex technically, and in particular involves
+the ability to read and write input and output files from the
+reservoir simulator (i.e. ECLIPSE in the case of ERT), run simulations
+with arbitrary external programs, plotting data and so on. This
+implies that a quite significant technical machinery must be in place
+before the EnKF algorithm as such can be utilizied. This in particular
+applies to real industry reservoir models, where typically
+imperfections of all kinds flourish.
+
+The initial motivation for creating ERT was to be able to use the EnKF
+algorithm for history matching. Currently ERT is more used with the
+Ensemble Smoother and also purely as a worklfow manager; herding a
+large collection of reservoir models through the required simulations
+steps.
+
+
+2. ECLIPSE Utilities
+
+
+3. Building ERT
+
+
+4. The code
+
+
+5. Test
+
+
