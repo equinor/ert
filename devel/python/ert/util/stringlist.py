@@ -41,16 +41,17 @@ from   ert.cwrap.cclass import CClass
 
 class StringList(CClass):
 
-    @classmethod
-    def NULL( cls ):
-        obj = object.__new__( cls )
-        obj.c_ptr = None 
-        return obj
-
-    @classmethod
-    def wrap_ptr( cls , c_ptr ):
-        obj = cls( c_ptr = c_ptr )
-        return obj
+    #@classmethod
+    #def NULL( cls ):
+    #    obj = object.__new__( cls )
+    #    obj.c_ptr = None 
+    #    return obj
+    #
+    #
+    #@classmethod
+    #def wrap_ptr( cls , c_ptr ):
+    #    obj = cls( c_ptr = c_ptr )
+    #    return obj
 
 
     def __init__( self , initial = None , c_ptr = None):
@@ -66,11 +67,17 @@ class StringList(CClass):
 
         If an element in the @initial argument is not a string the
         TypeError exception will be raised.
+
+        If c_ptr argument is different from None, that should refer to
+        an already created stringlist instance; this Python will take
+        ownership of the underlying object.
         """
         if c_ptr:
-            self.c_ptr = c_ptr
+            self.init_cobj( c_ptr , cfunc.free )
         else:
-            self.c_ptr = cfunc.stringlist_alloc( )
+            c_ptr = cfunc.stringlist_alloc( )
+            self.init_cobj( c_ptr , cfunc.free )
+
             if initial:
                 for s in initial:
                     if isinstance( s , types.StringType):
@@ -79,9 +86,6 @@ class StringList(CClass):
                         raise TypeError("Item:%s not a string" % s)
 
             
-    def __del__( self ):
-        if self.c_ptr:
-            cfunc.stringlist_free( self )
 
 
     def __getitem__(self , index):
@@ -135,9 +139,10 @@ class StringList(CClass):
         length = len(self)
         for i in range(length):
             if i == length -1:
-                buffer += "\'%s\']" % self[i]
+                buffer += "\'%s\'" % self[i]
             else:
                 buffer += "\'%s\'," % self[i]
+        buffer += "]"
         return buffer
 
 
@@ -185,7 +190,7 @@ CWrapper.registerType( "stringlist" , StringList )
 cwrapper = CWrapper( libutil.lib )
 cfunc    = CWrapperNameSpace("StringList")
 cfunc.stringlist_alloc      = cwrapper.prototype("c_void_p stringlist_alloc_new( )")
-cfunc.stringlist_free       = cwrapper.prototype("void stringlist_free( stringlist )")
+cfunc.free                  = cwrapper.prototype("void stringlist_free( stringlist )")
 cfunc.stringlist_append     = cwrapper.prototype("void stringlist_append_copy( stringlist , char* )")
 cfunc.stringlist_iget       = cwrapper.prototype("char* stringlist_iget( stringlist , int )")
 cfunc.stringlist_get_size   = cwrapper.prototype("int  stringlist_get_size( stringlist )") 

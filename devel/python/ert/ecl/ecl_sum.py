@@ -499,7 +499,7 @@ class EclSum( CClass ):
         on fnmatch(), i.e. shell style wildcards.
         """
         c_ptr = cfunc.create_well_list( self , pattern )
-        return StringList.wrap_ptr( c_ptr )
+        return StringList( c_ptr = c_ptr )
 
 
     def groups( self , pattern = None ):
@@ -511,7 +511,7 @@ class EclSum( CClass ):
         on fnmatch(), i.e. shell style wildcards.
         """
         c_ptr = cfunc.create_group_list( self , pattern )
-        return StringList.wrap_ptr( c_ptr )
+        return StringList( c_ptr = c_ptr )
 
     
     def get_values( self , key , report_only = False):

@@ -72,8 +72,8 @@ class TVector(CClass):
         (start , stop , step) = slice.indices( obj.size )
         if stop > start:
             new_obj = TVector.__new__( cls )
-            new_obj.c_ptr = cls.cstrided_copy( obj  , start , stop , step )
-            new_obj.data_owner = True
+            c_ptr = cls.cstrided_copy( obj  , start , stop , step )
+            new_obj.init_cobj( c_ptr , new_obj.free )
             return new_obj
         else:
             return None
@@ -82,23 +82,20 @@ class TVector(CClass):
     @classmethod
     def __copy__( cls , obj ):
         new_obj = TVector.__new__( cls )
-        new_obj.c_ptr = cls.alloc_copy( obj )
-        new_obj.data_owner = True
+        c_ptr = cls.alloc_copy( obj )
+        new_obj.init_cobj( c_ptr , new_obj.free )
         return new_obj
     
 
     def __new__( cls ):
         obj = object.__new__( cls )
-        obj.c_ptr = None
         return obj
 
 
     @classmethod
     def ref( cls , c_ptr , parent ):
         obj = cls( )
-        obj.c_ptr      = c_ptr
-        obj.data_owner = False
-        obj.parent     = parent
+        obj.init_cref( c_ptr , parent )
         return obj
 
     
@@ -114,13 +111,13 @@ class TVector(CClass):
         new = self.copy(  )
         return new
 
-    def __init__( self , default_value = 0 , c_ptr = None):
+    def __init__( self , default_value = 0):
         """
         Creates a new TVector instance.
         """
         init_size  = 0
-        self.c_ptr = self.alloc( init_size , default_value )
-        self.data_owner   = True
+        c_ptr = self.alloc( init_size , default_value )
+        self.init_cobj( c_ptr , self.free )
         self.element_size = self.get_element_size( self ) 
 
 
@@ -182,12 +179,6 @@ class TVector(CClass):
         return self.str( max_lines = 10 , width = 5 )
 
 
-    def __del__(self):
-        """
-        Method called by the gc on the way out.
-        """
-        if self.data_owner:
-            self.free( self )
 
     def __getitem__(self, index ):
         """
