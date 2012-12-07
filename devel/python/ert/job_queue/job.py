@@ -30,14 +30,11 @@ STATUS_EXIT    = 128
 class Job(CClass):
     def __init__(self , driver , c_ptr , queue_index , blocking = False):
         self.driver      = driver
-        self.c_ptr       = c_ptr
+        self.init_cobj( c_ptr , self.driver.free_job)
         self.submit_time = datetime.datetime.now()
         self.queue_index = queue_index
 
-                    
-    def __del__(self):
-        self.driver.free_job( self )
-        
+
         
     def block( self ):
         while True:
