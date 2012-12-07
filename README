@@ -60,8 +60,22 @@ steps.
 
 2. ECLIPSE Utilities
 
+ERT has a quite large amount of code devoted to reading and writing
+the ECLIPSE output files (grid/rft/restart/init/summary). In addition
+there is also reasonable support for reading and writing the grdecl
+input files, but there is no general .DATA file parser. The ability to
+read and write ECLIPSE output files is valuable in many reservoir
+applications, and it is possible to only build and use the libecl
+(with support libraries) library for working with ECLIPSE files. In
+fact the default build setup is to only build the ECLIPSE related
+library and utilities. This part of the ERT distribution can also be
+built on Windows with Visual Studio (albeit with maaaany warnings) and
+with MinGW.
+
 
 3. Building ERT
+
+CMake is the build system for ERT.
 
 
 4. The code
