@@ -1,4 +1,3 @@
-
                     _________________________________ 
                    /                                 \ 
                    |   ______   ______   _______     |
@@ -17,6 +16,7 @@
    1. ERT
    2. ECLIPSE utilities.
    3. Building ERT
+      3.1 CMake settings you might want to adjust
    4. The code:
      4.1 The different libraries
      4.1 The general structure
@@ -75,7 +75,30 @@ with MinGW.
 
 3. Building ERT
 
-CMake is the build system for ERT.
+CMake is the build system for ERT. The top level CMakeLists.txt file
+is located in the devel/ directory, and this CMakeLists.txt file includes
+individual CMakeLists.txt files for the different libraries.
+
+Building with CMake is performed like this:
+
+  1. Create a build directory, this can in principle be anywhere in the
+     filesystem. At the same level as the devel/ directory is a practical 
+     choice.
+
+  2. Go to the build directory and invoke the command:
+  
+        ccmake <path/to/directory/containing/CMakeLists.txt> 
+
+     Go through several 'configure' steps with CMake and generate native 
+     build files. 
+
+  3. Exit ccmake and invoke the native build system, i.e. ordinaray make 
+     on Linux.
+
+  4. Subsequent builds can be performed using just the native make command, 
+     as in step 3. 
+
+3.1 CMake settings you might want to adjust
 
 
 4. The code
