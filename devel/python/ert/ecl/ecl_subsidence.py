@@ -55,12 +55,8 @@ class EclSubsidence(CClass):
         The input arguments @grid and @init_file should be instances
         of EclGrid and EclFile respectively.
         """
-        self.c_ptr     = cfunc.subsidence_alloc( grid , init_file )
         self.init_file = init_file   # Inhibit premature garbage collection of init_file
-        
-
-    def __del__( self ):
-        cfunc.free( self )
+        self.init_cobj( cfunc.subsidence_alloc( grid , init_file ) , cfunc.free )
         
 
     def add_survey_PRESSURE( self , survey_name , restart_file ):

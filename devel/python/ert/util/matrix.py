@@ -36,12 +36,8 @@ from   ert.cwrap.cclass      import CClass
 class Matrix(CClass):
 
     def __init__(self , rows , columns):
-        self.c_ptr = cfunc.matrix_alloc( rows , columns )
-        self.data_owner = True
-
-    def __del__(self):
-        if self.data_owner:
-            cfunc.free( self )
+        c_ptr = cfunc.matrix_alloc( rows , columns )
+        self.init_cobj( c_ptr , cfunc.free )
             
     def __getitem__(self, index_tuple ):
         print index_tuple

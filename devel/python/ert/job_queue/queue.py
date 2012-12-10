@@ -146,7 +146,7 @@ class JobQueue(CClass):
 
         OK_file     = None 
         exit_file   = None
-        self.c_ptr  = cfunc.alloc_queue(max_submit , OK_file , exit_file )
+        self.init_cobj( c_ptr , cfunc.free_queue )
         self.driver = driver
         self.jobs   = JobList()
         self.size   = size
@@ -169,10 +169,6 @@ class JobQueue(CClass):
     def start( self , blocking = False):
         verbose = False
         cfunc.run_jobs( self , self.size , verbose )
-
-    def __del__(self):
-        cfunc.free_queue( self )
-
 
 
     def submit( self , cmd , run_path , job_name , argv , num_cpu = 1):
