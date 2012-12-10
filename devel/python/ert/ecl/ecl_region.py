@@ -51,10 +51,11 @@ class EclRegion(CClass):
 
         self.grid = grid
         self.active_index = False
-        if c_ptr:
-            self.c_ptr = c_ptr
-        else:
-            self.c_ptr = cfunc.alloc( grid , preselect )
+        if not c_ptr:
+            c_ptr = cfunc.alloc( grid , preselect )
+        self.init_cobj( c_ptr , cfunc.free )
+
+
             
     def __deep_copy__(self , memo):
         """
@@ -167,11 +168,6 @@ class EclRegion(CClass):
         new_region = self.copy()
         new_region.__isub__( other )
         return new_region
-
-
-    def __del__( self ):
-        if self.c_ptr:
-            cfunc.free( self )
 
 
     def union_with( self, other):

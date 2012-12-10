@@ -417,7 +417,7 @@ class EclSum( CClass ):
         c_ptr = cfunc.fread_alloc( load_case , join_string , include_restart)
         if c_ptr:
             obj = object.__new__( cls )
-            obj.c_ptr = c_ptr
+            obj.init_cobj( c_ptr , cfunc.free )
             return obj
         else:
             return None
@@ -463,17 +463,6 @@ class EclSum( CClass ):
             self.__mpl_datesR[i]   = date2num( self.__datesR[i] )
         
 
-    def __del__( self ):
-        if self.c_ptr:
-            cfunc.free( self )
-        self.c_ptr = None
-
-    #@classmethod
-    #def from_param( cls , obj ):
-    #    if obj is None:
-    #        return ctypes.c_void_p()
-    #    else:
-    #        return ctypes.c_void_p( obj.c_ptr )
 
     def get_vector( self , key , report_only = False):
         """
@@ -510,7 +499,7 @@ class EclSum( CClass ):
         on fnmatch(), i.e. shell style wildcards.
         """
         c_ptr = cfunc.create_well_list( self , pattern )
-        return StringList.wrap_ptr( c_ptr )
+        return StringList( c_ptr = c_ptr )
 
 
     def groups( self , pattern = None ):
@@ -522,7 +511,7 @@ class EclSum( CClass ):
         on fnmatch(), i.e. shell style wildcards.
         """
         c_ptr = cfunc.create_group_list( self , pattern )
-        return StringList.wrap_ptr( c_ptr )
+        return StringList( c_ptr = c_ptr )
 
     
     def get_values( self , key , report_only = False):
