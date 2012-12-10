@@ -24,12 +24,9 @@ from   ert.cwrap.cclass      import CClass
 
 class LaTeX(CClass):
     def __init__(self , src_file , in_place = False):
-        self.c_ptr = cfunc.alloc( src_file , in_place )
-        
+        c_ptr = cfunc.alloc( src_file , in_place )
+        self.init_cobj( c_ptr , cfunc.free )
 
-    def __del__(self):
-        if self.c_ptr:
-            cfunc.free( self )
 
     @property
     def runpath(self):
