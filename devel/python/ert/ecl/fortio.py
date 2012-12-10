@@ -87,7 +87,8 @@ class FortIO(CClass):
         obj = cls( )
 
         obj.pyfile = pyfile
-        obj.c_ptr = cfunc.fortio_wrap_FILE( filename , endian_flip , fmt_file , CFILE(obj.pyfile))
+        c_ptr = cfunc.fortio_wrap_FILE( filename , endian_flip , fmt_file , CFILE(obj.pyfile))
+        obj.init_cobj( c_ptr , None )
         return obj
 
 
@@ -115,8 +116,11 @@ class FortIO(CClass):
         """
         return cls.open( filename , "w" , fmt_file , endian_flip )
 
-    
+
     # Implements normal Python semantics - close on delete.
+    # Because the __del__() operator, i.e. the close(), involves
+    # more than just a cfree() function we must override the
+    # __del__ operator of the base class.
     def __del__(self):
         """
         Desctructor - will close the filehandle.
@@ -124,7 +128,7 @@ class FortIO(CClass):
         if self.c_ptr:
             self.close( )
 
-            
+
     def close( self ):
         """
         Close the filehandle.

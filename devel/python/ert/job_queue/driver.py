@@ -33,7 +33,8 @@ class Driver(CClass):
         """
         Creates a new driver instance
         """
-        self.c_ptr = cfunc.alloc_driver( type )
+        c_ptr = cfunc.alloc_driver( type )
+        self.init_cobj( c_ptr , cfunc.free_driver )
         if options:
             for (key,value) in options:
                 self.set_option( key , value )
@@ -57,8 +58,6 @@ class Driver(CClass):
     def is_driver_instance( self ):
         return True
 
-    def __del__( self ):
-        cfunc.free_driver( self )
 
     def submit( self , name , cmd , run_path , argList , num_cpu = 1 , blocking = False):
         argc = len( argList )

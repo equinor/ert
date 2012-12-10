@@ -14,6 +14,7 @@ import region_test
 import latex_test
 import fortio_test
 import restart_test
+import stringlist_test
 
 def run_suite(name , suite):
     print "Running tests from %12s:" % name,
@@ -41,3 +42,4 @@ run("grid"       , grid_test)
 run("region"     , region_test)
 run("latex"      , latex_test)
 run("fortio"     , fortio_test)
+run("stringlist" , stringlist_test)

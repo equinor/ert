@@ -107,10 +107,9 @@ class EclKW(CClass):
            soil_kw = EclKW.new( "SOIL" , 10000 , ECL_FLOAT_TYPE )
            
         """
-        obj            = cls()
-        obj.c_ptr      = cfunc.alloc_new( name , size , type )
-        obj.data_owner = True
-        obj.parent     = None
+        obj   = cls()
+        c_ptr = cfunc.alloc_new( name , size , type )
+        obj.init_cobj( c_ptr , cfunc.free )
         obj.__init( )
         return obj
 
@@ -124,10 +123,12 @@ class EclKW(CClass):
     # value from the ecl_file_iget_xxx() methods?
     @classmethod
     def wrap( cls , c_ptr , parent = None , data_owner = False):
-        obj            = cls( )
-        obj.c_ptr      = c_ptr
-        obj.data_owner = False
-        obj.parent     = parent
+        obj = cls( )
+        if parent:
+            obj.init_cref( c_ptr , parent )
+        else:
+            obj.init_cobj( c_ptr , cfunc.free )
+            
         obj.__init( )
         return obj
 
@@ -137,10 +138,9 @@ class EclKW(CClass):
     def slice_copy( cls , src , slice ):
         (start , stop , step) = slice.indices( src.size )
         if stop > start:
+            c_ptr = cfunc.slice_copyc( src , start , stop , step)
             obj = cls( )
-            obj.c_ptr = cfunc.slice_copyc( src , start , stop , step)
-            obj.parent = None
-            obj.data_owner = True
+            obj.init_cobj( c_ptr , cfunc.free )
             obj.__init( )
             return obj
         else:
@@ -153,9 +153,8 @@ class EclKW(CClass):
         Will create a deep copy of the current kw instance.
         """
         obj = cls( )
-        obj.c_ptr = cfunc.copyc( src )
-        obj.parent = None
-        obj.data_owner = True
+        c_ptr = cfunc.copyc( src )
+        obj.init_cobj( c_ptr , cfunc.free )
         obj.__init( )
         return obj
     
@@ -249,9 +248,7 @@ class EclKW(CClass):
         c_ptr  = cfunc.load_grdecl( cfile , kw , strict , ecl_type )
         if c_ptr:
             obj = cls( )
-            obj.c_ptr = c_ptr
-            obj.data_owner = True
-            obj.parent = None
+            obj.init_cobj( c_ptr , cfunc.free )
             obj.__init()
             return obj
         else:
@@ -303,9 +300,7 @@ class EclKW(CClass):
         c_ptr = cfunc.fread_alloc( fortio )
         if c_ptr:
             obj = cls( )
-            obj.c_ptr = c_ptr
-            obj.data_owner = True
-            obj.parent = None
+            obj.init_cobj( c_ptr , cfunc.free )
             obj.__init()
             return obj
         else:
@@ -379,11 +374,6 @@ class EclKW(CClass):
         return cfunc.get_size( self )
 
     
-    def __del__(self):
-        if self.data_owner:
-            cfunc.free( self )
-            
-
     def __deep_copy__(self , memo):
         """
         Python special routine used to perform deep copy.
