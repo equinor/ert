@@ -163,11 +163,61 @@ The different libraries are:
    libenkf: This is the main functionality which is ERT specific; this library is
       to large.
 
+
 4.2 General structure
 
+The code is written in C, but conventions give a 'scent of object oriented'. Common to 
+a very large part of the code is the following:
+
+   - Every file 'xxx' implements a datatype 'xxx_type' - the naming convention is quite
+     strong.
+
+   - All the struct defintions are in the source files, i.e. external scope must access 
+     the fields of a structure through accessor functions.
+
+   - All functions which operate on a type 'xxx_type' take a pointer to xxx_type as the
+     first argument, the structure closely resemble the 'self' argument used when 
+     implementing Python classes.
+
+   - Memory management is manual; however there are some conventions:
+     * Functions allocating storage have _alloc_ as part of the name.
+     * For all functions xxx_alloc() allocating storage there should be a matching xxx_free()
+       to discard the objects.
+     * Containers can optionally destroy their content is the content is installed with
+       a destructor.
+ 
+   - In libert_util/src/type_macros.h there is a macro based 'type-system' which is to to
+     runtime check casts of (void *).
+
+   
 4.3 Python wrappers
      
+Some of the code, in particular the ECLIPSE related functionality, has been wrapped in 
+Python. Using these wrappers it is quite easy work with ECLIPSE files. The python
+wrappers are quite well documented both in the devel/python/docs directory and in the 
+Python classes themselves.
+
+
 5. Testing
 
+The ERT is very weak on tests, but that is being improved. There are two different 
+categories of tests:
+ 
+     CMake tests: CMake  has a system for adding and running tests, and these can be 
+         invoked with the command 'make test' after the normal build process has 
+         completed.
+
+    Python test: The python directory devel/python/test has several python unittests. 
+         These tests test both the Python and wrappers and the underlying C code and
+         serve as quite good integration tests. Read the content of 
+         devel/python/test/README carfully before you invoke the Python tests, you might
+         have to update the local_(csh|bash) scripts to reflect your build output path.
 
 
+5.1 Test data
+
+Unfortunately a large fraction of the test data is based on Statoil internal data, and 
+is not available on GitHub. Work is underway to clarify this, and give the user the option
+to specify that the test should be performed with or without Statoil data.
+
+  
