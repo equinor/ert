@@ -197,7 +197,6 @@ FIELD    RV            DYNAMIC   MIN:0.0034
 
 --SURFACE  TOP  OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/d_BCU_%d.irap  BASE_SURFACE:Surfaces/d_BCU_0.irap
 
-INCLUDE  ./summary_vars
 -- Observations
 OBS_CONFIG         observations
 
