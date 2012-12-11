@@ -40,6 +40,37 @@ typedef enum {CONFIG_STRING        = 0,
               CONFIG_BYTESIZE      = 7,
               CONFIG_EXECUTABLE    = 8 ,
               CONFIG_INVALID       = 1000  } config_item_types;
+  
+#define CONFIG_ITEM_TYPE_ENUM_DEFS              \
+{.value =    0 , .name="CONFIG_STRING"},        \
+{.value =    1 , .name="CONFIG_INT"},           \
+{.value =    2 , .name="CONFIG_FLOAT"},         \
+{.value =    9 , .name="CONFIG_FILE"},          \
+{.value =    3 , .name="CONFIG_EXISTING_FILE"}, \
+{.value =    4 , .name="CONFIG_EXISTING_DIR"},  \
+{.value =    5 , .name="CONFIG_BOOLEAN"},       \
+{.value =    6 , .name="CONFIG_CONFIG"},        \
+{.value =    7 , .name="CONFIG_BYTESIZE"},      \
+{.value =    8 , .name="CONFIG_EXECUTABLE"},    \
+{.value = 1000 , .name="CONFIG_INVALID"}       
+#define CONFIG_ITEM_TYPE_ENUM_SIZE 11
+
+  
+  typedef enum  {
+    CONFIG_UNRECOGNIZED_IGNORE = 0,
+    CONFIG_UNRECOGNIZED_WARN = 1,
+    CONFIG_UNRECOGNIZED_ERROR = 2
+  } config_schema_unrecognized_enum;
+
+
+#define CONFIG_SCHEMA_UNRECOGNIZED_ENUM_DEFS          \
+{.value =    0 , .name="CONFIG_UNRECOGNIZED_IGNORE"}, \
+{.value =    1 , .name="CONFIG_UNRECOGNIZED_WARN"},   \
+{.value =    2 , .name="CONFIG_UNRECOGNIZED_ERROR"}
+#define CONFIG_SCHEMA_UNRECOGNIZED_ENUM_SIZE 3
+
+
+
 
 #define CONFIG_DEFAULT_ARG_MIN -1
 #define CONFIG_DEFAULT_ARG_MAX -1

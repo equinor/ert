@@ -539,7 +539,7 @@ static void config_parse__(config_type * config ,
                            const char * comment_string , 
                            const char * include_kw ,
                            const char * define_kw , 
-                           config_unrecognized_enum unrecognized,
+                           config_schema_unrecognized_enum unrecognized,
                            bool validate) {
 
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
@@ -692,7 +692,7 @@ bool config_parse(config_type * config ,
                   const char * comment_string , 
                   const char * include_kw ,
                   const char * define_kw , 
-                  config_unrecognized_enum unrecognized_behaviour,
+                  config_schema_unrecognized_enum unrecognized_behaviour,
                   bool validate) {
 
   char * config_path;

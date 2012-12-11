@@ -532,3 +532,17 @@ bool config_schema_item_has_required_children_value( const config_schema_item_ty
 stringlist_type * config_schema_item_get_required_children_value(const config_schema_item_type * item , const char * value) {
   return hash_safe_get( item->required_children_value , value );
 }
+
+
+/*****************************************************************/
+/* Small functions to support enum introspection. */
+
+
+const char * config_schema_item_type_enum_iget( int index, int * value) {
+  return util_enum_iget( index , CONFIG_ITEM_TYPE_ENUM_SIZE , (const util_enum_element_type []) { CONFIG_ITEM_TYPE_ENUM_DEFS }, value);
+}
+
+
+const char * config_schema_item_unrecognized_enum_iget( int index, int * value) {
+  return util_enum_iget( index , CONFIG_SCHEMA_UNRECOGNIZED_ENUM_SIZE , (const util_enum_element_type []) { CONFIG_SCHEMA_UNRECOGNIZED_ENUM_DEFS }, value);
+}
