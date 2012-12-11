@@ -54,12 +54,10 @@ class EclGrav(CClass):
         The input arguments @grid and @init_file should be instances
         of EclGrid and EclFile respectively.
         """
-        self.c_ptr     = cfunc.grav_alloc( grid , init_file )
         self.init_file = init_file   # Inhibit premature garbage collection of init_file
+        self.init_cobj( cfunc.grav_alloc(grid , init_file) , cfunc.free)
         
 
-    def __del__( self ):
-        cfunc.free( self )
         
 
     def add_survey_RPORV( self , survey_name , restart_file ):

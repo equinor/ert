@@ -20,31 +20,20 @@ Create a polygon
 
 import ctypes
 import libgeo
-from    ert.cwrap.cwrap       import *
+from    ert.cwrap.cwrap  import *
+from    ert.cwrap.cclass import CClass
 
-class GeoPolygon:
+class GeoPolygon(CClass):
 
     def __init__(self , points):
-        self.c_ptr = cfunc.alloc_new()
+        c_ptr = cfunc.alloc_new()
+        self.init_cobj( c_ptr , cfunc.free )
         for (xc,yz) in points:
             self.add_point( self , xc , yc )
 
 
     def add_point( self , xc , yc ):
         cfunc.add_point( self , xc , yc )
-
-
-    @classmethod
-    def from_param( cls , obj ):
-        if obj is None:
-            return ctypes.c_void_p()
-        else:
-            return ctypes.c_void_p( obj.c_ptr )
-
-
-    def __del__(self):
-        if self.c_ptr:
-            cfunc.free( self )
 
 
 #################################################################
