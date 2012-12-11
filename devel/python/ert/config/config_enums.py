@@ -13,8 +13,13 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-import libconfig
 
-from   config_enums  import *  
-from   config_parser import ConfigParser
+import  libconfig
+from    ert.cwrap.cenum       import create_enum
 
+
+# config_item_types from config_schema_item.h
+create_enum( libconfig.lib , "config_schema_item_type_enum_iget" , "config_types_enum" , globals())
+
+# config_item_types from config_schema_item.h
+create_enum( libconfig.lib , "config_schema_item_unrecognized_enum_iget" , "config_unrecognized_enum" , name_space = globals())
