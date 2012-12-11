@@ -26,10 +26,8 @@ from    ert.util.ctime        import ctime
 class SchedFile(CClass):
 
     def __init__(self , filename , start_time):
-        self.c_ptr = cfunc.parse( filename , ctime( start_time ))
-
-    def __del__(self):
-        cfunc.free( self )
+        c_ptr = cfunc.parse( filename , ctime( start_time ))
+        self.init_cobj( c_ptr , cfunc.free )
 
 
     @property

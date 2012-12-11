@@ -61,9 +61,8 @@ class EclGrid(CClass):
         If you are so inclined ...  
         """
         obj = object.__new__( cls )
-        obj.c_ptr = cfunc.grdecl_create( specgrid[0] , specgrid[1] , specgrid[2] , zcorn , coord , actnum , mapaxes) 
-        obj.data_owner = True
-        obj.parent     = None
+        c_ptr = cfunc.grdecl_create( specgrid[0] , specgrid[1] , specgrid[2] , zcorn , coord , actnum , mapaxes) 
+        obj.init_cobj( c_ptr , cfunc.free )
         return obj
 
 
@@ -75,9 +74,8 @@ class EclGrid(CClass):
         With the default value @actnum == None all cells will be active, 
         """
         obj = object.__new__( cls )
-        obj.c_ptr = cfunc.alloc_rectangular( dims[0] , dims[1] , dims[2] , dV[0] , dV[1] , dV[2] , actnum )
-        obj.data_owner = True
-        obj.parent     = None
+        c_ptr = cfunc.alloc_rectangular( dims[0] , dims[1] , dims[2] , dV[0] , dV[1] , dV[2] , actnum )
+        obj.init_cobj( c_ptr , cfunc.free )
         return obj
         
 
@@ -89,20 +87,13 @@ class EclGrid(CClass):
             
         if c_ptr:
             obj = object.__new__( cls )
-            obj.c_ptr = c_ptr
             if lgr:
-                obj.data_owner = False
-                obj.parent     = parent    # Keep a reference to the parent to inhibit GC.
+                obj.init_cref( c_ptr , parent )
             else:
-                obj.data_owner = True
-                obj.parent     = None
+                obj.init_cobj( c_ptr , cfunc.free )
             return obj
         else:
             return None
-
-    def __del__(self):
-        if self.data_owner:
-            cfunc.free( self )
 
 
     def equal(self , other , include_lgr = True , verbose = False):
