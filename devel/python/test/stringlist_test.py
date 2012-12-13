@@ -32,6 +32,14 @@ path = "test-data/Statoil/ECLIPSE/Gurbat"
 case = "%s/%s" % (path , base)
 
 
+def pop_empty():
+    s = StringList( initial = initList )
+    s.pop()
+    s.pop()
+    s.pop()
+    s.pop()
+
+
 class StringListTest( unittest.TestCase ):
     
     def setUp( self ):
@@ -43,6 +51,22 @@ class StringListTest( unittest.TestCase ):
         st = s.strings
         del s
         return st
+
+    def test_pop( self ):
+        s = StringList( initial = initList )
+        s1 = s.pop()
+        self.assertTrue( len(s) == 2 )
+        self.assertTrue( s1 == "S33")
+
+        s1 = s.pop()
+        self.assertTrue( len(s) == 1 )
+        self.assertTrue( s1 == "SABC")
+
+        s1 = s.pop()
+        self.assertTrue( len(s) == 0 )
+        self.assertTrue( s1 == "S1")
+
+        self.assertRaises( IndexError , pop_empty )
 
 
     def test_create( self ):
@@ -74,6 +98,7 @@ def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( StringListTest( 'test_create' ))
     suite.addTest( StringListTest( 'test_reference' ))
+    suite.addTest( StringListTest( 'test_pop' ))
     return suite
 
                    
