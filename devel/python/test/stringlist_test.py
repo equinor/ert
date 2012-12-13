@@ -39,6 +39,13 @@ def pop_empty():
     s.pop()
     s.pop()
 
+def last_empty():
+    s = StringList( initial = initList )
+    s.pop()
+    s.pop()
+    s.pop()
+    s.last
+
 
 class StringListTest( unittest.TestCase ):
     
@@ -85,6 +92,12 @@ class StringListTest( unittest.TestCase ):
         for i in range(len(s)):
             self.assertTrue( s3[i] == initList[i] )
 
+    def test_last( self ):
+        s = StringList( initial = initList )
+        l = s.last
+        self.assertTrue( "S33" == l )
+        self.assertRaises( IndexError , last_empty)
+
 
     def test_reference(self):
         sum = ecl.EclSum( case )
@@ -99,6 +112,7 @@ def fast_suite():
     suite.addTest( StringListTest( 'test_create' ))
     suite.addTest( StringListTest( 'test_reference' ))
     suite.addTest( StringListTest( 'test_pop' ))
+    suite.addTest( StringListTest( 'test_last' ))
     return suite
 
                    

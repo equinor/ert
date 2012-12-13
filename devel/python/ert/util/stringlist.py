@@ -181,6 +181,17 @@ class StringList(CClass):
             slist.append( s )
         return slist
 
+    @property
+    def last(self):
+        """
+        Will return the last element in list. Raise IndexError if empty.
+        """
+        if len(self):
+            return cfunc.last( self )
+        else:
+            raise IndexError("The list is empty")
+
+
     def sort(self , cmp_flag = 0):
         """
         Will sort the list inplace.
@@ -209,3 +220,4 @@ cfunc.stringlist_get_size   = cwrapper.prototype("int  stringlist_get_size( stri
 cfunc.contains              = cwrapper.prototype("bool stringlist_contains(stringlist , char*)")
 cfunc.sort                  = cwrapper.prototype("void stringlist_python_sort( stringlist , int)")
 cfunc.pop                   = cwrapper.prototype("char* stringlist_pop( stringlist )")
+cfunc.last                  = cwrapper.prototype("char* stringlist_get_last( stringlist )")
