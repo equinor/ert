@@ -146,6 +146,18 @@ class StringList(CClass):
         return buffer
 
 
+    def pop(self):
+        """
+        Will remove the last element from the list and return it. 
+        
+        Will raise IndexError if list is empty.
+        """
+        if len(self):
+            return cfunc.pop( self )
+        else:
+            raise IndexError("pop() failed - the list is empty")
+        
+
     def append(self, s):
         """
         Appends a new string @s to list.
@@ -196,3 +208,4 @@ cfunc.stringlist_iget       = cwrapper.prototype("char* stringlist_iget( stringl
 cfunc.stringlist_get_size   = cwrapper.prototype("int  stringlist_get_size( stringlist )") 
 cfunc.contains              = cwrapper.prototype("bool stringlist_contains(stringlist , char*)")
 cfunc.sort                  = cwrapper.prototype("void stringlist_python_sort( stringlist , int)")
+cfunc.pop                   = cwrapper.prototype("char* stringlist_pop( stringlist )")
