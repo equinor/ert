@@ -114,7 +114,7 @@ void enkf_usage() {
 
 
 
-static void init_debug( const char * executable ) {
+static void init_debug( const char * argv0) {
   char * git_commit       = util_alloc_sprintf("git commit...........: %s \n",GIT_COMMIT);
   char * compile_time     = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
 
@@ -125,8 +125,7 @@ static void init_debug( const char * executable ) {
   free(git_commit);
   free(compile_time);
 
-  if (executable != NULL)
-    util_abort_set_executable( executable );
+  util_abort_set_executable( argv0 );
 }  
 
 
@@ -135,7 +134,7 @@ static void init_debug( const char * executable ) {
 int main (int argc , char ** argv) {
   devel_warning();
   text_splash();
-  init_debug( NULL );
+  init_debug( argv[0] );
   printf("\n");
   printf("Documentation : %s \n","http://ert.nr.no");
   printf("git commit    : %s \n",GIT_COMMIT);
