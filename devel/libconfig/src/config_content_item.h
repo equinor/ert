@@ -29,10 +29,10 @@ extern "C" {
 
 #include <config_error.h>
 #include <config_schema_item.h>
+#include <config_path_elm.h>
 
 typedef struct config_content_item_struct config_content_item_type;
 
-  bool                       config_content_item_is_set(const config_content_item_type * item);
   int                        config_content_item_get_occurences(const config_content_item_type * item);
   config_content_node_type * config_content_item_get_last_node(const config_content_item_type * item);
   config_content_node_type * config_content_item_iget_node(const config_content_item_type * item , int index);
@@ -50,11 +50,11 @@ typedef struct config_content_item_struct config_content_item_type;
   void                       config_content_item_clear( config_content_item_type * item );
   void                       config_content_item_free( config_content_item_type * item );
   void                       config_content_item_free__( void * arg );
-  config_content_item_type * config_content_item_alloc( const config_schema_item_type * schema );
+  config_content_item_type * config_content_item_alloc( const config_schema_item_type * schema , const config_path_elm_type * path_elm);
   void                       config_content_item_validate(const config_content_item_type * item, config_error_type * error);
-  config_content_node_type * config_content_item_alloc_node( const config_content_item_type * item );
+  config_content_node_type * config_content_item_alloc_node( const config_content_item_type * item , const config_path_elm_type * path_elm);
   const config_schema_item_type * config_content_item_get_schema( const config_content_item_type * item );
-  void                       config_content_item_set( config_content_item_type * item );
+  const config_path_elm_type * config_content_item_get_path_elm( const config_content_item_type * item );
 
 #ifdef __cplusplus
 }

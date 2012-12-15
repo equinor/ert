@@ -264,7 +264,7 @@ void ert_report_list_init( ert_report_list_type * report_list , config_type * co
   }  
   
   /* Installing the target path for reports*/
-  if (config_has_set_item(config , REPORT_PATH_KEY))
+  if (config_item_set(config , REPORT_PATH_KEY))
     ert_report_list_set_target_path( report_list , config_iget( config , REPORT_PATH_KEY , 0 , 0));
 
   ert_report_list_add_global_context( report_list , CONFIG_FILE_TAG , config_get_config_file( config , true ));

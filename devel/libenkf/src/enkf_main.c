@@ -2904,10 +2904,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         char * delete_runpath_string = NULL;
         int    ens_size              = config_get_value_as_int(config , NUM_REALIZATIONS_KEY);
         
-        if (config_has_set_item(config , KEEP_RUNPATH_KEY))
+        if (config_item_set(config , KEEP_RUNPATH_KEY))
           keep_runpath_string = config_alloc_joined_string(config , KEEP_RUNPATH_KEY , "");
 
-        if (config_has_set_item(config , DELETE_RUNPATH_KEY))
+        if (config_item_set(config , DELETE_RUNPATH_KEY))
           delete_runpath_string = config_alloc_joined_string(config , DELETE_RUNPATH_KEY , "");
 
         enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string , ens_size );
@@ -2919,14 +2919,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /* This is really in the wrong place ... */
       {
         enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
-        if (config_has_set_item(config , PRE_CLEAR_RUNPATH_KEY))
+        if (config_item_set(config , PRE_CLEAR_RUNPATH_KEY))
           enkf_main->pre_clear_runpath = config_get_value_as_bool( config , PRE_CLEAR_RUNPATH_KEY);
       }
 
 
 
 
-      if (config_has_set_item(config , STATIC_KW_KEY)) {
+      if (config_item_set(config , STATIC_KW_KEY)) {
         for (int i=0; i < config_get_occurences(config , STATIC_KW_KEY); i++) {
           const stringlist_type * static_kw_list = config_iget_stringlist_ref(config , STATIC_KW_KEY , i);
           int k;
@@ -2964,7 +2964,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       
       {
         const char * obs_config_file;
-        if (config_has_set_item(config , OBS_CONFIG_KEY))
+        if (config_item_set(config , OBS_CONFIG_KEY))
           obs_config_file = config_iget(config  , OBS_CONFIG_KEY , 0,0);
         else
           obs_config_file = NULL;
@@ -2977,7 +2977,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       {
         const char * rft_config_file = NULL;
-        if (config_has_set_item(config , RFT_CONFIG_KEY))
+        if (config_item_set(config , RFT_CONFIG_KEY))
           rft_config_file = config_iget(config , RFT_CONFIG_KEY , 0,0);
 
         enkf_main_set_rft_config_file( enkf_main , rft_config_file ); 

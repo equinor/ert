@@ -123,6 +123,7 @@ static bool workflow_try_compile( workflow_type * script ) {
     }
   } 
   // It is legal to remove the script after successfull compilation.
+  return script->compiled;
 }
 
 

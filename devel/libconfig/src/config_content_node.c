@@ -24,7 +24,7 @@
 
 #include <config_schema_item.h>
 #include <config_content_node.h>
-
+#include <config_path_elm.h>
 
 
 #define CONFIG_CONTENT_NODE_ID 6752887
@@ -32,17 +32,18 @@ struct config_content_node_struct {
   UTIL_TYPE_ID_DECLARATION;
   const config_schema_item_type * schema;         
   stringlist_type               * stringlist;              /* The values which have been set. */
-  char                          * config_cwd;              /* The currently active cwd (relative or absolute) of the parser when this item is set. */
+  const config_path_elm_type    * cwd;
 };
 
 
 static UTIL_SAFE_CAST_FUNCTION( config_content_node , CONFIG_CONTENT_NODE_ID )
 
-config_content_node_type * config_content_node_alloc( const config_schema_item_type * schema ) {
+
+config_content_node_type * config_content_node_alloc( const config_schema_item_type * schema , const config_path_elm_type * cwd) {
   config_content_node_type * node = util_malloc(sizeof * node );
   UTIL_TYPE_ID_INIT( node , CONFIG_CONTENT_NODE_ID );
   node->stringlist = stringlist_alloc_new();
-  node->config_cwd = NULL;
+  node->cwd = cwd;
   node->schema = schema;
   return node;
 }
@@ -64,7 +65,6 @@ char * config_content_node_alloc_joined_string(const config_content_node_type * 
 
 void config_content_node_free(config_content_node_type * node) {
   stringlist_free(node->stringlist);
-  util_safe_free(node->config_cwd);
   free(node);
 }
 
@@ -125,12 +125,6 @@ const char * config_content_node_get_kw( const config_content_node_type * node )
 }
 
 
-void config_content_node_set_cwd( config_content_node_type * node , const char * config_cwd ) {        
-  if (config_cwd != NULL)
-    node->config_cwd = util_alloc_string_copy( config_cwd );
-  else
-    node->config_cwd = util_alloc_cwd(  );  /* For use from external scope. */
-}
 
 
 int config_content_node_get_size( const config_content_node_type * node ) {
@@ -144,4 +138,9 @@ void config_content_node_assert_key_value( const config_content_node_type * node
 
   if (!((argc_min == 1) && (argc_min == 1)))
     util_abort("%s: item:%s before calling config_get_value() functions *without* index you must set argc_min == argc_max = 1 \n",__func__ , config_schema_item_get_kw( node->schema ));
+}
+
+
+const config_path_elm_type * config_content_node_get_path_elm( const config_content_node_type * node ) {
+  return node->cwd;
 }

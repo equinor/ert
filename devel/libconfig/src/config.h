@@ -89,7 +89,6 @@ typedef struct config_struct              config_type;
   hash_type             * config_alloc_hash(const config_type *  , const char * );
   const stringlist_type * config_get_stringlist_ref(const config_type *  , const char * );
   const stringlist_type       * config_iget_stringlist_ref(const config_type *  , const char * , int );
-  bool                    config_has_set_item(const config_type *  , const char * );
   
   int                     config_get_occurences(const config_type * , const char * );
   int                     config_get_occurence_size( const config_type * config , const char * kw , int occurence);

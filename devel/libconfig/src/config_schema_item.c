@@ -32,7 +32,7 @@
 
 #include <config_error.h>
 #include <config_schema_item.h>
-
+#include <config_path_elm.h>
 
 typedef struct validate_struct validate_type;
 
@@ -247,19 +247,19 @@ config_schema_item_type * config_schema_item_alloc(const char * kw , bool requir
 
 
 
-static char * __alloc_relocated__(const char * config_cwd , const char * value) {
+static char * __alloc_relocated__(const config_path_elm_type * path_elm , const char * value) {
   char * file;
   
   if (util_is_abs_path(value))
     file = util_alloc_string_copy( value );
   else
-    file = util_alloc_filename(config_cwd , value , NULL);
+    file = util_alloc_filename(config_path_elm_get_path( path_elm ) , value , NULL);
 
   return file;
 }
 
 
-bool config_schema_item_validate_set(const config_schema_item_type * item , stringlist_type * token_list , const char * config_file, const char * config_cwd, config_error_type * error_list) {
+bool config_schema_item_validate_set(const config_schema_item_type * item , stringlist_type * token_list , const char * config_file, const config_path_elm_type * path_elm , config_error_type * error_list) {
   bool OK = true;
   int argc = stringlist_get_size( token_list ) - 1;
   if (item->validate->argc_min >= 0) {
@@ -341,7 +341,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
                  b. Else - try if the util_alloc_PATH_executable() exists.
             */
             if (!util_is_abs_path( value )) {
-              char * relocated  = __alloc_relocated__(config_cwd , value);
+              char * relocated  = __alloc_relocated__(path_elm , value);
               char * path_exe   = util_alloc_PATH_executable( value );
               
               if (util_file_exists(relocated)) {
@@ -370,9 +370,9 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           break;
         case(CONFIG_EXISTING_FILE):
           {
-            char * file = __alloc_relocated__(config_cwd , value);
+            char * file = __alloc_relocated__(path_elm , value);
             if (!util_file_exists(file)) 
-              config_error_add( error_list , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
+              config_error_add( error_list , util_alloc_sprintf("Can not find file %s in %s ",value , config_path_elm_get_path( path_elm) ));
             else
               stringlist_iset_copy( token_list , iarg + 1 , file);  
             free( file );
@@ -380,14 +380,14 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           break;
         case(CONFIG_FILE):
           {
-            char * file = __alloc_relocated__(config_cwd , value);
+            char * file = __alloc_relocated__(path_elm , value);
             stringlist_iset_copy( token_list , iarg + 1 , file);  
             free( file );
           }
           break;
         case(CONFIG_EXISTING_DIR):
           {
-            char * dir = __alloc_relocated__(config_cwd , value);
+            char * dir = __alloc_relocated__(path_elm , value);
             if (!util_is_directory(value))
               config_error_add( error_list , util_alloc_sprintf("Can not find directory: %s. ",value));
             else

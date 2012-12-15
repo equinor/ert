@@ -24,24 +24,26 @@
 define extern "C" {
 #endif
 
+#include <config_schema_item.h>
+#include <config_path_elm.h>
 
 typedef struct config_content_node_struct config_content_node_type;
 
-         config_content_node_type * config_content_node_alloc( const config_schema_item_type * schema );
-         void                       config_content_node_set(config_content_node_type * node , const stringlist_type * token_list);
-         char                     * config_content_node_alloc_joined_string(const config_content_node_type * node, const char * sep);
-         void                       config_content_node_free(config_content_node_type * node);
-         void                       config_content_node_free__(void * arg);
-         const char               * config_content_node_iget(const config_content_node_type * node , int index);
-         bool                       config_content_node_iget_as_bool(const config_content_node_type * node , int index);
-         int                        config_content_node_iget_as_int(const config_content_node_type * node , int index);
-         double                     config_content_node_iget_as_double(const config_content_node_type * node , double index);
-         const stringlist_type    * config_content_node_get_stringlist( const config_content_node_type * node );
-         void                       config_content_node_set_cwd( config_content_node_type * node , const char * config_cwd );
-         const char               * config_content_node_safe_iget(const config_content_node_type * node , int index);
-         int                        config_content_node_get_size( const config_content_node_type * node );
-         const char               * config_content_node_get_kw( const config_content_node_type * node );
-         void                       config_content_node_assert_key_value( const config_content_node_type * node );
+         config_content_node_type   * config_content_node_alloc( const config_schema_item_type * schema , const config_path_elm_type * cwd);
+         void                         config_content_node_set(config_content_node_type * node , const stringlist_type * token_list);
+         char                       * config_content_node_alloc_joined_string(const config_content_node_type * node, const char * sep);
+         void                         config_content_node_free(config_content_node_type * node);
+         void                         config_content_node_free__(void * arg);
+         const char                 * config_content_node_iget(const config_content_node_type * node , int index);
+         bool                         config_content_node_iget_as_bool(const config_content_node_type * node , int index);
+         int                          config_content_node_iget_as_int(const config_content_node_type * node , int index);
+         double                       config_content_node_iget_as_double(const config_content_node_type * node , double index);
+         const stringlist_type      * config_content_node_get_stringlist( const config_content_node_type * node );
+         const char                 * config_content_node_safe_iget(const config_content_node_type * node , int index);
+         int                          config_content_node_get_size( const config_content_node_type * node );
+         const char                 * config_content_node_get_kw( const config_content_node_type * node );
+         void                         config_content_node_assert_key_value( const config_content_node_type * node );
+         const config_path_elm_type * config_content_node_get_path_elm( const config_content_node_type * node );
 
 #ifdef __cplusplus
 }

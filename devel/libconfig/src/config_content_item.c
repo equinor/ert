@@ -27,7 +27,7 @@
 #include <config_content_node.h>
 #include <config_content_item.h>
 #include <config_error.h>
-
+#include <config_path_elm.h>
 
 
 #define CONFIG_CONTENT_ITEM_ID 8876752
@@ -35,14 +35,11 @@ struct config_content_item_struct {
   UTIL_TYPE_ID_DECLARATION;
   const config_schema_item_type  * schema;
   vector_type                    * nodes;
-  bool                             currently_set;              /* Has a value been assigned to this keyword. */
+  const config_path_elm_type     * path_elm;
 };
 
 
 
-bool config_content_item_is_set(const config_content_item_type * item) {
-  return item->currently_set;
-}
 
 
 
@@ -228,7 +225,6 @@ double  config_content_item_iget_as_double(const config_content_item_type * item
 
 void config_content_item_clear( config_content_item_type * item ) {
   vector_clear( item->nodes );
-  item->currently_set = false;
 }
 
 
@@ -250,12 +246,12 @@ void config_content_item_free__( void * arg ) {
 }
 
 
-config_content_item_type * config_content_item_alloc( const config_schema_item_type * schema ) {
+config_content_item_type * config_content_item_alloc( const config_schema_item_type * schema , const config_path_elm_type * path_elm) {
   config_content_item_type * content_item = util_malloc( sizeof * content_item );
   UTIL_TYPE_ID_INIT( content_item , CONFIG_CONTENT_ITEM_ID );
   content_item->schema = schema;
   content_item->nodes = vector_alloc_new();
-  content_item->currently_set = false;
+  content_item->path_elm = path_elm;
   return content_item;
 }
 
@@ -263,8 +259,8 @@ config_content_item_type * config_content_item_alloc( const config_schema_item_t
 
 
 
-config_content_node_type * config_content_item_alloc_node( const config_content_item_type * item ) {
-  config_content_node_type * node = config_content_node_alloc( item->schema );
+config_content_node_type * config_content_item_alloc_node( const config_content_item_type * item , const config_path_elm_type * path_elm) {
+  config_content_node_type * node = config_content_node_alloc( item->schema , path_elm );
   vector_append_owned_ref( item->nodes , node , config_content_node_free__);
   return node;
 }
@@ -276,6 +272,8 @@ const config_schema_item_type * config_content_item_get_schema( const config_con
 }
 
 
-void config_content_item_set( config_content_item_type * item ) {
-  item->currently_set = true;
+
+
+const config_path_elm_type * config_content_item_get_path_elm( const config_content_item_type * item ) {
+  return item->path_elm;
 }
