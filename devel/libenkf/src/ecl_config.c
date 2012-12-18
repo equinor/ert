@@ -646,7 +646,7 @@ void ecl_config_add_config_items( config_type * config ) {
   config_schema_item_type * item;
 
   item = config_add_schema_item(config , SCHEDULE_FILE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_PATH});
   /*
     Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
     GEN_KW is added in ensemble_config.c
@@ -659,7 +659,7 @@ void ecl_config_add_config_items( config_type * config ) {
   config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
   item = config_add_schema_item(config , DATA_FILE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_PATH});
 
   item = config_add_schema_item(config , STATIC_KW_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
@@ -671,10 +671,10 @@ void ecl_config_add_config_items( config_type * config ) {
   config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , NULL );
   
   item = config_add_schema_item(config , GRID_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_PATH});
   
   item = config_add_schema_item(config , INIT_SECTION_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_PATH});
   config_add_alias(config , INIT_SECTION_KEY , "EQUIL_INIT_FILE");
   
   item = config_add_schema_item(config , END_DATE_KEY , false  );

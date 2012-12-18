@@ -218,16 +218,17 @@ static void validate_set_indexed_selection_set(validate_type * validate , int in
 
 static UTIL_SAFE_CAST_FUNCTION( config_schema_item , CONFIG_SCHEMA_ITEM_ID)
 
-void config_schema_item_assure_type(const config_schema_item_type * item , int index , config_item_types item_type) {
+void config_schema_item_assure_type(const config_schema_item_type * item , int index , int type_mask) {
   if (item->validate->type_map != NULL) {
     bool OK = false;
     
-    if (int_vector_safe_iget( item->validate->type_map , index) == item_type)
+    if (int_vector_safe_iget( item->validate->type_map , index) & type_mask)
       OK = true;
     
     if (!OK)
       util_abort("%s: failed - wrong installed type \n" , __func__);
-  }
+  } else
+    util_abort("%s: no type information supplied for config item:%s \n",__func__ , item->kw );
 }
 
 
@@ -331,6 +332,29 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
         switch (int_vector_safe_iget( item->validate->type_map , iarg)) {
         case(CONFIG_STRING): /* This never fails ... */
           break;
+        case(CONFIG_INT):
+          if (!util_sscanf_int( value , NULL ))
+            config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
+          break;
+        case(CONFIG_FLOAT):
+          if (!util_sscanf_double( value , NULL )) {
+            config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
+            OK = false;
+          }
+          break;
+        case(CONFIG_PATH):
+          // As long as we do not reuqire the path to exist it is just a string.
+          break;
+        case(CONFIG_EXISTING_PATH):
+          {
+            char * path = config_path_elm_alloc_path( path_elm , value );
+            if (!util_entry_exists(path)) {
+              config_error_add( error_list , util_alloc_sprintf("Can not find entry %s in %s ",value , config_path_elm_get_path( path_elm) ));
+              OK = false;
+            }
+            free( path );
+          }
+          break;
         case(CONFIG_EXECUTABLE):
           {
             /*
@@ -360,48 +384,17 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
             }
           }
           break;
-        case(CONFIG_INT):
-          if (!util_sscanf_int( value , NULL ))
-            config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
-          break;
-        case(CONFIG_FLOAT):
-          if (!util_sscanf_double( value , NULL ))
-            config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
-          break;
-        case(CONFIG_EXISTING_FILE):
-          {
-            char * file = __alloc_relocated__(path_elm , value);
-            if (!util_file_exists(file)) 
-              config_error_add( error_list , util_alloc_sprintf("Can not find file %s in %s ",value , config_path_elm_get_path( path_elm) ));
-            else
-              stringlist_iset_copy( token_list , iarg + 1 , file);  
-            free( file );
-          }
-          break;
-        case(CONFIG_FILE):
-          {
-            char * file = __alloc_relocated__(path_elm , value);
-            stringlist_iset_copy( token_list , iarg + 1 , file);  
-            free( file );
-          }
-          break;
-        case(CONFIG_EXISTING_DIR):
-          {
-            char * dir = __alloc_relocated__(path_elm , value);
-            if (!util_is_directory(value))
-              config_error_add( error_list , util_alloc_sprintf("Can not find directory: %s. ",value));
-            else
-              stringlist_iset_copy( token_list , iarg + 1 , dir);  
-            free( dir );
-          }
-          break;
         case(CONFIG_BOOLEAN):
-          if (!util_sscanf_bool( value , NULL ))
+          if (!util_sscanf_bool( value , NULL )) {
             config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
+            OK = false;
+          }
           break;
         case(CONFIG_BYTESIZE):
-          if (!util_sscanf_bytesize( value , NULL))
+          if (!util_sscanf_bytesize( value , NULL)) {
             config_error_add( error_list , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
+            OK = false;
+          }
           break;
         default:
           util_abort("%s: config_item_type:%d not recognized \n",__func__ , int_vector_safe_iget(item->validate->type_map , iarg));

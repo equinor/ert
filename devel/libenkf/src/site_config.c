@@ -1089,10 +1089,10 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   config_schema_item_set_argc_minmax(item , 3 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
 
   item = config_add_schema_item(config , JOB_SCRIPT_KEY , site_only  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_PATH});
   
   item = config_add_schema_item(config , INSTALL_JOB_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 2 , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_PATH});
 
   /* Items related to the reports. */
   item = config_add_schema_item( config , REPORT_SEARCH_PATH_KEY , false  );

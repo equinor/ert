@@ -31,6 +31,8 @@ void                   config_path_elm_free__( void * arg );
 config_path_elm_type * config_path_elm_alloc( const char * path);
 const char *           config_path_elm_get_abspath( const config_path_elm_type * path_elm );
 const char *           config_path_elm_get_path( const config_path_elm_type * path_elm );
+char *                 config_path_elm_alloc_abspath(const config_path_elm_type * path_elm , const char * path);
+char *                 config_path_elm_alloc_path(const config_path_elm_type * path_elm , const char * path);
 
 #ifdef __cplusplus
 }

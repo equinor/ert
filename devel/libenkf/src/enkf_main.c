@@ -1933,7 +1933,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   /* Required keywords from the ordinary model_config file */
 
   item = config_add_schema_item(config , CASE_TABLE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1, (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1, (const config_item_types [1]) {CONFIG_EXISTING_PATH});
 
   config_add_key_value( config , LOG_LEVEL_KEY , false , CONFIG_INT);
   config_add_key_value( config , LOG_FILE_KEY  , false , CONFIG_STRING); 
@@ -1952,7 +1952,7 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   /* Optional keywords from the model config file */
 
   item = config_add_schema_item( config , RUN_TEMPLATE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX , 2 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
+  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX , 2 , (const config_item_types [2]) { CONFIG_EXISTING_PATH , CONFIG_STRING });  /* Force the template to exist at boot time. */
 
   config_add_key_value(config , RUNPATH_KEY , false , CONFIG_STRING);
   config_add_key_value(config , RERUN_PATH_KEY , false , CONFIG_STRING);
@@ -1985,19 +1985,19 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
 
   item = config_add_schema_item(config , OBS_CONFIG_KEY  , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_PATH});
 
   item = config_add_schema_item(config , RFT_CONFIG_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_PATH});
 
   item = config_add_schema_item(config , RFTPATH_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
   item = config_add_schema_item(config , LOCAL_CONFIG_KEY  , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_PATH});
 
   item = config_add_schema_item(config , ENKF_SCHED_FILE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_PATH});
 
   item = config_add_schema_item(config , HISTORY_SOURCE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);

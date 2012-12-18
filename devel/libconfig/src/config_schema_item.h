@@ -30,31 +30,29 @@ extern "C" {
 /** 
     Types used for validation of config items.
 */
-typedef enum {CONFIG_STRING        = 0,
-              CONFIG_INT           = 1,
-              CONFIG_FLOAT         = 2,   
-              CONFIG_FILE          = 9,  /* These file does not need to exist - but includes are handled. */
-              CONFIG_EXISTING_FILE = 3,
-              CONFIG_EXISTING_DIR  = 4,
-              CONFIG_BOOLEAN       = 5,
-              CONFIG_CONFIG        = 6,
-              CONFIG_BYTESIZE      = 7,
-              CONFIG_EXECUTABLE    = 8 ,
-              CONFIG_INVALID       = 1000  } config_item_types;
+typedef enum {CONFIG_STRING        = 1,
+              CONFIG_INT           = 2,
+              CONFIG_FLOAT         = 4,   
+              CONFIG_PATH          = 8,
+              CONFIG_EXISTING_PATH = 16,
+              CONFIG_BOOLEAN       = 32,
+              CONFIG_CONFIG        = 64,
+              CONFIG_BYTESIZE      = 128,
+              CONFIG_EXECUTABLE    = 256 ,
+              CONFIG_INVALID       = 512  } config_item_types;
   
-#define CONFIG_ITEM_TYPE_ENUM_DEFS              \
-{.value =    0 , .name="CONFIG_STRING"},        \
-{.value =    1 , .name="CONFIG_INT"},           \
-{.value =    2 , .name="CONFIG_FLOAT"},         \
-{.value =    9 , .name="CONFIG_FILE"},          \
-{.value =    3 , .name="CONFIG_EXISTING_FILE"}, \
-{.value =    4 , .name="CONFIG_EXISTING_DIR"},  \
-{.value =    5 , .name="CONFIG_BOOLEAN"},       \
-{.value =    6 , .name="CONFIG_CONFIG"},        \
-{.value =    7 , .name="CONFIG_BYTESIZE"},      \
-{.value =    8 , .name="CONFIG_EXECUTABLE"},    \
-{.value = 1000 , .name="CONFIG_INVALID"}       
-#define CONFIG_ITEM_TYPE_ENUM_SIZE 11
+#define CONFIG_ITEM_TYPE_ENUM_DEFS               \
+{.value =    1 , .name="CONFIG_STRING"},         \
+{.value =    2 , .name="CONFIG_INT"},            \
+{.value =    4 , .name="CONFIG_FLOAT"},          \
+{.value =    8 , .name="CONFIG_PATH"},           \
+{.value =   16 , .name="CONFIG_EXISTING_PATH"},  \
+{.value =   32 , .name="CONFIG_BOOLEAN"},        \
+{.value =   64 , .name="CONFIG_CONFIG"},         \
+{.value =  128 , .name="CONFIG_BYTESIZE"},       \
+{.value =  256 , .name="CONFIG_EXECUTABLE"},     \
+{.value =  512 , .name="CONFIG_INVALID"}       
+#define CONFIG_ITEM_TYPE_ENUM_SIZE 10
 
   
   typedef enum  {
@@ -102,7 +100,7 @@ typedef enum {CONFIG_STRING        = 0,
                                                                int argc_max, 
                                                                int type_map_size , 
                                                                const config_item_types * type_map);
-  void                      config_schema_item_assure_type(const config_schema_item_type * item , int index , config_item_types item_type);
+  void                      config_schema_item_assure_type(const config_schema_item_type * item , int index , int type_mask);
 
   int                       config_schema_item_num_required_children(const config_schema_item_type * item);
   const char              * config_schema_item_iget_required_child( const config_schema_item_type * item , int index);     

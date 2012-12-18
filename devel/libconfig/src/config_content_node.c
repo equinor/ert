@@ -33,10 +33,12 @@ struct config_content_node_struct {
   const config_schema_item_type * schema;         
   stringlist_type               * stringlist;              /* The values which have been set. */
   const config_path_elm_type    * cwd;
+  stringlist_type               * path_storage;
 };
 
 
 static UTIL_SAFE_CAST_FUNCTION( config_content_node , CONFIG_CONTENT_NODE_ID )
+
 
 
 config_content_node_type * config_content_node_alloc( const config_schema_item_type * schema , const config_path_elm_type * cwd) {
@@ -45,6 +47,7 @@ config_content_node_type * config_content_node_alloc( const config_schema_item_t
   node->stringlist = stringlist_alloc_new();
   node->cwd = cwd;
   node->schema = schema;
+  node->path_storage = NULL;
   return node;
 }
 
@@ -65,6 +68,8 @@ char * config_content_node_alloc_joined_string(const config_content_node_type * 
 
 void config_content_node_free(config_content_node_type * node) {
   stringlist_free(node->stringlist);
+  if (node->path_storage != NULL)
+    stringlist_free( node->path_storage );
   free(node);
 }
 
@@ -107,11 +112,43 @@ int config_content_node_iget_as_int(const config_content_node_type * node , int 
 
 
 
-double config_content_node_iget_as_double(const config_content_node_type * node , double index) {
+double config_content_node_iget_as_double(const config_content_node_type * node , int index) {
   double value;
-  config_schema_item_assure_type(node->schema , index , CONFIG_FLOAT);
+  config_schema_item_assure_type(node->schema , index , CONFIG_FLOAT + CONFIG_INT);
   util_sscanf_double( config_content_node_iget(node , index) , &value );
   return value;
+}
+
+
+static void config_content_node_push_path( config_content_node_type * node , char * path) {
+  if (node->path_storage == NULL)
+    node->path_storage = stringlist_alloc_new( );
+
+  stringlist_append_owned_ref( node->path_storage , path );
+}
+
+
+const char * config_content_node_iget_as_path(config_content_node_type * node , int index) {
+  config_schema_item_assure_type(node->schema , index , CONFIG_PATH + CONFIG_EXISTING_PATH);
+  {
+    const char * config_value = config_content_node_iget(node , index);
+    char * path_value = config_path_elm_alloc_path( node->cwd , config_value );
+    config_content_node_push_path( node , path_value );
+    
+    return path_value;
+  }
+}
+
+
+const char * config_content_node_iget_as_abspath( config_content_node_type * node , int index) {
+  config_schema_item_assure_type(node->schema , index , CONFIG_PATH + CONFIG_EXISTING_PATH);
+  {
+    const char * config_value = config_content_node_iget(node , index);
+    char * path_value = config_path_elm_alloc_abspath( node->cwd , config_value );
+    config_content_node_push_path( node , path_value );
+    
+    return path_value;
+  }
 }
 
 

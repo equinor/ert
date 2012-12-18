@@ -32,32 +32,40 @@
 */
 
 
-
-bool config_get_value_as_bool(const config_type * config , const char * kw) {
+static config_content_node_type * config_get_value_node( const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
   config_content_node_type * node = config_content_item_get_last_node( item );
   config_content_node_assert_key_value( node );
+  return node;
+}
+
+bool config_get_value_as_bool(const config_type * config , const char * kw) {
+  config_content_node_type * node = config_get_value_node( config , kw );
   return config_content_node_iget_as_bool(node , 0);
 }
 
 int config_get_value_as_int(const config_type * config , const char * kw) {
-  config_content_item_type * item = config_get_content_item(config , kw);
-  config_content_node_type * node = config_content_item_get_last_node( item );
-  config_content_node_assert_key_value( node );
+  config_content_node_type * node = config_get_value_node( config , kw );
   return config_content_node_iget_as_int(node , 0);
 }
 
 double config_get_value_as_double(const config_type * config , const char * kw) {
-  config_content_item_type * item = config_get_content_item(config , kw);
-  config_content_node_type * node = config_content_item_get_last_node( item );
-  config_content_node_assert_key_value( node );
+  config_content_node_type * node = config_get_value_node( config , kw );
   return config_content_node_iget_as_double(node , 0);
 }
 
+const char * config_get_value_as_path( const config_type * config , const char * kw) {
+  config_content_node_type * node = config_get_value_node( config , kw );
+  return config_content_node_iget_as_path(node , 0);
+}
+
+const char * config_get_value_as_abspath( const config_type * config , const char * kw) {
+  config_content_node_type * node = config_get_value_node( config , kw );
+  return config_content_node_iget_as_path(node , 0);
+}
+
 const char * config_get_value(const config_type * config , const char * kw) {
-  config_content_item_type * item = config_get_content_item(config , kw);
-  config_content_node_type * node = config_content_item_get_last_node( item );
-  config_content_node_assert_key_value( node );
+  config_content_node_type * node = config_get_value_node( config , kw );
   return config_content_node_iget(node , 0);
 }
 
