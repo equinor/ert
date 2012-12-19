@@ -57,9 +57,11 @@ struct config_content_item_struct {
 */
 
 
-int config_content_item_get_occurences(const config_content_item_type * item) {
+
+int config_content_item_get_size(const config_content_item_type * item) {
   return vector_get_size( item->nodes );
 }
+
 
 config_content_node_type * config_content_item_get_last_node(const config_content_item_type * item) {
   return vector_get_last( item->nodes );
@@ -78,7 +80,7 @@ char * config_content_item_ialloc_joined_string(const config_content_item_type *
 
 
 char * config_content_item_alloc_joined_string(const config_content_item_type * item , const char * sep) {
-  const int occurences = config_content_item_get_occurences( item );
+  const int occurences = config_content_item_get_size( item );
   char * joined_string = NULL;
   
   for (int i =0; i < occurences ; i++) {

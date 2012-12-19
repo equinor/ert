@@ -80,7 +80,6 @@ const char * config_path_elm_get_abspath( const config_path_elm_type * path_elm 
 }
 
 
-
 char * config_path_elm_alloc_path(const config_path_elm_type * path_elm , const char * path) {
   if (util_is_abs_path( path ))
     return util_alloc_string_copy( path );

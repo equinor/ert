@@ -36,6 +36,8 @@
 
 
 #include <config.h>
+#include <config_content_item.h>
+#include <config_content_node.h>
 
 #include <site_config.h>
 #include "enkf_defaults.h"
@@ -282,14 +284,17 @@ bool site_config_del_job( site_config_type * site_config , const char * job_name
 
 
 static void site_config_add_jobs(site_config_type * site_config , const config_type * config) {
-  int  i;
-  
-  stringlist_type *item_list = config_alloc_complete_stringlist(config , INSTALL_JOB_KEY);
-
-  for (i=0; i < stringlist_get_size(item_list); i+=2) 
-    site_config_install_job(site_config , stringlist_iget(item_list , i) , stringlist_iget(item_list , i + 1));
-
-  stringlist_free(item_list);
+  if (config_item_set( config , INSTALL_JOB_KEY)) {
+    const config_content_item_type * content_item = config_get_content_item( config , INSTALL_JOB_KEY );
+    int num_jobs = config_content_item_get_size( content_item );
+    for (int job_nr = 0; job_nr < num_jobs; job_nr++) {
+      const config_content_node_type * node = config_content_item_iget_node( content_item , job_nr );
+      const char * job_key = config_content_node_iget( node , 0 );
+      const char * description_file = config_content_node_iget_as_abspath( node , 1 );
+      
+      site_config_install_job(site_config , job_key , description_file );
+    }
+  }
 }
 
 
@@ -802,10 +807,10 @@ void site_config_init(site_config_type * site_config , const config_type * confi
     site_config_set_max_running_local( site_config , config_iget_as_int( config , MAX_RUNNING_LOCAL_KEY , 0,0));
 
   if (config_item_set(config , JOB_SCRIPT_KEY))
-    site_config_set_job_script( site_config , config_iget( config , JOB_SCRIPT_KEY , 0 , 0));
+    site_config_set_job_script( site_config , config_get_value_as_abspath( config , JOB_SCRIPT_KEY));
   
   if (config_item_set(config , LICENSE_PATH_KEY))
-    site_config_set_license_root_path( site_config , config_iget( config , LICENSE_PATH_KEY , 0 , 0));
+    site_config_set_license_root_path( site_config , config_get_value_as_abspath( config , LICENSE_PATH_KEY));
   
   if (user_config) 
     site_config_install_job_queue( site_config );
@@ -1052,7 +1057,7 @@ void site_config_add_config_items( config_type * config , bool site_only) {
   config_schema_item_set_envvar_expansion( item , false );   /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
 
   item = config_add_schema_item( config , LICENSE_PATH_KEY , site_only  );
-  config_schema_item_set_argc_minmax(item , 1 , 1, 0 , NULL );
+  config_schema_item_set_argc_minmax(item , 1 , 1, 1 , (const config_item_types [1]) { CONFIG_PATH });
 
 
   /*****************************************************************/

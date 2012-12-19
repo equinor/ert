@@ -31,6 +31,7 @@ extern "C" {
 
 #include <config_schema_item.h>
 #include <config_content_node.h>
+#include <config_content_item.h>
 
 #define ECL_COM_KW "--"
 #define ENKF_COM_KW "--"
@@ -93,7 +94,7 @@ typedef struct config_struct              config_type;
   int                     config_get_occurences(const config_type * , const char * );
   int                     config_get_occurence_size( const config_type * config , const char * kw , int occurence);
   
-  
+  config_content_item_type * config_get_content_item( const config_type * config , const char * input_kw);
   config_schema_item_type      * config_add_key_value( config_type * config , const char * key , bool required , config_item_types item_type);  
   bool                    config_get_value_as_bool(const config_type * config , const char * kw);
   int                     config_get_value_as_int(const config_type * config , const char * kw);

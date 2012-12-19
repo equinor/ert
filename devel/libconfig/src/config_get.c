@@ -61,6 +61,7 @@ const char * config_get_value_as_path( const config_type * config , const char *
 
 const char * config_get_value_as_abspath( const config_type * config , const char * kw) {
   config_content_node_type * node = config_get_value_node( config , kw );
+  printf("Looking for:%s \n",kw);
   return config_content_node_iget_as_path(node , 0);
 }
 
@@ -80,6 +81,9 @@ int config_get_content_size( const config_type * config ) {
 const config_content_node_type * config_iget_content_node( const config_type * config , int index) {
   return vector_iget_const( config->content_list , index );
 }
+
+
+
 
 
 int config_get_schema_size( const config_type * config ) {

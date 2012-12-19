@@ -33,7 +33,7 @@ extern "C" {
 
 typedef struct config_content_item_struct config_content_item_type;
 
-  int                        config_content_item_get_occurences(const config_content_item_type * item);
+  int                        config_content_item_get_size(const config_content_item_type * item);
   config_content_node_type * config_content_item_get_last_node(const config_content_item_type * item);
   config_content_node_type * config_content_item_iget_node(const config_content_item_type * item , int index);
   char                     * config_content_item_ialloc_joined_string(const config_content_item_type * item , const char * sep , int occurence);
