@@ -79,11 +79,19 @@ const char * config_path_elm_get_abspath( const config_path_elm_type * path_elm 
   return path_elm->abs_path;
 }
 
+
+
 char * config_path_elm_alloc_path(const config_path_elm_type * path_elm , const char * path) {
-  return util_alloc_filename( path_elm->rel_path , path , NULL );
+  if (util_is_abs_path( path ))
+    return util_alloc_string_copy( path );
+  else
+    return util_alloc_filename( path_elm->rel_path , path , NULL );
 }
 
 
 char * config_path_elm_alloc_abspath(const config_path_elm_type * path_elm , const char * path) {
-  return util_alloc_filename( path_elm->abs_path , path , NULL );
+  if (util_is_abs_path( path ))
+    return util_alloc_string_copy( path );
+  else
+    return util_alloc_filename( path_elm->abs_path , path , NULL );
 }
