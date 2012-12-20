@@ -744,6 +744,10 @@ void site_config_init(site_config_type * site_config , const config_type * confi
       util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n",__func__ , string_mask);
   }
 
+  if (config_item_set(config , MAX_SUBMIT_KEY)) 
+    site_config_set_max_submit( site_config , config_get_value_as_int( config , MAX_SUBMIT_KEY ));
+  
+
   /* LSF options */
   {
     if (config_item_set(config , LSF_QUEUE_KEY))
