@@ -35,7 +35,7 @@ typedef struct time_map_struct time_map_type;
   void             time_map_fwrite( time_map_type * map , FILE * stream );
   void             time_map_fread( time_map_type * map , FILE * stream );
   double           time_map_iget_sim_days( time_map_type * map , int step );
-  int              time_map_get_last_step( const time_map_type * map);
+  int              time_map_get_last_step( time_map_type * map);
 
 #ifdef __cplusplus 
 }
