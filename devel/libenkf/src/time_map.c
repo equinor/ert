@@ -63,8 +63,18 @@ static void time_map_update__( time_map_type * map , int step , time_t time) {
   if (current_time == DEFAULT_TIME) 
     time_t_vector_iset( map->map , step , time );
   else {
-    if (current_time != time)
-      util_abort("%s: time mismatch for step:%d \n",__func__ , step );
+    if (current_time != time) {
+      int current[3];
+      int new[3];
+      
+      util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
+      util_set_date_values( time , &new[0] , &new[1] , &new[2]);
+      
+      util_abort("%s: time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step , 
+                 new[0]     , new[1]     , new[2] , 
+                 current[0] , current[1] , current[2]);
+      
+    }
   }
 
   if (step == 0)
@@ -165,7 +175,7 @@ void time_map_fread( time_map_type * map , FILE * stream ) {
   step. 
 */
 
-int time_map_get_last_step( const time_map_type * map) {
+int time_map_get_last_step( time_map_type * map) {
   int last_step;
   
   pthread_rwlock_rdlock( &map->rw_lock );
