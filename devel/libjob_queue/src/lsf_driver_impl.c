@@ -94,6 +94,8 @@
 #define LSF_JOB_TYPE_ID    9963900
 #define BJOBS_REFRESH_TIME 10
 #define DEFAULT_RSH_CMD    "/usr/bin/ssh"
+#define DEFAULT_BSUB_CMD   "bsub"
+#define DEFAULT_BJOBS_CMD  "bjobs"
 
 
 struct lsf_job_struct {
@@ -131,6 +133,8 @@ struct lsf_driver_struct {
   pthread_mutex_t     bjobs_mutex;        /* Only one thread should update the bjobs_chache table. */
   char              * remote_lsf_server;
   char              * rsh_cmd;
+  char              * bsub_cmd;
+  char              * bjobs_cmd;
 };
 
 
@@ -220,7 +224,8 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
        The options -R and -L are optional.    
     */
     buffer_type * remote_cmd = buffer_alloc(256);
-    buffer_fwrite_char_ptr( remote_cmd , "bsub -o " );
+    buffer_fwrite_char_ptr( remote_cmd , driver->bsub_cmd);
+    buffer_fwrite_char_ptr( remote_cmd , " -o " );
     buffer_fwrite_char_ptr( remote_cmd , lsf_stdout );
     buffer_fwrite_char_ptr( remote_cmd , " -q " );
     buffer_fwrite_char_ptr( remote_cmd , driver->queue_name );
@@ -283,8 +288,9 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   {
     char ** argv = util_calloc( 2 , sizeof * argv);
     argv[0] = driver->remote_lsf_server;
-    argv[1] = "bjobs -a";
+    argv[1] = util_alloc_sprintf("%s -a" , driver->bjobs_cmd);
     util_fork_exec(driver->rsh_cmd , 2 , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
+    free( argv[1] );
     free( argv );
   }
   
@@ -561,6 +567,14 @@ static void lsf_driver_set_rsh_cmd( lsf_driver_type * driver , const char * rsh_
   driver->rsh_cmd = util_realloc_string_copy( driver->rsh_cmd , rsh_cmd );    
 }
 
+static void lsf_driver_set_bsub_cmd( lsf_driver_type * driver , const char * bsub_cmd) {
+  driver->bsub_cmd = util_realloc_string_copy( driver->bsub_cmd , bsub_cmd );    
+}
+
+static void lsf_driver_set_bjobs_cmd( lsf_driver_type * driver , const char * bjobs_cmd) {
+  driver->bjobs_cmd = util_realloc_string_copy( driver->bjobs_cmd , bjobs_cmd );    
+}
+
 static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char * remote_server) {
   driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_server );
   if (driver->remote_lsf_server != NULL) {
@@ -596,6 +610,10 @@ bool lsf_driver_set_option( void * __driver , const char * option_key , const vo
       lsf_driver_set_login_shell( driver , value );
     else if (strcmp( LSF_RSH_CMD , option_key) == 0)
       lsf_driver_set_rsh_cmd( driver , value );
+    else if (strcmp( LSF_BSUB_CMD , option_key) == 0)
+      lsf_driver_set_bsub_cmd( driver , value );
+    else if (strcmp( LSF_BJOBS_CMD , option_key) == 0)
+      lsf_driver_set_bjobs_cmd( driver , value );
     else 
       has_option = false;
   }
@@ -616,6 +634,10 @@ const void * lsf_driver_get_option( const void * __driver , const char * option_
       return driver->login_shell;
     else if (strcmp( LSF_RSH_CMD , option_key ) == 0)
       return driver->rsh_cmd;
+    else if (strcmp( LSF_BJOBS_CMD , option_key ) == 0)
+      return driver->bjobs_cmd;
+    else if (strcmp( LSF_BSUB_CMD , option_key ) == 0)
+      return driver->bsub_cmd;
     else {
       util_abort("%s: option_id:%s not recognized for LSF driver \n",__func__ , option_key);
       return NULL;
@@ -697,8 +719,11 @@ void * lsf_driver_alloc( ) {
   hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_QUEUE_DONE);
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
-  lsf_driver_set_remote_server( lsf_driver , NULL );
-  lsf_driver_set_rsh_cmd( lsf_driver , DEFAULT_RSH_CMD );
+
+  lsf_driver_set_option( lsf_driver , LSF_SERVER    , NULL );
+  lsf_driver_set_option( lsf_driver , LSF_RSH_CMD   , DEFAULT_RSH_CMD );
+  lsf_driver_set_option( lsf_driver , LSF_BSUB_CMD  , DEFAULT_BSUB_CMD );
+  lsf_driver_set_option( lsf_driver , LSF_BJOBS_CMD , DEFAULT_BJOBS_CMD );
   return lsf_driver;
 }
 
