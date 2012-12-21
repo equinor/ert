@@ -171,7 +171,7 @@ void lsf_job_free(lsf_job_type * job) {
 }
 
 
-static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
+static int lsf_job_parse_bsub_stdout(const lsf_driver_type * driver , const char * stdout_file) {
   int     jobid = -1;
   FILE * stream = util_fopen(stdout_file , "r");
   if (util_fseek_string(stream , "<" , true , true)) {
@@ -179,12 +179,18 @@ static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
     if (jobid_string != NULL) {
       jobid = atoi( jobid_string );
       free( jobid_string );
-    } else
-      util_abort("%s: Could not extract job id from bsub submit_file:%s \n",__func__ , stdout_file );
-  } else
-    util_abort("%s: Could not extract job id from bsub submit_file:%s \n",__func__ , stdout_file );
-  
+    } 
+  } 
   fclose( stream );
+
+  if (jobid == -1) {
+    char * file_content = util_fread_alloc_file_content( stdout_file , NULL );
+    fprintf(stderr,"Failed to get lsf job id from file: %s \n",stdout_file );
+    fprintf(stderr,"bsub command                      : %s \n",driver->bsub_cmd );
+    fprintf(stderr,"%s\n", file_content);
+    free( file_content );
+    util_exit("%s: \n",__func__);
+  }
   return jobid;
 }
 
@@ -262,7 +268,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
     util_safe_free(quoted_resource_request);
   }
   
-  job_id = lsf_job_parse_bsub_stdout(tmp_file);
+  job_id = lsf_job_parse_bsub_stdout(driver , tmp_file);
   util_unlink_existing( tmp_file );
   free(lsf_stdout);
   free(tmp_file);
@@ -272,7 +278,6 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
 
 
 static int lsf_driver_get_status__(lsf_driver_type * driver , const char * status, const char * job_id) {
-  
   if (hash_has_key( driver->status_map , status))
     return hash_get_int( driver->status_map , status);
   else {
@@ -708,6 +713,8 @@ void * lsf_driver_alloc( ) {
   lsf_driver->bjobs_cache         = hash_alloc(); 
   lsf_driver->my_jobs             = hash_alloc(); 
   lsf_driver->status_map          = hash_alloc();
+  lsf_driver->bsub_cmd            = NULL;
+  lsf_driver->bjobs_cmd           = NULL;
   
 
   hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
