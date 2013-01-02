@@ -147,22 +147,30 @@ void time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum
 }
 
 
-void time_map_fwrite( time_map_type * map , FILE * stream ) {
-  pthread_rwlock_rdlock( &map->rw_lock );
-  time_t_vector_fwrite( map->map , stream );
+void time_map_fwrite( time_map_type * map , const char * filename ) {
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    FILE * stream = util_fopen(filename , "w");
+    time_t_vector_fwrite( map->map , stream );
+    fclose( stream );
+}
   pthread_rwlock_unlock( &map->rw_lock );
 }
 
 
-void time_map_fread( time_map_type * map , FILE * stream ) {
-  pthread_rwlock_wrlock( &map->rw_lock );
+void time_map_fread( time_map_type * map , const char * filename) {
+  pthread_rwlock_rdlock( &map->rw_lock );
   {
-    time_t_vector_type * file_map = time_t_vector_fread_alloc( stream );
-
-    for (int step=0; step < time_t_vector_size( file_map ); step++) 
-      time_map_update__( map , step , time_t_vector_iget( file_map , step ));
-    
-    time_t_vector_free( file_map );
+    if (util_file_exists( filename )) {
+      FILE * stream = util_fopen( filename , "r");
+      time_t_vector_type * file_map = time_t_vector_fread_alloc( stream );
+      
+      for (int step=0; step < time_t_vector_size( file_map ); step++) 
+        time_map_update__( map , step , time_t_vector_iget( file_map , step ));
+      
+      time_t_vector_free( file_map );
+      fclose( stream );
+    }
   }
   pthread_rwlock_unlock( &map->rw_lock );
 }
