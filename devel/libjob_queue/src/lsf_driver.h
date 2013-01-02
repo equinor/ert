@@ -72,8 +72,10 @@ typedef struct lsf_job_struct    lsf_job_type;
   void            lsf_driver_free__(void * __driver );
   void            lsf_driver_free( lsf_driver_type * driver );
   job_status_type lsf_driver_get_job_status(void * __driver , void * __job);
+  int             lsf_driver_get_job_status_lsf(void * __driver , void * __job);
   void            lsf_driver_free_job(void * __job);
   void            lsf_driver_display_info( void * __driver , void * __job);
+  void            lsf_driver_set_bjobs_refresh_interval( lsf_driver_type * driver , int refresh_interval);
   
   lsf_submit_method_enum lsf_driver_get_submit_method( const lsf_driver_type * driver ); 
   

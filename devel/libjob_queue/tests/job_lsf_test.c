@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2012  Statoil ASA, Norway. 
     
-   The file 'ert_util_stringlist_test.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'job_lsf_test.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -75,6 +75,7 @@ int main( int argc , char ** argv) {
   test_status( JOB_STAT_DONE   , JOB_QUEUE_DONE );
   test_status( JOB_STAT_EXIT   , JOB_QUEUE_EXIT );
   test_status( JOB_STAT_UNKWN  , JOB_QUEUE_EXIT );
+  test_status( 192             , JOB_QUEUE_DONE ); 
   
   printf("Status OK \n");
   exit(0);
