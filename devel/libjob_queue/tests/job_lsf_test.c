@@ -20,7 +20,7 @@
 
 //#include <test_util.h>
 #include <lsf_driver.h>
-
+#include <lsf/lsbatch.h>
 
 
 void test_option(lsf_driver_type * driver , const char * option , const char * value) {
@@ -39,6 +39,13 @@ void test_server(lsf_driver_type * driver , const char * server, lsf_submit_meth
 }
 
 
+void test_status(int lsf_status , job_status_type job_status) {
+  if (lsf_driver_convert_status( lsf_status ) != job_status) {
+    printf("Error converting integer status:%d \n",lsf_status);
+    exit(1);
+  }
+}
+
 
 int main( int argc , char ** argv) {
   lsf_driver_type * driver = lsf_driver_alloc();
@@ -49,6 +56,7 @@ int main( int argc , char ** argv) {
   test_option( driver , LSF_RSH_CMD     , "RSH");
   test_option( driver , LSF_LOGIN_SHELL , "shell");
   test_option( driver , LSF_BSUB_CMD    , "bsub");
+  printf("Options OK\n");
 
   test_server( driver , NULL , LSF_SUBMIT_INTERNAL );
   test_server( driver , "LoCaL" , LSF_SUBMIT_LOCAL_SHELL );
@@ -56,6 +64,18 @@ int main( int argc , char ** argv) {
   test_server( driver , "XLOCAL" , LSF_SUBMIT_REMOTE_SHELL );
   test_server( driver , NULL , LSF_SUBMIT_INTERNAL );
   test_server( driver , "be-grid01" , LSF_SUBMIT_REMOTE_SHELL );
+  printf("Servers OK\n");
 
+  test_status( JOB_STAT_PEND   , JOB_QUEUE_PENDING );
+  test_status( JOB_STAT_PSUSP  , JOB_QUEUE_RUNNING );
+  test_status( JOB_STAT_USUSP  , JOB_QUEUE_RUNNING );
+  test_status( JOB_STAT_SSUSP  , JOB_QUEUE_RUNNING );
+  test_status( JOB_STAT_RUN    , JOB_QUEUE_RUNNING );
+  test_status( JOB_STAT_NULL   , JOB_QUEUE_NOT_ACTIVE );
+  test_status( JOB_STAT_DONE   , JOB_QUEUE_DONE );
+  test_status( JOB_STAT_EXIT   , JOB_QUEUE_EXIT );
+  test_status( JOB_STAT_UNKWN  , JOB_QUEUE_EXIT );
+  
+  printf("Status OK \n");
   exit(0);
 }

@@ -345,15 +345,14 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 
 
 
-#define CASE_SET(s1,s2) case(s1):  status = s2; break;
-static job_status_type lsf_driver_get_job_status_libary(void * __driver , void * __job) {
+static int lsf_driver_get_job_status_libary(void * __driver , void * __job) {
   if (__job == NULL) 
     /* the job has not been registered at all ... */
     return JOB_QUEUE_NOT_ACTIVE;
   else {
     lsf_job_type    * job    = lsf_job_safe_cast( __job );
     {
-      job_status_type status;
+      int status;
       struct jobInfoEnt *job_info;
       if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) {
         /* 
@@ -375,31 +374,16 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , void *
           job->num_exec_host = job_info->numExHosts;
           job->exec_host     = util_alloc_stringlist_copy( (const char **) job_info->exHosts , job->num_exec_host);
         }
-        
-        switch (job_info->status) {
-          CASE_SET(JOB_STAT_PEND  , JOB_QUEUE_PENDING);
-          CASE_SET(JOB_STAT_SSUSP , JOB_QUEUE_RUNNING);
-          CASE_SET(JOB_STAT_RUN   , JOB_QUEUE_RUNNING);
-          CASE_SET(JOB_STAT_EXIT  , JOB_QUEUE_EXIT);
-          CASE_SET(JOB_STAT_DONE  , JOB_QUEUE_DONE);
-          CASE_SET(JOB_STAT_PDONE , JOB_QUEUE_DONE);
-          CASE_SET(JOB_STAT_PERR  , JOB_QUEUE_EXIT);
-          CASE_SET(192            , JOB_QUEUE_DONE); /* this 192 seems to pop up - where the fuck 
-                                                        does it come frome ??  _pdone + _ususp ??? */
-        default:
-          util_abort("%s: job:%ld lsf_status:%d not recognized - internal LSF fuck up - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
-          status = JOB_QUEUE_DONE; /* ????  */
-        }
+        status = job_info->status;
       }
-      
       return status;
     }
   }
 }
 
 
-static job_status_type lsf_driver_get_job_status_shell(void * __driver , void * __job) {
-  job_status_type status = JOB_QUEUE_NOT_ACTIVE;
+static int lsf_driver_get_job_status_shell(void * __driver , void * __job) {
+  int status = JOB_STAT_NULL;
   
   if (__job != NULL) {
     lsf_job_type    * job    = lsf_job_safe_cast( __job );
@@ -428,7 +412,7 @@ static job_status_type lsf_driver_get_job_status_shell(void * __driver , void * 
         /* 
            It might be running - but since job != NULL it is at least in the queue system.
         */
-        status = JOB_QUEUE_PENDING;
+        status = JOB_STAT_PEND;
 
     }
   }
@@ -437,16 +421,54 @@ static job_status_type lsf_driver_get_job_status_shell(void * __driver , void * 
 }
 
 
+job_status_type lsf_driver_convert_status( int lsf_status ) {
+  job_status_type job_status;
+  switch (lsf_status) {
+  case JOB_STAT_NULL:
+    job_status = JOB_QUEUE_NOT_ACTIVE;
+    break;
+  case JOB_STAT_PEND:
+    job_status = JOB_QUEUE_PENDING;
+    break;
+  case JOB_STAT_SSUSP:
+    job_status = JOB_QUEUE_RUNNING;
+    break;
+  case JOB_STAT_USUSP:
+    job_status = JOB_QUEUE_RUNNING;
+    break;
+  case JOB_STAT_PSUSP:
+    job_status = JOB_QUEUE_RUNNING;
+    break;
+  case JOB_STAT_RUN:
+    job_status = JOB_QUEUE_RUNNING;
+    break;   
+  case JOB_STAT_DONE:
+    job_status = JOB_QUEUE_DONE;
+    break;
+  case JOB_STAT_EXIT:
+    job_status = JOB_QUEUE_EXIT;
+    break;
+  case JOB_STAT_UNKWN:  // Have lost contact with one of the daemons.
+    job_status = JOB_QUEUE_EXIT;
+    break;
+  default:
+    job_status = JOB_QUEUE_NOT_ACTIVE;
+    util_abort("%s: unrecognized lsf status code:%d \n",__func__ , lsf_status );
+  }
+  return job_status;
+}
 
 
 job_status_type lsf_driver_get_job_status(void * __driver , void * __job) {
-  job_status_type status;
+  int lsf_status;
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
+
   if (driver->submit_method == LSF_SUBMIT_INTERNAL) 
-    status = lsf_driver_get_job_status_libary(__driver , __job);
+    lsf_status = lsf_driver_get_job_status_libary(__driver , __job);
   else
-    status = lsf_driver_get_job_status_shell(__driver , __job);
-  return status;
+    lsf_status = lsf_driver_get_job_status_shell(__driver , __job);
+
+  return lsf_driver_convert_status( lsf_status );
 }
 
 
@@ -758,14 +780,14 @@ void * lsf_driver_alloc( ) {
   lsf_driver->bkill_cmd           = NULL;
 
 
-  hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
-  hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_QUEUE_RUNNING);
-  hash_insert_int(lsf_driver->status_map , "PSUSP"  , JOB_QUEUE_PENDING);
-  hash_insert_int(lsf_driver->status_map , "RUN"    , JOB_QUEUE_RUNNING);
-  hash_insert_int(lsf_driver->status_map , "EXIT"   , JOB_QUEUE_EXIT);
-  hash_insert_int(lsf_driver->status_map , "USUSP"  , JOB_QUEUE_RUNNING);
-  hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_QUEUE_DONE);
-  hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT);    /* Uncertain about this one */
+  hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_STAT_PEND);
+  hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_STAT_SSUSP);
+  hash_insert_int(lsf_driver->status_map , "PSUSP"  , JOB_STAT_PSUSP);
+  hash_insert_int(lsf_driver->status_map , "RUN"    , JOB_STAT_RUN);
+  hash_insert_int(lsf_driver->status_map , "EXIT"   , JOB_STAT_EXIT);
+  hash_insert_int(lsf_driver->status_map , "USUSP"  , JOB_STAT_DONE);
+  hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_STAT_PDONE);
+  hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_STAT_UNKWN);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
 
   lsf_driver_set_option( lsf_driver , LSF_SERVER    , NULL );
