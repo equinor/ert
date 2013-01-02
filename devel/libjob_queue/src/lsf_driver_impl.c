@@ -451,6 +451,9 @@ job_status_type lsf_driver_convert_status( int lsf_status ) {
   case JOB_STAT_UNKWN:  // Have lost contact with one of the daemons.
     job_status = JOB_QUEUE_EXIT;
     break;
+  case 192:     /* this 192 seems to pop up - where the fuck does it come frome ??  _pdone + _ususp ??? */
+    job_status = JOB_QUEUE_DONE;
+    break;
   default:
     job_status = JOB_QUEUE_NOT_ACTIVE;
     util_abort("%s: unrecognized lsf status code:%d \n",__func__ , lsf_status );
@@ -783,10 +786,10 @@ void * lsf_driver_alloc( ) {
   hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_STAT_PEND);
   hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_STAT_SSUSP);
   hash_insert_int(lsf_driver->status_map , "PSUSP"  , JOB_STAT_PSUSP);
+  hash_insert_int(lsf_driver->status_map , "USUSP"  , JOB_STAT_USUSP);
   hash_insert_int(lsf_driver->status_map , "RUN"    , JOB_STAT_RUN);
   hash_insert_int(lsf_driver->status_map , "EXIT"   , JOB_STAT_EXIT);
-  hash_insert_int(lsf_driver->status_map , "USUSP"  , JOB_STAT_DONE);
-  hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_STAT_PDONE);
+  hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_STAT_DONE);
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_STAT_UNKWN);    /* Uncertain about this one */
   pthread_mutex_init( &lsf_driver->bjobs_mutex , NULL );
 
