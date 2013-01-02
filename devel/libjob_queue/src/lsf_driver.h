@@ -67,6 +67,7 @@ typedef struct lsf_job_struct    lsf_job_type;
                                const char  * job_name ,
                                int           argc,     
                                const char ** argv );
+  job_status_type lsf_driver_convert_status( int lsf_status );
   void            lsf_driver_kill_job(void * __driver , void * __job);
   void            lsf_driver_free__(void * __driver );
   void            lsf_driver_free( lsf_driver_type * driver );
