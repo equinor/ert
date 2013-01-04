@@ -38,18 +38,20 @@ struct config_path_elm_struct {
 static UTIL_SAFE_CAST_FUNCTION( config_path_elm , CONFIG_PATH_ELM_TYPE_ID )
 
 
-config_path_elm_type * config_path_elm_alloc( const char * path)  {
+config_path_elm_type * config_path_elm_alloc( const char * root_path , const char * path)  {
   config_path_elm_type * path_elm = util_malloc( sizeof * path_elm );
   UTIL_TYPE_ID_INIT(path_elm , CONFIG_PATH_ELM_TYPE_ID);
   if (path == NULL) {
     path_elm->rel_path = NULL;
     path_elm->abs_path = util_alloc_cwd();
   } else {
-    path_elm->rel_path = util_alloc_string_copy( path );
-    if (util_is_abs_path( path ))
+    if (util_is_abs_path( path )) {
       path_elm->abs_path = util_alloc_string_copy( path );
-    else
+      path_elm->rel_path = util_alloc_rel_path( root_path , path );
+    } else {
       path_elm->abs_path = util_alloc_abs_path( path );
+      path_elm->rel_path = util_alloc_string_copy( path );
+    }
   }
 
   return path_elm;
