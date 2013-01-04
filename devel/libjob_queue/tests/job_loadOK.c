@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2012  Statoil ASA, Norway. 
     
-   The file 'load_internal.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'job_loadOK.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -23,7 +23,7 @@
 
 
 
-bool loadConfig(config_type * config , const char * config_file, config_type * config_compiler) {
+bool loadConfig(config_type * config , const char * config_file , config_type * config_compiler) {
   bool OK = false;
   workflow_job_type * cmd = workflow_job_config_alloc( "NAME" , config , config_file);
   
@@ -47,11 +47,11 @@ int main( int argc , char ** argv) {
     bool OK = true;
 
     for (iarg = 1; iarg < argc; iarg++) 
-      OK = OK && (loadConfig(  config , argv[iarg] , config_compiler ) == false);
+      OK = OK && loadConfig(  config , argv[iarg] , config_compiler); 
     
     if (!OK)
       status = 1;
-
+    
     config_free(config_compiler);
     config_free(config);
   }
