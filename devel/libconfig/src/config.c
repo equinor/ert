@@ -140,6 +140,7 @@ struct config_struct {
   subst_list_type      * define_list;
   char                 * config_file;               /* The last parsed file - NULL if no file is parsed-. */
   char                 * abs_path;
+  char                 * root_path; 
   vector_type          * path_elm;
 };
 
@@ -252,6 +253,7 @@ config_type * config_alloc() {
   config->define_list     = subst_list_alloc( NULL );
   config->config_file     = NULL;
   config->abs_path        = NULL;
+  config->root_path       = NULL;
   return config;
 }
 
@@ -272,8 +274,10 @@ void config_clear(config_type * config) {
   
   util_safe_free( config->config_file );
   util_safe_free( config->abs_path );    
+  util_safe_free( config->root_path );    
   config->config_file = NULL;
   config->abs_path = NULL;
+  config->root_path = NULL;
 }
 
 
@@ -481,7 +485,7 @@ static void config_validate(config_type * config, const char * filename) {
 
 
 static config_path_elm_type * config_add_path_elm( config_type * config , const char * path ) {
-  config_path_elm_type * path_elm = config_path_elm_alloc( path );
+  config_path_elm_type * path_elm = config_path_elm_alloc( config->root_path , path );
   vector_append_owned_ref( config->path_elm , path_elm , config_path_elm_free__);
   return path_elm;
 }
@@ -703,8 +707,10 @@ static void config_parse__(config_type * config ,
 static void config_set_config_file( config_type * config , const char * config_file ) {
   config->config_file = util_realloc_string_copy( config->config_file , config_file );
   
+  util_safe_free(config->root_path);
   util_safe_free(config->abs_path);
   config->abs_path = util_alloc_abs_path( config_file );
+  util_alloc_file_components( config->abs_path , &config->root_path , NULL , NULL );
 }
 
 
