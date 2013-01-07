@@ -30,9 +30,11 @@ void                   config_path_elm_free( config_path_elm_type * path_elm );
 void                   config_path_elm_free__( void * arg );
 config_path_elm_type * config_path_elm_alloc( const char * root_path , const char * path);
 const char *           config_path_elm_get_abspath( const config_path_elm_type * path_elm );
-const char *           config_path_elm_get_path( const config_path_elm_type * path_elm );
-char *                 config_path_elm_alloc_abspath(const config_path_elm_type * path_elm , const char * path);
-char *                 config_path_elm_alloc_path(const config_path_elm_type * path_elm , const char * path);
+const char *           config_path_elm_get_relpath( const config_path_elm_type * path_elm );
+const char *           config_path_elm_get_rootpath( const config_path_elm_type * path_elm );
+char *                 config_path_elm_alloc_abspath(const config_path_elm_type * path_elm , const char * input_path);
+char *                 config_path_elm_alloc_relpath(const config_path_elm_type * path_elm , const char * input_path);
+char *                 config_path_elm_alloc_path(const config_path_elm_type * path_elm , const char * input_path);
 
 #ifdef __cplusplus
 }

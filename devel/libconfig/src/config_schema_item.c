@@ -254,7 +254,7 @@ static char * __alloc_relocated__(const config_path_elm_type * path_elm , const 
   if (util_is_abs_path(value))
     file = util_alloc_string_copy( value );
   else
-    file = util_alloc_filename(config_path_elm_get_path( path_elm ) , value , NULL);
+    file = util_alloc_filename(config_path_elm_get_relpath( path_elm ) , value , NULL);
 
   return file;
 }
@@ -349,7 +349,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           {
             char * path = config_path_elm_alloc_path( path_elm , value );
             if (!util_entry_exists(path)) {
-              config_error_add( error_list , util_alloc_sprintf("Can not find entry %s in %s ",value , config_path_elm_get_path( path_elm) ));
+              config_error_add( error_list , util_alloc_sprintf("Can not find entry %s in %s ",value , config_path_elm_get_relpath( path_elm) ));
               OK = false;
             }
             free( path );

@@ -33,16 +33,19 @@ int main(int argc , char ** argv) {
   const char * abs_path = "/tmp/root/abs/path";
   const char * rel_true = "rel/path/XXX";
   const char * abs_true = "/tmp/root/rel/path/XXX";
+  const char * path_true1 = "rel/path/XXX";
+  const char * path_true2 = "/tmp/root/rel/path/XXX";
 #endif
 
   {
     config_path_elm_type * path_elm = config_path_elm_alloc( root , rel_path );
   
-    test_string_equal( config_path_elm_get_path( path_elm ) , rel_path );
+    test_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path );
     test_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path );
-    test_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , rel_true);
+    test_string_equal( config_path_elm_get_rootpath( path_elm ) , root );
+    test_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true);
     test_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true);
-
+    test_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true1);
 
     config_path_elm_free( path_elm );
   }
@@ -50,10 +53,12 @@ int main(int argc , char ** argv) {
   {
     config_path_elm_type * path_elm = config_path_elm_alloc( root , abs_path );
   
-    test_string_equal( config_path_elm_get_path( path_elm ) , rel_path );
+    test_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path );
     test_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path );
-    test_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , rel_true);
+    test_string_equal( config_path_elm_get_rootpath( path_elm ) , root );
+    test_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true);
     test_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true);
+    test_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true2);
 
     config_path_elm_free( path_elm );
   }
