@@ -572,6 +572,7 @@ static void config_parse__(config_type * config ,
                            bool validate) {
 
   /* Guard against circular includes. */
+  printf("config_input:%s \n",config_input);
   {
     char * abs_filename = util_alloc_realpath(config_input);
     if (!set_add_key(config->parsed_files , abs_filename)) 
@@ -645,7 +646,10 @@ static void config_parse__(config_type * config ,
               util_abort("%s: keyword:%s must have exactly one argument. \n",__func__ ,include_kw);
             {
               const char *include_file  = stringlist_iget( token_list , 1);
-              config_parse__(config , path_stack , include_file , comment_string , include_kw , define_kw , unrecognized, false); /* Recursive call */
+              if (util_file_exists( include_file ))
+                config_parse__(config , path_stack , include_file , comment_string , include_kw , define_kw , unrecognized, false); /* Recursive call */
+              else 
+                config_error_add(config->parse_errors , util_alloc_sprintf("%s file:%s not found" , include_kw , include_file));
             }
           } else if ((define_kw != NULL) && (strcmp(define_kw , kw) == 0)) {
             /* Treating the define keyword. */
