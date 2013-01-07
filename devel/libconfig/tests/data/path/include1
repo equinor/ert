@@ -1,0 +1,2 @@
+INCLUDE subpath/include3
+INCLUDE subpath/subsubpath/include4
