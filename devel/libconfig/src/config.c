@@ -572,7 +572,6 @@ static void config_parse__(config_type * config ,
                            bool validate) {
 
   /* Guard against circular includes. */
-  printf("config_input:%s \n",config_input);
   {
     char * abs_filename = util_alloc_realpath(config_input);
     if (!set_add_key(config->parsed_files , abs_filename)) 

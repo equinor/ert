@@ -25,7 +25,6 @@
 #include <config_path_elm.h>
 
 
-
 int main(int argc , char ** argv) {
 #ifdef ERT_LINUX
   const char * root = "/tmp/root";
