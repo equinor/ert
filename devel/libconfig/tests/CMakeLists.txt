@@ -13,6 +13,9 @@ target_link_libraries( config_typeFail config )
 add_executable( config_path_elm config_path_elm.c )
 target_link_libraries( config_path_elm config )
 
+add_executable( config_root_path config_root_path.c )
+target_link_libraries( config_root_path config )
+
 add_executable( config_include_test config_include_test.c)
 target_link_libraries( config_include_test config)
 
@@ -22,3 +25,4 @@ add_test( config_append_test   ${EXECUTABLE_OUTPUT_PATH}/config_append_test  ${C
 add_test( config_node_test     ${EXECUTABLE_OUTPUT_PATH}/config_node_test    ${CMAKE_CURRENT_SOURCE_DIR}/data/append_test )
 add_test( config_path_elm      ${EXECUTABLE_OUTPUT_PATH}/config_path_elm )
 add_test( config_include_test  ${EXECUTABLE_OUTPUT_PATH}/config_include_test ${CMAKE_CURRENT_SOURCE_DIR}/data include_test )
+add_test( config_root_path      ${EXECUTABLE_OUTPUT_PATH}/config_root_path ${CMAKE_CURRENT_SOURCE_DIR}/data )

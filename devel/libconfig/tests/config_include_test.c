@@ -30,6 +30,19 @@ void parse_test(config_type * config , const char * config_path , const char * c
   
   config_clear( config );
   if (config_parse( config , file , "--" , "INCLUDE" , NULL , CONFIG_UNRECOGNIZED_IGNORE , true )) {
+    const char * path0 = "PATH0";
+    const char * path1 = "path/PATH1";
+    const char * path2 = "path/subpath/PATH2";
+    const char * path3 = "path/subpath/PATH3";
+    const char * path4 = "path/subpath/subsubpath/PATH3";
+
+    if (!test_string_equal( config_get_value_as_path( config, "PATH0") , path0))
+      test_error_exit("PATH0:%s  expected:%s \n",config_get_value_as_path(config , "PATH0") , path0);
+
+    if (!test_string_equal( config_get_value_as_path( config, "PATH1") , path1))
+      test_error_exit("PATH1:%s  expected:%s \n",config_get_value_as_path(config , "PATH1"), path1);
+    
+    
   } else {
     config_error_type * error = config_get_errors( config );
     config_error_fprintf( error , stdout );
@@ -43,8 +56,8 @@ int main(int argc , char ** argv) {
   const char * abs_path    = argv[1];
   const char * config_file = argv[2];
   char * cwd = util_alloc_cwd();
-  printf("abs:%s  file:%s  cwd:%s \n",abs_path , config_file , cwd);
   char * rel_path = util_alloc_rel_path( cwd , abs_path );
+  printf("abs:%s  file:%s  cwd:%s rel:%s \n",abs_path , config_file , cwd , rel_path);
   config_type * config = config_alloc();
 
   {
