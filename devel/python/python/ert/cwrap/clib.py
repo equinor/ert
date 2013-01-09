@@ -21,10 +21,10 @@ import ctypes
 import os
 import os.path
 
-ert_path = None
+ert_lib_path = None
 
 
-def __load__( lib_list , ert_prefix ):
+def __load__( lib_list , ert_prefix):
     """
     Thin wrapper around the ctypes.CDLL function for loading shared library.
     
@@ -44,7 +44,7 @@ def __load__( lib_list , ert_prefix ):
     for lib in lib_list:
         try:
             if ert_prefix:
-                ert_lib = os.path.join( ert_path , lib )
+                ert_lib = os.path.join( ert_lib_path , lib )
                 dll = ctypes.CDLL( ert_lib , ctypes.RTLD_GLOBAL )
             else:
                 dll = ctypes.CDLL( lib , ctypes.RTLD_GLOBAL )
@@ -72,14 +72,28 @@ You might need to update this variable?
 """ % LD_LIBRARY_PATH
     raise ImportError( error_msg )
 
+#################################################################
+
 
 def load( *lib_list ):
+    """
+    Will try to load shared library with normal load semantics.
+    """
     return __load__(lib_list , False )
 
 
-
 def ert_load( *lib_list ):
-    if ert_path:
-        return __load__(lib_list , True )
+    """
+    Iff the ert_lib_path module variable has been set it will try to
+    load shared library from that path; if that fails the loader will
+    try again without imposing any path restrictions.
+    """
+    if ert_lib_path:
+        try:
+            return __load__(lib_list , True )
+        except ImportError:
+            # Try again - ignoring the ert_lib_path setting.
+            return load( lib_list )
     else:
+        # The ert_lib_path variable has not been set; just try a normal load.
         return load( lib_list )
