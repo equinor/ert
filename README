@@ -226,7 +226,7 @@ categories of tests:
          path.
 
 
-5.1 Test data
+5.1 Test data & labels
 
 Unfortunately a large fraction of the test data is based on Statoil
 internal data, and is not available on GitHub. All the tests which are
@@ -237,6 +237,25 @@ options to include/exclude tests based on their label.
    ctest -L Statoil      # Run all the tests with the 'Statoil' label
    ctest -LE Statoil     # Run all the tests without the 'Statoil' label
 
+The argument to the -L and -LE options are regular expressions,
+i.e. in the case above all tests which have a label matching the
+regexp 'Statoil' will be run. A test can only have one single label,
+but due to to the regexp mechanism we can create a 'list-like'
+structure by chaining labels together; by convention the label
+elements are joined with ':'. In the example
+
+   set_property( TEST test_name PROPERTY LABELS Statoil:Python )
+
+the labels 'Statoil' and 'Python' are applied to the test. The labels
+in use are:
+
+  Statoil: This indicates that the test makes use of Statoil internal
+           test data, and will fail if the Statoil test data have not
+           been made available according to the description in
+           devel/test-data/README.txt
+
+  Python: This indicates that the test is a Python unittest, and the
+          Python interpreter will be the test runner for the test.
 
 5.2 Test names
 
