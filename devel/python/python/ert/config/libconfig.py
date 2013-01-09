@@ -16,5 +16,5 @@
 
 
 import ert.cwrap.clib as clib
-lib = clib.load("libconfig.so")
+lib = clib.ert_load("libconfig.so")
     

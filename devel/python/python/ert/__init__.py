@@ -26,5 +26,8 @@ ert.job_queue:
 ert.util:
 
 """
+import os.path
+import cwrap.clib
 
-
+ert_lib_path = os.path.realpath( os.path.join(os.path.dirname( os.path.abspath( __file__)) , "../../lib") )
+cwrap.clib.ert_path = ert_lib_path
