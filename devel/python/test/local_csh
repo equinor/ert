@@ -8,6 +8,5 @@ ln -sf ../../../build/lib/libenkf.so ../lib/libenkf.so
 ln -sf ../../../build/lib/libjob_queue.so ../lib/libjob_queue.so
 ln -sf ../../../build/lib/libconfig.so ../lib/libconfig.so
 ln -sf ../../../build/lib/libwell.so ../lib/libwell.so
-setenv LD_LIBRARY_PATH "$PWD/../lib:$LD_LIBRARY_PATH"
 setenv PYTHONPATH $PWD/../python:$PYTHONPATH
 
