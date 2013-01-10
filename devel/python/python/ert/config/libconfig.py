@@ -1,6 +1,6 @@
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
-#  The file '__init__.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'libconfig.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -13,18 +13,8 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-"""
-ert - Ensemble Reservoir Tool - a package for reservoir modeling.
-
-The ert package itself has no code, but contains several subpackages:
-
-ert.ecl: Package for working with ECLIPSE files. The far most mature
-   package in ert.
-
-ert.job_queue: 
-
-ert.util:
-
-"""
 
 
+import ert.cwrap.clib as clib
+lib = clib.ert_load("libconfig.so")
+    

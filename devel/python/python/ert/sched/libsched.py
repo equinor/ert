@@ -21,5 +21,5 @@ import ert.util.libutil
 import ert.geo.libgeo
 import ert.ecl.libecl
 
-lib = clib.load("libsched.so")
+lib = clib.ert_load("libsched.so")
     
