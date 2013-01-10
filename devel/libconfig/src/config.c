@@ -38,6 +38,7 @@
 #include <config_content_node.h>
 #include <config_content_item.h>
 #include <config_path_elm.h>
+#include <config_root_path.h>
 
 #define  CLEAR_STRING "__RESET__"
 
@@ -140,8 +141,9 @@ struct config_struct {
   subst_list_type      * define_list;
   char                 * config_file;               /* The last parsed file - NULL if no file is parsed-. */
   char                 * abs_path;
-  char                 * root_path; 
-  vector_type          * path_elm;
+  config_root_path_type * root_path;
+  vector_type          * path_elm_storage;
+  vector_type          * path_elm_stack;
 };
 
 
@@ -242,9 +244,11 @@ static void config_content_item_set_arg__(config_type * config , config_content_
 
 
 config_type * config_alloc() {
-  config_type *config     = util_malloc(sizeof * config );
-  config->content_list    = vector_alloc_new();
-  config->path_elm        = vector_alloc_new();
+  config_type *config       = util_malloc(sizeof * config );
+  config->content_list      = vector_alloc_new();
+  config->path_elm_storage  = vector_alloc_new();
+  config->path_elm_stack    = vector_alloc_new();
+  
   config->schema_items    = hash_alloc();
   config->content_items   = hash_alloc(); 
   config->parse_errors    = config_error_alloc();
@@ -270,14 +274,17 @@ void config_clear(config_type * config) {
   set_clear(config->parsed_files);
   subst_list_clear( config->define_list );
   config_clear_content_items( config );
-  vector_clear( config->path_elm );
-  
+  vector_clear( config->path_elm_storage );
+  vector_clear( config->path_elm_stack );
+
   util_safe_free( config->config_file );
   util_safe_free( config->abs_path );    
-  util_safe_free( config->root_path );    
+  if (config->root_path != NULL) {
+    config_root_path_free( config->root_path );
+    config->root_path = NULL;
+  }
   config->config_file = NULL;
   config->abs_path = NULL;
-  config->root_path = NULL;
 }
 
 
@@ -287,7 +294,8 @@ void config_free(config_type * config) {
   set_free(config->parsed_files);
   subst_list_free( config->define_list );
   
-  vector_free( config->path_elm );
+  vector_free( config->path_elm_storage );
+  vector_free( config->path_elm_stack );
   vector_free( config->content_list );
   hash_free(config->schema_items);
   hash_free(config->content_items);
@@ -485,10 +493,34 @@ static void config_validate(config_type * config, const char * filename) {
 
 
 static config_path_elm_type * config_add_path_elm( config_type * config , const char * path ) {
-  config_path_elm_type * path_elm = config_path_elm_alloc( config->root_path , path );
-  vector_append_owned_ref( config->path_elm , path_elm , config_path_elm_free__);
-  return path_elm;
+  const config_path_elm_type * current_path_elm;
+  if (vector_get_size( config->path_elm_stack ) == 0)
+    current_path_elm = NULL;
+  else
+    current_path_elm = vector_get_last_const(config->path_elm_stack);
+  
+  {
+    config_path_elm_type * new_path_elm;
+
+    {
+      char * rel_path = NULL;
+      if (path != NULL) {
+        if (current_path_elm == NULL) 
+          rel_path = util_alloc_rel_path( config_root_path_get_abs_path( config->root_path ) , path);
+        else
+          rel_path = config_path_elm_alloc_relpath( current_path_elm , path );
+      }
+      
+      new_path_elm = config_path_elm_alloc( config->root_path , rel_path );
+      util_safe_free( rel_path );
+    }
+    vector_append_owned_ref( config->path_elm_storage , new_path_elm , config_path_elm_free__);
+    vector_append_ref( config->path_elm_stack , new_path_elm );
+    return new_path_elm;
+  }
 }
+
+
 
 /**
    This function parses the config file 'filename', and updated the
@@ -579,8 +611,8 @@ static void config_parse__(config_type * config ,
     free( abs_filename );
   }
   
-  
   config_path_elm_type * current_path_elm;
+
   char * config_file;
   {
     /* Extract the path component of the current input file and chdir() */
@@ -703,17 +735,23 @@ static void config_parse__(config_type * config ,
   }
   free(config_file);
   path_stack_pop( path_stack );
+  vector_pop( config->path_elm_stack );
 }
 
 
 
 static void config_set_config_file( config_type * config , const char * config_file ) {
   config->config_file = util_realloc_string_copy( config->config_file , config_file );
-  
-  util_safe_free(config->root_path);
   util_safe_free(config->abs_path);
   config->abs_path = util_alloc_abs_path( config_file );
-  util_alloc_file_components( config->abs_path , &config->root_path , NULL , NULL );
+  if (config->root_path != NULL) 
+    config_root_path_free( config->root_path );
+  {
+    char * root;
+    util_alloc_file_components( config->abs_path , &root , NULL , NULL );
+    config->root_path = config_root_path_alloc( root );
+    util_safe_free( root );
+  }
 }
 
 

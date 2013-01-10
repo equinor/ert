@@ -61,9 +61,14 @@ const char * config_get_value_as_path( const config_type * config , const char *
 
 const char * config_get_value_as_abspath( const config_type * config , const char * kw) {
   config_content_node_type * node = config_get_value_node( config , kw );
-  printf("Looking for:%s \n",kw);
-  return config_content_node_iget_as_path(node , 0);
+  return config_content_node_iget_as_abspath(node , 0);
 }
+
+const char * config_get_value_as_relpath( const config_type * config , const char * kw) {
+  config_content_node_type * node = config_get_value_node( config , kw );
+  return config_content_node_iget_as_relpath(node , 0);
+}
+
 
 const char * config_get_value(const config_type * config , const char * kw) {
   config_content_node_type * node = config_get_value_node( config , kw );

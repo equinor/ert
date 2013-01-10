@@ -100,6 +100,7 @@ typedef struct config_struct              config_type;
   int                     config_get_value_as_int(const config_type * config , const char * kw);
   double                  config_get_value_as_double(const config_type * config , const char * kw);
   const char *            config_get_value_as_abspath( const config_type * config , const char * kw);
+  const char *            config_get_value_as_relpath( const config_type * config , const char * kw);
   const char *            config_get_value_as_path( const config_type * config , const char * kw);
   const char *            config_get_value(const config_type * config , const char * kw);
   const char *            config_get_config_file( const config_type * config , bool abs_path);

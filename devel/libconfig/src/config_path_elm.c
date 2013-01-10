@@ -25,6 +25,7 @@
 #include <type_macros.h>
 #include <util.h>
 
+#include <config_root_path.h>
 #include <config_path_elm.h>
 
 #define CONFIG_PATH_ELM_TYPE_ID  7100063
@@ -33,37 +34,42 @@ struct config_path_elm_struct {
   UTIL_TYPE_ID_DECLARATION;
   char * abs_path;     // This will always be absolute
   char * rel_path;     // This will always be relative to the root path.
-  char * root_path;
+  const config_root_path_type * root_path;
 };
 
 static UTIL_SAFE_CAST_FUNCTION( config_path_elm , CONFIG_PATH_ELM_TYPE_ID )
 
 
-config_path_elm_type * config_path_elm_alloc( const char * root_path , const char * path)  {
-  config_path_elm_type * path_elm = util_malloc( sizeof * path_elm );
-  UTIL_TYPE_ID_INIT(path_elm , CONFIG_PATH_ELM_TYPE_ID);
-  path_elm->root_path = util_alloc_string_copy( root_path );
-  if (path == NULL) {
-    path_elm->rel_path = NULL;
-    path_elm->abs_path = util_alloc_cwd();
-  } else {
-    if (util_is_abs_path( path )) {
-      path_elm->abs_path = util_alloc_string_copy( path );
-      path_elm->rel_path = util_alloc_rel_path( root_path , path );
+config_path_elm_type * config_path_elm_alloc( const config_root_path_type * root_path , const char * path)  {
+  if (root_path != NULL) {
+    config_path_elm_type * path_elm = util_malloc( sizeof * path_elm );
+    UTIL_TYPE_ID_INIT(path_elm , CONFIG_PATH_ELM_TYPE_ID);
+    path_elm->root_path = root_path;
+    if (path == NULL) {
+      path_elm->rel_path = NULL;
+      path_elm->abs_path = util_alloc_cwd();
     } else {
-      path_elm->abs_path = util_alloc_abs_path( path );
-      path_elm->rel_path = util_alloc_string_copy( path );
+      if (util_is_abs_path( path )) {
+        path_elm->abs_path = util_alloc_string_copy( path );
+        path_elm->rel_path = util_alloc_rel_path( config_root_path_get_abs_path(root_path) , path );
+      } else {
+        path_elm->abs_path = util_alloc_filename( config_root_path_get_abs_path(root_path) , path , NULL );
+        path_elm->rel_path = util_alloc_string_copy( path );
+      }
     }
+    return path_elm;
+  } else {
+    util_abort("%s: root_path input argument == NULL - invalid \n",__func__);
+    return NULL;
   }
-
-  return path_elm;
 }
+
+
 
 
 void config_path_elm_free( config_path_elm_type * path_elm ) {
   util_safe_free( path_elm->rel_path );
   util_safe_free( path_elm->abs_path );
-  util_safe_free( path_elm->root_path );
   free( path_elm );
 }
 
@@ -74,8 +80,7 @@ void config_path_elm_free__( void * arg ) {
   config_path_elm_free( path_elm );
 }
 
-
-const char * config_path_elm_get_rootpath( const config_path_elm_type * path_elm ) {
+const config_root_path_type * config_path_elm_get_rootpath( const config_path_elm_type * path_elm ) {
   return path_elm->root_path;
 }
 
@@ -97,14 +102,18 @@ char * config_path_elm_alloc_path(const config_path_elm_type * path_elm , const 
   else {
     /* This will be relative or absolute depending on the relative/absolute
        status of the root_path. */
-    return util_alloc_joined_string( (const char *[3]) { path_elm->root_path , path_elm->rel_path , path } , 3 , UTIL_PATH_SEP_STRING );
+    const char * input_root = config_root_path_get_input_path( path_elm->root_path );
+    if (input_root == NULL)
+      return util_alloc_filename( path_elm->rel_path , path , NULL);
+    else
+      return util_alloc_joined_string( (const char *[3]) { config_root_path_get_input_path( path_elm->root_path ) , path_elm->rel_path , path } , 3 , UTIL_PATH_SEP_STRING );
   }
 }
 
 
 char * config_path_elm_alloc_relpath(const config_path_elm_type * path_elm , const char * input_path) {
   if (util_is_abs_path( input_path )) 
-    return util_alloc_rel_path( path_elm->root_path , input_path);
+    return util_alloc_rel_path( config_root_path_get_input_path( path_elm->root_path ) , input_path);
   else
     return util_alloc_filename( path_elm->rel_path , input_path , NULL );
 }

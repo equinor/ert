@@ -18,36 +18,44 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <test_util.h>
 #include <util.h>
+#include <path_stack.h>
 
 #include <config.h>
 #include <config_schema_item.h>
 
 void parse_test(config_type * config , const char * config_path , const char * config_file , bool abs_path) {
-  char  * file = util_alloc_filename( config_path , config_file , NULL);
+  path_stack_type * path_stack = path_stack_alloc();
+  char  * file = util_alloc_filename(NULL , config_file , NULL);
   
-  config_clear( config );
-  if (config_parse( config , file , "--" , "INCLUDE" , NULL , CONFIG_UNRECOGNIZED_IGNORE , true )) {
-    const char * path0 = "PATH0";
-    const char * path1 = "path/PATH1";
-    const char * path2 = "path/subpath/PATH2";
-    const char * path3 = "path/subpath/PATH3";
-    const char * path4 = "path/subpath/subsubpath/PATH3";
-
-    if (!test_string_equal( config_get_value_as_path( config, "PATH0") , path0))
-      test_error_exit("PATH0:%s  expected:%s \n",config_get_value_as_path(config , "PATH0") , path0);
-
-    if (!test_string_equal( config_get_value_as_path( config, "PATH1") , path1))
-      test_error_exit("PATH1:%s  expected:%s \n",config_get_value_as_path(config , "PATH1"), path1);
-    
-    
-  } else {
-    config_error_type * error = config_get_errors( config );
-    config_error_fprintf( error , stdout );
-    test_error_exit("Hmm - parsing %s failed \n", file );
+  path_stack_push( path_stack , NULL );
+  chdir( config_path );
+  {
+    config_clear( config );
+    if (config_parse( config , file , "--" , "INCLUDE" , NULL , CONFIG_UNRECOGNIZED_IGNORE , true )) {
+      const char * path0 = "PATH0";
+      const char * path1 = "path/PATH1";
+      const char * path2 = "path/PATH2";
+      const char * path3 = "path/subpath/PATH3";
+      const char * path4 = "path/subpath/subsubpath/PATH4";
+      
+      
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH0") , path0 , "PATH0:%s  expected:%s \n");
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH1") , path1 , "PATH1:%s  expected:%s \n");
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH2") , path2 , "PATH2:%s  expected:%s \n");
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH3") , path3 , "PATH3:%s  expected:%s \n");
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH4") , path4 , "PATH4:%s  expected:%s \n");
+      
+    } else {
+      config_error_type * error = config_get_errors( config );
+      config_error_fprintf( error , stdout );
+      test_error_exit("Hmm - parsing %s failed \n", file );
+    }
   }
+  path_stack_pop( path_stack );
   free( file );  
 }
 

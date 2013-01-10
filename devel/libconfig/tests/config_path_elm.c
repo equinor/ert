@@ -20,48 +20,72 @@
 #include <stdio.h>
 
 #include <test_util.h>
+#include <util.h>
 
 #include <config.h>
 #include <config_path_elm.h>
-
+#include <config_root_path.h>
 
 int main(int argc , char ** argv) {
 #ifdef ERT_LINUX
   const char * root = "/tmp/root";
   const char * rel_path = "rel/path";
-  const char * abs_path = "/tmp/root/abs/path";
+  const char * abs_path = "/tmp/root/rel/path";
   const char * rel_true = "rel/path/XXX";
   const char * abs_true = "/tmp/root/rel/path/XXX";
   const char * path_true1 = "rel/path/XXX";
   const char * path_true2 = "/tmp/root/rel/path/XXX";
-#endif
-
-  {
-    config_path_elm_type * path_elm = config_path_elm_alloc( root , rel_path );
   
-    test_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path );
-    test_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path );
-    test_string_equal( config_path_elm_get_rootpath( path_elm ) , root );
-    test_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true);
-    test_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true);
-    test_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true1);
+#endif
+  
+  util_make_path( root );
+  config_root_path_type * root_path = config_root_path_alloc( root );
+  {
+    config_path_elm_type * path_elm = config_path_elm_alloc( root_path , rel_path );
+    
+    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path , NULL);
+    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path , NULL);
 
+    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true, NULL);
+    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true, NULL);
+    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true2, NULL);
+
+    
     config_path_elm_free( path_elm );
   }
   printf("test1 OK \n");
   {
-    config_path_elm_type * path_elm = config_path_elm_alloc( root , abs_path );
+    config_path_elm_type * path_elm = config_path_elm_alloc( root_path , abs_path );
   
-    test_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path );
-    test_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path );
-    test_string_equal( config_path_elm_get_rootpath( path_elm ) , root );
-    test_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true);
-    test_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true);
-    test_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true2);
+    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path , NULL);
+    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path , NULL);
 
+    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true, NULL);
+    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true, NULL);
+    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true2, NULL);
+    
     config_path_elm_free( path_elm );
   }
   printf("test2 OK \n");
+  config_root_path_free( root_path );
+
+  chdir( root );
+  root_path = config_root_path_alloc( NULL );
+  {
+    config_path_elm_type * path_elm = config_path_elm_alloc( root_path , rel_path );
+    
+    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path , NULL);
+    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path , NULL);
+
+    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true, NULL);
+    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true, NULL);
+    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true1, NULL);
+
+    
+    config_path_elm_free( path_elm );
+  }
+  printf("test3 OK \n");
+  
   exit(0);
 }
 
