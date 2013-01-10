@@ -25,9 +25,6 @@ add_test( job_loadFail3 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_S
 # functions.
 set(LSF_SERVERS "LOCAL NULL" CACHE STRING  "List of LSF servers for testing")
 
-add_executable( loadOK loadOK.c )
-target_link_libraries( loadOK job_queue util )
-
 
 add_executable( job_lsf_test job_lsf_test.c )
 target_link_libraries( job_lsf_test job_queue util )
