@@ -20,7 +20,6 @@ import ctypes
 import ert.util.libutil
 import ert.cwrap.clib as clib
 
-clib.load("libconfig.so" )
 
 # Getting LSF to work properly is quite painful. The situation is a
 # mix of internal dependencies comiled into the libjob_queue.so shared
@@ -88,7 +87,6 @@ def setenv( var , value):
         os.environ[ var ] = value
 
 # 1: Setting up the full LSF environment
-
 LSF_HOME = os.getenv( "LSF_HOME")
 if LSF_HOME:
     setenv( "LSF_BINDIR"  , "%s/bin" % LSF_HOME )
@@ -117,8 +115,9 @@ except:
 # 3: Loading the libjob_queue library, which might (depending on the
 #    value of INCLUDE_LSF used when building) depend on the LSF
 #    libraries we tried to load at the previous step.
+clib.ert_load("libconfig.so" )
 try:
-    lib  = clib.load("libjob_queue.so")
+    lib  = clib.ert_load("libjob_queue.so")
 except:
     if HAVE_LSF == False:
         sys.stderr.write("** Failed to load the libjob_queue library, \n")
