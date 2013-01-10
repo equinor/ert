@@ -68,8 +68,17 @@ void test_submit(lsf_driver_type * driver , const char * server , const char * b
 
 int main( int argc , char ** argv) {
   lsf_driver_type * driver = lsf_driver_alloc();
-  test_submit(driver , "LOCAL" , NULL , NULL , NULL , argv[1]);
-  test_submit(driver , "be-grid01" , NULL , NULL , NULL , argv[1]);
-  test_submit(driver , NULL , NULL , NULL , NULL , argv[1]);
+  stringlist_type * server_list = stringlist_alloc_from_split( argv[2] , " ");
+  int iarg;
+  for (iarg = 0; iarg < stringlist_get_size( server_list ); iarg++) {
+    const char * server = stringlist_iget( server_list , iarg );
+    
+    if (strcmp(server , "NULL") == 0)
+      test_submit(driver , NULL , NULL , NULL , NULL , argv[1]);
+    else
+      test_submit(driver , server , NULL , NULL , NULL , argv[1]);
+  }
+  stringlist_free( server_list );
+
   exit(0);
 }
