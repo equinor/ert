@@ -141,7 +141,7 @@ struct config_struct {
   subst_list_type      * define_list;
   char                 * config_file;               /* The last parsed file - NULL if no file is parsed-. */
   char                 * abs_path;
-  config_root_path_type * root_path;
+  config_root_path_type * invoke_path;
   vector_type          * path_elm_storage;
   vector_type          * path_elm_stack;
 };
@@ -257,7 +257,7 @@ config_type * config_alloc() {
   config->define_list     = subst_list_alloc( NULL );
   config->config_file     = NULL;
   config->abs_path        = NULL;
-  config->root_path       = NULL;
+  config->invoke_path     = NULL;
   return config;
 }
 
@@ -279,9 +279,9 @@ void config_clear(config_type * config) {
 
   util_safe_free( config->config_file );
   util_safe_free( config->abs_path );    
-  if (config->root_path != NULL) {
-    config_root_path_free( config->root_path );
-    config->root_path = NULL;
+  if (config->invoke_path != NULL) {
+    config_root_path_free( config->invoke_path );
+    config->invoke_path = NULL;
   }
   config->config_file = NULL;
   config->abs_path = NULL;
@@ -494,6 +494,7 @@ static void config_validate(config_type * config, const char * filename) {
 
 static config_path_elm_type * config_add_path_elm( config_type * config , const char * path ) {
   const config_path_elm_type * current_path_elm;
+
   if (vector_get_size( config->path_elm_stack ) == 0)
     current_path_elm = NULL;
   else
@@ -506,12 +507,11 @@ static config_path_elm_type * config_add_path_elm( config_type * config , const 
       char * rel_path = NULL;
       if (path != NULL) {
         if (current_path_elm == NULL) 
-          rel_path = util_alloc_rel_path( config_root_path_get_abs_path( config->root_path ) , path);
+          rel_path = util_alloc_rel_path( config_root_path_get_abs_path(config->invoke_path) , path);
         else
           rel_path = config_path_elm_alloc_relpath( current_path_elm , path );
       }
-      
-      new_path_elm = config_path_elm_alloc( config->root_path , rel_path );
+      new_path_elm = config_path_elm_alloc( config->invoke_path , rel_path );
       util_safe_free( rel_path );
     }
     vector_append_owned_ref( config->path_elm_storage , new_path_elm , config_path_elm_free__);
@@ -610,7 +610,6 @@ static void config_parse__(config_type * config ,
       util_exit("%s: file:%s already parsed - circular include ? \n",__func__ , abs_filename);
     free( abs_filename );
   }
-  
   config_path_elm_type * current_path_elm;
 
   char * config_file;
@@ -744,14 +743,13 @@ static void config_set_config_file( config_type * config , const char * config_f
   config->config_file = util_realloc_string_copy( config->config_file , config_file );
   util_safe_free(config->abs_path);
   config->abs_path = util_alloc_abs_path( config_file );
-  if (config->root_path != NULL) 
-    config_root_path_free( config->root_path );
-  {
-    char * root;
-    util_alloc_file_components( config->abs_path , &root , NULL , NULL );
-    config->root_path = config_root_path_alloc( root );
-    util_safe_free( root );
-  }
+}
+
+
+static void config_set_invoke_path( config_type * config ) {
+  if (config->invoke_path != NULL) 
+    config_root_path_free( config->invoke_path );
+  config->invoke_path = config_root_path_alloc( NULL );
 }
 
 
@@ -780,6 +778,7 @@ bool config_parse(config_type * config ,
   path_stack_type * path_stack = path_stack_alloc();
   {
     config_set_config_file( config , filename );
+    config_set_invoke_path( config );
     config_parse__(config , path_stack , filename , comment_string , include_kw , define_kw , unrecognized_behaviour , validate);
   }
   path_stack_free( path_stack );

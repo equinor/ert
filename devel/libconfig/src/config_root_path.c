@@ -40,7 +40,6 @@ struct config_root_path_struct {
 */
 
 config_root_path_type * config_root_path_alloc( const char * input_path ) {
-  printf("input_payth:%s \n",input_path);
   if (input_path == NULL || util_is_directory( input_path )) {
     config_root_path_type * root_path = util_malloc( sizeof * root_path );
     {

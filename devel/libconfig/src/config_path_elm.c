@@ -47,7 +47,7 @@ config_path_elm_type * config_path_elm_alloc( const config_root_path_type * root
     path_elm->root_path = root_path;
     if (path == NULL) {
       path_elm->rel_path = NULL;
-      path_elm->abs_path = util_alloc_cwd();
+      path_elm->abs_path = util_alloc_string_copy( config_root_path_get_abs_path(root_path) );
     } else {
       if (util_is_abs_path( path )) {
         path_elm->abs_path = util_alloc_string_copy( path );
@@ -106,22 +106,30 @@ char * config_path_elm_alloc_path(const config_path_elm_type * path_elm , const 
     if (input_root == NULL)
       return util_alloc_filename( path_elm->rel_path , path , NULL);
     else
-      return util_alloc_joined_string( (const char *[3]) { config_root_path_get_input_path( path_elm->root_path ) , path_elm->rel_path , path } , 3 , UTIL_PATH_SEP_STRING );
+      return util_alloc_joined_string( (const char *[3]) { input_root , path_elm->rel_path , path } , 3 , UTIL_PATH_SEP_STRING );
   }
 }
 
 
 char * config_path_elm_alloc_relpath(const config_path_elm_type * path_elm , const char * input_path) {
   if (util_is_abs_path( input_path )) 
-    return util_alloc_rel_path( config_root_path_get_input_path( path_elm->root_path ) , input_path);
-  else
-    return util_alloc_filename( path_elm->rel_path , input_path , NULL );
+    return util_alloc_rel_path( config_root_path_get_rel_path( path_elm->root_path ) , input_path);
+  else {
+    char * abs_path = config_path_elm_alloc_abspath( path_elm , input_path );
+    char * rel_path = util_alloc_rel_path( config_root_path_get_abs_path( path_elm->root_path ) , abs_path );
+    free( abs_path );
+    return rel_path;
+  }
 }
 
 
 char * config_path_elm_alloc_abspath(const config_path_elm_type * path_elm , const char * input_path) {
   if (util_is_abs_path( input_path ))
     return util_alloc_string_copy( input_path );
-  else
-    return util_alloc_filename( path_elm->abs_path , input_path , NULL );
+  else {
+    char * abs_path1 = util_alloc_filename( path_elm->abs_path , input_path , NULL );
+    char * abs_path  = util_alloc_realpath__( abs_path1 );  // The util_alloc_realpath__() will work also for nonexsting paths
+    free( abs_path1 );
+    return abs_path; 
+  }
 }
