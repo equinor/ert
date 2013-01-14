@@ -79,7 +79,7 @@ const char * config_get_value(const config_type * config , const char * kw) {
 /*****************************************************************/
 
 int config_get_content_size( const config_type * config ) {
-  return vector_get_size( config->content_list);
+  return vector_get_size(config->content_list);
 }
 
 

@@ -72,7 +72,7 @@ void parse_test(config_type * config ,
       test_assert_string_equal(config_get_value_as_relpath(config , "PATH2") , relpath2 , "rel: PATH2:%s  expected:%s \n");
       test_assert_string_equal(config_get_value_as_relpath(config , "PATH3") , relpath3 , "rel: PATH3:%s  expected:%s \n");
       test_assert_string_equal(config_get_value_as_relpath(config , "PATH4") , relpath4 , "rel: PATH4:%s  expected:%s \n");
-
+      
       test_assert_string_equal(config_get_value_as_abspath(config , "PATH0") , abspath0 , "abs: PATH0:%s  expected:%s \n");
       test_assert_string_equal(config_get_value_as_abspath(config , "PATH1") , abspath1 , "abs: PATH1:%s  expected:%s \n");
       test_assert_string_equal(config_get_value_as_abspath(config , "PATH2") , abspath2 , "abs: PATH2:%s  expected:%s \n");

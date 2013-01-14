@@ -529,12 +529,6 @@ enkf_state_type * enkf_state_alloc(int iens,
 
 
 
-enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  util_abort("%s: not implemented \n",__func__);
-  return NULL;
-}
-
-
 
 static bool enkf_state_has_node(const enkf_state_type * enkf_state , const char * node_key) {
   bool has_node = hash_has_key(enkf_state->node_hash , node_key);
@@ -589,12 +583,17 @@ void enkf_state_update_node( enkf_state_type * enkf_state , const char * node_ke
 }
 
 
+const char * enkf_state_get_eclbase( const enkf_state_type * enkf_state ) {
+  return member_config_get_eclbase( enkf_state->my_config );
+}
+
+
 static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state , stringlist_type * messages , bool * loadOK) {
   member_config_type * my_config         = enkf_state->my_config;
   const run_info_type * run_info         = enkf_state->run_info;
   const ecl_config_type * ecl_config     = enkf_state->shared_info->ecl_config;
   const bool fmt_file                    = ecl_config_get_formatted(ecl_config);
-  const char * eclbase                   = member_config_get_eclbase( my_config );
+  const char * eclbase                   = enkf_state_get_eclbase( enkf_state );
   
 
   stringlist_type * data_files           = stringlist_alloc_new();

@@ -73,7 +73,6 @@ typedef struct enkf_state_struct    enkf_state_type;
   void               enkf_state_set_analyzed(enkf_state_type * , bool );
   void               enkf_state_swapout_node(const enkf_state_type * , const char *);
   void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
-  enkf_state_type  * enkf_state_copyc(const enkf_state_type * );
   void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
   enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
   void               enkf_state_del_node(enkf_state_type * , const char * );
@@ -110,6 +109,7 @@ typedef struct enkf_state_struct    enkf_state_type;
   int                enkf_state_get_iens(const enkf_state_type * );
   member_config_type *enkf_state_get_member_config(const enkf_state_type * enkf_state);
   const char       * enkf_state_get_run_path(const enkf_state_type * );
+  const char       * enkf_state_get_eclbase( const enkf_state_type * enkf_state );
   void               enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int step2);
 
 

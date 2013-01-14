@@ -58,7 +58,7 @@ void enkf_tui_main_menu(enkf_main_type * enkf_main) {
 
   menu_add_item(menu , "Manage cases"                          , "cC" , enkf_tui_fs_menu        , enkf_main , NULL);
   menu_add_item(menu , "Run, restart or analyse experiment"    , "rR" , enkf_tui_run_menu       , enkf_main , NULL);
-  menu_add_item(menu , "Prior quality check"                   , "uU" , enkf_tui_QC_menu        , enkf_main , NULL);
+  menu_add_item(menu , "Quality check"                         , "uU" , enkf_tui_QC_menu        , enkf_main , NULL);
   menu_add_item(menu , "Plot results"                          , "pP" , enkf_tui_plot_menu      , enkf_main , NULL);
   menu_add_item(menu , "Rank results"                          , "aA" , enkf_tui_ranking_menu   , enkf_main , NULL);
   menu_add_item(menu , "Export data to other formats"          , "eE" , enkf_tui_export_menu    , enkf_main , NULL);

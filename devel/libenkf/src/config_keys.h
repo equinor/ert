@@ -121,6 +121,7 @@ extern "C" {
 #define  QUEUE_SYSTEM_KEY                  "QUEUE_SYSTEM"
 #define  QUEUE_OPTION_KEY                  "QUEUE_OPTION" 
 #define  QC_PATH_KEY                       "QC_PATH"  
+#define  QC_WORKFLOW_KEY                   "QC_WORKFLOW"
 #define  REFCASE_KEY                       "REFCASE"
 #define  REPORT_CONTEXT_KEY                "REPORT_CONTEXT"
 #define  REPORT_SEARCH_PATH_KEY            "REPORT_SEARCH_PATH"
@@ -154,7 +155,7 @@ extern "C" {
 #define  STORE_SEED_KEY                    "STORE_SEED"
 #define  UMASK_KEY                         "UMASK"   
 #define  WORKFLOW_JOB_DIRECTORY_KEY        "WORKFLOW_JOB_DIRECTORY"
-#define  LOAD_WORKFLOW_KEY                      "LOAD_WORKFLOW"                       
+#define  LOAD_WORKFLOW_KEY                 "LOAD_WORKFLOW"                       
 
 
 #define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"

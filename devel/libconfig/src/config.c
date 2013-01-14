@@ -226,10 +226,8 @@ static void config_content_item_set_arg__(config_type * config , config_content_
 
     {
       if (config_schema_item_validate_set(schema_item , token_list , config_file,  path_elm , config->parse_errors)) {
-        {
-          config_content_node_type * node = config_get_new_content_node(config , item);
-          config_content_node_set(node , token_list);
-        }
+        config_content_node_type * node = config_get_new_content_node(config , item);
+        config_content_node_set(node , token_list);
       }
     }
   }
@@ -262,9 +260,12 @@ config_type * config_alloc() {
 }
 
 
+
+
 static void config_clear_content_items( config_type * config ) {
   hash_free( config->content_items );
   config->content_items = hash_alloc();
+  vector_clear( config->content_list );
 }
 
 
@@ -386,8 +387,12 @@ static bool config_has_content_item( const config_type * config , const char * i
 config_content_item_type * config_get_content_item( const config_type * config , const char * input_kw) {
   config_schema_item_type * schema_item = config_get_schema_item( config , input_kw );
   const char * kw = config_schema_item_get_kw( schema_item );
-  return hash_get( config->content_items , kw );
+  if (hash_has_key( config->content_items , kw ))
+    return hash_get( config->content_items , kw );
+  else
+    return NULL;
 }
+
 
 
 bool config_item_set(const config_type * config , const char * kw) {
@@ -443,8 +448,8 @@ static void config_validate_content_item(const config_type * config , const conf
     if (config_schema_item_has_required_children_value( schema_item )) {
       int inode;
       for (inode = 0; inode < config_content_item_get_size(item); inode++) {
-        config_content_node_type * node   = config_content_item_iget_node(item , inode);
-        const stringlist_type * values = config_content_node_get_stringlist( node );
+        config_content_node_type * node = config_content_item_iget_node(item , inode);
+        const stringlist_type * values  = config_content_node_get_stringlist( node );
         int is;
 
         for (is = 0; is < stringlist_get_size(values); is++) {

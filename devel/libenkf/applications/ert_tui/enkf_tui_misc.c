@@ -18,12 +18,14 @@
 
 #include <menu.h>
 #include <util.h>
+
+#include <ext_joblist.h>
+#include <ext_job.h>
+
 #include <enkf_types.h>
 #include <enkf_main.h>
 #include <enkf_state.h>
 #include <enkf_tui_misc.h>
-#include <ext_joblist.h>
-#include <ext_job.h>
 #include <enkf_tui_help.h>
 
 static void enkf_tui_misc_printf_subst_list(void * arg) {

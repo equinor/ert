@@ -211,7 +211,6 @@ static void workflow_job_iset_argtype_string( workflow_job_type * workflow_job ,
 
 static void workflow_job_validate( workflow_job_type * workflow_job ) {
   if (!workflow_job->internal) {
-    printf("Executable : %s \n",workflow_job->executable);
     if (workflow_job->executable != NULL) {
       if (util_is_executable( workflow_job->executable ) && 
           (workflow_job->module == workflow_job->function) && 
@@ -264,21 +263,14 @@ workflow_job_type * workflow_job_config_alloc( const char * name , config_type *
         }
       }
       
-      printf("Loading:%s \n",config_file);
       if (config_item_set( config , MODULE_KEY))
-        printf("MODULE_KEY set \n");
-      else
-        printf("MODULE_KEY NOT set \n");
-      
-      
-      if (config_item_set( config , MODULE_KEY))
-        workflow_job_set_module( workflow_job , config_get_value( config , MODULE_KEY));
+        workflow_job_set_module( workflow_job , config_get_value( config , MODULE_KEY));  // Could be a pure so name; or a full path ..... Like executable
       
       if (config_item_set( config , FUNCTION_KEY))
         workflow_job_set_function( workflow_job , config_get_value( config , FUNCTION_KEY));
       
       if (config_item_set( config , EXECUTABLE_KEY))
-        workflow_job_set_executable( workflow_job , config_get_value( config , EXECUTABLE_KEY));
+        workflow_job_set_executable( workflow_job , config_get_value_as_abspath( config , EXECUTABLE_KEY));
       
       workflow_job_validate( workflow_job );
       

@@ -24,19 +24,25 @@
 extern "C" {
 #endif
 
+#include <subst_list.h>
+
 #include <config.h>
+#include <workflow.h>
 
 
   typedef struct ert_workflow_list_struct ert_workflow_list_type;
   
+  workflow_type           *  ert_workflow_list_get_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name );
+  workflow_type           *  ert_workflow_list_add_workflow( ert_workflow_list_type * workflow_list , const char * workflow_file , const char * workflow_name);
   void                       ert_workflow_list_free( ert_workflow_list_type * workflow_list );
-  ert_workflow_list_type  *  ert_workflow_list_alloc();
+  ert_workflow_list_type  *  ert_workflow_list_alloc( const subst_list_type * subst_list );
   void                       ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path);
   void                       ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const char * job_name , const char * config_file );
+  void                       ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const char * real_name , const char * alias);
   void                       ert_workflow_list_update_config( config_type * config );
   void                       ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config );
-  void                       ert_workflow_list_add_workflow( ert_workflow_list_type * workflow_list , const char * workflow_file , const char * workflow_name);
   bool                       ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self);
+  bool                       ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_type * workflow, void * self );
   bool                       ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name );
 
 #ifdef __cplusplus

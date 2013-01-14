@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include <test_util.h>
+#include <util.h>
 
 #include <config.h>
 #include <config_root_path.h>

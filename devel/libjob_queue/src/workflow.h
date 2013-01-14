@@ -25,11 +25,12 @@ extern "C" {
 #endif
   
 #include <workflow_joblist.h>
+#include <subst_list.h>
 
   typedef struct workflow_struct workflow_type;
 
   workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * joblist);
-  bool            workflow_run(  workflow_type * workflow , void * self );
+  bool            workflow_run(  workflow_type * workflow , void * self , const subst_list_type * context);
   void            workflow_free( workflow_type * workflow );
   void            workflow_free__( void * arg );
 

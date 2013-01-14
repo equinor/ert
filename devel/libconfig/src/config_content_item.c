@@ -71,9 +71,17 @@ config_content_node_type * config_content_item_iget_node(const config_content_it
   return vector_iget( item->nodes , index );
 }
 
+const config_content_node_type * config_content_item_get_last_node_const(const config_content_item_type * item) {
+  return vector_get_last( item->nodes );
+}
+
+const config_content_node_type * config_content_item_iget_node_const(const config_content_item_type * item , int index) {
+  return vector_iget( item->nodes , index );
+}
+
 
 char * config_content_item_ialloc_joined_string(const config_content_item_type * item , const char * sep , int occurence) {
-  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
+  const config_content_node_type * node = config_content_item_iget_node(item , occurence);  
   return config_content_node_alloc_joined_string(node , sep);
 }
 
@@ -93,13 +101,13 @@ char * config_content_item_alloc_joined_string(const config_content_item_type * 
 }
 
 const stringlist_type * config_content_item_iget_stringlist_ref(const config_content_item_type * item, int occurence) {
-  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
+  const config_content_node_type * node = config_content_item_iget_node(item , occurence);  
   return config_content_node_get_stringlist( node );
 }
 
 
 const stringlist_type * config_content_item_get_stringlist_ref(const config_content_item_type * item) {
-  config_content_node_type * node = config_content_item_get_last_node( item );  
+  const config_content_node_type * node = config_content_item_get_last_node( item );  
   return config_content_node_get_stringlist( node );
 }
 
@@ -113,7 +121,7 @@ stringlist_type * config_content_item_alloc_complete_stringlist(const config_con
   int inode;
   stringlist_type * stringlist = stringlist_alloc_new();
   for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
-    config_content_node_type * node = config_content_item_iget_node(item , inode);
+    const config_content_node_type * node = config_content_item_iget_node(item , inode);
     const stringlist_type * src_list = config_content_node_get_stringlist( node );
     
     if (copy)
@@ -133,7 +141,7 @@ stringlist_type * config_content_item_alloc_complete_stringlist(const config_con
 */
 
 stringlist_type * config_content_item_alloc_stringlist(const config_content_item_type * item, bool copy) {
-  config_content_node_type * node = config_content_item_get_last_node( item );
+  const config_content_node_type * node = config_content_item_get_last_node( item );
   stringlist_type * stringlist = stringlist_alloc_new();
   const stringlist_type * src_list = config_content_node_get_stringlist( node );
   
@@ -179,7 +187,7 @@ hash_type * config_content_item_alloc_hash(const config_content_item_type * item
 
 
 const char * config_content_item_iget(const config_content_item_type * item , int occurence , int index) {
-  config_content_node_type * node = config_content_item_iget_node(item , occurence);  
+  const config_content_node_type * node = config_content_item_iget_node(item , occurence);  
   const stringlist_type * src_list = config_content_node_get_stringlist( node );
   return stringlist_iget( src_list , index );
 }
