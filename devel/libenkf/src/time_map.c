@@ -113,9 +113,9 @@ double time_map_iget_sim_days( time_map_type * map , int step ) {
     time_t sim_time   = time_map_iget__( map , step );
     
     if (sim_time >= start_time)
-      return 1.0 * (sim_time - start_time) / (3600 * 24);
+      days = 1.0 * (sim_time - start_time) / (3600 * 24);
     else
-      return -1;
+      days = -1;
   }
   pthread_rwlock_unlock( &map->rw_lock );
 
@@ -153,7 +153,7 @@ void time_map_fwrite( time_map_type * map , const char * filename ) {
     FILE * stream = util_fopen(filename , "w");
     time_t_vector_fwrite( map->map , stream );
     fclose( stream );
-}
+  }
   pthread_rwlock_unlock( &map->rw_lock );
 }
 
