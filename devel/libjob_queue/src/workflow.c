@@ -26,6 +26,7 @@
 #include <stringlist.h>
 #include <arg_pack.h>
 #include <vector.h>
+#include <subst_list.h>
 
 #include <config.h>
 
@@ -88,15 +89,38 @@ static void workflow_add_cmd( workflow_type * workflow , cmd_type * cmd ) {
 }
 
 
-static bool workflow_try_compile( workflow_type * script ) {
+static void workflow_clear( workflow_type * workflow ) {
+  vector_clear( workflow->cmd_list );
+}
+
+
+static bool workflow_try_compile( workflow_type * script , const subst_list_type * context) {
   if (util_file_exists( script->src_file )) {
-    time_t src_mtime = util_file_mtime( script->src_file );
-    if (script->compiled) {
-      if (util_difftime_seconds( src_mtime , script->compile_time ) > 0 ) 
-        return true;
-      else {
-        // Script has been compiled succesfully, but then changed afterwards. 
-        // We try to recompile; if that fails we are left with 'nothing'.
+    const char * src_file = script->src_file;
+    char * tmp_file = NULL;
+    bool   update = false;
+    if (context != NULL) {
+      tmp_file = util_alloc_tmp_file("/tmp" , "ert-workflow" , false );
+      update = subst_list_filter_file( context , script->src_file , tmp_file );
+      if (update) {
+        script->compiled = false;
+        src_file = tmp_file;
+      } else {
+        remove( tmp_file );
+        free( tmp_file );
+        tmp_file = NULL;
+      }
+    }
+    
+    {
+      time_t src_mtime = util_file_mtime( script->src_file );
+      if (script->compiled) {
+        if (util_difftime_seconds( src_mtime , script->compile_time ) > 0 ) 
+          return true;
+        else {
+          // Script has been compiled succesfully, but then changed afterwards. 
+          // We try to recompile; if that fails we are left with 'nothing'.
+        }
       }
     }
     
@@ -104,10 +128,10 @@ static bool workflow_try_compile( workflow_type * script ) {
       // Try to compile
       config_type * config_compiler = workflow_joblist_get_compiler( script->joblist );
       script->compiled = false;
-      vector_clear( script->cmd_list );
+      workflow_clear( script );
       config_clear( config_compiler );
       {
-        if (config_parse( config_compiler , script->src_file , WORKFLOW_COMMENT_STRING , WORKFLOW_INCLUDE , NULL , CONFIG_UNRECOGNIZED_WARN , true )) {
+        if (config_parse( config_compiler , src_file , WORKFLOW_COMMENT_STRING , WORKFLOW_INCLUDE , NULL , CONFIG_UNRECOGNIZED_ERROR , true )) {
           int cmd_line;
           for (cmd_line = 0; cmd_line < config_get_content_size(config_compiler); cmd_line++) {
             const config_content_node_type * node = config_iget_content_node( config_compiler , cmd_line );
@@ -121,14 +145,22 @@ static bool workflow_try_compile( workflow_type * script ) {
         } 
       }
     }
+    
+    if (tmp_file != NULL) {
+      if (script->compiled)
+        remove( tmp_file );
+      free( tmp_file );
+    }
   } 
-  // It is legal to remove the script after successfull compilation.
+
+  // It is legal to remove the script after successfull compilation but
+  // then the context will not be applied at subsequent invocations.
   return script->compiled;
 }
 
 
-bool workflow_run(workflow_type * workflow , void * self ) {
-  workflow_try_compile( workflow );
+bool workflow_run(workflow_type * workflow , void * self , const subst_list_type * context) {
+  workflow_try_compile( workflow , context);
 
   if (workflow->compiled) {
     int icmd;
@@ -152,7 +184,7 @@ workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * 
   script->cmd_list        = vector_alloc_new();
   script->compiled        = false;
   
-  workflow_try_compile( script );
+  workflow_try_compile( script , NULL );
   return script;
 }
 

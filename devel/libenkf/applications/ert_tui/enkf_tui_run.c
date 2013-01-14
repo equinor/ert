@@ -298,13 +298,28 @@ void enkf_tui_run_manual_load__( void * arg ) {
         arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */                  
         arg_pack_append_owned_ptr( arg_pack , stringlist_alloc_new() , stringlist_free__);  /* 6: List of interactive mode messages. */
         thread_pool_add_job( tp , enkf_state_internalize_results_mt , arg_pack);
+        
       }
     }
     
     thread_pool_join( tp );
     thread_pool_free( tp );
     printf("\n");
-    
+
+    {
+      qc_module_type * qc_module = enkf_main_get_qc_module( enkf_main );
+      runpath_list_type * runpath_list = qc_module_get_runpath_list( qc_module );
+
+      for (iens = 0; iens < ens_size; iens++) {
+        if (iactive[iens]) {
+          const enkf_state_type * state = enkf_main_iget_state( enkf_main , iens );
+          runpath_list_add( runpath_list , iens , enkf_state_get_run_path( state ) , enkf_state_get_eclbase( state ));
+        }
+      }
+
+      qc_module_export_runpath_list( qc_module );
+    }
+
     for (iens = 0; iens < ens_size; iens++) {
       if (iactive[iens]) {
         stringlist_type * msg_list = arg_pack_iget_ptr( arg_list[iens] , 6 );
