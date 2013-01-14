@@ -35,6 +35,7 @@ struct time_map_struct {
   time_t_vector_type * map;
   time_t               start_time;
   pthread_rwlock_t     rw_lock;
+  bool                 modified;
 };
 
 
@@ -42,6 +43,7 @@ time_map_type * time_map_alloc( ) {
   time_map_type * map = util_malloc( sizeof * map );
   map->map = time_t_vector_alloc(0 , DEFAULT_TIME );
   map->start_time = DEFAULT_TIME;
+  map->modified = false;
   pthread_rwlock_init( &map->rw_lock , NULL);
   return map;
 }
@@ -79,6 +81,7 @@ static void time_map_update__( time_map_type * map , int step , time_t time) {
 
   if (step == 0)
     map->start_time = time;
+  map->modified = true;
 }
 
 
@@ -150,9 +153,11 @@ void time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum
 void time_map_fwrite( time_map_type * map , const char * filename ) {
   pthread_rwlock_wrlock( &map->rw_lock );
   {
-    FILE * stream = util_fopen(filename , "w");
-    time_t_vector_fwrite( map->map , stream );
-    fclose( stream );
+    if (map->modified) {
+      FILE * stream = util_fopen(filename , "w");
+      time_t_vector_fwrite( map->map , stream );
+      fclose( stream );
+    }
   }
   pthread_rwlock_unlock( &map->rw_lock );
 }
@@ -173,6 +178,7 @@ void time_map_fread( time_map_type * map , const char * filename) {
     }
   }
   pthread_rwlock_unlock( &map->rw_lock );
+  map->modified = false;
 }
 
 
