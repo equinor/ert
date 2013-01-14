@@ -117,6 +117,7 @@ int main(int argc , char ** argv) {
   parse_test( config , abs_path , config_file );        
   parse_test( config , abs_path , abs_config_file );
   parse_test( config , NULL , abs_config_file );
+  parse_test( config , "../../" , abs_config_file );
 
   config_free( config );
   exit(0);

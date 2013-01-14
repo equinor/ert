@@ -589,7 +589,7 @@ static config_path_elm_type * config_add_path_elm( config_type * config , const 
 
    After parsing we will have an entry: "NAME" , "Bjarne" , "28" , "Dogs".
 
-   The key-value pairs internalized during the config parsing are NOT
+   The         key-value pairs internalized during the config parsing are NOT
    returned to the calling scope in any way.
 */
 
