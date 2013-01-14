@@ -161,22 +161,39 @@ const char * runpath_list_get_line_fmt( const runpath_list_type * list ) {
 
 /*****************************************************************/
 
-static const runpath_node_type * runpath_list_iget_node( const runpath_list_type * list , int index) {
+
+static const runpath_node_type * runpath_list_iget_node__( const runpath_list_type * list , int index) {
   return vector_iget_const( list->list , index );
 }
 
 
-int runpath_list_iget_iens( const runpath_list_type * list , int index) {
+
+static const runpath_node_type * runpath_list_iget_node( runpath_list_type * list , int index) {
+  const runpath_node_type * node;
+  {
+    pthread_rwlock_rdlock( &list->lock );
+    node = runpath_list_iget_node__( list , index );
+    pthread_rwlock_unlock( &list->lock );
+  }
+  return node;
+}
+
+
+int runpath_list_iget_iens( runpath_list_type * list , int index) {
   const runpath_node_type * node = runpath_list_iget_node( list , index );
   return node->iens;
 }
 
 
-void runpath_list_fprintf( const runpath_list_type * list , FILE * stream) {
-  const char * line_fmt = runpath_list_get_line_fmt( list );
-  int index;
-  for (index =0; index < vector_get_size( list->list ); index++) {
-    const runpath_node_type * node = runpath_list_iget_node( list , index );
-    runpath_node_fprintf( node , line_fmt , stream );
+void runpath_list_fprintf(runpath_list_type * list , FILE * stream) {
+  pthread_rwlock_rdlock( &list->lock );
+  {
+    const char * line_fmt = runpath_list_get_line_fmt( list );
+    int index;
+    for (index =0; index < vector_get_size( list->list ); index++) {
+      const runpath_node_type * node = runpath_list_iget_node__( list , index );
+      runpath_node_fprintf( node , line_fmt , stream );
+    }
   }
+  pthread_rwlock_unlock( &list->lock );
 }

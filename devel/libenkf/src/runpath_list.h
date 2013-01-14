@@ -33,10 +33,10 @@ extern "C" {
   void                runpath_list_add( runpath_list_type * list , int iens , const char * runpath , const char * basename);
   void                runpath_list_clear( runpath_list_type * list );
   void                runpath_list_sort( runpath_list_type * list );
-  int                 runpath_list_iget_iens( const runpath_list_type * list , int index);
+  int                 runpath_list_iget_iens( runpath_list_type * list , int index);
   void                runpath_list_set_line_fmt( runpath_list_type * list , const char * line_fmt );
   const char        * runpath_list_get_line_fmt( const runpath_list_type * list );
-  void                runpath_list_fprintf( const runpath_list_type * list , FILE * stream);
+  void                runpath_list_fprintf( runpath_list_type * list , FILE * stream);
   
 
 #ifdef __cplusplus

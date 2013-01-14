@@ -52,11 +52,12 @@ int main(int argc , char ** argv) {
   runpath_list_add( list , 3 , "path" , "base");
   runpath_list_add( list , 2 , "path" , "base");
   runpath_list_add( list , 1 , "path" , "base");
-
+  
   test_assert_int_equal( runpath_list_size( list ) , 3 , NULL );
   test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 3 , NULL );
   test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 1 , NULL );
   runpath_list_sort( list );
+
   test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 1 , "After sort: got:%d  expected:%d\n" );
   test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 3 , NULL );
   runpath_list_clear( list );
@@ -70,9 +71,9 @@ int main(int argc , char ** argv) {
   }
   runpath_list_set_line_fmt( list , NULL );
   test_assert_string_equal( runpath_list_get_line_fmt( list ) , RUNPATH_LIST_DEFAULT_LINE_FMT , NULL);
-  
+
   {
-    const int block_size = 200;
+    const int block_size = 100;
     const int threads = 100;
     thread_pool_type * tp = thread_pool_alloc( threads , true );
     int it;
