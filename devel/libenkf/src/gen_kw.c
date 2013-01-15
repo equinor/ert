@@ -164,7 +164,7 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
     int ikw;
     
     for (ikw = 0; ikw < size; ikw++) {
-      const char * key = gen_kw_config_get_tagged_name(gen_kw->config , ikw);      
+      const char * key = gen_kw_config_get_tagged_name(gen_kw->config , ikw);  
       subst_list_append_owned_ref(gen_kw->subst_list , key , util_alloc_sprintf("%g" , gen_kw_config_transform( gen_kw->config , ikw , gen_kw->data[ikw] )) , NULL);
     }
       
