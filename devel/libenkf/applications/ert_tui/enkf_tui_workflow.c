@@ -50,11 +50,8 @@ void enkf_tui_workflow_run( void * arg ) {
       char * workflow_name = util_alloc_stdin_line();
       if (workflow_name != NULL) {
         if (ert_workflow_list_has_workflow( workflow_list , workflow_name )) {
-          if (ert_workflow_list_run_workflow( workflow_list , workflow_name , enkf_main ))
-            printf("Workflow:%s has run successfully??\n", workflow_name );
-          else {
+          if (!ert_workflow_list_run_workflow( workflow_list , workflow_name , enkf_main ))
             printf("Workflow:%s would not run??\n", workflow_name );
-          }
         }
       }
       util_safe_free( workflow_name );
@@ -71,6 +68,28 @@ void enkf_tui_workflow_load( void * arg ) {
 }
 
 
+void enkf_tui_workflow_list( void * arg ) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+  {
+    ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
+    stringlist_type * name_list = ert_workflow_list_alloc_namelist( workflow_list );
+    
+    printf("Available workflows: \n");
+    {
+      int i;
+      for (i=0; i < stringlist_get_size( name_list ); i++) {
+        if ((i % 5) == 0)
+          printf("\n   ");
+        else
+          printf("  ");
+
+        printf( stringlist_iget( name_list , i ));
+      }
+    }
+    stringlist_free( name_list );
+    printf("\n\n");
+  }
+}
 
 
 void enkf_tui_workflow_menu(void * arg) {
@@ -78,7 +97,8 @@ void enkf_tui_workflow_menu(void * arg) {
   menu_type       * menu  = menu_alloc("Workflows" , "Back" , "bB");
   
   menu_add_item(menu , "Run workflow"  , "rR" , enkf_tui_workflow_run , enkf_main , NULL );
-  menu_add_item(menu , "Load workflow" , "oO" , enkf_tui_workflow_load , enkf_main , NULL );
+  menu_add_item(menu , "Load workflow" , "lL" , enkf_tui_workflow_load , enkf_main , NULL );
+  menu_add_item(menu , "List available workflows" , "iI" , enkf_tui_workflow_list , enkf_main , NULL );
   
   menu_add_item(menu , "Help" , "hH" , enkf_tui_help_menu_run   , enkf_main , NULL); 
   menu_run(menu);
