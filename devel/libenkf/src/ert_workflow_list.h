@@ -44,7 +44,8 @@ extern "C" {
   bool                       ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self);
   bool                       ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_type * workflow, void * self );
   bool                       ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name );
-
+  stringlist_type          * ert_workflow_list_alloc_namelist( ert_workflow_list_type * workflow_list );
+  
 #ifdef __cplusplus
 }
 #endif

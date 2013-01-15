@@ -93,8 +93,16 @@ void ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const
 
 
 void ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const char * job_name , const char * config_file ) {
-  if (!workflow_joblist_add_job_from_file( workflow_list->joblist , job_name , config_file )) 
+  char * name = (char *) job_name;
+
+  if (job_name == NULL) 
+    util_alloc_file_components( config_file , NULL , &name , NULL );
+  
+  if (!workflow_joblist_add_job_from_file( workflow_list->joblist , name , config_file )) 
     fprintf(stderr,"** Warning: failed to add workflow job:%s from:%s \n",job_name , config_file );
+
+  if (job_name == NULL) 
+    free(name);
 }
 
 
@@ -123,12 +131,23 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_typ
   /* Adding jobs */
   {
     const config_content_item_type * jobpath_item = config_get_content_item( config , WORKFLOW_JOB_DIRECTORY_KEY);
-
     if (jobpath_item != NULL) {
       for (int i=0; i < config_content_item_get_size( jobpath_item ); i++) {
         config_content_node_type * path_node = config_content_item_iget_node( jobpath_item , i );
         for (int j=0; j < config_content_node_get_size( path_node ); j++) 
           ert_workflow_list_add_jobs_in_directory( workflow_list , config_content_node_iget_as_path( path_node , j ));
+      }
+    }
+  }
+  
+  {
+    const config_content_item_type * job_item = config_get_content_item( config , LOAD_WORKFLOW_JOB_KEY);
+    if (job_item != NULL) {
+      for (int i=0; i < config_content_item_get_size( job_item ); i++) {
+        config_content_node_type * job_node = config_content_item_iget_node( job_item , i );
+        const char * config_file = config_content_node_iget_as_path( job_node , 0 );
+        const char * job_name = config_content_node_safe_iget( job_node , 1 );
+        ert_workflow_list_add_job( workflow_list , job_name , config_file);
       }
     }
   }
@@ -157,6 +176,9 @@ void ert_workflow_list_update_config( config_type * config ) {
 
   item = config_add_schema_item( config , LOAD_WORKFLOW_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 2 , 2 ,  (const config_item_types [2]) { CONFIG_EXISTING_PATH , CONFIG_STRING });
+  
+  item = config_add_schema_item( config , LOAD_WORKFLOW_JOB_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 2 , 2 ,  (const config_item_types [2]) { CONFIG_EXISTING_PATH , CONFIG_STRING});
 }
 
 
@@ -179,4 +201,10 @@ bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , co
   return ert_workflow_list_run_workflow__( workflow_list , workflow , self );
 }
 
+
+/*****************************************************************/
+
+stringlist_type * ert_workflow_list_alloc_namelist( ert_workflow_list_type * workflow_list ) {
+  return hash_alloc_stringlist( workflow_list->workflows );
+}
 

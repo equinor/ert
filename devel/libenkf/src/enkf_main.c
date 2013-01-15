@@ -1411,10 +1411,12 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 
         }
       }
-      if (totalOK) 
-        log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded.");
-      
       enkf_fs_fsync( enkf_main->dbase );
+      if (totalOK) {
+        log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded.");
+        if (run_mode != ENKF_ASSIMILATION)
+          qc_module_run_workflow( enkf_main->qc_module , enkf_main );
+      }
       return totalOK;
     }
   }

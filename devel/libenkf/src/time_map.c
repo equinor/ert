@@ -150,8 +150,15 @@ void time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum
 }
 
 
+/**
+   Observe that the locking is opposite of the function name; i.e.
+   the time_map_fwrite() function reads the time_map and takes the
+   read lock, whereas the time_map_fread() function takes the write
+   lock.
+*/
+
 void time_map_fwrite( time_map_type * map , const char * filename ) {
-  pthread_rwlock_wrlock( &map->rw_lock );
+  pthread_rwlock_rdlock( &map->rw_lock );
   {
     if (map->modified) {
       FILE * stream = util_fopen(filename , "w");
@@ -164,7 +171,7 @@ void time_map_fwrite( time_map_type * map , const char * filename ) {
 
 
 void time_map_fread( time_map_type * map , const char * filename) {
-  pthread_rwlock_rdlock( &map->rw_lock );
+  pthread_rwlock_wrlock( &map->rw_lock );
   {
     if (util_file_exists( filename )) {
       FILE * stream = util_fopen( filename , "r");
@@ -178,6 +185,7 @@ void time_map_fread( time_map_type * map , const char * filename) {
     }
   }
   pthread_rwlock_unlock( &map->rw_lock );
+  time_map_get_last_step( map );
   map->modified = false;
 }
 
@@ -195,6 +203,6 @@ int time_map_get_last_step( time_map_type * map) {
   pthread_rwlock_rdlock( &map->rw_lock );
   last_step = time_t_vector_size( map->map ) - 1;
   pthread_rwlock_unlock( &map->rw_lock );
-  
+
   return last_step;
 }

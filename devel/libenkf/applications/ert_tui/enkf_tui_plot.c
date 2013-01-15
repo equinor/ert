@@ -121,14 +121,14 @@ void enkf_tui_plot_PC( enkf_main_type * enkf_main , const char * plot_name , con
 
 
 
-static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main , 
-                                     const enkf_config_node_type * config_node , 
-                                     const char * user_key  ,
-                                     const char * key_index ,
-                                     int step1 , int step2  , 
-                                     bool prediction_mode   ,
-                                     int iens1 , int iens2  , 
-                                     state_enum plot_state) {
+void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main , 
+                              const enkf_config_node_type * config_node , 
+                              const char * user_key  ,
+                              const char * key_index ,
+                              int step1 , int step2  , 
+                              bool prediction_mode   ,
+                              int iens1 , int iens2  , 
+                              state_enum plot_state) {
                                      
   enkf_fs_type               * fs           = enkf_main_get_fs(enkf_main);
   enkf_obs_type              * enkf_obs     = enkf_main_get_obs( enkf_main );

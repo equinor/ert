@@ -109,9 +109,12 @@ void qc_module_set_workflow( qc_module_type * qc_module , const char * qc_workfl
 
 
 bool qc_module_run_workflow( qc_module_type * qc_module , void * self) {
-  if (qc_module->qc_workflow != NULL )
+  if (qc_module->qc_workflow != NULL ) {
+    if (!util_file_exists( qc_module->runpath_list_file ))
+      fprintf(stderr,"** Warning: the file:%s with a list of runpath directories was not found - QC workflow wil probably fail.\n" , qc_module->runpath_list_file);
+    
     return ert_workflow_list_run_workflow__( qc_module->workflow_list , qc_module->qc_workflow , self);
-  else
+  } else
     return false;
 }
 
@@ -142,7 +145,7 @@ void qc_module_init( qc_module_type * qc_module , const config_type * config) {
 
 void qc_module_add_config_items( config_type * config ) {
   config_schema_item_type * item;
-
+  
   item = config_add_schema_item( config , QC_PATH_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
 
