@@ -12,3 +12,12 @@ endif()
 if (NEED_LIBDL)
    target_link_libraries( job_queue dl )
 endif()
+
+
+if (JOB_QUEUE_INSTALL_PREFIX)
+   install(TARGETS job_queue DESTINATION ${JOB_QUEUE_INSTALL_PREFIX}/lib)
+   install(FILES ${header_files} DESTINATION ${JOB_QUEUE_INSTALL_PREFIX}/include)
+else()
+   install(TARGETS job_queue DESTINATION lib)
+   install(FILES ${header_files} DESTINATION include)
+endif()
