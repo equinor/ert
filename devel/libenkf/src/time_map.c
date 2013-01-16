@@ -33,7 +33,6 @@
 
 struct time_map_struct {
   time_t_vector_type * map;
-  time_t               start_time;
   pthread_rwlock_t     rw_lock;
   bool                 modified;
 };
@@ -42,10 +41,13 @@ struct time_map_struct {
 time_map_type * time_map_alloc( ) {
   time_map_type * map = util_malloc( sizeof * map );
   map->map = time_t_vector_alloc(0 , DEFAULT_TIME );
-  map->start_time = DEFAULT_TIME;
   map->modified = false;
   pthread_rwlock_init( &map->rw_lock , NULL);
   return map;
+}
+
+bool time_map_equal( const time_map_type * map1 , const time_map_type * map2) {
+  return time_t_vector_equal( map1->map , map2->map );
 }
 
 
@@ -59,33 +61,25 @@ void time_map_free( time_map_type * map ) {
    Must hold the write lock. 
 */
 
-static void time_map_update__( time_map_type * map , int step , time_t time) {
+
+static bool time_map_update__( time_map_type * map , int step , time_t time) {
+  bool   updateOK     = true;
   time_t current_time = time_t_vector_safe_iget( map->map , step);
 
   if (current_time == DEFAULT_TIME) 
     time_t_vector_iset( map->map , step , time );
-  else {
-    if (current_time != time) {
-      int current[3];
-      int new[3];
-      
-      util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
-      util_set_date_values( time , &new[0] , &new[1] , &new[2]);
-      
-      util_abort("%s: time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step , 
-                 new[0]     , new[1]     , new[2] , 
-                 current[0] , current[1] , current[2]);
-      
-    }
-  }
+  else if (current_time != time) 
+    updateOK = false;
 
-  if (step == 0)
-    map->start_time = time;
-  map->modified = true;
+  if (updateOK) 
+    map->modified = true;
+
+  return updateOK;
 }
 
 
-static void time_map_summary_update__( time_map_type * map , const ecl_sum_type * ecl_sum) {
+static bool time_map_summary_update__( time_map_type * map , const ecl_sum_type * ecl_sum) {
+  bool updateOK = true;
   int first_step = ecl_sum_get_first_report_step( ecl_sum );
   int last_step  = ecl_sum_get_last_report_step( ecl_sum );
   int step;
@@ -93,10 +87,11 @@ static void time_map_summary_update__( time_map_type * map , const ecl_sum_type 
   for (step = first_step; step <= last_step; step++) {
     if (ecl_sum_has_report_step(ecl_sum , step)) {
       time_t time = ecl_sum_get_report_time( ecl_sum , step ); 
-      time_map_update__( map , step , time );
+      updateOK = (updateOK && time_map_update__( map , step , time ));
     }
   }
-  time_map_update__(map , 0 , ecl_sum_get_start_time( ecl_sum ));
+  updateOK = (updateOK && time_map_update__(map , 0 , ecl_sum_get_start_time( ecl_sum )));
+  return updateOK;
 }
 
 
@@ -136,18 +131,7 @@ time_t time_map_iget( time_map_type * map , int step ) {
   return t;
 }
 
-void time_map_update( time_map_type * map , int step , time_t time) {
-  pthread_rwlock_wrlock( &map->rw_lock );
-  time_map_update__( map , step , time );
-  pthread_rwlock_unlock( &map->rw_lock );
-}
 
-
-void time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum) {
-  pthread_rwlock_wrlock( &map->rw_lock );
-  time_map_summary_update__( map , ecl_sum );
-  pthread_rwlock_unlock( &map->rw_lock );
-}
 
 
 /**
@@ -165,6 +149,7 @@ void time_map_fwrite( time_map_type * map , const char * filename ) {
       time_t_vector_fwrite( map->map , stream );
       fclose( stream );
     }
+    map->modified = false;
   }
   pthread_rwlock_unlock( &map->rw_lock );
 }
@@ -206,3 +191,78 @@ int time_map_get_last_step( time_map_type * map) {
 
   return last_step;
 }
+
+
+/*****************************************************************/
+
+bool time_map_update( time_map_type * map , int step , time_t time) {
+  bool updateOK;
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    updateOK = time_map_update__( map , step , time );
+  }  
+  pthread_rwlock_unlock( &map->rw_lock );
+  return updateOK;
+}
+
+
+bool time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum) {
+  bool updateOK;
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    updateOK = time_map_summary_update__( map , ecl_sum );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return updateOK;
+}
+
+
+void time_map_clear( time_map_type * map ) {
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    time_t_vector_reset( map->map );
+    map->modified = true;
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
+/*****************************************************************/
+
+void time_map_update_strict( time_map_type * map , int step , time_t time) {
+  if (!time_map_update( map , step , time )) {
+    time_t current_time = time_map_iget__( map , step );
+    int current[3];
+    int new[3];
+    
+    util_set_date_values( current_time , &current[0] , &current[1] , &current[2]);
+    util_set_date_values( time , &new[0] , &new[1] , &new[2]);
+    
+    util_abort("%s: time mismatch for step:%d   New: %02d/%02d/%04d   existing: %02d/%02d/%04d \n",__func__ , step , 
+               new[0]     , new[1]     , new[2] , 
+               current[0] , current[1] , current[2]);
+    
+  }
+}
+
+void time_map_summary_update_strict( time_map_type * map , const ecl_sum_type * ecl_sum) {
+  if (!time_map_summary_update( map , ecl_sum)) {
+    /* 
+       If the normal summary update fails we just play through all
+       time steps to pinpoint exactly the step where the update fails.
+    */
+    int first_step = ecl_sum_get_first_report_step( ecl_sum );
+    int last_step  = ecl_sum_get_last_report_step( ecl_sum );
+    int step;
+    
+    for (step = first_step; step <= last_step; step++) {
+      if (ecl_sum_has_report_step(ecl_sum , step)) {
+        time_t time = ecl_sum_get_report_time( ecl_sum , step ); 
+        time_map_update_strict( map , step , time );
+      }
+    }
+  }
+}
+
+
+
+/*****************************************************************/
