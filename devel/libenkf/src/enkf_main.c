@@ -33,8 +33,8 @@
 #include <matrix.h>
 
 #include <subst_list.h>
-#include <rng.h>
 #include <subst_func.h>
+#include <rng.h>
 #include <int_vector.h>
 #include <bool_vector.h>
 #include <util.h>
@@ -2165,7 +2165,6 @@ static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config
 
 static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
   /* Here we add the functions which should be available for string substitution operations. */
-  enkf_main->subst_func_pool = subst_func_pool_alloc( enkf_main->rng );
   subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                               , subst_func_exp         , false , 1 , 1 , NULL);
   subst_func_pool_add_func( enkf_main->subst_func_pool , "LOG"       , "log"                               , subst_func_log         , false , 1 , 1 , NULL);
   subst_func_pool_add_func( enkf_main->subst_func_pool , "POW10"     , "Calculates 10^x"                   , subst_func_pow10       , false , 1 , 1 , NULL);
@@ -2190,7 +2189,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
       o Constant in time.
   */
 
-  enkf_main->subst_list = subst_list_alloc( enkf_main->subst_func_pool );
+
   /* Installing the functions. */
   subst_list_insert_func( enkf_main->subst_list , "EXP"         , "__EXP__");
   subst_list_insert_func( enkf_main->subst_list , "LOG"         , "__LOG__");
@@ -2217,11 +2216,13 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
   enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
-  
+  enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
+  enkf_main->subst_list         = subst_list_alloc( enkf_main->subst_func_pool );
+
   enkf_main_set_verbose( enkf_main , true );
-  enkf_main->site_config      = site_config_alloc_empty();
-  enkf_main->ensemble_config  = ensemble_config_alloc_empty();
-  enkf_main->ecl_config       = ecl_config_alloc_empty();
+  enkf_main->site_config        = site_config_alloc_empty();
+  enkf_main->ensemble_config    = ensemble_config_alloc_empty();
+  enkf_main->ecl_config         = ecl_config_alloc_empty();
 
   enkf_main->model_config     = model_config_alloc_empty();
   enkf_main->analysis_config  = analysis_config_alloc_default( enkf_main->rng );   /* This is ready for use. */
@@ -2853,7 +2854,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     site_config_init( enkf_main->site_config , config , true );                                   /*  <---- model_config : second pass. */ 
 
     /*****************************************************************/
-    /* OK - now we have parsed everything - and we are ready to start
+    /* 
+       OK - now we have parsed everything - and we are ready to start
        populating the enkf_main object.
     */
 

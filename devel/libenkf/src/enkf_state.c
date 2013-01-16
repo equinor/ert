@@ -738,7 +738,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
       }
       {
         time_map_type * time_map = enkf_fs_get_time_map( fs );
-        time_map_summary_update( time_map , summary );
+        time_map_summary_update_strict( time_map , summary );
       }
       ecl_sum_free( summary ); 
       return true;

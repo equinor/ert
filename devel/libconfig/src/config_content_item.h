@@ -30,6 +30,7 @@ extern "C" {
 #include <config_error.h>
 #include <config_schema_item.h>
 #include <config_path_elm.h>
+#include <config_content_node.h>
 
 typedef struct config_content_item_struct config_content_item_type;
 

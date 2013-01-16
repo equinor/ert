@@ -796,36 +796,6 @@ bool config_parse(config_type * config ,
 
 
 
-bool config_has_keys(const config_type * config, const char **ext_keys, int ext_num_keys, bool exactly)
-{
-  int i;
-
-  int     config_num_keys;
-  char ** config_keys;
-
-  config_keys = config_alloc_active_list(config, &config_num_keys);
-
-  if(exactly && (config_num_keys != ext_num_keys))
-  {
-    util_free_stringlist(config_keys,config_num_keys);
-    return false;
-  }
-
-  for(i=0; i<ext_num_keys; i++)
-  {
-    if(!config_has_schema_item(config,ext_keys[i]))
-    {
-      util_free_stringlist(config_keys,config_num_keys);
-      return false;
-    }
-  }
- 
-  util_free_stringlist(config_keys,config_num_keys);
-  return true;
-}
-
-
-
 
 /*****************************************************************/
 /* 
@@ -907,17 +877,6 @@ const char * config_safe_iget(const config_type * config , const char *kw, int o
   }
   return value;
 }
-
-
-
-
-
-const stringlist_type * config_get_stringlist_ref(const config_type * config , const char * kw) {
-  config_content_item_type * item = config_get_content_item(config , kw);
-
-  return config_content_item_get_stringlist_ref(item);
-}
-
 
 
 const stringlist_type * config_iget_stringlist_ref(const config_type * config , const char * kw, int occurence) {

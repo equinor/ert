@@ -32,46 +32,57 @@
 */
 
 
-static config_content_node_type * config_get_value_node( const config_type * config , const char * kw) {
+config_content_node_type * config_get_value_node( const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
-  config_content_node_type * node = config_content_item_get_last_node( item );
-  config_content_node_assert_key_value( node );
+  if (config_content_item_get_size( item )) {
+    config_content_node_type * node = config_content_item_get_last_node( item );
+    config_content_node_assert_key_value( node );
+    return node;
+  } else
+    return NULL;  // Will return NULL on unset keywords - must check NULL return value?!
+}
+
+static config_content_node_type * config_get_value_node__( const config_type * config , const char * kw) {
+  config_content_node_type * node = config_get_value_node( config , kw );
+  if (node == NULL) 
+    util_abort("Tried to get value node from unset kw:%s \n",__func__ , kw );
+  
   return node;
 }
 
 bool config_get_value_as_bool(const config_type * config , const char * kw) {
-  config_content_node_type * node = config_get_value_node( config , kw );
+  config_content_node_type * node = config_get_value_node__( config , kw );
   return config_content_node_iget_as_bool(node , 0);
 }
 
 int config_get_value_as_int(const config_type * config , const char * kw) {
-  config_content_node_type * node = config_get_value_node( config , kw );
+  config_content_node_type * node = config_get_value_node__( config , kw );
   return config_content_node_iget_as_int(node , 0);
 }
 
 double config_get_value_as_double(const config_type * config , const char * kw) {
-  config_content_node_type * node = config_get_value_node( config , kw );
+  config_content_node_type * node = config_get_value_node__( config , kw );
   return config_content_node_iget_as_double(node , 0);
 }
 
 const char * config_get_value_as_path( const config_type * config , const char * kw) {
-  config_content_node_type * node = config_get_value_node( config , kw );
+  config_content_node_type * node = config_get_value_node__( config , kw );
   return config_content_node_iget_as_path(node , 0);
 }
 
 const char * config_get_value_as_abspath( const config_type * config , const char * kw) {
-  config_content_node_type * node = config_get_value_node( config , kw );
+  config_content_node_type * node = config_get_value_node__( config , kw );
   return config_content_node_iget_as_abspath(node , 0);
 }
 
 const char * config_get_value_as_relpath( const config_type * config , const char * kw) {
-  config_content_node_type * node = config_get_value_node( config , kw );
+  config_content_node_type * node = config_get_value_node__( config , kw );
   return config_content_node_iget_as_relpath(node , 0);
 }
 
 
 const char * config_get_value(const config_type * config , const char * kw) {
-  config_content_node_type * node = config_get_value_node( config , kw );
+  config_content_node_type * node = config_get_value_node__( config , kw );
   return config_content_node_iget(node , 0);
 }
 

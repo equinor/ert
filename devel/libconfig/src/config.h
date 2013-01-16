@@ -30,9 +30,9 @@ extern "C" {
 #include <hash.h>
 
 #include <config_schema_item.h>
-#include <config_content_node.h>
 #include <config_content_item.h>
-
+#include <config_content_node.h>
+  
 #define ECL_COM_KW "--"
 #define ENKF_COM_KW "--"
 
@@ -75,11 +75,6 @@ typedef struct config_struct              config_type;
                                      bool required);
   
   
-  bool config_has_keys(const config_type *,
-                       const char       **,
-                       int                ,
-                       bool               );
-  
   const char            * config_safe_iget(const config_type * config , const char *kw, int occurence , int index);
   const char            * config_iget(const config_type * , const char * , int occurence , int index);
   bool                    config_iget_as_bool(const config_type * , const char * , int occurence , int index);
@@ -88,8 +83,7 @@ typedef struct config_struct              config_type;
   stringlist_type       * config_alloc_complete_stringlist(const config_type*  , const char * );
   stringlist_type       * config_alloc_stringlist(const config_type * config , const char * );
   hash_type             * config_alloc_hash(const config_type *  , const char * );
-  const stringlist_type * config_get_stringlist_ref(const config_type *  , const char * );
-  const stringlist_type       * config_iget_stringlist_ref(const config_type *  , const char * , int );
+  const stringlist_type * config_iget_stringlist_ref(const config_type *  , const char * , int );
   
   int                     config_get_occurences(const config_type * , const char * );
   int                     config_get_occurence_size( const config_type * config , const char * kw , int occurence);
@@ -105,10 +99,11 @@ typedef struct config_struct              config_type;
   const char *            config_get_value(const config_type * config , const char * kw);
   const char *            config_get_config_file( const config_type * config , bool abs_path);
   void                    config_fprintf_errors( const config_type * config , FILE * stream );
-
+  
   int                     config_get_schema_size( const config_type * config );
   int                     config_get_content_size( const config_type * config );
   const config_content_node_type * config_iget_content_node( const config_type * config , int index );
+  config_content_node_type       * config_get_value_node( const config_type * config , const char * kw);
   config_error_type * config_get_errors( const config_type * config );
   
 #ifdef __cplusplus
