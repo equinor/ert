@@ -368,38 +368,60 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   
   /* Loading external modules */
   {
-    for (int i=0; i < config_get_occurences( config , ANALYSIS_LOAD_KEY ); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_LOAD_KEY , i);
-      const char * user_name = stringlist_iget( tokens , 0 );
-      const char * lib_name  = stringlist_iget( tokens , 1 );
-      
-      analysis_config_load_external_module( analysis , user_name , lib_name);
+    const config_content_item_type * load_item = config_get_content_item( config , ANALYSIS_LOAD_KEY );
+    if (load_item != NULL) {
+      for (int i=0; i < config_content_item_get_size( load_item ); i++) {
+        const config_content_node_type * load_node = config_content_item_iget_node( load_item , i );
+        const char * user_name = config_content_node_iget( load_node , 0 );
+        const char * lib_name  = config_content_node_iget( load_node , 1 );
+        
+        analysis_config_load_external_module( analysis , user_name , lib_name);
+      }
     }
   }
   
   /* Reload/copy modules. */
   {
-    for (int i=0; i < config_get_occurences( config , ANALYSIS_COPY_KEY ); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_COPY_KEY , i);
-      const char * src_name    = stringlist_iget( tokens , 0 );
-      const char * target_name = stringlist_iget( tokens , 1 );
-      
-      analysis_config_add_module_copy( analysis , src_name , target_name);
+    const config_content_item_type * copy_item = config_get_content_item( config , ANALYSIS_COPY_KEY );
+    if (copy_item != NULL) {
+      for (int i=0; i < config_content_item_get_size( copy_item ); i++) {
+        const config_content_node_type * copy_node = config_content_item_iget_node( copy_item , i );
+        const char * src_name = config_content_node_iget( copy_node , 0 );
+        const char * target_name  = config_content_node_iget( copy_node , 1 );
+        
+        analysis_config_add_module_copy( analysis , src_name , target_name);
+      }
     }
   }
 
 
   /* Setting variables for analysis modules */
   {
-    for (int i=0; i < config_get_occurences( config , ANALYSIS_SET_VAR_KEY ); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref( config , ANALYSIS_SET_VAR_KEY , i);
-      const char * module_name = stringlist_iget( tokens , 0 );
-      const char * var_name    = stringlist_iget( tokens , 1 );
-      char       * value       = stringlist_alloc_joined_substring( tokens , 2 , stringlist_get_size( tokens ) , " " );
-      analysis_module_type * module = analysis_config_get_module( analysis , module_name );
-      
-      analysis_module_set_var( module , var_name , value );
-      free( value );
+    const config_content_item_type * assign_item = config_get_content_item( config , ANALYSIS_SET_VAR_KEY );
+    if (assign_item != NULL) {
+      for (int i=0; i < config_content_item_get_size( assign_item ); i++) {
+        const config_content_node_type * assign_node = config_content_item_iget_node( assign_item , i );
+        
+        const char * module_name = config_content_node_iget( assign_node , 0 );
+        const char * var_name    = config_content_node_iget( assign_node , 1 );
+        analysis_module_type * module = analysis_config_get_module( analysis , module_name );
+        {
+          char * value = NULL;
+
+          for (int j=2; j < config_content_node_get_size( assign_node ); j++) {
+            const char * config_value = config_content_node_iget( assign_node , j );
+            if (value == NULL)
+              value = util_alloc_string_copy( config_value );
+            else {
+              value = util_strcat_realloc( value , " " );
+              value = util_strcat_realloc( value , config_value );
+            }
+          }
+
+          analysis_module_set_var( module , var_name , value );
+          free( value );
+        }
+      }
     }
   }
 
