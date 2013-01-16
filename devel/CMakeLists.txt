@@ -3,6 +3,8 @@ project( ERT C CXX )
 include( CheckFunctionExists )
 ENABLE_TESTING()
 
+option( BUILD_ERT      "Build the full ERT application - Linux only" OFF)
+option( BUILD_ENS_PLOT "Build small Eclipse plotting program - no" OFF)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
    set(ERT_LINUX TRUE )
@@ -19,16 +21,10 @@ set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
 if (MSVC)
-   set(SHARED_LIB OFF)
-else()
-   option( SHARED_LIB "Build shared libraries" OFF)
+   set( LIBRARY_TYPE STATIC )
+   set( SHARED_LIB OFF )
 endif()
 
-if (SHARED_LIB)
-   set( LIBRARY_TYPE SHARED )
-else()
-   set( LIBRARY_TYPE STATIC )
-endif()     
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
@@ -238,18 +234,28 @@ set( libplot_src_path         ${CMAKE_SOURCE_DIR}/libplot/src )
 include_directories( ${libert_util_build_path}) 
 include_directories( ${libert_util_src_path} )
 
+if (BUILD_ERT)
+   # The full ERT build requires shared libraries due extensive use of dlopen().
+   set( LIBRARY_TYPE SHARED )
+   set( SHARED_LIB ON )
+else()
+   set( SHARED_LIB OFF CACHE BOOLEAN "Build shared libraries")
+   if (SHARED_LIB)
+      set( SHARED_LIB ON )
+   else()
+       set( LIBRARY_TYPE STATIC )
+   endif()     
+endif()
+
+
 add_subdirectory( libert_util )
 add_subdirectory( libgeometry )
 add_subdirectory( libecl )
 add_subdirectory( libwell )
 
-option( BUILD_ERT      "Build the full ERT application - Linux only" OFF)
-option( BUILD_ENS_PLOT "Build small Eclipse plotting program - no" OFF)
-
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
-
    try_compile( DLOPEN ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_dlopen.c )
    if (DLOPEN)
       set(NEED_LIBDL OFF)    
