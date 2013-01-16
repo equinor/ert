@@ -23,10 +23,13 @@ extern "C" {
 
 #include <time.h>
 
+#include <type_macros.h>
+
 #include <ecl_sum.h>
 
 typedef struct time_map_struct time_map_type;
 
+  UTIL_SAFE_CAST_HEADER( time_map  );
   void             time_map_clear( time_map_type * map );
   bool             time_map_equal( const time_map_type * map1 , const time_map_type * map2);
   time_map_type  * time_map_alloc( );

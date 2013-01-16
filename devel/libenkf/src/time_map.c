@@ -23,6 +23,7 @@
 
 #include <util.h>
 #include <time_t_vector.h>
+#include <type_macros.h>
 
 #include <ecl_sum.h>
 
@@ -31,15 +32,21 @@
 #define DEFAULT_TIME  -1
 
 
+#define TIME_MAP_TYPE_ID 7751432
 struct time_map_struct {
+  UTIL_TYPE_ID_DECLARATION;
   time_t_vector_type * map;
   pthread_rwlock_t     rw_lock;
   bool                 modified;
 };
 
 
+UTIL_SAFE_CAST_FUNCTION( time_map , TIME_MAP_TYPE_ID )
+
 time_map_type * time_map_alloc( ) {
   time_map_type * map = util_malloc( sizeof * map );
+  UTIL_TYPE_ID_INIT( map , TIME_MAP_TYPE_ID );
+
   map->map = time_t_vector_alloc(0 , DEFAULT_TIME );
   map->modified = false;
   pthread_rwlock_init( &map->rw_lock , NULL);
