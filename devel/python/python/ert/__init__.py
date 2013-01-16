@@ -72,6 +72,6 @@ else:
     # Look in the default path "../../lib"
     ert_lib_path = os.path.realpath( os.path.join(os.path.dirname( os.path.abspath( __file__)) , "../../lib") )
     if not os.path.exists( ert_lib_path ):
-       ert_lib_path = None
+        ert_lib_path = None
     
 cwrap.clib.ert_lib_path = ert_lib_path
