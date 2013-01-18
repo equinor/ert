@@ -26,8 +26,8 @@
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_util.h>
 
-#include <rms_file.h>
-#include <rms_util.h>
+#include <ert/rms/rms_file.h>
+#include <ert/rms/rms_util.h>
 
 #include <enkf_types.h>
 #include <field_config.h>

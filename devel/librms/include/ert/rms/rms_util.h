@@ -27,7 +27,7 @@ extern "C" {
 
 #include <ert/ecl/ecl_util.h>
 
-#include <rms_type.h>
+#include <ert/rms/rms_type.h>
 
 #define RMS_INACTIVE_DOUBLE -999.00
 #define RMS_INACTIVE_FLOAT  -999.00

@@ -24,8 +24,10 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+
 #include <hash.h>
-#include <rms_tagkey.h>
+
+#include <ert/rms/rms_tagkey.h>
 
 
 

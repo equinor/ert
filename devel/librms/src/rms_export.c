@@ -25,9 +25,9 @@
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_kw.h>
 
-#include "rms_file.h"
-#include "rms_util.h"
-#include "rms_export.h"
+#include <ert/rms/rms_file.h>
+#include <ert/rms/rms_util.h>
+#include <ert/rms/rms_export.h>
 
 
 void rms_export_roff_from_keyword(const char *filename, ecl_grid_type *ecl_grid, 

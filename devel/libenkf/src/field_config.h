@@ -31,7 +31,7 @@ extern "C" {
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_grid.h>
 
-#include <rms_file.h>
+#include <ert/rms/rms_file.h>
 
 #include <enkf_util.h>
 #include <enkf_macros.h>

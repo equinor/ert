@@ -27,7 +27,7 @@ extern "C" {
 
 #include <hash.h>
 
-#include <rms_type.h>
+#include <ert/rms/rms_type.h>
 
 #include <ert/ecl/ecl_util.h>
 

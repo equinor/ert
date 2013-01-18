@@ -24,11 +24,11 @@
 #include <vector.h>
 #include <util.h>
 
-#include <rms_type.h>
-#include <rms_util.h>
-#include <rms_tag.h>
-#include <rms_file.h>
-#include <rms_tagkey.h>
+#include <ert/rms/rms_type.h>
+#include <ert/rms/rms_util.h>
+#include <ert/rms/rms_tag.h>
+#include <ert/rms/rms_file.h>
+#include <ert/rms/rms_tagkey.h>
 
 #include <ert/ecl/ecl_kw.h>
 

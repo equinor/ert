@@ -23,7 +23,7 @@
 
 #include <util.h>
 
-#include <rms_util.h>
+#include <ert/rms/rms_util.h>
 
 #include <ert/ecl/ecl_util.h>
 
