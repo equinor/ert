@@ -24,7 +24,7 @@
 #include <util.h>
 #include <type_macros.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <ext_cmd.h>
 
