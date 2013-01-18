@@ -28,8 +28,8 @@
 #include <menu.h>
 #include <bool_vector.h>
 
-#include <history.h>
-#include <sched_file.h>
+#include <ert/sched/history.h>
+#include <ert/sched/sched_file.h>
 
 #include <ert/config/config.h>
 

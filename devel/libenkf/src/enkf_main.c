@@ -61,8 +61,8 @@
 #include <forward_model.h>
 #include <queue_driver.h>
 
-#include <history.h>
-#include <sched_file.h>
+#include <ert/sched/history.h>
+#include <ert/sched/sched_file.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>

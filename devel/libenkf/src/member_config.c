@@ -24,8 +24,6 @@
 #include <path_fmt.h>
 #include <subst_list.h>
 
-#include <sched_file.h>
-
 #include <ecl_config.h>
 
 #include <member_config.h>

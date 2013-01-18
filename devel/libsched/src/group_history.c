@@ -18,14 +18,15 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+
 #include <util.h>
 #include <size_t_vector.h>
-#include <group_history.h>
-#include <well_history.h>
-#include <vector.h>
-#include <size_t_vector.h>
 #include <time_t_vector.h>
-#include <group_index.h>
+#include <vector.h>
+
+#include <ert/sched/group_history.h>
+#include <ert/sched/well_history.h>
+#include <ert/sched/group_index.h>
 
 #define GROUP_HISTORY_TYPE_ID 5100635
 

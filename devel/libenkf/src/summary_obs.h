@@ -26,7 +26,7 @@ extern "C" {
 
 #include <util.h>
 
-#include <history.h>
+#include <ert/sched/history.h>
 
 #include <ert/config/conf.h>
 

@@ -27,9 +27,9 @@
 #include <int_vector.h>
 #include <double_vector.h>
 
-#include <sched_types.h>
-#include <sched_kw_wconhist.h>
-#include <sched_util.h>
+#include <ert/sched/sched_types.h>
+#include <ert/sched/sched_kw_wconhist.h>
+#include <ert/sched/sched_util.h>
 
 
 /*

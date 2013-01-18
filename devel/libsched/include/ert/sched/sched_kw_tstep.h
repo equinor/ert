@@ -23,7 +23,8 @@ extern "C" {
 #endif
 #include <hash.h>
 #include <time.h>
-#include <sched_macros.h>
+
+#include <ert/sched/sched_macros.h>
 
 typedef struct sched_kw_tstep_struct sched_kw_tstep_type;
 

@@ -22,14 +22,16 @@
 extern "C" {
 #endif
 
-
-#include <time_t_vector.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <sched_macros.h>
-#include <sched_types.h>
+
+#include <time_t_vector.h>
 #include <hash.h>
 #include <stringlist.h>
+
+#include <ert/sched/sched_macros.h>
+#include <ert/sched/sched_types.h>
+
 
 
 typedef struct sched_kw_wconhist_struct sched_kw_wconinjh_type;

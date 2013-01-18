@@ -31,7 +31,7 @@ extern "C" {
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_io_config.h>
 
-#include <sched_file.h>
+#include <ert/sched/sched_file.h>
 
 
   typedef struct ecl_config_struct ecl_config_type;

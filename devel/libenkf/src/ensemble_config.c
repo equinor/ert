@@ -40,6 +40,8 @@
 #include <rsh_driver.h>
 #include <ext_joblist.h>
 
+#include <ert/sched/sched_file.h>
+
 #include <ert/config/config.h>
 
 #include <enkf_config_node.h>
@@ -49,7 +51,6 @@
 #include <surface_config.h>
 #include <meas_data.h>
 #include <enkf_types.h>
-#include <sched_file.h>
 #include <gen_kw_config.h>
 #include <summary.h>
 #include <summary_config.h>

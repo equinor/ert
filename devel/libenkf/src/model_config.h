@@ -31,8 +31,8 @@ extern "C" {
 #include <ext_joblist.h>
 #include <forward_model.h>
 
-#include <history.h>
-#include <sched_file.h>
+#include <ert/sched/history.h>
+#include <ert/sched/sched_file.h>
 
 #include <ert/ecl/ecl_sum.h>
 

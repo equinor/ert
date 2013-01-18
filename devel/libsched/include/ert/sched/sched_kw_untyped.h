@@ -24,8 +24,10 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <sched_macros.h>
+
 #include <stringlist.h>
+
+#include <ert/sched/sched_macros.h>
 
 typedef struct sched_kw_untyped_struct sched_kw_untyped_type;
 

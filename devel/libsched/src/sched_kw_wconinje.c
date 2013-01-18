@@ -19,16 +19,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
 #include <stringlist.h>
 #include <util.h>
 #include <vector.h>
-#include <sched_kw_wconinje.h>
-#include <sched_util.h>
-#include <stringlist.h>
-#include <sched_types.h>
 #include <buffer.h>
 #include <int_vector.h>
 #include <double_vector.h>
+
+#include <ert/sched/sched_kw_wconinje.h>
+#include <ert/sched/sched_util.h>
+#include <ert/sched/sched_types.h>
 
 
 #define DEFAULT_INJECTOR_STATE OPEN

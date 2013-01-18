@@ -26,10 +26,10 @@
 
 #include <ert/ecl/ecl_util.h>
 
-#include <sched_util.h>
-#include <sched_kw_dates.h>
-#include <sched_types.h>
-#include <sched_time.h>
+#include <ert/sched/sched_util.h>
+#include <ert/sched/sched_kw_dates.h>
+#include <ert/sched/sched_types.h>
+#include <ert/sched/sched_time.h>
 
 
 #define DATES_FMT          "  %d \'%s\' %4d  /  \n"    // The format string used when writing dates the arguments are (day , month_string , year).

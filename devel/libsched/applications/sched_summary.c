@@ -22,10 +22,12 @@
 
 #include <util.h>
 
-#include <sched_file.h>
-#include <sched_history.h>
-
 #include <ert/ecl/ecl_util.h>
+
+#include <ert/sched/sched_file.h>
+#include <ert/sched/sched_history.h>
+
+
 
 
 

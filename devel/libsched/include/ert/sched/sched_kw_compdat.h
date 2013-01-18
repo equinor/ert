@@ -19,8 +19,10 @@
 #ifndef __SCHED_KW_COMPDAT_H__
 #define __SCHED_KW_COMPDAT_H__
 #include <stdio.h>
+
 #include <set.h>
-#include <sched_macros.h>
+
+#include <ert/sched/sched_macros.h>
 
 typedef struct sched_kw_compdat_struct sched_kw_compdat_type;
 

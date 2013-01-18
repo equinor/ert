@@ -27,7 +27,7 @@ extern "C" {
 
 #include <hash.h>
 
-#include <sched_types.h>
+#include <ert/sched/sched_types.h>
               
 typedef struct sched_kw_struct sched_kw_type;
 

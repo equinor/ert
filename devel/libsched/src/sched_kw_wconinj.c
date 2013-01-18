@@ -18,13 +18,14 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stringlist.h>
 #include <string.h>
-#include <util.h>
-#include <sched_kw_wconinj.h>
-#include <sched_kw_untyped.h>
-#include <sched_util.h>
+
 #include <stringlist.h>
+#include <util.h>
+
+#include <ert/sched/sched_kw_wconinj.h>
+#include <ert/sched/sched_kw_untyped.h>
+#include <ert/sched/sched_util.h>
 
 
 

@@ -31,7 +31,7 @@
 #include <bool_vector.h>
 #include <msg.h>
 
-#include <history.h>
+#include <ert/sched/history.h>
 
 #include <ert/config/conf.h>
 

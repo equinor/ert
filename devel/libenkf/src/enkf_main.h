@@ -34,7 +34,7 @@ extern "C" {
 #include <matrix.h>
 #include <path_fmt.h>
 
-#include <sched_file.h>
+#include <ert/sched/sched_file.h>
 
 #include <job_queue.h>
 #include <ext_joblist.h>

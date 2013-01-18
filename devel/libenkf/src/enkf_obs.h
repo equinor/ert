@@ -26,7 +26,7 @@ extern "C" {
 #include <hash.h>
 #include <stringlist.h>
 
-#include <history.h>
+#include <ert/sched/history.h>
 
 #include <ert/ecl/ecl_sum.h>
 

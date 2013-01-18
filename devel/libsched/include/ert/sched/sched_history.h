@@ -27,7 +27,7 @@ extern "C" {
 
 #include <double_vector.h>
 
-#include <sched_file.h>
+#include <ert/sched/sched_file.h>
 
 typedef struct sched_history_struct sched_history_type;
 

@@ -24,10 +24,10 @@ extern "C" {
 #endif
 #include <size_t_vector.h>
 
-#include <sched_kw.h>
-#include <sched_kw_wconhist.h>
-#include <well_index.h>
-#include <group_history.h>
+#include <ert/sched/sched_kw.h>
+#include <ert/sched/sched_kw_wconhist.h>
+#include <ert/sched/well_index.h>
+#include <ert/sched/group_history.h>
 
 typedef struct well_history_struct  well_history_type;
 

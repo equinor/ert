@@ -23,12 +23,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <sched_macros.h>
-#include <sched_types.h>
-#include <stringlist.h>
 #include <stdbool.h>
+
+#include <stringlist.h>
 #include <buffer.h>
 #include <time_t_vector.h>
+
+#include <ert/sched/sched_macros.h>
+#include <ert/sched/sched_types.h>
+
 
 typedef struct sched_kw_wconinje_struct sched_kw_wconinje_type;
 typedef struct wconinje_state_struct    wconinje_state_type;

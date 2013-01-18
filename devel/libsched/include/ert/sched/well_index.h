@@ -24,7 +24,7 @@ extern "C" {
 #endif
 #include <type_macros.h>
 
-#include <sched_types.h>
+#include <ert/sched/sched_types.h>
 
 typedef struct well_index_struct well_index_type;
 

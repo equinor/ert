@@ -31,7 +31,7 @@ extern "C" {
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <sched_file.h>
+#include <ert/sched/sched_file.h>
 
      
 typedef enum {

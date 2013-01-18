@@ -18,8 +18,10 @@
 
 #include <stdbool.h>
 #include <string.h>
+
 #include <util.h>
-#include <gruptree.h>
+
+#include <ert/sched/gruptree.h>
 
 
 /*

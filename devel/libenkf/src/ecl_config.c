@@ -26,7 +26,7 @@
 #include <util.h>
 #include <parser.h>
 
-#include <sched_file.h>
+#include <ert/sched/sched_file.h>
 
 #include <ert/config/config.h>
 

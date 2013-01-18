@@ -26,9 +26,9 @@
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_util.h>
 
-#include <gruptree.h>
-#include <sched_history.h>
-#include <history.h>
+#include <ert/sched/gruptree.h>
+#include <ert/sched/sched_history.h>
+#include <ert/sched/history.h>
 
 
 struct history_struct{

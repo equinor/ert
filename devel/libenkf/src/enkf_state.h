@@ -31,7 +31,7 @@ extern "C" {
 #include <matrix.h>
 #include <log.h>
 
-#include <sched_file.h>
+#include <ert/sched/sched_file.h>
  
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_file.h>

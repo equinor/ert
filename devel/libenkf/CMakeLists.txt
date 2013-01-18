@@ -9,7 +9,7 @@ include_directories( ${libconfig_src_path}/../include )
 include_directories( ${libjob_queue_src_path} )
 include_directories( ${libplot_src_path} )
 include_directories( ${libanalysis_src_path}/../include )
-include_directories( ${libsched_src_path} )
+include_directories( ${libsched_src_path}/../include )
 include_directories( ${libgeometry_src_path} )
 
 link_directories( ${CMAKE_CURRENT_BINARY_DIR}/src )

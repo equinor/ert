@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
-   The file 'sched_kw_wconinj.h' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'sched_kw_gruptree.h' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -16,28 +16,30 @@
    for more details. 
 */
 
-#ifndef __SCHED_KW_WCONINJ_H__
-#define __SCHED_KW_WCONINJ_H__
-
-
+#ifndef __SCHED_KW_GRUPTREE_H__
+#define __SCHED_KW_GRUPTREE_H__
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include <stdio.h>
-#include <stdbool.h>
-#include <sched_macros.h>
-#include <hash.h>
+
 #include <stringlist.h>
 
+#include <ert/sched/sched_macros.h>
 
-typedef struct sched_kw_wconinj_struct sched_kw_wconinj_type;
+typedef struct sched_kw_gruptree_struct sched_kw_gruptree_type;
 
-
-char ** sched_kw_wconinj_alloc_wells_copy( const sched_kw_wconinj_type * , int * );
+//void                     sched_kw_gruptree_free        (sched_kw_gruptree_type *);
+//void                     sched_kw_gruptree_fprintf     (const sched_kw_gruptree_type *, FILE * );
+void                     sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type *, char ***, char ***, int *);
+void                     sched_kw_gruptree_init_child_parent_list( const sched_kw_gruptree_type * kw , stringlist_type * child , stringlist_type * parent);
 
 /*******************************************************************/
 
-KW_HEADER(wconinj)
+
+
+KW_HEADER(gruptree)
+
 
 #ifdef __cplusplus
 }

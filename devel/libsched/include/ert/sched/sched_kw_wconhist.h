@@ -30,8 +30,9 @@ extern "C" {
 #include <stringlist.h>
 #include <time_t_vector.h>
 
-#include <sched_types.h>
-#include <sched_macros.h> 
+#include <ert/sched/sched_types.h>
+#include <ert/sched/sched_macros.h> 
+
 typedef  struct  sched_kw_wconhist_struct sched_kw_wconhist_type;
 typedef  struct  wconhist_state_struct    wconhist_state_type;  
 

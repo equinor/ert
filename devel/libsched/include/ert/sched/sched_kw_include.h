@@ -19,8 +19,9 @@
 #ifndef __SCHED_KW_INCLUDE_H__
 #define __SCHED_KW_INCLDUE_H__
 
-#include <sched_macros.h>
 #include <stringlist.h>
+
+#include <ert/sched/sched_macros.h>
 
 typedef struct sched_kw_include_struct sched_kw_include_type;
 
