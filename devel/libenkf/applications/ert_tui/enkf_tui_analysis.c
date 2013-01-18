@@ -28,11 +28,12 @@
 #include <arg_pack.h>
 #include <stringlist.h>
 
+#include <ert/analysis/analysis_module.h>
+
 #include <enkf_main.h>
 #include <enkf_sched.h>
 #include <ensemble_config.h>
 #include <analysis_config.h>
-#include <analysis_module.h>
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
 #include <ert_tui_const.h>
