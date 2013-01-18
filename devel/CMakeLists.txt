@@ -228,12 +228,12 @@ endif()
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
 
-set( libert_util_build_path   ${CMAKE_BINARY_DIR}/libert_util/src )
-set( libert_util_src_path     ${CMAKE_SOURCE_DIR}/libert_util/src )
-set( libecl_src_path          ${CMAKE_SOURCE_DIR}/libecl/src )
-set( libgeometry_src_path     ${CMAKE_SOURCE_DIR}/libgeometry/src )
-set( libwell_src_path         ${CMAKE_SOURCE_DIR}/libwell/src )
-set( libplot_src_path         ${CMAKE_SOURCE_DIR}/libplot/src )
+set( libert_util_build_path   ${PROJECT_BINARY_DIR}/libert_util/src )
+set( libert_util_src_path     ${PROJECT_SOURCE_DIR}/libert_util/src )
+set( libecl_src_path          ${PROJECT_SOURCE_DIR}/libecl/src )
+set( libgeometry_src_path     ${PROJECT_SOURCE_DIR}/libgeometry/src )
+set( libwell_src_path         ${PROJECT_SOURCE_DIR}/libwell/src )
+set( libplot_src_path         ${PROJECT_SOURCE_DIR}/libplot/src )
 
 include_directories( ${libert_util_build_path}) 
 include_directories( ${libert_util_src_path} )
