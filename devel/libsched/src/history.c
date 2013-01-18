@@ -17,12 +17,15 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include <util.h>
 #include <hash.h>
-#include <ecl_sum.h>
-#include <ecl_util.h>
 #include <stringlist.h>
 #include <bool_vector.h>
+
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_util.h>
+
 #include <gruptree.h>
 #include <sched_history.h>
 #include <history.h>

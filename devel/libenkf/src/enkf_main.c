@@ -50,8 +50,8 @@
 
 #include <config.h>
 
-#include <ecl_util.h>
-#include <ecl_io_config.h>
+#include <ert/ecl/ecl_util.h>
+#include <ert/ecl/ecl_io_config.h>
 
 #include <enkf_types.h>
 #include <enkf_config_node.h>
@@ -1464,7 +1464,7 @@ bool enkf_main_is_not_initialized_at_all( const enkf_main_type * enkf_main ) {
       node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
       initialized = enkf_config_node_has_node( config_node , enkf_main->dbase , node_id);
       if (initialized)
-	not_initialized_at_all = false;
+        not_initialized_at_all = false;
     }
     
   }
@@ -1797,8 +1797,8 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const string
       
       if (i == (num_cpu - 1)){
         end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
-	if(ens_sub_size == 0)
-	  start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
+        if(ens_sub_size == 0)
+          start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
       }
       arg_pack_append_int( arg_list[i] , start_iens );
       arg_pack_append_int( arg_list[i] , end_iens );

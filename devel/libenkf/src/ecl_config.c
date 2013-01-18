@@ -30,9 +30,9 @@
 
 #include <config.h>
 
-#include <ecl_grid.h>
-#include <ecl_sum.h>
-#include <ecl_io_config.h>
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_io_config.h>
 
 #include <enkf_util.h>
 #include <ecl_config.h>

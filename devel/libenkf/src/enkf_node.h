@@ -28,10 +28,10 @@
 #include <rng.h>
 #include <hash.h>
 
-#include <ecl_kw.h>
-#include <ecl_file.h>
-#include <ecl_sum.h>
-#include <fortio.h>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/fortio.h>
 
 #include <enkf_serialize.h>
 #include <active_list.h>

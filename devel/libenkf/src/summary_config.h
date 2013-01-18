@@ -28,8 +28,8 @@ extern "C" {
 
 #include <util.h>
 
-#include <ecl_sum.h>
-#include <ecl_smspec.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_smspec.h>
 
 #include <enkf_macros.h>
 

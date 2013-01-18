@@ -25,8 +25,8 @@ extern "C" {
 
 #include <stringlist.h>
 
-#include <ecl_grid.h>
-#include <ecl_sum.h>
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <config.h>
 

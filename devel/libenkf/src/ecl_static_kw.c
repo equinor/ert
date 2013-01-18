@@ -17,12 +17,16 @@
 */
 
 #include <stdlib.h>
+
 #include <util.h>
+#include <buffer.h>
+
+#include <ert/ecl/ecl_kw.h>
+
 #include <ecl_static_kw.h>
-#include <ecl_kw.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
-#include <buffer.h>
+
 
 
 struct ecl_static_kw_struct {

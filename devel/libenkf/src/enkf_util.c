@@ -21,11 +21,15 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <enkf_util.h>
+
 #include <util.h>
-#include <ecl_util.h>
-#include <enkf_defaults.h>
 #include <rng.h>
+
+#include <ert/ecl/ecl_util.h>
+
+#include <enkf_util.h>
+#include <enkf_defaults.h>
+
 
 
 

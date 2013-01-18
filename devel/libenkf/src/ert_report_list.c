@@ -28,7 +28,7 @@
 
 #include <config.h>
 
-#include <ecl_sum.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <ert_report.h>
 #include <ert_report_list.h>

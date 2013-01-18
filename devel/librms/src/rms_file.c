@@ -24,13 +24,13 @@
 #include <vector.h>
 #include <util.h>
 
-
 #include <rms_type.h>
 #include <rms_util.h>
 #include <rms_tag.h>
 #include <rms_file.h>
 #include <rms_tagkey.h>
-#include <ecl_kw.h>
+
+#include <ert/ecl/ecl_kw.h>
 
 /*****************************************************************/
 static const char * rms_ascii_header      = "roff-asc";

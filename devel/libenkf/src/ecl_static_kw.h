@@ -21,10 +21,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include <stdbool.h>
-#include <ecl_kw.h>
-#include <enkf_macros.h>
+
 #include <util.h>
+
+#include <ert/ecl/ecl_kw.h>
+#include <enkf_macros.h>
+
+
 typedef struct ecl_static_kw_struct ecl_static_kw_type;
 
 

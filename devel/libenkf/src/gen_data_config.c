@@ -27,7 +27,7 @@
 
 #include <config.h>
 
-#include <ecl_util.h>
+#include <ert/ecl/ecl_util.h>
 
 #include <enkf_macros.h>
 #include <gen_data_config.h>

@@ -5,7 +5,6 @@ set( header_files sched_history.h sched_time.h group_index.h sched_blob.h well_i
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${libutil_build_path} )
 include_directories( ${libutil_src_path} )
-include_directories( ${libecl_src_path} )
 
 add_library( sched ${LIBRARY_TYPE} ${source_files} )
 

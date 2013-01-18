@@ -27,8 +27,7 @@ extern "C" {
   
 #include <stdbool.h>
 
-#include <ecl_kw.h>
-#include <ecl_intehead.h>
+#include <ert/ecl/ecl_intehead.h>
 
   typedef enum {
     well_conn_dirX  = 1,

@@ -33,9 +33,9 @@
 
 #include <config.h>
 
-#include <ecl_sum.h>
-#include <ecl_util.h>
-#include <ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_util.h>
+#include <ert/ecl/ecl_grid.h>
 
 #include <forward_model.h>
 

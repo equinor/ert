@@ -32,7 +32,7 @@
 #include <thread_pool.h>
 #include <stringlist.h>
 
-#include <ecl_grid.h>
+#include <ert/ecl/ecl_grid.h>
 
 #include <job_queue.h>
 #include <lsf_driver.h>

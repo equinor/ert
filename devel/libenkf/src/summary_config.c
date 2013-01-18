@@ -23,8 +23,8 @@
 #include <util.h>
 #include <set.h>
 
-#include <ecl_sum.h>
-#include <ecl_smspec.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_smspec.h>
 
 #include <enkf_types.h>
 #include <enkf_util.h>

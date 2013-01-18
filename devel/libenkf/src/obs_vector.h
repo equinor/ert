@@ -32,7 +32,7 @@ extern "C" {
 
 #include <conf.h>
 
-#include <ecl_sum.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <enkf_fs.h>
 #include <enkf_types.h>

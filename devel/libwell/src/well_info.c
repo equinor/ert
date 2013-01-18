@@ -22,18 +22,20 @@
 #include <util.h>
 #include <hash.h>
 #include <int_vector.h>
-#include <ecl_intehead.h>
-#include <ecl_file.h>
-#include <ecl_kw.h>
-#include <ecl_kw_magic.h>
-#include <ecl_util.h>
+#include <stringlist.h>
+
+#include <ert/ecl/ecl_intehead.h>
+#include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_kw_magic.h>
+#include <ert/ecl/ecl_util.h>
 
 #include <well_const.h>
 #include <well_conn.h>
 #include <well_state.h>
 #include <well_info.h>
 #include <well_ts.h>
-#include <stringlist.h>
+
 
 /*
   The library libwell contains functionality to read and interpret

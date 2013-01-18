@@ -3,7 +3,6 @@ set( header_files well_state.h well_const.h well_conn.h well_info.h well_ts.h we
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${libgeometry_src_path} )
-include_directories( ${libecl_src_path} )
 
 
 add_library( well ${LIBRARY_TYPE} ${source_files} )

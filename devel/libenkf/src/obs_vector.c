@@ -35,9 +35,9 @@
 
 #include <conf.h>
 
-#include <ecl_sum.h>
-#include <ecl_grid.h>
-#include <smspec_node.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/smspec_node.h>
 
 #include <obs_vector.h>
 #include <enkf_fs.h>

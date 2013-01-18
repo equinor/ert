@@ -34,7 +34,7 @@ extern "C" {
 #include <history.h>
 #include <sched_file.h>
 
-#include <ecl_sum.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <enkf_sched.h>
 #include <enkf_types.h>

@@ -19,13 +19,13 @@
 #ifndef __LOCAL_CONFIG_H__
 #define __LOCAL_CONFIG_H__
 
+#include <ert/ecl/ecl_grid.h>
+
 #include <local_updatestep.h>
 #include <local_ministep.h>
 #include <stringlist.h>
 #include <ensemble_config.h>
 #include <enkf_obs.h>
-#include <ecl_grid.h>
-
 
 
 #ifdef __cplusplus

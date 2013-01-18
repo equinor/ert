@@ -26,8 +26,8 @@ extern "C" {
 #include <bool_vector.h>
 #include <buffer.h>
 
-#include <ecl_sum.h>
-#include <ecl_file.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_file.h>
 
 #include <enkf_macros.h>
 #include <gen_data_common.h>

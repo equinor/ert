@@ -26,8 +26,8 @@
 
 #include <conf.h>
 
-#include <ecl_grid.h>
-#include <ecl_sum.h>
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <summary_obs.h>
 #include <block_obs.h>

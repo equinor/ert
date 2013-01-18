@@ -24,10 +24,13 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <enkf_types.h>
-#include <ecl_util.h>
+
 #include <buffer.h>
 #include <rng.h>
+
+#include <ert/ecl/ecl_util.h>
+
+#include <enkf_types.h>
 
 /*****************************************************************/
 

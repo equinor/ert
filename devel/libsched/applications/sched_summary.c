@@ -16,13 +16,18 @@
    for more details. 
 */
 
-#include <util.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+#include <util.h>
+
 #include <sched_file.h>
 #include <sched_history.h>
-#include <ecl_util.h>
-#include <time.h>
-#include <stdio.h>
+
+#include <ert/ecl/ecl_util.h>
+
+
 
 
 

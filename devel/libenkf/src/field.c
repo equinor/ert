@@ -24,11 +24,11 @@
 #include <buffer.h>
 #include <rng.h>
 
-#include <fortio.h>
-#include <ecl_kw.h>
-#include <ecl_file.h>
-#include <ecl_util.h>
-#include <ecl_endian_flip.h>
+#include <ert/ecl/fortio.h>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_util.h>
+#include <ert/ecl/ecl_endian_flip.h>
 
 #include <rms_file.h>
 #include <rms_tagkey.h>

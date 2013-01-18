@@ -24,9 +24,9 @@
 #include <log.h>
 #include <double_vector.h>
 
-#include <ecl_sum.h>
-#include <ecl_smspec.h> 
-#include <ecl_file.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_smspec.h> 
+#include <ert/ecl/ecl_file.h>
 
 #include <enkf_types.h>
 #include <enkf_util.h>

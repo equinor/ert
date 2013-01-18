@@ -22,9 +22,9 @@
 
 #include <util.h>
 
-#include <ecl_grid.h>
-#include <ecl_kw.h>
-#include <ecl_util.h>
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_util.h>
 
 #include <rms_file.h>
 #include <rms_util.h>

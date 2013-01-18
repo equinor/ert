@@ -24,8 +24,8 @@ extern "C" {
 #include <util.h>
 #include <type_macros.h>
 
-#include <fortio.h>
-#include <ecl_kw.h>
+#include <ert/ecl/fortio.h>
+#include <ert/ecl/ecl_kw.h>
 
 #include <enkf_macros.h>
 #include <enkf_util.h>

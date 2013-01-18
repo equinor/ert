@@ -27,8 +27,8 @@ extern "C" {
 
 #include <conf.h>
 
-#include <ecl_sum.h>
-#include <ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_grid.h>
 
 #include <enkf_macros.h>
 #include <obs_data.h>

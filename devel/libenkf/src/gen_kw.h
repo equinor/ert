@@ -22,7 +22,6 @@
 extern "C" {
 #endif
 
-#include <fortio.h>
 #include <gen_kw_config.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>

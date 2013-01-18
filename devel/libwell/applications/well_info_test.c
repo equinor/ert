@@ -22,11 +22,12 @@
 
 #include <util.h>
 #include <int_vector.h>
-#include <ecl_intehead.h>
-#include <ecl_file.h>
-#include <ecl_kw.h>
-#include <ecl_kw_magic.h>
-#include <ecl_util.h>
+
+#include <ert/ecl/ecl_intehead.h>
+#include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_kw_magic.h>
+#include <ert/ecl/ecl_util.h>
 
 #include <well_state.h>
 #include <well_info.h>
@@ -83,16 +84,16 @@ int main( int argc , char ** argv) {
         const well_conn_type ** connections = well_state_get_connections( well_state , 0 );
         printf("Branches: %d \n",well_state_get_num_branches( well_state ));
         printf("num_connections: %d \n",well_state_get_num_connections( well_state , 0 ));
-	{ 
-	  int iconn;
-	  for (iconn = 0; iconn < well_state_get_num_connections( well_state , 0 ); iconn++) {
-	    well_conn_type * conn = connections[ iconn ];
-	    printf("Connection:%02d   i=%3d  j=%3d  k=%3d  State:",iconn , well_conn_get_i( conn ) , well_conn_get_j( conn ) , well_conn_get_k( conn ));
-	    if (well_conn_open( conn ) )
+        { 
+          int iconn;
+          for (iconn = 0; iconn < well_state_get_num_connections( well_state , 0 ); iconn++) {
+            well_conn_type * conn = connections[ iconn ];
+            printf("Connection:%02d   i=%3d  j=%3d  k=%3d  State:",iconn , well_conn_get_i( conn ) , well_conn_get_j( conn ) , well_conn_get_k( conn ));
+            if (well_conn_open( conn ) )
             printf("Open\n");
-	    else
-	      printf("Closed\n");
-	  }
+            else
+              printf("Closed\n");
+          }
         }
       }
     }

@@ -27,6 +27,8 @@
 #include <bool_vector.h>
 #include <vector.h>
 
+#include <ert/ecl/ecl_grid.h>
+
 #include <enkf_macros.h>
 #include <enkf_node.h>
 #include <field_config.h>

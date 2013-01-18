@@ -33,8 +33,8 @@ extern "C" {
 
 #include <sched_file.h>
  
-#include <fortio.h>
-#include <ecl_file.h>
+#include <ert/ecl/fortio.h>
+#include <ert/ecl/ecl_file.h>
 
 #include <forward_model.h>
 #include <ext_joblist.h>

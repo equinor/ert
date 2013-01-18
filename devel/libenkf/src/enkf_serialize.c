@@ -18,9 +18,11 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+
+#include <util.h>
+
 #include <enkf_serialize.h>
 #include <enkf_types.h>
-#include <util.h>
 #include <active_list.h>
 
 /** This is heavy shit ... */

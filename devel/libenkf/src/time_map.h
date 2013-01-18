@@ -23,6 +23,7 @@ extern "C" {
 
 #include <time.h>
 
+#include <ert/ecl/ecl_sum.h>
 
 typedef struct time_map_struct time_map_type;
 

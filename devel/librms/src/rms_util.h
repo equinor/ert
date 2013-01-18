@@ -21,9 +21,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <ecl_util.h>
+
+#include <ert/ecl/ecl_util.h>
+
 #include <rms_type.h>
 
 #define RMS_INACTIVE_DOUBLE -999.00

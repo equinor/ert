@@ -22,8 +22,8 @@
 extern "C" {
 #endif
 
-#include <ecl_grid.h>
-#include <ecl_kw.h>
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_kw.h>
 
   
 void rms_export_roff_from_keyword(const char *filename, ecl_grid_type *ecl_grid, 

@@ -28,10 +28,10 @@
 #include <bool_vector.h>
 #include <rng.h>
 
-#include <fortio.h>
-#include <ecl_sum.h>
-#include <ecl_file.h>
-#include <ecl_util.h>
+#include <ert/ecl/fortio.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_util.h>
 
 #include <enkf_serialize.h>
 #include <enkf_types.h>

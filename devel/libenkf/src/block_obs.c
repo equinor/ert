@@ -26,9 +26,9 @@
 #include <util.h>
 #include <stringlist.h>
 
-#include <ecl_sum.h>
-#include <ecl_grid.h>
-#include <smspec_node.h>
+#include <ert/ecl/ecl_sum.h>
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/smspec_node.h>
 
 #include <enkf_util.h>
 #include <field.h>

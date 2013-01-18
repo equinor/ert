@@ -21,14 +21,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #include <stringlist.h>
-#include <enkf_types.h>
-#include <enkf_macros.h>
-#include <ecl_grid.h>
+
+#include <ert/ecl/ecl_grid.h>
+
 #include <field_trans.h>
 #include <gen_data_config.h>
 #include <summary_config.h>
-
+#include <enkf_types.h>
+#include <enkf_macros.h>
 
   typedef void   (config_free_ftype)    (void *);
   typedef int    (get_data_size_ftype)  (const void *);

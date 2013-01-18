@@ -19,12 +19,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <vector.h>
 #include <util.h>
-#include <ecl_grid.h>
-#include <ecl_region.h>
+
 #include <geo_polygon.h>
 #include <geo_region.h>
+
+#include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_region.h>
+
+
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <local_config.h>

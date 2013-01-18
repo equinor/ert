@@ -18,13 +18,16 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <vector.h>
 #include <time.h>
+
+#include <vector.h>
 #include <util.h>
+#include <stringlist.h>
+
+#include <ert/ecl/ecl_util.h>
+
 #include <sched_util.h>
 #include <sched_kw_dates.h>
-#include <stringlist.h>
-#include <ecl_util.h>
 #include <sched_types.h>
 #include <sched_time.h>
 

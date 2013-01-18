@@ -22,11 +22,14 @@
 extern "C" {
 #endif
 
-#include <hash.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+#include <hash.h>
+
 #include <rms_type.h>
-#include <ecl_util.h>
+
+#include <ert/ecl/ecl_util.h>
 
 typedef struct rms_tagkey_struct rms_tagkey_type;
 
