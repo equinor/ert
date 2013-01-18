@@ -25,7 +25,7 @@
 #include <rng.h>
 #include <stringlist.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <enkf_types.h>
 #include <analysis_module.h>

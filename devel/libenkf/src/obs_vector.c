@@ -33,7 +33,7 @@
 
 #include <history.h>
 
-#include <conf.h>
+#include <ert/config/conf.h>
 
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_grid.h>

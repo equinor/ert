@@ -27,7 +27,7 @@ extern "C" {
 
 #include <ert/ecl/ecl_sum.h>  
 
-#include <config.h>
+#include <ert/config/config.h>
   
   typedef struct ert_report_list_struct ert_report_list_type;
 

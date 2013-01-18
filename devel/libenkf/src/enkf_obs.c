@@ -24,7 +24,7 @@
 #include <util.h>
 #include <msg.h>
 
-#include <conf.h>
+#include <ert/config/conf.h>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>

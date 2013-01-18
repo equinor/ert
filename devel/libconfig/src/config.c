@@ -30,7 +30,7 @@
 #include <subst_list.h>
 #include <vector.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #define CLEAR_STRING "__RESET__"
 

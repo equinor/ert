@@ -25,7 +25,7 @@
 #include <stringlist.h>
 #include <rng.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <analysis_module.h>
 

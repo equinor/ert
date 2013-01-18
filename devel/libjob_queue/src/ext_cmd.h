@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-#include <config.h>
+#include <ert/config/config.h>
 
 
   typedef struct ext_cmd_struct ext_cmd_type;

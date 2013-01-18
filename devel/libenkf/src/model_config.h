@@ -26,7 +26,7 @@ extern "C" {
 #include <time.h>
 #include <path_fmt.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <ext_joblist.h>
 #include <forward_model.h>

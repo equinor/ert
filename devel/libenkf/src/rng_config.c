@@ -19,9 +19,12 @@
 #include <mzran.h>
 #include <util.h>
 #include <stdlib.h>
-#include <rng_config.h>
+
+#include <ert/config/config.h>
+
 #include <rng.h>
-#include <config.h>
+
+#include <rng_config.h>
 #include <config_keys.h>
 #include <enkf_defaults.h>
 

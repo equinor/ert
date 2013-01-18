@@ -22,18 +22,21 @@
 #ifdef __cplusplus 
 extern "C" {
 #endif
-
-
 #include <stdbool.h>
-#include <conf.h>
+
+#include <util.h>
+
 #include <history.h>
+
+#include <ert/config/conf.h>
+
 #include <enkf_macros.h>
 #include <obs_data.h>
 #include <meas_data.h>
 #include <summary_config.h>
 #include <summary.h>
 #include <active_list.h>
-#include <util.h>
+
 
 #define AUTO_CORRF_EXP     "EXP"
 #define AUTO_CORRF_GAUSS   "GAUSS"

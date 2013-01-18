@@ -48,7 +48,7 @@
 #include <log.h>
 #include <node_ctype.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_io_config.h>

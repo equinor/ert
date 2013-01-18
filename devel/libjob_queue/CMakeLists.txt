@@ -22,7 +22,7 @@ endif()
 
 include_directories( ${LSF_INCLUDE_PATH} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src )
-include_directories( ${libconfig_src_path} )
+include_directories( ${libconfig_src_path}/../include )
 
 add_subdirectory( src )
 add_subdirectory( applications )

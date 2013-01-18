@@ -18,7 +18,7 @@
 
 #ifndef __PLOT_CONFIG_H__
 #define __PLOT_CONFIG_H__
-#include <config.h>
+#include <ert/config/config.h>
 
 typedef struct plot_config_struct plot_config_type;
 

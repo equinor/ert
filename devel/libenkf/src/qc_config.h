@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#include <config.h>
+#include <ert/config/config.h>
 
   typedef struct qc_config_struct qc_config_type;
   

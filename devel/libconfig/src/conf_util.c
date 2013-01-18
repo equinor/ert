@@ -17,10 +17,12 @@
 */
 
 #include <assert.h>
-#include <util.h>
 #include <string.h>
-#include <conf_util.h>
+
+#include <util.h>
 #include <parser.h>
+
+#include <ert/config/conf_util.h>
 
 
 /*

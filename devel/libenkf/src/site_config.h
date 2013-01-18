@@ -26,7 +26,7 @@ extern "C" {
 
 #include <stringlist.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <ext_joblist.h>
 #include <forward_model.h>

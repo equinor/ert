@@ -40,7 +40,7 @@
 #include <rsh_driver.h>
 #include <ext_joblist.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <enkf_config_node.h>
 #include <enkf_types.h>

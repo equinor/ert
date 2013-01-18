@@ -21,7 +21,7 @@
 
 #include <util.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <config_keys.h>
 #include <qc_config.h>

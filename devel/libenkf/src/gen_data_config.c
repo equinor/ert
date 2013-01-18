@@ -25,7 +25,7 @@
 #include <int_vector.h>
 #include <bool_vector.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <ert/ecl/ecl_util.h>
 

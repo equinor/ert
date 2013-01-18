@@ -104,16 +104,19 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+
 #include <set.h>
-#include <conf_data.h>
 #include <stringlist.h>
 
+#include <ert/config/conf_data.h>
 
-typedef struct conf_class_struct      	   conf_class_type;
-typedef struct conf_instance_struct   	   conf_instance_type;
-typedef struct conf_item_spec_struct  	   conf_item_spec_type;
-typedef struct conf_item_struct       	   conf_item_type;
-typedef struct conf_item_mutex_struct 	   conf_item_mutex_type;
+
+
+typedef struct conf_class_struct           conf_class_type;
+typedef struct conf_instance_struct        conf_instance_type;
+typedef struct conf_item_spec_struct       conf_item_spec_type;
+typedef struct conf_item_struct            conf_item_type;
+typedef struct conf_item_mutex_struct      conf_item_mutex_type;
 
 
 /** D E F A U L T   A L L O C / F R E E    F U N C T I O N S */

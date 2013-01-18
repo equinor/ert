@@ -34,8 +34,7 @@
 #include <local_driver.h>
 #include <queue_driver.h>
 
-
-#include <config.h>
+#include <ert/config/config.h>
 
 #include <site_config.h>
 #include "enkf_defaults.h"
