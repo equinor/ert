@@ -23,12 +23,14 @@
 #include <matrix.h>
 #include <matrix_blas.h>
 #include <stdio.h>
-#include <analysis_table.h>
-#include <analysis_module.h>
-/*#include <enkf_linalg.h>*/
+
 #include <stepwise.h>
-#include <fwd_step_enkf.h>
 #include <math.h>
+
+#include <ert/analysis/fwd_step_enkf.h>
+#include <ert/analysis/analysis_table.h>
+#include <ert/analysis/analysis_module.h>
+
 
 #define FWD_STEP_ENKF_TYPE_ID 765524
 

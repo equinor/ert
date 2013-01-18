@@ -7,7 +7,7 @@
 #include <matrix_blas.h>
 #include <util.h>
 
-#include <enkf_linalg.h>
+#include <ert/analysis/enkf_linalg.h>
 
 void enkf_linalg_genX3(matrix_type * X3 , const matrix_type * W , const matrix_type * D , const double * eig) {
   const int nrobs = matrix_get_rows( D );

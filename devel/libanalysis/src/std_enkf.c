@@ -25,10 +25,10 @@
 #include <matrix_blas.h>
 #include <rng.h>
 
-#include <analysis_module.h>
-#include <analysis_table.h>
-#include <enkf_linalg.h>
-#include <std_enkf.h>
+#include <ert/analysis/analysis_module.h>
+#include <ert/analysis/analysis_table.h>
+#include <ert/analysis/enkf_linalg.h>
+#include <ert/analysis/std_enkf.h>
 
 
 /*

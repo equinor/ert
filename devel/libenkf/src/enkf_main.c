@@ -53,9 +53,6 @@
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_io_config.h>
 
-#include <enkf_types.h>
-#include <enkf_config_node.h>
-#include <ecl_config.h>
 
 #include <job_queue.h>
 #include <local_driver.h>
@@ -67,6 +64,13 @@
 #include <history.h>
 #include <sched_file.h>
 
+#include <ert/analysis/analysis_module.h>
+#include <ert/analysis/analysis_table.h>
+#include <ert/analysis/enkf_linalg.h>
+
+#include <enkf_types.h>
+#include <enkf_config_node.h>
+#include <ecl_config.h>
 #include <enkf_sched.h>
 #include <obs_data.h>
 #include <meas_data.h>
@@ -75,11 +79,6 @@
 #include <enkf_fs.h>
 #include <enkf_main.h>
 #include <enkf_serialize.h>
-
-#include <analysis_module.h>
-#include <analysis_table.h>
-#include <enkf_linalg.h>
-
 #include <plot_config.h>
 #include <ensemble_config.h>
 #include <model_config.h>

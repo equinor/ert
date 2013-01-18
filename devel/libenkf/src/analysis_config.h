@@ -27,8 +27,11 @@
 
 #include <ert/config/config.h>
 
+#include <ert/analysis/analysis_module.h>
+
 #include <enkf_types.h>
-#include <analysis_module.h>
+
+
 
 
 
