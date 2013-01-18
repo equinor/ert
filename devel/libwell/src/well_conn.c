@@ -20,7 +20,7 @@
 
 #include <util.h>
 
-#include <ecl_kw.h>
+#include <ert/ecl/ecl_kw.h>
 
 #include <well_const.h>
 #include <well_conn.h>

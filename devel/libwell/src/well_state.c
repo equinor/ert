@@ -29,12 +29,13 @@
 #include <vector.h>
 #include <hash.h>
 #include <int_vector.h>
-#include <ecl_intehead.h>
-#include <ecl_file.h>
-#include <ecl_kw.h>
-#include <ecl_kw_magic.h>
-#include <ecl_util.h>
 #include <type_macros.h>
+
+#include <ert/ecl/ecl_intehead.h>
+#include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/ecl_kw_magic.h>
+#include <ert/ecl/ecl_util.h>
 
 #include <well_const.h>
 #include <well_conn.h>

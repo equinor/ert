@@ -24,8 +24,9 @@
 extern "C" {
 #endif
 
-#include <ecl_file.h>
-#include <ecl_grid.h>
+#include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_grid.h>
+
 #include <well_ts.h>
 
   typedef struct well_info_struct well_info_type;
