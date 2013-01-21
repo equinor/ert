@@ -24,7 +24,8 @@
 extern "C" {
 #endif
 
-#include <plot.h>
+#include <ert/plot/plot.h>
+
 #include <plot_config.h>
   
   char      * enkf_tui_plot_alloc_plot_file(const plot_config_type * plot_config , const char * case_name , const char * base_name);
