@@ -22,6 +22,8 @@
 
 #include <vector.h>
 #include <util.h>
+#include <int_vector.h>
+
 
 #include <ert/geometry/geo_polygon.h>
 #include <ert/geometry/geo_region.h>
@@ -36,7 +38,6 @@
 #include <local_dataset.h>
 #include <local_obsset.h>
 #include <local_context.h>
-#include <int_vector.h>
 #include <ensemble_config.h>
 #include <enkf_obs.h>
 #include "config_keys.h"
