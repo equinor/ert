@@ -27,10 +27,11 @@
 #include <msg.h>
 #include <util.h>
 #include <thread_pool.h>
-
-#include <job_queue.h>
-#include <queue_driver.h>
 #include <arg_pack.h>
+
+#include <ert/job_queue/job_queue.h>
+#include <ert/job_queue/queue_driver.h>
+
 
 
 #define JOB_QUEUE_START_SIZE 16

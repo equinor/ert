@@ -28,8 +28,8 @@ extern "C" {
 
 #include <ert/config/config.h>
 
-#include <ext_joblist.h>
-#include <forward_model.h>
+#include <ert/job_queue/ext_joblist.h>
+#include <ert/job_queue/forward_model.h>
 
 
 typedef struct site_config_struct site_config_type;

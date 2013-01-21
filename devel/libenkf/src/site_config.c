@@ -26,13 +26,13 @@
 #include <stringlist.h>
 #include <vector.h>
 
-#include <job_queue.h>
-#include <ext_job.h>
-#include <ext_joblist.h>
-#include <lsf_driver.h>
-#include <rsh_driver.h>
-#include <local_driver.h>
-#include <queue_driver.h>
+#include <ert/job_queue/job_queue.h>
+#include <ert/job_queue/ext_job.h>
+#include <ert/job_queue/ext_joblist.h>
+#include <ert/job_queue/lsf_driver.h>
+#include <ert/job_queue/rsh_driver.h>
+#include <ert/job_queue/local_driver.h>
+#include <ert/job_queue/queue_driver.h>
 
 #include <ert/config/config.h>
 

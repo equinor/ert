@@ -32,7 +32,7 @@
 
 #include <ert/config/config.h>
 
-#include <ext_job.h>
+#include <ert/job_queue/ext_job.h>
 
 /*
   About arguments

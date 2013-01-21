@@ -37,7 +37,7 @@
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_grid.h>
 
-#include <forward_model.h>
+#include <ert/job_queue/forward_model.h>
 
 #include <enkf_sched.h>
 #include <model_config.h>

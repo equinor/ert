@@ -36,9 +36,9 @@ extern "C" {
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_file.h>
 
-#include <forward_model.h>
-#include <ext_joblist.h>
-#include <job_queue.h>
+#include <ert/job_queue/forward_model.h>
+#include <ert/job_queue/ext_joblist.h>
+#include <ert/job_queue/job_queue.h>
 
 #include <model_config.h>
 #include <site_config.h>

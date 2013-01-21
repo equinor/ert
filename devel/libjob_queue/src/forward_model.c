@@ -26,9 +26,9 @@
 #include <vector.h> 
 #include <parser.h>
 
-#include <ext_job.h>
-#include <ext_joblist.h>
-#include <forward_model.h>
+#include <ert/job_queue/ext_job.h>
+#include <ert/job_queue/ext_joblist.h>
+#include <ert/job_queue/forward_model.h>
 
 /**
    This file implements a 'forward-model' object. I

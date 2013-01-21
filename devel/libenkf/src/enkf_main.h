@@ -36,8 +36,10 @@ extern "C" {
 
 #include <ert/sched/sched_file.h>
 
-#include <job_queue.h>
-#include <ext_joblist.h>
+#include <ert/job_queue/job_queue.h>
+#include <ert/job_queue/ext_joblist.h>
+#include <ert/job_queue/forward_model.h>
+
 
 #include <plot_config.h>
 #include <enkf_config_node.h>
@@ -47,7 +49,6 @@ extern "C" {
 #include <enkf_fs.h>
 #include <member_config.h>
 #include <enkf_obs.h>
-#include <forward_model.h>
 #include <misfit_ensemble.h>
 #include <analysis_config.h>
 #include <site_config.h>

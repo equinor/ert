@@ -49,10 +49,10 @@
 
 #include <ert/sched/sched_file.h>
 
-#include <forward_model.h>
-#include <job_queue.h>
-#include <queue_driver.h>
-#include <ext_joblist.h>
+#include <ert/job_queue/forward_model.h>
+#include <ert/job_queue/job_queue.h>
+#include <ert/job_queue/queue_driver.h>
+#include <ert/job_queue/ext_joblist.h>
 
 #include <enkf_node.h>
 #include <enkf_state.h>
