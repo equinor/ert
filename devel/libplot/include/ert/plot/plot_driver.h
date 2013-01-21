@@ -19,9 +19,11 @@
 #ifndef __PLOT_DRIVER_H__
 #define __PLOT_DRIVER_H__
 
-#include <plot_const.h>
-#include <plot_range.h>
 #include <double_vector.h>
+
+#include <ert/plot/plot_const.h>
+#include <ert/plot/plot_range.h>
+
 
 
 typedef struct plot_dataset_struct    plot_dataset_type;

@@ -33,10 +33,13 @@ extern "c" {
  * @{
  */
 #include <stdbool.h>
+
 #include <util.h>
+
 #include <plplot/plplot.h>
-#include <plot_const.h>
-#include <plot_dataset.h>
+
+#include <ert/plot/plot_const.h>
+#include <ert/plot/plot_dataset.h>
 
 
 typedef struct plot_struct plot_type;

@@ -31,8 +31,6 @@
 #include <block_obs.h>
 #include <field_config.h>
 #include <obs_vector.h>
-#include <plot.h>
-#include <plot_dataset.h>
 #include <enkf_tui_util.h>
 #include <ensemble_config.h>
 #include <msg.h>

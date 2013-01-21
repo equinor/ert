@@ -22,9 +22,9 @@
 extern "C" {
 #endif
 
-#include <plot_const.h>
-#include <plot_range.h>
-#include <plot_driver.h>
+#include <ert/plot/plot_const.h>
+#include <ert/plot/plot_range.h>
+#include <ert/plot/plot_driver.h>
 
 
 

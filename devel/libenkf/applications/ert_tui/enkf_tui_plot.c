@@ -34,11 +34,11 @@
 #include <path_fmt.h>
 #include <thread_pool.h>
 
-#include <plot.h>
-#include <plot_dataset.h> 
+#include <ert/plot/plot.h>
+#include <ert/plot/plot_dataset.h> 
 
-#include <ecl_rft_file.h>
-#include <ecl_sum.h>
+#include <ert/ecl/ecl_rft_file.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <enkf_main.h>
 #include <enkf_obs.h>
