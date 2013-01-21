@@ -19,7 +19,7 @@
 #ifndef __PLOT_DRIVER_H__
 #define __PLOT_DRIVER_H__
 
-#include <double_vector.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/plot/plot_const.h>
 #include <ert/plot/plot_range.h>

@@ -20,9 +20,9 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
-#include <int_vector.h>
-#include <util.h>
-#include <type_macros.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/config/config.h>
 

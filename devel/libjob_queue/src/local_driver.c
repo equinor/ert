@@ -24,8 +24,8 @@
 #include <pthread.h>
 #include <errno.h>
 
-#include <util.h>
-#include <arg_pack.h>
+#include <ert/util/util.h>
+#include <ert/util/arg_pack.h>
 
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/local_driver.h>

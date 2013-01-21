@@ -19,8 +19,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <hash.h>
-#include <vector.h>
+#include <ert/util/hash.h>
+#include <ert/util/vector.h>
 
 #include <ert/plot/plplot_driver.h>
 #include <ert/plot/plot.h>

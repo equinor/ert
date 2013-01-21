@@ -22,9 +22,9 @@
 #include <pthread.h>
 #include <dlfcn.h>
 
-#include <util.h>
-#include <hash.h>
-#include <stringlist.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
 
 
 #include <lsf/lsbatch.h>

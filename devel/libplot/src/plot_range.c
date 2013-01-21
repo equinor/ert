@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <util.h>
-#include <arg_pack.h>
+#include <ert/util/util.h>
+#include <ert/util/arg_pack.h>
 
 #include <plplot/plplot.h>
 #include <plplot/plplotP.h>

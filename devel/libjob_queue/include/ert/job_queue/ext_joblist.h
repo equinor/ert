@@ -23,9 +23,9 @@ extern "C" {
 #endif
 #include <stdbool.h>
 
-#include <hash.h>
-#include <stringlist.h>
-#include <subst_list.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/subst_list.h>
 
 #include <ert/job_queue/ext_job.h>
 

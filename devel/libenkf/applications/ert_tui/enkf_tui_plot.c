@@ -24,15 +24,15 @@
 #include <time.h>
 #include <ctype.h>
 
-#include <util.h>
-#include <menu.h>
-#include <arg_pack.h>
-#include <msg.h>
-#include <vector.h>
-#include <bool_vector.h>
-#include <double_vector.h>
-#include <path_fmt.h>
-#include <thread_pool.h>
+#include <ert/util/util.h>
+#include <ert/util/menu.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/msg.h>
+#include <ert/util/vector.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/double_vector.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/thread_pool.h>
 
 #include <ert/plot/plot.h>
 #include <ert/plot/plot_dataset.h> 

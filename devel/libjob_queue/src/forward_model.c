@@ -19,12 +19,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
 #include <ctype.h>
-#include <util.h>
-#include <subst_list.h>
-#include <vector.h> 
-#include <parser.h>
+
+#include <ert/util/util.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/vector.h> 
+#include <ert/util/parser.h>
 
 #include <ert/job_queue/ext_job.h>
 #include <ert/job_queue/ext_joblist.h>
