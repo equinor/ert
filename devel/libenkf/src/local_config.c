@@ -23,8 +23,8 @@
 #include <vector.h>
 #include <util.h>
 
-#include <geo_polygon.h>
-#include <geo_region.h>
+#include <ert/geometry/geo_polygon.h>
+#include <ert/geometry/geo_region.h>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_region.h>

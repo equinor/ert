@@ -23,7 +23,7 @@
 #include <util.h>
 #include <log.h>
 
-#include <geo_surface.h>
+#include <ert/geometry/geo_surface.h>
 
 #include <enkf_macros.h>
 #include <enkf_util.h>

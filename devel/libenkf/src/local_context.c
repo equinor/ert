@@ -21,9 +21,9 @@
 #include <util.h>
 #include <hash.h>
 
-#include <geo_polygon.h>
-#include <geo_surface.h>
-#include <geo_region.h>
+#include <ert/geometry/geo_polygon.h>
+#include <ert/geometry/geo_surface.h>
+#include <ert/geometry/geo_region.h>
 
 #include <ert/ecl/ecl_grid.h>
 

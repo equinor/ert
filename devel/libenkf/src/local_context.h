@@ -26,9 +26,9 @@ extern "C" {
   
 #include <stdbool.h>
 
-#include <geo_polygon.h>
-#include <geo_surface.h>
-#include <geo_region.h>  
+#include <ert/geometry/geo_polygon.h>
+#include <ert/geometry/geo_surface.h>
+#include <ert/geometry/geo_region.h>
 
 #include <ert/ecl/ecl_region.h>
 #include <ert/ecl/ecl_file.h>

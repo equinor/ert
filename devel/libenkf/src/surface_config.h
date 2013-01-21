@@ -23,8 +23,9 @@
 extern "C" {
 #endif
 
+#include <ert/geometry/geo_surface.h>
+
 #include <enkf_macros.h>
-#include <geo_surface.h>
 
   typedef struct surface_config_struct surface_config_type;
 

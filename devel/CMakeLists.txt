@@ -237,7 +237,7 @@ set( libplot_src_path         ${PROJECT_SOURCE_DIR}/libplot/src )
 
 include_directories( ${libert_util_build_path}) 
 include_directories( ${libert_util_src_path} )
-include_directories( ${libgeometry_src_path} )
+include_directories( ${libgeometry_src_path}/../include )
 
 add_subdirectory( libert_util )
 add_subdirectory( libgeometry )
