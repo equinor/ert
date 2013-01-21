@@ -12,12 +12,7 @@ add_library( enkf  ${LIBRARY_TYPE} ${source_files} )
 target_link_libraries( enkf ecl geometry sched analysis rms plot config job_queue )
 
 #-----------------------------------------------------------------
-if (ENKF_INSTALL_PREFIX)
-   install(TARGETS enkf DESTINATION ${ENKF_INSTALL_PREFIX}/lib)
-   install(FILES ${header_files} DESTINATION ${ENKF_INSTALL_PREFIX}/include)
-else()
-   install(TARGETS enkf DESTINATION lib)
-   install(FILES ${header_files} DESTINATION include)
-endif()        
+install(TARGETS enkf DESTINATION lib)
+install(FILES ${header_files} DESTINATION include)
 
 
