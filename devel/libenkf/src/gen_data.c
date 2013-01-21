@@ -33,14 +33,14 @@
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_util.h>
 
-#include <enkf_serialize.h>
-#include <enkf_types.h>
-#include <enkf_macros.h>
-#include <enkf_util.h>
-#include <gen_data_config.h>
-#include <gen_data.h>
-#include <gen_data_common.h>
-#include <gen_common.h>
+#include <ert/enkf/enkf_serialize.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_macros.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/gen_data_config.h>
+#include <ert/enkf/gen_data.h>
+#include <ert/enkf/gen_data_common.h>
+#include <ert/enkf/gen_common.h>
 
 /**
    The file implements a general data type which can be used to update

@@ -39,12 +39,12 @@
 
 #include <ert/job_queue/forward_model.h>
 
-#include <enkf_sched.h>
-#include <model_config.h>
-#include <enkf_types.h>
-#include <fs_types.h>
-#include <enkf_defaults.h>
-#include "config_keys.h"
+#include <ert/enkf/enkf_sched.h>
+#include <ert/enkf/model_config.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/fs_types.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/config_keys.h>
 
 /**
    This struct contains configuration which is specific to this

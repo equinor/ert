@@ -23,13 +23,13 @@
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
 
-#include <enkf_util.h>
-#include <enkf_macros.h>
-#include <enkf_defaults.h>
-#include <gen_kw_common.h>
-#include <gen_kw_config.h>
-#include <trans_func.h>
-#include "config_keys.h"
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/enkf_macros.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/gen_kw_common.h>
+#include <ert/enkf/gen_kw_config.h>
+#include <ert/enkf/trans_func.h>
+#include <ert/enkf/config_keys.h>
 
 #define GEN_KW_CONFIG_TYPE_ID     550761
 #define GEN_KW_PARAMETER_TYPE_ID  886201

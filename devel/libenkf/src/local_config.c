@@ -31,16 +31,16 @@
 #include <ert/ecl/ecl_region.h>
 
 
-#include <local_ministep.h>
-#include <local_updatestep.h>
-#include <local_config.h>
-#include <local_dataset.h>
-#include <local_obsset.h>
-#include <local_context.h>
-#include <ensemble_config.h>
-#include <enkf_obs.h>
-#include "config_keys.h"
-#include "enkf_defaults.h"
+#include <ert/enkf/local_ministep.h>
+#include <ert/enkf/local_updatestep.h>
+#include <ert/enkf/local_config.h>
+#include <ert/enkf/local_dataset.h>
+#include <ert/enkf/local_obsset.h>
+#include <ert/enkf/local_context.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 /******************************************************************/
 /*
 

@@ -28,13 +28,12 @@
 #include <ert/util/rng.h>
 #include <ert/util/subst_list.h>
 
-
-#include <enkf_types.h>
-#include <enkf_util.h>
-#include <enkf_macros.h>
-#include <gen_kw_common.h>
-#include <gen_kw_config.h>
-#include <gen_kw.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/enkf_macros.h>
+#include <ert/enkf/gen_kw_common.h>
+#include <ert/enkf/gen_kw_config.h>
+#include <ert/enkf/gen_kw.h>
 
 
 GET_DATA_SIZE_HEADER(gen_kw);

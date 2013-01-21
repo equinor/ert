@@ -39,15 +39,15 @@
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/smspec_node.h>
 
-#include <obs_vector.h>
-#include <enkf_fs.h>
-#include <summary_obs.h>
-#include <block_obs.h>
-#include <gen_obs.h>
-#include <ensemble_config.h>
-#include <active_list.h>
-#include <enkf_state.h>
-#include "enkf_defaults.h"
+#include <ert/enkf/obs_vector.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/summary_obs.h>
+#include <ert/enkf/block_obs.h>
+#include <ert/enkf/gen_obs.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/active_list.h>
+#include <ert/enkf/enkf_state.h>
+#include <ert/enkf/enkf_defaults.h>
 
 #define OBS_VECTOR_TYPE_ID 120086
 

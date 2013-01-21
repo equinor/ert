@@ -29,13 +29,13 @@
 
 #include <ert/ecl/ecl_util.h>
 
-#include <enkf_macros.h>
-#include <gen_data_config.h>
-#include <enkf_types.h>
-#include <gen_data_common.h>
-#include <enkf_fs.h>
-#include "config_keys.h"
-#include "enkf_defaults.h"
+#include <ert/enkf/enkf_macros.h>
+#include <ert/enkf/gen_data_config.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/gen_data_common.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 /**
    About deactivating by the forward model

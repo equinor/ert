@@ -45,27 +45,26 @@
 
 #include <ert/config/config.h>
 
-#include <enkf_config_node.h>
-#include <enkf_types.h>
-#include <field_config.h>
-#include <gen_data_config.h>
-#include <surface_config.h>
-#include <meas_data.h>
-#include <enkf_types.h>
-#include <gen_kw_config.h>
-#include <summary.h>
-#include <summary_config.h>
-#include <gen_data.h>
-#include <gen_kw_config.h>
-#include <gen_data_config.h>
-#include <ensemble_config.h>
-#include <gen_data_config.h>
-#include <field_trans.h>
-
-#include <enkf_obs.h>
-#include <ecl_config.h>
-#include "config_keys.h"
-#include "enkf_defaults.h"
+#include <ert/enkf/enkf_config_node.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/gen_data_config.h>
+#include <ert/enkf/surface_config.h>
+#include <ert/enkf/meas_data.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/gen_kw_config.h>
+#include <ert/enkf/summary.h>
+#include <ert/enkf/summary_config.h>
+#include <ert/enkf/gen_data.h>
+#include <ert/enkf/gen_kw_config.h>
+#include <ert/enkf/gen_data_config.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/gen_data_config.h>
+#include <ert/enkf/field_trans.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/ecl_config.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 
 struct ensemble_config_struct {

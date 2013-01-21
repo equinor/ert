@@ -35,7 +35,7 @@
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
 
-#include <field_trans.h>
+#include <ert/enkf/field_trans.h>
 /*****************************************************************/
 
 struct field_trans_table_struct {

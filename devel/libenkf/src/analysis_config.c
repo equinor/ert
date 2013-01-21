@@ -29,10 +29,10 @@
 
 #include <ert/analysis/analysis_module.h>
 
-#include <enkf_types.h>
-#include <analysis_config.h>
-#include <enkf_defaults.h>
-#include "config_keys.h"
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/analysis_config.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/config_keys.h>
 
 
 struct analysis_config_struct {

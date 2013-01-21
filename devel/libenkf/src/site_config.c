@@ -36,9 +36,9 @@
 
 #include <ert/config/config.h>
 
-#include <site_config.h>
-#include "enkf_defaults.h"
-#include "config_keys.h"
+#include <ert/enkf/site_config.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/config_keys.h>
 
 /**
    This struct contains information which is specific to the site

@@ -52,7 +52,6 @@
 #include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_io_config.h>
 
-
 #include <ert/job_queue/job_queue.h>
 #include <ert/job_queue/local_driver.h>
 #include <ert/job_queue/rsh_driver.h>
@@ -67,36 +66,36 @@
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
 
-#include <enkf_types.h>
-#include <enkf_config_node.h>
-#include <ecl_config.h>
-#include <enkf_sched.h>
-#include <obs_data.h>
-#include <meas_data.h>
-#include <enkf_state.h>
-#include <enkf_obs.h>
-#include <enkf_fs.h>
-#include <enkf_main.h>
-#include <enkf_serialize.h>
-#include <plot_config.h>
-#include <ensemble_config.h>
-#include <model_config.h>
-#include <qc_config.h>
-#include <site_config.h>
-#include <active_config.h>
-#include <enkf_analysis.h>
-#include <local_ministep.h>
-#include <local_updatestep.h>
-#include <local_config.h>
-#include <local_dataset.h>
-#include <misfit_ensemble.h>
-#include <ert_template.h>
-#include <rng_config.h>
-#include <enkf_plot_data.h>
-#include <ert_report_list.h>
-#include <ranking_table.h>
-#include "enkf_defaults.h"
-#include "config_keys.h"
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_config_node.h>
+#include <ert/enkf/ecl_config.h>
+#include <ert/enkf/enkf_sched.h>
+#include <ert/enkf/obs_data.h>
+#include <ert/enkf/meas_data.h>
+#include <ert/enkf/enkf_state.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/enkf_main.h>
+#include <ert/enkf/enkf_serialize.h>
+#include <ert/enkf/plot_config.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/model_config.h>
+#include <ert/enkf/qc_config.h>
+#include <ert/enkf/site_config.h>
+#include <ert/enkf/active_config.h>
+#include <ert/enkf/enkf_analysis.h>
+#include <ert/enkf/local_ministep.h>
+#include <ert/enkf/local_updatestep.h>
+#include <ert/enkf/local_config.h>
+#include <ert/enkf/local_dataset.h>
+#include <ert/enkf/misfit_ensemble.h>
+#include <ert/enkf/ert_template.h>
+#include <ert/enkf/rng_config.h>
+#include <ert/enkf/enkf_plot_data.h>
+#include <ert/enkf/ert_report_list.h>
+#include <ert/enkf/ranking_table.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/config_keys.h>
 
 /**/
 

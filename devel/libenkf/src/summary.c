@@ -28,13 +28,13 @@
 #include <ert/ecl/ecl_smspec.h> 
 #include <ert/ecl/ecl_file.h>
 
-#include <enkf_types.h>
-#include <enkf_util.h>
-#include <enkf_serialize.h>
-#include <enkf_macros.h>
-#include <enkf_util.h>
-#include <summary.h>
-#include <summary_config.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/enkf_serialize.h>
+#include <ert/enkf/enkf_macros.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/summary.h>
+#include <ert/enkf/summary_config.h>
 
 /*****************************************************************/
 

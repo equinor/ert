@@ -23,7 +23,7 @@
 #include <ert/util/hash.h>
 #include <ert/util/type_macros.h>
 
-#include <misfit_member.h>
+#include <ert/enkf/misfit_member.h>
 
 
 #define MISFIT_MEMBER_TYPE_ID         541066

@@ -30,18 +30,18 @@
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/smspec_node.h>
 
-#include <enkf_util.h>
-#include <field.h>
-#include <summary.h>
-#include <field_config.h>
-#include <container.h>
-#include <container_config.h>
-#include <obs_data.h>
-#include <meas_data.h>
-#include <field_config.h>
-#include <active_list.h>
-#include <block_obs.h> 
-#include <enkf_defaults.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/field.h>
+#include <ert/enkf/summary.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/container.h>
+#include <ert/enkf/container_config.h>
+#include <ert/enkf/obs_data.h>
+#include <ert/enkf/meas_data.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/active_list.h>
+#include <ert/enkf/block_obs.h> 
+#include <ert/enkf/enkf_defaults.h>
 
 #define BLOCK_OBS_TYPE_ID 661098
 #define POINT_OBS_TYPE_ID 778196

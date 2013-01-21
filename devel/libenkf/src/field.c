@@ -35,9 +35,9 @@
 #include <ert/rms/rms_type.h>
 #include <ert/rms/rms_util.h>
 
-#include <field.h>
-#include <field_config.h>
-#include <enkf_serialize.h>
+#include <ert/enkf/field.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/enkf_serialize.h>
 
 
 GET_DATA_SIZE_HEADER(field);

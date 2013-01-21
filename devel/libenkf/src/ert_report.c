@@ -27,7 +27,7 @@
 #include <ert/util/latex.h>
 #include <ert/util/subst_list.h>
 
-#include <ert_report.h>
+#include <ert/enkf/ert_report.h>
 
 /*
   The LATEX_PATH_FMT is a format string for where the latex

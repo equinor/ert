@@ -23,9 +23,9 @@
 
 #include <ert/ecl/ecl_kw.h>
 
-#include <ecl_static_kw.h>
-#include <enkf_util.h>
-#include <enkf_macros.h>
+#include <ert/enkf/ecl_static_kw.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/enkf_macros.h>
 
 
 

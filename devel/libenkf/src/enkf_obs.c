@@ -29,17 +29,17 @@
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
 
-#include <summary_obs.h>
-#include <block_obs.h>
-#include <enkf_fs.h>
-#include <obs_vector.h>
-#include <enkf_state.h>
-#include <local_ministep.h>
-#include <local_config.h>
-#include <meas_data.h>
-#include <enkf_obs.h>
-#include "enkf_defaults.h"
-#include "config_keys.h"
+#include <ert/enkf/summary_obs.h>
+#include <ert/enkf/block_obs.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/obs_vector.h>
+#include <ert/enkf/enkf_state.h>
+#include <ert/enkf/local_ministep.h>
+#include <ert/enkf/local_config.h>
+#include <ert/enkf/meas_data.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/config_keys.h>
 
 /*
 

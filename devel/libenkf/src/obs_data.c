@@ -71,9 +71,9 @@ Matrices: S, D, E and various internal variables.
 #include <ert/util/matrix.h>
 #include <ert/util/rng.h>
 
-#include <obs_data.h>
-#include <meas_data.h>
-#include <enkf_util.h>
+#include <ert/enkf/obs_data.h>
+#include <ert/enkf/meas_data.h>
+#include <ert/enkf/enkf_util.h>
 
 #define OBS_BLOCK_TYPE_ID 995833
 

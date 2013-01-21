@@ -29,21 +29,21 @@
 
 #include <ert/ecl/ecl_grid.h>
 
-#include <enkf_macros.h>
-#include <enkf_node.h>
-#include <field_config.h>
-#include <gen_data_config.h>
-#include <gen_kw_config.h>
-#include <summary_config.h>
-#include <surface_config.h>
-#include <container_config.h>
-#include <enkf_obs.h>
-#include <gen_obs.h>
-#include <enkf_config_node.h>
-#include <enkf_fs.h>
-#include <enkf_types.h>
-#include "enkf_defaults.h"
-#include "config_keys.h"
+#include <ert/enkf/enkf_macros.h>
+#include <ert/enkf/enkf_node.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/gen_data_config.h>
+#include <ert/enkf/gen_kw_config.h>
+#include <ert/enkf/summary_config.h>
+#include <ert/enkf/surface_config.h>
+#include <ert/enkf/container_config.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/gen_obs.h>
+#include <ert/enkf/enkf_config_node.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/config_keys.h>
 
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 

@@ -34,11 +34,10 @@
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_io_config.h>
 
-#include <enkf_util.h>
-#include <ecl_config.h>
-
-#include "config_keys.h"
-#include "enkf_defaults.h"
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/ecl_config.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 /**
   This file implements a struct which holds configuration information

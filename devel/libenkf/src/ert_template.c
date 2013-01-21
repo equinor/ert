@@ -23,9 +23,9 @@
 #include <ert/util/util.h>
 #include <ert/util/subst_list.h>
 
-#include <ert_template.h>
-#include "config_keys.h"
-#include "enkf_defaults.h"
+#include <ert/enkf/ert_template.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 
 #define ERT_TEMPLATE_TYPE_ID  7731963

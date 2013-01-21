@@ -1,6 +1,4 @@
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
-include_directories( ${libplot_src_path} )
 include_directories( ${PLPLOT_HEADER} )
 
 set( SITE_CONFIG_FILE /project/res/etc/ERT/site-config CACHE FILEPATH "Path to global ERT Configuration file")

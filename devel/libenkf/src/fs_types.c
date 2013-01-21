@@ -21,7 +21,7 @@
 
 #include <ert/util/util.h>
 
-#include <fs_types.h>
+#include <ert/enkf/fs_types.h>
 
 
 

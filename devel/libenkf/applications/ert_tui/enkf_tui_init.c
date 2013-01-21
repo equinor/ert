@@ -26,15 +26,16 @@
 #include <ert/util/menu.h>
 #include <ert/util/msg.h>
 
-#include <enkf_main.h>
-#include <enkf_sched.h>
-#include <enkf_types.h>
+#include <ert/enkf/enkf_main.h>
+#include <ert/enkf/enkf_sched.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_state.h>
+#include <ert/enkf/enkf_node.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/ensemble_config.h>
+
 #include <enkf_tui_util.h>
 #include <enkf_tui_init.h>
-#include <enkf_state.h>
-#include <enkf_node.h>
-#include <enkf_fs.h>
-#include <ensemble_config.h>
 
 
 

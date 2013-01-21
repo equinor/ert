@@ -18,8 +18,8 @@
 
 #include <ert/util/util.h>
 
-#include <fs_types.h>
-#include <fs_driver.h>
+#include <ert/enkf/fs_types.h>
+#include <ert/enkf/fs_driver.h>
 
 /* 
    The underlying base types (abstract - with no accompanying

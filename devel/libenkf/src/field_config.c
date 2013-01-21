@@ -29,13 +29,13 @@
 #include <ert/rms/rms_file.h>
 #include <ert/rms/rms_util.h>
 
-#include <enkf_types.h>
-#include <field_config.h>
-#include <enkf_macros.h>
-#include <field_trans.h>
-#include <field_common.h>
-#include "config_keys.h"  
-#include "enkf_defaults.h"
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/enkf_macros.h>
+#include <ert/enkf/field_trans.h>
+#include <ert/enkf/field_common.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 /**
    About transformations and truncations

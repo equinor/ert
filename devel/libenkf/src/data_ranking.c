@@ -29,11 +29,11 @@
 #include <ert/util/buffer.h>
 #include <ert/util/type_macros.h>
 
-#include <enkf_obs.h>
-#include <enkf_fs.h>
-#include <enkf_util.h>
-#include <ranking_common.h>
-#include <data_ranking.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/ranking_common.h>
+#include <ert/enkf/data_ranking.h>
 
 
 #define DATA_RANKING_TYPE_ID 71420672

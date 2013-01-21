@@ -25,7 +25,7 @@
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
 
-#include <trans_func.h>
+#include <ert/enkf/trans_func.h>
 
 
 

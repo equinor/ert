@@ -24,12 +24,11 @@
 #include <ert/util/path_fmt.h>
 #include <ert/util/subst_list.h>
 
-#include <ecl_config.h>
-
-#include <member_config.h>
-#include <enkf_fs.h>
-#include <enkf_types.h>
-#include <ensemble_config.h>
+#include <ert/enkf/ecl_config.h>
+#include <ert/enkf/member_config.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/ensemble_config.h>
 
 
 /**

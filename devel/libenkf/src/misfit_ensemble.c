@@ -28,12 +28,12 @@
 #include <ert/util/msg.h>
 #include <ert/util/buffer.h>
 
-#include <enkf_obs.h>
-#include <enkf_fs.h>
-#include <enkf_util.h>
-#include <misfit_ensemble.h>
-#include <misfit_member.h>
-#include <misfit_ts.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/misfit_ensemble.h>
+#include <ert/enkf/misfit_member.h>
+#include <ert/enkf/misfit_ts.h>
 
 
 /**

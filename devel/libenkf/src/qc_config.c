@@ -23,8 +23,8 @@
 
 #include <ert/config/config.h>
 
-#include <config_keys.h>
-#include <qc_config.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/qc_config.h>
 
 
 struct qc_config_struct {

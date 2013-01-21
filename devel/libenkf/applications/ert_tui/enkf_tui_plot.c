@@ -40,21 +40,21 @@
 #include <ert/ecl/ecl_rft_file.h>
 #include <ert/ecl/ecl_sum.h>
 
-#include <enkf_main.h>
-#include <enkf_obs.h>
-#include <block_obs.h>
-#include <gen_obs.h>
-#include <field_config.h>
-#include <obs_vector.h>
-#include <ensemble_config.h>
-#include <enkf_state.h>
-#include <gen_kw_config.h>
-#include <enkf_defaults.h>
-#include <plot_config.h>
-#include <member_config.h>
-#include <enkf_plot_data.h>
-#include <time_map.h>
-#include <ert_report_list.h>
+#include <ert/enkf/enkf_main.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/block_obs.h>
+#include <ert/enkf/gen_obs.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/obs_vector.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/enkf_state.h>
+#include <ert/enkf/gen_kw_config.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/plot_config.h>
+#include <ert/enkf/member_config.h>
+#include <ert/enkf/enkf_plot_data.h>
+#include <ert/enkf/time_map.h>
+#include <ert/enkf/ert_report_list.h>
 
 #include <ert_tui_const.h>
 #include <enkf_tui_util.h>
@@ -63,6 +63,7 @@
 #include <enkf_tui_plot.h>
 #include <enkf_tui_fs.h>
 #include <enkf_tui_help.h>
+
 /**
    The final plot path consists of three parts: 
 

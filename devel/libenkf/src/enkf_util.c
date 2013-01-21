@@ -27,8 +27,8 @@
 
 #include <ert/ecl/ecl_util.h>
 
-#include <enkf_util.h>
-#include <enkf_defaults.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/enkf_defaults.h>
 
 
 

@@ -28,11 +28,11 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/enkf_linalg.h>
 
-#include <meas_data.h>
-#include <obs_data.h>
-#include <analysis_config.h>
-#include <enkf_util.h>
-#include <enkf_analysis.h>
+#include <ert/enkf/meas_data.h>
+#include <ert/enkf/obs_data.h>
+#include <ert/enkf/analysis_config.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/enkf_analysis.h>
 
 
 

@@ -33,16 +33,16 @@
 #include <ert/util/stringlist.h>
 #include <ert/util/arg_pack.h>
 
-#include <block_fs_driver.h>
-#include <enkf_fs.h>
-#include <enkf_defaults.h>
-#include <fs_driver.h>
-#include <fs_types.h>
-#include <ecl_static_kw.h>
-#include <plain_driver.h>
-#include <gen_data.h>
-#include <time_map.h>
-#include <misfit_ensemble.h>
+#include <ert/enkf/block_fs_driver.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/fs_driver.h>
+#include <ert/enkf/fs_types.h>
+#include <ert/enkf/ecl_static_kw.h>
+#include <ert/enkf/plain_driver.h>
+#include <ert/enkf/gen_data.h>
+#include <ert/enkf/time_map.h>
+#include <ert/enkf/misfit_ensemble.h>
 
 
 /**

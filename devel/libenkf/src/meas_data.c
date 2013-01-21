@@ -32,7 +32,7 @@
 #include <ert/util/set.h>
 #include <ert/util/vector.h>
 
-#include <meas_data.h>
+#include <ert/enkf/meas_data.h>
 
 #define MEAS_BLOCK_TYPE_ID 661936407
 

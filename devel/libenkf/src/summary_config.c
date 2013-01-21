@@ -26,10 +26,10 @@
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_smspec.h>
 
-#include <enkf_types.h>
-#include <enkf_util.h>
-#include <summary_config.h>
-#include <enkf_macros.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_util.h>
+#include <ert/enkf/summary_config.h>
+#include <ert/enkf/enkf_macros.h>
 
 
 #define SUMMARY_CONFIG_TYPE_ID 63106

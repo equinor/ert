@@ -26,9 +26,9 @@
 #include <ert/util/vector.h>
 #include <ert/util/parser.h>
 
-#include <enkf_types.h>
-#include <enkf_sched.h>
-#include <enkf_defaults.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_sched.h>
+#include <ert/enkf/enkf_defaults.h>
 
 /**
    How long is the simulation?

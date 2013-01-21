@@ -20,10 +20,10 @@
 #include <ert/util/vector.h>
 #include <ert/util/type_macros.h>
 
-#include <container_config.h>
-#include <container.h>
-#include <enkf_types.h>
-#include <enkf_node.h>
+#include <ert/enkf/container_config.h>
+#include <ert/enkf/container.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_node.h>
 
 typedef struct container_struct {
   int                          __type_id;       

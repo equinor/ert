@@ -24,10 +24,10 @@
 #include <ert/util/path_fmt.h>
 #include <ert/util/buffer.h>
 
-#include <fs_driver.h>
-#include <plain_driver.h>
-#include <enkf_node.h>
-#include <fs_types.h>
+#include <ert/enkf/fs_driver.h>
+#include <ert/enkf/plain_driver.h>
+#include <ert/enkf/enkf_node.h>
+#include <ert/enkf/fs_types.h>
 
 
 /**

@@ -54,22 +54,22 @@
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/ext_joblist.h>
 
-#include <enkf_node.h>
-#include <enkf_state.h>
-#include <enkf_types.h>
-#include <ecl_static_kw.h>
-#include <field.h>
-#include <field_config.h>
-#include <gen_kw.h>
-#include <summary.h>
-#include <enkf_fs.h>
-#include <ensemble_config.h>
-#include <model_config.h>
-#include <site_config.h>
-#include <ecl_config.h>
-#include <ert_template.h>
-#include <member_config.h>
-#include <enkf_defaults.h>
+#include <ert/enkf/enkf_node.h>
+#include <ert/enkf/enkf_state.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/ecl_static_kw.h>
+#include <ert/enkf/field.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/gen_kw.h>
+#include <ert/enkf/summary.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/model_config.h>
+#include <ert/enkf/site_config.h>
+#include <ert/enkf/ecl_config.h>
+#include <ert/enkf/ert_template.h>
+#include <ert/enkf/member_config.h>
+#include <ert/enkf/enkf_defaults.h>
 
 #define  ENKF_STATE_TYPE_ID 78132
 

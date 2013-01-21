@@ -24,9 +24,9 @@
 
 #include <ert/config/config.h>
 
-#include <rng_config.h>
-#include <config_keys.h>
-#include <enkf_defaults.h>
+#include <ert/enkf/rng_config.h>
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 
 struct rng_config_struct {

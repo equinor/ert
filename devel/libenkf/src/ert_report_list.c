@@ -30,9 +30,9 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert_report.h>
-#include <ert_report_list.h>
-#include <config_keys.h>
+#include <ert/enkf/ert_report.h>
+#include <ert/enkf/ert_report_list.h>
+#include <ert/enkf/config_keys.h>
 
 #define WELL_LIST_TAG   "$WELL_LIST"
 #define GROUP_LIST_TAG  "$GROUP_LIST"
