@@ -19,7 +19,8 @@
 #include <stdbool.h>
 
 #include <ert/config/config.h>
-#include <ext_cmd.h>
+
+#include <ert/job_queue/ext_cmd.h>
 
 
 

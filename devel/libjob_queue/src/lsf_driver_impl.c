@@ -19,14 +19,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <queue_driver.h>
-#include <lsf_driver.h>
+#include <pthread.h>
+#include <dlfcn.h>
+
 #include <util.h>
 #include <hash.h>
-#include <pthread.h>
 #include <stringlist.h>
+
+
 #include <lsf/lsbatch.h>
-#include <dlfcn.h>
+
+#include <ert/job_queue/queue_driver.h>
+#include <ert/job_queue/lsf_driver.h>
 
 
 

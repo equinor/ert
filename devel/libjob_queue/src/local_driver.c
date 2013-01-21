@@ -27,8 +27,8 @@
 #include <util.h>
 #include <arg_pack.h>
 
-#include <queue_driver.h>
-#include <local_driver.h>
+#include <ert/job_queue/queue_driver.h>
+#include <ert/job_queue/local_driver.h>
 
 
 
