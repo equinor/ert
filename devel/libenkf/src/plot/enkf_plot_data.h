@@ -26,7 +26,7 @@ extern "C" {
 #include <stdbool.h>
 #include <time.h>
 
-#include <bool_vector.h>
+#include <ert/util/bool_vector.h>
   
 #include <enkf_config_node.h>
 #include <enkf_fs.h>

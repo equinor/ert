@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <matrix.h>
-#include <matrix_lapack.h>
-#include <matrix_blas.h>
-#include <util.h>
+#include <ert/util/matrix.h>
+#include <ert/util/matrix_lapack.h>
+#include <ert/util/matrix_blas.h>
+#include <ert/util/util.h>
 
 #include <ert/analysis/enkf_linalg.h>
 

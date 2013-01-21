@@ -17,7 +17,7 @@
 */
 
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <ert/geometry/geo_surface.h>
 

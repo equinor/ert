@@ -21,10 +21,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <enkf_types.h>
-#include <arg_pack.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+#include <ert/util/arg_pack.h>
+
+#include <enkf_types.h>
 
 
 typedef struct trans_func_struct  trans_func_type;

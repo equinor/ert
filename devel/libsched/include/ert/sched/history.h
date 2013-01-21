@@ -26,8 +26,8 @@ extern "C" {
 #include <stdio.h>
 #include <time.h>
 
-#include <bool_vector.h>
-#include <double_vector.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
 

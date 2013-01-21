@@ -6,8 +6,8 @@ extern "C" {
 #endif
 
 
-#include <matrix.h>
-#include <rng.h>
+#include <ert/util/matrix.h>
+#include <ert/util/rng.h>
 
 
   typedef void (analysis_updateA_ftype) (void * module_data , 

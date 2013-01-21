@@ -20,10 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <vector.h>
-#include <util.h>
-#include <int_vector.h>
-
+#include <ert/util/vector.h>
+#include <ert/util/util.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/geometry/geo_polygon.h>
 #include <ert/geometry/geo_region.h>

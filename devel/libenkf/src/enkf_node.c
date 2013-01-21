@@ -21,12 +21,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <util.h>
-#include <buffer.h>
-#include <msg.h>
-#include <rng.h>
-#include <vector.h>
-#include <path_fmt.h>
+#include <ert/util/util.h>
+#include <ert/util/buffer.h>
+#include <ert/util/msg.h>
+#include <ert/util/rng.h>
+#include <ert/util/vector.h>
+#include <ert/util/path_fmt.h>
 
 #include <enkf_node.h>
 #include <enkf_config_node.h>

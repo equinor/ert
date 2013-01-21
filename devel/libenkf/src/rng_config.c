@@ -16,13 +16,13 @@
    for more details. 
 */
 
-#include <mzran.h>
-#include <util.h>
 #include <stdlib.h>
 
-#include <ert/config/config.h>
+#include <ert/util/mzran.h>
+#include <ert/util/util.h>
+#include <ert/util/rng.h>
 
-#include <rng.h>
+#include <ert/config/config.h>
 
 #include <rng_config.h>
 #include <config_keys.h>

@@ -24,11 +24,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <util.h>
-#include <hash.h>
-#include <stringlist.h>
-#include <subst_list.h>
-#include <parser.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/parser.h>
 
 #include <ert/config/config.h>
 

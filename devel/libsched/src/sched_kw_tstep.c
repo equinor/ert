@@ -20,8 +20,8 @@
 #include <string.h>
 #include <time.h>
 
-#include <double_vector.h>
-#include <util.h>
+#include <ert/util/double_vector.h>
+#include <ert/util/util.h>
 
 #include <ert/sched/sched_util.h>
 #include <ert/sched/sched_kw_tstep.h>

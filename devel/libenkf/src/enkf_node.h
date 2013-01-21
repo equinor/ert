@@ -21,12 +21,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <arg_pack.h>
-#include <buffer.h>
-#include <msg.h>
-#include <matrix.h>
-#include <rng.h>
-#include <hash.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/buffer.h>
+#include <ert/util/msg.h>
+#include <ert/util/matrix.h>
+#include <ert/util/rng.h>
+#include <ert/util/hash.h>
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_file.h>

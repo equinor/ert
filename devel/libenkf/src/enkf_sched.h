@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <stringlist.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/sched/sched_file.h>
 

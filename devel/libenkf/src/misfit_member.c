@@ -19,9 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <util.h>
-#include <hash.h>
-#include <type_macros.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/type_macros.h>
 
 #include <misfit_member.h>
 

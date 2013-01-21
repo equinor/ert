@@ -20,9 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include <hash.h>
-#include <vector.h>
-#include <util.h>
+
+#include <ert/util/hash.h>
+#include <ert/util/vector.h>
+#include <ert/util/util.h>
 
 #include <ert/rms/rms_type.h>
 #include <ert/rms/rms_util.h>

@@ -20,12 +20,12 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <stringlist.h>
-#include <util.h>
-#include <vector.h>
-#include <buffer.h>
-#include <int_vector.h>
-#include <double_vector.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
+#include <ert/util/vector.h>
+#include <ert/util/buffer.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/sched/sched_kw_wconinje.h>
 #include <ert/sched/sched_util.h>

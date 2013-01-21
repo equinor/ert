@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/lsf_driver.h>

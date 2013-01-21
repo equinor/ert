@@ -23,9 +23,9 @@ extern "C" {
 #endif
 #include <stdbool.h>
 
-#include <stringlist.h>
-#include <util.h>
-#include <bool_vector.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
+#include <ert/util/bool_vector.h>
 
 #include <enkf_fs_type.h>
 #include <enkf_types.h>

@@ -21,8 +21,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <hash.h>
 #include <time.h>
+
+#include <ert/util/hash.h>
 
 #include <ert/sched/sched_macros.h>
 

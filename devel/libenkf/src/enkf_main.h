@@ -24,15 +24,15 @@ extern "C" {
 
 #include <stdbool.h>
 
-#include <util.h>
-#include <stringlist.h>
-#include <set.h>
-#include <subst_list.h>
-#include <log.h>  
-#include <bool_vector.h>
-#include <int_vector.h>
-#include <matrix.h>
-#include <path_fmt.h>
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/set.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/log.h>  
+#include <ert/util/bool_vector.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/matrix.h>
+#include <ert/util/path_fmt.h>
 
 #include <ert/sched/sched_file.h>
 

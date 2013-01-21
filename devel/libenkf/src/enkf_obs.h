@@ -23,8 +23,8 @@ extern "C" {
 #endif
 #include <time.h>
 
-#include <hash.h>
-#include <stringlist.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/sched/history.h>
 

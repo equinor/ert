@@ -19,7 +19,7 @@
 #ifndef __LOCAL_CONFIG_H__
 #define __LOCAL_CONFIG_H__
 
-#include <stringlist.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/ecl/ecl_grid.h>
 

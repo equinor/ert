@@ -23,8 +23,9 @@
 extern "C" {
 #endif
 #include <stdio.h>
-#include <type_macros.h>
 #include <stdbool.h>
+
+#include <ert/util/type_macros.h>
 
 #include <enkf_fs.h>
 

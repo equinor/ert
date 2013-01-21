@@ -20,8 +20,8 @@
 #include <math.h>
 #include <string.h>
 
-#include <util.h>
-#include <log.h>
+#include <ert/util/util.h>
+#include <ert/util/log.h>
 
 #include <ert/geometry/geo_surface.h>
 

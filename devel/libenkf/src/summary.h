@@ -18,8 +18,7 @@
 
 #ifndef __SUMMARY_H__
 #define __SUMMARY_H__
-#include <util.h>
-#include <double_vector.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_file.h>

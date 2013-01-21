@@ -22,8 +22,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <vector.h>
-#include <util.h>
+#include <ert/util/vector.h>
+#include <ert/util/util.h>
 
 #include <ert/sched/sched_kw_compdat.h>
 #include <ert/sched/sched_util.h>

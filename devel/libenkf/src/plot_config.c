@@ -17,7 +17,9 @@
 */
 
 #include <stdlib.h>
-#include <util.h>
+
+#include <ert/util/util.h>
+
 #include <plot_config.h>
 #include <enkf_defaults.h>
 #include "config_keys.h"

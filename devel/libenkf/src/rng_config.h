@@ -23,8 +23,9 @@
 extern "C" {
 #endif
 
+#include <ert/util/rng.h>
+
 #include <ert/config/config.h>
-#include <rng.h>
 
 typedef struct rng_config_struct rng_config_type; 
 

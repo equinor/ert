@@ -24,8 +24,9 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stringlist.h>
-#include <hash.h>
+
+#include <ert/util/stringlist.h>
+#include <ert/util/hash.h>
 
 #define ECL_COM_KW "--"
 #define ENKF_COM_KW "--"

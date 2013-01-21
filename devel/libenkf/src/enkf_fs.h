@@ -23,14 +23,14 @@ extern "C" {
 #endif
 #include <stdbool.h>
 
-#include <path_fmt.h>
-#include <stringlist.h>
-#include <type_macros.h>
-#include <buffer.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/buffer.h>
+#include <ert/util/stringlist.h>
 
 #include <fs_driver.h>
 #include <enkf_types.h>
-#include <stringlist.h>
 #include <fs_types.h>
 #include <enkf_fs_type.h>
 #include <time_map.h>

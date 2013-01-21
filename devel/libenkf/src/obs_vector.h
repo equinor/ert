@@ -25,8 +25,7 @@ extern "C" {
 
 #include <time.h>
 
-#include <util.h>
-#include <bool_vector.h>
+#include <ert/util/bool_vector.h>
 
 #include <ert/sched/history.h>
 

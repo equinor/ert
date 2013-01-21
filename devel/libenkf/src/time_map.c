@@ -21,8 +21,8 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-#include <util.h>
-#include <time_t_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/time_t_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
 

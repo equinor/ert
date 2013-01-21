@@ -18,9 +18,9 @@
 
 #include <string.h>
 
-#include <hash.h>
-#include <stringlist.h>
-#include <util.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
 
 #include <ert/sched/sched_kw_gruptree.h>
 #include <ert/sched/sched_util.h>

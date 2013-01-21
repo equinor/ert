@@ -25,7 +25,7 @@ extern "C" {
 #include <stdbool.h>
 #include <time.h>
 
-#include <hash.h>
+#include <ert/util/hash.h>
 
 #include <ert/sched/sched_types.h>
               

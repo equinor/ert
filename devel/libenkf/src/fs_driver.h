@@ -21,8 +21,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <buffer.h>
-#include <stringlist.h>
+#include <ert/util/buffer.h>
+#include <ert/util/stringlist.h>
+
 #include <enkf_node.h>
 #include <fs_types.h>
 

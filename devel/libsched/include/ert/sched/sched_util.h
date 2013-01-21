@@ -23,7 +23,8 @@ extern "C" {
 #endif
 #include <stdbool.h>
 #include <time.h>
-#include <stringlist.h>
+
+#include <ert/util/stringlist.h>
 
 #define SCHED_KW_DEFAULT_ITEM "*"
 

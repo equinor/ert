@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <util.h>
-#include <rng.h>
-#include <matrix.h>
-#include <matrix_blas.h>
+#include <ert/util/util.h>
+#include <ert/util/rng.h>
+#include <ert/util/matrix.h>
+#include <ert/util/matrix_blas.h>
 
 #include <ert/analysis/enkf_linalg.h>
 #include <ert/analysis/analysis_table.h>

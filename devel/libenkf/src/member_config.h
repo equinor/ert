@@ -26,7 +26,7 @@ extern "C" {
 #include <stdbool.h>
 #include <time.h>
 
-#include <subst_list.h>
+#include <ert/util/subst_list.h>
 
 #include <ert/sched/sched_file.h> 
 

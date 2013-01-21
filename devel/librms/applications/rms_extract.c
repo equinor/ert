@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <ert/rms/rms_file.h>
 #include <ert/rms/rms_tagkey.h>

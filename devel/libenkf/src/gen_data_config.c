@@ -21,9 +21,9 @@
 #include <string.h>
 #include <pthread.h>
 
-#include <util.h>
-#include <int_vector.h>
-#include <bool_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/bool_vector.h>
 
 #include <ert/config/config.h>
 

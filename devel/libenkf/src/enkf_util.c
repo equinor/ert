@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <util.h>
-#include <rng.h>
+#include <ert/util/util.h>
+#include <ert/util/rng.h>
 
 #include <ert/ecl/ecl_util.h>
 

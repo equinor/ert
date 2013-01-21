@@ -21,11 +21,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <int_vector.h>
-#include <util.h>
-#include <rng.h>
-#include <matrix.h>
-#include <matrix_blas.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/rng.h>
+#include <ert/util/matrix.h>
+#include <ert/util/matrix_blas.h>
 
 #include <ert/analysis/std_enkf.h>
 #include <ert/analysis/cv_enkf.h>

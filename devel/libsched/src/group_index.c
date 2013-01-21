@@ -18,9 +18,9 @@
 
 #include <stdlib.h>
 
-#include <size_t_vector.h>
-#include <int_vector.h>
-#include <util.h>  
+#include <ert/util/size_t_vector.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/util.h>  
 
 #include <ert/sched/sched_types.h>
 #include <ert/sched/group_index.h>

@@ -18,16 +18,17 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
-#include <hash.h>
+
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/vector.h>
+
 #include <enkf_util.h>
 #include <enkf_macros.h>
-#include <trans_func.h>
 #include <enkf_defaults.h>
 #include <gen_kw_common.h>
 #include <gen_kw_config.h>
 #include <trans_func.h>
-#include <vector.h>
 #include "config_keys.h"
 
 #define GEN_KW_CONFIG_TYPE_ID     550761

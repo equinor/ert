@@ -23,7 +23,7 @@ extern "C" {
 #endif 
 #include <stdbool.h>
 
-#include <stringlist.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>

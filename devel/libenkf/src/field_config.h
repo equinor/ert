@@ -24,9 +24,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <path_fmt.h>
-#include <stringlist.h>
-#include <util.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_grid.h>

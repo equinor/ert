@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#include <rng.h>
-#include <matrix.h>
+#include <ert/util/rng.h>
+#include <ert/util/matrix.h>
 
 typedef struct fwd_step_enkf_data_struct fwd_step_enkf_data_type;
 

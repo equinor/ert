@@ -18,14 +18,16 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <util.h>
 #include <string.h>
 #include <stdio.h>
+
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/vector.h>
+#include <ert/util/parser.h>
+
 #include <enkf_types.h>
 #include <enkf_sched.h>
-#include <stringlist.h>
-#include <vector.h>
-#include <parser.h>
 #include <enkf_defaults.h>
 
 /**

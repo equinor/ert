@@ -25,10 +25,10 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <type_macros.h>
-#include <hash.h>
-#include <stringlist.h>
-#include <time_t_vector.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/time_t_vector.h>
 
 #include <ert/sched/sched_types.h>
 #include <ert/sched/sched_macros.h> 

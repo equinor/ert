@@ -18,10 +18,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <util.h>
-#include <hash.h>
-#include <stringlist.h>
-#include <bool_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/bool_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_util.h>

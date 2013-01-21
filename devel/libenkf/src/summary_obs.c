@@ -23,8 +23,10 @@
 #include <stdbool.h>
 #include <math.h>
 #include <string.h>
-#include <util.h>
 #include <stdio.h>
+
+#include <ert/util/util.h>
+
 #include <summary_obs.h>
 #include <obs_data.h>
 #include <meas_data.h>

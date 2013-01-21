@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <ert/config/config.h>
 

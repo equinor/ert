@@ -26,18 +26,18 @@
 #include <stdarg.h>
 #include <pthread.h>
 
-#include <path_fmt.h>
-#include <thread_pool.h>
-#include <hash.h>
-#include <util.h>
-#include <arg_pack.h>
-#include <stringlist.h>
-#include <node_ctype.h>
-#include <subst_list.h>
-#include <log.h>
-#include <timer.h>
-#include <time_t_vector.h>
-#include <rng.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/thread_pool.h>
+#include <ert/util/hash.h>
+#include <ert/util/util.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/node_ctype.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/log.h>
+#include <ert/util/timer.h>
+#include <ert/util/time_t_vector.h>
+#include <ert/util/rng.h>
 
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_kw.h>

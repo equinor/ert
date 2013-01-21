@@ -24,11 +24,13 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdbool.h>
+
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
+
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <gen_kw_common.h>
-#include <stringlist.h>
-#include <util.h>
 
 
 bool                        gen_kw_config_is_valid( const gen_kw_config_type * config );

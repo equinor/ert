@@ -23,8 +23,8 @@
 extern "C" {
 #endif
 
-#include <subst_list.h>
-#include <stringlist.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/stringlist.h>
 
 typedef struct ert_template_struct  ert_template_type;
 typedef struct ert_templates_struct ert_templates_type;

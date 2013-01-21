@@ -20,9 +20,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <util.h>
-#include <buffer.h>
-#include <rng.h>
+#include <ert/util/util.h>
+#include <ert/util/buffer.h>
+#include <ert/util/rng.h>
 
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_kw.h>

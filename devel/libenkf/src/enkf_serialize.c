@@ -19,7 +19,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <enkf_serialize.h>
 #include <enkf_types.h>

@@ -25,7 +25,7 @@ extern "C" {
 #include <stdio.h>
 #include <time.h>
 
-#include <time_t_vector.h>
+#include <ert/util/time_t_vector.h>
 
 #include <ert/sched/sched_kw.h>
 #include <ert/sched/sched_types.h>

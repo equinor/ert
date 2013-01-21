@@ -1,8 +1,8 @@
 #ifndef __ENKF_LINALG_H__
 #define __ENKF_LINALG_H__
 
-#include <matrix_lapack.h>
-#include <matrix.h>
+#include <ert/util/matrix_lapack.h>
+#include <ert/util/matrix.h>
 
 
 void enkf_linalg_get_PC( const matrix_type * S0, 
@@ -39,7 +39,7 @@ int enkf_linalg_svd_truncation(const matrix_type * S ,
                      dgesvd_vector_enum store_V0T , 
                      double * sig0, 
                      matrix_type * U0 , 
-		     matrix_type * V0T);
+                     matrix_type * V0T);
 
 
 int enkf_linalg_svdS(const matrix_type * S , 

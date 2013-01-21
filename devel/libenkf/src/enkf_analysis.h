@@ -25,9 +25,12 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include <matrix.h>
+
+#include <ert/util/matrix.h>
+#include <ert/util/int_vector.h>
+
 #include <obs_data.h>
-#include <int_vector.h>
+
 
 
 void          enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , 

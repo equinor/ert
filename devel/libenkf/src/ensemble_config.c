@@ -25,12 +25,13 @@
 #include <time.h>
 #include <pthread.h>                /* must have rw locking on the config_nodes ... */
 
-#include <util.h>
-#include <hash.h>
-#include <set.h>
-#include <path_fmt.h>
-#include <thread_pool.h>
-#include <stringlist.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/set.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/thread_pool.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/subst_func.h>
 
 #include <ert/ecl/ecl_grid.h>
 
@@ -60,7 +61,7 @@
 #include <ensemble_config.h>
 #include <gen_data_config.h>
 #include <field_trans.h>
-#include <subst_func.h>
+
 #include <enkf_obs.h>
 #include <ecl_config.h>
 #include "config_keys.h"

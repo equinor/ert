@@ -21,9 +21,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <util.h>
-#include <stringlist.h>
-#include <rng.h>
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/rng.h>
 
 #include <ert/config/config.h>
 

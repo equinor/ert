@@ -19,10 +19,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <menu.h>
-#include <arg_pack.h>
-#include <util.h>
-#include <msg.h>
+#include <ert/util/menu.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/util.h>
+#include <ert/util/msg.h>
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_init.h>

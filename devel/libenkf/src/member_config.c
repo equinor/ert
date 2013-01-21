@@ -17,12 +17,12 @@
 */
 
 #include <stdlib.h>
-#include <util.h>
 #include <stdbool.h>
 #include <time.h>
 
-#include <path_fmt.h>
-#include <subst_list.h>
+#include <ert/util/util.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/subst_list.h>
 
 #include <ecl_config.h>
 

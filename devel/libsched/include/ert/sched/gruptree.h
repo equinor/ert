@@ -23,7 +23,6 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include <hash.h>
 
 typedef struct gruptree_struct gruptree_type;
 

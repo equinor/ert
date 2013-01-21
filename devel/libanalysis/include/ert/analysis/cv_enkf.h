@@ -16,8 +16,8 @@
    for more details. 
 */
 
-#include <rng.h>
-#include <matrix.h>
+#include <ert/util/rng.h>
+#include <ert/util/matrix.h>
 
 typedef struct cv_enkf_data_struct cv_enkf_data_type;
 

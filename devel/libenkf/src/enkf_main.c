@@ -30,23 +30,22 @@
 #include <sys/types.h>
 
 #define HAVE_THREAD_POOL 1
-#include <matrix.h>
-
-#include <subst_list.h>
-#include <rng.h>
-#include <subst_func.h>
-#include <int_vector.h>
-#include <bool_vector.h>
-#include <util.h>
-#include <hash.h>
-#include <path_fmt.h>
-#include <thread_pool.h>
-#include <arg_pack.h>
-#include <msg.h>
-#include <stringlist.h>
-#include <set.h>
-#include <log.h>
-#include <node_ctype.h>
+#include <ert/util/matrix.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/rng.h>
+#include <ert/util/subst_func.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/thread_pool.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/msg.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/set.h>
+#include <ert/util/log.h>
+#include <ert/util/node_ctype.h>
 
 #include <ert/config/config.h>
 

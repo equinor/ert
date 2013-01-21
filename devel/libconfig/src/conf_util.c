@@ -19,8 +19,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include <util.h>
-#include <parser.h>
+#include <ert/util/util.h>
+#include <ert/util/parser.h>
 
 #include <ert/config/conf_util.h>
 

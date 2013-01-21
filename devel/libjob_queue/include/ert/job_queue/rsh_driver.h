@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <hash.h>
+#include <ert/util/hash.h>
 
 #define RSH_HOST           "RSH_HOST"
 #define RSH_HOSTLIST       "RSH_HOSTLIST"

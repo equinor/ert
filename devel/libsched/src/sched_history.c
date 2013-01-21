@@ -17,12 +17,12 @@
 */
 #include <stdlib.h>
 
-#include <util.h>
-#include <hash.h>
-#include <time_t_vector.h>
-#include <bool_vector.h>
-#include <size_t_vector.h>
-#include <double_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/time_t_vector.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/size_t_vector.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/sched/well_history.h>
 #include <ert/sched/group_history.h>

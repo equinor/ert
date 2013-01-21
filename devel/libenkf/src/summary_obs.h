@@ -24,8 +24,6 @@ extern "C" {
 #endif
 #include <stdbool.h>
 
-#include <util.h>
-
 #include <ert/sched/history.h>
 
 #include <ert/config/conf.h>

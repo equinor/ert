@@ -16,9 +16,10 @@
    for more details. 
 */
 
-#include <util.h>
-#include <hash.h>
-#include <vector.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/vector.h>
+
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <enkf_macros.h>

@@ -18,8 +18,8 @@
 
 #include <stdbool.h>
 
-#include <util.h>
-#include <hash.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
 
 #include <ert/geometry/geo_polygon.h>
 #include <ert/geometry/geo_surface.h>

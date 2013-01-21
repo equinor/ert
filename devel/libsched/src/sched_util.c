@@ -20,8 +20,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <util.h>
-#include <buffer.h>
+#include <ert/util/util.h>
+#include <ert/util/buffer.h>
 
 #include <ert/sched/sched_util.h>
 

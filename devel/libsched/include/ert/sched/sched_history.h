@@ -25,7 +25,7 @@ extern "C" {
 
 #include <time.h>
 
-#include <double_vector.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/sched/sched_file.h>
 

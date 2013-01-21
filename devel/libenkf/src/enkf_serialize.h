@@ -25,7 +25,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <matrix.h>
+#include <ert/util/matrix.h>
 
 #include <ert/ecl/ecl_util.h>
 

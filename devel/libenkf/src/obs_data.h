@@ -23,11 +23,13 @@ extern "C" {
 #endif
 #include <stdio.h>
 #include <stdbool.h>
-#include <matrix.h>
-#include <meas_data.h>
-#include <hash.h>
+
+#include <ert/util/matrix.h>
+#include <ert/util/hash.h>
+#include <ert/util/rng.h>
+
 #include <enkf_types.h>
-#include <rng.h>
+#include <meas_data.h>
 
 typedef struct obs_data_struct   obs_data_type;
 typedef struct obs_block_struct  obs_block_type;

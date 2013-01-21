@@ -20,13 +20,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <util.h>
 #include <ctype.h>
-#include <menu.h>
-#include <thread_pool.h>
-#include <arg_pack.h>
-#include <bool_vector.h>
+
+#include <ert/util/util.h>
+#include <ert/util/menu.h>
+#include <ert/util/thread_pool.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/bool_vector.h>
 
 #include <enkf_main.h>
 #include <enkf_fs.h>

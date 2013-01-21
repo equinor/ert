@@ -18,10 +18,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <template.h>
-#include <hash.h>
-#include <util.h>
-#include <subst_list.h>
+#include <ert/util/template.h>
+#include <ert/util/hash.h>
+#include <ert/util/util.h>
+#include <ert/util/subst_list.h>
 
 #include <ert_template.h>
 #include "config_keys.h"

@@ -21,10 +21,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <util.h>
-#include <stringlist.h>
-#include <vector.h>
-#include <subst_list.h>
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/vector.h>
+#include <ert/util/subst_list.h>
 
 #include <ert/config/config.h>
 

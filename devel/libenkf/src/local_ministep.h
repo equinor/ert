@@ -23,9 +23,9 @@
 extern "C" {
 #endif
 
-#include <hash.h>
-#include <stringlist.h>
-#include <util.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
+
 #include <active_list.h>
 #include <local_dataset.h>
 #include <local_obsset.h>

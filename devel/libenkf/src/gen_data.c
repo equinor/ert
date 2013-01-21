@@ -22,11 +22,11 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include <util.h>
-#include <matrix.h>
-#include <log.h>
-#include <bool_vector.h>
-#include <rng.h>
+#include <ert/util/util.h>
+#include <ert/util/matrix.h>
+#include <ert/util/log.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/rng.h>
 
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_sum.h>

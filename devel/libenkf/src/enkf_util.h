@@ -25,8 +25,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <buffer.h>
-#include <rng.h>
+#include <ert/util/buffer.h>
+#include <ert/util/rng.h>
 
 #include <ert/ecl/ecl_util.h>
 

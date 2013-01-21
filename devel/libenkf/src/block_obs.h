@@ -21,8 +21,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <util.h>
-
 #include <ert/sched/history.h>
 
 #include <ert/config/conf.h>

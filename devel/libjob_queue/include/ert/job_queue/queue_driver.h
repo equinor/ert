@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#include <hash.h>
+#include <ert/util/hash.h>
 
 typedef enum { NULL_DRIVER  = 0,
                LSF_DRIVER   = 1,

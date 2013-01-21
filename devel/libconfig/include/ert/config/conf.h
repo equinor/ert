@@ -105,8 +105,8 @@ extern "C" {
 
 #include <stdbool.h>
 
-#include <set.h>
-#include <stringlist.h>
+#include <ert/util/set.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/config/conf_data.h>
 

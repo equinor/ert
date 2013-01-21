@@ -21,8 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <util.h>
-#include <type_macros.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_kw.h>

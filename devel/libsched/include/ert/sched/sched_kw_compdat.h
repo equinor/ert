@@ -20,7 +20,8 @@
 #define __SCHED_KW_COMPDAT_H__
 #include <stdio.h>
 
-#include <set.h>
+#include <ert/util/set.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/sched/sched_macros.h>
 

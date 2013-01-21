@@ -24,12 +24,12 @@ extern "C" {
 
 #include <stdbool.h>
 
-#include <hash.h>
-#include <subst_list.h>
-#include <rng.h>
-#include <stringlist.h>
-#include <matrix.h>
-#include <log.h>
+#include <ert/util/hash.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/rng.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/matrix.h>
+#include <ert/util/log.h>
 
 #include <ert/sched/sched_file.h>
  

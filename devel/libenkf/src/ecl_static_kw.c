@@ -18,8 +18,8 @@
 
 #include <stdlib.h>
 
-#include <util.h>
-#include <buffer.h>
+#include <ert/util/util.h>
+#include <ert/util/buffer.h>
 
 #include <ert/ecl/ecl_kw.h>
 

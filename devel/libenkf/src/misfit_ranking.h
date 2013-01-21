@@ -19,7 +19,7 @@
 #ifndef __MISFIT_RANKING_H__
 #define __MISFIT_RANKING_H__
 
-#include <type_macros.h>
+#include <ert/util/type_macros.h>
 
 #include <enkf_obs.h>
 #include <ensemble_config.h>

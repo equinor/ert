@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <ert/sched/sched_types.h>
 

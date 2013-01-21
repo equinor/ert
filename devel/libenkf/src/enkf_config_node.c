@@ -21,11 +21,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <stringlist.h>
-#include <util.h>
-#include <path_fmt.h>
-#include <bool_vector.h>
-#include <vector.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/vector.h>
 
 #include <ert/ecl/ecl_grid.h>
 

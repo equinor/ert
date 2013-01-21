@@ -20,9 +20,9 @@
 #include <math.h>
 #include <string.h>
 
-#include <util.h>
-#include <log.h>
-#include <double_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/log.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_smspec.h> 

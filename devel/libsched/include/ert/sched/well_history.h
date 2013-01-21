@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <size_t_vector.h>
+#include <ert/util/size_t_vector.h>
 
 #include <ert/sched/sched_kw.h>
 #include <ert/sched/sched_kw_wconhist.h>

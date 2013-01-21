@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <stringlist.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/job_queue/queue_driver.h>
 

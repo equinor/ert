@@ -19,10 +19,10 @@
 #include <assert.h>
 #include <string.h>
 
-#include <hash.h>
-#include <set.h>
-#include <util.h>
-#include <vector.h>
+#include <ert/util/hash.h>
+#include <ert/util/set.h>
+#include <ert/util/util.h>
+#include <ert/util/vector.h>
 
 #include <ert/config/conf.h>
 #include <ert/config/conf_util.h>

@@ -18,9 +18,9 @@
 #include <time.h>
 #include <stdbool.h>
 
-#include <double_vector.h>
-#include <vector.h>
-#include <thread_pool.h>
+#include <ert/util/double_vector.h>
+#include <ert/util/vector.h>
+#include <ert/util/thread_pool.h>
 
 #include <enkf_fs.h>
 #include <member_config.h>

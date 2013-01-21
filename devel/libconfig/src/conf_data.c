@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <ert/config/conf_data.h>
 

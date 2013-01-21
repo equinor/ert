@@ -20,9 +20,9 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <hash.h>
-#include <util.h>
-#include <msg.h>
+#include <ert/util/hash.h>
+#include <ert/util/util.h>
+#include <ert/util/msg.h>
 
 #include <ert/config/conf.h>
 

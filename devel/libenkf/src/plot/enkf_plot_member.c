@@ -15,9 +15,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
-#include <util.h>
-#include <double_vector.h>
-#include <time_t_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/double_vector.h>
+#include <ert/util/time_t_vector.h>
 
 #include <enkf_plot_member.h>
 #include <enkf_plot_arg.h>

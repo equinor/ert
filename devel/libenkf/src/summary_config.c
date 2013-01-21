@@ -20,8 +20,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <util.h>
-#include <set.h>
+#include <ert/util/util.h>
+#include <ert/util/set.h>
 
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_smspec.h>

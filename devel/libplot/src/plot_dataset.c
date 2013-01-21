@@ -19,9 +19,9 @@
 #include <string.h>
 #include <math.h>
 
-#include <util.h>
-#include <double_vector.h>
-#include <bool_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/double_vector.h>
+#include <ert/util/bool_vector.h>
 
 #include <plplot/plplot.h>
 #include <plplot/plplotP.h>

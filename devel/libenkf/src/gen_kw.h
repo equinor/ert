@@ -22,11 +22,12 @@
 extern "C" {
 #endif
 
+#include <ert/util/subst_list.h>
+
 #include <gen_kw_config.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <enkf_serialize.h>
-#include <subst_list.h>
 #include <gen_kw_common.h>
 
 

@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+
 #include <misfit_ts.h>
 
   typedef struct misfit_member_struct    misfit_member_type;

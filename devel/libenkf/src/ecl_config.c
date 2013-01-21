@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <set.h>
-#include <path_fmt.h>
-#include <util.h>
-#include <parser.h>
+#include <ert/util/set.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/util.h>
+#include <ert/util/parser.h>
 
 #include <ert/sched/sched_file.h>
 

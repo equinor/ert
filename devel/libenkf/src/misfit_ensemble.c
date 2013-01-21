@@ -21,12 +21,12 @@
 #include <math.h>
 #include <stdbool.h>
 
-#include <util.h>
-#include <hash.h>
-#include <vector.h>
-#include <double_vector.h>
-#include <msg.h>
-#include <buffer.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+#include <ert/util/vector.h>
+#include <ert/util/double_vector.h>
+#include <ert/util/msg.h>
+#include <ert/util/buffer.h>
 
 #include <enkf_obs.h>
 #include <enkf_fs.h>

@@ -24,7 +24,8 @@ extern "C" {
 
 #include <stdbool.h>
 #include <time.h>
-#include <path_fmt.h>
+
+#include <ert/util/path_fmt.h>
 
 #include <ert/config/config.h>
 

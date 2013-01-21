@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#include <stringlist.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/ecl/ecl_grid.h>
 

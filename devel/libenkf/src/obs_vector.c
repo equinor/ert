@@ -25,11 +25,11 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include <util.h>
-#include <vector.h>
-#include <double_vector.h>
-#include <bool_vector.h>
-#include <msg.h>
+#include <ert/util/util.h>
+#include <ert/util/vector.h>
+#include <ert/util/double_vector.h>
+#include <ert/util/bool_vector.h>
+#include <ert/util/msg.h>
 
 #include <ert/sched/history.h>
 

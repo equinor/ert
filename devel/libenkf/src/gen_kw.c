@@ -21,16 +21,17 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <util.h>
-#include <buffer.h>
-#include <matrix.h>
-#include <log.h>
-#include <rng.h>
+#include <ert/util/util.h>
+#include <ert/util/buffer.h>
+#include <ert/util/matrix.h>
+#include <ert/util/log.h>
+#include <ert/util/rng.h>
+#include <ert/util/subst_list.h>
+
 
 #include <enkf_types.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
-#include <subst_list.h>
 #include <gen_kw_common.h>
 #include <gen_kw_config.h>
 #include <gen_kw.h>

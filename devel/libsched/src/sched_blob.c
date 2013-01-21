@@ -19,9 +19,9 @@
 #include <string.h>
 #include <time.h>
 
-#include <buffer.h>
-#include <util.h>
-#include <stringlist.h>
+#include <ert/util/buffer.h>
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/sched/sched_util.h>
 #include <ert/sched/sched_blob.h>

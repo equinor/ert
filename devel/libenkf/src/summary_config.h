@@ -26,8 +26,6 @@ extern "C" {
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <util.h>
-
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_smspec.h>
 

@@ -17,9 +17,9 @@
 */
 #include <stdbool.h>
 
-#include <util.h>
-#include <double_vector.h>
-#include <time_t_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/double_vector.h>
+#include <ert/util/time_t_vector.h>
 
 #include <enkf_plot_arg.h>
 

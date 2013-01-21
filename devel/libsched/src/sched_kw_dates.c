@@ -20,9 +20,9 @@
 #include <string.h>
 #include <time.h>
 
-#include <vector.h>
-#include <util.h>
-#include <stringlist.h>
+#include <ert/util/vector.h>
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/ecl/ecl_util.h>
 

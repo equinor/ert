@@ -24,8 +24,9 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
-#include <matrix.h>
-#include <hash.h>
+
+#include <ert/util/matrix.h>
+#include <ert/util/hash.h>
 
 typedef struct meas_data_struct   meas_data_type;
 typedef struct meas_block_struct  meas_block_type;  

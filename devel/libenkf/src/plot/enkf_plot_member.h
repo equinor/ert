@@ -26,7 +26,7 @@ extern "C" {
 #include <time.h>
 #include <stdbool.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <enkf_fs.h>
 #include <enkf_types.h>

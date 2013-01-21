@@ -22,7 +22,7 @@
 */
 #include <stdlib.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <enkf_util.h>
 #include <enkf_types.h>

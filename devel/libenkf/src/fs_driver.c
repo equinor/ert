@@ -16,7 +16,8 @@
    for more details. 
 */
 
-#include <util.h>
+#include <ert/util/util.h>
+
 #include <fs_types.h>
 #include <fs_driver.h>
 

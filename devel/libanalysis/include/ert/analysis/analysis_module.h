@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#include <matrix.h>
+#include <ert/util/matrix.h>
 
 
 /* 

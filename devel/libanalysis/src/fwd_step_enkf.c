@@ -18,14 +18,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
-#include <rng.h>
-#include <matrix.h>
-#include <matrix_blas.h>
+#include <math.h>
 #include <stdio.h>
 
-#include <stepwise.h>
-#include <math.h>
+#include <ert/util/util.h>
+#include <ert/util/rng.h>
+#include <ert/util/matrix.h>
+#include <ert/util/matrix_blas.h>
+#include <ert/util/stepwise.h>
 
 #include <ert/analysis/fwd_step_enkf.h>
 #include <ert/analysis/analysis_table.h>

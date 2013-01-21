@@ -22,8 +22,8 @@
 #include <math.h>
 #include <time.h>
 
-#include <util.h>
-#include <hash.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
 
 #include <ert/rms/rms_type.h>
 #include <ert/rms/rms_tagkey.h>

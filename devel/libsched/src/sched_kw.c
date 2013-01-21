@@ -23,9 +23,9 @@
 #include <ctype.h>
 #include <time.h>
 
-#include <hash.h>
-#include <util.h>
-#include <stringlist.h>
+#include <ert/util/hash.h>
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/sched/sched_kw.h>
 #include <ert/sched/sched_util.h>

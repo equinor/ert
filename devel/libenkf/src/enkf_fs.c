@@ -25,15 +25,15 @@
 #include <pthread.h>
 #include <dirent.h>
 
-#include <util.h>
-#include <type_macros.h>
-#include <msg.h>
-#include <path_fmt.h>
-#include <arg_pack.h>
-#include <stringlist.h>
-#include <arg_pack.h>
-#include <block_fs_driver.h>
+#include <ert/util/util.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/msg.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/arg_pack.h>
 
+#include <block_fs_driver.h>
 #include <enkf_fs.h>
 #include <enkf_defaults.h>
 #include <fs_driver.h>

@@ -22,11 +22,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <util.h>
-#include <path_fmt.h>
-#include <hash.h>
-#include <menu.h>
-#include <bool_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/path_fmt.h>
+#include <ert/util/hash.h>
+#include <ert/util/menu.h>
+#include <ert/util/bool_vector.h>
 
 #include <ert/sched/history.h>
 #include <ert/sched/sched_file.h>

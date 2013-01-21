@@ -25,10 +25,10 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <matrix.h>
-#include <log.h>
-#include <rng.h>
-#include <double_vector.h>
+#include <ert/util/matrix.h>
+#include <ert/util/log.h>
+#include <ert/util/rng.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/ecl/ecl_file.h>
 #include <ert/ecl/ecl_sum.h>

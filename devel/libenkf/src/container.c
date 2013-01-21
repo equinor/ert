@@ -16,9 +16,9 @@
    for more details. 
 */
 
-#include <util.h>
-#include <vector.h>
-#include <type_macros.h>
+#include <ert/util/util.h>
+#include <ert/util/vector.h>
+#include <ert/util/type_macros.h>
 
 #include <container_config.h>
 #include <container.h>

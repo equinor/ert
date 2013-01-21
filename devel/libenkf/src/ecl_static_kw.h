@@ -24,7 +24,7 @@ extern "C" {
 
 #include <stdbool.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
 #include <ert/ecl/ecl_kw.h>
 #include <enkf_macros.h>

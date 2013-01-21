@@ -21,9 +21,9 @@
 #include <ctype.h>
 #include <time.h>
 
-#include <util.h>
-#include <parser.h>
-#include <stringlist.h>
+#include <ert/util/util.h>
+#include <ert/util/parser.h>
+#include <ert/util/stringlist.h>
 
 #include <ert/sched/sched_util.h>
 #include <ert/sched/sched_kw_include.h>

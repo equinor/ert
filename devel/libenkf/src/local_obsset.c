@@ -19,8 +19,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <util.h>
-#include <hash.h>
+
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
+
 #include <active_list.h>
 #include <local_obsset.h>
 #include <local_config.h>

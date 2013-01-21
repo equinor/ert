@@ -16,10 +16,13 @@
    for more details. 
 */
 
-#include <util.h>
+
 #include <stdlib.h>
 #include <string.h>
-#include <hash.h>
+
+#include <ert/util/hash.h>
+#include <ert/util/util.h>
+
 #include <enkf_macros.h>
 #include <local_config.h>  
 #include <local_ministep.h>

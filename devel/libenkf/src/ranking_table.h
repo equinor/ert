@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+
 #include <misfit_ensemble_typedef.h>
 
   typedef struct ranking_table_struct ranking_table_type;

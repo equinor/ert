@@ -21,9 +21,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <dlfcn.h>
-#include <matrix.h>
-#include <util.h>
-#include <rng.h>
+
+#include <ert/util/matrix.h>
+#include <ert/util/util.h>
+#include <ert/util/rng.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
