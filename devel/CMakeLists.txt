@@ -228,20 +228,25 @@ endif()
 configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
 
-set( libert_util_src_path     ${PROJECT_SOURCE_DIR}/libert_util/src )
-set( libecl_src_path          ${PROJECT_SOURCE_DIR}/libecl/src )
-set( libgeometry_src_path     ${PROJECT_SOURCE_DIR}/libgeometry/src )
-set( libecl_well_src_path     ${PROJECT_SOURCE_DIR}/libwecl_well/src )
-set( libplot_src_path         ${PROJECT_SOURCE_DIR}/libplot/src )
-
+include_directories( ${PROJECT_SOURCE_DIR}/libert_util/include )
 include_directories( ${PROJECT_BINARY_DIR}/libert_util/include )
-include_directories( ${libert_util_src_path}/../include )
-include_directories( ${libgeometry_src_path}/../include )
-
 add_subdirectory( libert_util )
+
+include_directories( ${PROJECT_SOURCE_DIR}/libgeometry/include )
 add_subdirectory( libgeometry )
+
+set( BUILD_LIBPLOT ON )
+if (BUILD_LIBPLOT)
+   include_directories( ${PROJECT_SOURCE_DIR}/libplot/include )
+   add_subdirectory( libplot )
+endif()
+
+include_directories( ${PROJECT_SOURCE_DIR}/libecl/include )
 add_subdirectory( libecl )
+
+include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )
 add_subdirectory( libecl_well )
+
 
 option( BUILD_ERT      "Build the full ERT application - Linux only" OFF)
 option( BUILD_ENS_PLOT "Build small Eclipse plotting program - no" OFF)
@@ -249,7 +254,6 @@ option( BUILD_ENS_PLOT "Build small Eclipse plotting program - no" OFF)
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
-
    try_compile( DLOPEN ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_dlopen.c )
    if (DLOPEN)
       set(NEED_LIBDL OFF)    
@@ -258,37 +262,23 @@ if (BUILD_ERT)
    endif()
 
    option(USE_LSF "Include support for LSF" ON)
-   set( libconfig_src_path    ${CMAKE_SOURCE_DIR}/libconfig/src )
-   set( libsched_src_path     ${CMAKE_SOURCE_DIR}/libsched/src )
-   set( librms_src_path       ${CMAKE_SOURCE_DIR}/librms/src )
-   set( libanalysis_src_path  ${CMAKE_SOURCE_DIR}/libanalysis/src )
-   set( libjob_queue_src_path ${CMAKE_SOURCE_DIR}/libjob_queue/src )
-   set( libenkf_src_path      ${CMAKE_SOURCE_DIR}/libenkf/src )
 
+   include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
    add_subdirectory( libconfig )
-   add_subdirectory( libanalysis )
-   add_subdirectory( librms )
-   add_subdirectory( libsched )
-   add_subdirectory( libjob_queue )
-   add_subdirectory( libplot )
-   add_subdirectory( libenkf)
 
-   #add_dependencies( config_shared util_shared )
-   ##add_dependencies( analysis_shared util_shared )
-   #add_dependencies( rms_shared geometry_shared util_shared )
-   #add_dependencies( sched_shared util_shared ecl_shared )
-   #add_dependencies( job_queue_shared config_shared util )
-   #add_dependencies( plot_shared util_shared )
-   #add_dependencies( enkf_shared plot_shared ecl_shared util_shared config_shared sched_shared rms_shared analysis job_queue_shared )
-   #add_dependencies( ert_shared enkf_shared plot_shared )
-   #
-   #add_dependencies( config_static util_static )
-   ##add_dependencies( analysis_static util_static )
-   #add_dependencies( rms_static geometry_static util_static )
-   #add_dependencies( sched_static util_static ecl_static )
-   #add_dependencies( job_queue_static config_static util )
-   #add_dependencies( plot_static util_static )
-   #add_dependencies( enkf_static plot_static ecl_static util_static config_static sched_static rms_static analysis job_queue_static )
-   #add_dependencies( ert enkf_static plot_static )
+   include_directories( ${PROJECT_SOURCE_DIR}/libsched/include )
+   add_subdirectory( libsched )
+
+   include_directories( ${PROJECT_SOURCE_DIR}/librms/include )
+   add_subdirectory( librms )
+
+   include_directories( ${PROJECT_SOURCE_DIR}/libanalysis/include )
+   add_subdirectory( libanalysis )
+
+   include_directories( ${PROJECT_SOURCE_DIR}/libjob_queue/include )
+   add_subdirectory( libjob_queue )
+
+   include_directories( ${PROJECT_SOURCE_DIR}/libenkf/include )
+   add_subdirectory( libenkf )
 endif()
 

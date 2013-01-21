@@ -27,17 +27,18 @@
 #include <ert/util/arg_pack.h>
 #include <ert/util/msg.h>
 
-#include <enkf_main.h>
+#include <ert/enkf/enkf_main.h>
+#include <ert/enkf/enkf_obs.h>
+#include <ert/enkf/block_obs.h>
+#include <ert/enkf/field_config.h>
+#include <ert/enkf/obs_vector.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/gen_kw_config.h>
+
+#include <enkf_tui_util.h>
+#include <enkf_tui_help.h>
 #include <enkf_tui_plot.h>
 #include <enkf_tui_fs.h>
-#include <enkf_obs.h>
-#include <block_obs.h>
-#include <field_config.h>
-#include <obs_vector.h>
-#include <enkf_tui_util.h>
-#include <ensemble_config.h>
-#include <gen_kw_config.h>
-#include <enkf_tui_help.h>
 
 
         

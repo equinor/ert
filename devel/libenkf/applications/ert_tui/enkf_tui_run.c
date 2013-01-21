@@ -28,16 +28,17 @@
 #include <ert/util/arg_pack.h>
 #include <ert/util/bool_vector.h>
 
-#include <enkf_main.h>
-#include <enkf_fs.h>
-#include <enkf_sched.h>
-#include <ensemble_config.h>
-#include <enkf_analysis.h>
+#include <ert/enkf/enkf_main.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/enkf_sched.h>
+#include <ert/enkf/ensemble_config.h>
+#include <ert/enkf/enkf_analysis.h>
+#include <ert/enkf/ecl_config.h>
+
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
 #include <enkf_tui_analysis.h>
 #include <ert_tui_const.h>
-#include <ecl_config.h>
 #include <enkf_tui_help.h>
 
 /*

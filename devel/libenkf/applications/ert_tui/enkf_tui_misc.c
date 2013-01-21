@@ -22,9 +22,10 @@
 #include <ert/util/menu.h>
 #include <ert/util/util.h>
 
-#include <enkf_types.h>
-#include <enkf_main.h>
-#include <enkf_state.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_main.h>
+#include <ert/enkf/enkf_state.h>
+
 #include <enkf_tui_misc.h>
 #include <enkf_tui_help.h>
 
