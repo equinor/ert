@@ -2888,11 +2888,17 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                        ecl_config_get_refcase( enkf_main->ecl_config ));
     enkf_main_update_num_cpu( enkf_main );
     {
-      if (config_item_set( config , SCHEDULE_PREDICTION_FILE_KEY)) {
-        const stringlist_type * tokens = config_iget_stringlist_ref(config , SCHEDULE_PREDICTION_FILE_KEY , 0);
-        const char * template_file = stringlist_iget(tokens , 0);
+      const config_content_item_type * pred_item = config_get_content_item( config , SCHEDULE_PREDICTION_FILE_KEY );
+      if (pred_item != NULL) {
+        const config_content_node_type * pred_node = config_content_item_get_last_node( pred_item );
+        const char * template_file = config_content_node_iget_as_path( pred_node , 0 );
         {
-          hash_type * opt_hash                = hash_alloc_from_options( tokens );
+          hash_type * opt_hash = hash_alloc();
+          {
+            int i;
+            for (i = 1; i < config_content_node_get_size( pred_node ); i++)
+              hash_add_option( opt_hash , config_content_node_iget( pred_node , i ));
+          }
           
           const char * parameters = hash_safe_get( opt_hash , "PARAMETERS" );
           const char * min_std    = hash_safe_get( opt_hash , "MIN_STD"    );
