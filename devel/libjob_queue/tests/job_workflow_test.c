@@ -48,45 +48,68 @@ void read_file( void * self , const stringlist_type * args) {
 }
 
 
+static void create_exworkflow( const char * workflow , const char * bin_path) 
+{
+  FILE * stream = util_fopen( workflow , "w");
+  fprintf(stream , "EXECUTABLE  %s/create_file\n" , bin_path);  
+  fprintf(stream , "ARG_TYPE    1   INT\n");
+  fprintf(stream , "MIN_ARG     2\n");
+  fprintf(stream , "MAX_ARG     2\n");
+  fclose(stream);
+}
+
 
 int main( int argc , char ** argv) {
-  int int_value = rand();
-  int read_value = 100;
-  workflow_joblist_type * joblist = workflow_joblist_alloc();
+#ifdef ERT_LINUX
+  const char * exworkflow = "/tmp/xflow";
+#endif
 
-  if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , argv[1])) 
-    test_error_exit("Loading job CREATE_FILE failed\n");
-
-  if (!workflow_joblist_add_job_from_file( joblist , "READ_FILE"   , argv[2]))
-    test_error_exit("Loading job READ_FILE failed\n");
-
+  const char * bin_path = argv[1];
+  const char * internal_workflow = argv[2];
+  create_exworkflow( exworkflow , bin_path );
   {
-    config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
     
-    if (config_get_schema_size( workflow_compiler ) != 2)
-      test_error_exit("Config compiler - wrong size \n");
-  }
-  
-
-  {
-    const char * workflow_file = "/tmp/workflow";
-    const char * tmp_file = "/tmp/fileX";
-    workflow_type * workflow;
+    int int_value = rand();
+    int read_value = 100;
+    workflow_joblist_type * joblist = workflow_joblist_alloc();
     
-    create_workflow( workflow_file , tmp_file , int_value );
-    workflow = workflow_alloc(workflow_file , joblist );
-    unlink( workflow_file );
+    if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exworkflow)) {
+      remove( exworkflow );
+      test_error_exit("Loading job CREATE_FILE failed\n");
+    } else
+      remove( exworkflow );
     
-    if (!workflow_run( workflow , &read_value , NULL)) {
+    if (!workflow_joblist_add_job_from_file( joblist , "READ_FILE"   , internal_workflow))
+      test_error_exit("Loading job READ_FILE failed\n");
+    
+    {
       config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
-      config_fprintf_errors( workflow_compiler , stdout);
-      unlink( tmp_file );
-      test_error_exit("Workflow did not run\n");
+      
+      if (config_get_schema_size( workflow_compiler ) != 2)
+        test_error_exit("Config compiler - wrong size \n");
     }
-    unlink( tmp_file );
+    
+    
+    {
+      const char * workflow_file = "/tmp/workflow";
+      const char * tmp_file = "/tmp/fileX";
+      workflow_type * workflow;
+      
+      create_workflow( workflow_file , tmp_file , int_value );
+      workflow = workflow_alloc(workflow_file , joblist );
+      unlink( workflow_file );
+      
+      if (!workflow_run( workflow , &read_value , NULL)) {
+        config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
+        config_fprintf_errors( workflow_compiler , stdout);
+        unlink( tmp_file );
+        test_error_exit("Workflow did not run\n");
+      }
+      unlink( tmp_file );
+    }
+    workflow_joblist_free( joblist );
+    if (int_value != read_value)
+      test_error_exit("Wrong numeric value read back \n");
   }
-  workflow_joblist_free( joblist );
-  if (int_value != read_value)
-    test_error_exit("Wrong numeric value read back \n");
   exit(0);
 }

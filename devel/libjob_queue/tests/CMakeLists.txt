@@ -9,7 +9,7 @@ target_link_libraries( job_loadOK job_queue util )
 target_link_libraries( job_loadFail job_queue util )
 
 
-add_test( job_workflow_test ${EXECUTABLE_OUTPUT_PATH}/job_workflow_test ${CMAKE_CURRENT_SOURCE_DIR}/data/external_job ${CMAKE_CURRENT_SOURCE_DIR}/data/internal_job)
+add_test( job_workflow_test ${EXECUTABLE_OUTPUT_PATH}/job_workflow_test ${EXECUTABLE_OUTPUT_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/data/internal_job)
 
 add_test( job_loadOK1 ${EXECUTABLE_OUTPUT_PATH}/job_loadOK ${CMAKE_CURRENT_SOURCE_DIR}/data/internalOK)
 add_test( job_loadOK2 ${EXECUTABLE_OUTPUT_PATH}/job_loadOK ${CMAKE_CURRENT_SOURCE_DIR}/data/externalOK)
