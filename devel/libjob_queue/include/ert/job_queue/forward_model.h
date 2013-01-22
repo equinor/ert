@@ -24,10 +24,10 @@ extern "C" {
 
 #include <stdbool.h>
 
-#include <stringlist.h>
-#include <subst_list.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/subst_list.h>
 
-#include <ext_joblist.h>
+#include <ert/job_queue/ext_joblist.h>
 
 typedef struct  forward_model_struct forward_model_type ;
 
