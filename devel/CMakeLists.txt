@@ -32,7 +32,7 @@ endif()
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-
+set(PYTHON_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build/python)
 #-----------------------------------------------------------------
 find_library( ZLIB_LIBRARY NAMES z )
 find_path( ZLIB_HEADER zlib.h /usr/include )
@@ -291,4 +291,30 @@ if (BUILD_ERT)
    #add_dependencies( enkf_static plot_static ecl_static util_static config_static sched_static rms_static analysis job_queue_static )
    #add_dependencies( ert enkf_static plot_static )
 endif()
+#######################################
+###           python stuff          ###
+#######################################
+file(MAKE_DIRECTORY ${PYTHON_OUTPUT_PATH})
+macro(add_python_target tgt ARGN)
+  SET(OUT_FILES "")			
+  foreach(file ${ARGN})
+    set(OUT ${PYTHON_OUTPUT_PATH}/${file}.pyc)
+    list(APPEND OUT_FILES ${OUT})
+    ADD_CUSTOM_COMMAND(	 
+      OUTPUT ${PYTHON_OUTPUT_PATH}/${file}.pyc
+      COMMAND python -m py_compile 
+      ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.py
+      WORKING_DIRECTORY ${PYTHON_OUTPUT_PATH}
+      COMMAND mv 
+      ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.pyc ${PYTHON_OUTPUT_PATH}
+    )
+    install(FILES ${file}.pyc DESTINATION ${PYTHON_OUTPUT_PATH})
+  endforeach(file)
+list(REMOVE_DUPLICATES OUT_FILES)
+ADD_CUSTOM_TARGET(    
+  output_pyc_files ALL
+  DEPENDS ${OUT_FILES})	
+endmacro()
+
+add_subdirectory( python )
 
