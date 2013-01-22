@@ -3,9 +3,10 @@ project( ERT C CXX )
 include( CheckFunctionExists )
 ENABLE_TESTING()
 
-option( BUILD_ERT      "Build the full ERT application - Linux only" OFF)
-option( BUILD_ENS_PLOT "Build small Eclipse plotting program - no" OFF)
-
+option( BUILD_ERT          "Build the full ERT application - Linux only" OFF)
+option( BUILD_ENS_PLOT     "Build small Eclipse plotting program - no" OFF)
+option( BUILD_TESTS        "Should the tests be built" OFF)
+option( BUILD_APPLICATONS  "Should we build small utility applications" OFF)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
    set(ERT_LINUX TRUE )
@@ -26,11 +27,10 @@ set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
-
 if (MSVC)
    set(SHARED_LIB OFF)
 else()
-   option( SHARED_LIB "Build shared libraries" OFF)
+   option( SHARED_LIB "Build shared libraries" ON)
 endif()
 
 if (SHARED_LIB)
