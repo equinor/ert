@@ -8,6 +8,7 @@ option( BUILD_ERT          "Build the full ERT application - Linux only" OFF)
 option( BUILD_ENS_PLOT     "Build small Eclipse plotting program - no" OFF)
 option( BUILD_TESTS        "Should the tests be built" OFF)
 option( BUILD_APPLICATONS  "Should we build small utility applications" OFF)
+option( BUILD_ECL_SUMMARY  "Build the commandline application ecl_summary" OFF)
 
 include( CheckFunctionExists )
 ENABLE_TESTING()
