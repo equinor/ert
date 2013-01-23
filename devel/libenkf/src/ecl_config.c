@@ -641,6 +641,19 @@ bool ecl_config_get_unified_restart(const ecl_config_type * ecl_config)  { retur
 bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)  { return ecl_io_config_get_unified_summary( ecl_config->io_config ); }
 
 
+void ecl_config_static_kw_init( ecl_config_type * ecl_config , const config_type * config ) {
+  const config_content_item_type * content_item = config_get_content_item( config , STATIC_KW_KEY );
+  if (content_item != NULL) {
+    int j;
+    for (j=0; j < config_content_item_get_size( content_item ); j++) {
+      const config_content_node_type * content_node = config_content_item_iget_node( content_item , j);
+      int k;
+      for (k = 0; k < config_content_node_get_size( content_node ); k++)
+        ecl_config_add_static_kw(ecl_config , config_content_node_iget( content_node , k ));
+    }
+  }
+}
+
 
 void ecl_config_add_config_items( config_type * config ) {
   config_schema_item_type * item;
@@ -753,5 +766,4 @@ void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stre
   
   
   fprintf(stream , "\n\n");
-  
 }

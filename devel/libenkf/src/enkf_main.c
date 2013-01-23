@@ -2954,38 +2954,12 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
 
 
-
-
-      if (config_item_set(config , STATIC_KW_KEY)) {
-        for (int i=0; i < config_get_occurences(config , STATIC_KW_KEY); i++) {
-          const stringlist_type * static_kw_list = config_iget_stringlist_ref(config , STATIC_KW_KEY , i);
-          int k;
-          for (k = 0; k < stringlist_get_size(static_kw_list); k++)
-            ecl_config_add_static_kw(enkf_main->ecl_config , stringlist_iget( static_kw_list , k));
-        }
-      }
-            
+      ecl_config_static_kw_init( enkf_main->ecl_config , config );
+      
       /* Installing templates */
       {
-        enkf_main->templates       = ert_templates_alloc( enkf_main->subst_list );
-        for (int i=0; i < config_get_occurences( config , RUN_TEMPLATE_KEY); i++) {
-          const char * template_file = config_iget( config , RUN_TEMPLATE_KEY , i , 0);
-          const char * target_file   = config_iget( config , RUN_TEMPLATE_KEY , i , 1);
-          ert_template_type * template = ert_templates_add_template( enkf_main->templates , NULL , template_file , target_file , NULL);
-          
-          for (int iarg = 2; iarg < config_get_occurence_size( config , RUN_TEMPLATE_KEY , i); iarg++) {
-            char * key , *value;
-            util_binary_split_string( config_iget( config , RUN_TEMPLATE_KEY , i , iarg ), "=:" , true , &key , &value);
-            
-            if (value != NULL) 
-              ert_template_add_arg( template ,key , value );
-            else
-              fprintf(stderr,"** Warning - failed to parse argument:%s as key:value - ignored \n",config_iget( config , "RUN_TEMPLATE" , i , iarg ));
-
-            free( key );
-            util_safe_free( value );
-          }
-        }
+        enkf_main->templates = ert_templates_alloc( enkf_main->subst_list );
+        ert_templates_init( enkf_main->templates , config );
       }
 
       /*****************************************************************/
