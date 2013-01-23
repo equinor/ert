@@ -23,12 +23,12 @@ endif()
 set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99 -fno-leading-underscore" )
 set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
-include(CMake/ert_check.cmake)
-include(CMake/ert_find.cmake)
-include(CMake/UseMultiArch.cmake)
+include(cmake/ert_check.cmake)
+include(cmake/ert_find.cmake)
+include(cmake/Modules/UseMultiArch.cmake)
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
-set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 if (MSVC)
@@ -60,7 +60,7 @@ else()
 endif()
 
 
-configure_file( ${PROJECT_SOURCE_DIR}/CMake/config/ert_build_config.h.in
+configure_file( ${PROJECT_SOURCE_DIR}/cmake/config/ert_build_config.h.in
                 ${PROJECT_BINARY_DIR}/ert_build_config.h )
 
 include_directories( ${PROJECT_SOURCE_DIR}/libert_util/include )
@@ -85,7 +85,7 @@ add_subdirectory( libecl_well )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
-   try_compile( DLOPEN ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_dlopen.c )
+   try_compile( DLOPEN ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_dlopen.c )
    if (DLOPEN)
       set(NEED_LIBDL OFF)    
    else()
