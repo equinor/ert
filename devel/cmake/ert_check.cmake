@@ -81,28 +81,28 @@ if (HAVE_OPENDIR)
   add_definitions( -DHAVE_USLEEP )
 endif()
 
-try_compile( HAVE_ISFINITE ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_isfinite.c )
+try_compile( HAVE_ISFINITE ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_isfinite.c )
 if (HAVE_ISFINITE)
   add_definitions( -DHAVE_ISFINITE )
 endif()
 
-try_compile( MKDIR_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_mkdir.c )
+try_compile( MKDIR_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_mkdir.c )
 if (MKDIR_POSIX)
   add_definitions( -DMKDIR_POSIX )
 endif()
 
-try_compile( HAVE_PID_T ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_pid_t.c )
+try_compile( HAVE_PID_T ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_pid_t.c )
 if (HAVE_PID_T)
   add_definitions( -DHAVE_PID_T )
 endif()
 
-try_compile( HAVE_VA_COPY ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_va_copy.c )
+try_compile( HAVE_VA_COPY ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_va_copy.c )
 if (HAVE_VA_COPY)
    add_definitions( -DHAVE_VA_COPY )
 endif()
 
 
-try_compile( ISREG_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/CMake/Tests/test_isreg.c )
+try_compile( ISREG_POSIX ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_isreg.c )
 if (ISREG_POSIX)
   add_definitions( -DHAVE_ISREG )
 endif()
