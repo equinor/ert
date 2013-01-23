@@ -1,12 +1,16 @@
 cmake_minimum_required( VERSION 2.6 )
 project( ERT C CXX )
-include( CheckFunctionExists )
-ENABLE_TESTING()
+
+set( ERT_VERSION_MAJOR 1 )
+set( ERT_VERSION_MINOR 0 )
 
 option( BUILD_ERT          "Build the full ERT application - Linux only" OFF)
 option( BUILD_ENS_PLOT     "Build small Eclipse plotting program - no" OFF)
 option( BUILD_TESTS        "Should the tests be built" OFF)
 option( BUILD_APPLICATONS  "Should we build small utility applications" OFF)
+
+include( CheckFunctionExists )
+ENABLE_TESTING()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
    set(ERT_LINUX TRUE )
