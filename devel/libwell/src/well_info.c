@@ -295,6 +295,11 @@ void well_info_add_wells( well_info_type * well_info , ecl_file_type * rst_file 
   ecl_intehead_free( global_header );
 }
 
+/**
+   Observe that this function will fail if the rst_file instance
+   corresponds to a non-unified restart file, because these files do
+   not have the SEQNUM keyword.
+*/
 
 void well_info_add_UNRST_wells( well_info_type * well_info , ecl_file_type * rst_file) {
   {
