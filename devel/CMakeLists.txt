@@ -32,7 +32,7 @@ endif()
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-set(PYTHON_INSTALL_PATH python)
+#set(PYTHON_INSTALL_PATH python)
 set(PYTHON_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/python)
 #-----------------------------------------------------------------
 find_library( ZLIB_LIBRARY NAMES z )
@@ -296,7 +296,7 @@ endif()
 ###           python stuff          ###
 #######################################
 #file(MAKE_DIRECTORY ${PYTHON_OUTPUT_PATH})
-macro(add_python_target tgt ARGN)
+macro(add_python_target tgt  PYTHON_INSTALL_PATH ARGN)
   SET(OUT_FILES "")			
   foreach(file ${ARGN})
     set(OUT ${PYTHON_OUTPUT_PATH}/${file}.pyc)
@@ -309,11 +309,11 @@ macro(add_python_target tgt ARGN)
       COMMAND mv 
       ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.pyc ${PYTHON_OUTPUT_PATH}
     )
-    install(FILES ${PYTHON_OUTPUT_PATH}/${file}.pyc DESTINATION ${PYTHON_INSTALL_PATH})
+    install(FILES ${PYTHON_OUTPUT_PATH}/${file}.pyc DESTINATION  ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTALL_PATH})
   endforeach(file)
 list(REMOVE_DUPLICATES OUT_FILES)
 ADD_CUSTOM_TARGET(    
-  output_pyc_files ALL
+  ${tgt} ALL
   DEPENDS ${OUT_FILES})	
 endmacro()
 
