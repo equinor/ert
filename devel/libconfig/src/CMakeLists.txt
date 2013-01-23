@@ -6,7 +6,7 @@ set_target_properties( config PROPERTIES VERSION 1.0 SOVERSION 1.0 )
 
 target_link_libraries( config ert_util )
 
-install(TARGETS config DESTINATION lib)
+install(TARGETS config DESTINATION ${CMAKE_INSTALL_LIBDIR})
 foreach(header ${header_files})
     install(FILES ../include/ert/config/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/config)
 endforeach()
