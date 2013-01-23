@@ -16,7 +16,7 @@ if (NEED_LIBDL)
 endif()
 
 
-install(TARGETS job_queue DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+install(TARGETS job_queue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 foreach(header ${header_files})
     install(FILES ../include/ert/job_queue/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/job_queue)
 endforeach()
