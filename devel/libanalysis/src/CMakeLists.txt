@@ -19,7 +19,7 @@ add_library( sqrt_enkf MODULE sqrt_enkf.c )
 
 #-----------------------------------------------------------------
 
-install(TARGETS analysis DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+install(TARGETS analysis DESTINATION ${CMAKE_INSTALL_LIBDIR})
 foreach(header ${header_files})
     install(FILES ../include/ert/analysis/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/analysis)
 endforeach()

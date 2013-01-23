@@ -20,12 +20,12 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    add_definitions( -DERT_WINDOWS )
 endif()    
 
-
 set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99 -fno-leading-underscore" )
 set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
 include(CMake/ert_check.cmake)
 include(CMake/ert_find.cmake)
+include(CMake/UseMultiArch.cmake)
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
