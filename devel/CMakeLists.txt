@@ -9,6 +9,7 @@ option( BUILD_ENS_PLOT     "Build small Eclipse plotting program - no" OFF)
 option( BUILD_TESTS        "Should the tests be built" OFF)
 option( BUILD_APPLICATONS  "Should we build small utility applications" OFF)
 option( BUILD_ECL_SUMMARY  "Build the commandline application ecl_summary" OFF)
+option( BUILD_PYTHON       "Run py_compile on the python wrappers" OFF)
 
 include( CheckFunctionExists )
 ENABLE_TESTING()
@@ -27,6 +28,7 @@ set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 include(cmake/ert_check.cmake)
 include(cmake/ert_find.cmake)
 include(cmake/Modules/UseMultiArch.cmake)
+include(cmake/python.cmake)
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
@@ -113,29 +115,9 @@ if (BUILD_ERT)
    include_directories( ${PROJECT_SOURCE_DIR}/libenkf/include )
    add_subdirectory( libenkf )
 endif()
-#######################################
-###           python stuff          ###
-#######################################
-macro(add_python_target tgt  PYTHON_INSTALL_PATH ARGN)
-  SET(OUT_FILES "")			
-  foreach(file ${ARGN})
-    set(OUT ${CMAKE_CURRENT_BINARY_DIR}/${file}.pyc)
-    list(APPEND OUT_FILES ${OUT})
-    ADD_CUSTOM_COMMAND(	 
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file}.pyc
-      COMMAND python -m py_compile 
-      ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.py
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND mv 
-      ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.pyc ${CMAKE_CURRENT_BINARY_DIR}
-    )
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${file}.pyc DESTINATION  ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTALL_PATH})
-  endforeach(file)
-list(REMOVE_DUPLICATES OUT_FILES)
-ADD_CUSTOM_TARGET(    
-  ${tgt} ALL
-  DEPENDS ${OUT_FILES})	
-endmacro()
 
-add_subdirectory( python )
+
+if (BUILD_PYTHON)
+   add_subdirectory( python )
+endif()
 
