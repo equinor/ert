@@ -20,13 +20,14 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#include <test_util.h>
-#include <util.h>
+#include <ert/util/test_util.h>
+#include <ert/util/util.h>
 
-#include <config.h>
-#include <workflow.h>
-#include <workflow_job.h>
-#include <workflow_joblist.h>
+#include <ert/config/config.h>
+
+#include <ert/job_queue/workflow.h>
+#include <ert/job_queue/workflow_job.h>
+#include <ert/job_queue/workflow_joblist.h>
 
 
 void create_workflow( const char * workflow_file , const char * tmp_file , int value) {

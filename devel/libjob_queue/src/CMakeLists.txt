@@ -4,6 +4,8 @@ set(source_files forward_model.c queue_driver.c job_queue.c lsf_driver.c local_d
 set(header_files job_queue.h queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h forward_model.h workflow_job.h workflow.h workflow_joblist.h)
 
 add_library( job_queue SHARED ${source_files} )
+set_target_properties( job_queue PROPERTIES VERSION 1.0 SOVERSION 1.0 )
+
 target_link_libraries( job_queue config ert_util )
 if (HAVE_LSF)
    target_link_libraries( job_queue bat ${LSF_LIBRARY} nsl)
@@ -14,10 +16,7 @@ if (NEED_LIBDL)
 endif()
 
 
-if (JOB_QUEUE_INSTALL_PREFIX)
-   install(TARGETS job_queue DESTINATION ${JOB_QUEUE_INSTALL_PREFIX}/lib)
-   install(FILES ${header_files} DESTINATION ${JOB_QUEUE_INSTALL_PREFIX}/include)
-else()
-   install(TARGETS job_queue DESTINATION lib)
-   install(FILES ${header_files} DESTINATION include)
-endif()
+install(TARGETS job_queue DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(header ${header_files})
+    install(FILES ../include/ert/job_queue/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/job_queue)
+endforeach()

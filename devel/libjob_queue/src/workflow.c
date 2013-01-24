@@ -20,19 +20,19 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
-#include <int_vector.h>
-#include <util.h>
-#include <type_macros.h>
-#include <stringlist.h>
-#include <arg_pack.h>
-#include <vector.h>
-#include <subst_list.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/vector.h>
+#include <ert/util/subst_list.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
-#include <workflow.h>
-#include <workflow_job.h>
-#include <workflow_joblist.h>
+#include <ert/job_queue/workflow.h>
+#include <ert/job_queue/workflow_job.h>
+#include <ert/job_queue/workflow_joblist.h>
 
 #define CMD_TYPE_ID                66153
 #define WORKFLOW_TYPE_ID         6762081
