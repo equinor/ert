@@ -21,11 +21,11 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-#include <vector.h>
-#include <util.h>
-#include <type_macros.h>
+#include <ert/util/vector.h>
+#include <ert/util/util.h>
+#include <ert/util/type_macros.h>
 
-#include <runpath_list.h>
+#include <ert/enkf/runpath_list.h>
 
 typedef struct runpath_node_struct runpath_node_type;
 

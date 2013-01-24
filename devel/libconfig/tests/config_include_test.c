@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <test_util.h>
-#include <util.h>
-#include <path_stack.h>
+#include <ert/util/test_util.h>
+#include <ert/util/util.h>
+#include <ert/util/path_stack.h>
 
-#include <config.h>
-#include <config_schema_item.h>
+#include <ert/config/config.h>
+#include <ert/config/config_schema_item.h>
 
 void parse_test(config_type * config , 
                 const char * root_path ,     // The new working directory - the test will start by chdir() here.

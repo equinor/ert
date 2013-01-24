@@ -22,23 +22,23 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <type_macros.h>
-#include <util.h>
-#include <parser.h>
-#include <hash.h>
-#include <stringlist.h>
-#include <set.h>
-#include <subst_list.h>
-#include <vector.h>
-#include <path_stack.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/util.h>
+#include <ert/util/parser.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/set.h>
+#include <ert/util/subst_list.h>
+#include <ert/util/vector.h>
+#include <ert/util/path_stack.h>
 
-#include <config.h>
-#include <config_error.h>
-#include <config_schema_item.h>
-#include <config_content_node.h>
-#include <config_content_item.h>
-#include <config_path_elm.h>
-#include <config_root_path.h>
+#include <ert/config/config.h>
+#include <ert/config/config_error.h>
+#include <ert/config/config_schema_item.h>
+#include <ert/config/config_content_node.h>
+#include <ert/config/config_content_item.h>
+#include <ert/config/config_path_elm.h>
+#include <ert/config/config_root_path.h>
 
 #define  CLEAR_STRING "__RESET__"
 

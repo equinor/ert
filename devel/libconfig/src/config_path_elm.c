@@ -22,11 +22,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <type_macros.h>
-#include <util.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/util.h>
 
-#include <config_root_path.h>
-#include <config_path_elm.h>
+#include <ert/config/config_root_path.h>
+#include <ert/config/config_path_elm.h>
 
 #define CONFIG_PATH_ELM_TYPE_ID  7100063
 

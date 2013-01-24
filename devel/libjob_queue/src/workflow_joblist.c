@@ -21,15 +21,15 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
-#include <hash.h>
-#include <int_vector.h>
-#include <util.h>
-#include <type_macros.h>
+#include <ert/util/hash.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/util.h>
+#include <ert/util/type_macros.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
-#include <workflow_job.h>
-#include <workflow_joblist.h>
+#include <ert/job_queue/workflow_job.h>
+#include <ert/job_queue/workflow_joblist.h>
 
 
 struct workflow_joblist_struct {

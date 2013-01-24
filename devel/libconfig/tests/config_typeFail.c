@@ -18,8 +18,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <config_error.h>
-#include <config.h>
+#include <ert/config/config_error.h>
+#include <ert/config/config.h>
 
 
 void error(char * msg) {

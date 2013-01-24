@@ -19,13 +19,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <test_util.h>
-#include <util.h>
-#include <hash.h>
+#include <ert/util/test_util.h>
+#include <ert/util/util.h>
+#include <ert/util/hash.h>
 
-#include <config_content_node.h>
-#include <config_schema_item.h>
-#include <config_path_elm.h>
+#include <ert/config/config_content_node.h>
+#include <ert/config/config_schema_item.h>
+#include <ert/config/config_path_elm.h>
 
 
 int main(int argc , char ** argv) {

@@ -15,16 +15,16 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
+#include <ert/util/menu.h>
+#include <ert/util/util.h>
 
-#include <menu.h>
-#include <util.h>
+#include <ert/job_queue/ext_joblist.h>
+#include <ert/job_queue/ext_job.h>
 
-#include <ext_joblist.h>
-#include <ext_job.h>
+#include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_main.h>
+#include <ert/enkf/enkf_state.h>
 
-#include <enkf_types.h>
-#include <enkf_main.h>
-#include <enkf_state.h>
 #include <enkf_tui_misc.h>
 #include <enkf_tui_help.h>
 

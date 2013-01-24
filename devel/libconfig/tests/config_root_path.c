@@ -19,11 +19,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <test_util.h>
-#include <util.h>
+#include <ert/util/test_util.h>
+#include <ert/util/util.h>
 
-#include <config.h>
-#include <config_root_path.h>
+#include <ert/config/config.h>
+#include <ert/config/config_root_path.h>
 
 
 int main(int argc , char ** argv) {

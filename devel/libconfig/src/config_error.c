@@ -17,10 +17,10 @@
 */
 #include <stdio.h>
 
-#include <util.h>
-#include <stringlist.h>
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
 
-#include <config_error.h>
+#include <ert/config/config_error.h>
 
 struct config_error_struct {
   stringlist_type * error_list;

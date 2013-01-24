@@ -22,9 +22,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <util.h>
+#include <ert/util/util.h>
 
-#include <config_root_path.h>
+#include <ert/config/config_root_path.h>
 
 struct config_root_path_struct {
   char * input_path;

@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <test_util.h>
-#include <util.h>
-#include <thread_pool.h>
-#include <arg_pack.h>
+#include <ert/util/test_util.h>
+#include <ert/util/util.h>
+#include <ert/util/thread_pool.h>
+#include <ert/util/arg_pack.h>
 
-#include <runpath_list.h>
+#include <ert/enkf/runpath_list.h>
 
 void * add_pathlist( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );

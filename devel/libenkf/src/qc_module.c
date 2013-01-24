@@ -19,16 +19,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <util.h>
-#include <subst_list.h>
+#include <ert/util/util.h>
+#include <ert/util/subst_list.h>
 
-#include <config.h>
+#include <ert/config/config.h>
 
-#include <config_keys.h>
-#include <qc_module.h>
-#include <workflow.h>
-#include <ert_workflow_list.h>
-#include <runpath_list.h>
+#include <ert/job_queue/workflow.h>
+
+#include <ert/enkf/config_keys.h>
+#include <ert/enkf/qc_module.h>
+#include <ert/enkf/ert_workflow_list.h>
+#include <ert/enkf/runpath_list.h>
 
 #define QC_WORKFLOW_NAME    "QC"
 #define RUNPATH_LIST_FILE   "/tmp/ert_runpath_list"

@@ -18,13 +18,13 @@
 
 #include <stdbool.h>
 
-#include <type_macros.h>
-#include <util.h>
-#include <stringlist.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/util.h>
+#include <ert/util/stringlist.h>
 
-#include <config_schema_item.h>
-#include <config_content_node.h>
-#include <config_path_elm.h>
+#include <ert/config/config_schema_item.h>
+#include <ert/config/config_content_node.h>
+#include <ert/config/config_path_elm.h>
 
 
 #define CONFIG_CONTENT_NODE_ID 6752887

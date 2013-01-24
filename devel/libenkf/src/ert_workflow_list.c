@@ -23,20 +23,20 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include <hash.h>
-#include <stringlist.h>
-#include <util.h>
-#include <subst_list.h>
+#include <ert/util/hash.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
+#include <ert/util/subst_list.h>
 
-#include <config.h>
-#include <config_schema_item.h>
+#include <ert/config/config.h>
+#include <ert/config/config_schema_item.h>
 
-#include <workflow.h>
-#include <workflow_job.h>
-#include <workflow_joblist.h>
+#include <ert/job_queue/workflow.h>
+#include <ert/job_queue/workflow_job.h>
+#include <ert/job_queue/workflow_joblist.h>
 
-#include <ert_workflow_list.h>
-#include <config_keys.h>
+#include <ert/enkf/ert_workflow_list.h>
+#include <ert/enkf/config_keys.h>
 
 
 struct ert_workflow_list_struct {
