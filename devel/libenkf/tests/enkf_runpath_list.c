@@ -47,30 +47,30 @@ int main(int argc , char ** argv) {
 
   runpath_list_type * list = runpath_list_alloc();
 
-  test_assert_int_equal( runpath_list_size( list ) , 0 , NULL );
+  test_assert_int_equal( runpath_list_size( list ) , 0 );
 
   runpath_list_add( list , 3 , "path" , "base");
   runpath_list_add( list , 2 , "path" , "base");
   runpath_list_add( list , 1 , "path" , "base");
   
-  test_assert_int_equal( runpath_list_size( list ) , 3 , NULL );
-  test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 3 , NULL );
-  test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 1 , NULL );
+  test_assert_int_equal( runpath_list_size( list ) , 3 );
+  test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 3 );
+  test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 1 );
   runpath_list_sort( list );
 
-  test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 1 , "After sort: got:%d  expected:%d\n" );
-  test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 3 , NULL );
+  test_assert_int_equal( runpath_list_iget_iens( list , 0 ) , 1 );
+  test_assert_int_equal( runpath_list_iget_iens( list , 2 ) , 3 );
   runpath_list_clear( list );
-  test_assert_int_equal( runpath_list_size( list ) , 0 , NULL );
+  test_assert_int_equal( runpath_list_size( list ) , 0 );
 
-  test_assert_string_equal( runpath_list_get_line_fmt( list ) , RUNPATH_LIST_DEFAULT_LINE_FMT , "Default1  got:[%s]  expected:[%s]\n");
+  test_assert_string_equal( runpath_list_get_line_fmt( list ) , RUNPATH_LIST_DEFAULT_LINE_FMT );
   {
     const char * other_line = "%d %s %s";
     runpath_list_set_line_fmt( list , other_line );
-    test_assert_string_equal( runpath_list_get_line_fmt( list ) , other_line , NULL);
+    test_assert_string_equal( runpath_list_get_line_fmt( list ) , other_line );
   }
   runpath_list_set_line_fmt( list , NULL );
-  test_assert_string_equal( runpath_list_get_line_fmt( list ) , RUNPATH_LIST_DEFAULT_LINE_FMT , NULL);
+  test_assert_string_equal( runpath_list_get_line_fmt( list ) , RUNPATH_LIST_DEFAULT_LINE_FMT );
 
   {
     const int block_size = 100;
@@ -89,12 +89,12 @@ int main(int argc , char ** argv) {
       thread_pool_add_job( tp , add_pathlist , arg_pack );
     }
     thread_pool_join( tp );
-    test_assert_int_equal( runpath_list_size( list ) , block_size * threads , "New size: got:%d  expected:%d\n");
+    test_assert_int_equal( runpath_list_size( list ) , block_size * threads );
     runpath_list_sort( list );
     {
       int iens;
       for (iens = 0; iens < block_size * threads; iens++)
-        test_assert_int_equal( runpath_list_iget_iens( list , iens ) , iens , "Iteration got:%d  expected:%d\n" );
+        test_assert_int_equal( runpath_list_iget_iens( list , iens ) , iens );
     }
     
     {
@@ -113,8 +113,8 @@ int main(int argc , char ** argv) {
         FILE * stream = util_fopen( filename, "r");
         for (iens = 0; iens < threads * block_size; iens++) {
           int fscanf_return = fscanf( stream , "%d %s %s" , &file_iens , file_path , file_base);
-          test_assert_int_equal(fscanf_return, 3 , "fscanf() failed got:%d  expected:%d\n" );
-          test_assert_int_equal( file_iens , iens , "File read got:%d  expected:%d\n" );
+          test_assert_int_equal(fscanf_return, 3 );
+          test_assert_int_equal( file_iens , iens );
         }
         fclose( stream );
       }

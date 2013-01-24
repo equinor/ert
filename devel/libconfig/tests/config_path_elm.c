@@ -43,12 +43,12 @@ int main(int argc , char ** argv) {
   {
     config_path_elm_type * path_elm = config_path_elm_alloc( root_path , rel_path );
     
-    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path , NULL);
-    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path , NULL);
+    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path );
+    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path );
 
-    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true, NULL);
-    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true, NULL);
-    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true2, NULL);
+    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true);
+    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true);
+    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true2 );
 
     
     config_path_elm_free( path_elm );
@@ -57,12 +57,12 @@ int main(int argc , char ** argv) {
   {
     config_path_elm_type * path_elm = config_path_elm_alloc( root_path , abs_path );
   
-    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path , NULL);
-    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path , NULL);
+    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path );
+    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path );
 
-    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true, NULL);
-    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true, NULL);
-    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true2, NULL);
+    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true);
+    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true);
+    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true2 );
     
     config_path_elm_free( path_elm );
   }
@@ -74,12 +74,12 @@ int main(int argc , char ** argv) {
   {
     config_path_elm_type * path_elm = config_path_elm_alloc( root_path , rel_path );
     
-    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path , NULL);
-    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path , NULL);
+    test_assert_string_equal( config_path_elm_get_relpath( path_elm ) , rel_path );
+    test_assert_string_equal( config_path_elm_get_abspath( path_elm ) , abs_path );
 
-    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true, NULL);
-    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true, NULL);
-    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true1, NULL);
+    test_assert_string_equal( config_path_elm_alloc_relpath( path_elm , "XXX" ) , rel_true);
+    test_assert_string_equal( config_path_elm_alloc_abspath( path_elm , "XXX" ) , abs_true);
+    test_assert_string_equal( config_path_elm_alloc_path( path_elm , "XXX" ) , path_true1 );
 
     
     config_path_elm_free( path_elm );

@@ -52,10 +52,15 @@ config_content_node_type * config_content_node_alloc( const config_schema_item_t
 }
 
 
+void config_content_node_add_value(config_content_node_type * node , const char * value) {
+  stringlist_append_copy( node->stringlist , value);
+}
+
+
 void config_content_node_set(config_content_node_type * node , const stringlist_type * token_list) {
   int argc = stringlist_get_size( token_list ) - 1;
   for (int iarg=0; iarg < argc; iarg++) 
-    stringlist_append_copy( node->stringlist , stringlist_iget( token_list , iarg + 1));
+    config_content_node_add_value( node , stringlist_iget( token_list , iarg + 1));
 }
 
 
@@ -192,4 +197,21 @@ void config_content_node_assert_key_value( const config_content_node_type * node
 
 const config_path_elm_type * config_content_node_get_path_elm( const config_content_node_type * node ) {
   return node->cwd;
+}
+
+/**
+   The node should contain elements of the type:
+
+      KEY1:VALUE1    KEY2:Value2   XX Key3:Val3  Ignored
+
+   Which will be inserted in the opt_hash dictionary as : {"KEY1" :
+   "VALUE1" , ... } Elements which do not conform to this syntax are
+   ignored.  
+*/
+   
+
+void config_content_node_init_opt_hash( const config_content_node_type * node , hash_type * opt_hash , int elm_offset) {
+  int i;
+  for (i = elm_offset; i < config_content_node_get_size( node ); i++) 
+    hash_add_option( opt_hash , config_content_node_iget( node , i ));
 }

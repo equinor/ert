@@ -67,17 +67,17 @@ void parse_test(config_type * config ,
       char * abspath3 = util_alloc_filename( config_abs_path , path3, NULL);
       char * abspath4 = util_alloc_filename( config_abs_path , path4, NULL);
       
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH0") , relpath0 , "rel: PATH0:%s  expected:%s \n");
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH1") , relpath1 , "rel: PATH1:%s  expected:%s \n");
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH2") , relpath2 , "rel: PATH2:%s  expected:%s \n");
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH3") , relpath3 , "rel: PATH3:%s  expected:%s \n");
-      test_assert_string_equal(config_get_value_as_relpath(config , "PATH4") , relpath4 , "rel: PATH4:%s  expected:%s \n");
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH0") , relpath0 );
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH1") , relpath1 );
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH2") , relpath2 );
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH3") , relpath3 );
+      test_assert_string_equal(config_get_value_as_relpath(config , "PATH4") , relpath4 );
       
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH0") , abspath0 , "abs: PATH0:%s  expected:%s \n");
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH1") , abspath1 , "abs: PATH1:%s  expected:%s \n");
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH2") , abspath2 , "abs: PATH2:%s  expected:%s \n");
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH3") , abspath3 , "abs: PATH3:%s  expected:%s \n");
-      test_assert_string_equal(config_get_value_as_abspath(config , "PATH4") , abspath4 , "abs: PATH4:%s  expected:%s \n");
+      test_assert_string_equal(config_get_value_as_abspath(config , "PATH0") , abspath0 );
+      test_assert_string_equal(config_get_value_as_abspath(config , "PATH1") , abspath1 );
+      test_assert_string_equal(config_get_value_as_abspath(config , "PATH2") , abspath2 );
+      test_assert_string_equal(config_get_value_as_abspath(config , "PATH3") , abspath3 );
+      test_assert_string_equal(config_get_value_as_abspath(config , "PATH4") , abspath4 );
       
     } else {
       config_error_type * error = config_get_errors( config );

@@ -24,12 +24,15 @@
 define extern "C" {
 #endif
 
+#include <hash.h>
+
 #include <config_schema_item.h>
 #include <config_path_elm.h>
 
 typedef struct config_content_node_struct config_content_node_type;
 
          config_content_node_type   * config_content_node_alloc( const config_schema_item_type * schema , const config_path_elm_type * cwd);
+         void                         config_content_node_add_value(config_content_node_type * node , const char * value);
          void                         config_content_node_set(config_content_node_type * node , const stringlist_type * token_list);
          char                       * config_content_node_alloc_joined_string(const config_content_node_type * node, const char * sep);
          void                         config_content_node_free(config_content_node_type * node);
@@ -47,6 +50,8 @@ typedef struct config_content_node_struct config_content_node_type;
          const char                 * config_content_node_get_kw( const config_content_node_type * node );
          void                         config_content_node_assert_key_value( const config_content_node_type * node );
          const config_path_elm_type * config_content_node_get_path_elm( const config_content_node_type * node );
+         void                         config_content_node_init_opt_hash( const config_content_node_type * node , hash_type * opt_hash , int elm_offset);
+
 
 #ifdef __cplusplus
 }

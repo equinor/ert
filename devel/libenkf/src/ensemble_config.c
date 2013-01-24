@@ -335,6 +335,42 @@ void ensemble_config_add_config_items(config_type * config) {
 }
 
 
+void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_type * config ) {
+  /* gen_param  - should be unified with the gen_data*/
+  const config_content_item_type * item = config_get_content_item( config , GEN_PARAM_KEY );
+  if (item != NULL) {
+    int i;
+    for (i=0; i < config_content_item_get_size(config); i++) {
+      const config_content_node_type * node = config_content_item_iget_node( item , i );
+      const char * key                      = config_content_node_iget( node , 0 );
+      const char * ecl_file                 = config_content_node_iget( node , 1 );
+      enkf_config_node_type * config_node   = ensemble_config_add_gen_data( ensemble_config , key );
+      {
+        hash_type * options = hash_alloc();
+        
+
+        gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
+        gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
+        const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
+        const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+        const char * key                        = hash_safe_get( options , KEY_KEY);
+        const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
+        const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
+        
+        enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+        {
+          const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+          if (!gen_data_config_is_valid( gen_data_config ))
+            util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , key);
+        }
+        hash_free( options );
+      }
+    }
+  }
+}
+
+
+
 /**
    observe that if the user has not given a refcase with the refcase
    key the refcase pointer will be NULL. in that case it will be
@@ -349,31 +385,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   if (config_item_set( config , GEN_KW_TAG_FORMAT_KEY))
     ensemble_config_set_gen_kw_format( ensemble_config , config_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
   
-  /* gen_param  - should be unified with the gen_data*/
-  for (i=0; i < config_get_occurences(config , GEN_PARAM_KEY); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_PARAM_KEY , i);
-    const char * key                          = stringlist_iget(tokens , 0);
-    const char * ecl_file                     = stringlist_iget(tokens , 1);  /* only difference from gen_data is that the ecl_file is not a ":" keyword. */
-    enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
-    {
-      hash_type * options = hash_alloc_from_options( tokens );
-      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
-      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
-      const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
-      const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
-      const char * key                        = hash_safe_get( options , KEY_KEY);
-      const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
-      const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
-      
-      enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
-      {
-        const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-        if (!gen_data_config_is_valid( gen_data_config ))
-          util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , key);
-      }
-      hash_free( options );
-    }
-  }
+  ensemble_config_init_GEN_PARAM( ensemble_config , config );
   
   /* gen_data */
   for (i=0; i < config_get_occurences(config , GEN_DATA_KEY); i++) {
