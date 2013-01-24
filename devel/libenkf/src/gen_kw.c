@@ -231,7 +231,7 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 void gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
   const int size = gen_kw_config_get_data_size(gen_kw->config );
   FILE * stream  = util_fopen( filename , "r");
-  bool   readOK = true;
+  bool   readOK  = true;
 
   /* First try reading all the data as one long vector. */
   {

@@ -2891,11 +2891,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         const char * template_file = config_content_node_iget_as_path( pred_node , 0 );
         {
           hash_type * opt_hash = hash_alloc();
-          {
-            int i;
-            for (i = 1; i < config_content_node_get_size( pred_node ); i++)
-              hash_add_option( opt_hash , config_content_node_iget( pred_node , i ));
-          }
+          config_content_node_init_opt_hash( pred_node , opt_hash , 1 );
           
           const char * parameters = hash_safe_get( opt_hash , "PARAMETERS" );
           const char * min_std    = hash_safe_get( opt_hash , "MIN_STD"    );

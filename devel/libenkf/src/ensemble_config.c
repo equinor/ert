@@ -336,12 +336,49 @@ void ensemble_config_add_config_items(config_type * config) {
 }
 
 
+void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_type * config ) {
+/* gen_param  - should be unified with the gen_data*/
+  const config_content_item_type * item = config_get_content_item( config , GEN_PARAM_KEY );
+  if (item != NULL) {
+    int i;
+    for (i=0; i < config_content_item_get_size(item); i++) {
+      const config_content_node_type * node = config_content_item_iget_node( item , i );
+      const char * key                      = config_content_node_iget( node , 0 );
+      enkf_config_node_type * config_node   = ensemble_config_add_gen_data( ensemble_config , key );
+      {
+        hash_type * options = hash_alloc();
+        
+        config_content_node_init_opt_hash( node , options , 1 );
+        {
+          gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
+          gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
+          const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
+          const char * ecl_file                   = hash_safe_get( options , ECL_FILE_KEY); 
+          const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+          const char * key                        = hash_safe_get( options , KEY_KEY);
+          const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
+          const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
+          
+          enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+          {
+            const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+            if (!gen_data_config_is_valid( gen_data_config ))
+              util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , key);
+          }
+        }
+        hash_free( options );
+      }
+    }
+  }
+}
+
+
 void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_type * config ) {
   /* gen_param  - should be unified with the gen_data*/
   const config_content_item_type * item = config_get_content_item( config , GEN_PARAM_KEY );
   if (item != NULL) {
     int i;
-    for (i=0; i < config_content_item_get_size(config); i++) {
+    for (i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
       const char * key                      = config_content_node_iget( node , 0 );
       const char * ecl_file                 = config_content_node_iget( node , 1 );
@@ -349,22 +386,122 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
       {
         hash_type * options = hash_alloc();
         
-
-        gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
-        gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
-        const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
-        const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
-        const char * key                        = hash_safe_get( options , KEY_KEY);
-        const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
-        const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
-        
-        enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+        config_content_node_init_opt_hash( node , options , 2 );
         {
-          const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-          if (!gen_data_config_is_valid( gen_data_config ))
-            util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , key);
+          gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
+          gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
+          const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
+          const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
+          const char * key                        = hash_safe_get( options , KEY_KEY);
+          const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
+          const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
+          
+          enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+          {
+            const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+            if (!gen_data_config_is_valid( gen_data_config ))
+              util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , key);
+          }
         }
         hash_free( options );
+      }
+    }
+  }
+}
+
+
+void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const config_type * config ) {
+  const config_content_item_type * gen_kw_item = config_get_content_item( config , GEN_KW_KEY );
+  if (gen_kw_item != NULL) {
+    int i;
+    for (i=0; i < config_content_item_get_size( gen_kw_item ); i++) {
+      config_content_node_type * node = config_content_item_iget_node( gen_kw_item , i );
+
+      const char * key            = config_content_node_iget( node , 0 );
+      const char * template_file  = config_content_node_iget_as_path( node , 1 );
+      const char * enkf_outfile   = config_content_node_iget( node , 2 );
+      const char * parameter_file = config_content_node_iget_as_path( node , 3 );
+
+      {
+        hash_type * opt_hash                = hash_alloc();
+        enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
+        config_content_node_init_opt_hash( node , opt_hash , 4 );
+        enkf_config_node_update_gen_kw( config_node , 
+                                      enkf_outfile , 
+                                      template_file , 
+                                      parameter_file , 
+                                      hash_safe_get( opt_hash , MIN_STD_KEY ) , 
+                                      hash_safe_get( opt_hash , INIT_FILES_KEY));
+        hash_free( opt_hash );
+      }
+    }
+  }
+}
+
+
+
+void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , const config_type * config ) {
+  const config_content_item_type * item = config_get_content_item( config , SURFACE_KEY );
+  if (item != NULL) {
+    int i;
+    for (i=0; i < config_content_item_get_size( item ); i++) {
+      const config_content_node_type * node = config_content_item_iget_node( item , i );
+      const char * key           = config_content_node_iget( node , 0 );
+      {
+        hash_type * options = hash_alloc();  /* INIT_FILE:<init_files>  OUTPUT_FILE:<outfile>  BASE_SURFACE:<base_file> */
+        
+        config_content_node_init_opt_hash( node , options , 1 );
+        {
+          const char * init_file_fmt = hash_safe_get( options , INIT_FILES_KEY );
+          const char * output_file   = hash_safe_get( options , OUTPUT_FILE_KEY);
+          const char * base_surface  = hash_safe_get( options , BASE_SURFACE_KEY);
+          const char * min_std_file  = hash_safe_get( options , MIN_STD_KEY);
+          
+          if ((init_file_fmt == NULL) || (output_file == NULL) || (base_surface == NULL)) {
+            fprintf(stderr,"** error: when entering a surface you must provide arguments:\n");
+            fprintf(stderr,"**   %s:/path/to/input/files%%d  \n",INIT_FILES_KEY);
+            fprintf(stderr,"**   %s:name_of_output_file\n", OUTPUT_FILE_KEY);
+            fprintf(stderr,"**   %s:base_surface_file\n",base_surface);
+            exit(1);
+          }
+        
+          {
+            enkf_config_node_type * config_node = ensemble_config_add_surface( ensemble_config , key );
+            enkf_config_node_update_surface( config_node , base_surface , init_file_fmt , output_file , min_std_file );
+          }
+        }
+        hash_free( options );
+      }
+    }
+  }
+}
+
+
+void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , const config_type * config , const ecl_sum_type * refcase) {
+  const config_content_item_type * item = config_get_content_item( config , SUMMARY_KEY );
+
+  if (item != NULL) {
+    int i;
+    for (i=0; i < config_content_item_get_size( item ); i++) {
+      const config_content_node_type * node = config_content_item_iget_node( item , i );
+      int j;
+      for (j= 0; j < config_content_node_get_size( node ); j++) {
+        const char * key = config_content_node_iget( node , j );
+        
+        if (util_string_has_wildcard( key )) {
+          if (ensemble_config->refcase != NULL) {
+            int k;
+            stringlist_type * keys = stringlist_alloc_new ( );
+
+            ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* expanding the wildcard notatition with help of the refcase. */
+            for (k=0; k < stringlist_get_size( keys ); k++) 
+              ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) , LOAD_FAIL_SILENT );
+
+            stringlist_free( keys );
+          } else
+            util_exit("error: when using summary wildcards like: \"%s\" you must supply a valid refcase.\n",key);
+        } else 
+          ensemble_config_add_summary(ensemble_config , key , LOAD_FAIL_SILENT);
       }
     }
   }
@@ -387,75 +524,10 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     ensemble_config_set_gen_kw_format( ensemble_config , config_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
   
   ensemble_config_init_GEN_PARAM( ensemble_config , config );
-  
-  /* gen_data */
-  for (i=0; i < config_get_occurences(config , GEN_DATA_KEY); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , GEN_DATA_KEY , i);
-    const char * key                          = stringlist_iget(tokens , 0);
-    enkf_config_node_type * config_node       = ensemble_config_add_gen_data( ensemble_config , key );
-    {
-      hash_type * options = hash_alloc_from_options( tokens );
-      gen_data_file_format_type input_format  = gen_data_config_check_format( hash_safe_get( options , INPUT_FORMAT_KEY));
-      gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
-      const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
-      const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
-      const char * key                        = hash_safe_get( options , KEY_KEY);
-      const char * ecl_file                   = hash_safe_get( options , ECL_FILE_KEY);
-      const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
-      const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
-
-      enkf_config_node_update_gen_data( config_node , 
-                                        input_format , 
-                                        output_format , 
-                                        init_file_fmt , 
-                                        template , 
-                                        key , 
-                                        ecl_file , 
-                                        result_file , 
-                                        min_std_file);
-      {
-        const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-        if (!gen_data_config_is_valid( gen_data_config ))
-          util_abort("%s: sorry the gen_data key:%s is not valid \n",__func__ , key);
-      }
-      hash_free( options );
-    }
-  }
-
-
-  /* surface */
-  {
-    for (i=0; i < config_get_occurences( config , SURFACE_KEY ); i++) {
-      const stringlist_type * tokens   = config_iget_stringlist_ref(config , SURFACE_KEY , i);
-      const char * key           = stringlist_iget(tokens , 0);
-      {
-        hash_type * options = hash_alloc_from_options( tokens );  /* INIT_FILE:<init_files>  OUTPUT_FILE:<outfile>  BASE_SURFACE:<base_file> */
-
-        const char * init_file_fmt = hash_safe_get( options , INIT_FILES_KEY );
-        const char * output_file   = hash_safe_get( options , OUTPUT_FILE_KEY);
-        const char * base_surface  = hash_safe_get( options , BASE_SURFACE_KEY);
-        const char * min_std_file  = hash_safe_get( options , MIN_STD_KEY);
-
-        if ((init_file_fmt == NULL) || (output_file == NULL) || (base_surface == NULL)) {
-          fprintf(stderr,"** error: when entering a surface you must provide arguments:\n");
-          fprintf(stderr,"**   %s:/path/to/input/files%%d  \n",INIT_FILES_KEY);
-          fprintf(stderr,"**   %s:name_of_output_file\n", OUTPUT_FILE_KEY);
-          fprintf(stderr,"**   %s:base_surface_file\n",base_surface);
-          exit(1);
-        }
-
-        {
-          enkf_config_node_type * config_node = ensemble_config_add_surface( ensemble_config , key );
-          enkf_config_node_update_surface( config_node , base_surface , init_file_fmt , output_file , min_std_file );
-        }
-        
-        hash_free( options );
-      }
-    }
-  }
-
-
-
+  ensemble_config_init_GEN_DATA( ensemble_config , config );
+  ensemble_config_init_GEN_KW(ensemble_config , config ); 
+  ensemble_config_init_SURFACE( ensemble_config , config );
+  ensemble_config_init_SUMMARY( ensemble_config , config , refcase );
 
   /* field */
   {
@@ -530,63 +602,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
     }
   }
 
-  /* gen_kw */
-  for (i=0; i < config_get_occurences(config , GEN_KW_KEY); i++) {
-    stringlist_type * tokens = stringlist_alloc_deep_copy( config_iget_stringlist_ref(config , GEN_KW_KEY , i) );
-    char * key            = stringlist_iget_copy(tokens , 0);
-    char * template_file  = stringlist_iget_copy(tokens , 1);
-    char * enkf_outfile   = stringlist_iget_copy(tokens , 2);
-    char * parameter_file = stringlist_iget_copy(tokens , 3);
-    stringlist_idel( tokens , 0);
-    stringlist_idel( tokens , 0);
-    stringlist_idel( tokens , 0);
-    stringlist_idel( tokens , 0);
-
-    {
-      hash_type * opt_hash                = hash_alloc_from_options( tokens );
-      enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
-      enkf_config_node_update_gen_kw( config_node , 
-                                      enkf_outfile , 
-                                      template_file , 
-                                      parameter_file , 
-                                      hash_safe_get( opt_hash , MIN_STD_KEY ) , 
-                                      hash_safe_get( opt_hash , INIT_FILES_KEY));
-      hash_free( opt_hash );
-    }
-
-    free(key);
-    free(template_file);
-    free(enkf_outfile);
-    free(parameter_file);
-    stringlist_free( tokens );
-  }
-
-
-  /* summary */
-  {
-    stringlist_type * keys = stringlist_alloc_new ( );
-    
-    for (i=0; i < config_get_occurences(config , SUMMARY_KEY ); i++) {
-      int j,k;
-      const stringlist_type * summary_kw_list = config_iget_stringlist_ref(config , SUMMARY_KEY , i);
-      for (j= 0; j < stringlist_get_size( summary_kw_list ); j++) {
-        const char * key = stringlist_iget( summary_kw_list , j); 
-        
-        if (util_string_has_wildcard( key )) {
-          if (ensemble_config->refcase != NULL) {
-            ecl_sum_select_matching_general_var_list( ensemble_config->refcase , key , keys );   /* expanding the wildcard notatition with help of the refcase. */
-            for (k=0; k < stringlist_get_size( keys ); k++) 
-              ensemble_config_add_summary(ensemble_config , stringlist_iget(keys , k) , LOAD_FAIL_SILENT );
-          } else
-            util_exit("error: when using summary wildcards like: \"%s\" you must supply a valid refcase.\n",key);
-        } else 
-          ensemble_config_add_summary(ensemble_config , key , LOAD_FAIL_SILENT);
-      }
-    }
-    
-    stringlist_free( keys );
-  }
-
+  
   /* Containers - this must come last, to ensure that the other nodes have been added. */
   {
     for (i=0; i < config_get_occurences(config , CONTAINER_KEY ); i++) {
@@ -806,7 +822,7 @@ enkf_config_node_type * ensemble_config_add_surface( ensemble_config_type * ense
   If key == NULL the function will create a random key.
 */
 enkf_config_node_type * ensemble_config_add_container( ensemble_config_type * ensemble_config , const char * key) {
-  char * local_key = key;
+  char * local_key = (char *) key;
   bool  random_key = false;
   if (key == NULL) {
     local_key = util_calloc( 11 , sizeof * local_key  );
