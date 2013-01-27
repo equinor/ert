@@ -508,42 +508,24 @@ void ensemble_config_init_SUMMARY( ensemble_config_type * ensemble_config , cons
 }
 
 
-
-/**
-   observe that if the user has not given a refcase with the refcase
-   key the refcase pointer will be NULL. in that case it will be
-   impossible to use wildcards when expanding summary variables.
-*/
-
-void ensemble_config_init(ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
-  int i;
-  ensemble_config->field_trans_table     = field_trans_table_alloc();    
-  ensemble_config_set_refcase( ensemble_config , refcase );
-
-  if (config_item_set( config , GEN_KW_TAG_FORMAT_KEY))
-    ensemble_config_set_gen_kw_format( ensemble_config , config_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
-  
-  ensemble_config_init_GEN_PARAM( ensemble_config , config );
-  ensemble_config_init_GEN_DATA( ensemble_config , config );
-  ensemble_config_init_GEN_KW(ensemble_config , config ); 
-  ensemble_config_init_SURFACE( ensemble_config , config );
-  ensemble_config_init_SUMMARY( ensemble_config , config , refcase );
-
-  /* field */
-  {
-    for (i=0; i < config_get_occurences(config , FIELD_KEY); i++) {
-      const stringlist_type * tokens            = config_iget_stringlist_ref(config , FIELD_KEY , i);
-      const char *  key                   = stringlist_iget(tokens , 0);
-      const char *  var_type_string       = stringlist_iget(tokens , 1);
+void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid) {
+  const config_content_item_type * item = config_get_content_item( config , FIELD_KEY );
+  if (item != NULL) {
+    int i;
+    for (i=0; i < config_content_item_get_size( item ); i++) {
+      const config_content_node_type * node = config_content_item_iget_node( item , i );
+      const char *  key                   = config_content_node_iget( node , 0 );
+      const char *  var_type_string       = config_content_node_iget( node , 1 );
       enkf_config_node_type * config_node = ensemble_config_add_field( ensemble_config , key , grid );
       
       {
-        hash_type * options = hash_alloc_from_options( tokens );
+        hash_type * options = hash_alloc();
         
         int    truncation = TRUNCATE_NONE;
         double value_min  = -1;
         double value_max  = -1;
-        
+
+        config_content_node_init_opt_hash( node , options , 3 );
         if (hash_has_key( options , MIN_KEY)) {
           truncation |= TRUNCATE_MIN;
           value_min   = atof(hash_get( options , MIN_KEY));
@@ -558,7 +540,7 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
         if (strcmp(var_type_string , DYNAMIC_KEY) == 0) 
           enkf_config_node_update_state_field( config_node , truncation , value_min , value_max );
         else if (strcmp(var_type_string , PARAMETER_KEY) == 0) {
-          const char *  ecl_file          = stringlist_iget(tokens , 2);
+          const char *  ecl_file          = config_content_node_iget( node , 2 );
           const char *  init_file_fmt     = hash_safe_get( options , INIT_FILES_KEY );
           const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );
           const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
@@ -574,8 +556,8 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
                                                    init_transform    , 
                                                    output_transform   );
         } else if (strcmp(var_type_string , GENERAL_KEY) == 0) {
-          const char *  ecl_file          = stringlist_iget(tokens , 2);
-          const char *  enkf_infile       = stringlist_iget(tokens , 3);
+          const char *  ecl_file          = config_content_node_iget( node , 2 );
+          const char *  enkf_infile       = config_content_node_iget( node , 3 );
           const char *  init_file_fmt     = hash_safe_get( options , INIT_FILES_KEY );
           const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );
           const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
@@ -601,7 +583,31 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
       }
     }
   }
+}
 
+
+
+/**
+   observe that if the user has not given a refcase with the refcase
+   key the refcase pointer will be NULL. in that case it will be
+   impossible to use wildcards when expanding summary variables.
+*/
+
+void ensemble_config_init(ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
+  int i;
+  ensemble_config->field_trans_table     = field_trans_table_alloc();    
+  ensemble_config_set_refcase( ensemble_config , refcase );
+
+  if (config_item_set( config , GEN_KW_TAG_FORMAT_KEY))
+    ensemble_config_set_gen_kw_format( ensemble_config , config_iget( config , GEN_KW_TAG_FORMAT_KEY , 0 , 0 ));
+  
+  ensemble_config_init_GEN_PARAM( ensemble_config , config );
+  ensemble_config_init_GEN_DATA( ensemble_config , config );
+  ensemble_config_init_GEN_KW(ensemble_config , config ); 
+  ensemble_config_init_SURFACE( ensemble_config , config );
+  ensemble_config_init_SUMMARY( ensemble_config , config , refcase );
+  ensemble_config_init_FIELD( ensemble_config , config , grid );
+  
   
   /* Containers - this must come last, to ensure that the other nodes have been added. */
   {

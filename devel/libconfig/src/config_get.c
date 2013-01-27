@@ -34,7 +34,7 @@
 
 config_content_node_type * config_get_value_node( const config_type * config , const char * kw) {
   config_content_item_type * item = config_get_content_item(config , kw);
-  if (config_content_item_get_size( item )) {
+  if (item != NULL) {
     config_content_node_type * node = config_content_item_get_last_node( item );
     config_content_node_assert_key_value( node );
     return node;
