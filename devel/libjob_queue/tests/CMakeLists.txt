@@ -3,10 +3,11 @@ add_executable( job_loadFail job_loadFail.c )
 add_executable( create_file create_file.c )
 add_executable( job_workflow_test job_workflow_test.c )
 
-target_link_libraries( job_workflow_test job_queue util )
-target_link_libraries( create_file job_queue util )
-target_link_libraries( job_loadOK job_queue util )
-target_link_libraries( job_loadFail job_queue util )
+
+target_link_libraries( job_workflow_test job_queue )
+target_link_libraries( create_file job_queue  )
+target_link_libraries( job_loadOK job_queue  )
+target_link_libraries( job_loadFail job_queue  )
 
 
 add_test( job_workflow_test ${EXECUTABLE_OUTPUT_PATH}/job_workflow_test ${EXECUTABLE_OUTPUT_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/data/internal_job)
@@ -18,6 +19,12 @@ add_test( job_loadOK3 ${EXECUTABLE_OUTPUT_PATH}/job_loadOK ${CMAKE_CURRENT_SOURC
 add_test( job_loadFail1 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_SOURCE_DIR}/data/internalFail)
 add_test( job_loadFail2 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_SOURCE_DIR}/data/externalFail)
 add_test( job_loadFail3 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_SOURCE_DIR}/data/internalFail ${CMAKE_CURRENT_SOURCE_DIR}/data/externalFail)
+
+
+add_executable( job_queue_test job_queue_test.c )
+target_link_libraries( job_queue_test job_queue )
+add_test( job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_test )
+
 
 # This should be a space separated list of servers which will be 
 # tried out when testing the LSF submit capability. The test program
