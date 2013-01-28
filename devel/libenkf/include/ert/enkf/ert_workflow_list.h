@@ -40,7 +40,7 @@ extern "C" {
   void                       ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path);
   void                       ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const char * job_name , const char * config_file );
   void                       ert_workflow_list_add_alias( ert_workflow_list_type * workflow_list , const char * real_name , const char * alias);
-  void                       ert_workflow_list_update_config( config_type * config );
+  void                       ert_workflow_list_add_config_items( config_type * config );
   void                       ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config );
   bool                       ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self);
   bool                       ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_type * workflow, void * self );

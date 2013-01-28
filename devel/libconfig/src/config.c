@@ -377,20 +377,26 @@ static config_content_item_type * config_add_content_item( const config_type * c
 }
 
 
-static bool config_has_content_item( const config_type * config , const char * input_kw) {
-  config_schema_item_type * schema_item = config_get_schema_item( config , input_kw );
-  const char * kw = config_schema_item_get_kw( schema_item );
-  return hash_has_key( config->content_items , kw );
+bool config_has_content_item( const config_type * config , const char * input_kw) {
+  if (config_has_schema_item( config , input_kw )) {
+    config_schema_item_type * schema_item = config_get_schema_item( config , input_kw );
+    const char * kw = config_schema_item_get_kw( schema_item );
+    return hash_has_key( config->content_items , kw );
+  } else
+    return false;
 }
 
 
 config_content_item_type * config_get_content_item( const config_type * config , const char * input_kw) {
-  config_schema_item_type * schema_item = config_get_schema_item( config , input_kw );
-  const char * kw = config_schema_item_get_kw( schema_item );
-  if (hash_has_key( config->content_items , kw ))
-    return hash_get( config->content_items , kw );
-  else
-    return NULL;
+  if (config_has_schema_item( config , input_kw )) {
+    config_schema_item_type * schema_item = config_get_schema_item( config , input_kw );
+    const char * kw = config_schema_item_get_kw( schema_item );
+    if (hash_has_key( config->content_items , kw ))
+      return hash_get( config->content_items , kw );
+    else
+      return NULL;
+  } else
+    return NULL;   
 }
 
 

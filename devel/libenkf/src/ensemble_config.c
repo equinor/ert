@@ -138,12 +138,26 @@ ensemble_config_type * ensemble_config_alloc_empty( ) {
 
   ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config );
   ensemble_config->config_nodes          = hash_alloc();
+  ensemble_config->field_trans_table     = field_trans_table_alloc();    
   ensemble_config->refcase               = NULL;
   ensemble_config->gen_kw_format_string  = util_alloc_string_copy( DEFAULT_GEN_KW_TAG_FORMAT );
   pthread_mutex_init( &ensemble_config->mutex , NULL);
   
   return ensemble_config;
 }
+
+
+
+void ensemble_config_free(ensemble_config_type * ensemble_config) {
+  hash_free( ensemble_config->config_nodes );
+  field_trans_table_free( ensemble_config->field_trans_table );
+  free( ensemble_config->gen_kw_format_string );
+  free( ensemble_config );
+}
+
+
+
+
 
 
 
@@ -172,16 +186,6 @@ enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_conf
   return var_type;
 }
 
-
-
-
-
-void ensemble_config_free(ensemble_config_type * ensemble_config) {
-  hash_free( ensemble_config->config_nodes );
-  field_trans_table_free( ensemble_config->field_trans_table );
-  free( ensemble_config->gen_kw_format_string );
-  free( ensemble_config );
-}
 
 
 
@@ -284,6 +288,13 @@ void ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config) {
 
 
 
+void ensemble_config_add_GEN_PARAM_config_item( config_type * config ) {
+  config_schema_item_type * item;
+  item = config_add_schema_item(config , GEN_PARAM_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 5 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
+}
+
+
 void ensemble_config_add_config_items(config_type * config) {
   config_schema_item_type * item;
 
@@ -301,6 +312,8 @@ void ensemble_config_add_config_items(config_type * config) {
 
   /*****************************************************************/
   
+  ensemble_config_add_GEN_PARAM_config_item( config );
+  
   item = config_add_schema_item(config , GEN_KW_KEY , false  );
   config_schema_item_set_argc_minmax(item , 4 , 6 ,  6 , (const config_item_types [6]) { CONFIG_STRING , CONFIG_EXISTING_PATH , CONFIG_STRING , CONFIG_EXISTING_PATH , CONFIG_STRING , CONFIG_STRING});
   
@@ -309,9 +322,6 @@ void ensemble_config_add_config_items(config_type * config) {
   item = config_add_schema_item(config , SCHEDULE_PREDICTION_FILE_KEY , false  );
   /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
   config_schema_item_set_argc_minmax(item , 1 , 3 ,  3 , (const config_item_types [3]) { CONFIG_EXISTING_PATH , CONFIG_STRING , CONFIG_STRING});
-
-  item = config_add_schema_item(config , GEN_PARAM_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 5 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
   
   item = config_add_schema_item(config , GEN_DATA_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
@@ -338,7 +348,7 @@ void ensemble_config_add_config_items(config_type * config) {
 
 void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_type * config ) {
 /* gen_param  - should be unified with the gen_data*/
-  const config_content_item_type * item = config_get_content_item( config , GEN_PARAM_KEY );
+  const config_content_item_type * item = config_get_content_item( config , GEN_DATA_KEY );
   if (item != NULL) {
     int i;
     for (i=0; i < config_content_item_get_size(item); i++) {
@@ -595,7 +605,6 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
 
 void ensemble_config_init(ensemble_config_type * ensemble_config , const config_type * config , ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
-  ensemble_config->field_trans_table     = field_trans_table_alloc();    
   ensemble_config_set_refcase( ensemble_config , refcase );
 
   if (config_item_set( config , GEN_KW_TAG_FORMAT_KEY))

@@ -269,5 +269,24 @@ void ert_report_list_init( ert_report_list_type * report_list , config_type * co
 
   ert_report_list_add_global_context( report_list , CONFIG_FILE_TAG , config_get_config_file( config , true ));
   ert_report_list_add_global_context( report_list , USER_TAG , getenv("USER"));
+}
 
+
+void ert_report_list_add_config_items( config_type * config ) {
+  config_schema_item_type * item;
+  
+  item = config_add_schema_item(config , REPORT_LIST_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
+
+  item = config_add_schema_item(config , REPORT_CONTEXT_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
+  
+  item = config_add_schema_item(config , REPORT_PATH_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+
+  item = config_add_schema_item( config , REPORT_WELL_LIST_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
+  
+  item = config_add_schema_item( config , REPORT_GROUP_LIST_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
 }

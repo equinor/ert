@@ -1924,26 +1924,19 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main ,
 
 
 
-static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
-  config_type * config = config_alloc();
+static void enkf_main_init_user_config( const enkf_main_type * enkf_main , config_type * config ) {
   config_schema_item_type * item;
 
   /*****************************************************************/
-  /* config_add_schema_item():                                            */
+  /* config_add_schema_item():                                     */
   /*                                                               */
   /*  1. boolean - required?                                       */
   /*****************************************************************/
   
-  site_config_add_config_items( config , site_only );
-  ert_workflow_list_update_config( config );
-  if (site_only)                                                   
-    return config;                                                  /* <---------------- return statement here! */
-
-
-  
+  ert_workflow_list_add_config_items( config );
   plot_config_add_config_items( config );
   analysis_config_add_config_items( config );
-  ensemble_config_add_config_items(config);
+  ensemble_config_add_config_items( config );
   ecl_config_add_config_items( config );
   rng_config_add_config_items( config );
 
@@ -2028,26 +2021,9 @@ static config_type * enkf_main_alloc_config( bool site_only , bool strict ) {
 
     stringlist_free(refcase_dep);
   }
-  /*****************************************************************/
-  /* Report */
-  item = config_add_schema_item(config , REPORT_LIST_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
-
-  item = config_add_schema_item(config , REPORT_CONTEXT_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
   
-  item = config_add_schema_item(config , REPORT_PATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
-
-  item = config_add_schema_item( config , REPORT_WELL_LIST_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
-  
-  item = config_add_schema_item( config , REPORT_GROUP_LIST_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
-  /*****************************************************************/
-  
+  ert_report_list_add_config_items( config);
   qc_module_add_config_items( config );
-  return config;
 }
 
 
@@ -2740,11 +2716,14 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
 */
 
 
-static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * site_config_file , bool strict) {
-  config_type * config = enkf_main_alloc_config( true , strict );
-  config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
-  site_config_init( enkf_main->site_config , config , false);                                /*  <---- site_config : first pass. */  
-  ert_report_list_site_init( enkf_main->report_list , config );
+static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * site_config_file) {
+  config_type * config = config_alloc();
+  {
+    site_config_add_config_items( config , true );
+    config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
+    site_config_init( enkf_main->site_config , config );
+    ert_report_list_site_init( enkf_main->report_list , config );
+  }
   config_free( config );
 }
 
@@ -2833,22 +2812,22 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (!util_file_exists(site_config))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
-    enkf_main            = enkf_main_alloc_empty( );
     config_type * config;
-    /* Parsing the site_config file first */
+    enkf_main            = enkf_main_alloc_empty( );
     enkf_main_set_verbose( enkf_main , verbose );
-    enkf_main_bootstrap_site( enkf_main , site_config , strict );
+    enkf_main_bootstrap_site( enkf_main , site_config);
     
-    
-    config = enkf_main_alloc_config( false , strict );
+    config = config_alloc();
+    enkf_main_init_user_config( enkf_main , config );
+    site_config_add_config_items( config , false );
     site_config_init_user_mode( enkf_main->site_config );
-
+    
     if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true)) {
       config_fprintf_errors( config , stderr );
       exit(1);
     }
 
-    site_config_init( enkf_main->site_config , config , true );                                   /*  <---- model_config : second pass. */ 
+    site_config_init( enkf_main->site_config , config );                                   /*  <---- model_config : second pass. */ 
 
     /*****************************************************************/
     /* 

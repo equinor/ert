@@ -44,6 +44,7 @@ extern "C" {
   void                    ert_report_list_site_init( ert_report_list_type * report_list , config_type * config );
   void                    ert_report_list_init( ert_report_list_type * report_list , config_type * config , const ecl_sum_type * refcase);
   void                    ert_report_list_create( const ert_report_list_type * report_list , const char * current_case , bool verbose );
+  void                    ert_report_list_add_config_items( config_type * config );
   
 #ifdef __cplusplus
 }
