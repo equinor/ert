@@ -32,6 +32,7 @@ struct plot_config_struct {
   char * plot_path;     /* All the plots will be saved as xxxx files in this directory. */
   char * image_type;    /* Type of plot file - currently only 'png' is tested. */
   char * plot_refcase;  /* Full path to DATA file for refcase plotting */
+  char * plot_refcase_list;  /* */
   char * driver;        /* The driver used by the libplot layer when actually 'rendering' the plots. */
   char * viewer;        /* The executable used when displaying the newly created image - can be NULL - in which case the plots are not displayed in any way. */
   int    errorbar_max;  /* If the number of observations is less than this it is plotted with errorbars - otherwise with lines. */
@@ -67,6 +68,10 @@ void plot_config_set_path(plot_config_type * plot_config , const char * plot_pat
 
 void plot_config_set_plot_refcase(plot_config_type * plot_config , const char * plot_refcase) {
   plot_config->plot_refcase = util_realloc_string_copy(plot_config->plot_refcase , plot_refcase);
+}
+
+void plot_config_set_plot_refcase_list(plot_config_type * plot_config , const char * plot_refcase_list) {
+  plot_config->plot_refcase_list = util_realloc_string_copy(plot_config->plot_refcase_list , plot_refcase_list);
 }
 
 void plot_config_set_image_type(plot_config_type * plot_config , const char * image_type) {
@@ -129,6 +134,10 @@ const char *  plot_config_get_plot_refcase(const plot_config_type * plot_config 
   return plot_config->plot_refcase;
 }
 
+const char *  plot_config_get_plot_refcase_list(const plot_config_type * plot_config ) {
+  return plot_config->plot_refcase_list;
+}
+
 const char *  plot_config_get_image_type(const plot_config_type * plot_config ) {
   return plot_config->image_type;
 }
@@ -161,6 +170,7 @@ bool plot_config_get_plot_errorbar( const plot_config_type * plot_config) {
 void plot_config_free( plot_config_type * plot_config) {
   free(plot_config->plot_path);
   free(plot_config->plot_refcase);
+  free(plot_config->plot_refcase_list);
   util_safe_free(plot_config->viewer);
   free(plot_config->image_type);
   free(plot_config->driver );
@@ -175,12 +185,14 @@ plot_config_type * plot_config_alloc_default() {
   plot_config_type * info        = util_malloc( sizeof * info );
   info->plot_path                = NULL;
   info->plot_refcase             = NULL;
+  info->plot_refcase_list         = NULL;
   info->image_type               = NULL;
   info->viewer                   = NULL;
   info->driver                   = NULL;      
   
   plot_config_set_path(info         , DEFAULT_PLOT_PATH );
   plot_config_set_plot_refcase(info , DEFAULT_PLOT_REFCASE );
+  plot_config_set_plot_refcase_list(info , DEFAULT_PLOT_REFCASE_LIST );
   plot_config_set_image_type(info   , DEFAULT_IMAGE_TYPE );
   plot_config_set_viewer(info       , DEFAULT_IMAGE_VIEWER );
   plot_config_set_driver(info       , DEFAULT_PLOT_DRIVER );
@@ -200,6 +212,9 @@ void plot_config_init(plot_config_type * plot_config , const config_type * confi
 
   if (config_item_set( config , PLOT_REFCASE_KEY))
     plot_config_set_plot_refcase( plot_config , config_get_value( config , PLOT_REFCASE_KEY ));
+  
+  if (config_item_set( config , PLOT_REFCASE_LIST_KEY))
+    plot_config_set_plot_refcase_list( plot_config , config_get_value( config , PLOT_REFCASE_LIST_KEY ));
   
   if (config_item_set( config , PLOT_DRIVER_KEY))
     plot_config_set_driver( plot_config , config_get_value( config , PLOT_DRIVER_KEY ));
@@ -228,7 +243,8 @@ void plot_config_add_config_items( config_type * config ) {
   config_add_key_value(config , PLOT_HEIGHT_KEY       , false , CONFIG_INT);
   config_add_key_value(config , PLOT_WIDTH_KEY        , false , CONFIG_INT);
   config_add_key_value(config , PLOT_PATH_KEY         , false , CONFIG_STRING);
-  config_add_key_value(config , PLOT_REFCASE_KEY      , false , CONFIG_STRING);
+  config_add_key_value(config , PLOT_REFCASE_KEY      , false , CONFIG_FILE);
+  config_add_key_value(config , PLOT_REFCASE_LIST_KEY      , false , CONFIG_STRING);
   config_add_key_value(config , IMAGE_VIEWER_KEY      , false , CONFIG_FILE);
   config_add_key_value(config , PLOT_ERRORBAR_KEY     , false , CONFIG_BOOLEAN);
   config_add_key_value(config , PLOT_ERRORBAR_MAX_KEY , false , CONFIG_INT);
@@ -266,6 +282,10 @@ void plot_config_fprintf_config( const plot_config_type * plot_config , FILE * s
   if (!util_string_equal( plot_config->plot_refcase , DEFAULT_PLOT_REFCASE)) {
     fprintf(stream , CONFIG_KEY_FORMAT      , PLOT_REFCASE_KEY );
     fprintf(stream , CONFIG_ENDVALUE_FORMAT , plot_config->plot_refcase );
+  }
+  if (!util_string_equal( plot_config->plot_refcase_list , DEFAULT_PLOT_REFCASE_LIST)) {
+    fprintf(stream , CONFIG_KEY_FORMAT      , PLOT_REFCASE_LIST_KEY );
+    fprintf(stream , CONFIG_ENDVALUE_FORMAT , plot_config->plot_refcase_list );
   }
 
   if (!util_string_equal( plot_config->image_type , DEFAULT_IMAGE_TYPE)) {
