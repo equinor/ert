@@ -359,7 +359,6 @@ void enkf_state_update_eclbase( enkf_state_type * enkf_state ) {
       enkf_state_add_subst_kw( enkf_state , "CASE" , eclbase , NULL);      /* No CASE_TABLE loaded - using the eclbase as default. */
     else
       enkf_state_add_subst_kw( enkf_state , "CASE" , casename , NULL);
-    
   }
 }
 
@@ -498,7 +497,7 @@ enkf_state_type * enkf_state_alloc(int iens,
      done in a cascade like fashion). The user defined keywords are
      added first, so that these can refer to the built in keywords.
   */
-  
+
   enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , "---" , "The absolute path of the current forward model instance. ");
   enkf_state_add_subst_kw(enkf_state , "IENS"          , "---" , "The realisation number for this realization.");
   enkf_state_add_subst_kw(enkf_state , "IENS4"         , "---" , "The realization number for this realization - formated with %04d.");
@@ -518,12 +517,11 @@ enkf_state_type * enkf_state_alloc(int iens,
     enkf_state_add_subst_kw(enkf_state , "CASE" , casename , "The casename for this realization - as loaded from the CASE_TABLE file.");
   else
     enkf_state_add_subst_kw(enkf_state , "CASE" , "---" , "The casename for this realization - similar to ECLBASE.");
-  
+
   enkf_state->my_config = member_config_alloc( iens , casename , pre_clear_runpath , keep_runpath , ecl_config , ensemble_config , fs);
   enkf_state_set_static_subst_kw( enkf_state );
-
   enkf_state_add_nodes( enkf_state , ensemble_config );
-
+  
   return enkf_state;
 }
 

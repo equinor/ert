@@ -216,11 +216,12 @@ void enkf_main_set_jobname( enkf_main_type * enkf_main , const char * jobname_fm
 }
 
 
-
-void enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
-  ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
+bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
+  bool set_refcase = ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
   model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
   ensemble_config_set_refcase( enkf_main->ensemble_config , ecl_config_get_refcase( enkf_main->ecl_config ));
+  
+  return set_refcase;
 }
 
 
@@ -323,8 +324,10 @@ const qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main
 
 void enkf_main_reload_obs( enkf_main_type * enkf_main) {
   enkf_obs_reload(enkf_main->obs , 
+                  model_config_get_history(enkf_main->model_config), 
                   ecl_config_get_grid( enkf_main->ecl_config ),
                   ecl_config_get_refcase( enkf_main->ecl_config ) , 
+                  analysis_config_get_std_cutoff(enkf_main->analysis_config),
                   enkf_main->ensemble_config );
 }
 
@@ -339,9 +342,11 @@ void enkf_main_reload_obs( enkf_main_type * enkf_main) {
 void enkf_main_load_obs( enkf_main_type * enkf_main , const char * obs_config_file ) {
   if (!util_string_equal( obs_config_file , enkf_obs_get_config_file( enkf_main->obs ))) {
     enkf_obs_load(enkf_main->obs , 
+                  model_config_get_history(enkf_main->model_config), 
                   obs_config_file , 
                   ecl_config_get_grid( enkf_main->ecl_config ),
                   ecl_config_get_refcase( enkf_main->ecl_config ) , 
+                  analysis_config_get_std_cutoff(enkf_main->analysis_config),
                   enkf_main->ensemble_config );
   }
 }
@@ -388,19 +393,25 @@ static void enkf_main_free_ensemble( enkf_main_type * enkf_main ) {
 
 
 void enkf_main_free(enkf_main_type * enkf_main){ 
-  rng_free( enkf_main->rng );
+  if (enkf_main->rng != NULL)
+    rng_free( enkf_main->rng );
   rng_config_free( enkf_main->rng_config );
+  
   enkf_obs_free(enkf_main->obs);
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
   if (enkf_main->dbase != NULL) enkf_fs_close( enkf_main->dbase );
   util_safe_free( enkf_main->current_fs_case );
 
-  log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
+  if (log_is_open( enkf_main->logh ))
+    log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
   log_close( enkf_main->logh );
+
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
+  
+  
   qc_module_free( enkf_main->qc_module );
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
@@ -2120,20 +2131,14 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 }
 
 static void enkf_main_init_workflow_list( enkf_main_type * enkf_main , config_type * config ) {
-  enkf_main->workflow_list = ert_workflow_list_alloc( enkf_main->subst_list );
-
   ert_workflow_list_init( enkf_main->workflow_list , config );
 }
 
 
 static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config ) {
-  enkf_main->qc_module = qc_module_alloc( enkf_main->workflow_list , DEFAULT_QC_PATH );
-  
   qc_module_init( enkf_main->qc_module , config );
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
 }
-
-
 
 
 static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
@@ -2145,7 +2150,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
   subst_func_pool_add_func( enkf_main->subst_func_pool , "MUL"       , "Multiplies arguments"              , subst_func_mul         , true  , 1 , 0 , NULL);
   subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDINT"   , "Returns a random integer - 32 bit" , subst_func_randint     , false , 0 , 0 , enkf_main->rng);
   subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDFLOAT" , "Returns a random float 0-1."       , subst_func_randfloat   , false , 0 , 0 , enkf_main->rng);
-
+  
   /**
      Allocating the parent subst_list instance. This will (should ...)
      be the top level subst instance for all substitions in the ert
@@ -2175,7 +2180,7 @@ static void enkf_main_init_subst_list( enkf_main_type * enkf_main ) {
 
 
 
-static enkf_main_type * enkf_main_alloc_empty( ) {
+enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main_type * enkf_main = util_malloc(sizeof * enkf_main);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   enkf_main->current_fs_case    = NULL;
@@ -2185,23 +2190,31 @@ static enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->site_config_file   = NULL;
   enkf_main->rft_config_file    = NULL;
   enkf_main->local_config       = NULL;
+  enkf_main->rng                = NULL; 
   enkf_main->ens_size           = 0;
   enkf_main->keep_runpath       = int_vector_alloc( 0 , DEFAULT_KEEP );
-  enkf_main->logh               = log_alloc_existing( NULL , DEFAULT_LOG_LEVEL );
+  enkf_main->logh               = log_open( NULL , DEFAULT_LOG_LEVEL );
   enkf_main->rng_config         = rng_config_alloc( );
-  enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
-  enkf_main->subst_list         = subst_list_alloc( enkf_main->subst_func_pool );
-
-  enkf_main_set_verbose( enkf_main , true );
   enkf_main->site_config        = site_config_alloc_empty();
   enkf_main->ensemble_config    = ensemble_config_alloc_empty();
   enkf_main->ecl_config         = ecl_config_alloc_empty();
+  enkf_main->plot_config        = plot_config_alloc_default();                       
+  enkf_main->ranking_table      = ranking_table_alloc( 0 );
+  enkf_main->obs                = enkf_obs_alloc( );
+  enkf_main->model_config       = model_config_alloc_empty( );
 
-  enkf_main->model_config     = model_config_alloc_empty();
-  enkf_main->analysis_config  = analysis_config_alloc_default( enkf_main->rng );   /* This is ready for use. */
-  enkf_main->plot_config      = plot_config_alloc_default();                       /* This is ready for use. */
-  enkf_main->report_list      = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
-  enkf_main->ranking_table    = ranking_table_alloc( 0 );
+  enkf_main_rng_init( enkf_main );
+  enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
+  enkf_main->subst_list         = subst_list_alloc( enkf_main->subst_func_pool );
+  enkf_main->templates          = ert_templates_alloc( enkf_main->subst_list );
+  enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main->subst_list );
+  enkf_main->qc_module          = qc_module_alloc( enkf_main->workflow_list , DEFAULT_QC_PATH );
+  enkf_main->analysis_config    = analysis_config_alloc_default( enkf_main->rng );   
+  enkf_main->report_list        = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
+  
+  enkf_main_init_subst_list( enkf_main );
+  enkf_main_set_verbose( enkf_main , true );
+  printf("enkf_main->subst_list :%p \n",enkf_main->subst_list);
   return enkf_main;
 }
 
@@ -2241,8 +2254,8 @@ static void enkf_main_install_data_kw( enkf_main_type * enkf_main , hash_type * 
     enkf_main_add_subst_kw( enkf_main , "NUM_CPU"      , num_cpu_string , "The number of CPU used for one forward model." , true );
     enkf_main_add_subst_kw( enkf_main , "RUNPATH_FILE" , qc_module_get_runpath_list_file( enkf_main->qc_module ) , "The name of a file with a list of run directories." , true);
     
-    free( cwd );
-    free( date_string );
+    //free( cwd );
+    //free( date_string );
   }
 }
 
@@ -2637,7 +2650,7 @@ void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
 
 
 void enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file ) {
-  log_reset_filename( enkf_main->logh , log_file);
+  log_reopen( enkf_main->logh , log_file);
 }
 
 
@@ -2687,23 +2700,68 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * c
 
 
 void enkf_main_rng_init( enkf_main_type * enkf_main) {
-  const char * seed_load  = rng_config_get_seed_load_file( enkf_main->rng_config );
-  const char * seed_store = rng_config_get_seed_store_file( enkf_main->rng_config );
-  enkf_main->rng = rng_alloc( rng_config_get_type(enkf_main->rng_config) , INIT_DEFAULT);
-  
-  if (seed_load != NULL) {
-    FILE * stream = util_fopen( seed_load , "r");
-    rng_fscanf_state( enkf_main->rng , stream );
-    fclose( stream );
-  } else
-    rng_init( enkf_main->rng , INIT_DEV_RANDOM );
-  
-
-  if (seed_store != NULL) {
-    FILE * stream = util_mkdir_fopen( seed_store , "w");
-    rng_fprintf_state( enkf_main->rng , stream );
-    fclose( stream );
+  if (enkf_main->rng != NULL) {
+    rng_free( enkf_main->rng );
+    enkf_main->rng = NULL;
   }
+  
+  {
+    const char * seed_load  = rng_config_get_seed_load_file( enkf_main->rng_config );
+    const char * seed_store = rng_config_get_seed_store_file( enkf_main->rng_config );
+    enkf_main->rng = rng_alloc( rng_config_get_type(enkf_main->rng_config) , INIT_DEFAULT);
+    
+    if (seed_load != NULL) {
+      FILE * stream = util_fopen( seed_load , "r");
+      rng_fscanf_state( enkf_main->rng , stream );
+      fclose( stream );
+    } else
+      rng_init( enkf_main->rng , INIT_DEV_RANDOM );
+    
+    
+    if (seed_store != NULL) {
+      FILE * stream = util_mkdir_fopen( seed_store , "w");
+      rng_fprintf_state( enkf_main->rng , stream );
+      fclose( stream );
+    }
+  }
+}
+
+
+void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_type * config ) {
+  if (model_config_has_history( enkf_main->model_config )) {
+    enkf_main->local_config  = local_config_alloc( /*enkf_main->ensemble_config , enkf_main->enkf_obs , */ model_config_get_last_history_restart( enkf_main->model_config ));
+    
+    /* First create the default ALL_ACTIVE configuration. */
+    {
+      char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
+      enkf_main_create_all_active_config( enkf_main , 
+                                          all_active_config_file );
+      
+      /* Install custom local_config - if present.*/
+      {
+        int i;
+        for (i = 0; i < config_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
+          const stringlist_type * files = config_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
+          for (int j=0; j < stringlist_get_size( files ); j++)
+            local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
+        }
+      }
+      
+      /**
+         This is where the local configuration files are actually parsed. 
+      */
+      local_config_reload( enkf_main->local_config , 
+                           ecl_config_get_grid( enkf_main->ecl_config ), 
+                           enkf_main->ensemble_config , 
+                           enkf_main->obs , 
+                           all_active_config_file );
+      
+      unlink( all_active_config_file );
+      free(all_active_config_file);
+    }
+  } else 
+    if (config_get_occurences( config , LOCAL_CONFIG_KEY) > 0) 
+      fprintf(stderr,"** Warning: Not possible to configure local analysis without SCHEDULE or REFCASE - %s keyword(s) ignored\n", LOCAL_CONFIG_KEY);
 }
 
 
@@ -2845,7 +2903,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     rng_config_init( enkf_main->rng_config , config );
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
     enkf_main_init_subst_list( enkf_main );
-    enkf_main_init_workflow_list( enkf_main , config );
+    ert_workflow_list_init( enkf_main->workflow_list , config );
     enkf_main_init_qc( enkf_main , config );
     enkf_main_init_data_kw( enkf_main , config );
     
@@ -2930,7 +2988,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       
       /* Installing templates */
       {
-        enkf_main->templates = ert_templates_alloc( enkf_main->subst_list );
         ert_templates_init( enkf_main->templates , config );
       }
 
@@ -2944,7 +3001,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         else
           obs_config_file = NULL;
 
-        enkf_main->obs = enkf_obs_alloc( model_config_get_history(enkf_main->model_config), analysis_config_get_std_cutoff(enkf_main->analysis_config) );
         enkf_main_load_obs( enkf_main , obs_config_file );
       }
 
@@ -2970,7 +3026,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       /* Adding ensemble members */
       enkf_main_resize_ensemble( enkf_main  , config_iget_as_int(config , NUM_REALIZATIONS_KEY , 0 , 0) );
-        
+
       /*****************************************************************/
       /*
          Installing the local_config object. Observe that the
@@ -2978,41 +3034,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
          if you have created a personal local config that will be
          loaded on top.
       */
-
-      if (model_config_has_history( enkf_main->model_config )) {
-        enkf_main->local_config  = local_config_alloc( /*enkf_main->ensemble_config , enkf_main->enkf_obs , */ model_config_get_last_history_restart( enkf_main->model_config ));
-        
-        /* First create the default ALL_ACTIVE configuration. */
-        {
-          char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
-          enkf_main_create_all_active_config( enkf_main , 
-                                              all_active_config_file );
-          
-          /* Install custom local_config - if present.*/
-          {
-            int i;
-            for (i = 0; i < config_get_occurences( config , LOCAL_CONFIG_KEY); i++) {
-              const stringlist_type * files = config_iget_stringlist_ref(config , LOCAL_CONFIG_KEY , i);
-              for (int j=0; j < stringlist_get_size( files ); j++)
-                local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
-            }
-          }
-          
-          /**
-             This is where the local configuration files are actually parsed. 
-          */
-          local_config_reload( enkf_main->local_config , 
-                               ecl_config_get_grid( enkf_main->ecl_config ), 
-                               enkf_main->ensemble_config , 
-                               enkf_main->obs , 
-                               all_active_config_file );
-
-          unlink( all_active_config_file );
-          free(all_active_config_file);
-        }
-      } else 
-        if (config_get_occurences( config , LOCAL_CONFIG_KEY) > 0) 
-          fprintf(stderr,"** Warning: Not possible to configure local analysis without SCHEDULE or REFCASE - %s keyword(s) ignored\n", LOCAL_CONFIG_KEY);
+      enkf_main_init_local_updates(enkf_main , config );
+      
     }
     config_free(config);
   }

@@ -76,7 +76,7 @@ extern "C" {
   const char                  * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main );
   bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
   void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
-  void                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
+  bool                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
   
   ert_report_list_type        * enkf_main_get_report_list( const enkf_main_type * enkf_main );
   ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
@@ -236,6 +236,9 @@ extern "C" {
   bool                   enkf_main_get_verbose( const enkf_main_type * enkf_main );
 
   ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main );
+  
+  enkf_main_type      * enkf_main_alloc_empty( );
+
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 

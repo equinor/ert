@@ -183,9 +183,8 @@ site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc( sizeof * site_config);
   
   site_config->joblist                = ext_joblist_alloc( );
-  site_config->job_queue              = NULL;
   site_config->queue_drivers          = hash_alloc( );
-
+  
   site_config->lsf_queue_name_site    = NULL;
   site_config->lsf_request_site       = NULL;
   site_config->rsh_command_site       = NULL;
@@ -198,7 +197,8 @@ site_config_type * site_config_alloc_empty() {
   site_config->default_browser        = NULL;
   site_config->user_mode              = false;
   site_config->driver_type            = NULL_DRIVER;
-    
+
+  site_config->job_queue              = job_queue_alloc(DEFAULT_MAX_SUBMIT , "OK" , "ERROR" );
   site_config->env_variables_user     = hash_alloc();
   site_config->env_variables_site     = hash_alloc();
   
@@ -665,6 +665,7 @@ void site_config_set_max_submit( site_config_type * site_config , int max_submit
   site_config->max_submit = max_submit;
   if (!site_config->user_mode)
     site_config->max_submit_site = max_submit;
+  job_queue_set_max_submit( site_config->job_queue , max_submit );
 }
 
 
@@ -677,8 +678,6 @@ static void site_config_install_job_queue(site_config_type  * site_config ) {
   if (site_config->job_script == NULL)
     util_exit("Must set the path to the job script with the %s key in the site_config / config file\n",JOB_SCRIPT_KEY);
   
-  site_config->job_queue = job_queue_alloc(site_config->max_submit , "OK" , "ERROR" );
-
   /* 
      All the various driver options are set, unconditionally of which
      driver is actually selected in the end.

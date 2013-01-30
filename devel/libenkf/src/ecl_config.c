@@ -264,7 +264,7 @@ const char * ecl_config_get_eclbase( const ecl_config_type * ecl_config ) {
    Can be called with @refcase == NULL - which amounts to clearing the
    current refcase. 
 */
-void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase ){ 
+bool ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase ){ 
   if (ecl_config->refcase != NULL) {
     if (refcase == NULL) {    /* Clear the refcase */
       ecl_sum_free( ecl_config->refcase );
@@ -278,6 +278,11 @@ void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcas
   } else 
     if (refcase != NULL)
       ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , SUMMARY_KEY_JOIN_STRING );
+  
+  if (refcase == NULL)
+    return true;
+  else
+    return (ecl_config->refcase == NULL) ? false : true;
 }
 
 
@@ -442,10 +447,13 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
                                                config_iget_as_int(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , iocc , 1));
   }
   
-
-  if (config_item_set( config , REFCASE_KEY)) 
-    ecl_config_load_refcase( ecl_config , config_get_value( config , REFCASE_KEY ));
-
+  
+  if (config_item_set( config , REFCASE_KEY)) {
+    const char * refcase_path = config_get_value( config , REFCASE_KEY );
+    if (!ecl_config_load_refcase( ecl_config , refcase_path))
+      fprintf(stderr,"** Warning: loading refcase:%s failed \n", refcase_path);
+  }
+  
   if (config_item_set(config , INIT_SECTION_KEY)) 
     ecl_config_set_init_section( ecl_config , config_get_value( config , INIT_SECTION_KEY ));
   else 
