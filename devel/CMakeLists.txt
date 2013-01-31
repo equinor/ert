@@ -65,7 +65,11 @@ configure_file( ${PROJECT_SOURCE_DIR}/cmake/config/ert_build_config.h.in
 
 include_directories( ${PROJECT_SOURCE_DIR}/libert_util/include )
 include_directories( ${PROJECT_BINARY_DIR}/libert_util/include )
+if (MSVC)
+  include_directories( ${PROJECT_BINARY_DIR}/libert_util/include/ert/util )
+endif()
 add_subdirectory( libert_util )
+
 
 include_directories( ${PROJECT_SOURCE_DIR}/libgeometry/include )
 add_subdirectory( libgeometry )
