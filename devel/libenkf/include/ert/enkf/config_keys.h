@@ -74,6 +74,7 @@ extern "C" {
 #define  ENKF_TRUNCATION_KEY               "ENKF_TRUNCATION"
 #define  ENSPATH_KEY                       "ENSPATH" 
 #define  ITER_ENSPATH_KEY                  "ITER_ENSPATH" 
+#define  ITER_COUNT_KEY                    "ITER_COUNT"
 #define  FIELD_KEY                         "FIELD"
 #define  SURFACE_KEY                       "SURFACE"
 #define  FORWARD_MODEL_KEY                 "FORWARD_MODEL"
