@@ -45,7 +45,7 @@ char * create_config_file( const char * enspath_fmt , const char * runpath_fmt ,
 
 int main(int argc , char ** argv) {
   const char * enspath_fmt = "enspath/iter%d";
-  const char * runpath_fmt = "run/iter%d/real%d";
+  const char * runpath_fmt = "run/iter%d/real%%d";
   const int iter_count = 10;
   char * config_file = create_config_file( enspath_fmt , runpath_fmt , iter_count);
   
@@ -56,9 +56,14 @@ int main(int argc , char ** argv) {
   test_assert_true( config_parse( config , config_file , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR , true));
   {
     analysis_iter_config_type * iter_config = analysis_iter_config_alloc();
+    test_assert_string_equal( analysis_iter_config_iget_enspath( iter_config , 5) , NULL );
+    test_assert_string_equal( analysis_iter_config_iget_runpath_fmt( iter_config , 5) , NULL );
+
     analysis_iter_config_init( iter_config , config );
     
     test_assert_int_equal( analysis_iter_config_get_num_iterations( iter_config ) , iter_count );
+    test_assert_string_equal( analysis_iter_config_iget_enspath( iter_config , 5) , "enspath/iter5");
+    test_assert_string_equal( analysis_iter_config_iget_runpath_fmt( iter_config , 5) , "run/iter5/real%d" );    
 
     analysis_iter_config_free( iter_config );
   }
