@@ -129,7 +129,7 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
     int_vector_type * step_list = int_vector_alloc(0,0);
     bool_vector_type * iactive = bool_vector_alloc(0 , true);
     int iter  = 0;
-    int num_iter = 16;
+    int num_iter = analysis_iter_config_get_num_iterations( iter_config );
     stringlist_type * node_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER );
 
     if (ecl_config_has_schedule( ecl_config ))
@@ -154,12 +154,11 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
         }
       }
       
-      char * target_fs_name = util_alloc_sprintf("smoother-%d" , iter);
+      char * target_fs_name    = analysis_iter_config_iget_enspath( iter_config , iter );
       enkf_fs_type * target_fs = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
       enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
       enkf_main_smoother_update(enkf_main , step_list , target_fs);
       {
-        
         
         enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
@@ -177,8 +176,8 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
       
       free( target_fs_name );
 
-      iter = analysis_module_get_int(module, "ITER");
-      
+      //iter = analysis_module_get_int(module, "ITER");
+      iter++;
       if (iter == num_iter)
         break;
     }
