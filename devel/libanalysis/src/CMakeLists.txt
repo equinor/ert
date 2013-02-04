@@ -16,6 +16,7 @@ endif()
 set( CMAKE_SHARED_MODULE_PREFIX "" )
 add_library( std_enkf  MODULE  std_enkf.c )
 add_library( sqrt_enkf MODULE sqrt_enkf.c )
+add_library( rml_enkf  MODULE rml_enkf.c rml_enkf_common.c )
 
 #-----------------------------------------------------------------
 
