@@ -33,7 +33,7 @@
 
 struct analysis_iter_config_struct {
   char            * runpath_fmt;
-  char            * enspath_fmt;
+  char            * case_fmt;
   stringlist_type * storage;
   int               num_iterations;
 };
@@ -52,7 +52,7 @@ int analysis_iter_config_get_num_iterations( const analysis_iter_config_type * c
 analysis_iter_config_type * analysis_iter_config_alloc() {
    analysis_iter_config_type * config = util_malloc( sizeof * config );    
    config->runpath_fmt    = NULL;
-   config->enspath_fmt    = NULL;
+   config->case_fmt    = NULL;
    config->storage        = stringlist_alloc_new();
    analysis_iter_config_set_num_iterations( config , DEFAULT_ANALYSIS_NUM_ITERATIONS );
    return config;
@@ -60,16 +60,17 @@ analysis_iter_config_type * analysis_iter_config_alloc() {
 
 void analysis_iter_config_free( analysis_iter_config_type * config ) {
   util_safe_free( config->runpath_fmt );
-  util_safe_free( config->enspath_fmt );
+  util_safe_free( config->case_fmt );
   stringlist_free( config->storage );
 }
+
 
 /**
    This should contain a format string with two %d modifiers, the
    first will be replaced with the iteration number, and the second
    with the realization number. The actual instantiation will happen
-   in a two step process, the last '%d' must therefor be protected
-   with an extra '%'.
+   in a two step process, hence the last '%d' must be protected with
+   an extra '%'.  
 */
 
 static void analysis_iter_config_set_runpath_fmt( analysis_iter_config_type * config , const char * runpath_fmt) {
@@ -85,8 +86,8 @@ static void analysis_iter_config_set_runpath_fmt( analysis_iter_config_type * co
   }
 }
 
-static void analysis_iter_config_set_enspath_fmt( analysis_iter_config_type * config , const char * enspath_fmt) {
-  config->enspath_fmt = util_realloc_string_copy( config->enspath_fmt , enspath_fmt );
+static void analysis_iter_config_set_case_fmt( analysis_iter_config_type * config , const char * case_fmt) {
+  config->case_fmt = util_realloc_string_copy( config->case_fmt , case_fmt );
 }
 
 const char * analysis_iter_config_iget_runpath_fmt( analysis_iter_config_type * config , int iter) {
@@ -98,26 +99,26 @@ const char * analysis_iter_config_iget_runpath_fmt( analysis_iter_config_type * 
     return NULL;
 }
 
-const char * analysis_iter_config_iget_enspath( analysis_iter_config_type * config , int iter) {
-  if (config->enspath_fmt != NULL) {
-    char * enspath = util_alloc_sprintf( config->enspath_fmt , iter );
-    stringlist_append_owned_ref( config->storage , enspath);
-    return enspath;
+const char * analysis_iter_config_iget_case( analysis_iter_config_type * config , int iter) {
+  if (config->case_fmt != NULL) {
+    char * fs_case = util_alloc_sprintf( config->case_fmt , iter );
+    stringlist_append_owned_ref( config->storage , fs_case);
+    return fs_case;
   } else
     return NULL;
 }
 
 
 void analysis_iter_config_add_config_items( config_type * config ) {
-  config_add_key_value( config , ITER_ENSPATH_KEY , false , CONFIG_STRING);
+  config_add_key_value( config , ITER_CASE_KEY    , false , CONFIG_STRING);
   config_add_key_value( config , ITER_RUNPATH_KEY , false , CONFIG_STRING);
-  config_add_key_value( config , ITER_COUNT_KEY , false , CONFIG_INT);
+  config_add_key_value( config , ITER_COUNT_KEY   , false , CONFIG_INT);
 }
 
 
 void analysis_iter_config_init(analysis_iter_config_type * iter_config , const config_type * config) {
-  if (config_item_set( config , ITER_ENSPATH_KEY ))
-    analysis_iter_config_set_enspath_fmt( iter_config , config_get_value( config , ITER_ENSPATH_KEY ));
+  if (config_item_set( config , ITER_CASE_KEY ))
+    analysis_iter_config_set_case_fmt( iter_config , config_get_value( config , ITER_CASE_KEY ));
   
   if (config_item_set( config , ITER_RUNPATH_KEY ))
     analysis_iter_config_set_runpath_fmt( iter_config , config_get_value( config , ITER_RUNPATH_KEY ));

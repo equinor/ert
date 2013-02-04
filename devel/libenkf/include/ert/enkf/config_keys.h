@@ -77,7 +77,7 @@ extern "C" {
 #define  ENKF_SCHED_FILE_KEY               "ENKF_SCHED_FILE"
 #define  ENKF_TRUNCATION_KEY               "ENKF_TRUNCATION"
 #define  ENSPATH_KEY                       "ENSPATH" 
-#define  ITER_ENSPATH_KEY                  "ITER_ENSPATH" 
+#define  ITER_CASE_KEY                     "ITER_CASE" 
 #define  ITER_COUNT_KEY                    "ITER_COUNT"
 #define  FIELD_KEY                         "FIELD"
 #define  FORWARD_MODEL_KEY                 "FORWARD_MODEL"
