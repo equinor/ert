@@ -33,7 +33,7 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
-#include <ert/enkf/analysis_iterated_config.h>
+#include <ert/enkf/analysis_iter_config.h>
 
 
 struct analysis_config_struct {
@@ -53,7 +53,7 @@ struct analysis_config_struct {
   bool                            update_results;              /* Should result values like e.g. WWCT be updated? */
   bool                            single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
   rng_type                      * rng;  
-  analysis_iterated_config_type * iter_config;
+  analysis_iter_config_type * iter_config;
 }; 
 
 
@@ -412,7 +412,7 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   if (config_item_set( config, ANALYSIS_SELECT_KEY )) 
     analysis_config_select_module( analysis , config_get_value( config , ANALYSIS_SELECT_KEY ));
 
-  analysis_iterated_config_init( analysis->iter_config , config );
+  analysis_iter_config_init( analysis->iter_config , config );
 }
 
 
@@ -422,13 +422,13 @@ bool analysis_config_get_merge_observations(const analysis_config_type * config)
 }
 
 
-
-
-
+analysis_iter_config_type * analysis_config_get_iter_config( const analysis_config_type * config ) {
+  return config->iter_config;
+}
 
 
 void analysis_config_free(analysis_config_type * config) {
-  analysis_iterated_config_free( config->iter_config );
+  analysis_iter_config_free( config->iter_config );
   hash_free( config->analysis_modules );
   free(config->log_path);
   free(config);
@@ -459,7 +459,7 @@ analysis_config_type * analysis_config_alloc_default( rng_type * rng ) {
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
   config->rng              = rng; 
-  config->iter_config      = analysis_iterated_config_alloc();
+  config->iter_config      = analysis_iter_config_alloc();
   return config;
 }
 
@@ -504,7 +504,7 @@ void analysis_config_add_config_items( config_type * config ) {
   item = config_add_schema_item( config , ANALYSIS_SET_VAR_KEY , false , true );
   config_schema_item_set_argc_minmax( item , 3 , -1 , 0 , NULL );
 
-  analysis_iterated_config_add_config_items( config );
+  analysis_iter_config_add_config_items( config );
 }
 
 
