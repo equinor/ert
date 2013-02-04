@@ -146,25 +146,23 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
     while (true) {
       {
         const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iter);
-        printf("runpath_fmt:%s \n",runpath_fmt);
         if (runpath_fmt != NULL) {
           char * runpath_key = util_alloc_sprintf( "runpath-%d" , iter);
-          printf("Using:%s \n",runpath_fmt);
           model_config_add_runpath( model_config , runpath_key , runpath_fmt);
           model_config_select_runpath( model_config , runpath_key );
           free( runpath_key );
         }
       }
       
-      char * target_fs_name    = analysis_iter_config_iget_enspath( iter_config , iter );
-      enkf_fs_type * target_fs = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
       enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
-      enkf_main_smoother_update(enkf_main , step_list , target_fs);
       {
-        
+        char * target_fs_name    = analysis_iter_config_iget_case( iter_config , iter );
+        enkf_fs_type * target_fs = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
+        enkf_main_smoother_update(enkf_main , step_list , target_fs);
+          
         enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
-                                 step2 , 
+                                 0 ,   // Smoother update will write on step 0
                                  ANALYZED , 
                                  target_fs, 
                                  step1 , 
@@ -173,11 +171,10 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
                                  NULL , 
                                  node_list );
         
-        enkf_main_select_fs(enkf_main , target_fs );
+        
+        enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+        free( target_fs_name );
       }
-      
-      free( target_fs_name );
-
       //iter = analysis_module_get_int(module, "ITER");
       iter++;
       if (iter == num_iter)
