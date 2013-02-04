@@ -95,6 +95,8 @@ class SumTest( unittest.TestCase ):
         sum = self.sum
         d = sum.dates
 
+        self.assertEqual( d[0]  , datetime.datetime( 2000 , 1 , 1 , 0 , 0 , 0))
+        self.assertEqual( d[62] , datetime.datetime( 2004 , 12 , 31 , 0 , 0 , 0))
         self.assertEqual( len(d) , 63 )
         self.assertEqual( d[25] , datetime.datetime( 2001 , 12 , 1 , 0 , 0 , 0))
         self.assertEqual( sum.iget_date( 25 ) , datetime.datetime( 2001 , 12 , 1 , 0 , 0 , 0))
