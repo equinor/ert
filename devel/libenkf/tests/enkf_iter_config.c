@@ -27,12 +27,12 @@
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 
-#include <ert/enkf/iter_config.h>
+#include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/config_keys.h>
 
 
 #define TMP_PATH "/tmp"
-char * create_config( const char * enspath_fmt , const char * runpath_fmt , int iter_count) {
+char * create_config_file( const char * enspath_fmt , const char * runpath_fmt , int iter_count) {
   char * config_file = util_alloc_tmp_file(TMP_PATH , "iter-config" , false);
   FILE * stream = util_fopen( config_file , "w");
   fprintf(stream , "%s  %s\n" , ITER_ENSPATH_KEY , enspath_fmt);
@@ -55,13 +55,15 @@ int main(int argc , char ** argv) {
   
   test_assert_true( config_parse( config , config_file , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR , true));
   {
-    analysis_iter_config_type * iter_config = iter_config_alloc();
+    analysis_iter_config_type * iter_config = analysis_iter_config_alloc();
     analysis_iter_config_init( iter_config , config );
     
+    test_assert_int_equal( analysis_iter_config_get_num_iterations( iter_config ) , iter_count );
+
     analysis_iter_config_free( iter_config );
   }
   remove( config_file );
   free( config_file );
   config_free( config );
-  exit(1);
+  exit(0);
 }

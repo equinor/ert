@@ -17,6 +17,10 @@ add_executable( enkf_main enkf_main.c )
 target_link_libraries( enkf_main enkf )
 add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
 
+add_executable( enkf_iter_config enkf_iter_config.c )
+target_link_libraries( enkf_iter_config enkf )
+add_test( enkf_iter_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_iter_config )
+
 add_executable( enkf_model_config enkf_model_config.c )
 target_link_libraries( enkf_model_config enkf )
 add_test( enkf_model_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_model_config )
