@@ -33,26 +33,32 @@
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
+#include <ert/enkf/analysis_iterated_config.h>
 
 
 struct analysis_config_struct {
-  hash_type             * analysis_modules;
-  analysis_module_type  * analysis_module;
-  char                  * log_path;                    /* Points to directory with update logs. */
-  bool                    merge_observations;          /* When observing from time1 to time2 - should ALL observations in between be used? */
-  bool                    rerun;                       /* Should we rerun the simulator when the parameters have been updated? */
-  int                     rerun_start;                 /* When rerunning - from where should we start? */
+  hash_type                     * analysis_modules;
+  analysis_module_type          * analysis_module;
+  char                          * log_path;                    /* Points to directory with update logs. */
+  bool                            merge_observations;          /* When observing from time1 to time2 - should ALL observations in between be used? */
+  bool                            rerun;                       /* Should we rerun the simulator when the parameters have been updated? */
+  int                             rerun_start;                 /* When rerunning - from where should we start? */
 
-  double                  overlap_alpha;
-  double                  std_cutoff;
+  double                          overlap_alpha;
+  double                          std_cutoff;
 
-  char                  * PC_filename;
-  char                  * PC_path;
-  bool                    store_PC;
-  bool                    update_results;              /* Should result values like e.g. WWCT be updated? */
-  bool                    single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
-  rng_type              * rng; 
+  char                          * PC_filename;
+  char                          * PC_path;
+  bool                            store_PC;
+  bool                            update_results;              /* Should result values like e.g. WWCT be updated? */
+  bool                            single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
+  rng_type                      * rng;  
+  analysis_iterated_config_type * iter_config;
 }; 
+
+
+
+
 
 
 /*****************************************************************/
@@ -107,8 +113,8 @@ ANALYSIS_SELECT  ModuleName
 
 */
 
-   
-
+     
+/*****************************************************************/
 
 
 
@@ -405,7 +411,8 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
 
   if (config_item_set( config, ANALYSIS_SELECT_KEY )) 
     analysis_config_select_module( analysis , config_get_value( config , ANALYSIS_SELECT_KEY ));
-  
+
+  analysis_iterated_config_init( analysis->iter_config , config );
 }
 
 
@@ -421,6 +428,7 @@ bool analysis_config_get_merge_observations(const analysis_config_type * config)
 
 
 void analysis_config_free(analysis_config_type * config) {
+  analysis_iterated_config_free( config->iter_config );
   hash_free( config->analysis_modules );
   free(config->log_path);
   free(config);
@@ -451,6 +459,7 @@ analysis_config_type * analysis_config_alloc_default( rng_type * rng ) {
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
   config->rng              = rng; 
+  config->iter_config      = analysis_iterated_config_alloc();
   return config;
 }
 
@@ -494,6 +503,8 @@ void analysis_config_add_config_items( config_type * config ) {
   
   item = config_add_schema_item( config , ANALYSIS_SET_VAR_KEY , false , true );
   config_schema_item_set_argc_minmax( item , 3 , -1 , 0 , NULL );
+
+  analysis_iterated_config_add_config_items( config );
 }
 
 
