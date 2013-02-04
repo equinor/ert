@@ -64,8 +64,25 @@ void analysis_iter_config_free( analysis_iter_config_type * config ) {
   stringlist_free( config->storage );
 }
 
+/**
+   This should contain a format string with two %d modifiers, the
+   first will be replaced with the iteration number, and the second
+   with the realization number. The actual instantiation will happen
+   in a two step process, the last '%d' must therefor be protected
+   with an extra '%'.
+*/
+
 static void analysis_iter_config_set_runpath_fmt( analysis_iter_config_type * config , const char * runpath_fmt) {
-  config->runpath_fmt = util_realloc_string_copy( config->runpath_fmt , runpath_fmt );
+  util_safe_free( config->runpath_fmt );
+  if (runpath_fmt != NULL) {
+    config->runpath_fmt = util_calloc( strlen(runpath_fmt ) + 2 , sizeof * config->runpath_fmt);
+    strcpy(config->runpath_fmt , runpath_fmt);
+    {
+      char * perc_ptr = strrchr( config->runpath_fmt , '%');
+      memmove(&perc_ptr[1] , &perc_ptr[0] , strlen(perc_ptr) + 1);
+      perc_ptr[0] = '%';
+    }
+  }
 }
 
 static void analysis_iter_config_set_enspath_fmt( analysis_iter_config_type * config , const char * enspath_fmt) {
@@ -94,6 +111,7 @@ const char * analysis_iter_config_iget_enspath( analysis_iter_config_type * conf
 void analysis_iter_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ITER_ENSPATH_KEY , false , CONFIG_STRING);
   config_add_key_value( config , ITER_RUNPATH_KEY , false , CONFIG_STRING);
+  config_add_key_value( config , ITER_COUNT_KEY , false , CONFIG_INT);
 }
 
 
@@ -103,6 +121,9 @@ void analysis_iter_config_init(analysis_iter_config_type * iter_config , const c
   
   if (config_item_set( config , ITER_RUNPATH_KEY ))
     analysis_iter_config_set_runpath_fmt( iter_config , config_get_value( config , ITER_RUNPATH_KEY ));
+
+  if (config_item_set( config , ITER_COUNT_KEY ))
+    analysis_iter_config_set_num_iterations( iter_config , config_get_value_as_int( config , ITER_COUNT_KEY ));
 }
 
 
