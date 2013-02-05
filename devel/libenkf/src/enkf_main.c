@@ -2689,7 +2689,7 @@ static void enkf_main_init_log( enkf_main_type * enkf_main , const config_type *
 static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * config ) {
   config_content_item_type * data_item = config_get_content_item( config , DATA_KW_KEY );
   if (data_item) {
-    hash_type      * data_kw   = config_content_item_alloc_hash(config , true);
+    hash_type      * data_kw   = config_content_item_alloc_hash(data_item , true);
     enkf_main_install_data_kw( enkf_main , data_kw );
     hash_free( data_kw );
   }
