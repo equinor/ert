@@ -22,7 +22,6 @@ from ert_gui.widgets.tablewidgets import KeywordTable
 from ert_gui.widgets.tablewidgets import KeywordList
 from ert_gui.widgets.stringbox import StringBox
 import os
-from ert.ertwrapper import c_char_p, c_int
 from ert_gui.widgets.spinnerwidgets import IntegerSpinner
 import ert_gui.widgets.util
 from ert_gui.widgets.helpedwidget import ContentModelProxy

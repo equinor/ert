@@ -19,7 +19,6 @@
 # Analysis tab
 # ----------------------------------------------------------------------------------------------
 from ert_gui.widgets.checkbox import CheckBox
-import ert.ertwrapper as ertwrapper
 from ert_gui.widgets.spinnerwidgets import IntegerSpinner, DoubleSpinner, DoubleSpinner
 import ert_gui.widgets.tablewidgets
 from ert_gui.widgets.pathchooser import PathChooser

@@ -18,11 +18,11 @@
 
 from fetcher import PlotDataFetcherHandler
 from ert_gui.pages.config.parameters.parametermodels import FieldModel, SummaryModel, KeywordModel, DataModel
-import ert.ertwrapper as ertwrapper
-import ert.enums as enums
+import ert.ert.ertwrapper as ertwrapper
+import ert.ert.enums as enums
 from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
 from PyQt4.QtCore import SIGNAL
-from ert.erttypes import time_t
+from ert.ert.erttypes import time_t
 import numpy
 
 class EnsembleFetcher(PlotDataFetcherHandler):

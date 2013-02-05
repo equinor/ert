@@ -20,7 +20,7 @@
 # ----------------------------------------------------------------------------------------------
 from ert_gui.widgets.combochoice import ComboChoice
 from ert_gui.widgets.pathchooser import PathChooser
-from ert.enums import history_source_type
+from ert.ert.enums import history_source_type
 from ert_gui.widgets.reloadbutton import ReloadButton
 
 def createObservationsPage(configPanel, parent):

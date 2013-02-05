@@ -22,7 +22,6 @@ from ert_gui.widgets.pathchooser import PathChooser
 from ert_gui.widgets.combochoice import ComboChoice
 from ert_gui.widgets.spinnerwidgets import IntegerSpinner
 
-import ert.ertwrapper as ertwrapper
 
 def createPlotPage(configPanel, parent):
     configPanel.startPage("Plot")

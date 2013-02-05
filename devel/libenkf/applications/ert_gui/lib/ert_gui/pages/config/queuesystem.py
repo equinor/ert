@@ -20,7 +20,6 @@
 # ----------------------------------------------------------------------------------------------
 from ert_gui.widgets.configpanel import ConfigPanel
 from ert_gui.widgets.combochoice import ComboChoice
-import ert.ertwrapper as ertwrapper
 from ert_gui.widgets.stringbox import StringBox
 from ert_gui.widgets.pathchooser import PathChooser
 from ert_gui.widgets.spinnerwidgets import IntegerSpinner
