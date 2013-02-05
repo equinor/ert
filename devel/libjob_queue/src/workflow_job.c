@@ -209,31 +209,42 @@ static void workflow_job_iset_argtype_string( workflow_job_type * workflow_job ,
 }
 
 
-static void workflow_job_validate( workflow_job_type * workflow_job ) {
-  if (!workflow_job->internal) {
-    if (workflow_job->executable != NULL) {
-      if (util_is_executable( workflow_job->executable ) && 
-          (workflow_job->module == workflow_job->function) && 
-          (workflow_job->module == NULL))
+static void workflow_job_validate_internal( workflow_job_type * workflow_job ) {
+  if ((workflow_job->executable == NULL) && (workflow_job->function != NULL)) {
+    workflow_job->lib_handle = dlopen( workflow_job->module , RTLD_NOW );
+    if (workflow_job->lib_handle != NULL) {
+      workflow_job->dl_func = (workflow_job_ftype *) dlsym( workflow_job->lib_handle , workflow_job->function );
+      if (workflow_job->dl_func != NULL)
         workflow_job->valid = true;
+      else 
+        fprintf(stderr,"Failed to load symbol:%s Error:%s \n",workflow_job->function , dlerror());
+    } else {
+      if (workflow_job->module != NULL)
+        fprintf(stderr,"Failed to load module:%s Error:%s \n",workflow_job->module , dlerror());
     }
-  } else {
-    if ((workflow_job->executable == NULL) && (workflow_job->function != NULL)) {
-      workflow_job->lib_handle = dlopen( workflow_job->module , RTLD_NOW );
-      if (workflow_job->lib_handle != NULL) {
-        workflow_job->dl_func = (workflow_job_ftype *) dlsym( workflow_job->lib_handle , workflow_job->function );
-        if (workflow_job->dl_func != NULL)
-          workflow_job->valid = true;
-        else 
-          fprintf(stderr,"Failed to load symbol:%s Error:%s \n",workflow_job->function , dlerror());
-      } else {
-        if (workflow_job->module != NULL)
-          fprintf(stderr,"Failed to load module:%s Error:%s \n",workflow_job->module , dlerror());
-      }
-    } else
-      fprintf(stderr,"Must have executable == NULL and function != NULL for internal jobs \n");
+  } else
+    fprintf(stderr,"Must have executable == NULL and function != NULL for internal jobs \n");
+}
+
+
+static void workflow_job_validate_external( workflow_job_type * workflow_job ) {
+  if (workflow_job->executable != NULL) {
+    if (util_is_executable( workflow_job->executable ) && 
+        (workflow_job->module == workflow_job->function) && 
+        (workflow_job->module == NULL))
+      workflow_job->valid = true;
   }
 }
+
+
+
+static void workflow_job_validate( workflow_job_type * workflow_job ) {
+  if (workflow_job->internal) 
+    workflow_job_validate_internal( workflow_job );
+  else 
+    workflow_job_validate_external( workflow_job );
+}
+
 
 
 
