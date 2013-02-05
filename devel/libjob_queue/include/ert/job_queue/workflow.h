@@ -26,14 +26,17 @@ extern "C" {
   
 #include <ert/util/subst_list.h>
 
+#include <ert/config/config_error.h>
+
 #include <ert/job_queue/workflow_joblist.h>
 
   typedef struct workflow_struct workflow_type;
 
-  workflow_type * workflow_alloc( const char * src_file , workflow_joblist_type * joblist);
-  bool            workflow_run(  workflow_type * workflow , void * self , const subst_list_type * context);
-  void            workflow_free( workflow_type * workflow );
-  void            workflow_free__( void * arg );
+  const config_error_type * workflow_get_last_error( const workflow_type * workflow);
+  workflow_type           * workflow_alloc( const char * src_file , workflow_joblist_type * joblist);
+  bool                      workflow_run(  workflow_type * workflow , void * self , const subst_list_type * context);
+  void                      workflow_free( workflow_type * workflow );
+  void                      workflow_free__( void * arg );
 
 #ifdef __cplusplus
 }

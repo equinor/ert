@@ -35,6 +35,17 @@ config_error_type * config_error_alloc() {
 }
 
 
+config_error_type * config_error_alloc_copy( const config_error_type * src_error) {
+  config_error_type * config_error = config_error_alloc();
+  stringlist_deep_copy( config_error->error_list , src_error->error_list );
+  return config_error;
+}
+
+
+bool config_error_equal( const config_error_type * error1 , const config_error_type * error2) {
+  return stringlist_equal( error1->error_list , error2->error_list );
+}
+
 void config_error_free( config_error_type * error ) {
   stringlist_free( error->error_list );
   free( error );

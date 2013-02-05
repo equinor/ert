@@ -2784,6 +2784,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
     config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
     site_config_init( enkf_main->site_config , config );
     ert_report_list_site_init( enkf_main->report_list , config );
+    ert_workflow_list_init( enkf_main->workflow_list , config );
   }
   config_free( config );
 }
