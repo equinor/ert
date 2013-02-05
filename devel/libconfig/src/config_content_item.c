@@ -161,21 +161,23 @@ stringlist_type * config_content_item_alloc_stringlist(const config_content_item
 
 hash_type * config_content_item_alloc_hash(const config_content_item_type * item , bool copy) {
   hash_type * hash = hash_alloc();
-  int inode;
-  for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
-    const config_content_node_type * node = config_content_item_iget_node(item , inode);
-    const stringlist_type * src_list = config_content_node_get_stringlist( node );
-    const char * key = stringlist_iget(src_list , 0);
-    const char * value = stringlist_iget(src_list , 1);
-
-    if (copy) {
-      hash_insert_hash_owned_ref(hash , 
-                                 key ,
-                                 util_alloc_string_copy(value) , 
-                                 free);
-    } else
-      hash_insert_ref(hash , key , value );
-    
+  if (item != NULL) {
+    int inode;
+    for (inode = 0; inode < vector_get_size( item->nodes ); inode++) {
+      const config_content_node_type * node = config_content_item_iget_node(item , inode);
+      const stringlist_type * src_list = config_content_node_get_stringlist( node );
+      const char * key = stringlist_iget(src_list , 0);
+      const char * value = stringlist_iget(src_list , 1);
+      
+      if (copy) {
+        hash_insert_hash_owned_ref(hash , 
+                                   key ,
+                                   util_alloc_string_copy(value) , 
+                                   free);
+      } else
+        hash_insert_ref(hash , key , value );
+      
+    }
   }
   return hash;
 }
