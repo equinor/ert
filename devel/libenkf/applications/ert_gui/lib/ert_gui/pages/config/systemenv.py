@@ -21,7 +21,6 @@
 from ert_gui.widgets.pathchooser import PathChooser
 from ert_gui.widgets.configpanel import ConfigPanel
 from ert_gui.widgets.tablewidgets import KeywordTable, KeywordList
-import ert.ertwrapper as ertwrapper
 from PyQt4 import QtGui, QtCore
 from jobs.jobspanel import JobsPanel, Job
 import os

@@ -20,12 +20,11 @@
 # ----------------------------------------------------------------------------------------------
 from PyQt4 import QtGui, QtCore
 from ert_gui.widgets.spinnerwidgets import IntegerSpinner
-import ert.ertwrapper as ertwrapper
 from parameters.parameterpanel import ParameterPanel, enums
 from parameters.parametermodels import SummaryModel, DataModel, FieldModel, KeywordModel
-from ert.enums import field_type
-from ert.enums import truncation_type
-from ert.enums import gen_data_file_format
+from ert.ert.enums import field_type
+from ert.ert.enums import truncation_type
+from ert.ert.enums import gen_data_file_format
 
 def createEnsemblePage(configPanel, parent):
     configPanel.startPage("Ensemble")

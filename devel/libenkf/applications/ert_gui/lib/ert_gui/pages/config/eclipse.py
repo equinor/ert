@@ -20,7 +20,6 @@
 # ----------------------------------------------------------------------------------------------
 from ert_gui.widgets.pathchooser import PathChooser
 from ert_gui.widgets.tablewidgets import KeywordTable, KeywordList
-import ert.ertwrapper as ertwrapper
 from ert_gui.widgets.configpanel import ConfigPanel
 
 def createEclipsePage(configPanel, parent):

@@ -20,7 +20,6 @@
 # ----------------------------------------------------------------------------------------------
 from PyQt4 import QtCore
 from ert_gui.widgets.spinnerwidgets import IntegerSpinner
-import ert.ertwrapper as ertwrapper
 from ert_gui.widgets.tablewidgets import KeywordTable
 from ert_gui.widgets.pathchooser import PathChooser
 from ert_gui.widgets.checkbox import CheckBox
@@ -28,7 +27,7 @@ from ert_gui.widgets.configpanel import ConfigPanel
 from ert_gui.widgets.stringbox import StringBox
 from jobs.forwardmodelpanel import ForwardModelPanel
 from simulations.runpathpanel import RunpathMemberList, RunpathMemberPanel
-from ert.enums import keep_runpath_type
+from ert.ert.enums import keep_runpath_type
 from simulations.runtemplatepanel import RunTemplatePanel
 import ert_gui.widgets.helpedwidget
 import os
