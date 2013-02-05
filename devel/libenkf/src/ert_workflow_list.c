@@ -29,6 +29,7 @@
 #include <ert/util/subst_list.h>
 
 #include <ert/config/config.h>
+#include <ert/config/config_error.h>
 #include <ert/config/config_schema_item.h>
 
 #include <ert/job_queue/workflow.h>
@@ -40,20 +41,22 @@
 
 
 struct ert_workflow_list_struct {
-  stringlist_type       * path_list;
-  hash_type             * workflows;
-  workflow_joblist_type * joblist;
-  const subst_list_type * context;
+  stringlist_type         * path_list;
+  hash_type               * workflows;
+  workflow_joblist_type   * joblist;
+  const subst_list_type   * context;
+  const config_error_type * last_error;
 };
 
 
 
 ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context) {
   ert_workflow_list_type * workflow_list = util_malloc( sizeof * workflow_list );
-  workflow_list->path_list = stringlist_alloc_new();
-  workflow_list->workflows = hash_alloc();
-  workflow_list->joblist   = workflow_joblist_alloc();
-  workflow_list->context   = context;
+  workflow_list->path_list  = stringlist_alloc_new();
+  workflow_list->workflows  = hash_alloc();
+  workflow_list->joblist    = workflow_joblist_alloc();
+  workflow_list->context    = context;
+  workflow_list->last_error = NULL;
   return workflow_list;
 }
 
@@ -134,8 +137,9 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_typ
     if (jobpath_item != NULL) {
       for (int i=0; i < config_content_item_get_size( jobpath_item ); i++) {
         config_content_node_type * path_node = config_content_item_iget_node( jobpath_item , i );
+               
         for (int j=0; j < config_content_node_get_size( path_node ); j++) 
-          ert_workflow_list_add_jobs_in_directory( workflow_list , config_content_node_iget_as_path( path_node , j ));
+          ert_workflow_list_add_jobs_in_directory( workflow_list , config_content_node_iget_as_abspath( path_node , j ));
       }
     }
   }
@@ -193,7 +197,14 @@ bool  ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , co
 
 
 bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_type * workflow, void * self ) {
-  return workflow_run( workflow , self , workflow_list->context );
+  bool runOK = workflow_run( workflow , self , workflow_list->context );
+
+  if (runOK)
+    workflow_list->last_error = NULL;
+  else
+    workflow_list->last_error = workflow_get_last_error( workflow );
+
+  return runOK;
 }
 
 bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self) {
@@ -208,3 +219,7 @@ stringlist_type * ert_workflow_list_alloc_namelist( ert_workflow_list_type * wor
   return hash_alloc_stringlist( workflow_list->workflows );
 }
 
+
+const config_error_type * ert_workflow_list_get_last_error( const ert_workflow_list_type * workflow_list) {
+  return workflow_list->last_error;
+}

@@ -27,6 +27,7 @@ extern "C" {
 #include <ert/util/subst_list.h>
 
 #include <ert/config/config.h>
+#include <ert/config/config_error.h>
 
 #include <ert/job_queue/workflow.h>
 
@@ -46,6 +47,7 @@ extern "C" {
   bool                       ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_type * workflow, void * self );
   bool                       ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , const char * workflow_name );
   stringlist_type          * ert_workflow_list_alloc_namelist( ert_workflow_list_type * workflow_list );
+  const config_error_type  * ert_workflow_list_get_last_error( const ert_workflow_list_type * workflow_list);
   
 #ifdef __cplusplus
 }
