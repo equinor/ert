@@ -347,7 +347,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           break;
         case(CONFIG_EXISTING_PATH):
           {
-            char * path = config_path_elm_alloc_path( path_elm , value );
+            char * path = config_path_elm_alloc_abspath( path_elm , value );
             if (!util_entry_exists(path)) {
               config_error_add( error_list , util_alloc_sprintf("Can not find entry %s in %s ",value , config_path_elm_get_relpath( path_elm) ));
               OK = false;

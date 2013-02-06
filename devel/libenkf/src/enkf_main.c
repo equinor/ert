@@ -2781,10 +2781,15 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
   config_type * config = config_alloc();
   {
     site_config_add_config_items( config , true );
-    config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false);
-    site_config_init( enkf_main->site_config , config );
-    ert_report_list_site_init( enkf_main->report_list , config );
-    ert_workflow_list_init( enkf_main->workflow_list , config );
+    if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
+      site_config_init( enkf_main->site_config , config );
+      ert_report_list_site_init( enkf_main->report_list , config );
+      ert_workflow_list_init( enkf_main->workflow_list , config );
+    } else {
+      fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
+      config_fprintf_errors( config , true , stderr );
+      exit(1);
+    }
   }
   config_free( config );
 }
@@ -2885,7 +2890,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     site_config_init_user_mode( enkf_main->site_config );
     
     if (!config_parse(config , model_config , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , true)) {
-      config_fprintf_errors( config , stderr );
+      config_fprintf_errors( config , true , stderr );
       exit(1);
     }
 

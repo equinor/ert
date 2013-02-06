@@ -228,7 +228,7 @@ static void config_content_item_set_arg__(config_type * config , config_content_
       if (config_schema_item_validate_set(schema_item , token_list , config_file,  path_elm , config->parse_errors)) {
         config_content_node_type * node = config_get_new_content_node(config , item);
         config_content_node_set(node , token_list);
-      }
+      } 
     }
   }
 }
@@ -404,7 +404,14 @@ config_content_item_type * config_get_content_item( const config_type * config ,
 
 
 bool config_item_set(const config_type * config , const char * kw) {
-  return config_has_content_item(config , kw );
+  if (config_has_content_item(config , kw)) {
+    const config_content_item_type * item = config_get_content_item( config , kw );
+    if (config_content_item_get_size( item ))
+      return true;
+    else
+      return false;  // The item exists - but it has size zero.
+  } else
+    return false;
 }
 
 
@@ -774,8 +781,8 @@ const char * config_get_config_file( const config_type * config , bool abs_path)
 }
 
 
-void config_fprintf_errors( const config_type * config , FILE * stream ) {
-  config_error_fprintf( config->parse_errors , stderr );
+void config_fprintf_errors( const config_type * config , bool add_count , FILE * stream ) {
+  config_error_fprintf( config->parse_errors , add_count , stderr );
 }
 
 

@@ -81,7 +81,7 @@ void parse_test(config_type * config ,
       
     } else {
       config_error_type * error = config_get_errors( config );
-      config_error_fprintf( error , stdout );
+      config_error_fprintf( error , true , stdout );
       test_error_exit("Hmm - parsing %s failed \n", config_file );
     }
   }

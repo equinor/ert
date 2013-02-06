@@ -102,7 +102,7 @@ int main( int argc , char ** argv) {
       
       if (!workflow_run( workflow , &read_value , NULL)) {
         config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
-        config_fprintf_errors( workflow_compiler , stdout);
+        config_fprintf_errors( workflow_compiler , true ,stdout);
         unlink( tmp_file );
         test_error_exit("Workflow did not run\n");
       }

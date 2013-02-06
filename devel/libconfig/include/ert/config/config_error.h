@@ -35,7 +35,7 @@ typedef struct config_error_struct config_error_type;
   void                config_error_add( config_error_type * error , char * new_error );
   void                config_error_clear( config_error_type * error );
   int                 config_error_count( const config_error_type * error );
-  void                config_error_fprintf( const config_error_type * error , FILE * stream );
+  void                config_error_fprintf( const config_error_type * error , bool add_count , FILE * stream );
   bool                config_error_equal( const config_error_type * error1 , const config_error_type * error2);
 
 #ifdef __cplusplus

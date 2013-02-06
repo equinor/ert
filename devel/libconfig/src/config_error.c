@@ -74,7 +74,13 @@ const char * config_error_iget( const config_error_type * error , int index) {
 }
 
 
-void config_error_fprintf( const config_error_type * error , FILE * stream ) {
-  stringlist_fprintf( error->error_list , "\n", stream);
-  fprintf(stream , "\n");
+void config_error_fprintf( const config_error_type * error , bool add_count , FILE * stream ) {
+  int error_nr;
+
+  for (error_nr = 0; error_nr < stringlist_get_size( error->error_list ); error_nr++) {
+    if (add_count) 
+      fprintf(stream , "  %02d: " , error_nr);
+    
+    fprintf( stream , "%s\n" , stringlist_iget( error->error_list , error_nr));
+  }
 }

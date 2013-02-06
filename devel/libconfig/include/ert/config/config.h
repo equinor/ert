@@ -100,7 +100,7 @@ typedef struct config_struct              config_type;
   const char *            config_get_value_as_path( const config_type * config , const char * kw);
   const char *            config_get_value(const config_type * config , const char * kw);
   const char *            config_get_config_file( const config_type * config , bool abs_path);
-  void                    config_fprintf_errors( const config_type * config , FILE * stream );
+  void                    config_fprintf_errors( const config_type * config , bool add_count , FILE * stream );
   
   int                     config_get_schema_size( const config_type * config );
   int                     config_get_content_size( const config_type * config );

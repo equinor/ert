@@ -133,7 +133,8 @@ int main (int argc , char ** argv) {
   printf("Documentation : %s \n","http://ert.nr.no");
   printf("git commit    : %s \n",GIT_COMMIT);
   printf("compile time  : %s \n",COMPILE_TIME_STAMP);
-  printf("site config   : %s \n\n",SITE_CONFIG_FILE);
+  printf("site config   : %s \n",SITE_CONFIG_FILE);
+  
   enkf_main_install_SIGNALS();                     /* Signals common to both tui and gui. */
   signal(SIGINT , util_abort_signal);              /* Control C - tui only.               */
   if (argc != 2) {
@@ -142,7 +143,11 @@ int main (int argc , char ** argv) {
   } else {
     const char * site_config_file  = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * model_config_file = argv[1]; 
-    
+  
+    {
+      char * abs_config = util_alloc_realpath( model_config_file );
+      printf("model config  : %s \n\n", abs_config);
+    }
     enkf_welcome( model_config_file );
     {
       enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file , true , true);
