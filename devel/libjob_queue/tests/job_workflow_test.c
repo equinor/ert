@@ -100,7 +100,7 @@ int main( int argc , char ** argv) {
       workflow = workflow_alloc(workflow_file , joblist );
       unlink( workflow_file );
       
-      if (!workflow_run( workflow , &read_value , NULL)) {
+      if (!workflow_run( workflow , &read_value , false , NULL)) {
         config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
         config_fprintf_errors( workflow_compiler , true ,stdout);
         unlink( tmp_file );

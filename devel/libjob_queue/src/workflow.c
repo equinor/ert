@@ -173,14 +173,14 @@ static bool workflow_try_compile( workflow_type * script , const subst_list_type
 }
 
 
-bool workflow_run(workflow_type * workflow , void * self , const subst_list_type * context) {
+bool workflow_run(workflow_type * workflow , void * self , bool verbose , const subst_list_type * context) {
   workflow_try_compile( workflow , context);
   
   if (workflow->compiled) {
     int icmd;
     for (icmd = 0; icmd < vector_get_size( workflow->cmd_list ); icmd++) {
       const cmd_type * cmd = vector_iget_const( workflow->cmd_list , icmd );
-      workflow_job_run( cmd->workflow_job , self , cmd->arglist );
+      workflow_job_run( cmd->workflow_job , self , verbose , cmd->arglist );
     }
     return true;
   } else
