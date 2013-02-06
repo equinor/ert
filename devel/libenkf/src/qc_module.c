@@ -110,11 +110,12 @@ void qc_module_set_workflow( qc_module_type * qc_module , const char * qc_workfl
 
 
 bool qc_module_run_workflow( qc_module_type * qc_module , void * self) {
+  bool verbose = false;
   if (qc_module->qc_workflow != NULL ) {
     if (!util_file_exists( qc_module->runpath_list_file ))
       fprintf(stderr,"** Warning: the file:%s with a list of runpath directories was not found - QC workflow wil probably fail.\n" , qc_module->runpath_list_file);
     
-    return ert_workflow_list_run_workflow__( qc_module->workflow_list , qc_module->qc_workflow , self);
+    return ert_workflow_list_run_workflow__( qc_module->workflow_list , qc_module->qc_workflow , verbose , self);
   } else
     return false;
 }

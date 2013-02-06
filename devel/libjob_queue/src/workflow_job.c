@@ -316,12 +316,12 @@ void workflow_job_free__( void * arg) {
 
 
 
-static void workflow_job_run_internal( const workflow_job_type * job , void * self , const stringlist_type * arg) {
+static void workflow_job_run_internal( const workflow_job_type * job , void * self , bool verbose , const stringlist_type * arg) {
   job->dl_func( self , arg );
 }
 
 
-static void workflow_job_run_external( const workflow_job_type * job  , const stringlist_type * arg) {
+static void workflow_job_run_external( const workflow_job_type * job  , bool verbose , const stringlist_type * arg) {
   char ** argv = stringlist_alloc_char_copy( arg );
 
   util_fork_exec( job->executable , 
@@ -344,9 +344,9 @@ static void workflow_job_run_external( const workflow_job_type * job  , const st
 }
 
 
-void workflow_job_run( const workflow_job_type * job , void * self , const stringlist_type * arg) {
+void workflow_job_run( const workflow_job_type * job , void * self , bool verbose , const stringlist_type * arg) {
   if (job->internal)
-    workflow_job_run_internal( job , self , arg );
+    workflow_job_run_internal( job , self , verbose , arg );
   else
-    workflow_job_run_external( job , arg );
+    workflow_job_run_external( job , verbose , arg );
 }

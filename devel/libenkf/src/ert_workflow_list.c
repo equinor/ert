@@ -38,6 +38,7 @@
 
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 
 struct ert_workflow_list_struct {
@@ -46,6 +47,7 @@ struct ert_workflow_list_struct {
   workflow_joblist_type   * joblist;
   const subst_list_type   * context;
   const config_error_type * last_error;
+  bool                      verbose;
 };
 
 
@@ -57,9 +59,14 @@ ert_workflow_list_type * ert_workflow_list_alloc(const subst_list_type * context
   workflow_list->joblist    = workflow_joblist_alloc();
   workflow_list->context    = context;
   workflow_list->last_error = NULL;
+  ert_workflow_list_set_verbose( workflow_list , DEFAULT_WORKFLOW_VERBOSE );
   return workflow_list;
 }
 
+
+void ert_workflow_list_set_verbose( ert_workflow_list_type * workflow_list , bool verbose) {
+  workflow_list->verbose = verbose;
+}
 
 
 void ert_workflow_list_free( ert_workflow_list_type * workflow_list ) {
@@ -196,8 +203,8 @@ bool  ert_workflow_list_has_workflow(ert_workflow_list_type * workflow_list , co
 }
 
 
-bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_type * workflow, void * self ) {
-  bool runOK = workflow_run( workflow , self , workflow_list->context );
+bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , workflow_type * workflow, bool verbose , void * self ) {
+  bool runOK = workflow_run( workflow , self , verbose , workflow_list->context );
 
   if (runOK)
     workflow_list->last_error = NULL;
@@ -209,7 +216,7 @@ bool ert_workflow_list_run_workflow__(ert_workflow_list_type * workflow_list  , 
 
 bool ert_workflow_list_run_workflow(ert_workflow_list_type * workflow_list  , const char * workflow_name , void * self) {
   workflow_type * workflow = ert_workflow_list_get_workflow( workflow_list , workflow_name );
-  return ert_workflow_list_run_workflow__( workflow_list , workflow , self );
+  return ert_workflow_list_run_workflow__( workflow_list , workflow , workflow_list->verbose , self );
 }
 
 

@@ -145,7 +145,7 @@
 #define SUMMARY_KEY_JOIN_STRING ":"
 #define USER_KEY_JOIN_STRING    ":"
 
-
+#define DEFAULT_WORKFLOW_VERBOSE false
 
 /*
   Some #define symbols used when saving configuration files.
