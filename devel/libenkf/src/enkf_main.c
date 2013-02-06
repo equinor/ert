@@ -2227,7 +2227,7 @@ static void enkf_main_install_data_kw( enkf_main_type * enkf_main , hash_type * 
     Installing the DATA_KW keywords supplied by the user - these are
     at the very top level, so they can reuse everything defined later.
   */
-  {
+  if (config_data_kw) {
     hash_iter_type * iter = hash_iter_alloc(config_data_kw);
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
@@ -2688,11 +2688,14 @@ static void enkf_main_init_log( enkf_main_type * enkf_main , const config_type *
 
 static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * config ) {
   config_content_item_type * data_item = config_get_content_item( config , DATA_KW_KEY );
-  if (data_item) {
-    hash_type      * data_kw   = config_content_item_alloc_hash(data_item , true);
-    enkf_main_install_data_kw( enkf_main , data_kw );
+  hash_type      * data_kw = NULL;
+  if (data_item) 
+    data_kw = config_content_item_alloc_hash(data_item , true);
+
+  enkf_main_install_data_kw( enkf_main , data_kw );
+  
+  if (data_kw)
     hash_free( data_kw );
-  }
 }
 
     
