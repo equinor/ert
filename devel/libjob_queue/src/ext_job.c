@@ -824,7 +824,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
         }
       }
     } else {
-      config_fprintf_errors( config , stderr );
+      config_fprintf_errors( config , true , stderr );
       exit(1);
     }
     config_free(config);

@@ -56,7 +56,7 @@ void enkf_tui_workflow_run( void * arg ) {
           if (!ert_workflow_list_run_workflow( workflow_list , workflow_name , enkf_main )) {
             printf("Errors in workflow:%s \n", workflow_name );
             printf("-----------------------------------------------------------------\n");
-            config_error_fprintf( ert_workflow_list_get_last_error( workflow_list ) , stdout);
+            config_error_fprintf( ert_workflow_list_get_last_error( workflow_list ) , true , stdout);
             printf("-----------------------------------------------------------------\n");
           }
         }
