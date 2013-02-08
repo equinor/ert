@@ -107,6 +107,9 @@ class SumTest( unittest.TestCase ):
         days = sum.days
         self.assertTrue( approx_equal( days[50] , 1461 ))
 
+        self.assertEqual( sum.start_time , datetime.datetime( 2000 , 1 , 1 , 0 , 0 , 0))
+        self.assertEqual( sum.end_time , datetime.datetime( 2004 , 12 , 31 , 0 , 0 , 0))
+        self.assertTrue( sum.check_sim_time(datetime.datetime( 2004 , 12 , 31 , 0 , 0 , 0)))
 
     def test_keys(self):
         sum = self.sum
