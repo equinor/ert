@@ -24,6 +24,7 @@ from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
 from PyQt4.QtCore import SIGNAL
 from ert.ert.erttypes import time_t
 import numpy
+import ert.enkf.ens_config
 
 class EnsembleFetcher(PlotDataFetcherHandler):
     """A data fetcher for ensemble parameters."""
@@ -45,8 +46,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.connect(self.data_configuration, SIGNAL('configurationChanged()'), emitter)
 
     def initialize(self, ert):
-        ert.prototype("long ensemble_config_get_node(long, char*)")
-        ert.prototype("bool ensemble_config_has_key(long, char*)")
+
 
         ert.prototype("long enkf_main_get_fs(long)")
         ert.prototype("int enkf_main_get_ensemble_size(long)")
