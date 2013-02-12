@@ -37,7 +37,9 @@ class EnsConfig(CClass):
     def has_key(self , key):
         return cfunc.has_key( self ,key )
 
-
+    def initialize(self, ert):
+        ert.prototype("long ensemble_config_get_node(long, char*)")
+        ert.prototype("bool ensemble_config_has_key(long, char*)")
 
 ##################################################################
 
