@@ -122,7 +122,7 @@ static bool rsh_host_available(rsh_host_type * rsh_host) {
   {
     available = false;
     if ((rsh_host->max_running - rsh_host->running) > 0) {  // The host has free slots()
-      if (util_ping( rsh_host->hostname )) {                // The host answers to ping()
+      if (util_ping( rsh_host->host_name )) {                // The host answers to ping()
         available = true;
         rsh_host->running++;
       }
