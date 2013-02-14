@@ -148,7 +148,7 @@ bool ert_report_create( ert_report_type * ert_report , const subst_list_type * c
       latex_link_directory_content( latex , ert_report->input_path );
       latex_link_directory_content( latex , plot_path );
       latex_set_target_file( latex , target_file );
-      success = latex_compile( latex , ert_report->ignore_errors , ert_report->with_xref);
+      success = latex_compile( latex , ert_report->ignore_errors , ert_report->with_xref , true);
       
       if (success) 
         ert_report->target_file = util_realloc_string_copy( ert_report->target_file , latex_get_target_file( latex ));
