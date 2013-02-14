@@ -81,7 +81,7 @@ void ert_workflow_list_free( ert_workflow_list_type * workflow_list ) {
 workflow_type * ert_workflow_list_add_workflow( ert_workflow_list_type * workflow_list , const char * workflow_file , const char * workflow_name) {
   if (util_file_exists( workflow_file )) {
     workflow_type * workflow = workflow_alloc( workflow_file , workflow_list->joblist );
-    if (workflow_name == NULL) 
+    if (workflow_name != NULL) 
       hash_insert_hash_owned_ref( workflow_list->workflows , workflow_name , workflow , workflow_free__);    
     else {
       char * name;

@@ -16,10 +16,27 @@
    for more details. 
 */
 
-#include <enkf_main.h>
+#include <ert/util/stringlist.h>
+
+#include <ert/enkf/enkf_main.h>
 
 
 void enkf_main_exit_JOB(void * self , const stringlist_type * args ) {
   enkf_main_type  * enkf_main = enkf_main_safe_cast( self );
   enkf_main_exit( enkf_main );
 }
+
+
+
+void enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) {
+  enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
+  int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
+  bool_vector_type * iactive   = bool_vector_alloc( 0 , true );
+
+  // Ignore args until string_utils is in place ..... 
+  // if (stringlist_get_size( args ) 
+
+  bool_vector_iset( iactive , ens_size - 1 , true );
+  enkf_main_run_exp( enkf_main , iactive , 0 , 0 , ANALYZED );
+}
+
