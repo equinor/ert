@@ -50,6 +50,11 @@ class LaTeXTest( unittest.TestCase ):
         self.assertTrue( lx.compile() )
         self.assertFalse( os.path.exists( run_path ) )
 
+        lx = latex.LaTeX( "%s/report_OK.tex" % statoil_path , in_place = False )
+        run_path = lx.runpath
+        self.assertTrue( lx.compile( cleanup = False) )
+        self.assertTrue( os.path.exists( "%s/report_OK.log" % run_path))
+
 
 
     def test_report(self):
