@@ -165,7 +165,7 @@ extern "C" {
   const char * enkf_main_get_image_viewer(const enkf_main_type * );
   const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main );
   const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
-  void         enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2);
+  void         enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, bool force_init);
   
   void enkf_main_initialize_from_existing(enkf_main_type * enkf_main , 
                                           const char * source_case , 

@@ -279,14 +279,17 @@ static void shared_info_free(shared_info_type * shared_info) {
 /** Helper classes complete - starting on the enkf_state proper object. */
 /*****************************************************************/
 
-void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list) {
+void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list, bool force_init) {
+  state_enum init_state = ANALYZED;
   int ip;
   for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
     int iens = enkf_state_get_iens( enkf_state );
     enkf_node_type * param_node = enkf_state_get_node( enkf_state , stringlist_iget( param_list , ip));
-    if (enkf_node_initialize( param_node , iens , enkf_state->rng)) {
-      node_id_type node_id = {.report_step = 0, .iens = iens , .state = ANALYZED };
-      enkf_node_store( param_node , fs , true , node_id);
+    node_id_type node_id = {.report_step = 0, .iens = iens , .state = init_state };
+    if (force_init || (enkf_node_has_data( param_node , fs , node_id) == false)) {
+      if (enkf_node_initialize( param_node , iens , enkf_state->rng)) 
+        enkf_node_store( param_node , fs , true , node_id);
+      
     }
   }
 }
