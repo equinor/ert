@@ -41,11 +41,13 @@ class LaTeXTest( unittest.TestCase ):
 
     def test_cleanup( self ):
         lx = latex.LaTeX( "%s/report_OK.tex" % statoil_path , in_place = True )
+        self.assertTrue( lx.in_place )
         self.assertTrue( lx.compile() )
         for ext in ["log" , "aux" , "nav" , "out" , "snm" , "toc"]:
             self.assertFalse( os.path.exists( "%s/report_OK.%s" % (statoil_path , ext) ))
 
         lx = latex.LaTeX( "%s/report_OK.tex" % statoil_path , in_place = False )
+        self.assertFalse( lx.in_place )
         run_path = lx.runpath
         self.assertTrue( lx.compile() )
         self.assertFalse( os.path.exists( run_path ) )
