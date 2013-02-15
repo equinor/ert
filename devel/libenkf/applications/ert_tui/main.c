@@ -51,22 +51,6 @@ void text_splash() {
 }
 
 
-void devel_warning() {
-#ifdef DEVEL_VERSION
-  printf("\n");
-  printf("  ***************************************************************\n");
-  printf("  ** You have started a development version of ERT. If you are **\n");
-  printf("  ** not an advanced user, it might be better to use a stable  **\n");
-  printf("  ** version which has been better tested. The stable version  **\n");
-  printf("  ** should be available with the command:                     **\n");
-  printf("  **                                                           **\n");
-  printf("  **      bash%% ert config_file                                **\n");
-  printf("  **                                                           **\n");
-  printf("  ***************************************************************\n");
-#endif
-}
-
-
 /*
   GIT_COMMIT and COMPILE_TIME_STAMP are env variables set by the
   makefile. Will exit if the config file does not exist.
@@ -157,5 +141,5 @@ int main (int argc , char ** argv) {
     
     util_abort_free_version_info(); /* No fucking leaks ... */
   }
-
+  exit(0);
 }
