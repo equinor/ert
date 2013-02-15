@@ -131,6 +131,7 @@ extern "C" {
 #define  REPORT_PATH_KEY                   "REPORT_PATH"
 #define  REPORT_WELL_LIST_KEY              "REPORT_WELL_LIST"
 #define  REPORT_GROUP_LIST_KEY             "REPORT_GROUP_LIST"
+#define  REPORT_TIMEOUT                    "REPORT_TIMEOUT"
 #define  RERUN_START_KEY                   "RERUN_START"
 #define  RSH_COMMAND_KEY                   "RSH_COMMAND"
 #define  RSH_HOST_KEY                      "RSH_HOST"

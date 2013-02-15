@@ -41,7 +41,6 @@
 */
 #define LATEX_PATH_FMT "/tmp/latex-XXXXXX"  
 #define ERT_REPORT_TYPE_ID 919191653
-#define LATEX_TIMEOUT      20
 
 
 /*
@@ -75,7 +74,6 @@ struct ert_report_struct {
   UTIL_TYPE_ID_DECLARATION;
   template_type * template;
 
-  int             latex_timeout;
   char          * latex_basename;
   char          * input_path;
   bool            with_xref;
@@ -119,7 +117,6 @@ ert_report_type * ert_report_alloc( const char * source_file , const char * targ
   report->ignore_errors = true;
   report->target_file = NULL;
   report->work_path = NULL;
-  report->latex_timeout = LATEX_TIMEOUT;
   ert_report_set_work_path( report );
   return report;
 }
@@ -136,7 +133,8 @@ static void ert_report_clear( ert_report_type * ert_report , bool mkdir_work_pat
 
 
 
-bool ert_report_create( ert_report_type * ert_report , const subst_list_type * context , const char * plot_path , const char * target_path ) {
+
+bool ert_report_create( ert_report_type * ert_report , int latex_timeout , const subst_list_type * context , const char * plot_path , const char * target_path ) {
   bool   success;
   {
     char * latex_file = util_alloc_filename( ert_report->work_path , ert_report->latex_basename , LATEX_EXTENSION );
@@ -145,7 +143,7 @@ bool ert_report_create( ert_report_type * ert_report , const subst_list_type * c
       latex_type * latex = latex_alloc( latex_file , true );
       char * target_file = util_alloc_filename( target_path , ert_report->latex_basename , "pdf");
 
-      latex_set_timeout( latex , ert_report->latex_timeout );
+      latex_set_timeout( latex , latex_timeout );
       latex_link_directory_content( latex , ert_report->input_path );
       latex_link_directory_content( latex , plot_path );
       latex_set_target_file( latex , target_file );

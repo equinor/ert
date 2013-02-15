@@ -25,6 +25,10 @@ add_executable( enkf_model_config enkf_model_config.c )
 target_link_libraries( enkf_model_config enkf )
 add_test( enkf_model_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_model_config )
 
+add_executable( enkf_report_list enkf_report_list.c )
+target_link_libraries( enkf_report_list enkf )
+add_test( enkf_report_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_report_list ${CMAKE_CURRENT_SOURCE_DIR}/data/config/ert_report_list)
+
 add_executable( enkf_ecl_config enkf_ecl_config.c )
 target_link_libraries( enkf_ecl_config enkf )
 add_test( enkf_ecl_config1  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config )
