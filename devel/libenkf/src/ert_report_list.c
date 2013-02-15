@@ -33,6 +33,7 @@
 #include <ert/enkf/ert_report.h>
 #include <ert/enkf/ert_report_list.h>
 #include <ert/enkf/config_keys.h>
+#include <ert/enkf/enkf_defaults.h>
 
 #define WELL_LIST_TAG   "$WELL_LIST"
 #define GROUP_LIST_TAG  "$GROUP_LIST"
@@ -40,7 +41,6 @@
 #define USER_TAG        "$USER"
 #define CONFIG_FILE_TAG "$CONFIG_FILE"
 
-#define LATEX_TIMEOUT   120     // Seconds
 
 
 
@@ -53,6 +53,7 @@ struct ert_report_list_struct {
   stringlist_type * group_list;
   subst_list_type * global_context;
   int               latex_timeout;
+  bool              init_large_report;
 };
 
 
@@ -64,19 +65,39 @@ int ert_report_list_get_latex_timeout( const ert_report_list_type * report_list 
   return report_list->latex_timeout;
 }
 
+static void ert_report_list_init_large_report( ert_report_list_type * report_list ) {
+  if (report_list->init_large_report) {
+    printf("Running script \'fmtutil --all\' to regenerate pdflatex config information ..... ");  
+    fflush(stdout);
+    util_fork_exec("fmtutil" , 1 , (const char *[1]) {"--all"} , true , NULL , NULL , NULL , "/dev/null" , "/dev/null");
+    printf("\n");
+  }
+  report_list->init_large_report = false;
+}
+
+bool ert_report_list_get_init_large_report( const ert_report_list_type * report_list ) {
+  return report_list->init_large_report;
+}
+
+void ert_report_list_set_large_report(ert_report_list_type * report_list , bool init_large_report) {
+  report_list->init_large_report = init_large_report;
+}
+
+
 ert_report_list_type * ert_report_list_alloc(const char * target_path, const char * plot_path ) {
   ert_report_list_type * report_list = util_malloc( sizeof * report_list );
   report_list->path_list   = stringlist_alloc_new( );
   report_list->report_list = vector_alloc_new( );
   report_list->target_path = NULL;
   report_list->plot_path   = NULL;
+  report_list->init_large_report = DEFAULT_REPORT_LARGE;
 
   report_list->well_list      = stringlist_alloc_new();
   report_list->group_list     = stringlist_alloc_new();
   report_list->global_context = subst_list_alloc( NULL );
   ert_report_list_set_plot_path( report_list , plot_path );
   ert_report_list_set_target_path( report_list , target_path );
-  ert_report_list_set_latex_timeout( report_list , LATEX_TIMEOUT);
+  ert_report_list_set_latex_timeout( report_list , DEFAULT_REPORT_TIMEOUT);
   return report_list;
 }
 
@@ -198,7 +219,7 @@ char * alloc_list(const stringlist_type * list) {
 
 /*****************************************************************/
 
-void ert_report_list_create( const ert_report_list_type * report_list , const char * current_case , bool verbose ) {
+void ert_report_list_create( ert_report_list_type * report_list , const char * current_case , bool verbose ) {
   if (vector_get_size( report_list->report_list ) > 0) {
     subst_list_type * context = subst_list_alloc( report_list->global_context );
     char * target_path = util_alloc_filename( report_list->target_path , current_case , NULL );
@@ -208,6 +229,7 @@ void ert_report_list_create( const ert_report_list_type * report_list , const ch
     subst_list_append_owned_ref( context , WELL_LIST_TAG  , alloc_list( report_list->well_list ), "The list of wells for plotting");
     subst_list_append_owned_ref( context , GROUP_LIST_TAG , alloc_list( report_list->group_list ), "The list of groups for plotting");
 
+    ert_report_list_init_large_report( report_list );
     for (int ir = 0; ir < vector_get_size( report_list->report_list ); ir++) {
       ert_report_type * ert_report = vector_iget( report_list->report_list , ir);
       
@@ -242,8 +264,11 @@ void ert_report_list_site_init( ert_report_list_type * report_list , config_type
 void ert_report_list_init( ert_report_list_type * report_list , config_type * config , const ecl_sum_type * refcase) {
   ert_report_list_site_init( report_list , config );
 
-  if (config_item_set( config , REPORT_TIMEOUT))
-    ert_report_list_set_latex_timeout( report_list , config_get_value_as_int( config , REPORT_TIMEOUT ));
+  if (config_item_set( config , REPORT_LARGE_KEY))
+    ert_report_list_set_large_report(report_list , config_get_value_as_bool( config , REPORT_LARGE_KEY ));
+  
+  if (config_item_set( config , REPORT_TIMEOUT_KEY))
+    ert_report_list_set_latex_timeout( report_list , config_get_value_as_int( config , REPORT_TIMEOUT_KEY ));
   
   /* Installing the list of reports. */
   for (int i=0; i < config_get_occurences( config , REPORT_LIST_KEY ); i++) {
@@ -302,6 +327,9 @@ void ert_report_list_add_config_items( config_type * config ) {
   item = config_add_schema_item( config , REPORT_GROUP_LIST_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
 
-  item = config_add_schema_item( config , REPORT_TIMEOUT , false );
+  item = config_add_schema_item( config , REPORT_TIMEOUT_KEY , false );
   config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_INT });
+
+  item = config_add_schema_item( config , REPORT_LARGE_KEY , false );
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_BOOLEAN });
 }

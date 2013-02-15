@@ -36,7 +36,8 @@ int main(int argc , char ** argv) {
   ert_report_list_init( report_list , config , NULL);
   
   test_assert_int_equal( 167 , ert_report_list_get_latex_timeout( report_list ));
-  
+  test_assert_true( ert_report_list_get_init_large_report( report_list ));
+
   ert_report_list_free( report_list );
   exit(0);
 }
