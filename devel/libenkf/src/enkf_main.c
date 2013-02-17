@@ -2687,31 +2687,17 @@ static void enkf_main_init_data_kw( enkf_main_type * enkf_main , config_type * c
 /*****************************************************************/
 
 
+rng_config_type * enkf_main_get_rng_config( const enkf_main_type * enkf_main ) {
+  return enkf_main->rng_config;
+}
+
 void enkf_main_rng_init( enkf_main_type * enkf_main) {
   if (enkf_main->rng != NULL) {
     rng_free( enkf_main->rng );
     enkf_main->rng = NULL;
   }
   
-  {
-    const char * seed_load  = rng_config_get_seed_load_file( enkf_main->rng_config );
-    const char * seed_store = rng_config_get_seed_store_file( enkf_main->rng_config );
-    enkf_main->rng = rng_alloc( rng_config_get_type(enkf_main->rng_config) , INIT_DEFAULT);
-    
-    if (seed_load != NULL) {
-      FILE * stream = util_fopen( seed_load , "r");
-      rng_fscanf_state( enkf_main->rng , stream );
-      fclose( stream );
-    } else
-      rng_init( enkf_main->rng , INIT_DEV_RANDOM );
-    
-    
-    if (seed_store != NULL) {
-      FILE * stream = util_mkdir_fopen( seed_store , "w");
-      rng_fprintf_state( enkf_main->rng , stream );
-      fclose( stream );
-    }
-  }
+  enkf_main->rng = rng_config_alloc_rng( enkf_main->rng_config );
 }
 
 
@@ -2763,20 +2749,23 @@ void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_typ
 
 
 static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * site_config_file) {
-  config_type * config = config_alloc();
-  {
-    site_config_add_config_items( config , true );
-    if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
-      site_config_init( enkf_main->site_config , config );
-      ert_report_list_site_init( enkf_main->report_list , config );
-      ert_workflow_list_init( enkf_main->workflow_list , config );
-    } else {
-      fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
-      config_fprintf_errors( config , true , stderr );
-      exit(1);
+  if (site_config_file != NULL) {
+    if (!util_file_exists(site_config_file))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config_file);
+    config_type * config = config_alloc();
+    {
+      site_config_add_config_items( config , true );
+      if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
+        site_config_init( enkf_main->site_config , config );
+        ert_report_list_site_init( enkf_main->report_list , config );
+        ert_workflow_list_init( enkf_main->workflow_list , config );
+      } else {
+        fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
+        config_fprintf_errors( config , true , stderr );
+        exit(1);
+      }
     }
+    config_free( config );
   }
-  config_free( config );
 }
 
 
@@ -2824,9 +2813,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
   if (site_config == NULL)
     site_config = _site_config;
-  
+
   if (site_config == NULL)
-    util_exit("%s: main enkf_config file is not set. Use environment variable \"ERT_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
+    fprintf(stderr,"**WARNING** main enkf_config file is not set. Use environment variable \"ERT_SITE_CONFIG\" - or recompile.\n");
   
   {
     char * path;
@@ -2861,7 +2850,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   }
 
 
-  if (!util_file_exists(site_config))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
     config_type * config;

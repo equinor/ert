@@ -57,6 +57,7 @@ extern "C" {
 #include <ert/enkf/ert_report_list.h>
 #include <ert/enkf/ranking_table.h>
 #include <ert/enkf/qc_module.h>
+#include <ert/enkf/rng_config.h>
 
   /*****************************************************************/
   
@@ -239,6 +240,7 @@ extern "C" {
   
   enkf_main_type      * enkf_main_alloc_empty( );
 
+  rng_config_type     * enkf_main_get_rng_config( const enkf_main_type * enkf_main );
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 

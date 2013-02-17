@@ -2034,15 +2034,11 @@ void enkf_state_init_run(enkf_state_type * state ,
 
 
 
-/*****************************************************************/
 
 
-/**
-   This function will return the true time (i.e. time_t instance)
-   cooresponding to the report_step 'report_step'. If no data has been
-   loaded for the input report_step -1 is returned, this must be
-   checked by the calling scope.
-*/
+unsigned int enkf_state_get_random( enkf_state_type * enkf_state ) {
+  return rng_forward( enkf_state->rng );
+}
 
 
 

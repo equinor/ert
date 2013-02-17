@@ -112,6 +112,7 @@ typedef struct enkf_state_struct    enkf_state_type;
   const char       * enkf_state_get_eclbase( const enkf_state_type * enkf_state );
   void               enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int step2);
 
+  unsigned int       enkf_state_get_random( enkf_state_type * enkf_state );
 
 /*****************************************************************/
   void enkf_state_set_inactive(enkf_state_type * state);

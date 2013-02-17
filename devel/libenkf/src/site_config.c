@@ -682,7 +682,8 @@ static void site_config_install_job_queue(site_config_type  * site_config ) {
      All the various driver options are set, unconditionally of which
      driver is actually selected in the end.
   */
-  site_config_set_job_queue__( site_config , site_config->driver_type );
+  if (site_config->driver_type != NULL_DRIVER)
+    site_config_set_job_queue__( site_config , site_config->driver_type );
 }
 
 
