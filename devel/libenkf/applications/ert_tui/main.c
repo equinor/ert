@@ -110,7 +110,6 @@ static void init_debug( const char * argv0) {
 
 
 int main (int argc , char ** argv) {
-  devel_warning();
   text_splash();
   init_debug( argv[0] );
   printf("\n");
