@@ -2696,8 +2696,9 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
     rng_free( enkf_main->rng );
     enkf_main->rng = NULL;
   }
-  
+  printf("Creating rng \n");
   enkf_main->rng = rng_config_alloc_rng( enkf_main->rng_config );
+  printf("RNG OK \n");
 }
 
 

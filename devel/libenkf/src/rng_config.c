@@ -94,16 +94,16 @@ rng_type * rng_config_alloc_rng( rng_config_type * rng_config ) {
       fclose( stream );
     } else {
       /* 
-         In the special case that seed_load == seed_store; we accept a seed_load argument
-         pointing to a non-existant file. 
+         In the special case that seed_load == seed_store; we accept a
+         seed_load argument pointing to a non-existant file.
       */
       if (test_string_equal( seed_load , seed_store))
-        rng_init( rng , INIT_DEV_RANDOM );
+        rng_init( rng , INIT_DEV_URANDOM );
       else
         util_abort("%s: tried to load random seed from non-existing file:%s \n",__func__ , seed_load);
     }
   } else
-    rng_init( rng , INIT_DEV_RANDOM );
+    rng_init( rng , INIT_DEV_URANDOM );
   
   
   if (seed_store != NULL) {
@@ -131,7 +131,7 @@ void rng_config_add_config_items( config_type * config ) {
 void rng_config_init( rng_config_type * rng_config , config_type * config ) {
   if (config_item_set( config , STORE_SEED_KEY ))
     rng_config_set_seed_store_file( rng_config , config_iget(config , STORE_SEED_KEY ,0,0));
-
+  
   if (config_item_set( config , LOAD_SEED_KEY ))
     rng_config_set_seed_load_file( rng_config , config_iget(config , LOAD_SEED_KEY ,0,0));
 }
