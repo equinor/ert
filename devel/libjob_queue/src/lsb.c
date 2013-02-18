@@ -33,7 +33,8 @@ typedef struct jobInfoEnt * (lsb_readjobinfo_ftype)  (int * );
 typedef int                 (lsb_closejobinfo_ftype) ( );
 typedef int                 (lsb_forcekilljob_ftype) ( int );
 typedef int                 (lsb_init_ftype)         ( char * );
-typedef int                 (lsb_sysmsg_ftype)       ( );
+typedef char *              (lsb_sysmsg_ftype)       ( );
+
 
 
 struct lsb_struct {
