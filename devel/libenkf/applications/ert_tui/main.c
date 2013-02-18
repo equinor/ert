@@ -32,6 +32,7 @@
 #include <ert/enkf/enkf_sched.h>
 #include <enkf_tui_main.h>
 
+#define WORKFLOW_OPTION "-wf"
 
 void text_splash() {
   const int usleep_time = 1000;
@@ -108,6 +109,22 @@ static void init_debug( const char * argv0) {
 
 
 
+void parse_workflows(int argc , char ** argv , stringlist_type * workflows) {
+  bool workflow_on = false;
+  for (int iarg = 2; iarg < argc; iarg++) {
+    if (strcmp( argv[iarg] , WORKFLOW_OPTION) == 0)
+      workflow_on = true;
+    else {
+      if (workflow_on)
+        stringlist_append_copy( workflows , argv[iarg]);
+      else
+        fprintf(stderr,"**Warning - option:\'%s\' ignored\n",argv[iarg]);
+    }
+  }
+}
+
+
+
 
 int main (int argc , char ** argv) {
   text_splash();
@@ -120,13 +137,15 @@ int main (int argc , char ** argv) {
   
   enkf_main_install_SIGNALS();                     /* Signals common to both tui and gui. */
   signal(SIGINT , util_abort_signal);              /* Control C - tui only.               */
-  if (argc != 2) {
+  if (argc < 2) {
     enkf_usage();
     exit(1);
   } else {
     const char * site_config_file  = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * model_config_file = argv[1]; 
-  
+    stringlist_type * workflow_list = stringlist_alloc_new();
+
+    parse_workflows( argc , argv , workflow_list );
     {
       char * abs_config = util_alloc_realpath( model_config_file );
       printf("model config  : %s \n\n", abs_config);
@@ -134,10 +153,12 @@ int main (int argc , char ** argv) {
     enkf_welcome( model_config_file );
     {
       enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file , true , true);
+      enkf_main_run_workflows( enkf_main , workflow_list );
       enkf_tui_main_menu(enkf_main); 
       enkf_main_free(enkf_main);
     }
-    
+
+    stringlist_free( workflow_list );
     util_abort_free_version_info(); /* No fucking leaks ... */
   }
   exit(0);
