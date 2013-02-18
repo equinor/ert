@@ -257,12 +257,26 @@ stringlist_type * lsf_driver_alloc_cmd(lsf_driver_type * driver ,
                                        int           job_argc,
                                        const char ** job_argv) {
   
-  stringlist_type * argv = stringlist_alloc_new();
+  stringlist_type * argv  = stringlist_alloc_new();
   char *  num_cpu_string  = util_alloc_sprintf("%d" , num_cpu);
   char * quoted_resource_request = NULL;
   
-  if (driver->resource_request != NULL)
-    quoted_resource_request = util_alloc_sprintf("\"%s\"" , driver->resource_request);
+  /*
+    The resource request string contains spaces, and when passed
+    through the shell it must be protected with \"..\"; this applies
+    when submitting to a remote lsf server with ssh. However when
+    submitting to the local workstation using a bsub command the
+    command will be invoked with the util_fork_exec() command - and no
+    shell is involved. In this latter case we must avoid the \"...\"
+    quoting.
+  */
+
+  if  (driver->resource_request != NULL) { 
+    if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) 
+      quoted_resource_request =util_alloc_sprintf("\"%s\"" , driver->resource_request); 
+    else
+      quoted_resource_request = util_alloc_string_copy( driver->resource_request ); 
+  }
 
   if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL)
     stringlist_append_ref( argv , driver->bsub_cmd);
@@ -370,9 +384,9 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
 
-  printf("driver->remote:%s \n",driver->remote_lsf_server);
   if (driver->remote_lsf_server != NULL) {
     stringlist_type * remote_argv = lsf_driver_alloc_cmd( driver , lsf_stdout , job_name , submit_cmd , num_cpu , job_argc , job_argv);
+
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
       char ** argv = util_calloc( 2 , sizeof * argv );
       argv[0] = driver->remote_lsf_server;
@@ -382,19 +396,13 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
       free( argv );
     } else if (driver->submit_method == LSF_SUBMIT_LOCAL_SHELL) {
       char ** argv = stringlist_alloc_char_ref( remote_argv );
-      printf("Using local shell \n");
-      printf("cmd: %s \n",driver->bsub_cmd );
-      printf("arg: "); stringlist_fprintf( remote_argv , " " , stdout);
-      printf("\n");
-      printf("Calling fork_exec \n");
-      util_fork_exec(driver->bsub_cmd , stringlist_get_size( remote_argv) , (const char **) argv , true , NULL , NULL , NULL , tmp_file , NULL);
-      printf("Returned from fork_exec \n");
+      util_fork_exec(driver->bsub_cmd , stringlist_get_size( remote_argv) , (const char **) argv , true , NULL , NULL , NULL , tmp_file , tmp_file);
       free( argv );
     }
+    
     stringlist_free( remote_argv );
   }
   
-  printf("Parsing:%s \n",tmp_file);
   job_id = lsf_job_parse_bsub_stdout(driver , tmp_file);
   util_unlink_existing( tmp_file );
   free(tmp_file);
