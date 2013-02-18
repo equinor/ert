@@ -116,6 +116,7 @@ except:
 # 3: Loading the libjob_queue library, which might (depending on the
 #    value of INCLUDE_LSF used when building) depend on the LSF
 #    libraries we tried to load at the previous step.
+lib = None
 try:
     lib  = clib.ert_load("libjob_queue.so")
 except:
@@ -128,11 +129,11 @@ except:
             sys.stderr.write("** LSF_LIBDIR = %s\n" % LSF_LIBDIR)
         else:
             sys.stderr.write("** LSF_LIBDIR = <NOT SET>\n")
+
     # Seems the loading of libjob_queue requires that the LSF
     # libraries bee in LD_LIBRARY_PATH even though manual load with
     # explicit path has seemingly worked a couple of lines further
     # up. If the load all in all has failed we let the lib pointer be None;
     # that will blow up later when/if it is actually used.
-    lib = None
-
-
+    raise ImportError("Failed to load libjob_queue library - LSF setup?")
+    

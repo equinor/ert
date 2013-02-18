@@ -17,8 +17,7 @@
 Module doc
 """
 import libjob_queue
-if libjob_queue.lib:
-    from queue  import JobQueue
-    from driver import Driver
-    from job    import Job
+from queue  import JobQueue
+from driver import Driver
+from job    import Job
 
