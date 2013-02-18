@@ -15,6 +15,19 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
+
+/*
+  This file implements a very small wrapper structure around the
+  lsb_xxxx() functions from the libbat.so shared library which are
+  used to submit, monitor and control simulations with LSF. 
+
+  Loading and initializing the lsf libraries is quite painful, in an
+  attempt to reduce unecessary dependencies the lsf libraries are
+  loaded with dlopen() in the lsb_alloc() function below. This means
+  that the libjob_queue.so shared library can be loaded without access
+  to the lsf libraries.
+*/
+
 #include <stdlib.h>
 #include <dlfcn.h>
 
@@ -73,6 +86,22 @@ void * lsb_dlopen( lsb_type * lsb , const char * lib_name) {
   return lib_handle;
 }
 
+/*
+  The following environment variables must be set (at some stage) before
+  LSF will work properly:
+
+    LSF_BINDIR      $LSF_HOME/bin
+    LSF_LIBDIR      $LSF_HOME/lib
+    XLSF_UIDDIR     $LSF_HOME/lib/uid
+    LSF_SERVERDIR   $LSF_HOME/etc
+    LSF_ENVDIR      /prog/LSF/conf
+
+  The runtime linker must locate the libnsl, libbat and liblsf
+  libraries using whatever method it usually does. If the loading
+  fails the lsb object will get the ->ready flag set to false, and the
+  lsf_driver will discard the lsb instance (and hopefully use shell
+  commands to perform job management).
+*/
 
 lsb_type * lsb_alloc() {
   lsb_type * lsb = util_malloc( sizeof * lsb );
@@ -92,7 +121,7 @@ lsb_type * lsb_alloc() {
     lsb->lsb_init  = (lsb_init_ftype *) lsb_dlsym( lsb , "lsb_init");
     lsb->sys_msg   = (lsb_sysmsg_ftype *) lsb_dlsym( lsb , "lsb_sysmsg");
   } 
-  
+
   return lsb;
 }
 
