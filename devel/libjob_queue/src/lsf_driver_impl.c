@@ -22,15 +22,15 @@
 #include <pthread.h>
 #include <dlfcn.h>
 
+#include <lsf/lsbatch.h>
+
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
 
-
-#include <lsf/lsbatch.h>
-
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/lsf_driver.h>
+#include <ert/job_queue/lsb.h>
 
 
 
@@ -103,6 +103,7 @@
 #define DEFAULT_BKILL_CMD  "bkill"
 
 
+
 struct lsf_job_struct {
   UTIL_TYPE_ID_DECLARATION;
   long int    lsf_jobnr;
@@ -126,6 +127,8 @@ struct lsf_driver_struct {
   /* Fields used by the lsf library functions */
   struct submit      lsf_request;
   struct submitReply lsf_reply; 
+  lsb_type         * lsb;
+
 
   /*-----------------------------------------------------------------*/
   /* Fields used by the shell based functions */
@@ -294,12 +297,12 @@ static int lsf_driver_submit_internal_job( lsf_driver_type * driver ,
   driver->lsf_request.loginShell    = driver->login_shell;
   driver->lsf_request.queue         = driver->queue_name;
   driver->lsf_request.jobName       = (char *) job_name;
-  driver->lsf_request.outFile       = lsf_stdout;
+  driver->lsf_request.outFile       = (char *) lsf_stdout;
   driver->lsf_request.command       = command;
   driver->lsf_request.numProcessors = num_cpu;
 
   {
-    int lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
+    int lsf_jobnr = lsb_submitjob( driver->lsb , &driver->lsf_request , &driver->lsf_reply );
     free( command );  /* I trust the lsf layer is finished with the command? */
     return lsf_jobnr;
   }
@@ -409,8 +412,8 @@ static int lsf_driver_get_job_status_libary(void * __driver , void * __job) {
     lsf_job_type    * job    = lsf_job_safe_cast( __job );
     {
       int status;
-      struct jobInfoEnt *job_info;
-      if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) {
+      lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
+      if (lsb_openjob( driver->lsb , job->lsf_jobnr) != 1) {
         /* 
            Failed to get information about the job - we boldly assume
            the following situation has occured:
@@ -424,13 +427,13 @@ static int lsf_driver_get_job_status_libary(void * __driver , void * __job) {
         fprintf(stderr,"Warning: failed to get status information for job:%ld - assuming it is finished. \n", job->lsf_jobnr);
         status = JOB_QUEUE_DONE;
       } else {
-        job_info = lsb_readjobinfo( NULL );
-        lsb_closejobinfo();
+        struct jobInfoEnt *job_info = lsb_readjob( driver->lsb );
         if (job->num_exec_host == 0) {
           job->num_exec_host = job_info->numExHosts;
           job->exec_host     = util_alloc_stringlist_copy( (const char **) job_info->exHosts , job->num_exec_host);
         }
         status = job_info->status;
+        lsb_closejob(driver->lsb);
       }
       return status;
     }
@@ -554,7 +557,7 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
   {
     if (driver->submit_method == LSF_SUBMIT_INTERNAL)
-      lsb_forcekilljob(job->lsf_jobnr);
+      lsb_killjob( driver->lsb , job->lsf_jobnr);
     else {
       if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
         char ** argv = util_calloc( 2, sizeof * argv );
@@ -609,7 +612,7 @@ void * lsf_driver_submit_job(void * __driver ,
         NULL return values.
       */
       if (driver->submit_method == LSF_SUBMIT_INTERNAL) 
-        fprintf(stderr,"%s: ** Warning: lsb_submit() failed: %s/%d \n",__func__ , lsb_sysmsg() , lsberrno);
+        fprintf(stderr,"%s: ** Warning: lsb_submit() failed: %s \n",__func__ , lsb_sys_msg( driver->lsb ));
       lsf_job_free(job);
       return NULL;
     }
@@ -631,6 +634,9 @@ void lsf_driver_free(lsf_driver_type * driver ) {
   hash_free(driver->status_map);
   hash_free(driver->bjobs_cache);
   hash_free(driver->my_jobs);
+  
+  if (driver->lsb != NULL)
+    lsb_free( driver->lsb );
   
   free(driver);
   driver = NULL;
@@ -802,22 +808,14 @@ void * lsf_driver_alloc( ) {
   }
   lsf_driver->lsf_request.options2 = 0;
   
-
-  /*
-    The environment variable LSF_ENVDIR must be set to point the
-    directory containing LSF configuration information, the whole
-    thing will crash and burn if this is not properly set.
-  */
-  if ( lsb_init(NULL) != 0 ) {
-    fprintf(stderr,"LSF_ENVDIR: ");
-    if (getenv("LSF_ENVDIR") != NULL)
-      fprintf(stderr,"%s\n", getenv("LSF_ENVDIR"));
-    else
-      fprintf(stderr, "not set\n");
-    
-    util_abort("%s failed to initialize LSF environment : %s/%d  \n",__func__ , lsb_sysmsg() , lsberrno);
+  lsf_driver->lsb = lsb_alloc();
+  if (!lsb_ready(lsf_driver->lsb)) {
+    lsb_free( lsf_driver->lsb );
+    lsf_driver->lsb = NULL;
   }
   
+  lsb_initialize(lsf_driver->lsb);
+
   /*****************************************************************/
   /* Shell initialization */
   lsf_driver->last_bjobs_update   = time( NULL );

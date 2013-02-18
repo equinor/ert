@@ -28,8 +28,7 @@
 
 
 void test_submit(lsf_driver_type * driver , const char * server , const char * bsub_cmd , const char * bjobs_cmd , const char * bkill_cmd , const char * cmd) {
-  if (server != NULL)
-    lsf_driver_set_option(driver , LSF_SERVER , server );
+  lsf_driver_set_option(driver , LSF_SERVER , server );
   
   if (bsub_cmd != NULL)
     lsf_driver_set_option(driver , LSF_BSUB_CMD , server );
