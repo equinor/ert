@@ -317,6 +317,7 @@ static int lsf_driver_submit_shell_job(lsf_driver_type * driver ,
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   
+  printf("remote_lsf_server: %s \n",driver->remote_lsf_server);
   if (driver->remote_lsf_server != NULL) {
     stringlist_type * remote_argv = lsf_driver_alloc_cmd( driver , lsf_stdout , job_name , submit_cmd , num_cpu , job_argc , job_argv);
     if (driver->submit_method == LSF_SUBMIT_REMOTE_SHELL) {
