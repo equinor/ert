@@ -885,12 +885,14 @@ static void lsf_driver_lib_init( lsf_driver_type * lsf_driver ) {
   lsf_driver->lsf_request.options2 = 0;
   
   lsf_driver->lsb = lsb_alloc();
-  if (!lsb_ready(lsf_driver->lsb)) {
+  if (lsb_ready(lsf_driver->lsb)) 
+    lsb_initialize(lsf_driver->lsb);
+  else {
     lsb_free( lsf_driver->lsb );
     lsf_driver->lsb = NULL;
   }
   
-  lsb_initialize(lsf_driver->lsb);
+
 #endif
 }
 
