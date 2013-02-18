@@ -112,7 +112,9 @@ static void init_debug( const char * argv0) {
 void parse_workflows(int argc , char ** argv , stringlist_type * workflows) {
   bool workflow_on = false;
   for (int iarg = 2; iarg < argc; iarg++) {
-    if (strcmp( argv[iarg] , WORKFLOW_OPTION) == 0)
+    stringlist_append_copy( workflows , argv[iarg]);
+    
+    /*if (strcmp( argv[iarg] , WORKFLOW_OPTION) == 0)
       workflow_on = true;
     else {
       if (workflow_on)
@@ -120,6 +122,7 @@ void parse_workflows(int argc , char ** argv , stringlist_type * workflows) {
       else
         fprintf(stderr,"**Warning - option:\'%s\' ignored\n",argv[iarg]);
     }
+    */
   }
 }
 
@@ -144,7 +147,7 @@ int main (int argc , char ** argv) {
     const char * site_config_file  = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * model_config_file = argv[1]; 
     stringlist_type * workflow_list = stringlist_alloc_new();
-
+    
     parse_workflows( argc , argv , workflow_list );
     {
       char * abs_config = util_alloc_realpath( model_config_file );
