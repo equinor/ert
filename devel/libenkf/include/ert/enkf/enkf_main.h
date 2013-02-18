@@ -237,6 +237,8 @@ extern "C" {
   bool                   enkf_main_get_verbose( const enkf_main_type * enkf_main );
 
   ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main );
+  void                     enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type * workflows);
+  bool                     enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow);
   
   enkf_main_type      * enkf_main_alloc_empty( );
 

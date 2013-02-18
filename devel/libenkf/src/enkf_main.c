@@ -2696,9 +2696,7 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
     rng_free( enkf_main->rng );
     enkf_main->rng = NULL;
   }
-  printf("Creating rng \n");
   enkf_main->rng = rng_config_alloc_rng( enkf_main->rng_config );
-  printf("RNG OK \n");
 }
 
 
@@ -3482,3 +3480,21 @@ void enkf_main_fprintf_config( const enkf_main_type * enkf_main ) {
 ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main ) {
   return enkf_main->workflow_list;
 }
+
+
+bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow) {
+  ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
+  if (ert_workflow_list_has_workflow( workflow_list , workflow)) 
+    return ert_workflow_list_run_workflow( workflow_list , workflow , enkf_main );
+  else
+    return false;
+}
+
+
+void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type * workflows) {
+  int iw;
+  for (iw = 0; iw < stringlist_get_size( workflows ); iw++) 
+    enkf_main_run_workflow( enkf_main , stringlist_iget( workflows , iw ));
+}
+
+

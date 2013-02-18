@@ -752,6 +752,8 @@ static void * enkf_tui_plot_ensemble_mt( void * void_arg ) {
   return NULL;
 }
     
+
+
 void enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 , int iens2 , int step1 , int step2 , bool prediction_mode) {
   /*
     This code is prepared for multithreaded creation of plots;

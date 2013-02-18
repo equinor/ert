@@ -40,3 +40,12 @@ void enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) {
   enkf_main_run_exp( enkf_main , iactive , 0 , 0 , ANALYZED );
 }
 
+
+
+void enkf_main_create_reports_JOB(void * self , const stringlist_type * args ) {
+  enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
+  ert_report_list_type * report_list = enkf_main_get_report_list( enkf_main );
+  
+  ert_report_list_create( report_list , enkf_main_get_current_fs( enkf_main ) , true );
+}
+
