@@ -44,13 +44,6 @@ def createEnsemblePage(configPanel, parent):
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("ensembleUpdated()"))
 
     def initialize(ert):
-        ert.prototype("long ensemble_config_get_node(long, char*)")
-        ert.prototype("long ensemble_config_alloc_keylist(long)")
-        ert.prototype("long ensemble_config_add_summary(long, char*)")
-        ert.prototype("long ensemble_config_add_gen_kw(long, char*)")
-        ert.prototype("long ensemble_config_add_gen_data(long, char*)")
-        ert.prototype("long ensemble_config_add_field(long, char*, long)")
-
         ert.prototype("void enkf_main_del_node(long, char*)")
         ert.prototype("long ecl_config_get_grid(long)")
 
