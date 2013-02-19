@@ -52,6 +52,8 @@ if (LATEX_PATH)
 else()
    set( WITH_LATEX OFF )
 endif()
+#-----------------------------------------------------------------f
+find_program(PING_PATH NAMES ping)
 #-----------------------------------------------------------------
 find_path( EXECINFO_HEADER execinfo.h /usr/include )
 if (EXECINFO_HEADER)
