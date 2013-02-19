@@ -4,7 +4,7 @@
 
 Name:           ert.ecl
 Version:        1.0
-Release:        0
+Release:        1
 Summary:        ERT - Ensemble based Reservoir Tool - ECL library
 License:        GPL-3+
 Group:          Development/Libraries/C and C++
@@ -38,6 +38,7 @@ Group:          Development/Libraries/C and C++
 Requires:       %{name} = %{version}
 Requires:       lapack-devel
 Requires:       libert.ecl1 = %{version}
+BuildArch:      noarch
 
 %description devel
 This package contains the development and header files for ert.ecl
@@ -72,3 +73,7 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %{_libdir}/*.so
 %{_includedir}/*
+
+%changelog
+* Tue Feb 19 2013 Arne Morten Kvarving <arne.morten.kvarving@sintef.no> 1.0-1
+- Mark -devel package as architecture independent
