@@ -328,9 +328,12 @@ void enkf_tui_run_manual_load__( void * arg ) {
 
 void enkf_tui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
+  model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+  path_fmt_type     * runpath_fmt  = model_config_get_runpath_fmt( model_config );
   menu_type       * menu;
+
   {
-    char            * title      = util_alloc_sprintf("Run menu [case:%s]" , enkf_main_get_current_fs( enkf_main ));
+    char   * title = util_alloc_sprintf("Run menu [case:%s  Runpath:%s]" , enkf_main_get_current_fs( enkf_main ) , path_fmt_get_fmt ( runpath_fmt ));
     menu = menu_alloc(title , "Back" , "bB");
     free(title);
   }
