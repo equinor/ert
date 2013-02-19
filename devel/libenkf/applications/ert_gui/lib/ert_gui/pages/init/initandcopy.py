@@ -217,7 +217,6 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def initialize(self, ert):
-        ert.prototype("long ensemble_config_alloc_keylist_from_var_type(long, int)")
         ert.prototype("int enkf_main_initialize_from_scratch(long, long, int, int)")
         ert.prototype("int enkf_main_get_ensemble_size(long)")
         ert.prototype("long enkf_main_get_fs(long)")

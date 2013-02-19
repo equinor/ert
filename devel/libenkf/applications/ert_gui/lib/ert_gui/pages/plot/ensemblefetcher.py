@@ -45,8 +45,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.connect(self.data_configuration, SIGNAL('configurationChanged()'), emitter)
 
     def initialize(self, ert):
-        ert.prototype("long ensemble_config_get_node(long, char*)")
-        ert.prototype("bool ensemble_config_has_key(long, char*)")
+
 
         ert.prototype("long enkf_main_get_fs(long)")
         ert.prototype("int enkf_main_get_ensemble_size(long)")
