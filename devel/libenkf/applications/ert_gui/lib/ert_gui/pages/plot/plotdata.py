@@ -231,8 +231,6 @@ class PlotContextDataFetcher(ContentModel):
         ContentModel.__init__(self)
 
     def initialize(self, ert):
-        ert.prototype("long ensemble_config_alloc_keylist(long)")
-        ert.prototype("long ensemble_config_get_node(long, char*)")
 
         ert.prototype("long enkf_config_node_get_impl_type(long)")
         ert.prototype("long enkf_config_node_get_ref(long)")

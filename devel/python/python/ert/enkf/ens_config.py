@@ -20,8 +20,6 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 import  libenkf
-import  ert_local
-
 class EnsConfig(CClass):
     
     def __init__(self , c_ptr = None):
@@ -37,9 +35,7 @@ class EnsConfig(CClass):
     def has_key(self , key):
         return cfunc.has_key( self ,key )
 
-    def initialize(self, ert):
-        ert.prototype("long ensemble_config_get_node(long, char*)")
-        ert.prototype("bool ensemble_config_has_key(long, char*)")
+
 
 ##################################################################
 
@@ -52,5 +48,11 @@ cwrapper.registerType( "ens_config" , EnsConfig )
 cfunc = CWrapperNameSpace("ens_config")
 
 
-cfunc.free       = cwrapper.prototype("void ensemble_config_free( ens_config )")
-cfunc.has_key    = cwrapper.prototype("bool ensemble_config_has_key( ens_config , char* )")
+cfunc.free          = cwrapper.prototype("void ensemble_config_free( ens_config )")
+cfunc.has_key       = cwrapper.prototype("bool ensemble_config_has_key( ens_config , char* )")
+cfunc.get_node      = cwrapper.prototype("c_void_p ensemble_config_get_node( ens_config , char*)")
+cfunc.alloc_keylist = cwrapper.prototype("c_void_p ensemble_config_alloc_keylist( ens_config )")
+cfunc.add_summary   = cwrapper.prototype("c_void_p ensemble_config_add_summary( ens_config, char*)")
+cfunc.add_gen_kw    = cwrapper.prototype("c_void_p ensemble_config_add_gen_kw( ens_config, char*)")
+cfunc.add_gen_data  = cwrapper.prototype("c_void_p ensemble_config_add_gen_data( ens_config, char*)")
+cfunc.add_field     = cwrapper.prototype("c_void_p ensemble_config_add_field( ens_config, char*, ecl_grid)")
