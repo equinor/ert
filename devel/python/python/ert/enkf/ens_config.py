@@ -56,3 +56,4 @@ cfunc.add_summary   = cwrapper.prototype("c_void_p ensemble_config_add_summary( 
 cfunc.add_gen_kw    = cwrapper.prototype("c_void_p ensemble_config_add_gen_kw( ens_config, char*)")
 cfunc.add_gen_data  = cwrapper.prototype("c_void_p ensemble_config_add_gen_data( ens_config, char*)")
 cfunc.add_field     = cwrapper.prototype("c_void_p ensemble_config_add_field( ens_config, char*, ecl_grid)")
+cfunc.alloc_keylist_from_var_type = cwrapper.prototype("c_void_p ensemble_config_alloc_keylist_from_var_type(ens_config, int)")
