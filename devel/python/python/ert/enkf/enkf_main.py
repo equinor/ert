@@ -87,3 +87,4 @@ cfunc.ens_size        = cwrapper.prototype("int      enkf_main_get_ensemble_size
 cfunc.get_ens_config  = cwrapper.prototype("c_void_p enkf_main_get_ensemble_config( enkf_main )")
 cfunc.set_verbose     = cwrapper.prototype("void     enkf_main_set_verbose( enkf_main , bool )")
 cfunc.update          = cwrapper.prototype("void     enkf_main_UPDATE(enkf_main , int_vector)")
+cfunc.get_model_config = cwrapper.prototype("c_void_p enkf_main_get_model_config( enkf_main )") 

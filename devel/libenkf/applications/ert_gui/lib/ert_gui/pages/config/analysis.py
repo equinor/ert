@@ -24,6 +24,7 @@ import ert_gui.widgets.tablewidgets
 from ert_gui.widgets.pathchooser import PathChooser
 from ert_gui.widgets.combochoice import ComboChoice
 from PyQt4 import QtGui
+import ert.enkf
 
 def createAnalysisPage(configPanel, parent):
     configPanel.startPage("Analysis")
@@ -42,7 +43,7 @@ def createAnalysisPage(configPanel, parent):
 
     r = configPanel.addRow(PathChooser(parent, "ENKF schedule file", "config/analysis/enkf_sched_file"))
     r.initialize = lambda ert : [ert.prototype("char* model_config_get_enkf_sched_file(long)"),
-                                 ert.prototype("long enkf_main_get_model_config(long)"),
+                                 ert.enkf.get_model_config( ert.enkf.enkf_main ),
                                  ert.prototype("void model_config_set_enkf_sched_file(long, char*)")]
     r.getter = lambda ert : ert.enkf.model_config_get_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main))
     r.setter = lambda ert, value : ert.enkf.model_config_set_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main), str(value))
