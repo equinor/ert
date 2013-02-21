@@ -109,6 +109,7 @@ extern "C" {
 
   void                          enkf_main_run_exp(enkf_main_type * enkf_main            ,
                                                   const bool_vector_type * iactive      , 
+                                                  bool             simulate , 
                                                   int              init_step_parameters ,
                                                   int              start_report         ,
                                                   state_enum       start_state);
