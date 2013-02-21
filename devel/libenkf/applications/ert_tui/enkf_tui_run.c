@@ -226,9 +226,7 @@ void enkf_tui_run_exp(void * enkf_main) {
 void enkf_tui_run_create_runpath__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive = bool_vector_alloc(0,true);
-  bool_vector_iset( iactive , ens_size - 1 , true );
-
+  bool_vector_type * iactive = bool_vector_alloc(0,false);
 
   state_enum init_state    = ANALYZED; 
   int start_report         = 0;
@@ -238,9 +236,9 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
     char * select_string;
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
-    util_sscanf_active_range( select_string , ens_size - 1 , bool_vector_get_ptr( iactive) );
+    enkf_tui_util_sscanf_active_list( iactive , select_string , ens_size );
+    util_safe_free( select_string );
     free( prompt );
-    free( select_string );
   }
 
   enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
