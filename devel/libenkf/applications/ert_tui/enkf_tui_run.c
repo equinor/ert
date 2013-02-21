@@ -27,6 +27,7 @@
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 #include <ert/util/bool_vector.h>
+#include <ert/util/string_util.h>
 
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_fs.h>
@@ -176,6 +177,7 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
         break;
     }
     int_vector_free( step_list );
+    bool_vector_free( iactive );
   }
   
 }
@@ -195,9 +197,8 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
 
 
 void enkf_tui_run_exp(void * enkf_main) {
-  const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive = bool_vector_alloc(0,true);
-  bool_vector_iset( iactive , ens_size - 1 , true );
+  const int ens_size          = enkf_main_get_ensemble_size( enkf_main );
+  bool_vector_type * iactive  = bool_vector_alloc(0,false);
 
   state_enum init_state    = ANALYZED; 
   int start_report         = 0;
@@ -205,13 +206,19 @@ void enkf_tui_run_exp(void * enkf_main) {
   char * select_string;
   
   {
+
     char * prompt = util_alloc_sprintf("Which realizations to simulate (Ex: 1,3-5) <Enter for all> [M to return to menu] : " , ens_size);
+    
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
-    if (select_string != NULL) {
-      util_sscanf_active_range( select_string , ens_size - 1 , bool_vector_get_ptr( iactive) );
+    if (select_string == NULL) {
+      bool_vector_set_default( iactive , true );
+      bool_vector_iset( iactive , ens_size - 1 , true );
+    } else {
+      string_util_init_active_mask( select_string , iactive );
       free( select_string );
     } 
+    
     free( prompt );
   }
   enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
@@ -259,9 +266,9 @@ void enkf_tui_run_manual_load__( void * arg ) {
   const int last_report                        = -1;
   const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
   int step1,step2;
-  bool * iactive         = util_calloc(ens_size , sizeof * iactive );
+  bool_vector_type * iactive = bool_vector_alloc( 0 , false );
   run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
-
+  
   enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
   
   step1 = 0;
@@ -271,9 +278,16 @@ void enkf_tui_run_manual_load__( void * arg ) {
     char * select_string;
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
-    util_sscanf_active_range( select_string , ens_size - 1 , iactive);
+    
+    if (select_string == NULL) {
+      bool_vector_set_default( iactive , true );
+      bool_vector_iset( iactive , ens_size - 1 , true );
+    } else {
+      string_util_init_active_mask( select_string , iactive );
+      free( select_string );
+    } 
+
     free( prompt );
-    free( select_string );
   }
 
 
@@ -288,7 +302,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
       arg_pack_type * arg_pack = arg_pack_alloc();
       arg_list[iens] = arg_pack;
       
-      if (iactive[iens]) {
+      if (bool_vector_iget(iactive , iens)) {
         enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
 
         arg_pack_append_ptr( arg_pack , enkf_state);                                        /* 0: */
@@ -307,7 +321,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
     printf("\n");
     
     for (iens = 0; iens < ens_size; iens++) {
-      if (iactive[iens]) {
+      if (bool_vector_iget(iactive , iens)) {
         stringlist_type * msg_list = arg_pack_iget_ptr( arg_list[iens] , 6 );
         if (stringlist_get_size( msg_list ))
           enkf_tui_display_load_msg( iens , msg_list );
@@ -319,7 +333,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
       arg_pack_free( arg_list[iens]);
     free( arg_list );      
   }
-  free( iactive );
+  bool_vector_free( iactive );
 }
 
 
