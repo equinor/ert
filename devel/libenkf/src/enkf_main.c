@@ -1297,7 +1297,6 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
     else
       log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> ??? ",step1);
 
-    bool_vector_safe_cast( iactive );
     job_size = bool_vector_count_equal( iactive , true );
     {
       pthread_t        queue_thread;
