@@ -114,6 +114,7 @@ void enkf_tui_run_smoother(void * arg) {
 }
 
 
+
 void enkf_tui_run_iterated_ES(void * enkf_main) {
   const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   const int last_report = enkf_main_get_history_length( enkf_main );
@@ -154,7 +155,7 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
         }
       }
       
-      enkf_main_run_exp(enkf_main , iactive , step1 , step1 , FORECAST);
+      enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST);
       {
         char * target_fs_name    = analysis_iter_config_iget_case( iter_config , iter );
         enkf_fs_type * target_fs = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
