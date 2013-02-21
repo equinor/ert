@@ -2052,29 +2052,25 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
   int i;
   for (i = 0; i < ens_size; i++)
     int_vector_iset( enkf_main->keep_runpath , i , DEFAULT_KEEP);
+  
 
   {
-    int * active_list; 
-    int   num_items;
+    int_vector_type * active_list = string_util_alloc_active_list(keep_runpath_string);
 
-    active_list = util_sscanf_alloc_active_list(keep_runpath_string , &num_items);
-    for (i = 0; i < num_items; i++)
-      int_vector_iset( enkf_main->keep_runpath , i , EXPLICIT_KEEP);
+    for (i = 0; i < int_vector_size( active_list ); i++)
+      int_vector_iset( enkf_main->keep_runpath , int_vector_iget( active_list , i ) , EXPLICIT_KEEP);
     
-    
-    free( active_list );
+    int_vector_free( active_list );
   }
   
   
   {
-    int * active_list; 
-    int   num_items;
+    int_vector_type * active_list = string_util_alloc_active_list(delete_runpath_string);
 
-    active_list = util_sscanf_alloc_active_list(delete_runpath_string , &num_items);
-    for (i = 0; i < num_items; i++) 
-      int_vector_iset( enkf_main->keep_runpath , i , EXPLICIT_DELETE);
+    for (i = 0; i < int_vector_size( active_list ); i++)
+      int_vector_iset( enkf_main->keep_runpath , int_vector_iget( active_list , i ) , EXPLICIT_DELETE);
     
-    free( active_list );
+    int_vector_free( active_list );
   }
 }
 
