@@ -47,7 +47,7 @@ This package contains the development and header files for ert.ecl
 
 %build
 cd devel
-cmake28 -DSHARED_LIB=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{_prefix}
+cmake28 -DSHARED_LIB=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{_prefix} -DBUILD_ECL_SUMMARY=1
 make
 
 %install
@@ -67,6 +67,7 @@ rm -rf %{buildroot}
 %files -n libert.ecl1
 %defattr(-,root,root,-)
 %{_libdir}/*.so.*
+%{_bindir}/*
 
 %files devel
 %defattr(-,root,root,-)
