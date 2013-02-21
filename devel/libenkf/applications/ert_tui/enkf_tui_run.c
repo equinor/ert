@@ -203,12 +203,12 @@ void enkf_tui_run_exp(void * enkf_main) {
   state_enum init_state    = ANALYZED; 
   int start_report         = 0;
   int init_step_parameters = 0;
-  char * select_string;
   
   {
 
     char * prompt = util_alloc_sprintf("Which realizations to simulate (Ex: 1,3-5) <Enter for all> [M to return to menu] : " , ens_size);
-    
+    char * select_string;
+      
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     enkf_tui_util_sscanf_active_list( iactive , select_string , ens_size);
@@ -216,7 +216,8 @@ void enkf_tui_run_exp(void * enkf_main) {
     util_safe_free( select_string );
     free( prompt );
   }
-  enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
+  if (bool_vector_count_equal(iactive , true))
+    enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
   
   bool_vector_free(iactive);
 }
@@ -280,8 +281,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
 
 
 
-
-  {
+  if (bool_vector_count_equal( iactive , true )) {
     int iens;
     arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
     thread_pool_type * tp = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
