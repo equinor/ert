@@ -211,14 +211,9 @@ void enkf_tui_run_exp(void * enkf_main) {
     
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
-    if (select_string == NULL) {
-      bool_vector_set_default( iactive , true );
-      bool_vector_iset( iactive , ens_size - 1 , true );
-    } else {
-      string_util_init_active_mask( select_string , iactive );
-      free( select_string );
-    } 
-    
+    enkf_tui_util_sscanf_active_list( iactive , select_string , ens_size);
+
+    util_safe_free( select_string );
     free( prompt );
   }
   enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
@@ -278,15 +273,10 @@ void enkf_tui_run_manual_load__( void * arg ) {
     char * select_string;
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
-    
-    if (select_string == NULL) {
-      bool_vector_set_default( iactive , true );
-      bool_vector_iset( iactive , ens_size - 1 , true );
-    } else {
-      string_util_init_active_mask( select_string , iactive );
-      free( select_string );
-    } 
 
+    enkf_tui_util_sscanf_active_list( iactive , select_string , ens_size );
+    util_safe_free( select_string );
+    
     free( prompt );
   }
 
