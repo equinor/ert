@@ -219,7 +219,7 @@ void enkf_tui_run_exp(void * enkf_main) {
     } 
     free( prompt );
   }
-  enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
+  enkf_main_run_exp(enkf_main , iactive , true , init_step_parameters , start_report , init_state);
   
   bool_vector_free(iactive);
 }
@@ -245,8 +245,7 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
     free( prompt );
     free( select_string );
   }
-
-  enkf_main_run_exp(enkf_main , iactive , init_step_parameters , start_report , init_state);
+  enkf_main_run_exp(enkf_main , iactive , false , init_step_parameters , start_report , init_state);
   bool_vector_free(iactive);
 }
 
@@ -370,7 +369,7 @@ void enkf_tui_run_menu(void * arg) {
     menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__       , enkf_main , NULL);
     menu_item_type * ES_item           = menu_add_item(menu , "Integrated smoother update"             , "iI" , enkf_tui_run_smoother      , enkf_main , NULL);
     menu_item_type * it_ES_item        = menu_add_item(menu , "Iterated smoother [RML-EnKF]"           , "tT" , enkf_tui_run_iterated_ES   , enkf_main , NULL);
-    
+              
     if (!ecl_config_has_schedule( ecl_config )) {
       menu_item_disable( enkf_item );
       menu_item_disable( restart_enkf_item );
@@ -383,7 +382,7 @@ void enkf_tui_run_menu(void * arg) {
   }
   menu_add_separator(menu);
   menu_add_item(menu , "Create runpath directories - NO simulation" , "cC" , enkf_tui_run_create_runpath__ , enkf_main , NULL );
-  menu_add_item(menu , "Load results manually"                  , "lL"  , enkf_tui_run_manual_load__ , enkf_main , NULL);
+  menu_add_item(menu , "Load results manually"                               , "lL"  , enkf_tui_run_manual_load__ , enkf_main , NULL);
   menu_add_separator(menu);
   {
     menu_item_type * analysis_item = menu_add_item(menu , "Analysis menu"             , "aA" , enkf_tui_analysis_menu , enkf_main , NULL);
