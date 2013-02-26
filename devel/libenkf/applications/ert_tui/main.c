@@ -137,6 +137,12 @@ int main (int argc , char ** argv) {
   printf("site config   : %s \n\n",SITE_CONFIG_FILE);
   enkf_main_install_SIGNALS();                     /* Signals common to both tui and gui. */
   signal(SIGINT , util_abort_signal);              /* Control C - tui only.               */
+  {
+#include <ert/util/vector.h>
+    vector_type * v = vector_alloc_new();
+    vector_iget(v , 100);
+  }
+
   if (argc != 2) {
     enkf_usage();
     exit(1);
