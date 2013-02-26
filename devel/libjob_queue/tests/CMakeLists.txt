@@ -48,7 +48,6 @@ if (HAVE_LSF_LIBRARY)
 endif()
 
 
-add_test( loadOK ${EXECUTABLE_OUTPUT_PATH}/loadOK ${CMAKE_CURRENT_SOURCE_DIR}/data/internalOK)
 add_test( job_lsf_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_test )
 if (LSF_SERVERS)
    add_test( job_lsf_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_program ${LSF_SERVERS})
