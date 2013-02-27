@@ -776,6 +776,8 @@ static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char 
       
       if (strcmp(tmp_server , LOCAL_LSF_SERVER) == 0)
         driver->submit_method = LSF_SUBMIT_LOCAL_SHELL;
+      else if (strcmp(tmp_server , NULL_LSF_SERVER) == 0)  // We trap the special string 'NULL' and call again with a true NULL pointer.
+        lsf_driver_set_remote_server( driver , NULL);
       else
         driver->submit_method = LSF_SUBMIT_REMOTE_SHELL;
       
