@@ -217,14 +217,6 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def initialize(self, ert):
-        ert.prototype("int enkf_main_initialize_from_scratch(long, long, int, int)")
-        ert.prototype("int enkf_main_get_ensemble_size(long)")
-        ert.prototype("long enkf_main_get_fs(long)")
-#        ert.prototype("char* enkf_fs_get_read_dir(long)")
-#        ert.prototype("long enkf_fs_alloc_dirlist(long)")
-        ert.prototype("int enkf_main_get_history_length(long)")
-        ert.prototype("void enkf_main_initialize_from_existing__(long, char*, int, int, long, char*, long)")
-        ert.prototype("void enkf_main_copy_ensemble(long, char*, int, int, char*, int, int, long, char*, long)")
         self.initialized = True
 
 

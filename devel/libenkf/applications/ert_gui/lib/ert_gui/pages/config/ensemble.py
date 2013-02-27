@@ -30,8 +30,6 @@ def createEnsemblePage(configPanel, parent):
     configPanel.startPage("Ensemble")
 
     r = configPanel.addRow(IntegerSpinner(parent, "Number of realizations", "config/ensemble/num_realizations", 1, 10000))
-    r.initialize = lambda ert : [ert.prototype("int enkf_main_get_ensemble_size(long)"),
-                                 ert.prototype("void enkf_main_resize_ensemble(int)")]
 
     r.getter = lambda ert : ert.enkf.enkf_main_get_ensemble_size(ert.main)
     r.setter = lambda ert, value : ert.enkf.enkf_main_resize_ensemble(ert.main, value)
@@ -42,44 +40,6 @@ def createEnsemblePage(configPanel, parent):
     configPanel.startGroup("Parameters")
     r = configPanel.addRow(ParameterPanel(parent, "", "")) # no help file necessary
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("ensembleUpdated()"))
-
-    def initialize(ert):
-        ert.prototype("void enkf_main_del_node(long, char*)")
-        ert.prototype("long ecl_config_get_grid(long)")
-
-        ert.prototype("long enkf_config_node_get_impl_type(long)")
-        ert.prototype("long enkf_config_node_get_ref(long)")
-        ert.prototype("bool enkf_config_node_is_valid(long)")
-        ert.prototype("char* enkf_config_node_get_min_std_file(long)")
-        ert.prototype("char* enkf_config_node_get_enkf_outfile(long)")
-        ert.prototype("char* enkf_config_node_get_enkf_infile(long)")
-        ert.prototype("void enkf_config_node_update_gen_kw(long, char*, char*, char*, char*, char*)")
-        ert.prototype("void enkf_config_node_update_state_field(long, int, double, double)")
-        ert.prototype("void enkf_config_node_update_parameter_field(long, char*, char*, char*, int, double, double, char*, char*)")
-        ert.prototype("void enkf_config_node_update_general_field(long, char*, char*, char*, char*, int, double, double, char*, char*, char*)")
-        ert.prototype("void enkf_config_node_update_gen_data(long, int, int, char*, char*, char*, char*, char*, char*)")
-
-        ert.prototype("char* gen_kw_config_get_template_file(long)")
-        ert.prototype("char* gen_kw_config_get_init_file_fmt(long)")
-        ert.prototype("char* gen_kw_config_get_parameter_file(long)")
-
-        ert.prototype("long gen_data_config_get_output_format(long)")
-        ert.prototype("long gen_data_config_get_input_format(long)")
-        ert.prototype("char* gen_data_config_get_template_file(long)")
-        ert.prototype("char* gen_data_config_get_template_key(long)")
-        ert.prototype("char* gen_data_config_get_init_file_fmt(long)")
-
-        ert.prototype("int field_config_get_type(long)")
-        ert.prototype("int field_config_get_truncation_mode(long)")
-        ert.prototype("double field_config_get_truncation_min(long)")
-        ert.prototype("double field_config_get_truncation_max(long)")
-        ert.prototype("char* field_config_get_init_transform_name(long)")
-        ert.prototype("char* field_config_get_output_transform_name(long)")
-        ert.prototype("char* field_config_get_init_file_fmt(long)")
-
-
-
-    r.initialize = initialize
 
     def getEnsembleParameters(ert):
         keys = ert.getStringList(ert.enkf.ensemble_config_alloc_keylist(ert.ensemble_config), free_after_use=True)
