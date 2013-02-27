@@ -524,9 +524,9 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
     int i;
     for (i=0; i < config_content_item_get_size( item ); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
-      const char *  key                   = config_content_node_iget( node , 0 );
-      const char *  var_type_string       = config_content_node_iget( node , 1 );
-      enkf_config_node_type * config_node = ensemble_config_add_field( ensemble_config , key , grid );
+      const char *  key                     = config_content_node_iget( node , 0 );
+      const char *  var_type_string         = config_content_node_iget( node , 1 );
+      enkf_config_node_type * config_node   = ensemble_config_add_field( ensemble_config , key , grid );
       
       {
         hash_type * options = hash_alloc();
@@ -534,8 +534,8 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
         int    truncation = TRUNCATE_NONE;
         double value_min  = -1;
         double value_max  = -1;
-
-        config_content_node_init_opt_hash( node , options , 3 );
+        
+        config_content_node_init_opt_hash( node , options , 2 );
         if (hash_has_key( options , MIN_KEY)) {
           truncation |= TRUNCATE_MIN;
           value_min   = atof(hash_get( options , MIN_KEY));
@@ -555,7 +555,7 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
           const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );
           const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
           const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY );
-          
+    
           enkf_config_node_update_parameter_field( config_node, 
                                                    ecl_file          , 
                                                    init_file_fmt     , 
