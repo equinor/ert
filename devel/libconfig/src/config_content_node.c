@@ -215,3 +215,10 @@ void config_content_node_init_opt_hash( const config_content_node_type * node , 
   for (i = elm_offset; i < config_content_node_get_size( node ); i++) 
     hash_add_option( opt_hash , config_content_node_iget( node , i ));
 }
+
+
+void config_content_node_fprintf( const config_content_node_type * node , FILE * stream ) {
+  fprintf(stream , "%s: {" , config_schema_item_get_kw( node->schema ));
+  stringlist_fprintf( node->stringlist , ", " , stream );
+  fprintf(stream , "}\n");
+}

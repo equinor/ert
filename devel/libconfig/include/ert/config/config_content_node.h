@@ -51,7 +51,7 @@ typedef struct config_content_node_struct config_content_node_type;
          void                         config_content_node_assert_key_value( const config_content_node_type * node );
          const config_path_elm_type * config_content_node_get_path_elm( const config_content_node_type * node );
          void                         config_content_node_init_opt_hash( const config_content_node_type * node , hash_type * opt_hash , int elm_offset);
-
+         void                         config_content_node_fprintf( const config_content_node_type * node , FILE * stream );
 
 #ifdef __cplusplus
 }
