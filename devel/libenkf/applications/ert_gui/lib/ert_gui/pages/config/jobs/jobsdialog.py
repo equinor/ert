@@ -157,34 +157,6 @@ class JobConfigPanel(ConfigPanel):
         self.addRow(widget, label)
 
 
-    def initialize(self, ert):
-        if not self.initialized:
-            ert.prototype("long site_config_get_installed_jobs(long)")
-            ert.prototype("char* ext_job_get_stdin_file(long)",lib=ert.job_queue)
-            ert.prototype("void ext_job_set_stdin_file(long, char*)", lib=ert.job_queue)
-            ert.prototype("char* ext_job_get_stdout_file(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_set_stdout_file(long, char*)", lib=ert.job_queue)
-            ert.prototype("char* ext_job_get_stderr_file(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_set_stderr_file(long, char*)", lib=ert.job_queue)
-            ert.prototype("char* ext_job_get_target_file(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_set_target_file(long, char*)", lib=ert.job_queue)
-            ert.prototype("char* ext_job_get_executable(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_set_executable(long, char*)", lib=ert.job_queue)
-            ert.prototype("char* ext_job_get_private_args_as_string(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_set_private_args_from_string(long, char*)", lib=ert.job_queue)
-            ert.prototype("int ext_job_get_max_running(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_set_max_running(long, int)", lib=ert.job_queue)
-            ert.prototype("int ext_job_get_max_running_minutes(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_set_max_running_minutes(long, int)", lib=ert.job_queue)
-            ert.prototype("long ext_job_get_environment(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_add_environment(long, char*, char*)", lib=ert.job_queue)
-            ert.prototype("void ext_job_clear_environment(long)", lib=ert.job_queue)
-            ert.prototype("void ext_job_save(long)", lib=ert.job_queue)
-            ert.prototype("long ext_joblist_get_job(long, char*)", lib=ert.job_queue)
-
-            self.initialized = True
-
-
     def setJob(self, job):
         self.job = job
 
