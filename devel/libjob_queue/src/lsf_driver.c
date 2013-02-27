@@ -763,7 +763,10 @@ static void lsf_driver_set_internal_submit( lsf_driver_type * driver) {
 static void lsf_driver_set_remote_server( lsf_driver_type * driver , const char * remote_server) {
   if (remote_server == NULL) {
 #ifdef HAVE_LSF_LIBRARY
-    lsf_driver_set_internal_submit( driver );
+    if (driver->lsb)
+      lsf_driver_set_internal_submit( driver );
+    else
+      lsf_driver_set_remote_server( driver , LOCAL_LSF_SERVER );  // If initializing the lsb layer failed we try the local shell commands.
 #endif
   } else {
     driver->remote_lsf_server = util_realloc_string_copy( driver->remote_lsf_server , remote_server );
@@ -891,8 +894,6 @@ static void lsf_driver_lib_init( lsf_driver_type * lsf_driver ) {
     lsb_free( lsf_driver->lsb );
     lsf_driver->lsb = NULL;
   }
-  
-
 #endif
 }
 
