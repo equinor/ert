@@ -4,12 +4,12 @@ project( ERT C CXX )
 set( ERT_VERSION_MAJOR 1 )
 set( ERT_VERSION_MINOR 0 )
 
-option( BUILD_ERT          "Build the full ERT application - Linux only" OFF)
-option( BUILD_ENS_PLOT     "Build small Eclipse plotting program - no" OFF)
-option( BUILD_TESTS        "Should the tests be built" OFF)
-option( BUILD_APPLICATONS  "Should we build small utility applications" OFF)
-option( BUILD_ECL_SUMMARY  "Build the commandline application ecl_summary" OFF)
-option( BUILD_PYTHON       "Run py_compile on the python wrappers" OFF)
+option( BUILD_ERT           "Build the full ERT application - Linux only" OFF)
+option( BUILD_ENS_PLOT      "Build small Eclipse plotting program - no" OFF)
+option( BUILD_TESTS         "Should the tests be built" OFF)
+option( BUILD_APPLICATIONS  "Should we build small utility applications" OFF)
+option( BUILD_ECL_SUMMARY   "Build the commandline application ecl_summary" OFF)
+option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 
 include( CheckFunctionExists )
 ENABLE_TESTING()
@@ -22,7 +22,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    add_definitions( -DERT_WINDOWS )
 endif()    
 
-set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99 -fno-leading-underscore" )
+set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99" )
 set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
 include(cmake/ert_check.cmake)
@@ -68,7 +68,11 @@ configure_file( ${PROJECT_SOURCE_DIR}/cmake/config/ert_build_config.h.in
 
 include_directories( ${PROJECT_SOURCE_DIR}/libert_util/include )
 include_directories( ${PROJECT_BINARY_DIR}/libert_util/include )
+if (MSVC)
+  include_directories( ${PROJECT_BINARY_DIR}/libert_util/include/ert/util )
+endif()
 add_subdirectory( libert_util )
+
 
 include_directories( ${PROJECT_SOURCE_DIR}/libgeometry/include )
 add_subdirectory( libgeometry )
