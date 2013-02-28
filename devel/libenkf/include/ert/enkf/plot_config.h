@@ -52,6 +52,7 @@ void               plot_config_show_viewer_warning( plot_config_type * plot_conf
 void               plot_config_toggle_logy( plot_config_type * plot_config );
 void               plot_config_set_logy( plot_config_type * plot_config , bool logy);
 bool               plot_config_get_logy( const plot_config_type * plot_config );
+stringlist_type *  plot_refcase_fscanf(const char * plot_refcase_file );
 
 
 #endif

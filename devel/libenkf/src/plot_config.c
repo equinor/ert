@@ -330,3 +330,16 @@ void plot_config_fprintf_config( const plot_config_type * plot_config , FILE * s
   fprintf(stream , "\n\n");
 }
 
+stringlist_type * plot_config_refcase_fscanf(const char * plot_refcase_file ) {
+  stringlist_type * list_of_refcases = stringlist_alloc_new();
+  if (plot_refcase_file != NULL){
+    FILE * stream = util_fopen(plot_refcase_file , "r");
+    bool at_eof;
+    do { 
+      stringlist_append_copy( list_of_refcases ,util_fscanf_alloc_line(stream , &at_eof));
+    } while (!at_eof);
+    
+    fclose( stream );
+  }
+  return list_of_refcases;
+}

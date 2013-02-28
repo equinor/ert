@@ -36,7 +36,6 @@
 
 #include <ert/plot/plot.h>
 #include <ert/plot/plot_dataset.h> 
-#include <ert/plot/plot_refcase.h>
 
 #include <ert/ecl/ecl_rft_file.h>
 #include <ert/ecl/ecl_sum.h>
@@ -178,7 +177,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
     }
   }
   else{
-    reflist = plot_refcase_fscanf(refcase_list);
+    reflist = plot_config_refcase_fscanf(refcase_list);
   }
   
   if (plot_dates)
