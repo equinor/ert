@@ -435,7 +435,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       double_vector_free( obs_value );
     }
   }
-  /*REFCASE PLOTTING          plot_dataset_set_point_color( iplot , (iens % 13)+1);*/
+  /*REFCASE PLOTTING*/
 
   if(plot_refcase){
     for(int iref=0; iref<stringlist_get_size(reflist);iref++){
@@ -446,14 +446,8 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 	plot_dataset_type  * d             = plot_alloc_new_dataset( plot , refcase_label , PLOT_XY );
 	plot_dataset_set_style( d , LINE );
 	plot_dataset_set_line_color( d , iref+1 );
-	char *base;
-	char *header_file;
-	stringlist_type * summary_file_list = stringlist_alloc_new();
-	char *path;
 	ecl_sum_type *ecl_sum;
-	util_alloc_file_components( stringlist_iget(reflist, iref) , &path , &base , NULL );
-	ecl_util_alloc_summary_files( path , base , NULL , &header_file , summary_file_list);
-	ecl_sum = ecl_sum_fread_alloc( header_file , summary_file_list , ":" );
+	ecl_sum = ecl_sum_fread_alloc_case(stringlist_iget(reflist, iref), SUMMARY_KEY_JOIN_STRING);
 	for ( int i = 0; i < double_vector_size(x); i++ ){
 	  time_t sim_time = ( time_t ) double_vector_iget( x , i );
 	  if( ecl_sum_has_general_var( ecl_sum , user_key ) && ecl_sum_check_sim_time( ecl_sum , sim_time)){
@@ -461,10 +455,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 	    double_vector_append( refcase_time , sim_time );
 	  }
 	}
-	
-	util_safe_free(header_file);
-	util_safe_free(base);
-	util_safe_free(path);
 	ecl_sum_free(ecl_sum);
 	util_safe_free(refcase_label);
 	for (int i = 0; i < double_vector_size( refcase_time ); i++) {

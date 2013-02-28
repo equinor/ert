@@ -185,7 +185,7 @@ plot_config_type * plot_config_alloc_default() {
   plot_config_type * info        = util_malloc( sizeof * info );
   info->plot_path                = NULL;
   info->plot_refcase             = NULL;
-  info->plot_refcase_list         = NULL;
+  info->plot_refcase_list        = NULL;
   info->image_type               = NULL;
   info->viewer                   = NULL;
   info->driver                   = NULL;      
@@ -335,7 +335,7 @@ stringlist_type * plot_config_refcase_fscanf(const char * plot_refcase_file ) {
   if (plot_refcase_file != NULL){
     FILE * stream = util_fopen(plot_refcase_file , "r");
     bool at_eof;
-    do { 
+    do {
       stringlist_append_copy( list_of_refcases ,util_fscanf_alloc_line(stream , &at_eof));
     } while (!at_eof);
     
