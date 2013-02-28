@@ -178,6 +178,45 @@ class SumTest( unittest.TestCase ):
         os.chdir( cwd )
 
 
+
+
+    def test_var_properties( self ):
+        sum = self.sum
+        self.assertRaises( KeyError , sum.smspec_node , "BJARNE" )
+
+        node = sum.smspec_node( "FOPT" )
+        self.assertTrue( node.is_total )
+        self.assertFalse( node.is_historical )
+
+        node = sum.smspec_node( "FOPR" )
+        self.assertFalse( node.is_total )
+        self.assertFalse( node.is_historical )
+
+        node = sum.smspec_node( "FOPRH" )
+        self.assertFalse( node.is_total )
+        self.assertTrue( node.is_historical )
+        self.assertTrue( node.is_rate )
+        
+
+        node = sum.smspec_node( "WOPR:OP_1" )
+        self.assertFalse( node.is_total )
+        self.assertTrue( node.is_rate )
+
+        node = sum.smspec_node( "WOPT:OP_1" )
+        self.assertTrue( node.is_total )
+        self.assertFalse( node.is_rate )
+        self.assertTrue( node.unit == "SM3" )
+
+        self.assertTrue( sum.unit( "FOPR" ) == "SM3/DAY")
+
+
+        node = sum.smspec_node( "FOPTH" )
+        self.assertTrue( node.is_total )
+        self.assertFalse( node.is_rate )
+        
+
+
+
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( SumTest( 'test_load' ))
@@ -193,6 +232,7 @@ def fast_suite():
     suite.addTest( SumTest( 'test_fwrite' ))
     suite.addTest( SumTest( 'test_block' ))
     suite.addTest( SumTest( 'test_restart' ))
+    suite.addTest( SumTest( 'test_var_properties' ))
     return suite
 
 
