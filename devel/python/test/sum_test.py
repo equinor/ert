@@ -219,6 +219,11 @@ class SumTest( unittest.TestCase ):
         self.assertFalse( node.is_rate )
         self.assertTrue( node.wgname is None )
         
+        node = sum.smspec_node( "FOPTH" )
+        self.assertTrue( node.num is None )
+        
+        node = sum.smspec_node( "BPR:1095" )
+        self.assertTrue( node.num == 1095 )
 
 
 
