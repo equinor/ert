@@ -23,6 +23,7 @@
 #include <ert/util/test_util.h>
 
 #include <ert/job_queue/lsf_driver.h>
+#include <ert/job_queue/lsb.h>
 
 
 void test_option(lsf_driver_type * driver , const char * option , const char * value) {
@@ -53,16 +54,28 @@ int main( int argc , char ** argv) {
   test_option( driver , LSF_LOGIN_SHELL , "shell");
   test_option( driver , LSF_BSUB_CMD    , "bsub");
   printf("Options OK\n");
-  
-  test_server( driver , NULL        , LSF_SUBMIT_INTERNAL );       //   <------+
-  test_server( driver , "LoCaL"     , LSF_SUBMIT_LOCAL_SHELL );    //          | 
-  test_server( driver , "LOCAL"     , LSF_SUBMIT_LOCAL_SHELL );    //          | These tests require that the dynamic linker finds liblsf, otherwise they will return LSF_SUBMIT_LOCAL_SHELL. 
-  test_server( driver , "XLOCAL"    , LSF_SUBMIT_REMOTE_SHELL );   //          |
-  test_server( driver , NULL        , LSF_SUBMIT_INTERNAL );       //   <------+
-  test_server( driver , "NULL"      , LSF_SUBMIT_INTERNAL );       //   <------+ 
-  test_server( driver , "be-grid01" , LSF_SUBMIT_REMOTE_SHELL );
-  printf("Servers OK\n");
 
+  {
+    
+    lsf_submit_method_enum submit_NULL;
+    lsb_type * lsb = lsb_alloc();
+    if (lsb_ready(lsb))
+      submit_NULL = LSF_SUBMIT_INTERNAL;
+    else
+      submit_NULL = LSF_SUBMIT_LOCAL_SHELL;
+    
+
+    test_server( driver , NULL        , submit_NULL ); 
+    test_server( driver , "LoCaL"     , LSF_SUBMIT_LOCAL_SHELL ); 
+    test_server( driver , "LOCAL"     , LSF_SUBMIT_LOCAL_SHELL ); 
+    test_server( driver , "XLOCAL"    , LSF_SUBMIT_REMOTE_SHELL );
+    test_server( driver , NULL        , submit_NULL ); 
+    test_server( driver , "NULL"      , submit_NULL ); 
+    test_server( driver , "be-grid01" , LSF_SUBMIT_REMOTE_SHELL );
+    printf("Servers OK\n");
+
+    lsb_free( lsb );
+  }
   test_status( JOB_STAT_PEND   , JOB_QUEUE_PENDING );
   test_status( JOB_STAT_PSUSP  , JOB_QUEUE_RUNNING );
   test_status( JOB_STAT_USUSP  , JOB_QUEUE_RUNNING );
