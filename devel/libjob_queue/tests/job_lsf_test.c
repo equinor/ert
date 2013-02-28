@@ -43,6 +43,10 @@ void test_status(int lsf_status , job_status_type job_status) {
 }
 
 
+/*
+  This test should ideally be run twice in two different environments;
+  with and without dlopen() access to the lsf libraries.
+*/
 
 int main( int argc , char ** argv) {
   lsf_driver_type * driver = lsf_driver_alloc();
