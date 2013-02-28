@@ -110,7 +110,7 @@ lsb_type * lsb_alloc() {
 
   lsb_dlopen(lsb , "libnsl.so" );
   lsb_dlopen(lsb , "liblsf.so" );
-  lsb->lib_handle = dlopen("libbat.so" , RTLD_NOW | RTLD_GLOBAL);
+  lsb->lib_handle = lsb_dlopen(lsb , "libbat.so");
   
   if (lsb->lib_handle) {
     lsb->submit    = (lsb_submit_ftype *) lsb_dlsym( lsb , "lsb_submit");
