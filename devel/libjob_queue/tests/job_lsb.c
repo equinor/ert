@@ -17,11 +17,16 @@
 */
 #include <stdlib.h>
 #include <stdbool.h>
+#include <dlfcn.h>
 
 #include <ert/util/test_util.h>
 
 #include <ert/job_queue/lsb.h>
 
+/*
+  This test should ideally be run twice in two different environments;
+  with and without dlopen() access to the lsf libraries.
+*/
 
 int main( int argc , char ** argv) {
   lsb_type * lsb = lsb_alloc();
@@ -31,8 +36,12 @@ int main( int argc , char ** argv) {
     const stringlist_type * error_list = lsb_get_error_list( lsb );
     stringlist_fprintf(error_list , "\n", stdout);
   }
-  test_assert_true( lsb_ready( lsb ));
 
+  if (dlopen( "libbat.so" , RTLD_NOW | RTLD_GLOBAL))
+    test_assert_true( lsb_ready( lsb ));
+  else
+    test_assert_false( lsb_ready( lsb ));
+                      
   lsb_free( lsb );
   exit(0);
 }
