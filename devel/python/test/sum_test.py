@@ -191,21 +191,25 @@ class SumTest( unittest.TestCase ):
         node = sum.smspec_node( "FOPR" )
         self.assertFalse( node.is_total )
         self.assertFalse( node.is_historical )
+        self.assertTrue( node.keyword == "FOPR" )
 
         node = sum.smspec_node( "FOPRH" )
         self.assertFalse( node.is_total )
         self.assertTrue( node.is_historical )
         self.assertTrue( node.is_rate )
-        
+        self.assertTrue( node.keyword == "FOPRH" )
 
         node = sum.smspec_node( "WOPR:OP_1" )
         self.assertFalse( node.is_total )
         self.assertTrue( node.is_rate )
+        self.assertTrue( node.keyword == "WOPR" )
 
         node = sum.smspec_node( "WOPT:OP_1" )
         self.assertTrue( node.is_total )
         self.assertFalse( node.is_rate )
         self.assertTrue( node.unit == "SM3" )
+        self.assertTrue( node.wgname == "OP_1")
+        self.assertTrue( node.keyword == "WOPT" )
 
         self.assertTrue( sum.unit( "FOPR" ) == "SM3/DAY")
 
@@ -213,6 +217,7 @@ class SumTest( unittest.TestCase ):
         node = sum.smspec_node( "FOPTH" )
         self.assertTrue( node.is_total )
         self.assertFalse( node.is_rate )
+        self.assertTrue( node.wgname is None )
         
 
 
