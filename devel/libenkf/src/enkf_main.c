@@ -1278,7 +1278,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
   
   if (step1 > 0)
     ecl_config_assert_restart( enkf_main_get_ecl_config( enkf_main ) );
-  
+
   {
     bool     verbose_queue   = enkf_main->verbose;
     int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
@@ -1290,24 +1290,27 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
       if (run_mode == ENKF_ASSIMILATION)
         printf("Starting forward step: %d -> %d\n",step1 , step2);
     }
-    
+
     log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
     if (run_mode == ENKF_ASSIMILATION)
       log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
     else
       log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> ??? ",step1);
 
-    bool_vector_safe_cast( iactive );
     job_size = bool_vector_count_equal( iactive , true );
     {
       pthread_t        queue_thread;
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-      arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
       
-      arg_pack_append_ptr(queue_args  , job_queue);
-      arg_pack_append_int(queue_args  , job_size);
-      arg_pack_append_bool(queue_args , verbose_queue);
-      pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+      /* Start the queue */
+      if (run_mode != INIT_ONLY) {
+        arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
+        arg_pack_append_ptr(queue_args  , job_queue);
+        arg_pack_append_int(queue_args  , job_size);
+        arg_pack_append_bool(queue_args , verbose_queue);
+        pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+      }
+
       
       {
         thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
@@ -1329,6 +1332,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
                                 load_start ,
                                 step1 ,
                                 step2 );
+
             {
               arg_pack_type * arg_pack = arg_pack_alloc( );   // This is discarded by the enkf_state_start_forward_model__() function. */
               
@@ -1348,15 +1352,17 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
         thread_pool_join(submit_threads);        
         thread_pool_free(submit_threads);        
       }
-      job_queue_submit_complete( job_queue );
-      log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
-      pthread_join( queue_thread , NULL );   /* Wait for the job_queue_run_jobs() function to complete. */
+      if (run_mode != INIT_ONLY) {
+        job_queue_submit_complete( job_queue );
+        log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
+        pthread_join( queue_thread , NULL );   /* Wait for the job_queue_run_jobs() function to complete. */
+      }
     }
 
-
+    
     /* This should be carefully checked for the situation where only a
        subset (with offset > 0) of realisations are simulated. */
-    {
+    if (run_mode != INIT_ONLY) {
       bool totalOK = true;
       for (iens = 0; iens < ens_size; iens++) {    
         if (bool_vector_iget(iactive , iens)) {
@@ -1383,7 +1389,8 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
       
       enkf_fs_fsync( enkf_main->dbase );
       return totalOK;
-    }
+    } else
+      return true;
   }
 }
 
@@ -1472,9 +1479,11 @@ bool enkf_main_is_not_initialized_at_all( const enkf_main_type * enkf_main ) {
 
 void enkf_main_run_exp(enkf_main_type * enkf_main            ,
                        const bool_vector_type * iactive      , 
+                       bool             simulate , 
                        int              init_step_parameters ,
                        int              start_report         ,
                        state_enum       start_state) {
+  run_mode_type run_mode = simulate ? ENSEMBLE_EXPERIMENT : INIT_ONLY;
   bool initialize = enkf_main_is_not_initialized_at_all( enkf_main );
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
   if (initialize) {
@@ -1482,14 +1491,14 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
     enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1);
     stringlist_free( param_list );
   }  
-  enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT );
+  enkf_main_init_run( enkf_main , run_mode );
   {
     const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
     const int last_report              = -1;  // Should be fully ignored.
     int load_start                  = start_report;
     state_enum init_state_parameter = start_state;
     state_enum init_state_dynamic   = start_state;
-    enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , -1);
+    enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , -1);
   }
 }
 
@@ -2052,29 +2061,25 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
   int i;
   for (i = 0; i < ens_size; i++)
     int_vector_iset( enkf_main->keep_runpath , i , DEFAULT_KEEP);
+  
 
   {
-    int * active_list; 
-    int   num_items;
+    int_vector_type * active_list = string_util_alloc_active_list(keep_runpath_string);
 
-    active_list = util_sscanf_alloc_active_list(keep_runpath_string , &num_items);
-    for (i = 0; i < num_items; i++)
-      int_vector_iset( enkf_main->keep_runpath , i , EXPLICIT_KEEP);
+    for (i = 0; i < int_vector_size( active_list ); i++)
+      int_vector_iset( enkf_main->keep_runpath , int_vector_iget( active_list , i ) , EXPLICIT_KEEP);
     
-    
-    free( active_list );
+    int_vector_free( active_list );
   }
   
   
   {
-    int * active_list; 
-    int   num_items;
+    int_vector_type * active_list = string_util_alloc_active_list(delete_runpath_string);
 
-    active_list = util_sscanf_alloc_active_list(delete_runpath_string , &num_items);
-    for (i = 0; i < num_items; i++) 
-      int_vector_iset( enkf_main->keep_runpath , i , EXPLICIT_DELETE);
+    for (i = 0; i < int_vector_size( active_list ); i++)
+      int_vector_iset( enkf_main->keep_runpath , int_vector_iget( active_list , i ) , EXPLICIT_DELETE);
     
-    free( active_list );
+    int_vector_free( active_list );
   }
 }
 
