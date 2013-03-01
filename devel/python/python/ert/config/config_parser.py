@@ -88,6 +88,9 @@ class ContentNode(CClass):
         else:
             raise ValueError("[] operator must have integer index")
 
+    def content(self , sep = " "):
+        return cfunc.content_full_string(self , sep)
+
 
 
 #-----------------------------------------------------------------
@@ -140,4 +143,6 @@ cfunc.schema_alloc = cwrapper.prototype("c_void_p config_schema_item_alloc( char
 cfunc.content_size = cwrapper.prototype("int config_content_item_get_size( content_item )")
 cfunc.iget_content_node = cwrapper.prototype("int config_content_item_iget_node( content_item , int)")
 cfunc.content_node_iget = cwrapper.prototype("char* config_content_node_iget( content_node , int)")
-cfunc.content_node_size = cwrapper.prototype("int config_content_node_get_size( content_node )")
+cfunc.content_node_size  = cwrapper.prototype("int config_content_node_get_size( content_node )")
+cfunc.content_full_string = cwrapper.prototype("char* config_content_node_get_full_string( content_node , char* )")
+

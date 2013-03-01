@@ -66,8 +66,13 @@ class ConfigTest( unittest.TestCase ):
         self.assertRaises( IndexError , content_node.__getitem__ , 10 )
         self.assertTrue( content_node[1] == "be-lx633214:2")
 
+        self.assertTrue( content_node.content( sep = ",") == "be-lx655082:2,be-lx633214:2")
+        self.assertTrue( content_node.content( ) == "be-lx655082:2 be-lx633214:2")
+
+
         content_item = conf["FIELD"]
         self.assertTrue( len(content_item) == 5)
+
 
 
     def test_schema(self):
