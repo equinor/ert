@@ -41,6 +41,7 @@ class ConfigTest( unittest.TestCase ):
         self.assertTrue( config_enums.unrecognized.CONFIG_UNRECOGNIZED_ERROR )
 
 
+
     def test_parse(self):
         conf = config.ConfigParser()
         conf.add("FIELD" , False)
