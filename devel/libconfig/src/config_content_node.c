@@ -33,7 +33,7 @@ struct config_content_node_struct {
   const config_schema_item_type * schema;         
   stringlist_type               * stringlist;              /* The values which have been set. */
   const config_path_elm_type    * cwd;
-  stringlist_type               * path_storage;
+  stringlist_type               * string_storage;
 };
 
 
@@ -47,7 +47,7 @@ config_content_node_type * config_content_node_alloc( const config_schema_item_t
   node->stringlist = stringlist_alloc_new();
   node->cwd = cwd;
   node->schema = schema;
-  node->path_storage = NULL;
+  node->string_storage = NULL;
   return node;
 }
 
@@ -73,8 +73,8 @@ char * config_content_node_alloc_joined_string(const config_content_node_type * 
 
 void config_content_node_free(config_content_node_type * node) {
   stringlist_free(node->stringlist);
-  if (node->path_storage != NULL)
-    stringlist_free( node->path_storage );
+  if (node->string_storage != NULL)
+    stringlist_free( node->string_storage );
   free(node);
 }
 
@@ -85,7 +85,18 @@ void config_content_node_free__(void * arg) {
   config_content_node_free( node );
 }
 
+static void config_content_node_push_string( config_content_node_type * node , char * string) {
+  if (node->string_storage == NULL)
+    node->string_storage = stringlist_alloc_new( );
 
+  stringlist_append_owned_ref( node->string_storage , string );
+}
+
+const char * config_content_node_get_full_string( config_content_node_type * node , const char * sep ) {
+  char * full_string = stringlist_alloc_joined_string(node->stringlist , sep);
+  config_content_node_push_string( node , full_string );
+  return full_string;
+}
 
 const char * config_content_node_iget(const config_content_node_type * node , int index) {
   return stringlist_iget( node->stringlist , index );
@@ -125,12 +136,6 @@ double config_content_node_iget_as_double(const config_content_node_type * node 
 }
 
 
-static void config_content_node_push_path( config_content_node_type * node , char * path) {
-  if (node->path_storage == NULL)
-    node->path_storage = stringlist_alloc_new( );
-
-  stringlist_append_owned_ref( node->path_storage , path );
-}
 
 
 const char * config_content_node_iget_as_path(config_content_node_type * node , int index) {
@@ -138,7 +143,7 @@ const char * config_content_node_iget_as_path(config_content_node_type * node , 
   {
     const char * config_value = config_content_node_iget(node , index);
     char * path_value = config_path_elm_alloc_path( node->cwd , config_value );
-    config_content_node_push_path( node , path_value );
+    config_content_node_push_string( node , path_value );
     
     return path_value;
   }
@@ -150,7 +155,7 @@ const char * config_content_node_iget_as_abspath( config_content_node_type * nod
   {
     const char * config_value = config_content_node_iget(node , index);
     char * path_value = config_path_elm_alloc_abspath( node->cwd , config_value );
-    config_content_node_push_path( node , path_value );
+    config_content_node_push_string( node , path_value );
     
     return path_value;
   }
@@ -162,7 +167,7 @@ const char * config_content_node_iget_as_relpath( config_content_node_type * nod
   {
     const char * config_value = config_content_node_iget(node , index);
     char * path_value = config_path_elm_alloc_relpath( node->cwd , config_value );
-    config_content_node_push_path( node , path_value );
+    config_content_node_push_string( node , path_value );
     
     return path_value;
   }
