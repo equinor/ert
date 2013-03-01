@@ -16,5 +16,5 @@
 import libconfig
 
 from   config_enums  import *  
-from   config_parser import ConfigParser , SchemaItem , ContentItem
+from   config_parser import ConfigParser , SchemaItem , ContentItem , ContentNode
 

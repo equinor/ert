@@ -43,13 +43,30 @@ class ConfigTest( unittest.TestCase ):
 
     def test_parse(self):
         conf = config.ConfigParser()
+        conf.add("FIELD" , False)
         schema_item = conf.add("RSH_HOST" , False)
         self.assertTrue( isinstance( schema_item , config.SchemaItem ))
         self.assertTrue( conf.parse("test-data/local/config/simple_config" , unrecognized = config_enums.unrecognized.CONFIG_UNRECOGNIZED_IGNORE) )
         
+        
         content_item = conf["RSH_HOST"]
         self.assertTrue( isinstance( content_item , config.ContentItem ))
         self.assertRaises( KeyError , conf.__getitem__ , "BJARNE" )
+
+        self.assertTrue( len(content_item) == 1)
+        self.assertRaises( ValueError , content_item.__getitem__ , "BJARNE")
+        self.assertRaises( IndexError , content_item.__getitem__ , 10 )
+        
+        content_node = content_item[0]
+        self.assertTrue( isinstance( content_node , config.ContentNode ))
+        
+        self.assertTrue( len(content_node) == 2)
+        self.assertRaises( ValueError , content_node.__getitem__ , "BJARNE")
+        self.assertRaises( IndexError , content_node.__getitem__ , 10 )
+        self.assertTrue( content_node[1] == "be-lx633214:2")
+
+        content_item = conf["FIELD"]
+        self.assertTrue( len(content_item) == 5)
 
 
     def test_schema(self):
