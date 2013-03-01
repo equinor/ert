@@ -37,6 +37,7 @@ typedef struct config_content_node_struct config_content_node_type;
          char                       * config_content_node_alloc_joined_string(const config_content_node_type * node, const char * sep);
          void                         config_content_node_free(config_content_node_type * node);
          void                         config_content_node_free__(void * arg);
+         const char                 * config_content_node_get_full_string( config_content_node_type * node , const char * sep );
          const char                 * config_content_node_iget(const config_content_node_type * node , int index);
          bool                         config_content_node_iget_as_bool(const config_content_node_type * node , int index);
          int                          config_content_node_iget_as_int(const config_content_node_type * node , int index);
