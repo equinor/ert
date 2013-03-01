@@ -43,6 +43,8 @@ int main(int argc , char ** argv) {
     test_assert_string_equal( config_content_node_iget( node , 0 ) , "KEY1:VALUE1" );
     test_assert_string_equal( config_content_node_iget( node , 2 ) , "KEY3:VALUE3" );
     
+    test_assert_string_equal( config_content_node_get_full_string( node , ",") , "KEY1:VALUE1,KEY2:VALUE2,KEY3:VALUE3,KEYVALUE");
+    
     {
       hash_type * opt_hash = hash_alloc( );
       {
