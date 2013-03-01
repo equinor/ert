@@ -1,6 +1,6 @@
-#  Copyright (C) 2012  Statoil ASA, Norway. 
+#  Copyright (C) 2013  Statoil ASA, Norway. 
 #   
-#  The file 'config.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'config_enums.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -13,8 +13,9 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-import libconfig
+from    ert.cwrap.cenum       import create_enum
+import  libconfig
 
-from   config_enums  import *  
-from   config_parser import ConfigParser , SchemaItem , ContentItem
+create_enum( libconfig.lib , "config_schema_item_type_enum_iget" , "content_type" , name_space = globals())
 
+create_enum( libconfig.lib , "config_schema_item_unrecognized_enum_iget" , "unrecognized" , name_space = globals())
