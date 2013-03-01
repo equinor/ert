@@ -1661,26 +1661,29 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_f
     const shared_info_type    * shared_info   = enkf_state->shared_info;
     const member_config_type  * my_config     = enkf_state->my_config;
     const site_config_type    * site_config   = shared_info->site_config;
-    arg_pack_type             * load_arg      = arg_pack_alloc();
-
-    /*
-      Prepare the job and submit it to the queue
-    */
     enkf_state_init_eclipse( enkf_state , fs );
-    arg_pack_append_ptr( load_arg , enkf_state );
-    arg_pack_append_ptr( load_arg , fs );
-    
-    run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
-                                                  site_config_get_job_script( site_config ),
-                                                  enkf_state_complete_forward_modelOK__ , 
-                                                  enkf_state_complete_forward_modelEXIT__ , 
-                                                  load_arg , 
-                                                  ecl_config_get_num_cpu( shared_info->ecl_config ),
-                                                  run_info->run_path     , 
-                                                  member_config_get_jobname(my_config) , 
-                                                  1, 
-                                                  (const char *[1]) { run_info->run_path } );
-    run_info->num_internal_submit++;
+
+    if (run_info->run_mode != INIT_ONLY) {
+      arg_pack_type             * load_arg      = arg_pack_alloc();
+
+      /*
+        Prepare the job and submit it to the queue
+      */
+      arg_pack_append_ptr( load_arg , enkf_state );
+      arg_pack_append_ptr( load_arg , fs );
+      
+      run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
+                                                    site_config_get_job_script( site_config ),
+                                                    enkf_state_complete_forward_modelOK__ , 
+                                                    enkf_state_complete_forward_modelEXIT__ , 
+                                                    load_arg , 
+                                                    ecl_config_get_num_cpu( shared_info->ecl_config ),
+                                                    run_info->run_path     , 
+                                                    member_config_get_jobname(my_config) , 
+                                                    1, 
+                                                    (const char *[1]) { run_info->run_path } );
+      run_info->num_internal_submit++;
+    }
   }
 }
 
