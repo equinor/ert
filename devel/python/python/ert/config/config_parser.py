@@ -34,6 +34,14 @@ class SchemaItem(CClass):
         return obj
 
 
+    def iget_type( self , index ):
+        return cfunc.schema_iget_type( self , index )
+
+    def iset_type( self , index , type ):
+        cfunc.schema_iset_type( self , index , type )
+    
+
+
 #-----------------------------------------------------------------
 
 
@@ -138,8 +146,11 @@ cfunc.parse        = cwrapper.prototype("bool config_parse( config_parser , char
 cfunc.has_content  = cwrapper.prototype("bool config_has_content_item( config_parser , char*) ")
 cfunc.get_content  = cwrapper.prototype("c_void_p config_get_content_item( config_parser , char*) ")
 
-cfunc.schema_free  = cwrapper.prototype("void config_schema_item_free( schema_item )")
-cfunc.schema_alloc = cwrapper.prototype("c_void_p config_schema_item_alloc( char* , bool )")
+cfunc.schema_alloc      = cwrapper.prototype("c_void_p config_schema_item_alloc( char* , bool )")
+cfunc.schema_free       = cwrapper.prototype("void config_schema_item_free( schema_item )")
+cfunc.schema_iget_type  = cwrapper.prototype("int config_schema_item_iget_type( schema_item ,int)")
+cfunc.schema_iset_type  = cwrapper.prototype("void config_schema_item_iset_type( schema_item , int , int)")
+
 cfunc.content_size = cwrapper.prototype("int config_content_item_get_size( content_item )")
 cfunc.iget_content_node = cwrapper.prototype("int config_content_item_iget_node( content_item , int)")
 cfunc.content_node_iget = cwrapper.prototype("char* config_content_node_iget( content_node , int)")

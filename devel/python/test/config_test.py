@@ -78,6 +78,9 @@ class ConfigTest( unittest.TestCase ):
     def test_schema(self):
         schema_item = config.SchemaItem("TestItem")
         self.assertTrue( isinstance( schema_item , config.SchemaItem ))
+        self.assertTrue( schema_item.iget_type( 6 ) == config_enums.content_type.CONFIG_STRING )
+        schema_item.iset_type( 0 , config_enums.content_type.CONFIG_INT )
+        self.assertTrue( schema_item.iget_type( 0 ) == config_enums.content_type.CONFIG_INT )
 
 
 
