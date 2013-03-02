@@ -24,6 +24,7 @@
 #include <ert/util/test_util.h>
 
 #include <ert/config/config.h>
+#include <ert/config/config_schema_item.h>
 
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/config_keys.h>
