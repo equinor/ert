@@ -113,6 +113,9 @@ typedef enum {CONFIG_STRING        = 1,
   bool                      config_schema_item_has_required_children_value( const config_schema_item_type * item );
   stringlist_type         * config_schema_item_get_required_children_value(const config_schema_item_type * item , const char * value);
 
+  void                      config_schema_item_iset_type( config_schema_item_type * item , int index , config_item_types type);
+  config_item_types         config_schema_item_iget_type(const config_schema_item_type * item , int index );
+
 
 #ifdef __cplusplus
 }
