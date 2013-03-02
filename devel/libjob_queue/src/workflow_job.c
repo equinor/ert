@@ -103,7 +103,7 @@ config_type * workflow_job_alloc_config() {
     /*****************************************************************/
 
     item = config_add_schema_item( config , INTERNAL_KEY , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_BOOLEAN});    
+    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_BOOL});     
     
   }
   return config;

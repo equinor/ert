@@ -110,7 +110,7 @@ static validate_type * validate_alloc() {
   validate->indexed_selection_set   = NULL;
   validate->required_children       = NULL;
   validate->required_children_value = NULL;
-  validate->type_map                = NULL;
+  validate->type_map                = int_vector_alloc(0 , CONFIG_STRING);  // The default type is CONFIG_STRING - i.e. essentially untyped
 
   return validate;
 }
@@ -125,13 +125,21 @@ static void validate_free(validate_type * validate) {
     free(validate->indexed_selection_set);
   }
   
-  if (validate->type_map != NULL)
-    int_vector_free( validate->type_map );
+  int_vector_free( validate->type_map );
   if (validate->required_children != NULL) stringlist_free(validate->required_children);
   if (validate->required_children_value != NULL) hash_free(validate->required_children_value);
   free(validate);
 }
 
+
+static void validate_iset_type( validate_type * validate , int index , config_item_types type) {
+  int_vector_iset( validate->type_map , index , type);
+}
+
+
+static config_item_types validate_iget_type( const validate_type * validate , int index) {
+  return int_vector_safe_iget( validate->type_map , index ); 
+}
 
 
 static void validate_set_argc_minmax(validate_type * validate , int argc_min , int argc_max, int type_map_size , const config_item_types * type_map) {
@@ -165,27 +173,9 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
   
   if (type_map != NULL) {
     int i;
-    validate->type_map = int_vector_alloc( 0 , CONFIG_STRING );
     for (i=0; i < type_map_size; i++)
-      int_vector_iset( validate->type_map , i , type_map[i]);
-
-
-    /*
-      If a maximum number of arguments has been explicitly set, AND
-      this maximum value is greated than the number of arguments with
-      an explicit type we right-pad the type map with CONFIG_STRING values.
-
-      Alternatively if no explicit max has been set, we ensure that
-      the type map is at least as large as the minimum number of
-      arguments.
-    */
-    if (validate->argc_max != CONFIG_DEFAULT_ARG_MAX) {
-      if (validate->argc_max > type_map_size) 
-        int_vector_iset(validate->type_map , validate->argc_max -1 , CONFIG_STRING); 
-    } else {
-      if (validate->argc_min > type_map_size) 
-        int_vector_iset(validate->type_map , validate->argc_min -1 , CONFIG_STRING); 
-    }
+      validate_iset_type( validate , i , type_map[i]);
+    
   }
 }
 
@@ -219,16 +209,13 @@ static void validate_set_indexed_selection_set(validate_type * validate , int in
 static UTIL_SAFE_CAST_FUNCTION( config_schema_item , CONFIG_SCHEMA_ITEM_ID)
 
 void config_schema_item_assure_type(const config_schema_item_type * item , int index , int type_mask) {
-  if (item->validate->type_map != NULL) {
-    bool OK = false;
-    
-    if (int_vector_safe_iget( item->validate->type_map , index) & type_mask)
-      OK = true;
-    
-    if (!OK)
-      util_abort("%s: failed - wrong installed type \n" , __func__);
-  } else
-    util_abort("%s: no type information supplied for config item:%s \n",__func__ , item->kw );
+  bool OK = false;
+  
+  if (int_vector_safe_iget( item->validate->type_map , index) & type_mask)
+    OK = true;
+  
+  if (!OK)
+    util_abort("%s: failed - wrong installed type \n" , __func__);
 }
 
 
@@ -326,10 +313,10 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
 
 
     /* Validate the TYPE of the various argumnents */
-    if (item->validate->type_map != NULL) {
+    {
       for (int iarg = 0; iarg < argc; iarg++) {
         const char * value = stringlist_iget(token_list , iarg + 1);
-        switch (int_vector_safe_iget( item->validate->type_map , iarg)) {
+        switch (validate_iget_type( item->validate , iarg)) {
         case(CONFIG_STRING): /* This never fails ... */
           break;
         case(CONFIG_INT):
@@ -384,7 +371,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
             }
           }
           break;
-        case(CONFIG_BOOLEAN):
+        case(CONFIG_BOOL):
           if (!util_sscanf_bool( value , NULL )) {
             config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
             OK = false;
@@ -397,7 +384,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
           }
           break;
         default:
-          util_abort("%s: config_item_type:%d not recognized \n",__func__ , int_vector_safe_iget(item->validate->type_map , iarg));
+          util_abort("%s: config_item_type:%d not recognized \n",__func__ , validate_iget_type(item->validate , iarg));
         }
       }
     } 
@@ -444,10 +431,20 @@ void config_schema_item_set_argc_minmax(config_schema_item_type * item ,
                                         int argc_max, 
                                         int type_map_size , 
                                         const config_item_types * type_map) {
-
+  
   validate_set_argc_minmax(item->validate , argc_min , argc_max , type_map_size , type_map);
 
 }
+
+void config_schema_item_iset_type( config_schema_item_type * item , int index , config_item_types type) {
+  validate_iset_type( item->validate , index , type );
+}
+
+
+config_item_types config_schema_item_iget_type(const config_schema_item_type * item , int index ) {
+  return validate_iget_type( item->validate , index );
+}
+
   
 
 

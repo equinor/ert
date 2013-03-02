@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include <ert/util/stringlist.h>
+
 #include <ert/config/config_error.h>
 #include <ert/config/config_path_elm.h>
 
@@ -35,7 +37,7 @@ typedef enum {CONFIG_STRING        = 1,
               CONFIG_FLOAT         = 4,   
               CONFIG_PATH          = 8,
               CONFIG_EXISTING_PATH = 16,
-              CONFIG_BOOLEAN       = 32,
+              CONFIG_BOOL          = 32,
               CONFIG_CONFIG        = 64,
               CONFIG_BYTESIZE      = 128,
               CONFIG_EXECUTABLE    = 256 ,
@@ -47,7 +49,7 @@ typedef enum {CONFIG_STRING        = 1,
 {.value =    4 , .name="CONFIG_FLOAT"},          \
 {.value =    8 , .name="CONFIG_PATH"},           \
 {.value =   16 , .name="CONFIG_EXISTING_PATH"},  \
-{.value =   32 , .name="CONFIG_BOOLEAN"},        \
+{.value =   32 , .name="CONFIG_BOOL"},        \
 {.value =   64 , .name="CONFIG_CONFIG"},         \
 {.value =  128 , .name="CONFIG_BYTESIZE"},       \
 {.value =  256 , .name="CONFIG_EXECUTABLE"},     \
@@ -110,6 +112,9 @@ typedef enum {CONFIG_STRING        = 1,
   void                      config_schema_item_get_argc( const config_schema_item_type * item , int *argc_min , int *argc_max);
   bool                      config_schema_item_has_required_children_value( const config_schema_item_type * item );
   stringlist_type         * config_schema_item_get_required_children_value(const config_schema_item_type * item , const char * value);
+
+  void                      config_schema_item_iset_type( config_schema_item_type * item , int index , config_item_types type);
+  config_item_types         config_schema_item_iget_type(const config_schema_item_type * item , int index );
 
 
 #ifdef __cplusplus
