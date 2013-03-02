@@ -761,18 +761,18 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
     ext_job_set_config_file( ext_job , config_file );
     {
       config_schema_item_type * item;
-      item = config_add_schema_item(config , "MAX_RUNNING"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-      item = config_add_schema_item(config , "STDIN"               , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
-      item = config_add_schema_item(config , "STDOUT"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
-      item = config_add_schema_item(config , "STDERR"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
-      item = config_add_schema_item(config , "EXECUTABLE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
-      item = config_add_schema_item(config , "TARGET_FILE"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
-      item = config_add_schema_item(config , "ERROR_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
-      item = config_add_schema_item(config , "START_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 0 , NULL);
-      item = config_add_schema_item(config , "ENV"                 , false ); config_schema_item_set_argc_minmax(item  , 2 , 2 , 0 , NULL);
-      item = config_add_schema_item(config , "DEFAULT"             , false ); config_schema_item_set_argc_minmax(item  , 2 , 2 , 0 , NULL);
-      item = config_add_schema_item(config , "ARGLIST"             , false ); config_schema_item_set_argc_minmax(item  , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
-      item = config_add_schema_item(config , "MAX_RUNNING_MINUTES" , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+      item = config_add_schema_item(config , "MAX_RUNNING"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
+      item = config_add_schema_item(config , "STDIN"               , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
+      item = config_add_schema_item(config , "STDOUT"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
+      item = config_add_schema_item(config , "STDERR"              , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
+      item = config_add_schema_item(config , "EXECUTABLE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
+      item = config_add_schema_item(config , "TARGET_FILE"         , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
+      item = config_add_schema_item(config , "ERROR_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
+      item = config_add_schema_item(config , "START_FILE"          , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 );
+      item = config_add_schema_item(config , "ENV"                 , false ); config_schema_item_set_argc_minmax(item  , 2 , 2 );
+      item = config_add_schema_item(config , "DEFAULT"             , false ); config_schema_item_set_argc_minmax(item  , 2 , 2 );
+      item = config_add_schema_item(config , "ARGLIST"             , false ); config_schema_item_set_argc_minmax(item  , 1 , CONFIG_DEFAULT_ARG_MAX );
+      item = config_add_schema_item(config , "MAX_RUNNING_MINUTES" , false ); config_schema_item_set_argc_minmax(item  , 1 , 1 ); config_schema_item_iset_type( item , 0 , CONFIG_INT );
     }
     config_add_alias(config , "EXECUTABLE" , "PORTABLE_EXE");
 

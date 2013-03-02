@@ -27,7 +27,7 @@ int main(int argc , char ** argv) {
   config_type * config = config_alloc();
   bool OK;
   config_schema_item_type * item = config_add_schema_item(config , "APPEND" , false );
-  config_schema_item_set_argc_minmax( item , 1 , 1 , 0 , NULL);
+  config_schema_item_set_argc_minmax( item , 1 , 1);
 
   OK = config_parse(config , config_file , "--" , NULL , NULL , false , true );
 

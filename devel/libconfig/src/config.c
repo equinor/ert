@@ -346,7 +346,8 @@ config_schema_item_type * config_add_schema_item(config_type * config ,
 
 config_schema_item_type * config_add_key_value( config_type * config , const char * key , bool required , config_item_types item_type) {
   config_schema_item_type * item = config_add_schema_item( config , key , required );
-  config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types  [1]) { item_type });
+  config_schema_item_set_argc_minmax( item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , item_type );
   return item;
 }
 
