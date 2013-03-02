@@ -313,23 +313,25 @@ void ert_report_list_add_config_items( config_type * config ) {
   config_schema_item_type * item;
   
   item = config_add_schema_item(config , REPORT_LIST_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config , REPORT_CONTEXT_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , 2 , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 2 , 2);
   
   item = config_add_schema_item(config , REPORT_PATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , 1);
 
   item = config_add_schema_item( config , REPORT_WELL_LIST_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
   
   item = config_add_schema_item( config , REPORT_GROUP_LIST_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item( config , REPORT_TIMEOUT_KEY , false );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_INT });
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_INT);
 
   item = config_add_schema_item( config , REPORT_LARGE_KEY , false );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_BOOL });
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_BOOL);
 }

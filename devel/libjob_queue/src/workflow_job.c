@@ -80,31 +80,35 @@ config_type * workflow_job_alloc_config() {
     config_schema_item_type * item;
   
     item = config_add_schema_item( config , MIN_ARG_KEY , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_INT});
+    config_schema_item_set_argc_minmax( item , 1 , 1 );
+    config_schema_item_iset_type( item , 0 , CONFIG_INT );
 
     item = config_add_schema_item( config , MAX_ARG_KEY , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_INT});
+    config_schema_item_set_argc_minmax( item , 1 , 1 );
+    config_schema_item_iset_type( item , 0 , CONFIG_INT );
 
     item = config_add_schema_item( config , ARG_TYPE_KEY , false );
-    config_schema_item_set_argc_minmax( item , 2 , 2 , 2 , (const config_item_types[2]) {CONFIG_INT , CONFIG_STRING});
+    config_schema_item_set_argc_minmax( item , 2 , 2 );
+    config_schema_item_iset_type( item , 0 , CONFIG_INT );
     config_schema_item_set_indexed_selection_set( item , 1 , 3 , (const char *[3]) {WORKFLOW_JOB_STRING_TYPE , WORKFLOW_JOB_INT_TYPE , WORKFLOW_JOB_FLOAT_TYPE});
 
     /*****************************************************************/
     item = config_add_schema_item( config , EXECUTABLE_KEY , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_PATH});
+    config_schema_item_set_argc_minmax( item , 1 , 1 );
+    config_schema_item_iset_type( item , 0 , CONFIG_PATH );
 
     /*---------------------------------------------------------------*/
     
     item = config_add_schema_item( config , FUNCTION_KEY , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_STRING});
+    config_schema_item_set_argc_minmax( item , 1 , 1);
 
     item = config_add_schema_item( config , MODULE_KEY , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_STRING});
+    config_schema_item_set_argc_minmax( item , 1 , 1);
     /*****************************************************************/
 
     item = config_add_schema_item( config , INTERNAL_KEY , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 1 , (const config_item_types[1]) {CONFIG_BOOL});     
-    
+    config_schema_item_set_argc_minmax( item , 1 , 1);
+    config_schema_item_iset_type( item , 0 , CONFIG_BOOL);
   }
   return config;
 }
@@ -121,10 +125,10 @@ void workflow_job_update_config_compiler( const workflow_job_type * workflow_job
      CONFIG_STRING values.
   */
   {
-    int argc_types = int_vector_size( workflow_job->arg_types );
-    config_item_types * arg_types = (config_item_types *) int_vector_get_ptr( workflow_job->arg_types );
-    
-    config_schema_item_set_argc_minmax( item , workflow_job->min_arg , workflow_job->max_arg , argc_types , arg_types);
+    int iarg;
+    config_schema_item_set_argc_minmax( item , workflow_job->min_arg , workflow_job->max_arg );
+    for (iarg = 0; iarg < int_vector_size( workflow_job->arg_types ); iarg++)
+      config_schema_item_iset_type( item , iarg , int_vector_iget( workflow_job->arg_types , iarg ));
   }
 }
 

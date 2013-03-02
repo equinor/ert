@@ -99,9 +99,7 @@ typedef enum {CONFIG_STRING        = 1,
   void                      config_schema_item_set_envvar_expansion( config_schema_item_type * item , bool expand_envvar );
   void                      config_schema_item_set_argc_minmax(config_schema_item_type * item , 
                                                                int argc_min , 
-                                                               int argc_max, 
-                                                               int type_map_size , 
-                                                               const config_item_types * type_map);
+                                                               int argc_max);
   void                      config_schema_item_assure_type(const config_schema_item_type * item , int index , int type_mask);
 
   int                       config_schema_item_num_required_children(const config_schema_item_type * item);
