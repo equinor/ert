@@ -673,7 +673,7 @@ void ecl_config_add_config_items( config_type * config ) {
   */
 
   item = config_add_schema_item( config , IGNORE_SCHEDULE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_BOOLEAN });
+  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_BOOL });
 
   item = config_add_schema_item(config , ECLBASE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);

@@ -113,7 +113,7 @@ const char * config_content_node_safe_iget(const config_content_node_type * node
 
 bool config_content_node_iget_as_bool(const config_content_node_type * node , int index) {
   bool value;
-  config_schema_item_assure_type(node->schema , index , CONFIG_BOOLEAN);
+  config_schema_item_assure_type(node->schema , index , CONFIG_BOOL);
   util_sscanf_bool( config_content_node_iget(node , index) , &value );
   return value;
 }

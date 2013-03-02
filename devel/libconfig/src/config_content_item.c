@@ -196,7 +196,7 @@ const char * config_content_item_iget(const config_content_item_type * item , in
 
 bool config_content_item_iget_as_bool(const config_content_item_type * item, int occurence , int index) {
   bool value;
-  config_schema_item_assure_type(item->schema , index , CONFIG_BOOLEAN);
+  config_schema_item_assure_type(item->schema , index , CONFIG_BOOL);
   util_sscanf_bool( config_content_item_iget(item , occurence ,index) , &value );
   return value;
 }

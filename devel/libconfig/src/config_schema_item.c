@@ -384,7 +384,7 @@ bool config_schema_item_validate_set(const config_schema_item_type * item , stri
             }
           }
           break;
-        case(CONFIG_BOOLEAN):
+        case(CONFIG_BOOL):
           if (!util_sscanf_bool( value , NULL )) {
             config_error_add( error_list , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
             OK = false;
@@ -444,7 +444,7 @@ void config_schema_item_set_argc_minmax(config_schema_item_type * item ,
                                         int argc_max, 
                                         int type_map_size , 
                                         const config_item_types * type_map) {
-
+  
   validate_set_argc_minmax(item->validate , argc_min , argc_max , type_map_size , type_map);
 
 }
