@@ -498,20 +498,20 @@ void analysis_config_add_config_items( config_type * config ) {
   
   config_add_key_value( config , ENKF_ALPHA_KEY              , false , CONFIG_FLOAT);
   config_add_key_value( config , STD_CUTOFF_KEY              , false , CONFIG_FLOAT);
-  config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , UPDATE_RESULTS_KEY          , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , SINGLE_NODE_UPDATE_KEY      , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , ENKF_PEN_PRESS_KEY          , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , ENKF_SCALING_KEY            , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , ENKF_KERNEL_REG_KEY         , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_MERGE_OBSERVATIONS_KEY , false , CONFIG_BOOL);
+  config_add_key_value( config , UPDATE_RESULTS_KEY          , false , CONFIG_BOOL);
+  config_add_key_value( config , SINGLE_NODE_UPDATE_KEY      , false , CONFIG_BOOL);
+  config_add_key_value( config , ENKF_CROSS_VALIDATION_KEY   , false , CONFIG_BOOL);
+  config_add_key_value( config , ENKF_LOCAL_CV_KEY           , false , CONFIG_BOOL);
+  config_add_key_value( config , ENKF_PEN_PRESS_KEY          , false , CONFIG_BOOL);
+  config_add_key_value( config , ENKF_SCALING_KEY            , false , CONFIG_BOOL);
+  config_add_key_value( config , ENKF_KERNEL_REG_KEY         , false , CONFIG_BOOL);
   config_add_key_value( config , ENKF_KERNEL_FUNC_KEY        , false , CONFIG_INT);
   config_add_key_value( config , ENKF_KERNEL_PARAM_KEY       , false , CONFIG_INT);
-  config_add_key_value( config , ENKF_FORCE_NCOMP_KEY        , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_FORCE_NCOMP_KEY        , false , CONFIG_BOOL);
   config_add_key_value( config , ENKF_NCOMP_KEY              , false , CONFIG_INT);
   config_add_key_value( config , ENKF_CV_FOLDS_KEY           , false , CONFIG_INT);
-  config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOL);
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
   config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
 

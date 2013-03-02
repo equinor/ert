@@ -33,7 +33,7 @@ int main(int argc , char ** argv) {
   bool OK;
   {
     config_schema_item_type * item  = config_add_schema_item(config , "TYPE_KEY" , false );
-    config_schema_item_set_argc_minmax( item , 4 , 4 , 4 , (const config_item_types [4]) {CONFIG_INT , CONFIG_FLOAT , CONFIG_BOOLEAN , CONFIG_STRING });
+    config_schema_item_set_argc_minmax( item , 4 , 4 , 4 , (const config_item_types [4]) {CONFIG_INT , CONFIG_FLOAT , CONFIG_BOOL , CONFIG_STRING });
       
     item = config_add_schema_item( config , "SHORT_KEY" , false );
     config_schema_item_set_argc_minmax( item , 1 , 1 , 0 , NULL );

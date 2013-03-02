@@ -230,7 +230,7 @@ void plot_config_add_config_items( config_type * config ) {
   config_add_key_value(config , PLOT_PATH_KEY         , false , CONFIG_STRING);
   config_add_key_value(config , PLOT_REFCASE_KEY      , false , CONFIG_STRING);
   config_add_key_value(config , IMAGE_VIEWER_KEY      , false , CONFIG_PATH);
-  config_add_key_value(config , PLOT_ERRORBAR_KEY     , false , CONFIG_BOOLEAN);
+  config_add_key_value(config , PLOT_ERRORBAR_KEY     , false , CONFIG_BOOL);
   config_add_key_value(config , PLOT_ERRORBAR_MAX_KEY , false , CONFIG_INT);
 
   {

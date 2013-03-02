@@ -1991,7 +1991,7 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   item = config_add_schema_item(config , KEEP_RUNPATH_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);
 
-  config_add_key_value(config , PRE_CLEAR_RUNPATH_KEY , false , CONFIG_BOOLEAN);
+  config_add_key_value(config , PRE_CLEAR_RUNPATH_KEY , false , CONFIG_BOOL);
 
   item = config_add_schema_item(config , DELETE_RUNPATH_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL);

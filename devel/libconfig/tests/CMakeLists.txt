@@ -29,6 +29,10 @@ add_executable( config_error config_error.c)
 target_link_libraries( config_error config)
 add_test( config_error ${EXECUTABLE_OUTPUT_PATH}/config_error )
 
+add_executable( config_schema_item config_schema_item.c)
+target_link_libraries( config_schema_item config)
+add_test( config_schema_item ${EXECUTABLE_OUTPUT_PATH}/config_schema_item )
+
 
 add_test( config_typeOK        ${EXECUTABLE_OUTPUT_PATH}/config_typeOK       ${CMAKE_CURRENT_SOURCE_DIR}/data/type_testOK )
 add_test( config_typeFail      ${EXECUTABLE_OUTPUT_PATH}/config_typeFail     ${CMAKE_CURRENT_SOURCE_DIR}/data/type_testFail )
