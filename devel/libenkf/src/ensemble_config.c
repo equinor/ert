@@ -291,7 +291,7 @@ void ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config) {
 void ensemble_config_add_GEN_PARAM_config_item( config_type * config ) {
   config_schema_item_type * item;
   item = config_add_schema_item(config , GEN_PARAM_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 5 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 5 , CONFIG_DEFAULT_ARG_MAX);
 }
 
 
@@ -304,10 +304,11 @@ void ensemble_config_add_config_items(config_type * config) {
   */
       
   item = config_add_schema_item(config , "HAVANA_FAULT" , false  );
-  config_schema_item_set_argc_minmax(item , 2 , 2 ,  0 , NULL );
+  config_schema_item_set_argc_minmax(item , 2 , 2);
 
   item = config_add_schema_item(config , "MULTFLT" , false  );
-  config_schema_item_set_argc_minmax(item , 3 , 3 ,  3 , (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_PATH});
+  config_schema_item_set_argc_minmax(item , 3 , 3 );
+  config_schema_item_iset_type( item , 2 , CONFIG_EXISTING_PATH );
 
 
   /*****************************************************************/
@@ -315,25 +316,32 @@ void ensemble_config_add_config_items(config_type * config) {
   ensemble_config_add_GEN_PARAM_config_item( config );
   
   item = config_add_schema_item(config , GEN_KW_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 4 , 6 ,  6 , (const config_item_types [6]) { CONFIG_STRING , CONFIG_EXISTING_PATH , CONFIG_STRING , CONFIG_EXISTING_PATH , CONFIG_STRING , CONFIG_STRING});
+  config_schema_item_set_argc_minmax(item , 4 , 6);
+  config_schema_item_iset_type( item , 1 , CONFIG_EXISTING_PATH );
+  config_schema_item_iset_type( item , 3 , CONFIG_EXISTING_PATH );
   
+  
+
   item = config_add_key_value( config , GEN_KW_TAG_FORMAT_KEY , false , CONFIG_STRING);
-  
   item = config_add_schema_item(config , SCHEDULE_PREDICTION_FILE_KEY , false  );
   /* scedhule_prediction_file   filename  <parameters:> <init_files:> */
-  config_schema_item_set_argc_minmax(item , 1 , 3 ,  3 , (const config_item_types [3]) { CONFIG_EXISTING_PATH , CONFIG_STRING , CONFIG_STRING});
+  config_schema_item_set_argc_minmax(item , 1 , 3 );
+  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+  
+
+
   
   item = config_add_schema_item(config , GEN_DATA_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config , SUMMARY_KEY , false  );   /* can have several summary keys on each line. */
-  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX);
 
   item = config_add_schema_item(config , CONTAINER_KEY , false  );   /* can have several summary keys on each line. */
-  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX);
   
   item = config_add_schema_item( config , SURFACE_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 4 , 5 ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 4 , 5 );
   /* 
      the way config info is entered for fields is unfortunate because
      it is difficult/impossible to let the config system handle run
@@ -341,7 +349,7 @@ void ensemble_config_add_config_items(config_type * config) {
   */
   
   item = config_add_schema_item(config , FIELD_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX ,  0 , NULL);
+  config_schema_item_set_argc_minmax(item , 2 , CONFIG_DEFAULT_ARG_MAX);
   config_schema_item_add_required_children(item , GRID_KEY);   /* if you are using a field - you must have a grid. */
 }
 

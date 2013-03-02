@@ -518,14 +518,14 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ANALYSIS_SELECT_KEY         , false , CONFIG_STRING);
 
   item = config_add_schema_item( config , ANALYSIS_LOAD_KEY , false  );
-  config_schema_item_set_argc_minmax( item , 2 , 2 , 0 , NULL );  
+  config_schema_item_set_argc_minmax( item , 2 , 2);
 
   item = config_add_schema_item( config , ANALYSIS_COPY_KEY , false  );
-  config_schema_item_set_argc_minmax( item , 2 , 2 , 0 , NULL );  
+  config_schema_item_set_argc_minmax( item , 2 , 2);
   
 
   item = config_add_schema_item( config , ANALYSIS_SET_VAR_KEY , false  );
-  config_schema_item_set_argc_minmax( item , 3 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL );
+  config_schema_item_set_argc_minmax( item , 3 , CONFIG_DEFAULT_ARG_MAX);
   analysis_iter_config_add_config_items( config );
 }
 

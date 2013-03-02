@@ -183,13 +183,16 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_typ
 
 void ert_workflow_list_add_config_items( config_type * config ) {
   config_schema_item_type * item = config_add_schema_item( config , WORKFLOW_JOB_DIRECTORY_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_PATH } );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 
   item = config_add_schema_item( config , LOAD_WORKFLOW_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 2 , 2 ,  (const config_item_types [2]) { CONFIG_EXISTING_PATH , CONFIG_STRING });
+  config_schema_item_set_argc_minmax(item , 1 , 2 );
+  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
   
   item = config_add_schema_item( config , LOAD_WORKFLOW_JOB_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 2 , 2 ,  (const config_item_types [2]) { CONFIG_EXISTING_PATH , CONFIG_STRING});
+  config_schema_item_set_argc_minmax(item , 1 , 2 );
+  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 }
 
 

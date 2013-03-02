@@ -142,7 +142,7 @@ static config_item_types validate_iget_type( const validate_type * validate , in
 }
 
 
-static void validate_set_argc_minmax(validate_type * validate , int argc_min , int argc_max, int type_map_size , const config_item_types * type_map) {
+static void validate_set_argc_minmax(validate_type * validate , int argc_min , int argc_max) {
   if (validate->argc_min != CONFIG_DEFAULT_ARG_MIN)
     util_abort("%s: sorry - current implementation does not allow repeated calls to: %s \n",__func__ , __func__);
   
@@ -168,14 +168,6 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
       for (int iarg=0; iarg < internal_type_size; iarg++)
         validate->indexed_selection_set[iarg] = NULL;
     }
-  }
-  
-  
-  if (type_map != NULL) {
-    int i;
-    for (i=0; i < type_map_size; i++)
-      validate_iset_type( validate , i , type_map[i]);
-    
   }
 }
 
@@ -428,11 +420,9 @@ void config_schema_item_set_required_children_on_value(config_schema_item_type *
 
 void config_schema_item_set_argc_minmax(config_schema_item_type * item , 
                                         int argc_min , 
-                                        int argc_max, 
-                                        int type_map_size , 
-                                        const config_item_types * type_map) {
+                                        int argc_max) {
   
-  validate_set_argc_minmax(item->validate , argc_min , argc_max , type_map_size , type_map);
+  validate_set_argc_minmax(item->validate , argc_min , argc_max);
 
 }
 

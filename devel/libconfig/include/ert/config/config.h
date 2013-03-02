@@ -62,7 +62,8 @@ typedef struct config_struct              config_type;
   char             * config_alloc_joined_string(const config_type * , const char * , const char * );
   
   void               config_add_define( config_type * config , const char * key , const char * value );
-  
+
+  /*  
   bool               config_schema_item_is_set(const config_schema_item_type * );
   void               config_schema_item_set_argc_minmax(config_schema_item_type * , int  , int , int type_map_size , const config_item_types * );
   void               config_schema_item_set_common_selection_set(config_schema_item_type * , int argc , const char ** argv);
@@ -70,7 +71,8 @@ typedef struct config_struct              config_type;
   void               config_schema_item_set_required_children(config_schema_item_type * , stringlist_type * );
   void               config_schema_item_set_required_children_on_value(config_schema_item_type * , const char * , stringlist_type * );
   void               config_schema_item_add_required_children(config_schema_item_type * item , const char * child_key);
-  
+  */
+
   config_schema_item_type * config_add_schema_item(config_type * config, 
                                      const char * kw,
                                      bool required);

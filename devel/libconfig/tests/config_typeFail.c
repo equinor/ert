@@ -34,13 +34,16 @@ int main(int argc , char ** argv) {
   bool OK;
   {
     config_schema_item_type * item  = config_add_schema_item(config , "TYPES_KEY" , false );
-    config_schema_item_set_argc_minmax( item , 4 , 4 , 4 , (const config_item_types [4]) {CONFIG_INT , CONFIG_FLOAT , CONFIG_BOOL , CONFIG_STRING });
+    config_schema_item_set_argc_minmax( item , 4 , 4 ); 
+    config_schema_item_iset_type( item , 0 , CONFIG_INT );
+    config_schema_item_iset_type( item , 1 , CONFIG_FLOAT );
+    config_schema_item_iset_type( item , 2 , CONFIG_BOOL );
       
     item = config_add_schema_item( config , "SHORT_KEY" , false );
-    config_schema_item_set_argc_minmax( item , 1 , 1 , 0 , NULL );
+    config_schema_item_set_argc_minmax( item , 1 , 1 );
     
     item = config_add_schema_item( config , "LONG_KEY" , false );
-    config_schema_item_set_argc_minmax( item , 3 , CONFIG_DEFAULT_ARG_MAX , 0 , NULL );
+    config_schema_item_set_argc_minmax( item , 3 , CONFIG_DEFAULT_ARG_MAX);
   }
   OK = config_parse(config , config_file , "--" , NULL , NULL , false , true );
   

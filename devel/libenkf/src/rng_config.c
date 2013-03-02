@@ -121,10 +121,12 @@ void rng_config_add_config_items( config_type * config ) {
   config_schema_item_type * item;
 
   item= config_add_schema_item( config , STORE_SEED_KEY , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_PATH});
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_PATH );
   
   item = config_add_schema_item( config , LOAD_SEED_KEY , false );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_PATH});
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_PATH );
 }
 
 

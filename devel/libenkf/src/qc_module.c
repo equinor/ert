@@ -149,10 +149,11 @@ void qc_module_add_config_items( config_type * config ) {
   config_schema_item_type * item;
   
   item = config_add_schema_item( config , QC_PATH_KEY , false  );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
 
   item = config_add_schema_item( config , QC_WORKFLOW_KEY , false );
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_PATH });
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 }
 
 

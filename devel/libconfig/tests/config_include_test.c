@@ -99,19 +99,24 @@ int main(int argc , char ** argv) {
     config_schema_item_type * schema_item;
     
     schema_item = config_add_schema_item( config , "PATH0" , true );
-    config_schema_item_set_argc_minmax( schema_item , 1 , 1 , 1 , (const config_item_types  [1]) { CONFIG_PATH });
+    config_schema_item_set_argc_minmax( schema_item , 1 , 1 );
+    config_schema_item_iset_type( schema_item , 0 , CONFIG_PATH );
 
     schema_item = config_add_schema_item( config , "PATH1" , true );
-    config_schema_item_set_argc_minmax( schema_item , 1 , 1 , 1 , (const config_item_types  [1]) { CONFIG_PATH });
+    config_schema_item_set_argc_minmax( schema_item , 1 , 1 );
+    config_schema_item_iset_type( schema_item , 0 , CONFIG_PATH );
 
     schema_item = config_add_schema_item( config , "PATH2" , true );
-    config_schema_item_set_argc_minmax( schema_item , 1 , 1 , 1 , (const config_item_types  [1]) { CONFIG_PATH });
+    config_schema_item_set_argc_minmax( schema_item , 1 , 1 );
+    config_schema_item_iset_type( schema_item , 0 , CONFIG_PATH );
 
     schema_item = config_add_schema_item( config , "PATH3" , true );
-    config_schema_item_set_argc_minmax( schema_item , 1 , 1 , 1 , (const config_item_types  [1]) { CONFIG_PATH });
+    config_schema_item_set_argc_minmax( schema_item , 1 , 1 );
+    config_schema_item_iset_type( schema_item , 0 , CONFIG_PATH );
 
     schema_item = config_add_schema_item( config , "PATH4" , true );
-    config_schema_item_set_argc_minmax( schema_item , 1 , 1 , 1 , (const config_item_types  [1]) { CONFIG_PATH });
+    config_schema_item_set_argc_minmax( schema_item , 1 , 1 );
+    config_schema_item_iset_type( schema_item , 0 , CONFIG_PATH );
   }
   
   parse_test( config , abs_path , config_file );        
