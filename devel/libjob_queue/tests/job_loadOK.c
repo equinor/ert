@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2012  Statoil ASA, Norway. 
     
-   The file 'load_internal.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'job_loadOK.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -20,17 +20,18 @@
 
 #include <ert/config/config.h>
 
-#include <ert/job_queue/ext_cmd.h>
+#include <ert/job_queue/workflow_job.h>
 
 
 
-bool loadConfig(config_type * config , const char * config_file) {
+bool loadConfig(config_type * config , const char * config_file , config_type * config_compiler) {
   bool OK = false;
-  ext_cmd_type * cmd = ext_cmd_config_alloc( config , config_file);
+  workflow_job_type * cmd = workflow_job_config_alloc( "NAME" , config , config_file);
   
   if (cmd != NULL) {
     OK = true;
-    ext_cmd_free( cmd );
+    workflow_job_update_config_compiler( cmd , config_compiler );
+    workflow_job_free( cmd );
   } 
   
   return OK;
@@ -41,16 +42,18 @@ bool loadConfig(config_type * config , const char * config_file) {
 int main( int argc , char ** argv) {
   int status = 0;
   {
-    config_type * config = ext_cmd_alloc_config();
+    config_type * config = workflow_job_alloc_config();
+    config_type * config_compiler = config_alloc();
     int iarg;
     bool OK = true;
 
     for (iarg = 1; iarg < argc; iarg++) 
-      OK = OK && loadConfig( config , argv[iarg]); 
+      OK = OK && loadConfig(  config , argv[iarg] , config_compiler); 
     
     if (!OK)
       status = 1;
     
+    config_free(config_compiler);
     config_free(config);
   }
   exit( status );

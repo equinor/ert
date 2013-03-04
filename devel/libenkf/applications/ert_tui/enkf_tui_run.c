@@ -35,6 +35,8 @@
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/enkf_analysis.h>
 #include <ert/enkf/ecl_config.h>
+#include <ert/enkf/analysis_config.h>
+#include <ert/enkf/analysis_iter_config.h>
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
@@ -43,7 +45,7 @@
 #include <enkf_tui_help.h>
 
 /*
-Set runpath runtime - disabled.
+  Set runpath runtime - disabled.
 
 static void enkf_tui_run_set_runpath(void * arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
@@ -113,6 +115,7 @@ void enkf_tui_run_smoother(void * arg) {
 }
 
 
+
 void enkf_tui_run_iterated_ES(void * enkf_main) {
   const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   const int last_report = enkf_main_get_history_length( enkf_main );
@@ -121,13 +124,14 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
     const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
     const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+    analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
     analysis_module_type * module = analysis_config_get_active_module( analysis_config );
     int step1 = 0;
     int step2 ;
     int_vector_type * step_list = int_vector_alloc(0,0);
     bool_vector_type * iactive = bool_vector_alloc(0 , true);
     int iter  = 0;
-    int num_iter = 16;
+    int num_iter = analysis_iter_config_get_num_iterations( iter_config );
     stringlist_type * node_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER );
 
     if (ecl_config_has_schedule( ecl_config ))
@@ -142,24 +146,25 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
     bool_vector_iset( iactive , ens_size - 1 , true );
     
     while (true) {
-      /* {
-         char * user = getenv("USER");
-         char * runpath_fmt = util_alloc_sprintf("/scratch/ert/%s/iteratedES/%d/run%%d" , user , iter);
-         model_config_set_runpath_fmt( model_config , runpath_fmt );
-         free( runpath_fmt );
-         }
-      */
-      
-      char * target_fs_name = util_alloc_sprintf("smoother-%d" , iter);
-      enkf_fs_type * target_fs = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
-      enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST);
-      enkf_main_smoother_update(enkf_main , step_list , target_fs);
       {
-        
-        
+        const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iter);
+        if (runpath_fmt != NULL) {
+          char * runpath_key = util_alloc_sprintf( "runpath-%d" , iter);
+          model_config_add_runpath( model_config , runpath_key , runpath_fmt);
+          model_config_select_runpath( model_config , runpath_key );
+          free( runpath_key );
+        }
+      }
+      
+      enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST);
+      {
+        char * target_fs_name    = analysis_iter_config_iget_case( iter_config , iter );
+        enkf_fs_type * target_fs = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
+        enkf_main_smoother_update(enkf_main , step_list , target_fs);
+          
         enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
-                                 step2 , 
+                                 0 ,   // Smoother update will write on step 0
                                  ANALYZED , 
                                  target_fs, 
                                  step1 , 
@@ -168,11 +173,12 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
                                  NULL , 
                                  node_list );
         
-        enkf_main_select_fs(enkf_main , target_fs );
+        
+        enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+        free( target_fs_name );
       }
-      
-      free( target_fs_name );
-      iter= analysis_module_get_int(module, "ITER");
+      //iter = analysis_module_get_int(module, "ITER");
+      iter++;
       if (iter == num_iter)
         break;
     }
@@ -300,13 +306,28 @@ void enkf_tui_run_manual_load__( void * arg ) {
         arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */                  
         arg_pack_append_owned_ptr( arg_pack , stringlist_alloc_new() , stringlist_free__);  /* 6: List of interactive mode messages. */
         thread_pool_add_job( tp , enkf_state_internalize_results_mt , arg_pack);
+        
       }
     }
     
     thread_pool_join( tp );
     thread_pool_free( tp );
     printf("\n");
-    
+
+    {
+      qc_module_type * qc_module = enkf_main_get_qc_module( enkf_main );
+      runpath_list_type * runpath_list = qc_module_get_runpath_list( qc_module );
+
+      for (iens = 0; iens < ens_size; iens++) {
+        if (bool_vector_iget(iactive , iens)) {
+          const enkf_state_type * state = enkf_main_iget_state( enkf_main , iens );
+          runpath_list_add( runpath_list , iens , enkf_state_get_run_path( state ) , enkf_state_get_eclbase( state ));
+        }
+      }
+
+      qc_module_export_runpath_list( qc_module );
+    }
+
     for (iens = 0; iens < ens_size; iens++) {
       if (bool_vector_iget(iactive , iens)) {
         stringlist_type * msg_list = arg_pack_iget_ptr( arg_list[iens] , 6 );
@@ -326,6 +347,9 @@ void enkf_tui_run_manual_load__( void * arg ) {
 
 
 
+
+
+/*****************************************************************/
 
 void enkf_tui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );

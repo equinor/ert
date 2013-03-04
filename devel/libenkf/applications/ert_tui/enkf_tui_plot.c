@@ -122,14 +122,14 @@ void enkf_tui_plot_PC( enkf_main_type * enkf_main , const char * plot_name , con
 
 
 
-static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main , 
-                                     const enkf_config_node_type * config_node , 
-                                     const char * user_key  ,
-                                     const char * key_index ,
-                                     int step1 , int step2  , 
-                                     bool prediction_mode   ,
-                                     int iens1 , int iens2  , 
-                                     state_enum plot_state) {
+void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main , 
+                              const enkf_config_node_type * config_node , 
+                              const char * user_key  ,
+                              const char * key_index ,
+                              int step1 , int step2  , 
+                              bool prediction_mode   ,
+                              int iens1 , int iens2  , 
+                              state_enum plot_state) {
                                      
   enkf_fs_type               * fs           = enkf_main_get_fs(enkf_main);
   enkf_obs_type              * enkf_obs     = enkf_main_get_obs( enkf_main );
@@ -750,6 +750,7 @@ static void * enkf_tui_plot_ensemble_mt( void * void_arg ) {
 }
     
 
+
 void enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 , int iens2 , int step1 , int step2 , bool prediction_mode) {
   /*
     This code is prepared for multithreaded creation of plots;
@@ -802,10 +803,9 @@ void enkf_tui_plot_all_summary__( enkf_main_type * enkf_main , int iens1 , int i
 
 
 
+
 void enkf_tui_plot_all_summary(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main ); 
   int iens1 , iens2 , step1 , step2;   
   bool prediction_mode;
   
@@ -819,12 +819,14 @@ void enkf_tui_plot_all_summary(void * arg) {
     if(step1 != -2)
       step2 = enkf_tui_util_scanf_int_with_default_return_to_menu( "Stop plotting at report step [Enter: default: everything] (M: return to menu)" , PROMPT_LEN , &prediction_mode);
   }
+  
   if (step1 != -2 && step2 != -2){
     enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d) [default: all]" , enkf_main_get_ensemble_size( enkf_main ) , PROMPT_LEN , &iens1 , &iens2);
-    enkf_tui_plot_all_summary__( enkf_main , iens1 , iens2 , step1 , step2 , prediction_mode);
+    enkf_tui_plot_all_summary__( enkf_main , iens1 , iens2 , step1 , step2 , prediction_mode );
   }
 }
-
+    
+    
           
 
 
