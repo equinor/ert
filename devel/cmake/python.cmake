@@ -3,14 +3,13 @@ macro(add_python_target tgt  PYTHON_INSTALL_PATH ARGN)
   foreach(file ${ARGN})
     set(OUT ${CMAKE_CURRENT_BINARY_DIR}/${file}.pyc)
     list(APPEND OUT_FILES ${OUT})
+#------------------------------------------------------    
     ADD_CUSTOM_COMMAND(  
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file}.pyc
-      COMMAND python -m py_compile 
-      ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.py
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND mv 
-      ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.pyc ${CMAKE_CURRENT_BINARY_DIR}
+      OUTPUT ${OUT}
+      COMMAND ${PROJECT_SOURCE_DIR}/cmake/cmake_pyc.py
+      ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PATH}
     )
+#------------------------------------------------------    
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${file}.pyc DESTINATION  ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTALL_PATH})
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${file}.py  DESTINATION  ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTALL_PATH})
   endforeach(file)
