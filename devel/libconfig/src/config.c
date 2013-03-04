@@ -1026,4 +1026,3 @@ void config_install_message(config_type * config , const char * kw, const char *
 #include "config_get.c"
 
 
-
