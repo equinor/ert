@@ -66,7 +66,8 @@ class StringListTest( unittest.TestCase ):
         sum = ecl.EclSum( case )
         wells = sum.wells()
         self.assertTrue( approx_equalv( wells , ['OP_1','OP_2','OP_3','OP_4','OP_5','WI_1','WI_2','WI_3']))
-
+        self.assertTrue( isinstance( wells , StringList ))
+        
 
 
 
