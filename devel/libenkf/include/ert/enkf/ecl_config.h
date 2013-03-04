@@ -35,6 +35,7 @@ extern "C" {
 
 
   typedef struct ecl_config_struct ecl_config_type;
+  void                  ecl_config_static_kw_init( ecl_config_type * ecl_config , const config_type * config );
   bool                  ecl_config_active( const ecl_config_type * config );
   time_t                ecl_config_get_end_date( const ecl_config_type * ecl_config );
   time_t                ecl_config_get_start_date( const ecl_config_type * ecl_config );
@@ -71,7 +72,7 @@ extern "C" {
   const char          * ecl_config_get_eclbase( const ecl_config_type * ecl_config );
   const char          * ecl_config_get_schedule_file( const ecl_config_type * ecl_config );
   void                  ecl_config_set_schedule_file( ecl_config_type * ecl_config , const char * schedule_file );
-  void                  ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase);
+  bool                  ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase);
   const char          * ecl_config_get_refcase_name( const ecl_config_type * ecl_config);
   void                  ecl_config_clear_static_kw( ecl_config_type * ecl_config );
   stringlist_type     * ecl_config_get_static_kw_list( const ecl_config_type * ecl_config );

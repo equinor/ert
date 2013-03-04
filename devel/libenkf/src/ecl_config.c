@@ -29,6 +29,7 @@
 #include <ert/sched/sched_file.h>
 
 #include <ert/config/config.h>
+#include <ert/config/config_schema_item.h>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
@@ -264,7 +265,7 @@ const char * ecl_config_get_eclbase( const ecl_config_type * ecl_config ) {
    Can be called with @refcase == NULL - which amounts to clearing the
    current refcase. 
 */
-void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase ){ 
+bool ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase ){ 
   if (ecl_config->refcase != NULL) {
     if (refcase == NULL) {    /* Clear the refcase */
       ecl_sum_free( ecl_config->refcase );
@@ -278,6 +279,11 @@ void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcas
   } else 
     if (refcase != NULL)
       ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , SUMMARY_KEY_JOIN_STRING );
+  
+  if (refcase == NULL)
+    return true;
+  else
+    return (ecl_config->refcase == NULL) ? false : true;
 }
 
 
@@ -442,10 +448,13 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
                                                config_iget_as_int(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , iocc , 1));
   }
   
-
-  if (config_item_set( config , REFCASE_KEY)) 
-    ecl_config_load_refcase( ecl_config , config_get_value( config , REFCASE_KEY ));
-
+  
+  if (config_item_set( config , REFCASE_KEY)) {
+    const char * refcase_path = config_get_value( config , REFCASE_KEY );
+    if (!ecl_config_load_refcase( ecl_config , refcase_path))
+      fprintf(stderr,"** Warning: loading refcase:%s failed \n", refcase_path);
+  }
+  
   if (config_item_set(config , INIT_SECTION_KEY)) 
     ecl_config_set_init_section( ecl_config , config_get_value( config , INIT_SECTION_KEY ));
   else 
@@ -640,44 +649,71 @@ bool ecl_config_get_unified_restart(const ecl_config_type * ecl_config)  { retur
 bool ecl_config_get_unified_summary(const ecl_config_type * ecl_config)  { return ecl_io_config_get_unified_summary( ecl_config->io_config ); }
 
 
+void ecl_config_static_kw_init( ecl_config_type * ecl_config , const config_type * config ) {
+  const config_content_item_type * content_item = config_get_content_item( config , STATIC_KW_KEY );
+  if (content_item != NULL) {
+    int j;
+    for (j=0; j < config_content_item_get_size( content_item ); j++) {
+      const config_content_node_type * content_node = config_content_item_iget_node( content_item , j);
+      int k;
+      for (k = 0; k < config_content_node_get_size( content_node ); k++)
+        ecl_config_add_static_kw(ecl_config , config_content_node_iget( content_node , k ));
+    }
+  }
+}
+
 
 void ecl_config_add_config_items( config_type * config ) {
   config_schema_item_type * item;
 
-  item = config_add_schema_item(config , SCHEDULE_FILE_KEY , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , SCHEDULE_FILE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
   /*
     Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
     GEN_KW is added in ensemble_config.c
   */
 
-  item = config_add_schema_item( config , IGNORE_SCHEDULE_KEY , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) { CONFIG_BOOLEAN });
+  item = config_add_schema_item( config , IGNORE_SCHEDULE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_BOOL);
 
-  item = config_add_schema_item(config , ECLBASE_KEY , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL);
-
-  item = config_add_schema_item(config , DATA_FILE_KEY , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-  item = config_add_schema_item(config , STATIC_KW_KEY , false , true);
-  config_schema_item_set_argc_minmax(item , 1 , -1 , 0 , NULL);
-
-  item = config_add_schema_item(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , false , true);
-  config_schema_item_set_argc_minmax(item , 2 , 2 , 2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_INT});
-
-  item = config_add_schema_item(config , REFCASE_KEY , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , NULL );
   
-  item = config_add_schema_item(config , GRID_KEY , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  item = config_add_schema_item(config , ECLBASE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1);
+
+
+  item = config_add_schema_item(config , DATA_FILE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+
+
+  item = config_add_schema_item(config , STATIC_KW_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , CONFIG_DEFAULT_ARG_MAX );
   
-  item = config_add_schema_item(config , INIT_SECTION_KEY , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
+
+  item = config_add_schema_item(config , ADD_FIXED_LENGTH_SCHEDULE_KW_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 2 , 2 );
+  config_schema_item_iset_type( item , 1 , CONFIG_INT );
+  
+
+  item = config_add_schema_item(config , REFCASE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  
+  
+  item = config_add_schema_item(config , GRID_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+
+  
+  item = config_add_schema_item(config , INIT_SECTION_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_PATH );
   config_add_alias(config , INIT_SECTION_KEY , "EQUIL_INIT_FILE");
   
-  item = config_add_schema_item(config , END_DATE_KEY , false , false);
-  config_schema_item_set_argc_minmax(item , 1 , 1 , 0 , NULL );
+
+  item = config_add_schema_item(config , END_DATE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
 }
 
 
@@ -752,5 +788,4 @@ void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stre
   
   
   fprintf(stream , "\n\n");
-  
 }

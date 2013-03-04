@@ -35,16 +35,13 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 if (MSVC)
-   set(SHARED_LIB OFF)
+   set( LIBRARY_TYPE STATIC )
+   set( SHARED_LIB OFF )
 else()
-   option( SHARED_LIB "Build shared libraries" ON)
+   set( LIBRARY_TYPE SHARED )
+   set( SHARED_LIB ON )
 endif()
 
-if (SHARED_LIB)
-   set( LIBRARY_TYPE SHARED )
-else()
-   set( LIBRARY_TYPE STATIC )
-endif()     
 
 
 
@@ -84,10 +81,6 @@ endif()
 
 include_directories( ${PROJECT_SOURCE_DIR}/libecl/include )
 add_subdirectory( libecl )
-
-include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )
-add_subdirectory( libecl_well )
-
 
 #-----------------------------------------------------------------
 if (BUILD_ERT)

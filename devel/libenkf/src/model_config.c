@@ -281,6 +281,7 @@ void model_config_select_refcase_history( model_config_type * model_config , con
     util_abort("%s: internal error - trying to load history from REFCASE - but no REFCASE has been loaded.\n",__func__);
 }
 
+
 int model_config_get_max_internal_submit( const model_config_type * config ) {
   return config->max_internal_submit;
 }
@@ -312,11 +313,12 @@ model_config_type * model_config_alloc_empty() {
   model_config->select_case               = NULL;    
   model_config->history                   = NULL;
   model_config->jobname_fmt               = NULL;
+  model_config->forward_model             = NULL;
   model_config->internalize_state         = bool_vector_alloc( 0 , false );
   model_config->__load_state              = bool_vector_alloc( 0 , false ); 
   model_config->history_source            = HISTORY_SOURCE_INVALID;
   model_config->runpath_map               = hash_alloc(); 
-  
+
   model_config_set_enspath( model_config        , DEFAULT_ENSPATH );
   model_config_set_rftpath( model_config        , DEFAULT_RFTPATH );
   model_config_set_dbase_type( model_config     , DEFAULT_DBASE_TYPE );
@@ -336,8 +338,8 @@ void model_config_init(model_config_type * model_config ,
                        int last_history_restart , 
                        const sched_file_type * sched_file , 
                        const ecl_sum_type * refcase) {
-
-  model_config->forward_model             = forward_model_alloc(  joblist );
+  
+  model_config->forward_model = forward_model_alloc(  joblist );
   model_config_set_refcase( model_config , refcase );
   
 
@@ -446,9 +448,13 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->enkf_sched_file );
   util_safe_free( model_config->select_case );
   util_safe_free( model_config->case_table_file );
+
   if (model_config->history != NULL)
     history_free(model_config->history);
-  forward_model_free(model_config->forward_model);
+
+  if (model_config->forward_model != NULL)
+    forward_model_free(model_config->forward_model);
+
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_state);
   if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
