@@ -151,7 +151,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   bool_vector_type * has_data = bool_vector_alloc( 0 , false );
   int     iens , step;
   bool plot_refcase = true;
-  stringlist_type * reflist;
   /*
   {
     enkf_plot_data_type * plot_data = enkf_main_alloc_plot_data( enkf_main );
@@ -172,12 +171,8 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       plot_refcase = false;
     }
     else{
-      reflist = stringlist_alloc_new();
-      stringlist_append_copy(reflist,data_file);
+      plot_config_add_refcase_to_list(plot_config, data_file);
     }
-  }
-  else{
-    reflist = plot_config_refcase_fscanf(refcase_list);
   }
   
   if (plot_dates)
@@ -438,16 +433,16 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   /*REFCASE PLOTTING*/
 
   if(plot_refcase){
-    for(int iref=0; iref<stringlist_get_size(reflist);iref++){
-      if( util_file_exists( stringlist_iget(reflist, iref ) )){
-	double_vector_type * refcase_value = double_vector_alloc( 0 , 0 );
-	double_vector_type * refcase_time  = double_vector_alloc( 0 , 0 );
-	char * refcase_label = util_alloc_sprintf("Refcase%d" , iref);
-	plot_dataset_type  * d             = plot_alloc_new_dataset( plot , refcase_label , PLOT_XY );
-	plot_dataset_set_style( d , LINE );
-	plot_dataset_set_line_color( d , iref+1 );
-	ecl_sum_type *ecl_sum;
-	ecl_sum = ecl_sum_fread_alloc_case(stringlist_iget(reflist, iref), SUMMARY_KEY_JOIN_STRING);
+    ecl_sum_type * ecl_sum;
+    for(int iref=0; iref<plot_config_get_num_refcase(plot_config);iref++){
+      double_vector_type * refcase_value = double_vector_alloc( 0 , 0 );
+      double_vector_type * refcase_time  = double_vector_alloc( 0 , 0 );
+      char * refcase_label = util_alloc_sprintf("Refcase%d" , iref);
+      plot_dataset_type  * d             = plot_alloc_new_dataset( plot , refcase_label , PLOT_XY );
+      plot_dataset_set_style( d , LINE );
+      plot_dataset_set_line_color( d , iref+1 );
+      ecl_sum = plot_config_iget_refcase( plot_config , iref);
+      if(ecl_sum != NULL){
 	for ( int i = 0; i < double_vector_size(x); i++ ){
 	  time_t sim_time = ( time_t ) double_vector_iget( x , i );
 	  if( ecl_sum_has_general_var( ecl_sum , user_key ) && ecl_sum_check_sim_time( ecl_sum , sim_time)){
@@ -455,19 +450,17 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 	    double_vector_append( refcase_time , sim_time );
 	  }
 	}
-	ecl_sum_free(ecl_sum);
-	util_safe_free(refcase_label);
-	for (int i = 0; i < double_vector_size( refcase_time ); i++) {
-	  double days  = double_vector_iget( refcase_time  , i);
-	  double value = double_vector_iget( refcase_value , i);
-	  plot_dataset_append_point_xy( d , days , value);
-	}
-	double_vector_free( refcase_value );
-	double_vector_free( refcase_time );
       }
-      else 
-	printf("\nCannot find refcase data file: \n%s\n", stringlist_iget(reflist, iref));
+      util_safe_free(refcase_label);
+      for (int i = 0; i < double_vector_size( refcase_time ); i++) {
+	double days  = double_vector_iget( refcase_time  , i);
+	double value = double_vector_iget( refcase_value , i);
+	plot_dataset_append_point_xy( d , days , value);
+      }
+      double_vector_free( refcase_value );
+      double_vector_free( refcase_time );
     }
+    //ecl_sum_free(ecl_sum);
   }
   double_vector_free( x );    
   
@@ -484,7 +477,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
     printf( "No data to plot for:%s \n" , user_key);
     plot_free( plot );
   }
-  stringlist_free(reflist);
   free( plot_file );
   bool_vector_free( has_data );
 }

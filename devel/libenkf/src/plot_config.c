@@ -31,8 +31,10 @@
 struct plot_config_struct {
   char * plot_path;     /* All the plots will be saved as xxxx files in this directory. */
   char * image_type;    /* Type of plot file - currently only 'png' is tested. */
-  char * plot_refcase;  /* Full path to DATA file for refcase plotting */
-  char * plot_refcase_list;  /* */
+  char * plot_refcase;  /* Full path to DATA file for refcase plotting. */
+  char * plot_refcase_list;  /* PAth to file with list of refcases.*/
+  stringlist_type * refcase_list; /*Actual list of refcases.*/
+  hash_type * refcase_cache; /*Hash table with cached refcases.*/
   char * driver;        /* The driver used by the libplot layer when actually 'rendering' the plots. */
   char * viewer;        /* The executable used when displaying the newly created image - can be NULL - in which case the plots are not displayed in any way. */
   int    errorbar_max;  /* If the number of observations is less than this it is plotted with errorbars - otherwise with lines. */
@@ -138,6 +140,30 @@ const char *  plot_config_get_plot_refcase_list(const plot_config_type * plot_co
   return plot_config->plot_refcase_list;
 }
 
+int plot_config_get_num_refcase( const plot_config_type * plot_config){
+  return stringlist_get_size(plot_config->refcase_list);
+}
+
+ecl_sum_type * plot_config_get_refcase( const plot_config_type * pc , const char * refcase) {
+  if (!hash_has_key( pc->refcase_cache , refcase)) {
+    ecl_sum_type * ecl_sum = ecl_sum_fread_alloc_case( refcase , ":");
+    if (ecl_sum){
+      hash_insert_hash_owned_ref( pc->refcase_cache , refcase , ecl_sum , ecl_sum_free__);
+    }
+    else{
+      hash_insert_ref( pc->refcase_cache , refcase , NULL);
+    }
+  }
+  return hash_get( pc->refcase_cache , refcase);  // Can return NULL
+}
+
+
+ecl_sum_type * plot_config_iget_refcase( const plot_config_type * pl , int index) {
+  return plot_config_get_refcase( pl , stringlist_iget( pl->refcase_list , index));
+} 
+
+
+
 const char *  plot_config_get_image_type(const plot_config_type * plot_config ) {
   return plot_config->image_type;
 }
@@ -171,6 +197,8 @@ void plot_config_free( plot_config_type * plot_config) {
   free(plot_config->plot_path);
   free(plot_config->plot_refcase);
   free(plot_config->plot_refcase_list);
+  hash_free(plot_config->refcase_cache);
+  stringlist_free(plot_config->refcase_list);
   util_safe_free(plot_config->viewer);
   free(plot_config->image_type);
   free(plot_config->driver );
@@ -186,6 +214,8 @@ plot_config_type * plot_config_alloc_default() {
   info->plot_path                = NULL;
   info->plot_refcase             = NULL;
   info->plot_refcase_list        = NULL;
+  info->refcase_list             = stringlist_alloc_new();
+  info->refcase_cache            = hash_alloc();
   info->image_type               = NULL;
   info->viewer                   = NULL;
   info->driver                   = NULL;      
@@ -204,7 +234,17 @@ plot_config_type * plot_config_alloc_default() {
   return info;
 }
 
-
+void plot_config_init_refcase_list( plot_config_type * plot_config ){
+  if (plot_config->plot_refcase_list != NULL){
+    FILE * stream = util_fopen(plot_config->plot_refcase_list , "r");
+    bool at_eof;
+    do {
+      stringlist_append_copy( plot_config->refcase_list ,util_fscanf_alloc_line(stream , &at_eof));
+    } while (!at_eof);
+    
+    fclose( stream );
+  }
+}
 
 void plot_config_init(plot_config_type * plot_config , const config_type * config ) {
   if (config_item_set( config , PLOT_PATH_KEY))
@@ -213,8 +253,10 @@ void plot_config_init(plot_config_type * plot_config , const config_type * confi
   if (config_item_set( config , PLOT_REFCASE_KEY))
     plot_config_set_plot_refcase( plot_config , config_get_value( config , PLOT_REFCASE_KEY ));
   
-  if (config_item_set( config , PLOT_REFCASE_LIST_KEY))
+  if (config_item_set( config , PLOT_REFCASE_LIST_KEY)){
     plot_config_set_plot_refcase_list( plot_config , config_get_value( config , PLOT_REFCASE_LIST_KEY ));
+    plot_config_init_refcase_list( plot_config );
+  };
   
   if (config_item_set( config , PLOT_DRIVER_KEY))
     plot_config_set_driver( plot_config , config_get_value( config , PLOT_DRIVER_KEY ));
@@ -260,6 +302,9 @@ void plot_config_add_config_items( config_type * config ) {
   }
 }
 
+void plot_config_add_refcase_to_list(plot_config_type * plot_config, char * refcase){      
+  stringlist_append_copy( plot_config->refcase_list ,refcase);
+}
 
 /**
    It would be natural to set the plot settings in the site config
