@@ -6,7 +6,7 @@ macro(add_python_target tgt  PYTHON_INSTALL_PATH ARGN)
 #------------------------------------------------------    
     ADD_CUSTOM_COMMAND(  
       OUTPUT ${OUT}
-      COMMAND ${PROJECT_SOURCE_DIR}/cmake/cmake_pyc.py
+      COMMAND ${PROJECT_SOURCE_DIR}/cmake/cmake_pyc
       ARGS ${CMAKE_CURRENT_SOURCE_DIR}/${file}.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PATH}
     )
 #------------------------------------------------------    
