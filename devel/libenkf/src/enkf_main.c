@@ -2713,7 +2713,7 @@ void enkf_main_rng_init( enkf_main_type * enkf_main) {
 
 void enkf_main_init_local_updates( enkf_main_type * enkf_main , const config_type * config ) {
   if (model_config_has_history( enkf_main->model_config )) {
-    enkf_main->local_config  = local_config_alloc( /*enkf_main->ensemble_config , enkf_main->enkf_obs , */ model_config_get_last_history_restart( enkf_main->model_config ));
+    enkf_main->local_config  = local_config_alloc( );
     
     /* First create the default ALL_ACTIVE configuration. */
     {
