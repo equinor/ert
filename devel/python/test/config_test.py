@@ -81,7 +81,8 @@ class ConfigTest( unittest.TestCase ):
         self.assertTrue( schema_item.iget_type( 6 ) == config_enums.content_type.CONFIG_STRING )
         schema_item.iset_type( 0 , config_enums.content_type.CONFIG_INT )
         self.assertTrue( schema_item.iget_type( 0 ) == config_enums.content_type.CONFIG_INT )
-
+        schema_item.set_argc_minmax( 3 , 6)
+        
 
 
 def fast_suite():
