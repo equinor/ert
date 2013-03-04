@@ -4,6 +4,16 @@ import os
 import os.path
 import sys
 
+# Small 'python compiler' used in the build system for ert. The
+# commandline arguments should be:
+#
+#  cmake_pyc.py src1.py  src2.py  src3.py  /path/to/pyc/files
+#
+# The input source files can contain a path component like
+# path/src1.py, but the path will not be recreated in the target
+# domain.
+
+
 def compile_file(src_file , target_file):
     path = os.path.dirname( target_file )
     if not os.path.exists( path ):
