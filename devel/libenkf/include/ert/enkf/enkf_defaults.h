@@ -125,6 +125,7 @@
 #define DEFAULT_ENSPATH      "storage"
 #define DEFAULT_RFTPATH      "rft"
 #define DEFAULT_PLOT_REFCASE ""
+#define DEFAULT_PLOT_REFCASE_LIST ""
 
 #define DEFAULT_PRE_CLEAR_RUNPATH   false
 
