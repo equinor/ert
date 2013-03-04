@@ -112,6 +112,7 @@ extern "C" {
 #define  PLOT_HEIGHT_KEY                   "PLOT_HEIGHT"       
 #define  PLOT_PATH_KEY                     "PLOT_PATH"         
 #define  PLOT_REFCASE_KEY                  "PLOT_REFCASE"
+#define  PLOT_REFCASE_LIST_KEY             "PLOT_REFCASE_LIST"
 #define  PLOT_WIDTH_KEY                    "PLOT_WIDTH"        
 #define  PRE_CLEAR_RUNPATH_KEY             "PRE_CLEAR_RUNPATH"
 #define  QUEUE_SYSTEM_KEY                  "QUEUE_SYSTEM"
