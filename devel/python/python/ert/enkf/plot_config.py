@@ -63,3 +63,4 @@ cfunc.get_viewer          = cwrapper.prototype("char* plot_config_get_viewer(plo
 cfunc.set_viewer          = cwrapper.prototype("void plot_config_set_viewer(plot_config, char*)")
 cfunc.get_image_type      = cwrapper.prototype("char* plot_config_get_image_type(plot_config)")
 cfunc.set_image_type      = cwrapper.prototype("void plot_config_set_image_type(plot_config, char*)")
+

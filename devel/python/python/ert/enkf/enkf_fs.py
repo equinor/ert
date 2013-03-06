@@ -51,3 +51,5 @@ cfunc = CWrapperNameSpace("enkf_fs")
 cfunc.free                = cwrapper.prototype("void enkf_fs_free( enkf_fs )")
 cfunc.has_node            = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, long, int, int, int)")
 cfunc.fread_node          = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, char*, long, int, int, int)")
+cfunc.get_read_dir        = cwrapper.prototype("char* enkf_fs_get_read_dir(enkf_fs)") #NBNB
+cfunc.alloc_dirlist       = cwrapper.prototype("c_void_p enkf_fs_alloc_dirlist(enkf_fs)")#NBNB

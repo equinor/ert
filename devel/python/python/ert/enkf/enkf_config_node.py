@@ -52,4 +52,5 @@ cfunc.free                = cwrapper.prototype("void enkf_config_node_free( enkf
 cfunc.iget_sim_days       = cwrapper.prototype("double enkf_config_node_iget_sim_days(enkf_config_node, int, int)")
 cfunc.iget_sim_time       = cwrapper.prototype("time_t enkf_config_node_iget_sim_time(enkf_config_node, int, int)")
 cfunc.get_ref             = cwrapper.prototype("c_void_p enkf_config_node_get_ref(enkf_config_node)")
-cfunc.      = cwrapper.prototype("bool field_config_ijk_active(long, int, int, int)")
+cfunc.get_impl_type       = cwrapper.prototype("c_void_p enkf_config_node_get_impl_type(enkf_config_node)")
+

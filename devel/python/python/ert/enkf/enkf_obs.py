@@ -50,3 +50,4 @@ cfunc = CWrapperNameSpace("enkf_obs")
 
 cfunc.free                = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
 cfunc.get_config_file     = cwrapper.prototype("char* enkf_obs_get_config_file( enkf_obs )")
+cfunc.alloc_typed_keylist = cwrapper.prototype("stringlist enkf_obs_alloc_typed_keylist(enkf_obs, int)")

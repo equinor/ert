@@ -130,3 +130,5 @@ cfunc.copy_ensemble                = cwrapper.prototype("void enkf_main_copy_ens
 cfunc.iget_member_config           = cwrapper.prototype("c_void_p enkf_main_iget_member_config(enkf_main, int)")
 cfunc.get_observations             = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)") 
 cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
+cfunc.mount_extra_fs               = cwrapper.prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")
+cfunc.get_obs                      = cwrapper.prototype("c_void_p enkf_main_get_obs(enkf_main)")

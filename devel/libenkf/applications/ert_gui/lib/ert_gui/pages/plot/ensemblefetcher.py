@@ -44,15 +44,6 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.connect(self.keyword_configuration, SIGNAL('configurationChanged()'), emitter)
         self.connect(self.data_configuration, SIGNAL('configurationChanged()'), emitter)
 
-    def initialize(self, ert):
-        ert.prototype("long enkf_config_node_get_ref(long)")
-        ert.prototype("bool field_config_ijk_active(long, int, int, int)")
-
-        ert.prototype("bool ecl_sum_has_general_var(long, char*)", lib=ert.ecl)
-        ert.prototype("int ecl_sum_get_general_var_index(long, char*)", lib=ert.ecl)
-
-        ert.prototype("time_vector ecl_sum_alloc_time_vector(long, bool)", lib=ert.ecl)
-        ert.prototype("double_vector ecl_sum_alloc_data_vector(long, int, bool)", lib=ert.ecl)
 
 
     def isHandlerFor(self, ert, key):
@@ -185,7 +176,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
     def _getRefCase(self, ert, key, data):
         ecl_sum = ert.enkf.ecl_config_get_refcase(ert.ecl_config)
 
-        if(ert.ecl.ecl_sum_has_general_var(ecl_sum, key)):
+        if(ert.ecl.ecl_sum_has_key(ecl_sum, key)):
             ki = ert.ecl.ecl_sum_get_general_var_index(ecl_sum, key)
             x_data = ert.ecl.ecl_sum_alloc_time_vector(ecl_sum, True)
             y_data = ert.ecl.ecl_sum_alloc_data_vector(ecl_sum, ki, True)
