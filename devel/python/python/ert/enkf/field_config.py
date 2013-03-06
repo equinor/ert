@@ -60,3 +60,4 @@ cfunc.ijk_active                = cwrapper.prototype("bool field_config_ijk_acti
 cfunc.get_nx                    = cwrapper.prototype("int field_config_get_nx(field_config)")
 cfunc.get_ny                    = cwrapper.prototype("int field_config_get_ny(field_config)")
 cfunc.get_nz                    = cwrapper.prototype("int field_config_get_nz(field_config)")
+cfunc.get_grid                  = cwrapper.prototype("c_void_p field_config_get_grid(field_config)")

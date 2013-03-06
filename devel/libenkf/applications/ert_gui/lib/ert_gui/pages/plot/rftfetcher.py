@@ -27,42 +27,6 @@ class RFTFetcher(PlotDataFetcherHandler):
     def __init__(self):
         PlotDataFetcherHandler.__init__(self)
 
-    def initialize(self, ert):
-        ert.prototype("long enkf_main_get_obs(long)")
-        ert.prototype("long enkf_main_get_fs(long)")
-        ert.prototype("int enkf_main_get_ensemble_size(long)")
-        ert.prototype("int enkf_main_get_history_length(long)")
-
-        ert.prototype("bool enkf_fs_has_node(long, long, int, int, int)")
-        ert.prototype("void enkf_fs_fread_node(long, long, int, int, int)")
-
-        ert.prototype("bool enkf_obs_has_key(long, char*)")
-        ert.prototype("long enkf_obs_get_vector(long, char*)")
-        ert.prototype("long enkf_obs_alloc_typed_keylist(long, int)")
-
-        ert.prototype("char* obs_vector_get_state_kw(long)")
-        ert.prototype("long obs_vector_iget_node(long, int)")
-        ert.prototype("int obs_vector_get_num_active(long)")
-        ert.prototype("bool obs_vector_iget_active(long, int)")
-
-        ert.prototype("long enkf_config_node_get_ref(long)")
-
-        ert.prototype("int* field_obs_get_i(long)")
-        ert.prototype("int* field_obs_get_j(long)")
-        ert.prototype("int* field_obs_get_k(long)")
-        ert.prototype("int field_obs_get_size(long)")
-        ert.prototype("void field_obs_iget(long, int, double*, double*)")
-
-        ert.prototype("double field_ijk_get_double(long, int, int, int)")
-
-        ert.prototype("long field_config_get_grid(long)")
-
-        ert.prototype("long enkf_node_alloc(long)")
-        ert.prototype("void enkf_node_free(long)")
-        ert.prototype("long enkf_node_value_ptr(long)")
-
-        ert.prototype("void ecl_grid_get_xyz3(long, int, int, int, double*, double*, double*)", lib=ert.ecl)
-
     def isHandlerFor(self, ert, key):
         enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
         key_list = ert.enkf.enkf_obs_alloc_typed_keylist(enkf_obs, obs_impl_type.FIELD_OBS.value())
