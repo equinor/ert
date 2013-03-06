@@ -45,26 +45,6 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.connect(self.data_configuration, SIGNAL('configurationChanged()'), emitter)
 
     def initialize(self, ert):
-
-
-        ert.prototype("long enkf_main_get_fs(long)")
-        ert.prototype("int enkf_main_get_ensemble_size(long)")
-        ert.prototype("long enkf_main_iget_member_config(long, int)")
-        ert.prototype("void enkf_main_get_observations(long, char*, int, long*, double*, double*)") #main, user_key, *time, *y, *std
-        ert.prototype("int enkf_main_get_observation_count(long, char*)")
-
-        ert.prototype("bool enkf_fs_has_node(long, long, int, int, int)")
-        ert.prototype("void enkf_fs_fread_node(long, long, int, int, int)")
-
-        ert.prototype("long enkf_node_alloc(long)")
-        ert.prototype("void enkf_node_free(long)")
-        ert.prototype("double enkf_node_user_get(long, char*, bool*)")
-
-        ert.prototype("double member_config_iget_sim_days(long, int, int)")
-        ert.prototype("time_t member_config_iget_sim_time(long, int, int)")
-        ert.prototype("int  enkf_main_get_history_length(long)")
-
-
         ert.prototype("long enkf_config_node_get_ref(long)")
         ert.prototype("bool field_config_ijk_active(long, int, int, int)")
 

@@ -1,6 +1,6 @@
 #  Copyright (C) 2012  Statoil ASA, Norway. 
 #   
-#  The file 'enkf_config_node.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'member_config.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -20,7 +20,7 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 import  libenkf
-class EnkfConfigNode(CClass):
+class MemberConfig(CClass):
     
     def __init__(self , c_ptr = None):
         self.owner = False
@@ -40,16 +40,15 @@ class EnkfConfigNode(CClass):
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
-cwrapper.registerType( "enkf_config_node" , EnkfConfigNode )
+cwrapper.registerType( "member_config" , MemberConfig )
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
 #    These functions are used when implementing the EclKW class, not
 #    used outside this scope.
-cfunc = CWrapperNameSpace("enkf_config_node")
+cfunc = CWrapperNameSpace("member_config")
 
 
-cfunc.free                = cwrapper.prototype("void enkf_config_node_free( enkf_config_node )")
-cfunc.iget_sim_days       = cwrapper.prototype("double enkf_config_node_iget_sim_days(enkf_config_node, int, int)")
-cfunc.iget_sim_time       = cwrapper.prototype("time_t enkf_config_node_iget_sim_time(enkf_config_node, int, int)")
-cfunc.get_ref             = cwrapper.prototype("c_void_p enkf_config_node_get_ref(enkf_config_node)")
-cfunc.      = cwrapper.prototype("bool field_config_ijk_active(long, int, int, int)")
+cfunc.free                = cwrapper.prototype("void member_config_free( member_config )")
+cfunc.iget_sim_days       = cwrapper.prototype("double member_config_iget_sim_days(member_config, int, int)")
+cfunc.iget_sim_time       = cwrapper.prototype("time_t member_config_iget_sim_time(member_config, int, int)")
+
