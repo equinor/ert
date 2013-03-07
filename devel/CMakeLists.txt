@@ -82,6 +82,10 @@ endif()
 include_directories( ${PROJECT_SOURCE_DIR}/libecl/include )
 add_subdirectory( libecl )
 
+include_directories( ${PROJECT_SOURCE_DIR}/libecl_well/include )
+add_subdirectory( libecl_well )
+
+
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
