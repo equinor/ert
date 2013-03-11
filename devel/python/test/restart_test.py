@@ -107,6 +107,16 @@ class RestartTest( unittest.TestCase ):
         self.assertRaises( TypeError , ecl.EclFile.file_report_list)
 
 
+    def test_dates(self):
+        f = ecl.EclFile(file)
+        dates = f.dates
+        self.assertTrue( len(dates) == 63 )
+        
+        f = ecl.EclFile(xfile0)
+        dates = f.dates
+        self.assertTrue( len(dates) == 1 )
+        self.assertTrue( dates[0] == datetime.datetime(2000,1,1))
+
 
 
     def test_name(self):
@@ -142,6 +152,7 @@ def fast_suite():
     suite.addTest( RestartTest( 'test_date' )) 
     suite.addTest( RestartTest( 'test_kw' )) 
     suite.addTest( RestartTest( 'test_report_list' )) 
+    suite.addTest( RestartTest( 'test_dates' ))
     return suite
 
 
