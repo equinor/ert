@@ -66,7 +66,7 @@
 
 typedef struct sum_pair_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char         * case_name;
+  char         * case_name;     // This  should be (path)/basename - no extension
   ecl_sum_type * ecl_sum;
 } sum_pair_type;
 
@@ -89,12 +89,12 @@ static sum_pair_type * sum_pair_alloc( const char * case_name , bool strict_load
   char * basename = NULL;
 
   util_alloc_file_components( case_name , &path , &basename , NULL);
-  if ((path != NULL) && (basename != NULL)) {
+  if (basename != NULL) {
     char * use_case = util_alloc_filename( path , basename , NULL);
     if (strict_load) 
       ecl_sum = ecl_sum_fread_alloc_case( use_case , ":");
 
-    free( path );
+    util_safe_free( path );
     free( basename );
     if (strict_load && (ecl_sum == NULL)) {
       free( use_case );
