@@ -10,3 +10,11 @@
 
 # /develbranch/libenkf/src/
 /develbranch/libenkf/src/.faultlist
+
+# /devel/build
+/devel/build
+
+# netbeans project
+/devel/nbproject
+
+/build
