@@ -38,6 +38,7 @@
 #include <ert/enkf/enkf_util.h>
 #include <ert/enkf/ecl_config.h>
 #include <ert/enkf/config_keys.h>
+#include <ert/enkf/ecl_refcase_list.h>
 #include <ert/enkf/enkf_defaults.h>
 
 /**
@@ -65,7 +66,7 @@ struct ecl_config_struct {
   char               * data_file;                  /* Eclipse data file. */
   time_t               start_date;                 /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   time_t               end_date;                   /* An optional date value which can be used to check if the ECLIPSE simulation has been 'long enough'. */
-  ecl_sum_type       * refcase;                    /* Refcase - can be NULL. */
+  ecl_refcase_list_type * refcase_list;
   ecl_grid_type      * grid;                       /* The grid which is active for this model. */
   char               * schedule_prediction_file;   /* Name of schedule prediction file - observe that this is internally handled as a gen_kw node. */
   char               * schedule_target_file;       /* File name to write schedule info to */
@@ -266,24 +267,7 @@ const char * ecl_config_get_eclbase( const ecl_config_type * ecl_config ) {
    current refcase. 
 */
 bool ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase ){ 
-  if (ecl_config->refcase != NULL) {
-    if (refcase == NULL) {    /* Clear the refcase */
-      ecl_sum_free( ecl_config->refcase );
-      ecl_config->refcase = NULL;
-    } else {                  /* Check if the currently loaded case is the same as refcase */
-      if (!ecl_sum_same_case( ecl_config->refcase , refcase )) {
-        ecl_sum_free( ecl_config->refcase );
-        ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , SUMMARY_KEY_JOIN_STRING );
-      }
-    }
-  } else 
-    if (refcase != NULL)
-      ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , SUMMARY_KEY_JOIN_STRING );
-  
-  if (refcase == NULL)
-    return true;
-  else
-    return (ecl_config->refcase == NULL) ? false : true;
+  return ecl_refcase_list_set_default( ecl_config->refcase_list , refcase );
 }
 
 
@@ -291,11 +275,11 @@ bool ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcas
    Will return NULL if no refcase is set.
 */
 const char * ecl_config_get_refcase_name( const ecl_config_type * ecl_config) {
-
-  if (ecl_config->refcase == NULL)
+  ecl_sum_type * refcase = ecl_refcase_list_get_default( ecl_config->refcase_list );
+  if (refcase == NULL)
     return NULL;
   else
-    return ecl_sum_get_case( ecl_config->refcase );
+    return ecl_sum_get_case( refcase );
 
 }
 
@@ -411,7 +395,6 @@ ecl_config_type * ecl_config_alloc_empty( ) {
   ecl_config->data_file                = NULL;
   ecl_config->input_init_section       = NULL; 
   ecl_config->init_section             = NULL;
-  ecl_config->refcase                  = NULL;
   ecl_config->grid                     = NULL;
   ecl_config->can_restart              = false;
   ecl_config->start_date               = -1;
@@ -419,6 +402,7 @@ ecl_config_type * ecl_config_alloc_empty( ) {
   ecl_config->sched_file               = NULL;
   ecl_config->schedule_prediction_file = NULL;
   ecl_config->schedule_target_file     = NULL;
+  ecl_config->refcase_list             = ecl_refcase_list_alloc();
   
   ecl_config_init_static_kw( ecl_config );
 
@@ -518,8 +502,7 @@ void ecl_config_free(ecl_config_type * ecl_config) {
   if (ecl_config->grid != NULL)
     ecl_grid_free( ecl_config->grid );
 
-  if (ecl_config->refcase != NULL)
-    ecl_sum_free( ecl_config->refcase );
+  ecl_refcase_list_free( ecl_config->refcase_list );
   
   free(ecl_config);
 }
@@ -601,8 +584,12 @@ void ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file 
 }
 
 
+ecl_refcase_list_type * ecl_config_get_refcase_list( const ecl_config_type * ecl_config ) {
+  return ecl_config->refcase_list;
+}
+
 const ecl_sum_type * ecl_config_get_refcase(const ecl_config_type * ecl_config) {
-  return ecl_config->refcase;
+  return ecl_refcase_list_get_default( ecl_config->refcase_list );
 }
 
 
@@ -749,10 +736,12 @@ void ecl_config_fprintf_config( const ecl_config_type * ecl_config , FILE * stre
     }
   }
 
-  if (ecl_config->refcase != NULL) {
+  /*
+    if (ecl_config->refcase != NULL) {
     fprintf( stream , CONFIG_KEY_FORMAT      , REFCASE_KEY );
     fprintf( stream , CONFIG_ENDVALUE_FORMAT , ecl_config_get_refcase_name( ecl_config ));
-  }
+    }
+  */
 
   if (ecl_config->grid != NULL) {
     fprintf( stream , CONFIG_KEY_FORMAT      , GRID_KEY );

@@ -33,6 +33,8 @@ extern "C" {
 
 #include <ert/sched/sched_file.h>
 
+#include <ert/enkf/ecl_refcase_list.h>
+
 
   typedef struct ecl_config_struct ecl_config_type;
   void                  ecl_config_static_kw_init( ecl_config_type * ecl_config , const config_type * config );
@@ -61,6 +63,7 @@ extern "C" {
   const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * );
   int                   ecl_config_get_num_restart_files(const ecl_config_type * );
   const ecl_sum_type  * ecl_config_get_refcase(const ecl_config_type * ecl_config);
+  ecl_refcase_list_type * ecl_config_get_refcase_list( const ecl_config_type * ecl_config );
   ecl_grid_type       * ecl_config_get_grid(const ecl_config_type * );
   void                  ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file );
   const char          * ecl_config_get_gridfile( const ecl_config_type * ecl_config );
