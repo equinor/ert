@@ -232,7 +232,7 @@ void enkf_tui_run_exp(void * enkf_main) {
 
 void enkf_tui_run_create_runpath__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
-  const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
+  const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc(0,false);
 
   state_enum init_state    = ANALYZED; 
@@ -241,9 +241,11 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
   {
     char * prompt = util_alloc_sprintf("Which realizations to create[ensemble size:%d] : " , ens_size);
     char * select_string;
+
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     enkf_tui_util_sscanf_active_list( iactive , select_string , ens_size );
+    
     util_safe_free( select_string );
     free( prompt );
   }

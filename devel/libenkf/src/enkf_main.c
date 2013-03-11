@@ -1352,7 +1352,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
         
         for (iens = 0; iens < ens_size; iens++) {
           enkf_state_type * enkf_state = enkf_main->ensemble[iens];
-          if (bool_vector_iget(iactive , iens)) {
+          if (bool_vector_safe_iget(iactive , iens)) {
             int load_start = step1;
             if (step1 > 0)
               load_start++;
