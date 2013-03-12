@@ -434,7 +434,7 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
   
   
   if (config_item_set( config , REFCASE_KEY)) {
-    const char * refcase_path = config_get_value( config , REFCASE_KEY );
+    const char * refcase_path = config_get_value_as_path( config , REFCASE_KEY );
     if (!ecl_config_load_refcase( ecl_config , refcase_path))
       fprintf(stderr,"** Warning: loading refcase:%s failed \n", refcase_path);
   }
@@ -447,7 +447,7 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
       config_content_node_type * node = config_content_item_iget_node( item , i );
       int j;
       for (j=0; j < config_content_node_get_size( node ); j++) {
-        const char * case_glob = config_content_node_iget( node , j );
+        const char * case_glob = config_content_node_iget_as_path( node , j );
         ecl_refcase_list_add_matching( ecl_config->refcase_list , case_glob );
       }
     }
@@ -710,9 +710,10 @@ void ecl_config_add_config_items( config_type * config ) {
 
   item = config_add_schema_item(config , REFCASE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
+  config_schema_item_iset_type( item , 0 , CONFIG_PATH );
 
   item = config_add_schema_item(config , REFCASE_LIST_KEY , false );
-    
+  config_schema_item_set_default_type( item , CONFIG_PATH );
   
   item = config_add_schema_item(config , GRID_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );

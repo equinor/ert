@@ -221,17 +221,6 @@ bool ecl_refcase_list_set_default( ecl_refcase_list_type * refcase_list , const 
   }
 }
 
-/*
-  The case_name should be an optional path and an ECLIPSE basename. No
-  extension.  
-*/
-
-static sum_pair_type * ecl_refcase_list_get_pair( ecl_refcase_list_type * refcase_list , const char * casename) {
-  if (hash_has_key( refcase_list->case_dict , casename ))
-    return hash_get( refcase_list->case_dict , casename);
-  else
-    return NULL;
-}
 
 
 
@@ -239,7 +228,7 @@ static sum_pair_type * ecl_refcase_list_get_pair( ecl_refcase_list_type * refcas
    Will sort the list and remove all elements which can not be loaded.
 */
 
-static void ecl_refcase_list_assert_sorted( ecl_refcase_list_type * refcase_list ) {
+static void ecl_refcase_list_assert_clean( ecl_refcase_list_type * refcase_list ) {
   if (!refcase_list->sorted) {
     vector_free( refcase_list->case_list );
     refcase_list->case_list = vector_alloc_new();
@@ -257,12 +246,14 @@ static void ecl_refcase_list_assert_sorted( ecl_refcase_list_type * refcase_list
           normal_case = false;
         
         if (normal_case) {
-          sum_pair_type * pair = ecl_refcase_list_get_pair( refcase_list , casename );
+          sum_pair_type * pair = hash_get( refcase_list->case_dict , casename);
           const ecl_sum_type * ecl_sum = sum_pair_get_ecl_sum( pair );
+          
           if (ecl_sum)
-            vector_append_ref( refcase_list->case_list , ecl_refcase_list_get_pair( refcase_list , casename ));
+            vector_append_ref( refcase_list->case_list , pair);
           else 
             hash_del( refcase_list->case_dict , casename );
+          
         }
       }
       stringlist_free( tmp_list );
@@ -274,8 +265,19 @@ static void ecl_refcase_list_assert_sorted( ecl_refcase_list_type * refcase_list
 }
 
 
+static sum_pair_type * ecl_refcase_list_get_pair( ecl_refcase_list_type * refcase_list , const char * case_name) {
+  ecl_refcase_list_assert_clean( refcase_list );
+  {
+    if (hash_has_key( refcase_list , case_name))
+      return hash_get( refcase_list->case_dict , case_name );
+    else
+      return NULL;
+  }
+}
+
+
 static sum_pair_type * ecl_refcase_list_iget_pair( ecl_refcase_list_type * refcase_list , int index) {
-  ecl_refcase_list_assert_sorted( refcase_list );
+  ecl_refcase_list_assert_clean( refcase_list );
   {
     int index_offset = refcase_list->default_case ? 1 : 0;
     index -= index_offset;
@@ -287,8 +289,9 @@ static sum_pair_type * ecl_refcase_list_iget_pair( ecl_refcase_list_type * refca
   }
 }
 
+
 int ecl_refcase_list_get_size(ecl_refcase_list_type * refcase_list ) {
-  ecl_refcase_list_assert_sorted( refcase_list );
+  ecl_refcase_list_assert_clean( refcase_list );
   {
     int size = hash_get_size( refcase_list->case_dict );
     return size;
@@ -296,14 +299,27 @@ int ecl_refcase_list_get_size(ecl_refcase_list_type * refcase_list ) {
 }
 
 
+
 const ecl_sum_type * ecl_refcase_list_iget_case( ecl_refcase_list_type * refcase_list , int index) {
   sum_pair_type * pair = ecl_refcase_list_iget_pair( refcase_list , index );
-
-  if (pair) // The default can return NULL
-    return sum_pair_get_ecl_sum( pair );
-  else
-    return NULL;
+  return sum_pair_get_ecl_sum( pair );
 }
+
+
+const ecl_sum_type * ecl_refcase_list_get_case( ecl_refcase_list_type * refcase_list , const char * case_name) {
+  sum_pair_type * pair = ecl_refcase_list_get_pair( refcase_list , case_name );
+  return sum_pair_get_ecl_sum( pair );
+}
+
+
+bool ecl_refcase_list_has_case( ecl_refcase_list_type * refcase_list , const char * case_name) {
+  const sum_pair_type * pair = ecl_refcase_list_get_pair( refcase_list , case_name );
+  if (pair)
+    return true;
+  else
+    return false;
+}
+
 
 
 const char * ecl_refcase_list_iget_pathcase( ecl_refcase_list_type * refcase_list , int index) {

@@ -43,6 +43,17 @@ int main(int argc , char ** argv) {
   {
     ecl_refcase_list_type * refcase_list = ecl_refcase_list_alloc( );
     
+    test_assert_false( ecl_refcase_list_has_case( refcase_list , "DoesNotExist" ));
+    test_assert_NULL( ecl_refcase_list_get_case( refcase_list , "DoesNotExist"));
+    
+    test_assert_int_equal( ecl_refcase_list_add_matching( refcase_list , "DoesNotExist") , 0);
+    ecl_refcase_list_add_case( refcase_list , "DoesNotExist" );
+    test_assert_false( ecl_refcase_list_has_case( refcase_list , "DoesNotExist"));
+    
+    ecl_refcase_list_add_case( refcase_list , case1 );
+    test_assert_true( ecl_refcase_list_has_case( refcase_list , case1));
+
+
     test_assert_not_NULL( refcase_list );
     test_assert_false( ecl_refcase_list_has_default( refcase_list ));
     test_assert_NULL( ecl_refcase_list_get_default( refcase_list ));

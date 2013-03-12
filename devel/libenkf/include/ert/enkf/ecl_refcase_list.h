@@ -40,6 +40,8 @@ extern "C" {
   int                     ecl_refcase_list_add_case( ecl_refcase_list_type * refcase_list , const char * case_name);
   const char            * ecl_refcase_list_iget_pathcase( ecl_refcase_list_type * refcase_list , int index);
   const ecl_sum_type    * ecl_refcase_list_iget_case( ecl_refcase_list_type * refcase_list , int index);
+  const ecl_sum_type    * ecl_refcase_list_get_case( ecl_refcase_list_type * refcase_list , const char * case_name);
+  bool                    ecl_refcase_list_has_case( ecl_refcase_list_type * refcase_list , const char * case_name);
 
 #ifdef __cplusplus
 }
