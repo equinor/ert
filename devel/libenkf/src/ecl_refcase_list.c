@@ -221,9 +221,13 @@ bool ecl_refcase_list_set_default( ecl_refcase_list_type * refcase_list , const 
   }
 }
 
+/*
+  The case_name should be an optional path and an ECLIPSE basename. No
+  extension.  
+*/
 
 static sum_pair_type * ecl_refcase_list_get_pair( ecl_refcase_list_type * refcase_list , const char * casename) {
-  if (ecl_refcase_list_has_case( refcase_list , casename))
+  if (hash_has_key( refcase_list->case_dict , casename ))
     return hash_get( refcase_list->case_dict , casename);
   else
     return NULL;
@@ -254,10 +258,10 @@ static void ecl_refcase_list_assert_sorted( ecl_refcase_list_type * refcase_list
         
         if (normal_case) {
           sum_pair_type * pair = ecl_refcase_list_get_pair( refcase_list , casename );
-          ecl_sum_type * ecl_sum = sum_pair_get_ecl_sum( pair );
+          const ecl_sum_type * ecl_sum = sum_pair_get_ecl_sum( pair );
           if (ecl_sum)
             vector_append_ref( refcase_list->case_list , ecl_refcase_list_get_pair( refcase_list , casename ));
-          else
+          else 
             hash_del( refcase_list->case_dict , casename );
         }
       }
@@ -283,7 +287,7 @@ static sum_pair_type * ecl_refcase_list_iget_pair( ecl_refcase_list_type * refca
   }
 }
 
-int ecl_refcase_list_get_size( const ecl_refcase_list_type * refcase_list ) {
+int ecl_refcase_list_get_size(ecl_refcase_list_type * refcase_list ) {
   ecl_refcase_list_assert_sorted( refcase_list );
   {
     int size = hash_get_size( refcase_list->case_dict );
@@ -312,15 +316,10 @@ const char * ecl_refcase_list_iget_fullpath( ecl_refcase_list_type * refcase_lis
 
 
 
-bool ecl_refcase_list_has_case( ecl_refcase_list_type * refcase_list , const char * case_name) {
-  return hash_has_key( refcase_list->case_dict , case_name );
-}
-
-
 int ecl_refcase_list_add_case( ecl_refcase_list_type * refcase_list , const char * case_name) {
   sum_pair_type * pair = sum_pair_alloc( case_name , false );
   if (pair) {
-    if (ecl_refcase_list_has_case( refcase_list , pair->case_name)) {
+    if (hash_has_key( refcase_list->case_dict , pair->case_name)) {
       sum_pair_free( pair );
       return 0;
     } else {
@@ -359,13 +358,14 @@ int ecl_refcase_list_add_matching( ecl_refcase_list_type * refcase_list , const 
       free( glob_ext );
     }
   }
-
+  
   {
     stringlist_type * case_list = stringlist_alloc_new();
     int i;
     stringlist_select_matching( case_list , glob_string );
-    for (i=0; i < stringlist_get_size( case_list ); i++) 
+    for (i=0; i < stringlist_get_size( case_list ); i++) {
       count += ecl_refcase_list_add_case( refcase_list , stringlist_iget( case_list , i ) );
+    }
     stringlist_free( case_list );
   }
 

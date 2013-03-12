@@ -448,7 +448,7 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
       int j;
       for (j=0; j < config_content_node_get_size( node ); j++) {
         const char * case_glob = config_content_node_iget( node , j );
-        ecl_refcase_list_add_case( ecl_config->refcase_list , case_glob );
+        ecl_refcase_list_add_matching( ecl_config->refcase_list , case_glob );
       }
     }
   }
@@ -605,6 +605,15 @@ ecl_refcase_list_type * ecl_config_get_refcase_list( const ecl_config_type * ecl
 
 const ecl_sum_type * ecl_config_get_refcase(const ecl_config_type * ecl_config) {
   return ecl_refcase_list_get_default( ecl_config->refcase_list );
+}
+
+bool ecl_config_has_refcase( const ecl_config_type * ecl_config ) {
+  const ecl_sum_type * refcase = ecl_config_get_refcase( ecl_config );
+  printf("refcase:%p \n",refcase);
+  if (refcase)
+    return true;
+  else
+    return false;
 }
 
 

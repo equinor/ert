@@ -47,6 +47,10 @@ add_test( enkf_ecl_config1  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config )
 add_test( enkf_ecl_config2  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE)
 set_property( TEST enkf_ecl_config2 PROPERTY LABELS Statoil )
 
+add_executable( enkf_ecl_config_config enkf_ecl_config_config.c )
+target_link_libraries( enkf_ecl_config_config enkf )
+add_test( enkf_ecl_config_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config_config ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_config )
+set_property( TEST enkf_ecl_config_config PROPERTY LABELS Statoil )
 
 add_test( enkf_runpath_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_runpath_list )
 add_test( enkf_site_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_site_config /project/res/etc/ERT/site-config)
@@ -56,5 +60,6 @@ add_test( enkf_ensemble_GEN_PARAM  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble_GEN_P
 add_test( enkf_ensemble  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble )
 
 
-set_property( TEST enkf_time_map2   PROPERTY LABELS Statoil )
+set_property( TEST enkf_time_map2     PROPERTY LABELS Statoil )
+set_property( TEST enkf_site_config   PROPERTY LABELS Statoil )
 

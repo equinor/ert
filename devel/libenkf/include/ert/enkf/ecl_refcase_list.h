@@ -35,10 +35,9 @@ extern "C" {
   bool                    ecl_refcase_list_has_default( ecl_refcase_list_type * refcase_list );
   const ecl_sum_type    * ecl_refcase_list_get_default( ecl_refcase_list_type * refcase_list ); 
   bool                    ecl_refcase_list_set_default( ecl_refcase_list_type * refcase_list , const char * default_case);
-  int                     ecl_refcase_list_get_size( const ecl_refcase_list_type * refcase_list );
+  int                     ecl_refcase_list_get_size(ecl_refcase_list_type * refcase_list );
   int                     ecl_refcase_list_add_matching( ecl_refcase_list_type * refcase_list , const char * glob_string);
   int                     ecl_refcase_list_add_case( ecl_refcase_list_type * refcase_list , const char * case_name);
-  bool                    ecl_refcase_list_has_case( ecl_refcase_list_type * refcase_list , const char * case_name);
   const char            * ecl_refcase_list_iget_fullpath( ecl_refcase_list_type * refcase_list , int index);
   const ecl_sum_type    * ecl_refcase_list_iget_case( ecl_refcase_list_type * refcase_list , int index);
 
