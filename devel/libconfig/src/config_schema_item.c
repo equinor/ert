@@ -102,6 +102,10 @@ struct config_schema_item_struct {
 
 
 /*****************************************************************/
+static void validate_set_default_type( validate_type * validate , config_item_types item_type) {
+  int_vector_set_default(validate->type_map , item_type);
+}
+
 static validate_type * validate_alloc() {
   validate_type * validate = util_malloc(sizeof * validate );
   validate->argc_min                = CONFIG_DEFAULT_ARG_MIN;
@@ -110,8 +114,8 @@ static validate_type * validate_alloc() {
   validate->indexed_selection_set   = NULL;
   validate->required_children       = NULL;
   validate->required_children_value = NULL;
-  validate->type_map                = int_vector_alloc(0 , CONFIG_STRING);  // The default type is CONFIG_STRING - i.e. essentially untyped
-
+  validate->type_map                = int_vector_alloc(0 , 0);  
+  validate_set_default_type( validate , CONFIG_STRING );
   return validate;
 }
 
@@ -428,6 +432,10 @@ void config_schema_item_set_argc_minmax(config_schema_item_type * item ,
 
 void config_schema_item_iset_type( config_schema_item_type * item , int index , config_item_types type) {
   validate_iset_type( item->validate , index , type );
+}
+
+void config_schema_item_set_default_type( config_schema_item_type * item , config_item_types type) {
+  validate_set_default_type( item->validate , type );
 }
 
 

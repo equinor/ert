@@ -39,6 +39,8 @@ int main(int argc , char ** argv) {
   test_assert_int_equal( config_schema_item_iget_type( schema_item , 2 ) , CONFIG_STRING );
   test_assert_int_equal( config_schema_item_iget_type( schema_item , 5 ) , CONFIG_BOOL );
 
+  config_schema_item_set_default_type( schema_item , CONFIG_FLOAT );
+  test_assert_int_equal( config_schema_item_iget_type( schema_item , 7 ) , CONFIG_FLOAT );
   
   config_schema_item_free( schema_item );
   exit(0);
