@@ -33,10 +33,17 @@
 
 void ecl_test( const char * ecl_case ) {
   ecl_sum_type * ecl_sum  = ecl_sum_fread_alloc_case( ecl_case , ":");
+  time_t start_time = ecl_sum_get_start_time( ecl_sum );
+  time_t end_time   = ecl_sum_get_end_time( ecl_sum );
   time_map_type * ecl_map = time_map_alloc( );
   
   test_assert_true( time_map_summary_update( ecl_map , ecl_sum ) );
   test_assert_true( time_map_summary_update( ecl_map , ecl_sum ) );
+  
+  test_assert_time_t_equal( time_map_get_start_time( ecl_map ) , start_time );
+  test_assert_time_t_equal( time_map_get_end_time( ecl_map ) , end_time );
+  test_assert_double_equal( time_map_get_end_days( ecl_map ) , ecl_sum_get_sim_length( ecl_sum ));
+
   time_map_clear( ecl_map );
   time_map_update( ecl_map , 1 , 256 );
   test_assert_false( time_map_summary_update( ecl_map , ecl_sum ));
@@ -118,6 +125,7 @@ int main(int argc , char ** argv) {
     thread_test();
   } else
     ecl_test( argv[1] );
+
   
   
   exit(0);

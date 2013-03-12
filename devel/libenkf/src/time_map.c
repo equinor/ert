@@ -200,6 +200,21 @@ int time_map_get_last_step( time_map_type * map) {
 }
 
 
+time_t time_map_get_start_time( time_map_type * map) {
+  return time_map_iget( map , 0 );
+}
+
+
+time_t time_map_get_end_time( time_map_type * map) {
+  int last_step = time_map_get_last_step( map );
+  return time_map_iget( map , last_step );
+}
+
+double time_map_get_end_days( time_map_type * map) {
+  int last_step = time_map_get_last_step( map );
+  return time_map_iget_sim_days( map , last_step );
+}
+
 /*****************************************************************/
 
 bool time_map_update( time_map_type * map , int step , time_t time) {

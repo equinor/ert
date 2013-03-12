@@ -43,6 +43,10 @@ typedef struct time_map_struct time_map_type;
   int              time_map_get_last_step( time_map_type * map);
   void             time_map_update_strict( time_map_type * map , int step , time_t time);
   void             time_map_summary_update_strict( time_map_type * map , const ecl_sum_type * ecl_sum);
+  time_t           time_map_get_start_time( time_map_type * map);
+  time_t           time_map_get_end_time( time_map_type * map);
+  double           time_map_get_end_days( time_map_type * map);
+
 
 #ifdef __cplusplus 
 }
