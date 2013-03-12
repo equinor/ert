@@ -219,18 +219,19 @@ plot_config_type * plot_config_alloc_default() {
   info->image_type               = NULL;
   info->viewer                   = NULL;
   info->driver                   = NULL;      
+
   
-  plot_config_set_path(info         , DEFAULT_PLOT_PATH );
-  plot_config_set_plot_refcase(info , DEFAULT_PLOT_REFCASE );
+  plot_config_set_path(info              , DEFAULT_PLOT_PATH );
+  plot_config_set_plot_refcase(info      , DEFAULT_PLOT_REFCASE );
   plot_config_set_plot_refcase_list(info , DEFAULT_PLOT_REFCASE_LIST );
-  plot_config_set_image_type(info   , DEFAULT_IMAGE_TYPE );
-  plot_config_set_viewer(info       , DEFAULT_IMAGE_VIEWER );
-  plot_config_set_driver(info       , DEFAULT_PLOT_DRIVER );
-  plot_config_set_width(info        , DEFAULT_PLOT_WIDTH );
-  plot_config_set_height(info       , DEFAULT_PLOT_HEIGHT );
-  plot_config_set_errorbar_max(info , DEFAULT_PLOT_ERRORBAR_MAX);
-  plot_config_set_plot_errorbar(info, DEFAULT_PLOT_ERRORBAR);
-  plot_config_set_logy( info        , DEFAULT_PLOT_LOGY );
+  plot_config_set_image_type(info        , DEFAULT_IMAGE_TYPE );
+  plot_config_set_viewer(info            , DEFAULT_IMAGE_VIEWER );
+  plot_config_set_driver(info            , DEFAULT_PLOT_DRIVER );
+  plot_config_set_width(info             , DEFAULT_PLOT_WIDTH );
+  plot_config_set_height(info            , DEFAULT_PLOT_HEIGHT );
+  plot_config_set_errorbar_max(info      , DEFAULT_PLOT_ERRORBAR_MAX);
+  plot_config_set_plot_errorbar(info     , DEFAULT_PLOT_ERRORBAR);
+  plot_config_set_logy( info             , DEFAULT_PLOT_LOGY );
   return info;
 }
 

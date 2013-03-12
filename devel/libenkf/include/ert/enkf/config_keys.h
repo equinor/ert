@@ -126,6 +126,7 @@ extern "C" {
 #define  QC_PATH_KEY                       "QC_PATH"  
 #define  QC_WORKFLOW_KEY                   "QC_WORKFLOW"
 #define  REFCASE_KEY                       "REFCASE"
+#define  REFCASE_LIST_KEY                  "REFCASE_LIST"
 #define  REPORT_CONTEXT_KEY                "REPORT_CONTEXT"
 #define  REPORT_SEARCH_PATH_KEY            "REPORT_SEARCH_PATH"
 #define  REPORT_LARGE_KEY                  "REPORT_LARGE"   

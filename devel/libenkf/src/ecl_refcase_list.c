@@ -222,13 +222,6 @@ bool ecl_refcase_list_set_default( ecl_refcase_list_type * refcase_list , const 
 }
 
 
-
-int ecl_refcase_list_get_size( const ecl_refcase_list_type * refcase_list ) {
-  int size = hash_get_size( refcase_list->case_dict );
-  return size;
-}
-
-
 static sum_pair_type * ecl_refcase_list_get_pair( ecl_refcase_list_type * refcase_list , const char * casename) {
   if (ecl_refcase_list_has_case( refcase_list , casename))
     return hash_get( refcase_list->case_dict , casename);
@@ -238,6 +231,10 @@ static sum_pair_type * ecl_refcase_list_get_pair( ecl_refcase_list_type * refcas
 
 
 
+/**
+   Will sort the list and remove all elements which can not be loaded.
+*/
+
 static void ecl_refcase_list_assert_sorted( ecl_refcase_list_type * refcase_list ) {
   if (!refcase_list->sorted) {
     vector_free( refcase_list->case_list );
@@ -245,8 +242,8 @@ static void ecl_refcase_list_assert_sorted( ecl_refcase_list_type * refcase_list
     
     {
       stringlist_type * tmp_list = hash_alloc_stringlist( refcase_list->case_dict );
-      int i;
       sum_pair_type * default_case = refcase_list->default_case;
+      int i;
 
       for (i =0; i < stringlist_get_size( tmp_list ); i++) {
         const char * casename = stringlist_iget( tmp_list , i );
@@ -255,8 +252,14 @@ static void ecl_refcase_list_assert_sorted( ecl_refcase_list_type * refcase_list
         if (default_case && util_string_equal( casename , default_case->case_name))
           normal_case = false;
         
-        if (normal_case)
-          vector_append_ref( refcase_list->case_list , ecl_refcase_list_get_pair( refcase_list , casename ));
+        if (normal_case) {
+          sum_pair_type * pair = ecl_refcase_list_get_pair( refcase_list , casename );
+          ecl_sum_type * ecl_sum = sum_pair_get_ecl_sum( pair );
+          if (ecl_sum)
+            vector_append_ref( refcase_list->case_list , ecl_refcase_list_get_pair( refcase_list , casename ));
+          else
+            hash_del( refcase_list->case_dict , casename );
+        }
       }
       stringlist_free( tmp_list );
     }
@@ -280,6 +283,15 @@ static sum_pair_type * ecl_refcase_list_iget_pair( ecl_refcase_list_type * refca
   }
 }
 
+int ecl_refcase_list_get_size( const ecl_refcase_list_type * refcase_list ) {
+  ecl_refcase_list_assert_sorted( refcase_list );
+  {
+    int size = hash_get_size( refcase_list->case_dict );
+    return size;
+  }
+}
+
+
 const ecl_sum_type * ecl_refcase_list_iget_case( ecl_refcase_list_type * refcase_list , int index) {
   sum_pair_type * pair = ecl_refcase_list_iget_pair( refcase_list , index );
 
@@ -290,8 +302,6 @@ const ecl_sum_type * ecl_refcase_list_iget_case( ecl_refcase_list_type * refcase
 }
 
 
-
-
 const char * ecl_refcase_list_iget_fullpath( ecl_refcase_list_type * refcase_list , int index) {
   const ecl_sum_type * ecl_sum = ecl_refcase_list_iget_case( refcase_list , index );
   if (ecl_sum)
@@ -299,9 +309,6 @@ const char * ecl_refcase_list_iget_fullpath( ecl_refcase_list_type * refcase_lis
   else
     return NULL;
 }
-
-
-
 
 
 

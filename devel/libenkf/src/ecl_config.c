@@ -275,7 +275,7 @@ bool ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcas
    Will return NULL if no refcase is set.
 */
 const char * ecl_config_get_refcase_name( const ecl_config_type * ecl_config) {
-  ecl_sum_type * refcase = ecl_refcase_list_get_default( ecl_config->refcase_list );
+  const ecl_sum_type * refcase = ecl_refcase_list_get_default( ecl_config->refcase_list );
   if (refcase == NULL)
     return NULL;
   else
@@ -439,6 +439,21 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
       fprintf(stderr,"** Warning: loading refcase:%s failed \n", refcase_path);
   }
   
+
+  if (config_item_set( config , REFCASE_LIST_KEY)) {
+    config_content_item_type * item = config_get_content_item( config , REFCASE_LIST_KEY);
+    int i;
+    for (i=0; i < config_content_item_get_size( item ); i++) {
+      config_content_node_type * node = config_content_item_iget_node( item , i );
+      int j;
+      for (j=0; j < config_content_node_get_size( node ); j++) {
+        const char * case_glob = config_content_node_iget( node , j );
+        ecl_refcase_list_add_case( ecl_config->refcase_list , case_glob );
+      }
+    }
+  }
+  
+
   if (config_item_set(config , INIT_SECTION_KEY)) 
     ecl_config_set_init_section( ecl_config , config_get_value( config , INIT_SECTION_KEY ));
   else 
@@ -686,7 +701,9 @@ void ecl_config_add_config_items( config_type * config ) {
 
   item = config_add_schema_item(config , REFCASE_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
-  
+
+  item = config_add_schema_item(config , REFCASE_LIST_KEY , false );
+    
   
   item = config_add_schema_item(config , GRID_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
