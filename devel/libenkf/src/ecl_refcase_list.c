@@ -268,7 +268,7 @@ static void ecl_refcase_list_assert_clean( ecl_refcase_list_type * refcase_list 
 static sum_pair_type * ecl_refcase_list_get_pair( ecl_refcase_list_type * refcase_list , const char * case_name) {
   ecl_refcase_list_assert_clean( refcase_list );
   {
-    if (hash_has_key( refcase_list , case_name))
+    if (hash_has_key( refcase_list->case_dict , case_name))
       return hash_get( refcase_list->case_dict , case_name );
     else
       return NULL;
@@ -285,7 +285,7 @@ static sum_pair_type * ecl_refcase_list_iget_pair( ecl_refcase_list_type * refca
     if (index < 0)
       return refcase_list->default_case;
     else
-      return vector_iget( refcase_list->case_list , index);
+      return vector_safe_iget( refcase_list->case_list , index);
   }
 }
 
@@ -302,13 +302,19 @@ int ecl_refcase_list_get_size(ecl_refcase_list_type * refcase_list ) {
 
 const ecl_sum_type * ecl_refcase_list_iget_case( ecl_refcase_list_type * refcase_list , int index) {
   sum_pair_type * pair = ecl_refcase_list_iget_pair( refcase_list , index );
-  return sum_pair_get_ecl_sum( pair );
+  if (pair)
+    return sum_pair_get_ecl_sum( pair );
+  else
+    return NULL;
 }
 
 
 const ecl_sum_type * ecl_refcase_list_get_case( ecl_refcase_list_type * refcase_list , const char * case_name) {
   sum_pair_type * pair = ecl_refcase_list_get_pair( refcase_list , case_name );
-  return sum_pair_get_ecl_sum( pair );
+  if (pair)
+    return sum_pair_get_ecl_sum( pair );
+  else
+    return NULL;
 }
 
 

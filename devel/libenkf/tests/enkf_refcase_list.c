@@ -61,7 +61,7 @@ int main(int argc , char ** argv) {
     test_assert_false( ecl_refcase_list_set_default( refcase_list , "DoesNotExist"));
     test_assert_false( ecl_refcase_list_has_default( refcase_list ));
     test_assert_NULL( ecl_refcase_list_get_default( refcase_list ));
-    test_assert_int_equal( 0 , ecl_refcase_list_get_size( refcase_list ));
+    test_assert_int_equal( 1 , ecl_refcase_list_get_size( refcase_list ));
     
     test_assert_true( ecl_refcase_list_set_default( refcase_list , case1));
     test_assert_true( ecl_refcase_list_has_default( refcase_list ));
@@ -72,7 +72,7 @@ int main(int argc , char ** argv) {
     test_assert_true( ecl_refcase_list_has_default( refcase_list ));
     test_assert_not_NULL( ecl_refcase_list_get_default( refcase_list ));
     test_assert_int_equal( 1 , ecl_refcase_list_get_size( refcase_list ));
-    
+    test_assert_NULL( ecl_refcase_list_iget_case( refcase_list , 100));
     
     ecl_refcase_list_free( refcase_list );
   }
