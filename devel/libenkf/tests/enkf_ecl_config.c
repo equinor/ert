@@ -39,7 +39,7 @@ int main(int argc , char ** argv) {
 
       test_assert_ptr_equal( iget0 , def );
       test_assert_string_equal( argv[1] , ecl_sum_get_case( def ));
-      test_assert_string_equal( ecl_refcase_list_iget_fullpath( refcase_list , 0) , ecl_sum_get_case( def ));
+      test_assert_string_equal( ecl_refcase_list_iget_pathcase( refcase_list , 0) , ecl_sum_get_case( def ));
       
     }
   }

@@ -38,7 +38,7 @@ extern "C" {
   int                     ecl_refcase_list_get_size(ecl_refcase_list_type * refcase_list );
   int                     ecl_refcase_list_add_matching( ecl_refcase_list_type * refcase_list , const char * glob_string);
   int                     ecl_refcase_list_add_case( ecl_refcase_list_type * refcase_list , const char * case_name);
-  const char            * ecl_refcase_list_iget_fullpath( ecl_refcase_list_type * refcase_list , int index);
+  const char            * ecl_refcase_list_iget_pathcase( ecl_refcase_list_type * refcase_list , int index);
   const ecl_sum_type    * ecl_refcase_list_iget_case( ecl_refcase_list_type * refcase_list , int index);
 
 #ifdef __cplusplus

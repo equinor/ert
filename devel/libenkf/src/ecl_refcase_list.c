@@ -306,7 +306,7 @@ const ecl_sum_type * ecl_refcase_list_iget_case( ecl_refcase_list_type * refcase
 }
 
 
-const char * ecl_refcase_list_iget_fullpath( ecl_refcase_list_type * refcase_list , int index) {
+const char * ecl_refcase_list_iget_pathcase( ecl_refcase_list_type * refcase_list , int index) {
   const ecl_sum_type * ecl_sum = ecl_refcase_list_iget_case( refcase_list , index );
   if (ecl_sum)
     return ecl_sum_get_case( ecl_sum );
