@@ -41,6 +41,7 @@ typedef struct time_map_struct time_map_type;
   void             time_map_fread( time_map_type * map , const char * filename);
   double           time_map_iget_sim_days( time_map_type * map , int step );
   int              time_map_get_last_step( time_map_type * map);
+  int              time_map_get_size( time_map_type * map);
   void             time_map_update_strict( time_map_type * map , int step , time_t time);
   void             time_map_summary_update_strict( time_map_type * map , const ecl_sum_type * ecl_sum);
   time_t           time_map_get_start_time( time_map_type * map);

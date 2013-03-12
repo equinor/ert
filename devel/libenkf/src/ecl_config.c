@@ -453,7 +453,22 @@ void ecl_config_init( ecl_config_type * ecl_config , const config_type * config 
     }
   }
   
-
+  /* Deprecated */
+  if (config_item_set( config , PLOT_REFCASE_LIST_KEY)) {
+    char * case_list_file = config_get_value( config , PLOT_REFCASE_LIST_KEY);
+    FILE * stream = util_fopen(case_list_file , "r");
+    bool at_eof;
+    do {
+      char * case_name = util_fscanf_alloc_line(stream , &at_eof);
+      if (case_name) {
+        ecl_refcase_list_add_case( ecl_config->refcase_list , case_name);
+        free( case_name );
+      }
+    } while (!at_eof);
+    
+    fclose( stream );
+  }
+  
   if (config_item_set(config , INIT_SECTION_KEY)) 
     ecl_config_set_init_section( ecl_config , config_get_value( config , INIT_SECTION_KEY ));
   else 
@@ -714,6 +729,13 @@ void ecl_config_add_config_items( config_type * config ) {
 
   item = config_add_schema_item(config , REFCASE_LIST_KEY , false );
   config_schema_item_set_default_type( item , CONFIG_PATH );
+
+  item = config_add_key_value(config , PLOT_REFCASE_LIST_KEY , false , CONFIG_STRING);
+  {
+    char * message = util_alloc_sprintf("Warning: the key:%s is depreceated - use %s instead" , PLOT_REFCASE_LIST_KEY , REFCASE_LIST_KEY);
+    config_install_message( config , PLOT_REFCASE_LIST_KEY , message );
+    free( message );
+  }
   
   item = config_add_schema_item(config , GRID_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );

@@ -119,16 +119,15 @@
 #define DEFAULT_ANALYSIS_NUM_ITERATIONS 1
 
 /* Default directories. */
-#define DEFAULT_QC_PATH      "QC"
-#define DEFAULT_REPORT_PATH  "reports" 
-#define DEFAULT_PLOT_PATH    "plots"
-#define DEFAULT_RUNPATH      "simulations/realization%d"
-#define DEFAULT_ENSPATH      "storage"
-#define DEFAULT_RFTPATH      "rft"
-#define DEFAULT_PLOT_REFCASE ""
+#define DEFAULT_QC_PATH          "QC"
+#define DEFAULT_REPORT_PATH      "reports" 
+#define DEFAULT_PLOT_PATH        "plots"
+#define DEFAULT_RUNPATH          "simulations/realization%d"
+#define DEFAULT_ENSPATH          "storage"
+#define DEFAULT_RFTPATH          "rft"
+#define DEFAULT_PLOT_REFCASE     true
 #define DEFAULT_REPORT_LARGE     false
 #define DEFAULT_REPORT_TIMEOUT   120
-#define DEFAULT_PLOT_REFCASE_LIST ""
 
 #define DEFAULT_PRE_CLEAR_RUNPATH   false
 
