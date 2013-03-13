@@ -54,3 +54,4 @@ cfunc.get_input_format       = cwrapper.prototype("c_void_p gen_data_config_get_
 cfunc.get_template_file      = cwrapper.prototype("char* gen_data_config_get_template_file(gen_data_config)")
 cfunc.get_template_key       = cwrapper.prototype("char* gen_data_config_get_template_key(gen_data_config)")
 cfunc.get_init_file_fmt      = cwrapper.prototype("char* gen_data_config_get_init_file_fmt(gen_data_config)")
+cfunc.get_initial_size       = cwrapper.prototype("int gen_data_config_get_initial_size(gen_data_config)")

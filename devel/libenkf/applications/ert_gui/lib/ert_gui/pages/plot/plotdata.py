@@ -54,8 +54,7 @@ class PlotDataFetcher(ContentModel, QObject):
             handler.initialize(ert)
             self.connect(handler, SIGNAL('dataChanged()'), self.__dataChanged)
 
-        ert.prototype("long enkf_main_mount_extra_fs(long, char*)")
-        ert.prototype("void enkf_fs_free(long)")
+        
 
 
     #@print_timing
@@ -231,28 +230,6 @@ class PlotContextDataFetcher(ContentModel):
         ContentModel.__init__(self)
 
     def initialize(self, ert):
-
-        ert.prototype("long enkf_config_node_get_impl_type(long)")
-        ert.prototype("long enkf_config_node_get_ref(long)")
-
-        ert.prototype("long gen_kw_config_alloc_name_list(long)")
-
-        ert.prototype("long gen_data_config_get_initial_size(long)")
-
-        ert.prototype("int field_config_get_nx(long)")
-        ert.prototype("int field_config_get_ny(long)")
-        ert.prototype("int field_config_get_nz(long)")
-
-        ert.prototype("long enkf_main_get_fs(long)")
-        ert.prototype("char* enkf_fs_get_read_dir(long)")
-        ert.prototype("long enkf_fs_alloc_dirlist(long)")
-
-        ert.prototype("int plot_config_get_errorbar_max(long)")
-        ert.prototype("char* plot_config_get_path(long)")
-
-        ert.prototype("long enkf_main_get_obs(long)")
-        ert.prototype("long enkf_obs_alloc_typed_keylist(long, int)")
-
         self.modelConnect("casesUpdated()", self.fetchContent)
 
 
