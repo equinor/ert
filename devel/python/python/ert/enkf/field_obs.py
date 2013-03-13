@@ -1,6 +1,6 @@
 #  Copyright (C) 2012  Statoil ASA, Norway. 
 #   
-#  The file 'gen_kw_config.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'field_obs.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -18,10 +18,9 @@ import  ctypes
 from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
-from    ert.enkf.enkf_enum             import *
-from   ert.util.stringlist   import StringList
-import  ert.enkf.libenkf
-class GenKwConfig(CClass):
+from    enkf_enum             import *
+import  libenkf
+class FieldObs(CClass):
     
     def __init__(self , c_ptr = None):
         self.owner = False
@@ -41,16 +40,17 @@ class GenKwConfig(CClass):
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
-cwrapper.registerType( "gen_kw_config" , GenKwConfig )
+cwrapper.registerType( "field_obs" , FieldObs )
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
 #    These functions are used when implementing the EclKW class, not
 #    used outside this scope.
-cfunc = CWrapperNameSpace("gen_kw_config")
+cfunc = CWrapperNameSpace("field_obs")
 
 
-cfunc.free                   = cwrapper.prototype("void gen_kw_config_free( gen_kw_config )")
-cfunc.get_template_file      = cwrapper.prototype("char* gen_kw_config_get_template_file(gen_kw_config)")
-#cfunc.get_init_file_fmt      = cwrapper.prototype("char* gen_kw_config_get_init_file_fmt(gen_kw_config)")#NB NB No more in use
-cfunc.get_parameter_file     = cwrapper.prototype("char* gen_kw_config_get_parameter_file(gen_kw_config)")
-cfunc.alloc_name_list        = cwrapper.prototype("stringlist gen_kw_config_alloc_name_list(gen_kw_config)")
+cfunc.free                = cwrapper.prototype("void field_obs_free( field_obs )")
+cfunc.get_i               = cwrapper.prototype("int* field_obs_get_i(field_obs)")
+cfunc.get_j               = cwrapper.prototype("int* field_obs_get_j( field_obs )")
+cfunc.get_k               = cwrapper.prototype("int* field_obs_get_k( field_obs )")
+cfunc.get_size            = cwrapper.prototype("int field_obs_get_size( field_obs )")
+cfunc.iget                = cwrapper.prototype("void field_obs_iget( field_obs, int, double*, double*)")
