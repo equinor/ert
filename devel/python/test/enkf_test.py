@@ -45,8 +45,12 @@ class EnKFtest( unittest.TestCase ):
         self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
         config = self.main.config
         anal_config = self.main.anal_config
+        mod_config = self.main.mod_config
+        loc_config = self.main.loc_config
         self.assertTrue( isinstance( config , ert.enkf.ens_config.EnsConfig))
         self.assertTrue( isinstance( anal_config , ert.enkf.analysis_config.AnalysisConfig))
+        self.assertTrue( isinstance( mod_config , ert.enkf.model_config.ModelConfig))
+        self.assertTrue( isinstance( loc_config , ert.enkf.local_config.LocalConfig))
         del self
 
     #def test_update(self):
