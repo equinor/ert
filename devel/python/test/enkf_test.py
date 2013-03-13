@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #  Copyright (C) 2012  Statoil ASA, Norway. 
 #   
-#  The file 'sum_test.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'enkf_test.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -21,6 +21,7 @@ import ert
 import ert.enkf.enkf as enkf
 from   ert.util.tvector import * 
 from   test_util import approx_equal, approx_equalv
+
 
 case = "../../../libenkf/src/Gurbat/enkf.ext"
 
@@ -51,6 +52,9 @@ class EnKFtest( unittest.TestCase ):
         self.main = enkf.EnKFMain.bootstrap( case )
         self.main.update(step_list)
 
+    def test_analysis_config(self):
+        analysis_config = enkf.EnKFMain.get_analysis_config( case )
+        self.assertTrue( isinstance( analysis_config , ert.enkf.analysis_config.AnalysisConfig))
         
     #def test_sim(self):
     #    self.main = enkf.EnKFMain.bootstrap( case )
