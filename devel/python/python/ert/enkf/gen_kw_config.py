@@ -18,8 +18,9 @@ import  ctypes
 from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
-from    enkf_enum             import *
-import  libenkf
+from    ert.enkf.enkf_enum             import *
+from   ert.util.stringlist   import StringList
+import  ert.enkf.libenkf
 class GenKwConfig(CClass):
     
     def __init__(self , c_ptr = None):
@@ -50,6 +51,6 @@ cfunc = CWrapperNameSpace("gen_kw_config")
 
 cfunc.free                   = cwrapper.prototype("void gen_kw_config_free( gen_kw_config )")
 cfunc.get_template_file      = cwrapper.prototype("char* gen_kw_config_get_template_file(gen_kw_config)")
-cfunc.get_init_file_fmt      = cwrapper.prototype("char* gen_kw_config_get_init_file_fmt(gen_kw_config)")
+#cfunc.get_init_file_fmt      = cwrapper.prototype("char* gen_kw_config_get_init_file_fmt(gen_kw_config)")#NB NB No more in use
 cfunc.get_parameter_file     = cwrapper.prototype("char* gen_kw_config_get_parameter_file(gen_kw_config)")
 cfunc.alloc_name_list        = cwrapper.prototype("stringlist gen_kw_config_alloc_name_list(gen_kw_config)")

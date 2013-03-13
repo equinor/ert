@@ -52,11 +52,11 @@ cfunc.free                = cwrapper.prototype("void model_config_free( model_co
 cfunc.get_enkf_sched_file = cwrapper.prototype("char* model_config_get_enkf_sched_file( model_config )")
 cfunc.set_enkf_sched_file = cwrapper.prototype("void model_config_set_enkf_sched_file( model_config, char*)")
 cfunc.get_history_source  = cwrapper.prototype("int model_config_get_history_source(model_config)")
-cfunc.set_history_source  = cwrapper.prototype("void model_config_set_history_source(model_config, int)")
+#cfunc.set_history_source  = cwrapper.prototype("void model_config_set_history_source(model_config, int)")#NB NB No more in use
 cfunc.get_forward_model   = cwrapper.prototype("c_void_p model_config_get_forward_model(model_config)")
-cfunc.get_max_resample    = cwrapper.prototype("int model_config_get_max_resample(model_config)")
-cfunc.set_max_resample    = cwrapper.prototype("void model_config_set_max_resample(model_config, int)")
+#cfunc.get_max_resample    = cwrapper.prototype("int model_config_get_max_resample(model_config)")#NB NB No more in use
+#cfunc.set_max_resample    = cwrapper.prototype("void model_config_set_max_resample(model_config, int)")#NB NB No more in use
 cfunc.get_case_table_file = cwrapper.prototype("char* model_config_get_case_table_file(model_config)")
 cfunc.get_runpath_as_char = cwrapper.prototype("char* model_config_get_runpath_as_char(model_config)")
-cfunc.set_runpath_fmt     = cwrapper.prototype("void model_config_set_runpath_fmt(model_config, char*)")
+#cfunc.set_runpath_fmt     = cwrapper.prototype("void model_config_set_runpath_fmt(model_config, char*)")#NB NB No more in use
                                  

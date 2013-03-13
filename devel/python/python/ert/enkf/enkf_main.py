@@ -20,6 +20,7 @@ from    ert.cwrap.cclass        import CClass
 from    ert.util.tvector        import * 
 from    ert.job_queue.job_queue import JobQueue
 from    enkf_enum               import *
+from    analysis_config         import AnalysisConfig
 import  ens_config
 import  ecl_config
 import  analysis_config
@@ -33,7 +34,7 @@ import  enkf_obs
 import  plot_config
 import  site_config
 import  libenkf
-import  ert_local
+
 
 class EnKFMain(CClass):
     
@@ -43,7 +44,7 @@ class EnKFMain(CClass):
 
 
     @classmethod
-    def bootstrap(cls , model_config , site_config = ert_local.site_config):
+    def bootstrap(cls , model_config , site_config):
         obj = EnKFMain()
         obj.c_ptr = cfunc.bootstrap( site_config , model_config , True , False )
         return obj
@@ -80,6 +81,7 @@ class EnKFMain(CClass):
         return config
 
 
+
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -93,13 +95,14 @@ cfunc = CWrapperNameSpace("enkf_main")
 
 cfunc.bootstrap                    = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool)")
 cfunc.free                         = cwrapper.prototype("void     enkf_main_free( enkf_main )")
-cfunc.run                          = cwrapper.prototype("void     enkf_main_run( enkf_main , int , bool_vector , int , int , int)")
+#cfunc.run                          = cwrapper.prototype("void     enkf_main_run( enkf_main , int , bool_vector , int , int , int)") NBNB
 cfunc.ens_size                     = cwrapper.prototype("int      enkf_main_get_ensemble_size( enkf_main )")
 cfunc.get_ens_config               = cwrapper.prototype("c_void_p enkf_main_get_ensemble_config( enkf_main )")
 cfunc.set_verbose                  = cwrapper.prototype("void     enkf_main_set_verbose( enkf_main , bool )")
-cfunc.update                       = cwrapper.prototype("void     enkf_main_UPDATE(enkf_main , int_vector)")
+#cfunc.update                       = cwrapper.prototype("void     enkf_main_UPDATE(enkf_main , int_vector)") NBNB
 cfunc.get_model_config             = cwrapper.prototype("c_void_p enkf_main_get_model_config( enkf_main )")
 cfunc.get_local_config             = cwrapper.prototype("c_void_p enkf_main_get_local_config( enkf_main )")
+cfunc.get_analysis_config          = cwrapper.prototype("c_void_p enkf_main_get_analysis_config( enkf_main)")
 cfunc.set_eclbase                  = cwrapper.prototype("void     enkf_main_set_eclbase( enkf_main, char*)")
 cfunc.set_datafile                 = cwrapper.prototype("void     enkf_main_set_data_file( enkf_main, char*)")
 cfunc.get_schedule_prediction_file = cwrapper.prototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
@@ -118,7 +121,7 @@ cfunc.get_pre_clear_runpath        = cwrapper.prototype("bool enkf_main_get_pre_
 cfunc.set_pre_clear_runpath        = cwrapper.prototype("void enkf_main_set_pre_clear_runpath(enkf_main, bool)")
 cfunc.get_ensemble_size            = cwrapper.prototype("int enkf_main_get_ensemble_size(enkf_main)"),
 cfunc.iget_keep_runpath            = cwrapper.prototype("int enkf_main_iget_keep_runpath(enkf_main, int)"),
-cfunc.iset_keep_runpath            = cwrapper.prototype("void enkf_main_iset_keep_runpath(enkf_main, int, keep_runpath)")
+#cfunc.iset_keep_runpath            = cwrapper.prototype("void enkf_main_iset_keep_runpath(enkf_main, int, keep_runpath)") NBNB
 cfunc.get_templates                = cwrapper.prototype("c_void_p enkf_main_get_templates(enkf_main)")
 cfunc.get_site_config_file         = cwrapper.prototype("char* enkf_main_get_site_config_file(enkf_main)")
 cfunc.initialize_from_scratch      = cwrapper.prototype("int enkf_main_initialize_from_scratch(enkf_main, stringlist, int, int)")

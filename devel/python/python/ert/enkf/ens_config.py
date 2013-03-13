@@ -18,8 +18,9 @@ import  ctypes
 from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
-from    enkf_enum             import *
-import  libenkf
+from    ert.enkf.enkf_enum             import *
+import  ert.enkf.libenkf
+from    ert.ecl.ecl_grid import EclGrid
 class EnsConfig(CClass):
     
     def __init__(self , c_ptr = None):
