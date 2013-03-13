@@ -417,6 +417,16 @@ int enkf_tui_util_scanf_int_with_default_return_to_menu(const char * prompt , in
   return value;
 }
 
+bool enkf_tui_util_sscanf_active_list( bool_vector_type * iactive , const char * select_string , int ens_size ) {
+  if (select_string == NULL) {
+    bool_vector_set_default( iactive , true );
+    bool_vector_iset( iactive , ens_size - 1 , true );
+    return true;
+  } else 
+    return string_util_init_active_mask( select_string , iactive );
+}
+
+
 /*****************************************************************/
 
 
