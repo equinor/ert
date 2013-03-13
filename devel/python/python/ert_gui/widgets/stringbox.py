@@ -56,7 +56,7 @@ class StringBox(HelpedWidget):
         if self_get_from_model is None:
             self_get_from_model = ""
 
-        self.boxString.setText(self_get_from_model)
+        self.boxString.setText("%s" % self_get_from_model)
 
 
 

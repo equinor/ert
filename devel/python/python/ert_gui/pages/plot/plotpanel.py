@@ -82,12 +82,12 @@ class PlotPanel(QtGui.QWidget):
         plotLayout.addLayout(plot_view_layout)
 
         self.plotViewSettings = PlotViewSettingsPanel(plotView=self.plot, width=250)
-        self.connect(self.plotViewSettings, QtCore.SIGNAL('comparisonCaseSelected(String)'), self.plotDataFetcher.updateComparisonFS)
+        self.connect(self.plotViewSettings, QtCore.SIGNAL('comparisonCaseSelected(QString)'), self.plotDataFetcher.updateComparisonFS)
         plotLayout.addWidget(self.plotViewSettings)
         
         self.setLayout(plotLayout)
 
-        self.connect(self.plot.plot_settings, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchSettings)
+        ##self.connect(self.plot.plot_settings, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchSettings)
 
         ContentModel.modelConnect('casesUpdated()', self.updateList)
         

@@ -65,8 +65,8 @@ class PlotSettings(QObject):
                               self.errorbar_plot_config,
                               self.comparison_plot_config]
 
-        for pc in self._plot_configs:
-            self.connect(pc.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self.notify)
+        #for pc in self._plot_configs:
+        #    self.connect(pc.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self.notify)
 
         self._plot_config_dict = {}
         for pc in self._plot_configs:

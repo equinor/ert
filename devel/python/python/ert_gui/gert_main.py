@@ -114,12 +114,13 @@ from PyQt4 import QtGui, QtCore
 import sys
 import os
 
+
 from ert.ert.ertwrapper import ErtWrapper
 
 import ert_gui.widgets.util
 import ert_gui.widgets.help
-ert_gui.widgets.help.help_prefix = os.getenv("GERT_SHARE_PATH")+ "/help/"
-ert_gui.widgets.util.img_prefix  = os.getenv("GERT_SHARE_PATH")+ "/img/"
+ert_gui.widgets.help.help_prefix = os.getenv("ERT_SHARE_PATH")+ "/help/"
+ert_gui.widgets.util.img_prefix  = os.getenv("ERT_SHARE_PATH")+ "/img/"
 
 
 
@@ -187,9 +188,9 @@ window.setSaveFunction(ert.save)
 splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
 app.processEvents()
 
-#window.addPage("Configuration", resourceIcon("config"), ConfigPages(window))
-window.addPage("Init", resourceIcon("db"), InitPanel(window))
-window.addPage("Run", resourceIcon("run"), RunPanel(window))
+window.addPage("Configuration", resourceIcon("config"), ConfigPages(window))
+window.addPage("Init" , resourceIcon("db"), InitPanel(window))
+window.addPage("Run"  , resourceIcon("run"), RunPanel(window))
 window.addPage("Plots", resourceIcon("plot"), PlotPanel())
 
 splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)

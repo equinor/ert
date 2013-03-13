@@ -53,8 +53,8 @@ class RunTemplatePanel(HelpedWidget):
         self.addWidget(self.searchableList)
         self.connect(self.searchableList, QtCore.SIGNAL('currentItemChanged(QListWidgetItem, QListWidgetItem)'),
                      self.changeParameter)
-        self.connect(self.searchableList, QtCore.SIGNAL('addItem(list)'), self.addItem)
-        self.connect(self.searchableList, QtCore.SIGNAL('removeItem(list)'), self.removeItem)
+        self.connect(self.searchableList, QtCore.SIGNAL('addItem(QListWidgetItem)'), self.addItem)
+        self.connect(self.searchableList, QtCore.SIGNAL('removeItem(QListWidgetItem)'), self.removeItem)
 
 
         self.run_template_panel = ert_gui.widgets.util.createEmptyPanel()

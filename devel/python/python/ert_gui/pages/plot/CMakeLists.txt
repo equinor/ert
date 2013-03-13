@@ -1,0 +1,1 @@
+add_python_target( python_gui_pages_plot ${PYTHON_INSTALL_PREFIX}/ert_gui/pages/plot "__init__;fetcher;plotconfig;plotfigure;plotpanel;plotsettings;plotview;zoomslider;ensemblefetcher;plotdata;plotgenerator;plotrenderer;plotsettingsxml;rftfetcher")

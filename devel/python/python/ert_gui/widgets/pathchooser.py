@@ -182,7 +182,7 @@ class PathChooser(HelpedWidget):
         path = self.getFromModel()
         if path is None:
             path = ""
-
-        self.pathLine.setText(path)
+            
+        self.pathLine.setText("%s" % path)
         self.editing = False
 

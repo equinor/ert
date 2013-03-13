@@ -76,16 +76,16 @@ def createAnalysisPage(configPanel, parent):
     r.setter = lambda ert, value : ert.enkf.analysis_config_set_merge_observations(ert.analysis_config, value)
 
 
-    enkf_mode_type = {"ENKF_STANDARD" : 10, "ENKF_SQRT" : 20}
-    enkf_mode_type_inverted = {10 : "ENKF_STANDARD" , 20 : "ENKF_SQRT"}
-    r = configPanel.addRow(ComboChoice(parent, enkf_mode_type.keys(), "Mode", "config/analysis/enkf_mode"))
-    r.getter = lambda ert : enkf_mode_type_inverted[ert.enkf.analysis_config_get_enkf_mode(ert.analysis_config)]
-    r.setter = lambda ert, value : ert.enkf.analysis_config_set_enkf_mode(ert.analysis_config, enkf_mode_type[str(value)])
+    #enkf_mode_type = {"ENKF_STANDARD" : 10, "ENKF_SQRT" : 20}
+    #enkf_mode_type_inverted = {10 : "ENKF_STANDARD" , 20 : "ENKF_SQRT"}
+    #r = configPanel.addRow(ComboChoice(parent, enkf_mode_type.keys(), "Mode", "config/analysis/enkf_mode"))
+    #r.getter = lambda ert : enkf_mode_type_inverted[ert.enkf.analysis_config_get_enkf_mode(ert.analysis_config)]
+    #r.setter = lambda ert, value : ert.enkf.analysis_config_set_enkf_mode(ert.analysis_config, enkf_mode_type[str(value)])
 
 
-    r = configPanel.addRow(DoubleSpinner(parent, "Truncation", "config/analysis/enkf_truncation", 0, 1, 2))
-    r.getter = lambda ert : ert.enkf.analysis_config_get_truncation(ert.analysis_config)
-    r.setter = lambda ert, value : ert.enkf.analysis_config_set_truncation(ert.analysis_config, value)
+    #r = configPanel.addRow(DoubleSpinner(parent, "Truncation", "config/analysis/enkf_truncation", 0, 1, 2))
+    #r.getter = lambda ert : ert.enkf.analysis_config_get_truncation(ert.analysis_config)
+    #r.setter = lambda ert, value : ert.enkf.analysis_config_set_truncation(ert.analysis_config, value)
 
 
 
