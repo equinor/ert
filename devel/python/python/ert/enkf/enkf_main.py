@@ -95,11 +95,11 @@ cfunc = CWrapperNameSpace("enkf_main")
 
 cfunc.bootstrap                    = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool , bool)")
 cfunc.free                         = cwrapper.prototype("void     enkf_main_free( enkf_main )")
-#cfunc.run                          = cwrapper.prototype("void     enkf_main_run( enkf_main , int , bool_vector , int , int , int)") NBNB
+cfunc.run                          = cwrapper.safe_prototype("void     enkf_main_run( enkf_main , int , bool_vector , int , int , int)")
 cfunc.ens_size                     = cwrapper.prototype("int      enkf_main_get_ensemble_size( enkf_main )")
 cfunc.get_ens_config               = cwrapper.prototype("c_void_p enkf_main_get_ensemble_config( enkf_main )")
 cfunc.set_verbose                  = cwrapper.prototype("void     enkf_main_set_verbose( enkf_main , bool )")
-#cfunc.update                       = cwrapper.prototype("void     enkf_main_UPDATE(enkf_main , int_vector)") NBNB
+cfunc.update                       = cwrapper.safe_prototype("void     enkf_main_UPDATE(enkf_main , int_vector)")
 cfunc.get_model_config             = cwrapper.prototype("c_void_p enkf_main_get_model_config( enkf_main )")
 cfunc.get_local_config             = cwrapper.prototype("c_void_p enkf_main_get_local_config( enkf_main )")
 cfunc.get_analysis_config          = cwrapper.prototype("c_void_p enkf_main_get_analysis_config( enkf_main)")
