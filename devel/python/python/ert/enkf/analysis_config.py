@@ -32,8 +32,8 @@ class AnalysisConfig(CClass):
             cfunc.free( self )
 
 
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
+    def get_rerun(self):
+        return cfunc.get_rerun( self )
 
 
 
