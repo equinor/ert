@@ -80,6 +80,11 @@ class EnKFMain(CClass):
         config = ens_config.EnsConfig( cfunc.get_ens_config( self ))
         return config
 
+    @property
+    def anal_config(self):
+        anal_config=analysis_config.AnalysisConfig( cfunc.get_analysis_config( self ))
+        return anal_config
+
 
 
 ##################################################################

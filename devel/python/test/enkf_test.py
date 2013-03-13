@@ -39,18 +39,22 @@ class EnKFtest( unittest.TestCase ):
     def test_enum(self):
         self.assertEqual( enkf.enkf_state_enum.FORECAST , 2 )
         self.assertEqual( enkf.enkf_state_enum.ANALYZED , 4 )
-
+        del self
         
     def test_config( self ):
         self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
         config = self.main.config
+        anal_config = self.main.anal_config
         self.assertTrue( isinstance( config , ert.enkf.ens_config.EnsConfig))
+        self.assertTrue( isinstance( anal_config , ert.enkf.analysis_config.AnalysisConfig))
+        del self
 
-    def test_update(self):
-        step_list = IntVector(0)
-        step_list.append(30)
-        self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
-        self.main.update(step_list)
+    #def test_update(self):
+    #    step_list = IntVector(0)
+    #    step_list.append(30)
+    #    self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
+    #    self.main.update(step_list)
+    #    del self
 
         
     #def test_sim(self):

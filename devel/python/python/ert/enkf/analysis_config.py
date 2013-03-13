@@ -47,7 +47,7 @@ cfunc = CWrapperNameSpace("analysis_config")
 
 cfunc.free                   = cwrapper.prototype("void analysis_config_free( analysis_config )")
 cfunc.get_rerun              = cwrapper.prototype("int analysis_config_get_rerun( analysis_config )")
-cfunc.set_rerun              = cwrapper.prototype("void analysis_config_set_rerun analysis_config, bool)")
+cfunc.set_rerun              = cwrapper.prototype("void analysis_config_set_rerun( analysis_config, bool)")
 cfunc.get_rerun_start        = cwrapper.prototype("int analysis_config_get_rerun_start( analysis_config )")
 cfunc.set_rerun_start        = cwrapper.prototype("void analysis_config_set_rerun_start( analysis_config, int)")
 cfunc.get_log_path           = cwrapper.prototype("char* analysis_config_get_log_path( analysis_config)")
