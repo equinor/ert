@@ -23,7 +23,7 @@ from   ert.util.tvector import *
 from   test_util import approx_equal, approx_equalv
 
 
-case = "../../../libenkf/src/Gurbat/enkf.ext"
+case = "/private/inmyr/ERT-Intro/testcase/ert_config"
 
 class EnKFtest( unittest.TestCase ):
     def setUp(self):
@@ -31,7 +31,7 @@ class EnKFtest( unittest.TestCase ):
 
 
     def test_boot( self ):
-        self.main = enkf.EnKFMain.bootstrap( case )
+        self.main = enkf.EnKFMain.bootstrap( case , )
         self.assertTrue( self.main , "Load failed" )
         del self
 

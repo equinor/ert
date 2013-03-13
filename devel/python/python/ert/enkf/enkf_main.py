@@ -93,7 +93,7 @@ cwrapper.registerType( "enkf_main" , EnKFMain )
 cfunc = CWrapperNameSpace("enkf_main")
 
 
-cfunc.bootstrap                    = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool)")
+cfunc.bootstrap                    = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool , bool)")
 cfunc.free                         = cwrapper.prototype("void     enkf_main_free( enkf_main )")
 #cfunc.run                          = cwrapper.prototype("void     enkf_main_run( enkf_main , int , bool_vector , int , int , int)") NBNB
 cfunc.ens_size                     = cwrapper.prototype("int      enkf_main_get_ensemble_size( enkf_main )")
@@ -133,5 +133,5 @@ cfunc.copy_ensemble                = cwrapper.prototype("void enkf_main_copy_ens
 cfunc.iget_member_config           = cwrapper.prototype("c_void_p enkf_main_iget_member_config(enkf_main, int)")
 cfunc.get_observations             = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)") 
 cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
-cfunc.mount_extra_fs               = cwrapper.prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")
+#cfunc.mount_extra_fs               = cwrapper.prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)") NBNB
 cfunc.get_obs                      = cwrapper.prototype("c_void_p enkf_main_get_obs(enkf_main)")
