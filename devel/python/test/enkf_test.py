@@ -31,7 +31,7 @@ class EnKFtest( unittest.TestCase ):
 
 
     def test_boot( self ):
-        self.main = enkf.EnKFMain.bootstrap( case , )
+        self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
         self.assertTrue( self.main , "Load failed" )
         del self
 
@@ -42,19 +42,16 @@ class EnKFtest( unittest.TestCase ):
 
         
     def test_config( self ):
-        self.main = enkf.EnKFMain.bootstrap( case )
+        self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
         config = self.main.config
         self.assertTrue( isinstance( config , ert.enkf.ens_config.EnsConfig))
 
     def test_update(self):
         step_list = IntVector(0)
         step_list.append(30)
-        self.main = enkf.EnKFMain.bootstrap( case )
+        self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
         self.main.update(step_list)
 
-    def test_analysis_config(self):
-        analysis_config = enkf.EnKFMain.get_analysis_config( case )
-        self.assertTrue( isinstance( analysis_config , ert.enkf.analysis_config.AnalysisConfig))
         
     #def test_sim(self):
     #    self.main = enkf.EnKFMain.bootstrap( case )
