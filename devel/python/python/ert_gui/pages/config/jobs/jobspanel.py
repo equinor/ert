@@ -49,10 +49,9 @@ class JobsPanel(HelpedWidget):
     def createWidgets(self, parent):
         self.searchableList = SearchableList(parent, list_height=200, list_width=150, ignore_case=True)
         self.addWidget(self.searchableList)
-        self.connect(self.searchableList, QtCore.SIGNAL('currentItemChanged(QListWidgetItem, QListWidgetItem)'),
-                     self.changeParameter)
-        self.connect(self.searchableList, QtCore.SIGNAL('addItem(list)'), self.addItem)
-        self.connect(self.searchableList, QtCore.SIGNAL('removeItem(list)'), self.removeItem)
+        self.connect(self.searchableList , QtCore.SIGNAL('currentItemChanged(QListWidgetItem, QListWidgetItem)'),self.changeParameter)
+        self.connect(self.searchableList , QtCore.SIGNAL('addItem(QListWidgetItem)'), self.addItem)
+        self.connect(self.searchableList , QtCore.SIGNAL('removeItem(QListWidgetItem)'), self.removeItem)
 
 
         self.jobPanel = ert_gui.widgets.util.createEmptyPanel()

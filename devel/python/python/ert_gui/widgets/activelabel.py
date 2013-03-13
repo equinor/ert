@@ -44,4 +44,4 @@ class ActiveLabel(HelpedWidget):
         if self_get_from_model is None:
             self_get_from_model = ""
 
-        self.active_label.setText(self_get_from_model)
+        self.active_label.setText("%s" % self_get_from_model)

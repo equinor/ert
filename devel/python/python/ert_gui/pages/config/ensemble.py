@@ -70,7 +70,7 @@ def createEnsemblePage(configPanel, parent):
                 model["init"] = ert.enkf.field_config_get_init_transform_name(data)
                 model["output"] = ert.enkf.field_config_get_output_transform_name(data)
                 
-                model["init_files"] = ert.enkf.field_config_get_init_file_fmt(data)
+                model["init_files"] = "????" ##ert.enkf.field_config_get_init_file_fmt(data)
                 model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
                 model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
                 model["enkf_infile"] = ert.enkf.enkf_config_node_get_enkf_infile(node)
@@ -86,7 +86,7 @@ def createEnsemblePage(configPanel, parent):
 
                 template_file = ert.enkf.gen_data_config_get_template_file(data)
                 template_key = ert.enkf.gen_data_config_get_template_key(data)
-                init_file_fmt = ert.enkf.gen_data_config_get_init_file_fmt(data)
+                init_file_fmt = "????" #ert.enkf.gen_data_config_get_init_file_fmt(data)
 
                 model["output_format"] = output_format
                 model["input_format"] = input_format
@@ -109,14 +109,14 @@ def createEnsemblePage(configPanel, parent):
                 model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
                 model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
                 model["template"] = ert.enkf.gen_kw_config_get_template_file(data)
-                model["init_file"] = ert.enkf.gen_kw_config_get_init_file_fmt(data)
+                model["init_file"] = "????" #ert.enkf.gen_kw_config_get_init_file_fmt(data)
                 model["parameter_file"] = ert.enkf.gen_kw_config_get_parameter_file(data)
             elif type == SummaryModel.TYPE:
                 model = SummaryModel(key)
             else:
                 pass #Unknown type
 
-            model.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            #model.setValid(ert.enkf.enkf_config_node_is_valid(node))
 
             parameters.append(model)
 

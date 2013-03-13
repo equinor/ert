@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
+import sys
 from PyQt4 import QtGui, QtCore
 from helpedwidget import *
 
@@ -54,7 +54,11 @@ class ComboChoice(HelpedWidget):
                 break
 
         if not indexSet:
-            raise AssertionError("ComboBox can not be set to: " + str(newValue))
+            self.combo.setCurrentIndex(0)
+            sys.stderr.write("AssertionError: ComboBox can not be set to: " + str(newValue) + "\n")
+            #raise AssertionError("ComboBox can not be set to: " + str(newValue))
+
+
 
     def updateList(self, choiceList):
         """Replace the list of choices with the specified items"""

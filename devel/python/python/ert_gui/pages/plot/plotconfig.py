@@ -129,7 +129,7 @@ class PlotConfigPanel(QFrame):
     def __init__(self, plot_config):
         QFrame.__init__(self)
         self.plot_config = plot_config
-        self.connect(plot_config.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self._fetchValues)
+        #self.connect(plot_config.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self._fetchValues)
 
         layout = QFormLayout()
         layout.setRowWrapPolicy(QFormLayout.WrapLongRows)

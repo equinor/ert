@@ -59,8 +59,8 @@ class ParameterPanel(HelpedWidget):
         self.addWidget(self.pagesWidget)
 
         self.connect(self.searchableList, QtCore.SIGNAL('currentItemChanged(QListWidgetItem, QListWidgetItem)'), self.changeParameter)
-        self.connect(self.searchableList, QtCore.SIGNAL('addItem(list)'), self.addItem)
-        self.connect(self.searchableList, QtCore.SIGNAL('removeItem(list)'), self.removeItem)
+        self.connect(self.searchableList, QtCore.SIGNAL('addItem(QListWidgetItem)'), self.addItem)
+        self.connect(self.searchableList, QtCore.SIGNAL('removeItem(QListWidgetItem)'), self.removeItem)
 
         #self.addHelpButton()
 
@@ -110,7 +110,7 @@ class ParameterPanel(HelpedWidget):
         list.setCurrentItem(parameter)
 
         user_data = parameter.getUserData()
-        self.connect(user_data, SIGNAL('modelChanged(Model)'), self.modelChanged)
+        ##self.connect(user_data, SIGNAL('modelChanged(Model)'), self.modelChanged)
 
     def modelChanged(self, parameter_model):
         """Called whenever the content of a model changes"""
@@ -154,7 +154,9 @@ class ParameterPanel(HelpedWidget):
 
         for parameter in parameters:
             if parameter is None:
-                raise AssertionError("Unknown type name!")
+                sys.stderr.write("Unknown type name!\n")
+                break
+                #raise AssertionError("Unknown type name!")
 
             param = Parameter(parameter.name, parameter.TYPE)
             param.setUserData(parameter)
