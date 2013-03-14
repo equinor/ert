@@ -817,7 +817,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , 
   {
     char * filename  = ecl_util_alloc_exfilename(run_info->run_path , member_config_get_eclbase(enkf_state->my_config) , ECL_RESTART_FILE , fmt_file , report_step);
     if (filename != NULL) {
-      restart_file = ecl_file_open( filename );
+      restart_file = ecl_file_open( filename , 0 );
       free(filename);
     } else 
       restart_file = NULL;  /* No restart information was found; if that is expected the program will fail hard in the enkf_node_forward_load() functions. */
