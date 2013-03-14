@@ -91,6 +91,8 @@ extern "C" {
   const char                  * enkf_main_get_data_file(const enkf_main_type * );
   const char                 ** enkf_main_get_well_list_ref(const enkf_main_type * , int *);
   
+  void                          enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode);
+
   bool                          enkf_main_get_endian_swap(const enkf_main_type * );
   bool                          enkf_main_get_fmt_file(const enkf_main_type * );
   bool                          enkf_main_has_key(const enkf_main_type * , const char *);

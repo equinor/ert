@@ -34,7 +34,7 @@ import  enkf_obs
 import  plot_config
 import  site_config
 import  libenkf
-
+import  enkf_fs
 
 class EnKFMain(CClass):
     
@@ -80,6 +80,20 @@ class EnKFMain(CClass):
         config = ens_config.EnsConfig( cfunc.get_ens_config( self ))
         return config
 
+    @property
+    def anal_config(self):
+        anal_config=analysis_config.AnalysisConfig( cfunc.get_analysis_config( self ))
+        return anal_config
+    
+    @property
+    def mod_config(self):
+        mod_config=model_config.ModelConfig( cfunc.get_model_config( self ))
+        return mod_config
+    
+    @property
+    def loc_config(self):
+        loc_config=local_config.LocalConfig( cfunc.get_local_config( self ))
+        return loc_config
 
 
 ##################################################################
@@ -98,8 +112,7 @@ cfunc.free                         = cwrapper.prototype("void     enkf_main_free
 cfunc.run                          = cwrapper.safe_prototype("void     enkf_main_run( enkf_main , int , bool_vector , int , int , int)")
 cfunc.ens_size                     = cwrapper.prototype("int      enkf_main_get_ensemble_size( enkf_main )")
 cfunc.get_ens_config               = cwrapper.prototype("c_void_p enkf_main_get_ensemble_config( enkf_main )")
-cfunc.set_verbose                  = cwrapper.prototype("void     enkf_main_set_verbose( enkf_main , bool )")
-cfunc.update                       = cwrapper.safe_prototype("void     enkf_main_UPDATE(enkf_main , int_vector)")
+cfunc.update                       = cwrapper.prototype("void     enkf_main_UPDATE(enkf_main , int_vector, enkf_fs, int, run_mode )")
 cfunc.get_model_config             = cwrapper.prototype("c_void_p enkf_main_get_model_config( enkf_main )")
 cfunc.get_local_config             = cwrapper.prototype("c_void_p enkf_main_get_local_config( enkf_main )")
 cfunc.get_analysis_config          = cwrapper.prototype("c_void_p enkf_main_get_analysis_config( enkf_main)")
@@ -121,7 +134,7 @@ cfunc.get_pre_clear_runpath        = cwrapper.prototype("bool enkf_main_get_pre_
 cfunc.set_pre_clear_runpath        = cwrapper.prototype("void enkf_main_set_pre_clear_runpath(enkf_main, bool)")
 cfunc.get_ensemble_size            = cwrapper.prototype("int enkf_main_get_ensemble_size(enkf_main)"),
 cfunc.iget_keep_runpath            = cwrapper.prototype("int enkf_main_iget_keep_runpath(enkf_main, int)"),
-#cfunc.iset_keep_runpath            = cwrapper.prototype("void enkf_main_iset_keep_runpath(enkf_main, int, keep_runpath)") NBNB
+cfunc.iset_keep_runpath            = cwrapper.safe_prototype("void enkf_main_iset_keep_runpath(enkf_main, int, keep_runpath)")
 cfunc.get_templates                = cwrapper.prototype("c_void_p enkf_main_get_templates(enkf_main)")
 cfunc.get_site_config_file         = cwrapper.prototype("char* enkf_main_get_site_config_file(enkf_main)")
 cfunc.initialize_from_scratch      = cwrapper.prototype("int enkf_main_initialize_from_scratch(enkf_main, stringlist, int, int)")
@@ -133,5 +146,5 @@ cfunc.copy_ensemble                = cwrapper.prototype("void enkf_main_copy_ens
 cfunc.iget_member_config           = cwrapper.prototype("c_void_p enkf_main_iget_member_config(enkf_main, int)")
 cfunc.get_observations             = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)") 
 cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
-#cfunc.mount_extra_fs               = cwrapper.prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)") NBNB
+cfunc.mount_extra_fs               = cwrapper.safe_prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")
 cfunc.get_obs                      = cwrapper.prototype("c_void_p enkf_main_get_obs(enkf_main)")

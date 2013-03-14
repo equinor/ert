@@ -27,14 +27,10 @@ class EnkfFs(CClass):
         self.c_ptr = c_ptr
         
         
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
-
 
     def has_key(self , key):
         return cfunc.has_key( self ,key )
-
+####THIS FUNCTION HAS NO DEL METHOD !!!! OBS OBS###############
 
 
 ##################################################################
@@ -48,8 +44,7 @@ cwrapper.registerType( "enkf_fs" , EnkfFs )
 cfunc = CWrapperNameSpace("enkf_fs")
 
 
-cfunc.free                = cwrapper.prototype("void enkf_fs_free( enkf_fs )")
 cfunc.has_node            = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, long, int, int, int)")
 cfunc.fread_node          = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, char*, long, int, int, int)")
-cfunc.get_read_dir        = cwrapper.prototype("char* enkf_fs_get_read_dir(enkf_fs)") #NBNB
-cfunc.alloc_dirlist       = cwrapper.prototype("c_void_p enkf_fs_alloc_dirlist(enkf_fs)")#NBNB
+cfunc.get_read_dir        = cwrapper.safe_prototype("char* enkf_fs_get_read_dir(enkf_fs)")
+cfunc.alloc_dirlist       = cwrapper.safe_prototype("c_void_p enkf_fs_alloc_dirlist(enkf_fs)")

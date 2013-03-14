@@ -32,8 +32,8 @@ class AnalysisConfig(CClass):
             cfunc.free( self )
 
 
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
+    def get_rerun(self):
+        return cfunc.get_rerun( self )
 
 
 
@@ -47,7 +47,7 @@ cfunc = CWrapperNameSpace("analysis_config")
 
 cfunc.free                   = cwrapper.prototype("void analysis_config_free( analysis_config )")
 cfunc.get_rerun              = cwrapper.prototype("int analysis_config_get_rerun( analysis_config )")
-cfunc.set_rerun              = cwrapper.prototype("void analysis_config_set_rerun analysis_config, bool)")
+cfunc.set_rerun              = cwrapper.prototype("void analysis_config_set_rerun( analysis_config, bool)")
 cfunc.get_rerun_start        = cwrapper.prototype("int analysis_config_get_rerun_start( analysis_config )")
 cfunc.set_rerun_start        = cwrapper.prototype("void analysis_config_set_rerun_start( analysis_config, int)")
 cfunc.get_log_path           = cwrapper.prototype("char* analysis_config_get_log_path( analysis_config)")
@@ -56,7 +56,7 @@ cfunc.get_alpha              = cwrapper.prototype("double analysis_config_get_al
 cfunc.set_alpha              = cwrapper.prototype("void analysis_config_set_alpha(analysis_config, double)")
 cfunc.get_merge_observations = cwrapper.prototype("bool analysis_config_get_merge_observations(analysis_config)")
 cfunc.set_merge_observations = cwrapper.prototype("void analysis_config_set_merge_observations(analysis_config, int)")
-#cfunc.get_enkf_mode          = cwrapper.prototype("int analysis_config_get_enkf_mode(analysis_config)") #NB NB No more in use
-#cfunc.set_enkf_mode          = cwrapper.prototype("void analysis_config_set_enkf_mode(analysis_config, int)") #NB NB No more in use
-#cfunc.get_truncation         = cwrapper.prototype("double analysis_config_get_truncation(analysis_config)")#NB NB No more in use
-#cfunc.get_truncation         = cwrapper.prototype("void analysis_config_set_truncation(analysis_config, double)")#NB NB No more in use
+cfunc.get_enkf_mode          = cwrapper.safe_prototype("int analysis_config_get_enkf_mode(analysis_config)")
+cfunc.set_enkf_mode          = cwrapper.safe_prototype("void analysis_config_set_enkf_mode(analysis_config, int)")
+cfunc.get_truncation         = cwrapper.safe_prototype("double analysis_config_get_truncation(analysis_config)")
+cfunc.get_truncation         = cwrapper.safe_prototype("void analysis_config_set_truncation(analysis_config, double)")
