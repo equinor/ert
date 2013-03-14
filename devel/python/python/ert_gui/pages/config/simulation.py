@@ -40,9 +40,9 @@ def createSimulationsPage(configPanel, parent):
     r.getter = lambda ert : ert.enkf.site_config_get_max_submit(ert.site_config)
     r.setter = lambda ert, value : ert.enkf.site_config_set_max_submit(ert.site_config, value)
 
-    r = configPanel.addRow(IntegerSpinner(parent, "Max resample", "config/simulation/max_resample", 1, 10000))
-    r.getter = lambda ert : ert.enkf.model_config_get_max_resample(ert.model_config)
-    r.setter = lambda ert, value : ert.enkf.model_config_set_max_resample(ert.model_config, value)
+    r = configPanel.addRow(IntegerSpinner(parent, "Max internal submit", "config/simulation/max_resample", 1, 10000))
+    r.getter = lambda ert : ert.enkf.model_config_get_max_internal_submit(ert.model_config)
+    r.setter = lambda ert, value : ert.enkf.model_config_set_max_internal_submit(ert.model_config, value)
 
 
 
@@ -163,15 +163,15 @@ def createSimulationsPage(configPanel, parent):
 
     def get_run_templates(ert):
         templates = ert.enkf.enkf_main_get_templates(ert.main)
-        template_list = ert.enkf.ert_template_alloc_list(templates)
+        template_list = ert.enkf.ert_templates_alloc_list(templates)
 
         template_names = ert.getStringList(template_list, free_after_use=True)
         result = []
         for name in template_names:
-            template = ert.enkf.ert_template_get_template(templates, name)
-            template_file = ert.enkf.ert_template_get_template_file(template)
-            target_file = ert.enkf.ert_template_get_target_file(template)
-            arguments = ert.enkf.ert_template_get_args_as_string(template)
+            template = ert.enkf.ert_templates_get_template(templates, name)
+            template_file = ert.enkf.ert_templates_get_template_file(template)
+            target_file = ert.enkf.ert_templates_get_target_file(template)
+            arguments = ert.enkf.ert_templates_get_args_as_string(template)
             result.append((name, template_file, target_file, arguments))
         return result
 
@@ -179,10 +179,10 @@ def createSimulationsPage(configPanel, parent):
 
     def set_run_templates(ert, template_list):
         templates_pointer = ert.enkf.enkf_main_get_templates(ert.main)
-        ert.enkf.ert_template_clear(templates_pointer)
+        ert.enkf.ert_templates_clear(templates_pointer)
 
         for template in template_list:
-            ert.enkf.ert_template_add_template(templates_pointer, template[0], template[1], template[2], template[3])
+            ert.enkf.ert_templates_add_template(templates_pointer, template[0], template[1], template[2], template[3])
 
     r.setter = set_run_templates  
     

@@ -275,10 +275,10 @@ class  run_mode_type(enum):
     SMOOTHER_UPDATE = None
     INIT_ONLY = None
 
-run_mode_type:ENKF_ASSIMILATION = run_mode_type( "ENKF_ASSIMILATION", 1)
-run_mode_type:ENKF_EXPERIMENT = run_mode_type( "ENKF_EXPERIMENT", 2)
-run_mode_type:SMOOTHER_UPDATE = run_mode_type( "SMOOTHER_UPDATE", 4)
-run_mode_type:INIT_ONLY = run_mode_type( "INIT_ONLY", 8)
+run_mode_type.ENKF_ASSIMILATION = run_mode_type( "ENKF_ASSIMILATION", 1)
+run_mode_type.ENKF_EXPERIMENT = run_mode_type( "ENKF_EXPERIMENT", 2)
+run_mode_type.SMOOTHER_UPDATE = run_mode_type( "SMOOTHER_UPDATE", 4)
+run_mode_type.INIT_ONLY = run_mode_type( "INIT_ONLY", 8)
     
 class history_source_type(enum):
     SCHEDULE = None
@@ -297,4 +297,4 @@ class obs_impl_type(enum):
 
 obs_impl_type.GEN_OBS = obs_impl_type("GEN_OBS", 1)
 obs_impl_type.SUMMARY_OBS = obs_impl_type("SUMMARY_OBS", 2)
-obs_impl_type.FIELD_OBS = obs_impl_type("FIELD_OBS", 3)hih
+obs_impl_type.FIELD_OBS = obs_impl_type("FIELD_OBS", 3)

@@ -21,6 +21,7 @@ from    ert.util.tvector        import *
 from    ert.job_queue.job_queue import JobQueue
 from    enkf_enum               import *
 from    analysis_config         import AnalysisConfig
+from    ert.ert.enums           import *
 import  ens_config
 import  ecl_config
 import  analysis_config
@@ -112,7 +113,7 @@ cfunc.free                         = cwrapper.prototype("void     enkf_main_free
 cfunc.run                          = cwrapper.safe_prototype("void     enkf_main_run( enkf_main , int , bool_vector , int , int , int)")
 cfunc.ens_size                     = cwrapper.prototype("int      enkf_main_get_ensemble_size( enkf_main )")
 cfunc.get_ens_config               = cwrapper.prototype("c_void_p enkf_main_get_ensemble_config( enkf_main )")
-cfunc.update                       = cwrapper.prototype("void     enkf_main_UPDATE(enkf_main , int_vector, enkf_fs, int, run_mode )")
+cfunc.update                       = cwrapper.prototype("void     enkf_main_UPDATE(enkf_main , int_vector, enkf_fs, int, int )")
 cfunc.get_model_config             = cwrapper.prototype("c_void_p enkf_main_get_model_config( enkf_main )")
 cfunc.get_local_config             = cwrapper.prototype("c_void_p enkf_main_get_local_config( enkf_main )")
 cfunc.get_analysis_config          = cwrapper.prototype("c_void_p enkf_main_get_analysis_config( enkf_main)")
