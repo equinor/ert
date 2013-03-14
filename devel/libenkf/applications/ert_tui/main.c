@@ -148,7 +148,10 @@ int main (int argc , char ** argv) {
     const char * model_config_file = argv[1]; 
     stringlist_type * workflow_list = stringlist_alloc_new();
     
-    parse_workflows( argc , argv , workflow_list );
+    parse_workflows( argc , argv , workflow_list ); 
+    if ( !(util_entry_readable(model_config_file) && util_is_file(model_config_file)) )
+      util_exit("Can not read file %s - exiting \n", model_config_file);
+
     {
       char * abs_config = util_alloc_realpath( model_config_file );
       printf("model config  : %s \n\n", abs_config);
