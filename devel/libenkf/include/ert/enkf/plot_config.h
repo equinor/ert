@@ -26,11 +26,6 @@ typedef struct plot_config_struct plot_config_type;
 void               plot_config_set_width(plot_config_type * plot_config , int width);
 void               plot_config_set_height(plot_config_type * plot_config , int height);
 void               plot_config_set_path(plot_config_type * plot_config , const char * plot_path);
-void               plot_config_set_plot_refcase(plot_config_type * plot_config , const char * plot_refcase);
-void               plot_config_set_plot_refcase_list(plot_config_type * plot_config , const char * plot_refcase_list);
-int                plot_config_get_num_refcase( const plot_config_type * plot_config);
-ecl_sum_type     * plot_config_get_refcase( const plot_config_type * pc , const char * refcase);
-ecl_sum_type     * plot_config_iget_refcase( const plot_config_type * pl , int index);
 
 void               plot_config_set_image_type(plot_config_type * plot_config , const char * plot_device);
 void               plot_config_set_viewer(plot_config_type * plot_config , const char * plot_viewer);
@@ -42,8 +37,8 @@ bool               plot_config_get_plot_errorbar(const plot_config_type * plot_c
 int                plot_config_get_width(const plot_config_type * plot_config );
 int                plot_config_get_height(const plot_config_type * plot_config );
 const char  *      plot_config_get_path(const plot_config_type * plot_config );
-const char  *      plot_config_get_plot_refcase(const plot_config_type * plot_config);
-const char  *      plot_config_get_plot_refcase_list(const plot_config_type * plot_config);
+bool               plot_config_get_plot_refcase(const plot_config_type * plot_config);
+void               plot_config_set_plot_refcase(plot_config_type * plot_config, bool plot_refcase);
 const char  *      plot_config_get_image_type(const plot_config_type * plot_config );
 const char  *      plot_config_get_viewer(const plot_config_type * plot_config );
 const char  *      plot_config_get_driver(const plot_config_type * plot_config );
@@ -52,13 +47,11 @@ plot_config_type * plot_config_alloc_default();
 void               plot_config_init(plot_config_type * plot_config , const config_type * config );
 
 void               plot_config_add_config_items( config_type * config );
-void               plot_config_add_refcase_to_list(plot_config_type * plot_config, char * refcase);
 void               plot_config_show_viewer_warning( plot_config_type * plot_config );
 
 void               plot_config_toggle_logy( plot_config_type * plot_config );
 void               plot_config_set_logy( plot_config_type * plot_config , bool logy);
 bool               plot_config_get_logy( const plot_config_type * plot_config );
-stringlist_type *  plot_refcase_fscanf(const char * plot_refcase_file );
 
 
 #endif

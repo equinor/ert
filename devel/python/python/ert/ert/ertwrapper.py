@@ -84,7 +84,7 @@ class ErtWrapper:
         else:
             sys.exit("Need a value for environment variable LSF_HOME")
         
-        self.util = self.__loadLibrary( "libutil" )
+        self.util = self.__loadLibrary( "libert_util" )
         self.__loadLibrary( "libgeometry" )
         self.ecl  = self.__loadLibrary( "libecl" )
         self.__loadLibrary( "libsched" )
@@ -95,7 +95,6 @@ class ErtWrapper:
         self.enkf      = self.__loadLibrary( "libenkf" )
 
         self.enkf.enkf_main_install_SIGNALS()
-        self.enkf.enkf_main_init_debug("/prog/sdpsoft/python2.4/bin/python")
 
         
     def __registerDefaultTypes(self):
