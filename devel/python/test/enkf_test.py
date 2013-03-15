@@ -24,6 +24,8 @@ from   test_util import approx_equal, approx_equalv
 
 
 case = "/private/inmyr/ERT-Intro/testcase/ert_config"
+site_conf_file = "/project/res/etc/ERT/site-config"
+obs_config_file = "/private/inmyr/ERT-Intro/testcase/observations"
 
 class EnKFtest( unittest.TestCase ):
     def setUp(self):
@@ -31,38 +33,39 @@ class EnKFtest( unittest.TestCase ):
 
 
     def test_boot( self ):
-        self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
+        self.main = enkf.EnKFMain.bootstrap( case, site_conf_file )
         self.assertTrue( self.main , "Load failed" )
         del self
 
-
-    #def test_enum(self):
-    #    self.assertEqual( enkf.enkf_state_enum.FORECAST , 2 )
-    #    self.assertEqual( enkf.enkf_state_enum.ANALYZED , 4 )
-    #    del self
+    def test_enum(self):
+        self.assertEqual( enkf.enkf_state_enum.FORECAST , 2 )
+        self.assertEqual( enkf.enkf_state_enum.ANALYZED , 4 )
+        del self
         
     def test_config( self ):
-        self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
-        config = self.main.config
+        self.main   = enkf.EnKFMain.bootstrap( case, site_conf_file )
+        config      = self.main.config
         anal_config = self.main.anal_config
-        mod_config = self.main.mod_config
-        loc_config = self.main.loc_config
-        self.assertTrue( isinstance( config , ert.enkf.ens_config.EnsConfig))
+        mod_config  = self.main.mod_config
+        loc_config  = self.main.loc_config
+        site_conf   = self.main.site_config
+        ecl_conf    = self.main.ecl_config
+        plot_conf   = self.main.plot_config
+        self.main.load_obs(obs_config_file)
+        ob          = self.main.get_obs
+        temp        = self.main.get_templates
+        enkf_fsout  = self.main.get_fs
+        self.assertTrue( isinstance( config      , ert.enkf.ens_config.EnsConfig))
         self.assertTrue( isinstance( anal_config , ert.enkf.analysis_config.AnalysisConfig))
-        self.assertTrue( isinstance( mod_config , ert.enkf.model_config.ModelConfig))
-        self.assertTrue( isinstance( loc_config , ert.enkf.local_config.LocalConfig))
+        self.assertTrue( isinstance( mod_config  , ert.enkf.model_config.ModelConfig))
+        self.assertTrue( isinstance( loc_config  , ert.enkf.local_config.LocalConfig))
+        self.assertTrue( isinstance( site_conf   , ert.enkf.site_config.SiteConfig))
+        self.assertTrue( isinstance( ecl_conf    , ert.enkf.ecl_config.EclConfig))
+        self.assertTrue( isinstance( plot_conf   , ert.enkf.plot_config.PlotConfig))
+        self.assertTrue( isinstance( ob          , ert.enkf.enkf_obs.EnkfObs))
+        self.assertTrue( isinstance( temp        , ert.enkf.ert_templates.ErtTemplates))
+        self.assertTrue( isinstance( enkf_fsout  , ert.enkf.enkf_fs.EnkfFs))                
         del self
-
-    def test_update(self):
-        step_list = IntVector(0)
-        step_list.append(30)
-        self.main = enkf.EnKFMain.bootstrap( case, "/project/res/etc/ERT/site-config" )
-        self.main.update(step_list)
-        del self
-
-        
-    #def test_sim(self):
-    #    self.main = enkf.EnKFMain.bootstrap( case )
-    #    self.main.sim()
-
+            
 unittest.main()
+e
