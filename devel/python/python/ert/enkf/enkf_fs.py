@@ -26,10 +26,8 @@ class EnkfFs(CClass):
         self.owner = False
         self.c_ptr = c_ptr
         
-        
 
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
+
 ####THIS FUNCTION HAS NO DEL METHOD !!!! OBS OBS###############
 
 

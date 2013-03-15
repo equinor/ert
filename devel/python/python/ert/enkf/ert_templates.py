@@ -1,6 +1,6 @@
 #  Copyright (C) 2012  Statoil ASA, Norway. 
 #   
-#  The file 'ert_template.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'ert_templates.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -20,7 +20,7 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 import  libenkf
-class ErtTemplate(CClass):
+class ErtTemplates(CClass):
     
     def __init__(self , c_ptr = None):
         self.owner = False
@@ -36,7 +36,7 @@ class ErtTemplate(CClass):
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
-cwrapper.registerType( "ert_templates" , ErtTemplate )
+cwrapper.registerType( "ert_templates" , ErtTemplates )
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
 #    These functions are used when implementing the EclKW class, not
@@ -44,11 +44,11 @@ cwrapper.registerType( "ert_templates" , ErtTemplate )
 cfunc = CWrapperNameSpace("ert_templates")
 
 
-cfunc.free                   = cwrapper.prototype("void ert_template_free( ert_template )")
-cfunc.alloc_list             = cwrapper.prototype("c_void_p ert_templates_alloc_list(ert_template)")
-cfunc.get_template           = cwrapper.prototype("c_void_p ert_templates_get_template(ert_template, char*)")
-cfunc.get_template_file      = cwrapper.prototype("char* ert_template_get_template_file(ert_template)")
-cfunc.get_target_file        = cwrapper.prototype("char* ert_template_get_target_file(ert_template)")
-cfunc.get_args_as_string     = cwrapper.prototype("char* ert_template_get_args_as_string(ert_template)")
-cfunc.clear                  = cwrapper.prototype("void ert_templates_clear(ert_template)")
-cfunc.add_template           = cwrapper.prototype("void ert_templates_add_template(ert_template, char*, char*, char*, char*)")
+cfunc.free                   = cwrapper.prototype("void ert_template_free( ert_templates )")
+cfunc.alloc_list             = cwrapper.prototype("c_void_p ert_templates_alloc_list(ert_templates)")
+cfunc.get_template           = cwrapper.prototype("c_void_p ert_templates_get_template(ert_templates, char*)")
+cfunc.get_template_file      = cwrapper.prototype("char* ert_template_get_template_file(ert_templates)")
+cfunc.get_target_file        = cwrapper.prototype("char* ert_template_get_target_file(ert_templates)")
+cfunc.get_args_as_string     = cwrapper.prototype("char* ert_template_get_args_as_string(ert_templates)")
+cfunc.clear                  = cwrapper.prototype("void ert_templates_clear(ert_templates)")
+cfunc.add_template           = cwrapper.prototype("void ert_templates_add_template(ert_templates, char*, char*, char*, char*)")

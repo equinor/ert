@@ -36,6 +36,7 @@ import  plot_config
 import  site_config
 import  libenkf
 import  enkf_fs
+import  ert_templates
 
 class EnKFMain(CClass):
     
@@ -49,7 +50,9 @@ class EnKFMain(CClass):
         obj = EnKFMain()
         obj.c_ptr = cfunc.bootstrap( site_config , model_config , True , False )
         return obj
-
+    
+    def set_eclbase(self, eclbase):
+        cfunc.set_eclbase(self, eclbase)
         
     def __del__(self):
         if self.c_ptr:
@@ -60,43 +63,144 @@ class EnKFMain(CClass):
     @property
     def ens_size( self ):
         return cfunc.ens_size( self )
-        
-
-    def sim( self ):
-        iactive = BoolVector( True )
-        iactive[ self.ens_size -1 ] = True
-        
-        start_state = enkf_state_enum.ANALYZED
-        run_mode = enkf_run_enum.ENSEMBLE_EXPERIMENT
-        start_report = 0
-        init_step_parameters = 0
-        cfunc.run( self , run_mode , iactive , init_step_parameters , start_report , start_state )
-
-    def update(self , step_list):
-        cfunc.update( self , step_list )
-        
-        
-    @property
+    
+    @property        
     def config(self):
         config = ens_config.EnsConfig( cfunc.get_ens_config( self ))
         return config
-
-    @property
+    
+    @property 
     def anal_config(self):
-        anal_config=analysis_config.AnalysisConfig( cfunc.get_analysis_config( self ))
+        anal_config = analysis_config.AnalysisConfig( cfunc.get_analysis_config( self ))
         return anal_config
     
-    @property
+    @property     
     def mod_config(self):
-        mod_config=model_config.ModelConfig( cfunc.get_model_config( self ))
+        mod_config = model_config.ModelConfig( cfunc.get_model_config( self ))
         return mod_config
     
-    @property
+    @property     
     def loc_config(self):
-        loc_config=local_config.LocalConfig( cfunc.get_local_config( self ))
+        loc_config = local_config.LocalConfig( cfunc.get_local_config( self ))
         return loc_config
+    
+    @property     
+    def site_config(self):
+        site_conf = site_config.SiteConfig( cfunc.get_site_config( self ))
+        return site_conf
+    
+    @property     
+    def ecl_config(self):
+        ecl_conf = ecl_config.EclConfig( cfunc.get_ecl_config( self ))
+        return ecl_conf
+     
+    @property     
+    def plot_config(self):
+        plot_conf = plot_config.PlotConfig( cfunc.get_plot_config( self ))
+        return plot_conf
+     
+    def set_eclbase(self, eclbase):
+        cfunc.set_eclbase(self, eclbase)
+
+    def set_datafile(self, datafile):
+        cfunc.set_eclbase(self, datafile)
+
+    @property
+    def get_schedule_prediction_file(self):
+        schedule_prediction_file = cfunc.get_schedule_prediction_file(self)
+        return schedule_prediction_file
+
+    def set_schedule_prediction_file(self,file):
+        cfunc.set_schedule_prediction_file(self,file)
+
+    @property
+    def get_data_kw(self):
+        data_kw = cfunc.get_data_kw(self)
+        return data_kw
+
+    def clear_data_kw(self):
+        cfunc.set_data_kw(self)
+
+    def add_data_kw(self, key, value):
+        cfunc.add_data_kw(self, key, value)
+
+    def resize_ensemble(self, value):
+        cfunc.resize_ensemble(self, value)
+
+    def del_node(self, key):
+        cfunc.del_node(self, key)
+        
+    @property
+    def get_obs(self):
+        ob = enkf_obs.EnkfObs( cfunc.get_obs( self ))
+        return ob
+    
+    def load_obs(self, obs_config_file):
+        cfunc.load_obs(self, obs_config_file)
+        
+    def reload_obs(self):
+        cfunc.reload_obs(self)
+        
+    def set_case_table(self, case_table_file):
+        cfunc.set_case_table(self, case_table_file)
+        
+    @property
+    def get_pre_clear_runpath(self):
+        pre_clear = cfunc.get_pre_clear_runpath(self)
+        return pre_clear
+        
+    def set_pre_clear_runpath(self):
+        cfunc.set_pre_clear_runpath(self)
+        
+    @property    
+    def iget_keep_runpath(self, iens):
+        ikeep = cfunc.iget_keep_runpath(self, iens)
+        return ikeep
+        
+    def iset_keep_runpath(self, iens, keep_runpath):
+        cfunc.iset_keep_runpath(self, iens, keep_runpath)
+
+    @property
+    def get_templates(self):
+        temp = ert_templates.ErtTemplates( cfunc.get_templates( self ))
+        return temp
+        
+    @property
+    def get_site_config_file(self):
+        site_conf_file = cfunc.get_site_config_file(self)
+        return site_conf_file
+       
+    def initialize_from_scratch(self, parameter_list, iens1, iens2, force_init):
+        cfunc.initialize_from_scratch(self, parameter_list, iens1, iens2, force_init)
+       
+    @property
+    def get_fs(self):
+        enkf_fsout = enkf_fs.EnkfFs(cfunc.get_fs(self))
+        return enkf_fsout
+ #       
+ #   def get_history_length(self):
+ #       cfunc.
+ #       
+ #   def initialize_from_existing__(self):
+ #       cfunc.
+ #       
+ #   def copy_ensemble(self):
+ #       cfunc.
+ #       
+ #   def iget_member_config(self):
+ #       cfunc.
+ #       
+ #   def get_observations(self):
+ #       cfunc.
+ #       
+ #   def get_observation_count(self):
+
+ #       cfunc.
+ #
 
 
+
+        
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -110,13 +214,14 @@ cfunc = CWrapperNameSpace("enkf_main")
 
 cfunc.bootstrap                    = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool , bool)")
 cfunc.free                         = cwrapper.prototype("void     enkf_main_free( enkf_main )")
-cfunc.run                          = cwrapper.safe_prototype("void     enkf_main_run( enkf_main , int , bool_vector , int , int , int)")
 cfunc.ens_size                     = cwrapper.prototype("int      enkf_main_get_ensemble_size( enkf_main )")
 cfunc.get_ens_config               = cwrapper.prototype("c_void_p enkf_main_get_ensemble_config( enkf_main )")
-cfunc.update                       = cwrapper.prototype("void     enkf_main_UPDATE(enkf_main , int_vector, enkf_fs, int, int )")
 cfunc.get_model_config             = cwrapper.prototype("c_void_p enkf_main_get_model_config( enkf_main )")
 cfunc.get_local_config             = cwrapper.prototype("c_void_p enkf_main_get_local_config( enkf_main )")
 cfunc.get_analysis_config          = cwrapper.prototype("c_void_p enkf_main_get_analysis_config( enkf_main)")
+cfunc.get_site_config              = cwrapper.prototype("c_void_p enkf_main_get_site_config( enkf_main)")
+cfunc.get_ecl_config               = cwrapper.prototype("c_void_p enkf_main_get_ecl_config( enkf_main)")
+cfunc.get_plot_config              = cwrapper.prototype("c_void_p enkf_main_get_plot_config( enkf_main)")
 cfunc.set_eclbase                  = cwrapper.prototype("void     enkf_main_set_eclbase( enkf_main, char*)")
 cfunc.set_datafile                 = cwrapper.prototype("void     enkf_main_set_data_file( enkf_main, char*)")
 cfunc.get_schedule_prediction_file = cwrapper.prototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
@@ -124,8 +229,7 @@ cfunc.set_schedule_prediction_file = cwrapper.prototype("void enkf_main_set_sche
 cfunc.get_data_kw                  = cwrapper.prototype("c_void_p enkf_main_get_data_kw(enkf_main)")
 cfunc.clear_data_kw                = cwrapper.prototype("void enkf_main_clear_data_kw(enkf_main)")
 cfunc.add_data_kw                  = cwrapper.prototype("void enkf_main_add_data_kw(enkf_main, char*, char*)")
-cfunc.get_ensemble_size            = cwrapper.prototype("int enkf_main_get_ensemble_size(enkf_main)")
-cfunc.resize_ensemble              = cwrapper.prototype("void enkf_main_resize_ensemble(int)")
+cfunc.resize_ensemble              = cwrapper.prototype("void enkf_main_resize_ensemble(enkf_main, int)")
 cfunc.del_node                     = cwrapper.prototype("void enkf_main_del_node(enkf_main, char*)")
 cfunc.get_obs                      = cwrapper.prototype("c_void_p enkf_main_get_obs(enkf_main)")
 cfunc.load_obs                     = cwrapper.prototype("void enkf_main_load_obs(enkf_main, char*)")
@@ -133,13 +237,11 @@ cfunc.reload_obs                   = cwrapper.prototype("void enkf_main_reload_o
 cfunc.set_case_table               = cwrapper.prototype("void enkf_main_set_case_table(enkf_main, char*)")
 cfunc.get_pre_clear_runpath        = cwrapper.prototype("bool enkf_main_get_pre_clear_runpath(enkf_main)"),
 cfunc.set_pre_clear_runpath        = cwrapper.prototype("void enkf_main_set_pre_clear_runpath(enkf_main, bool)")
-cfunc.get_ensemble_size            = cwrapper.prototype("int enkf_main_get_ensemble_size(enkf_main)"),
 cfunc.iget_keep_runpath            = cwrapper.prototype("int enkf_main_iget_keep_runpath(enkf_main, int)"),
-cfunc.iset_keep_runpath            = cwrapper.safe_prototype("void enkf_main_iset_keep_runpath(enkf_main, int, keep_runpath)")
+cfunc.iset_keep_runpath            = cwrapper.prototype("void enkf_main_iset_keep_runpath(enkf_main, int, int_vector)")
 cfunc.get_templates                = cwrapper.prototype("c_void_p enkf_main_get_templates(enkf_main)")
 cfunc.get_site_config_file         = cwrapper.prototype("char* enkf_main_get_site_config_file(enkf_main)")
-cfunc.initialize_from_scratch      = cwrapper.prototype("int enkf_main_initialize_from_scratch(enkf_main, stringlist, int, int)")
-cfunc.get_ensemble_size            = cwrapper.prototype("int enkf_main_get_ensemble_size(enkf_main)")
+cfunc.initialize_from_scratch      = cwrapper.prototype("void enkf_main_initialize_from_scratch(enkf_main, stringlist, int, int, bool)")
 cfunc.get_fs                       = cwrapper.prototype("c_void_p enkf_main_get_fs(enkf_main)")
 cfunc.get_history_length           = cwrapper.prototype("int enkf_main_get_history_length(enkf_main)")
 cfunc.initialize_from_existing__   = cwrapper.prototype("void enkf_main_initialize_from_existing__(enkf_main, char*, int, int, bool_vector, char*, stringlist)")
@@ -148,4 +250,3 @@ cfunc.iget_member_config           = cwrapper.prototype("c_void_p enkf_main_iget
 cfunc.get_observations             = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)") 
 cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
 cfunc.mount_extra_fs               = cwrapper.safe_prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")
-cfunc.get_obs                      = cwrapper.prototype("c_void_p enkf_main_get_obs(enkf_main)")
