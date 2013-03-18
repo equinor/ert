@@ -20,11 +20,10 @@ add_library( rml_enkf  MODULE rml_enkf.c rml_enkf_common.c )
 
 #-----------------------------------------------------------------
 
-if (INSTALL_ERT)
-   install(TARGETS analysis DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   install(TARGETS rml_enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   foreach(header ${header_files})
-       install(FILES ../include/ert/analysis/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/analysis)
-   endforeach()
-endif()
+install(TARGETS analysis DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS rml_enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(header ${header_files})
+    install(FILES ../include/ert/analysis/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/analysis)
+endforeach()
+
 

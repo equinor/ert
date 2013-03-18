@@ -12,11 +12,10 @@ set_target_properties( sched PROPERTIES VERSION 1.0 SOVERSION 1.0 )
 target_link_libraries( sched ert_util ecl)
 
 #-----------------------------------------------------------------
-if (INSTALL_ERT)
-   install(TARGETS sched DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   foreach(header ${header_files})
-       install(FILES ../include/ert/sched/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/sched)
-   endforeach()
-endif()
+install(TARGETS sched DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(header ${header_files})
+    install(FILES ../include/ert/sched/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/sched)
+endforeach()
+
 
 

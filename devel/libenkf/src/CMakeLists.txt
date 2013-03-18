@@ -13,11 +13,10 @@ set_target_properties( enkf PROPERTIES VERSION 1.0 SOVERSION 1.0 )
 target_link_libraries( enkf ecl sched analysis rms plot config job_queue )
 
 #-----------------------------------------------------------------
-if (INSTALL_ERT)
-   install(TARGETS enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   foreach(header ${header_files})
-       install(FILES ../include/ert/enkf/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/enkf)
-   endforeach()
-endif()
+install(TARGETS enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
+foreach(header ${header_files})
+    install(FILES ../include/ert/enkf/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/enkf)
+endforeach()
+
 
 
