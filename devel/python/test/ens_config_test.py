@@ -20,7 +20,7 @@ import unittest
 import ert
 import ert.enkf.enkf as enkf
 from   test_util import approx_equal, approx_equalv
-
+from   ert.util.stringlist import StringList
 
 case = "/private/inmyr/ERT-Intro/testcase/ert_config"
 site_conf_file = "/project/res/etc/ERT/site-config"
@@ -36,6 +36,13 @@ class EnsConfigTest( unittest.TestCase ):
         self.assertTrue( conf.has_key("WWCT:OP_1" ))
         self.assertFalse( conf.has_key("WWCT:OP_1X" ))
 
-    
+    def test_enkf_conf_node(self):
+        main = enkf.EnKFMain.bootstrap( case , site_conf_file)
+        conf = main.config
+        s = StringList(initial = None, c_ptr=conf.alloc_keylist)
+        self.assertTrue( isinstance( conf.get_node("MULTFLT") , ert.enkf.enkf_config_node.EnkfConfigNode))
+        self.assertTrue( isinstance( s , ert.util.stringlist.StringList))
 
+
+        
 unittest.main()
