@@ -15,28 +15,28 @@
 #  for more details. 
 
 import  ctypes
-from    ert.cwrap.cwrap         import *
-from    ert.cwrap.cclass        import CClass
-from    ert.util.tvector        import * 
-from    ert.job_queue.job_queue import JobQueue
-from    enkf_enum               import *
-from    analysis_config         import AnalysisConfig
-from    ert.ert.enums           import *
-import  ens_config
-import  ecl_config
-import  analysis_config
-import  local_config
-import  model_config
-import  enkf_config_node
-import  gen_kw_config
-import  gen_data_config
-import  field_config
-import  enkf_obs
-import  plot_config
-import  site_config
-import  libenkf
-import  enkf_fs
-import  ert_templates
+from    ert.cwrap.cwrap           import *
+from    ert.cwrap.cclass          import CClass
+from    ert.util.tvector          import * 
+from    ert.job_queue.job_queue   import JobQueue
+from    ert.enkf.enkf_enum        import *
+from    ert.ert.enums             import *
+from    ert.enkf.ens_config       import *
+from    ert.enkf.ecl_config       import *
+from    ert.enkf.analysis_config  import *
+from    ert.enkf.local_config     import *
+from    ert.enkf.model_config     import *
+from    ert.enkf.enkf_config_node import *
+from    ert.enkf.gen_kw_config    import *
+from    ert.enkf.gen_data_config  import *
+from    ert.enkf.field_config     import *
+from    ert.enkf.enkf_obs         import *
+from    ert.enkf.plot_config      import *
+from    ert.enkf.site_config      import *
+from    ert.enkf.libenkf          import *
+from    ert.enkf.enkf_fs          import *
+from    ert.enkf.ert_templates    import *
+from    ert.enkf.member_config    import *
 
 class EnKFMain(CClass):
     
@@ -66,37 +66,37 @@ class EnKFMain(CClass):
     
     @property        
     def config(self):
-        config = ens_config.EnsConfig( cfunc.get_ens_config( self ))
+        config = ert.enkf.ens_config.EnsConfig( cfunc.get_ens_config( self ))
         return config
     
     @property 
     def anal_config(self):
-        anal_config = analysis_config.AnalysisConfig( cfunc.get_analysis_config( self ))
+        anal_config = ert.enkf.analysis_config.AnalysisConfig( cfunc.get_analysis_config( self ))
         return anal_config
     
     @property     
     def mod_config(self):
-        mod_config = model_config.ModelConfig( cfunc.get_model_config( self ))
+        mod_config = ert.enkf.model_config.ModelConfig( cfunc.get_model_config( self ))
         return mod_config
     
     @property     
     def loc_config(self):
-        loc_config = local_config.LocalConfig( cfunc.get_local_config( self ))
+        loc_config = ert.enkf.local_config.LocalConfig( cfunc.get_local_config( self ))
         return loc_config
     
     @property     
     def site_config(self):
-        site_conf = site_config.SiteConfig( cfunc.get_site_config( self ))
+        site_conf = ert.enkf.site_config.SiteConfig( cfunc.get_site_config( self ))
         return site_conf
     
     @property     
     def ecl_config(self):
-        ecl_conf = ecl_config.EclConfig( cfunc.get_ecl_config( self ))
+        ecl_conf = ert.enkf.ecl_config.EclConfig( cfunc.get_ecl_config( self ))
         return ecl_conf
      
     @property     
     def plot_config(self):
-        plot_conf = plot_config.PlotConfig( cfunc.get_plot_config( self ))
+        plot_conf = ert.enkf.plot_config.PlotConfig( cfunc.get_plot_config( self ))
         return plot_conf
      
     def set_eclbase(self, eclbase):
@@ -132,7 +132,7 @@ class EnKFMain(CClass):
         
     @property
     def get_obs(self):
-        ob = enkf_obs.EnkfObs( cfunc.get_obs( self ))
+        ob = ert.enkf.enkf_obs.EnkfObs( cfunc.get_obs( self ))
         return ob
     
     def load_obs(self, obs_config_file):
@@ -162,7 +162,7 @@ class EnKFMain(CClass):
 
     @property
     def get_templates(self):
-        temp = ert_templates.ErtTemplates( cfunc.get_templates( self ))
+        temp = ert.enkf.ert_templates.ErtTemplates( cfunc.get_templates( self ))
         return temp
         
     @property
@@ -175,28 +175,34 @@ class EnKFMain(CClass):
        
     @property
     def get_fs(self):
-        enkf_fsout = enkf_fs.EnkfFs(cfunc.get_fs(self))
+        enkf_fsout = ert.enkf.enkf_fs.EnkfFs(cfunc.get_fs(self))
         return enkf_fsout
- #       
- #   def get_history_length(self):
- #       cfunc.
- #       
- #   def initialize_from_existing__(self):
- #       cfunc.
- #       
- #   def copy_ensemble(self):
- #       cfunc.
- #       
- #   def iget_member_config(self):
- #       cfunc.
- #       
- #   def get_observations(self):
- #       cfunc.
- #       
- #   def get_observation_count(self):
 
- #       cfunc.
- #
+    @property
+    def get_history_length(self):
+        history_len =cfunc.get_history_length(self)
+        return history_len
+       
+    def initialize_from_existing__(self, source_case,source_report_step, source_state, member_mask, ranking_key, node_list):
+        cfunc.initialize_from_existing__(self, source_case, source_report_step, source_state, member_mask, ranking_key, node_list)
+
+       
+    def copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step, target_state, member_mask, ranking_key, node_list):
+        cfunc.copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step, target_state, member_mask, ranking_key, node_list)
+
+
+    @property
+    def iget_member_config(self, ens_mem):
+        i_memb_conf = ert.enkf.member_config.MemberConfig( cfunc.iget_member_config( self , ens_mem))
+        return i_memb_conf
+    
+    def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
+        cfunc.get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std)
+        
+    @property
+    def get_observation_count(self, user_key):
+        cfunc.get_observation_count(self, user_key)
+ 
 
 
 

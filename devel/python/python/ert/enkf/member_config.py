@@ -49,6 +49,6 @@ cfunc = CWrapperNameSpace("member_config")
 
 
 cfunc.free                = cwrapper.prototype("void member_config_free( member_config )")
-cfunc.iget_sim_days       = cwrapper.prototype("double member_config_iget_sim_days(member_config, int, int)")
-cfunc.iget_sim_time       = cwrapper.prototype("time_t member_config_iget_sim_time(member_config, int, int)")
+cfunc.iget_sim_days       = cwrapper.safe_prototype("double member_config_iget_sim_days(member_config, int, int)")
+cfunc.iget_sim_time       = cwrapper.safe_prototype("time_t member_config_iget_sim_time(member_config, int, int)")
 

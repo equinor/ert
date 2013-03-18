@@ -22,7 +22,6 @@ import ert.enkf.enkf as enkf
 from   ert.util.tvector import * 
 from   test_util import approx_equal, approx_equalv
 
-
 case = "/private/inmyr/ERT-Intro/testcase/ert_config"
 site_conf_file = "/project/res/etc/ERT/site-config"
 obs_config_file = "/private/inmyr/ERT-Intro/testcase/observations"
@@ -55,6 +54,7 @@ class EnKFtest( unittest.TestCase ):
         ob          = self.main.get_obs
         temp        = self.main.get_templates
         enkf_fsout  = self.main.get_fs
+#        member_conf = self.main.iget_member_config("self.main", 0)
         self.assertTrue( isinstance( config      , ert.enkf.ens_config.EnsConfig))
         self.assertTrue( isinstance( anal_config , ert.enkf.analysis_config.AnalysisConfig))
         self.assertTrue( isinstance( mod_config  , ert.enkf.model_config.ModelConfig))
@@ -64,7 +64,8 @@ class EnKFtest( unittest.TestCase ):
         self.assertTrue( isinstance( plot_conf   , ert.enkf.plot_config.PlotConfig))
         self.assertTrue( isinstance( ob          , ert.enkf.enkf_obs.EnkfObs))
         self.assertTrue( isinstance( temp        , ert.enkf.ert_templates.ErtTemplates))
-        self.assertTrue( isinstance( enkf_fsout  , ert.enkf.enkf_fs.EnkfFs))                
+        self.assertTrue( isinstance( enkf_fsout  , ert.enkf.enkf_fs.EnkfFs))
+#        self.assertTrue( isinstance( member_conf , ert.enkf.member_config.MemberConfig))
         del self
             
 unittest.main()
