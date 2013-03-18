@@ -191,9 +191,8 @@ class EnKFMain(CClass):
         cfunc.copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step, target_state, member_mask, ranking_key, node_list)
 
 
-    @property
-    def iget_member_config(self, ens_mem):
-        i_memb_conf = ert.enkf.member_config.MemberConfig( cfunc.iget_member_config( self , ens_mem))
+    def iget_member_config(self, ens_memb):
+        i_memb_conf = ert.enkf.member_config.MemberConfig( cfunc.iget_member_config( self ,ens_memb))
         return i_memb_conf
     
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
