@@ -10,8 +10,6 @@ option( BUILD_TESTS         "Should the tests be built" OFF)
 option( BUILD_APPLICATIONS  "Should we build small utility applications" OFF)
 option( BUILD_ECL_SUMMARY   "Build the commandline application ecl_summary" OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
-option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
-
 
 include( CheckFunctionExists )
 ENABLE_TESTING()
