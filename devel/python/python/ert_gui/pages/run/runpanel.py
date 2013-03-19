@@ -183,16 +183,10 @@ class RunWidget(HelpedWidget):
         self.membersList.selectAll()
 
 
-    def initialize(self, ert):
-        """Prototype functions"""
-        ert.prototype("int enkf_main_get_ensemble_size(long)")
-        ert.prototype("int enkf_main_get_history_length(long)")
-        ert.prototype("char* model_config_get_runpath_as_char(long)")
-        ert.prototype("bool enkf_main_is_initialized(long)")
 
     def getter(self, ert):
         """Fetch data from EnKF. Such as number of realizations, runpath and number of timesteps."""
-        members = ert.enkf.enkf_main_get_ensemble_size(ert.main)
+        members = ert.enkf.ens_size()#ert.enkf.enkf_main_ens_size(ert.main)
         historyLength = ert.enkf.enkf_main_get_history_length(ert.main)
         runpath = ert.enkf.model_config_get_runpath_as_char(ert.model_config)
 
