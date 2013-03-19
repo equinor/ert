@@ -10,7 +10,7 @@ License:        GPL-3+
 Group:          Development/Libraries/C and C++
 Url:            http://ert.nr.no
 Source0:        %{name}-%{version}.tar.gz
-BuildRequires:  lapack-devel
+BuildRequires:  lapack-devel zlib-devel iputils
 BuildRequires:  gcc
 BuildRequires:  cmake28 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
