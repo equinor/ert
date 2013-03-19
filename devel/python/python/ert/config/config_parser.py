@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
+import os.path
 import libconfig
 from   ert.cwrap.cwrap       import *
 from   ert.cwrap.cclass      import CClass
@@ -119,7 +120,10 @@ class ConfigParser(CClass):
     
     
     def parse( self , config_file , comment_string = "--" , include_kw = "INCLUDE" , define_kw = "DEFINE" , unrecognized = config_enums.unrecognized.CONFIG_UNRECOGNIZED_WARN , validate = True):
-        return cfunc.parse( self , config_file , comment_string , include_kw , define_kw , unrecognized , validate )
+        if os.path.exists( config_file ):
+            return cfunc.parse( self , config_file , comment_string , include_kw , define_kw , unrecognized , validate )
+        else:
+            raise IOError("File: %s does not exists")
 
 
     def __getitem__(self , keyword):
