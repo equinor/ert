@@ -23,7 +23,8 @@ import re
 import sys
 import os
 import erttypes
-
+import ert
+import ert.enkf.enkf as enkf
 
 def RH_version():
     RH  = open('/etc/redhat-release' , 'r').read().split()[6]
@@ -42,18 +43,17 @@ class ErtWrapper:
 
         
     def bootstrap(self, enkf_config , site_config , strict = True):
-        self.prototype("long enkf_main_bootstrap(char*, char*, bool)")
-        self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config, strict)
+        self.main = enkf.EnKFMain.bootstrap( enkf_config, site_config, strict )
         print "\nBootstrap complete!"
 
 
-        self.plot_config = self.__getErtPointer("enkf_main_get_plot_config")
-        self.analysis_config = self.__getErtPointer("enkf_main_get_analysis_config")
-        self.ecl_config = self.__getErtPointer("enkf_main_get_ecl_config")
-        self.site_config = self.__getErtPointer("enkf_main_get_site_config")
-        self.ensemble_config = self.__getErtPointer("enkf_main_get_ensemble_config")
-        self.model_config = self.__getErtPointer("enkf_main_get_model_config")
-        self.logh = self.__getErtPointer("enkf_main_get_logh")
+        #self.plot_config = self.__getErtPointer("enkf_main_get_plot_config")
+        #self.analysis_config = self.__getErtPointer("enkf_main_get_analysis_config")
+        #self.ecl_config = self.__getErtPointer("enkf_main_get_ecl_config")
+        #self.site_config = self.__getErtPointer("enkf_main_get_site_config")
+        #self.ensemble_config = self.__getErtPointer("enkf_main_get_ensemble_config")
+        #self.model_config = self.__getErtPointer("enkf_main_get_model_config")
+        #self.logh = self.__getErtPointer("enkf_main_get_logh")
 
         self.initializeTypes()
 
@@ -203,7 +203,7 @@ class ErtWrapper:
         self.prototype("long bool_vector_get_ptr(long)", lib=self.util)
         self.prototype("void bool_vector_free(long)", lib=self.util)
 
-        self.prototype("void enkf_main_free(long)")
+        #self.prototype("void enkf_main_free(long)")
         self.prototype("void enkf_main_fprintf_config(long)")
         self.prototype("void enkf_main_create_new_config(long , char*, char* , char* , int)")
         
@@ -308,7 +308,7 @@ class ErtWrapper:
     def cleanup(self):
         """Called at atexit to clean up before shutdown"""
         print "Calling enkf_main_free()"
-        self.enkf.enkf_main_free(self.main)
+        self.main.__del__
 
     def nonify(self, s):
         """Convert an empty string to None."""

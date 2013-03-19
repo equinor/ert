@@ -283,3 +283,6 @@ cfunc.submit_complete = cwrapper.prototype("void job_queue_submit_complete( job_
 cfunc.get_job_ptr     = cwrapper.prototype("c_void_p job_queue_iget_job( job_queue , int)")
 cfunc.iget_sim_start  = cwrapper.prototype("time_t   job_queue_iget_sim_start( job_queue , int)")
 cfunc.get_active_size = cwrapper.prototype("int      job_queue_get_active_size( job_queue )")
+cfunc.get_pause       = cwrapper.prototype("bool job_queue_get_pause(job_queue)")
+cfunc.set_pause_on    = cwrapper.prototype("void job_queue_set_pause_on(job_queue)")
+cfunc.set_pause_off   = cwrapper.prototype("void job_queue_set_pause_off(job_queue)")

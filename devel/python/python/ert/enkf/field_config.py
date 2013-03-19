@@ -20,7 +20,7 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 import  libenkf
-class GenDataConfig(CClass):
+class FieldConfig(CClass):
     
     def __init__(self , c_ptr = None):
         self.owner = False
@@ -40,7 +40,7 @@ class GenDataConfig(CClass):
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
-cwrapper.registerType( "field_config" , GenDataConfig )
+cwrapper.registerType( "field_config" , FieldConfig )
 
 # 3. Installing the c-functions used to manipulate ecl_kw instances.
 #    These functions are used when implementing the EclKW class, not

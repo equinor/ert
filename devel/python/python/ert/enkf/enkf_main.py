@@ -37,6 +37,7 @@ from    ert.enkf.libenkf          import *
 from    ert.enkf.enkf_fs          import *
 from    ert.enkf.ert_templates    import *
 from    ert.enkf.member_config    import *
+from    ert.enkf.enkf_state       import *
 
 class EnKFMain(CClass):
     
@@ -46,9 +47,9 @@ class EnKFMain(CClass):
 
 
     @classmethod
-    def bootstrap(cls , model_config , site_config):
+    def bootstrap(cls , model_config , site_config , strict = True):
         obj = EnKFMain()
-        obj.c_ptr = cfunc.bootstrap( site_config , model_config , True , False )
+        obj.c_ptr = cfunc.bootstrap( site_config , model_config , strict , False )
         return obj
     
     def set_eclbase(self, eclbase):
@@ -65,22 +66,22 @@ class EnKFMain(CClass):
         return cfunc.ens_size( self )
     
     @property        
-    def config(self):
+    def ensemble_config(self):
         config = ert.enkf.ens_config.EnsConfig( cfunc.get_ens_config( self ))
         return config
     
     @property 
-    def anal_config(self):
+    def analysis_config(self):
         anal_config = ert.enkf.analysis_config.AnalysisConfig( cfunc.get_analysis_config( self ))
         return anal_config
     
     @property     
-    def mod_config(self):
+    def model_config(self):
         mod_config = ert.enkf.model_config.ModelConfig( cfunc.get_model_config( self ))
         return mod_config
     
     @property     
-    def loc_config(self):
+    def local_config(self):
         loc_config = ert.enkf.local_config.LocalConfig( cfunc.get_local_config( self ))
         return loc_config
     
@@ -194,6 +195,10 @@ class EnKFMain(CClass):
     def iget_member_config(self, ens_memb):
         i_memb_conf = ert.enkf.member_config.MemberConfig( cfunc.iget_member_config( self ,ens_memb))
         return i_memb_conf
+
+    def iget_state(self, ens_memb):
+        i_enkf_state = ert.enkf.enkf_state.EnKFState( cfunc.iget_state( self ,ens_memb))
+        return i_enkf_state
     
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         cfunc.get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std)
@@ -255,3 +260,5 @@ cfunc.iget_member_config           = cwrapper.prototype("c_void_p enkf_main_iget
 cfunc.get_observations             = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)") 
 cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
 cfunc.mount_extra_fs               = cwrapper.safe_prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")
+cfunc.is_initialized               = cwrapper.prototype("bool enkf_main_is_initialized(enkf_main)")
+cfunc.iget_state                   = cwrapper.prototype("c_void_p enkf_main_iget_state(enkf_main, int)")

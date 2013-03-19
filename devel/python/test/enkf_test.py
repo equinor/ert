@@ -55,6 +55,7 @@ class EnKFtest( unittest.TestCase ):
         temp        = self.main.get_templates
         enkf_fsout  = self.main.get_fs
         mem_conf    = self.main.iget_member_config(0)
+        enkf_stat   = self.main.iget_state(0)
         self.assertTrue( isinstance( config      , ert.enkf.ens_config.EnsConfig))
         self.assertTrue( isinstance( anal_config , ert.enkf.analysis_config.AnalysisConfig))
         self.assertTrue( isinstance( mod_config  , ert.enkf.model_config.ModelConfig))
@@ -66,6 +67,7 @@ class EnKFtest( unittest.TestCase ):
         self.assertTrue( isinstance( temp        , ert.enkf.ert_templates.ErtTemplates))
         self.assertTrue( isinstance( enkf_fsout  , ert.enkf.enkf_fs.EnkfFs))
         self.assertTrue( isinstance( mem_conf    , ert.enkf.member_config.MemberConfig))
+        self.assertTrue( isinstance( enkf_stat    , ert.enkf.enkf_state.EnKFState))
         del self
             
 unittest.main()

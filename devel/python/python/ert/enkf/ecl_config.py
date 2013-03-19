@@ -31,20 +31,11 @@ class EclConfig(CClass):
         if self.owner:
             cfunc.free( self )
 
-
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
-
-
-
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "ecl_config" , EclConfig )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("ecl_config")
 
 

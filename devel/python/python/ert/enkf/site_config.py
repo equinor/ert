@@ -32,21 +32,15 @@ class SiteConfig(CClass):
             cfunc.free( self )
 
 
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
-
-
-
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "site_config" , SiteConfig )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("site_config")
 
+##################################################################
+##################################################################
 
 cfunc.free                  = cwrapper.prototype("void site_config_free( site_config )")
 cfunc.get_queue_name        = cwrapper.prototype("char* site_config_get_queue_name(site_config)")
@@ -82,3 +76,4 @@ cfunc.clear_pathvar         = cwrapper.prototype("void site_config_clear_pathvar
 cfunc.update_pathvar        = cwrapper.prototype("void site_config_update_pathvar(site_config, char*, char*)")
 cfunc.get_installed_jobs    = cwrapper.prototype("c_void_p site_config_get_installed_jobs(site_config)"),
 cfunc.get_license_root_path = cwrapper.prototype("char* site_config_get_license_root_path(site_config)")
+cfunc.get_job_queue         = cwrapper.prototype("c_void_p site_config_get_job_queue(site_config)")

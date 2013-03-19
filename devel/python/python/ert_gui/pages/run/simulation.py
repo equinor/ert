@@ -314,19 +314,9 @@ class SimulationPanelController:
         self.selectedSimulations = []
         self.view.connect(self.view, QtCore.SIGNAL('simulationsUpdated()'), self.showSelectedSimulations)
 
-    def initialize(self, ert):
-        """Set prototypes for ERT"""
-        if not self.initialized:
-            ert.prototype("bool job_queue_get_pause(long)", lib = ert.job_queue)
-            ert.prototype("void job_queue_set_pause_on(long)", lib = ert.job_queue)
-            ert.prototype("void job_queue_set_pause_off(long)", lib = ert.job_queue)
-            ert.prototype("void job_queue_user_exit(long)", lib = ert.job_queue)
-            ert.prototype("long enkf_main_iget_state(long, int)")
-            ert.prototype("void enkf_state_kill_simulation(long)")
-            ert.prototype("void enkf_state_resubmit_simulation(long, int)")
-            ert.prototype("int enkf_state_get_run_status(long)")
-            ert.prototype("long site_config_get_job_queue(long)")
-            self.initialized = True
+#    def initialize(self, ert):
+#        if not self.initialized:
+#            self.initialized = True
 
     def setModel(self, ert):
         """Set the reference to ERT (ertwrapper instance)"""
