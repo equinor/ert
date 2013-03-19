@@ -160,16 +160,6 @@ class SimulationsDialogController:
         self.view.simulationPanel.setSimulations(selection)
 
 
-    def initialize(self, ert):
-        """Protoype ERT functions"""
-        if not self.initialized:
-            ert.prototype("long enkf_main_iget_state(long, int)")
-            ert.prototype("int enkf_state_get_run_status(long)")
-            ert.prototype("long site_config_queue_is_running(long)")
-            ert.prototype("long enkf_state_get_start_time(long)")
-            ert.prototype("long enkf_state_get_submit_time(long)")
-            self.initialized = True
-
     def start(self, **kwargs):
         """Start the simulation. Two threads are started one for the simulation and one for progress monitoring"""
         ert = kwargs["ert"]

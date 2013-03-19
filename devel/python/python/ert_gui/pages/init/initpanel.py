@@ -75,9 +75,6 @@ class InitPanel(QtGui.QFrame):
         cases.addRemoveWidget.enableRemoveButton(False)  #todo: add support for removal
         cases.list.setMaximumHeight(150)
 
-        cases.initialize = lambda ert : [ert.prototype("long enkf_main_get_fs(long)"),
-                                         ert.prototype("void enkf_main_select_case(long , char*)"), 
-                                         ert.prototype("long enkf_fs_alloc_dirlist(long)")]
 
         def create_case(ert, cases):
             fs = ert.enkf.enkf_main_get_fs(ert.main)
@@ -103,8 +100,6 @@ class InitPanel(QtGui.QFrame):
         self.currentCase.combo.setMinimumWidth(150)
 
         def initialize_cases(ert):
-            ert.prototype("long enkf_main_get_fs(long)")
-
             self.currentCase.updateList(self.get_case_list(ert))
 
         self.currentCase.initialize = initialize_cases
@@ -122,7 +117,7 @@ class InitPanel(QtGui.QFrame):
         def select_case(ert, case):
             case = str(case)
             if not case == "":
-                ert.enkf.enkf_main_select_case( ert.main , case )
+                ert.enkf.enkf_main_user_select_fs( ert.main , case )
                 self.casesUpdated()
 
         self.currentCase.setter = select_case
