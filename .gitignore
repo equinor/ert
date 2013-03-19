@@ -10,3 +10,11 @@
 
 # /develbranch/libenkf/src/
 /develbranch/libenkf/src/.faultlist
+
+# Ignore build catalog
+/build
+
+#       Ignore pdf from tex-test
+/devel/libert_util/tests/data/latex_OK.pdf
+#       Ignore Statoil test data
+/devel/test-data/Statoil
