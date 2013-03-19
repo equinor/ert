@@ -77,3 +77,4 @@ cfunc.update_pathvar        = cwrapper.prototype("void site_config_update_pathva
 cfunc.get_installed_jobs    = cwrapper.prototype("c_void_p site_config_get_installed_jobs(site_config)"),
 cfunc.get_license_root_path = cwrapper.prototype("char* site_config_get_license_root_path(site_config)")
 cfunc.get_job_queue         = cwrapper.prototype("c_void_p site_config_get_job_queue(site_config)")
+cfunc.queue_is_running      = cwrapper.prototype("bool site_config_queue_is_running(site_config)")

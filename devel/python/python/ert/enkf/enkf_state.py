@@ -45,3 +45,5 @@ cfunc.free                = cwrapper.prototype("void enkf_state_free( enkf_state
 cfunc.kill_simulation     = cwrapper.prototype("void enkf_state_kill_simulation(enkf_state)")
 cfunc.resubmit_simulation = cwrapper.prototype("void enkf_state_resubmit_simulation(enkf_state, int)")
 cfunc.get_run_status      = cwrapper.prototype("int enkf_state_get_run_status(enkf_state)")
+cfunc.get_start_time      = cwrapper.prototype("time_t enkf_state_get_start_time(enkf_state)")
+cfunc.get_submit_time     = cwrapper.prototype("time_t enkf_state_get_submit_time(enkf_state)")

@@ -216,11 +216,10 @@ class EnKFMain(CClass):
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "enkf_main" , EnKFMain )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("enkf_main")
 
+##################################################################
+##################################################################
 
 cfunc.bootstrap                    = cwrapper.prototype("c_void_p enkf_main_bootstrap(char*, char*, bool , bool)")
 cfunc.free                         = cwrapper.prototype("void     enkf_main_free( enkf_main )")
@@ -262,3 +261,4 @@ cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_obser
 cfunc.mount_extra_fs               = cwrapper.safe_prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")
 cfunc.is_initialized               = cwrapper.prototype("bool enkf_main_is_initialized(enkf_main)")
 cfunc.iget_state                   = cwrapper.prototype("c_void_p enkf_main_iget_state(enkf_main, int)")
+cfunc.user_select_fs               = cwrapper.prototype("void enkf_main_user_select_fs(enkf_main , char*)"), 
