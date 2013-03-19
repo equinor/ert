@@ -127,7 +127,7 @@ class ConfigParser(CClass):
             c_ptr = cfunc.get_content(self , keyword )
             return ContentItem.wrap( c_ptr , self )
         else:
-            raise KeyError("The config item:%s has not been set" % keyword)
+            return None
 
 #-----------------------------------------------------------------
 
