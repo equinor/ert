@@ -19,7 +19,7 @@ import datetime
 import unittest
 import ert
 import ert.enkf.enkf as enkf
-from   ert.util.tvector import * 
+from   ert.util.tvector import *
 from   test_util import approx_equal, approx_equalv
 
 case = "/private/inmyr/ERT-Intro/testcase/ert_config"
@@ -43,10 +43,10 @@ class EnKFtest( unittest.TestCase ):
         
     def test_config( self ):
         self.main   = enkf.EnKFMain.bootstrap( case, site_conf_file )
-        config      = self.main.config
-        anal_config = self.main.anal_config
-        mod_config  = self.main.mod_config
-        loc_config  = self.main.loc_config
+        config      = self.main.ensemble_config
+        anal_config = self.main.analysis_config
+        mod_config  = self.main.model_config
+        loc_config  = self.main.local_config
         site_conf   = self.main.site_config
         ecl_conf    = self.main.ecl_config
         plot_conf   = self.main.plot_config

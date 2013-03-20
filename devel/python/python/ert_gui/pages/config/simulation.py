@@ -37,12 +37,12 @@ def createSimulationsPage(configPanel, parent):
 
 
     r = configPanel.addRow(IntegerSpinner(parent, "Max submit", "config/simulation/max_submit", 1, 10000))
-    r.getter = lambda ert : ert.enkf.site_config_get_max_submit(ert.site_config)
-    r.setter = lambda ert, value : ert.enkf.site_config_set_max_submit(ert.site_config, value)
+    r.getter = lambda ert : ert.main.site_config.get_max_submit
+    r.setter = lambda ert, value : ert.main.site_config.set_max_submit( value)
 
     r = configPanel.addRow(IntegerSpinner(parent, "Max internal submit", "config/simulation/max_resample", 1, 10000))
-    r.getter = lambda ert : ert.enkf.model_config_get_max_internal_submit(ert.model_config)
-    r.setter = lambda ert, value : ert.enkf.model_config_set_max_internal_submit(ert.model_config, value)
+    r.getter = lambda ert : ert.main.model_config.get_max_internal_submit
+    r.setter = lambda ert, value : ert.main.model_config.set_max_internal_submit( value)
 
 
 
@@ -50,25 +50,25 @@ def createSimulationsPage(configPanel, parent):
 
 
     def get_forward_model(ert):
-        site_config = ert.site_config
-        installed_jobs_pointer = ert.enkf.site_config_get_installed_jobs(site_config)
-        installed_jobs_stringlist_pointer = ert.job_queue.ext_joblist_alloc_list(installed_jobs_pointer)
+        site_config = ert.main.site_config
+        installed_jobs = ert.main.site_config.get_installed_jobs
+        installed_jobs_stringlist_pointer = installed_jobs.alloc_list
         available_jobs = ert.getStringList(installed_jobs_stringlist_pointer , free_after_use=True)
 
         result = {'available_jobs': available_jobs}
 
-        model_config = ert.model_config
-        forward_model = ert.enkf.model_config_get_forward_model(model_config)
-        name_string_list = ert.job_queue.forward_model_alloc_joblist(forward_model)
+
+        forward_model = ert.main.model_config.get_forward_model
+        name_string_list = forward_model.alloc_joblist
         job_names = ert.getStringList(name_string_list, free_after_use=True)
 
         forward_model_jobs = []
 
         count = 0
         for name in job_names:
-            ext_job = ert.job_queue.forward_model_iget_job(forward_model, count)
-            arg_string = ert.job_queue.ext_job_get_private_args_as_string(ext_job)
-            help_text = ert.job_queue.ext_job_get_help_text(ext_job)
+            ext_job    = forward_model.iget_job( count)
+            arg_string = ext_job.get_private_args_as_string
+            help_text  = ext_job.get_help_text
             forward_model_jobs.append((name, arg_string, help_text))
             count+=1
 
@@ -79,14 +79,14 @@ def createSimulationsPage(configPanel, parent):
     r.getter = get_forward_model
 
     def update_forward_model(ert, forward_model):
-        forward_model_pointer = ert.enkf.model_config_get_forward_model(ert.model_config)
-        ert.job_queue.forward_model_clear(forward_model_pointer)
+        forward_model_object = ert.main.model_config.get_forward_model
+        forward_model_object.clear
 
         for job in forward_model:
             name = job[0]
             args = job[1]
-            ext_job = ert.job_queue.forward_model_add_job(forward_model_pointer, name)
-            ert.job_queue.ext_job_set_private_args_from_string(ext_job, args)
+            ext_job = forward_model.add_job( name)
+            ext_job.set_private_args_from_string( args)
 
     r.setter = update_forward_model
 
@@ -96,17 +96,17 @@ def createSimulationsPage(configPanel, parent):
 
 
     def get_case_table(ert):
-        return ert.enkf.model_config_get_case_table_file(ert.model_config)
+        return ert.main.model_config.get_case_table_file
     r.getter = get_case_table
 
     def set_case_table(ert, value):
         if os.path.exists(value):
-            ert.enkf.enkf_main_set_case_table(ert.model_config, ert.nonify(value))
+            ert.main.set_case_table( ert.nonify(value))
     r.setter = set_case_table
 
     
     r = configPanel.addRow(PathChooser(parent, "License path", "config/simulation/license_path"))
-    r.getter = lambda ert : ert.enkf.site_config_get_license_root_path(ert.site_config)
+    r.getter = lambda ert : ert.main.site_config.get_license_root_path
 
     def ls(string):
         if string is None:
@@ -114,7 +114,7 @@ def createSimulationsPage(configPanel, parent):
         else:
             return string
 
-    r.setter = lambda ert, value : ert.enkf.site_config_set_license_root_path(ert.site_config, ls(value))
+    r.setter = lambda ert, value : ert.main.site_config.set_license_root_path( ls(value))
 
 
 
@@ -124,24 +124,24 @@ def createSimulationsPage(configPanel, parent):
 
     r = internalPanel.addRow(PathChooser(parent, "Runpath", "config/simulation/runpath", path_format=True))
 
-    r.getter = lambda ert : ert.enkf.model_config_get_runpath_as_char(ert.model_config)
-    r.setter = lambda ert, value : ert.enkf.model_config_set_runpath_fmt(ert.model_config, str(value))
+    r.getter = lambda ert : ert.main.model_config.get_runpath_as_char
+    r.setter = lambda ert, value : ert.main.model_config.select_runpath( str(value))
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("runpathChanged()"))
 
 
     r = internalPanel.addRow(CheckBox(parent, "Pre clear", "config/simulation/pre_clear_runpath", "Perform pre clear"))
 
-    r.getter = lambda ert : ert.enkf.enkf_main_get_pre_clear_runpath(ert.main)
-    r.setter = lambda ert, value : ert.enkf.enkf_main_set_pre_clear_runpath(ert.main, value)
+    r.getter = lambda ert : ert.main.get_pre_clear_runpath
+    r.setter = lambda ert, value : ert.main.set_pre_clear_runpath( value)
 
 
     r = internalPanel.addRow(RunpathMemberPanel(widgetLabel="Retain runpath", helpLabel="config/simulation/runpath_retain"))
     def get_runpath_retain_state(ert):
-        ensemble_size = ert.enkf.enkf_main_get_ensemble_size(ert.main)
+        ensemble_size = ert.main.ens_size
 
         result = []
         for index in range(ensemble_size):
-            state = ert.enkf.enkf_main_iget_keep_runpath(ert.main, index)
+            state = ert.main.iget_keep_runpath( index)
             result.append((index, keep_runpath_type.resolveValue(state)))
             
         return result
@@ -150,7 +150,7 @@ def createSimulationsPage(configPanel, parent):
 
     def set_runpath_retain_state(ert, items):
         for item in items:
-            ert.enkf.enkf_main_iset_keep_runpath(ert.main, item.member, item.runpath_state.value())
+            ert.main.iset_keep_runpath(item.member, item.runpath_state.value())
 
     r.setter = set_runpath_retain_state
 
@@ -162,27 +162,27 @@ def createSimulationsPage(configPanel, parent):
     r = internalPanel.addRow(RunTemplatePanel(parent))
 
     def get_run_templates(ert):
-        templates = ert.enkf.enkf_main_get_templates(ert.main)
-        template_list = ert.enkf.ert_templates_alloc_list(templates)
+        templates = ert.main.get_templates
+        template_list = templates.alloc_list
 
         template_names = ert.getStringList(template_list, free_after_use=True)
         result = []
         for name in template_names:
-            template = ert.enkf.ert_templates_get_template(templates, name)
-            template_file = ert.enkf.ert_templates_get_template_file(template)
-            target_file = ert.enkf.ert_templates_get_target_file(template)
-            arguments = ert.enkf.ert_templates_get_args_as_string(template)
+            template = templates.get_template( name)
+            template_file = template.get_template_file
+            target_file = template.get_target_file
+            arguments = template.get_args_as_string
             result.append((name, template_file, target_file, arguments))
         return result
 
     r.getter = get_run_templates
 
     def set_run_templates(ert, template_list):
-        templates_pointer = ert.enkf.enkf_main_get_templates(ert.main)
-        ert.enkf.ert_templates_clear(templates_pointer)
+        templates_object = ert.main.get_templates
+        templates_object.clear
 
         for template in template_list:
-            ert.enkf.ert_templates_add_template(templates_pointer, template[0], template[1], template[2], template[3])
+            templates_object.add_template( template[0], template[1], template[2], template[3])
 
     r.setter = set_run_templates  
     

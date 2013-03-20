@@ -30,50 +30,58 @@ def createAnalysisPage(configPanel, parent):
     configPanel.startPage("Analysis")
 
     r = configPanel.addRow(CheckBox(parent, "ENKF rerun", "config/analysis/enkf_rerun", "Perform rerun"))
-    r.getter = lambda ert : ert.enkf.analysis_config_get_rerun(ert.analysis_config)
-    r.setter = lambda ert, value : ert.enkf.analysis_config_set_rerun(ert.analysis_config, value)
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.analysis_config.get_rerun
+    r.setter = lambda ert, value : ert.main.analysis_config.set_rerun( value)
 
     r = configPanel.addRow(IntegerSpinner(parent, "Rerun start", "config/analysis/rerun_start",  0, 100000))
-    r.getter = lambda ert : ert.enkf.analysis_config_get_rerun_start(ert.analysis_config)
-    r.setter = lambda ert, value : ert.enkf.analysis_config_set_rerun_start(ert.analysis_config, value)
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.analysis_config.get_rerun_start
+    r.setter = lambda ert, value : ert.main.analysis_config.set_rerun_start( value)
 
     r = configPanel.addRow(PathChooser(parent, "ENKF schedule file", "config/analysis/enkf_sched_file"))
-    r.getter = lambda ert : ert.enkf.model_config_get_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main))
-    r.setter = lambda ert, value : ert.enkf.model_config_set_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main), str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.model_config.get_enkf_sched_file
+    r.setter = lambda ert, value : ert.main.model_config.set_enkf_sched_file(str(value))
 
     r = configPanel.addRow(ert_gui.widgets.tablewidgets.KeywordList(parent, "Local config", "config/analysis/local_config"))
     r.newKeywordPopup = lambda list : QtGui.QFileDialog.getOpenFileName(r, "Select a path", "")
 
     def get_local_config_files(ert):
-        local_config = ert.enkf.enkf_main_get_local_config(ert.main)
-        config_files_pointer = ert.enkf.local_config_get_config_files(local_config)
+        local_config = ert.main.local_config
+        config_files_pointer = ert.main.local_config.get_config_files
         return ert.getStringList(config_files_pointer)
 
+    r.initialize = r.emptyInitializer
     r.getter = get_local_config_files
 
     def add_config_file(ert, value):
-        local_config = ert.enkf.enkf_main_get_local_config(ert.main)
-        ert.enkf.local_config_clear_config_files(local_config)
+        local_config = ert.main.local_config
+        ert.main.local_config.clear_config_files
 
         for file in value:
-            ert.enkf.local_config_add_config_file(local_config, file)
+            ert.main.local_config.add_config_file( file)
 
+    r.initialize = r.emptyInitializer        
     r.setter = add_config_file
 
     r = configPanel.addRow(PathChooser(parent, "Update log", "config/analysis/update_log"))
-    r.getter = lambda ert : ert.enkf.analysis_config_get_log_path(ert.analysis_config)
-    r.setter = lambda ert, value : ert.enkf.analysis_config_set_log_path(ert.analysis_config, str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.analysis_config.get_log_path
+    r.setter = lambda ert, value : ert.main.analysis_config.set_log_path( str(value))
 
 
     configPanel.startGroup("EnKF")
 
     r = configPanel.addRow(DoubleSpinner(parent, "Alpha", "config/analysis/enkf_alpha", 0, 100000, 2))
-    r.getter = lambda ert : ert.enkf.analysis_config_get_alpha(ert.analysis_config)
-    r.setter = lambda ert, value : ert.enkf.analysis_config_set_alpha(ert.analysis_config, value)
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.analysis_config.get_alpha
+    r.setter = lambda ert, value : ert.main.analysis_config.set_alpha( value)
 
     r = configPanel.addRow(CheckBox(parent, "Merge Observations", "config/analysis/enkf_merge_observations", "Perform merge"))
-    r.getter = lambda ert : ert.enkf.analysis_config_get_merge_observations(ert.analysis_config)
-    r.setter = lambda ert, value : ert.enkf.analysis_config_set_merge_observations(ert.analysis_config, value)
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.analysis_config.get_merge_observations
+    r.setter = lambda ert, value : ert.main.analysis_config.set_merge_observations( value)
 
 
     #enkf_mode_type = {"ENKF_STANDARD" : 10, "ENKF_SQRT" : 20}

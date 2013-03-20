@@ -29,14 +29,14 @@ def createObservationsPage(configPanel, parent):
     r = configPanel.addRow(ComboChoice(parent, history_source_type.values(), "History source", "config/observations/history_source"))
 
     def get_history_source(ert):
-        history_source = ert.enkf.model_config_get_history_source(ert.model_config)
+        history_source = ert.main.model_config.get_history_source
         return history_source_type.resolveValue(history_source)
 
     r.getter = get_history_source
 
     def set_history_source(ert, value):
         history_source = history_source_type.resolveName(str(value))
-        ert.enkf.model_config_get_history_source(ert.model_config, history_source.value())
+        ert.main.model_config.set_history_source( history_source.value())
         
     r.setter = set_history_source
 
@@ -44,19 +44,19 @@ def createObservationsPage(configPanel, parent):
     r = configPanel.addRow(PathChooser(parent, "Observations config", "config/observations/obs_config", True))
 
     def get_obs(ert):
-        obs = ert.enkf.enkf_main_get_obs(ert.main)
-        return ert.enkf.enkf_obs_get_config_file(obs)
+        obs = ert.main.get_obs
+        return obs.get_config_file
 
     r.getter = get_obs
 
 
     def set_obs(ert, value):
-        ert.enkf.enkf_main_load_obs(ert.main, str(value))
+        ert.main.load_obs( str(value))
     r.setter = set_obs
 
 
     r = configPanel.addRow(ReloadButton(parent, "Reload Observations", "config/observations/reload_observation", "Reload"))
-    r.getter = lambda ert : ert.enkf.enkf_main_reload_obs(ert.main)
+    r.getter = lambda ert : ert.main.reload_obs
     
 
     configPanel.endPage()

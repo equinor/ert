@@ -25,14 +25,16 @@ from parameters.parametermodels import SummaryModel, DataModel, FieldModel, Keyw
 from ert.ert.enums import field_type
 from ert.ert.enums import truncation_type
 from ert.ert.enums import gen_data_file_format
+import ert.enkf.enkf_config_node
+import ert.enkf.gen_kw_config
 
 def createEnsemblePage(configPanel, parent):
     configPanel.startPage("Ensemble")
 
     r = configPanel.addRow(IntegerSpinner(parent, "Number of realizations", "config/ensemble/num_realizations", 1, 10000))
 
-    r.getter = lambda ert : ert.enkf.enkf_main_get_ensemble_size(ert.main)
-    r.setter = lambda ert, value : ert.enkf.enkf_main_resize_ensemble(ert.main, value)
+    r.getter = lambda ert : ert.main.ens_size
+    r.setter = lambda ert, value : ert.main.resize_ensemble( value)
 
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("ensembleResized()"))
 
@@ -42,51 +44,51 @@ def createEnsemblePage(configPanel, parent):
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("ensembleUpdated()"))
 
     def getEnsembleParameters(ert):
-        keys = ert.getStringList(ert.enkf.ensemble_config_alloc_keylist(ert.ensemble_config), free_after_use=True)
+        keys = ert.getStringList(ert.main.ensemble_config.alloc_keylist, free_after_use=True)
 
         parameters = []
         for key in keys:
-            node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, key)
-            type = ert.enkf.enkf_config_node_get_impl_type(node)
-            data = ert.enkf.enkf_config_node_get_ref(node)
+            node = ert.main.ensemble_config.get_node( key)
+            type = node.get_impl_type
+            data = node.get_ref
             #print key, type
 
             model = None
             if type == FieldModel.TYPE:
                 model = FieldModel(key)
 
-                field_type = ert.enkf.field_config_get_type(data)
+                field_type = node.field_model.get_type
                 field_type = enums.field_type[field_type]
                 model["type"] = field_type
 
-                truncation = ert.enkf.field_config_get_truncation_mode(data)
+                truncation = node.field_model.get_truncation_mode
 
                 if truncation & enums.truncation_type.TRUNCATE_MAX:
-                    model["max"] = ert.enkf.field_config_get_truncation_max(data)
+                    model["max"] = node.field_model.get_truncation_max
 
                 if truncation & enums.truncation_type.TRUNCATE_MIN:
-                    model["min"] = ert.enkf.field_config_get_truncation_min(data)
+                    model["min"] = node.field_model.get_truncation_min
 
-                model["init"] = ert.enkf.field_config_get_init_transform_name(data)
-                model["output"] = ert.enkf.field_config_get_output_transform_name(data)
+                model["init"] = node.field_model.get_init_transform_name
+                model["output"] = node.field_model.get_output_transform_name
                 
-                model["init_files"] = "????" ##ert.enkf.field_config_get_init_file_fmt(data)
-                model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
-                model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
-                model["enkf_infile"] = ert.enkf.enkf_config_node_get_enkf_infile(node)
+                model["init_files"] = "????" ##node.field_model.get_init_file_fmt
+                model["min_std"] = node.get_min_std_file
+                model["enkf_outfile"] = node.get_enkf_outfile
+                model["enkf_infile"] = node.get_enkf_infile
 
             elif type == DataModel.TYPE:
                 model = DataModel(key)
 
-                output_format_value = ert.enkf.gen_data_config_get_output_format(data)
+                output_format_value = node.data_model.get_output_format
                 output_format = gen_data_file_format.resolveValue(output_format_value)
 
-                input_format_value = ert.enkf.gen_data_config_get_input_format(data)
+                input_format_value = node.data_model.get_input_format
                 input_format = gen_data_file_format.resolveValue(input_format_value)
 
-                template_file = ert.enkf.gen_data_config_get_template_file(data)
-                template_key = ert.enkf.gen_data_config_get_template_key(data)
-                init_file_fmt = "????" #ert.enkf.gen_data_config_get_init_file_fmt(data)
+                template_file = node.data_model.get_template_file
+                template_key = node.data_model.get_template_key
+                init_file_fmt = "????" #node.data_model.get_init_file_fmt
 
                 model["output_format"] = output_format
                 model["input_format"] = input_format
@@ -94,9 +96,9 @@ def createEnsemblePage(configPanel, parent):
                 model["template_key"] = template_key
                 model["init_file_fmt"] = init_file_fmt
 
-                min_std = ert.enkf.enkf_config_node_get_min_std_file(node)
-                enkf_outfile = ert.enkf.enkf_config_node_get_enkf_outfile(node)
-                enkf_infile = ert.enkf.enkf_config_node_get_enkf_infile(node)
+                min_std = node.get_min_std_file
+                enkf_outfile = node.get_enkf_outfile
+                enkf_infile = node.get_enkf_infile
 
 
 
@@ -106,40 +108,40 @@ def createEnsemblePage(configPanel, parent):
 
             elif type == KeywordModel.TYPE:
                 model = KeywordModel(key)
-                model["min_std"] = ert.enkf.enkf_config_node_get_min_std_file(node)
-                model["enkf_outfile"] = ert.enkf.enkf_config_node_get_enkf_outfile(node)
-                model["template"] = ert.enkf.gen_kw_config_get_template_file(data)
-                model["init_file"] = "????" #ert.enkf.gen_kw_config_get_init_file_fmt(data)
-                model["parameter_file"] = ert.enkf.gen_kw_config_get_parameter_file(data)
+                model["min_std"] = node.get_min_std_file
+                model["enkf_outfile"] = node.get_enkf_outfile
+                model["template"] = node.keyword_model.get_template_file
+                model["init_file"] = "????" #node.keyword_model.get_init_file_fmt
+                model["parameter_file"] = node.keyword_model.get_parameter_file
             elif type == SummaryModel.TYPE:
                 model = SummaryModel(key)
             else:
                 pass #Unknown type
 
-            #model.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            #model.setValid(ert.main.enkf_config_node.is_valid)
 
             parameters.append(model)
 
         return parameters
 
     def removeParameter(ert, parameter_key):
-        ert.enkf.enkf_main_del_node(ert.main, parameter_key)
+        ert.main.del_node(ert.main, parameter_key)
 
     def insertParameter(ert, parameter):
         key = parameter.getName()
         if parameter.getType() == FieldModel.TYPE:
-            grid = ert.enkf.ecl_config_get_grid(ert.ecl_config)
-            node = ert.enkf.ensemble_config_add_field(ert.ensemble_config, key, grid)
-            parameter.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            grid = ert.main.ecl_config.get_grid
+            node = ert.main.ensemble_config.add_field( key, grid)
+            parameter.setValid(ert.main.enkf_config_node.is_valid)
         elif parameter.getType() == DataModel.TYPE:
-            node = ert.enkf.ensemble_config_add_gen_data(ert.ensemble_config, key)
-            parameter.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            node = ert.main.ensemble_config.add_gen_data( key)
+            parameter.setValid(ert.main.enkf_config_node.is_valid)
         elif parameter.getType() == KeywordModel.TYPE:
-            node = ert.enkf.ensemble_config_add_gen_kw(ert.ensemble_config, key)
-            parameter.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            node = ert.main.ensemble_config.add_gen_kw( key)
+            parameter.setValid(ert.main.enkf_config_node.is_valid)
         elif parameter.getType() == SummaryModel.TYPE:
             parameter.setValid(True)
-            b = ert.enkf.ensemble_config_add_summary(ert.ensemble_config, key)
+            b = ert.main.ensemble_config.add_summary( key)
             return b > 0 #0 == NULL 
         else:
             print "Unknown type: ", parameter
@@ -149,7 +151,7 @@ def createEnsemblePage(configPanel, parent):
 
     def updateParameter(ert, parameter_model):
         key  = parameter_model.getName()
-        node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, key)
+        node = ert.main.ensemble_config.get_node( key)
         
         if isinstance(parameter_model, FieldModel):
             type = parameter_model["type"]
@@ -165,12 +167,12 @@ def createEnsemblePage(configPanel, parent):
                 maximum = 0.0
 
             if type == field_type.ECLIPSE_RESTART: #dynamic
-                ert.enkf.enkf_config_node_update_state_field(node,
+                ert.main.enkf_config_node.update_state_field(node,
                                                              truncate.value(),
                                                              float(minimum),
                                                              float(maximum))
             elif type == field_type.ECLIPSE_PARAMETER: #parameter
-                ert.enkf.enkf_config_node_update_parameter_field(node,
+                ert.main.enkf_config_node.update_parameter_field(node,
                                                                  ert.nonify(parameter_model["enkf_outfile"]),
                                                                  ert.nonify(parameter_model["init_files"]),
                                                                  ert.nonify(parameter_model["min_std"]),
@@ -180,7 +182,7 @@ def createEnsemblePage(configPanel, parent):
                                                                  parameter_model["init"],
                                                                  parameter_model["output"])
             elif type == field_type.GENERAL: #general
-                ert.enkf.enkf_config_node_update_general_field(node,
+                ert.main.enkf_config_node.update_general_field(node,
                                                                ert.nonify(parameter_model["enkf_outfile"]),
                                                                ert.nonify(parameter_model["enkf_infile"]),
                                                                ert.nonify(parameter_model["init_files"]),
@@ -192,7 +194,7 @@ def createEnsemblePage(configPanel, parent):
                                                                None,
                                                                parameter_model["output"])
 
-            parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            parameter_model.setValid(ert.main.enkf_config_node.is_valid)
 
         elif isinstance(parameter_model, KeywordModel):
             enkf_outfile_fmt = parameter_model["enkf_outfile"]
@@ -200,20 +202,20 @@ def createEnsemblePage(configPanel, parent):
             parameter_file = parameter_model["parameter_file"]
             min_std_file = parameter_model["min_std"]
             init_file_fmt = parameter_model["init_files"]
-            ert.enkf.enkf_config_node_update_gen_kw(node,
+            ert.main.enkf_config_node.update_gen_kw(node,
                                                     ert.nonify(enkf_outfile_fmt),
                                                     ert.nonify(template_file),
                                                     ert.nonify(parameter_file),
                                                     ert.nonify(min_std_file),
                                                     ert.nonify(init_file_fmt))
-            parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            parameter_model.setValid(ert.main.enkf_config_node.is_valid)
         elif isinstance(parameter_model, SummaryModel):
             #should never be called from SummaryModel...
             raise AssertionError("Summary keys can not be updated!")
         elif isinstance(parameter_model, DataModel):
             input_format = gen_data_file_format.resolveName(str(parameter_model["input_format"]))
             output_format = gen_data_file_format.resolveName(str(parameter_model["output_format"]))
-            ert.enkf.enkf_config_node_update_gen_data(node,
+            ert.main.enkf_config_node.update_gen_data(node,
                                                       input_format.value(),
                                                       output_format.value(),
                                                       ert.nonify(parameter_model["init_file_fmt"]),
@@ -222,12 +224,12 @@ def createEnsemblePage(configPanel, parent):
                                                       ert.nonify(parameter_model["enkf_outfile"]),
                                                       ert.nonify(parameter_model["enkf_infile"]),
                                                       ert.nonify(parameter_model["min_std"]))
-            parameter_model.setValid(ert.enkf.enkf_config_node_is_valid(node))
+            parameter_model.setValid(ert.main.enkf_config_node.is_valid)
         else:
             raise AssertionError("Type is not supported: %s" % (parameter_model.__class__))
         
-        if ert.enkf.enkf_config_node_is_valid(node):
-            ert.enkf.enkf_main_update_node( ert.main , key )
+        if ert.main.enkf_config_node.is_valid:
+            ert.main.update_node( ert.main , key )
 
 
 
