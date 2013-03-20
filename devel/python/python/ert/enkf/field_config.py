@@ -31,23 +31,36 @@ class FieldConfig(CClass):
         if self.owner:
             cfunc.free( self )
 
+    @property
+    def get_type(self):
+        return cfunc.get_type(self)
 
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
+    @property
+    def get_truncation_mode(self):
+        return cfunc.get_truncation_mode(self)
 
+    @property
+    def get_truncation_min(self):
+        return cfunc.get_truncation_min(self)
 
+    @property
+    def get_init_transform_name(self):
+        return cfunc.get_init_transform_name(self)
 
+    @property
+    def get_output_transform_name(self):
+        return cfunc.get_output_transform_name(self)
+
+    @property
+    def get_truncation_max(self):
+        return cfunc.get_truncation_max(self) 
 ##################################################################
-
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "field_config" , FieldConfig )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("field_config")
-
-
+##################################################################
+##################################################################
 cfunc.free                      = cwrapper.prototype("void field_config_free( field_config )")
 cfunc.get_type                  = cwrapper.prototype("int field_config_get_type(field_config)")
 cfunc.get_truncation_mode       = cwrapper.prototype("int field_config_get_truncation_mode(field_config)")

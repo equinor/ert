@@ -31,12 +31,40 @@ class AnalysisConfig(CClass):
         if self.owner:
             cfunc.free( self )
 
-
+    @property
     def get_rerun(self):
         return cfunc.get_rerun( self )
 
+    def set_rerun(self, rerun):
+        cfunc.set_rerun(self, rerun)
+        
+    @property
+    def get_rerun_start(self):
+        return cfunc.get_rerun_start( self )
 
+    def set_rerun_start(self, int):
+        cfunc.set_rerun_start( self , int)
 
+    @property
+    def get_log_path(self):
+        return cfunc.get_log_path( self )
+
+    def set_log_path(self, path):
+        cfunc.set_log_path( self, path) 
+
+    @property
+    def get_alpha(self):
+        return cfunc.get_alpha( self )
+
+    def set_alpha(self, alpha):
+        cfunc.set_alpha( self , alpha)
+
+    @property
+    def get_merge_observations(self):
+        return cfunc.get_merge_observations( self )
+    
+    def set_merge_observations(self, merge_observations):
+        return cfunc.set_merge_observations( self , merge_observations)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -55,7 +83,7 @@ cfunc.set_log_path           = cwrapper.prototype("void analysis_config_set_log_
 cfunc.get_alpha              = cwrapper.prototype("double analysis_config_get_alpha(analysis_config)")
 cfunc.set_alpha              = cwrapper.prototype("void analysis_config_set_alpha(analysis_config, double)")
 cfunc.get_merge_observations = cwrapper.prototype("bool analysis_config_get_merge_observations(analysis_config)")
-cfunc.set_merge_observations = cwrapper.prototype("void analysis_config_set_merge_observations(analysis_config, int)")
+cfunc.set_merge_observations = cwrapper.prototype("void analysis_config_set_merge_observations(analysis_config, bool)")
 cfunc.get_enkf_mode          = cwrapper.safe_prototype("int analysis_config_get_enkf_mode(analysis_config)")
 cfunc.set_enkf_mode          = cwrapper.safe_prototype("void analysis_config_set_enkf_mode(analysis_config, int)")
 cfunc.get_truncation         = cwrapper.safe_prototype("double analysis_config_get_truncation(analysis_config)")

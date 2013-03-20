@@ -38,6 +38,7 @@ from    ert.enkf.enkf_fs          import *
 from    ert.enkf.ert_templates    import *
 from    ert.enkf.member_config    import *
 from    ert.enkf.enkf_state       import *
+from    ert.util.log              import *
 
 class EnKFMain(CClass):
     
@@ -79,6 +80,11 @@ class EnKFMain(CClass):
     def model_config(self):
         mod_config = ert.enkf.model_config.ModelConfig( cfunc.get_model_config( self ))
         return mod_config
+
+    @property     
+    def logh(self):
+        mog = ert.util.log.Log( cfunc.get_logh( self ))
+        return mog
     
     @property     
     def local_config(self):
@@ -150,8 +156,8 @@ class EnKFMain(CClass):
         pre_clear = cfunc.get_pre_clear_runpath(self)
         return pre_clear
         
-    def set_pre_clear_runpath(self):
-        cfunc.set_pre_clear_runpath(self)
+    def set_pre_clear_runpath(self, value):
+        cfunc.set_pre_clear_runpath(self, value)
         
     @property    
     def iget_keep_runpath(self, iens):
@@ -244,9 +250,9 @@ cfunc.get_obs                      = cwrapper.prototype("c_void_p enkf_main_get_
 cfunc.load_obs                     = cwrapper.prototype("void enkf_main_load_obs(enkf_main, char*)")
 cfunc.reload_obs                   = cwrapper.prototype("void enkf_main_reload_obs(enkf_main)")
 cfunc.set_case_table               = cwrapper.prototype("void enkf_main_set_case_table(enkf_main, char*)")
-cfunc.get_pre_clear_runpath        = cwrapper.prototype("bool enkf_main_get_pre_clear_runpath(enkf_main)"),
+cfunc.get_pre_clear_runpath        = cwrapper.prototype("bool enkf_main_get_pre_clear_runpath(enkf_main)")
 cfunc.set_pre_clear_runpath        = cwrapper.prototype("void enkf_main_set_pre_clear_runpath(enkf_main, bool)")
-cfunc.iget_keep_runpath            = cwrapper.prototype("int enkf_main_iget_keep_runpath(enkf_main, int)"),
+cfunc.iget_keep_runpath            = cwrapper.prototype("int enkf_main_iget_keep_runpath(enkf_main, int)")
 cfunc.iset_keep_runpath            = cwrapper.prototype("void enkf_main_iset_keep_runpath(enkf_main, int, int_vector)")
 cfunc.get_templates                = cwrapper.prototype("c_void_p enkf_main_get_templates(enkf_main)")
 cfunc.get_site_config_file         = cwrapper.prototype("char* enkf_main_get_site_config_file(enkf_main)")
@@ -261,4 +267,5 @@ cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_obser
 cfunc.mount_extra_fs               = cwrapper.safe_prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")
 cfunc.is_initialized               = cwrapper.prototype("bool enkf_main_is_initialized(enkf_main)")
 cfunc.iget_state                   = cwrapper.prototype("c_void_p enkf_main_iget_state(enkf_main, int)")
-cfunc.user_select_fs               = cwrapper.prototype("void enkf_main_user_select_fs(enkf_main , char*)"), 
+cfunc.user_select_fs               = cwrapper.prototype("void enkf_main_user_select_fs(enkf_main , char*)") 
+cfunc.get_logh                     = cwrapper.prototype("void enkf_main_get_logh( enkf_main )")

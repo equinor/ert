@@ -15,11 +15,12 @@
 #  for more details. 
 
 import  ctypes
-from    ert.cwrap.cwrap       import *
-from    ert.cwrap.cclass      import CClass
-from    ert.util.tvector      import * 
-from    enkf_enum             import *
-import  libenkf
+from    ert.cwrap.cwrap            import *
+from    ert.cwrap.cclass           import CClass
+from    ert.util.tvector           import * 
+from    enkf_enum                  import *
+from    ert.job_queue.forward_model import ForwardModel
+from    libenkf import *
 class ModelConfig(CClass):
     
     def __init__(self , c_ptr = None):
@@ -31,19 +32,48 @@ class ModelConfig(CClass):
         if self.owner:
             cfunc.free( self )
 
+    @property
+    def get_enkf_sched_file(self):
+        return cfunc.get_enkf_sched_file( self )
 
+    def set_enkf_sched_file(self, file):
+        cfunc.get_enkf_sched_file( self , file)
 
+    @property
+    def get_history_source(self):
+        return cfunc.get_history_source( self )
 
+    def set_history_source(self, ):
+        sys.stderr.write("set_history_source is defunct")
+
+    @property
+    def get_max_internal_submit(self):
+        return cfunc.get_max_internal_submit( self )
+
+    def set_max_internal_submit(self, max):
+        cfunc.get_max_internal_submit( self , max)
+
+    @property     
+    def get_forward_model(self):
+        ford_model = ert.job_queue.forward_model.ForwardModel( cfunc.get_forward_model( self ))
+        return ford_model
+
+    @property
+    def get_case_table_file(self):
+        return cfunc.get_case_table_file(self)
+
+    @property
+    def get_runpath_as_char(self):
+        return cfunc.get_runpath_as_char(self)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "model_config" , ModelConfig )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("model_config")
 
+##################################################################
+##################################################################
 
 cfunc.free                    = cwrapper.prototype("void model_config_free( model_config )")
 cfunc.get_enkf_sched_file     = cwrapper.prototype("char* model_config_get_enkf_sched_file( model_config )")
@@ -55,5 +85,5 @@ cfunc.get_max_internal_submit = cwrapper.safe_prototype("int model_config_get_ma
 cfunc.set_max_internal_submit = cwrapper.safe_prototype("void model_config_set_max_internal_submit(model_config, int)")
 cfunc.get_case_table_file     = cwrapper.prototype("char* model_config_get_case_table_file(model_config)")
 cfunc.get_runpath_as_char     = cwrapper.prototype("char* model_config_get_runpath_as_char(model_config)")
-cfunc.set_runpath_fmt         = cwrapper.safe_prototype("void model_config_set_runpath_fmt(model_config, char*)")
+cfunc.select_runpath          = cwrapper.safe_prototype("void model_config_select_runpath(model_config, char*)")
                                  

@@ -31,23 +31,23 @@ class ExtJob(CClass):
         if self.owner:
             cfunc.free( self )
 
+    @property
+    def get_private_args_as_string(self):
+        return cfunc.get_private_args_as_string(self)
 
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
+    def set_private_args_as_string(self, args):
+        cfunc.set_private_args_as_string(self, args)    
 
-
-
-##################################################################
+    @property
+    def get_help_text(self):
+        return cfunc.get_help_text(self)##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "ext_job" , ExtJob )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("ext_job")
-
-
+##################################################################
+##################################################################
 cfunc.free                       = cwrapper.prototype("void ext_job_free( ext_job )")
 cfunc.get_help_text              = cwrapper.prototype("char* ext_job_get_help_text(ext_job)")
 cfunc.get_private_args_as_string = cwrapper.prototype("char* ext_job_get_private_args_as_string(ext_job)")

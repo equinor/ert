@@ -27,47 +27,54 @@ def createEclipsePage(configPanel, parent):
     configPanel.startPage("Eclipse")
 
     r = configPanel.addRow(PathChooser(parent, "Eclipse Base", "config/eclipse/eclbase", path_format=True))
-    r.getter = lambda ert : ert.enkf.ecl_config_get_eclbase(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.enkf_main_set_eclbase(ert.main , str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.ecl_config.get_eclbase
+    r.setter = lambda ert, value : ert.main.set_eclbase(str(value))
 
     r = configPanel.addRow(PathChooser(parent, "Data file", "config/eclipse/data_file", show_files=True))
-    r.getter = lambda ert : ert.enkf.ecl_config_get_data_file(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.enkf_main_set_data_file(ert.main , str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.ecl_config.get_data_file
+    r.setter = lambda ert, value : ert.main.set_data_file(str(value))
 
     r = configPanel.addRow(PathChooser(parent, "Grid", "config/eclipse/grid", show_files=True))
-    r.getter = lambda ert : ert.enkf.ecl_config_get_gridfile(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.ecl_config_set_grid(ert.ecl_config, str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.ecl_config.get_gridfile
+    r.setter = lambda ert, value : ert.main.ecl_config.set_gridfile(str(value))
 
     r = configPanel.addRow(PathChooser(parent, "Schedule file" , "config/eclipse/schedule_file" , show_files = True))
-    r.getter = lambda ert : ert.enkf.ecl_config_get_schedule_file(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.ecl_config_set_schedule_file(ert.ecl_config, str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.ecl_config.get_schedule_file
+    r.setter = lambda ert, value : ert.main.ecl_config.set_schedule_file( str(value))
 
 
     r = configPanel.addRow(PathChooser(parent, "Init section", "config/eclipse/init_section", show_files=True))
-    r.getter = lambda ert : ert.enkf.ecl_config_get_init_section(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.ecl_config_set_init_section(ert.ecl_config, str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.ecl_config.get_init_section
+    r.setter = lambda ert, value : ert.main.ecl_config.set_init_section( str(value))
 
 
     r = configPanel.addRow(PathChooser(parent, "Refcase", "config/eclipse/refcase", show_files=True))
-    r.getter = lambda ert : ert.enkf.ecl_config_get_refcase_name(ert.ecl_config)
-    r.setter = lambda ert, value : ert.enkf.ecl_config_load_refcase(ert.ecl_config, str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.ecl_config.get_refcase_name
+    r.setter = lambda ert, value : ert.main.ecl_config.load_refcase( str(value))
 
     r = configPanel.addRow(PathChooser(parent, "Schedule prediction file", "config/eclipse/schedule_prediction_file", show_files=True))
-    r.getter = lambda ert : ert.enkf.enkf_main_get_schedule_prediction_file(ert.main)
-    r.setter = lambda ert, value : ert.enkf.enkf_main_set_schedule_prediction_file(ert.main, ert.nonify( value ))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.get_schedule_prediction_file
+    r.setter = lambda ert, value : ert.main.set_schedule_prediction_file( ert.nonify( value ))
 
     r = configPanel.addRow(KeywordTable(parent, "Data keywords", "config/eclipse/data_kw"))
-    r.getter = lambda ert : ert.getSubstitutionList(ert.enkf.enkf_main_get_data_kw(ert.main))
+    r.getter = lambda ert : ert.getSubstitutionList(ert.main.get_data_kw)
 
     def add_data_kw(ert, listOfKeywords):
-        ert.enkf.enkf_main_clear_data_kw(ert.main)
+        ert.main.clear_data_kw
 
         for keyword in listOfKeywords:
-            ert.enkf.enkf_main_add_data_kw(ert.main, keyword[0], keyword[1])
+            ert.main.add_data_kw( keyword[0], keyword[1])
 
     r.setter = add_data_kw
 
-
+    r.initialize = r.emptyInitializer
 
     configPanel.addSeparator()
 
@@ -76,16 +83,16 @@ def createEclipsePage(configPanel, parent):
     internalPanel.startPage("Static keywords")
 
     r = internalPanel.addRow(KeywordList(parent, "", "config/eclipse/add_static_kw"))
-    r.getter = lambda ert : ert.getStringList(ert.enkf.ecl_config_get_static_kw_list(ert.ecl_config))
+    r.getter = lambda ert : ert.getStringList(ert.main.ecl_config.get_static_kw_list)
 
     def add_static_kw(ert, listOfKeywords):
-        ert.enkf.ecl_config_clear_static_kw(ert.ecl_config)
+        ert.main.ecl_config.clear_static_kw(ert.ecl_config)
 
         for keyword in listOfKeywords:
-            ert.enkf.ecl_config_add_static_kw(ert.ecl_config, keyword)
+            ert.main.ecl_config.add_static_kw(ert.ecl_config, keyword)
 
     r.setter = add_static_kw
-
+    r.initialize = r.emptyInitializer
     internalPanel.endPage()
 
     # todo: add support for fixed length schedule keywords

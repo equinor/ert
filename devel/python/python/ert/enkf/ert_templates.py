@@ -31,6 +31,18 @@ class ErtTemplates(CClass):
         if self.owner:
             cfunc.free( self )
 
+    @property
+    def alloc_list(self):
+        return cfunc.alloc_list(self)
+
+    def clear(self):
+        cfunc.clear(self)
+
+    def get_template(self,key):
+        template = ert.enkf.ert_template.ErtTemplate( cfunc.get_template( self, key ))
+        return template
+    
+
 
 
 ##################################################################
@@ -38,17 +50,11 @@ class ErtTemplates(CClass):
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "ert_templates" , ErtTemplates )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("ert_templates")
-
-
-cfunc.free                   = cwrapper.prototype("void ert_template_free( ert_templates )")
+##################################################################
+##################################################################
+cfunc.free                   = cwrapper.prototype("void ert_templates_free( ert_templates )")
 cfunc.alloc_list             = cwrapper.prototype("c_void_p ert_templates_alloc_list(ert_templates)")
 cfunc.get_template           = cwrapper.prototype("c_void_p ert_templates_get_template(ert_templates, char*)")
-cfunc.get_template_file      = cwrapper.prototype("char* ert_template_get_template_file(ert_templates)")
-cfunc.get_target_file        = cwrapper.prototype("char* ert_template_get_target_file(ert_templates)")
-cfunc.get_args_as_string     = cwrapper.prototype("char* ert_template_get_args_as_string(ert_templates)")
 cfunc.clear                  = cwrapper.prototype("void ert_templates_clear(ert_templates)")
 cfunc.add_template           = cwrapper.prototype("void ert_templates_add_template(ert_templates, char*, char*, char*, char*)")

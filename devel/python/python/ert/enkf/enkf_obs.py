@@ -31,11 +31,9 @@ class EnkfObs(CClass):
         if self.owner:
             cfunc.free( self )
 
-
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
-
-
+    @property
+    def get_config_file(self):
+        return cfunc.get_config_file(self)
 
 ##################################################################
 

@@ -31,22 +31,19 @@ class LocalConfig(CClass):
         if self.owner:
             cfunc.free( self )
 
-
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
-
-
-
+    @property
+    def get_config_files(self):
+        config_files = cfunc.get_config_files(self)
+        return config_files
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "local_config" , LocalConfig )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("local_config")
 
+##################################################################
+##################################################################
 
 cfunc.free               = cwrapper.prototype("void local_config_free( local_config )")
 cfunc.get_config_files   = cwrapper.prototype("c_void_p local_config_get_config_files( local_config )")

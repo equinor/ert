@@ -34,25 +34,28 @@ def createSystemPage(configPanel, parent):
     # the site configuration file; this should only be a label - not
     # user editable.
     r = configPanel.addRow(ActiveLabel(None, "Site Config", "", "Not specified."))
-    r.getter = lambda ert : ert.enkf.enkf_main_get_site_config_file(ert.main)
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.get_site_config_file
     r.modelConnect("casesUpdated()", r.fetchContent)
     
 
 
     r = configPanel.addRow(PathChooser(parent, "Job script", "config/systemenv/job_script", True))
-    r.getter = lambda ert : ert.enkf.site_config_get_job_script(ert.site_config)
-    r.setter = lambda ert, value : ert.enkf.site_config_set_job_script(ert.site_config, str(value))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.main.site_config.get_job_script
+    r.setter = lambda ert, value : ert.main.site_config.set_job_script( str(value))
 
     internalPanel = ConfigPanel(parent)
     internalPanel.startPage("setenv")
 
     r = internalPanel.addRow(KeywordTable(parent, "", "config/systemenv/setenv"))
-    r.getter = lambda ert : ert.getHash(ert.enkf.site_config_get_env_hash(ert.site_config))
+    r.initialize = r.emptyInitializer
+    r.getter = lambda ert : ert.getHash(ert.main.site_config.get_env_hash)
 
     def setenv(ert, value):
-        ert.enkf.site_config_clear_env(ert.site_config)
+        ert.main.site_config.clear_env
         for env in value:
-            ert.enkf.site_config_setenv(ert.site_config, env[0], env[1])
+            ert.main.site_config.setenv( env[0], env[1])
 
     r.setter = setenv
 
@@ -61,19 +64,20 @@ def createSystemPage(configPanel, parent):
     internalPanel.startPage("Update path")
 
     r = internalPanel.addRow(KeywordTable(parent, "", "config/systemenv/update_path"))
+    r.initialize = r.emptyInitializer
     def get_update_path(ert):
-        paths = ert.getStringList(ert.enkf.site_config_get_path_variables(ert.site_config))
-        values =  ert.getStringList(ert.enkf.site_config_get_path_values(ert.site_config))
+        paths = ert.getStringList(ert.main.site_config.get_path_variables)
+        values =  ert.getStringList(ert.main.site_config.get_path_values)
 
         return [[p, v] for p, v in zip(paths, values)]
 
     r.getter = get_update_path
 
     def update_pathvar(ert, value):
-        ert.enkf.site_config_clear_pathvar(ert.site_config)
+        ert.main.site_config.clear_pathvar
 
         for pathvar in value:
-            ert.enkf.site_config_update_pathvar(ert.site_config, pathvar[0], pathvar[1])
+            ert.main.site_config.update_pathvar( pathvar[0], pathvar[1])
 
     r.setter = update_pathvar
 
@@ -84,8 +88,8 @@ def createSystemPage(configPanel, parent):
 
     r = internalPanel.addRow(JobsPanel(parent))
     def get_jobs(ert):
-        jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
-        h  = ert.job_queue.ext_joblist_get_jobs(jl)
+        jl = ert.main.site_config.get_installed_jobs
+        h  = jl.get_jobs
 
         jobs = ert.getHash(h, return_type="long")
 
@@ -99,10 +103,10 @@ def createSystemPage(configPanel, parent):
         return private_jobs
 
     def update_job(ert, value):
-        jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
+        jl = ert.main.site_config.get_installed_jobs
 
         if os.path.exists(value.path):
-            license = ert.enkf.site_config_get_license_root_path(ert.site_config)
+            license = ert.main.site_config.get_license_root_path
             job = ert.job_queue.ext_job_fscanf_alloc(value.name, license, True, value.path)
             ert.job_queue.ext_joblist_add_job(jl, value.name, job)
         else:
@@ -111,9 +115,9 @@ def createSystemPage(configPanel, parent):
 
 
     def add_job(ert, value):
-        jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
+        jl = ert.main.site_config.get_installed_jobs
         if not ert.job_queue.ext_joblist_has_job(jl, value.name):
-            license = ert.enkf.site_config_get_license_root_path(ert.site_config)
+            license = ert.main.site_config.get_license_root_path
             if os.path.exists(value.path):
                 job = ert.job_queue.ext_job_fscanf_alloc(value.name, license, True, value.path)
                 ert.job_queue.ext_joblist_add_job(jl, value.name, job)
@@ -126,7 +130,7 @@ def createSystemPage(configPanel, parent):
         return False
 
     def remove_job(ert, value):
-        jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
+        jl = ert.main.site_config.get_installed_jobs
         success = ert.job_queue.ext_joblist_del_job(jl, value.name)
 
         if not success:
@@ -146,12 +150,12 @@ def createSystemPage(configPanel, parent):
     configPanel.addRow(internalPanel)
 
     r = configPanel.addRow(PathChooser(parent, "Log file", "config/systemenv/log_file", True))
-    r.getter = lambda ert : ert.util.log_get_filename(ert.logh)
-    r.setter = lambda ert, value : ert.util.log_reset_filename(ert.logh, value)
+    r.getter = lambda ert : ert.main.logh.get_filename
+    r.setter = lambda ert, value : ert.main.logh.reopen_filename( value)
 
     r = configPanel.addRow(ert_gui.widgets.spinnerwidgets.IntegerSpinner(parent, "Log level", "config/systemenv/log_level", 0, 1000))
-    r.getter = lambda ert : ert.util.log_get_level(ert.logh)
-    r.setter = lambda ert, value : ert.util.log_set_level(ert.logh, value)
+    r.getter = lambda ert : ert.main.logh.get_level
+    r.setter = lambda ert, value : ert.main.logh.set_level( value)
 
     configPanel.endPage()
 

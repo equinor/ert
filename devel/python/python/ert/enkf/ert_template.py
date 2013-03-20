@@ -1,6 +1,6 @@
 #  Copyright (C) 2012  Statoil ASA, Norway. 
 #   
-#  The file 'ext_joblist.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'ert_template.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -18,9 +18,9 @@ import  ctypes
 from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
-from    ert.enkf.enkf_enum             import *
-import  ert.enkf.libenkf
-class ExtJoblist(CClass):
+from    enkf_enum             import *
+import  libenkf
+class ErtTemplate(CClass):
     
     def __init__(self , c_ptr = None):
         self.owner = False
@@ -30,24 +30,27 @@ class ExtJoblist(CClass):
     def __del__(self):
         if self.owner:
             cfunc.free( self )
-    @property
-    def get_jobs(self):
-        return cfunc.get_jobs( self )
 
     @property
-    def alloc_list(self):
-        return cfunc.alloc_list( self )    
+    def get_template_file(self):
+        return cfunc.get_template_file(self)
+
+    @property
+    def get_target_file(self):
+        return cfunc.get_target_file(self)
+
+    @property
+    def get_args_as_string(self):
+        return cfunc.get_args_as_string(self)   
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
-cwrapper.registerType( "ext_joblist" , ExtJoblist )
-cfunc = CWrapperNameSpace("ext_joblist")
+cwrapper.registerType( "ert_template" , ErtTemplate )
+
+cfunc = CWrapperNameSpace("ert_template")
 ##################################################################
 ##################################################################
-cfunc.free                       = cwrapper.prototype("void ext_joblist_free( ext_joblist )")
-cfunc.alloc_list                 = cwrapper.prototype("c_void_p ext_joblist_alloc_list(ext_joblist)")
-cfunc.get_job                    = cwrapper.prototype("c_void_p ext_joblist_get_job(ext_joblist, char*)")
-cfunc.del_job                    = cwrapper.prototype("int ext_joblist_del_job(ext_joblist, char*)")
-cfunc.has_job                    = cwrapper.prototype("int ext_joblist_has_job(ext_joblist, char*)")
-cfunc.add_job                    = cwrapper.prototype("void ext_joblist_add_job(ext_joblist, char*, ext_joblist)")
-cfunc.get_jobs                   = cwrapper.prototype("c_void_p ext_joblist_get_jobs(ext_joblist)")
+cfunc.free                   = cwrapper.prototype("void ert_template_free( ert_template )")
+cfunc.get_template_file      = cwrapper.prototype("char* ert_template_get_template_file(ert_template)")
+cfunc.get_target_file        = cwrapper.prototype("char* ert_template_get_target_file(ert_template)")
+cfunc.get_args_as_string     = cwrapper.prototype("char* ert_template_get_args_as_string(ert_template)")
