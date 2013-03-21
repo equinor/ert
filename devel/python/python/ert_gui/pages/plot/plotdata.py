@@ -117,7 +117,7 @@ class PlotDataFetcher(ContentModel, QObject):
                 self.comparison_fs_name = "None"
 
             if not new_fs == "None":
-                self.fs_for_comparison_plots = ert.enkf.enkf_main_mount_extra_fs(ert.main, new_fs)
+                self.fs_for_comparison_plots = ert.main.mount_extra_fs( new_fs)
                 self.comparison_fs_name = new_fs
 
             self.__dataChanged()
@@ -237,14 +237,14 @@ class PlotContextDataFetcher(ContentModel):
     def getter(self, ert):
         data = PlotContextData()
 
-        keys = ert.getStringList(ert.enkf.ensemble_config_alloc_keylist(ert.ensemble_config), free_after_use=True)
+        keys = ert.getStringList(ert.main.ensemble_config.alloc_keylist, free_after_use=True)
         data.keys = keys
         data.parameters = []
 
         for key in keys:
-            config_node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, key)
-            type = ert.enkf.enkf_config_node_get_impl_type(config_node)
-            node_ref = ert.enkf.enkf_config_node_get_ref(config_node)
+            config_node = ert.main.ensemble_config.get_node( key)
+            type = config_node.get_impl_type
+            node_ref = config_node.get_ref
 
             if type == SummaryModel.TYPE:
                 p = Parameter(key, SummaryModel.TYPE)
@@ -255,32 +255,32 @@ class PlotContextDataFetcher(ContentModel):
                 data.parameters.append(p)
 
                 if data.field_bounds is None:
-                    x = ert.enkf.field_config_get_nx(node_ref)
-                    y = ert.enkf.field_config_get_ny(node_ref)
-                    z = ert.enkf.field_config_get_nz(node_ref)
+                    x = config_node.field_model.get_nx
+                    y = config_node.field_model.get_ny
+                    z = config_node.field_model.get_nz
                     data.field_bounds = (x,y,z)
 
             elif type == DataModel.TYPE:
                 data.parameters.append(Parameter(key, DataModel.TYPE))
-                data.gen_data_size = ert.enkf.gen_data_config_get_initial_size(node_ref)
+                data.gen_data_size = config_node.data_model.get_initial_size
 
             elif type == KeywordModel.TYPE:
                 p = Parameter(key, KeywordModel.TYPE)
                 data.parameters.append(p)
-                s = ert.enkf.gen_kw_config_alloc_name_list(node_ref)
+                s = config_node.keyword_model.alloc_name_list
                 data.key_index_list[key] = ert.getStringList(s, free_after_use=True)
 
-        data.errorbar_max = ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
+        data.errorbar_max = ert.main.plot_config.get_errorbar_max
 
-        fs = ert.enkf.enkf_main_get_fs(ert.main)
-        current_case = "default" #ert.enkf.enkf_fs_get_read_dir(fs)
+        fs = ert.main.get_fs
+        current_case = "default" #fs.get_read_dir(fs)
 
-        data.plot_config_path = ert.enkf.plot_config_get_path(ert.plot_config)
-        #data.plot_path = ert.enkf.plot_config_get_path(ert.plot_config) + "/" + current_case
+        data.plot_config_path = ert.main.plot_config.get_path
+        #data.plot_path = ert.main.plot_config.get_path + "/" + current_case
         data.plot_path = "PLOTXXX"
         
-        enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
-        key_list = ert.enkf.enkf_obs_alloc_typed_keylist(enkf_obs, obs_impl_type.FIELD_OBS.value())
+        enkf_obs = ert.main.get_obs
+        key_list = enkf_obs.alloc_typed_keylist( obs_impl_type.FIELD_OBS.value())
         field_obs = ert.getStringList(key_list, free_after_use=True)
 
         for obs in field_obs:
@@ -288,7 +288,7 @@ class PlotContextDataFetcher(ContentModel):
             data.parameters.append(p)
 
 
-        #case_list_pointer = ert.enkf.enkf_fs_alloc_dirlist(fs)
+        #case_list_pointer = fs.alloc_dirlist(fs)
         #case_list = ert.getStringList(case_list_pointer)
         case_list = ["default"]
         data.current_case = current_case

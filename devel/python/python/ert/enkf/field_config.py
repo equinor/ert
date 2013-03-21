@@ -53,7 +53,19 @@ class FieldConfig(CClass):
 
     @property
     def get_truncation_max(self):
-        return cfunc.get_truncation_max(self) 
+        return cfunc.get_truncation_max(self)
+
+    @property
+    def get_nx(self):
+        return cfunc.get_nx(self)
+
+    @property
+    def get_ny(self):
+        return cfunc.get_ny(self)
+
+    @property
+    def get_nz(self):
+        return cfunc.get_ny(self) 
 ##################################################################
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "field_config" , FieldConfig )

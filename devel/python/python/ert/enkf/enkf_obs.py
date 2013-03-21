@@ -35,6 +35,15 @@ class EnkfObs(CClass):
     def get_config_file(self):
         return cfunc.get_config_file(self)
 
+    def alloc_typed_keylist(self, type):
+        return cfunc.alloc_typed_keylist(self, type)
+
+    def has_key(self, key):
+        return cfunc.has_key(self, key)
+
+    def get_vector(self, key):
+        return cfunc.get_vector(self,key)
+
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -48,6 +57,6 @@ cfunc = CWrapperNameSpace("enkf_obs")
 
 cfunc.free                = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
 cfunc.get_config_file     = cwrapper.prototype("char* enkf_obs_get_config_file( enkf_obs )")
-cfunc.alloc_typed_keylist = cwrapper.prototype("stringlist enkf_obs_alloc_typed_keylist(enkf_obs, int)")
+cfunc.alloc_typed_keylist = cwrapper.prototype("c_void_p enkf_obs_alloc_typed_keylist(enkf_obs, int)")
 cfunc.has_key             = cwrapper.prototype("bool enkf_obs_has_key(enkf_obs, char*)")
 cfunc.get_vector          = cwrapper.prototype("c_void_p enkf_obs_get_vector(enkf_obs, char*)")
