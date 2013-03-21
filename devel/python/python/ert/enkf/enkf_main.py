@@ -63,12 +63,12 @@ class EnKFMain(CClass):
     #################################################################
 
     @property
-    def ens_size( self ):
+    def get_ensemble_ens_size( self ):
         return cfunc.ens_size( self )
     
     @property        
     def ensemble_config(self):
-        config = ert.enkf.ens_config.EnsConfig( cfunc.get_ens_config( self ))
+        config = ert.enkf.ens_config.EnsConfig( cfunc.get_ens_config( self ) , parent = self)
         return config
     
     @property 
@@ -93,7 +93,7 @@ class EnKFMain(CClass):
     
     @property     
     def site_config(self):
-        site_conf = ert.enkf.site_config.SiteConfig( cfunc.get_site_config( self ))
+        site_conf = ert.enkf.site_config.SiteConfig( cfunc.get_site_config( self ) , parent = self)
         return site_conf
     
     @property     

@@ -23,16 +23,19 @@ import  libenkf
 from    ert.enkf.libenkf       import *
 from ert.job_queue.ext_joblist import ExtJoblist
 
+
+
+
+
+
 class SiteConfig(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
         
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
 
     @property
     def get_queue_name(self):
