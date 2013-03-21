@@ -159,7 +159,6 @@ class EnKFMain(CClass):
     def set_pre_clear_runpath(self, value):
         cfunc.set_pre_clear_runpath(self, value)
         
-    @property    
     def iget_keep_runpath(self, iens):
         ikeep = cfunc.iget_keep_runpath(self, iens)
         return ikeep

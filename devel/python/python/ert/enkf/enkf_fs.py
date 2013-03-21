@@ -27,8 +27,9 @@ class EnkfFs(CClass):
         self.c_ptr = c_ptr
         
 
-
-####THIS FUNCTION HAS NO DEL METHOD !!!! OBS OBS###############
+    def __del__(self):
+        if self.owner:
+            cfunc.close( self )
 
 
 ##################################################################
@@ -36,12 +37,9 @@ class EnkfFs(CClass):
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "enkf_fs" , EnkfFs )
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("enkf_fs")
 
-
+cfunc.close               = cwrapper.prototype("void enkf_fs_close(enkf_fs)")
 cfunc.has_node            = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, long, int, int, int)")
 cfunc.fread_node          = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, char*, long, int, int, int)")
 cfunc.get_read_dir        = cwrapper.safe_prototype("char* enkf_fs_get_read_dir(enkf_fs)")

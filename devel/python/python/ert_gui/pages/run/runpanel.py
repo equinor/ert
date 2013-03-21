@@ -115,7 +115,7 @@ class RunWidget(HelpedWidget):
             return
 
         member_mask = ert.createBoolVector(self.membersList.count(), selectedMembers)
-        if not ert.enkf.enkf_main_is_initialized(ert.main, member_mask):
+        if not ert.main.is_initialized( member_mask):
             QtGui.QMessageBox.warning(self, "Case not initialized", "The case must be initialized before simulation can start!")
             return
         ert.freeBoolVector(member_mask)
@@ -186,9 +186,9 @@ class RunWidget(HelpedWidget):
 
     def getter(self, ert):
         """Fetch data from EnKF. Such as number of realizations, runpath and number of timesteps."""
-        members = ert.enkf.ens_size()#ert.enkf.enkf_main_ens_size(ert.main)
-        historyLength = ert.enkf.enkf_main_get_history_length(ert.main)
-        runpath = ert.enkf.model_config_get_runpath_as_char(ert.model_config)
+        members = ert.main.ens_size
+        historyLength = ert.main.get_history_length
+        runpath = ert.main.model_config.get_runpath_as_char
 
         return {"members" : range(members), "history_length" : historyLength, "runpath" : runpath}
 

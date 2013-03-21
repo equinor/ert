@@ -42,7 +42,7 @@ class InitPanel(QtGui.QFrame):
 
 
         def get_case_list(ert):
-            fs = ert.enkf.enkf_main_get_fs(ert.main)
+            fs = ert.main.get_fs
             caseList = ["default"] #ert.enkf.enkf_fs_alloc_dirlist(fs)
 
             list = caseList #ert.getStringList(caseList)
@@ -77,11 +77,11 @@ class InitPanel(QtGui.QFrame):
 
 
         def create_case(ert, cases):
-            fs = ert.enkf.enkf_main_get_fs(ert.main)
+            fs = ert.main.get_fs(ert.main)
 
             for case in cases:
-                if not ert.enkf.enkf_fs_has_dir(fs, case):
-                    ert.enkf.enkf_fs_select_write_dir(fs, case, True)
+                if not ert.enkf_fs.has_dir( case):
+                    fs.select_write_dir( case, True)
                     break
 
             self.currentCase.updateList(self.get_case_list(ert))
@@ -105,9 +105,9 @@ class InitPanel(QtGui.QFrame):
         self.currentCase.initialize = initialize_cases
 
         def get_current_case(ert):
-            fs = ert.enkf.enkf_main_get_fs(ert.main)
+            fs = ert.main.get_fs
             tmp = self.get_case_list(ert)
-            currentCase = tmp[0] #ert.enkf.enkf_fs_get_read_dir(fs)
+            currentCase = tmp[0] #ert.enkf_fs.get_read_dir(fs)
             #print "The selected case is: " + currentCase
             return currentCase
 
@@ -117,7 +117,7 @@ class InitPanel(QtGui.QFrame):
         def select_case(ert, case):
             case = str(case)
             if not case == "":
-                ert.enkf.enkf_main_user_select_fs( ert.main , case )
+                ert.main.user_select_fs( case )
                 self.casesUpdated()
 
         self.currentCase.setter = select_case
