@@ -46,15 +46,6 @@ class ErtWrapper:
         self.main = enkf.EnKFMain.bootstrap( enkf_config, site_config, strict )
         print "\nBootstrap complete!"
 
-
-        #self.plot_config = self.__getErtPointer("enkf_main_get_plot_config")
-        #self.analysis_config = self.__getErtPointer("enkf_main_get_analysis_config")
-        #self.ecl_config = self.__getErtPointer("enkf_main_get_ecl_config")
-        #self.site_config = self.__getErtPointer("enkf_main_get_site_config")
-        #self.ensemble_config = self.__getErtPointer("enkf_main_get_ensemble_config")
-        #self.model_config = self.__getErtPointer("enkf_main_get_model_config")
-        #self.logh = self.__getErtPointer("enkf_main_get_logh")
-
         self.initializeTypes()
 
         atexit.register(self.cleanup)
@@ -133,7 +124,7 @@ class ErtWrapper:
 
         prototype expects a string formatted like this:
 
-            "type functionName(type, ... ,type)"
+            #type functionName(type, ... ,type)#
 
         where type is a type available to ctypes
         Some type are automatically converted:
