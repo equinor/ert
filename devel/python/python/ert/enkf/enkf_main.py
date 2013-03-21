@@ -176,7 +176,7 @@ class EnKFMain(CClass):
         site_conf_file = cfunc.get_site_config_file(self)
         return site_conf_file
        
-    def initialize_from_scratch(self, parameter_list, iens1, iens2, force_init):
+    def initialize_from_scratch(self, parameter_list, iens1, iens2, force_init = True):
         cfunc.initialize_from_scratch(self, parameter_list, iens1, iens2, force_init)
        
     @property

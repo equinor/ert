@@ -173,7 +173,7 @@ class ErtWrapper:
 
     def initializeTypes(self):
         self.prototype("char* stringlist_iget(long, int)", lib=self.util)
-        self.prototype("long stringlist_alloc_new()", lib=self.util)
+        self.prototype("c_void_p stringlist_alloc_new()", lib=self.util)
         self.prototype("void stringlist_append_copy(long, char*)", lib=self.util)
         self.prototype("int stringlist_get_size(long)", lib=self.util)
         self.prototype("void stringlist_free(long)", lib=self.util)
