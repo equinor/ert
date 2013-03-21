@@ -19,6 +19,8 @@ from ert_gui.widgets.helpedwidget import HelpedWidget
 from PyQt4 import QtGui, QtCore
 from ert_gui.widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, getItemsFromList
 from ert.ert.enums import ert_state_enum
+from   ert.util.stringlist import StringList
+from ctypes import *
 
 class ParametersAndMembers(HelpedWidget):
 
@@ -102,13 +104,14 @@ class ParametersAndMembers(HelpedWidget):
     def initializeCaseFromScratch(self, parameters, members):
         ert = self.getModel()
 
-        stringlist = ert.createStringList(parameters)
+        stringlist = StringList(parameters)
 
         for member in members:
             m = int(member.strip())
-            ert.main.initialize_from_scratch( stringlist, m , m)
+            ert.main.initialize_from_scratch(stringlist, m , m)
 
-        ert.freeStringList(stringlist)
+        stringlist.__del__
+        #ert.freeStringList(stringlist)
 
     def initializeCaseFromCase(self, selected_parameters, selected_members):
         ert = self.getModel()
