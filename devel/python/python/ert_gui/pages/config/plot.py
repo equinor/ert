@@ -27,32 +27,32 @@ def createPlotPage(configPanel, parent):
     configPanel.startPage("Plot")
 
     r = configPanel.addRow(PathChooser(parent, "Output path", "config/plot/path"))
-    r.getter = lambda ert : ert.enkf.plot_config_get_path(ert.plot_config)
-    r.setter = lambda ert, value : ert.enkf.plot_config_set_path(ert.plot_config, str(value))
+    r.getter = lambda ert : ert.main.plot_config.get_path
+    r.setter = lambda ert, value : ert.main.plot_config.set_path( str(value))
 
     r = configPanel.addRow(ComboChoice(parent, ["PLPLOT", "TEXT"], "Driver", "config/plot/plot_driver"))
-    r.getter = lambda ert : ert.enkf.plot_config_get_driver(ert.plot_config)
-    r.setter = lambda ert, value : ert.enkf.plot_config_set_driver(ert.plot_config, str(value))
+    r.getter = lambda ert : ert.main.plot_config.get_driver
+    r.setter = lambda ert, value : ert.main.plot_config.set_driver( str(value))
 
     r = configPanel.addRow(IntegerSpinner(parent, "Errorbar max", "config/plot/plot_errorbar_max", 1, 10000000))
-    r.getter = lambda ert : ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
-    r.setter = lambda ert, value : ert.enkf.plot_config_set_errorbar_max(ert.plot_config, value)
+    r.getter = lambda ert : ert.main.plot_config.get_errorbar_max
+    r.setter = lambda ert, value : ert.main.plot_config.set_errorbar_max( value)
 
     r = configPanel.addRow(IntegerSpinner(parent, "Width", "config/plot/width", 1, 10000))
-    r.getter = lambda ert : ert.enkf.plot_config_get_width(ert.plot_config)
-    r.setter = lambda ert, value : ert.enkf.plot_config_set_width(ert.plot_config, value)
+    r.getter = lambda ert : ert.main.plot_config.get_width
+    r.setter = lambda ert, value : ert.main.plot_config.set_width( value)
 
     r = configPanel.addRow(IntegerSpinner(parent, "Height", "config/plot/plot_height", 1, 10000))
-    r.getter = lambda ert : ert.enkf.plot_config_get_height(ert.plot_config)
-    r.setter = lambda ert, value : ert.enkf.plot_config_set_height(ert.plot_config, value)
+    r.getter = lambda ert : ert.main.plot_config.get_height
+    r.setter = lambda ert, value : ert.main.plot_config.set_height( value)
 
     r = configPanel.addRow(PathChooser(parent, "Image Viewer", "config/plot/image_viewer", True))
-    r.getter = lambda ert : ert.enkf.plot_config_get_viewer(ert.plot_config)
-    r.setter = lambda ert, value : ert.enkf.plot_config_set_viewer(ert.plot_config, str(value))
+    r.getter = lambda ert : ert.main.plot_config.get_viewer
+    r.setter = lambda ert, value : ert.main.plot_config.set_viewer( str(value))
 
     r = configPanel.addRow(ComboChoice(parent, ["bmp", "jpg", "png", "tif"], "Image type", "config/plot/image_type"))
-    r.getter = lambda ert : ert.enkf.plot_config_get_image_type(ert.plot_config)
-    r.setter = lambda ert, value : ert.enkf.plot_config_set_image_type(ert.plot_config, str(value))
+    r.getter = lambda ert : ert.main.plot_config.get_image_type
+    r.setter = lambda ert, value : ert.main.plot_config.set_image_type( str(value))
 
 
     configPanel.endPage()

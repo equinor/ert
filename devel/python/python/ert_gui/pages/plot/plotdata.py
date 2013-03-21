@@ -112,7 +112,7 @@ class PlotDataFetcher(ContentModel, QObject):
             ert = self.getModel()
 
             if self.fs_for_comparison_plots:
-                ert.enkf.enkf_fs_free(self.fs_for_comparison_plots)
+                fs_for_comparison_plots.__del__
                 self.fs_for_comparison_plots = None
                 self.comparison_fs_name = "None"
 

@@ -106,7 +106,7 @@ class ParametersAndMembers(HelpedWidget):
 
         for member in members:
             m = int(member.strip())
-            ert.enkf.enkf_main_initialize_from_scratch(ert.main, stringlist, m , m)
+            ert.main.initialize_from_scratch( stringlist, m , m)
 
         ert.freeStringList(stringlist)
 
@@ -123,8 +123,7 @@ class ParametersAndMembers(HelpedWidget):
         ranking_key = None
         node_list = ert.createStringList(selected_parameters)
 
-        ert.enkf.enkf_main_initialize_from_existing__(ert.main,
-                                                      source_case,
+        ert.main.initialize_from_existing__(          source_case,
                                                       source_report_step,
                                                       source_state,
                                                       member_mask,
@@ -152,8 +151,7 @@ class ParametersAndMembers(HelpedWidget):
         ranking_key = None
         node_list = ert.createStringList(selected_parameters)
 
-        ert.enkf.enkf_main_copy_ensemble(ert.main,
-                                         source_case,
+        ert.main.copy_ensemble(          source_case,
                                          source_report_step,
                                          source_state,
                                          target_case,
@@ -227,25 +225,25 @@ class ParametersAndMembers(HelpedWidget):
         #enums from enkf_types.h
         PARAMETER = 1
         DYNAMIC_STATE = 2
-        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER )
+        keylist = ert.main.ensemble_config.alloc_keylist_from_var_type( PARAMETER )
         
         parameters = ert.getStringList(keylist)
         ert.freeStringList(keylist)
 
-        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config,  DYNAMIC_STATE )
+        keylist = ert.main.ensemble_config.alloc_keylist_from_var_type( DYNAMIC_STATE )
         dynamicParameters = ert.getStringList(keylist)
         ert.freeStringList(keylist)
 
-        members = ert.enkf.enkf_main_get_ensemble_size(ert.main)
+        members = ert.main.ens_size
 
-        fs = ert.enkf.enkf_main_get_fs(ert.main)
+        fs = ert.main.get_fs
         currentCase = "default" #ert.enkf.enkf_fs_get_read_dir(fs)
 
         #caseList = ert.enkf.enkf_fs_alloc_dirlist(fs)
         #list = ert.getStringList(caseList)
         #ert.freeStringList(caseList)
         list = ["default"]
-        historyLength = ert.enkf.enkf_main_get_history_length(ert.main)
+        historyLength = ert.main.get_history_length
 
         return {"parameters" : parameters,
                 "dynamic_parameters" : dynamicParameters,
