@@ -135,12 +135,13 @@ history_type * history_alloc_from_refcase(const ecl_sum_type * refcase , bool us
 
 
 
-int history_get_last_restart(const history_type * history)
-{
+int history_get_last_restart(const history_type * history) {
   if (history->refcase != NULL)
     return ecl_sum_get_last_report_step( history->refcase);
-  else
+  else {
+    printf("Asking schedule for last history ... \n");
     return sched_history_get_last_history( history->sched_history );
+  }
 }
 
 
