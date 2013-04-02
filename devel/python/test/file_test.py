@@ -131,3 +131,4 @@ def fast_suite():
 
 if __name__ == "__main__":
     unittest.TextTestRunner().run( fast_suite() )
+    unittest.TextTestRunner().run( slow_suite() )
