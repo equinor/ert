@@ -56,9 +56,11 @@ if (ERT_LINUX)
    set( NEED_LIBM TRUE )
    set( LINK_STATIC FALSE )
    add_definitions( -DHAVE_PROC )
+   set( NEED_LIBDL ON )    
 else()
    set( NEED_LIBM FALSE )
    set( LINK_STATIC TRUE )
+   set( NEED_LIBDL OFF )    
 endif()
 
 
@@ -91,13 +93,6 @@ add_subdirectory( libecl_well )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
-   try_compile( DLOPEN ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_dlopen.c )
-   if (DLOPEN)
-      set(NEED_LIBDL OFF)    
-   else()
-      set(NEED_LIBDL ON)
-   endif()
-
    option(USE_LSF "Include support for LSF" ON)
 
    include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
