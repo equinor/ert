@@ -422,8 +422,15 @@ bool enkf_tui_util_sscanf_active_list( bool_vector_type * iactive , const char *
     bool_vector_set_default( iactive , true );
     bool_vector_iset( iactive , ens_size - 1 , true );
     return true;
-  } else 
-    return string_util_init_active_mask( select_string , iactive );
+  } else {
+    bool OK;
+    OK = string_util_init_active_mask( select_string , iactive );
+    
+    if (bool_vector_size( iactive ) < ens_size) 
+      bool_vector_iset( iactive , ens_size - 1 , false );
+    
+    return OK;
+  }
 }
 
 
