@@ -2124,7 +2124,7 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 }
 
 static void enkf_main_init_workflow_list( enkf_main_type * enkf_main , config_type * config ) {
-  ert_workflow_list_init( enkf_main->workflow_list , config );
+  ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh);
 }
 
 
@@ -2767,7 +2767,7 @@ static void enkf_main_bootstrap_site(enkf_main_type * enkf_main , const char * s
       if (config_parse(config , site_config_file  , "--" , INCLUDE_KEY , DEFINE_KEY , CONFIG_UNRECOGNIZED_WARN , false)) {
         site_config_init( enkf_main->site_config , config );
         ert_report_list_site_init( enkf_main->report_list , config );
-        ert_workflow_list_init( enkf_main->workflow_list , config );
+        ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh);
       } else {
         fprintf(stderr , "** ERROR: Parsing site configuration file:%s failed \n\n" , site_config_file);
         config_fprintf_errors( config , true , stderr );
@@ -2895,7 +2895,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     rng_config_init( enkf_main->rng_config , config );
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
     enkf_main_init_subst_list( enkf_main );
-    ert_workflow_list_init( enkf_main->workflow_list , config );
+    ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh );
     enkf_main_init_qc( enkf_main , config );
     enkf_main_init_data_kw( enkf_main , config );
     

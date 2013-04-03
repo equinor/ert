@@ -18,7 +18,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include <ert/util/test_util.h>
+
 #include <ert/config/config.h>
+
 
 
 
@@ -29,26 +32,16 @@ int main(int argc , char ** argv) {
   config_schema_item_type * item = config_add_schema_item(config , "APPEND" , false );
   config_schema_item_set_argc_minmax( item , 1 , 1);
 
-  OK = config_parse(config , config_file , "--" , NULL , NULL , false , true );
+  test_assert_true(config_parse(config , config_file , "--" , NULL , NULL , false , true ));
 
-  if (OK) {
-    if (config_get_occurences( config , "APPEND" ) == 3) {
+  {
+    test_assert_int_equal( config_get_occurences( config , "APPEND" ) , 3);
+    {
       const char * value = config_get_value( config , "APPEND");
-      
-      if (strcmp( value , "VALUE3") == 0)
-        exit(0);
-      else {
-        printf("Value error \n");
-        exit(1);
-      }
+      test_assert_string_equal( value , "VALUE3");
     }
-    else {
-      printf("Count error \n");
-      exit(1);
-    }
-  } else {
-    printf("Parse error\n");
-    exit(1);
-  }
-  
+  } 
+
+  test_assert_false( config_parse( config , "DoesNotExist" , "--" , NULL , NULL , false , true));
+  exit(0);
 }

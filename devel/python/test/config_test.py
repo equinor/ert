@@ -52,7 +52,7 @@ class ConfigTest( unittest.TestCase ):
         
         content_item = conf["RSH_HOST"]
         self.assertTrue( isinstance( content_item , config.ContentItem ))
-        self.assertRaises( KeyError , conf.__getitem__ , "BJARNE" )
+        self.assertTrue( conf["BJARNE"] is None )
 
         self.assertTrue( len(content_item) == 1)
         self.assertRaises( ValueError , content_item.__getitem__ , "BJARNE")
@@ -72,7 +72,8 @@ class ConfigTest( unittest.TestCase ):
 
         content_item = conf["FIELD"]
         self.assertTrue( len(content_item) == 5)
-
+        self.assertRaises(IOError , config.ConfigParser.parse , conf , "DoesNotExits")
+        
 
 
     def test_schema(self):
