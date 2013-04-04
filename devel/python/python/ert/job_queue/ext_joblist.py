@@ -22,21 +22,31 @@ from    ert.enkf.enkf_enum             import *
 import  ert.enkf.libenkf
 class ExtJoblist(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
+                    
     @property
     def get_jobs(self):
         return cfunc.get_jobs( self )
 
     @property
     def alloc_list(self):
-        return cfunc.alloc_list( self )    
+        return cfunc.alloc_list( self )
+
+    def del_job(self, job):
+        return cfunc.del_job(self, job)
+
+    def has_job(self, job):
+        return cfunc.has_job(self, job)
+
+    def get_job(self, job):
+        return ert.job_queue.ext_job.ExtJob( cfunc.get_job( self , job))
+
+    def add_job(self, job_name, new_job):
+        cfunc.add_job(self, job_name, new_job)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )

@@ -126,7 +126,7 @@ class SiteConfig(CClass):
 
     @property     
     def get_installed_jobs(self):
-        installed_jobs = ert.job_queue.ext_joblist.ExtJoblist( cfunc.get_installed_jobs( self ))
+        installed_jobs = ert.job_queue.ext_joblist.ExtJoblist( cfunc.get_installed_jobs( self ), parent = self)
         return installed_jobs
 
     @property

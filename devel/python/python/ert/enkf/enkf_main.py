@@ -63,7 +63,7 @@ class EnKFMain(CClass):
     #################################################################
 
     @property
-    def get_ensemble_ens_size( self ):
+    def ens_size( self ):
         return cfunc.ens_size( self )
     
     @property        
