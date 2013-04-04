@@ -10,6 +10,8 @@ option( BUILD_TESTS         "Should the tests be built" OFF)
 option( BUILD_APPLICATIONS  "Should we build small utility applications" OFF)
 option( BUILD_ECL_SUMMARY   "Build the commandline application ecl_summary" OFF)
 option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
+option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
+
 
 include( CheckFunctionExists )
 ENABLE_TESTING()
@@ -53,10 +55,12 @@ endif()
 if (ERT_LINUX)
    set( NEED_LIBM TRUE )
    set( LINK_STATIC FALSE )
+   set( NEED_LIBDL ON )    
    add_definitions( -DHAVE_PROC )
 else()
    set( NEED_LIBM FALSE )
    set( LINK_STATIC TRUE )
+   set( NEED_LIBDL OFF )    
 endif()
 
 
@@ -89,13 +93,6 @@ add_subdirectory( libecl_well )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
-   try_compile( DLOPEN ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_dlopen.c )
-   if (DLOPEN)
-      set(NEED_LIBDL OFF)    
-   else()
-      set(NEED_LIBDL ON)
-   endif()
-
    option(USE_LSF "Include support for LSF" ON)
 
    include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
@@ -115,6 +112,8 @@ if (BUILD_ERT)
 
    include_directories( ${PROJECT_SOURCE_DIR}/libenkf/include )
    add_subdirectory( libenkf )
+
+   install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
 
