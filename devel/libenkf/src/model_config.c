@@ -330,6 +330,42 @@ model_config_type * model_config_alloc_empty() {
 }
 
 
+static bool model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * sched_file , const ecl_sum_type * refcase) {
+  bool selectOK = false;
+
+  if (source_type == SCHEDULE && sched_file != NULL) {
+    model_config_select_schedule_history( model_config , sched_file ); 
+    selectOK = true;
+  }
+
+  if (((source_type == REFCASE_HISTORY) || (source_type == REFCASE_SIMULATED)) && refcase != NULL) {
+    if (source_type == REFCASE_HISTORY)
+      model_config_select_refcase_history( model_config , refcase , true); 
+    else
+      model_config_select_refcase_history( model_config , refcase , false); 
+    selectOK = true;
+  }
+  
+  return selectOK;
+}
+
+
+static bool model_config_select_any_history( model_config_type * model_config , const sched_file_type * sched_file , const ecl_sum_type * refcase) {
+  bool selectOK = false;
+
+  if (sched_file != NULL) {
+    model_config_select_schedule_history( model_config , sched_file ); 
+    selectOK = true;
+  } else if ( refcase != NULL ) {
+    model_config_select_refcase_history( model_config , refcase , true); 
+    selectOK = true;
+  }
+  
+  return selectOK;
+}
+
+
+
 
 void model_config_init(model_config_type * model_config , 
                        const config_type * config , 
@@ -371,20 +407,12 @@ void model_config_init(model_config_type * model_config ,
       const char * history_source = config_iget(config , HISTORY_SOURCE_KEY, 0,0);
       source_type = history_get_source_type( history_source );
     }
+
+    if (!model_config_select_history( model_config , source_type , sched_file , refcase ))
+      if (!model_config_select_history( model_config , DEFAULT_HISTORY_SOURCE , sched_file , refcase ))
+        if (!model_config_select_any_history( model_config , sched_file , refcase))
+          fprintf(stderr,"** Warning:: Do not have enough information to select a history source \n");
     
-    switch (source_type) {
-    case SCHEDULE:
-      model_config_select_schedule_history( model_config , sched_file ); 
-      break;
-    case REFCASE_HISTORY:
-      model_config_select_refcase_history( model_config , refcase , true); 
-      break;
-    case REFCASE_SIMULATED:
-      model_config_select_refcase_history( model_config , refcase , false); 
-      break;
-    default:
-      break;
-    }
   }
       
 
@@ -484,6 +512,7 @@ history_type * model_config_get_history(const model_config_type * config) {
 }
 
 int model_config_get_last_history_restart(const model_config_type * config) {
+  printf("config->history:%p \n",config->history);
   return history_get_last_restart( config->history );
 }
 

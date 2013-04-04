@@ -795,15 +795,18 @@ bool config_parse(config_type * config ,
                   const char * define_kw , 
                   config_schema_unrecognized_enum unrecognized_behaviour,
                   bool validate) {
-
-  path_stack_type * path_stack = path_stack_alloc();
-  {
-    config_set_config_file( config , filename );
-    config_set_invoke_path( config );
-    config_parse__(config , path_stack , filename , comment_string , include_kw , define_kw , unrecognized_behaviour , validate);
-  }
-  path_stack_free( path_stack );
-
+  
+  if (util_file_readable( filename )) {
+    path_stack_type * path_stack = path_stack_alloc();
+    {
+      config_set_config_file( config , filename );
+      config_set_invoke_path( config );
+      config_parse__(config , path_stack , filename , comment_string , include_kw , define_kw , unrecognized_behaviour , validate);
+    }
+    path_stack_free( path_stack );
+  } else 
+    config_error_add( config->parse_errors , util_alloc_sprintf("Could not open file:%s for parsing" , filename));
+    
   if (config_error_count( config->parse_errors ) == 0)
     return true;   // No errors
   else

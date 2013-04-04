@@ -79,7 +79,7 @@
    model_config_set_history_source() does currently not handle a
    default value different from SCHEDULE.
 */
-#define DEFAULT_HISTORY_SOURCE  HISTORY_SOURCE_INVALID
+#define DEFAULT_HISTORY_SOURCE  REFCASE_HISTORY
 
 
 #define DEFAULT_MAX_SUBMIT           2        /* The number of times to resubmit - default value for config item: MAX_SUBMIT */

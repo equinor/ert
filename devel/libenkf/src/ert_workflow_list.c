@@ -117,7 +117,8 @@ void ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const c
 
 
 
-void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path ) {
+
+void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path , log_type * logh) {
   DIR * dirH = opendir( path );
   while (true) {
     struct dirent * entry = readdir( dirH );
@@ -125,8 +126,11 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
       if ((strcmp(entry->d_name , ".") != 0) && (strcmp(entry->d_name , "..") != 0)) {
         char * full_path = util_alloc_filename( path , entry->d_name , NULL );
 
-        if (util_is_file( full_path ))
+        if (util_is_file( full_path )) {
+          if (log_is_open( logh ))
+            log_add_message( logh , 1 , NULL , util_alloc_sprintf("Adding workflow job:%s " , full_path ), true);
           ert_workflow_list_add_job( workflow_list , entry->d_name , full_path );
+        }
         
         free( full_path );
       }
@@ -137,7 +141,7 @@ void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_
 }
 
 
-void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config ) {
+void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_type * config , log_type * logh) {
   /* Adding jobs */
   {
     const config_content_item_type * jobpath_item = config_get_content_item( config , WORKFLOW_JOB_DIRECTORY_KEY);
@@ -146,7 +150,7 @@ void ert_workflow_list_init( ert_workflow_list_type * workflow_list , config_typ
         config_content_node_type * path_node = config_content_item_iget_node( jobpath_item , i );
                
         for (int j=0; j < config_content_node_get_size( path_node ); j++) 
-          ert_workflow_list_add_jobs_in_directory( workflow_list , config_content_node_iget_as_abspath( path_node , j ));
+          ert_workflow_list_add_jobs_in_directory( workflow_list , config_content_node_iget_as_abspath( path_node , j ) , logh);
       }
     }
   }
