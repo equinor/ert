@@ -55,8 +55,8 @@ endif()
 if (ERT_LINUX)
    set( NEED_LIBM TRUE )
    set( LINK_STATIC FALSE )
-   add_definitions( -DHAVE_PROC )
    set( NEED_LIBDL ON )    
+   add_definitions( -DHAVE_PROC )
 else()
    set( NEED_LIBM FALSE )
    set( LINK_STATIC TRUE )
@@ -112,6 +112,8 @@ if (BUILD_ERT)
 
    include_directories( ${PROJECT_SOURCE_DIR}/libenkf/include )
    add_subdirectory( libenkf )
+
+   install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
 
