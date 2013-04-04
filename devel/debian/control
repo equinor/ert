@@ -1,7 +1,8 @@
-Source: libert.ecl
+Source: ert.ecl
 Priority: extra
 Maintainer: Arne Morten Kvarving <arne.morten.kvarving@sintef.no>
-Build-Depends: debhelper (>= 8.0.0), cmake, liblapack-dev, libquadmath0
+Build-Depends: debhelper (>= 8.0.0), cmake, liblapack-dev, libquadmath0,
+               iputils-ping, zlib1g-dev
 Standards-Version: 3.9.2
 Section: libs
 Homepage: http://ert.nr.no
