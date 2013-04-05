@@ -141,7 +141,11 @@ class SiteConfig(CClass):
         return cfunc.get_license_root_path( self )
 
     def set_license_root_pathmax_submit(self, path):
-        cfunc.set_license_root_path( self , path)        
+        cfunc.set_license_root_path( self , path)
+
+    @property
+    def queue_is_running(self):
+        return cfunc.queue_is_running( self )
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )

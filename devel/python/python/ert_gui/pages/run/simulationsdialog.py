@@ -25,6 +25,7 @@ import time
 from ert_gui.widgets.util import getItemsFromList
 from ert.ert.enums import ert_job_status_type
 from PyQt4.QtGui import QApplication
+from ert.util.tvector import BoolVector
 
 class SimulationsDialog(QtGui.QDialog):
     """A dialog that shows the progress of a simulation"""
@@ -189,11 +190,12 @@ class SimulationsDialogController:
         self.runthread = threading.Thread(name="enkf_main_run")
         def run():
             self.view.setRunningState(True)
-            boolVector = ert.createBoolVector(memberCount, selectedMembers)
-            boolPtr = ert.getBoolVectorPtr(boolVector)
+            boolVector = BoolVector.active_mask(str(selectedMembers).strip('[]'))#create_from_list(memberCount, selectedMembers)
+            #boolVector.active_mask(selectedMembers)
+            #boolPtr = ert.getBoolVectorPtr(boolVector)
 
-            ert.main.run(boolPtr, init_step_parameter, simFrom, state)
-            ert.freeBoolVector(boolVector)
+            ert.main.run(boolVector, init_step_parameter, simFrom, state)
+            #ert.freeBoolVector(boolVector)
             self.view.setRunningState(False)
 
         self.runthread.setDaemon(True)
