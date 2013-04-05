@@ -192,7 +192,7 @@ class SimulationsDialogController:
             boolVector = ert.createBoolVector(memberCount, selectedMembers)
             boolPtr = ert.getBoolVectorPtr(boolVector)
 
-            ert.main.run(boolVector, True, init_step_parameter, simFrom, state)
+            ert.main.run(boolPtr, init_step_parameter, simFrom, state)
             ert.freeBoolVector(boolVector)
             self.view.setRunningState(False)
 
@@ -202,21 +202,21 @@ class SimulationsDialogController:
 
         self.pollthread = threading.Thread(name="polling_thread")
         def poll():
-            while not ert.enkf.site_config_queue_is_running(ert.site_config):
+            while not ert.main.site_config.queue_is_running:
                 time.sleep(0.5)
 
             job_start_time = int(time.time())
 
             while(self.runthread.isAlive()):
                 for member in selectedMembers:
-                    state = ert.enkf.enkf_main_iget_state( ert.main , member)
-                    status = ert.enkf.enkf_state_get_run_status( state )
+                    state = ert.main.iget_state(  member)
+                    status = ert.enkf_state.get_run_status
 
                     simulations[member].simulation.setStatus(ert_job_status_type.resolveValue(status))
 
                     if not ert_job_status_type.NOT_ACTIVE == status:
-                        start_time = ert.enkf.enkf_state_get_start_time(state)
-                        submit_time = ert.enkf.enkf_state_get_submit_time(state)
+                        start_time = ert.enkf_state.get_start_time
+                        submit_time = ert.enkf_state.get_submit_time
 
                         simulations[member].simulation.setStartTime(start_time)
                         simulations[member].simulation.setSubmitTime(submit_time)

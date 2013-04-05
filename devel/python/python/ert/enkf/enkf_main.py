@@ -217,7 +217,7 @@ class EnKFMain(CClass):
         return cfunc.is_initialized(self)
 
 
-    def run(self, boolPtr, simulate, init_step_parameter, simFrom, state):
+    def run(self, boolPtr, init_step_parameter, simFrom, state, simulate = True):
         cfunc.run_exp(self, boolPtr, simulate, init_step_parameter, simFrom, state)
 ##################################################################
 
