@@ -210,12 +210,15 @@ class EnKFMain(CClass):
         
     @property
     def get_observation_count(self, user_key):
-        cfunc.get_observation_count(self, user_key)
+        return cfunc.get_observation_count(self, user_key)
  
+    @property
+    def is_initialized(self):
+        return cfunc.is_initialized(self)
 
 
-
-        
+    def run(self, boolPtr, simulate, init_step_parameter, simFrom, state):
+        cfunc.run_exp(self, boolPtr, simulate, init_step_parameter, simFrom, state)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -268,3 +271,4 @@ cfunc.is_initialized               = cwrapper.prototype("bool enkf_main_is_initi
 cfunc.iget_state                   = cwrapper.prototype("c_void_p enkf_main_iget_state(enkf_main, int)")
 cfunc.user_select_fs               = cwrapper.prototype("void enkf_main_user_select_fs(enkf_main , char*)") 
 cfunc.get_logh                     = cwrapper.prototype("void enkf_main_get_logh( enkf_main )")
+cfunc.run_exp                      = cwrapper.prototype("void enkf_main_run_exp( enkf_main, bool_vector, bool, int, int, int)")
