@@ -212,13 +212,13 @@ class SimulationsDialogController:
             while(self.runthread.isAlive()):
                 for member in selectedMembers:
                     state = ert.main.iget_state(  member)
-                    status = ert.enkf_state.get_run_status
+                    status = state.get_run_status
 
                     simulations[member].simulation.setStatus(ert_job_status_type.resolveValue(status))
 
                     if not ert_job_status_type.NOT_ACTIVE == status:
-                        start_time = ert.enkf_state.get_start_time
-                        submit_time = ert.enkf_state.get_submit_time
+                        start_time = state.get_start_time
+                        submit_time = state.get_submit_time
 
                         simulations[member].simulation.setStartTime(start_time)
                         simulations[member].simulation.setSubmitTime(submit_time)
