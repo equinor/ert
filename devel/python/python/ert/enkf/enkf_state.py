@@ -31,7 +31,23 @@ class EnKFState(CClass):
         if self.owner:
             cfunc.free( self )
 
-
+    def kill_simulation(self):
+        cfunc.kill_simulation(self)
+    
+    def resubmit_simulation(self, sim_number):
+        cfunc.resubmit_simulation(self, sim_number)
+    
+    @property
+    def get_run_status(self):
+        return cfunc.get_run_status(self)
+    
+    @property    
+    def get_start_time(self):
+        return cfunc.get_start_time(self)
+    
+    @property    
+    def get_submit_time(self):
+        return cfunc.get_submit_time(self)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
