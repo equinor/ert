@@ -115,7 +115,7 @@ class RunWidget(HelpedWidget):
             return
 
         member_mask = ert.createBoolVector(self.membersList.count(), selectedMembers)
-        if not ert.main.is_initialized( member_mask):
+        if not ert.main.is_initialized:
             QtGui.QMessageBox.warning(self, "Case not initialized", "The case must be initialized before simulation can start!")
             return
         ert.freeBoolVector(member_mask)

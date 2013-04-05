@@ -314,9 +314,9 @@ class SimulationPanelController:
         self.selectedSimulations = []
         self.view.connect(self.view, QtCore.SIGNAL('simulationsUpdated()'), self.showSelectedSimulations)
 
-#    def initialize(self, ert):
-#        if not self.initialized:
-#            self.initialized = True
+    def initialize(self, ert):
+        if not self.initialized:
+            self.initialized = True
 
     def setModel(self, ert):
         """Set the reference to ERT (ertwrapper instance)"""

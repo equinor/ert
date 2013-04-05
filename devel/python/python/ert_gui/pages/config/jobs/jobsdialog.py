@@ -87,7 +87,7 @@ class JobConfigPanel(ConfigPanel):
 
         def jid(ert):
             """Returns the pointer to the current job (self.job)"""
-            jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
+            jl = ert.main.site_config_get_installed_jobs
             return ert.job_queue.ext_joblist_get_job(jl, self.job.name)
 
         self.stdin = PathChooser(self, "", "config/systemenv/install_job_stdin", show_files=True, must_be_set=False, must_exist=True)

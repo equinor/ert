@@ -159,7 +159,10 @@ class SimulationsDialogController:
         selection = getItemsFromList(self.view.simulationList, lambda item : item.simulation)
         self.view.simulationPanel.setSimulations(selection)
 
-
+    def initialize(self, ert):
+        if not self.initialized:
+            self.initialized = True
+            
     def start(self, **kwargs):
         """Start the simulation. Two threads are started one for the simulation and one for progress monitoring"""
         ert = kwargs["ert"]
@@ -189,7 +192,7 @@ class SimulationsDialogController:
             boolVector = ert.createBoolVector(memberCount, selectedMembers)
             boolPtr = ert.getBoolVectorPtr(boolVector)
 
-            ert.enkf.enkf_main_run(ert.main, mode, boolPtr, init_step_parameter, simFrom, state)
+            ert.main.run(boolVector, True, init_step_parameter, simFrom, state)
             ert.freeBoolVector(boolVector)
             self.view.setRunningState(False)
 
