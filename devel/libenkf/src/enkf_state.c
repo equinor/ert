@@ -1051,11 +1051,21 @@ static void enkf_state_forward_init(enkf_state_type * enkf_state ,
   run_info_type * run_info   = enkf_state->run_info;
 
   if (run_info->step1 == 0) {
+    int iens = enkf_state_get_iens( enkf_state );
     hash_iter_type * iter = hash_iter_alloc( enkf_state->node_hash );
     while ( !hash_iter_is_complete(iter) ) {
       enkf_node_type * node = hash_iter_get_next_value(iter);
       if (enkf_node_get_forward_init(node)) {
         printf("Initializing %s from forward model .... \n", enkf_node_get_key( node ));
+
+        if (enkf_node_forward_init(node , run_info->run_path , iens )) {
+          node_id_type node_id = {.report_step = 0 , 
+                                  .iens = iens , 
+                                  .state = ANALYZED };
+
+          enkf_node_store( node , fs, false , node_id );
+        } else
+          *loadOK = false;
       }
     }
     hash_iter_free( iter );

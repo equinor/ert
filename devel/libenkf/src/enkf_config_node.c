@@ -642,11 +642,24 @@ char * enkf_config_node_alloc_outfile(const enkf_config_node_type * node , int r
     return NULL;
 }
 
-char * enkf_config_node_alloc_initfile( const enkf_config_node_type * node , int iens) {
+/*
+  The path argument is used when the function is during forward_model
+  based initialisation.  
+*/
+
+char * enkf_config_node_alloc_initfile( const enkf_config_node_type * node , const char * path , int iens) {
   if (node->init_file_fmt == NULL)
     return NULL;
-  else
-    return path_fmt_alloc_file( node->init_file_fmt , false , iens );
+  else {
+    char * file = path_fmt_alloc_file( node->init_file_fmt , false , iens );
+    if (util_is_abs_path( file ))
+      return file;
+    else if (path) {
+      char * full_path = util_alloc_filename( path , file , NULL );
+      free( file );
+      return full_path;
+    }
+  }
 }
 
 

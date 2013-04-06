@@ -422,6 +422,18 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node , const char * run_path , 
 }
 
 
+bool enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path , int iens) {
+  char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , run_path , iens );
+  bool loadOK = false;
+  if (init_file) {
+    loadOK = enkf_node->forward_load( enkf_node->data , init_file , NULL , NULL , 0 );
+    util_safe_free( init_file );
+  }
+  return loadOK;
+}
+
+
+
 bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step1, int report_step2 , int iens ) {
   bool loadOK;
   FUNC_ASSERT(enkf_node->forward_load_vector);
@@ -847,19 +859,23 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
 */
 
 bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , rng_type * rng) {
-  if (enkf_node->initialize != NULL) {
-    char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , iens );
-    bool   init = enkf_node->initialize(enkf_node->data , iens , init_file, rng);
-    if (init) {
-      enkf_node->__node_id.report_step = 0;
-      enkf_node->__node_id.state       = ANALYZED;
-      enkf_node->__node_id.iens        = iens;
-      enkf_node->__modified    = true;
-    } 
-    util_safe_free( init_file );
-    return init;
-  } else
-    return false;  /* No init performed */
+  if (enkf_node_get_forward_init( enkf_node ))
+    return false; // This node will be initialized by loading results from the forward model.
+  else {
+    if (enkf_node->initialize != NULL) {
+      char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , NULL , iens );
+      bool   init = enkf_node->initialize(enkf_node->data , iens , init_file, rng);
+      if (init) {
+        enkf_node->__node_id.report_step = 0;
+        enkf_node->__node_id.state       = ANALYZED;
+        enkf_node->__node_id.iens        = iens;
+        enkf_node->__modified    = true;
+      } 
+      util_safe_free( init_file );
+      return init;
+    } else
+      return false;  /* No init performed */
+  }
 }
 
 
