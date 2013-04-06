@@ -243,7 +243,7 @@ enkf_config_node_type *  ensemble_config_add_STATIC_node(ensemble_config_type * 
   if (ensemble_config_has_key(ensemble_config , key)) 
     util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
   {
-    enkf_config_node_type * node = enkf_config_node_alloc(STATIC , STATIC , false , key , NULL , NULL , NULL , NULL);
+    enkf_config_node_type * node = enkf_config_node_alloc(STATIC_STATE , STATIC , false , key , NULL , NULL , NULL , NULL);
     hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
     return node;
   }
