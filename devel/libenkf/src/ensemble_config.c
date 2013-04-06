@@ -356,8 +356,6 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
     for (i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
       const char * key                      = config_content_node_iget( node , 0 );
-      bool forward_init                     = false;
-      enkf_config_node_type * config_node   = ensemble_config_add_gen_data( ensemble_config , key , forward_init);
       {
         hash_type * options = hash_alloc();
         
@@ -371,7 +369,16 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
           const char * key                        = hash_safe_get( options , KEY_KEY);
           const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
           const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
+          const char *  forward_string            = hash_safe_get( options , FORWARD_INIT_KEY );
+          enkf_config_node_type * config_node;
+          bool forward_init = false;
           
+          if (forward_string) {
+            if (!util_sscanf_bool( forward_string , &forward_init))
+              fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
+          }
+          
+          config_node = ensemble_config_add_gen_data( ensemble_config , key , forward_init);
           enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
           {
             const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
@@ -393,10 +400,8 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
     int i;
     for (i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
-      const char * key                      = config_content_node_iget( node , 0 );
+      const char * node_key                 = config_content_node_iget( node , 0 );
       const char * ecl_file                 = config_content_node_iget( node , 1 );
-      bool forward_init                     = false;
-      enkf_config_node_type * config_node   = ensemble_config_add_gen_data( ensemble_config , key , forward_init);
       {
         hash_type * options = hash_alloc();
         
@@ -406,15 +411,24 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
           gen_data_file_format_type output_format = gen_data_config_check_format( hash_safe_get( options , OUTPUT_FORMAT_KEY));
           const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
           const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
-          const char * key                        = hash_safe_get( options , KEY_KEY);
+          const char * data_key                   = hash_safe_get( options , KEY_KEY);
           const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
           const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
+          const char *  forward_string            = hash_safe_get( options , FORWARD_INIT_KEY );
+          enkf_config_node_type * config_node;
+          bool forward_init = false;
           
-          enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+          if (forward_string) {
+            if (!util_sscanf_bool( forward_string , &forward_init))
+              fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
+          }
+          
+          config_node   = ensemble_config_add_gen_data( ensemble_config , node_key , forward_init);
+          enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
           {
             const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
             if (!gen_data_config_is_valid( gen_data_config ))
-              util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , key);
+              util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , node_key);
           }
         }
         hash_free( options );
@@ -466,11 +480,17 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
         
         config_content_node_init_opt_hash( node , options , 1 );
         {
-          const char * init_file_fmt = hash_safe_get( options , INIT_FILES_KEY );
-          const char * output_file   = hash_safe_get( options , OUTPUT_FILE_KEY);
-          const char * base_surface  = hash_safe_get( options , BASE_SURFACE_KEY);
-          const char * min_std_file  = hash_safe_get( options , MIN_STD_KEY);
+          const char * init_file_fmt   = hash_safe_get( options , INIT_FILES_KEY );
+          const char * output_file     = hash_safe_get( options , OUTPUT_FILE_KEY);
+          const char * base_surface    = hash_safe_get( options , BASE_SURFACE_KEY);
+          const char * min_std_file    = hash_safe_get( options , MIN_STD_KEY);
+          const char *  forward_string = hash_safe_get( options , FORWARD_INIT_KEY );
           bool forward_init = false;
+          
+          if (forward_string) {
+            if (!util_sscanf_bool( forward_string , &forward_init))
+              fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
+          }
           
           if ((init_file_fmt == NULL) || (output_file == NULL) || (base_surface == NULL)) {
             fprintf(stderr,"** error: when entering a surface you must provide arguments:\n");

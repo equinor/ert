@@ -1237,13 +1237,26 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, enkf_fs_type * fs) {
     
     const int num_keys = hash_get_size(enkf_state->node_hash);
     char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
+    int iens = enkf_state_get_iens( enkf_state );
     int ikey;
-    
+
     for (ikey = 0; ikey < num_keys; ikey++) {
       if (!stringlist_contains(enkf_state->restart_kw_list , key_list[ikey])) {          /* Make sure that the elements in the restart file are not written (again). */
         enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-        if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE)                          /* Ensure that no-longer-active static keywords do not create problems. */
-          enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+        if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE) {                        /* Ensure that no-longer-active static keywords do not create problems. */
+          bool forward_init = enkf_node_get_forward_init( enkf_node );
+
+          if ((run_info->step1 == 0) && (forward_init)) {
+            node_id_type node_id = {.report_step = 0, 
+                                    .iens = iens , 
+                                    .state = ANALYZED };
+            
+            if (enkf_node_has_data( enkf_node , fs , node_id))
+              enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+          } else
+            enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+
+        }
       }
     }
     util_free_stringlist(key_list , num_keys);
@@ -1287,7 +1300,11 @@ void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mas
       node_id_type node_id = {.report_step = report_step , 
                               .iens = member_config_get_iens( my_config ) , 
                               state = state };
-      enkf_node_load(enkf_node , fs , node_id);
+      bool forward_init = enkf_node_get_forward_init( enkf_node );
+      if (forward_init)
+        enkf_node_try_load(enkf_node , fs , node_id );
+      else
+        enkf_node_load(enkf_node , fs , node_id);
     }
   }
   util_free_stringlist(key_list , num_keys);
