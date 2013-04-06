@@ -187,7 +187,7 @@ static void enkf_tui_fs_copy_ensemble__(
       for (i = 0; i < stringlist_get_size( restart_kw_list ); i++) {
         const char * kw = stringlist_iget( restart_kw_list , i);
         if (!ensemble_config_has_key(config , kw)) 
-          ensemble_config_add_STATIC_node(config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL );
+          ensemble_config_add_STATIC_node(config , kw );
       }
       for (i=0; i < ens_size; i++) 
         enkf_fs_fwrite_restart_kw_list(target_fs , report_step_to , i , restart_kw_list);

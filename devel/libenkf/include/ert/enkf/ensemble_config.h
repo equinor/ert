@@ -75,12 +75,7 @@ typedef struct ensemble_config_struct ensemble_config_type;
   void                          ensemble_config_fprintf_config( ensemble_config_type * ensemble_config , FILE * stream );
 
   enkf_config_node_type  * ensemble_config_add_STATIC_node(ensemble_config_type * ,
-                                                           const char    * ,
-                                                           enkf_var_type ,
-                                                           ert_impl_type ,
-                                                           const char   * ,
-                                                           const char   * ,
-                                                           void         * );
+                                                           const char    * );
 
 
 
