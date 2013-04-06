@@ -1044,12 +1044,45 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
   } 
 }
 
+
+static void enkf_state_forward_init(enkf_state_type * enkf_state , 
+                                    enkf_fs_type * fs , 
+                                    bool * loadOK ) {
+  run_info_type * run_info   = enkf_state->run_info;
+
+  if (run_info->step1 == 0) {
+    hash_iter_type * iter = hash_iter_alloc( enkf_state->node_hash );
+    while ( !hash_iter_is_complete(iter) ) {
+      enkf_node_type * node = hash_iter_get_next_value(iter);
+      if (enkf_node_get_forward_init(node)) {
+        printf("Initializing %s from forward model .... \n", enkf_node_get_key( node ));
+      }
+    }
+    hash_iter_free( iter );
+  }
+
+}
+
+
+
+static void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
+                                               enkf_fs_type * fs , 
+                                               bool * loadOK , 
+                                               bool interactive , 
+                                               stringlist_type * msg_list) {
+
+  enkf_state_forward_init( enkf_state , fs , loadOK );
+  enkf_state_internalize_results( enkf_state , fs , loadOK , interactive , msg_list );
+  
+}
+
+
 /**
    Observe that this does not return the loadOK flag; it will load as
    good as it can all the data it should, and be done with it. 
 */
 
-void * enkf_state_internalize_results_mt( void * arg ) {
+void * enkf_state_load_from_forward_model_mt( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
   enkf_fs_type * fs            = arg_pack_iget_ptr( arg_pack , 1 );
@@ -1069,7 +1102,7 @@ void * enkf_state_internalize_results_mt( void * arg ) {
                           model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 
                           enkf_state->subst_list );
   
-  enkf_state_internalize_results( enkf_state , fs , &loadOK , interactive , msg_list );
+  enkf_state_load_from_forward_model( enkf_state , fs , &loadOK , interactive , msg_list );
   if (interactive) {
     printf(".");
     fflush(stdout);
@@ -1884,7 +1917,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
      is OK the final status is updated, otherwise: restart.
   */
   log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
-  enkf_state_internalize_results(enkf_state , fs , &loadOK , false , NULL); 
+  enkf_state_load_from_forward_model(enkf_state , fs , &loadOK , false , NULL); 
   if (loadOK) {
     /*
       The loading succeded - so this is a howling success! We set
