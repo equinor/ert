@@ -532,7 +532,7 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
       const char *  key                     = config_content_node_iget( node , 0 );
       const char *  var_type_string         = config_content_node_iget( node , 1 );
       bool forward_init                     = false;
-      enkf_config_node_type * config_node   = ensemble_config_add_field( ensemble_config , key , grid , forward_init);
+      enkf_config_node_type * config_node;
       
       {
         hash_type * options = hash_alloc();
@@ -553,14 +553,23 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
         }
         
         
-        if (strcmp(var_type_string , DYNAMIC_KEY) == 0) 
+        if (strcmp(var_type_string , DYNAMIC_KEY) == 0) {
+          config_node = ensemble_config_add_field( ensemble_config , key , grid , false);
           enkf_config_node_update_state_field( config_node , truncation , value_min , value_max );
-        else if (strcmp(var_type_string , PARAMETER_KEY) == 0) {
+        } else if (strcmp(var_type_string , PARAMETER_KEY) == 0) {
           const char *  ecl_file          = config_content_node_iget( node , 2 );
           const char *  init_file_fmt     = hash_safe_get( options , INIT_FILES_KEY );
           const char *  init_transform    = hash_safe_get( options , INIT_TRANSFORM_KEY );
           const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
           const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY );
+          const char *  forward_string    = hash_safe_get( options , FORWARD_INIT_KEY );
+          bool forward_init = false;
+
+          if (forward_string) {
+            if (!util_sscanf_bool( forward_string , &forward_init))
+              fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
+          }
+          config_node = ensemble_config_add_field( ensemble_config , key , grid , forward_init);
     
           enkf_config_node_update_parameter_field( config_node, 
                                                    ecl_file          , 
@@ -572,6 +581,7 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
                                                    init_transform    , 
                                                    output_transform   );
         } else if (strcmp(var_type_string , GENERAL_KEY) == 0) {
+          /* General - not really interesting .. */
           const char *  ecl_file          = config_content_node_iget( node , 2 );
           const char *  enkf_infile       = config_content_node_iget( node , 3 );
           const char *  init_file_fmt     = hash_safe_get( options , INIT_FILES_KEY );
@@ -579,7 +589,8 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
           const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
           const char *  input_transform   = hash_safe_get( options , INPUT_TRANSFORM_KEY );
           const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY );
-          
+          bool forward_init = false;
+          config_node = ensemble_config_add_field( ensemble_config , key , grid , forward_init);
 
           enkf_config_node_update_general_field( config_node,
                                                  ecl_file , 
