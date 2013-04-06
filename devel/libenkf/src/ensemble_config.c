@@ -570,7 +570,6 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
               fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
           }
           config_node = ensemble_config_add_field( ensemble_config , key , grid , forward_init);
-    
           enkf_config_node_update_parameter_field( config_node, 
                                                    ecl_file          , 
                                                    init_file_fmt     , 
@@ -589,8 +588,13 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
           const char *  output_transform  = hash_safe_get( options , OUTPUT_TRANSFORM_KEY );
           const char *  input_transform   = hash_safe_get( options , INPUT_TRANSFORM_KEY );
           const char *  min_std_file      = hash_safe_get( options , MIN_STD_KEY );
+          const char *  forward_string    = hash_safe_get( options , FORWARD_INIT_KEY );
           bool forward_init = false;
-          config_node = ensemble_config_add_field( ensemble_config , key , grid , forward_init);
+
+          if (forward_string) {
+            if (!util_sscanf_bool( forward_string , &forward_init))
+              fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
+          }
 
           enkf_config_node_update_general_field( config_node,
                                                  ecl_file , 
