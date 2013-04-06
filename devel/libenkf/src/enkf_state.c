@@ -1056,12 +1056,11 @@ static void enkf_state_forward_init(enkf_state_type * enkf_state ,
     while ( !hash_iter_is_complete(iter) ) {
       enkf_node_type * node = hash_iter_get_next_value(iter);
       if (enkf_node_get_forward_init(node)) {
-        printf("Initializing %s from forward model .... \n", enkf_node_get_key( node ));
-
-        if (enkf_node_forward_init(node , run_info->run_path , iens )) {
-          node_id_type node_id = {.report_step = 0 , 
-                                  .iens = iens , 
-                                  .state = ANALYZED };
+        if (enkf_node_forward_init(node , run_info->run_path , iens ) && 
+            (enkf_node_has_data( param_node , fs , node_id) == false)) {   // Will not reinitialize; i.e. it is essential
+          node_id_type node_id = {.report_step = 0 ,                       // that the forward model uses the state given
+                                  .iens = iens ,                           // from the stored instance, and not from the
+                                  .state = ANALYZED };                     // current run of e.g. RMS.
 
           enkf_node_store( node , fs, false , node_id );
         } else
