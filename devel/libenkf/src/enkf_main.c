@@ -2588,7 +2588,8 @@ void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , cons
 
   if (template_file != NULL) {
     char * target_file;
-    enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key );                                                
+    bool forward_init = false;
+    enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key , forward_init);                                                
     {
       char * base;
       char * ext;

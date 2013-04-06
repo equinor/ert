@@ -293,7 +293,9 @@ enkf_var_type enkf_node_get_var_type(const enkf_node_type * enkf_node) {
   return enkf_config_node_get_var_type(enkf_node->config);
 }
 
-
+bool enkf_node_get_forward_init( const enkf_node_type * enkf_node ) {
+  return enkf_config_node_get_forward_init( enkf_node->config );
+}
 
 
 

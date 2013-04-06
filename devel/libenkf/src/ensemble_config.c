@@ -231,25 +231,28 @@ void ensemble_config_add_node__( ensemble_config_type * ensemble_config , enkf_c
   const char * key = enkf_config_node_get_key( node );
   if (ensemble_config_has_key(ensemble_config , key)) 
     util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
+  
   hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
 }
 
 
-enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensemble_config , 
-                                                  const char    * key              , 
-                                                  enkf_var_type  enkf_type         , 
-                                                  ert_impl_type  impl_type         ,
-                                                  const char   * enkf_outfile      , /* written by enkf and read by forward model */
-                                                  const char   * enkf_infile       , /* written by forward model and read by enkf */ 
-                                                  void         * data ) {
+
+enkf_config_node_type *  ensemble_config_add_STATIC_node(ensemble_config_type * ensemble_config , 
+                                                         const char    * key              , 
+                                                         enkf_var_type  enkf_type         , 
+                                                         ert_impl_type  impl_type         ,
+                                                         const char   * enkf_outfile      , /* written by enkf and read by forward model */
+                                                         const char   * enkf_infile       , /* written by forward model and read by enkf */ 
+                                                         void         * data ) {
 
   if (ensemble_config_has_key(ensemble_config , key)) 
       util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
   
   {
     const char * init_file = "hhh";
+    bool forward_init = false;
     
-    enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , init_file , enkf_outfile , enkf_infile , data );
+    enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , forward_init , key , init_file , enkf_outfile , enkf_infile , data );
     hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
     return node;
   }
@@ -265,7 +268,7 @@ void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , 
   pthread_mutex_lock( &ensemble_config->mutex );
   {
     if (!ensemble_config_has_key(ensemble_config , kw)) 
-      ensemble_config_add_node(ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
+      ensemble_config_add_STATIC_node(ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
   }
   pthread_mutex_unlock( &ensemble_config->mutex );
 }
@@ -354,7 +357,7 @@ void ensemble_config_add_config_items(config_type * config) {
 }
 
 
-void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_type * config ) {
+void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , const config_type * config) {
 /* gen_param  - should be unified with the gen_data*/
   const config_content_item_type * item = config_get_content_item( config , GEN_DATA_KEY );
   if (item != NULL) {
@@ -362,7 +365,8 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
     for (i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
       const char * key                      = config_content_node_iget( node , 0 );
-      enkf_config_node_type * config_node   = ensemble_config_add_gen_data( ensemble_config , key );
+      bool forward_init                     = false;
+      enkf_config_node_type * config_node   = ensemble_config_add_gen_data( ensemble_config , key , forward_init);
       {
         hash_type * options = hash_alloc();
         
@@ -391,7 +395,7 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
 }
 
 
-void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_type * config ) {
+void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , const config_type * config) {
   /* gen_param  - should be unified with the gen_data*/
   const config_content_item_type * item = config_get_content_item( config , GEN_PARAM_KEY );
   if (item != NULL) {
@@ -400,7 +404,8 @@ void ensemble_config_init_GEN_PARAM( ensemble_config_type * ensemble_config , co
       const config_content_node_type * node = config_content_item_iget_node( item , i );
       const char * key                      = config_content_node_iget( node , 0 );
       const char * ecl_file                 = config_content_node_iget( node , 1 );
-      enkf_config_node_type * config_node   = ensemble_config_add_gen_data( ensemble_config , key );
+      bool forward_init                     = false;
+      enkf_config_node_type * config_node   = ensemble_config_add_gen_data( ensemble_config , key , forward_init);
       {
         hash_type * options = hash_alloc();
         
@@ -439,10 +444,10 @@ void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const
       const char * template_file  = config_content_node_iget_as_path( node , 1 );
       const char * enkf_outfile   = config_content_node_iget( node , 2 );
       const char * parameter_file = config_content_node_iget_as_path( node , 3 );
-
+      bool forward_init = false;
       {
         hash_type * opt_hash                = hash_alloc();
-        enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key );
+        enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key , forward_init);
         config_content_node_init_opt_hash( node , opt_hash , 4 );
         enkf_config_node_update_gen_kw( config_node , 
                                       enkf_outfile , 
@@ -474,6 +479,7 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
           const char * output_file   = hash_safe_get( options , OUTPUT_FILE_KEY);
           const char * base_surface  = hash_safe_get( options , BASE_SURFACE_KEY);
           const char * min_std_file  = hash_safe_get( options , MIN_STD_KEY);
+          bool forward_init = false;
           
           if ((init_file_fmt == NULL) || (output_file == NULL) || (base_surface == NULL)) {
             fprintf(stderr,"** error: when entering a surface you must provide arguments:\n");
@@ -484,7 +490,7 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
           }
         
           {
-            enkf_config_node_type * config_node = ensemble_config_add_surface( ensemble_config , key );
+            enkf_config_node_type * config_node = ensemble_config_add_surface( ensemble_config , key , forward_init);
             enkf_config_node_update_surface( config_node , base_surface , init_file_fmt , output_file , min_std_file );
           }
         }
@@ -534,7 +540,8 @@ void ensemble_config_init_FIELD( ensemble_config_type * ensemble_config , const 
       const config_content_node_type * node = config_content_item_iget_node( item , i );
       const char *  key                     = config_content_node_iget( node , 0 );
       const char *  var_type_string         = config_content_node_iget( node , 1 );
-      enkf_config_node_type * config_node   = ensemble_config_add_field( ensemble_config , key , grid );
+      bool forward_init                     = false;
+      enkf_config_node_type * config_node   = ensemble_config_add_field( ensemble_config , key , grid , forward_init);
       
       {
         hash_type * options = hash_alloc();
@@ -780,22 +787,22 @@ int ensemble_config_get_observations( const ensemble_config_type * config , enkf
    is essential for proper operation.
 */
 
-enkf_config_node_type * ensemble_config_add_field( ensemble_config_type * config , const char * key , ecl_grid_type * ecl_grid ) {
-  enkf_config_node_type * config_node = enkf_config_node_new_field( key , ecl_grid , config->field_trans_table );
+enkf_config_node_type * ensemble_config_add_field( ensemble_config_type * config , const char * key , ecl_grid_type * ecl_grid , bool forward_init) {
+  enkf_config_node_type * config_node = enkf_config_node_new_field( key , ecl_grid , config->field_trans_table , forward_init);
   ensemble_config_add_node__( config , config_node );
   return config_node;
 }
 
 
-enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key ) {
-  enkf_config_node_type * config_node = enkf_config_node_new_gen_kw( key , config->gen_kw_format_string );
+enkf_config_node_type * ensemble_config_add_gen_kw( ensemble_config_type * config , const char * key , bool forward_init) {
+  enkf_config_node_type * config_node = enkf_config_node_new_gen_kw( key , config->gen_kw_format_string , forward_init);
   ensemble_config_add_node__( config , config_node );
   return config_node;
 }
 
 
-enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key ) {
-  enkf_config_node_type * config_node = enkf_config_node_new_gen_data( key );
+enkf_config_node_type * ensemble_config_add_gen_data( ensemble_config_type * config , const char * key , bool forward_init) {
+  enkf_config_node_type * config_node = enkf_config_node_new_gen_data( key , forward_init);
   ensemble_config_add_node__( config , config_node );
   return config_node;
 }
@@ -834,8 +841,8 @@ enkf_config_node_type * ensemble_config_add_summary(ensemble_config_type * ensem
 }
 
 
-enkf_config_node_type * ensemble_config_add_surface( ensemble_config_type * ensemble_config , const char * key ) {
-  enkf_config_node_type * config_node = enkf_config_node_new_surface( key );
+enkf_config_node_type * ensemble_config_add_surface( ensemble_config_type * ensemble_config , const char * key , bool forward_init) {
+  enkf_config_node_type * config_node = enkf_config_node_new_surface( key , forward_init );
   ensemble_config_add_node__( ensemble_config , config_node );
   return config_node;
 }

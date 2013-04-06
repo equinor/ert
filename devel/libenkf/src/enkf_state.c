@@ -1118,7 +1118,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state , enkf_fs
        before things blow up completely at a later instant.
     */  
     if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
-      ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL );
+      ensemble_config_add_STATIC_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL );
     
     if (!enkf_state_has_node(enkf_state , kw)) {
       const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
