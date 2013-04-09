@@ -44,7 +44,7 @@ def createEnsemblePage(configPanel, parent):
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("ensembleUpdated()"))
 
     def getEnsembleParameters(ert):
-        keys = ert.getStringList(ert.main.ensemble_config.alloc_keylist, free_after_use=True)
+        keys = ert.main.ensemble_config.alloc_keylist
 
         parameters = []
         for key in keys:

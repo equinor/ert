@@ -47,17 +47,17 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
 
     def isHandlerFor(self, ert, key):
-        return ert.enkf.ensemble_config_has_key(ert.ensemble_config, key)
+        return ert.main.ensemble_config.has_key( key)
 
 
     def fetch(self, ert, key, parameter, data, comparison_fs):
         data.x_data_type = "time"
 
-        fs = ert.enkf.enkf_main_get_fs(ert.main)
-        config_node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, key)
-        node = ert.enkf.enkf_node_alloc(config_node)
-        comp_node = ert.enkf.enkf_node_alloc(config_node)
-        num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
+        fs = ert.main.get_fs
+        config_node = ert.main.ensemble_config.get_node(key)
+        node = config_node.alloc_node
+        comp_node = config_node.alloc_node
+        num_realizations = ert.main.get_ensemble_size
 
         user_data = parameter.getUserData()
 
@@ -70,7 +70,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
         if parameter.getType() == FieldModel.TYPE:
             field_position = user_data['field_position']
-            field_config = ert.enkf.enkf_config_node_get_ref(config_node)
+            field_config = config_node.get_ref
             if ert.enkf.field_config_ijk_active(field_config, field_position[0] - 1, field_position[1] - 1, field_position[2] - 1):
                 key_index = "%i,%i,%i" % (field_position[0], field_position[1], field_position[2])
                 data.setKeyIndexIsIndex(True)

@@ -31,11 +31,9 @@ class EnkfNode(CClass):
         if self.owner:
             cfunc.free( self )
 
-
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
-
-
+    def alloc(self,config_node):
+        node = EnkfNode(cfunc.alloc( config_node ) , parent = config_node)
+        return node 
 
 ##################################################################
 

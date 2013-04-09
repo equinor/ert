@@ -19,7 +19,6 @@ from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
-from    ert.util.stringlist   import StringList
 import  libenkf
 import  ert.util.libutil
 class EclConfig(CClass):

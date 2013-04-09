@@ -20,6 +20,8 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 import  libenkf
+from    ert.util.stringlist   import StringList
+
 class EnkfObs(CClass):
     
     def __init__(self , c_ptr = None):
@@ -36,13 +38,13 @@ class EnkfObs(CClass):
         return cfunc.get_config_file(self)
 
     def alloc_typed_keylist(self, type):
-        return cfunc.alloc_typed_keylist(self, type)
+        return StringList(c_ptr = cfunc.alloc_typed_keylist(self, type))
 
     def has_key(self, key):
         return cfunc.has_key(self, key)
 
     def get_vector(self, key):
-        return cfunc.get_vector(self,key)
+        return ert.enkf.obs_vector.ObsVector(cfunc.get_vector(self,key))
 
 ##################################################################
 

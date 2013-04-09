@@ -28,42 +28,41 @@ class RFTFetcher(PlotDataFetcherHandler):
         PlotDataFetcherHandler.__init__(self)
 
     def isHandlerFor(self, ert, key):
-        enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
-        key_list = ert.enkf.enkf_obs_alloc_typed_keylist(enkf_obs, obs_impl_type.FIELD_OBS.value())
-        field_obs = ert.getStringList(key_list, free_after_use=True)
-        return key in field_obs
+        enkf_obs = ert.main.get_obs
+        key_list = enkf_obs.alloc_typed_keylist(obs_impl_type.FIELD_OBS.value())
+        return key in key_list
 
     def fetch(self, ert, key, parameter, data, comparison_fs):
-        enkf_obs = ert.enkf.enkf_main_get_obs(ert.main)
-        obs_vector = ert.enkf.enkf_obs_get_vector(enkf_obs, key)
+        enkf_obs = ert.main.get_obs
+        obs_vector = enkf_obs.get_vector(key)
 
-        num_active = ert.enkf.obs_vector_get_num_active(obs_vector)
+        num_active = obs_vector.get_num_active
         if num_active == 1:
-            report_step = ert.enkf.obs_vector_get_active_report_step(obs_vector)
+            report_step = obs_vector.get_active_report_step
         elif num_active > 1:
-            history_length = ert.enkf.enkf_main_get_history_length(ert.main)
+            history_length = ert.main.get_history_length
             active = []
             for index in range(history_length):
-                if ert.enkf.obs_vector_iget_active(obs_vector , index):
+                if obs_vector.iget_active(index):
                     active.append(index)
             print "Active:", active
             report_step = active[0] #todo: enable selection from GUI
         else:
             return
 
-        fs = ert.enkf.enkf_main_get_fs(ert.main)
-        state_kw = ert.enkf.obs_vector_get_state_kw(obs_vector)
+        fs = ert.main.get_fs
+        state_kw = obs_vector.get_state_kw
 
-        ens_size = ert.enkf.enkf_main_get_ensemble_size(ert.main)
-        config_node = ert.enkf.ensemble_config_get_node(ert.ensemble_config, state_kw)
-        field_config = ert.enkf.enkf_config_node_get_ref(config_node)
-        field_obs = ert.enkf.obs_vector_iget_node(obs_vector, report_step)
+        ens_size = ert.main.get_ensemble_size
+        config_node = ert.main.ensemble_config.get_node(state_kw)
+        field_config = config_node.get_ref
+        block_obs = obs_vector.iget_node(report_step)
 
-        i = ert.enkf.field_obs_get_i(field_obs)
-        j = ert.enkf.field_obs_get_j(field_obs)
-        k = ert.enkf.field_obs_get_k(field_obs)
-        obs_size = ert.enkf.field_obs_get_size(field_obs)
-        grid = ert.enkf.field_config_get_grid(field_config)
+        i = block_obs.get_i
+        j = block_obs.get_j
+        k = block_obs.get_k
+        obs_size = block_obs.get_size
+        grid = field_config.get_grid
 
         node = ert.enkf.enkf_node_alloc(config_node)
 

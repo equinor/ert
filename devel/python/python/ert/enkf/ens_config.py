@@ -22,7 +22,7 @@ from    ert.enkf.enkf_enum             import *
 import  ert.enkf.libenkf
 from    ert.ecl.ecl_grid import EclGrid
 import  ert.enkf.enkf_config_node
-from    ert.util.stringlist import StringList
+from    ert.util.stringlist   import StringList
 
 class EnsConfig(CClass):
     
@@ -41,7 +41,7 @@ class EnsConfig(CClass):
     
     @property
     def alloc_keylist(self):
-        key_list = cfunc.alloc_keylist(self)
+        key_list = StringList( c_ptr = cfunc.alloc_keylist(self))
         return key_list
        
     def add_summary(self, key):

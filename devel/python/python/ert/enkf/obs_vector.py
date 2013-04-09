@@ -31,12 +31,20 @@ class EnkfObs(CClass):
         if self.owner:
             cfunc.free( self )
 
+    @property
+    def get_state_kw(self):
+        return cfunc.get_state_kw(self)
+    
+    def iget_node(self, index):
+        cfunc.iget_node(self,index)
 
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
+    @property
+    def get_num_active(self):
+        return cfunc.get_num_active(self)
 
-
-
+    @property
+    def iget_active(self, index):
+        return cfunc.iget_active(self, index)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )

@@ -72,6 +72,11 @@ class EnkfConfigNode(CClass):
     @property
     def get_enkf_infile(self):
         return cfunc.get_enkf_infile( self)
+
+    def alloc_node(self):
+        node=ert.enkf.enkf_node.EnkfNode()
+        node.alloc(self)
+        return node
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )

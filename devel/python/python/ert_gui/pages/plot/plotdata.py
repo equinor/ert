@@ -237,7 +237,7 @@ class PlotContextDataFetcher(ContentModel):
     def getter(self, ert):
         data = PlotContextData()
 
-        keys = ert.getStringList(ert.main.ensemble_config.alloc_keylist, free_after_use=True)
+        keys = ert.main.ensemble_config.alloc_keylist
         data.keys = keys
         data.parameters = []
 
@@ -281,9 +281,8 @@ class PlotContextDataFetcher(ContentModel):
         
         enkf_obs = ert.main.get_obs
         key_list = enkf_obs.alloc_typed_keylist( obs_impl_type.FIELD_OBS.value())
-        field_obs = ert.getStringList(key_list, free_after_use=True)
 
-        for obs in field_obs:
+        for obs in key_list:
             p = Parameter(obs, obs_impl_type.FIELD_OBS, PlotContextDataFetcher.observation_icon)
             data.parameters.append(p)
 
