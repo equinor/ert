@@ -119,8 +119,8 @@ from ert.ert.ertwrapper import ErtWrapper
 
 import ert_gui.widgets.util
 import ert_gui.widgets.help
-ert_gui.widgets.help.help_prefix = os.getenv("ERT_SHARE_PATH")+ "/help/"
-ert_gui.widgets.util.img_prefix  = os.getenv("ERT_SHARE_PATH")+ "/img/"
+ert_gui.widgets.help.help_prefix = os.getenv("ERT_SHARE_PATH")+ "/gui/help/"
+ert_gui.widgets.util.img_prefix  = os.getenv("ERT_SHARE_PATH")+ "/gui/img/"
 
 
 
