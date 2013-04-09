@@ -19,6 +19,7 @@ from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
+from ert.ert.enums import enkf_var_type
 import  libenkf
 class EnkfFs(CClass):
     
@@ -31,6 +32,12 @@ class EnkfFs(CClass):
         if self.owner:
             cfunc.close( self )
 
+    def has_node(self, node_key, step, member, value, type = enkf_var_type.PARAMETER):
+        return cfunc.has_node(self, node_key, type, step, member, value)
+    
+    def fread_node(self, node, step, member, value,type = enkf_var_type.PARAMETER):
+        buffer = c_buffer()
+        cfunc.fread_node(self, buffer, node, type, step, member, value)
 
 ##################################################################
 

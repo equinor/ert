@@ -24,6 +24,7 @@ from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
 from PyQt4.QtCore import SIGNAL
 from ert.ert.erttypes import time_t
 import numpy
+from ert.util.node_id import *
 
 class EnsembleFetcher(PlotDataFetcherHandler):
     """A data fetcher for ensemble parameters."""
@@ -57,7 +58,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         config_node = ert.main.ensemble_config.get_node(key)
         node = config_node.alloc_node
         comp_node = config_node.alloc_node
-        num_realizations = ert.main.get_ensemble_size
+        num_realizations = ert.main.ens_size
 
         user_data = parameter.getUserData()
 
@@ -99,16 +100,17 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                 x_comp_time = data.x_comp_data[member]
                 y_comp = data.y_comp_data[member]
 
-            member_config = ert.enkf.enkf_main_iget_member_config(ert.main, member)
-            stop_time = ert.enkf.enkf_main_get_history_length( ert.main )
+            member_config = ert.main.iget_member_config(member)
+            stop_time = ert.main.get_history_length
 
             for step in range(0, stop_time + 1):
                 for state in state_list:
-                    if ert.enkf.enkf_fs_has_node(fs, config_node, step, member, state.value()):
-                        sim_time = ert.enkf.member_config_iget_sim_time(member_config, step, fs)
-                        ert.enkf.enkf_fs_fread_node(fs, node, step, member, state.value())
+                    if fs.has_node(key, step, member, state.value()):
+                        sim_time = member_config.iget_sim_time(step, fs)
+                        fs.fread_node(node, step, member, state.value())
                         valid = ertwrapper.c_int()
-                        value = ert.enkf.enkf_node_user_get(node, key_index, ertwrapper.byref(valid))
+                        node_id = NodeId(step, state, member)
+                        value = node.user_get(fs, key_index, node_id, ertwrapper.byref(valid))
                         if valid.value == 1:
                             data.checkMaxMin(sim_time)
                             data.checkMaxMinY(value)
@@ -118,11 +120,12 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                         #    print "Not valid: ", key, member, step, key_index
 
                     if not comparison_fs is None:
-                        if ert.enkf.enkf_fs_has_node(comparison_fs, config_node, step, member, state.value()):
-                            sim_time = ert.enkf.member_config_iget_sim_time(member_config, step, comparison_fs)
-                            ert.enkf.enkf_fs_fread_node(comparison_fs, comp_node, step, member, state.value())
+                        if comparison_fs.has_node(config_node, step, member, state.value()):
+                            sim_time = member_config.iget_sim_time(step, comparison_fs)
+                            comparison_fs.fread_node(comp_node, step, member, state.value())
                             valid = ertwrapper.c_int()
-                            value = ert.enkf.enkf_node_user_get(comp_node, key_index, ertwrapper.byref(valid))
+                            node_id = NodeId(step, state, member)
+                            value = comp_node.user_get(comparison_fs, key_index, node_id, ertwrapper.byref(valid))
                             if valid.value == 1:
                                 #data.checkMaxMin(sim_time)
                                 #data.checkMaxMinY(value)
@@ -143,8 +146,8 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
         self._getRefCase(ert, key, data)
 
-        ert.enkf.enkf_node_free(node)
-        ert.enkf.enkf_node_free(comp_node)
+        node.free
+        comp_node.free
 
         data.inverted_y_axis = False
 
@@ -154,12 +157,12 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         else:
             user_key = key
 
-        obs_count = ert.enkf.enkf_main_get_observation_count(ert.main, user_key)
+        obs_count = ert.main.get_observation_count(user_key)
         if obs_count > 0:
             obs_x = (time_t * obs_count)()
             obs_y = (ertwrapper.c_double * obs_count)()
             obs_std = (ertwrapper.c_double * obs_count)()
-            ert.enkf.enkf_main_get_observations(ert.main, user_key, obs_count, obs_x, obs_y, obs_std)
+            ert.main.get_observations(user_key, obs_count, obs_x, obs_y, obs_std)
 
             data.obs_x = numpy.array([t.datetime() for t in obs_x])
             data.obs_y = numpy.array(obs_y)
@@ -174,10 +177,11 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
 
     def _getRefCase(self, ert, key, data):
-        ecl_sum = ert.enkf.ecl_config_get_refcase(ert.ecl_config)
+        ecl_config = ert.main.ecl_config
+        ecl_sum = ecl_config.get_refcase
 
-        if(ert.ecl.ecl_sum_has_key(ecl_sum, key)):
-            ki = ert.ecl.ecl_sum_get_general_var_index(ecl_sum, key)
+        if(ecl_sum.has_key(key)):
+            ki = ecl_sum.get_general_var_index(key)
             x_data = ert.ecl.ecl_sum_alloc_time_vector(ecl_sum, True)
             y_data = ert.ecl.ecl_sum_alloc_data_vector(ecl_sum, ki, True)
 
