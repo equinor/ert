@@ -314,6 +314,7 @@ class SimulationPanelController:
         self.selectedSimulations = []
         self.view.connect(self.view, QtCore.SIGNAL('simulationsUpdated()'), self.showSelectedSimulations)
 
+
     def initialize(self, ert):
         if not self.initialized:
             self.initialized = True
@@ -326,39 +327,39 @@ class SimulationPanelController:
     def kill(self):
         """Kills the selected simulations."""
         for simulation in self.selectedSimulations:
-            state = self.ert.enkf.enkf_main_iget_state(self.ert.main, simulation.name)
-            status = self.ert.enkf.enkf_state_get_run_status(state)
+            state = self.ert.main.iget_state(simulation.name)
+            status = state.get_run_status
 
             #if status == Simulation.RUNNING:
-            self.ert.enkf.enkf_state_kill_simulation(state)
+            state.kill_simulation
 
     def restart(self, resample):
         """Restarts the selected simulations. May also resample."""
         for simulation in self.selectedSimulations:
-            state = self.ert.enkf.enkf_main_iget_state(self.ert.main, simulation.name)
-            status = self.ert.enkf.enkf_state_get_run_status(state)
+            state = self.ert.main.iget_state(simulation.name)
+            status = state.get_run_status
 
             #if status == Simulation.USER_KILLED:
-            self.ert.enkf.enkf_state_resubmit_simulation(state , resample)
+            state.resubmit_simulation(resample)
 
     def pause(self, pause):
         """Pause the job queue after the currently running jobs are finished."""
-        job_queue = self.ert.enkf.site_config_get_job_queue(self.ert.site_config)
+        job_queue = self.ert.site_config.get_job_queue
 
         if pause:
             self.statistics.stop()
-            self.ert.job_queue.job_queue_set_pause_on(job_queue)
+            job_queue.set_pause_on
         else:
             self.statistics.startTiming()
-            self.ert.job_queue.job_queue_set_pause_off(job_queue)
+            job_queue.set_pause_off
 
     def killAll(self):
         """Kills all simulations"""
         killAll = QtGui.QMessageBox.question(self.view, "Remove all jobs?", "Are you sure you want to remove all jobs from the queue?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
 
         if killAll == QtGui.QMessageBox.Yes:
-            job_queue = self.ert.enkf.site_config_get_job_queue(self.ert.site_config)
-            self.ert.job_queue.job_queue_user_exit(job_queue)
+            job_queue = self.ert.main.site_config.get_job_queue
+            job_queue.user_exit
 
     def showSelectedSimulations(self):
         """Update information relating to a single job"""

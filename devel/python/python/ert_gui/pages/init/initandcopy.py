@@ -111,7 +111,7 @@ class ParametersAndMembers(HelpedWidget):
             ert.main.initialize_from_scratch(stringlist, m , m)
 
         stringlist.__del__
-        #ert.freeStringList(stringlist)
+
 
     def initializeCaseFromCase(self, selected_parameters, selected_members):
         ert = self.getModel()
