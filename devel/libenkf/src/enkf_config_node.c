@@ -682,12 +682,8 @@ bool enkf_config_node_include_type(const enkf_config_node_type * config_node , i
 }
 
 
-bool enkf_config_node_get_forward_init(const enkf_config_node_type * config_node) {
+bool enkf_config_node_use_forward_init(const enkf_config_node_type * config_node) {
   return config_node->forward_init;
-}
-
-void enkf_config_node_set_forward_init(enkf_config_node_type * config_node, bool forward_init) {
-  config_node->forward_init = forward_init;
 }
 
 

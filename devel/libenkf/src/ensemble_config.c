@@ -74,6 +74,7 @@ struct ensemble_config_struct {
   field_trans_table_type * field_trans_table;      /* a table of the transformations which are available to apply on fields. */
   const ecl_sum_type     * refcase;                /* a ecl_sum reference instance - can be null (not owned by the ensemble
                                                       config). is only used to check that summary keys are valid when adding. */
+  bool                     have_forward_init;
 };
 
 
@@ -141,6 +142,7 @@ ensemble_config_type * ensemble_config_alloc_empty( ) {
   ensemble_config->field_trans_table     = field_trans_table_alloc();    
   ensemble_config->refcase               = NULL;
   ensemble_config->gen_kw_format_string  = util_alloc_string_copy( DEFAULT_GEN_KW_TAG_FORMAT );
+  ensemble_config->have_forward_init     = false;
   pthread_mutex_init( &ensemble_config->mutex , NULL);
   
   return ensemble_config;
@@ -226,6 +228,10 @@ void ensemble_config_del_node(ensemble_config_type * ensemble_config, const char
 }
 
 
+bool ensemble_config_have_forward_init( const ensemble_config_type * ensemble_config ) {
+  return ensemble_config->have_forward_init;
+}
+
 void ensemble_config_add_node__( ensemble_config_type * ensemble_config , enkf_config_node_type * node) {
   
   const char * key = enkf_config_node_get_key( node );
@@ -233,6 +239,7 @@ void ensemble_config_add_node__( ensemble_config_type * ensemble_config , enkf_c
     util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
   
   hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
+  ensemble_config->have_forward_init |= enkf_config_node_use_forward_init( node );
 }
 
 
@@ -355,7 +362,7 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
     int i;
     for (i=0; i < config_content_item_get_size(item); i++) {
       const config_content_node_type * node = config_content_item_iget_node( item , i );
-      const char * key                      = config_content_node_iget( node , 0 );
+      const char * node_key                 = config_content_node_iget( node , 0 );
       {
         hash_type * options = hash_alloc();
         
@@ -366,7 +373,7 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
           const char * init_file_fmt              = hash_safe_get( options , INIT_FILES_KEY);
           const char * ecl_file                   = hash_safe_get( options , ECL_FILE_KEY); 
           const char * template                   = hash_safe_get( options , TEMPLATE_KEY);
-          const char * key                        = hash_safe_get( options , KEY_KEY);
+          const char * data_key                   = hash_safe_get( options , KEY_KEY);
           const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
           const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
           const char *  forward_string            = hash_safe_get( options , FORWARD_INIT_KEY );
@@ -378,12 +385,12 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
               fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
           }
           
-          config_node = ensemble_config_add_gen_data( ensemble_config , key , forward_init);
-          enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , key , ecl_file , result_file , min_std_file);
+          config_node = ensemble_config_add_gen_data( ensemble_config , node_key , forward_init);
+          enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
           {
             const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
             if (!gen_data_config_is_valid( gen_data_config ))
-              util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , key);
+              util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , node_key);
           }
         }
         hash_free( options );
@@ -445,23 +452,32 @@ void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const
     for (i=0; i < config_content_item_get_size( gen_kw_item ); i++) {
       config_content_node_type * node = config_content_item_iget_node( gen_kw_item , i );
 
-      const char * key            = config_content_node_iget( node , 0 );
-      const char * template_file  = config_content_node_iget_as_path( node , 1 );
-      const char * enkf_outfile   = config_content_node_iget( node , 2 );
-      const char * parameter_file = config_content_node_iget_as_path( node , 3 );
-      bool forward_init = false;
+      const char * key             = config_content_node_iget( node , 0 );
+      const char * template_file   = config_content_node_iget_as_path( node , 1 );
+      const char * enkf_outfile    = config_content_node_iget( node , 2 );
+      const char * parameter_file  = config_content_node_iget_as_path( node , 3 );
+      hash_type * opt_hash         = hash_alloc();
+
+      config_content_node_init_opt_hash( node , opt_hash , 4 );
       {
-        hash_type * opt_hash                = hash_alloc();
-        enkf_config_node_type * config_node = ensemble_config_add_gen_kw( ensemble_config , key , forward_init);
-        config_content_node_init_opt_hash( node , opt_hash , 4 );
+        const char *  forward_string = hash_safe_get( opt_hash , FORWARD_INIT_KEY );
+        enkf_config_node_type * config_node;
+        bool forward_init = false;
+        
+        if (forward_string) {
+          if (!util_sscanf_bool( forward_string , &forward_init))
+            fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
+        }
+        
+        config_node = ensemble_config_add_gen_kw( ensemble_config , key , forward_init);
         enkf_config_node_update_gen_kw( config_node , 
                                       enkf_outfile , 
                                       template_file , 
-                                      parameter_file , 
+                                        parameter_file , 
                                       hash_safe_get( opt_hash , MIN_STD_KEY ) , 
                                       hash_safe_get( opt_hash , INIT_FILES_KEY));
-        hash_free( opt_hash );
       }
+      hash_free( opt_hash );
     }
   }
 }

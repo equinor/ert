@@ -293,8 +293,8 @@ enkf_var_type enkf_node_get_var_type(const enkf_node_type * enkf_node) {
   return enkf_config_node_get_var_type(enkf_node->config);
 }
 
-bool enkf_node_get_forward_init( const enkf_node_type * enkf_node ) {
-  return enkf_config_node_get_forward_init( enkf_node->config );
+bool enkf_node_use_forward_init( const enkf_node_type * enkf_node ) {
+  return enkf_config_node_use_forward_init( enkf_node->config );
 }
 
 
@@ -859,7 +859,7 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
 */
 
 bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , rng_type * rng) {
-  if (enkf_node_get_forward_init( enkf_node ))
+  if (enkf_node_use_forward_init( enkf_node ))
     return false; // This node will be initialized by loading results from the forward model.
   else {
     if (enkf_node->initialize != NULL) {

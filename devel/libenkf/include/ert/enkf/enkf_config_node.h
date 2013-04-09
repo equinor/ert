@@ -158,7 +158,7 @@ extern "C" {
   void                  enkf_node_free(enkf_node_type *enkf_node);
   const enkf_node_type * enkf_config_node_get_min_std( const enkf_config_node_type * config_node );
 
-  bool                  enkf_config_node_get_forward_init(const enkf_config_node_type * config_node);
+  bool                  enkf_config_node_use_forward_init(const enkf_config_node_type * config_node);
   void                  enkf_config_node_set_forward_init(enkf_config_node_type * config_node, bool forward_init);
       
 
