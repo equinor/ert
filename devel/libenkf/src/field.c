@@ -1145,19 +1145,6 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
 /*****************************************************************/
 
 
-/* /\* Skal param_name vaere en variabel ?? *\/ */
-/* void field_rms_export_parameter(const field_type * field , const char * param_name , const float * data3D,  const rms_file_type * rms_file) { */
-/*   const field_config_type * config = field->config; */
-/*   const int data_size = field_config_get_data_size(config); */
-  
-/*   /\* Hardcoded rms_float_type *\/ */
-/*   rms_tagkey_type *tagkey = rms_tagkey_alloc_complete("data" , data_size , rms_float_type , data3D , true); */
-/*   rms_tag_fwrite_parameter(param_name , tagkey , rms_file_get_FILE(rms_file)); */
-/*   rms_tagkey_free(tagkey); */
-  
-/* } */
-
-
 
 
 /**

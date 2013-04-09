@@ -1044,12 +1044,57 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
   } 
 }
 
+
+static void enkf_state_forward_init(enkf_state_type * enkf_state , 
+                                    enkf_fs_type * fs , 
+                                    bool * loadOK ) {
+  run_info_type * run_info   = enkf_state->run_info;
+
+  if (run_info->step1 == 0) {
+    int iens = enkf_state_get_iens( enkf_state );
+    hash_iter_type * iter = hash_iter_alloc( enkf_state->node_hash );
+    while ( !hash_iter_is_complete(iter) ) {
+      enkf_node_type * node = hash_iter_get_next_value(iter);
+      if (enkf_node_use_forward_init(node)) {
+        node_id_type node_id = {.report_step = 0 ,  
+                                .iens = iens ,      
+                                .state = ANALYZED };
+
+        if (enkf_node_forward_init(node , run_info->run_path , iens ) && 
+            (enkf_node_has_data( node , fs , node_id) == false)) {   // Will not reinitialize; i.e. it is essential
+                                                                     // that the forward model uses the state given
+                                                                     // from the stored instance, and not from the
+                                                                     // current run of e.g. RMS.                 
+          enkf_node_store( node , fs, false , node_id );
+        } else
+          *loadOK = false;
+      }
+    }
+    hash_iter_free( iter );
+  }
+
+}
+
+
+
+static void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
+                                               enkf_fs_type * fs , 
+                                               bool * loadOK , 
+                                               bool interactive , 
+                                               stringlist_type * msg_list) {
+  if (ensemble_config_have_forward_init( enkf_state->ensemble_config ))
+    enkf_state_forward_init( enkf_state , fs , loadOK );
+
+  enkf_state_internalize_results( enkf_state , fs , loadOK , interactive , msg_list );
+}
+
+
 /**
    Observe that this does not return the loadOK flag; it will load as
    good as it can all the data it should, and be done with it. 
 */
 
-void * enkf_state_internalize_results_mt( void * arg ) {
+void * enkf_state_load_from_forward_model_mt( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
   enkf_fs_type * fs            = arg_pack_iget_ptr( arg_pack , 1 );
@@ -1069,7 +1114,7 @@ void * enkf_state_internalize_results_mt( void * arg ) {
                           model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 
                           enkf_state->subst_list );
   
-  enkf_state_internalize_results( enkf_state , fs , &loadOK , interactive , msg_list );
+  enkf_state_load_from_forward_model( enkf_state , fs , &loadOK , interactive , msg_list );
   if (interactive) {
     printf(".");
     fflush(stdout);
@@ -1118,7 +1163,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state , enkf_fs
        before things blow up completely at a later instant.
     */  
     if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
-      ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL );
+      ensemble_config_ensure_static_key(enkf_state->ensemble_config , kw );
     
     if (!enkf_state_has_node(enkf_state , kw)) {
       const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
@@ -1194,13 +1239,26 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state, enkf_fs_type * fs) {
     
     const int num_keys = hash_get_size(enkf_state->node_hash);
     char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
+    int iens = enkf_state_get_iens( enkf_state );
     int ikey;
-    
+
     for (ikey = 0; ikey < num_keys; ikey++) {
       if (!stringlist_contains(enkf_state->restart_kw_list , key_list[ikey])) {          /* Make sure that the elements in the restart file are not written (again). */
         enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-        if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE)                          /* Ensure that no-longer-active static keywords do not create problems. */
-          enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+        if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE) {                        /* Ensure that no-longer-active static keywords do not create problems. */
+          bool forward_init = enkf_node_use_forward_init( enkf_node );
+
+          if ((run_info->step1 == 0) && (forward_init)) {
+            node_id_type node_id = {.report_step = 0, 
+                                    .iens = iens , 
+                                    .state = ANALYZED };
+            
+            if (enkf_node_has_data( enkf_node , fs , node_id))
+              enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+          } else
+            enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+
+        }
       }
     }
     util_free_stringlist(key_list , num_keys);
@@ -1244,7 +1302,11 @@ void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mas
       node_id_type node_id = {.report_step = report_step , 
                               .iens = member_config_get_iens( my_config ) , 
                               state = state };
-      enkf_node_load(enkf_node , fs , node_id);
+      bool forward_init = enkf_node_use_forward_init( enkf_node );
+      if (forward_init)
+        enkf_node_try_load(enkf_node , fs , node_id );
+      else
+        enkf_node_load(enkf_node , fs , node_id);
     }
   }
   util_free_stringlist(key_list , num_keys);
@@ -1884,7 +1946,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
      is OK the final status is updated, otherwise: restart.
   */
   log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
-  enkf_state_internalize_results(enkf_state , fs , &loadOK , false , NULL); 
+  enkf_state_load_from_forward_model(enkf_state , fs , &loadOK , false , NULL); 
   if (loadOK) {
     /*
       The loading succeded - so this is a howling success! We set

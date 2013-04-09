@@ -66,7 +66,7 @@ typedef struct enkf_state_struct    enkf_state_type;
   time_t             enkf_state_get_submit_time( const enkf_state_type * enkf_state );
   bool               enkf_state_resubmit_simulation( enkf_state_type * enkf_state , enkf_fs_type * fs , bool resample);
   bool               enkf_state_kill_simulation( const enkf_state_type * enkf_state );
-  void *             enkf_state_internalize_results_mt( void * arg );
+  void *             enkf_state_load_from_forward_model_mt( void * arg );
   void               enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs, const stringlist_type * param_list , bool force_init);
   void               enkf_state_fread(enkf_state_type *  , enkf_fs_type * fs , int  , int  , state_enum );
   bool               enkf_state_get_analyzed(const enkf_state_type * );
