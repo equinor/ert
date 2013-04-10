@@ -64,7 +64,7 @@ class RFTFetcher(PlotDataFetcherHandler):
         obs_size = block_obs.get_size
         grid = field_config.get_grid
 
-        node = ert.enkf.enkf_node_alloc(config_node)
+        node = config_node.alloc_node
 
         y_obs = []
         x_obs = []
@@ -77,7 +77,7 @@ class RFTFetcher(PlotDataFetcherHandler):
         for index in range(obs_size):
             ert.ecl.ecl_grid_get_xyz3(grid, i[index], j[index], k[index], xpos, ypos , zpos)
             y_obs.append(zpos.value)
-            ert.enkf.field_obs_iget(field_obs, index, value, std)
+            block_obs.iget(index, value, std)
             x_obs.append(value.value)
             x_std.append(std.value)
             data.checkMaxMin(value.value + std.value)
@@ -89,10 +89,10 @@ class RFTFetcher(PlotDataFetcherHandler):
 
 
         for member in range(ens_size):
-            if ert.enkf.enkf_fs_has_node(fs, config_node, report_step, member, ert_state_enum.ANALYZED.value()):
-                ert.enkf.enkf_fs_fread_node(fs, node, report_step, member, ert_state_enum.ANALYZED.value())
-            elif ert.enkf.enkf_fs_has_node(fs, config_node, report_step, member, ert_state_enum.FORECAST.value()):
-                ert.enkf.enkf_fs_fread_node(fs, node, report_step, member, ert_state_enum.FORECAST.value())
+            if fs.has_node(config_node, report_step, member, ert_state_enum.ANALYZED.value()):
+                fs.fread_node(node, report_step, member, ert_state_enum.ANALYZED.value())
+            elif fs.has_node(config_node, report_step, member, ert_state_enum.FORECAST.value()):
+                fs.fread_node(node, report_step, member, ert_state_enum.FORECAST.value())
             else:
                 print "No data found for member %d/%d." % (member, report_step)
                 continue
@@ -102,7 +102,7 @@ class RFTFetcher(PlotDataFetcherHandler):
             x_data = data.x_data[member]
             y_data = data.y_data[member]
 
-            field = ert.enkf.enkf_node_value_ptr(node)
+            field = node.value_ptr
             for index in range(obs_size):
                 value = ert.enkf.field_ijk_get_double(field, i[index] , j[index] , k[index])
                 x_data.append(value)
