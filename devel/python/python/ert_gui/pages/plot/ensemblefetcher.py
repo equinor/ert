@@ -120,7 +120,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                         #    print "Not valid: ", key, member, step, key_index
 
                     if not comparison_fs is None:
-                        if comparison_fs.has_node(config_node, step, member, state.value()):
+                        if comparison_fs.has_node(key, step, member, state.value()):
                             sim_time = member_config.iget_sim_time(step, comparison_fs)
                             comparison_fs.fread_node(comp_node, step, member, state.value())
                             valid = ertwrapper.c_int()

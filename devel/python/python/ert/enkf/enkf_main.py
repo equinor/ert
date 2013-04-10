@@ -208,7 +208,6 @@ class EnKFMain(CClass):
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         cfunc.get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std)
         
-    @property
     def get_observation_count(self, user_key):
         return cfunc.get_observation_count(self, user_key)
  

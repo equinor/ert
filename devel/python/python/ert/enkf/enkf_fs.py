@@ -32,10 +32,10 @@ class EnkfFs(CClass):
         if self.owner:
             cfunc.close( self )
 
-    def has_node(self, node_key, step, member, value, type = 1):#enkf_var_type.PARAMETER):
+    def has_node(self, node_key, step, member, value, type = enkf_var_type.PARAMETER.value()):
         return cfunc.has_node(self, node_key, type, step, member, value)
     
-    def fread_node(self, node, step, member, value,type = enkf_var_type.PARAMETER):
+    def fread_node(self, node, step, member, value,type = enkf_var_type.PARAMETER.value()):
         buffer = c_buffer()
         cfunc.fread_node(self, buffer, node, type, step, member, value)
 
