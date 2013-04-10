@@ -81,7 +81,8 @@ class EclConfig(CClass):
 
     @property     
     def get_refcase(self):
-        refcase = ert.ecl.ecl_sum.EclSum( c_ptr = cfunc.get_refcase( self ))
+        refcase = ert.ecl.ecl_sum.EclSum(self.get_refcase_name)
+        refcase.__init__(self.get_refcase_name, c_ptr = cfunc.get_refcase( self ))
         return refcase
 ##################################################################
 

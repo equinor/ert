@@ -22,7 +22,7 @@ import ert.ert.ertwrapper as ertwrapper
 import ert.ert.enums as enums
 from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
 from PyQt4.QtCore import SIGNAL
-from ert.ert.erttypes import time_t
+from ert.ert.erttypes import time_t, time_vector
 import numpy
 from ert.util.node_id import *
 
@@ -146,8 +146,8 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
         self._getRefCase(ert, key, data)
 
-        node.free
-        comp_node.free
+        #node.__del__
+        #comp_node.__del__
 
         data.inverted_y_axis = False
 
@@ -181,9 +181,10 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         ecl_sum = ecl_config.get_refcase
 
         if(ecl_sum.has_key(key)):
-            ki = ecl_sum.get_general_var_index(key)
-            x_data = ert.ecl.ecl_sum_alloc_time_vector(ecl_sum, True)
-            y_data = ert.ecl.ecl_sum_alloc_data_vector(ecl_sum, ki, True)
+            ki = ecl_sum.get_general_var_index
+            print 'Her er den %d' % ki
+            x_data = ecl_sum.alloc_time_vector(True)
+            y_data = ecl_sum.alloc_data_vector(ki, True)
 
             data.refcase_x = []
             data.refcase_y = []
