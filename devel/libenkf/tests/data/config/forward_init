@@ -1,0 +1,5 @@
+RUNPATH Simulations/Run%d
+NUM_REALIZATIONS 1
+
+
+JOB_SCRIPT script.sh
