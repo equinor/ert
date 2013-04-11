@@ -20,8 +20,8 @@ from    ert.cwrap.cclass           import CClass
 from    ert.util.tvector           import * 
 from    enkf_enum                  import *
 from    ert.job_queue.forward_model import ForwardModel
-from    ert.ert.c_enums import history_source
 from    libenkf import *
+from    ert.sched.history import HistoryType
 class ModelConfig(CClass):
     
     def __init__(self , c_ptr = None):
@@ -42,7 +42,7 @@ class ModelConfig(CClass):
 
     @property
     def get_history_source(self):
-        return cfunc.get_history_source( self )
+        return HistoryType(c_ptr = cfunc.get_history_source( self ))
 
     def set_history_source(self, ):
         sys.stderr.write("set_history_source is defunct")
@@ -79,7 +79,7 @@ cfunc = CWrapperNameSpace("model_config")
 cfunc.free                    = cwrapper.prototype("void model_config_free( model_config )")
 cfunc.get_enkf_sched_file     = cwrapper.prototype("char* model_config_get_enkf_sched_file( model_config )")
 cfunc.set_enkf_sched_file     = cwrapper.prototype("void model_config_set_enkf_sched_file( model_config, char*)")
-cfunc.get_history_source      = cwrapper.prototype("history_source model_config_get_history_source(model_config)")
+cfunc.get_history_source      = cwrapper.prototype("c_void_p model_config_get_history_source(model_config)")
 cfunc.set_history_source      = cwrapper.safe_prototype("void model_config_set_history_source(model_config, int)")
 cfunc.get_forward_model       = cwrapper.prototype("c_void_p model_config_get_forward_model(model_config)")
 cfunc.get_max_internal_submit = cwrapper.prototype("int model_config_get_max_internal_submit(model_config)")
