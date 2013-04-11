@@ -38,7 +38,6 @@ Group:          Development/Libraries/C and C++
 Requires:       %{name} = %{version}
 Requires:       lapack-devel
 Requires:       libert.ecl1 = %{version}
-BuildArch:      noarch
 
 %description devel
 This package contains the development and header files for ert.ecl
