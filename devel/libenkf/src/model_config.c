@@ -286,7 +286,7 @@ int model_config_get_max_internal_submit( const model_config_type * config ) {
   return config->max_internal_submit;
 }
 
-static void model_config_set_max_internal_submit( model_config_type * model_config , int max_resample ) {
+void model_config_set_max_internal_submit( model_config_type * model_config , int max_resample ) {
   model_config->max_internal_submit = max_resample;
 }
 

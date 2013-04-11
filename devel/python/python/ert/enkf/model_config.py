@@ -20,6 +20,7 @@ from    ert.cwrap.cclass           import CClass
 from    ert.util.tvector           import * 
 from    enkf_enum                  import *
 from    ert.job_queue.forward_model import ForwardModel
+from    ert.ert.c_enums import history_source
 from    libenkf import *
 class ModelConfig(CClass):
     
@@ -78,11 +79,11 @@ cfunc = CWrapperNameSpace("model_config")
 cfunc.free                    = cwrapper.prototype("void model_config_free( model_config )")
 cfunc.get_enkf_sched_file     = cwrapper.prototype("char* model_config_get_enkf_sched_file( model_config )")
 cfunc.set_enkf_sched_file     = cwrapper.prototype("void model_config_set_enkf_sched_file( model_config, char*)")
-cfunc.get_history_source      = cwrapper.prototype("int model_config_get_history_source(model_config)")
+cfunc.get_history_source      = cwrapper.prototype("history_source model_config_get_history_source(model_config)")
 cfunc.set_history_source      = cwrapper.safe_prototype("void model_config_set_history_source(model_config, int)")
 cfunc.get_forward_model       = cwrapper.prototype("c_void_p model_config_get_forward_model(model_config)")
 cfunc.get_max_internal_submit = cwrapper.prototype("int model_config_get_max_internal_submit(model_config)")
-cfunc.set_max_internal_submit = cwrapper.safe_prototype("void model_config_set_max_internal_submit(model_config, int)")
+cfunc.set_max_internal_submit = cwrapper.prototype("void model_config_set_max_internal_submit(model_config, int)")
 cfunc.get_case_table_file     = cwrapper.prototype("char* model_config_get_case_table_file(model_config)")
 cfunc.get_runpath_as_char     = cwrapper.prototype("char* model_config_get_runpath_as_char(model_config)")
 cfunc.select_runpath          = cwrapper.safe_prototype("void model_config_select_runpath(model_config, char*)")
