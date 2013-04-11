@@ -32,6 +32,7 @@ def createObservationsPage(configPanel, parent):
         history_source = ert.main.model_config.get_history_source
         return history_source_type.resolveValue(history_source)
 
+    r.initialize = get_history_source
     r.getter = get_history_source
 
     def set_history_source(ert, value):
@@ -47,6 +48,7 @@ def createObservationsPage(configPanel, parent):
         obs = ert.main.get_obs
         return obs.get_config_file
 
+    r.initialize = get_obs
     r.getter = get_obs
 
 
@@ -56,6 +58,7 @@ def createObservationsPage(configPanel, parent):
 
 
     r = configPanel.addRow(ReloadButton(parent, "Reload Observations", "config/observations/reload_observation", "Reload"))
+    r.initialize = lambda ert : ert.main.reload_obs
     r.getter = lambda ert : ert.main.reload_obs
     
 

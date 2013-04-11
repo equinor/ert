@@ -30,17 +30,17 @@ def createAnalysisPage(configPanel, parent):
     configPanel.startPage("Analysis")
 
     r = configPanel.addRow(CheckBox(parent, "ENKF rerun", "config/analysis/enkf_rerun", "Perform rerun"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.analysis_config.get_rerun 
     r.getter = lambda ert : ert.main.analysis_config.get_rerun
     r.setter = lambda ert, value : ert.main.analysis_config.set_rerun( value)
 
     r = configPanel.addRow(IntegerSpinner(parent, "Rerun start", "config/analysis/rerun_start",  0, 100000))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.analysis_config.get_rerun_start
     r.getter = lambda ert : ert.main.analysis_config.get_rerun_start
     r.setter = lambda ert, value : ert.main.analysis_config.set_rerun_start( value)
 
     r = configPanel.addRow(PathChooser(parent, "ENKF schedule file", "config/analysis/enkf_sched_file"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.model_config.get_enkf_sched_file
     r.getter = lambda ert : ert.main.model_config.get_enkf_sched_file
     r.setter = lambda ert, value : ert.main.model_config.set_enkf_sched_file(str(value))
 
@@ -52,7 +52,7 @@ def createAnalysisPage(configPanel, parent):
         config_files_pointer = ert.main.local_config.get_config_files
         return ert.getStringList(config_files_pointer)
 
-    r.initialize = r.emptyInitializer
+    r.initialize = get_local_config_files
     r.getter = get_local_config_files
 
     def add_config_file(ert, value):
@@ -62,11 +62,10 @@ def createAnalysisPage(configPanel, parent):
         for file in value:
             ert.main.local_config.add_config_file( file)
 
-    r.initialize = r.emptyInitializer        
     r.setter = add_config_file
 
     r = configPanel.addRow(PathChooser(parent, "Update log", "config/analysis/update_log"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.analysis_config.get_log_path
     r.getter = lambda ert : ert.main.analysis_config.get_log_path
     r.setter = lambda ert, value : ert.main.analysis_config.set_log_path( str(value))
 
@@ -74,12 +73,12 @@ def createAnalysisPage(configPanel, parent):
     configPanel.startGroup("EnKF")
 
     r = configPanel.addRow(DoubleSpinner(parent, "Alpha", "config/analysis/enkf_alpha", 0, 100000, 2))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.analysis_config.get_alpha
     r.getter = lambda ert : ert.main.analysis_config.get_alpha
     r.setter = lambda ert, value : ert.main.analysis_config.set_alpha( value)
 
     r = configPanel.addRow(CheckBox(parent, "Merge Observations", "config/analysis/enkf_merge_observations", "Perform merge"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.analysis_config.get_merge_observations 
     r.getter = lambda ert : ert.main.analysis_config.get_merge_observations
     r.setter = lambda ert, value : ert.main.analysis_config.set_merge_observations( value)
 

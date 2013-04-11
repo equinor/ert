@@ -34,14 +34,14 @@ def createSystemPage(configPanel, parent):
     # the site configuration file; this should only be a label - not
     # user editable.
     r = configPanel.addRow(ActiveLabel(None, "Site Config", "", "Not specified."))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.get_site_config_file
     r.getter = lambda ert : ert.main.get_site_config_file
     r.modelConnect("casesUpdated()", r.fetchContent)
     
 
 
     r = configPanel.addRow(PathChooser(parent, "Job script", "config/systemenv/job_script", True))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.site_config.get_job_script
     r.getter = lambda ert : ert.main.site_config.get_job_script
     r.setter = lambda ert, value : ert.main.site_config.set_job_script( str(value))
 
@@ -49,7 +49,7 @@ def createSystemPage(configPanel, parent):
     internalPanel.startPage("setenv")
 
     r = internalPanel.addRow(KeywordTable(parent, "", "config/systemenv/setenv"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.getHash(ert.main.site_config.get_env_hash)
     r.getter = lambda ert : ert.getHash(ert.main.site_config.get_env_hash)
 
     def setenv(ert, value):
@@ -64,7 +64,7 @@ def createSystemPage(configPanel, parent):
     internalPanel.startPage("Update path")
 
     r = internalPanel.addRow(KeywordTable(parent, "", "config/systemenv/update_path"))
-    r.initialize = r.emptyInitializer
+
     def get_update_path(ert):
         paths = ert.getStringList(ert.main.site_config.get_path_variables)
         values =  ert.getStringList(ert.main.site_config.get_path_values)
@@ -72,7 +72,7 @@ def createSystemPage(configPanel, parent):
         return [[p, v] for p, v in zip(paths, values)]
 
     r.getter = get_update_path
-
+    r.initialize = get_update_path
     def update_pathvar(ert, value):
         ert.main.site_config.clear_pathvar
 
@@ -138,7 +138,7 @@ def createSystemPage(configPanel, parent):
             return False
         return True
 
-
+    
     r.getter = get_jobs
     r.setter = update_job
     r.insert = add_job
@@ -150,10 +150,12 @@ def createSystemPage(configPanel, parent):
     configPanel.addRow(internalPanel)
 
     r = configPanel.addRow(PathChooser(parent, "Log file", "config/systemenv/log_file", True))
+    r.initialize = lambda ert: ert.main.logh.get_filename
     r.getter = lambda ert : ert.main.logh.get_filename
     r.setter = lambda ert, value : ert.main.logh.reopen_filename( value)
 
     r = configPanel.addRow(ert_gui.widgets.spinnerwidgets.IntegerSpinner(parent, "Log level", "config/systemenv/log_level", 0, 1000))
+    r.initialize = lambda ert : ert.main.logh.get_level
     r.getter = lambda ert : ert.main.logh.get_level
     r.setter = lambda ert, value : ert.main.logh.set_level( value)
 
