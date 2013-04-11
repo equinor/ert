@@ -19,7 +19,8 @@ add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
 
 add_executable( enkf_forward_init enkf_forward_init.c )
 target_link_libraries( enkf_forward_init enkf )
-add_test( enkf_forward_init  ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward_init )
+add_test( enkf_forward_init1  ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_gen_xxx_true   TRUE)
+add_test( enkf_forward_init2  ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_gen_xxx_false FALSE)
 
 add_executable( enkf_iter_config enkf_iter_config.c )
 target_link_libraries( enkf_iter_config enkf )

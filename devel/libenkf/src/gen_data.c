@@ -309,9 +309,13 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
 }
 
 
-void gen_data_fload( gen_data_type * gen_data , const char * filename) {
-  if (!gen_data_fload_with_report_step( gen_data , filename , 0))
+bool gen_data_fload( gen_data_type * gen_data , const char * filename) {
+  if (gen_data_fload_with_report_step( gen_data , filename , 0))
+    return true;
+  else {
     util_abort("%s: failed to load from filename:%s \n",__func__ , filename );
+    return false;
+  }
 }
 
 

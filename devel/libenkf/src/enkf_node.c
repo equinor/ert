@@ -372,9 +372,9 @@ bool enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs ,
 
 
 
-void enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
+bool enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
   FUNC_ASSERT( enkf_node->fload );
-  enkf_node->fload( enkf_node->data , filename );
+  return enkf_node->fload( enkf_node->data , filename );
 }
 
 
@@ -426,9 +426,10 @@ bool enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path ,
   char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , run_path , iens );
   bool loadOK = false;
   if (init_file) {
-    loadOK = enkf_node->forward_load( enkf_node->data , init_file , NULL , NULL , 0 );
-    util_safe_free( init_file );
+    FUNC_ASSERT(enkf_node->fload);
+    loadOK = enkf_node->fload( enkf_node->data , init_file );
   }
+  util_safe_free( init_file );
   return loadOK;
 }
 
