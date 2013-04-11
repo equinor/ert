@@ -23,6 +23,7 @@ import  libenkf
 from    ert.enkf.gen_data_config import GenDataConfig
 from    ert.enkf.gen_kw_config   import GenKwConfig
 from    ert.enkf.field_config    import FieldConfig
+from    ert.enkf.enkf_node import EnkfNode
 
 class EnkfConfigNode(CClass):
     
@@ -73,9 +74,9 @@ class EnkfConfigNode(CClass):
     def get_enkf_infile(self):
         return cfunc.get_enkf_infile( self)
 
+    @property
     def alloc_node(self):
-        node=ert.enkf.enkf_node.EnkfNode()
-        node.alloc(self)
+        node = EnkfNode.alloc(self)
         return node
 ##################################################################
 

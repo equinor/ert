@@ -36,7 +36,6 @@ from    ert.enkf.site_config      import *
 from    ert.enkf.libenkf          import *
 from    ert.enkf.enkf_fs          import *
 from    ert.enkf.ert_templates    import *
-from    ert.enkf.member_config    import *
 from    ert.enkf.enkf_state       import *
 from    ert.util.log              import *
 
@@ -181,7 +180,7 @@ class EnKFMain(CClass):
        
     @property
     def get_fs(self):
-        enkf_fsout = ert.enkf.enkf_fs.EnkfFs(cfunc.get_fs(self))
+        enkf_fsout = ert.enkf.enkf_fs.EnkfFs(c_ptr = cfunc.get_fs(self))
         return enkf_fsout
 
     @property
@@ -196,10 +195,6 @@ class EnKFMain(CClass):
     def copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step, target_state, member_mask, ranking_key, node_list):
         cfunc.copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step, target_state, member_mask, ranking_key, node_list)
 
-
-    def iget_member_config(self, ens_memb):
-        i_memb_conf = ert.enkf.member_config.MemberConfig( cfunc.iget_member_config( self ,ens_memb))
-        return i_memb_conf
 
     def iget_state(self, ens_memb):
         i_enkf_state = ert.enkf.enkf_state.EnKFState( cfunc.iget_state( self ,ens_memb))
@@ -262,7 +257,6 @@ cfunc.get_fs                       = cwrapper.prototype("c_void_p enkf_main_get_
 cfunc.get_history_length           = cwrapper.prototype("int enkf_main_get_history_length(enkf_main)")
 cfunc.initialize_from_existing__   = cwrapper.prototype("void enkf_main_initialize_from_existing__(enkf_main, char*, int, int, bool_vector, char*, stringlist)")
 cfunc.copy_ensemble                = cwrapper.prototype("void enkf_main_copy_ensemble(enkf_main, char*, int, int, char*, int, int, bool_vector, char*, stringlist)")
-cfunc.iget_member_config           = cwrapper.prototype("c_void_p enkf_main_iget_member_config(enkf_main, int)")
 cfunc.get_observations             = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)") 
 cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
 cfunc.mount_extra_fs               = cwrapper.safe_prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")

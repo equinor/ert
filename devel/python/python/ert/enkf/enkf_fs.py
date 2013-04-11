@@ -15,11 +15,14 @@
 #  for more details. 
 
 import  ctypes
+from ctypes import c_buffer
 from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 from ert.ert.enums import enkf_var_type
+from ert.enkf.time_map import TimeMap
+from    ert.util.buffer        import Buffer
 import  libenkf
 class EnkfFs(CClass):
     
@@ -35,10 +38,14 @@ class EnkfFs(CClass):
     def has_node(self, node_key, step, member, value, type = enkf_var_type.PARAMETER.value()):
         return cfunc.has_node(self, node_key, type, step, member, value)
     
-    def fread_node(self, node, step, member, value,type = enkf_var_type.PARAMETER.value()):
-        buffer = c_buffer()
-        cfunc.fread_node(self, buffer, node, type, step, member, value)
+    def fread_node(self, key, step, member, value,type = enkf_var_type.PARAMETER.value()):
+        buffer = Buffer(100)
+        cfunc.fread_node(self, buffer, key, type, step, member, value)
 
+    @property
+    def get_time_map(self):
+        return TimeMap(cfunc.get_time_map(self))
+    
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -48,6 +55,8 @@ cfunc = CWrapperNameSpace("enkf_fs")
 
 cfunc.close               = cwrapper.prototype("void enkf_fs_close(enkf_fs)")
 cfunc.has_node            = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, long, int, int, int)")
-cfunc.fread_node          = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, char*, long, int, int, int)")
+cfunc.fread_node          = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, buffer, char*, long, int, int, int)")
+cfunc.get_time_map        = cwrapper.prototype("c_void_p enkf_fs_get_time_map(enkf_fs)")
+
 cfunc.get_read_dir        = cwrapper.safe_prototype("char* enkf_fs_get_read_dir(enkf_fs)")
 cfunc.alloc_dirlist       = cwrapper.safe_prototype("c_void_p enkf_fs_alloc_dirlist(enkf_fs)")

@@ -25,6 +25,7 @@ from PyQt4.QtCore import SIGNAL
 from ert.ert.erttypes import time_t, time_vector
 import numpy
 from ert.util.node_id import *
+from ert.ert.c_enums import c_state_enum
 
 class EnsembleFetcher(PlotDataFetcherHandler):
     """A data fetcher for ensemble parameters."""
@@ -100,16 +101,16 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                 x_comp_time = data.x_comp_data[member]
                 y_comp = data.y_comp_data[member]
 
-            member_config = ert.main.iget_member_config(member)
             stop_time = ert.main.get_history_length
 
             for step in range(0, stop_time + 1):
                 for state in state_list:
                     if fs.has_node(key, step, member, state.value()):
-                        sim_time = member_config.iget_sim_time(step, fs)
-                        fs.fread_node(node, step, member, state.value())
-                        valid = ertwrapper.c_int()
-                        node_id = NodeId(step, state, member)
+                        time_map = fs.get_time_map
+                        sim_time = time_map.iget(step)
+                        fs.fread_node(key, step, member, state.value())
+                        valid = ertwrapper.c_double()
+                        node_id = NodeId(step, state_val, member)
                         value = node.user_get(fs, key_index, node_id, ertwrapper.byref(valid))
                         if valid.value == 1:
                             data.checkMaxMin(sim_time)
@@ -121,10 +122,11 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
                     if not comparison_fs is None:
                         if comparison_fs.has_node(key, step, member, state.value()):
-                            sim_time = member_config.iget_sim_time(step, comparison_fs)
+                            time_map = comparison_fs.get_time_map
+                            sim_time = time_map.iget(step)
                             comparison_fs.fread_node(comp_node, step, member, state.value())
-                            valid = ertwrapper.c_int()
-                            node_id = NodeId(step, state, member)
+                            valid = ertwrapper.c_double()
+                            node_id = NodeId(step, state.value(), member)
                             value = comp_node.user_get(comparison_fs, key_index, node_id, ertwrapper.byref(valid))
                             if valid.value == 1:
                                 #data.checkMaxMin(sim_time)
@@ -181,8 +183,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         ecl_sum = ecl_config.get_refcase
 
         if(ecl_sum.has_key(key)):
-            ki = ecl_sum.get_general_var_index
-            print 'Her er den %d' % ki
+            ki = ecl_sum.get_general_var_index(key)
             x_data = ecl_sum.alloc_time_vector(True)
             y_data = ecl_sum.alloc_data_vector(ki, True)
 

@@ -18,10 +18,11 @@ import  ctypes
 from    ert.cwrap.cwrap        import *
 from    ert.cwrap.cclass       import CClass
 from    ert.ert.erttypes       import time_t
-#from    ert.util.tvector       import * 
-#from    enkf_enum              import *
-#import  libenkf
-#from    ert.enkf.libenkf       import *
+from    ert.util.tvector       import * 
+from    enkf_enum              import *
+import  libenkf
+from    ert.enkf.libenkf       import *
+
 #from ert.job_queue.ext_joblist import ExtJoblist
 
 class TimeMap(CClass):
@@ -31,16 +32,15 @@ class TimeMap(CClass):
             self.init_cref( c_ptr , parent)
         else:
             self.init_cobj( c_ptr , cfunc.free )
-
+            
     @property
     def iget_sim_days(self, step):
         return cfunc.iget_sim_days(self,step)
     
-    @property
     def iget(self,step):
-        return time_t(cfunc.iget(self,step)
-##################################################################
+        return cfunc.iget(self,step)
 
+##################################################################
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "time_map" , TimeMap )
 
@@ -51,4 +51,4 @@ cfunc = CWrapperNameSpace("time_map")
 
 cfunc.free                  = cwrapper.prototype("void time_map_free( time_map )")           
 cfunc.iget_sim_days         = cwrapper.prototype("double time_map_iget_sim_days(time_map, int)")
-cfunc.iget                  = cwrapper.prototype("time_t time_map_iget(time_map, step)"
+cfunc.iget                  = cwrapper.prototype("time_t time_map_iget(time_map, int)")
