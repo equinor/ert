@@ -77,11 +77,11 @@ class InitPanel(QtGui.QFrame):
 
 
         def create_case(ert, cases):
-            fs = ert.main.get_fs(ert.main)
+            fs = ert.main.get_fs
 
             for case in cases:
-                if not ert.enkf_fs.has_dir( case):
-                    fs.select_write_dir( case, True)
+                if not fs.has_dir(case):
+                    fs.select_write_dir(case, True)
                     break
 
             self.currentCase.updateList(self.get_case_list(ert))
@@ -89,6 +89,7 @@ class InitPanel(QtGui.QFrame):
             self.casesUpdated()
 
         cases.getter = self.get_case_list
+        cases.initialize = self.get_case_list
         cases.setter = create_case
 
         return cases
