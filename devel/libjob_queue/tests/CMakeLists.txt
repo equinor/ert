@@ -52,3 +52,7 @@ add_test( job_lsf_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_test )
 if (LSF_SERVERS)
    add_test( job_lsf_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_program ${LSF_SERVERS})
 endif()
+
+add_executable( job_torque_test job_torque_test.c )
+target_link_libraries( job_torque_test job_queue util )
+add_test( job_torque_test ${EXECUTABLE_OUTPUT_PATH}/job_torque_test )
