@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2013  Statoil ASA, Norway. 
     
-   The file 'enkf_forward_init_GEN_KW.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'enkf_forward_init_SURFACE.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -46,7 +46,8 @@ int main(int argc , char ** argv) {
   enkf_main_install_SIGNALS();
   {
     const char * config_file = argv[1];
-    const char * forward_init_string = argv[2];
+    const char * init_file = argv[2];
+    const char * forward_init_string = argv[3];
     bool forward_init;
     bool strict = true;
     enkf_main_type * enkf_main;
@@ -57,23 +58,23 @@ int main(int argc , char ** argv) {
     enkf_main = enkf_main_bootstrap( NULL , config_file , strict , true );
     {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
-      enkf_node_type * gen_kw_node = enkf_state_get_node( state , "MULTFLT" );
+      enkf_node_type * surface_node = enkf_state_get_node( state , "SURFACE" );
       {
-        enkf_config_node_type * gen_kw_config_node = enkf_node_get_config( gen_kw_node );
-        char * init_file1 = enkf_config_node_alloc_initfile( gen_kw_config_node , NULL , 0);
-        char * init_file2 = enkf_config_node_alloc_initfile( gen_kw_config_node , "/tmp", 0);
+        enkf_config_node_type * surface_config_node = enkf_node_get_config( surface_node );
+        char * init_file1 = enkf_config_node_alloc_initfile( surface_config_node , NULL , 0);
+        char * init_file2 = enkf_config_node_alloc_initfile( surface_config_node , "/tmp", 0);
 
-        test_assert_bool_equal( enkf_config_node_use_forward_init( gen_kw_config_node ) , forward_init );
-        test_assert_string_equal( init_file1 , "MULTFLT_INIT");
-        test_assert_string_equal( init_file2 , "/tmp/MULTFLT_INIT");
+        test_assert_bool_equal( enkf_config_node_use_forward_init( surface_config_node ) , forward_init );
+        test_assert_string_equal( init_file1 , "Surface.irap");
+        test_assert_string_equal( init_file2 , "/tmp/Surface.irap");
 
         free( init_file1 );
         free( init_file2 );
       }
   
-      test_assert_bool_equal( enkf_node_use_forward_init( gen_kw_node ) , forward_init );
+      test_assert_bool_equal( enkf_node_use_forward_init( surface_node ) , forward_init );
       if (forward_init)
-        test_assert_bool_not_equal( enkf_node_initialize( gen_kw_node , 0 , enkf_state_get_rng( state )) , forward_init);
+        test_assert_bool_not_equal( enkf_node_initialize( surface_node , 0 , enkf_state_get_rng( state )) , forward_init);
       // else hard_failure()
     }
     test_assert_bool_equal( forward_init, ensemble_config_have_forward_init( enkf_main_get_ensemble_config( enkf_main )));
@@ -81,7 +82,7 @@ int main(int argc , char ** argv) {
     if (forward_init) {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
-      enkf_node_type * gen_kw_node = enkf_state_get_node( state , "MULTFLT" );
+      enkf_node_type * surface_node = enkf_state_get_node( state , "SURFACE" );
       node_id_type node_id = {.report_step = 0 ,  
                               .iens = 0,
                               .state = ANALYZED };
@@ -99,11 +100,11 @@ int main(int argc , char ** argv) {
         }
         
         
-        test_assert_false( enkf_node_has_data( gen_kw_node , fs, node_id ));
+        test_assert_false( enkf_node_has_data( surface_node , fs, node_id ));
         
-        util_unlink_existing( "/tmp/simulations/run0/MULTFLT_INIT" );
+        util_unlink_existing( "/tmp/simulations/run0/Surface.irap" );
         
-        test_assert_false( enkf_node_forward_init( gen_kw_node , "/tmp/simulations/run0" , 0 ));
+        test_assert_false( enkf_node_forward_init( surface_node , "/tmp/simulations/run0" , 0 ));
         enkf_state_forward_init( state , fs , &loadOK );
         test_assert_false( loadOK );
 
@@ -114,13 +115,7 @@ int main(int argc , char ** argv) {
       }
       
 
-
-      {
-        FILE * stream = util_fopen("/tmp/simulations/run0/MULTFLT_INIT" , "w");
-        fprintf(stream , "123456.0\n" );
-        fclose( stream );
-      }
-      
+      util_copy_file( init_file , "/tmp/simulations/run0/Surface.irap");
       {
         bool loadOK = true;
         stringlist_type * msg_list = stringlist_alloc_new();
@@ -130,7 +125,7 @@ int main(int argc , char ** argv) {
           enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
         }
         
-        test_assert_true( enkf_node_forward_init( gen_kw_node , "/tmp/simulations/run0" , 0 ));
+        test_assert_true( enkf_node_forward_init( surface_node , "/tmp/simulations/run0" , 0 ));
         enkf_state_forward_init( state , fs , &loadOK );
         test_assert_true( loadOK );
         enkf_state_load_from_forward_model( state , fs , &loadOK , false , msg_list );
@@ -139,20 +134,25 @@ int main(int argc , char ** argv) {
 
         {
           double value;
-          test_assert_true( enkf_node_user_get( gen_kw_node , fs , "MULTFLT" , node_id , &value)); 
-          test_assert_double_equal( 123456.0 , value);
+          test_assert_true( enkf_node_user_get( surface_node , fs , "0" , node_id , &value)); 
+          test_assert_double_equal( 2735.7461 , value);
+
+          test_assert_true( enkf_node_user_get( surface_node , fs , "5" , node_id , &value)); 
+          test_assert_double_equal( 2737.0122 , value);
         }
       }
       util_clear_directory( "/tmp/simulations" , true , true );
       create_runpath( enkf_main );
       test_assert_true( util_is_directory( "/tmp/simulations/run0" ));
-      test_assert_true( util_is_file( "/tmp/simulations/run0/MULTFLT.INC" ));
+      test_assert_true( util_is_file( "/tmp/simulations/run0/SURFACE.INC" ));
+      test_assert_true( enkf_node_fload( surface_node , "/tmp/simulations/run0/SURFACE.INC"));
       {
-        FILE * stream = util_fopen("/tmp/simulations/run0/MULTFLT.INC" , "r");
         double value;
-        fscanf(stream , "%g" , &value);
-        fclose( stream );
-        test_assert_double_equal( 123456.0 , value);
+        test_assert_true( enkf_node_user_get( surface_node , fs , "0" , node_id , &value)); 
+        test_assert_double_equal( 2735.7461 , value);
+      
+        test_assert_true( enkf_node_user_get( surface_node , fs , "5" , node_id , &value)); 
+        test_assert_double_equal( 2737.0122 , value);
       }
       util_clear_directory( "/tmp/simulations" , true , true );
     }

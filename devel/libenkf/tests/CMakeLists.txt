@@ -22,6 +22,23 @@ target_link_libraries( enkf_forward_init_GEN_KW enkf )
 add_test( enkf_forward_init_GEN_KW_TRUE   ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_gen_xxx_true   TRUE)
 add_test( enkf_forward_init_GEN_KW_FALSE  ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_gen_xxx_false FALSE)
 
+add_executable( enkf_forward_init_SURFACE enkf_forward_init_SURFACE.c )
+target_link_libraries( enkf_forward_init_SURFACE enkf )
+
+add_test( enkf_forward_init_SURFACE_TRUE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_SURFACE 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/config_surface_true   
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
+          TRUE)
+
+add_test( enkf_forward_init_SURFACE_FALSE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_SURFACE 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/config_surface_false
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
+          FALSE)
+
+
+
 add_executable( enkf_iter_config enkf_iter_config.c )
 target_link_libraries( enkf_iter_config enkf )
 add_test( enkf_iter_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_iter_config )
@@ -67,4 +84,6 @@ add_test( enkf_ensemble  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble )
 
 set_property( TEST enkf_time_map2     PROPERTY LABELS Statoil )
 set_property( TEST enkf_site_config   PROPERTY LABELS Statoil )
+set_property( TEST enkf_forward_init_SURFACE_FALSE  PROPERTY LABELS Statoil )
+set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS Statoil )
 

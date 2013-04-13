@@ -1043,6 +1043,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->iaddsqr            = surface_iaddsqr__;
     node->imul               = surface_imul__;
     node->isqrt              = surface_isqrt__;
+    node->fload              = surface_fload__;
     break;
   case(FIELD):
     node->alloc              = field_alloc__;

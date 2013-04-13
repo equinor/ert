@@ -512,7 +512,7 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
             fprintf(stderr,"** error: when entering a surface you must provide arguments:\n");
             fprintf(stderr,"**   %s:/path/to/input/files%%d  \n",INIT_FILES_KEY);
             fprintf(stderr,"**   %s:name_of_output_file\n", OUTPUT_FILE_KEY);
-            fprintf(stderr,"**   %s:base_surface_file\n",base_surface);
+            fprintf(stderr,"**   %s:base_surface_file\n",BASE_SURFACE_KEY);
             exit(1);
           }
         
