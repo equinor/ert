@@ -20,16 +20,16 @@ from    ert.cwrap.cclass           import CClass
 from    ert.util.tvector           import * 
 import    libsched
 class HistoryType(CClass):
-    
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
 
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
+
+    def get_source_string(self):
+        return cfunc.get_source_string(self)
+            
 ##################################################################
 
 cwrapper = CWrapper( libsched.lib )
@@ -41,4 +41,4 @@ cfunc = CWrapperNameSpace("history_type")
 ##################################################################
 
 cfunc.free                    = cwrapper.prototype("void history_free( history_type )")
-                                 
+cfunc.get_source_string       = cwrapper.prototype("char* history_get_source_string(history_type)")

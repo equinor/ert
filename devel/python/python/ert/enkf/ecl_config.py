@@ -84,6 +84,12 @@ class EclConfig(CClass):
         refcase = ert.ecl.ecl_sum.EclSum(self.get_refcase_name)
         refcase.__init__(self.get_refcase_name, c_ptr = cfunc.get_refcase( self ))
         return refcase
+
+    def clear_static_kw(self):
+        cfunc.clear_static_kw(self)
+
+    def add_static_kw(self,kw):
+        cfunc.add_static_kw(self,kw)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )

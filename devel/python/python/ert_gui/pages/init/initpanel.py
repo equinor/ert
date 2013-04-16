@@ -124,3 +124,5 @@ class InitPanel(QtGui.QFrame):
         self.currentCase.setter = select_case
 
         return self.currentCase
+
+    

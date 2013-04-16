@@ -110,7 +110,8 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                         sim_time = time_map.iget(step)
                         fs.fread_node(key, step, member, state.value())
                         valid = ertwrapper.c_double()
-                        node_id = NodeId(step, state_val, member)
+                        state_enum = c_state_enum(state.value())
+                        node_id = NodeId(step, state_enum, member)
                         value = node.user_get(fs, key_index, node_id, ertwrapper.byref(valid))
                         if valid.value == 1:
                             data.checkMaxMin(sim_time)

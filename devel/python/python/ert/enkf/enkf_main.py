@@ -77,7 +77,7 @@ class EnKFMain(CClass):
     
     @property     
     def model_config(self):
-        mod_config = ModelConfig( c_ptr = cfunc.get_model_config( self ))
+        mod_config = ModelConfig( c_ptr = cfunc.get_model_config( self ) , parent = self)
         return mod_config
 
     @property     

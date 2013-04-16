@@ -34,7 +34,7 @@ def createEclipsePage(configPanel, parent):
     r = configPanel.addRow(PathChooser(parent, "Data file", "config/eclipse/data_file", show_files=True))
     r.initialize = lambda ert : ert.main.ecl_config.get_data_file
     r.getter = lambda ert : ert.main.ecl_config.get_data_file
-    r.setter = lambda ert, value : ert.main.set_data_file(str(value))
+    r.setter = lambda ert, value : ert.main.set_datafile(str(value))
 
     r = configPanel.addRow(PathChooser(parent, "Grid", "config/eclipse/grid", show_files=True))
     r.initialize = lambda ert : ert.main.ecl_config.get_gridfile
@@ -86,10 +86,10 @@ def createEclipsePage(configPanel, parent):
     r.getter = lambda ert : ert.getStringList(ert.main.ecl_config.get_static_kw_list)
 
     def add_static_kw(ert, listOfKeywords):
-        ert.main.ecl_config.clear_static_kw(ert.ecl_config)
+        ert.main.ecl_config.clear_static_kw
 
         for keyword in listOfKeywords:
-            ert.main.ecl_config.add_static_kw(ert.ecl_config, keyword)
+            ert.main.ecl_config.add_static_kw(keyword)
 
     r.setter = add_static_kw
     r.initialize = lambda ert : ert.getStringList(ert.main.ecl_config.get_static_kw_list)
