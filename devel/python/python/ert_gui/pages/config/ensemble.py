@@ -236,6 +236,7 @@ def createEnsemblePage(configPanel, parent):
 
 
     r.getter = getEnsembleParameters
+    r.initialize = getEnsembleParameters
     r.remove = removeParameter
     r.insert = insertParameter
     r.setter = updateParameter
