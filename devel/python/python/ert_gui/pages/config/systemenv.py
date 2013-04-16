@@ -140,6 +140,7 @@ def createSystemPage(configPanel, parent):
 
     
     r.getter = get_jobs
+    r.initialize = get_jobs
     r.setter = update_job
     r.insert = add_job
     r.remove = remove_job
