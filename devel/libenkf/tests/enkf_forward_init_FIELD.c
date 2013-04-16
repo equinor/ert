@@ -60,7 +60,7 @@ int main(int argc , char ** argv) {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_node_type * field_node = enkf_state_get_node( state , "PORO" );
       {
-        enkf_config_node_type * field_config_node = enkf_node_get_config( field_node );
+        const enkf_config_node_type * field_config_node = enkf_node_get_config( field_node );
         char * init_file1 = enkf_config_node_alloc_initfile( field_config_node , NULL , 0);
         char * init_file2 = enkf_config_node_alloc_initfile( field_config_node , "/tmp", 0);
 
@@ -125,7 +125,7 @@ int main(int argc , char ** argv) {
           enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
         }
         
-        test_assert_true( enkf_node_forward_init( field_node , "/tmp/simulations/run0" , 0 ));
+        test_assert_true( enkf_node_forward_init( field_node , "/tmp/simulations/run0" , 0));
         enkf_state_forward_init( state , fs , &loadOK );
         test_assert_true( loadOK );
         enkf_state_load_from_forward_model( state , fs , &loadOK , false , msg_list );
