@@ -117,7 +117,6 @@ endif()
 
 
 if (BUILD_PYTHON)
-   #include(cmake/python.cmake)
    include(cmake/python.cmake2)
    add_subdirectory( python )
 endif()
