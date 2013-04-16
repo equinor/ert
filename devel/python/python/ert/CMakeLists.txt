@@ -1,4 +1,5 @@
-add_python_target( python_ert ${PYTHON_INSTALL_PREFIX}/ert __init__ )
+add_python_package( "Python ert" "__init__.py" ${PYTHON_INSTALL_PREFIX}/ert)
+
 add_subdirectory( config )
 add_subdirectory( cwrap )
 add_subdirectory( ecl )

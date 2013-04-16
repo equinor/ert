@@ -1,0 +1,21 @@
+function(add_python_package target source_files PYTHON_INSTALL_PATH)
+
+  set(target_files "")                       
+
+  foreach (file ${source_files} )
+     set(  target_file ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PATH}/${file} )
+     set(  source_file ${CMAKE_CURRENT_SOURCE_DIR}/${file} )
+
+     add_custom_command(
+        OUTPUT ${target_file}
+        COMMAND ${PROJECT_SOURCE_DIR}/cmake/cmake_pyc2
+        ARGS ${source_file} ${target_file} 
+        DEPENDS ${source_file} )
+    
+     list(APPEND target_files ${target_file} )
+     install(FILES ${target_file} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTALL_PATH})
+  endforeach()
+
+  add_custom_target( ${target} ALL DEPENDS ${target_files})
+
+endfunction()
