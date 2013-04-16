@@ -1126,11 +1126,14 @@ bool field_fload_typed(field_type * field , const char * filename ,  field_file_
 
 
 bool field_fload(field_type * field , const char * filename ) {
-  field_file_format_type file_type = field_config_guess_file_type( filename );
-  if (file_type == UNDEFINED_FORMAT) 
-    file_type = field_config_manual_file_type(filename , true);
-
-  return field_fload_typed(field , filename , file_type);
+  if (util_file_readable( filename )) {
+    field_file_format_type file_type = field_config_guess_file_type( filename );
+    if (file_type == UNDEFINED_FORMAT) 
+      file_type = field_config_manual_file_type(filename , true);
+    
+    return field_fload_typed(field , filename , file_type);
+  } else
+    return false;
 }
 
 
@@ -1380,10 +1383,12 @@ void field_update_sum(field_type * sum , const field_type * field , double lower
 */
 bool field_user_get(const field_type * field, const char * index_key, int report_step , state_enum state, double * value)
 {
+  printf("index_key : %s \n",index_key);
   const    bool internal_value = false;
   bool     valid;
   int      i,j,k;
   int      parse_user_key = field_config_parse_user_key(field->config , index_key , &i, &j , &k);
+  
 
   if (parse_user_key == 0) {
     int active_index = field_config_active_index(field->config , i,j,k);
