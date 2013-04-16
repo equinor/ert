@@ -30,7 +30,7 @@ def createObservationsPage(configPanel, parent):
 
     def get_history_source(ert):
         history_source = ert.main.model_config.get_history_source
-        return history_source_type.resolveValue(history_source)
+        return history_source_type.resolveValue(history_source.get_source_string)
 
     r.initialize = get_history_source
     r.getter = get_history_source
