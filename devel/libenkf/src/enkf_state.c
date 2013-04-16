@@ -281,6 +281,7 @@ static void shared_info_free(shared_info_type * shared_info) {
 
 void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list, bool force_init) {
   state_enum init_state = ANALYZED;
+  bool initOK = true;
   int ip;
   for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
     int iens = enkf_state_get_iens( enkf_state );
@@ -289,7 +290,6 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
     if (force_init || (enkf_node_has_data( param_node , fs , node_id) == false)) {
       if (enkf_node_initialize( param_node , iens , enkf_state->rng)) 
         enkf_node_store( param_node , fs , true , node_id);
-      
     }
   }
 }
@@ -1045,9 +1045,9 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
 }
 
 
-static void enkf_state_forward_init(enkf_state_type * enkf_state , 
-                                    enkf_fs_type * fs , 
-                                    bool * loadOK ) {
+void enkf_state_forward_init(enkf_state_type * enkf_state , 
+                             enkf_fs_type * fs , 
+                             bool * loadOK ) {
   run_info_type * run_info   = enkf_state->run_info;
 
   if (run_info->step1 == 0) {
@@ -1060,14 +1060,18 @@ static void enkf_state_forward_init(enkf_state_type * enkf_state ,
                                 .iens = iens ,      
                                 .state = ANALYZED };
 
-        if (enkf_node_forward_init(node , run_info->run_path , iens ) && 
-            (enkf_node_has_data( node , fs , node_id) == false)) {   // Will not reinitialize; i.e. it is essential
-                                                                     // that the forward model uses the state given
-                                                                     // from the stored instance, and not from the
-                                                                     // current run of e.g. RMS.                 
-          enkf_node_store( node , fs, false , node_id );
-        } else
-          *loadOK = false;
+
+        /* Will not reinitialize; i.e. it is essential that the
+           forward model uses the state given from the stored
+           instance, and not from the current run of e.g. RMS.  */
+
+        if (!enkf_node_has_data( node , fs , node_id)) {   
+          if (enkf_node_forward_init(node , run_info->run_path , iens ))
+            enkf_node_store( node , fs, false , node_id );
+          else
+            *loadOK = false;
+        }
+
       }
     }
     hash_iter_free( iter );
@@ -1077,14 +1081,15 @@ static void enkf_state_forward_init(enkf_state_type * enkf_state ,
 
 
 
-static void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
-                                               enkf_fs_type * fs , 
-                                               bool * loadOK , 
-                                               bool interactive , 
-                                               stringlist_type * msg_list) {
+void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
+                                        enkf_fs_type * fs , 
+                                        bool * loadOK , 
+                                        bool interactive , 
+                                        stringlist_type * msg_list) {
+
   if (ensemble_config_have_forward_init( enkf_state->ensemble_config ))
     enkf_state_forward_init( enkf_state , fs , loadOK );
-
+  
   enkf_state_internalize_results( enkf_state , fs , loadOK , interactive , msg_list );
 }
 
@@ -2099,7 +2104,9 @@ void enkf_state_init_run(enkf_state_type * state ,
 
 
 
-
+rng_type * enkf_state_get_rng( const enkf_state_type * enkf_state ) {
+  return enkf_state->rng;
+}
 
 unsigned int enkf_state_get_random( enkf_state_type * enkf_state ) {
   return rng_forward( enkf_state->rng );

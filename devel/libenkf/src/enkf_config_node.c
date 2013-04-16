@@ -654,7 +654,7 @@ char * enkf_config_node_alloc_initfile( const enkf_config_node_type * node , con
     char * file = path_fmt_alloc_file( node->init_file_fmt , false , iens );
     if (util_is_abs_path( file ))
       return file;
-    else if (path) {
+    else {
       char * full_path = util_alloc_filename( path , file , NULL );
       free( file );
       return full_path;

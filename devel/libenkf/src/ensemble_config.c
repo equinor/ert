@@ -471,11 +471,11 @@ void ensemble_config_init_GEN_KW( ensemble_config_type * ensemble_config , const
         
         config_node = ensemble_config_add_gen_kw( ensemble_config , key , forward_init);
         enkf_config_node_update_gen_kw( config_node , 
-                                      enkf_outfile , 
-                                      template_file , 
+                                        enkf_outfile , 
+                                        template_file , 
                                         parameter_file , 
-                                      hash_safe_get( opt_hash , MIN_STD_KEY ) , 
-                                      hash_safe_get( opt_hash , INIT_FILES_KEY));
+                                        hash_safe_get( opt_hash , MIN_STD_KEY ) , 
+                                        hash_safe_get( opt_hash , INIT_FILES_KEY));
       }
       hash_free( opt_hash );
     }
@@ -512,7 +512,7 @@ void ensemble_config_init_SURFACE( ensemble_config_type * ensemble_config , cons
             fprintf(stderr,"** error: when entering a surface you must provide arguments:\n");
             fprintf(stderr,"**   %s:/path/to/input/files%%d  \n",INIT_FILES_KEY);
             fprintf(stderr,"**   %s:name_of_output_file\n", OUTPUT_FILE_KEY);
-            fprintf(stderr,"**   %s:base_surface_file\n",base_surface);
+            fprintf(stderr,"**   %s:base_surface_file\n",BASE_SURFACE_KEY);
             exit(1);
           }
         

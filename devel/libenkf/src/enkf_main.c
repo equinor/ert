@@ -3493,11 +3493,10 @@ ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main
   return enkf_main->workflow_list;
 }
 
-
-bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow) {
+bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow ) {
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
   if (ert_workflow_list_has_workflow( workflow_list , workflow)) 
-    return ert_workflow_list_run_workflow( workflow_list , workflow , enkf_main );
+    return ert_workflow_list_run_workflow( workflow_list , workflow , enkf_main);
   else
     return false;
 }
