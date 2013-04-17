@@ -29,7 +29,7 @@ def createQueueSystemPage(configPanel, parent):
     configPanel.startPage("Queue System")
 
     r = configPanel.addRow(ComboChoice(parent, ["LSF", "RSH", "LOCAL"], "Queue system", "config/queue_system/queue_system"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.site_config.get_queue_name
     r.getter = lambda ert : ert.main.site_config.get_queue_name
     r.setter = lambda ert, value : ert.main.site_config.set_job_queue(str(value))
 
@@ -38,17 +38,17 @@ def createQueueSystemPage(configPanel, parent):
     internalPanel.startPage("LSF")
 
     r = internalPanel.addRow(StringBox(parent, "LSF Queue", "config/queue_system/lsf_queue"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.site_config.get_lsf_queue
     r.getter = lambda ert : ert.main.site_config.get_lsf_queue
     r.setter = lambda ert, value : ert.main.site_config.set_lsf_queue( str(value))
 
     r = internalPanel.addRow(IntegerSpinner(parent, "Max running", "config/queue_system/max_running_lsf", 1, 1000))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.site_config.get_max_running_lsf
     r.getter = lambda ert : ert.main.site_config.get_max_running_lsf
     r.setter = lambda ert, value : ert.main.site_config.set_max_running_lsf( value)
 
     r = internalPanel.addRow(StringBox(parent, "Resources", "config/queue_system/lsf_resources"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.site_config.get_lsf_request
     r.getter = lambda ert : ert.main.site_config.get_lsf_request
     r.setter = lambda ert, value : ert.main.site_config.set_lsf_request(str(value))
 
@@ -58,18 +58,18 @@ def createQueueSystemPage(configPanel, parent):
     internalPanel.startPage("RSH")
 
     r = internalPanel.addRow(PathChooser(parent, "Command", "config/queue_system/rsh_command", show_files=True, must_exist=True, is_executable_file=True))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.site_config.get_rsh_command
     r.getter = lambda ert : ert.main.site_config.get_rsh_command
     r.setter = lambda ert, value : ert.main.site_config.set_rsh_command(str(value))
 
     r = internalPanel.addRow(IntegerSpinner(parent, "Max running", "config/queue_system/max_running_rsh", 1, 1000))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.site_config.get_max_running_rsh
     r.getter = lambda ert : ert.main.site_config.get_max_running_rsh
     r.setter = lambda ert, value : ert.main.site_config.set_max_running_rsh( value)
 
 
     r = internalPanel.addRow(KeywordTable(parent, "Host List", "config/queue_system/rsh_host_list", "Host", "Number of jobs"))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.getHash(ert.main.site_config.get_rsh_host_list, True)
     r.getter = lambda ert : ert.getHash(ert.main.site_config.get_rsh_host_list, True)
 
     def add_rsh_host(ert, listOfKeywords):
@@ -91,7 +91,7 @@ def createQueueSystemPage(configPanel, parent):
     internalPanel.startPage("LOCAL")
 
     r = internalPanel.addRow(IntegerSpinner(parent, "Max running", "config/queue_system/max_running_local", 1, 1000))
-    r.initialize = r.emptyInitializer
+    r.initialize = lambda ert : ert.main.site_config.get_max_running_local
     r.getter = lambda ert : ert.main.site_config.get_max_running_local
     r.setter = lambda ert, value : ert.main.site_config.set_max_running_local(ert.site_config, value)
 
