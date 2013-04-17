@@ -44,49 +44,6 @@ def createEnsemblePage(configPanel, parent):
     r = configPanel.addRow(ParameterPanel(parent, "", "")) # no help file necessary
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("ensembleUpdated()"))
 
-#    def initialize(ert):
-#        ensemble_config_get_node(char*)
-#        ensemble_config_alloc_keylist
-#        ensemble_config_add_summary(char*)
-#        ensemble_config_add_gen_kw(char*)
-#        ensemble_config_add_gen_data(char*)
-#        ensemble_config_add_field(char*, long)
-#
-#        enkf_main_del_node(char*)
-#        ecl_config_get_grid
-#
-#        enkf_config_node_get_impl_type
-#        enkf_config_node_get_ref
-#        enkf_config_node_is_valid
-#        enkf_config_node_get_min_std_file
-#        enkf_config_node_get_enkf_outfile
-#        enkf_config_node_get_enkf_infile
-#        enkf_config_node_update_gen_kw(char*, char*, char*, char*, char*)
-#        enkf_config_node_update_state_field(int, double, double)
-#        enkf_config_node_update_parameter_field(char*, char*, char*, int, double, double, char*, char*)
-#        enkf_config_node_update_general_field(char*, char*, char*, char*, int, double, double, char*, char*, char*)
-#        enkf_config_node_update_gen_data(int, int, char*, char*, char*, char*, char*, char*)
-
-#        gen_kw_config_get_template_file
-#        gen_kw_config_get_init_file_fmt
-#        gen_kw_config_get_parameter_file
-
-#        gen_data_config_get_output_format
-#        gen_data_config_get_input_format
-#        gen_data_config_get_template_file
-#        gen_data_config_get_template_key
-#        gen_data_config_get_init_file_fmt
-
-#        field_config_get_type
-#        field_config_get_truncation_mode
-#        field_config_get_truncation_min
-#        field_config_get_truncation_max
-#        field_config_get_init_transform_name
-#        field_config_get_output_transform_name
-#        field_config_get_init_file_fmt
-
-
-
 
     def getEnsembleParameters(ert):
         keys = ert.main.ensemble_config.alloc_keylist
@@ -117,7 +74,7 @@ def createEnsemblePage(configPanel, parent):
                 model["init"] = node.field_model.get_init_transform_name
                 model["output"] = node.field_model.get_output_transform_name
                 
-                model["init_files"] = "????" ##node.field_model.get_init_file_fmt
+                model["init_files"] = node.get_init_file_fmt
                 model["min_std"] = node.get_min_std_file
                 model["enkf_outfile"] = node.get_enkf_outfile
                 model["enkf_infile"] = node.get_enkf_infile
@@ -133,7 +90,7 @@ def createEnsemblePage(configPanel, parent):
 
                 template_file = node.data_model.get_template_file
                 template_key = node.data_model.get_template_key
-                init_file_fmt = "????" #node.data_model.get_init_file_fmt
+                init_file_fmt = node.get_init_file_fmt
 
                 model["output_format"] = output_format
                 model["input_format"] = input_format
@@ -156,7 +113,7 @@ def createEnsemblePage(configPanel, parent):
                 model["min_std"] = node.get_min_std_file
                 model["enkf_outfile"] = node.get_enkf_outfile
                 model["template"] = node.keyword_model.get_template_file
-                model["init_file"] = "????" #node.keyword_model.get_init_file_fmt
+                model["init_file"] = node.get_init_file_fmt
                 model["parameter_file"] = node.keyword_model.get_parameter_file
             elif type == SummaryModel.TYPE:
                 model = SummaryModel(key)
