@@ -19,6 +19,8 @@ from    ert.cwrap.cwrap       import *
 from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
+from    ert.enkf.enkf_fs import EnkfFs
+from    ert.util.node_id import NodeId
 import  libenkf
 class EnkfNode(CClass):
     
@@ -31,8 +33,9 @@ class EnkfNode(CClass):
         if self.owner:
             cfunc.free( self )
 
-    def alloc(self,config_node):
-        node = EnkfNode(cfunc.alloc( config_node ) , parent = config_node)
+    @staticmethod
+    def alloc(config_node):
+        node = EnkfNode(c_ptr = cfunc.alloc( config_node ) )
         return node 
 
     def user_get(self, fs, key, node_id, value):

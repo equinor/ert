@@ -134,7 +134,7 @@ class SiteConfig(CClass):
         return cfunc.get_max_submit( self )
 
     def set_max_submit(self, max):
-        cfunc.set_job_script( self , max)
+        cfunc.set_max_submit( self , max)
 
     @property
     def get_license_root_path(self):

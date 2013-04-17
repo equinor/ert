@@ -37,10 +37,12 @@ def createSimulationsPage(configPanel, parent):
 
 
     r = configPanel.addRow(IntegerSpinner(parent, "Max submit", "config/simulation/max_submit", 1, 10000))
+    r.initialize = lambda ert : ert.main.site_config.get_max_submit
     r.getter = lambda ert : ert.main.site_config.get_max_submit
     r.setter = lambda ert, value : ert.main.site_config.set_max_submit( value)
 
     r = configPanel.addRow(IntegerSpinner(parent, "Max internal submit", "config/simulation/max_resample", 1, 10000))
+    r.initialize = lambda ert : ert.main.model_config.get_max_internal_submit
     r.getter = lambda ert : ert.main.model_config.get_max_internal_submit
     r.setter = lambda ert, value : ert.main.model_config.set_max_internal_submit( value)
 
@@ -77,6 +79,7 @@ def createSimulationsPage(configPanel, parent):
         return result
 
     r.getter = get_forward_model
+    r.initialize = get_forward_model
 
     def update_forward_model(ert, forward_model):
         forward_model_object = ert.main.model_config.get_forward_model
@@ -98,7 +101,8 @@ def createSimulationsPage(configPanel, parent):
     def get_case_table(ert):
         return ert.main.model_config.get_case_table_file
     r.getter = get_case_table
-
+    r.initialize = get_case_table
+    
     def set_case_table(ert, value):
         if os.path.exists(value):
             ert.main.set_case_table( ert.nonify(value))
@@ -107,6 +111,7 @@ def createSimulationsPage(configPanel, parent):
     
     r = configPanel.addRow(PathChooser(parent, "License path", "config/simulation/license_path"))
     r.getter = lambda ert : ert.main.site_config.get_license_root_path
+    r.initialize = lambda ert : ert.main.site_config.get_license_root_path
 
     def ls(string):
         if string is None:
@@ -125,6 +130,7 @@ def createSimulationsPage(configPanel, parent):
     r = internalPanel.addRow(PathChooser(parent, "Runpath", "config/simulation/runpath", path_format=True))
 
     r.getter = lambda ert : ert.main.model_config.get_runpath_as_char
+    r.initialize = lambda ert : ert.main.model_config.get_runpath_as_char
     r.setter = lambda ert, value : ert.main.model_config.select_runpath( str(value))
     parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("runpathChanged()"))
 
@@ -132,6 +138,7 @@ def createSimulationsPage(configPanel, parent):
     r = internalPanel.addRow(CheckBox(parent, "Pre clear", "config/simulation/pre_clear_runpath", "Perform pre clear"))
 
     r.getter = lambda ert : ert.main.get_pre_clear_runpath
+    r.initialize = lambda ert : ert.main.get_pre_clear_runpath
     r.setter = lambda ert, value : ert.main.set_pre_clear_runpath( value)
 
 
@@ -147,7 +154,8 @@ def createSimulationsPage(configPanel, parent):
         return result
 
     r.getter = get_runpath_retain_state
-
+    r.initialize = get_runpath_retain_state
+    
     def set_runpath_retain_state(ert, items):
         for item in items:
             ert.main.iset_keep_runpath(item.member, item.runpath_state.value())
@@ -176,6 +184,7 @@ def createSimulationsPage(configPanel, parent):
         return result
 
     r.getter = get_run_templates
+    r.initialize = get_run_templates
 
     def set_run_templates(ert, template_list):
         templates_object = ert.main.get_templates

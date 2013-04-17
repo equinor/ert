@@ -2588,7 +2588,8 @@ void enkf_main_set_schedule_prediction_file__( enkf_main_type * enkf_main , cons
 
   if (template_file != NULL) {
     char * target_file;
-    enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key );                                                
+    bool forward_init = false;
+    enkf_config_node_type * config_node = ensemble_config_add_gen_kw( enkf_main->ensemble_config , key , forward_init);                                                
     {
       char * base;
       char * ext;
@@ -3492,11 +3493,10 @@ ert_workflow_list_type * enkf_main_get_workflow_list( enkf_main_type * enkf_main
   return enkf_main->workflow_list;
 }
 
-
-bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow) {
+bool enkf_main_run_workflow( enkf_main_type * enkf_main , const char * workflow ) {
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
   if (ert_workflow_list_has_workflow( workflow_list , workflow)) 
-    return ert_workflow_list_run_workflow( workflow_list , workflow , enkf_main );
+    return ert_workflow_list_run_workflow( workflow_list , workflow , enkf_main);
   else
     return false;
 }

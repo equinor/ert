@@ -36,7 +36,6 @@ from    ert.enkf.site_config      import *
 from    ert.enkf.libenkf          import *
 from    ert.enkf.enkf_fs          import *
 from    ert.enkf.ert_templates    import *
-from    ert.enkf.member_config    import *
 from    ert.enkf.enkf_state       import *
 from    ert.util.log              import *
 
@@ -68,42 +67,42 @@ class EnKFMain(CClass):
     
     @property        
     def ensemble_config(self):
-        config = ert.enkf.ens_config.EnsConfig( cfunc.get_ens_config( self ) , parent = self)
+        config = EnsConfig( c_ptr = cfunc.get_ens_config( self ) , parent = self)
         return config
     
     @property 
     def analysis_config(self):
-        anal_config = ert.enkf.analysis_config.AnalysisConfig( cfunc.get_analysis_config( self ))
+        anal_config = AnalysisConfig( c_ptr = cfunc.get_analysis_config( self ))
         return anal_config
     
     @property     
     def model_config(self):
-        mod_config = ert.enkf.model_config.ModelConfig( cfunc.get_model_config( self ))
+        mod_config = ModelConfig( c_ptr = cfunc.get_model_config( self ) , parent = self)
         return mod_config
 
     @property     
     def logh(self):
-        mog = ert.util.log.Log( cfunc.get_logh( self ))
+        mog = Log( c_ptr = cfunc.get_logh( self ))
         return mog
     
     @property     
     def local_config(self):
-        loc_config = ert.enkf.local_config.LocalConfig( cfunc.get_local_config( self ))
+        loc_config = LocalConfig( c_ptr = cfunc.get_local_config( self ))
         return loc_config
     
     @property     
     def site_config(self):
-        site_conf = ert.enkf.site_config.SiteConfig( cfunc.get_site_config( self ) , parent = self)
+        site_conf = SiteConfig( c_ptr = cfunc.get_site_config( self ) , parent = self)
         return site_conf
     
     @property     
     def ecl_config(self):
-        ecl_conf = ert.enkf.ecl_config.EclConfig( cfunc.get_ecl_config( self ))
+        ecl_conf = EclConfig( c_ptr = cfunc.get_ecl_config( self ))
         return ecl_conf
      
     @property     
     def plot_config(self):
-        plot_conf = ert.enkf.plot_config.PlotConfig( cfunc.get_plot_config( self ))
+        plot_conf = PlotConfig( c_ptr = cfunc.get_plot_config( self ))
         return plot_conf
      
     def set_eclbase(self, eclbase):
@@ -139,7 +138,7 @@ class EnKFMain(CClass):
         
     @property
     def get_obs(self):
-        ob = ert.enkf.enkf_obs.EnkfObs( cfunc.get_obs( self ))
+        ob = EnkfObs( c_ptr = cfunc.get_obs( self ))
         return ob
     
     def load_obs(self, obs_config_file):
@@ -168,7 +167,7 @@ class EnKFMain(CClass):
 
     @property
     def get_templates(self):
-        temp = ert.enkf.ert_templates.ErtTemplates( cfunc.get_templates( self ))
+        temp = ErtTemplates( c_ptr = cfunc.get_templates( self ))
         return temp
         
     @property
@@ -181,7 +180,7 @@ class EnKFMain(CClass):
        
     @property
     def get_fs(self):
-        enkf_fsout = ert.enkf.enkf_fs.EnkfFs(cfunc.get_fs(self))
+        enkf_fsout = EnkfFs(c_ptr = cfunc.get_fs(self))
         return enkf_fsout
 
     @property
@@ -197,18 +196,13 @@ class EnKFMain(CClass):
         cfunc.copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step, target_state, member_mask, ranking_key, node_list)
 
 
-    def iget_member_config(self, ens_memb):
-        i_memb_conf = ert.enkf.member_config.MemberConfig( cfunc.iget_member_config( self ,ens_memb))
-        return i_memb_conf
-
     def iget_state(self, ens_memb):
-        i_enkf_state = ert.enkf.enkf_state.EnKFState( cfunc.iget_state( self ,ens_memb))
+        i_enkf_state = EnKFState( c_ptr = cfunc.iget_state( self ,ens_memb))
         return i_enkf_state
     
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         cfunc.get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std)
         
-    @property
     def get_observation_count(self, user_key):
         return cfunc.get_observation_count(self, user_key)
  
@@ -263,7 +257,6 @@ cfunc.get_fs                       = cwrapper.prototype("c_void_p enkf_main_get_
 cfunc.get_history_length           = cwrapper.prototype("int enkf_main_get_history_length(enkf_main)")
 cfunc.initialize_from_existing__   = cwrapper.prototype("void enkf_main_initialize_from_existing__(enkf_main, char*, int, int, bool_vector, char*, stringlist)")
 cfunc.copy_ensemble                = cwrapper.prototype("void enkf_main_copy_ensemble(enkf_main, char*, int, int, char*, int, int, bool_vector, char*, stringlist)")
-cfunc.iget_member_config           = cwrapper.prototype("c_void_p enkf_main_iget_member_config(enkf_main, int)")
 cfunc.get_observations             = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)") 
 cfunc.get_observation_count        = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
 cfunc.mount_extra_fs               = cwrapper.safe_prototype("c_void_p enkf_main_mount_extra_fs(enkf_main, char*)")

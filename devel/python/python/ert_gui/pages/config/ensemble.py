@@ -33,6 +33,7 @@ def createEnsemblePage(configPanel, parent):
 
     r = configPanel.addRow(IntegerSpinner(parent, "Number of realizations", "config/ensemble/num_realizations", 1, 10000))
 
+    r.initialize = lambda ert : ert.main.ens_size
     r.getter = lambda ert : ert.main.ens_size
     r.setter = lambda ert, value : ert.main.resize_ensemble( value)
 
@@ -235,6 +236,7 @@ def createEnsemblePage(configPanel, parent):
 
 
     r.getter = getEnsembleParameters
+    r.initialize = getEnsembleParameters
     r.remove = removeParameter
     r.insert = insertParameter
     r.setter = updateParameter

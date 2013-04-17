@@ -42,8 +42,8 @@ class PlotConfig(CClass):
         
     @property
     def get_driver(self):
-        driver = ert.plot.plot_driver.PlotDriver( cfunc.get_driver( self ))
-        return driver
+        #driver = ert.plot.plot_driver.PlotDriver( cfunc.get_driver( self ))
+        return cfunc.get_driver(self)#driver
 
     def set_driver(self, driver):
         cfunc.set_driver(self, driver)
