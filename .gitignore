@@ -3,7 +3,7 @@
 .svn/
 */.svn/
 *.pyc
-
+*~
 
 # /devel/libenkf/src/
 /devel/libenkf/src/.faultlist
