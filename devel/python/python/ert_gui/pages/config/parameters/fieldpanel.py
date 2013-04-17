@@ -48,10 +48,10 @@ class FieldPanel(QtGui.QFrame):
         self.max = DoubleBox(self, "", "config/ensemble/field_max")
         self.modelWrap(self.max, "max")
 
-        self.init = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "config/ensemble/field_init")
+        self.init = ComboChoice(self, ["None", "EXP", "EXP0", "LOG", "LN","LN0", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "config/ensemble/field_init")
         self.modelWrap(self.init, "init")
 
-        self.output = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "config/ensemble/field_output")
+        self.output = ComboChoice(self, ["None", "EXP", "EXP0", "LOG", "LN","LN0", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "config/ensemble/field_output")
         self.modelWrap(self.output, "output")
 
         self.init_files = PathChooser(self, "", "config/ensemble/field_init_files", True)

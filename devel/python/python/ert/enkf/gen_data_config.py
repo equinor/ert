@@ -22,20 +22,25 @@ from    enkf_enum             import *
 import  libenkf
 class GenDataConfig(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
+
+        @property
+        def get_template_file(self):
+            return cfunc.get_template_file(self)
+
+        def get_templaye_key(self):
+            return cfunc.get_template_key(self)
         
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
+        def get_initial_size(self):
+            return cfunc.get_initial_size(self)
 
-
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
-
-
+#        cfunc.get_output_format      = cwrapper.prototype("c_void_p gen_data_config_get_output_format(gen_data_config)")
+#        cfunc.get_input_format       = cwrapper.prototype("c_void_p gen_data_config_get_input_format(gen_data_config)")
+#        cfunc.get_init_file_fmt      = cwrapper.safe_prototype("char* gen_data_config_get_init_file_fmt(gen_data_config)")
 
 ##################################################################
 
@@ -53,5 +58,5 @@ cfunc.get_output_format      = cwrapper.prototype("c_void_p gen_data_config_get_
 cfunc.get_input_format       = cwrapper.prototype("c_void_p gen_data_config_get_input_format(gen_data_config)")
 cfunc.get_template_file      = cwrapper.prototype("char* gen_data_config_get_template_file(gen_data_config)")
 cfunc.get_template_key       = cwrapper.prototype("char* gen_data_config_get_template_key(gen_data_config)")
-cfunc.get_init_file_fmt      = cwrapper.safe_prototype("char* gen_data_config_get_init_file_fmt(gen_data_config)")
-cfunc.get_initial_size       = cwrapper.prototype("int gen_data_config_get_initial_size(gen_data_config)")
+#cfunc.get_init_file_fmt      = cwrapper.safe_prototype("char* gen_data_config_get_init_file_fmt(gen_data_config)")
+

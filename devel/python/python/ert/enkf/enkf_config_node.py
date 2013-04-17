@@ -70,6 +70,10 @@ class EnkfConfigNode(CClass):
     def alloc_node(self):
         node = EnkfNode.alloc(self)
         return node
+
+    @property
+    def get_init_file_fmt(self):
+        return cfunc.get_init_file_fmt(self)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -85,4 +89,5 @@ cfunc.get_ref             = cwrapper.prototype("c_void_p enkf_config_node_get_re
 cfunc.get_impl_type       = cwrapper.prototype("c_void_p enkf_config_node_get_impl_type(enkf_config_node)")
 cfunc.get_enkf_outfile    = cwrapper.prototype("char* enkf_config_node_get_enkf_outfile(enkf_config_node)")
 cfunc.get_min_std_file    = cwrapper.prototype("char* enkf_config_node_get_min_std_file(enkf_config_node)")
-cfunc.get_enkf_infile    = cwrapper.prototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
+cfunc.get_enkf_infile     = cwrapper.prototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
+cfunc.get_init_file_fmt   = cwrapper.prototype("char* enkf_config_node_get_init_file_fmt(enkf_config_node)")
