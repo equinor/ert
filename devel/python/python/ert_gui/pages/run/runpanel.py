@@ -30,7 +30,7 @@ from simulationsdialog import SimulationsDialog
 
 class RunWidget(HelpedWidget):
     """A widget that shows simulation parameters and the possibility to start the simulation"""
-    run_mode_type = {"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4}
+    run_mode_type = {"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4, "SMOOTHER" : 5}
     state_enum = {"UNDEFINED" : 0, "SERIALIZED" : 1, "FORECAST" : 2, "ANALYZED" : 4, "BOTH" : 6}
 
     def __init__(self, parent=None):
@@ -40,8 +40,9 @@ class RunWidget(HelpedWidget):
 
         self.modelConnect("ensembleResized()", self.fetchContent)
         self.modelConnect("runpathChanged()", self.fetchContent)
-        #self.rbAssimilation.toggle()
-        self.rbExperiment.toggle()    
+        self.rbAssimilation.toggle()
+        #self.rbExperiment.toggle()    
+        #self.rbSmoother.toggle()
 
     def createPanel(self, parent):
         """Creates the panel with the simulation parameters."""
@@ -126,11 +127,13 @@ class RunWidget(HelpedWidget):
 
         if self.rbAssimilation.isChecked():
             mode = self.run_mode_type["ENKF_ASSIMILATION"]
-        else:
+        if self.rbExperiment.isChecked():
             if simTo == -1: # -1 == End
                 mode = self.run_mode_type["ENSEMBLE_PREDICTION"]
             else:
                 mode = self.run_mode_type["ENSEMBLE_EXPERIMENT"]
+        if self.rbSmoother.isChecked():
+            mode = self.run_mode_type["SMOOTHER"]
 
         state = self.state_enum["ANALYZED"]
         if self.startState.currentText() == "Forecast" and not simFrom == 0:
@@ -204,17 +207,19 @@ class RunWidget(HelpedWidget):
     def createRadioButtons(self):
         """Create a toggle between assimilation and experiment."""
         radioLayout = QtGui.QVBoxLayout()
-        radioLayout.setSpacing(2)
+        radioLayout.setSpacing(3)
         self.rbExperiment = QtGui.QRadioButton("Ensemble experiment")
         radioLayout.addWidget(self.rbExperiment)
         self.rbAssimilation = QtGui.QRadioButton("EnKF assimilation")
         radioLayout.addWidget(self.rbAssimilation)
-
+        self.rbSmoother = QtGui.QRadioButton("Smoother")
+        radioLayout.addWidget(self.rbSmoother)
 
 
         self.connect(self.rbAssimilation , QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
         self.connect(self.rbExperiment  , QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
-
+        self.connect(self.rbSmoother  , QtCore.SIGNAL('toggled(bool)'), lambda : self.rbToggle())
+        
         return radioLayout
 
 

@@ -190,12 +190,8 @@ class SimulationsDialogController:
         self.runthread = threading.Thread(name="enkf_main_run")
         def run():
             self.view.setRunningState(True)
-            boolVector = BoolVector.active_mask(str(selectedMembers).strip('[]'))#create_from_list(memberCount, selectedMembers)
-            #boolVector.active_mask(selectedMembers)
-            #boolPtr = ert.getBoolVectorPtr(boolVector)
-
-            ert.main.run(boolVector, init_step_parameter, simFrom, state)
-            #ert.freeBoolVector(boolVector)
+            boolVector = BoolVector.active_mask(str(selectedMembers).strip('[]'))
+            ert.main.run(boolVector, init_step_parameter, simFrom, state, mode)
             self.view.setRunningState(False)
 
         self.runthread.setDaemon(True)
