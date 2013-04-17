@@ -1,3 +1,3 @@
-add_python_target( python_ert_gui ${PYTHON_INSTALL_PREFIX}/ert_gui "__init__;gert_main;newconfig")
+add_python_package( "Python ert_gui" ${PYTHON_INSTALL_PREFIX}/ert_gui "__init__.py;gert_main.py;newconfig.py" True)
 add_subdirectory( pages )
 add_subdirectory( widgets )
