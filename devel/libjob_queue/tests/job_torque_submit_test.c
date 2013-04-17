@@ -66,12 +66,6 @@ void test_submit_nocommand(torque_driver_type * driver) {
 }
 
 int main(int argc, char ** argv) {
-  char cwd[1024];
-  if (getcwd(cwd, sizeof (cwd)) != NULL)
-    fprintf(stdout, "Current working dir: %s\n", cwd);
-  else
-    perror("getcwd() error");
-
   torque_driver_type * driver = torque_driver_alloc();
   if (argc == 1) {
     test_submit_nocommand(driver);
