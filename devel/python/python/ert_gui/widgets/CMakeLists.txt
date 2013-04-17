@@ -1,2 +1,2 @@
-add_python_target( python_gui_widgets ${PYTHON_INSTALL_PREFIX}/ert_gui/widgets "__init__;activelabel;checkbox;cogwheel;combochoice;configpanel;helpedwidget;help;pathchooser;reloadbutton;searchablelist;spinnerwidgets;stringbox;tablewidgets;util;validateddialog")
+add_python_package( "Python ert_gui.widgets" ${PYTHON_INSTALL_PREFIX}/ert_gui/widgets "__init__.py;activelabel.py;checkbox.py;cogwheel.py;combochoice.py;configpanel.py;helpedwidget.py;help.py;pathchooser.py;reloadbutton.py;searchablelist.py;spinnerwidgets.py;stringbox.py;tablewidgets.py;util.py;validateddialog.py" True)
 

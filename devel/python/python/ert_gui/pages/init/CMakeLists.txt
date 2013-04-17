@@ -1,1 +1,1 @@
-add_python_target( python_gui_pages_init ${PYTHON_INSTALL_PREFIX}/ert_gui/pages/init "__init__;initandcopy;initpanel")
+add_python_package( "Python ert_gui.pages.init" ${PYTHON_INSTALL_PREFIX}/ert_gui/pages/init "__init__.py;initandcopy.py;initpanel.py" True)
