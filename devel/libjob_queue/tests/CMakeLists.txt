@@ -56,3 +56,8 @@ endif()
 add_executable( job_torque_test job_torque_test.c )
 target_link_libraries( job_torque_test job_queue util )
 add_test( job_torque_test ${EXECUTABLE_OUTPUT_PATH}/job_torque_test )
+
+add_executable( job_torque_submit_test job_torque_submit_test.c )
+target_link_libraries( job_torque_submit_test job_queue util )
+add_test(NAME job_torque_submit_test WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH} COMMAND ${EXECUTABLE_OUTPUT_PATH}/job_torque_submit_test )
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/qsub_emulators/ DESTINATION ${EXECUTABLE_OUTPUT_PATH})

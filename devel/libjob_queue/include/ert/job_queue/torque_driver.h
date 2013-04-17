@@ -14,7 +14,7 @@
     
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
-*/
+ */
 #ifndef TORQUE_DRIVER_H
 #define	TORQUE_DRIVER_H
 
@@ -23,22 +23,43 @@ extern "C" {
 #endif
 
 #include <ert/util/type_macros.h>
+#include <ert/job_queue/queue_driver.h>
 
-/*
-  The options supported by the Torque driver.
-*/
+  /*
+    The options supported by the Torque driver.
+   */
 #define TORQUE_QSUB_CMD     "QSUB_CMD"
 #define TORQUE_QSTAT_CMD    "QSTAT_CMD"
 #define TORQUE_QDEL_CMD    "QDEL_CMD"
 
-typedef struct torque_driver_struct torque_driver_type;
+  typedef struct torque_driver_struct torque_driver_type;
+  typedef struct torque_job_struct torque_job_type;
 
-void          * torque_driver_alloc( );
-const  void   * torque_driver_get_option( const void * __driver , const char * option_key);
-bool            torque_driver_set_option( void * __driver , const char * option_key , const void * value);
 
-UTIL_SAFE_CAST_HEADER( torque_driver );
- 
+  void * torque_driver_alloc();
+
+
+  void * torque_driver_submit_job(void * __driver,
+          const char * submit_cmd,
+          int num_cpu,
+          const char * run_path,
+          const char * job_name,
+          int argc,
+          const char ** argv);
+  
+  void torque_driver_kill_job(void * __driver, void * __job);
+  void torque_driver_free__(void * __driver);
+  void torque_driver_free(torque_driver_type * driver);
+  job_status_type torque_driver_get_job_status(void * __driver, void * __job);
+  void torque_driver_free_job(void * __job);
+  //  void            lsf_driver_display_info( void * __driver , void * __job);
+  void torque_driver_set_qstat_refresh_interval(torque_driver_type * driver, int refresh_interval);
+
+  const void * torque_driver_get_option(const void * __driver, const char * option_key);
+  bool torque_driver_set_option(void * __driver, const char * option_key, const void * value);
+
+  UTIL_SAFE_CAST_HEADER(torque_driver);
+
 #ifdef	__cplusplus
 }
 #endif
