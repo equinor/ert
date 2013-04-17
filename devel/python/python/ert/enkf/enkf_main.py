@@ -72,7 +72,7 @@ class EnKFMain(CClass):
     
     @property 
     def analysis_config(self):
-        anal_config = AnalysisConfig( c_ptr = cfunc.get_analysis_config( self ))
+        anal_config = AnalysisConfig( c_ptr = cfunc.get_analysis_config( self ), parent = self)
         return anal_config
     
     @property     
@@ -185,8 +185,7 @@ class EnKFMain(CClass):
 
     @property
     def get_history_length(self):
-        history_len =cfunc.get_history_length(self)
-        return history_len
+        return cfunc.get_history_length(self)
        
     def initialize_from_existing__(self, source_case,source_report_step, source_state, member_mask, ranking_key, node_list):
         cfunc.initialize_from_existing__(self, source_case, source_report_step, source_state, member_mask, ranking_key, node_list)
@@ -210,9 +209,16 @@ class EnKFMain(CClass):
     def is_initialized(self):
         return cfunc.is_initialized(self)
 
-
-    def run(self, boolPtr, init_step_parameter, simFrom, state, simulate = True):
-        cfunc.run_exp(self, boolPtr, simulate, init_step_parameter, simFrom, state)
+    def run(self, boolPtr, init_step_parameter, simFrom, state, mode):
+        #{"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4, "SMOOTHER" : 5}
+        if mode == 1:
+            cfunc.run_assimilation(self, boolPtr, init_step_parameter, simFrom, state)
+        if mode == 2:
+            cfunc.run_exp(self, boolPtr, True, init_step_parameter, simFrom, state)
+        if mode == 4:
+            cfunc.run_exp(self, boolPtr, False, init_step_parameter, simFrom, state)
+        if mode == 5:
+            cfunc.run_smoother(self, "AUTOSMOOTHER", True)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -265,3 +271,5 @@ cfunc.iget_state                   = cwrapper.prototype("c_void_p enkf_main_iget
 cfunc.user_select_fs               = cwrapper.prototype("void enkf_main_user_select_fs(enkf_main , char*)") 
 cfunc.get_logh                     = cwrapper.prototype("void enkf_main_get_logh( enkf_main )")
 cfunc.run_exp                      = cwrapper.prototype("void enkf_main_run_exp( enkf_main, bool_vector, bool, int, int, int)")
+cfunc.run_assimilation             = cwrapper.prototype("void enkf_main_run_assimilation( enkf_main, bool_vector, int, int, int)")
+cfunc.run_smoother                 = cwrapper.prototype("void enkf_main_run_smoother(enkf_main, char*, bool)")
