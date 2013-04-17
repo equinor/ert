@@ -27,14 +27,11 @@ from    ert.enkf.enkf_node import EnkfNode
 
 class EnkfConfigNode(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
 
     @property
     def get_impl_type( self ):
@@ -54,21 +51,16 @@ class EnkfConfigNode(CClass):
 
     @property
     def field_model(self):
-        obj = FieldConfig()
-        obj.c_ptr = cfunc.get_ref( self)
-        return obj
+        return FieldConfig(c_ptr = cfunc.get_ref( self), parent = self)
 
     @property
     def data_model(self):
-        obj = GenDataConfig()
-        obj.c_ptr = cfunc.get_ref( self)
-        return obj
+        return GenDataConfig(c_ptr = cfunc.get_ref( self), parent = self)
 
     @property
     def keyword_model(self):
-        obj = GenKwConfig()
-        obj.c_ptr = cfunc.get_ref( self)
-        return obj
+        return GenKwConfig(c_ptr = cfunc.get_ref( self), parent = self)
+
 
     @property
     def get_enkf_infile(self):

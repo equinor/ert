@@ -23,19 +23,16 @@ from    ert.enkf.enkf_fs import EnkfFs
 from    ert.util.node_id import NodeId
 import  libenkf
 class EnkfNode(CClass):
-    
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
 
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )   
+            
     @staticmethod
     def alloc(config_node):
-        node = EnkfNode(c_ptr = cfunc.alloc( config_node ) )
+        node = EnkfNode(c_ptr = cfunc.alloc( config_node ) , parent = config_node)
         return node 
 
     def user_get(self, fs, key, node_id, value):
