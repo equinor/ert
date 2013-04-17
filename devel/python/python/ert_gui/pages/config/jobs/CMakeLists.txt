@@ -1,1 +1,1 @@
-add_python_target( python_gui_pages_config_jobs ${PYTHON_INSTALL_PREFIX}/ert_gui/pages/config/jobs "__init__;forwardmodelpanel;jobsdialog;jobspanel")
+add_python_package( "Python ert_gui.pages.config.jobs" ${PYTHON_INSTALL_PREFIX}/ert_gui/pages/config/jobs "__init__.py;forwardmodelpanel.py;jobsdialog.py;jobspanel.py" True)
