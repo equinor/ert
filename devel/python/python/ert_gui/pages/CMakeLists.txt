@@ -1,4 +1,4 @@
-add_python_target( python_gui_pages ${PYTHON_INSTALL_PREFIX}/ert_gui/pages "application;__init__")
+add_python_package( "Python gui.pages" ${PYTHON_INSTALL_PREFIX}/ert_gui/pages "application.py;__init__.py" True)
 add_subdirectory( config )
 add_subdirectory( init )
 add_subdirectory( plot )
