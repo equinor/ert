@@ -71,8 +71,12 @@ static void torque_driver_set_qstat_cmd(torque_driver_type * driver, const char 
   driver->qstat_cmd = util_realloc_string_copy(driver->qstat_cmd, qstat_cmd);
 }
 
-static void torque_driver_set_qdel_cmd(torque_driver_type * driver, const char * qstat_cmd) {
-  driver->qdel_cmd = util_realloc_string_copy(driver->qdel_cmd, qstat_cmd);
+static void torque_driver_set_qdel_cmd(torque_driver_type * driver, const char * qdel_cmd) {
+  driver->qdel_cmd = util_realloc_string_copy(driver->qdel_cmd, qdel_cmd);
+}
+
+static void torque_driver_set_queue_name(torque_driver_type * driver, const char * queue_name) {
+  driver->queue_name = util_realloc_string_copy(driver->queue_name, queue_name);
 }
 
 bool torque_driver_set_option(void * __driver, const char * option_key, const void * value) {
@@ -85,6 +89,8 @@ bool torque_driver_set_option(void * __driver, const char * option_key, const vo
       torque_driver_set_qstat_cmd(driver, value);
     else if (strcmp(TORQUE_QDEL_CMD, option_key) == 0)
       torque_driver_set_qdel_cmd(driver, value);
+    else if (strcmp(TORQUE_QUEUE, option_key) == 0)
+      torque_driver_set_queue_name(driver, value);
     else
       has_option = false;
   }
@@ -100,6 +106,8 @@ const void * torque_driver_get_option(const void * __driver, const char * option
       return driver->qstat_cmd;
     else if (strcmp(TORQUE_QDEL_CMD, option_key) == 0)
       return driver->qdel_cmd;
+    else if (strcmp(TORQUE_QUEUE, option_key) == 0)
+      return driver->queue_name;
     else {
       util_abort("%s: option_id:%s not recognized for TORQUE driver \n", __func__, option_key);
       return NULL;
@@ -129,14 +137,20 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
 
   stringlist_type * argv = stringlist_alloc_new();
 
-  stringlist_append_ref(argv, "-o");
-  stringlist_append_copy(argv, torque_stdout);
+  // -o ser ikke ut til å virke, men hvis man bruker -k o (keep output),
+  // så får man en fil generert ut fra navn på jobb og job-id. Må se på dette
+  // hvis vi har behov for denne outputen.
+  
+  //stringlist_append_ref(argv, "-o");
+  //stringlist_append_copy(argv, torque_stdout);
+  
   if (driver->queue_name != NULL) {
     stringlist_append_ref(argv, "-q");
     stringlist_append_ref(argv, driver->queue_name);
   }
-  //stringlist_append_ref(argv, "-N");
-  //stringlist_append_ref(argv, job_name);
+  
+  stringlist_append_ref(argv, "-N");
+  stringlist_append_ref(argv, job_name);
 
   stringlist_append_ref(argv, submit_cmd);
   {
