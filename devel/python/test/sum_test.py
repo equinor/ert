@@ -249,5 +249,11 @@ def fast_suite():
     return suite
 
 
+def ctest_run( argv ):
+    suite = fast_suite
+    path_root = argv[0]
+    unittest.TextTestRunner().run( fast_suite() )
+
+
 if __name__ == "__main__":
     unittest.TextTestRunner().run( fast_suite() )
