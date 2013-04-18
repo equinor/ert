@@ -120,6 +120,7 @@ extern "C" {
 
   queue_driver_type * queue_driver_alloc_RSH(const char * rsh_cmd, const hash_type * rsh_hostlist);
   queue_driver_type * queue_driver_alloc_LSF(const char * queue_name, const char * resource_request, const char * remote_lsf_server);
+  queue_driver_type * queue_driver_alloc_TORQUE();
   queue_driver_type * queue_driver_alloc_local();
   queue_driver_type * queue_driver_alloc(job_driver_type type);
 

@@ -235,6 +235,11 @@ queue_driver_type * queue_driver_alloc_LSF(const char * queue_name, const char *
   return driver;
 }
 
+queue_driver_type * queue_driver_alloc_TORQUE() {
+  queue_driver_type * driver = queue_driver_alloc(TORQUE_DRIVER);
+  return driver;
+}
+
 queue_driver_type * queue_driver_alloc_RSH(const char * rsh_cmd, const hash_type * rsh_hostlist) {
   queue_driver_type * driver = queue_driver_alloc(RSH_DRIVER);
 

@@ -23,7 +23,6 @@
 
 #define TORQUE_DRIVER_TYPE_ID 34873653
 #define TORQUE_JOB_TYPE_ID    12312312
-#define QSTAT_REFRESH_TIME 10
 #define DEFAULT_QSUB_CMD   "qsub"
 #define DEFAULT_QSTAT_CMD  "qstat"
 #define DEFAULT_QDEL_CMD  "qdel"
@@ -41,7 +40,7 @@ struct torque_job_struct {
   long int torque_jobnr;
   int num_exec_host;
   //char **exec_host;
-  char * torque_jobnr_char; /* Used to look up the job status in the bjobs_cache hash table */
+  char * torque_jobnr_char; /* Used to look up the job status in the qstat cache hash table */
 };
 
 UTIL_SAFE_CAST_FUNCTION(torque_driver, TORQUE_DRIVER_TYPE_ID);
@@ -113,6 +112,7 @@ torque_job_type * torque_job_alloc() {
   job = util_malloc(sizeof * job);
   job->num_exec_host = 0;
   job->torque_jobnr_char = NULL;
+  job->torque_jobnr = 0;
   UTIL_TYPE_ID_INIT(job, TORQUE_JOB_TYPE_ID);
   return job;
 }
@@ -135,8 +135,8 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
     stringlist_append_ref(argv, "-q");
     stringlist_append_ref(argv, driver->queue_name);
   }
-  stringlist_append_ref(argv, "-N");
-  stringlist_append_ref(argv, job_name);
+  //stringlist_append_ref(argv, "-N");
+  //stringlist_append_ref(argv, job_name);
 
   stringlist_append_ref(argv, submit_cmd);
   {
@@ -180,16 +180,16 @@ static int torque_driver_submit_shell_job(torque_driver_type * driver,
   char * tmp_file = util_alloc_tmp_file("/tmp", "enkf-submit", true);
   stringlist_type * remote_argv = torque_driver_alloc_cmd(driver, torque_stdout, job_name, submit_cmd, job_argc, job_argv);
   char ** argv = stringlist_alloc_char_ref(remote_argv);
-  printf("Starter prosessfork\n");
-  util_fork_exec(driver->qsub_cmd, stringlist_get_size(remote_argv), (const char **) argv, true, NULL, NULL, NULL, tmp_file, tmp_file);
-  printf("Ferdig med prosessfork\n");
-  free(argv);
+  util_fork_exec(driver->qsub_cmd, stringlist_get_size(remote_argv), (const char **) argv, true, NULL, NULL, NULL, tmp_file, NULL);
 
+  free(argv);
   stringlist_free(remote_argv);
 
   job_id = torque_job_parse_qsub_stdout(driver, tmp_file);
+  
   util_unlink_existing(tmp_file);
   free(tmp_file);
+ 
   return job_id;
 }
 
@@ -218,9 +218,7 @@ void * torque_driver_submit_job(void * __driver,
 
     job->torque_jobnr = torque_driver_submit_shell_job(driver, torque_stdout, job_name, submit_cmd, num_cpu, argc, argv);
     job->torque_jobnr_char = util_alloc_sprintf("%ld", job->torque_jobnr);
-    printf("Jobnr:");
-    printf(job->torque_jobnr_char);
-    printf("\n");
+
     //        hash_insert_ref( driver->my_jobs , job->torque_jobnr_char , NULL );   
 
     //      pthread_mutex_unlock( &driver->submit_lock );
@@ -288,7 +286,7 @@ job_status_type torque_driver_get_job_status(void * __driver, void * __job) {
   if (strcmp(status, "R") == 0) {
     result = JOB_QUEUE_RUNNING;
   } else if (strcmp(status, "E") == 0) {
-    result = JOB_QUEUE_EXIT;
+    result = JOB_QUEUE_DONE;
   } else if (strcmp(status, "C") == 0) {
     result = JOB_QUEUE_DONE;
   } else if (strcmp(status, "Q") == 0) {
