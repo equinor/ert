@@ -80,10 +80,10 @@
    xxx_site counterpart are stored.
 */
 
-#define LSF_DRIVER_NAME   "LSF"
-#define LOCAL_DRIVER_NAME "LOCAL"
-#define RSH_DRIVER_NAME   "RSH"
-
+#define LSF_DRIVER_NAME    "LSF"
+#define LOCAL_DRIVER_NAME  "LOCAL"
+#define RSH_DRIVER_NAME    "RSH"
+#define TORQUE_DRIVER_NAME "TORQUE"
 
 struct site_config_struct {
   ext_joblist_type      * joblist;                /* The list of external jobs which have been installed. 
@@ -160,9 +160,10 @@ queue_driver_type * site_config_get_queue_driver( const site_config_type * site_
 }
 
 static void site_config_create_queue_drivers( site_config_type * site_config ) {
-  site_config_add_queue_driver( site_config , LSF_DRIVER_NAME   , queue_driver_alloc_LSF( NULL , NULL ,   NULL));
-  site_config_add_queue_driver( site_config , RSH_DRIVER_NAME   , queue_driver_alloc_RSH( NULL , NULL ));
-  site_config_add_queue_driver( site_config , LOCAL_DRIVER_NAME , queue_driver_alloc_local( ));
+  site_config_add_queue_driver( site_config , LSF_DRIVER_NAME    , queue_driver_alloc_LSF( NULL , NULL ,   NULL));
+  site_config_add_queue_driver( site_config , TORQUE_DRIVER_NAME , queue_driver_alloc_TORQUE());
+  site_config_add_queue_driver( site_config , RSH_DRIVER_NAME    , queue_driver_alloc_RSH( NULL , NULL ));
+  site_config_add_queue_driver( site_config , LOCAL_DRIVER_NAME  , queue_driver_alloc_local( ));
 }
 
 
@@ -438,6 +439,9 @@ static void site_config_select_LSF_job_queue(site_config_type * site_config ) {
   site_config_select_job_driver( site_config , LSF_DRIVER_NAME );
 }
 
+static void site_config_select_TORQUE_job_queue(site_config_type * site_config ) { 
+  site_config_select_job_driver( site_config , TORQUE_DRIVER_NAME );
+}
 
 /*****************************************************************/
 /**
@@ -598,6 +602,9 @@ static void site_config_set_job_queue__( site_config_type * site_config , job_dr
     switch (driver_type) {
     case(LSF_DRIVER):
       site_config_select_LSF_job_queue( site_config );
+      break;
+    case(TORQUE_DRIVER):
+      site_config_select_TORQUE_job_queue( site_config );
       break;
     case(RSH_DRIVER):
       site_config_select_RSH_job_queue( site_config );
@@ -814,6 +821,8 @@ bool site_config_init(site_config_type * site_config , const config_type * confi
         driver_type = RSH_DRIVER;
       else if (strcmp(queue_system , LOCAL_DRIVER_NAME) == 0) 
         driver_type = LOCAL_DRIVER;
+      else if (strcmp(queue_system, TORQUE_DRIVER_NAME) == 0)
+        driver_type = TORQUE_DRIVER;
       else {
         util_abort("%s: queue system :%s not recognized \n",__func__ , queue_system);
         driver_type = NULL_DRIVER;

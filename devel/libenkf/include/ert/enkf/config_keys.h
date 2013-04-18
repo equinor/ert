@@ -104,6 +104,7 @@ extern "C" {
 #define  LSF_QUEUE_KEY                     "LSF_QUEUE"
 #define  LSF_RESOURCES_KEY                 "LSF_RESOURCES"
 #define  LSF_SERVER_KEY                    "LSF_SERVER"
+#define  TORQUE_QUEUE_KEY                  "TORQUE_QUEUE"
 #define  MAX_RESAMPLE_KEY                  "MAX_RESAMPLE"  
 #define  MAX_RUNNING_LOCAL_KEY             "MAX_RUNNING_LOCAL"
 #define  MAX_RUNNING_LSF_KEY               "MAX_RUNNING_LSF"
