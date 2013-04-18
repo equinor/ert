@@ -33,6 +33,7 @@ void setoption_setalloptions_optionsset() {
   test_option(driver, TORQUE_QSUB_CMD, "XYZaaa");
   test_option(driver, TORQUE_QSTAT_CMD, "xyZfff");
   test_option(driver, TORQUE_QDEL_CMD, "ZZyfff");
+  test_option(driver, TORQUE_QUEUE, "superhigh");
 
   printf("Options OK\n");
 }
