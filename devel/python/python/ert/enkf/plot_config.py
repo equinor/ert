@@ -24,14 +24,11 @@ from    ert.plot.plot_driver import PlotDriver
 
 class PlotConfig(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
 
     @property
     def get_path(self):
@@ -42,8 +39,7 @@ class PlotConfig(CClass):
         
     @property
     def get_driver(self):
-        #driver = ert.plot.plot_driver.PlotDriver( cfunc.get_driver( self ))
-        return cfunc.get_driver(self)#driver
+        return cfunc.get_driver(self)
 
     def set_driver(self, driver):
         cfunc.set_driver(self, driver)

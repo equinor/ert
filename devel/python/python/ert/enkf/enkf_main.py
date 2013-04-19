@@ -102,7 +102,7 @@ class EnKFMain(CClass):
      
     @property     
     def plot_config(self):
-        plot_conf = PlotConfig( c_ptr = cfunc.get_plot_config( self ))
+        plot_conf = PlotConfig( c_ptr = cfunc.get_plot_config( self ), parent = self)
         return plot_conf
      
     def set_eclbase(self, eclbase):
