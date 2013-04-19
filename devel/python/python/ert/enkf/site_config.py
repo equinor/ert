@@ -23,7 +23,7 @@ import  libenkf
 from    ert.enkf.libenkf       import *
 from ert.job_queue.ext_joblist import ExtJoblist
 from ert.job_queue.job_queue import JobQueue
-
+from ert.util.stringlist import StringList
 
 
 
@@ -65,10 +65,6 @@ class SiteConfig(CClass):
     def set_lsf_request(self, lsf_request):
         cfunc.set_lsf_request( self , lsf_request)
 
-    @property
-    def get_rsh_host_list(self):
-        return cfunc.get_rsh_host_list( self )
-
     def clear_rsh_host_list(self):
         cfunc.set_rsh_host_list( self )
 
@@ -108,15 +104,15 @@ class SiteConfig(CClass):
         cfunc.setenv( self , var, value)
 
     def clear_env(self):
-        cfunc.set_env( self )
+        cfunc.clear_env( self )
 
     @property
     def get_path_variables(self):
-        return cfunc.get_path_variables( self )
+        return StringList(c_ptr = cfunc.get_path_variables( self ), parent = self)
 
     @property
     def get_path_values(self):
-        return cfunc.get_path_values( self )
+        return StringList(c_ptr = cfunc.get_path_values( self ), parent = self)
 
     def clear_pathvar(self):
         cfunc.clear_pathvar( self )
@@ -154,6 +150,9 @@ class SiteConfig(CClass):
     @property
     def get_rsh_host_list(self):
         return cfunc.get_rsh_host_list(self)
+
+    def add_rsh_host(self, host, max_running):
+        cfunc.add_rsh_host(self, host, max_running)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -196,7 +195,5 @@ cfunc.get_path_variables    = cwrapper.prototype("c_void_p site_config_get_path_
 cfunc.get_path_values       = cwrapper.prototype("c_void_p site_config_get_path_values(site_config)")
 cfunc.clear_pathvar         = cwrapper.prototype("void site_config_clear_pathvar(site_config)")
 cfunc.update_pathvar        = cwrapper.prototype("void site_config_update_pathvar(site_config, char*, char*)")
-cfunc.get_installed_jobs    = cwrapper.prototype("c_void_p site_config_get_installed_jobs(site_config)")
-cfunc.get_license_root_path = cwrapper.prototype("char* site_config_get_license_root_path(site_config)")
 cfunc.get_job_queue         = cwrapper.prototype("c_void_p site_config_get_job_queue(site_config)")
 cfunc.queue_is_running      = cwrapper.prototype("bool site_config_queue_is_running(site_config)")

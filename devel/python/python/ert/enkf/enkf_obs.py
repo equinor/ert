@@ -21,30 +21,30 @@ from    ert.util.tvector      import *
 from    enkf_enum             import *
 import  libenkf
 from    ert.util.stringlist   import StringList
+from ert.enkf.obs_vector import ObsVector
 
 class EnkfObs(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
-
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
+            
     @property
     def get_config_file(self):
         return cfunc.get_config_file(self)
 
     def alloc_typed_keylist(self, type):
-        return StringList(c_ptr = cfunc.alloc_typed_keylist(self, type))
+        return StringList(c_ptr = cfunc.alloc_typed_keylist(self, type), parent = self)
 
+    @property
     def has_key(self, key):
         return cfunc.has_key(self, key)
 
+    @property
     def get_vector(self, key):
-        return ert.enkf.obs_vector.ObsVector(cfunc.get_vector(self,key))
+        return ObsVector(cfunc.get_vector(self,key), parent = self)
 
 ##################################################################
 

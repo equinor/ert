@@ -79,7 +79,7 @@ class EclConfig(CClass):
 
     @property     
     def get_refcase(self):
-        refcase = EclSum(self.get_refcase_name, c_ptr = cfunc.get_refcase( self ), parent = self)
+        refcase = EclSum(self.get_refcase_name, join_string = ":" , include_restart = True, c_ptr = cfunc.get_refcase( self ), parent = self)
         return refcase
     
     def clear_static_kw(self):

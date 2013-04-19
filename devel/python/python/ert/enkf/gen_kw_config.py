@@ -20,6 +20,7 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    ert.enkf.enkf_enum             import *
 import  ert.enkf.libenkf
+from ert.util.stringlist import StringList
 class GenKwConfig(CClass):
     
     def __init__(self , c_ptr , parent = None):
@@ -38,7 +39,7 @@ class GenKwConfig(CClass):
 
     @property
     def alloc_name_list(self):
-        return cfunc.alloc_name_list(self)
+        return StringList(c_ptr = cfunc.alloc_name_list(self), parent = self)
 
 ##################################################################
 

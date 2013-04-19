@@ -66,8 +66,8 @@ def createSystemPage(configPanel, parent):
     r = internalPanel.addRow(KeywordTable(parent, "", "config/systemenv/update_path"))
 
     def get_update_path(ert):
-        paths = ert.getStringList(ert.main.site_config.get_path_variables)
-        values =  ert.getStringList(ert.main.site_config.get_path_values)
+        paths = ert.main.site_config.get_path_variables
+        values =  ert.main.site_config.get_path_values
 
         return [[p, v] for p, v in zip(paths, values)]
 

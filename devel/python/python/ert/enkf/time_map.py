@@ -23,8 +23,6 @@ from    enkf_enum              import *
 import  libenkf
 from    ert.enkf.libenkf       import *
 
-#from ert.job_queue.ext_joblist import ExtJoblist
-
 class TimeMap(CClass):
     
     def __init__(self , c_ptr , parent = None):

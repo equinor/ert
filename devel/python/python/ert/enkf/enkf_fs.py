@@ -26,14 +26,11 @@ from    ert.util.buffer        import Buffer
 import  libenkf
 class EnkfFs(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-
-    def __del__(self):
-        if self.owner:
-            cfunc.close( self )
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.close )
 
     def has_node(self, node_key, step, member, value, type = enkf_var_type.PARAMETER.value()):
         return cfunc.has_node(self, node_key, type, step, member, value)
@@ -44,7 +41,7 @@ class EnkfFs(CClass):
 
     @property
     def get_time_map(self):
-        return TimeMap(cfunc.get_time_map(self))
+        return TimeMap(cfunc.get_time_map(self), parent = self)
     
 ##################################################################
 
@@ -57,6 +54,3 @@ cfunc.close               = cwrapper.prototype("void enkf_fs_close(enkf_fs)")
 cfunc.has_node            = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, long, int, int, int)")
 cfunc.fread_node          = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, buffer, char*, long, int, int, int)")
 cfunc.get_time_map        = cwrapper.prototype("c_void_p enkf_fs_get_time_map(enkf_fs)")
-
-cfunc.get_read_dir        = cwrapper.safe_prototype("char* enkf_fs_get_read_dir(enkf_fs)")
-cfunc.alloc_dirlist       = cwrapper.safe_prototype("c_void_p enkf_fs_alloc_dirlist(enkf_fs)")

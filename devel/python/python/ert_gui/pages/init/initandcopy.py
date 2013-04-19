@@ -228,24 +228,16 @@ class ParametersAndMembers(HelpedWidget):
         #enums from enkf_types.h
         PARAMETER = 1
         DYNAMIC_STATE = 2
-        keylist = ert.main.ensemble_config.alloc_keylist_from_var_type( PARAMETER )
+        parameters = ert.main.ensemble_config.alloc_keylist_from_var_type( PARAMETER )
         
-        parameters = ert.getStringList(keylist)
-        ert.freeStringList(keylist)
-
-        keylist = ert.main.ensemble_config.alloc_keylist_from_var_type( DYNAMIC_STATE )
-        dynamicParameters = ert.getStringList(keylist)
-        ert.freeStringList(keylist)
+        dynamicParameters = ert.main.ensemble_config.alloc_keylist_from_var_type( DYNAMIC_STATE )
 
         members = ert.main.ens_size
 
         fs = ert.main.get_fs
-        currentCase = "default" #ert.enkf.enkf_fs_get_read_dir(fs)
+        currentCase = ert.main.get_current_fs
 
-        #caseList = ert.enkf.enkf_fs_alloc_dirlist(fs)
-        #list = ert.getStringList(caseList)
-        #ert.freeStringList(caseList)
-        list = ["default"]
+        list = ert.main.alloc_caselist
         historyLength = ert.main.get_history_length
 
         return {"parameters" : parameters,

@@ -20,7 +20,6 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 import  ert.enkf.libenkf
-from    ert.plot.plot_driver import PlotDriver
 
 class PlotConfig(CClass):
     

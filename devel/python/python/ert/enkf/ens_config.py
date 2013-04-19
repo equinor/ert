@@ -61,7 +61,7 @@ class EnsConfig(CClass):
         return node
     
     def alloc_keylist_from_var_type(self, var_mask):
-        return cfunc.alloc_keylist_from_var_type(self,var_mask)
+        return StringList(c_ptr = cfunc.alloc_keylist_from_var_type(self,var_mask), parent = self)
 
 ##################################################################
 

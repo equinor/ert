@@ -117,7 +117,7 @@ class PlotDataFetcher(ContentModel, QObject):
                 self.comparison_fs_name = "None"
 
             if not new_fs == "None":
-                self.fs_for_comparison_plots = ert.main.mount_extra_fs( new_fs)
+                self.fs_for_comparison_plots = ert.main.get_alt_fs(new_fs, false, true)
                 self.comparison_fs_name = new_fs
 
             self.__dataChanged()
@@ -268,16 +268,15 @@ class PlotContextDataFetcher(ContentModel):
                 p = Parameter(key, KeywordModel.TYPE)
                 data.parameters.append(p)
                 s = config_node.keyword_model.alloc_name_list
-                data.key_index_list[key] = ert.getStringList(s, free_after_use=True)
+                data.key_index_list[key] = s
 
         data.errorbar_max = ert.main.plot_config.get_errorbar_max
 
         fs = ert.main.get_fs
-        current_case = "default" #fs.get_read_dir(fs)
+        current_case = ert.main.get_current_fs
 
         data.plot_config_path = ert.main.plot_config.get_path
-        #data.plot_path = ert.main.plot_config.get_path + "/" + current_case
-        data.plot_path = "PLOTXXX"
+        data.plot_path = ert.main.plot_config.get_path + "/" + current_case
         
         enkf_obs = ert.main.get_obs
         key_list = enkf_obs.alloc_typed_keylist( obs_impl_type.FIELD_OBS.value())
@@ -287,11 +286,11 @@ class PlotContextDataFetcher(ContentModel):
             data.parameters.append(p)
 
 
-        #case_list_pointer = fs.alloc_dirlist(fs)
-        #case_list = ert.getStringList(case_list_pointer)
-        case_list = ["default"]
+        
+        case_list = ert.main.alloc_caselist
+        
         data.current_case = current_case
-        #ert.freeStringList(case_list_pointer)
+        
 
         for case in case_list:
             data.case_list.append(case)
