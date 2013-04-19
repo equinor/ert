@@ -66,7 +66,7 @@ class ModelConfig(CClass):
 
     @property     
     def get_forward_model(self):
-        ford_model = ForwardModel( c_ptr = cfunc.get_forward_model( self ))
+        ford_model = ForwardModel( c_ptr = cfunc.get_forward_model( self ), parent = self)
         return ford_model
 
     @property
@@ -76,6 +76,9 @@ class ModelConfig(CClass):
     @property
     def get_runpath_as_char(self):
         return cfunc.get_runpath_as_char(self)
+
+    def select_runpath(self, path_key):
+        return cfunc.select_runpath(self, path_key)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -91,11 +94,11 @@ cfunc.get_enkf_sched_file     = cwrapper.prototype("char* model_config_get_enkf_
 cfunc.set_enkf_sched_file     = cwrapper.prototype("void model_config_set_enkf_sched_file( model_config, char*)")
 cfunc.get_history_source      = cwrapper.prototype("c_void_p model_config_get_history_source(model_config)")
 cfunc.select_schedule_history = cwrapper.prototype("void model_config_select_schedule_history(model_config, sched_file)")
-cfunc.select_refcase_history = cwrapper.prototype("void model_config_select_refcase_history(model_config, ecl_sum, bool)")
+cfunc.select_refcase_history  = cwrapper.prototype("void model_config_select_refcase_history(model_config, ecl_sum, bool)")
 cfunc.get_forward_model       = cwrapper.prototype("c_void_p model_config_get_forward_model(model_config)")
 cfunc.get_max_internal_submit = cwrapper.prototype("int model_config_get_max_internal_submit(model_config)")
 cfunc.set_max_internal_submit = cwrapper.prototype("void model_config_set_max_internal_submit(model_config, int)")
 cfunc.get_case_table_file     = cwrapper.prototype("char* model_config_get_case_table_file(model_config)")
 cfunc.get_runpath_as_char     = cwrapper.prototype("char* model_config_get_runpath_as_char(model_config)")
-cfunc.select_runpath          = cwrapper.safe_prototype("void model_config_select_runpath(model_config, char*)")
+cfunc.select_runpath          = cwrapper.prototype("void model_config_select_runpath(model_config, char*)")
                                  

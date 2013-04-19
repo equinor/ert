@@ -82,12 +82,12 @@ class EnKFMain(CClass):
 
     @property     
     def logh(self):
-        mog = Log( c_ptr = cfunc.get_logh( self ))
+        mog = Log( c_ptr = cfunc.get_logh( self ), parent = self)
         return mog
     
     @property     
     def local_config(self):
-        loc_config = LocalConfig( c_ptr = cfunc.get_local_config( self ))
+        loc_config = LocalConfig( c_ptr = cfunc.get_local_config( self ), parent = self)
         return loc_config
     
     @property     
@@ -97,7 +97,7 @@ class EnKFMain(CClass):
     
     @property     
     def ecl_config(self):
-        ecl_conf = EclConfig( c_ptr = cfunc.get_ecl_config( self ))
+        ecl_conf = EclConfig( c_ptr = cfunc.get_ecl_config( self ) , parent = self)
         return ecl_conf
      
     @property     
@@ -167,7 +167,7 @@ class EnKFMain(CClass):
 
     @property
     def get_templates(self):
-        temp = ErtTemplates( c_ptr = cfunc.get_templates( self ))
+        temp = ErtTemplates( c_ptr = cfunc.get_templates( self ), parent = self)
         return temp
         
     @property

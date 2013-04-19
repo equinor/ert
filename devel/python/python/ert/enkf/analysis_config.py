@@ -81,7 +81,4 @@ cfunc.get_alpha              = cwrapper.prototype("double analysis_config_get_al
 cfunc.set_alpha              = cwrapper.prototype("void analysis_config_set_alpha(analysis_config, double)")
 cfunc.get_merge_observations = cwrapper.prototype("bool analysis_config_get_merge_observations(analysis_config)")
 cfunc.set_merge_observations = cwrapper.prototype("void analysis_config_set_merge_observations(analysis_config, bool)")
-cfunc.get_enkf_mode          = cwrapper.safe_prototype("int analysis_config_get_enkf_mode(analysis_config)")
-cfunc.set_enkf_mode          = cwrapper.safe_prototype("void analysis_config_set_enkf_mode(analysis_config, int)")
-cfunc.get_truncation         = cwrapper.safe_prototype("double analysis_config_get_truncation(analysis_config)")
-cfunc.get_truncation         = cwrapper.safe_prototype("void analysis_config_set_truncation(analysis_config, double)")
+

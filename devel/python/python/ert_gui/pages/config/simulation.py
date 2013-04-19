@@ -31,6 +31,7 @@ from ert.ert.enums import keep_runpath_type
 from simulations.runtemplatepanel import RunTemplatePanel
 import ert_gui.widgets.helpedwidget
 import os
+from ert.util.stringlist import StringList
 
 def createSimulationsPage(configPanel, parent):
     configPanel.startPage("Simulations")
@@ -54,16 +55,14 @@ def createSimulationsPage(configPanel, parent):
     def get_forward_model(ert):
         site_config = ert.main.site_config
         installed_jobs = ert.main.site_config.get_installed_jobs
-        installed_jobs_stringlist_pointer = installed_jobs.alloc_list
-        available_jobs = ert.getStringList(installed_jobs_stringlist_pointer , free_after_use=True)
+        available_jobs = installed_jobs.alloc_list
 
         result = {'available_jobs': available_jobs}
 
-
-        forward_model = ert.main.model_config.get_forward_model
-        name_string_list = forward_model.alloc_joblist
-        job_names = ert.getStringList(name_string_list, free_after_use=True)
-
+        model_config = ert.main.model_config
+        forward_model = model_config.get_forward_model
+        job_names = forward_model.alloc_joblist
+        
         forward_model_jobs = []
 
         count = 0
@@ -171,9 +170,8 @@ def createSimulationsPage(configPanel, parent):
 
     def get_run_templates(ert):
         templates = ert.main.get_templates
-        template_list = templates.alloc_list
-
-        template_names = ert.getStringList(template_list, free_after_use=True)
+        template_names = templates.alloc_list
+        
         result = []
         for name in template_names:
             template = templates.get_template( name)

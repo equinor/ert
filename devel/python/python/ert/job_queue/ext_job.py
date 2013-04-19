@@ -22,15 +22,12 @@ from    ert.enkf.enkf_enum             import *
 import  ert.enkf.libenkf
 class ExtJob(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
-
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
+            
     @property
     def get_private_args_as_string(self):
         return cfunc.get_private_args_as_string(self)
@@ -40,7 +37,92 @@ class ExtJob(CClass):
 
     @property
     def get_help_text(self):
-        return cfunc.get_help_text(self)##################################################################
+        return cfunc.get_help_text(self)
+    
+    @property
+    def is_private(self):
+        return cfunc.isprivate(self)
+        
+    @property
+    def get_config_file(self):
+        return cfunc.get_config_file(self)
+    
+    def set_config_file(self, config_file):
+        cfunc.set_config_file
+        
+    @property
+    def get_stdin_file(self):
+        return cfunc.get_stdin_file(self)
+        
+    def set_stdin_file(self, file):
+        cfunc.set_stdin_file(self, file)
+        
+    @property    
+    def get_stdout_file(self):
+        return cfunc.get_stdout_file(self)
+
+    def set_stdout_file(self, file):
+        cfunc.set_stdout_file(self, file)
+        
+    @property    
+    def get_stderr_file(self):
+        return cfunc.get_stderr_file(self)
+
+    def set_stderr_file(self, file):
+        cfunc.set_stderr_file(self, file)
+    @property
+    
+    def get_target_file(self):
+        return cfunc.get_target_file(self)
+
+    def set_target_file(self, file):
+        cfunc.set_target_file(self, file)
+        
+    @property    
+    def get_executable(self):
+        return cfunc.get_executable(self)
+
+    def set_executable(self, executable):
+        cfunc.set_executable(self, executable)
+        
+    @property    
+    def get_max_running(self):
+        return cfunc.get_max_running(self)
+
+    def set_max_running(self, max_running):
+        cfunc.set_max_running(self, max_running)
+        
+    @property    
+    def get_max_running_minutes(self):
+        return cfunc.get_max_running_minutes(self)
+
+    def set_max_running_minutes(self, min):
+        cfunc.set_max_running_minutes(self, min)
+        
+    @property    
+    def get_environment(self):
+        return cfunc.get_environment(self)
+
+    def set_environment(self, key, value):
+        cfunc.set_environment(self, key, value)
+
+    def clear_environment(self):
+        cfunc. clear_environment(self)
+    
+    def save(self):
+        cfunc.save(self)
+
+    @staticmethod
+    def alloc(name, root_path, private):
+        job = ExtJob(c_ptr = cfunc.alloc(name, root_path, private))
+        return job
+
+    @staticmethod
+    def fscanf_alloc(name, root_path, private, config_file):
+        job = ExtJob(c_ptr = cfunc.fscanf_alloc(name, root_path, private, config_file))
+        return job
+
+##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "ext_job" , ExtJob )

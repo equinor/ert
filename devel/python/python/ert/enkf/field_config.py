@@ -62,7 +62,10 @@ class FieldConfig(CClass):
 
     @property
     def get_nz(self):
-        return cfunc.get_ny(self) 
+        return cfunc.get_ny(self)
+
+    def ijk_active(self, i,j,k):
+        cfunc.ijk_active(self,i,j,k)
 ##################################################################
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "field_config" , FieldConfig )
@@ -77,7 +80,6 @@ cfunc.get_truncation_min        = cwrapper.prototype("double field_config_get_tr
 cfunc.get_truncation_max        = cwrapper.prototype("double field_config_get_truncation_max(field_config)")
 cfunc.get_init_transform_name   = cwrapper.prototype("char* field_config_get_init_transform_name(field_config)")
 cfunc.get_output_transform_name = cwrapper.prototype("char* field_config_get_output_transform_name(field_config)")
-#cfunc.get_init_file_fmt         = cwrapper.safe_prototype("char* field_config_get_init_file_fmt(field_config)")
 cfunc.ijk_active                = cwrapper.prototype("bool field_config_ijk_active(field_config, int, int, int)")
 cfunc.get_nx                    = cwrapper.prototype("int field_config_get_nx(field_config)")
 cfunc.get_ny                    = cwrapper.prototype("int field_config_get_ny(field_config)")

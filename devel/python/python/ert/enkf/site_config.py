@@ -22,7 +22,7 @@ from    enkf_enum              import *
 import  libenkf
 from    ert.enkf.libenkf       import *
 from ert.job_queue.ext_joblist import ExtJoblist
-
+from ert.job_queue.job_queue import JobQueue
 
 
 
@@ -126,7 +126,7 @@ class SiteConfig(CClass):
 
     @property     
     def get_installed_jobs(self):
-        installed_jobs = ert.job_queue.ext_joblist.ExtJoblist( cfunc.get_installed_jobs( self ), parent = self)
+        installed_jobs = ExtJoblist( cfunc.get_installed_jobs( self ), parent = self)
         return installed_jobs
 
     @property
@@ -146,6 +146,14 @@ class SiteConfig(CClass):
     @property
     def queue_is_running(self):
         return cfunc.queue_is_running( self )
+
+    @property
+    def get_job_queue(self):
+        return JobQueue( c_ptr = cfunc.get_job_queue(self), parent = self)
+
+    @property
+    def get_rsh_host_list(self):
+        return cfunc.get_rsh_host_list(self)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )

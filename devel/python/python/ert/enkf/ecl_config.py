@@ -22,16 +22,14 @@ from    enkf_enum             import *
 import  libenkf
 import  ert.util.libutil
 from    ert.ecl.ecl_sum import EclSum
+from ert.util.stringlist import StringList
 class EclConfig(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
 
     @property
     def get_eclbase(self):
@@ -77,7 +75,7 @@ class EclConfig(CClass):
         
     @property     
     def get_static_kw_list(self):
-        return cfunc.get_static_kw_list( self )
+        return StringList(c_ptr = cfunc.get_static_kw_list( self ) , parent = self)
 
     @property     
     def get_refcase(self):

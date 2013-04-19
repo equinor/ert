@@ -22,14 +22,11 @@ from    enkf_enum             import *
 import  libenkf
 class ErtTemplate(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
 
     @property
     def get_template_file(self):

@@ -41,7 +41,7 @@ class EnsConfig(CClass):
     
     @property
     def alloc_keylist(self):
-        key_list = StringList( c_ptr = cfunc.alloc_keylist(self))
+        key_list = StringList( c_ptr = cfunc.alloc_keylist(self), parent = self)
         return key_list
        
     def add_summary(self, key):

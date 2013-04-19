@@ -46,7 +46,9 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.connect(self.keyword_configuration, SIGNAL('configurationChanged()'), emitter)
         self.connect(self.data_configuration, SIGNAL('configurationChanged()'), emitter)
 
-
+ 
+    def initialize(self, ert):
+        self.initialized = True
 
     def isHandlerFor(self, ert, key):
         return ert.main.ensemble_config.has_key( key)

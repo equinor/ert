@@ -37,10 +37,6 @@ class GenKwConfig(CClass):
         return cfunc.get_parameter_file(self)
 
     @property
-    def get_init_file_fmt(self):
-        return cfunc.get_parameter_file(self)
-
-    @property
     def alloc_name_list(self):
         return cfunc.alloc_name_list(self)
 
@@ -54,6 +50,5 @@ cfunc = CWrapperNameSpace("gen_kw_config")
 ##################################################################
 cfunc.free                   = cwrapper.prototype("void gen_kw_config_free( gen_kw_config )")
 cfunc.get_template_file      = cwrapper.prototype("char* gen_kw_config_get_template_file(gen_kw_config)")
-#cfunc.get_init_file_fmt      = cwrapper.safe_prototype("char* gen_kw_config_get_init_file_fmt(gen_kw_config)")
 cfunc.get_parameter_file     = cwrapper.prototype("char* gen_kw_config_get_parameter_file(gen_kw_config)")
 cfunc.alloc_name_list        = cwrapper.prototype("c_void_p gen_kw_config_alloc_name_list(gen_kw_config)")

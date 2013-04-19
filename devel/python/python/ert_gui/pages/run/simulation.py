@@ -344,7 +344,7 @@ class SimulationPanelController:
 
     def pause(self, pause):
         """Pause the job queue after the currently running jobs are finished."""
-        job_queue = self.ert.site_config.get_job_queue
+        job_queue = self.ert.main.site_config.get_job_queue
 
         if pause:
             self.statistics.stop()

@@ -20,28 +20,30 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 import  libenkf
+from ert.util.stringlist import StringList
 class ErtTemplates(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
-
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
+            
     @property
     def alloc_list(self):
-        return cfunc.alloc_list(self)
+        return StringList(c_ptr = cfunc.alloc_list(self), parent = self)
 
     def clear(self):
         cfunc.clear(self)
 
+    @property
     def get_template(self,key):
-        template = ert.enkf.ert_template.ErtTemplate( cfunc.get_template( self, key ))
+        template = ErtTemplate( cfunc.get_template( self, key ), parent = self)
         return template
-    
+
+    @property
+    def add_template(self, key, template_file, target_file, arg_string):
+        return ErtTemplate(cfunc.add_template(self, key, template_file, target_file, arg_string), parent = self)
 
 
 

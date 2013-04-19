@@ -20,21 +20,25 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 import  libenkf
+from ert.util.stringlist import StringList
 class LocalConfig(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
-
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
+            
     @property
     def get_config_files(self):
-        config_files = cfunc.get_config_files(self)
+        config_files = StringList(c_ptr = cfunc.get_config_files(self), parent = self)
         return config_files
+
+    def clear_config_files(self):
+        cfunc.clear_config_files(self)
+
+    def add_config_file(self, file):
+        cfunc.add_config_file(self, file)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
