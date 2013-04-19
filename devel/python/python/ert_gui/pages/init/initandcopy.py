@@ -124,7 +124,7 @@ class ParametersAndMembers(HelpedWidget):
         source_state = ert_state_enum.resolveName(str(self.sourceType.currentText())).value()
         member_mask = ert.createBoolVector(self.membersList.count(), selected_members)
         ranking_key = None
-        node_list = ert.createStringList(selected_parameters)
+        node_list = StringList(selected_parameters)
 
         ert.main.initialize_from_existing__(          source_case,
                                                       source_report_step,
@@ -133,7 +133,7 @@ class ParametersAndMembers(HelpedWidget):
                                                       ranking_key,
                                                       node_list)
 
-        ert.freeStringList(node_list)
+        node_list.__del__
         ert.freeBoolVector(member_mask)
 
     def copyEnsemble(self, selected_parameters, selected_members):
@@ -152,7 +152,7 @@ class ParametersAndMembers(HelpedWidget):
 
         member_mask = ert.createBoolVector(self.membersList.count(), selected_members)
         ranking_key = None
-        node_list = ert.createStringList(selected_parameters)
+        node_list = StringList(selected_parameters)
 
         ert.main.copy_ensemble(          source_case,
                                          source_report_step,
@@ -164,7 +164,7 @@ class ParametersAndMembers(HelpedWidget):
                                          ranking_key,
                                          node_list)
 
-        ert.freeStringList(node_list)
+        node_list.__del__
         ert.freeBoolVector(member_mask)
 
     def initializeOrCopy(self):

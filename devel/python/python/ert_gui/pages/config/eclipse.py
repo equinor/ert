@@ -83,7 +83,7 @@ def createEclipsePage(configPanel, parent):
     internalPanel.startPage("Static keywords")
 
     r = internalPanel.addRow(KeywordList(parent, "", "config/eclipse/add_static_kw"))
-    r.getter = lambda ert : ert.getStringList(ert.main.ecl_config.get_static_kw_list)
+    r.getter = lambda ert : ert.main.ecl_config.get_static_kw_list
 
     def add_static_kw(ert, listOfKeywords):
         ert.main.ecl_config.clear_static_kw
@@ -92,7 +92,7 @@ def createEclipsePage(configPanel, parent):
             ert.main.ecl_config.add_static_kw(keyword)
 
     r.setter = add_static_kw
-    r.initialize = lambda ert : ert.getStringList(ert.main.ecl_config.get_static_kw_list)
+    r.initialize = lambda ert : ert.main.ecl_config.get_static_kw_list
     internalPanel.endPage()
 
     # todo: add support for fixed length schedule keywords
