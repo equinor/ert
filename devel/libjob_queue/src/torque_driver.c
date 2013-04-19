@@ -131,6 +131,7 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
         const char * torque_stdout,
         const char * job_name,
         const char * submit_cmd,
+        int num_cpu,
         int job_argc,
         const char ** job_argv) {
 
@@ -140,17 +141,25 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
   // -o ser ikke ut til å virke, men hvis man bruker -k o (keep output),
   // så får man en fil generert ut fra navn på jobb og job-id. Må se på dette
   // hvis vi har behov for denne outputen.
-  
+
   //stringlist_append_ref(argv, "-o");
   //stringlist_append_copy(argv, torque_stdout);
+  
+  int num_nodes = 1;
+  char * resource_string = util_alloc_sprintf("nodes=%d:ppn=%d", num_nodes, num_cpu);
+  stringlist_append_ref(argv, "-l");
+  stringlist_append_copy(argv, resource_string);
+  free(resource_string);
   
   if (driver->queue_name != NULL) {
     stringlist_append_ref(argv, "-q");
     stringlist_append_ref(argv, driver->queue_name);
   }
-  
-  stringlist_append_ref(argv, "-N");
-  stringlist_append_ref(argv, job_name);
+
+  if (job_name != NULL) {
+    stringlist_append_ref(argv, "-N");
+    stringlist_append_ref(argv, job_name);
+  }
 
   stringlist_append_ref(argv, submit_cmd);
   {
@@ -158,6 +167,7 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
     for (iarg = 0; iarg < job_argc; iarg++)
       stringlist_append_ref(argv, job_argv[ iarg ]);
   }
+
   return argv;
 }
 
@@ -192,7 +202,7 @@ static int torque_driver_submit_shell_job(torque_driver_type * driver,
         const char ** job_argv) {
   int job_id;
   char * tmp_file = util_alloc_tmp_file("/tmp", "enkf-submit", true);
-  stringlist_type * remote_argv = torque_driver_alloc_cmd(driver, torque_stdout, job_name, submit_cmd, job_argc, job_argv);
+  stringlist_type * remote_argv = torque_driver_alloc_cmd(driver, torque_stdout, job_name, submit_cmd, num_cpu, job_argc, job_argv);
   char ** argv = stringlist_alloc_char_ref(remote_argv);
   util_fork_exec(driver->qsub_cmd, stringlist_get_size(remote_argv), (const char **) argv, true, NULL, NULL, NULL, tmp_file, NULL);
 
@@ -200,10 +210,10 @@ static int torque_driver_submit_shell_job(torque_driver_type * driver,
   stringlist_free(remote_argv);
 
   job_id = torque_job_parse_qsub_stdout(driver, tmp_file);
-  
+
   util_unlink_existing(tmp_file);
   free(tmp_file);
- 
+
   return job_id;
 }
 
@@ -292,6 +302,7 @@ static char* torque_driver_get_qstat_status(torque_driver_type * driver, int inp
 }
 
 // TODO: se på statuser med Joakim, hva er "riktig" i de forskjellige tilfellene?
+
 job_status_type torque_driver_get_job_status(void * __driver, void * __job) {
   torque_driver_type * driver = torque_driver_safe_cast(__driver);
   torque_job_type * job = torque_job_safe_cast(__job);
