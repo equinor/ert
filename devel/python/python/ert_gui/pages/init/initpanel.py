@@ -43,10 +43,7 @@ class InitPanel(QtGui.QFrame):
 
         def get_case_list(ert):
             fs = ert.main.get_fs
-            caseList = ["default"] #ert.enkf.enkf_fs_alloc_dirlist(fs)
-
-            list = caseList #ert.getStringList(caseList)
-            #ert.freeStringList(caseList)
+            list = ert.main.alloc_caselist
             return list
 
         self.get_case_list = get_case_list # convenience: used by several functions
@@ -108,8 +105,8 @@ class InitPanel(QtGui.QFrame):
         def get_current_case(ert):
             fs = ert.main.get_fs
             tmp = self.get_case_list(ert)
-            currentCase = tmp[0] #ert.enkf_fs.get_read_dir(fs)
-            #print "The selected case is: " + currentCase
+            currentCase = ert.main.get_current_fs
+            print "The selected case is: " + currentCase
             return currentCase
 
         self.currentCase.getter = get_current_case
