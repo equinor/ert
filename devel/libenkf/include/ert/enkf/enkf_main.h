@@ -91,6 +91,7 @@ extern "C" {
   const char                  * enkf_main_get_data_file(const enkf_main_type * );
   const char                 ** enkf_main_get_well_list_ref(const enkf_main_type * , int *);
   
+
   bool                          enkf_main_get_endian_swap(const enkf_main_type * );
   bool                          enkf_main_get_fmt_file(const enkf_main_type * );
   bool                          enkf_main_has_key(const enkf_main_type * , const char *);
@@ -244,6 +245,7 @@ extern "C" {
   enkf_main_type      * enkf_main_alloc_empty( );
 
   rng_config_type     * enkf_main_get_rng_config( const enkf_main_type * enkf_main );
+  void                  enkf_main_rng_init( enkf_main_type * enkf_main);
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 

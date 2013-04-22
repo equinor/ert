@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 /* These keys are used as options in KEY:VALUE statements */
+#define  FORWARD_INIT_KEY                  "FORWARD_INIT"
 #define  MIN_STD_KEY                       "MIN_STD"
 #define  INIT_FILES_KEY                    "INIT_FILES"
 #define  KEY_KEY                           "KEY"
