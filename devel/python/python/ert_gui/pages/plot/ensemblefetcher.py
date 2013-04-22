@@ -25,7 +25,7 @@ from PyQt4.QtCore import SIGNAL
 from ert.ert.erttypes import time_t, time_vector
 import numpy
 from ert.util.node_id import *
-from ert.ert.c_enums import c_state_enum
+
 
 class EnsembleFetcher(PlotDataFetcherHandler):
     """A data fetcher for ensemble parameters."""
@@ -74,7 +74,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
         if parameter.getType() == FieldModel.TYPE:
             field_position = user_data['field_position']
-            field_config = config_node.get_ref
+            field_config = config_node.field_model
             if field_config.ijk_active(field_position[0] - 1, field_position[1] - 1, field_position[2] - 1):
                 key_index = "%i,%i,%i" % (field_position[0], field_position[1], field_position[2])
                 data.setKeyIndexIsIndex(True)
@@ -112,9 +112,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                         sim_time = time_map.iget(step)
                         fs.fread_node(key, step, member, state.value())
                         valid = ertwrapper.c_double()
-                        state_enum = c_state_enum(state.value())
-                        node_id = NodeId(step, state_enum, member)
-                        value = node.user_get(fs, key_index, node_id, ertwrapper.byref(valid))
+                        value = node.user_get(fs, key_index, step, member, state.value(), ertwrapper.byref(valid))
                         if valid.value == 1:
                             data.checkMaxMin(sim_time)
                             data.checkMaxMinY(value)
@@ -129,8 +127,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                             sim_time = time_map.iget(step)
                             comparison_fs.fread_node(comp_node, step, member, state.value())
                             valid = ertwrapper.c_double()
-                            node_id = NodeId(step, state.value(), member)
-                            value = comp_node.user_get(comparison_fs, key_index, node_id, ertwrapper.byref(valid))
+                            value = comp_node.user_get(comparison_fs, key_index, step, member, state.value(), ertwrapper.byref(valid))
                             if valid.value == 1:
                                 #data.checkMaxMin(sim_time)
                                 #data.checkMaxMinY(value)

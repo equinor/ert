@@ -55,7 +55,7 @@ class ComboChoice(HelpedWidget):
 
         if not indexSet:
             self.combo.setCurrentIndex(0)
-            sys.stderr.write("AssertionError: ComboBox can not be set to: " + str(self.parent) + "\n")
+            sys.stderr.write("AssertionError: ComboBox can not be set to: " + str(newValue) + "\n")
             #raise AssertionError("ComboBox can not be set to: " + str(newValue))
 
 
