@@ -63,9 +63,17 @@ class Enumeration(c_uint):
 #    enum implementations
 #-------------------------------------------------------------------
 
-class c_state_enum(Enumeration):
+class state_enum(Enumeration):
     UNDEFINED  = 0
     SERIALIZED = 1
     FORECAST   = 2
     ANALYZED   = 4
     BOTH       = 6
+
+class var_type(Enumeration):
+    INVALID_VAR      =  0
+    PARAMETER        =  1
+    DYNAMIC_STATE    =  2
+    DYNAMIC_RESULT   =  4
+    STATIC_STATE     =  8
+    INDEX_STATE      = 16

@@ -35,8 +35,8 @@ class EnkfNode(CClass):
         node = EnkfNode(c_ptr = cfunc.alloc( config_node ) , parent = config_node)
         return node 
 
-    def user_get(self, fs, key, node_id, value):
-        return cfunc.user_get(self, fs, key, node_id, value)
+    def user_get(self, fs, key, report_step, iens, state, value):
+        return cfunc.user_get(self, fs, key, report_step, iens, state, value)
 
     def value_ptr(self):
         cfunc.value_ptr(self)
@@ -53,5 +53,5 @@ cfunc = CWrapperNameSpace("enkf_node")
 
 cfunc.free                = cwrapper.prototype("void enkf_node_free( enkf_node )")
 cfunc.alloc               = cwrapper.prototype("c_void_p enkf_node_alloc( enkf_node)")
-cfunc.user_get            = cwrapper.prototype("bool enkf_node_user_get(enkf_node , enkf_fs , char*  , node_id , double*)")
+cfunc.user_get            = cwrapper.prototype("bool enkf_node_user_get_no_id(enkf_node , enkf_fs , char*  , int, int , c_uint, double*)")
 cfunc.value_ptr           = cwrapper.prototype("void enkf_node_value_ptr(enkf_node)")

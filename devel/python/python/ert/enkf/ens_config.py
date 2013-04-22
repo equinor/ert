@@ -21,7 +21,7 @@ from    ert.util.tvector      import *
 from    ert.enkf.enkf_enum             import *
 import  ert.enkf.libenkf
 from    ert.ecl.ecl_grid import EclGrid
-import  ert.enkf.enkf_config_node
+from    ert.enkf.enkf_config_node import EnkfConfigNode
 from    ert.util.stringlist   import StringList
 
 class EnsConfig(CClass):
@@ -36,7 +36,7 @@ class EnsConfig(CClass):
         return cfunc.has_key( self ,key )
 
     def get_node(self, key):
-        node = ert.enkf.enkf_config_node.EnkfConfigNode( cfunc.get_node(self, key), parent = self)
+        node = EnkfConfigNode( cfunc.get_node(self, key), parent = self)
         return node
     
     @property
@@ -45,19 +45,19 @@ class EnsConfig(CClass):
         return key_list
        
     def add_summary(self, key):
-        node = ert.enkf.enkf_config_node.EnkfConfigNode( cfunc.add_summary(self, key, 2), parent = self)
+        node = EnkfConfigNode( cfunc.add_summary(self, key, 2), parent = self)
         return node
 
     def add_gen_kw(self, key):
-        node = ert.enkf.enkf_config_node.EnkfConfigNode( cfunc.add_gen_kw(self, key), parent = self)
+        node = EnkfConfigNode( cfunc.add_gen_kw(self, key), parent = self)
         return node
 
     def add_gen_data(self, key):
-        node = ert.enkf.enkf_config_node.EnkfConfigNode( cfunc.add_gen_data(self, key), parent = self)
+        node = EnkfConfigNode( cfunc.add_gen_data(self, key), parent = self)
         return node
     
     def add_field(self, key, eclipse_grid):
-        node = ert.enkf.enkf_config_node.EnkfConfigNode( cfunc.add_field(self, key, eclipse_grid), parent = self)
+        node = EnkfConfigNode( cfunc.add_field(self, key, eclipse_grid), parent = self)
         return node
     
     def alloc_keylist_from_var_type(self, var_mask):
