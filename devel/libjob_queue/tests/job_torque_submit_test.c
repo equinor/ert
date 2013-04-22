@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
+   Copyright (C) 2013  Statoil ASA, Norway. 
     
-   The file 'job_lsf_submit_test.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'job_torque_submit_test.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -48,7 +48,7 @@ void test_submit(torque_driver_type * driver, const char * cmd) {
       test_exit("After kill of job, the status is %d, it should have been JOB_QUEUE_EXIT, which is %d\n", torque_status, JOB_QUEUE_EXIT);
     }
   } else {
-    exit(1);
+    test_exit("Function %s returned null-pointer to job, terminating test.", "torque_driver_submit_job");
   }
 
   free(run_path);
