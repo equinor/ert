@@ -251,6 +251,7 @@ def fast_suite():
 
 
 def ctest_run( argv ):
+    print os.getcwd()
     suite = fast_suite
     unittest.TextTestRunner().run( fast_suite() )
 
