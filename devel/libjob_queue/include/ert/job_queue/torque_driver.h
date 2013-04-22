@@ -32,7 +32,9 @@ extern "C" {
 #define TORQUE_QSTAT_CMD    "QSTAT_CMD"
 #define TORQUE_QDEL_CMD     "QDEL_CMD"
 #define TORQUE_QUEUE        "TORQUE_QUEUE"
-
+#define TORQUE_DEFAULT_QSUB_CMD   "qsub"
+#define TORQUE_DEFAULT_QSTAT_CMD  "qstat"
+#define TORQUE_DEFAULT_QDEL_CMD  "qdel"
 
   typedef struct torque_driver_struct torque_driver_type;
   typedef struct torque_job_struct torque_job_type;

@@ -40,9 +40,9 @@ void setoption_setalloptions_optionsset() {
 
 void getoption_nooptionsset_defaultoptionsreturned() {
   torque_driver_type * driver = torque_driver_alloc();
-  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSUB_CMD), "qsub");
-  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSTAT_CMD), "qstat");
-  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QDEL_CMD), "qdel");
+  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSUB_CMD), TORQUE_DEFAULT_QSUB_CMD);
+  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSTAT_CMD), TORQUE_DEFAULT_QSTAT_CMD);
+  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QDEL_CMD), TORQUE_DEFAULT_QDEL_CMD);
   printf("Default options OK\n");
 }
 

@@ -23,9 +23,6 @@
 
 #define TORQUE_DRIVER_TYPE_ID 34873653
 #define TORQUE_JOB_TYPE_ID    12312312
-#define DEFAULT_QSUB_CMD   "qsub"
-#define DEFAULT_QSTAT_CMD  "qstat"
-#define DEFAULT_QDEL_CMD  "qdel"
 
 struct torque_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -57,9 +54,9 @@ void * torque_driver_alloc() {
   torque_driver->qstat_cmd = NULL;
   torque_driver->qdel_cmd = NULL;
 
-  torque_driver_set_option(torque_driver, TORQUE_QSUB_CMD, DEFAULT_QSUB_CMD);
-  torque_driver_set_option(torque_driver, TORQUE_QSTAT_CMD, DEFAULT_QSTAT_CMD);
-  torque_driver_set_option(torque_driver, TORQUE_QDEL_CMD, DEFAULT_QDEL_CMD);
+  torque_driver_set_option(torque_driver, TORQUE_QSUB_CMD, TORQUE_DEFAULT_QSUB_CMD);
+  torque_driver_set_option(torque_driver, TORQUE_QSTAT_CMD, TORQUE_DEFAULT_QSTAT_CMD);
+  torque_driver_set_option(torque_driver, TORQUE_QDEL_CMD, TORQUE_DEFAULT_QDEL_CMD);
   return torque_driver;
 }
 
@@ -138,19 +135,14 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
 
   stringlist_type * argv = stringlist_alloc_new();
 
-  // -o ser ikke ut til å virke, men hvis man bruker -k o (keep output),
-  // så får man en fil generert ut fra navn på jobb og job-id. Må se på dette
-  // hvis vi har behov for denne outputen.
+  {
+    int num_nodes = 1;
+    char * resource_string = util_alloc_sprintf("nodes=%d:ppn=%d", num_nodes, num_cpu);
+    stringlist_append_ref(argv, "-l");
+    stringlist_append_copy(argv, resource_string);
+    free(resource_string);
+  }
 
-  //stringlist_append_ref(argv, "-o");
-  //stringlist_append_copy(argv, torque_stdout);
-  
-  int num_nodes = 1;
-  char * resource_string = util_alloc_sprintf("nodes=%d:ppn=%d", num_nodes, num_cpu);
-  stringlist_append_ref(argv, "-l");
-  stringlist_append_copy(argv, resource_string);
-  free(resource_string);
-  
   if (driver->queue_name != NULL) {
     stringlist_append_ref(argv, "-q");
     stringlist_append_ref(argv, driver->queue_name);
@@ -172,23 +164,21 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
 }
 
 static int torque_job_parse_qsub_stdout(const torque_driver_type * driver, const char * stdout_file) {
-  int jobid = -1;
-  FILE * stream = util_fopen(stdout_file, "r");
-  char * jobid_string = util_fscanf_alloc_upto(stream, ".", false);
-  if (jobid_string != NULL) {
-    jobid = atoi(jobid_string);
+  int jobid;
+  {
+    FILE * stream = util_fopen(stdout_file, "r");
+    char * jobid_string = util_fscanf_alloc_upto(stream, ".", false);
+
+    if (jobid_string == NULL || !util_sscanf_int(jobid_string, &jobid)) {
+      char * file_content = util_fread_alloc_file_content(stdout_file, NULL);
+      fprintf(stderr, "Failed to get torque job id from file: %s \n", stdout_file);
+      fprintf(stderr, "qsub command                      : %s \n", driver->qsub_cmd);
+      fprintf(stderr, "File content: [%s]\n", file_content);
+      free(file_content);
+      util_exit("%s: \n", __func__);
+    }
     free(jobid_string);
-  }
-
-  fclose(stream);
-
-  if (jobid == -1) {
-    char * file_content = util_fread_alloc_file_content(stdout_file, NULL);
-    fprintf(stderr, "Failed to get torque job id from file: %s \n", stdout_file);
-    fprintf(stderr, "qsub command                      : %s \n", driver->qsub_cmd);
-    fprintf(stderr, "%s\n", file_content);
-    free(file_content);
-    util_exit("%s: \n", __func__);
+    fclose(stream);
   }
   return jobid;
 }
@@ -202,13 +192,16 @@ static int torque_driver_submit_shell_job(torque_driver_type * driver,
         const char ** job_argv) {
   int job_id;
   char * tmp_file = util_alloc_tmp_file("/tmp", "enkf-submit", true);
-  stringlist_type * remote_argv = torque_driver_alloc_cmd(driver, torque_stdout, job_name, submit_cmd, num_cpu, job_argc, job_argv);
-  char ** argv = stringlist_alloc_char_ref(remote_argv);
-  util_fork_exec(driver->qsub_cmd, stringlist_get_size(remote_argv), (const char **) argv, true, NULL, NULL, NULL, tmp_file, NULL);
+  
+  {
+    stringlist_type * remote_argv = torque_driver_alloc_cmd(driver, torque_stdout, job_name, submit_cmd, num_cpu, job_argc, job_argv);
+    char ** argv = stringlist_alloc_char_ref(remote_argv);
+    util_fork_exec(driver->qsub_cmd, stringlist_get_size(remote_argv), (const char **) argv, true, NULL, NULL, NULL, tmp_file, NULL);
 
-  free(argv);
-  stringlist_free(remote_argv);
-
+    free(argv);
+    stringlist_free(remote_argv);
+  }
+  
   job_id = torque_job_parse_qsub_stdout(driver, tmp_file);
 
   util_unlink_existing(tmp_file);
@@ -261,14 +254,12 @@ void * torque_driver_submit_job(void * __driver,
   }
 }
 
-static char* torque_driver_get_qstat_status(torque_driver_type * driver, int input_job_id) {
+static char* torque_driver_get_qstat_status(torque_driver_type * driver, char * jobnr_char) {
   char * status = util_malloc(sizeof (char)*2);
   char * tmp_file = util_alloc_tmp_file("/tmp", "enkf-qstat", true);
 
-  char ** argv = util_calloc(1, sizeof * argv); // malloc(1 * (sizeof * argv))
-  int len = snprintf(NULL, 0, "%d", input_job_id);
-  argv[0] = util_calloc(len + 1, sizeof (char)); // malloc(len +1 * (sizeof char))
-  snprintf(argv[0], len + 1, "%d", input_job_id);
+  char ** argv = util_calloc(1, sizeof * argv);
+  argv[0] = jobnr_char;
 
   util_fork_exec(driver->qstat_cmd, 1, (const char **) argv, true, NULL, NULL, NULL, tmp_file, NULL);
   FILE *stream = util_fopen(tmp_file, "r");
@@ -276,24 +267,22 @@ static char* torque_driver_get_qstat_status(torque_driver_type * driver, int inp
   util_fskip_lines(stream, 2);
   char * line = util_fscanf_alloc_line(stream, &at_eof);
   if (line != NULL) {
-    int job_id_int;
     char job_id_full_string[32];
     if (sscanf(line, "%s %*s %*s %*s %s %*s", job_id_full_string, status) == 2) {
       char *dotPtr = strchr(job_id_full_string, '.');
       int dotPosition = dotPtr - job_id_full_string;
-      char* job_id_as_char_ptr = (char*) malloc((dotPosition + 1) * sizeof (char));
-      memcpy(job_id_as_char_ptr, job_id_full_string, dotPosition);
-      job_id_as_char_ptr[dotPosition] = '\0';
-      job_id_int = atoi(job_id_as_char_ptr);
-      if (job_id_int != input_job_id) {
-        char output[200];
-        snprintf(output, sizeof (output), "Job id input (%d) does not match the one found by qstat (%d)", input_job_id, job_id_int);
-        util_abort(output);
+      char* job_id_as_char_ptr = util_alloc_substring_copy(job_id_full_string, 0, dotPosition);
+      if (strcmp(job_id_as_char_ptr, jobnr_char) != 0) {
+        util_abort("%s: Job id input (%d) does not match the one found by qstat (%d)\n", __func__,  jobnr_char, job_id_as_char_ptr);
       }
       free(job_id_as_char_ptr);
     }
     free(line);
   }
+  else {
+    util_abort("Unable to read qstat's output line number 3 from file: %s", tmp_file);
+  }
+  
   fclose(stream);
   util_unlink_existing(tmp_file);
   free(tmp_file);
@@ -301,12 +290,10 @@ static char* torque_driver_get_qstat_status(torque_driver_type * driver, int inp
   return status;
 }
 
-// TODO: se på statuser med Joakim, hva er "riktig" i de forskjellige tilfellene?
-
 job_status_type torque_driver_get_job_status(void * __driver, void * __job) {
   torque_driver_type * driver = torque_driver_safe_cast(__driver);
   torque_job_type * job = torque_job_safe_cast(__job);
-  char * status = torque_driver_get_qstat_status(driver, job->torque_jobnr);
+  char * status = torque_driver_get_qstat_status(driver, job->torque_jobnr_char);
   int result = JOB_QUEUE_FAILED;
   if (strcmp(status, "R") == 0) {
     result = JOB_QUEUE_RUNNING;
@@ -317,7 +304,11 @@ job_status_type torque_driver_get_job_status(void * __driver, void * __job) {
   } else if (strcmp(status, "Q") == 0) {
     result = JOB_QUEUE_PENDING;
   }
+  else {
+    util_abort("Unknown status found (%s), expecting one of R, E, C and Q.\n", status);
+  }
   free(status);
+  
   return result;
 }
 
