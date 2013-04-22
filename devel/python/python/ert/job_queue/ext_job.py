@@ -41,7 +41,7 @@ class ExtJob(CClass):
     
     @property
     def is_private(self):
-        return cfunc.isprivate(self)
+        return cfunc.is_private(self)
         
     @property
     def get_config_file(self):
@@ -70,8 +70,8 @@ class ExtJob(CClass):
 
     def set_stderr_file(self, file):
         cfunc.set_stderr_file(self, file)
+
     @property
-    
     def get_target_file(self):
         return cfunc.get_target_file(self)
 

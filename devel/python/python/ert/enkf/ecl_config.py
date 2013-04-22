@@ -91,6 +91,10 @@ class EclConfig(CClass):
     @property
     def get_grid(self):
         return cfunc.get_grid(self)
+
+    @property
+    def get_sched_file(self):
+        return cfunc.get_sched_file(self)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -115,3 +119,4 @@ cfunc.clear_static_kw    = cwrapper.prototype("void ecl_config_clear_static_kw(e
 cfunc.add_static_kw      = cwrapper.prototype("void ecl_config_add_static_kw(ecl_config, char*)")
 cfunc.get_grid           = cwrapper.prototype("c_void_p ecl_config_get_grid(ecl_config)")
 cfunc.get_refcase        = cwrapper.prototype("c_void_p ecl_config_get_refcase(ecl_config)")
+cfunc.get_sched_file      = cwrapper.prototype("c_void_p ecl_config_get_sched_file(ecl_config)")

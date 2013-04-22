@@ -18,6 +18,7 @@ import  ctypes
 from    ert.cwrap.cwrap            import *
 from    ert.cwrap.cclass           import CClass
 from    ert.util.tvector           import * 
+from ert.ecl.ecl_sum import *
 import    libsched
 class HistoryType(CClass):
 
@@ -30,6 +31,13 @@ class HistoryType(CClass):
     def get_source_string(self):
         return cfunc.get_source_string(self)
             
+    @staticmethod
+    def alloc_from_refcase(refcase, use_history):
+        return HistoryType(cfunc.alloc_from_refcase(refcase, use_history))
+
+    @staticmethod
+    def alloc_from_sched_file(sched_file):
+        return HistoryType(cfunc.alloc_from_sched_file(":", sched_file))
 ##################################################################
 
 cwrapper = CWrapper( libsched.lib )
@@ -42,3 +50,5 @@ cfunc = CWrapperNameSpace("history_type")
 
 cfunc.free                    = cwrapper.prototype("void history_free( history_type )")
 cfunc.get_source_string       = cwrapper.prototype("char* history_get_source_string(history_type)")
+cfunc.alloc_from_refcase      = cwrapper.prototype("c_void_p history_alloc_from_refcase(ecl_sum, bool)")
+cfunc.alloc_from_sched_file  = cwrapper.prototype("c_void_p history_alloc_from_sched_file(char*, c_void_p)")

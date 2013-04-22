@@ -330,7 +330,7 @@ model_config_type * model_config_alloc_empty() {
 }
 
 
-static bool model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * sched_file , const ecl_sum_type * refcase) {
+bool model_config_select_history( model_config_type * model_config , history_source_type source_type, const sched_file_type * sched_file , const ecl_sum_type * refcase) {
   bool selectOK = false;
 
   if (source_type == SCHEDULE && sched_file != NULL) {

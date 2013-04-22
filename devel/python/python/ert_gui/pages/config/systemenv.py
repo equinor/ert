@@ -26,6 +26,7 @@ from jobs.jobspanel import JobsPanel, Job
 import os
 import ert_gui.widgets.spinnerwidgets
 from ert_gui.widgets.activelabel import ActiveLabel
+from ert.job_queue.ext_job import ExtJob
 
 def createSystemPage(configPanel, parent):
     configPanel.startPage("System")
@@ -73,6 +74,7 @@ def createSystemPage(configPanel, parent):
 
     r.getter = get_update_path
     r.initialize = get_update_path
+    
     def update_pathvar(ert, value):
         ert.main.site_config.clear_pathvar
 
@@ -87,18 +89,24 @@ def createSystemPage(configPanel, parent):
     internalPanel.startPage("Jobs")
 
     r = internalPanel.addRow(JobsPanel(parent))
+
     def get_jobs(ert):
         jl = ert.main.site_config.get_installed_jobs
         h  = jl.get_jobs
-
-        jobs = ert.getHash(h, return_type="long")
+        stringlist = jl.alloc_list
+        jobs = ert.getHash(h, return_type="c_void_p")
 
         private_jobs = []
-        for k, v in jobs:
-            v = int(v)
-            path = ert.job_queue.ext_job_get_config_file(v)
-            if ert.job_queue.ext_job_is_private(v):
-                private_jobs.append(Job(k, path))
+        for v in stringlist:
+            job = jl.get_job(v)
+            path = job.get_config_file
+            if job.is_private:
+                private_jobs.append(Job(v, path))
+        #for k, v in jobs:
+        #    job = jl.get_job(v)
+        #    path = job.get_config_file
+        #    if v.is_private:
+        #        private_jobs.append(Job(k, path))
 
         return private_jobs
 
@@ -108,30 +116,30 @@ def createSystemPage(configPanel, parent):
         if os.path.exists(value.path):
             license = ert.main.site_config.get_license_root_path
             job = ert.job_queue.ext_job_fscanf_alloc(value.name, license, True, value.path)
-            ert.job_queue.ext_joblist_add_job(jl, value.name, job)
+            jl.add_job(value.name, job)
         else:
-            job = ert.job_queue.ext_joblist_get_job(jl, value.name)
-            ert.job_queue.ext_job_set_config_file(job, value.path)
+            job = jl.get_job(value.name)
+            job.set_config_file(value.path)
 
 
     def add_job(ert, value):
         jl = ert.main.site_config.get_installed_jobs
-        if not ert.job_queue.ext_joblist_has_job(jl, value.name):
+        if not jl.has_job(value.name):
             license = ert.main.site_config.get_license_root_path
             if os.path.exists(value.path):
                 job = ert.job_queue.ext_job_fscanf_alloc(value.name, license, True, value.path)
-                ert.job_queue.ext_joblist_add_job(jl, value.name, job)
+                jl.add_job(value.name, job)
             else:
                 job = ert.job_queue.ext_job_alloc(value.name, license, True)
-                ert.job_queue.ext_job_set_config_file(job, value.path)
-                ert.job_queue.ext_joblist_add_job(jl, value.name, job)
+                job.set_config_file(value.path)
+                jl.add_job(value.name, job)
             return True
 
         return False
 
     def remove_job(ert, value):
         jl = ert.main.site_config.get_installed_jobs
-        success = ert.job_queue.ext_joblist_del_job(jl, value.name)
+        success = jl.del_job(value.name)
 
         if not success:
             QtGui.QMessageBox.question(parent, "Failed", "Unable to delete job!", QtGui.QMessageBox.Ok)
@@ -153,7 +161,7 @@ def createSystemPage(configPanel, parent):
     r = configPanel.addRow(PathChooser(parent, "Log file", "config/systemenv/log_file", True))
     r.initialize = lambda ert: ert.main.logh.get_filename
     r.getter = lambda ert : ert.main.logh.get_filename
-    r.setter = lambda ert, value : ert.main.logh.reopen_filename( value)
+    r.setter = lambda ert, value : ert.main.logh.reopen(value)
 
     r = configPanel.addRow(ert_gui.widgets.spinnerwidgets.IntegerSpinner(parent, "Log level", "config/systemenv/log_level", 0, 1000))
     r.initialize = lambda ert : ert.main.logh.get_level

@@ -21,6 +21,7 @@ from    ert.util.tvector      import *
 from    ert.enkf.enkf_enum             import *
 import  ert.enkf.libenkf
 from ert.util.stringlist import StringList
+from ert.job_queue.ext_job import ExtJob
 class ExtJoblist(CClass):
     
     def __init__(self , c_ptr , parent = None):
@@ -35,7 +36,7 @@ class ExtJoblist(CClass):
 
     @property
     def alloc_list(self):
-        return StringList(c_ptr = cfunc.alloc_list( self ))
+        return StringList(c_ptr = cfunc.alloc_list( self ), parent = self)
 
     def del_job(self, job):
         return cfunc.del_job(self, job)
@@ -44,7 +45,7 @@ class ExtJoblist(CClass):
         return cfunc.has_job(self, job)
 
     def get_job(self, job):
-        return ExtJob( cfunc.get_job( self , job))
+        return ExtJob( c_ptr = cfunc.get_job( self , job), parent = self)
 
     def add_job(self, job_name, new_job):
         cfunc.add_job(self, job_name, new_job)

@@ -75,7 +75,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         if parameter.getType() == FieldModel.TYPE:
             field_position = user_data['field_position']
             field_config = config_node.get_ref
-            if ert.enkf.field_config_ijk_active(field_config, field_position[0] - 1, field_position[1] - 1, field_position[2] - 1):
+            if field_config.ijk_active(field_position[0] - 1, field_position[1] - 1, field_position[2] - 1):
                 key_index = "%i,%i,%i" % (field_position[0], field_position[1], field_position[2])
                 data.setKeyIndexIsIndex(True)
             else:

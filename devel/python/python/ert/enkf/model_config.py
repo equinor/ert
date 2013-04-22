@@ -25,6 +25,7 @@ from    ert.sched.libsched import *
 from    ert.sched.history import HistoryType
 from    ert.sched.sched_file import *
 from    ert.ecl.ecl_sum import *
+from    ert.sched.history import *
 class ModelConfig(CClass):
     
     def __init__(self , c_ptr , parent = None):
@@ -44,17 +45,8 @@ class ModelConfig(CClass):
     def get_history_source(self):
         return HistoryType(c_ptr = cfunc.get_history_source( self ) , parent = self)
 
-    def set_history_source(self, count):
-        if self.parent:
-            if count == 0:
-                schedfile = self.parent.get_schedule_prediction_file
-                cfunc.select_schedule_history(self, schedfile)
-            if count == 1:
-                refcase = self.parent.ecl_config.get_refcase
-                cfunc.select_refcase_history(self,refcase,True)
-            if count == 2: 
-                refcase = self.parent.ecl_config.get_refcase
-                cfunc.select_refcase_history(self,refcase,False)                 
+    def set_history_source(self, history_source, sched_file, refcase):
+        return cfunc.select_history(self, history_source, sched_file, refcase)
         
 
     @property
@@ -93,8 +85,7 @@ cfunc.free                    = cwrapper.prototype("void model_config_free( mode
 cfunc.get_enkf_sched_file     = cwrapper.prototype("char* model_config_get_enkf_sched_file( model_config )")
 cfunc.set_enkf_sched_file     = cwrapper.prototype("void model_config_set_enkf_sched_file( model_config, char*)")
 cfunc.get_history_source      = cwrapper.prototype("c_void_p model_config_get_history_source(model_config)")
-cfunc.select_schedule_history = cwrapper.prototype("void model_config_select_schedule_history(model_config, sched_file)")
-cfunc.select_refcase_history  = cwrapper.prototype("void model_config_select_refcase_history(model_config, ecl_sum, bool)")
+cfunc.select_history          = cwrapper.prototype("bool model_config_select_history(model_config, history_type, c_void_p, ecl_sum)")
 cfunc.get_forward_model       = cwrapper.prototype("c_void_p model_config_get_forward_model(model_config)")
 cfunc.get_max_internal_submit = cwrapper.prototype("int model_config_get_max_internal_submit(model_config)")
 cfunc.set_max_internal_submit = cwrapper.prototype("void model_config_set_max_internal_submit(model_config, int)")

@@ -37,6 +37,9 @@ class EnkfNode(CClass):
 
     def user_get(self, fs, key, node_id, value):
         return cfunc.user_get(self, fs, key, node_id, value)
+
+    def value_ptr(self):
+        cfunc.value_ptr(self)
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
@@ -51,4 +54,4 @@ cfunc = CWrapperNameSpace("enkf_node")
 cfunc.free                = cwrapper.prototype("void enkf_node_free( enkf_node )")
 cfunc.alloc               = cwrapper.prototype("c_void_p enkf_node_alloc( enkf_node)")
 cfunc.user_get            = cwrapper.prototype("bool enkf_node_user_get(enkf_node , enkf_fs , char*  , node_id , double*)")
-cfunc.value_ptr           = cwrapper.prototype("c_void_p enkf_node_value_ptr(enkf_node)")
+cfunc.value_ptr           = cwrapper.prototype("void enkf_node_value_ptr(enkf_node)")

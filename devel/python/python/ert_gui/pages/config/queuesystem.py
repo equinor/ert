@@ -93,7 +93,7 @@ def createQueueSystemPage(configPanel, parent):
     r = internalPanel.addRow(IntegerSpinner(parent, "Max running", "config/queue_system/max_running_local", 1, 1000))
     r.initialize = lambda ert : ert.main.site_config.get_max_running_local
     r.getter = lambda ert : ert.main.site_config.get_max_running_local
-    r.setter = lambda ert, value : ert.main.site_config.set_max_running_local(ert.site_config, value)
+    r.setter = lambda ert, value : ert.main.site_config.set_max_running_local(value)
 
     internalPanel.endPage()
     configPanel.addRow(internalPanel)
