@@ -1,13 +1,21 @@
+#!/usr/bin/env python
 import sys
+import os
+
 
 PYTHONPATH = sys.argv[1]
+test_module = sys.argv[2]
+cwd = None
+argv = []
+
 sys.path.insert( 0 , PYTHONPATH )
 
-print PYTHONPATH
-print sys.path
 
 test_module = __import__(sys.argv[2])
-if len(sys.argv) > 3:
-    test_module.ctest_run( sys.argv[3:] )
-else:
-    test_module.ctest_run( [ ] )
+
+try:
+    argv = sys.argv[3:]
+except:
+    pass
+
+test_module.ctest_run( sys.argv[3:] )
