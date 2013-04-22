@@ -250,10 +250,8 @@ def fast_suite():
     return suite
 
 
-def ctest_run( argv ):
-    print os.getcwd()
-    suite = fast_suite
-    unittest.TextTestRunner().run( fast_suite() )
+def test_suite( argv ):
+    return fast_suite()
 
 
 if __name__ == "__main__":

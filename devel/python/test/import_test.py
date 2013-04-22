@@ -44,6 +44,5 @@ test_import("ert.geo.geo")
 test_import("ert.well.well")
 
 
-def ctest_run(argv):
-    return True
-
+def test_suite( argv ):
+    return False
