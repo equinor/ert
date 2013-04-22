@@ -22,6 +22,7 @@ import ert
 import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv
 
+
 base = "ECLIPSE"
 path = "test-data/Statoil/ECLIPSE/Gurbat"
 case = "%s/%s" % (path , base)
@@ -156,11 +157,11 @@ class SumTest( unittest.TestCase ):
 
 
     def test_restart(self):
-        hist = ecl.EclSum( "test-data/ECLIPSE/sum-restart/history/T07-4A-W2011-18-P1" )
-        base = ecl.EclSum( "test-data/ECLIPSE/sum-restart/prediction/BASECASE" )
-        pred = ecl.EclSum( "test-data/ECLIPSE/sum-restart/prediction/BASECASE" , include_restart = False)
+        hist = ecl.EclSum( "test-data/Statoil/ECLIPSE/sum-restart/history/T07-4A-W2011-18-P1" )
+        base = ecl.EclSum( "test-data/Statoil/ECLIPSE/sum-restart/prediction/BASECASE" )
+        pred = ecl.EclSum( "test-data/Statoil/ECLIPSE/sum-restart/prediction/BASECASE" , include_restart = False)
 
-        self.assertTrue( True )
+        self.assertTrue( pred )
 
 
     def test_case1(self ):
@@ -251,7 +252,6 @@ def fast_suite():
 
 def ctest_run( argv ):
     suite = fast_suite
-    path_root = argv[0]
     unittest.TextTestRunner().run( fast_suite() )
 
 
