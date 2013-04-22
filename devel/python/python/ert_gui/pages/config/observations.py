@@ -22,6 +22,7 @@ from ert_gui.widgets.combochoice import ComboChoice
 from ert_gui.widgets.pathchooser import PathChooser
 from ert.ert.enums import history_source_type
 from ert_gui.widgets.reloadbutton import ReloadButton
+from ert.sched.history import HistoryType
 
 def createObservationsPage(configPanel, parent):
     configPanel.startPage("Observations")
@@ -36,8 +37,16 @@ def createObservationsPage(configPanel, parent):
     r.getter = get_history_source
 
     def set_history_source(ert, value):
-        history_source = history_source_type.resolveName(str(value))
-        ert.main.model_config.set_history_source( history_source.value())
+        history_source_enum = history_source_type.resolveName(str(value))
+        sched_file = ert.main.ecl_config.get_sched_file
+        refcase = ert.main.ecl_config.get_refcase
+        if history_source_enum.value() == 0:
+            history = HistoryType.alloc_from_sched_file(sched_file)
+        if history_source_enum.value() == 1:
+            history = HistoryType.alloc_from_refcase(refcase, True)
+        if history_source_enum.value() == 2: 
+            history = HistoryType.alloc_from_refcase(refcase, False)
+        ert.main.model_config.set_history_source(history, sched_file, refcase)
         
     r.setter = set_history_source
 
