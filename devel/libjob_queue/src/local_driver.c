@@ -140,12 +140,12 @@ void * submit_job_thread__(void * __arg) {
 
 
 
-void * local_driver_submit_job(void * __driver, 
-                               const char *  submit_cmd           , 
-                               int           num_cpu              , /* Ignored */
-                               const char *  run_path             , 
-                               const char *  job_name              ,
-                               int           argc,
+void * local_driver_submit_job(void * __driver           , 
+                               const char *  submit_cmd  , 
+                               int           num_cpu     , /* Ignored */
+                               const char *  run_path    , 
+                               const char *  job_name    ,
+                               int           argc        ,
                                const char ** argv ) {
   local_driver_type * driver = local_driver_safe_cast( __driver );
   {
@@ -196,7 +196,6 @@ void * local_driver_alloc() {
 
 
 bool local_driver_set_option( void * __driver , const char * option_key , const void * value){ 
-  local_driver_type * driver = local_driver_safe_cast( __driver );
   return false;
 }
 
