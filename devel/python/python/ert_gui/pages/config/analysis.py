@@ -22,7 +22,6 @@ from ert_gui.widgets.checkbox import CheckBox
 from ert_gui.widgets.spinnerwidgets import IntegerSpinner, DoubleSpinner, DoubleSpinner
 import ert_gui.widgets.tablewidgets
 from ert_gui.widgets.pathchooser import PathChooser
-from ert_gui.widgets.combochoice import ComboChoice
 from PyQt4 import QtGui
 import ert.enkf
 

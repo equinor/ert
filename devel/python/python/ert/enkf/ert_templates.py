@@ -36,7 +36,6 @@ class ErtTemplates(CClass):
     def clear(self):
         cfunc.clear(self)
 
-    @property
     def get_template(self,key):
         template = ErtTemplate( cfunc.get_template( self, key ), parent = self)
         return template
