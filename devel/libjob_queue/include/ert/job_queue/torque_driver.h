@@ -31,12 +31,14 @@ extern "C" {
 #define TORQUE_QSUB_CMD     "QSUB_CMD"
 #define TORQUE_QSTAT_CMD    "QSTAT_CMD"
 #define TORQUE_QDEL_CMD     "QDEL_CMD"
-#define TORQUE_QUEUE        "TORQUE_QUEUE"
+#define TORQUE_QUEUE        "QUEUE"
+#define TORQUE_NUM_CPUS     "NUM_CPUS"
+#define TORQUE_NUM_NODES    "NUM_NODES"
+
 #define TORQUE_DEFAULT_QSUB_CMD   "qsub"
 #define TORQUE_DEFAULT_QSTAT_CMD  "qstat"
 #define TORQUE_DEFAULT_QDEL_CMD  "qdel"
-#define TORQUE_NUM_CPUS     "NUM_CPUS"
-#define TORQUE_NUM_NODES    "NUM_NODES"
+
 
   typedef struct torque_driver_struct torque_driver_type;
   typedef struct torque_job_struct torque_job_type;
@@ -63,6 +65,8 @@ extern "C" {
 
   const void * torque_driver_get_option(const void * __driver, const char * option_key);
   bool torque_driver_set_option(void * __driver, const char * option_key, const void * value);
+  
+  void torque_job_create_submit_script(const char * run_path, const char * submit_cmd, int argc, const char ** job_argv);
 
   UTIL_SAFE_CAST_HEADER(torque_driver);
 

@@ -159,22 +159,18 @@ torque_job_type * torque_job_alloc() {
   return job;
 }
 
-// LSF has num_cpu, but this is not added (yet), not sure what the proper argument to qsub should be.
-
 stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
-        const char * torque_stdout,
         const char * job_name,
-        const char * submit_cmd,
-        int num_cpu,
-        int job_argc,
-        const char ** job_argv) {
+        const char * submit_script) {
 
 
   stringlist_type * argv = stringlist_alloc_new();
 
+  stringlist_append_ref(argv, "-k");
+  stringlist_append_ref(argv, "oe");
+
   {
-    int num_nodes = 1;
-    char * resource_string = util_alloc_sprintf("nodes=%d:ppn=%d", num_nodes, num_cpu);
+    char * resource_string = util_alloc_sprintf("nodes=%d:ppn=%d", driver->num_nodes, driver->num_cpus);
     stringlist_append_ref(argv, "-l");
     stringlist_append_copy(argv, resource_string);
     free(resource_string);
@@ -190,12 +186,7 @@ stringlist_type * torque_driver_alloc_cmd(torque_driver_type * driver,
     stringlist_append_ref(argv, job_name);
   }
 
-  stringlist_append_ref(argv, submit_cmd);
-  {
-    int iarg;
-    for (iarg = 0; iarg < job_argc; iarg++)
-      stringlist_append_ref(argv, job_argv[ iarg ]);
-  }
+  stringlist_append_ref(argv, submit_script);
 
   return argv;
 }
@@ -220,8 +211,19 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type * driver, const
   return jobid;
 }
 
+void torque_job_create_submit_script(const char * script_filename, const char * submit_cmd, int argc, const char ** job_argv) {
+  FILE* script_file = util_fopen(script_filename, "w");
+  fprintf(script_file, "#!/bin/sh\n");
+  fprintf(script_file, "%s", submit_cmd);
+  for (int i = 0; i<argc; i++) {
+    fprintf(script_file, " %s", job_argv[i]);
+  }
+  
+  util_fclose(script_file);
+}
+
 static int torque_driver_submit_shell_job(torque_driver_type * driver,
-        const char * torque_stdout,
+        const char * run_path,
         const char * job_name,
         const char * submit_cmd,
         int num_cpu,
@@ -229,9 +231,15 @@ static int torque_driver_submit_shell_job(torque_driver_type * driver,
         const char ** job_argv) {
   int job_id;
   char * tmp_file = util_alloc_tmp_file("/tmp", "enkf-submit", true);
-
+  char * script_filename = util_alloc_filename(run_path, "qsub_script", "sh");
+  torque_job_create_submit_script(script_filename, submit_cmd, job_argc, job_argv);
   {
-    stringlist_type * remote_argv = torque_driver_alloc_cmd(driver, torque_stdout, job_name, submit_cmd, num_cpu, job_argc, job_argv);
+    int p_units_from_driver = driver->num_cpus * driver->num_nodes;
+    if (num_cpu != p_units_from_driver) {
+      util_abort("%s: Error in config, job's config requires %d processing units, but config says %s: %d, and %s: %d, which multiplied becomes: %d \n",
+              __func__, num_cpu, TORQUE_NUM_CPUS, driver->num_cpus, TORQUE_NUM_NODES, driver->num_nodes, p_units_from_driver);
+    }
+    stringlist_type * remote_argv = torque_driver_alloc_cmd(driver, job_name, script_filename);
     char ** argv = stringlist_alloc_char_ref(remote_argv);
     util_fork_exec(driver->qsub_cmd, stringlist_get_size(remote_argv), (const char **) argv, true, NULL, NULL, NULL, tmp_file, NULL);
 
@@ -267,16 +275,8 @@ void * torque_driver_submit_job(void * __driver,
   torque_driver_type * driver = torque_driver_safe_cast(__driver);
   torque_job_type * job = torque_job_alloc();
   {
-    char * torque_stdout = util_alloc_filename(run_path, job_name, "TORQUE-stdout");
-    //pthread_mutex_lock( &driver->submit_lock );
-
-    job->torque_jobnr = torque_driver_submit_shell_job(driver, torque_stdout, job_name, submit_cmd, num_cpu, argc, argv);
+    job->torque_jobnr = torque_driver_submit_shell_job(driver, run_path, job_name, submit_cmd, num_cpu, argc, argv);
     job->torque_jobnr_char = util_alloc_sprintf("%ld", job->torque_jobnr);
-
-    //        hash_insert_ref( driver->my_jobs , job->torque_jobnr_char , NULL );   
-
-    //      pthread_mutex_unlock( &driver->submit_lock );
-    free(torque_stdout);
   }
 
   if (job->torque_jobnr > 0)
@@ -295,15 +295,20 @@ static char* torque_driver_get_qstat_status(torque_driver_type * driver, char * 
   char * status = util_malloc(sizeof (char)*2);
   char * tmp_file = util_alloc_tmp_file("/tmp", "enkf-qstat", true);
 
-  char ** argv = util_calloc(1, sizeof * argv);
-  argv[0] = jobnr_char;
+  {
+    char ** argv = util_calloc(1, sizeof * argv);
+    argv[0] = jobnr_char;
 
-  util_fork_exec(driver->qstat_cmd, 1, (const char **) argv, true, NULL, NULL, NULL, tmp_file, NULL);
+    util_fork_exec(driver->qstat_cmd, 1, (const char **) argv, true, NULL, NULL, NULL, tmp_file, NULL);
+    free(argv);
+  }
   
   FILE *stream = util_fopen(tmp_file, "r");
   bool at_eof = false;
   util_fskip_lines(stream, 2);
   char * line = util_fscanf_alloc_line(stream, &at_eof);
+  fclose(stream);
+
   if (line != NULL) {
     char job_id_full_string[32];
     if (sscanf(line, "%s %*s %*s %*s %s %*s", job_id_full_string, status) == 2) {
@@ -320,9 +325,7 @@ static char* torque_driver_get_qstat_status(torque_driver_type * driver, char * 
     util_abort("Unable to read qstat's output line number 3 from file: %s", tmp_file);
   }
 
-  fclose(stream);
   util_unlink_existing(tmp_file);
-  free(argv);
   free(tmp_file);
 
   return status;
