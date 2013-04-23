@@ -174,7 +174,7 @@ def createSimulationsPage(configPanel, parent):
         
         result = []
         for name in template_names:
-            template = templates.get_template( name)
+            template = templates.get_template(name)
             template_file = template.get_template_file
             target_file = template.get_target_file
             arguments = template.get_args_as_string
