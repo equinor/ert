@@ -21,7 +21,7 @@ from    ert.util.tvector      import *
 from    enkf_enum             import *
 import  libenkf
 from ert.util.stringlist import StringList
-import ert.enkf.ert_template ErtTemplate
+from ert.enkf.ert_template import ErtTemplate
 class ErtTemplates(CClass):
     
     def __init__(self , c_ptr , parent = None):
