@@ -134,7 +134,6 @@ extern "C" {
   const char * queue_driver_get_name(const queue_driver_type * driver);
 
   bool queue_driver_set_option(queue_driver_type * driver, const char * option_key, const void * value);
-  bool queue_driver_set_int_option(queue_driver_type * driver, const char * option_key, int int_value);
   const void * queue_driver_get_option(queue_driver_type * driver, const char * option_key);
 
   void queue_driver_free(queue_driver_type * driver);

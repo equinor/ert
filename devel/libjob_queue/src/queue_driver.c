@@ -192,11 +192,6 @@ bool queue_driver_set_option(queue_driver_type * driver, const char * option_key
   }
 }
 
-bool queue_driver_set_int_option(queue_driver_type * driver, const char * option_key, int int_value) {
-  const void * void_value = &int_value;
-  return queue_driver_set_option(driver, option_key, void_value);
-}
-
 bool queue_driver_set_string_option(queue_driver_type * driver, const char * option_key, const char * value) {
   return queue_driver_set_option(driver, option_key, value);
 }
