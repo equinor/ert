@@ -22,6 +22,8 @@
 #include <ert/util/test_util.h>
 #include <ert/job_queue/torque_driver.h>
 
+#include "ert/util/util.h"
+
 void test_option(torque_driver_type * driver, const char * option, const char * value) {
   test_assert_true(torque_driver_set_option(driver, option, value));
   test_assert_string_equal(torque_driver_get_option(driver, option), value);
@@ -51,8 +53,35 @@ void getoption_nooptionsset_defaultoptionsreturned() {
   torque_driver_free(driver);
 }
 
+void create_submit_script_script_according_to_input() {
+  char ** args = util_calloc(2, sizeof * args);
+  args[0] = "/tmp/jaja/";
+  args[1] = "number2arg";
+  char * script_filename = util_alloc_filename("/tmp/", "qsub_script", "sh");
+  torque_job_create_submit_script(script_filename, "job_program.py", 2, (const char **) args);
+  printf("Create submit script OK\n");
+
+  FILE* file_stream = util_fopen(script_filename, "r");
+  bool at_eof = false;
+  
+  char * line = util_fscanf_alloc_line(file_stream, &at_eof);
+  test_assert_string_equal("#!/bin/sh", line);
+  free(line);
+
+  line = util_fscanf_alloc_line(file_stream, &at_eof);
+  test_assert_string_equal("job_program.py /tmp/jaja/ number2arg", line);
+  free(line);
+  
+  line = util_fscanf_alloc_line(file_stream, &at_eof);
+  free(line);
+  test_assert_true(at_eof);
+  
+  fclose(file_stream);
+}
+
 int main(int argc, char ** argv) {
   getoption_nooptionsset_defaultoptionsreturned();
   setoption_setalloptions_optionsset();
+  create_submit_script_script_according_to_input();
   exit(0);
 }

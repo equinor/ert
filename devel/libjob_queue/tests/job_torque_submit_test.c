@@ -71,8 +71,8 @@ int main(int argc, char ** argv) {
     printf("Only accepts zero or one arguments (the job script to run)\n");
     exit(1);
   }
-
   printf("Submit, status and kill OK\n");
   torque_driver_free(driver);
+  
   exit(0);
 }
