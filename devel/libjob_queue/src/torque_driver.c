@@ -214,6 +214,9 @@ static int torque_job_parse_qsub_stdout(const torque_driver_type * driver, const
 void torque_job_create_submit_script(const char * script_filename, const char * submit_cmd, int argc, const char ** job_argv) {
   FILE* script_file = util_fopen(script_filename, "w");
   fprintf(script_file, "#!/bin/sh\n");
+  if (submit_cmd == NULL) {
+    util_abort("%s: cannot create submit script, because there is no executing commmand specified.", __func__);
+  }
   fprintf(script_file, "%s", submit_cmd);
   for (int i = 0; i<argc; i++) {
     fprintf(script_file, " %s", job_argv[i]);
