@@ -119,12 +119,12 @@ void local_driver_kill_job( void * __driver , void * __job) {
 
 void * submit_job_thread__(void * __arg) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg);
-  const char * executable  = arg_pack_iget_ptr(arg_pack , 0);
+  const char * executable  = arg_pack_iget_const_ptr(arg_pack , 0);
   /*
     The arg_pack contains a run_path field as the second argument,
     it has therefor been left here as a comment:
     
-    const char * run_path    = arg_pack_iget_ptr(arg_pack , 1);   
+    const char * run_path    = arg_pack_iget_const_ptr(arg_pack , 1);   
   */
   int          argc        = arg_pack_iget_int(arg_pack , 2);
   char ** argv             = arg_pack_iget_ptr(arg_pack , 3);
@@ -151,8 +151,8 @@ void * local_driver_submit_job(void * __driver           ,
   {
     local_job_type * job    = local_job_alloc();
     arg_pack_type  * arg_pack = arg_pack_alloc();
-    arg_pack_append_ptr( arg_pack , (char *) submit_cmd);
-    arg_pack_append_ptr( arg_pack , run_path );
+    arg_pack_append_const_ptr( arg_pack , submit_cmd);
+    arg_pack_append_const_ptr( arg_pack , run_path );
     arg_pack_append_int( arg_pack , argc );
     arg_pack_append_ptr( arg_pack , util_alloc_stringlist_copy( argv , argc ));   /* Due to conflict with threads and python GC we take a local copy. */
     arg_pack_append_ptr( arg_pack , job );
