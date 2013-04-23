@@ -234,6 +234,13 @@ class EnKFMain(CClass):
     @property
     def get_alt_fs(self, fs, read_only, create):
         return EnkfFS(cfunc.get_alt_fs(self, fs, read_only, create), parent = self)
+
+    @staticmethod
+    def create_new_config(config_file, storage_path, case_name, dbase_type, num_realizations):
+        cfunc.create_new_config(config_file, storage_path, case_name, dbase_type, num_realizations)
+
+    def fprintf_config(self):
+        cfunc.fprintf_config(self)
     
 ##################################################################
 
@@ -291,3 +298,5 @@ cfunc.run_assimilation             = cwrapper.prototype("void enkf_main_run_assi
 cfunc.run_smoother                 = cwrapper.prototype("void enkf_main_run_smoother(enkf_main, char*, bool)")
 cfunc.get_current_fs               = cwrapper.prototype("char* enkf_main_get_current_fs(enkf_main)")
 cfunc.alloc_caselist               = cwrapper.prototype("c_void_p enkf_main_alloc_caselist(enkf_main)")
+cfunc.fprintf_config               = cwrapper.prototype("void enkf_main_fprintf_config(enkf_main)")
+cfunc.create_new_config            = cwrapper.prototype("void enkf_main_create_new_config(char* , char*, char* , char* , int)")

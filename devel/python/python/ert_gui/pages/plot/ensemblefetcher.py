@@ -48,7 +48,28 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
  
     def initialize(self, ert):
-        self.initialized = True
+        ert.prototype("long ensemble_config_get_node(long, char*)")
+        ert.prototype("bool ensemble_config_has_key(long, char*)")
+        ert.prototype("long enkf_main_get_fs(long)")
+        ert.prototype("int enkf_main_get_ensemble_size(long)")
+        ert.prototype("long enkf_main_iget_member_config(long, int)")
+        ert.prototype("void enkf_main_get_observations(long, char*, int, long*, double*, double*)") #main, user_key, *time, *y, *std
+        ert.prototype("int enkf_main_get_observation_count(long, char*)")
+        ert.prototype("bool enkf_fs_has_node(long, long, int, int, int)")
+        ert.prototype("void enkf_fs_fread_node(long, long, int, int, int)")
+        ert.prototype("long enkf_node_alloc(long)")
+        ert.prototype("void enkf_node_free(long)")
+        ert.prototype("double enkf_node_user_get(long, char*, bool*)")
+        ert.prototype("double member_config_iget_sim_days(long, int, int)")
+        ert.prototype("time_t member_config_iget_sim_time(long, int, int)")
+        ert.prototype("int  enkf_main_get_history_length(long)")
+        ert.prototype("long enkf_config_node_get_ref(long)")
+        ert.prototype("bool field_config_ijk_active(long, int, int, int)")
+        ert.prototype("bool ecl_sum_has_general_var(long, char*)", lib=ert.ecl)
+        ert.prototype("int ecl_sum_get_general_var_index(long, char*)", lib=ert.ecl)
+        ert.prototype("time_vector ecl_sum_alloc_time_vector(long, bool)", lib=ert.ecl)
+        ert.prototype("double_vector ecl_sum_alloc_data_vector(long, int, bool)", lib=ert.ecl)
+    #    self.initialized = True
 
     def isHandlerFor(self, ert, key):
         return ert.main.ensemble_config.has_key( key)
