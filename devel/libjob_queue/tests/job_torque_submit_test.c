@@ -31,7 +31,8 @@ void test_submit(torque_driver_type * driver, const char * cmd) {
   if (job != NULL) {
     int torque_status = torque_driver_get_job_status(driver, job);
     if (!((torque_status == JOB_QUEUE_RUNNING) || (torque_status == JOB_QUEUE_PENDING))) {
-      test_exit("After start of job, the status is %d, it should have been JOB_QUEUE_RUNNING(%d) or JOB_QUEUE_PENDING (%d). Other statuses are JOB_QUEUE_EXIT(%d) and JOB_QUEUE_FAILED(%d)\n", torque_status, JOB_QUEUE_RUNNING, JOB_QUEUE_PENDING, JOB_QUEUE_EXIT, JOB_QUEUE_FAILED);
+      exit(1);
+      //test_exit("After start of job, the status is %d, it should have been JOB_QUEUE_RUNNING(%d) or JOB_QUEUE_PENDING (%d). Other statuses are JOB_QUEUE_EXIT(%d) and JOB_QUEUE_FAILED(%d)\n", torque_status, JOB_QUEUE_RUNNING, JOB_QUEUE_PENDING, JOB_QUEUE_EXIT, JOB_QUEUE_FAILED);
     }
 
     torque_driver_kill_job(driver, job);
@@ -45,10 +46,12 @@ void test_submit(torque_driver_type * driver, const char * cmd) {
 
     torque_status = torque_driver_get_job_status(driver, job);
     if (torque_status != JOB_QUEUE_EXIT && torque_status != JOB_QUEUE_DONE) {
-      test_exit("After kill of job, the status is %d, it should have been JOB_QUEUE_EXIT, which is %d\n", torque_status, JOB_QUEUE_EXIT);
+      exit(1);
+      //test_exit("After kill of job, the status is %d, it should have been JOB_QUEUE_EXIT, which is %d\n", torque_status, JOB_QUEUE_EXIT);
     }
   } else {
-    test_exit("Function %s returned null-pointer to job, terminating test.", "torque_driver_submit_job");
+    exit(1);
+    //test_exit("Function %s returned null-pointer to job, terminating test.", "torque_driver_submit_job");
   }
 
   free(run_path);

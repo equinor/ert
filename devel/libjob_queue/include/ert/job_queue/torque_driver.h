@@ -35,6 +35,8 @@ extern "C" {
 #define TORQUE_DEFAULT_QSUB_CMD   "qsub"
 #define TORQUE_DEFAULT_QSTAT_CMD  "qstat"
 #define TORQUE_DEFAULT_QDEL_CMD  "qdel"
+#define TORQUE_NUM_CPUS     "NUM_CPUS"
+#define TORQUE_NUM_NODES    "NUM_NODES"
 
   typedef struct torque_driver_struct torque_driver_type;
   typedef struct torque_job_struct torque_job_type;
@@ -50,7 +52,7 @@ extern "C" {
           const char * job_name,
           int argc,
           const char ** argv);
-  
+
   void torque_driver_kill_job(void * __driver, void * __job);
   void torque_driver_free__(void * __driver);
   void torque_driver_free(torque_driver_type * driver);
