@@ -21,6 +21,7 @@ from ert_gui.widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestep
 from ert.ert.enums import ert_state_enum
 from   ert.util.stringlist import StringList
 from ctypes import *
+from ert.util.tvector import BoolVector
 
 class ParametersAndMembers(HelpedWidget):
 
@@ -122,7 +123,7 @@ class ParametersAndMembers(HelpedWidget):
         source_case = str(self.sourceCase.currentText())
         source_report_step = self.sourceReportStep.getSelectedValue()
         source_state = ert_state_enum.resolveName(str(self.sourceType.currentText())).value()
-        member_mask = ert.createBoolVector(self.membersList.count(), selected_members)
+        member_mask = BoolVector.active_mask(str(selected_members).strip('[]'))
         ranking_key = None
         node_list = StringList(selected_parameters)
 
@@ -134,7 +135,6 @@ class ParametersAndMembers(HelpedWidget):
                                                       node_list)
 
         node_list.__del__
-        ert.freeBoolVector(member_mask)
 
     def copyEnsemble(self, selected_parameters, selected_members):
         ert = self.getModel()
@@ -150,7 +150,7 @@ class ParametersAndMembers(HelpedWidget):
         target_report_step = self.targetReportStep.getSelectedValue()
         target_state = ert_state_enum.resolveName(str(self.targetType.currentText())).value()
 
-        member_mask = ert.createBoolVector(self.membersList.count(), selected_members)
+        member_mask = BoolVector.active_mask(str(selected_members).strip('[]'))
         ranking_key = None
         node_list = StringList(selected_parameters)
 
@@ -165,7 +165,6 @@ class ParametersAndMembers(HelpedWidget):
                                          node_list)
 
         node_list.__del__
-        ert.freeBoolVector(member_mask)
 
     def initializeOrCopy(self):
         selected_parameters = getItemsFromList(self.parametersList)
