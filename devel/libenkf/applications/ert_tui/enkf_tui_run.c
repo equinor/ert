@@ -125,7 +125,6 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
     const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
     const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
-    analysis_module_type * module = analysis_config_get_active_module( analysis_config );
     int step1 = 0;
     int step2 ;
     int_vector_type * step_list = int_vector_alloc(0,0);

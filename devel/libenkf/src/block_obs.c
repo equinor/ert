@@ -169,7 +169,6 @@ block_obs_type * block_obs_alloc(const char   * obs_key,
   
   {
     block_obs_type * block_obs = util_malloc(sizeof * block_obs);
-    char           * sum_kw    = NULL;
 
     UTIL_TYPE_ID_INIT( block_obs , BLOCK_OBS_TYPE_ID );
     block_obs->obs_key         = util_alloc_string_copy(obs_key);

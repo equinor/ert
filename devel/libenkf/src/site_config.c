@@ -37,6 +37,7 @@
 #include <ert/config/config.h>
 #include <ert/config/config_content_item.h>
 #include <ert/config/config_content_node.h>
+#include <ert/config/config_schema_item.h>
 
 #include <ert/enkf/site_config.h>
 #include <ert/enkf/enkf_defaults.h>
