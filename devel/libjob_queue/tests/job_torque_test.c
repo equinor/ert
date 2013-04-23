@@ -29,13 +29,14 @@ void test_option(torque_driver_type * driver, const char * option, const char * 
 
 void setoption_setalloptions_optionsset() {
   torque_driver_type * driver = torque_driver_alloc();
-
   test_option(driver, TORQUE_QSUB_CMD, "XYZaaa");
   test_option(driver, TORQUE_QSTAT_CMD, "xyZfff");
   test_option(driver, TORQUE_QDEL_CMD, "ZZyfff");
   test_option(driver, TORQUE_QUEUE, "superhigh");
-
+  test_option(driver, TORQUE_NUM_CPUS, "42");
+  test_option(driver, TORQUE_NUM_NODES, "36");
   printf("Options OK\n");
+  torque_driver_free(driver);
 }
 
 void getoption_nooptionsset_defaultoptionsreturned() {
@@ -43,7 +44,11 @@ void getoption_nooptionsset_defaultoptionsreturned() {
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSUB_CMD), TORQUE_DEFAULT_QSUB_CMD);
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSTAT_CMD), TORQUE_DEFAULT_QSTAT_CMD);
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QDEL_CMD), TORQUE_DEFAULT_QDEL_CMD);
+  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_CPUS), "1");
+  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_NODES), "1");
+
   printf("Default options OK\n");
+  torque_driver_free(driver);
 }
 
 int main(int argc, char ** argv) {
