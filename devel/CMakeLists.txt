@@ -24,7 +24,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    add_definitions( -DERT_WINDOWS )
 endif()    
 
-set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99" )
+set( CMAKE_C_FLAGS    "-g -O2 -Wall -Wno-unknown-pragmas -std=gnu99 " )
 set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 
 include(cmake/ert_check.cmake)
