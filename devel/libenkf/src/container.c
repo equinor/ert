@@ -25,7 +25,7 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_node.h>
 
-typedef struct container_struct {
+struct container_struct {
   int                          __type_id;       
   container_config_type      * config; 
   vector_type                * nodes;
