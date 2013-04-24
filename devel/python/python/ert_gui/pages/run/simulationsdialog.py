@@ -207,7 +207,7 @@ class SimulationsDialogController:
 
             while(self.runthread.isAlive()):
                 for member in selectedMembers:
-                    state = ert.main.iget_state(  member)
+                    state = ert.main.iget_state(member)
                     status = state.get_run_status
 
                     simulations[member].simulation.setStatus(ert_job_status_type.resolveValue(status))
