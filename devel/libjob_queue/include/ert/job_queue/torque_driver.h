@@ -28,12 +28,13 @@ extern "C" {
   /*
     The options supported by the Torque driver.
    */
-#define TORQUE_QSUB_CMD     "QSUB_CMD"
-#define TORQUE_QSTAT_CMD    "QSTAT_CMD"
-#define TORQUE_QDEL_CMD     "QDEL_CMD"
-#define TORQUE_QUEUE        "QUEUE"
-#define TORQUE_NUM_CPUS     "NUM_CPUS"
-#define TORQUE_NUM_NODES    "NUM_NODES"
+#define TORQUE_QSUB_CMD          "QSUB_CMD"
+#define TORQUE_QSTAT_CMD         "QSTAT_CMD"
+#define TORQUE_QDEL_CMD          "QDEL_CMD"
+#define TORQUE_QUEUE             "QUEUE"
+#define TORQUE_NUM_CPUS          "NUM_CPUS"
+#define TORQUE_NUM_NODES         "NUM_NODES"
+#define TORQUE_KEEP_QSUB_OUTPUT  "KEEP_QSUB_OUTPUT"
 
 #define TORQUE_DEFAULT_QSUB_CMD   "qsub"
 #define TORQUE_DEFAULT_QSTAT_CMD  "qstat"

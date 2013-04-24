@@ -37,6 +37,9 @@ void setoption_setalloptions_optionsset() {
   test_option(driver, TORQUE_QUEUE, "superhigh");
   test_option(driver, TORQUE_NUM_CPUS, "42");
   test_option(driver, TORQUE_NUM_NODES, "36");
+  test_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "1");
+  test_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "0");
+
   printf("Options OK\n");
   torque_driver_free(driver);
 }
@@ -46,6 +49,7 @@ void getoption_nooptionsset_defaultoptionsreturned() {
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSUB_CMD), TORQUE_DEFAULT_QSUB_CMD);
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSTAT_CMD), TORQUE_DEFAULT_QSTAT_CMD);
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QDEL_CMD), TORQUE_DEFAULT_QDEL_CMD);
+  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_KEEP_QSUB_OUTPUT), "0");
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_CPUS), "1");
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_NODES), "1");
 
