@@ -140,7 +140,7 @@ import matplotlib
 print "PyQt4 version: ", QtCore.qVersion()
 print "matplotlib version: ", matplotlib.__version__
 
-splash = QtGui.QSplashScreen(resourceImage("splash") , QtCore.Qt.WindowStaysOnTopHint)
+splash = QtGui.QSplashScreen(resourceImage("newsplash") , QtCore.Qt.WindowStaysOnTopHint)
 splash.show()
 splash.showMessage("Starting up...", color=QtCore.Qt.white)
 app.processEvents()

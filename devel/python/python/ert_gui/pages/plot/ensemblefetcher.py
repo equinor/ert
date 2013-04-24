@@ -46,44 +46,20 @@ class EnsembleFetcher(PlotDataFetcherHandler):
         self.connect(self.keyword_configuration, SIGNAL('configurationChanged()'), emitter)
         self.connect(self.data_configuration, SIGNAL('configurationChanged()'), emitter)
 
- 
- #   def initialize(self, ert):
-#        ert.prototype("long ensemble_config_get_node(long, char*)")
-    #    ert.prototype("bool ensemble_config_has_key(long, char*)")
-    #    ert.prototype("long enkf_main_get_fs(long)")
-    #    ert.prototype("int enkf_main_get_ensemble_size(long)")
-    #    ert.prototype("long enkf_main_iget_member_config(long, int)")
-    #    ert.prototype("void enkf_main_get_observations(long, char*, int, long*, double*, double*)") #main, user_key, *time, *y, *std
-    #    ert.prototype("int enkf_main_get_observation_count(long, char*)")
-    #    ert.prototype("bool enkf_fs_has_node(long, long, int, int, int)")
-    #    ert.prototype("void enkf_fs_fread_node(long, long, int, int, int)")
-    #    ert.prototype("long enkf_node_alloc(long)")
-    #    ert.prototype("void enkf_node_free(long)")
-    #    ert.prototype("double enkf_node_user_get(long, char*, bool*)")
-    #    ert.prototype("double member_config_iget_sim_days(long, int, int)")
-    #    ert.prototype("time_t member_config_iget_sim_time(long, int, int)")
-    #    ert.prototype("int  enkf_main_get_history_length(long)")
-    #    ert.prototype("long enkf_config_node_get_ref(long)")
-    #    ert.prototype("bool field_config_ijk_active(long, int, int, int)")
-    #    ert.prototype("bool ecl_sum_has_general_var(long, char*)", lib=ert.ecl)
-    #    ert.prototype("int ecl_sum_get_general_var_index(long, char*)", lib=ert.ecl)
-    #    ert.prototype("time_vector ecl_sum_alloc_time_vector(long, bool)", lib=ert.ecl)
-    #    ert.prototype("double_vector ecl_sum_alloc_data_vector(long, int, bool)", lib=ert.ecl)
-    #    self.initialized = True
-
+        
+        
     def isHandlerFor(self, ert, key):
         return ert.main.ensemble_config.has_key( key)
 
 
     def fetch(self, ert, key, parameter, data, comparison_fs):
         data.x_data_type = "time"
-
         fs = ert.main.get_fs
         config_node = ert.main.ensemble_config.get_node(key)
         node = config_node.alloc_node
         comp_node = config_node.alloc_node
         num_realizations = ert.main.ens_size
-
+        var_type_set = False
         user_data = parameter.getUserData()
 
         if user_data is None:
@@ -101,13 +77,19 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                 data.setKeyIndexIsIndex(True)
             else:
                 return False
+            var_type = enums.enkf_var_type.PARAMETER
+            var_type_set = True
         elif parameter.getType() == DataModel.TYPE:
             data_index = user_data['data_index']
             key_index = "KEY:%d" % data_index
             data.setKeyIndexIsIndex(True)
+            var_type = enums.enkf_var_type.PARAMETER
+            var_type_set = True
 
+        if var_type_set == False:
+            var_type = enums.enkf_var_type.DYNAMIC_RESULT
+        
         data.setKeyIndex(key_index)
-
         state_list = [user_data['state']]
         if state_list[0] == enums.ert_state_enum.BOTH:
             state_list = [enums.ert_state_enum.FORECAST, enums.ert_state_enum.ANALYZED]
@@ -128,9 +110,10 @@ class EnsembleFetcher(PlotDataFetcherHandler):
 
             for step in range(0, stop_time + 1):
                 for state in state_list:
-                    if fs.has_node(key, step, member, state.value()):
+                    if fs.has_node(key, var_type.value(), step, member, state.value()):
                         time_map = fs.get_time_map
                         sim_time = time_map.iget(step)
+                        print "Is this invoked 1"
                         fs.fread_node(key, step, member, state.value())
                         valid = ertwrapper.c_double()
                         value = node.user_get(fs, key_index, step, member, state.value(), ertwrapper.byref(valid))
@@ -146,6 +129,7 @@ class EnsembleFetcher(PlotDataFetcherHandler):
                         if comparison_fs.has_node(key, step, member, state.value()):
                             time_map = comparison_fs.get_time_map
                             sim_time = time_map.iget(step)
+                            print "Is this invoked 2"#sim_time
                             comparison_fs.fread_node(comp_node, step, member, state.value())
                             valid = ertwrapper.c_double()
                             value = comp_node.user_get(comparison_fs, key_index, step, member, state.value(), ertwrapper.byref(valid))
