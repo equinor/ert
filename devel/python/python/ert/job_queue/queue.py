@@ -29,7 +29,7 @@ from    ert.cwrap.cclass      import CClass
 
 # Need to import this to ensure that the ctime type is registered
 import  ert.util.ctime        
-
+from ert.util.ctime import ctime
 
 import  libjob_queue
 
@@ -299,7 +299,7 @@ cfunc.num_pending     = cwrapper.prototype("int  job_queue_get_num_pending( job_
 cfunc.is_running      = cwrapper.prototype("int  job_queue_is_running( job_queue )")
 cfunc.submit_complete = cwrapper.prototype("void job_queue_submit_complete( job_queue )")
 cfunc.get_job_ptr     = cwrapper.prototype("c_void_p job_queue_iget_job( job_queue , int)")
-cfunc.iget_sim_start  = cwrapper.prototype("time_t   job_queue_iget_sim_start( job_queue , int)")
+cfunc.iget_sim_start  = cwrapper.prototype("int   job_queue_iget_sim_start( job_queue , int)")
 cfunc.get_active_size = cwrapper.prototype("int      job_queue_get_active_size( job_queue )")
 cfunc.get_pause       = cwrapper.prototype("bool job_queue_get_pause(job_queue)")
 cfunc.set_pause_on    = cwrapper.prototype("void job_queue_set_pause_on(job_queue)")

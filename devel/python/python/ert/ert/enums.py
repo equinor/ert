@@ -164,15 +164,15 @@ enkf_impl_type.GEN_DATA = enkf_impl_type("Data", 113)
 class enkf_var_type(enum):
     #INVALID_VAR      =  None  #,    /* */
     PARAMETER        =  None  #,    /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
-    #DYNAMIC_STATE    =  None  #,    /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
-    #DYNAMIC_RESULT   =  None  #,    /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
+    DYNAMIC_STATE    =  None  #,    /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
+    DYNAMIC_RESULT   =  None  #,    /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
     #STATIC_STATE     =  None  #,    /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
     #INDEX_STATE      =  None
 
 #enkf_var_type.INVALID_VAR
 enkf_var_type.PARAMETER = enkf_var_type("Parameter", 1)
-#enkf_var_type.DYNAMIC_STATE
-#enkf_var_type.DYNAMIC_RESULT
+enkf_var_type.DYNAMIC_STATE = enkf_var_type("DynamicState", 2)
+enkf_var_type.DYNAMIC_RESULT = enkf_var_type("DynamicResult", 4)
 #enkf_var_type.STATIC_STATE
 #enkf_var_type.INDEX_STATE 
 

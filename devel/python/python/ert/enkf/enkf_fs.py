@@ -34,10 +34,10 @@ class EnkfFs(CClass):
         else:
             self.init_cobj( c_ptr , cfunc.close )
 
-    def has_node(self, node_key, step, member, value, type = 1):
-        return cfunc.has_node(self, node_key, type, step, member, value)
+    def has_node(self, node_key, var_type, step, member, value):
+        return cfunc.has_node(self, node_key, var_type, step, member, value)
     
-    def fread_node(self, key, step, member, value,type = 1):
+    def fread_node(self, key, step, member, value,type = 2):
         buffer = Buffer(100)
         cfunc.fread_node(self, buffer, key, type, step, member, value)
 
