@@ -668,9 +668,9 @@ void * lsf_driver_submit_job(void * __driver ,
       pthread_mutex_lock( &driver->submit_lock );
       
       if (submit_method == LSF_SUBMIT_INTERNAL) {
-        job->lsf_jobnr = lsf_driver_submit_internal_job( driver , run_path , job_name , submit_cmd , num_cpu , argc, argv);
+        job->lsf_jobnr = lsf_driver_submit_internal_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
       } else {
-        job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , run_path , job_name , submit_cmd , num_cpu , argc, argv);
+        job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
         job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
         hash_insert_ref( driver->my_jobs , job->lsf_jobnr_char , NULL );   
       }
