@@ -31,6 +31,8 @@
 
 #include <enkf_tui_help.h>
 #include <enkf_tui_init.h>
+#include <enkf_tui_util.h>
+
 
 void enkf_tui_fs_ls_case(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
@@ -272,20 +274,22 @@ void enkf_tui_fs_copy_ensemble(void * arg)
   if(strlen(report_step_from_as_char) !=0){
     util_sscanf_int(report_step_from_as_char , &report_step_from);
     state_from = enkf_tui_util_scanf_state("source analyzed/forecast [a|f]" , prompt_len , false);
-    if(state_from != UNDEFINED){
+    if(state_from != UNDEFINED) {
       util_printf_prompt("target case" , prompt_len , '=' , "=> ");
-      char * target_case;
-      if(fgets(target_case, prompt_len, stdin) != NULL);{
+      char * target_case = NULL;
+
+      if ( fgets(target_case, prompt_len, stdin)) {
         char *newline = strchr(target_case, '\n');
         if (newline)
           *newline = 0;
       }
-      if(strlen(target_case) !=0){
+
+      if (target_case && (strlen(target_case))) {
         char * report_step_to_as_char = util_scanf_int_with_limits_return_char("target report step",prompt_len , 0 , last_report);
-        if(strlen(report_step_to_as_char) !=0){
+        if (strlen(report_step_to_as_char)) {
           util_sscanf_int(report_step_to_as_char , &report_step_to);
           state_to       = enkf_tui_util_scanf_state("target analyzed/forecast [a|f]" , prompt_len , false);
-          if(state_to != UNDEFINED){
+          if(state_to != UNDEFINED) {
             enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, false);
           }
         }
@@ -321,14 +325,17 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
     util_sscanf_int(report_step_from_as_char , &report_step_from);
     state_from = enkf_tui_util_scanf_state("source analyzed/forecast [a|f]" , prompt_len , false);
     if(state_from != UNDEFINED){
+
       util_printf_prompt("target case" , prompt_len , '=' , "=> ");
-      char * target_case;
-      if(fgets(target_case, prompt_len, stdin) != NULL);{
+      char * target_case = NULL;
+
+      if ( fgets(target_case, prompt_len, stdin) ) {
         char *newline = strchr(target_case, '\n');
         if (newline)
           *newline = 0;
       }
-      if(strlen(target_case) !=0){
+
+      if (target_case && strlen(target_case)) {
         char * report_step_to_as_char = util_scanf_int_with_limits_return_char("target report step",prompt_len , 0 , last_report);
         if(strlen(report_step_to_as_char) !=0){
           util_sscanf_int(report_step_to_as_char , &report_step_to);
