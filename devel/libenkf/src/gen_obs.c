@@ -65,7 +65,7 @@ struct gen_obs_struct {
   char                       * obs_file;         /* The file holding the observation. */ 
   gen_data_file_format_type    obs_format;       /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
   matrix_type                * error_covar;
-  gen_data_config_type       * data_config;
+  const gen_data_config_type * data_config;
 };
 
 /******************************************************************/

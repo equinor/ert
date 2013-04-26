@@ -1512,8 +1512,6 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
   }  
   enkf_main_init_run( enkf_main , run_mode );
   {
-    const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
-    const int last_report              = -1;  // Should be fully ignored.
     int load_start                  = start_report;
     state_enum init_state_parameter = start_state;
     state_enum init_state_dynamic   = start_state;
@@ -1788,12 +1786,12 @@ void enkf_main_initialize_from_existing(enkf_main_type * enkf_main ,
 
 
 static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
-  arg_pack_type * arg_pack     = arg_pack_safe_cast( void_arg );
-  enkf_main_type * enkf_main   = arg_pack_iget_ptr( arg_pack , 0);
-  stringlist_type * param_list = arg_pack_iget_ptr( arg_pack , 1 );
-  int iens1                    = arg_pack_iget_int( arg_pack , 2 );
-  int iens2                    = arg_pack_iget_int( arg_pack , 3 );
-  bool force_init              = arg_pack_iget_bool( arg_pack , 4 );
+  arg_pack_type * arg_pack           = arg_pack_safe_cast( void_arg );
+  enkf_main_type * enkf_main         = arg_pack_iget_ptr( arg_pack , 0);
+  const stringlist_type * param_list = arg_pack_iget_const_ptr( arg_pack , 1 );
+  int iens1                          = arg_pack_iget_int( arg_pack , 2 );
+  int iens2                          = arg_pack_iget_int( arg_pack , 3 );
+  bool force_init                    = arg_pack_iget_bool( arg_pack , 4 );
   int iens;
   
   for (iens = iens1; iens < iens2; iens++) {
@@ -1816,7 +1814,7 @@ void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const string
   for (i = 0; i < num_cpu;  i++) {
     arg_list[i] = arg_pack_alloc();
     arg_pack_append_ptr( arg_list[i] , enkf_main );
-    arg_pack_append_ptr( arg_list[i] , param_list );
+    arg_pack_append_const_ptr( arg_list[i] , param_list );
     {
       int start_iens = i * ens_sub_size;
       int end_iens   = start_iens + ens_sub_size;

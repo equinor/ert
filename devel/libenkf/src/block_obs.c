@@ -182,7 +182,7 @@ block_obs_type * block_obs_alloc(const char   * obs_key,
     {
       for (int l=0; l < size; l++) {
         int active_index = ecl_grid_get_active_index3( block_obs->grid , i[l],j[l],k[l]);
-        char * sum_key   = NULL;
+        const char * sum_key   = NULL;
         if (source_type == SOURCE_SUMMARY) 
           sum_key = stringlist_iget( summary_keys , l );
         
