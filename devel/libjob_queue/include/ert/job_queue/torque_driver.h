@@ -61,7 +61,6 @@ extern "C" {
   void torque_driver_free(torque_driver_type * driver);
   job_status_type torque_driver_get_job_status(void * __driver, void * __job);
   void torque_driver_free_job(void * __job);
-  //  void            lsf_driver_display_info( void * __driver , void * __job);
   void torque_driver_set_qstat_refresh_interval(torque_driver_type * driver, int refresh_interval);
 
   const void * torque_driver_get_option(const void * __driver, const char * option_key);

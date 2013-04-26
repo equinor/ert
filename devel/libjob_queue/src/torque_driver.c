@@ -137,7 +137,6 @@ bool torque_driver_set_option(void * __driver, const char * option_key, const vo
       torque_driver_set_num_nodes(driver, value);
     else if (strcmp(TORQUE_KEEP_QSUB_OUTPUT, option_key) == 0)
       torque_driver_set_keep_qsub_output(driver, value);
-
     else
       has_option = false;
   }
@@ -163,7 +162,6 @@ const void * torque_driver_get_option(const void * __driver, const char * option
       return driver->keep_qsub_output ? "1" : "0";
     else {
       util_abort("%s: option_id:%s not recognized for TORQUE driver \n", __func__, option_key);
-
       return NULL;
     }
   }
