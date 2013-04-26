@@ -129,6 +129,18 @@ def fast_suite():
     return suite
 
 
+
+
+def test_suite( argv ):
+    test_list = fast_suite()
+    if argv:
+        if argv[0][0] == "T":
+            for t in slow_suite():
+                test_list.addTest( t )
+    return test_list
+
+            
+
 if __name__ == "__main__":
     unittest.TextTestRunner().run( fast_suite() )
     unittest.TextTestRunner().run( slow_suite() )
