@@ -119,7 +119,7 @@ typedef struct run_info_struct {
 */
 
 typedef struct shared_info_struct {
-  const model_config_type     * model_config;      /* .... */
+  model_config_type           * model_config;      /* .... */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
   const site_config_type      * site_config;
@@ -249,7 +249,7 @@ static void run_info_complete_run(run_info_type * run_info) {
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, const ecl_config_type * ecl_config , log_type * logh , ert_templates_type * templates) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , model_config_type * model_config, const ecl_config_type * ecl_config , log_type * logh , ert_templates_type * templates) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info );
 
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
@@ -448,7 +448,7 @@ enkf_state_type * enkf_state_alloc(int iens,
                                    const char                * casename , 
                                    bool                        pre_clear_runpath , 
                                    keep_runpath_type           keep_runpath , 
-                                   const model_config_type   * model_config,
+                                   model_config_type         * model_config,
                                    ensemble_config_type      * ensemble_config,
                                    const site_config_type    * site_config,
                                    const ecl_config_type     * ecl_config,

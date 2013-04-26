@@ -505,8 +505,8 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
 
 /*****************************************************************/                   
 
-const enkf_config_node_type * enkf_config_node_container_iget( const enkf_config_node_type * node , int index) {
-  return vector_iget_const( node->container_nodes , index );
+enkf_config_node_type * enkf_config_node_container_iget( const enkf_config_node_type * node , int index) {
+  return vector_iget( node->container_nodes , index );
 }
 
 int enkf_config_node_container_size( const enkf_config_node_type * node ) {

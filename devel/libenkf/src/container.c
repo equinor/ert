@@ -27,13 +27,13 @@
 
 struct container_struct {
   int                          __type_id;       
-  container_config_type      * config; 
+  const container_config_type      * config; 
   vector_type                * nodes;
 };
 
 
 
-container_type * container_alloc( container_config_type * config ) {
+container_type * container_alloc( const container_config_type * config ) {
   container_type * container = util_malloc( sizeof * container );
   UTIL_TYPE_ID_INIT( container , CONTAINER );
   container->config = config;

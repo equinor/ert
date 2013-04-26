@@ -85,7 +85,7 @@ typedef struct enkf_state_struct    enkf_state_type;
                                       const char * casename , 
                                       bool         pre_clear_runpath, 
                                       keep_runpath_type , 
-                                      const model_config_type * ,
+                                      model_config_type * ,
                                       ensemble_config_type * ,
                                       const site_config_type * ,
                                       const ecl_config_type * ,

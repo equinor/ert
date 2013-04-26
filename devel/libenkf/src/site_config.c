@@ -1012,7 +1012,7 @@ void site_config_fprintf_config( const site_config_type * site_config , FILE * s
 
     {
       queue_driver_type * rsh_driver = site_config_get_queue_driver( site_config , RSH_DRIVER_NAME );
-      hash_type * host_list = queue_driver_get_option( rsh_driver , RSH_HOSTLIST );
+      hash_type * host_list = hash_safe_cast( (void *) queue_driver_get_option( rsh_driver , RSH_HOSTLIST ) );
       hash_iter_type * iter = hash_iter_alloc( host_list );
       while (!hash_iter_is_complete( iter )) {
         const char * host_name = hash_iter_get_next_key( iter );
