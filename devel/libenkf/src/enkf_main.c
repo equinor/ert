@@ -312,7 +312,7 @@ bool enkf_main_has_QC_workflow( const enkf_main_type * enkf_main ) {
   return qc_module_has_workflow( enkf_main->qc_module );
 }
 
-const qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
+qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main ) {
   return enkf_main->qc_module;
 }
 
