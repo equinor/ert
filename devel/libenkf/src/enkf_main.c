@@ -46,6 +46,7 @@
 #include <ert/util/set.h>
 #include <ert/util/log.h>
 #include <ert/util/node_ctype.h>
+#include <ert/util/string_util.h>
 
 #include <ert/config/config.h>
 
@@ -508,64 +509,6 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
 
 
 
-
-static void enkf_main_fwrite_sub_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state, int iens1 , int iens2) {
-  int iens;
-  for (iens = iens1; iens < iens2; iens++)
-    enkf_state_fwrite(enkf_main->ensemble[iens] , enkf_main_get_fs( enkf_main ), mask , report_step , state);
-}
-
-
-static void * enkf_main_fwrite_sub_ensemble__(void *__arg) {
-  arg_pack_type * arg_pack   = arg_pack_safe_cast(__arg);
-  enkf_main_type * enkf_main = arg_pack_iget_ptr(arg_pack , 0);
-  int mask                   = arg_pack_iget_int(arg_pack , 1);
-  int report_step            = arg_pack_iget_int(arg_pack , 2);
-  state_enum state           = arg_pack_iget_int(arg_pack , 3);
-  int iens1                  = arg_pack_iget_int(arg_pack , 4);
-  int iens2                  = arg_pack_iget_int(arg_pack , 5);
-
-  enkf_main_fwrite_sub_ensemble(enkf_main , mask , report_step , state , iens1 , iens2);
-  return NULL;
-}
-
-
-/*void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
-  const   int cpu_threads = 4;
-  int     sub_ens_size    = enkf_main_get_ensemble_size(enkf_main) / cpu_threads;
-  int     icpu;
-  thread_pool_type * tp = thread_pool_alloc( cpu_threads , true );
-  arg_pack_type ** arg_pack_list = util_malloc( cpu_threads * sizeof * arg_pack_list , __func__);
-
-  for (icpu = 0; icpu < cpu_threads; icpu++) {
-    arg_pack_type * arg = arg_pack_alloc();
-    arg_pack_append_ptr(arg , enkf_main);
-    arg_pack_append_int(arg , mask);
-    arg_pack_append_int(arg , report_step);
-    arg_pack_append_int(arg , state);
-
-    {
-      int iens1 =  icpu * sub_ens_size;
-      int iens2 = iens1 + sub_ens_size;
-
-      if (icpu == (cpu_threads - 1))
-        iens2 = enkf_main_get_ensemble_size(enkf_main);
-
-      arg_pack_append_int(arg , iens1);
-      arg_pack_append_int(arg , iens2);
-    }
-    arg_pack_list[icpu] = arg;
-    arg_pack_lock( arg );
-    thread_pool_add_job( tp , enkf_main_fwrite_sub_ensemble__ , arg);
-  }
-  thread_pool_join( tp );
-  thread_pool_free( tp );
-
-  for (icpu = 0; icpu < cpu_threads; icpu++)
-    arg_pack_free( arg_pack_list[icpu]);
-  free(arg_pack_list);
-}
-*/
 
 
 
@@ -2121,10 +2064,6 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
   free(tagged_key);
 }
 
-static void enkf_main_init_workflow_list( enkf_main_type * enkf_main , config_type * config ) {
-  ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh);
-}
-
 
 static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config ) {
   qc_module_init( enkf_main->qc_module , config );
@@ -2424,6 +2363,21 @@ char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const cha
 }
 
 
+void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
+  stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( enkf_main->ensemble_config , GEN_DATA);
+  for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
+    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( gen_data_keys , i));
+    enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
+    if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
+      gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+      gen_data_config_set_dynamic( gen_data_config , enkf_main->dbase );
+      gen_data_config_set_ens_size( gen_data_config , enkf_main->ens_size );
+    }
+  }
+  stringlist_free( gen_data_keys );
+}
+
+
 void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path ) {
   if (enkf_main->dbase != fs) {
     if (enkf_main->dbase != NULL)
@@ -2497,19 +2451,6 @@ enkf_fs_type * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * ca
   return alt_fs;
 }
 
-void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
-  stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( enkf_main->ensemble_config , GEN_DATA);
-  for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
-    enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( gen_data_keys , i));
-    enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-    if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) {
-      gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-      gen_data_config_set_dynamic( gen_data_config , enkf_main->dbase );
-      gen_data_config_set_ens_size( gen_data_config , enkf_main->ens_size );
-    }
-  }
-  stringlist_free( gen_data_keys );
-}
 
 
 void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
@@ -2914,7 +2855,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     {
       const config_content_item_type * pred_item = config_get_content_item( config , SCHEDULE_PREDICTION_FILE_KEY );
       if (pred_item != NULL) {
-        const config_content_node_type * pred_node = config_content_item_get_last_node( pred_item );
+        config_content_node_type * pred_node = config_content_item_get_last_node( pred_item );
         const char * template_file = config_content_node_iget_as_path( pred_node , 0 );
         {
           hash_type * opt_hash = hash_alloc();
