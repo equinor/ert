@@ -77,7 +77,7 @@ int main( int argc , char ** argv) {
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exworkflow)) {
       {
         FILE * stream = util_fopen( exworkflow , "r");
-        char * content = util_fread_alloc_file_content( stream );
+        char * content = util_fread_alloc_file_content( stream , NULL );
         printf("=================================================================\n");
         fprintf( stdout , "%s\n",content);
         printf("=================================================================\n");
