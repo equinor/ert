@@ -52,7 +52,7 @@ void read_file( void * self , const stringlist_type * args) {
 static void create_exworkflow( const char * workflow , const char * bin_path) 
 {
   FILE * stream = util_fopen( workflow , "w");
-  fprintf(stream , "EXECUTABLE  %s/create_file\n" , bin_path);  
+  fprintf(stream , "EXECUTABLE  \"%s/create file\"\n" , bin_path);  
   fprintf(stream , "ARG_TYPE    1   INT\n");
   fprintf(stream , "MIN_ARG     2\n");
   fprintf(stream , "MAX_ARG     2\n");
@@ -77,8 +77,8 @@ int main( int argc , char ** argv) {
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exworkflow)) {
       remove( exworkflow );
       {
-        config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
-        config_fprintf_errors( workflow_compiler , true , stdout );
+        config_type * job_config = workflow_joblist_get_job_config( joblist );
+        config_fprintf_errors( job_config , true , stdout );
       }
       test_error_exit("Loading job CREATE_FILE failed\n");
     } else

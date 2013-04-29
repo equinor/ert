@@ -284,7 +284,7 @@ workflow_job_type * workflow_job_config_alloc( const char * name , config_type *
       if (config_item_set( config , FUNCTION_KEY))
         workflow_job_set_function( workflow_job , config_get_value( config , FUNCTION_KEY));
       
-      if (config_item_set( config , EXECUTABLE_KEY))
+      if (config_item_set( config , EXECUTABLE_KEY)) 
         workflow_job_set_executable( workflow_job , config_get_value_as_abspath( config , EXECUTABLE_KEY));
       
       workflow_job_validate( workflow_job );
@@ -296,7 +296,7 @@ workflow_job_type * workflow_job_config_alloc( const char * name , config_type *
       
       return workflow_job;
     }
-  } else
+  } else 
     return NULL;
 }
 
