@@ -76,6 +76,10 @@ int main( int argc , char ** argv) {
     
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exworkflow)) {
       remove( exworkflow );
+      {
+        config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
+        config_fprintf_errors( workflow_compiler , true , stdout );
+      }
       test_error_exit("Loading job CREATE_FILE failed\n");
     } else
       remove( exworkflow );
@@ -85,7 +89,6 @@ int main( int argc , char ** argv) {
     
     {
       config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
-      
       if (config_get_schema_size( workflow_compiler ) != 2)
         test_error_exit("Config compiler - wrong size \n");
     }
