@@ -169,7 +169,7 @@ static void site_config_set_queue_option(site_config_type * site_config, const c
   if (site_config_has_queue_driver(site_config, driver_name)) {
     queue_driver_type * driver = site_config_get_queue_driver(site_config, driver_name);
     if (!queue_driver_set_option(driver, option_key, option_value))
-      fprintf(stderr, "** Warning: Option:%s not recognized by driver:%s- ignored \n", option_key, driver_name);
+      fprintf(stderr, "** Warning: Option:%s or its value is not recognized by driver:%s- ignored \n", option_key, driver_name);
   } else
     fprintf(stderr, "** Warning: Driver:%s not recognized - ignored \n", driver_name);
 }

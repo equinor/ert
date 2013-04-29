@@ -32,7 +32,7 @@ extern "C" {
 #define TORQUE_QSTAT_CMD         "QSTAT_CMD"
 #define TORQUE_QDEL_CMD          "QDEL_CMD"
 #define TORQUE_QUEUE             "QUEUE"
-#define TORQUE_NUM_CPUS          "NUM_CPUS"
+#define TORQUE_NUM_CPUS_PER_NODE "NUM_CPUS_PER_NODE"
 #define TORQUE_NUM_NODES         "NUM_NODES"
 #define TORQUE_KEEP_QSUB_OUTPUT  "KEEP_QSUB_OUTPUT"
 
