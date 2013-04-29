@@ -300,8 +300,10 @@ workflow_job_type * workflow_job_config_alloc( const char * name , config_type *
       
       return workflow_job;
     }
-  } else
+  } else {
+    printf("Compile failed \n");
     return NULL;
+  }
 }
 
 
