@@ -35,7 +35,7 @@ void setoption_setalloptions_optionsset() {
   test_option(driver, TORQUE_QSTAT_CMD, "xyZfff");
   test_option(driver, TORQUE_QDEL_CMD, "ZZyfff");
   test_option(driver, TORQUE_QUEUE, "superhigh");
-  test_option(driver, TORQUE_NUM_CPUS, "42");
+  test_option(driver, TORQUE_NUM_CPUS_PER_NODE, "42");
   test_option(driver, TORQUE_NUM_NODES, "36");
   test_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "1");
   test_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "0");
@@ -44,13 +44,26 @@ void setoption_setalloptions_optionsset() {
   torque_driver_free(driver);
 }
 
+void setoption_set_typed_options_wrong_format_returns_false() {
+  torque_driver_type * driver = torque_driver_alloc();
+  test_assert_false(torque_driver_set_option(driver, TORQUE_NUM_CPUS_PER_NODE, "42.2"));
+  test_assert_false(torque_driver_set_option(driver, TORQUE_NUM_CPUS_PER_NODE, "fire"));
+  test_assert_false(torque_driver_set_option(driver, TORQUE_NUM_NODES, "42.2"));
+  test_assert_false(torque_driver_set_option(driver, TORQUE_NUM_NODES, "fire"));
+  test_assert_true(torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "true"));
+  test_assert_true(torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "1"));
+  test_assert_false(torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "ja"));
+  test_assert_false(torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "22"));
+  test_assert_false(torque_driver_set_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "1.1"));
+}
+
 void getoption_nooptionsset_defaultoptionsreturned() {
   torque_driver_type * driver = torque_driver_alloc();
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSUB_CMD), TORQUE_DEFAULT_QSUB_CMD);
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QSTAT_CMD), TORQUE_DEFAULT_QSTAT_CMD);
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_QDEL_CMD), TORQUE_DEFAULT_QDEL_CMD);
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_KEEP_QSUB_OUTPUT), "0");
-  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_CPUS), "1");
+  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_CPUS_PER_NODE), "1");
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_NODES), "1");
 
   printf("Default options OK\n");
@@ -67,7 +80,7 @@ void create_submit_script_script_according_to_input() {
 
   FILE* file_stream = util_fopen(script_filename, "r");
   bool at_eof = false;
-  
+
   char * line = util_fscanf_alloc_line(file_stream, &at_eof);
   test_assert_string_equal("#!/bin/sh", line);
   free(line);
@@ -75,17 +88,18 @@ void create_submit_script_script_according_to_input() {
   line = util_fscanf_alloc_line(file_stream, &at_eof);
   test_assert_string_equal("job_program.py /tmp/jaja/ number2arg", line);
   free(line);
-  
+
   line = util_fscanf_alloc_line(file_stream, &at_eof);
   free(line);
   test_assert_true(at_eof);
-  
+
   fclose(file_stream);
 }
 
 int main(int argc, char ** argv) {
   getoption_nooptionsset_defaultoptionsreturned();
   setoption_setalloptions_optionsset();
+  setoption_set_typed_options_wrong_format_returns_false();
   create_submit_script_script_according_to_input();
   exit(0);
 }
