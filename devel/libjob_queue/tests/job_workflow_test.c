@@ -75,7 +75,16 @@ int main( int argc , char ** argv) {
     workflow_joblist_type * joblist = workflow_joblist_alloc();
     
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exworkflow)) {
-      //remove( exworkflow );
+      {
+        FILE * stream = util_fopen( exworkflow , "r");
+        char * content = util_alloc_file_content( stream );
+        printf("=================================================================\n");
+        fprintf( stdout , "%s\n",content);
+        printf("=================================================================\n");
+        fclose( stream );
+        free( content );
+      }
+      remove( exworkflow );
       {
         config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
         printf("Compiler errors: \n");
