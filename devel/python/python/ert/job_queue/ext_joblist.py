@@ -22,6 +22,7 @@ from    ert.enkf.enkf_enum             import *
 import  ert.enkf.libenkf
 from ert.util.stringlist import StringList
 from ert.job_queue.ext_job import ExtJob
+import  libjob_queue
 class ExtJoblist(CClass):
     
     def __init__(self , c_ptr , parent = None):
@@ -51,7 +52,7 @@ class ExtJoblist(CClass):
         cfunc.add_job(self, job_name, new_job)
 ##################################################################
 
-cwrapper = CWrapper( libenkf.lib )
+cwrapper = CWrapper( libjob_queue.lib )
 cwrapper.registerType( "ext_joblist" , ExtJoblist )
 cfunc = CWrapperNameSpace("ext_joblist")
 ##################################################################
