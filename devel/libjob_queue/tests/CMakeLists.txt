@@ -1,11 +1,11 @@
 add_executable( job_loadOK job_loadOK.c )
 add_executable( job_loadFail job_loadFail.c )
-add_executable( create_file create_file.c )
+add_executable( "create file" create_file.c )
 add_executable( job_workflow_test job_workflow_test.c )
 
 
 target_link_libraries( job_workflow_test job_queue )
-target_link_libraries( create_file job_queue  )
+target_link_libraries( "create file" job_queue  )
 target_link_libraries( job_loadOK job_queue  )
 target_link_libraries( job_loadFail job_queue  )
 
