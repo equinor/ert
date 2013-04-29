@@ -199,8 +199,6 @@ bool local_driver_set_option( void * __driver , const char * option_key , const 
   return false;
 }
 
-
-
 #undef LOCAL_DRIVER_ID  
 #undef LOCAL_JOB_ID    
 

@@ -121,7 +121,7 @@ typedef struct run_info_struct {
 typedef struct shared_info_struct {
   model_config_type           * model_config;      /* .... */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
-  job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
+  job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / TORQUE / rsh / local / ... )*/ 
   const site_config_type      * site_config;
   log_type                    * logh;              /* The log handle. */
   ert_templates_type          * templates; 
