@@ -75,9 +75,10 @@ int main( int argc , char ** argv) {
     workflow_joblist_type * joblist = workflow_joblist_alloc();
     
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exworkflow)) {
-      remove( exworkflow );
+      //remove( exworkflow );
       {
         config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
+        printf("Compiler errors: \n");
         config_fprintf_errors( workflow_compiler , true , stdout );
       }
       test_error_exit("Loading job CREATE_FILE failed\n");
