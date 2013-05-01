@@ -69,7 +69,7 @@ void * read_file( void * self , const stringlist_type * args) {
 static void create_exjob( const char * workflow , const char * bin_path) 
 {
   FILE * stream = util_fopen( workflow , "w");
-  fprintf(stream , "EXECUTABLE  %s/create_file\n" , bin_path);  
+  fprintf(stream , "EXECUTABLE  \"%s/create file\"\n" , bin_path);  
   fprintf(stream , "ARG_TYPE    1   INT\n");
   fprintf(stream , "MIN_ARG     2\n");
   fprintf(stream , "MAX_ARG     2\n");
@@ -92,8 +92,17 @@ int main( int argc , char ** argv) {
     int read_value = 100;
     workflow_joblist_type * joblist = workflow_joblist_alloc();
     
+<<<<<<< HEAD
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exjob_file)) {
       remove( exjob_file );
+=======
+    if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exworkflow)) {
+      remove( exworkflow );
+      {
+        config_type * job_config = workflow_joblist_get_job_config( joblist );
+        config_fprintf_errors( job_config , true , stdout );
+      }
+>>>>>>> master
       test_error_exit("Loading job CREATE_FILE failed\n");
     } else
       remove( exjob_file );
@@ -103,7 +112,6 @@ int main( int argc , char ** argv) {
     
     {
       config_type * workflow_compiler = workflow_joblist_get_compiler( joblist );
-      
       if (config_get_schema_size( workflow_compiler ) != 2)
         test_error_exit("Config compiler - wrong size \n");
     }
