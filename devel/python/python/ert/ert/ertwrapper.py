@@ -24,7 +24,8 @@ import sys
 import os
 import erttypes
 import ert
-import ert.enkf.enkf as enkf
+#import ert.enkf.enkf as enkf
+import ert.enkf.enkf_main as enkf
 
 def RH_version():
     RH  = open('/etc/redhat-release' , 'r').read().split()[6]
