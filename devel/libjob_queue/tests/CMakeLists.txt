@@ -28,9 +28,12 @@ add_test( job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_test )
 
 # This should be a space separated list of servers which will be 
 # tried out when testing the LSF submit capability. The test program
-# will interpret the special string 'NULL' as submit with library 
-# functions.
-set(LSF_SERVERS "LOCAL NULL" CACHE STRING  "List of LSF servers for testing")
+# will interpret the special strings 'NULL' and 'LOCAL' as follows:
+#
+#   NULL:  Submit using the linked in library functions.
+#   LOCAL: Submit using shell commands on the current server
+#
+set(LSF_SERVERS "LOCAL" CACHE STRING  "List of LSF servers for testing")
 
 
 add_executable( job_lsf_test job_lsf_test.c )
