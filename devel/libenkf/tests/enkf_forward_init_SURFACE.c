@@ -60,7 +60,7 @@ int main(int argc , char ** argv) {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_node_type * surface_node = enkf_state_get_node( state , "SURFACE" );
       {
-        enkf_config_node_type * surface_config_node = enkf_node_get_config( surface_node );
+        const enkf_config_node_type * surface_config_node = enkf_node_get_config( surface_node );
         char * init_file1 = enkf_config_node_alloc_initfile( surface_config_node , NULL , 0);
         char * init_file2 = enkf_config_node_alloc_initfile( surface_config_node , "/tmp", 0);
 
