@@ -21,6 +21,7 @@
 #include <math.h>
 
 #include <ert/util/util.h>
+#include <ert/util/string_util.h>
 
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_kw.h>

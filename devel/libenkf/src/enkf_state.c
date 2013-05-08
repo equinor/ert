@@ -281,7 +281,6 @@ static void shared_info_free(shared_info_type * shared_info) {
 
 void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list, bool force_init) {
   state_enum init_state = ANALYZED;
-  bool initOK = true;
   int ip;
   for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
     int iens = enkf_state_get_iens( enkf_state );
