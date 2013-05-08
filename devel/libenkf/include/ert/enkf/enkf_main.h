@@ -244,6 +244,7 @@ extern "C" {
   enkf_main_type      * enkf_main_alloc_empty( );
 
   rng_config_type     * enkf_main_get_rng_config( const enkf_main_type * enkf_main );
+  void                  enkf_main_rng_init( enkf_main_type * enkf_main);
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 
