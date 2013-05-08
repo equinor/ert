@@ -92,17 +92,12 @@ int main( int argc , char ** argv) {
     int read_value = 100;
     workflow_joblist_type * joblist = workflow_joblist_alloc();
     
-<<<<<<< HEAD
     if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exjob_file)) {
       remove( exjob_file );
-=======
-    if (!workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , exworkflow)) {
-      remove( exworkflow );
       {
         config_type * job_config = workflow_joblist_get_job_config( joblist );
         config_fprintf_errors( job_config , true , stdout );
       }
->>>>>>> master
       test_error_exit("Loading job CREATE_FILE failed\n");
     } else
       remove( exjob_file );
