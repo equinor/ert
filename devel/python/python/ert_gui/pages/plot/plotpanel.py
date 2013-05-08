@@ -87,7 +87,7 @@ class PlotPanel(QtGui.QWidget):
         
         self.setLayout(plotLayout)
 
-        ##self.connect(self.plot.plot_settings, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchSettings)
+        self.connect(self.plot.plot_settings, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchSettings)
 
         ContentModel.modelConnect('casesUpdated()', self.updateList)
         
@@ -175,12 +175,12 @@ class PlotViewSettingsPanel(QtGui.QFrame):
         for plot_config in plot_configs:
             config_panel = PlotConfigPanel(plot_config)
             tabbed_panel.addTab(config_panel, plot_config.name)
-            #self.connect(config_panel, SIGNAL('plotConfigChanged()'), self.plotView.drawPlot)
+            self.connect(config_panel, SIGNAL('plotConfigChanged()'), self.plotView.drawPlot)
 
         layout.addWidget(tabbed_panel)
 
         tabbed_panel = QTabWidget()
-        #tabbed_panel.setTabPosition(QTabWidget.West)
+        tabbed_panel.setTabPosition(QTabWidget.West)
 
         tabbed_panel.addTab(self.createMemberSelectionPanel(), "Members")
         tabbed_panel.addTab(self.createPlotRangePanel(), "Plot")

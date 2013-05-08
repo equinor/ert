@@ -34,12 +34,20 @@ class EnkfFs(CClass):
         else:
             self.init_cobj( c_ptr , cfunc.close )
 
-    def has_node(self, node_key, var_type, step, member, value):
-        return cfunc.has_node(self, node_key, var_type, step, member, value)
+    def has_node(self, node_key, var_type, report_step, iens, state):
+        return cfunc.has_node(self, node_key, var_type, report_step, iens, state)
+
+    def has_vector(self, node_key, var_type, iens, state):
+        return cfunc.has_vector(self, node_key, var_type, iens, state)        
+
     
-    def fread_node(self, key, step, member, value,type = 2):
+    def fread_node(self, key, type, step, member, value):
         buffer = Buffer(100)
         cfunc.fread_node(self, buffer, key, type, step, member, value)
+
+    def fread_vector(self, key, type, member, value):
+        buffer = Buffer(100)
+        cfunc.fread_vector(self, buffer, key, type, member, value)
 
     @property
     def get_time_map(self):
@@ -54,5 +62,7 @@ cfunc = CWrapperNameSpace("enkf_fs")
 
 cfunc.close               = cwrapper.prototype("void enkf_fs_close(enkf_fs)")
 cfunc.has_node            = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, c_uint, int, int, c_uint)")
+cfunc.has_vector          = cwrapper.prototype("bool enkf_fs_has_vector(enkf_fs, char*, c_uint, int, c_uint)")
 cfunc.fread_node          = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, buffer, char*, c_uint, int, int, c_uint)")
+cfunc.fread_vector        = cwrapper.prototype("void enkf_fs_fread_vector(enkf_fs, buffer, char*, c_uint, int, c_uint)")
 cfunc.get_time_map        = cwrapper.prototype("c_void_p enkf_fs_get_time_map(enkf_fs)")

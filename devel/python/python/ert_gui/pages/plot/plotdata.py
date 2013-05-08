@@ -163,7 +163,7 @@ class PlotData:
         if self.x_min is None or self.x_max is None:
             self.x_min = value
             self.x_max = value
-            
+
         self.x_min = min(value, self.x_min)
         self.x_max = max(value, self.x_max)
 
@@ -263,7 +263,7 @@ class PlotContextDataFetcher(ContentModel):
 
             elif type == DataModel.TYPE:
                 data.parameters.append(Parameter(key, DataModel.TYPE))
-                data.gen_data_size = config_node.data_model.get_initial_size
+                data.gen_data_size = 2#config_node.data_model.get_initial_size
 
             elif type == KeywordModel.TYPE:
                 p = Parameter(key, KeywordModel.TYPE)

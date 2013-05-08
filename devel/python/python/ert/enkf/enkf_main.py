@@ -177,11 +177,10 @@ class EnKFMain(CClass):
        
     def initialize_from_scratch(self, parameter_list, iens1, iens2, force_init = True):
         cfunc.initialize_from_scratch(self, parameter_list, iens1, iens2, force_init)
-       
+
     @property
     def get_fs(self):
-        enkf_fsout = EnkfFs(c_ptr = cfunc.get_fs(self), parent = self)
-        return enkf_fsout
+        return EnkfFs(c_ptr = cfunc.get_fs(self), parent = self)
 
     @property
     def get_history_length(self):
@@ -201,7 +200,7 @@ class EnKFMain(CClass):
     
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         cfunc.get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std)
-        
+
     def get_observation_count(self, user_key):
         return cfunc.get_observation_count(self, user_key)
  

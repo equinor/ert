@@ -22,6 +22,7 @@ from    ert.util.tvector       import *
 from    enkf_enum              import *
 import  libenkf
 from    ert.enkf.libenkf       import *
+from    ert.ert.erttypes import time_t
 
 class TimeMap(CClass):
     

@@ -27,6 +27,7 @@ from ert.ert.enums import truncation_type
 from ert.ert.enums import gen_data_file_format
 import ert.enkf.enkf_config_node
 import ert.enkf.gen_kw_config
+import ert.enkf.gen_data_config
 
 def createEnsemblePage(configPanel, parent):
     configPanel.startPage("Ensemble")
@@ -53,7 +54,7 @@ def createEnsemblePage(configPanel, parent):
             node = ert.main.ensemble_config.get_node( key)
             type = node.get_impl_type
             data = node.get_ref
-            #print key, type
+            print key, type
 
             model = None
             if type == FieldModel.TYPE:
