@@ -119,7 +119,7 @@ typedef struct run_info_struct {
 */
 
 typedef struct shared_info_struct {
-  const model_config_type     * model_config;      /* .... */
+  model_config_type           * model_config;      /* .... */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / TORQUE / rsh / local / ... )*/ 
   const site_config_type      * site_config;
@@ -249,7 +249,7 @@ static void run_info_complete_run(run_info_type * run_info) {
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, const ecl_config_type * ecl_config , log_type * logh , ert_templates_type * templates) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , model_config_type * model_config, const ecl_config_type * ecl_config , log_type * logh , ert_templates_type * templates) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info );
 
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
@@ -448,7 +448,7 @@ enkf_state_type * enkf_state_alloc(int iens,
                                    const char                * casename , 
                                    bool                        pre_clear_runpath , 
                                    keep_runpath_type           keep_runpath , 
-                                   const model_config_type   * model_config,
+                                   model_config_type         * model_config,
                                    ensemble_config_type      * ensemble_config,
                                    const site_config_type    * site_config,
                                    const ecl_config_type     * ecl_config,
@@ -590,7 +590,6 @@ const char * enkf_state_get_eclbase( const enkf_state_type * enkf_state ) {
 
 
 static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state , stringlist_type * messages , bool * loadOK) {
-  member_config_type * my_config         = enkf_state->my_config;
   const run_info_type * run_info         = enkf_state->run_info;
   const ecl_config_type * ecl_config     = enkf_state->shared_info->ecl_config;
   const bool fmt_file                    = ecl_config_get_formatted(ecl_config);
@@ -680,7 +679,6 @@ static void enkf_state_log_GEN_DATA_load( const enkf_node_type * enkf_node , int
 static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK, bool interactive , stringlist_type * msg_list) {
   const run_info_type   * run_info       = enkf_state->run_info;
   int        load_start                  = run_info->load_start;
-  int        report_step;
   
   if (load_start == 0)  /* Do not attempt to load the "S0000" summary results. */
     load_start++;
@@ -709,7 +707,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                 if (enkf_node_forward_load_vector( node , run_info->run_path , summary , NULL , load_start, step2 , iens)) {
                   enkf_node_store_vector( node , fs , iens , FORECAST );
                   if (interactive && enkf_node_get_impl_type(node) == GEN_DATA)
-                    enkf_state_log_GEN_DATA_load( node , report_step , msg_list );
+                    enkf_state_log_GEN_DATA_load( node , 0 , msg_list );
                 } else {
                   *loadOK = false;
                   log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:----] Failed to load data for vector node:%s.",iens , enkf_node_get_key( node ));
@@ -717,6 +715,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                     stringlist_append_owned_ref( msg_list , util_alloc_sprintf("Failed to load vector:%s" , enkf_node_get_key( node )));
                 }
               } else {
+                int report_step;
                 for (report_step = load_start; report_step <= step2; report_step++) {
                   bool store_vectors = (report_step == step2) ? true : false;
                   if (enkf_node_forward_load(node , run_info->run_path , summary , NULL , report_step , iens))  { /* Loading/internalizing */
@@ -754,7 +753,7 @@ static bool enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
   
   if (ecl_config_active( ecl_config )) {
     bool eclipse_load = enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , loadOK, interactive , msg_list);
-    fprintf("** Warning: could not load ECLIPSE summary data from %s - this will probably fail later ...\n" , enkf_state->run_info->run_path);
+    fprintf(stderr , "** Warning: could not load ECLIPSE summary data from %s - this will probably fail later ...\n" , enkf_state->run_info->run_path);
     return eclipse_load;
   } else
     return false;
@@ -1013,8 +1012,8 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state ,
    
 
 static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_fs_type * fs , bool * loadOK , bool interactive , stringlist_type * msg_list) {
-  run_info_type             * run_info   = enkf_state->run_info;
-  const model_config_type * model_config = enkf_state->shared_info->model_config;
+  run_info_type     * run_info     = enkf_state->run_info;
+  model_config_type * model_config = enkf_state->shared_info->model_config;
   int report_step;
 
   /*
