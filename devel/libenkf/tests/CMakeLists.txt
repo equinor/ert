@@ -115,4 +115,6 @@ set_property( TEST enkf_time_map2     PROPERTY LABELS Statoil )
 set_property( TEST enkf_site_config   PROPERTY LABELS Statoil )
 set_property( TEST enkf_forward_init_SURFACE_FALSE  PROPERTY LABELS Statoil )
 set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS Statoil )
+set_property( TEST enkf_forward_init_FIELD_FALSE  PROPERTY LABELS Statoil )
+set_property( TEST enkf_forward_init_FIELD_TRUE   PROPERTY LABELS Statoil )
 
