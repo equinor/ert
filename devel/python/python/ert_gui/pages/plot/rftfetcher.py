@@ -32,7 +32,8 @@ class RFTFetcher(PlotDataFetcherHandler):
 
     def isHandlerFor(self, ert, key):
         enkf_obs = ert.main.get_obs
-        key_list = enkf_obs.alloc_typed_keylist(obs_impl_type.FIELD_OBS.value())
+        key_list = enkf_obs.alloc_typed_keylist(obs_impl_type.GEN_OBS.value())
+        print "hallo", key_list
         return key in key_list
 
     def fetch(self, ert, key, parameter, data, comparison_fs):
@@ -57,6 +58,7 @@ class RFTFetcher(PlotDataFetcherHandler):
         state_kw = obs_vector.get_state_kw
 
         ens_size = ert.main.get_ensemble_size
+        print "SKJERA?"
         config_node = ert.main.ensemble_config.get_node(state_kw)
         field_config = config_node.get_ref
         block_obs = obs_vector.iget_node(report_step)
@@ -89,16 +91,25 @@ class RFTFetcher(PlotDataFetcherHandler):
         data.obs_x = numpy.array(x_obs)
         data.obs_std_x = numpy.array(x_std)
         data.obs_std_y = None
-
+        var_type = enums.enkf_var_type.DYNAMIC_RESULT
 
         for member in range(ens_size):
-            if fs.has_node(config_node, report_step, member, ert_state_enum.ANALYZED.value()):
-                fs.fread_node(node, report_step, member, ert_state_enum.ANALYZED.value())
-            elif fs.has_node(config_node, report_step, member, ert_state_enum.FORECAST.value()):
-                fs.fread_node(node, report_step, member, ert_state_enum.FORECAST.value())
+            if node.vector_storage:
+                if fs.has_vector(config_node, member, ert_state_enum.ANALYZED.value()):
+                    fs.fread_vector(node, member, ert_state_enum.ANALYZED.value())
+                elif fs.has_vector(config_node, member, ert_state_enum.FORECAST.value()):
+                    fs.fread_vector(node, member, ert_state_enum.FORECAST.value())
+                else:
+                    print "No data found for member %d/%d." % (member, report_step)
+                    continue
             else:
-                print "No data found for member %d/%d." % (member, report_step)
-                continue
+                if fs.has_node(config_node, var_type, report_step, member, ert_state_enum.ANALYZED.value()):
+                    fs.fread_node(node, var_type, report_step, member, ert_state_enum.ANALYZED.value())
+                elif fs.has_node(config_node, var_type, report_step, member, ert_state_enum.FORECAST.value()):
+                    fs.fread_node(node, var_type, report_step, member, ert_state_enum.FORECAST.value())
+                else:
+                    print "No data found for member %d/%d." % (member, report_step)
+                    continue
                 
             data.x_data[member] = []
             data.y_data[member] = []
