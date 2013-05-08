@@ -307,7 +307,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
         arg_pack_append_int( arg_pack , step2 );                                            /* 4: Step2 For summary data it will load the whole goddamn thing anyway.*/
         arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */                  
         arg_pack_append_owned_ptr( arg_pack , stringlist_alloc_new() , stringlist_free__);  /* 6: List of interactive mode messages. */
-        thread_pool_add_job( tp , enkf_state_internalize_results_mt , arg_pack);
+        thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
         
       }
     }
