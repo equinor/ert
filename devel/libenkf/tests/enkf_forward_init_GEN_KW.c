@@ -59,7 +59,7 @@ int main(int argc , char ** argv) {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
       enkf_node_type * gen_kw_node = enkf_state_get_node( state , "MULTFLT" );
       {
-        enkf_config_node_type * gen_kw_config_node = enkf_node_get_config( gen_kw_node );
+        const enkf_config_node_type * gen_kw_config_node = enkf_node_get_config( gen_kw_node );
         char * init_file1 = enkf_config_node_alloc_initfile( gen_kw_config_node , NULL , 0);
         char * init_file2 = enkf_config_node_alloc_initfile( gen_kw_config_node , "/tmp", 0);
 
@@ -150,7 +150,7 @@ int main(int argc , char ** argv) {
       {
         FILE * stream = util_fopen("/tmp/simulations/run0/MULTFLT.INC" , "r");
         double value;
-        fscanf(stream , "%g" , &value);
+        fscanf(stream , "%lg" , &value);
         fclose( stream );
         test_assert_double_equal( 123456.0 , value);
       }
