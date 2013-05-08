@@ -1048,7 +1048,7 @@ bool field_fload_rms(field_type * field , const char * filename) {
 
 bool field_fload_ecl_kw(field_type * field , const char * filename ) {
   const char * key = field_config_get_ecl_kw_name(field->config);
-  ecl_kw_type * ecl_kw;
+  ecl_kw_type * ecl_kw = NULL;
   
   {
     bool fmt_file;
@@ -1343,7 +1343,7 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
 }
 
 
-void field_update_sum(field_type * sum , const field_type * field , double lower_limit , double upper_limit) {
+void field_update_sum(field_type * sum , field_type * field , double lower_limit , double upper_limit) {
   field_output_transform( field );
   {
     const int data_size          = field_config_get_data_size(field->config );   

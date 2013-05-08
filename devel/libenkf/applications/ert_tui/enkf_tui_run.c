@@ -125,7 +125,6 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
     const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
     const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
-    analysis_module_type * module = analysis_config_get_active_module( analysis_config );
     int step1 = 0;
     int step2 ;
     int_vector_type * step_list = int_vector_alloc(0,0);
@@ -158,15 +157,15 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
       
       enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST);
       {
-        char * target_fs_name    = analysis_iter_config_iget_case( iter_config , iter );
-        enkf_fs_type * target_fs = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
+        const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iter );
+        enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
         enkf_main_smoother_update(enkf_main , step_list , target_fs);
           
         enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
                                  0 ,   // Smoother update will write on step 0
                                  ANALYZED , 
-                                 target_fs, 
+                                 target_fs_name , 
                                  step1 , 
                                  FORECAST , 
                                  iactive , 
@@ -175,7 +174,6 @@ void enkf_tui_run_iterated_ES(void * enkf_main) {
         
         
         enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
-        free( target_fs_name );
       }
       //iter = analysis_module_get_int(module, "ITER");
       iter++;

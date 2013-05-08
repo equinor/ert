@@ -69,10 +69,7 @@ void enkf_tui_workflow_run( void * arg ) {
 
 
 void enkf_tui_workflow_load( void * arg ) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  {
-    
-  }
+  // ...
 }
 
 
