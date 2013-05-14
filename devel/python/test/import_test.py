@@ -14,12 +14,16 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
-
+import sys
 
 def test_import( module ):
     print "Importing: %s ..." % module , 
-    __import__( module )
-    print
+    try:
+        __import__( module )
+        print "OK"
+    except:
+        print "failed"
+        sys.exit(1)
 
 
 test_import( "ert" )
@@ -35,7 +39,7 @@ test_import( "ert.enkf" )
 test_import( "ert.sched" )
 test_import( "ert.well")
 
-test_import("ert.ecl.ecl")
+test_import("ert.ecl.eclX")
 test_import("ert.ecl.ecl_local")
 test_import("ert.rms.rms")
 test_import("ert.enkf.enkf")
