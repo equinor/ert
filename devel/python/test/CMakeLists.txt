@@ -13,12 +13,13 @@ add_test( NAME python.ert.ecl.ecl_file_slow WORKING_DIRECTORY ${CMAKE_CURRENT_SO
 
 
 
-set_property( TEST python.ert.ecl.ecl_file       PROPERTY LABELS Python:Statoil )
-set_property( TEST python.ert.ecl.ecl_file_slow  PROPERTY LABELS Python:Statoil:Slow )
-set_property( TEST python.ert.ecl.ecl_sum        PROPERTY LABELS Python:Statoil )
-set_property( TEST python.ert.ecl.ecl_kw         PROPERTY LABELS Python:Statoil )
-set_property( TEST python.ert.ecl.ecl_grid       PROPERTY LABELS Python:Statoil:Slow )
-set_property( TEST python.import_local           PROPERTY LABELS Python:Statoil )
+
+set_property( TEST python.ert.ecl.ecl_file       PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_file_slow  PROPERTY LABELS Python:StatoilData:Slow )
+set_property( TEST python.ert.ecl.ecl_sum        PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_kw         PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_grid       PROPERTY LABELS Python:StatoilData:Slow )
+set_property( TEST python.import_local           PROPERTY LABELS Python:StatoilBuild )
 
 set_property( TEST python.import_all             PROPERTY LABELS Python )
 set_property( TEST python.ert.util.stringlist    PROPERTY LABELS Python )
