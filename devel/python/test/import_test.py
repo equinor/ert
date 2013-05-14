@@ -39,7 +39,7 @@ test_import( "ert.enkf" )
 test_import( "ert.sched" )
 test_import( "ert.well")
 
-test_import("ert.ecl.eclX")
+test_import("ert.ecl.ecl")
 test_import("ert.ecl.ecl_local")
 test_import("ert.rms.rms")
 test_import("ert.enkf.enkf")
