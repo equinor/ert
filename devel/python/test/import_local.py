@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-#  Copyright (C) 2011  Statoil ASA, Norway. 
+#  Copyright (C) 2013  Statoil ASA, Norway. 
 #   
-#  The file 'import_test.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'import_local.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -26,27 +26,7 @@ def test_import( module ):
         sys.exit(1)
 
 
-test_import( "ert" )
-
-test_import( "ert.cwrap" )
-test_import( "ert.ecl" )
-test_import( "ert.util" )
-test_import( "ert.geo" )
-test_import( "ert.config" )
-test_import( "ert.job_queue" )
-test_import( "ert.rms" )
-test_import( "ert.enkf" )
-test_import( "ert.sched" )
-test_import( "ert.well")
-
-test_import("ert.ecl.ecl")
-test_import("ert.ecl.ecl_default")
-test_import("ert.rms.rms")
-test_import("ert.enkf.enkf")
-test_import("ert.config.config")
-test_import("ert.job_queue.job_queue")
-test_import("ert.geo.geo")
-test_import("ert.well.well")
+test_import("ert.ecl.ecl_local")
 
 
 def test_suite( argv ):
