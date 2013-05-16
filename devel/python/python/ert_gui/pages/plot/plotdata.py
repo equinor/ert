@@ -50,10 +50,9 @@ class PlotDataFetcher(ContentModel, QObject):
         self.data = None
 
     def initialize(self, ert):
-        getter(self,ert)
-#        for handler in self.handlers:
-#            handler.initialize(ert)
-#            self.connect(handler, SIGNAL('dataChanged()'), self.__dataChanged)
+        for handler in self.handlers:
+            handler.initialize(ert)
+            self.connect(handler, SIGNAL('dataChanged()'), self.__dataChanged)
 
         
 
