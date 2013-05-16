@@ -33,7 +33,6 @@ class RFTFetcher(PlotDataFetcherHandler):
     def isHandlerFor(self, ert, key):
         enkf_obs = ert.main.get_obs
         key_list = enkf_obs.alloc_typed_keylist(obs_impl_type.GEN_OBS.value())
-        print "hallo", key_list
         return key in key_list
 
     def fetch(self, ert, key, parameter, data, comparison_fs):
@@ -58,7 +57,7 @@ class RFTFetcher(PlotDataFetcherHandler):
         state_kw = obs_vector.get_state_kw
 
         ens_size = ert.main.get_ensemble_size
-        print "SKJERA?"
+
         config_node = ert.main.ensemble_config.get_node(state_kw)
         field_config = config_node.get_ref
         block_obs = obs_vector.iget_node(report_step)

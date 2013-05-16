@@ -65,7 +65,7 @@ class FieldConfig(CClass):
         return cfunc.get_ny(self)
 
     def ijk_active(self, i,j,k):
-        cfunc.ijk_active(self,i,j,k)
+        return cfunc.ijk_active(self,i,j,k)
 ##################################################################
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "field_config" , FieldConfig )

@@ -190,7 +190,6 @@ class ZoomSlider(QFrame):
             if self.max_value > 1.0:
                 self.max_value = 1
 
-            #print "max:", self.min_value, self.max_value
 
             self.emit(SIGNAL('zoomValueChanged(float, float)'), self.min_value, self.max_value)
 
@@ -213,7 +212,6 @@ class ZoomSlider(QFrame):
             if self.min_value < 0.0:
                 self.min_value = 0.0
 
-            #print "min:", self.min_value, self.max_value
 
             self.emit(SIGNAL('zoomValueChanged(float, float)'), self.min_value, self.max_value)
 
