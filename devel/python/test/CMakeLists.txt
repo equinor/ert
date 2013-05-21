@@ -4,7 +4,7 @@ add_test( NAME python.import_all            WORKING_DIRECTORY ${CMAKE_CURRENT_SO
 add_test( NAME python.import_local          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} import_local )
 
 add_test( NAME python.ert.util.stringlist   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} stringlist_test )
-
+add_test( NAME python.ert.util.tvector      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} tvector_test )
 add_test( NAME python.ert.ecl.ecl_grid      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} grid_test )
 add_test( NAME python.ert.ecl.ecl_kw        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} kw_test )
 add_test( NAME python.ert.ecl.ecl_sum       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} sum_test )
@@ -23,3 +23,4 @@ set_property( TEST python.import_local           PROPERTY LABELS Python:StatoilB
 
 set_property( TEST python.import_all             PROPERTY LABELS Python )
 set_property( TEST python.ert.util.stringlist    PROPERTY LABELS Python )
+set_property( TEST python.ert.util.tvector       PROPERTY LABELS Python )
