@@ -1544,7 +1544,6 @@ int job_queue_get_max_running( const job_queue_type * queue ) {
   return queue_driver_get_max_running( queue->driver );
 }
 
-
 /*****************************************************************/
 
 

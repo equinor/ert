@@ -40,7 +40,12 @@ extern "C" {
 {.value = 4 , .name = "TORQUE_DRIVER"}                             
                         
 #define JOB_DRIVER_ENUM_SIZE 5
-
+  
+  /*
+    The options supported by the base queue_driver.
+   */
+#define MAX_RUNNING          "MAX_RUNNING"
+  
   typedef enum {
     JOB_QUEUE_NOT_ACTIVE = 1, /* This value is used in external query routines - for jobs which are (currently) not active. */
     //JOB_QUEUE_LOADING            =     2 ,   /* This value is used by external routines. Not used in the libjob_queue implementation. */
