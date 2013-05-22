@@ -510,8 +510,8 @@ void enkf_config_node_update_gen_data( enkf_config_node_type * config_node,
 
 /*****************************************************************/                   
 
-const enkf_config_node_type * enkf_config_node_container_iget( const enkf_config_node_type * node , int index) {
-  return vector_iget_const( node->container_nodes , index );
+enkf_config_node_type * enkf_config_node_container_iget( const enkf_config_node_type * node , int index) {
+  return vector_iget( node->container_nodes , index );
 }
 
 int enkf_config_node_container_size( const enkf_config_node_type * node ) {
@@ -588,17 +588,13 @@ void enkf_config_node_set_min_std( enkf_config_node_type * config_node , enkf_no
   config_node->min_std = min_std;
 }
 
-/*
-(defun insert-curly ()
- (interactive)
- (insert "{}"))
-*/
+
 void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step) {
   ert_impl_type impl_type = enkf_config_node_get_impl_type( node );
   if (impl_type == CONTAINER) {
     int inode;
     int container_size = enkf_config_node_container_size( node );
-    for (inode == 0; inode < container_size; inode++) {
+    for (inode = 0; inode < container_size; inode++) {
       enkf_config_node_type * child_node = enkf_config_node_container_iget( node , inode );
       enkf_config_node_set_internalize( child_node , report_step );
     }
