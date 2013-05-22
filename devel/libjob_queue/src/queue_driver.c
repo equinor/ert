@@ -178,20 +178,38 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
 
 /*****************************************************************/
 
+bool queue_driver_set_generic_option__(queue_driver_type * driver, const char * option_key, const void * value) {
+  bool option_set = true;
+  {
+    if (strcmp(MAX_RUNNING, option_key) == 0) {
+      int max_running_int = 0;
+      if (util_sscanf_int(value, &max_running_int)) {
+        queue_driver_set_max_running(driver, max_running_int);
+        option_set = true;
+      }
+    } else
+      option_set = false;
+  }
+  return option_set;
+}
+
+void * queue_driver_get_generic_option__(queue_driver_type * driver, const char * option_key) {
+  if (strcmp(MAX_RUNNING, option_key) == 0) {
+    return util_alloc_sprintf("%d", queue_driver_get_max_running(driver));
+  } else {
+    util_abort("%s: driver:%s does not support generic option %s\n", __func__, driver->name, option_key);
+    return NULL;
+  }
+}
 
 /** 
    Set option - can also be used to perform actions - not only setting
    of parameters. There is no limit :-) 
  */
 bool queue_driver_set_option(queue_driver_type * driver, const char * option_key, const void * value) {
-  if (strcmp(MAX_RUNNING, option_key) == 0) {
-    int max_running_int = 0;
-    if (util_sscanf_int(value, &max_running_int)) {
-      queue_driver_set_max_running(driver, max_running_int);
-      return true;
-    }
-  }
-  else if (driver->set_option != NULL)
+  if (queue_driver_set_generic_option__(driver, option_key, value)) {
+    return true;
+  } else if (driver->set_option != NULL)
     /* The actual low level set functions can not fail! */
     return driver->set_option(driver->data, option_key, value);
   else {
@@ -205,13 +223,17 @@ bool queue_driver_set_string_option(queue_driver_type * driver, const char * opt
   return queue_driver_set_option(driver, option_key, value);
 }
 
+bool queue_driver_has_generic_option__(queue_driver_type * driver, const char * option_key) {
+  if (strcmp(MAX_RUNNING, option_key) == 0)
+    return true;
+  else
+    return false;
+}
+
 /*****************************************************************/
 
 bool queue_driver_has_option(queue_driver_type * driver, const char * option_key) {
-  if (strcmp(MAX_RUNNING, option_key) == 0) {
-    return true;
-  }
-  else if (driver->has_option != NULL)
+  if (driver->has_option != NULL)
     return driver->has_option(driver, option_key);
   else
     return false;
@@ -220,10 +242,9 @@ bool queue_driver_has_option(queue_driver_type * driver, const char * option_key
 /*****************************************************************/
 
 const void * queue_driver_get_option(queue_driver_type * driver, const char * option_key) {
-  if (strcmp(MAX_RUNNING, option_key) == 0) {
-    return util_alloc_sprintf("%d",queue_driver_get_max_running(driver));
-  }
-  else if (driver->get_option != NULL)
+  if (queue_driver_has_generic_option__(driver, option_key)) {
+    return queue_driver_get_generic_option__(driver, option_key);
+  } else if (driver->get_option != NULL)
     /* The actual low level set functions can not fail! */
     return driver->get_option(driver->data, option_key);
   else {
