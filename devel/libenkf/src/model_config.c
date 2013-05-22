@@ -512,7 +512,6 @@ history_type * model_config_get_history(const model_config_type * config) {
 }
 
 int model_config_get_last_history_restart(const model_config_type * config) {
-  printf("config->history:%p \n",config->history);
   return history_get_last_restart( config->history );
 }
 
