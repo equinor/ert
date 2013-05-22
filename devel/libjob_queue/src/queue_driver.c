@@ -77,6 +77,7 @@ struct queue_driver_struct {
    */
   char * name; /* String name of driver. */
   job_driver_type driver_type; /* Enum value for driver. */
+  char * max_running_string;
   int max_running; /* Possible to maintain different max_running values for different
                                         drivers; the value 0 is interpreted as no limit - i.e. the queue layer
                                         will (try) to send an unlimited number of jobs to the driver. */
@@ -108,6 +109,7 @@ static queue_driver_type * queue_driver_alloc_empty() {
   driver->has_option = NULL;
   driver->name = NULL;
   driver->data = NULL;
+  driver->max_running_string = NULL;
 
   return driver;
 }
@@ -178,7 +180,7 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
 
 /*****************************************************************/
 
-bool queue_driver_set_generic_option__(queue_driver_type * driver, const char * option_key, const void * value) {
+static bool queue_driver_set_generic_option__(queue_driver_type * driver, const char * option_key, const void * value) {
   bool option_set = true;
   {
     if (strcmp(MAX_RUNNING, option_key) == 0) {
@@ -193,13 +195,20 @@ bool queue_driver_set_generic_option__(queue_driver_type * driver, const char * 
   return option_set;
 }
 
-void * queue_driver_get_generic_option__(queue_driver_type * driver, const char * option_key) {
+static void * queue_driver_get_generic_option__(queue_driver_type * driver, const char * option_key) {
   if (strcmp(MAX_RUNNING, option_key) == 0) {
-    return util_alloc_sprintf("%d", queue_driver_get_max_running(driver));
+    return driver->max_running_string;
   } else {
     util_abort("%s: driver:%s does not support generic option %s\n", __func__, driver->name, option_key);
     return NULL;
   }
+}
+
+static bool queue_driver_has_generic_option__(queue_driver_type * driver, const char * option_key) {
+  if (strcmp(MAX_RUNNING, option_key) == 0)
+    return true;
+  else
+    return false;
 }
 
 /** 
@@ -221,13 +230,6 @@ bool queue_driver_set_option(queue_driver_type * driver, const char * option_key
 
 bool queue_driver_set_string_option(queue_driver_type * driver, const char * option_key, const char * value) {
   return queue_driver_set_option(driver, option_key, value);
-}
-
-bool queue_driver_has_generic_option__(queue_driver_type * driver, const char * option_key) {
-  if (strcmp(MAX_RUNNING, option_key) == 0)
-    return true;
-  else
-    return false;
 }
 
 /*****************************************************************/
@@ -292,6 +294,7 @@ queue_driver_type * queue_driver_alloc_local() {
 /*****************************************************************/
 
 void queue_driver_set_max_running(queue_driver_type * driver, int max_running) {
+  driver->max_running_string = util_alloc_sprintf("%d", max_running);
   driver->max_running = max_running;
 }
 
@@ -334,6 +337,7 @@ void queue_driver_free_driver(queue_driver_type * driver) {
 void queue_driver_free(queue_driver_type * driver) {
   queue_driver_free_driver(driver);
   util_safe_free(driver->name);
+  util_safe_free(driver->max_running_string);
   free(driver);
 }
 
