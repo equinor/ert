@@ -22,31 +22,37 @@ from    enkf_enum             import *
 import  libenkf
 class BlockObs(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
 
+    def iget_i(self , index):
+        return cfunc.iget_i( self ,index )
 
+    def iget_j(self , index):
+        return cfunc.iget_j( self ,index )
+
+    def iget_k(self , index):
+        return cfunc.iget_k( self ,index )
+
+    def get_size(self):
+        return cfunc.get_size(self)
+
+    def iget(self, index, value, std):
+        return cfunc.iget(self, index, value, std)
 
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
 cwrapper.registerType( "block_obs" , BlockObs )
-
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
 cfunc = CWrapperNameSpace("block_obs")
 
 
 cfunc.free                = cwrapper.prototype("void block_obs_free( block_obs )")
-cfunc.get_i               = cwrapper.prototype("int* block_obs_get_i(block_obs)")
-cfunc.get_j               = cwrapper.prototype("int* block_obs_get_j( block_obs )")
-cfunc.get_k               = cwrapper.prototype("int* block_obs_get_k( block_obs )")
+cfunc.iget_i              = cwrapper.prototype("int block_obs_iget_i(block_obs, int)")
+cfunc.iget_j              = cwrapper.prototype("int block_obs_iget_j( block_obs, int)")
+cfunc.iget_k              = cwrapper.prototype("int block_obs_iget_k( block_obs , int)")
 cfunc.get_size            = cwrapper.prototype("int block_obs_get_size( block_obs )")
 cfunc.iget                = cwrapper.prototype("void block_obs_iget( block_obs, int, double*, double*)")

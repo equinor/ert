@@ -20,7 +20,6 @@ from    ert.cwrap.cclass      import CClass
 from    ert.util.tvector      import * 
 from    enkf_enum             import *
 from    ert.enkf.enkf_fs import EnkfFs
-from    ert.util.node_id import NodeId
 from    ert.util.tvector import DoubleVector
 import  libenkf
 class EnkfNode(CClass):

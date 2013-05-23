@@ -22,18 +22,14 @@ from    enkf_enum             import *
 import  libenkf
 class FieldObs(CClass):
     
-    def __init__(self , c_ptr = None):
-        self.owner = False
-        self.c_ptr = c_ptr
-        
-        
-    def __del__(self):
-        if self.owner:
-            cfunc.free( self )
+    def __init__(self , c_ptr , parent = None):
+        if parent:
+            self.init_cref( c_ptr , parent)
+        else:
+            self.init_cobj( c_ptr , cfunc.free )
 
-
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
+    def ijk_get_double(self , i,j,k):
+        return cfunc.ijk_get_double( self ,i,j,k )
 
 
 
@@ -49,4 +45,4 @@ cfunc = CWrapperNameSpace("field")
 
 
 cfunc.free                = cwrapper.prototype("void field_free( field )")
-cfunc.free                = cwrapper.prototype("double field_ijk_get_double(field, int, int, int)")
+cfunc.ijk_get_double      = cwrapper.prototype("double field_ijk_get_double(field, int, int, int)")
