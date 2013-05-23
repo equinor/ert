@@ -62,9 +62,6 @@ class RFTFetcher(PlotDataFetcherHandler):
         field_config = config_node.get_ref
         block_obs = obs_vector.iget_node(report_step)
 
-        i = block_obs.get_i
-        j = block_obs.get_j
-        k = block_obs.get_k
         obs_size = block_obs.get_size
         grid = field_config.get_grid
 
@@ -79,7 +76,7 @@ class RFTFetcher(PlotDataFetcherHandler):
         value = (ertwrapper.c_double)()
         std = (ertwrapper.c_double)()
         for index in range(obs_size):
-            grid.get_xyz3(i[index], j[index], k[index], xpos, ypos , zpos)
+            grid.get_xyz3(block_obs.iget_i(index),block_obs.iget_j(index),block_obs.iget_k(index), xpos, ypos , zpos)
             y_obs.append(zpos.value)
             block_obs.iget(index, value, std)
             x_obs.append(value.value)
@@ -143,7 +140,7 @@ class RFTFetcher(PlotDataFetcherHandler):
 
                 field = ert.enkf.enkf_node_value_ptr(comp_node)
                 for index in range(obs_size):
-                    value = field.ijk_get_double(i[index] , j[index] , k[index])
+                    value = field.ijk_get_double(block_obs.iget_i(index),block_obs.iget_j(index),block_obs.iget_k(index))
                     x_data.append(value)
                     y_data.append(y_obs[index])
                     data.checkMaxMin(value)

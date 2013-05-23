@@ -24,7 +24,6 @@ from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
 from PyQt4.QtCore import SIGNAL
 from ert.ert.erttypes import time_t, time_vector
 import numpy
-from ert.util.node_id import *
 from ert.util.tvector import DoubleVector
 import datetime
 class EnsembleFetcher(PlotDataFetcherHandler):
