@@ -435,15 +435,23 @@ static void site_config_select_TORQUE_job_queue(site_config_type * site_config) 
    What a mess.   
  */
 
+static void site_config_set_queue_max_running_option(site_config_type * site_config, const char* driver_name, int max_running) {
+  char* max_running_string = util_alloc_sprintf("%d", max_running);
+  site_config_set_queue_option(site_config, driver_name, MAX_RUNNING, max_running_string);
+  free(max_running_string);
+}
 
 void site_config_set_max_running(site_config_type * site_config, int max_running) {
-  queue_driver_set_max_running(site_config->current_driver, max_running); /* We set the max running of the current driver */
+  char* max_running_string = util_alloc_sprintf("%d", max_running);
+
+  if (!queue_driver_set_option(site_config->current_driver, MAX_RUNNING, max_running_string))
+    fprintf(stderr, "** Warning: Option:%s or its value is not recognized by driver - ignored \n", MAX_RUNNING);
+
+  free(max_running_string);
 }
 
 void site_config_set_max_running_lsf(site_config_type * site_config, int max_running_lsf) {
-  queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  queue_driver_set_max_running(lsf_driver, max_running_lsf);
-
+  site_config_set_queue_max_running_option(site_config, LSF_DRIVER_NAME, max_running_lsf);
   if (!site_config->user_mode)
     site_config->max_running_lsf_site = max_running_lsf;
 }
@@ -454,8 +462,7 @@ int site_config_get_max_running_lsf(const site_config_type * site_config) {
 }
 
 void site_config_set_max_running_rsh(site_config_type * site_config, int max_running_rsh) {
-  queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-  queue_driver_set_max_running(rsh_driver, max_running_rsh);
+  site_config_set_queue_max_running_option(site_config, RSH_DRIVER_NAME, max_running_rsh);
 
   if (!site_config->user_mode)
     site_config->max_running_rsh_site = max_running_rsh;
@@ -467,8 +474,7 @@ int site_config_get_max_running_rsh(const site_config_type * site_config) {
 }
 
 void site_config_set_max_running_local(site_config_type * site_config, int max_running_local) {
-  queue_driver_type * local_driver = site_config_get_queue_driver(site_config, LOCAL_DRIVER_NAME);
-  queue_driver_set_max_running(local_driver, max_running_local);
+  site_config_set_queue_max_running_option(site_config, LOCAL_DRIVER_NAME, max_running_local);
 
   if (!site_config->user_mode)
     site_config->max_running_local_site = max_running_local;
@@ -961,13 +967,13 @@ void site_config_fprintf_config(const site_config_type * site_config, FILE * str
     }
 
     {
-      queue_driver_type * rsh_driver = site_config_get_queue_driver( site_config , RSH_DRIVER_NAME );
-      hash_type * host_list = hash_safe_cast( (void *) queue_driver_get_option( rsh_driver , RSH_HOSTLIST ) );
-      hash_iter_type * iter = hash_iter_alloc( host_list );
-      while (!hash_iter_is_complete( iter )) {
-        const char * host_name = hash_iter_get_next_key( iter );
-        fprintf(stream , CONFIG_KEY_FORMAT      , RSH_HOST_KEY );
-        fprintf(stream , "%s:%d\n"  , host_name , hash_get_int( host_list , host_name));
+      queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
+      hash_type * host_list = hash_safe_cast((void *) queue_driver_get_option(rsh_driver, RSH_HOSTLIST));
+      hash_iter_type * iter = hash_iter_alloc(host_list);
+      while (!hash_iter_is_complete(iter)) {
+        const char * host_name = hash_iter_get_next_key(iter);
+        fprintf(stream, CONFIG_KEY_FORMAT, RSH_HOST_KEY);
+        fprintf(stream, "%s:%d\n", host_name, hash_get_int(host_list, host_name));
       }
       hash_iter_free(iter);
     }
