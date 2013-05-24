@@ -140,10 +140,5 @@ test_import("ert.well.well")
 test_import("ert.well.well_state")
 test_import("ert.well.well_ts")
 
-test_import("ert_gui")
-
-test_import("ert_gui.gert_main")
-
-
 def test_suite( argv ):
     return False
