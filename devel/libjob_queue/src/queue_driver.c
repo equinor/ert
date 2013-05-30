@@ -228,10 +228,6 @@ bool queue_driver_set_option(queue_driver_type * driver, const char * option_key
   return false;
 }
 
-bool queue_driver_set_string_option(queue_driver_type * driver, const char * option_key, const char * value) {
-  return queue_driver_set_option(driver, option_key, value);
-}
-
 /*****************************************************************/
 
 bool queue_driver_has_option(queue_driver_type * driver, const char * option_key) {
