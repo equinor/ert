@@ -134,8 +134,6 @@ extern "C" {
   void queue_driver_kill_job(queue_driver_type * driver, void * job_data);
   job_status_type queue_driver_get_status(queue_driver_type * driver, void * job_data);
 
-  void queue_driver_set_max_running(queue_driver_type * driver, int max_running);
-  int queue_driver_get_max_running(const queue_driver_type * driver);
   const char * queue_driver_get_name(const queue_driver_type * driver);
 
   bool queue_driver_set_option(queue_driver_type * driver, const char * option_key, const void * value);

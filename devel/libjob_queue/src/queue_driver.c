@@ -180,6 +180,26 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
 
 /*****************************************************************/
 
+
+/*****************************************************************/
+
+void queue_driver_set_max_running(queue_driver_type * driver, int max_running) {
+  driver->max_running_string = util_alloc_sprintf("%d", max_running);
+  driver->max_running = max_running;
+}
+
+int queue_driver_get_max_running(const queue_driver_type * driver) {
+  return driver->max_running;
+}
+
+const char * queue_driver_get_name(const queue_driver_type * driver) {
+  return driver->name;
+}
+
+
+/*****************************************************************/
+
+
 static bool queue_driver_set_generic_option__(queue_driver_type * driver, const char * option_key, const void * value) {
   bool option_set = true;
   {
@@ -189,6 +209,8 @@ static bool queue_driver_set_generic_option__(queue_driver_type * driver, const 
         queue_driver_set_max_running(driver, max_running_int);
         option_set = true;
       }
+      else
+        option_set = false;
     } else
       option_set = false;
   }
@@ -286,24 +308,6 @@ queue_driver_type * queue_driver_alloc_local() {
 
   return driver;
 }
-
-/*****************************************************************/
-
-void queue_driver_set_max_running(queue_driver_type * driver, int max_running) {
-  driver->max_running_string = util_alloc_sprintf("%d", max_running);
-  driver->max_running = max_running;
-}
-
-int queue_driver_get_max_running(const queue_driver_type * driver) {
-  return driver->max_running;
-}
-
-const char * queue_driver_get_name(const queue_driver_type * driver) {
-  return driver->name;
-}
-
-
-/*****************************************************************/
 
 /* These are the functions used by the job_queue layer. */
 
