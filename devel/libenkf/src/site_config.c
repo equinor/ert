@@ -418,6 +418,15 @@ static void site_config_select_TORQUE_job_queue(site_config_type * site_config) 
 /*****************************************************************/
 
 /*****************************************************************/
+static int site_config_get_queue_max_running_option(queue_driver_type * driver) {
+  const char * max_running_string = queue_driver_get_option(driver, MAX_RUNNING);
+  int max_running = 0;
+  if(!util_scanf_int(max_running_string, max_running)) {
+    fprintf(stderr, "** Warning: String:%s for max_running is not parsable as int, using 0\n", max_running_string);
+  }
+  return max_running;
+}
+
 
 static void site_config_set_queue_max_running_option(site_config_type * site_config, const char* driver_name, int max_running) {
   char* max_running_string = util_alloc_sprintf("%d", max_running);
@@ -433,7 +442,7 @@ void site_config_set_max_running_lsf(site_config_type * site_config, int max_run
 
 int site_config_get_max_running_lsf(const site_config_type * site_config) {
   queue_driver_type * lsf_driver = site_config_get_queue_driver(site_config, LSF_DRIVER_NAME);
-  return queue_driver_get_max_running(lsf_driver);
+  return site_config_get_queue_max_running_option(lsf_driver);
 }
 
 void site_config_set_max_running_rsh(site_config_type * site_config, int max_running_rsh) {
@@ -445,7 +454,7 @@ void site_config_set_max_running_rsh(site_config_type * site_config, int max_run
 
 int site_config_get_max_running_rsh(const site_config_type * site_config) {
   queue_driver_type * rsh_driver = site_config_get_queue_driver(site_config, RSH_DRIVER_NAME);
-  return queue_driver_get_max_running(rsh_driver);
+  return site_config_get_queue_max_running_option(rsh_driver);
 }
 
 void site_config_set_max_running_local(site_config_type * site_config, int max_running_local) {
@@ -457,7 +466,7 @@ void site_config_set_max_running_local(site_config_type * site_config, int max_r
 
 int site_config_get_max_running_local(const site_config_type * site_config) {
   queue_driver_type * local_driver = site_config_get_queue_driver(site_config, LOCAL_DRIVER_NAME);
-  return queue_driver_get_max_running(local_driver);
+  return site_config_get_queue_max_running_option(local_driver);
 }
 
 /*****************************************************************/
