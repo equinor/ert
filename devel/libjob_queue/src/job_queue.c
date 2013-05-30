@@ -1526,6 +1526,10 @@ bool job_queue_has_driver(const job_queue_type * queue ) {
    running has fallen below the new limit.
 
    The updated value will also be pushed down to the current driver.
+  
+   NOTE: These next three *max_running functions should not be used, rather
+   use the set_option feature, with MAX_RUNNING. They are (maybe) used by python
+   therefor not removed. 
 */
 
 void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
