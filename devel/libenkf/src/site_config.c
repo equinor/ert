@@ -417,36 +417,11 @@ static void site_config_select_TORQUE_job_queue(site_config_type * site_config) 
 
 /*****************************************************************/
 
-/**
-   This is quite awkward because the max_running variable is located
-   both in the job_queue instance, and in each separate driver
-   individually:
-
-    o If you call set_max_running - i.e. without specifiying a
-      particular driver, it will tell the queue system to use this
-      many jobs, and also look up the currently active driver and
-      update the internal info on that.
-
-    o If you tell a specific driver a value for max_running, it will
-      update the internal field for that driver, AND the queue IFF the
-      queue is currently running this driver; otherwise the queue will
-      be left untouched.
-
-   What a mess.   
- */
+/*****************************************************************/
 
 static void site_config_set_queue_max_running_option(site_config_type * site_config, const char* driver_name, int max_running) {
   char* max_running_string = util_alloc_sprintf("%d", max_running);
   site_config_set_queue_option(site_config, driver_name, MAX_RUNNING, max_running_string);
-  free(max_running_string);
-}
-
-void site_config_set_max_running(site_config_type * site_config, int max_running) {
-  char* max_running_string = util_alloc_sprintf("%d", max_running);
-
-  if (!queue_driver_set_option(site_config->current_driver, MAX_RUNNING, max_running_string))
-    fprintf(stderr, "** Warning: Option:%s or its value is not recognized by driver - ignored \n", MAX_RUNNING);
-
   free(max_running_string);
 }
 
