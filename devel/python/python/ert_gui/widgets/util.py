@@ -22,7 +22,7 @@ import time
 # The variable @img_prefix should be set to point to a directory
 # containing icons and images. In the current implementation this
 # variable is set from the gert_main.py script.
-img_prefix = None
+img_prefix = ""
 
 def resourceIcon(name):
     """Load an image as an icon"""
