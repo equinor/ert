@@ -184,7 +184,7 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
 /*****************************************************************/
 
 void queue_driver_set_max_running(queue_driver_type * driver, int max_running) {
-  driver->max_running_string = util_alloc_sprintf("%d", max_running);
+  driver->max_running_string = util_realloc_sprintf(driver->max_running_string,"%d", max_running);
   driver->max_running = max_running;
 }
 
