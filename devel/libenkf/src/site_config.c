@@ -421,7 +421,7 @@ static void site_config_select_TORQUE_job_queue(site_config_type * site_config) 
 static int site_config_get_queue_max_running_option(queue_driver_type * driver) {
   const char * max_running_string = queue_driver_get_option(driver, MAX_RUNNING);
   int max_running = 0;
-  if(!util_scanf_int(max_running_string, max_running)) {
+  if(!util_scanf_int(max_running_string, &max_running)) {
     fprintf(stderr, "** Warning: String:%s for max_running is not parsable as int, using 0\n", max_running_string);
   }
   return max_running;
