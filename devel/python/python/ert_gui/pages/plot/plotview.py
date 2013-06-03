@@ -22,7 +22,7 @@ import time
 from ert.ert.erttypes import time_t
 
 from ert_gui.widgets.util import print_timing
-from  plotdata import PlotData
+from ert_gui.pages.plot.plotdata import PlotData
 import ert_gui.widgets
 
 from PyQt4.QtCore import SIGNAL
