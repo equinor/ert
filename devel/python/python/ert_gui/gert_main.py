@@ -137,73 +137,77 @@ from ert_gui.widgets.helpedwidget import ContentModel
 from ert_gui.widgets.util import resourceImage, resourceIcon
 
 import matplotlib
-print "PyQt4 version: ", QtCore.qVersion()
-print "matplotlib version: ", matplotlib.__version__
+def main():
+    splash = QtGui.QSplashScreen(resourceImage("newsplash") , QtCore.Qt.WindowStaysOnTopHint)
+    splash.show()
+    splash.showMessage("Starting up...", color=QtCore.Qt.white)
+    app.processEvents()
 
-splash = QtGui.QSplashScreen(resourceImage("newsplash") , QtCore.Qt.WindowStaysOnTopHint)
-splash.show()
-splash.showMessage("Starting up...", color=QtCore.Qt.white)
-app.processEvents()
+    window = Application()
 
-window = Application()
-
-splash.showMessage("Bootstrapping...", color=QtCore.Qt.white)
-app.processEvents()
-
-ert         = ErtWrapper( )
-strict      = True
-site_config = os.getenv("ERT_SITE_CONFIG")
-if len(sys.argv) == 1:
-    print "-----------------------------------------------------------------"
-    print "-- You must supply the name of configuration file as the first --"
-    print "-- commandline argument:                                       --"
-    print "--                                                             --"
-    print "-- bash%  gert <config_file>                                   --"
-    print "--                                                             --"
-    print "-- If the configuration file does not exist, gert will create  --"
-    print "-- create a new configuration file.                            --"
-    print "-----------------------------------------------------------------"
+    splash.showMessage("Bootstrapping...", color=QtCore.Qt.white)
+    app.processEvents()
+    
+    ert         = ErtWrapper( )
+    strict      = True
+    site_config = os.getenv("ERT_SITE_CONFIG")
+    if len(sys.argv) == 1:
+        print "-----------------------------------------------------------------"
+        print "-- You must supply the name of configuration file as the first --"
+        print "-- commandline argument:                                       --"
+        print "--                                                             --"
+        print "-- bash%  gert <config_file>                                   --"
+        print "--                                                             --"
+        print "-- If the configuration file does not exist, gert will create  --"
+        print "-- create a new configuration file.                            --"
+        print "-----------------------------------------------------------------"
     #sys.exit(0)
-else:
-    enkf_config = sys.argv[1]
-    if not os.path.exists(enkf_config):
-        print "Trying to start new config"
-        new_configuration_dialog = NewConfigurationDialog(enkf_config)
-        success = new_configuration_dialog.exec_()
-        if not success:
-            print "Can not run without a configuration file."
-            sys.exit(1)
-        else:
-            enkf_config      = new_configuration_dialog.getConfigurationPath()
-            firste_case_name = new_configuration_dialog.getCaseName()
-            dbase_type       = new_configuration_dialog.getDBaseType()
-            num_realizations = new_configuration_dialog.getNumberOfRealizations()
-            storage_path     = new_configuration_dialog.getStoragePath()
+    else:
+        enkf_config = sys.argv[1]
+        if not os.path.exists(enkf_config):
+            print "Trying to start new config"
+            new_configuration_dialog = NewConfigurationDialog(enkf_config)
+            success = new_configuration_dialog.exec_()
+            if not success:
+                print "Can not run without a configuration file."
+                sys.exit(1)
+            else:
+                enkf_config      = new_configuration_dialog.getConfigurationPath()
+                firste_case_name = new_configuration_dialog.getCaseName()
+                dbase_type       = new_configuration_dialog.getDBaseType()
+                num_realizations = new_configuration_dialog.getNumberOfRealizations()
+                storage_path     = new_configuration_dialog.getStoragePath()
 
-            EnKFMain.create_new_config(enkf_config, storage_path , firste_case_name, dbase_type, num_realizations)
-            strict = False
+                EnKFMain.create_new_config(enkf_config, storage_path , firste_case_name, dbase_type, num_realizations)
+                strict = False
 
-    ert.bootstrap(enkf_config, site_config = site_config, strict = strict)
-    window.setSaveFunction(ert.save)
+        ert.bootstrap(enkf_config, site_config = site_config, strict = strict)
+        window.setSaveFunction(ert.save)
 
-    splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
-    app.processEvents()
+        splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
+        app.processEvents()
 
-    window.addPage("Configuration", resourceIcon("config"), ConfigPages(window))
-    window.addPage("Init" , resourceIcon("db"), InitPanel(window))
-    window.addPage("Run"  , resourceIcon("run"), RunPanel(window))
-    window.addPage("Plots", resourceIcon("plot"), PlotPanel())
+        window.addPage("Configuration", resourceIcon("config"), ConfigPages(window))
+        window.addPage("Init" , resourceIcon("db"), InitPanel(window))
+        window.addPage("Run"  , resourceIcon("run"), RunPanel(window))
+        window.addPage("Plots", resourceIcon("plot"), PlotPanel())
 
-    splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)
-    app.processEvents()
+        splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)
+        app.processEvents()
 
-    ContentModel.contentModel = ert
-    ContentModel.updateObservers()
+        ContentModel.contentModel = ert
+        ContentModel.updateObservers()
 
-    window.show()
-    splash.finish(window)
+        window.show()
+        splash.finish(window)
 
-    sys.exit(app.exec_())
+        sys.exit(app.exec_())
+
+if __name__ =="__main__":
+    main()
+
+
+
 
 
 
