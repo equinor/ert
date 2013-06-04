@@ -163,46 +163,47 @@ if len(sys.argv) == 1:
     print "-- If the configuration file does not exist, gert will create  --"
     print "-- create a new configuration file.                            --"
     print "-----------------------------------------------------------------"
-    sys.exit( )
-    
-enkf_config = sys.argv[1]
-if not os.path.exists(enkf_config):
-    print "Trying to start new config"
-    new_configuration_dialog = NewConfigurationDialog(enkf_config)
-    success = new_configuration_dialog.exec_()
-    if not success:
-        print "Can not run without a configuration file."
-        sys.exit(1)
-    else:
-        enkf_config      = new_configuration_dialog.getConfigurationPath()
-        firste_case_name = new_configuration_dialog.getCaseName()
-        dbase_type       = new_configuration_dialog.getDBaseType()
-        num_realizations = new_configuration_dialog.getNumberOfRealizations()
-        storage_path     = new_configuration_dialog.getStoragePath()
-        EnKFMain.create_new_config(enkf_config, storage_path , firste_case_name, dbase_type, num_realizations)
-        strict = False
+    #sys.exit(0)
+else:
+    enkf_config = sys.argv[1]
+    if not os.path.exists(enkf_config):
+        print "Trying to start new config"
+        new_configuration_dialog = NewConfigurationDialog(enkf_config)
+        success = new_configuration_dialog.exec_()
+        if not success:
+            print "Can not run without a configuration file."
+            sys.exit(1)
+        else:
+            enkf_config      = new_configuration_dialog.getConfigurationPath()
+            firste_case_name = new_configuration_dialog.getCaseName()
+            dbase_type       = new_configuration_dialog.getDBaseType()
+            num_realizations = new_configuration_dialog.getNumberOfRealizations()
+            storage_path     = new_configuration_dialog.getStoragePath()
 
-ert.bootstrap(enkf_config, site_config = site_config, strict = strict)
-window.setSaveFunction(ert.save)
+            EnKFMain.create_new_config(enkf_config, storage_path , firste_case_name, dbase_type, num_realizations)
+            strict = False
 
-splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
-app.processEvents()
+    ert.bootstrap(enkf_config, site_config = site_config, strict = strict)
+    window.setSaveFunction(ert.save)
 
-window.addPage("Configuration", resourceIcon("config"), ConfigPages(window))
-window.addPage("Init" , resourceIcon("db"), InitPanel(window))
-window.addPage("Run"  , resourceIcon("run"), RunPanel(window))
-window.addPage("Plots", resourceIcon("plot"), PlotPanel())
+    splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
+    app.processEvents()
 
-splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)
-app.processEvents()
+    window.addPage("Configuration", resourceIcon("config"), ConfigPages(window))
+    window.addPage("Init" , resourceIcon("db"), InitPanel(window))
+    window.addPage("Run"  , resourceIcon("run"), RunPanel(window))
+    window.addPage("Plots", resourceIcon("plot"), PlotPanel())
 
-ContentModel.contentModel = ert
-ContentModel.updateObservers()
+    splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)
+    app.processEvents()
 
-window.show()
-splash.finish(window)
+    ContentModel.contentModel = ert
+    ContentModel.updateObservers()
 
-sys.exit(app.exec_())
+    window.show()
+    splash.finish(window)
+
+    sys.exit(app.exec_())
 
 
 
