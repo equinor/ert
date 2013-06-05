@@ -120,7 +120,6 @@ class PlotConfig(object):
     picker = property(getPicker, setPicker, doc="Picker radius")
 
 
-
 class PlotConfigPanel(QFrame):
     """A panel to interact with PlotConfig instances."""
     plot_marker_styles = ["", ".", ",", "o", "*", "s", "+", "x", "p", "h", "H", "D", "d"]
@@ -210,13 +209,12 @@ class PlotConfigPanel(QFrame):
 
 class ColorPicker(QWidget):
     """A widget that shows a colored box and pops up a color dialog."""
-    color_dialog = QColorDialog()
 
     def __init__(self, plot_config):
         QWidget.__init__(self)
 
         self.plot_config = plot_config
-
+        self.color_dialog = QColorDialog()
         size = 20
         self.setMaximumSize(QSize(size, size))
         self.setMinimumSize(QSize(size, size))
