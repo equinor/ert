@@ -24,13 +24,16 @@ from ert_gui.widgets.pathchooser import PathChooser
 from ert_gui.widgets.combochoice import ComboChoice
 import ert_gui.widgets.stringbox
 from fieldpanel import *
+print "param -----"
 from parameterdialog import ParameterDialog
 from ert_gui.widgets.searchablelist import SearchableList
 from datapanel import DataPanel
+print "Param X"
 from keywordpanel import KeywordPanel
 import ert_gui.widgets.util
 from parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
 from PyQt4.QtCore import SIGNAL
+print "param END"
 
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
@@ -219,3 +222,6 @@ class Parameter(QtGui.QListWidgetItem):
             self.setBackgroundColor(QtCore.Qt.white)
         else:
             self.setBackgroundColor(HelpedWidget.STRONG_ERROR_COLOR)
+
+
+print "IMport complete"
