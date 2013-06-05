@@ -18,22 +18,10 @@
 # ----------------------------------------------------------------------------------------------
 # Ensemble tab
 # ----------------------------------------------------------------------------------------------
-print "1"
-
 from PyQt4 import QtCore
-print "2"
 from ert_gui.widgets.spinnerwidgets import IntegerSpinner
-
-print "3"
 from parameters.parameterpanel import ParameterPanel
-print "35"
 from parameters.parametermodels import SummaryModel, DataModel, FieldModel, KeywordModel
-print "36"
-#from ert.ert.enums import field_type
-print "4"
-#from ert.ert.enums import truncation_type
-#from ert.ert.enums import gen_data_file_format
-
 import ert.ert.enums as enums
 import ert.enkf.enkf_config_node
 import ert.enkf.gen_kw_config

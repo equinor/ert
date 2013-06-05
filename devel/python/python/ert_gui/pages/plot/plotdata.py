@@ -224,10 +224,10 @@ class PlotData:
 
 class PlotContextDataFetcher(ContentModel):
 
-    observation_icon = resourceIcon("observation")
 
     def __init__(self):
         ContentModel.__init__(self)
+        self.observation_icon = resourceIcon("observation")
 
     def initialize(self, ert):
         self.modelConnect("casesUpdated()", self.fetchContent)
@@ -282,7 +282,7 @@ class PlotContextDataFetcher(ContentModel):
         key_list = enkf_obs.alloc_typed_keylist( obs_impl_type.FIELD_OBS.value())
 
         for obs in key_list:
-            p = Parameter(obs, obs_impl_type.FIELD_OBS, PlotContextDataFetcher.observation_icon)
+            p = Parameter(obs, obs_impl_type.FIELD_OBS, self.observation_icon)
             data.parameters.append(p)
 
 
