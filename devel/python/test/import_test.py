@@ -18,12 +18,8 @@ import sys
 
 def test_import( module ):
     print "Importing: %s ..." % module , 
-    try:
-        __import__( module )
-        print "OK"
-    except:
-        print "failed"
-        sys.exit(1)
+    __import__( module )
+    print "OK"
 
 
 test_import( "ert" )
