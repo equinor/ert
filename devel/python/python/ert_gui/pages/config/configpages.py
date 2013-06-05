@@ -14,16 +14,16 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-
 from   ert_gui.widgets.configpanel import ConfigPanel
 import eclipse
 import analysis
 import queuesystem
 import systemenv
 import plot
-import ensemble
 import observations
 import simulation
+import ensemble
+
 
 class ConfigPages(ConfigPanel):
     

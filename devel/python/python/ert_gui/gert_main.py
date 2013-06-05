@@ -125,19 +125,21 @@ ert_gui.widgets.util.img_prefix  = os.getenv("ERT_SHARE_PATH")+ "/gui/img/"
 from ert.enkf.enkf_main import EnKFMain
 
 from ert_gui.newconfig import NewConfigurationDialog
-
 from ert_gui.pages.application import Application
 from ert_gui.pages.init.initpanel import InitPanel
 from ert_gui.pages.run.runpanel import RunPanel
-from ert_gui.pages.config.configpages import ConfigPages
-from ert_gui.pages.plot.plotpanel import PlotPanel
 from ert_gui.widgets.helpedwidget import ContentModel
 from ert_gui.widgets.util import resourceImage, resourceIcon
+
+
 
 import matplotlib
 
 def main():
     app = QtGui.QApplication(sys.argv) #Early so that QT is initialized before other imports
+    from ert_gui.pages.config.configpages import ConfigPages
+    from ert_gui.pages.plot.plotpanel import PlotPanel
+
     splash = QtGui.QSplashScreen(resourceImage("newsplash") , QtCore.Qt.WindowStaysOnTopHint)
     splash.show()
     splash.showMessage("Starting up...", color=QtCore.Qt.white)
