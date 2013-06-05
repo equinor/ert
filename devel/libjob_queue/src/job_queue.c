@@ -1144,7 +1144,7 @@ static void job_queue_handle_EXIT( job_queue_type * queue , job_queue_node_type 
 int job_queue_get_max_running_option(queue_driver_type * driver) {
   char * max_running_string = (char*)queue_driver_get_option(driver, MAX_RUNNING);
   int max_running;
-  if (!util_scanf_int(max_running_string, max_running)) {
+  if (!util_sscanf_int(max_running_string, &max_running)) {
     fprintf(stderr, "%s: Unable to parse option MAX_RUNNING with value %s to an int", __func__, max_running_string);
   }
   return max_running;
