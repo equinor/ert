@@ -2067,6 +2067,19 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 
 static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config ) {
   qc_module_init( enkf_main->qc_module , config );
+  
+  {
+    const char * enspath = model_config_get_enspath(enkf_main->model_config);
+    if (util_is_abs_path(enspath)) {
+      qc_module_set_runpath_list_basepath(enkf_main->qc_module, enspath);
+    }
+    else {
+      char * abs_enspath = util_alloc_abs_path(enspath);
+      qc_module_set_runpath_list_basepath(enkf_main->qc_module, abs_enspath);
+      free(abs_enspath);
+    }
+    
+  }
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
 }
 
@@ -2835,7 +2848,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
     enkf_main_init_subst_list( enkf_main );
     ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh );
-    enkf_main_init_qc( enkf_main , config );
     enkf_main_init_data_kw( enkf_main , config );
     
     analysis_config_load_internal_modules( enkf_main->analysis_config );
@@ -2851,6 +2863,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                        ecl_config_get_last_history_restart( enkf_main->ecl_config ),
                        ecl_config_get_sched_file(enkf_main->ecl_config) ,
                        ecl_config_get_refcase( enkf_main->ecl_config ));
+
+    enkf_main_init_qc( enkf_main , config );
     enkf_main_update_num_cpu( enkf_main );
     {
       const config_content_item_type * pred_item = config_get_content_item( config , SCHEDULE_PREDICTION_FILE_KEY );
