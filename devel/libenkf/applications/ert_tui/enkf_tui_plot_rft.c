@@ -245,7 +245,12 @@ void enkf_tui_plot_RFT_simIn(enkf_main_type * enkf_main, path_fmt_type * runpath
     for (int nobs =0; nobs<lines; nobs++){
       int start_index = 0;
       int i; int j; int k;
-      int global_index = ecl_grid_get_global_index_from_xyz(grid,double_vector_iget(UTM_x,nobs) ,double_vector_iget(UTM_y,nobs) ,double_vector_iget(TVD_z,nobs) ,start_index);
+      int global_index = ecl_grid_get_global_index_from_xyz( grid , 
+                                                             double_vector_iget(UTM_x,nobs) ,
+                                                             double_vector_iget(UTM_y,nobs) ,
+                                                             double_vector_iget(TVD_z,nobs) ,
+                                                             start_index);
+      
       ecl_grid_get_ijk1(grid , global_index, &i, &j , &k);
       int is_active = ecl_grid_get_active_index1(grid , global_index);
       int_vector_iset(i_values, nobs, i);
