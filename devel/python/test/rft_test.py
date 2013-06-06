@@ -25,6 +25,14 @@ RFT_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.RFT"
 PLT_file = "test-data/Statoil/ECLIPSE/RFT/TEST1_1A.RFT"
 
 
+
+
+def out_of_range():
+    rftFile = ecl.EclRFTFile( RFT_file )
+    rft = rftFile[100]
+
+
+
 class RFTTest( unittest.TestCase ):
 
     def loadRFT( self ):
@@ -36,12 +44,19 @@ class RFTTest( unittest.TestCase ):
     def loadPLT( self ):
         pltFile = ecl.EclRFTFile( PLT_file )
         self.assertTrue( pltFile[11].is_PLT() )
+
+
+    def exceptions( self ):
+        self.assertRaises( IndexError , out_of_range )
+    
+
         
 
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( RFTTest( 'loadRFT' ))
     suite.addTest( RFTTest( 'loadPLT' ))
+    suite.addTest( RFTTest( 'exceptions' ))
     return suite
 
 
