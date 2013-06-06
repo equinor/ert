@@ -39,11 +39,15 @@ class RFTTest( unittest.TestCase ):
         rftFile = ecl.EclRFTFile( RFT_file )
         for rft in rftFile:
             self.assertTrue( rft.is_RFT() )
-
-
+            for cell in rft:
+                self.assertTrue( isinstance( cell , ecl.EclRFTCell ))
+                
     def loadPLT( self ):
         pltFile = ecl.EclRFTFile( PLT_file )
-        self.assertTrue( pltFile[11].is_PLT() )
+        plt = pltFile[11]
+        self.assertTrue( plt.is_PLT() )
+        for cell in plt:
+            self.assertTrue( isinstance( cell , ecl.EclPLTCell ))
 
 
     def exceptions( self ):
