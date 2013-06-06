@@ -53,6 +53,9 @@ class RFTTest( unittest.TestCase ):
             for cell in rft:
                 self.assertTrue( isinstance( cell , ecl.EclRFTCell ))
                 
+            cell0 = rft.iget_sorted( 0 )
+            self.assertTrue( isinstance( cell , ecl.EclRFTCell ))
+            rft.sort()
 
 
                 
