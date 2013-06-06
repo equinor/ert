@@ -39,13 +39,18 @@ class RFTTest( unittest.TestCase ):
         rftFile = ecl.EclRFTFile( RFT_file )
         for rft in rftFile:
             self.assertTrue( rft.is_RFT() )
+            self.assertFalse( rft.is_SEGMENT( ))
+            self.assertFalse( rft.is_PLT( ))
             for cell in rft:
                 self.assertTrue( isinstance( cell , ecl.EclRFTCell ))
+
                 
     def loadPLT( self ):
         pltFile = ecl.EclRFTFile( PLT_file )
         plt = pltFile[11]
         self.assertTrue( plt.is_PLT() )
+        self.assertFalse( plt.is_SEGMENT( ))
+        self.assertFalse( plt.is_RFT( ))
         for cell in plt:
             self.assertTrue( isinstance( cell , ecl.EclPLTCell ))
 
