@@ -16,12 +16,41 @@
 #  for more details. 
 
 
+import unittest
 import ert.ecl.ecl as ecl
+from   test_util import approx_equal, approx_equalv
 
 
-rft = ecl.EclRFTFile( "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.RFT" )
-
-for node in rft:
-    print rft
+RFT_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.RFT"
+PLT_file = "test-data/Statoil/ECLIPSE/RFT/TEST1_1A.RFT"
 
 
+class RFTTest( unittest.TestCase ):
+
+    def loadRFT( self ):
+        rftFile = ecl.EclRFTFile( RFT_file )
+        for rft in rftFile:
+            self.assertTrue( rft.is_RFT() )
+
+
+    def loadPLT( self ):
+        pltFile = ecl.EclRFTFile( PLT_file )
+        self.assertTrue( pltFile[11].is_PLT() )
+        
+
+def fast_suite():
+    suite = unittest.TestSuite()
+    suite.addTest( RFTTest( 'loadRFT' ))
+    suite.addTest( RFTTest( 'loadPLT' ))
+    return suite
+
+
+def test_suite( argv ):
+    return fast_suite()
+
+
+if __name__ == "__main__":
+    unittest.TextTestRunner().run( fast_suite() )
+
+
+        
