@@ -60,8 +60,8 @@ class RFTCellTest( unittest.TestCase ):
 
 
     def PLTCell(self):
-        i = 10
-        j = 8
+        i = 2
+        j = 16
         k = 100
         depth = 100
         pressure = 65
@@ -80,6 +80,11 @@ class RFTCellTest( unittest.TestCase ):
         self.assertTrue( i == cell.get_i() )
         self.assertTrue( j == cell.get_j() )
         self.assertTrue( k == cell.get_k() )
+        
+        self.assertTrue( cell.get_i() + 1 == cell.i )
+        self.assertTrue( cell.get_j() + 1 == cell.j )
+        self.assertTrue( cell.get_k() + 1 == cell.k )
+        
         
         self.assertTrue( approx_equal( pressure , cell.pressure) )
         self.assertTrue( approx_equal( depth    , cell.depth ))
