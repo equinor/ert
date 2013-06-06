@@ -42,6 +42,10 @@ add_test( NAME python.ert.ecl.ecl_file_slow
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} file_test True)
 
+add_test( NAME python.ert.ecl.ecl_rft 
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} rft_test)
+
 
 
 
@@ -49,6 +53,7 @@ set_property( TEST python.ert.ecl.ecl_file       PROPERTY LABELS Python:StatoilD
 set_property( TEST python.ert.ecl.ecl_file_slow  PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.ert.ecl.ecl_sum        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.ert.ecl.ecl_kw         PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_rft        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.ert.ecl.ecl_grid       PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.import_local           PROPERTY LABELS Python:StatoilBuild )
 
