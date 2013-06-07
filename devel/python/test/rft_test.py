@@ -56,6 +56,7 @@ class RFTTest( unittest.TestCase ):
             self.assertTrue( rft.is_RFT() )
             self.assertFalse( rft.is_SEGMENT( ))
             self.assertFalse( rft.is_PLT( ))
+            self.assertFalse( rft.is_MSW( ))
             
             for cell in rft:
                 self.assertTrue( isinstance( cell , ecl.EclRFTCell ))
@@ -72,6 +73,7 @@ class RFTTest( unittest.TestCase ):
         self.assertTrue( plt.is_PLT() )
         self.assertFalse( plt.is_SEGMENT( ))
         self.assertFalse( plt.is_RFT( ))
+        self.assertFalse( plt.is_MSW( ))
         for cell in plt:
             self.assertTrue( isinstance( cell , ecl.EclPLTCell ))
 
