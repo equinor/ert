@@ -23,8 +23,6 @@ extern "C" {
 #endif
 
 #include <ert/config/config.h>
-#include <ert/enkf/model_config.h>
-
 
 #include <ert/enkf/ert_workflow_list.h>
 #include <ert/enkf/runpath_list.h>
