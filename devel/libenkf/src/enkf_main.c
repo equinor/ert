@@ -2067,19 +2067,7 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 
 static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config ) {
   qc_module_init( enkf_main->qc_module , config );
-  
-  {
-    const char * enspath = model_config_get_enspath(enkf_main->model_config);
-    if (util_is_abs_path(enspath)) {
-      qc_module_set_runpath_list_basepath(enkf_main->qc_module, enspath);
-    }
-    else {
-      char * abs_enspath = util_alloc_abs_path(enspath);
-      qc_module_set_runpath_list_basepath(enkf_main->qc_module, abs_enspath);
-      free(abs_enspath);
-    }
-  }
-  
+  qc_module_set_runpath_list_file(enkf_main->qc_module, model_config_get_enspath(enkf_main->model_config), NULL);
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
 }
 

@@ -77,13 +77,6 @@ void qc_module_export_runpath_list( const qc_module_type * qc_module ) {
   runpath_list_fprintf( qc_module->runpath_list , stream );
   fclose( stream );
 }
-
-void qc_module_set_runpath_list_basepath( qc_module_type * qc_module, const char * basepath) {
-  char * runpath_list_file = util_alloc_filename( basepath , RUNPATH_LIST_FILE , NULL);
-  qc_module_set_runpath_list_file( qc_module , NULL, runpath_list_file );
-  free(runpath_list_file);
-}
-
   
 void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * basepath, const char * filename) {
   char * file = NULL;
