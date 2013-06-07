@@ -32,6 +32,7 @@ import ert_gui.widgets.util
 from parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
 from PyQt4.QtCore import SIGNAL
 
+
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
 
@@ -168,54 +169,65 @@ class ParameterPanel(HelpedWidget):
             self.searchableList.getList().setCurrentRow(0)
 
 
+
 class Parameter(QtGui.QListWidgetItem):
     """ListWidgetItem class that represents a Parameter with an associated icon."""
-    typeIcons = {FieldModel.TYPE: util.resourceIcon("grid_16"),
-                 DataModel.TYPE: util.resourceIcon("data"),
-                 SummaryModel.TYPE: util.resourceIcon("summary"),
-                 KeywordModel.TYPE: util.resourceIcon("key")}
+
+    typeIcons__ = None
+
+    @property
+    @classmethod
+    def typeIcons(cls):
+        if typeIcons__ is None:
+            typeIcons__ = {FieldModel.TYPE: util.resourceIcon("grid_16"),
+                           DataModel.TYPE: util.resourceIcon("data"),
+                           SummaryModel.TYPE: util.resourceIcon("summary"),
+                           KeywordModel.TYPE: util.resourceIcon("key")}
+        return typeIcons__
 
 
     def __init__(self, name, type, icon=None):
         if icon is None:
             icon = Parameter.typeIcons[type]
-
+            
         QtGui.QListWidgetItem.__init__(self, icon, name)
         self.type = type
         self.name = name
         self.user_data = None
         self.setValid(True)
-
+    
     def getType(self):
         """Retruns the type of this parameter"""
         return self.type
-
+    
     def getName(self):
         """Returns the name of this parameter (keyword)"""
         return self.name
-
+    
     def __ge__(self, other):
         if self.type.name == other.type.name:
             return self.name.lower() >= other.name.lower()
         else:
             return self.type.name >= other.type.name
-
+    
     def __lt__(self, other):
         return not self >= other
-
+    
     def setUserData(self, data):
         """Set user data for this parameter."""
         self.user_data = data
-
+    
     def getUserData(self):
         """Retrieve the user data."""
         return self.user_data
-
+    
     def setValid(self, valid):
         """Set the validity of this item. An invalid item is colored red"""
         self.valid = valid
-
+    
         if valid:
             self.setBackgroundColor(QtCore.Qt.white)
         else:
             self.setBackgroundColor(HelpedWidget.STRONG_ERROR_COLOR)
+
+
