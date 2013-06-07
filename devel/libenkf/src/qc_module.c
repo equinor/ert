@@ -163,6 +163,9 @@ void qc_module_init( qc_module_type * qc_module , const config_type * config) {
     const char * qc_workflow = config_get_value_as_path(config , QC_WORKFLOW_KEY);
     qc_module_set_workflow( qc_module , qc_workflow );
   }
+  
+  if (config_item_set( config, QC_RUNPATH_FILE_KEY)) 
+    qc_module_set_runpath_list_file(qc_module, NULL, config_get_value(config, QC_RUNPATH_FILE_KEY));
 }
 
 
@@ -176,6 +179,9 @@ void qc_module_add_config_items( config_type * config ) {
   item = config_add_schema_item( config , QC_WORKFLOW_KEY , false );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+  
+  item = config_add_schema_item( config , QC_RUNPATH_FILE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
 }
 
 

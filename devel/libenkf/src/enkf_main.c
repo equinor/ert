@@ -2067,7 +2067,6 @@ static void enkf_main_add_subst_kw( enkf_main_type * enkf_main , const char * ke
 
 static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config ) {
   qc_module_init( enkf_main->qc_module , config );
-  qc_module_set_runpath_list_file(enkf_main->qc_module, model_config_get_enspath(enkf_main->model_config), NULL);
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
 }
 
