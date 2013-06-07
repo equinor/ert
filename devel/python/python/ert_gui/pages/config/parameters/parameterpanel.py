@@ -124,7 +124,7 @@ class ParameterPanel(HelpedWidget):
         for index in range(list.count()):
             uniqueNames.append(str(list.item(index).text()))
 
-        pd = ParameterDialog(self, Parameter.typeIcons, uniqueNames)
+        pd = ParameterDialog(self, Parameter.get_typeIcons() , uniqueNames)
         if pd.exec_():
             parameter = self.createParameter(pd.getTypeName(), pd.getName())
             ok = self.updateContent(parameter, operation=ContentModel.INSERT)
@@ -175,20 +175,20 @@ class Parameter(QtGui.QListWidgetItem):
 
     typeIcons__ = None
 
-    @property
     @classmethod
-    def typeIcons(cls):
-        if typeIcons__ is None:
+    def get_typeIcons(cls):
+        if cls.typeIcons__ is None:
             typeIcons__ = {FieldModel.TYPE: util.resourceIcon("grid_16"),
                            DataModel.TYPE: util.resourceIcon("data"),
                            SummaryModel.TYPE: util.resourceIcon("summary"),
                            KeywordModel.TYPE: util.resourceIcon("key")}
         return typeIcons__
+        
 
 
     def __init__(self, name, type, icon=None):
         if icon is None:
-            icon = Parameter.typeIcons[type]
+            icon = Parameter.get_typeIcons()[type]
             
         QtGui.QListWidgetItem.__init__(self, icon, name)
         self.type = type
