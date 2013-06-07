@@ -146,7 +146,7 @@ class SumTest( unittest.TestCase ):
 
 
     def test_fwrite(self):
-        self.sum.fwrite(ecl_case = "/tmp/CASE2" )
+        self.sum.fwrite(ecl_case = "/tmp/CASE" )
         self.assertTrue( True )
 
 
