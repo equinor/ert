@@ -16,6 +16,7 @@
 #  for more details. 
 
 
+import datetime
 import unittest
 import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv
@@ -42,6 +43,12 @@ class RFTTest( unittest.TestCase ):
         cell = rft.ijkget( (32 , 53 , 0) )
         self.assertTrue( isinstance( cell , ecl.EclRFTCell ))
 
+        self.assertEqual( 2   , rftFile.size( ) )
+        self.assertEqual( 0   , rftFile.size( well = "OP*"))
+        self.assertEqual( 0   , rftFile.size( well = "XXX"))
+        self.assertEqual( 1   , rftFile.size( date = datetime.date( 2000 , 6  , 1 )))
+        self.assertEqual( 0   , rftFile.size( date = datetime.date( 2000 , 6  , 17 )))
+                          
         cell = rft.ijkget( (30 , 20 , 1880) )
         self.assertTrue( cell is None )
 
