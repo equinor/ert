@@ -2078,8 +2078,8 @@ static void enkf_main_init_qc( enkf_main_type * enkf_main , config_type * config
       qc_module_set_runpath_list_basepath(enkf_main->qc_module, abs_enspath);
       free(abs_enspath);
     }
-    
   }
+  
   enkf_main_add_subst_kw( enkf_main , "QC_PATH" , qc_module_get_path( enkf_main->qc_module ) , "QC Root path" , true);
 }
 

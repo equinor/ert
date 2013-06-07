@@ -15,27 +15,34 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
  */
+#include <ert/util/util.h>
 #include <ert/util/test_util.h>
 #include <ert/enkf/qc_module.h>
 #include <ert/util/subst_list.h>
 
 int main(int argc, char ** argv) {
-  subst_func_pool_type * subst_func_pool = subst_func_pool_alloc();
-  subst_list_type * subst_list = subst_list_alloc(subst_func_pool);
-  ert_workflow_list_type * workflow_list = ert_workflow_list_alloc(subst_list);
-  qc_module_type * qc_module = qc_module_alloc(workflow_list, "");
-  qc_module_set_runpath_list_file(qc_module, "testing");
-  test_assert_string_equal("testing", qc_module_get_runpath_list_file(qc_module));
 
-  qc_module_set_runpath_list_basepath(qc_module, "Ensemble");
-
-  char * path = util_alloc_sprintf("Ensemble/%s", ".ert_runpath_list");
-  test_assert_string_equal(path, qc_module_get_runpath_list_file(qc_module));
-  free(path);
-  free(subst_func_pool);
-  free(subst_list);
-  free(workflow_list);
-  free(qc_module);
+  ert_workflow_list_type * list = NULL;
+  qc_module_type * qc_module = qc_module_alloc(list, "");
+ 
+  char * expected_path = util_alloc_abs_path(".ert_runpath_list");
+  test_assert_string_equal(expected_path, qc_module_get_runpath_list_file(qc_module));
+  free(expected_path);
+  
+  qc_module_set_runpath_list_file(qc_module, "Folder", NULL);
+  expected_path = util_alloc_abs_path("Folder/.ert_runpath_list");
+  test_assert_string_equal(expected_path, qc_module_get_runpath_list_file(qc_module));
+  free(expected_path);
+  
+  qc_module_set_runpath_list_file(qc_module, "Folder", "thefilename.txt");
+  expected_path = util_alloc_abs_path("Folder/thefilename.txt");
+  test_assert_string_equal(expected_path, qc_module_get_runpath_list_file(qc_module));
+  free(expected_path);
+  
+  qc_module_set_runpath_list_file(qc_module, "/tmp/ouagadogo", "thefilename.txt");
+  test_assert_string_equal("/tmp/ouagadogo/thefilename.txt", qc_module_get_runpath_list_file(qc_module));
+  
+  qc_module_free(qc_module);
 
   exit(0);
 }

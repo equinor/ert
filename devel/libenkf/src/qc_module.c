@@ -54,21 +54,15 @@ qc_module_type * qc_module_alloc( ert_workflow_list_type * workflow_list , const
   qc_module->runpath_list = runpath_list_alloc();
   qc_module->runpath_list_file = NULL;
   qc_module_set_path( qc_module , qc_path );
-  {
-    char * cwd = util_alloc_cwd();
-    char * runpath_list_file = util_alloc_filename( cwd , RUNPATH_LIST_FILE , NULL);
+  qc_module_set_runpath_list_file( qc_module , NULL, RUNPATH_LIST_FILE );
 
-    qc_module_set_runpath_list_file( qc_module , runpath_list_file );
-
-    free( runpath_list_file );
-    free( cwd );
-  }
   return qc_module;
 }
 
 
 void qc_module_free( qc_module_type * qc_module ) {
   util_safe_free( qc_module->qc_path );
+  util_safe_free( qc_module->runpath_list_file);
   runpath_list_free( qc_module->runpath_list );
   free( qc_module );
 }
@@ -86,13 +80,33 @@ void qc_module_export_runpath_list( const qc_module_type * qc_module ) {
 
 void qc_module_set_runpath_list_basepath( qc_module_type * qc_module, const char * basepath) {
   char * runpath_list_file = util_alloc_filename( basepath , RUNPATH_LIST_FILE , NULL);
-  qc_module_set_runpath_list_file( qc_module , runpath_list_file );
+  qc_module_set_runpath_list_file( qc_module , NULL, runpath_list_file );
   free(runpath_list_file);
 }
 
   
-void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * filename) {
-  qc_module->runpath_list_file = util_realloc_string_copy( qc_module->runpath_list_file , filename );
+void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * basepath, const char * filename) {
+  char * file = NULL;
+  if (filename != NULL) {
+    file = util_alloc_string_copy(filename);
+  }
+  else {
+    file = util_alloc_string_copy(RUNPATH_LIST_FILE);
+  }
+  
+  char * file_with_path_prefix = NULL;
+  if (basepath != NULL) {
+    file_with_path_prefix = util_alloc_filename(basepath, file, NULL);
+  }
+  else
+    file_with_path_prefix = util_alloc_filename(NULL, file, NULL);
+
+  char * absolute_path = util_alloc_abs_path(file_with_path_prefix);
+  free(qc_module->runpath_list_file);
+  qc_module->runpath_list_file = absolute_path;
+  
+  free(file_with_path_prefix);
+  free(file);
 }
 
 const char * qc_module_get_runpath_list_file( qc_module_type * qc_module) {
