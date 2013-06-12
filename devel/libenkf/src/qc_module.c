@@ -78,28 +78,37 @@ void qc_module_export_runpath_list( const qc_module_type * qc_module ) {
   fclose( stream );
 }
   
-void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * basepath, const char * filename) {
-  char * file = NULL;
-  if (filename != NULL) {
-    file = util_alloc_string_copy(filename);
-  }
-  else {
-    file = util_alloc_string_copy(RUNPATH_LIST_FILE);
-  }
-  
-  char * file_with_path_prefix = NULL;
-  if (basepath != NULL) {
-    file_with_path_prefix = util_alloc_filename(basepath, file, NULL);
-  }
-  else
-    file_with_path_prefix = util_alloc_filename(NULL, file, NULL);
+static void qc_module_set_runpath_list_file__( qc_module_type * qc_module , const char * runpath_list_file) {
+  util_safe_free( qc_module->runpath_list_file );
+  qc_module->runpath_list_file = util_alloc_string_copy( runpath_list_file );
+}
 
-  char * absolute_path = util_alloc_abs_path(file_with_path_prefix);
-  free(qc_module->runpath_list_file);
-  qc_module->runpath_list_file = absolute_path;
+
+void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * basepath, const char * filename) {
+
+  if (filename && util_is_abs_path( filename ))
+    qc_module_set_runpath_list_file__( qc_module , filename );
+  else {
+    const char * file = RUNPATH_LIST_FILE;
+
+    if (filename != NULL) 
+      file = filename;
   
-  free(file_with_path_prefix);
-  free(file);
+    char * file_with_path_prefix = NULL;
+    if (basepath != NULL) {
+      file_with_path_prefix = util_alloc_filename(basepath, file, NULL);
+    }
+    else
+      file_with_path_prefix = util_alloc_string_copy(file);
+
+    {
+      char * absolute_path = util_alloc_abs_path(file_with_path_prefix);
+      qc_module_set_runpath_list_file__( qc_module , absolute_path );
+      free( absolute_path );
+    }
+    
+    free(file_with_path_prefix);
+  }
 }
 
 const char * qc_module_get_runpath_list_file( qc_module_type * qc_module) {
