@@ -2468,7 +2468,15 @@ const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
   return enkf_main->current_fs_case;
 }
 
+bool enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case){
+  bool exists = false;
+  char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , input_case);
+  if(enkf_fs_exists( new_mount_point )) 
+    exists = true;
 
+  return exists;
+  free( new_mount_point );
+}
 
 
 void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_case ) {
