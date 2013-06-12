@@ -2386,7 +2386,8 @@ void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const ch
     enkf_main_link_current_fs__( enkf_main , case_path);
     enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
     enkf_main_gen_data_special( enkf_main );
-    enkf_main_add_subst_kw( enkf_main , "CASE" , enkf_main->current_fs_case , "Current case" , true );
+    enkf_main_add_subst_kw( enkf_main , "ERT-CASE" , enkf_main->current_fs_case , "Current case" , true );
+    enkf_main_add_subst_kw( enkf_main , "ERTCASE"  , enkf_main->current_fs_case , "Current case" , true );
   }
 }
 
