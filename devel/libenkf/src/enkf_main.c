@@ -2468,14 +2468,14 @@ const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
   return enkf_main->current_fs_case;
 }
 
-bool enkf_main_current_fs_exists(const enkf_main_type * enkf_main, const char * input_case){
+bool enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case){
   bool exists = false;
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config); 
-  char * new_mount_point = util_alloc_filename( ens_path , input_case , NULL);
+  char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , input_case);
   if(enkf_fs_exists( new_mount_point )) 
     exists = true;
 
   return exists;
+  free( new_mount_point );
 }
 
 

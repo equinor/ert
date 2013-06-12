@@ -77,7 +77,7 @@ class InitPanel(QtGui.QFrame):
             fs = ert.main.get_fs
 
             for case in cases:
-                if not ert.main.current_fs_exists(case):
+                if not ert.main.fs_exists(case):
                     ert.main.select_fs(case)
                     break
 
