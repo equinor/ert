@@ -103,6 +103,11 @@ target_link_libraries( enkf_ecl_config_config enkf )
 add_test( enkf_ecl_config_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config_config ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_config )
 set_property( TEST enkf_ecl_config_config PROPERTY LABELS StatoilData )
 
+add_executable( enkf_qc_module_test enkf_qc_module_test.c )
+target_link_libraries( enkf_qc_module_test enkf )
+add_test( enkf_qc_module_test ${EXECUTABLE_OUTPUT_PATH}/enkf_qc_module_test )
+ 
+
 add_test( enkf_runpath_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_runpath_list )
 add_test( enkf_site_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_site_config /project/res/etc/ERT/site-config)
 add_test( enkf_time_map1  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map )

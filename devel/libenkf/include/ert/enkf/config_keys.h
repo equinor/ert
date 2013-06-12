@@ -127,6 +127,7 @@ extern "C" {
 #define  QUEUE_OPTION_KEY                  "QUEUE_OPTION" 
 #define  QC_PATH_KEY                       "QC_PATH"  
 #define  QC_WORKFLOW_KEY                   "QC_WORKFLOW"
+#define  QC_RUNPATH_FILE_KEY               "QC_RUNPATH_FILE"  
 #define  REFCASE_KEY                       "REFCASE"
 #define  REFCASE_LIST_KEY                  "REFCASE_LIST"
 #define  REPORT_CONTEXT_KEY                "REPORT_CONTEXT"

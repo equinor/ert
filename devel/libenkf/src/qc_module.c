@@ -54,21 +54,15 @@ qc_module_type * qc_module_alloc( ert_workflow_list_type * workflow_list , const
   qc_module->runpath_list = runpath_list_alloc();
   qc_module->runpath_list_file = NULL;
   qc_module_set_path( qc_module , qc_path );
-  {
-    char * cwd = util_alloc_cwd();
-    char * runpath_list_file = util_alloc_filename( cwd , RUNPATH_LIST_FILE , NULL);
+  qc_module_set_runpath_list_file( qc_module , NULL, RUNPATH_LIST_FILE );
 
-    qc_module_set_runpath_list_file( qc_module , runpath_list_file );
-
-    free( runpath_list_file );
-    free( cwd );
-  }
   return qc_module;
 }
 
 
 void qc_module_free( qc_module_type * qc_module ) {
   util_safe_free( qc_module->qc_path );
+  util_safe_free( qc_module->runpath_list_file);
   runpath_list_free( qc_module->runpath_list );
   free( qc_module );
 }
@@ -83,9 +77,29 @@ void qc_module_export_runpath_list( const qc_module_type * qc_module ) {
   runpath_list_fprintf( qc_module->runpath_list , stream );
   fclose( stream );
 }
+  
+void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * basepath, const char * filename) {
+  char * file = NULL;
+  if (filename != NULL) {
+    file = util_alloc_string_copy(filename);
+  }
+  else {
+    file = util_alloc_string_copy(RUNPATH_LIST_FILE);
+  }
+  
+  char * file_with_path_prefix = NULL;
+  if (basepath != NULL) {
+    file_with_path_prefix = util_alloc_filename(basepath, file, NULL);
+  }
+  else
+    file_with_path_prefix = util_alloc_filename(NULL, file, NULL);
 
-void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * filename) {
-  qc_module->runpath_list_file = util_realloc_string_copy( qc_module->runpath_list_file , filename );
+  char * absolute_path = util_alloc_abs_path(file_with_path_prefix);
+  free(qc_module->runpath_list_file);
+  qc_module->runpath_list_file = absolute_path;
+  
+  free(file_with_path_prefix);
+  free(file);
 }
 
 const char * qc_module_get_runpath_list_file( qc_module_type * qc_module) {
@@ -149,6 +163,9 @@ void qc_module_init( qc_module_type * qc_module , const config_type * config) {
     const char * qc_workflow = config_get_value_as_path(config , QC_WORKFLOW_KEY);
     qc_module_set_workflow( qc_module , qc_workflow );
   }
+  
+  if (config_item_set( config, QC_RUNPATH_FILE_KEY)) 
+    qc_module_set_runpath_list_file(qc_module, NULL, config_get_value(config, QC_RUNPATH_FILE_KEY));
 }
 
 
@@ -162,6 +179,9 @@ void qc_module_add_config_items( config_type * config ) {
   item = config_add_schema_item( config , QC_WORKFLOW_KEY , false );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+  
+  item = config_add_schema_item( config , QC_RUNPATH_FILE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
 }
 
 
