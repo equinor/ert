@@ -6,4 +6,9 @@ if (CMAKE_COMPILER_IS_GNUCC)
    endif (USE_RUNPATH)
 else()
    set(USE_RUNPATH OFF)        
-endif(CMAKE_COMPILER_IS_GNUCC)
+endif()
+
+
+macro( add_runpath target )
+  set_target_properties( ${target} PROPERTIES LINK_FLAGS -Wl,--enable-new-dtags)     
+endmacro()
