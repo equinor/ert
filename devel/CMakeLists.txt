@@ -33,7 +33,7 @@ else()
    set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 endif()
 
-
+include(cmake/ert_link.cmake)
 include(cmake/ert_check.cmake)
 include(cmake/ert_find.cmake)
 include(cmake/Modules/UseMultiArch.cmake)
