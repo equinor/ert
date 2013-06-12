@@ -2474,8 +2474,8 @@ bool enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_ca
   if(enkf_fs_exists( new_mount_point )) 
     exists = true;
 
-  return exists;
   free( new_mount_point );
+  return exists;
 }
 
 
