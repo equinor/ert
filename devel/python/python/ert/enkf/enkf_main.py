@@ -243,7 +243,7 @@ class EnKFMain(CClass):
 
     def select_fs(self,path):
         cfunc.select_fs(self,path)
-
+        
     def current_fs_exists(self,case):
         return cfunc.current_fs_exists(self,case)
     
