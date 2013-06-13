@@ -13,6 +13,10 @@ target_link_libraries( enkf_ensemble_GEN_PARAM enkf )
 add_executable( enkf_ensemble enkf_ensemble.c )
 target_link_libraries( enkf_ensemble enkf )
 
+add_executable( enkf_local_obsdata_node enkf_local_obsdata_node.c )
+target_link_libraries( enkf_local_obsdata_node enkf )
+add_test( enkf_local_obsdata_node ${EXECUTABLE_OUTPUT_PATH}/enkf_local_obsdata_node )
+
 add_executable( enkf_main enkf_main.c )
 target_link_libraries( enkf_main enkf )
 add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
