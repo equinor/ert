@@ -25,6 +25,10 @@ add_executable( enkf_active_list enkf_active_list.c )
 target_link_libraries( enkf_active_list enkf )
 add_test( enkf_active_list ${EXECUTABLE_OUTPUT_PATH}/enkf_active_list )
 
+add_executable( enkf_obs_tstep_list enkf_obs_tstep_list.c )
+target_link_libraries( enkf_obs_tstep_list enkf )
+add_test( enkf_obs_tstep_list ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_tstep_list )
+
 add_executable( enkf_main enkf_main.c )
 target_link_libraries( enkf_main enkf )
 add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
