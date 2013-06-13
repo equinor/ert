@@ -21,6 +21,7 @@
 #include <ert/util/util.h>
 #include <ert/util/int_vector.h>
 
+#include <ert/enkf/obs_tstep_list.h>
 #include <ert/enkf/local_obsdata_node.h>
 
 
@@ -28,9 +29,9 @@
 
 struct local_obsdata_node_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char             * obs_key;
-  active_list_type * active_list;
-  int_vector_type  * tstep_list;
+  char                * obs_key;
+  active_list_type    * active_list;
+  obs_tstep_list_type * tstep_list;
 };
 
 
@@ -44,7 +45,7 @@ local_obsdata_node_type * local_obsdata_node_alloc( const char * obs_key ) {
   UTIL_TYPE_ID_INIT( node , LOCAL_OBSDATA_NODE_TYPE_ID );
   node->obs_key = util_alloc_string_copy( obs_key );
   node->active_list = active_list_alloc( );
-  node->tstep_list = int_vector_alloc(0,0);
+  node->tstep_list = obs_tstep_list_alloc( );
   return node;
 }
 
@@ -58,7 +59,7 @@ const char * local_obsdata_node_get_key( const local_obsdata_node_type * node ) 
 
 void local_obsdata_node_free( local_obsdata_node_type * node ) {
   active_list_free( node->active_list );
-  int_vector_free( node->tstep_list );
+  obs_tstep_list_free( node->tstep_list );
   free( node->obs_key );
   free( node );
 }
@@ -76,6 +77,6 @@ active_list_type * local_obsdata_node_get_active_list( const local_obsdata_node_
 }
 
 
-const int_vector_type * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node) {
+const obs_tstep_list_type * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node) {
   return node->tstep_list;
 }

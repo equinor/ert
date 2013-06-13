@@ -31,6 +31,10 @@ extern "C" {
 
   obs_tstep_list_type * obs_tstep_list_alloc();
   void                  obs_tstep_list_free( obs_tstep_list_type * list );
+  bool                  obs_tstep_list_all_active( const obs_tstep_list_type * list );
+  int                   obs_tstep_list_get_size( const obs_tstep_list_type * list );
+  void                  obs_tstep_list_add_tstep( obs_tstep_list_type * list , int tstep);
+
   UTIL_IS_INSTANCE_HEADER( obs_tstep_list );
 
 #ifdef __cplusplus
