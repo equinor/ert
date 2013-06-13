@@ -21,12 +21,19 @@
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/enkf/local_obsdata_node.h>
 #include <ert/enkf/active_list.h>
 
 
-
+void test_content( local_obsdata_node_type * node ) {
+  active_list_type * active_list = local_obsdata_node_get_active_list( node );
+  test_assert_not_NULL( active_list );
+  test_assert_true( active_list_is_instance( active_list ));
+  
+  test_assert_true( int_vector_is_instance( local_obsdata_node_get_tstep_list( node )));
+}
 
 
 int main(int argc , char ** argv) {
@@ -37,6 +44,7 @@ int main(int argc , char ** argv) {
     
     test_assert_true( local_obsdata_node_is_instance( node ));
     test_assert_string_equal( obs_key , local_obsdata_node_get_key( node ));
+    test_content( node );
     local_obsdata_node_free( node );
   }
 
