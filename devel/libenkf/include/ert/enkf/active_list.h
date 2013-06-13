@@ -22,12 +22,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <ert/util/type_macros.h>
+
 #include <ert/enkf/enkf_types.h>
 
 
 typedef struct active_list_struct active_list_type;
 
-active_list_type * active_list_alloc( active_mode_type mode ); 
+active_list_type * active_list_alloc( ); 
 void               active_list_reset(active_list_type * );
 void               active_list_add_index(active_list_type * , int);
 void               active_list_free( active_list_type *);
@@ -41,6 +43,8 @@ void               active_list_free__( void * arg );
 active_list_type * active_list_alloc_copy( const active_list_type * src);
 void               active_list_fprintf( const active_list_type * active_list , bool obs , const char * key , FILE * stream );
 bool               active_list_iget( const active_list_type * active_list , int index );
+
+UTIL_IS_INSTANCE_HEADER( active_list );
 
 #ifdef __cplusplus
 }

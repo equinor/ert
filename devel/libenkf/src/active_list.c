@@ -72,8 +72,8 @@ struct active_list_struct {
 /*****************************************************************/
 
 
-UTIL_SAFE_CAST_FUNCTION(active_list , ACTIVE_LIST_TYPE_ID)
-
+static UTIL_SAFE_CAST_FUNCTION(active_list , ACTIVE_LIST_TYPE_ID)
+UTIL_IS_INSTANCE_FUNCTION( active_list , ACTIVE_LIST_TYPE_ID)
 
 
 
@@ -81,17 +81,17 @@ UTIL_SAFE_CAST_FUNCTION(active_list , ACTIVE_LIST_TYPE_ID)
 /**
    The newly created active_list default to setting all indices actiove.
 */
-active_list_type * active_list_alloc(active_mode_type mode) {
+active_list_type * active_list_alloc( ) {
   active_list_type * active_list = util_malloc(sizeof * active_list);
   UTIL_TYPE_ID_INIT( active_list , ACTIVE_LIST_TYPE_ID );
   active_list->index_list  = int_vector_alloc(0 , -1);
-  active_list->mode        = mode;
+  active_list->mode        = ALL_ACTIVE;
   return active_list;
 }
 
 
 active_list_type * active_list_alloc_copy( const active_list_type * src) {
-  active_list_type * new = active_list_alloc( ALL_ACTIVE );
+  active_list_type * new = active_list_alloc(  );
   new->mode  = src->mode;
   int_vector_free( new->index_list ) ;
   new->index_list = int_vector_alloc_copy( src->index_list );
