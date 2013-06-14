@@ -12,6 +12,10 @@ set_target_properties( enkf PROPERTIES VERSION 1.0 SOVERSION 1.0 )
 
 target_link_libraries( enkf ecl sched analysis rms plot config job_queue )
 
+if (USE_RUNPATH)
+   add_runpath( enkf )
+endif()
+
 #-----------------------------------------------------------------
 if (INSTALL_ERT)
    install(TARGETS enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
