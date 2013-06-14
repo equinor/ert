@@ -47,6 +47,8 @@ int main(int argc , char ** argv) {
   test_assert_int_equal( 100 , obs_tstep_list_iget( tstep_list , 1 ));
   test_assert_int_equal( 101 , obs_tstep_list_iget( tstep_list , 2 ));
 
+  test_assert_int_equal( 101 , obs_tstep_list_get_last( tstep_list ));
+
   obs_tstep_list_free( tstep_list );
   
   exit(0);

@@ -79,3 +79,8 @@ int obs_tstep_list_get_size( const obs_tstep_list_type * list ) {
 int obs_tstep_list_iget( const obs_tstep_list_type * list , int index) {
    return int_vector_iget( list->tstep_list , index);
 }
+
+
+int obs_tstep_list_get_last( const obs_tstep_list_type * list ) {
+   return int_vector_get_last( list->tstep_list );
+}

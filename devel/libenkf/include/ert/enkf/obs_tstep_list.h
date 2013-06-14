@@ -35,6 +35,7 @@ extern "C" {
   int                   obs_tstep_list_get_size( const obs_tstep_list_type * list );
   void                  obs_tstep_list_add_tstep( obs_tstep_list_type * list , int tstep);
   int                   obs_tstep_list_iget( const obs_tstep_list_type * list , int index);
+  int                   obs_tstep_list_get_last( const obs_tstep_list_type * list );
 
   UTIL_IS_INSTANCE_HEADER( obs_tstep_list );
 
