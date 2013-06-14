@@ -33,10 +33,10 @@ else()
    set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
 endif()
 
-
 include(cmake/ert_check.cmake)
 include(cmake/ert_find.cmake)
 include(cmake/Modules/UseMultiArch.cmake)
+include(cmake/ert_link.cmake)
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
