@@ -28,11 +28,22 @@
 
 
 void test_content( local_obsdata_node_type * node ) {
-  active_list_type * active_list = local_obsdata_node_get_active_list( node );
+  const active_list_type * active_list = local_obsdata_node_get_active_list( node );
+  
   test_assert_not_NULL( active_list );
   test_assert_true( active_list_is_instance( active_list ));
-  
   test_assert_true( obs_tstep_list_is_instance( local_obsdata_node_get_tstep_list( node )));
+
+  {
+    active_list_type * new_active_list = active_list_alloc( );
+    
+    active_list_add_index( new_active_list , 1098 );
+    
+    test_assert_false( active_list_equal( new_active_list , local_obsdata_node_get_active_list( node )));
+    local_obsdata_node_copy_active_list( node , new_active_list );
+    test_assert_true( active_list_equal( new_active_list , local_obsdata_node_get_active_list( node )));
+    
+  }
 }
 
 
@@ -55,4 +66,4 @@ int main(int argc , char ** argv) {
   
   exit(0);
 }
-
+ 
