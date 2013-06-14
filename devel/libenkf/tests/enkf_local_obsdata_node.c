@@ -44,6 +44,16 @@ void test_content( local_obsdata_node_type * node ) {
     test_assert_true( active_list_equal( new_active_list , local_obsdata_node_get_active_list( node )));
     
   }
+  {
+    const obs_tstep_list_type * tstep = local_obsdata_node_get_tstep_list( node );
+    
+    local_obsdata_node_add_tstep( node , 10 );
+    local_obsdata_node_add_tstep( node , 10 );  // Second add - ignored
+    local_obsdata_node_add_tstep( node , 20 );
+    
+    test_assert_int_equal( 2 , obs_tstep_list_get_size( tstep ));
+  }
+
 }
 
 

@@ -84,3 +84,8 @@ active_list_type * local_obsdata_node_get_active_list( const local_obsdata_node_
 const obs_tstep_list_type * local_obsdata_node_get_tstep_list( const local_obsdata_node_type * node) {
   return node->tstep_list;
 }
+
+
+void local_obsdata_node_add_tstep( local_obsdata_node_type * node, int tstep) {
+  obs_tstep_list_add_tstep( node->tstep_list , tstep );
+}
