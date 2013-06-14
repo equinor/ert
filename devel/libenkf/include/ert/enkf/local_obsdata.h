@@ -24,12 +24,16 @@ extern "C" {
 
 #include <ert/util/type_macros.h>
 
+#include <ert/enkf/local_obsdata_node.h>
 
 typedef struct local_obsdata_struct local_obsdata_type;
 
-local_obsdata_type *  local_obsdata_alloc( );
-void                  local_obsdata_free( local_obsdata_type * data );
-
+  local_obsdata_type            * local_obsdata_alloc( );
+  void                            local_obsdata_free( local_obsdata_type * data );
+  int                             local_obsdata_get_size( const local_obsdata_type * data );
+  void                            local_obsdata_add_node( local_obsdata_type * data , local_obsdata_node_type * node );
+  const local_obsdata_node_type * local_obsdata_iget( const local_obsdata_type * data , int index);
+  
 
 UTIL_IS_INSTANCE_HEADER( local_obsdata );
 

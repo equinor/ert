@@ -20,8 +20,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <ert/enkf/local_obsdata.h>
 #include <ert/util/test_util.h>
+
+#include <ert/enkf/local_obsdata.h>
+#include <ert/enkf/local_obsdata_node.h>
 
 
 int main(int argc , char ** argv) {
@@ -29,6 +31,15 @@ int main(int argc , char ** argv) {
   
   obsdata = local_obsdata_alloc();
   test_assert_true( local_obsdata_is_instance( obsdata ));
+  test_assert_int_equal( 0 , local_obsdata_get_size( obsdata ));
+  
+  {
+    local_obsdata_node_type * obsnode = local_obsdata_node_alloc( "KEY" );
+    local_obsdata_add_node( obsdata , obsnode );
+    test_assert_int_equal( 1 , local_obsdata_get_size( obsdata ));
+    test_assert_ptr_equal( obsnode , local_obsdata_iget( obsdata , 0));
+  }
+
   local_obsdata_free( obsdata );
   
   exit(0);
