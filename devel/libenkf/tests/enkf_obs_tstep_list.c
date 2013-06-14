@@ -28,9 +28,25 @@ int main(int argc , char ** argv) {
   tstep_list = obs_tstep_list_alloc();
   test_assert_true( obs_tstep_list_is_instance( tstep_list ));
   test_assert_true( obs_tstep_list_all_active( tstep_list ));
+  test_assert_int_equal( 0 , obs_tstep_list_get_size( tstep_list ));
   
   obs_tstep_list_add_tstep( tstep_list , 100 );
   test_assert_int_equal( 1 , obs_tstep_list_get_size( tstep_list ));
+  test_assert_false( obs_tstep_list_all_active( tstep_list ));
+
+  obs_tstep_list_add_tstep( tstep_list , 101 );
+  test_assert_int_equal( 2 , obs_tstep_list_get_size( tstep_list ));
+
+  obs_tstep_list_add_tstep( tstep_list , 101 );
+  test_assert_int_equal( 2 , obs_tstep_list_get_size( tstep_list ));
+
+  obs_tstep_list_add_tstep( tstep_list , 1 );
+  test_assert_int_equal( 3 , obs_tstep_list_get_size( tstep_list ));
+  
+  test_assert_int_equal( 1   , obs_tstep_list_iget( tstep_list , 0 ));
+  test_assert_int_equal( 100 , obs_tstep_list_iget( tstep_list , 1 ));
+  test_assert_int_equal( 101 , obs_tstep_list_iget( tstep_list , 2 ));
+
   obs_tstep_list_free( tstep_list );
   
   exit(0);

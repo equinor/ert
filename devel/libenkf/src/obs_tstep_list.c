@@ -58,10 +58,24 @@ bool obs_tstep_list_all_active( const obs_tstep_list_type * list ) {
 
 
 void obs_tstep_list_add_tstep( obs_tstep_list_type * list , int tstep) {
-   int_vector_append( list->tstep_list , tstep ); 
+   if (int_vector_index_sorted( list->tstep_list , tstep) == -1) {
+      if (int_vector_size( list->tstep_list )) {
+          int last  = int_vector_get_last( list->tstep_list );
+          int_vector_append( list->tstep_list , tstep ); 
+          if (tstep < last)
+             int_vector_sort( list->tstep_list); 
+      } else
+         int_vector_append( list->tstep_list , tstep ); 
+   }  
+   list->all_active = false;
 }
 
 
 int obs_tstep_list_get_size( const obs_tstep_list_type * list ) {
    return int_vector_size( list->tstep_list );
+}
+
+
+int obs_tstep_list_iget( const obs_tstep_list_type * list , int index) {
+   return int_vector_iget( list->tstep_list , index);
 }
