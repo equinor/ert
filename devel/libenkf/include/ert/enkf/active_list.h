@@ -43,6 +43,7 @@ void               active_list_free__( void * arg );
 active_list_type * active_list_alloc_copy( const active_list_type * src);
 void               active_list_fprintf( const active_list_type * active_list , bool obs , const char * key , FILE * stream );
 bool               active_list_iget( const active_list_type * active_list , int index );
+bool               active_list_equal( const active_list_type * active_list1 , const active_list_type * active_list2);
 
 UTIL_IS_INSTANCE_HEADER( active_list );
 

@@ -218,3 +218,19 @@ void active_list_fprintf( const active_list_type * active_list , bool obs , cons
   } /* else: if mode == ALL_ACTIVE nothing is written */
 }
 
+
+
+bool active_list_equal( const active_list_type * active_list1 , const active_list_type * active_list2) {
+  if (active_list1 == active_list2)
+    return true;
+  else {
+    if (active_list1->mode != active_list2->mode)
+      return false;
+    else {
+      if (active_list1->mode == PARTLY_ACTIVE)
+        return int_vector_equal( active_list1->index_list , active_list2->index_list);
+      else
+        return true;
+    }
+  }
+}
