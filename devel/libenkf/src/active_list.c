@@ -99,6 +99,11 @@ active_list_type * active_list_alloc_copy( const active_list_type * src) {
 }
 
 
+void active_list_copy( active_list_type * target , const active_list_type * src) {
+  target->mode = src->mode;
+  int_vector_memcpy( target->index_list , src->index_list);
+}
+
 
 void active_list_free( active_list_type * active_list ) {
   int_vector_free(active_list->index_list);
