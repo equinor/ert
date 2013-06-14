@@ -391,6 +391,10 @@ class SimulationPanelController:
             self.view.runningLabel.setText(str(waitingTime) + " secs")
             self.view.waitingLabel.setText(str(runningTime) + " secs")
 
+            print self
+            print sim
+            print sim.status
+            print sim.status.name
             status = sim.status.name[10:]
             self.view.stateLabel.setText(status)
 
@@ -443,7 +447,7 @@ class Simulation:
 
     def hasFailed(self):
         """Has the job failed?"""
-        return self.checkStatus(ert_job_status_type.ALL_FAIL)
+        return self.checkStatus(ert_job_status_type.FAILED)
 
     def notActive(self):
         """Is the job active?"""
@@ -451,7 +455,7 @@ class Simulation:
 
     def finishedSuccessfully(self):
         """Has  the job finished?"""
-        return self.checkStatus(ert_job_status_type.ALL_OK)
+        return self.checkStatus(ert_job_status_type.SUCCESS)
 
     def isUserKilled(self):
         """Has the job been killed by the user?"""
@@ -463,7 +467,7 @@ class Simulation:
         if len(self.statuslog) == 0 or not self.statuslog[len(self.statuslog) - 1] == status:
             self.statuslog.append(status)
 
-            if status == ert_job_status_type.ALL_OK:
+            if status == ert_job_status_type.SUCCESS:
                 self.setFinishedTime(int(time.time()))
 
         self.status = status
