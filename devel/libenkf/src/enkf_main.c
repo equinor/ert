@@ -945,42 +945,36 @@ static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs, enkf_f
   return serialize_info;
 }
 
+void enkf_main_fprintf_PC(const char * filename , 
+                          matrix_type * PC , 
+                          matrix_type * PC_obs) {
 
-void enkf_main_get_PC( const enkf_main_type * enkf_main , 
-                       const matrix_type * S, 
+  FILE * stream   = util_mkdir_fopen(filename , "w");
+  const int num_PC   = matrix_get_rows( PC );
+  const int ens_size = matrix_get_columns( PC );
+  int ipc,iens;
+  
+  for (ipc = 0; ipc < num_PC; ipc++) 
+    fprintf(stream , "%10.6f " , matrix_iget( PC_obs , ipc , 0));
+  fprintf(stream , "\n");
+  
+  for (iens = 0; iens < ens_size; iens++) {
+      for (ipc = 0; ipc < num_PC; ipc++) 
+        fprintf(stream ,"%10.6f " , matrix_iget( PC , ipc, iens ));
+      fprintf(stream , "\n");
+  }
+  fclose( stream );
+}
+
+
+void enkf_main_get_PC( const matrix_type * S, 
                        const matrix_type * dObs,
-                       const char * obsset_name , 
-                       int step1 , int step2 , 
                        double truncation , 
                        int ncomp , 
                        matrix_type * PC , 
                        matrix_type * PC_obs) {
 
   enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
-  {
-    char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsset_name);
-    char * full_path = util_alloc_filename( analysis_config_get_PC_path( enkf_main->analysis_config) , filename , NULL );
-    FILE * stream   = util_mkdir_fopen(full_path , "w");
-    {
-      const int num_PC   = matrix_get_rows( PC );
-      const int ens_size = matrix_get_columns( PC );
-      int ipc,iens;
-      
-      for (ipc = 0; ipc < num_PC; ipc++) 
-        fprintf(stream , "%10.6f " , matrix_iget( PC_obs , ipc , 0));
-      fprintf(stream , "\n");
-      
-      for (iens = 0; iens < ens_size; iens++) {
-        for (ipc = 0; ipc < num_PC; ipc++) 
-          fprintf(stream ,"%10.6f " , matrix_iget( PC , ipc, iens ));
-        fprintf(stream , "\n");
-      }
-    }
-    fclose( stream );
-    free( filename );
-    free( full_path );
-  }
-
 }
 
 
@@ -1040,9 +1034,19 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       int ncomp            = ens_size - 1;
       matrix_type * PC     = matrix_alloc(1,1);
       matrix_type * PC_obs = matrix_alloc(1,1);
+      local_obsset_type   * obsset = local_ministep_get_obsset( ministep );
+      const char * obsset_name = local_obsset_get_name( obsset );
       
-      enkf_main_get_PC( enkf_main , S , dObs , local_ministep_get_name( ministep ) , step1 , step2 , truncation , ncomp , PC , PC_obs );
-      
+      enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs );
+      {
+        char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsset_name);
+        char * full_path = util_alloc_filename( analysis_config_get_PC_path( enkf_main->analysis_config) , filename , NULL );
+
+        enkf_main_fprintf_PC( full_path , PC , PC_obs);
+        
+        free( full_path );
+        free( filename );
+      }
       matrix_free( PC );
       matrix_free( PC_obs );
     }

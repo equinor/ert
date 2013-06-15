@@ -37,6 +37,7 @@ extern "C" {
 #include <ert/enkf/obs_vector.h>
 #include <ert/enkf/local_obsset.h>
 #include <ert/enkf/enkf_types.h>
+#include <ert/enkf/local_obsdata_node.h>
 
   bool            enkf_obs_have_obs( const enkf_obs_type * enkf_obs );
   const char    * enkf_obs_get_config_file( const enkf_obs_type * enkf_obs);
@@ -69,6 +70,16 @@ extern "C" {
                                     const local_obsset_type * obsset);
   
   
+  void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
+                                          enkf_fs_type             * fs,
+                                          const local_obsdata_node_type * obs_node , 
+                                          state_enum                 state,
+                                          int                        ens_size,
+                                          const enkf_state_type    ** ensemble ,
+                                          meas_data_type           * meas_data,
+                                          obs_data_type            * obs_data);
+
+
   stringlist_type * enkf_obs_alloc_typed_keylist( enkf_obs_type * enkf_obs , obs_impl_type );
   hash_type * enkf_obs_alloc_data_map(enkf_obs_type * enkf_obs);
   
