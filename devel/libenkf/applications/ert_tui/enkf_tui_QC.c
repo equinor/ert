@@ -99,7 +99,7 @@ void enkf_tui_QC_plot_get_PC( enkf_main_type * enkf_main , int step1 , int step2
     matrix_type * dObs   = obs_data_allocdObs( obs_data , active_size );
 
     obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
-    enkf_main_get_PC( enkf_main , S , dObs , local_obsset_get_name( obsset ) , step1 , step2 , truncation , ncomp , PC , PC_obs );
+    enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs );
     
     matrix_free( S );
     matrix_free( dObs );
