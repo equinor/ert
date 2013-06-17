@@ -31,7 +31,7 @@ from    ert.enkf.gen_kw_config    import *
 from    ert.enkf.gen_data_config  import *
 from    ert.enkf.field_config     import *
 from    ert.enkf.enkf_obs         import *
-from    ert.enkf.plot_config      import *
+from    ert.enkf.plot_conf        import *
 from    ert.enkf.site_config      import *
 from    ert.enkf.libenkf          import *
 from    ert.enkf.enkf_fs          import *
@@ -102,7 +102,7 @@ class EnKFMain(CClass):
      
     @property     
     def plot_config(self):
-        plot_conf = PlotConfig( c_ptr = cfunc.get_plot_config( self ), parent = self)
+        plot_conf = PlotConf( c_ptr = cfunc.get_plot_config( self ), parent = self)
         return plot_conf
      
     def set_eclbase(self, eclbase):
