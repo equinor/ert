@@ -58,6 +58,7 @@ add_test( NAME python.ert.ecl.ecl_queue
 
 
 set_property( TEST python.ert.ecl.ecl_file       PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_queue      PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.ert.ecl.ecl_file_slow  PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.ert.ecl.ecl_sum        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.ert.ecl.ecl_kw         PROPERTY LABELS Python:StatoilData )
