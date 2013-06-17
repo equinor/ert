@@ -85,6 +85,10 @@ class Driver(CClass):
         
     max_running = property( get_max_running , set_max_running )
 
+    @property
+    def name(self):
+        return cfunc.get_name( self )
+
 
 class LSFDriver(Driver):
     
@@ -149,3 +153,4 @@ cfunc.kill_job        = cwrapper.prototype("void        queue_driver_kill_job( d
 cfunc.set_max_running = cwrapper.prototype("void        queue_driver_set_max_running( driver , int )")
 cfunc.get_max_running = cwrapper.prototype("int         queue_driver_get_max_running( driver )")
 cfunc.set_str_option  = cwrapper.prototype("bool        queue_driver_set_option( driver , char* , char*) ")
+cfunc.get_name        = cwrapper.prototype("char*       queue_driver_get_name(driver)")  
