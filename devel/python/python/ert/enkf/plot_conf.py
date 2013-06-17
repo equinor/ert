@@ -1,6 +1,6 @@
 #  Copyright (C) 2012  Statoil ASA, Norway. 
 #   
-#  The file 'plot_config.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'plot_conf.py' is part of ERT - Ensemble based Reservoir Tool. 
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -21,7 +21,7 @@ from    ert.util.tvector      import *
 from    enkf_enum             import *
 import  ert.enkf.libenkf
 
-class PlotConfig(CClass):
+class PlotConf(CClass):
     
     def __init__(self , c_ptr , parent = None):
         if parent:
@@ -80,24 +80,24 @@ class PlotConfig(CClass):
 ##################################################################
 
 cwrapper = CWrapper( libenkf.lib )
-cwrapper.registerType( "plot_config" , PlotConfig )
+cwrapper.registerType( "plot_conf" , PlotConf )
 
-cfunc = CWrapperNameSpace("plot_config")
+cfunc = CWrapperNameSpace("plot_conf")
 ##################################################################
 ##################################################################
-cfunc.free                = cwrapper.prototype("void plot_config_free( plot_config )")
-cfunc.get_path            = cwrapper.prototype("char* plot_config_get_path(plot_config)")
-cfunc.set_path            = cwrapper.prototype("void plot_config_set_path(plot_config, char*)")
-cfunc.get_driver          = cwrapper.prototype("char* plot_config_get_driver(plot_config)")
-cfunc.set_driver          = cwrapper.prototype("void plot_config_set_driver(plot_config, char*)")
-cfunc.get_errorbar_max    = cwrapper.prototype("int plot_config_get_errorbar_max(plot_config)")
-cfunc.set_errorbar_max    = cwrapper.prototype("void plot_config_set_errorbar_max(plot_config, int)")
-cfunc.get_width           = cwrapper.prototype("int plot_config_get_width(plot_config)")
-cfunc.set_width           = cwrapper.prototype("void plot_config_set_width(plot_config, int)")
-cfunc.get_height          = cwrapper.prototype("int plot_config_get_height(plot_config)")
-cfunc.set_height          = cwrapper.prototype("void plot_config_set_height(plot_config, int)")
-cfunc.get_viewer          = cwrapper.prototype("char* plot_config_get_viewer(plot_config)")
-cfunc.set_viewer          = cwrapper.prototype("void plot_config_set_viewer(plot_config, char*)")
-cfunc.get_image_type      = cwrapper.prototype("char* plot_config_get_image_type(plot_config)")
-cfunc.set_image_type      = cwrapper.prototype("void plot_config_set_image_type(plot_config, char*)")
+cfunc.free                = cwrapper.prototype("void plot_config_free( plot_conf )")
+cfunc.get_path            = cwrapper.prototype("char* plot_config_get_path(plot_conf)")
+cfunc.set_path            = cwrapper.prototype("void plot_config_set_path(plot_conf, char*)")
+cfunc.get_driver          = cwrapper.prototype("char* plot_config_get_driver(plot_conf)")
+cfunc.set_driver          = cwrapper.prototype("void plot_config_set_driver(plot_conf, char*)")
+cfunc.get_errorbar_max    = cwrapper.prototype("int plot_config_get_errorbar_max(plot_conf)")
+cfunc.set_errorbar_max    = cwrapper.prototype("void plot_config_set_errorbar_max(plot_conf, int)")
+cfunc.get_width           = cwrapper.prototype("int plot_config_get_width(plot_conf)")
+cfunc.set_width           = cwrapper.prototype("void plot_config_set_width(plot_conf, int)")
+cfunc.get_height          = cwrapper.prototype("int plot_config_get_height(plot_conf)")
+cfunc.set_height          = cwrapper.prototype("void plot_config_set_height(plot_conf, int)")
+cfunc.get_viewer          = cwrapper.prototype("char* plot_config_get_viewer(plot_conf)")
+cfunc.set_viewer          = cwrapper.prototype("void plot_config_set_viewer(plot_conf, char*)")
+cfunc.get_image_type      = cwrapper.prototype("char* plot_config_get_image_type(plot_conf)")
+cfunc.set_image_type      = cwrapper.prototype("void plot_config_set_image_type(plot_conf, char*)")
 

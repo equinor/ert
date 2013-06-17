@@ -87,7 +87,7 @@ class PlotPanel(QtGui.QWidget):
         
         self.setLayout(plotLayout)
 
-        self.connect(self.plot.plot_settings, QtCore.SIGNAL('plotSettingsChanged()'), self.fetchSettings)
+        self.connect(self.plot.plot_settings, QtCore.SIGNAL('plotSettingsChanged(PlotSettings)'), self.fetchSettings)
 
         ContentModel.modelConnect('casesUpdated()', self.updateList)
         
