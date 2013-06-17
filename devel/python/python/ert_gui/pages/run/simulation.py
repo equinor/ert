@@ -391,10 +391,6 @@ class SimulationPanelController:
             self.view.runningLabel.setText(str(waitingTime) + " secs")
             self.view.waitingLabel.setText(str(runningTime) + " secs")
 
-            print self
-            print sim
-            print sim.status
-            print sim.status.name
             status = sim.status.name[10:]
             self.view.stateLabel.setText(status)
 
