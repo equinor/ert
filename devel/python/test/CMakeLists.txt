@@ -50,6 +50,10 @@ add_test( NAME python.ert.ecl.ecl_rft_cell
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} rft_cell_test)
 
+add_test( NAME python.ert.ecl.ecl_queue
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ecl_submit_test)
+
 
 
 
