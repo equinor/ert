@@ -2386,7 +2386,8 @@ void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const ch
     enkf_main_link_current_fs__( enkf_main , case_path);
     enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
     enkf_main_gen_data_special( enkf_main );
-    enkf_main_add_subst_kw( enkf_main , "CASE" , enkf_main->current_fs_case , "Current case" , true );
+    enkf_main_add_subst_kw( enkf_main , "ERT-CASE" , enkf_main->current_fs_case , "Current case" , true );
+    enkf_main_add_subst_kw( enkf_main , "ERTCASE"  , enkf_main->current_fs_case , "Current case" , true );
   }
 }
 
@@ -2468,7 +2469,15 @@ const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
   return enkf_main->current_fs_case;
 }
 
+bool enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case){
+  bool exists = false;
+  char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , input_case);
+  if(enkf_fs_exists( new_mount_point )) 
+    exists = true;
 
+  free( new_mount_point );
+  return exists;
+}
 
 
 void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_case ) {
@@ -2835,7 +2844,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main_rng_init( enkf_main );  /* Must be called before the ensmeble is created. */
     enkf_main_init_subst_list( enkf_main );
     ert_workflow_list_init( enkf_main->workflow_list , config , enkf_main->logh );
-    enkf_main_init_qc( enkf_main , config );
     enkf_main_init_data_kw( enkf_main , config );
     
     analysis_config_load_internal_modules( enkf_main->analysis_config );
@@ -2851,6 +2859,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
                        ecl_config_get_last_history_restart( enkf_main->ecl_config ),
                        ecl_config_get_sched_file(enkf_main->ecl_config) ,
                        ecl_config_get_refcase( enkf_main->ecl_config ));
+
+    enkf_main_init_qc( enkf_main , config );
     enkf_main_update_num_cpu( enkf_main );
     {
       const config_content_item_type * pred_item = config_get_content_item( config , SCHEDULE_PREDICTION_FILE_KEY );
