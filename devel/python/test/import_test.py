@@ -88,7 +88,7 @@ test_import("ert.enkf.libenkf")
 test_import("ert.enkf.local_config")
 test_import("ert.enkf.model_config")
 test_import("ert.enkf.obs_vector")
-test_import("ert.enkf.plot_config")
+test_import("ert.enkf.plot_conf")
 test_import("ert.enkf.site_config")
 test_import("ert.enkf.time_map")
 
