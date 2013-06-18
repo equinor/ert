@@ -24,11 +24,11 @@ import ert.ecl.ecl as ecl
 import shutil
 import sys
 import tempfile
-from   ert.util.stringlist import StringList
+import ert.job_queue.driver as driver
 from   test_util import approx_equal, approx_equalv
 
 
-base = "ECLIPSE"
+base = "ECLIPSE_SHORT"
 path = "test-data/Statoil/ECLIPSE/Gurbat"
 case = "%s/%s" % (path , base)
 
@@ -36,33 +36,64 @@ case = "%s/%s" % (path , base)
 
 class EclSubmitTest( unittest.TestCase ):
 
-    def setUp(self):
-        self.run_path = "%s%s" % (os.getcwd() , tempfile.mkdtemp())
-        shutil.copytree( "%s/include" % path , "%s/include" % self.run_path)
-        shutil.copy( "%s.DATA" % case , self.run_path ) 
 
+    def make_run_path(self):
+        run_path = "%s%s" % (os.getcwd() , tempfile.mkdtemp())
+        shutil.copytree( "%s/include" % path , "%s/include" % run_path)
+        shutil.copy( "%s.DATA" % case , run_path ) 
+        return run_path
         
-    def tearDown(self):
-        shutil.rmtree( self.run_path )
 
+    def test_LSF_submit(self):
+        num_submit = 6
+        queue = ecl.EclQueue( driver_type = driver.LSF_DRIVER , max_running = 4 , size = num_submit)
+        path_list = []
 
-    def test_submit(self):
-        queue = ecl.EclQueue( max_running = 1 , size = 1)
-        job = queue.submit("%s/%s.DATA" % (self.run_path , base))
+        for iens in (range(num_submit)):
+            run_path = self.make_run_path()
+            path_list.append( run_path )
+            job = queue.submit("%s/%s.DATA" % (run_path , base))
+
 
         while queue.running:
-            print "%d" % queue.num_complete , 
-            sys.stdout.flush()
             time.sleep( 1 )
         
-        sum = ecl.EclSum( "%s/%s" % (self.run_path , base))
-        self.assertTrue( isinstance( sum , ecl.EclSum ))
-        self.assertEqual( 62 , sum.last_report )
+
+        for path in path_list:
+            sum = ecl.EclSum( "%s/%s" % (path , base))
+            self.assertTrue( isinstance( sum , ecl.EclSum ))
+            self.assertEqual( 3 , sum.last_report )
+            
+            shutil.rmtree( path )
+
+
+
+    def test_LOCAL_submit(self):
+        num_submit = 4
+        queue = ecl.EclQueue( driver_type = driver.LOCAL_DRIVER , max_running = 2 )
+        path_list = []
+
+        for iens in (range(num_submit)):
+            run_path = self.make_run_path()
+            path_list.append( run_path )
+            job = queue.submit("%s/%s.DATA" % (run_path , base))
+
+        queue.submit_complete()
+        while queue.running:
+            time.sleep( 1 )
+        
+
+        for path in path_list:
+            sum = ecl.EclSum( "%s/%s" % (path , base))
+            self.assertTrue( isinstance( sum , ecl.EclSum ))
+            self.assertEqual( 3 , sum.last_report )
+            
+            shutil.rmtree( path )
 
 
 def fast_suite():
     suite = unittest.TestSuite()
-    suite.addTest( EclSubmitTest( 'test_submit' ))
+    suite.addTest( EclSubmitTest( 'test_LSF_submit' ))
     return suite
 
 
