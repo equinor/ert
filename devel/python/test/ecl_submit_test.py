@@ -62,7 +62,7 @@ class EclSubmitTest( unittest.TestCase ):
         for path in path_list:
             sum = ecl.EclSum( "%s/%s" % (path , base))
             self.assertTrue( isinstance( sum , ecl.EclSum ))
-            self.assertEqual( 3 , sum.last_report )
+            self.assertEqual( 2 , sum.last_report )
             
             shutil.rmtree( path )
 
@@ -86,7 +86,7 @@ class EclSubmitTest( unittest.TestCase ):
         for path in path_list:
             sum = ecl.EclSum( "%s/%s" % (path , base))
             self.assertTrue( isinstance( sum , ecl.EclSum ))
-            self.assertEqual( 3 , sum.last_report )
+            self.assertEqual( 2 , sum.last_report )
             
             shutil.rmtree( path )
 
@@ -94,6 +94,7 @@ class EclSubmitTest( unittest.TestCase ):
 def fast_suite():
     suite = unittest.TestSuite()
     suite.addTest( EclSubmitTest( 'test_LSF_submit' ))
+    suite.addTest( EclSubmitTest( 'test_LOCAL_submit' ))
     return suite
 
 
