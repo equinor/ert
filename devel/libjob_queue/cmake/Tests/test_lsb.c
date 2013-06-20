@@ -13,12 +13,12 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
-#include <lsf/lsbatch.h>
+//#include <lsf/lsbatch.h>
 
 int main(int argc , char ** argv) {
-   void * libnsl = dlopen( "libnsl.so" , RTLD_NOW | RTLD_GLOBAL);
-   void * liblsf = dlopen( "liblsf.so" , RTLD_NOW | RTLD_GLOBAL);
-
+  void * libnsl = NULL;//dlopen( "libnsl.so" , RTLD_NOW | RTLD_GLOBAL);
+  void * liblsf = NULL;//dlopen( "liblsf.so" , RTLD_NOW | RTLD_GLOBAL);
+   
    if ( libnsl && liblsf ) 
      exit(0);
    else

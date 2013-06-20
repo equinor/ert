@@ -1,6 +1,14 @@
-try_run( HAVE_LSF_LIBRARY 
-         LINK_WITH_LSB 
-         ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Tests/test_lsb.c )
+try_run( RUN_RESULT
+         COMPILE_RESULT
+         ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Tests/test_lsb.c 
+         CMAKE_FLAGS 
+         INCLUDE_DIRECTORIES $ENV{LSF_INCLUDE_PATH}
+         LINK_LIBRARIES dl )
+         
+
+message("RUN_RESULT     : ${RUN_RESULT}")
+message("COMPILE_RESULT : ${COMPILE_RESULT}")
+
 
 set( HAVE_LSF_LIBRARY ON )
 set( LSF_INCLUDE_PATH $ENV{LSF_INCLUDE_PATH}      CACHE FILEPATH "Path to LSF header files")
