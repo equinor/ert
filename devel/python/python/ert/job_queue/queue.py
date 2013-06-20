@@ -136,7 +136,7 @@ class JobQueue(CClass):
                 this you should call the submit_complete() method when all
                 jobs have been submitted.#
     
-              size > 0: The queue will now exactly how many jobs to run,
+              size > 0: The queue will know exactly how many jobs to run,
                 and will continue until this number of jobs have completed
                 - it is not necessary to call the submit_complete() method
                 in this case.
@@ -145,8 +145,8 @@ class JobQueue(CClass):
         OK_file     = None 
         exit_file   = None
         
-        c_ptr = cfunc.alloc_queue( max_submit , OK_file , exit_file)
-        self.init_cobj( c_ptr , cfunc.free_queue )
+        c_ptr = cfunc.alloc( max_submit , OK_file , exit_file)
+        self.init_cobj( c_ptr , cfunc.free )
                 
         self.jobs   = JobList()
         self.size   = size
@@ -283,9 +283,9 @@ cwrapper = CWrapper( libjob_queue.lib )
 cwrapper.registerType( "job_queue" , JobQueue )
 cfunc  = CWrapperNameSpace( "JobQueue" )
 
-cfunc.alloc_queue     = cwrapper.prototype("c_void_p job_queue_alloc( int , char* , char* )")
+cfunc.alloc           = cwrapper.prototype("c_void_p job_queue_alloc( int , char* , char* )")
 cfunc.user_exit       = cwrapper.prototype("void job_queue_user_exit( job_queue )") 
-cfunc.free_queue      = cwrapper.prototype("void job_queue_free( job_queue )")
+cfunc.free            = cwrapper.prototype("void job_queue_free( job_queue )")
 cfunc.set_max_running = cwrapper.prototype("void job_queue_set_max_running( job_queue , int)")
 cfunc.get_max_running = cwrapper.prototype("int  job_queue_get_max_running( job_queue )")
 cfunc.set_driver      = cwrapper.prototype("void job_queue_set_driver( job_queue , c_void_p )")
