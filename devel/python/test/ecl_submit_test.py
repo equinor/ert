@@ -23,7 +23,7 @@ import ert
 import ert.ecl.ecl as ecl
 import shutil
 import sys
-import tempfile
+import random
 import ert.job_queue.driver as driver
 from   test_util import approx_equal, approx_equalv
 
@@ -36,9 +36,10 @@ case = "%s/%s" % (path , base)
 
 class EclSubmitTest( unittest.TestCase ):
 
-
+            
     def make_run_path(self):
-        run_path = "%s%s" % (os.getcwd() , tempfile.mkdtemp())
+        run_path = "%s%s" % (os.getcwd() , "/tmp-%06d" % random.randint(0,999999))
+        os.makedirs( run_path )
         shutil.copytree( "%s/include" % path , "%s/include" % run_path)
         shutil.copy( "%s.DATA" % case , run_path ) 
         return run_path
@@ -99,6 +100,11 @@ def fast_suite():
 
 
 def test_suite( argv ):
+    cwd = os.getcwd()
+    work_path = argv[0]
+    os.chdir( work_path )
+    if not os.path.exists("test-data"):
+        os.symlink( "%s/test-data" % cwd , "test-data")
     return fast_suite()
 
 
