@@ -29,9 +29,12 @@
 #include <ert/job_queue/queue_driver.h>
 #include <ert/job_queue/lsf_driver.h>
 
-#include <lsf/lsbatch.h>
 #ifdef HAVE_LSF_LIBRARY
+#include <lsf/lsbatch.h>
 #include <ert/job_queue/lsb.h>
+#else
+#define JOB_STAT_NULL 0
+...
 #endif
 
 

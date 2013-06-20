@@ -3,14 +3,12 @@
 set(source_files forward_model.c queue_driver.c job_queue.c local_driver.c rsh_driver.c torque_driver.c ext_job.c ext_joblist.c workflow_job.c workflow.c workflow_joblist.c)
 set(header_files job_queue.h queue_driver.h local_driver.h rsh_driver.h torque_driver.h ext_job.h ext_joblist.h forward_model.h workflow_job.h workflow.h workflow_joblist.h)
 
-if (USE_LSF)
-   list( APPEND source_files lsf_driver.c)
-   list( APPEND header_files lsf_driver.h)
-   
-   if (HAVE_LSF_LIBRARY)
-      list( APPEND source_files lsb.c)
-      list( APPEND header_files lsb.h)
-   endif()
+list( APPEND source_files lsf_driver.c)
+list( APPEND header_files lsf_driver.h)
+
+if (HAVE_LSF_LIBRARY)
+   list( APPEND source_files lsb.c)
+   list( APPEND header_files lsb.h)
 endif()
 
 add_library( job_queue SHARED ${source_files} )

@@ -153,8 +153,8 @@ int lsb_initialize( const lsb_type * lsb) {
     directory containing LSF configuration information, the whole
     thing will crash and burn if this is not properly set.
   */
-  printf("Calling initialize ... \n");
   if ( lsb->lsb_init(NULL) != 0 ) {
+
     fprintf(stderr,"LSF_ENVDIR: ");
     if (getenv("LSF_ENVDIR") != NULL)
       fprintf(stderr,"%s\n", getenv("LSF_ENVDIR"));

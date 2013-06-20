@@ -99,8 +99,6 @@ add_subdirectory( libecl_well )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
-   option(USE_LSF "Include support for LSF" ON)
-
    include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
    add_subdirectory( libconfig )
 
