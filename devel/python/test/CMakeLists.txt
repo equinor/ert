@@ -50,10 +50,15 @@ add_test( NAME python.ert.ecl.ecl_rft_cell
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} rft_cell_test)
 
+add_test( NAME python.ert.ecl.ecl_queue
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ecl_submit_test ${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat )
+
 
 
 
 set_property( TEST python.ert.ecl.ecl_file       PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_queue      PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.ert.ecl.ecl_file_slow  PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.ert.ecl.ecl_sum        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.ert.ecl.ecl_kw         PROPERTY LABELS Python:StatoilData )
