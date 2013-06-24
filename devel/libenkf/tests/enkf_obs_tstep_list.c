@@ -30,6 +30,23 @@ void test_range( ) {
   obs_tstep_list_free( tstep_list );
 }
 
+void test_contains() {
+  obs_tstep_list_type * tstep_list = obs_tstep_list_alloc();
+  
+  test_assert_false( obs_tstep_list_contains( tstep_list , 0 ));
+  test_assert_false( obs_tstep_list_contains( tstep_list , 10 ));
+  test_assert_false( obs_tstep_list_contains( tstep_list , 12 ));
+  test_assert_false( obs_tstep_list_contains( tstep_list , 15 ));
+
+  obs_tstep_list_add_range( tstep_list , 10 , 12 );
+  test_assert_false( obs_tstep_list_contains( tstep_list , 0 ));
+  test_assert_true(  obs_tstep_list_contains( tstep_list , 10 ));
+  test_assert_true(  obs_tstep_list_contains( tstep_list , 12 ));
+  test_assert_false( obs_tstep_list_contains( tstep_list , 15 ));
+
+  obs_tstep_list_free( tstep_list );
+}
+
 
 int main(int argc , char ** argv) {
   obs_tstep_list_type * tstep_list;
@@ -61,7 +78,7 @@ int main(int argc , char ** argv) {
 
 
   test_range();
-  
+  test_contains();
   exit(0);
 }
 
