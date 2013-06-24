@@ -22,6 +22,15 @@
 #include <ert/util/test_util.h>
 
 
+void test_range( ) {
+  obs_tstep_list_type * tstep_list = obs_tstep_list_alloc();
+  
+  obs_tstep_list_add_range( tstep_list , 10 , 12 );
+  test_assert_int_equal( 3, obs_tstep_list_get_size( tstep_list ));
+  obs_tstep_list_free( tstep_list );
+}
+
+
 int main(int argc , char ** argv) {
   obs_tstep_list_type * tstep_list;
 
@@ -48,8 +57,10 @@ int main(int argc , char ** argv) {
   test_assert_int_equal( 101 , obs_tstep_list_iget( tstep_list , 2 ));
 
   test_assert_int_equal( 101 , obs_tstep_list_get_last( tstep_list ));
-
   obs_tstep_list_free( tstep_list );
+
+
+  test_range();
   
   exit(0);
 }

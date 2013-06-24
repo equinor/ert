@@ -71,6 +71,13 @@ void obs_tstep_list_add_tstep( obs_tstep_list_type * list , int tstep) {
 }
 
 
+void obs_tstep_list_add_range( obs_tstep_list_type * list , int step1 , int step2) {
+  int tstep;
+  for (tstep = step1; tstep <= step2; tstep++)
+    obs_tstep_list_add_tstep( list , tstep );
+}
+
+
 int obs_tstep_list_get_size( const obs_tstep_list_type * list ) {
    return int_vector_size( list->tstep_list );
 }
