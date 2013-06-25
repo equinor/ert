@@ -50,6 +50,7 @@
 #include <ert/enkf/plot_config.h>
 #include <ert/enkf/member_config.h>
 #include <ert/enkf/enkf_analysis.h>
+#include <ert/enkf/obs_tstep_list.h>
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_plot.h>
@@ -114,17 +115,11 @@ void enkf_tui_QC_plot_get_PC( enkf_main_type * enkf_main , int step1 , int step2
 
 void enkf_tui_QC_plot_PC( void * arg ) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
-  local_config_type * local_config = enkf_main_get_local_config( enkf_main );
-  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-  int               ens_size             = enkf_main_get_ensemble_size( enkf_main );
   const int last_report                  = enkf_main_get_history_length( enkf_main );
   int step1,step2;
-  int ncomp;
-  double truncation;
+  double truncation_or_ncomp;
+  local_obsdata_type * obsdata = local_obsdata_alloc();
   
-  state_enum state = FORECAST;
-  const local_updatestep_type * update_step;
-  local_obsset_type     * obsset;
   
 
   enkf_tui_util_scanf_report_steps(last_report , PROMPT_LEN , &step1 , &step2);
@@ -135,16 +130,7 @@ void enkf_tui_QC_plot_PC( void * arg ) {
     if (input == NULL)
       return;
     else {
-      double truncation_or_ncomp;
-      if (util_sscanf_double( input , &truncation_or_ncomp)) {
-        if (truncation_or_ncomp < 1) {
-          truncation = truncation_or_ncomp;
-          ncomp = -1;
-        } else {
-          truncation = -1;
-          ncomp = util_int_min( (int) truncation_or_ncomp , ens_size );
-        }
-      } else {
+      if (!util_sscanf_double( input , &truncation_or_ncomp)) {
         fprintf(stderr , "Failed to parse:%s as number \n",input);
         free( input );
         return;
@@ -154,40 +140,35 @@ void enkf_tui_QC_plot_PC( void * arg ) {
     free( input );
   }
   
-  update_step = local_config_iget_updatestep( local_config , step2 );
   {
-    int obsset_nr = 0;
-    if (local_updatestep_get_num_ministep( update_step) > 1) {
-      stringlist_type * obsset_list = stringlist_alloc_new();
-      for (int i =0; i < local_updatestep_get_num_ministep( update_step ); i++) {
-        local_obsset_type * obsset = local_updatestep_iget_obsset( update_step , i );
-        stringlist_append_ref( obsset_list , local_obsset_get_name( obsset ));
-        
-        printf("  %02d : %s \n", i +1 , local_obsset_get_name( obsset ));
-      }
-      stringlist_free( obsset_list );
+    stringlist_type * obs_keys = enkf_obs_alloc_keylist( enkf_main_get_obs( enkf_main ));
+    int iobs;
+    for (iobs = 0; iobs < stringlist_get_size( obs_keys); iobs++) {
+      const char * obs_key = stringlist_iget( obs_keys , iobs );
+      local_obsdata_node_type * obs_node = local_obsdata_node_alloc( obs_key );
 
-      obsset_nr = util_scanf_int( "Choose observation set" , PROMPT_LEN );
-      obsset_nr--;
+      local_obsdata_node_add_range( obs_node , step1 , step2 );
+      local_obsdata_add_node( obsdata , obs_node );
     }
-    if ((obsset_nr < 0) || (obsset_nr >= local_updatestep_get_num_ministep( update_step)))
-      return;
     
-    obsset = local_updatestep_iget_obsset( update_step , obsset_nr );
-  }
+
+    stringlist_free( obs_keys );
+  }  
     
   {
     matrix_type * PC     = matrix_alloc(1,1);
     matrix_type * PC_obs = matrix_alloc(1,1);
+    analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
     char * plot_name = util_alloc_sprintf(analysis_config_get_PC_filename( analysis_config ) , 
-                                          step1 , step2 , local_obsset_get_name( obsset ));
+                                          step1 , step2 , "obs");
     
-    enkf_tui_QC_plot_get_PC( enkf_main , step1 , step2 , state , obsset , truncation , ncomp , PC , PC_obs );
+    enkf_main_init_PC( enkf_main , obsdata , truncation_or_ncomp , PC , PC_obs);
     enkf_tui_plot_PC( enkf_main , plot_name , PC , PC_obs );
     
     free( plot_name );
     matrix_free( PC );
     matrix_free( PC_obs );
+    local_obsdata_free( obsdata );
   }
 }
 
