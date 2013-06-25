@@ -21,6 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stdbool.h>
 
 #include <ert/util/type_macros.h>
 
@@ -28,10 +29,11 @@ extern "C" {
 
 typedef struct local_obsdata_struct local_obsdata_type;
 
+  bool                            local_obsdata_has_node( const local_obsdata_type * data , const char * key);
   local_obsdata_type            * local_obsdata_alloc( );
   void                            local_obsdata_free( local_obsdata_type * data );
   int                             local_obsdata_get_size( const local_obsdata_type * data );
-  void                            local_obsdata_add_node( local_obsdata_type * data , local_obsdata_node_type * node );
+  bool                            local_obsdata_add_node( local_obsdata_type * data , local_obsdata_node_type * node );
   const local_obsdata_node_type * local_obsdata_iget( const local_obsdata_type * data , int index);
   local_obsdata_type            * local_obsdata_alloc_wrapper( local_obsdata_node_type * node );
 

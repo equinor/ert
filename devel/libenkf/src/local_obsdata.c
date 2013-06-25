@@ -20,6 +20,7 @@
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
 #include <ert/util/vector.h>
+#include <ert/util/hash.h>
 
 #include <ert/enkf/local_obsdata.h>
 
@@ -28,7 +29,8 @@
 
 struct local_obsdata_struct {
   UTIL_TYPE_ID_DECLARATION;
-  vector_type * obs_nodes;
+  hash_type   * nodes_map;
+  vector_type * nodes_list;
 };
 
 
@@ -38,26 +40,28 @@ UTIL_IS_INSTANCE_FUNCTION( local_obsdata  , LOCAL_OBSDATA_TYPE_ID )
 local_obsdata_type * local_obsdata_alloc( ) {
   local_obsdata_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , LOCAL_OBSDATA_TYPE_ID );
-  data->obs_nodes = vector_alloc_new();
+  data->nodes_list = vector_alloc_new();
+  data->nodes_map = hash_alloc();
   return data;
 }
 
 
+
 local_obsdata_type * local_obsdata_alloc_wrapper( local_obsdata_node_type * node ) {
-  local_obsdata_type * data = local_obsdata_alloc( );
+  local_obsdata_type * data = local_obsdata_alloc();
   local_obsdata_add_node( data , node );
   return data;
 }
 
 
 void local_obsdata_free( local_obsdata_type * data ) {
-  vector_free( data->obs_nodes );
+  vector_free( data->nodes_list );
   free( data );
 }
 
 
 int local_obsdata_get_size( const local_obsdata_type * data ) {
-  return vector_get_size( data->obs_nodes );
+  return vector_get_size( data->nodes_list );
 }
 
 
@@ -66,11 +70,22 @@ int local_obsdata_get_size( const local_obsdata_type * data ) {
   scope should NOT call local_obsdata_node_free().
 */
 
-void local_obsdata_add_node( local_obsdata_type * data , local_obsdata_node_type * node ) {
-  vector_append_owned_ref( data->obs_nodes , node , local_obsdata_node_free__ );
+bool local_obsdata_add_node( local_obsdata_type * data , local_obsdata_node_type * node ) {
+  const char * key = local_obsdata_node_get_key( node );
+  if (local_obsdata_has_node(data , key))
+    return false; 
+  else {
+    vector_append_owned_ref( data->nodes_list , node , local_obsdata_node_free__ );
+    hash_insert_ref( data->nodes_map , key , node );
+  }
 }
 
 
 const local_obsdata_node_type * local_obsdata_iget( const local_obsdata_type * data , int index) {
-  return vector_iget_const( data->obs_nodes , index );
+  return vector_iget_const( data->nodes_list , index );
+}
+
+
+bool local_obsdata_has_node( const local_obsdata_type * data , const char * key) {
+  return hash_has_key( data->nodes_map , key );
 }
