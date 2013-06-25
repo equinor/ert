@@ -119,11 +119,15 @@ void enkf_tui_QC_plot_PC( void * arg ) {
   int step1,step2;
   double truncation_or_ncomp;
   local_obsdata_type * obsdata = local_obsdata_alloc();
+  char * keys_input;
   
   
-
   enkf_tui_util_scanf_report_steps(last_report , PROMPT_LEN , &step1 , &step2);
+  util_printf_prompt("Observation keys (wildcards allowed) - [default: all]" , PROMPT_LEN , '=' , "=> ");
+  keys_input = util_alloc_stdin_line();
+
   util_printf_prompt("Truncation: [0,1): Explained variance  [1,ens_size): fixed" , PROMPT_LEN , '=' , "=> ");
+
   {
     char * input = util_alloc_stdin_line();
 
@@ -141,21 +145,37 @@ void enkf_tui_QC_plot_PC( void * arg ) {
   }
   
   {
-    stringlist_type * obs_keys = enkf_obs_alloc_keylist( enkf_main_get_obs( enkf_main ));
-    int iobs;
-    for (iobs = 0; iobs < stringlist_get_size( obs_keys); iobs++) {
-      const char * obs_key = stringlist_iget( obs_keys , iobs );
-      local_obsdata_node_type * obs_node = local_obsdata_node_alloc( obs_key );
+    stringlist_type * all_keys = enkf_obs_alloc_keylist( enkf_main_get_obs( enkf_main ));
+    stringlist_type * obs_keys = stringlist_alloc_new();
 
-      local_obsdata_node_add_range( obs_node , step1 , step2 );
-      local_obsdata_add_node( obsdata , obs_node );
-    }
-    
+    if (keys_input) {
+      stringlist_type * input_keys = stringlist_alloc_from_split( keys_input , " ");
+      int i;
+      for (i=0; i < stringlist_get_size( input_keys ); i++)
+        stringlist_append_matching_elements( obs_keys , all_keys , stringlist_iget( input_keys , i ));
+      stringlist_free( input_keys );
+    } else 
+      stringlist_deep_copy( obs_keys , all_keys );
 
-    stringlist_free( obs_keys );
+    {
+      int iobs;
+      
+      for (iobs = 0; iobs < stringlist_get_size( obs_keys); iobs++) {
+        const char * obs_key = stringlist_iget( obs_keys , iobs );
+        if (!local_obsdata_has_node( obsdata , obs_key )) {
+          local_obsdata_node_type * obs_node = local_obsdata_node_alloc( obs_key );
+
+          local_obsdata_node_add_range( obs_node , step1 , step2 );
+          local_obsdata_add_node( obsdata , obs_node );
+        }
+      }
+      
+      stringlist_free( all_keys );
+      stringlist_free( obs_keys );
+    } 
   }  
-    
-  {
+  
+  if (local_obsdata_get_size( obsdata )) {
     matrix_type * PC     = matrix_alloc(1,1);
     matrix_type * PC_obs = matrix_alloc(1,1);
     analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
@@ -168,8 +188,8 @@ void enkf_tui_QC_plot_PC( void * arg ) {
     free( plot_name );
     matrix_free( PC );
     matrix_free( PC_obs );
-    local_obsdata_free( obsdata );
   }
+  local_obsdata_free( obsdata );
 }
 
 
