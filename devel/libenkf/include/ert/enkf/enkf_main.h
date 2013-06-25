@@ -232,6 +232,12 @@ extern "C" {
                          matrix_type * PC , 
                          matrix_type * PC_obs);
   
+  void enkf_main_init_PC( enkf_main_type * enkf_main , 
+                          const local_obsdata_type * obsdata , 
+                          double truncation_or_ncomp , 
+                          matrix_type * PC , 
+                          matrix_type * PC_obs );
+
   void enkf_main_fprintf_PC(const char * filename , 
                             matrix_type * PC , 
                             matrix_type * PC_obs);

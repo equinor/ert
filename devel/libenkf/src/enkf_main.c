@@ -980,6 +980,59 @@ void enkf_main_get_PC( const matrix_type * S,
 
 
 
+void enkf_main_init_PC( enkf_main_type * enkf_main , 
+                        const local_obsdata_type * obsdata , 
+                        double truncation_or_ncomp , 
+                        matrix_type * PC , 
+                        matrix_type * PC_obs ) {
+  
+  state_enum   state                     = FORECAST;
+  int               ens_size             = enkf_main_get_ensemble_size( enkf_main );
+  obs_data_type  *  obs_data             = obs_data_alloc();
+  meas_data_type *  meas_data            = meas_data_alloc( ens_size );
+  
+  enkf_obs_get_obs_and_measure_data( enkf_main_get_obs( enkf_main ), 
+                                     enkf_main_get_fs( enkf_main ),
+                                     obsdata , 
+                                     state , 
+                                     ens_size , 
+                                     (const enkf_state_type **) enkf_main_get_ensemble( enkf_main ),
+                                     meas_data , 
+                                     obs_data );
+
+  {
+    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+    double std_cutoff = analysis_config_get_std_cutoff( analysis_config );
+    double alpha      = analysis_config_get_alpha( analysis_config );
+
+    enkf_analysis_deactivate_outliers( obs_data , meas_data  , std_cutoff , alpha);
+  }
+
+  {
+    int active_size      = obs_data_get_active_size( obs_data );
+    matrix_type * S      = meas_data_allocS( meas_data , active_size );
+    matrix_type * dObs   = obs_data_allocdObs( obs_data , active_size );
+    double truncation    = -1;
+    int ncomp            = -1;
+
+    if (truncation_or_ncomp < 1)
+      truncation = truncation_or_ncomp;
+    else
+      ncomp = (int) truncation_or_ncomp;
+
+    obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
+    enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
+    
+    matrix_free( S );
+    matrix_free( dObs );
+  }
+  
+  obs_data_free( obs_data );
+  meas_data_free( meas_data );
+}
+
+
+
 static void enkf_main_analysis_update( enkf_main_type * enkf_main , 
                                        enkf_fs_type * target_fs ,
                                        int target_step , 
