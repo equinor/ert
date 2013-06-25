@@ -77,6 +77,7 @@ bool local_obsdata_add_node( local_obsdata_type * data , local_obsdata_node_type
   else {
     vector_append_owned_ref( data->nodes_list , node , local_obsdata_node_free__ );
     hash_insert_ref( data->nodes_map , key , node );
+    return true;
   }
 }
 
