@@ -89,3 +89,8 @@ const obs_tstep_list_type * local_obsdata_node_get_tstep_list( const local_obsda
 void local_obsdata_node_add_tstep( local_obsdata_node_type * node, int tstep) {
   obs_tstep_list_add_tstep( node->tstep_list , tstep );
 }
+
+
+void local_obsdata_node_add_range( local_obsdata_node_type * node, int step1 , int step2) {
+  obs_tstep_list_add_range( node->tstep_list , step1 , step2);
+}
