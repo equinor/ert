@@ -43,6 +43,12 @@ local_obsdata_type * local_obsdata_alloc( ) {
 }
 
 
+local_obsdata_type * local_obsdata_alloc_wrapper( local_obsdata_node_type * node ) {
+  local_obsdata_type * data = local_obsdata_alloc( );
+  local_obsdata_add_node( data , node );
+  return data;
+}
+
 
 void local_obsdata_free( local_obsdata_type * data ) {
   vector_free( data->obs_nodes );

@@ -26,6 +26,16 @@
 #include <ert/enkf/local_obsdata_node.h>
 
 
+void test_wrapper() {
+  local_obsdata_node_type * node = local_obsdata_node_alloc("KEY");
+  local_obsdata_type * data = local_obsdata_alloc_wrapper( node );
+  test_assert_true( local_obsdata_is_instance( data ));
+  test_assert_int_equal( 1 , local_obsdata_get_size( data ));
+  test_assert_ptr_equal( node , local_obsdata_iget( data , 0 ));
+  local_obsdata_free( data );
+}
+
+
 int main(int argc , char ** argv) {
   local_obsdata_type * obsdata;
   
@@ -41,7 +51,8 @@ int main(int argc , char ** argv) {
   }
 
   local_obsdata_free( obsdata );
-  
+
+  test_wrapper();
   exit(0);
 }
 
