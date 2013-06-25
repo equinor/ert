@@ -431,15 +431,15 @@ void enkf_obs_get_obs_and_measure_node( const enkf_obs_type      * enkf_obs,
   if you want to use fresh instances.
 */
 
-static void enkf_obs_get_obs_and_measure__(const enkf_obs_type      * enkf_obs,
-                                           enkf_fs_type             * fs,
-                                           const local_obsdata_type * local_obsdata , 
-                                           state_enum                 state,
-                                           int                        ens_size,
-                                           const enkf_state_type    ** ensemble ,
-                                           meas_data_type           * meas_data,
-                                           obs_data_type            * obs_data) {
-
+void enkf_obs_get_obs_and_measure_data(const enkf_obs_type      * enkf_obs,
+                                       enkf_fs_type             * fs,
+                                       const local_obsdata_type * local_obsdata , 
+                                       state_enum                 state,
+                                       int                        ens_size,
+                                       const enkf_state_type    ** ensemble ,
+                                       meas_data_type           * meas_data,
+                                       obs_data_type            * obs_data) {
+  
   
   int iobs;
   for (iobs = 0; iobs < local_obsdata_get_size( local_obsdata ); iobs++) {
@@ -482,7 +482,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
     }
     hash_iter_free( iter );
   }
-  enkf_obs_get_obs_and_measure__(enkf_obs , fs , local_obsdata , state , ens_size , ensemble , meas_data , obs_data );
+  enkf_obs_get_obs_and_measure_data(enkf_obs , fs , local_obsdata , state , ens_size , ensemble , meas_data , obs_data );
   local_obsdata_free( local_obsdata );
 }
 
@@ -994,6 +994,17 @@ stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs
 }
 
 
+stringlist_type * enkf_obs_alloc_keylist(enkf_obs_type * enkf_obs ) {
+  stringlist_type * vars = stringlist_alloc_new();
+  hash_iter_type  * iter = hash_iter_alloc(enkf_obs->obs_hash); 
+  const char * key = hash_iter_get_next_key(iter);
+  while ( key != NULL) {
+    stringlist_append_copy(vars , key);
+    key = hash_iter_get_next_key(iter);
+  }
+  hash_iter_free(iter);
+  return vars;
+}
 
 /**
    This function allocates a hash table which looks like this:
