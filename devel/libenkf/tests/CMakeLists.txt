@@ -91,7 +91,6 @@ add_test( enkf_refcase_list2  ${EXECUTABLE_OUTPUT_PATH}/enkf_refcase_list ${PROJ
 set_property( TEST enkf_refcase_list PROPERTY LABELS StatoilData )
 set_property( TEST enkf_refcase_list2 PROPERTY LABELS StatoilData )
 
-
 add_executable( enkf_ecl_config enkf_ecl_config.c )
 target_link_libraries( enkf_ecl_config enkf )
 add_test( enkf_ecl_config1  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config )

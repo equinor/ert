@@ -45,6 +45,7 @@ extern "C" {
   void            enkf_obs_free(  enkf_obs_type * enkf_obs);
   
   obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
+  void enkf_obs_add_obs_vector(enkf_obs_type * enkf_obs, const char * key, const obs_vector_type * vector);
   
   void              enkf_obs_load(enkf_obs_type * enkf_obs,
                                   const history_type * history , 
