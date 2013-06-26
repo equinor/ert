@@ -7,6 +7,10 @@ target_link_libraries( enkf_site_config enkf )
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf )
 
+add_executable( enkf_pca_plot enkf_pca_plot.c )
+target_link_libraries( enkf_pca_plot enkf )
+add_test( enkf_pca_plot ${EXECUTABLE_OUTPUT_PATH}/enkf_pca_plot)
+
 add_executable( enkf_ensemble_GEN_PARAM enkf_ensemble_GEN_PARAM.c )
 target_link_libraries( enkf_ensemble_GEN_PARAM enkf )
 
