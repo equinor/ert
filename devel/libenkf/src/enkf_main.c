@@ -1000,6 +1000,7 @@ void enkf_main_init_PC( enkf_main_type * enkf_main ,
                                      meas_data , 
                                      obs_data );
 
+  if (0)
   {
     const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
     double std_cutoff = analysis_config_get_std_cutoff( analysis_config );
