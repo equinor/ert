@@ -25,18 +25,28 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()    
 
 
+# For the cmake test compile, allow warnings.
 if (ERT_WINDOWS)
    set( CMAKE_C_FLAGS    "-O2" )
    set( CMAKE_CXX_FLAGS  "-O2" )
 else()
-   set( CMAKE_C_FLAGS    "-g -O2 -Wall -Wno-unknown-pragmas -std=gnu99 " )
-   set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
+   set( CMAKE_C_FLAGS    "-std=gnu99 -g -O2 -Wall -Wno-unknown-pragmas " )
+   set( CMAKE_CXX_FLAGS  "-g -O2 -Wall ")
 endif()
 
 include(cmake/ert_check.cmake)
 include(cmake/ert_find.cmake)
 include(cmake/Modules/UseMultiArch.cmake)
 include(cmake/ert_link.cmake)
+
+# For the actual build test compile, treat warnings as errors.
+if (ERT_WINDOWS)
+   set( CMAKE_C_FLAGS    "-O2" )
+   set( CMAKE_CXX_FLAGS  "-O2" )
+else()
+   set( CMAKE_C_FLAGS    "-std=gnu99 -g -O2 -Wall -Werror -Wno-unknown-pragmas " )
+   set( CMAKE_CXX_FLAGS  "-g -O2 -Wall -Werror ")
+endif()
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
@@ -49,8 +59,6 @@ else()
    set( LIBRARY_TYPE SHARED )
    set( SHARED_LIB ON )
 endif()
-
-
 
 
 if (MSVC)
