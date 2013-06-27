@@ -101,12 +101,19 @@ def fast_suite():
 
 def test_suite( argv ):
     cwd = os.getcwd()
-    work_path = argv[0]
+    work_path = argv[1]
     os.chdir( work_path )
     if not os.path.exists("test-data"):
         os.symlink( "%s/test-data" % cwd , "test-data")
-    return fast_suite()
 
+
+    suite = unittest.TestSuite()
+    queue_name = argv[0]
+    if queue_name == "LSF":
+        suite.addTest( EclSubmitTest( 'test_LSF_submit' ))
+    elif queue_name == "LOCAL":
+        suite.addTest( EclSubmitTest( 'test_LOCAL_submit' ))
+    return suite
 
 if __name__ == "__main__":
     unittest.TextTestRunner().run( fast_suite() )
