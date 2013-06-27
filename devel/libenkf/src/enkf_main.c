@@ -98,6 +98,7 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/runpath_list.h>
+#include <ert/enkf/pca_plot_data.h>
 
 /**/
 
@@ -980,7 +981,7 @@ void enkf_main_get_PC( const matrix_type * S,
 
 
 
-void enkf_main_init_PC( enkf_main_type * enkf_main , 
+void enkf_main_init_PC( const enkf_main_type * enkf_main , 
                         const local_obsdata_type * obsdata , 
                         double truncation_or_ncomp , 
                         matrix_type * PC , 
@@ -996,7 +997,7 @@ void enkf_main_init_PC( enkf_main_type * enkf_main ,
                                      obsdata , 
                                      state , 
                                      ens_size , 
-                                     (const enkf_state_type **) enkf_main_get_ensemble( enkf_main ),
+                                     enkf_main_get_ensemble_const( enkf_main ),
                                      meas_data , 
                                      obs_data );
 
@@ -1030,6 +1031,26 @@ void enkf_main_init_PC( enkf_main_type * enkf_main ,
   
   obs_data_free( obs_data );
   meas_data_free( meas_data );
+}
+
+
+pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_main , 
+                                                    local_obsdata_type * obs_data, 
+                                                    double truncation_or_ncomp) {
+  pca_plot_data_type * pca_plot_data;
+  {
+    matrix_type * PC = matrix_alloc(1,1);
+    matrix_type * PC_obs = matrix_alloc(1,1);
+
+
+    enkf_main_init_PC(  enkf_main , obs_data , truncation_or_ncomp , PC , PC_obs );
+    pca_plot_data = pca_plot_data_alloc( local_obsdata_get_name( obs_data ) , PC , PC_obs );
+
+  
+    matrix_free( PC );
+    matrix_free( PC_obs );
+  }
+  return pca_plot_data;
 }
 
 
@@ -3106,6 +3127,11 @@ int enkf_main_get_ensemble_size( const enkf_main_type * enkf_main ) {
 
 
 enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
+  return enkf_main->ensemble;
+}
+
+
+const enkf_state_type ** enkf_main_get_ensemble_const( const enkf_main_type * enkf_main) {
   return enkf_main->ensemble;
 }
 

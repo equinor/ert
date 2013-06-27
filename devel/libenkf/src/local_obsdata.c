@@ -31,24 +31,26 @@ struct local_obsdata_struct {
   UTIL_TYPE_ID_DECLARATION;
   hash_type   * nodes_map;
   vector_type * nodes_list;
+  char * name;
 };
 
 
 
 UTIL_IS_INSTANCE_FUNCTION( local_obsdata  , LOCAL_OBSDATA_TYPE_ID )
 
-local_obsdata_type * local_obsdata_alloc( ) {
+local_obsdata_type * local_obsdata_alloc( const char * name) {
   local_obsdata_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , LOCAL_OBSDATA_TYPE_ID );
   data->nodes_list = vector_alloc_new();
   data->nodes_map = hash_alloc();
+  data->name = util_alloc_string_copy( name );
   return data;
 }
 
 
 
 local_obsdata_type * local_obsdata_alloc_wrapper( local_obsdata_node_type * node ) {
-  local_obsdata_type * data = local_obsdata_alloc();
+  local_obsdata_type * data = local_obsdata_alloc( local_obsdata_node_get_key( node ));
   local_obsdata_add_node( data , node );
   return data;
 }
@@ -56,7 +58,13 @@ local_obsdata_type * local_obsdata_alloc_wrapper( local_obsdata_node_type * node
 
 void local_obsdata_free( local_obsdata_type * data ) {
   vector_free( data->nodes_list );
+  hash_free( data->nodes_map );
+  free( data->name );
   free( data );
+}
+
+const char * local_obsdata_get_name( const local_obsdata_type * data) {
+  return data->name;
 }
 
 

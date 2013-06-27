@@ -52,6 +52,7 @@
 #include <ert/enkf/member_config.h>
 #include <ert/enkf/enkf_analysis.h>
 #include <ert/enkf/obs_tstep_list.h>
+#include <ert/enkf/pca_plot_data.h>
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_plot.h>
@@ -67,28 +68,35 @@ void enkf_tui_QC_plot_PC_list( void * arg ) {
   stringlist_type * obs_keys   = enkf_obs_alloc_keylist( enkf_main_get_obs( enkf_main ));
   matrix_type * PC = matrix_alloc(1, 1);
   matrix_type * PC_obs = matrix_alloc(1,1);
+  vector_type * PC_list = vector_alloc_new();
   int ncomp = 1;
   
   int iobs;
   for (iobs = 0; iobs < stringlist_get_size( obs_keys ); iobs++) {  
     local_obsdata_node_type * obsnode = local_obsdata_node_alloc( stringlist_iget( obs_keys , iobs ));
     local_obsdata_type * obsdata = local_obsdata_alloc_wrapper( obsnode );
-    
     local_obsdata_node_add_range( obsnode , 0 , last_report );
-    enkf_main_init_PC( enkf_main , obsdata , ncomp , PC , PC_obs);
+    {
+      pca_plot_data_type * plot_data = enkf_main_alloc_pca_plot_data( enkf_main , obsdata , ncomp );
+      vector_append_owned_ref( PC_list , plot_data , pca_plot_data_free__ );
+    }
     local_obsdata_free( obsdata );
   }
   matrix_free( PC );
   matrix_free( PC_obs );
   stringlist_free( obs_keys );
+  enkf_tui_plot_PC_list( enkf_main , PC_list );
+  vector_free( PC_list );
 }
+
+
 
 void enkf_tui_QC_plot_PC( void * arg ) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   const int last_report                  = enkf_main_get_history_length( enkf_main );
   int step1,step2;
   double truncation_or_ncomp;
-  local_obsdata_type * obsdata = local_obsdata_alloc();
+  local_obsdata_type * obsdata = local_obsdata_alloc("PCA Observations");
   char * keys_input;
   
   
@@ -154,13 +162,15 @@ void enkf_tui_QC_plot_PC( void * arg ) {
     analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
     char * plot_name = util_alloc_sprintf(analysis_config_get_PC_filename( analysis_config ) , 
                                           step1 , step2 , "obs");
+
+    pca_plot_data_type * plot_data = enkf_main_alloc_pca_plot_data( enkf_main , obsdata , truncation_or_ncomp);
     
-    enkf_main_init_PC( enkf_main , obsdata , truncation_or_ncomp , PC , PC_obs);
-    enkf_tui_plot_PC( enkf_main , plot_name , PC , PC_obs );
+    enkf_tui_plot_PC( enkf_main , plot_name , plot_data );
     
     free( plot_name );
     matrix_free( PC );
     matrix_free( PC_obs );
+    pca_plot_data_free( plot_data );
   }
   local_obsdata_free( obsdata );
 }

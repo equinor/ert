@@ -45,6 +45,7 @@ void test_create_data() {
     pca_plot_data_type * data = pca_plot_data_alloc("KEY" , PC , PC_obs);
     test_assert_true( pca_plot_data_is_instance( data ));
     test_assert_int_equal( 3 , pca_plot_data_get_size( data ));
+    test_assert_int_equal( 10 , pca_plot_data_get_ens_size( data ));
     test_assert_string_equal( "KEY" , pca_plot_data_get_name( data ));
     pca_plot_data_free( data );
   }
@@ -112,6 +113,7 @@ int main(int argc , char ** argv) {
   test_create_data();
   test_create_vector();
   test_get_vector();
+  test_content();
   exit(0);
 }
 

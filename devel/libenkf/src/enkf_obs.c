@@ -466,7 +466,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   obs_data_type            * obs_data,
                                   const local_obsset_type  * obsset) {
   
-  local_obsdata_type * local_obsdata = local_obsdata_alloc( );
+  local_obsdata_type * local_obsdata = local_obsdata_alloc( "OBS-SET" );
   {
     hash_iter_type * iter = local_obsset_alloc_obs_iter( obsset );
     while ( !hash_iter_is_complete(iter) ) {

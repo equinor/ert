@@ -34,6 +34,7 @@ void test_wrapper() {
   test_assert_ptr_equal( node , local_obsdata_iget( data , 0 ));
   test_assert_true( local_obsdata_has_node( data , "KEY" ));
   test_assert_false( local_obsdata_has_node( data , "KEYX" ));
+  test_assert_string_equal( local_obsdata_node_get_key( node ) , local_obsdata_get_name( data ));
   local_obsdata_free( data );
 }
 
@@ -41,9 +42,10 @@ void test_wrapper() {
 int main(int argc , char ** argv) {
   local_obsdata_type * obsdata;
   
-  obsdata = local_obsdata_alloc();
+  obsdata = local_obsdata_alloc( "KEY");
   test_assert_true( local_obsdata_is_instance( obsdata ));
   test_assert_int_equal( 0 , local_obsdata_get_size( obsdata ));
+  test_assert_string_equal( "KEY" , local_obsdata_get_name( obsdata ));
   
   {
     local_obsdata_node_type * obsnode = local_obsdata_node_alloc( "KEY" );

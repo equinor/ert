@@ -35,6 +35,8 @@ extern "C" {
   const pca_plot_vector_type * pca_plot_data_iget_vector( const pca_plot_data_type * plot_data , int ivec);
   int                  pca_plot_data_get_size( const pca_plot_data_type * plot_data );
   const char         * pca_plot_data_get_name( const pca_plot_data_type * plot_data );
+  int                  pca_plot_data_get_ens_size( const pca_plot_data_type * plot_data );
+  void                 pca_plot_data_free__( void * arg );
 
   UTIL_IS_INSTANCE_HEADER( pca_plot_data );
 

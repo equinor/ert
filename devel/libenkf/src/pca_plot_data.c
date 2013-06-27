@@ -32,11 +32,12 @@ struct pca_plot_data_struct {
   UTIL_TYPE_ID_DECLARATION;
   char * name;
   vector_type * pca_vectors;
+  int ens_size;
 };
 
 
 UTIL_IS_INSTANCE_FUNCTION( pca_plot_data , PCA_PLOT_DATA_TYPE_ID )
-
+static UTIL_SAFE_CAST_FUNCTION( pca_plot_data , PCA_PLOT_DATA_TYPE_ID )
 
 static void pca_plot_data_add_vectors(pca_plot_data_type * plot_data , const matrix_type * PC , const matrix_type * PC_obs) {
   int component;
@@ -57,6 +58,7 @@ pca_plot_data_type * pca_plot_data_alloc( const char * name,
     UTIL_TYPE_ID_INIT( plot_data , PCA_PLOT_DATA_TYPE_ID );
     plot_data->name = util_alloc_string_copy( name );
     plot_data->pca_vectors = vector_alloc_new();
+    plot_data->ens_size = matrix_get_columns( PC );
     pca_plot_data_add_vectors( plot_data , PC , PC_obs );
   }
   return plot_data;
@@ -72,10 +74,18 @@ void pca_plot_data_free( pca_plot_data_type * plot_data ) {
   free( plot_data );
 }
 
-
+void pca_plot_data_free__( void * arg ) {
+  pca_plot_data_type * plot_data = pca_plot_data_safe_cast( arg );
+  pca_plot_data_free( plot_data );
+}
 
 int pca_plot_data_get_size( const pca_plot_data_type * plot_data ) {
   return vector_get_size( plot_data->pca_vectors );
+}
+
+
+int pca_plot_data_get_ens_size( const pca_plot_data_type * plot_data ) {
+  return plot_data->ens_size;
 }
 
 const pca_plot_vector_type * pca_plot_data_iget_vector( const pca_plot_data_type * plot_data , int ivec) {
