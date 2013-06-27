@@ -225,15 +225,22 @@ extern "C" {
   qc_module_type       * enkf_main_get_qc_module( const enkf_main_type * enkf_main );
   bool                   enkf_main_has_QC_workflow( const enkf_main_type * enkf_main );
 
-  void enkf_main_get_PC( const enkf_main_type * enkf_main , 
-                         const matrix_type * S, 
+  void enkf_main_get_PC( const matrix_type * S, 
                          const matrix_type * dObs,
-                         const char * obsset_name , 
-                         int step1 , int step2 , 
                          double truncation , 
                          int ncomp , 
                          matrix_type * PC , 
                          matrix_type * PC_obs);
+  
+  void enkf_main_init_PC( enkf_main_type * enkf_main , 
+                          const local_obsdata_type * obsdata , 
+                          double truncation_or_ncomp , 
+                          matrix_type * PC , 
+                          matrix_type * PC_obs );
+
+  void enkf_main_fprintf_PC(const char * filename , 
+                            matrix_type * PC , 
+                            matrix_type * PC_obs);
   
   
   void                   enkf_main_set_verbose( enkf_main_type * enkf_main , bool verbose);
