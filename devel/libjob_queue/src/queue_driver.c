@@ -173,7 +173,7 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
       driver->data = torque_driver_alloc();
       break;
     default:
-      util_abort("%s: unrecognized driver type:%d \n", type);
+      util_abort("%s: unrecognized driver type:%d \n", __func__, type);
   }
   return driver;
 }

@@ -31,3 +31,7 @@ test_import("ert.ecl.ecl_local")
 
 def test_suite( argv ):
     return False
+
+
+if __name__ == "__main__":
+    unittest.TextTestRunner().run( fast_suite() )
