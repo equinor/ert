@@ -40,6 +40,7 @@ class PlotConfig(object):
 
     def notify(self):
         """Tell all listeners that something has changed. Automatically called by setters."""
+        #self.signal_handler.emit(plotConfigChanged)
         self.signal_handler.emit(SIGNAL('plotConfigChanged(PlotConfig)'), self)
 
     def get_name(self):
@@ -128,8 +129,7 @@ class PlotConfigPanel(QFrame):
     def __init__(self, plot_config):
         QFrame.__init__(self)
         self.plot_config = plot_config
-        self.connect(plot_config.signal_handler, SIGNAL('plotConfigChanged()'), self._fetchValues)
-
+        self.connect(plot_config.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self._fetchValues)
         layout = QFormLayout()
         layout.setRowWrapPolicy(QFormLayout.WrapLongRows)
 
