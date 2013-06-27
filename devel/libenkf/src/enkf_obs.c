@@ -505,7 +505,11 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
           if (config_node != NULL) {
             obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node( ensemble_config , obs_key ) , enkf_obs->obs_time , last_report);
             if (obs_vector != NULL) {
-              if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , hist_obs_conf , enkf_obs->history , ensemble_config , std_cutoff ))
+              if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , 
+                                                           hist_obs_conf , 
+                                                           enkf_obs->history , 
+                                                           ensemble_config , 
+                                                           std_cutoff ))
                 enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
               else {
                 fprintf(stderr,"** Could not load historical data for observation:%s - ignored\n",obs_key);
