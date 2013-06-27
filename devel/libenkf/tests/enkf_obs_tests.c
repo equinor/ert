@@ -23,7 +23,7 @@
 int main(int argc, char ** argv) {
   enkf_obs_type * enkf_obs = enkf_obs_alloc();
 
-  obs_vector_type * obs_vector = obs_vector_alloc(GEN_OBS, "WHAT", NULL, NULL, 0);
+  obs_vector_type * obs_vector = obs_vector_alloc(GEN_OBS, "WHAT", NULL, 0);
   enkf_obs_add_obs_vector(enkf_obs, "PROP", obs_vector);
   exit(0);
 }
