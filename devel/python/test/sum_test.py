@@ -41,8 +41,9 @@ class SumTest( unittest.TestCase ):
 
     def setUp(self):
         self.case = case
-        self.sum = ecl.EclSum( self.case )
         self.file_list = []
+        self.sum = ecl.EclSum( self.case )
+        self.assertTrue( isinstance( self.sum , ecl.EclSum ))
 
     def addFile( self , file ):
         self.file_list.append( file )
