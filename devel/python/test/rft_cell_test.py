@@ -69,7 +69,7 @@ class RFTCellTest( unittest.TestCase ):
         grat = 88
         wrat = 97213
         conn_start = 214
-        conn_end = 0
+        conn_end = 400
         flowrate = 111
         oil_flowrate = 12
         gas_flowrate = 132
