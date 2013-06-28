@@ -2264,11 +2264,11 @@ void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
 
 
 
-///**
-//   When the case has changed it is essential to invalidate the meta
-//   information in the enkf_nodes, otherwise the nodes might reuse old
-//   data (from a previous case).
-//*/
+/**
+   When the case has changed it is essential to invalidate the meta
+   information in the enkf_nodes, otherwise the nodes might reuse old
+   data (from a previous case).
+*/
 
 static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
