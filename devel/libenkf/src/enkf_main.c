@@ -98,6 +98,7 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/runpath_list.h>
+#include <ert/enkf/pca_plot_data.h>
 
 /**/
 
@@ -945,44 +946,112 @@ static serialize_info_type * serialize_info_alloc( enkf_fs_type * src_fs, enkf_f
   return serialize_info;
 }
 
+void enkf_main_fprintf_PC(const char * filename , 
+                          matrix_type * PC , 
+                          matrix_type * PC_obs) {
 
-void enkf_main_get_PC( const enkf_main_type * enkf_main , 
-                       const matrix_type * S, 
+  FILE * stream   = util_mkdir_fopen(filename , "w");
+  const int num_PC   = matrix_get_rows( PC );
+  const int ens_size = matrix_get_columns( PC );
+  int ipc,iens;
+  
+  for (ipc = 0; ipc < num_PC; ipc++) 
+    fprintf(stream , "%10.6f " , matrix_iget( PC_obs , ipc , 0));
+  fprintf(stream , "\n");
+  
+  for (iens = 0; iens < ens_size; iens++) {
+      for (ipc = 0; ipc < num_PC; ipc++) 
+        fprintf(stream ,"%10.6f " , matrix_iget( PC , ipc, iens ));
+      fprintf(stream , "\n");
+  }
+  fclose( stream );
+}
+
+
+void enkf_main_get_PC( const matrix_type * S, 
                        const matrix_type * dObs,
-                       const char * obsset_name , 
-                       int step1 , int step2 , 
                        double truncation , 
                        int ncomp , 
                        matrix_type * PC , 
                        matrix_type * PC_obs) {
 
   enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
-  {
-    char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsset_name);
-    char * full_path = util_alloc_filename( analysis_config_get_PC_path( enkf_main->analysis_config) , filename , NULL );
-    FILE * stream   = util_mkdir_fopen(full_path , "w");
-    {
-      const int num_PC   = matrix_get_rows( PC );
-      const int ens_size = matrix_get_columns( PC );
-      int ipc,iens;
-      
-      for (ipc = 0; ipc < num_PC; ipc++) 
-        fprintf(stream , "%10.6f " , matrix_iget( PC_obs , ipc , 0));
-      fprintf(stream , "\n");
-      
-      for (iens = 0; iens < ens_size; iens++) {
-        for (ipc = 0; ipc < num_PC; ipc++) 
-          fprintf(stream ,"%10.6f " , matrix_iget( PC , ipc, iens ));
-        fprintf(stream , "\n");
-      }
-    }
-    fclose( stream );
-    free( filename );
-    free( full_path );
-  }
-
 }
 
+
+
+
+void enkf_main_init_PC( const enkf_main_type * enkf_main , 
+                        const local_obsdata_type * obsdata , 
+                        double truncation_or_ncomp , 
+                        matrix_type * PC , 
+                        matrix_type * PC_obs ) {
+  
+  state_enum   state                     = FORECAST;
+  int               ens_size             = enkf_main_get_ensemble_size( enkf_main );
+  obs_data_type  *  obs_data             = obs_data_alloc();
+  meas_data_type *  meas_data            = meas_data_alloc( ens_size );
+  
+  enkf_obs_get_obs_and_measure_data( enkf_main_get_obs( enkf_main ), 
+                                     enkf_main_get_fs( enkf_main ),
+                                     obsdata , 
+                                     state , 
+                                     ens_size , 
+                                     enkf_main_get_ensemble_const( enkf_main ),
+                                     meas_data , 
+                                     obs_data );
+
+  if (0)
+  {
+    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+    double std_cutoff = analysis_config_get_std_cutoff( analysis_config );
+    double alpha      = analysis_config_get_alpha( analysis_config );
+
+    enkf_analysis_deactivate_outliers( obs_data , meas_data  , std_cutoff , alpha);
+  }
+
+  {
+    int active_size      = obs_data_get_active_size( obs_data );
+    matrix_type * S      = meas_data_allocS( meas_data , active_size );
+    matrix_type * dObs   = obs_data_allocdObs( obs_data , active_size );
+    double truncation    = -1;
+    int ncomp            = -1;
+
+    if (truncation_or_ncomp < 1)
+      truncation = truncation_or_ncomp;
+    else
+      ncomp = (int) truncation_or_ncomp;
+
+    obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
+    enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
+    
+    matrix_free( S );
+    matrix_free( dObs );
+  }
+  
+  obs_data_free( obs_data );
+  meas_data_free( meas_data );
+}
+
+
+pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_main , 
+                                                    local_obsdata_type * obs_data, 
+                                                    double truncation_or_ncomp) {
+  pca_plot_data_type * pca_plot_data;
+  {
+    matrix_type * PC = matrix_alloc(1,1);
+    matrix_type * PC_obs = matrix_alloc(1,1);
+
+
+    enkf_main_init_PC(  enkf_main , obs_data , truncation_or_ncomp , PC , PC_obs );
+    pca_plot_data = pca_plot_data_alloc( local_obsdata_get_name( obs_data ) , PC , PC_obs );
+
+  
+    matrix_free( PC );
+    matrix_free( PC_obs );
+  }
+  return pca_plot_data;
+}
 
 
 
@@ -1040,9 +1109,19 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       int ncomp            = ens_size - 1;
       matrix_type * PC     = matrix_alloc(1,1);
       matrix_type * PC_obs = matrix_alloc(1,1);
+      local_obsset_type   * obsset = local_ministep_get_obsset( ministep );
+      const char * obsset_name = local_obsset_get_name( obsset );
       
-      enkf_main_get_PC( enkf_main , S , dObs , local_ministep_get_name( ministep ) , step1 , step2 , truncation , ncomp , PC , PC_obs );
-      
+      enkf_main_get_PC( S , dObs , truncation , ncomp , PC , PC_obs );
+      {
+        char * filename  = util_alloc_sprintf(analysis_config_get_PC_filename( enkf_main->analysis_config ) , step1 , step2 , obsset_name);
+        char * full_path = util_alloc_filename( analysis_config_get_PC_path( enkf_main->analysis_config) , filename , NULL );
+
+        enkf_main_fprintf_PC( full_path , PC , PC_obs);
+        
+        free( full_path );
+        free( filename );
+      }
       matrix_free( PC );
       matrix_free( PC_obs );
     }
@@ -3048,6 +3127,11 @@ int enkf_main_get_ensemble_size( const enkf_main_type * enkf_main ) {
 
 
 enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
+  return enkf_main->ensemble;
+}
+
+
+const enkf_state_type ** enkf_main_get_ensemble_const( const enkf_main_type * enkf_main) {
   return enkf_main->ensemble;
 }
 

@@ -58,6 +58,7 @@ extern "C" {
 #include <ert/enkf/ranking_table.h>
 #include <ert/enkf/qc_module.h>
 #include <ert/enkf/rng_config.h>
+#include <ert/enkf/pca_plot_data.h>
 
   /*****************************************************************/
   
@@ -142,6 +143,7 @@ extern "C" {
   ert_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
   enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );
   enkf_state_type            ** enkf_main_get_ensemble( enkf_main_type * enkf_main);
+  const enkf_state_type      ** enkf_main_get_ensemble_const( const enkf_main_type * enkf_main);
   
   const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
   const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
@@ -198,6 +200,11 @@ extern "C" {
                                             const stringlist_type * node_list);
   
   
+pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_main , 
+                                                    local_obsdata_type * obs_data, 
+                                                    double truncation_or_ncomp);
+
+  
   void                     enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file );
   void                     enkf_main_list_users(  set_type * users , const char * executable );
   const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
@@ -225,15 +232,22 @@ extern "C" {
   qc_module_type       * enkf_main_get_qc_module( const enkf_main_type * enkf_main );
   bool                   enkf_main_has_QC_workflow( const enkf_main_type * enkf_main );
 
-  void enkf_main_get_PC( const enkf_main_type * enkf_main , 
-                         const matrix_type * S, 
+  void enkf_main_get_PC( const matrix_type * S, 
                          const matrix_type * dObs,
-                         const char * obsset_name , 
-                         int step1 , int step2 , 
                          double truncation , 
                          int ncomp , 
                          matrix_type * PC , 
                          matrix_type * PC_obs);
+  
+  void enkf_main_init_PC( const enkf_main_type * enkf_main , 
+                          const local_obsdata_type * obsdata , 
+                          double truncation_or_ncomp , 
+                          matrix_type * PC , 
+                          matrix_type * PC_obs );
+
+  void enkf_main_fprintf_PC(const char * filename , 
+                            matrix_type * PC , 
+                            matrix_type * PC_obs);
   
   
   void                   enkf_main_set_verbose( enkf_main_type * enkf_main , bool verbose);
