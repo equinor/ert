@@ -125,6 +125,9 @@ void enkf_tui_plot_PC_list( enkf_main_type * enkf_main , const vector_type * PC_
       plot_dataset_append_point_xy( obs_data , pca_plot_vector_get_obs_value( pca_vector ) , iobs );
       free( obs_label );
     }
+    // POsition of text is not considered when the autorange is applied; i.e. with
+    // fixed coordinates it might fall outside the clipping region ...
+    plot_add_text( plot , -0.75 , iobs , 0.35 , pca_plot_data_get_name( pca_data ));
   }
   enkf_tui_show_plot( plot , plot_config , plot_file ); /* Frees the plot - logical ehhh. */
   free( plot_file );

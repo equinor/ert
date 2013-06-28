@@ -59,6 +59,7 @@ struct plot_struct {
   vector_type        * dataset;          /* Vector of datasets to plot. */ 
   hash_type          * dataset_hash;     /* Hash table of the datasets - indexed by label. */
   bool                 is_histogram;     /* If this is true it can only contain histogram datasets. */
+  vector_type        * text_list;
   
   char               * xlabel;           /* Label for the x-axis */
   char               * ylabel;           /* Label for the y-axis */
@@ -186,6 +187,7 @@ plot_type * plot_alloc(const char * __driver_type , const void * init_arg , bool
 
   /* Initializing plot data which is common to all drivers. */
   plot->is_histogram    = false;
+  plot->text_list       = vector_alloc_new();
   plot->dataset         = vector_alloc_new();
   plot->dataset_hash    = hash_alloc();
   plot->range           = plot_range_alloc();
@@ -260,6 +262,7 @@ static void plot_free_all_datasets(plot_type * plot) {
 void plot_free( plot_type * plot )
 {
   plot_driver_free( plot->driver );
+  vector_free( plot->text_list );
   plot_free_all_datasets(plot);
   plot_range_free(plot->range);
   util_safe_free(plot->timefmt);
@@ -316,6 +319,14 @@ void plot_data(plot_type * plot)
   
   for (iplot = 0; iplot < vector_get_size( plot->dataset ); iplot++) 
     plot_dataset_draw(vector_iget(plot->dataset , iplot) , driver , plot->range);
+
+  {
+    int itext;
+    for (itext = 0; itext < vector_get_size( plot->text_list ); itext++) {
+      const plot_text_type * plot_text = vector_iget_const( plot->text_list , itext );
+      plot_driver_text( driver , plot_text );
+    }
+  }
 }
 
 
@@ -450,3 +461,7 @@ void plot_update_range(plot_type * plot, plot_range_type * range) {
 }
 
 
+void plot_add_text( plot_type * plot , double x , double y , double font_scale , const char * text) {
+  plot_text_type * text_node = plot_text_alloc(x , y ,  font_scale , text );
+  vector_append_owned_ref( plot->text_list , text_node , plot_text_free__ );
+}
