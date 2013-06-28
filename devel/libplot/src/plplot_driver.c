@@ -28,7 +28,7 @@
 
 #include <ert/plot/plot_driver.h>
 #include <ert/plot/plot_const.h>
-
+#include <ert/plot/plot_text.h>
 
 
 typedef struct {
@@ -354,6 +354,19 @@ void plplot_plot_hist( plot_driver_type * driver, const char * label , double_ve
 
 
 
+void plplot_text( plot_driver_type * driver , const plot_text_type * plot_text) {
+  double just = 0.0;  // Left justified
+  plschr( 0.0 , plot_text_get_font_scale( plot_text ) );
+  plcol0( BLACK );
+  
+  plptex( plot_text_get_x( plot_text ) , 
+          plot_text_get_y( plot_text ) , 
+          1 , 0 , just , 
+          plot_text_get_text( plot_text ));
+
+  plschr( 0.0 , 1.0 );
+}
+
 
 /**
    This function allocates a plplot based plot driver. The init_arg
@@ -387,6 +400,6 @@ plot_driver_type * plplot_driver_alloc(const void * init_arg) {
   driver->plot_x1x2y      = plplot_plot_x1x2y;
   driver->plot_hist       = plplot_plot_hist;
   driver->set_log         = plplot_set_log; 
-
+  driver->text            = plplot_text;
   return driver;
 }
