@@ -121,7 +121,7 @@ extern "C" {
   typedef bool (set_option_ftype) (void *, const char*, const void *);
   typedef const void * (get_option_ftype) (const void *, const char *);
   typedef bool (has_option_ftype) (const void *, const char *);
-  typedef void (init_option_list) (stringlist_type *);
+  typedef void (init_option_list_ftype) (stringlist_type *);
   
 
   queue_driver_type * queue_driver_alloc_RSH(const char * rsh_cmd, const hash_type * rsh_hostlist);

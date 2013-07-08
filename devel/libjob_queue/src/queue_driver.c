@@ -69,7 +69,7 @@ struct queue_driver_struct {
   set_option_ftype * set_option;
   get_option_ftype * get_option;
   has_option_ftype * has_option;
-  init_option_list * init_options;
+  init_option_list_ftype * init_options;
 
   void * data; /* Driver specific data - passed as first argument to the driver functions above. */
 
