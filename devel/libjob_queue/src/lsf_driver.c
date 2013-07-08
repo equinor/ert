@@ -859,6 +859,16 @@ bool lsf_driver_has_option( const void * __driver , const char * option_key) {
   return false;
 }
 
+void lsf_driver_init_option_list(stringlist_type * option_list) {
+  stringlist_append_ref(option_list, LSF_QUEUE);
+  stringlist_append_ref(option_list, LSF_RESOURCE);
+  stringlist_append_ref(option_list, LSF_SERVER);
+  stringlist_append_ref(option_list, LSF_RSH_CMD);
+  stringlist_append_ref(option_list, LSF_LOGIN_SHELL);
+  stringlist_append_ref(option_list, LSF_BSUB_CMD);
+  stringlist_append_ref(option_list, LSF_BJOBS_CMD);
+  stringlist_append_ref(option_list, LSF_BKILL_CMD);
+}
 
 
 
