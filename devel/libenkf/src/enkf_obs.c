@@ -484,7 +484,7 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
       conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file);
       
       if(conf_instance_validate(enkf_conf) == false) 
-      util_abort("Can not proceed with this configuration.\n");
+        util_abort("Can not proceed with this configuration.\n");
       
       if (enkf_obs->config_file != NULL)      /* Clear current instance, observe that this function   */
         hash_clear( enkf_obs->obs_hash );     /* will reload even if it is called repeatedly with the */
@@ -507,9 +507,9 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
             if (obs_vector != NULL) {
               if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , 
                                                            hist_obs_conf , 
-                                                           enkf_obs->history , 
-                                                           ensemble_config , 
-                                                           std_cutoff ))
+                                                           enkf_obs->history ,
+                      ensemble_config,
+                      std_cutoff ))
                 enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
               else {
                 fprintf(stderr,"** Could not load historical data for observation:%s - ignored\n",obs_key);

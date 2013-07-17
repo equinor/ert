@@ -25,6 +25,7 @@ int main(int argc, char ** argv) {
 
   obs_vector_type * obs_vector = obs_vector_alloc(GEN_OBS, "WHAT", NULL, 0);
   enkf_obs_add_obs_vector(enkf_obs, "PROP", obs_vector);
+  
   exit(0);
 }
 

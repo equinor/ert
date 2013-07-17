@@ -110,6 +110,10 @@ add_executable(enkf_obs_tests enkf_obs_tests.c)
 target_link_libraries(enkf_obs_tests enkf)
 add_test(enkf_obs_tests ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_tests)
 
+add_executable(obs_vector_tests obs_vector_tests.c)
+target_link_libraries(obs_vector_tests enkf)
+add_test(obs_vector_tests ${EXECUTABLE_OUTPUT_PATH}/obs_vector_tests)
+
 add_test( enkf_runpath_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_runpath_list )
 add_test( enkf_site_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_site_config /project/res/etc/ERT/site-config)
 add_test( enkf_time_map1  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map )

@@ -119,6 +119,7 @@ UTIL_IS_INSTANCE_FUNCTION(summary_obs , SUMMARY_OBS_TYPE_ID);
 
 void summary_obs_free(summary_obs_type * summary_obs) {
   free(summary_obs->summary_key);
+  free(summary_obs->obs_key);
   free(summary_obs);
 }
 
@@ -196,6 +197,11 @@ double summary_obs_get_value( const summary_obs_type * summary_obs ) {
 
 double summary_obs_get_std( const summary_obs_type * summary_obs ) {
   return summary_obs->std;
+}
+
+void summary_obs_scale_std__(void * summary_obs, double std_multiplier ) {
+  summary_obs_type * observation = summary_obs_safe_cast(summary_obs);
+  observation->std = observation->std * std_multiplier;
 }
 
 
