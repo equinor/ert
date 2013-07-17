@@ -29,7 +29,7 @@ if (ERT_WINDOWS)
    set( CMAKE_C_FLAGS    "-O2" )
    set( CMAKE_CXX_FLAGS  "-O2" )
 else()
-   set( CMAKE_C_FLAGS    "-std=gnu99 -g -O2 -Wall -Werror -Wno-unknown-pragmas " )
+   set( CMAKE_C_FLAGS    "-std=gnu99 -g -Wall -Werror -Wno-unknown-pragmas " )
    set( CMAKE_CXX_FLAGS  "-g -O2 -Wall -Werror ")
 endif()
 
