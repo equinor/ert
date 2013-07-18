@@ -80,7 +80,7 @@ summary_obs_type * summary_obs_alloc_from_SUMMARY_OBSERVATION(
 
 void summary_obs_set(summary_obs_type * , double , double );
 
-void summary_obs_scale_std__(void * summary_obs, double std_multiplier );
+void summary_obs_scale_std(void * summary_obs, double std_multiplier );
 
 VOID_FREE_HEADER(summary_obs);
 VOID_GET_OBS_HEADER(summary_obs);

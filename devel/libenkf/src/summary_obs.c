@@ -199,7 +199,7 @@ double summary_obs_get_std( const summary_obs_type * summary_obs ) {
   return summary_obs->std;
 }
 
-void summary_obs_scale_std__(void * summary_obs, double std_multiplier ) {
+void summary_obs_scale_std(void * summary_obs, double std_multiplier ) {
   summary_obs_type * observation = summary_obs_safe_cast(summary_obs);
   observation->std = observation->std * std_multiplier;
 }

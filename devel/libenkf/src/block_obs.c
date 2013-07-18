@@ -356,6 +356,17 @@ int block_obs_get_size(const block_obs_type * block_obs) {
   return block_obs->size;
 }
 
+void block_obs_scale_std(void * block_obs, double scale_factor) {
+  block_obs_type * observation = block_obs_safe_cast(block_obs);
+
+  for (int i = 0; i < observation->size; i++) {
+    if (observation->point_list[i] != NULL) {
+      point_obs_type * point_observation = observation->point_list[i];
+      point_observation->std = point_observation->std * scale_factor;
+    }
+  }
+}
+
 
 /*****************************************************************/
 
