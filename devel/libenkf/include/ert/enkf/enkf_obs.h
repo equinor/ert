@@ -81,6 +81,7 @@ extern "C" {
   stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string);
   time_t            enkf_obs_iget_obs_time(enkf_obs_type * enkf_obs , int report_step);
   void              enkf_obs_fprintf_config( const enkf_obs_type * enkf_obs , FILE * stream);
+  void              enkf_obs_scale_std(enkf_obs_type * enkf_obs, double scale_factor);
   
 #ifdef __cplusplus
 }

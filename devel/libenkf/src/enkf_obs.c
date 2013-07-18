@@ -1056,7 +1056,18 @@ const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , con
   return vector;
 }
 
-
-
 /*****************************************************************/
+
+void enkf_obs_scale_std(enkf_obs_type * enkf_obs, double scale_factor) {
+
+  hash_iter_type * observation_vector_iterator = enkf_obs_alloc_iter(enkf_obs);
+  obs_vector_type * current_obs_vector = NULL;
+  
+  while (!hash_iter_is_complete( observation_vector_iterator )) {
+    current_obs_vector = hash_iter_get_next_value( observation_vector_iterator );
+    obs_vector_scale_std(current_obs_vector, scale_factor);
+  }
+  
+  hash_iter_free(observation_vector_iterator);
+}
 
