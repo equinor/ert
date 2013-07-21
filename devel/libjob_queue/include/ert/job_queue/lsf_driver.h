@@ -85,7 +85,8 @@ typedef struct lsf_job_struct    lsf_job_type;
   bool            lsf_driver_has_option( const void * __driver , const char * option_key);
   const  void   * lsf_driver_get_option( const void * __driver , const char * option_key);
   bool            lsf_driver_set_option( void * __driver , const char * option_key , const void * value);
-  
+  void            lsf_driver_init_option_list(stringlist_type * option_list);
+ 
   
   UTIL_SAFE_CAST_HEADER( lsf_driver );
   

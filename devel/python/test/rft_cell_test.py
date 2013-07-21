@@ -69,12 +69,13 @@ class RFTCellTest( unittest.TestCase ):
         grat = 88
         wrat = 97213
         conn_start = 214
+        conn_end = 400
         flowrate = 111
         oil_flowrate = 12
         gas_flowrate = 132
         water_flowrate = 13344
 
-        cell = ecl.EclPLTCell.new( i , j , k , depth , pressure , orat , grat , wrat , conn_start , flowrate , oil_flowrate , gas_flowrate , water_flowrate)
+        cell = ecl.EclPLTCell.new( i , j , k , depth , pressure , orat , grat , wrat , conn_start , conn_end, flowrate , oil_flowrate , gas_flowrate , water_flowrate)
                                    
         
         self.assertTrue( i == cell.get_i() )
@@ -93,6 +94,7 @@ class RFTCellTest( unittest.TestCase ):
         self.assertTrue( approx_equal( wrat     , cell.wrat ))
 
         self.assertTrue( approx_equal( conn_start , cell.conn_start) )
+        self.assertTrue( approx_equal( conn_end   , cell.conn_end) )
         self.assertTrue( approx_equal( flowrate           , cell.flowrate      ))
         self.assertTrue( approx_equal( oil_flowrate       , cell.oil_flowrate  ))
         self.assertTrue( approx_equal( gas_flowrate       , cell.gas_flowrate  ))
