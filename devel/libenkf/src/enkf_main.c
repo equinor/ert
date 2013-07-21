@@ -2340,22 +2340,20 @@ void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
 }
 
 
-
-
-
-/**
-   When the case has changed it is essential to invalidate the meta
-   information in the enkf_nodes, otherwise the nodes might reuse old
-   data (from a previous case).
-*/
-
-static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
-  int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  int iens;
-  for (iens = 0; iens < ens_size; iens++)
-    enkf_state_invalidate_cache( enkf_main->ensemble[iens] );
-}
-
+// NOTE KF 20130628: This is commented out, because I don't think it is used, but we'll give it some time
+//
+///**
+//   When the case has changed it is essential to invalidate the meta
+//   information in the enkf_nodes, otherwise the nodes might reuse old
+//   data (from a previous case).
+//*/
+//
+//static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
+//  int ens_size = enkf_main_get_ensemble_size( enkf_main );
+//  int iens;
+//  for (iens = 0; iens < ens_size; iens++)
+//    enkf_state_invalidate_cache( enkf_main->ensemble[iens] );
+//}
 
 
 void enkf_main_create_fs( enkf_main_type * enkf_main , const char * fs_path) {
