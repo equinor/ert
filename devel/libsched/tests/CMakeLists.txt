@@ -9,6 +9,7 @@
 add_executable( sched_history_summary sched_history_summary.c )
 target_link_libraries( sched_history_summary sched )
 add_test( sched_history_summary1  ${EXECUTABLE_OUTPUT_PATH}/sched_history_summary ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE )
+add_test( sched_history_summary2  ${EXECUTABLE_OUTPUT_PATH}/sched_history_summary ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Snorre/SNORRE )
 
 #set_property( TEST sched_load PROPERTY LABELS StatoilData)
 set_property( TEST sched_history_summary1 PROPERTY LABELS StatoilData)
