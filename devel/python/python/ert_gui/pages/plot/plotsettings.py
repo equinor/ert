@@ -69,7 +69,6 @@ class PlotSettings(QObject):
         
         for pc in self._plot_configs:
             self.changed.connect( self.notify )
-            #self.connect(pc.signal_handler, SIGNAL('plotConfigChanged(PlotConfig)'), self.notify)
 
         self._plot_config_dict = {}
         for pc in self._plot_configs:
