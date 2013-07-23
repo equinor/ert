@@ -138,7 +138,7 @@ obs_vector_type * obs_vector_alloc(obs_impl_type obs_type, const char * obs_key,
       vector->get_obs = gen_obs_get_observations__;
       vector->user_get = gen_obs_user_get__;
       vector->chi2 = gen_obs_chi2__;
-      //vector->scale_std  = gen_obs_scale_std__;
+      vector->scale_std  = gen_obs_scale_std;
       break;
     default:
       util_abort("%s: internal error - obs_type:%d not recognized \n", __func__, obs_type);
