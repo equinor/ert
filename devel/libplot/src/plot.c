@@ -21,6 +21,7 @@
 
 #include <ert/util/hash.h>
 #include <ert/util/vector.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/plot/plplot_driver.h>
 #include <ert/plot/plot.h>
@@ -51,10 +52,11 @@
 
 
 
-
+#define PLOT_TYPE_ID 7000091
 
 
 struct plot_struct {
+  UTIL_TYPE_ID_DECLARATION;
   char               * timefmt;          /* The format string used to convert from time_t -> strtime on the x-axis; NULL if not used. */
   vector_type        * dataset;          /* Vector of datasets to plot. */ 
   hash_type          * dataset_hash;     /* Hash table of the datasets - indexed by label. */
@@ -79,6 +81,7 @@ struct plot_struct {
   plot_driver_type   * driver;           /* Plot driver - mainly list of function pointers to 'actually do it'. */
 };
 
+UTIL_IS_INSTANCE_FUNCTION( plot , PLOT_TYPE_ID)
 
 
 
@@ -154,6 +157,29 @@ static void plot_set_log( plot_type * plot , bool logx , bool logy) {
   plot->logy            = logy;
 }
 
+plot_driver_type * plot_alloc_driver( const char * __driver_type , const void * init_arg) {
+
+  plot_driver_type * driver = NULL;
+  {
+    char * driver_type = util_alloc_string_copy( __driver_type );
+    util_strupr( driver_type );
+    
+    if (util_string_equal( driver_type , "PLPLOT")) {
+      if (plplot_driver_check_init_arg( init_arg ))
+        driver  = plplot_driver_alloc(init_arg);
+    } else if (util_string_equal( driver_type , "TEXT"))
+      driver  = text_driver_alloc(init_arg);
+    else
+      util_abort("%s: plot driver:%s not implemented ... \n",__func__ , __driver_type);
+    
+    free( driver_type );
+  }
+
+  if (driver)
+    plot_driver_assert( driver );
+  return driver;
+}
+
 
 /**
    This function allocates the plot handle. The first argument is a
@@ -165,49 +191,38 @@ static void plot_set_log( plot_type * plot , bool logx , bool logy) {
 
 plot_type * plot_alloc(const char * __driver_type , const void * init_arg , bool logx , bool logy)
 {
-  plot_type * plot = util_malloc(sizeof *plot );
-  {
-    /*
-      Loading the driver:
-    */
-    char * driver_type = util_alloc_string_copy( __driver_type );
-    util_strupr( driver_type );
-
-    if (util_string_equal( driver_type , "PLPLOT"))
-      plot->driver  = plplot_driver_alloc(init_arg);
-    else if (util_string_equal( driver_type , "TEXT"))
-      plot->driver  = text_driver_alloc(init_arg);
-    else
-      util_abort("%s: plot driver:%s not implemented ... \n",__func__ , __driver_type);
+  plot_driver_type * driver = plot_alloc_driver( __driver_type , init_arg );
+  if (driver) {
+    plot_type * plot = util_malloc(sizeof *plot );
+    UTIL_TYPE_ID_INIT( plot , PLOT_TYPE_ID );
     
-    plot_driver_assert( plot->driver );
-
-    free( driver_type );
-  }
-
-  /* Initializing plot data which is common to all drivers. */
-  plot->is_histogram    = false;
-  plot->text_list       = vector_alloc_new();
-  plot->dataset         = vector_alloc_new();
-  plot->dataset_hash    = hash_alloc();
-  plot->range           = plot_range_alloc();
-  plot->timefmt         = NULL;
-  plot->xlabel          = NULL;
-  plot->ylabel          = NULL;
-  plot->title           = NULL;
-  
-  /* 
-     These functions only manipulate the internal plot_state
-     variables, and do not call the driver functions.
-  */
-  plot_set_window_size(plot , PLOT_DEFAULT_WIDTH , PLOT_DEFAULT_HEIGHT);
-  plot_set_box_color(plot , PLOT_DEFAULT_BOX_COLOR);
-  plot_set_label_color(plot , PLOT_DEFAULT_LABEL_COLOR);
-  plot_set_label_fontsize(plot , 1.0);
-  plot_set_axis_fontsize(plot , 1.0);
-  plot_set_labels(plot , "" , "" , ""); /* Initializeing with empty labels. */
-  plot_set_log( plot , logx , logy); /* Default - no log on the axis. */
-  return plot;
+    plot->driver = driver;
+    
+    /* Initializing plot data which is common to all drivers. */
+    plot->is_histogram    = false;
+    plot->text_list       = vector_alloc_new();
+    plot->dataset         = vector_alloc_new();
+    plot->dataset_hash    = hash_alloc();
+    plot->range           = plot_range_alloc();
+    plot->timefmt         = NULL;
+    plot->xlabel          = NULL;
+    plot->ylabel          = NULL;
+    plot->title           = NULL;
+    
+    /* 
+       These functions only manipulate the internal plot_state
+       variables, and do not call the driver functions.
+    */
+    plot_set_window_size(plot , PLOT_DEFAULT_WIDTH , PLOT_DEFAULT_HEIGHT);
+    plot_set_box_color(plot , PLOT_DEFAULT_BOX_COLOR);
+    plot_set_label_color(plot , PLOT_DEFAULT_LABEL_COLOR);
+    plot_set_label_fontsize(plot , 1.0);
+    plot_set_axis_fontsize(plot , 1.0);
+    plot_set_labels(plot , "" , "" , ""); /* Initializeing with empty labels. */
+    plot_set_log( plot , logx , logy); /* Default - no log on the axis. */
+    return plot;
+  } else
+    return NULL;
 }
 
 
