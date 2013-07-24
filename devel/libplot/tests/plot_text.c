@@ -24,25 +24,36 @@
 #include <ert/plot/plot_text.h>
 
 
-bool test_create( ) {
+void test_create_normal( ) {
   double xpos = 0.0;
   double ypos = 1.0;
   double font_scale = 0.07;
   
   const char * text = "Bjarne";
-  bool OK = true;
-  {
-    plot_text_type * plot_text = plot_text_alloc( xpos , ypos , font_scale , text );
-    plot_text_free( plot_text );
-  }
-  return OK;
+  plot_text_type * plot_text = plot_text_alloc( xpos , ypos , font_scale , text );
+
+  test_assert_true( plot_text_is_instance( plot_text ));
+  test_assert_string_equal( text , plot_text_get_text( plot_text ));
+  test_assert_double_equal( xpos , plot_text_get_x( plot_text ));
+  test_assert_double_equal( ypos , plot_text_get_y( plot_text ));
+  test_assert_double_equal( font_scale , plot_text_get_font_scale( plot_text ));
+  
+  plot_text_free( plot_text );
+}
+
+
+void test_create_NULL_content( ) {
+  plot_text_type * plot_text = plot_text_alloc( 1.0 , 1.0 , 1.0 , NULL );
+
+  test_assert_NULL( plot_text );
 }
 
 
 
 int main(int argc , char ** argv) {
   
-  test_assert_true( test_create() );
+  test_create_normal( );
+  test_create_NULL_content( );
   
   exit(0);
 }

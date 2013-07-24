@@ -35,17 +35,21 @@ struct plot_text_struct {
 
 
 static UTIL_SAFE_CAST_FUNCTION(plot_text , PLOT_TEXT_TYPE_ID )
+UTIL_IS_INSTANCE_FUNCTION( plot_text , PLOT_TEXT_TYPE_ID)
 
 plot_text_type * plot_text_alloc( double xpos , double ypos , double font_scale , const char * text) {
-  plot_text_type * plot_text = util_malloc( sizeof * plot_text );
+  if (text) {
+    plot_text_type * plot_text = util_malloc( sizeof * plot_text );
 
-  UTIL_TYPE_ID_INIT( plot_text , PLOT_TEXT_TYPE_ID );
-  plot_text->xpos = xpos;
-  plot_text->ypos = ypos;
-  plot_text->font_scale = font_scale;
-  plot_text->text = util_alloc_string_copy( text );
-
-  return plot_text;
+    UTIL_TYPE_ID_INIT( plot_text , PLOT_TEXT_TYPE_ID );
+    plot_text->xpos = xpos;
+    plot_text->ypos = ypos;
+    plot_text->font_scale = font_scale;
+    plot_text->text = util_alloc_string_copy( text );
+    
+    return plot_text;
+  } else
+    return NULL;
 }
 
 
