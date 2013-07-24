@@ -21,11 +21,13 @@
 #include <string.h>
 #include <math.h>
 
-#include <ert/util/util.h>
-#include <ert/util/arg_pack.h>
-
 #include <plplot/plplot.h>
 
+#include <ert/util/util.h>
+#include <ert/util/arg_pack.h>
+#include <ert/util/node_ctype.h>
+
+#include <ert/plot/plplot_driver.h>
 #include <ert/plot/plot_driver.h>
 #include <ert/plot/plot_const.h>
 #include <ert/plot/plot_text.h>
@@ -66,6 +68,8 @@ static void plplot_state_set_log( plplot_state_type * state , bool logx , bool l
   //else
   //  state->plbox_yopt = util_realloc_string_copy( state->plbox_yopt , PLOT_DEFAULT_PLBOX_YOPT );
 }
+
+
 
 
 static plplot_state_type * plplot_state_alloc( const void * init_arg ) {
@@ -113,7 +117,7 @@ static void plplot_state_close( plplot_state_type * state ) {
 
 
 
-static void plplot_close_driver( plot_driver_type * driver ) {
+void plplot_close_driver( plot_driver_type * driver ) {
   plplot_state_close( driver->state );
 }
 
@@ -368,6 +372,22 @@ void plplot_text( plot_driver_type * driver , const plot_text_type * plot_text) 
 }
 
 
+bool plplot_driver_check_init_arg( const void * init_arg ) {
+  if (arg_pack_is_instance( init_arg )) {
+    const arg_pack_type * arg_pack = arg_pack_safe_cast_const( init_arg );
+    if (arg_pack_size( arg_pack ) == 2) {
+      if ((arg_pack_iget_ctype( arg_pack , 0 ) == CTYPE_VOID_POINTER) &&
+          (arg_pack_iget_ctype( arg_pack , 1 ) == CTYPE_VOID_POINTER))
+        return true;
+      else
+        return false;
+    } else
+      return false;
+  } else
+    return false;
+}
+
+
 /**
    This function allocates a plplot based plot driver. The init_arg
    pointer should point to an arg_pack instance containing two
@@ -387,19 +407,22 @@ void plplot_text( plot_driver_type * driver , const plot_text_type * plot_text) 
 */
 
 plot_driver_type * plplot_driver_alloc(const void * init_arg) {
-  plot_driver_type * driver = plot_driver_alloc_empty("PLPLOT");
-  driver->state           = plplot_state_alloc( init_arg );
-  
-  driver->close_driver    = plplot_close_driver;
-  driver->set_window_size = plplot_set_window_size;
-  driver->set_labels      = plplot_set_labels; 
-  driver->set_axis        = plplot_set_axis;
-  
-  driver->plot_xy         = plplot_plot_xy;
-  driver->plot_xy1y2      = plplot_plot_xy1y2;
-  driver->plot_x1x2y      = plplot_plot_x1x2y;
-  driver->plot_hist       = plplot_plot_hist;
-  driver->set_log         = plplot_set_log; 
-  driver->text            = plplot_text;
-  return driver;
+  if (plplot_driver_check_init_arg( init_arg )) {
+    plot_driver_type * driver = plot_driver_alloc_empty("PLPLOT");
+    driver->state           = plplot_state_alloc( init_arg );
+    
+    driver->close_driver    = plplot_close_driver;
+    driver->set_window_size = plplot_set_window_size;
+    driver->set_labels      = plplot_set_labels; 
+    driver->set_axis        = plplot_set_axis;
+    
+    driver->plot_xy         = plplot_plot_xy;
+    driver->plot_xy1y2      = plplot_plot_xy1y2;
+    driver->plot_x1x2y      = plplot_plot_x1x2y;
+    driver->plot_hist       = plplot_plot_hist;
+    driver->set_log         = plplot_set_log; 
+    driver->text            = plplot_text;
+    return driver;
+  } else
+    return NULL;
 }
