@@ -508,8 +508,8 @@ void enkf_obs_load(enkf_obs_type * enkf_obs ,
               if (obs_vector_load_from_HISTORY_OBSERVATION(obs_vector , 
                                                            hist_obs_conf , 
                                                            enkf_obs->history ,
-                      ensemble_config,
-                      std_cutoff ))
+                                                           ensemble_config,
+                                                           std_cutoff ))
                 enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
               else {
                 fprintf(stderr,"** Could not load historical data for observation:%s - ignored\n",obs_key);
@@ -1061,10 +1061,9 @@ const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , con
 void enkf_obs_scale_std(enkf_obs_type * enkf_obs, double scale_factor) {
 
   hash_iter_type * observation_vector_iterator = enkf_obs_alloc_iter(enkf_obs);
-  obs_vector_type * current_obs_vector = NULL;
-  
-  while (!hash_iter_is_complete( observation_vector_iterator )) {
-    current_obs_vector = hash_iter_get_next_value( observation_vector_iterator );
+
+  while (!hash_iter_is_complete(observation_vector_iterator)) {
+    obs_vector_type * current_obs_vector = hash_iter_get_next_value(observation_vector_iterator);
     obs_vector_scale_std(current_obs_vector, scale_factor);
   }
   

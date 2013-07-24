@@ -38,6 +38,7 @@ int main(int argc, char ** argv) {
   summary_obs_type * summary_obs4 = summary_obs_alloc( "SummaryKey2" , "ObservationKey2" , 4.2, 0.1 , AUTO_CORRF_EXP, 42);
   obs_vector_install_node( obs_vector2 , 1 , summary_obs4 );
   
+  enkf_obs_add_obs_vector(enkf_obs, "PROP0", obs_vector);
   enkf_obs_add_obs_vector(enkf_obs, "PROP", obs_vector2);
   
   enkf_obs_scale_std(enkf_obs, 3.3);

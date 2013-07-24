@@ -53,18 +53,18 @@
 
 struct obs_vector_struct {
   UTIL_TYPE_ID_DECLARATION;
-  obs_free_ftype *freef; /* Function used to free an observation node. */
-  obs_get_ftype *get_obs; /* Function used to build the 'd' vector. */
-  obs_meas_ftype *measure; /* Function used to measure on the state, and add to to the S matrix. */
-  obs_user_get_ftype *user_get; /* Function to get an observation based on KEY:INDEX input from user.*/
-  obs_chi2_ftype *chi2; /* Function to evaluate chi-squared for an observation. */
+  obs_free_ftype      *freef;     /* Function used to free an observation node. */
+  obs_get_ftype       *get_obs;   /* Function used to build the 'd' vector. */
+  obs_meas_ftype      *measure;   /* Function used to measure on the state, and add to to the S matrix. */
+  obs_user_get_ftype  *user_get;  /* Function to get an observation based on KEY:INDEX input from user.*/
+  obs_chi2_ftype      *chi2;      /* Function to evaluate chi-squared for an observation. */
   obs_scale_std_ftype *scale_std; /* Function to scale the standard deviation with a given factor */
 
-  vector_type * nodes;
-  char * obs_key; /* The key this observation vector has in the enkf_obs layer. */
-  enkf_config_node_type * config_node; /* The config_node of the node type we are observing - shared reference */
-  obs_impl_type obs_type;
-  int num_active; /* The total number of timesteps where this observation is active (i.e. nodes[ ] != NULL) */
+  vector_type           *nodes;
+  char                  *obs_key;     /* The key this observation vector has in the enkf_obs layer. */
+  enkf_config_node_type *config_node; /* The config_node of the node type we are observing - shared reference */
+  obs_impl_type          obs_type;
+  int                    num_active;  /* The total number of timesteps where this observation is active (i.e. nodes[ ] != NULL) */
 };
 
 UTIL_IS_INSTANCE_FUNCTION(obs_vector, OBS_VECTOR_TYPE_ID)
