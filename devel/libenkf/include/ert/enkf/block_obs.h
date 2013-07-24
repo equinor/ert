@@ -70,7 +70,9 @@ int         block_obs_get_size(const block_obs_type * );
 void        block_obs_iget(const block_obs_type * block_obs, int  , double * , double * );
 void        block_obs_iget_ijk(const block_obs_type * block_obs , int block_nr , int * i , int * j , int * k);
 
-void        block_obs_scale_std(void * block_obs, double scale_factor);
+void        block_obs_scale_std(block_obs_type * block_obs, double scale_factor);
+void        block_obs_scale_std__(void * block_obs, double scale_factor);
+
 
 
 VOID_FREE_HEADER(block_obs);

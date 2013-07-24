@@ -411,11 +411,15 @@ void gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , const char 
   }
 }
 
-void gen_obs_scale_std(void * gen_obs, double std_multiplier ) {
-  gen_obs_type * observation = gen_obs_safe_cast(gen_obs);
-  for (int i = 0; i < observation->obs_size; i++) {
-    observation->obs_std[i] *= std_multiplier; 
+void gen_obs_scale_std(gen_obs_type * gen_obs, double std_multiplier) {
+  for (int i = 0; i < gen_obs->obs_size; i++) {
+    gen_obs->obs_std[i] *= std_multiplier;
   }
+}
+
+void gen_obs_scale_std__(void * gen_obs, double std_multiplier) {
+  gen_obs_type * observation = gen_obs_safe_cast(gen_obs);
+  gen_obs_scale_std(observation, std_multiplier);
 }
 
 

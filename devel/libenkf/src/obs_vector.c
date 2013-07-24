@@ -126,7 +126,7 @@ obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key
     vector->get_obs    = summary_obs_get_observations__;
     vector->user_get   = summary_obs_user_get__;
     vector->chi2       = summary_obs_chi2__;
-    vector->scale_std  = summary_obs_scale_std;
+    vector->scale_std  = summary_obs_scale_std__;
     break;
   case(BLOCK_OBS):
     vector->freef      = block_obs_free__;
@@ -134,7 +134,7 @@ obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key
     vector->get_obs    = block_obs_get_observations__;
     vector->user_get   = block_obs_user_get__;
     vector->chi2       = block_obs_chi2__;
-    vector->scale_std  = block_obs_scale_std;
+    vector->scale_std  = block_obs_scale_std__;
     break;
   case(GEN_OBS):
     vector->freef      = gen_obs_free__;
@@ -142,7 +142,7 @@ obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key
     vector->get_obs    = gen_obs_get_observations__;
     vector->user_get   = gen_obs_user_get__;
     vector->chi2       = gen_obs_chi2__; 
-    vector->scale_std  = gen_obs_scale_std;
+    vector->scale_std  = gen_obs_scale_std__;
     break;
   default:
     util_abort("%s: internal error - obs_type:%d not recognized \n",__func__ , obs_type);

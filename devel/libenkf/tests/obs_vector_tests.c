@@ -138,14 +138,12 @@ bool scale_std_block100observations_no_errors() {
     observations[i] = block_obs;
   }
 
-  double * value = util_calloc(1, sizeof * value);
-  double * std = util_calloc(1, sizeof * std);
-
   for (int i = 0; i < num_observations; i++) {
     for (int point_nr = 0; point_nr < num_points; point_nr++) {
-      block_obs_iget(observations[i], point_nr, value, std);
-      test_assert_double_equal(obs_value, value[0]);
-      test_assert_double_equal(obs_std, std[0]);
+      double value, std;
+      block_obs_iget(observations[i], point_nr, &value, &std);
+      test_assert_double_equal(obs_value, value);
+      test_assert_double_equal(obs_std, std);
     }
   }
 
@@ -153,15 +151,14 @@ bool scale_std_block100observations_no_errors() {
 
   for (int i = 0; i < num_observations; i++) {
     for (int point_nr = 0; point_nr < num_points; point_nr++) {
-      block_obs_iget(observations[i], point_nr, value, std);
-      test_assert_double_equal(obs_value, *value);
-      test_assert_double_equal(obs_std * scale_factor, *std);
+      double value, std;
+      block_obs_iget(observations[i], point_nr, &value, &std);
+      test_assert_double_equal(obs_value, value);
+      test_assert_double_equal(obs_std * scale_factor, std);
     }
   }
 
   ecl_grid_free(grid);
-  free(value);
-  free(std);
   obs_vector_free(obs_vector);
   return true;
 }
@@ -192,22 +189,19 @@ bool scale_std_gen_withdata_no_errors() {
 
   obs_vector_scale_std(obs_vector, multiplier);
 
-  double * value_new = util_calloc(1, sizeof * value_new);
-  double * std_new = util_calloc(1, sizeof * std_new);
-  bool * valid = util_calloc(1, sizeof * valid);
+  
 
   for (int i = 0; i < num_observations; i++) {
     char * index_key = util_alloc_sprintf("%d", i);
-    gen_obs_user_get_with_data_index(observations[i], index_key, value_new, std_new, valid);
-    test_assert_double_equal(std_dev * multiplier, *std_new);
-    test_assert_double_equal(value, *value_new);
+    double value_new, std_new;
+    bool valid;
+    gen_obs_user_get_with_data_index(observations[i], index_key, &value_new, &std_new, &valid);
+    test_assert_double_equal(std_dev * multiplier, std_new);
+    test_assert_double_equal(value, value_new);
     free(index_key);
   }
 
   obs_vector_free(obs_vector);
-  free(value_new);
-  free(std_new);
-  free(valid);
   return true;
 }
 
