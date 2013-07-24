@@ -111,7 +111,6 @@ add_test( enkf_refcase_list2  ${EXECUTABLE_OUTPUT_PATH}/enkf_refcase_list ${PROJ
 set_property( TEST enkf_refcase_list PROPERTY LABELS StatoilData )
 set_property( TEST enkf_refcase_list2 PROPERTY LABELS StatoilData )
 
-
 add_executable( enkf_ecl_config enkf_ecl_config.c )
 target_link_libraries( enkf_ecl_config enkf )
 add_test( enkf_ecl_config1  ${EXECUTABLE_OUTPUT_PATH}/enkf_ecl_config )
@@ -127,6 +126,13 @@ add_executable( enkf_qc_module_test enkf_qc_module_test.c )
 target_link_libraries( enkf_qc_module_test enkf )
 add_test( enkf_qc_module_test ${EXECUTABLE_OUTPUT_PATH}/enkf_qc_module_test )
  
+add_executable(enkf_obs_tests enkf_obs_tests.c)
+target_link_libraries(enkf_obs_tests enkf)
+add_test(enkf_obs_tests ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_tests)
+
+add_executable(obs_vector_tests obs_vector_tests.c)
+target_link_libraries(obs_vector_tests enkf)
+add_test(obs_vector_tests ${EXECUTABLE_OUTPUT_PATH}/obs_vector_tests)
 
 add_test( enkf_runpath_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_runpath_list )
 add_test( enkf_site_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_site_config /project/res/etc/ERT/site-config)
