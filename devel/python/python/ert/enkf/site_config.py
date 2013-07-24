@@ -143,7 +143,6 @@ class SiteConfig(CClass):
     def queue_is_running(self):
         return cfunc.queue_is_running( self )
 
-    @property
     def get_job_queue(self):
         return JobQueue( c_ptr = cfunc.get_job_queue(self), parent = self)
 
