@@ -3130,7 +3130,7 @@ enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
 
 
 const enkf_state_type ** enkf_main_get_ensemble_const( const enkf_main_type * enkf_main) {
-  return enkf_main->ensemble;
+  return (const enkf_state_type **) enkf_main->ensemble;
 }
 
 
