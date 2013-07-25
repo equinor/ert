@@ -69,7 +69,8 @@ struct plot_range_struct {
   bool   invert_y_axis; 
   bool   auto_range[4];
   /*-----------------------------------------------------------------*/
-  bool   is_empty;
+  bool   is_empty_x;
+  bool   is_empty_y;
   double current_xmin;
   double current_ymin;
   double current_xmax;
@@ -305,7 +306,8 @@ plot_range_type * plot_range_alloc() {
   
   range->invert_x_axis = false;
   range->invert_y_axis = false;
-  range->is_empty      = true;
+  range->is_empty_x    = true;
+  range->is_empty_y    = true;
   return range;
 }
 
@@ -421,21 +423,35 @@ void plot_range_apply(plot_range_type * plot_range) {
 
 /*****************************************************************/
 
-void plot_range_update( plot_range_type * range , double x , double y) {
-  if (range->is_empty) {
+void plot_range_update_x( plot_range_type * range , double x ) {
+  if (range->is_empty_x) {
     range->current_xmin = x;
     range->current_xmax = x;
     
-    range->current_ymin = y;
-    range->current_ymax = y;
-
-    range->is_empty = false;
+    range->is_empty_x = false;
   } else {
     range->current_xmin = util_double_min( range->current_xmin , x );
     range->current_xmax = util_double_max( range->current_xmax , x );
+  }
+}
+
+
+void plot_range_update_y( plot_range_type * range , double y ) {
+  if (range->is_empty_y) {
+    range->current_ymin = y;
+    range->current_ymax = y;
+    
+    range->is_empty_y = false;
+  } else {
     range->current_ymin = util_double_min( range->current_ymin , y );
     range->current_ymax = util_double_max( range->current_ymax , y );
   }
+}
+
+
+void plot_range_update( plot_range_type * range , double x , double y) {
+  plot_range_update_x( range , x );
+  plot_range_update_y( range , y );
 }
 
 
@@ -455,8 +471,12 @@ double plot_range_get_current_ymax( const plot_range_type * range ) {
   return range->current_ymax;
 }
 
-bool plot_range_empty( const plot_range_type * range ) {
-  return range->is_empty;
+bool plot_range_empty_x(const plot_range_type * range ) {
+  return range->is_empty_x;
+}
+
+bool plot_range_empty_y(const plot_range_type * range ) {
+  return range->is_empty_y;
 }
 
 /*****************************************************************/ 
@@ -607,10 +627,4 @@ void plot_range_get_limits( const plot_range_type * range , double * x1 , double
       *y2 = ymax + height * top_padding;
     }
   }
-  
-
-  
-  
-
-
-}
+ }
