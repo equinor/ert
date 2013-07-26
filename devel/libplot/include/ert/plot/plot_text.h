@@ -24,6 +24,8 @@ extern "c" {
 
 #include <ert/util/type_macros.h>
 
+#include <ert/plot/plot_range.h>
+
   typedef struct plot_text_struct plot_text_type;
 
 
@@ -38,6 +40,7 @@ extern "c" {
   double plot_text_get_font_scale( const plot_text_type * plot_text );
 
   const char *  plot_text_get_text( const plot_text_type * plot_text );
+  void          plot_text_update_range( const plot_text_type * plot_text , plot_range_type * range);
 
   UTIL_IS_INSTANCE_HEADER( plot_text );
 

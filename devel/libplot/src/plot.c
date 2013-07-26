@@ -295,7 +295,7 @@ void plot_free( plot_type * plot )
     1. Looping through all the datasets to find the minimum and
        maximum values of x and y, these are set in the plot_range
        struct.
-
+       
     2. The plot_range() methods are used to calculate final range
        xmin,xmax,ymin,ymax values based on the extremal values from
        point 1, padding values and invert_axis flags.
@@ -310,10 +310,6 @@ void plot_free( plot_type * plot )
 
 */
 
-static void plot_set_range__(plot_type * plot) {
-  plot_update_range(plot , plot->range);
-  plot_range_apply( plot->range );
-}
 
 
 
@@ -326,15 +322,14 @@ void plot_data(plot_type * plot)
   int iplot;
   plot_driver_type * driver = plot->driver;
   
-  plot_set_range__(plot);
-  
+  plot_update_range(plot);
   plot_driver_set_window_size( driver , plot->width , plot->height );
   plot_driver_set_labels( driver , plot->title , plot->xlabel  , plot->ylabel , plot->label_color , plot->label_font_size);
   plot_driver_set_axis( driver , plot->range , plot->timefmt , plot->box_color , plot->axis_font_size );
   
   for (iplot = 0; iplot < vector_get_size( plot->dataset ); iplot++) 
     plot_dataset_draw(vector_iget(plot->dataset , iplot) , driver , plot->range);
-
+  
   {
     int itext;
     for (itext = 0; itext < vector_get_size( plot->text_list ); itext++) {
@@ -357,23 +352,26 @@ void plot_data(plot_type * plot)
 
 
 void plot_set_range(plot_type * plot , double xmin , double xmax , double ymin , double ymax) {
-  plot_range_set_range(plot->range , xmin , xmax , ymin , ymax);
+  plot_set_xmin( plot , xmin );
+  plot_set_xmax( plot , xmax );
+  plot_set_ymin( plot , ymin );
+  plot_set_ymax( plot , ymax );
 }
 
 void plot_set_xmin(plot_type * plot , double xmin) {
-  plot_range_set_xmin( plot->range , xmin );
+  plot_range_set_manual_xmin( plot->range , xmin );
 }
 
 void plot_set_xmax(plot_type * plot , double xmax) {
-  plot_range_set_xmax( plot->range , xmax );
+  plot_range_set_manual_xmax( plot->range , xmax );
 }
 
 void plot_set_ymin(plot_type * plot , double ymin) {
-  plot_range_set_ymin( plot->range , ymin );
+  plot_range_set_manual_ymin( plot->range , ymin );
 }
 
 void plot_set_ymax(plot_type * plot , double ymax) {
-  plot_range_set_ymax( plot->range , ymax );
+  plot_range_set_manual_ymax( plot->range , ymax );
 }
 
 
@@ -404,11 +402,11 @@ void plot_set_padding(plot_type * plot , double padding) {
 /*****************************************************************/
 
 void plot_invert_x_axis(plot_type * plot) {
-  plot_range_invert_x_axis(plot->range , true);
+  plot_range_set_invert_x_axis(plot->range , true);
 }
 
 void plot_invert_y_axis(plot_type * plot) {
-  plot_range_invert_y_axis(plot->range , true);
+  plot_range_set_invert_y_axis(plot->range , true);
 }
 
 /*****************************************************************/
@@ -453,25 +451,14 @@ void plot_set_labels(plot_type * plot, const char *xlabel, const char *ylabel, c
 
 
 
-/**
- * @brief Get extrema values
- * @param plot your current plot
- * @param x_max pointer to the new x maximum
- * @param y_max pointer to the new y maximum
- * @param x_min pointer to the new x minimum
- * @param y_min pointer to the new y minimum
- * 
- * Find the extrema values in the plot plot, checks all added datasets.
- */
 
-void plot_update_range(plot_type * plot, plot_range_type * range) {
+void plot_update_range(plot_type * plot) {
   if (plot->is_histogram) 
-    plot_dataset_update_range_histogram( vector_iget(plot->dataset , 0) , range);
+    plot_dataset_update_range_histogram( vector_iget(plot->dataset , 0) , plot->range);
   else {
-    bool first_pass = true;
     int iplot;
     for (iplot = 0; iplot < vector_get_size( plot->dataset  ); iplot++) 
-      plot_dataset_update_range(vector_iget(plot->dataset , iplot) , &first_pass , range);
+      plot_dataset_update_range(vector_iget(plot->dataset , iplot) , plot->range);
   }
 }
 
@@ -479,4 +466,5 @@ void plot_update_range(plot_type * plot, plot_range_type * range) {
 void plot_add_text( plot_type * plot , double x , double y , double font_scale , const char * text) {
   plot_text_type * text_node = plot_text_alloc(x , y ,  font_scale , text );
   vector_append_owned_ref( plot->text_list , text_node , plot_text_free__ );
+  plot_text_update_range( text_node , plot->range );
 }
