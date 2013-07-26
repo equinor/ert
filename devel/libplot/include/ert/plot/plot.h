@@ -57,7 +57,7 @@ void plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel, c
 
 void plot_data(plot_type * item);
 void plot_free(plot_type * item);
-void plot_update_range(plot_type * item, plot_range_type * );
+void plot_update_range(plot_type * item);
 
 void plot_set_window_size(plot_type * , int , int );
 void plot_invert_y_axis(plot_type * );
