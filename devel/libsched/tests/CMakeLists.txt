@@ -13,3 +13,4 @@ add_test( sched_history_summary2  ${EXECUTABLE_OUTPUT_PATH}/sched_history_summar
 
 #set_property( TEST sched_load PROPERTY LABELS StatoilData)
 set_property( TEST sched_history_summary1 PROPERTY LABELS StatoilData)
+set_property( TEST sched_history_summary2 PROPERTY LABELS StatoilData)
