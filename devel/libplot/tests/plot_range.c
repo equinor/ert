@@ -21,6 +21,7 @@
 #include <math.h>
 
 #include <ert/util/test_util.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/plot/plot_range.h>
 
@@ -58,15 +59,11 @@ void test_default() {
 void test_empty_range() {
   plot_range_type * range = plot_range_alloc();
   
-  test_assert_true( plot_range_empty_x( range ));
-  test_assert_true( plot_range_empty_y( range ));
   {
     double x = 10;
     double y = 78;
 
     plot_range_update( range , x , y );
-    test_assert_false( plot_range_empty_x( range ));
-    test_assert_false( plot_range_empty_y( range ));
     test_assert_double_equal( plot_range_get_current_xmin( range ) , x );
     test_assert_double_equal( plot_range_get_current_xmax( range ) , x );
     test_assert_double_equal( plot_range_get_current_ymin( range ) , y );
@@ -79,17 +76,12 @@ void test_empty_range() {
 void test_empty_range_xy() {
   plot_range_type * range = plot_range_alloc();
   
-  test_assert_true( plot_range_empty_x( range ));
-  test_assert_true( plot_range_empty_y( range ));
   {
     double x = 10;
     double y = 78;
 
     plot_range_update_x( range , x );
-    test_assert_false( plot_range_empty_x( range ));
-    test_assert_true( plot_range_empty_y( range ));
     plot_range_update_y( range , y );
-    test_assert_false( plot_range_empty_y( range ));
 
     test_assert_double_equal( plot_range_get_current_xmin( range ) , x );
     test_assert_double_equal( plot_range_get_current_xmax( range ) , x );
@@ -99,6 +91,45 @@ void test_empty_range_xy() {
   plot_range_free( range );
 }
 
+
+void test_update_vector() {
+  plot_range_type * range = plot_range_alloc();
+  double_vector_type * xl = double_vector_alloc(0,0);
+  double_vector_type * yl = double_vector_alloc(0,0);
+  const int N = 100;
+  int i;
+
+  for (i=0; i < N; i++) {
+    double x = 2*3.14159265 * i / (N - 1);
+    
+    double_vector_append( xl , sin(x));
+    double_vector_append( yl , cos(x));
+  }
+  plot_range_update_vector( range , xl , yl );
+
+  test_assert_double_equal( plot_range_get_current_xmin( range ) , -1 );
+  test_assert_double_equal( plot_range_get_current_xmax( range ) ,  1 );
+  test_assert_double_equal( plot_range_get_current_ymin( range ) , -1 );
+  test_assert_double_equal( plot_range_get_current_ymax( range ) ,  1 );
+  
+  for (i=0; i < N; i++) {
+    double x = 2*3.14159265 * i / (N - 1);
+    
+    double_vector_append( xl , 2*sin(x));
+    double_vector_append( yl , 2*cos(x));
+  }
+  plot_range_update_vector_x( range , xl );
+  plot_range_update_vector_y( range , yl );
+
+  test_assert_double_equal( plot_range_get_current_xmin( range ) , -2 );
+  test_assert_double_equal( plot_range_get_current_xmax( range ) ,  2 );
+  test_assert_double_equal( plot_range_get_current_ymin( range ) , -2 );
+  test_assert_double_equal( plot_range_get_current_ymax( range ) ,  2 );
+
+  plot_range_free( range );
+  double_vector_free( xl );
+  double_vector_free( yl );
+}
 
 
 void test_update_range() {

@@ -24,6 +24,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
+#include <ert/util/double_vector.h>
+
 #define PLOT_RANGE_DEFAULT_PADDING       0.025
 #define PLOT_RANGE_DEFAULT_MANUAL_LIMIT  -9999
 
@@ -82,12 +84,14 @@ void plot_range_set_auto_ymin(plot_range_type *  , double);
   void               plot_range_set_range( plot_range_type * range , double xmin , double xmax , double ymin , double ymax);
 
   
+  void   plot_range_update_vector_x( plot_range_type * range , const double_vector_type * x );
+  void   plot_range_update_vector_y( plot_range_type * range , const double_vector_type * y );
+  void   plot_range_update_vector( plot_range_type * range , const double_vector_type * x , const double_vector_type * y);
+
   void   plot_range_update_y( plot_range_type * range , double y);
   void   plot_range_update_x( plot_range_type * range , double x );
   void   plot_range_update( plot_range_type * range , double x , double y);
 
-  bool   plot_range_empty_x( const plot_range_type * range );
-  bool   plot_range_empty_y( const plot_range_type * range );
   void plot_range_get_limits( const plot_range_type * range , double * x1 , double * x2 , double * y1 , double * y2 );
 
   double plot_range_get_current_xmin( const plot_range_type * range );
