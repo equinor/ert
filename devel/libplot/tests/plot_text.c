@@ -22,7 +22,7 @@
 #include <ert/util/test_util.h>
 
 #include <ert/plot/plot_text.h>
-
+#include <ert/plot/plot_range.h>
 
 void test_create_normal( ) {
   double xpos = 0.0;
@@ -49,11 +49,32 @@ void test_create_NULL_content( ) {
 }
 
 
+void test_update_range() {
+  double xpos = 1.56;
+  double ypos = 1.0;
+  double font_scale = 0.07;
+  
+  const char * text = "Bjarne";
+  plot_text_type * plot_text = plot_text_alloc( xpos , ypos , font_scale , text );
+  plot_range_type * plot_range = plot_range_alloc();
+
+  plot_text_update_range( plot_text , plot_range );
+  
+  test_assert_double_equal( xpos , plot_range_get_current_xmin( plot_range ));
+  test_assert_double_equal( xpos , plot_range_get_current_xmax( plot_range ));
+  test_assert_double_equal( ypos , plot_range_get_current_ymin( plot_range ));
+  test_assert_double_equal( ypos , plot_range_get_current_ymax( plot_range ));  
+}
+
+
+
+
 
 int main(int argc , char ** argv) {
   
   test_create_normal( );
   test_create_NULL_content( );
+  test_update_range( );
   
   exit(0);
 }
