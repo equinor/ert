@@ -52,7 +52,7 @@ typedef void (set_log_ftype)          (plot_driver_type * driver , bool logx , b
 typedef void (set_labels_ftype)       (plot_driver_type * driver , const char *title , const char * xlabel , const char * ylabel, plot_color_type label_color , double label_font_size);
 typedef void (window_size_ftype)      (plot_driver_type * driver , int width , int heigth);
 typedef void (close_driver_ftype)     (plot_driver_type * driver );
-typedef void (set_axis_ftype)         (plot_driver_type * driver , plot_range_type * range , const char * timefmt , plot_color_type box_color , double tick_font_size);
+typedef void (set_axis_ftype)         (plot_driver_type * driver , const plot_range_type * range , const char * timefmt , plot_color_type box_color , double tick_font_size);
 
 typedef void (plot_xy_ftype)          (plot_driver_type * driver , const char * label , double_vector_type * x  , double_vector_type * y , plot_style_type style , line_attribute_type line_attr , point_attribute_type point_attr);
 typedef void (plot_xy1y2_ftype)       (plot_driver_type * driver , const char * label , double_vector_type * x  , double_vector_type * y1 , double_vector_type * y2 , line_attribute_type line_attr );
