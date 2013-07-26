@@ -181,6 +181,16 @@ void lsf_job_free(lsf_job_type * job) {
 }
 
 
+void lsf_job_export_hostnames( const lsf_job_type * job , stringlist_type * hostlist) {
+  int host_nr;
+
+  stringlist_clear( hostlist );
+  for (host_nr = 0; host_nr < job->num_exec_host; host_nr++)
+    stringlist_append_copy( hostlist , job->exec_host[ host_nr ]);
+}
+
+
+
 static int lsf_job_parse_bsub_stdout(const lsf_driver_type * driver , const char * stdout_file) {
   int     jobid = -1;
   FILE * stream = util_fopen(stdout_file , "r");
