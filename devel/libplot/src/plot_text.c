@@ -84,3 +84,8 @@ double plot_text_get_font_scale( const plot_text_type * plot_text ) {
 const char *  plot_text_get_text( const plot_text_type * plot_text ) {
   return plot_text->text;
 }
+
+
+void plot_text_update_range( const plot_text_type * plot_text , plot_range_type * range) {
+  plot_range_update( range , plot_text_get_x( plot_text ), plot_text_get_y( plot_text ));
+}
