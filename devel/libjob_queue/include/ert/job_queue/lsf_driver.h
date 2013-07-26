@@ -79,6 +79,7 @@ typedef struct lsf_job_struct    lsf_job_type;
   void            lsf_driver_free_job(void * __job);
   void            lsf_driver_display_info( void * __driver , void * __job);
   void            lsf_driver_set_bjobs_refresh_interval( lsf_driver_type * driver , int refresh_interval);
+  void            lsf_job_export_hostnames( const lsf_job_type * job , stringlist_type * hostlist);
   
   lsf_submit_method_enum lsf_driver_get_submit_method( const lsf_driver_type * driver ); 
   
