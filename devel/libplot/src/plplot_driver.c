@@ -174,14 +174,12 @@ static void plplot_set_labels( plot_driver_type * driver , const char * title , 
 
 
 
-static void plplot_set_axis(plot_driver_type * driver , plot_range_type * range , const char * timefmt , plot_color_type box_color , double tick_font_size) {
+static void plplot_set_axis(plot_driver_type * driver , const plot_range_type * range , const char * timefmt , plot_color_type box_color , double tick_font_size) {
   plplot_state_type * state = driver->state;
   {
-    double xmin = plot_range_get_final_xmin( range );
-    double xmax = plot_range_get_final_xmax( range );
-    double ymin = plot_range_get_final_ymin( range );
-    double ymax = plot_range_get_final_ymax( range );
-    plplot_state_type * state = driver->state;
+    double xmin , xmax , ymin , ymax;
+    plot_range_get_limits( range , &xmin , &xmax , &ymin , &ymax);
+    
     if (state->logx) {
       xmin = log( xmin );
       xmax = log( xmax );
