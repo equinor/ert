@@ -69,8 +69,6 @@ struct plot_range_struct {
   bool   invert_y_axis; 
   bool   auto_range[4];
   /*-----------------------------------------------------------------*/
-  bool   is_empty_x;
-  bool   is_empty_y;
   double current_xmin;
   double current_ymin;
   double current_xmax;
@@ -299,6 +297,11 @@ plot_range_type * plot_range_alloc() {
   range->manual_ymin = PLOT_RANGE_DEFAULT_MANUAL_LIMIT;
   range->manual_ymax = PLOT_RANGE_DEFAULT_MANUAL_LIMIT;
 
+  range->current_xmin =  DBL_MAX;
+  range->current_xmax = -DBL_MAX;
+  range->current_ymin =  DBL_MAX;
+  range->current_ymax = -DBL_MAX;
+
   range->auto_xmin = true;
   range->auto_xmax = true;
   range->auto_ymin = true;
@@ -306,8 +309,6 @@ plot_range_type * plot_range_alloc() {
   
   range->invert_x_axis = false;
   range->invert_y_axis = false;
-  range->is_empty_x    = true;
-  range->is_empty_y    = true;
   return range;
 }
 
@@ -424,34 +425,41 @@ void plot_range_apply(plot_range_type * plot_range) {
 /*****************************************************************/
 
 void plot_range_update_x( plot_range_type * range , double x ) {
-  if (range->is_empty_x) {
-    range->current_xmin = x;
-    range->current_xmax = x;
-    
-    range->is_empty_x = false;
-  } else {
-    range->current_xmin = util_double_min( range->current_xmin , x );
-    range->current_xmax = util_double_max( range->current_xmax , x );
-  }
+  range->current_xmin = util_double_min( range->current_xmin , x );
+  range->current_xmax = util_double_max( range->current_xmax , x );
 }
 
 
 void plot_range_update_y( plot_range_type * range , double y ) {
-  if (range->is_empty_y) {
-    range->current_ymin = y;
-    range->current_ymax = y;
-    
-    range->is_empty_y = false;
-  } else {
-    range->current_ymin = util_double_min( range->current_ymin , y );
-    range->current_ymax = util_double_max( range->current_ymax , y );
-  }
+  range->current_ymin = util_double_min( range->current_ymin , y );
+  range->current_ymax = util_double_max( range->current_ymax , y );
 }
 
 
 void plot_range_update( plot_range_type * range , double x , double y) {
   plot_range_update_x( range , x );
   plot_range_update_y( range , y );
+}
+
+void plot_range_update_vector_x( plot_range_type * range , const double_vector_type * x ) {
+  int i;
+  const double * x_data = double_vector_get_const_ptr( x );
+  for (i=0; i < double_vector_size( x ); i++)
+    plot_range_update_x( range , x_data[i] );
+}
+
+
+void plot_range_update_vector_y( plot_range_type * range , const double_vector_type * y ) {
+  int i;
+  const double * y_data = double_vector_get_const_ptr( y );
+  for (i=0; i < double_vector_size( y ); i++)
+    plot_range_update_y( range , y_data[i] );
+}
+
+
+void plot_range_update_vector( plot_range_type * range , const double_vector_type * x , const double_vector_type * y) {
+  plot_range_update_vector_x( range , x );
+  plot_range_update_vector_y( range , y );
 }
 
 
@@ -471,13 +479,6 @@ double plot_range_get_current_ymax( const plot_range_type * range ) {
   return range->current_ymax;
 }
 
-bool plot_range_empty_x(const plot_range_type * range ) {
-  return range->is_empty_x;
-}
-
-bool plot_range_empty_y(const plot_range_type * range ) {
-  return range->is_empty_y;
-}
 
 /*****************************************************************/ 
 
