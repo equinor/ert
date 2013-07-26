@@ -36,8 +36,6 @@ typedef struct plot_range_struct plot_range_type;
 plot_range_type     * plot_range_alloc();
 void                  plot_range_free(plot_range_type *);
 
-void plot_range_fprintf(const plot_range_type * , FILE * );
-
 double plot_range_get_final_xmin(const plot_range_type * plot_range);
 double plot_range_get_final_xmax(const plot_range_type * plot_range);
 double plot_range_get_final_ymin(const plot_range_type * plot_range);
@@ -52,11 +50,6 @@ double plot_range_safe_get_xmax(const plot_range_type * );
 double plot_range_safe_get_ymax(const plot_range_type * );
 double plot_range_safe_get_xmin(const plot_range_type * );
 double plot_range_safe_get_ymin(const plot_range_type * );
- 
-void plot_range_set_xmax(plot_range_type *  , double);
-void plot_range_set_ymax(plot_range_type *  , double);
-void plot_range_set_xmin(plot_range_type *  , double);
-void plot_range_set_ymin(plot_range_type *  , double);
 
 void plot_range_set_auto_xmax(plot_range_type *  , double);
 void plot_range_set_auto_ymax(plot_range_type *  , double);
@@ -80,10 +73,6 @@ void plot_range_set_auto_ymin(plot_range_type *  , double);
   bool plot_range_get_invert_y_axis(const plot_range_type * range);
   bool plot_range_get_invert_x_axis(const plot_range_type * range);
   
-  void               plot_range_apply(plot_range_type * );
-  void               plot_range_set_range( plot_range_type * range , double xmin , double xmax , double ymin , double ymax);
-
-  
   void   plot_range_update_vector_x( plot_range_type * range , const double_vector_type * x );
   void   plot_range_update_vector_y( plot_range_type * range , const double_vector_type * y );
   void   plot_range_update_vector( plot_range_type * range , const double_vector_type * x , const double_vector_type * y);
@@ -99,6 +88,8 @@ void plot_range_set_auto_ymin(plot_range_type *  , double);
   double plot_range_get_current_ymin( const plot_range_type * range );
   double plot_range_get_current_ymax( const plot_range_type * range );
 
+
+
   double plot_range_get_manual_xmin( const plot_range_type * range );
   double plot_range_get_manual_xmax( const plot_range_type * range );
   double plot_range_get_manual_ymin( const plot_range_type * range );
@@ -108,6 +99,7 @@ void plot_range_set_auto_ymin(plot_range_type *  , double);
   void plot_range_set_manual_xmax(  plot_range_type * range , double value);
   void plot_range_set_manual_ymin(  plot_range_type * range , double value);
   void plot_range_set_manual_ymax(  plot_range_type * range , double value);
+
   void plot_range_unset_manual_xmin(  plot_range_type * range );
   void plot_range_unset_manual_xmax(  plot_range_type * range );
   void plot_range_unset_manual_ymin(  plot_range_type * range );
