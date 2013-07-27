@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#include <signal.h>
 #include <lsf/lsbatch.h>
 
 #include <ert/util/stringlist.h>
@@ -31,12 +31,35 @@
 #define BLOCK_COMMAND        "/d/proj/bg/enkf/bin/block_node.py"
 #define STATOIL_LSF_REQUEST  "select[cs && x86_64Linux]"
 
+
+
+static lsf_driver_type * lsf_driver;
+static vector_type * job_pool;
+static hash_type * nodes;
+
+
 typedef struct {
   lsf_job_type    * lsf_job;
   stringlist_type * hostlist;
   bool              running;
   bool              block_job;
 } block_job_type;
+
+
+typedef struct {
+  int target;
+  int current;
+} count_pair_type;
+
+
+count_pair_type * count_pair_alloc() {
+  count_pair_type * pair = util_malloc( sizeof * pair );
+  pair->target = 0;
+  pair->current = 0;
+  return pair;
+}
+
+
 
 
 block_job_type * block_job_alloc() {
@@ -60,65 +83,29 @@ void block_job_free( block_job_type * block_job ) {
 }
 
 
-  
-/*typedef struct {
-  struct  submit         lsf_request;
-  struct  submitReply    lsf_reply; 
-  long    int            lsf_jobnr; 
-  char                 * host_name;
-  const   char         * command;
-  bool                   running;
-  bool                   block_job; 
-} lsf_job_type;
-*/
-
-
-/*
-lsf_job_type * lsf_job_alloc(char * queue_name) { 
-  lsf_job_type * lsf_job = util_malloc( sizeof * lsf_job );
-  
-  memset(&lsf_job->lsf_request , 0 , sizeof (lsf_job->lsf_request));
-  lsf_job->lsf_request.queue            = queue_name;
-  lsf_job->lsf_request.beginTime        = 0;
-  lsf_job->lsf_request.termTime         = 0;   
-  lsf_job->lsf_request.numProcessors    = 1;
-  lsf_job->lsf_request.maxNumProcessors = 1;
-  lsf_job->lsf_request.command         = BLOCK_COMMAND; 
-  lsf_job->lsf_request.outFile         = "/tmp/lsf";
-  lsf_job->lsf_request.jobName         = "lsf";
-  lsf_job->lsf_request.resReq          = STATOIL_LSF_REQUEST;
-  {
-    int i;
-    for (i=0; i < LSF_RLIM_NLIMITS; i++) 
-      lsf_job->lsf_request.rLimits[i] = DEFAULT_RLIMIT;
-  }
-  lsf_job->lsf_request.options2 = 0;
-  lsf_job->lsf_request.options  = SUB_QUEUE + SUB_JOB_NAME + SUB_OUT_FILE + SUB_RES_REQ;
-  lsf_job->host_name            = NULL;
-  lsf_job->running              = false;
-  lsf_job->block_job            = false;
-  return lsf_job;
+const char * block_job_get_hostname( const block_job_type * block_job ) {
+  return stringlist_iget( block_job->hostlist , 0 );
 }
-*/
 
+  
 
-void update_job_status( lsf_driver_type * driver , block_job_type * job , hash_type * nodes) {
+void update_job_status( block_job_type * job ) {
   if (!job->running) {
-    int lsf_status = lsf_driver_get_job_status_lsf( driver , job->lsf_job );
+    int lsf_status = lsf_driver_get_job_status_lsf( lsf_driver , job->lsf_job );
     if (lsf_status == JOB_STAT_RUN) {
       lsf_job_export_hostnames( job->lsf_job , job->hostlist ); 
       {
         int ihost;
-        printf("%ld running on: ",lsf_job_get_jobnr( job->lsf_job) );
         for (ihost = 0; ihost < stringlist_get_size( job->hostlist ); ihost++) {
           const char * host = stringlist_iget( job->hostlist , ihost );
-          printf("%s ",host);
           if (hash_has_key( nodes, host))  { /* This is one of the instances which should be left running. */
-            job->block_job = true;
-            printf("Got a block on:%s \n" , host );
+            count_pair_type * pair = hash_get( nodes , host);
+            if (pair->current < pair->target) {
+              pair->current += 1;
+              job->block_job = true;
+            }
           }
         }
-        printf("\n");
       }
       job->running = true;
     }
@@ -131,51 +118,87 @@ void update_job_status( lsf_driver_type * driver , block_job_type * job , hash_t
 
 
 
-void add_jobs(lsf_driver_type * driver , vector_type * job_pool , int num_cpu , int chunk_size) {
+void add_jobs( int chunk_size) {
   int i;
   char * cwd = util_alloc_cwd();
   for (i=0; i < chunk_size; i++) {
     block_job_type * job = block_job_alloc();
-    job->lsf_job = lsf_driver_submit_job(driver , BLOCK_COMMAND , num_cpu , cwd , "BLOCK" , 0 , NULL );
+    job->lsf_job = lsf_driver_submit_job(lsf_driver , BLOCK_COMMAND , 1 , cwd , "BLOCK" , 0 , NULL );
     vector_append_ref( job_pool , job );
   }
   free( cwd );
 }
 
 
-void update_pool_status(lsf_driver_type * driver , vector_type * job_pool , hash_type * block_nodes , int * blocked , int * pending) {
+void update_pool_status( bool *all_blocked , int * pending) {
   int i;
-  int block_count = 0;
-  int pend_count  = 0;
+  int pend_count   = 0;
+  *all_blocked = true;
+
   for (i=0; i < vector_get_size( job_pool ); i++) {
     block_job_type * job = vector_iget( job_pool , i );
-    update_job_status( driver , job , block_nodes );
+    update_job_status( job );
+
     if (!job->running)
       pend_count++;
-    else {
-      if (job->block_job)
-        block_count++;
+  }
+
+  {
+    hash_iter_type * iter = hash_iter_alloc( nodes );
+    while (!hash_iter_is_complete( iter )) {
+      const char * hostname = hash_iter_get_next_key( iter );
+      const count_pair_type * count = hash_get( nodes , hostname );
+      if (count->current < count->target)
+        *all_blocked = false;
     }
   }
-  *blocked = block_count;
   *pending = pend_count;
 }
 
 
-void kill_jobs( lsf_driver_type * driver , const vector_type * job_pool) {
+void print_status() {
+  int total_running = 0;
+  int total_pending = 0;
+  for (int i=0; i < vector_get_size( job_pool ); i++) {
+    block_job_type * job = vector_iget( job_pool , i );
+    if (job->running)
+      total_running += 1;
+    else
+      total_pending += 1;
+  }
+  printf("Running:%3d  Pending: %3d   Blocks active: ",total_running , total_pending);
+  {
+    hash_iter_type * iter = hash_iter_alloc( nodes );
+    while (!hash_iter_is_complete( iter )) {
+      const char * hostname = hash_iter_get_next_key( iter );
+      const count_pair_type * count = hash_get( nodes , hostname );
+      printf("%s %d/%d   ",hostname , count->current , count->target);
+    }
+    printf("\n");
+    hash_iter_free( iter );
+  }
+}
+
+
+void block_node_exit( int signal ) {
   int job_nr;
+
+  print_status();
   for (job_nr = 0; job_nr < vector_get_size( job_pool ); job_nr++) {
     block_job_type * job = vector_iget( job_pool , job_nr );
     
     if (job->block_job) {
-      printf("Job:%ld is running on hosts: ", lsf_job_get_jobnr( job->lsf_job ));
+      printf("Job:%ld is running on host: ", lsf_job_get_jobnr( job->lsf_job ));
       stringlist_fprintf( job->hostlist , " " , stdout );
       printf("\n");
     } else
-      lsf_driver_kill_job( driver , job->lsf_job );
+      lsf_driver_kill_job( lsf_driver , job->lsf_job );
     
     block_job_free( job );
   }
+  printf("Remember to kill these jobs when the BLOCK is no longer needed\n");
+  if (signal != 0)
+    exit(0);
 }
 
 
@@ -194,65 +217,67 @@ int main( int argc, char ** argv) {
   util_update_path_var( "LD_LIBRARY_PATH"    , "/prog/LSF/8.0/linux2.6-glibc2.3-x86_64/lib" , false);
 
   
-  lsf_driver_type * lsf_driver = lsf_driver_alloc();
+  lsf_driver = lsf_driver_alloc();
   if (lsf_driver_get_submit_method( lsf_driver ) != LSF_SUBMIT_INTERNAL)
     util_exit("Sorry - the block_node program must be invoked on a proper LSF node \n");
 
   {
-    hash_type * nodes       = hash_alloc();
-    int         node_count  = 0; 
-    int iarg;
-    printf("Attempting to block nodes \n");
-    for (iarg = 1; iarg < argc; iarg++) {
-      char   node_name[64];
-      int    num_slots;
-      if (sscanf(argv[iarg] , "%s:%d" , node_name , &num_slots) != 2) 
-        num_slots = 1;
-
-      hash_insert_int( nodes , node_name , num_slots );
-      node_count += num_slots;
-      
-      printf("  %s",node_name);
-      if (num_slots != 1)
-        printf(" * %d",num_slots );
-      printf("\n");
-    }
-    printf("-----------------------------------------------------------------\n");
     
+    int iarg;
+    int total_blocked_target = 0;
+    nodes       = hash_alloc();
+    for (iarg = 1; iarg < argc; iarg++) {
+      char   *node_name;
+      int    num_slots;
+      
+      {
+        char * num_slots_string;
+        util_binary_split_string( argv[iarg] , ":" , true , &node_name , &num_slots_string);
+        if (num_slots_string)
+          util_sscanf_int( num_slots_string , &num_slots);
+        else
+          num_slots = 1;
+      }
+      
+      if (!hash_has_key( nodes , node_name))
+        hash_insert_hash_owned_ref( nodes , node_name , count_pair_alloc() , free);
+
+      {
+        count_pair_type * pair = hash_get( nodes , node_name);
+        pair->target += num_slots;
+      }
+      total_blocked_target += num_slots;
+    }
+
+    signal(SIGINT , block_node_exit );
     {
       const int sleep_time    = 5;
-      const int max_attempt   = 100;
-      const int chunk_size    = 25;   /* We submit this many at a time. */
-      const int max_pool_size = 1000; /* The absolute total maximum of jobs we will submit. */  
-      const int num_cpu       = 4;
+      const int chunk_size    = 10;    /* We submit this many at a time. */
+      const int max_pool_size = 1000;  /* The absolute total maximum of jobs we will submit. */  
 
-      vector_type  * job_pool    = vector_alloc_new();
       bool           cont        = true;
       int            pending     = 0;   
-      int            blocked;
-      int            attempt     = 0;
+      bool           all_blocked;
+      job_pool                   = vector_alloc_new();
+
       while (cont) {
-        printf("Attempt: %2d/%2d ",attempt , max_attempt); fflush( stdout );
+        printf("[Ctrl-C to give up] "); fflush( stdout );
+        if (cont) sleep( sleep_time );
         if (pending == 0) {
           if (vector_get_size( job_pool ) < max_pool_size)
-            add_jobs( lsf_driver , job_pool , num_cpu , chunk_size );
+            add_jobs( chunk_size );
         }
         
-        update_pool_status( lsf_driver , job_pool , nodes , &blocked , &pending);
-        if (blocked == node_count)
-          cont = false;                                         /* Ok - we have got them all blocked - leave the building. */
+        update_pool_status( &all_blocked , &pending);
+        print_status();
 
-        attempt++;
-        if (attempt > max_attempt)
+        if (all_blocked)
           cont = false;
-        
-        if (cont) sleep( sleep_time );
-        printf("\n");
       }
-      if (blocked < node_count)
+      if (!all_blocked)
         printf("Sorry - failed to block all the nodes \n");
       
-      kill_jobs( lsf_driver , job_pool );
+      block_node_exit( 0 );
       hash_free( nodes );
     }
   }
