@@ -28,7 +28,7 @@
 
 #include <ert/job_queue/lsf_driver.h>
 
-#define BLOCK_COMMAND        "/d/proj/bg/enkf/bin/block_node.py"
+#define BLOCK_COMMAND        "/project/res/bin/block-job"
 #define STATOIL_LSF_REQUEST  "select[cs && x86_64Linux]"
 
 
