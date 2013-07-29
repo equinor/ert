@@ -344,7 +344,7 @@ class SimulationPanelController:
 
     def pause(self, pause):
         """Pause the job queue after the currently running jobs are finished."""
-        job_queue = self.ert.main.site_config.get_job_queue
+        job_queue = self.ert.main.site_config.get_job_queue()
 
         if pause:
             self.statistics.stop()
@@ -358,8 +358,9 @@ class SimulationPanelController:
         killAll = QtGui.QMessageBox.question(self.view, "Remove all jobs?", "Are you sure you want to remove all jobs from the queue?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
 
         if killAll == QtGui.QMessageBox.Yes:
-            job_queue = self.ert.main.site_config.get_job_queue
-            job_queue.user_exit
+            job_queue = self.ert.main.site_config.get_job_queue( )
+            job_queue.user_exit( )
+
 
     def showSelectedSimulations(self):
         """Update information relating to a single job"""
