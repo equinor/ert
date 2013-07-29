@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <ert/util/type_macros.h>
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
 #include <ert/util/stringlist.h>
@@ -32,7 +33,10 @@
 #include <ert/sched/history.h>
 
 
+#define HISTORY_TYPE_ID 66143109
+
 struct history_struct{
+  UTIL_TYPE_ID_DECLARATION;
   const ecl_sum_type    * refcase;        /* ecl_sum instance used when the data are taken from a summary instance. Observe that this is NOT owned by history instance.*/
   const sched_file_type * sched_file;     /* Not owned. */
   sched_history_type    * sched_history;
@@ -74,13 +78,13 @@ const char * history_get_source_string( history_source_type history_source ) {
 }
 
 
-
-
+UTIL_IS_INSTANCE_FUNCTION( history , HISTORY_TYPE_ID )
 
 
 static history_type * history_alloc_empty(  )
 {
   history_type * history = util_malloc(sizeof * history);
+  UTIL_TYPE_ID_INIT( history , HISTORY_TYPE_ID );
   history->refcase       = NULL; 
   history->sched_history = NULL;
   history->sched_file    = NULL;
