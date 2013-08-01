@@ -21,8 +21,15 @@ add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
 
 add_executable( enkf_forward_init_GEN_KW enkf_forward_init_GEN_KW.c )
 target_link_libraries( enkf_forward_init_GEN_KW enkf test_util )
-add_test( enkf_forward_init_GEN_KW_TRUE   ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_GEN_KW_true   TRUE)
-add_test( enkf_forward_init_GEN_KW_FALSE  ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_GEN_KW_false FALSE)
+
+add_test( NAME enkf_forward_init_GEN_KW_TRUE   
+          COMMAND ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW data/config/forward/ert ert/config_GEN_KW_true TRUE
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+
+add_test( NAME enkf_forward_init_GEN_KW_FALSE
+          COMMAND ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW data/config/forward/ert ert/config_GEN_KW_false FALSE
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+
 
 #-----------------------------------------------------------------
 
