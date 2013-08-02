@@ -47,13 +47,13 @@ target_link_libraries( enkf_forward_init_SURFACE enkf test_util )
 
 add_test( enkf_forward_init_SURFACE_TRUE   
           ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_SURFACE 
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/config_surface_true   
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_true   
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
           TRUE)
 
 add_test( enkf_forward_init_SURFACE_FALSE   
           ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_SURFACE 
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/config_surface_false
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_false
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
           FALSE)
 
@@ -64,13 +64,13 @@ target_link_libraries( enkf_forward_init_FIELD enkf test_util )
 
 add_test( enkf_forward_init_FIELD_TRUE   
           ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_FIELD 
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/config_field_true   
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_true   
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/petro.grdecl
           TRUE)
 
 add_test( enkf_forward_init_FIELD_FALSE   
           ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_FIELD 
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/config_field_false
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_false
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/petro.grdecl
           FALSE)
 
