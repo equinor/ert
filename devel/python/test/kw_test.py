@@ -21,8 +21,15 @@ import stat
 import math
 import ert
 import ert.ecl.ecl as ecl
+from  ert.util.test_area import TestArea
 import sys
 from   test_util import *
+
+test_data_root = os.path.abspath( os.path.join( os.path.dirname( os.path.abspath( __file__)) , "../../"))
+
+def test_path( path ):
+    return os.path.join( test_data_root , path )
+
 
 def copy_long():
     src = ecl.EclKW.create("NAME" , 100 , ecl.ECL_FLOAT_TYPE )
@@ -33,25 +40,13 @@ def copy_offset():
     src = ecl.EclKW.create("NAME" , 100 , ecl.ECL_FLOAT_TYPE )
     copy = src.sub_copy( 200 , 100 )
 
-    
 
 
 class KWTest( unittest.TestCase ):
     
-    def setUp( self ):
-        self.file_list = []
-
-    def addFile( self , file ):
-        self.file_list.append( file )
-
-    def tearDown(self):
-        for file in self.file_list:
-            if os.path.exists( file ):
-                os.unlink( file )
-
 
     def fortio_size( self ):
-        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
+        unrst_file = test_path("test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST")
         file = ecl.EclFile( unrst_file )
         size = 0
         for kw in file:
@@ -79,7 +74,7 @@ class KWTest( unittest.TestCase ):
         self.assertFalse( kw1.equal(kw2) )
         self.assertFalse( kw1.equal_numeric( kw2 ))
         
-        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
+        unrst_file = test_path("test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST")
         file = ecl.EclFile( unrst_file )
         kw1 = file["PRESSURE"][0]
         kw2 = kw1.deep_copy()
@@ -103,8 +98,8 @@ class KWTest( unittest.TestCase ):
         
 
     def test_kw( self , type , data , fmt ):
-        name1 = "/tmp/file1.txt"
-        name2 = "/tmp/file2.txt"
+        name1 = "file1.txt"
+        name2 = "file2.txt"
         kw = ecl.EclKW.new( "TEST" , len(data) , type)
         i = 0
         for d in data:
@@ -122,12 +117,10 @@ class KWTest( unittest.TestCase ):
             file2.write( fmt % d )
         file2.close()
         self.assertTrue( file_equal( name1 , name2) )
-        self.addFile( name1 )
-        self.addFile( name2 )
 
             
     def testSubCopy(self):
-        unrst_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
+        unrst_file = test_path("test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST")
         file = ecl.EclFile( unrst_file )
         swat = file["SWAT"][0]
         
@@ -154,6 +147,7 @@ class KWTest( unittest.TestCase ):
         
 
     def fprintf_test( self ):
+        work_area = TestArea("python.ecl_kw")
         self.test_kw( ecl.ECL_INT_TYPE    , [0 , 1 , 2 , 3 , 4 , 5 ]              , "%4d\n")
         self.test_kw( ecl.ECL_FLOAT_TYPE  , [0.0 , 1.1 , 2.2 , 3.3 , 4.4 , 5.5 ]  , "%12.6f\n")
         self.test_kw( ecl.ECL_DOUBLE_TYPE , [0.0 , 1.1 , 2.2 , 3.3 , 4.4 , 5.5 ] , "%12.6f\n")
