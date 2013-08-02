@@ -49,7 +49,7 @@ int main(int argc , char ** argv) {
   const char * root_path = argv[1];
   const char * config_file = argv[2];
   const char * forward_init_string = argv[3];
-  test_work_area_copy_directory( work_area , root_path );
+  test_work_area_copy_directory_content( work_area , root_path );
   {  
     bool forward_init;
     bool strict = true;
@@ -57,7 +57,7 @@ int main(int argc , char ** argv) {
     
     test_assert_true( util_sscanf_bool( forward_init_string , &forward_init));
     
-    util_clear_directory( "ert/Storage" , true , true );
+    util_clear_directory( "Storage" , true , true );
     enkf_main = enkf_main_bootstrap( NULL , config_file , strict , true );
     {
       enkf_state_type * state   = enkf_main_iget_state( enkf_main , 0 );
