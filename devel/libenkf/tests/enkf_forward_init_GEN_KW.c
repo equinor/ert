@@ -161,4 +161,5 @@ int main(int argc , char ** argv) {
     }
     enkf_main_free( enkf_main );
   }
+  test_work_area_free( work_area );
 }

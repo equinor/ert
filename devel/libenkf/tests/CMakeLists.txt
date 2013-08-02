@@ -33,8 +33,12 @@ add_test( enkf_forward_init_GEN_KW_FALSE
 
 add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
-add_test( enkf_forward_init_GEN_PARAM_TRUE   ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_GEN_PARAM_true   TRUE)
-add_test( enkf_forward_init_GEN_PARAM_FALSE  ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_GEN_PARAM_false FALSE)
+
+add_test( enkf_forward_init_GEN_PARAM_TRUE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_PARAM_true   TRUE)
+
+add_test( enkf_forward_init_GEN_PARAM_FALSE  
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_PARAM_false FALSE)
 
 #-----------------------------------------------------------------
 
@@ -83,7 +87,7 @@ add_test( enkf_model_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_model_config )
 
 add_executable( enkf_rng enkf_rng.c )
 target_link_libraries( enkf_rng enkf test_util )
-add_test( enkf_rng  ${EXECUTABLE_OUTPUT_PATH}/enkf_rng ${CMAKE_CURRENT_SOURCE_DIR}/data/config/rng)
+add_test( enkf_rng  ${EXECUTABLE_OUTPUT_PATH}/enkf_rng ${CMAKE_CURRENT_SOURCE_DIR}/data/config rng)
 
 add_executable( enkf_report_list enkf_report_list.c )
 target_link_libraries( enkf_report_list enkf test_util )
