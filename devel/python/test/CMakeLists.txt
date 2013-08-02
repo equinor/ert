@@ -1,3 +1,5 @@
+set(LSF_RUNPATH "" CACHE STRING  "Disk area which is shared among cluster nodes and can be used as CWD for LSF jobs.")
+
 add_python_package("Python test" "${PYTHON_INSTALL_PREFIX}/test" "ecl_isosurf.py;enkf_test.py;ens_config_test.py;file_test.py;fortio_test.py;grav_test.py;grdecl_test.py;grid_test0.py;grid_test.py;import_test.py;job_test.py;kw_test.py;large_mem_test.py;latex_test.py;petrel_kw.py;poly_test.py;region_test.py;restart_test.py;rft_test.py;sched_test.py;stringlist_test.py;sum_test.py;test_all.py;test_fast.py;test_util.py;troll_test.py;util_test.py;ctest_run.py" True)
 
 # The test date is located in the current source directory; that is
@@ -52,12 +54,13 @@ add_test( NAME python.ert.ecl.ecl_rft_cell
 
 add_test( NAME python.ert.ecl.ecl_queue_LOCAL
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ecl_submit_test LOCAL ${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat )
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ecl_submit_test LOCAL  )
 
-#add_test( NAME python.ert.ecl.ecl_queue_LSF
-#          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
-#          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ecl_submit_test LSF ${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat )
-
+if (EXISTS "${LSF_RUNPATH}/") 
+   add_test( NAME python.ert.ecl.ecl_queue_LSF
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ecl_submit_test LSF ${LSF_RUNPATH} )
+endif()
 
 
 
