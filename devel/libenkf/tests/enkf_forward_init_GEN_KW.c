@@ -94,7 +94,7 @@ int main(int argc , char ** argv) {
       test_assert_true( util_is_directory( "simulations/run0" ));
       
       {
-        bool loadOK = true;
+        enkf_fw_init_result_enum result = true;
         stringlist_type * msg_list = stringlist_alloc_new();
         
         {
@@ -106,14 +106,16 @@ int main(int argc , char ** argv) {
         test_assert_false( enkf_node_has_data( gen_kw_node , fs, node_id ));
         util_unlink_existing( "simulations/run0/MULTFLT_INIT" );
         
+
         test_assert_false( enkf_node_forward_init( gen_kw_node , "simulations/run0" , 0 ));
-        enkf_state_forward_init( state , fs , &loadOK );
-        test_assert_false( loadOK );
+        enkf_state_forward_init( state , fs , &result );
+        test_assert_int_equal(FW_LOAD_FAILURE, result);
         
-        loadOK = true;
-        enkf_state_load_from_forward_model( state , fs , &loadOK , false , msg_list );
+        result = FW_LOAD_OK; 
+        enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
+
         stringlist_free( msg_list );
-        test_assert_false( loadOK );
+        test_assert_int_equal(FW_LOAD_FAILURE, result);
       }
       
       
@@ -125,7 +127,7 @@ int main(int argc , char ** argv) {
       }
       
       {
-        bool loadOK = true;
+        enkf_fw_init_result_enum result = FW_LOAD_OK; 
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
@@ -133,12 +135,14 @@ int main(int argc , char ** argv) {
           enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
         }
         
+
         test_assert_true( enkf_node_forward_init( gen_kw_node , "simulations/run0" , 0 ));
-        enkf_state_forward_init( state , fs , &loadOK );
-        test_assert_true( loadOK );
-        enkf_state_load_from_forward_model( state , fs , &loadOK , false , msg_list );
+        enkf_state_forward_init( state , fs , &result );
+        test_assert_int_equal(FW_LOAD_OK, result);
+        enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
+       
         stringlist_free( msg_list );
-        test_assert_true( loadOK );
+        test_assert_int_equal(FW_LOAD_OK, result);
 
         {
           double value;

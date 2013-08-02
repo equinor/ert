@@ -31,6 +31,14 @@ add_test( enkf_forward_init_GEN_KW_FALSE
 
 #-----------------------------------------------------------------
 
+add_executable( enkf_state_report_step_compatible enkf_state_report_step_compatible.c )
+target_link_libraries( enkf_state_report_step_compatible enkf )
+add_test( nkf_state_report_step_compatible  ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/config_GEN_KW_true 
+                                                                                               ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/R2R/R2R.SMSPEC )
+
+
+#-----------------------------------------------------------------
+
 add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
 

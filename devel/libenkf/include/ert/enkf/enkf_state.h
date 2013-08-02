@@ -82,13 +82,13 @@ typedef struct enkf_state_struct    enkf_state_type;
 
   void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
                                           enkf_fs_type * fs , 
-                                          bool * loadOK , 
+                                          enkf_fw_init_result_enum * result , 
                                           bool interactive , 
                                           stringlist_type * msg_list);
 
   void enkf_state_forward_init(enkf_state_type * enkf_state , 
                                enkf_fs_type * fs , 
-                               bool * loadOK );
+                               enkf_fw_init_result_enum * result );
     
   enkf_state_type  * enkf_state_alloc(int ,
                                       rng_type        * main_rng , 

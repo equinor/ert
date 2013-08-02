@@ -80,6 +80,24 @@ const char * enkf_types_get_impl_name(ert_impl_type impl_type) {
 }
 
 
+const char * enkf_types_get_fw_init_result_msg(enkf_fw_init_result_enum result) {
+  switch (result) {
+  case FW_LOAD_FAILURE:
+    return ".....";
+    break;
+    case FW_LOAD_OK:
+    return "....";
+    break;
+    case FW_LOAD_WARNING:
+    return "Warning: ";
+    break;
+  default:
+    util_abort("%s: internal error - unrecognized enkf_fw_init_result_enum type: %d - aborting \n",__func__ , result);
+    return NULL;
+  }
+} 
+
+
 #define if_strcmp(s) if (strcmp(impl_type_string , #s) == 0) impl_type = s
 static ert_impl_type enkf_types_get_impl_type__(const char * impl_type_string) {
   ert_impl_type impl_type;

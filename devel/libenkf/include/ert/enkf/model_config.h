@@ -55,6 +55,7 @@ extern "C" {
   const char           * model_config_get_enspath( const model_config_type * model_config);
   const char           * model_config_get_rftpath( const model_config_type * model_config);
   fs_driver_impl         model_config_get_dbase_type(const model_config_type * model_config );
+  const ecl_sum_type   * model_config_get_refcase( const model_config_type * model_config ); 
   void                   model_config_init_internalization( model_config_type * );
   void                   model_config_set_internalize_state( model_config_type *  , int );
   void                   model_config_set_load_state( model_config_type *  , int );

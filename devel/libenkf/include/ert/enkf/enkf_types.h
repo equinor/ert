@@ -125,6 +125,14 @@ typedef enum   {UNDEFINED   = 0 ,
                              {.value = 6 , .name = "BOTH"}
 #define ENKF_STATE_ENUM_SIZE 4
 
+                
+                
+
+typedef enum { FW_LOAD_FAILURE  = 0,
+               FW_LOAD_OK       = 1,
+               FW_LOAD_WARNING  = 2 } enkf_fw_init_result_enum;
+               
+
 
 
 
@@ -237,6 +245,7 @@ const char      * enkf_types_get_var_name(enkf_var_type var_type);
 ert_impl_type     enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(ert_impl_type );
 ert_impl_type     enkf_types_check_impl_type(const char * );
+const char      * enkf_types_get_fw_init_result_msg(enkf_fw_init_result_enum result); 
 
 #ifdef __cplusplus
 }

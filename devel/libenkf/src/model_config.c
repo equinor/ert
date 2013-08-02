@@ -241,6 +241,9 @@ fs_driver_impl model_config_get_dbase_type(const model_config_type * model_confi
   return model_config->dbase_type;
 }
 
+const ecl_sum_type * model_config_get_refcase( const model_config_type * model_config ) {
+  return model_config->refcase;  
+}
 
 void * model_config_get_dbase_args( const model_config_type * model_config ) {
   return NULL;
