@@ -59,7 +59,7 @@ add_test( NAME python.ert.ecl.ecl_queue_LOCAL
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ecl_submit_test LOCAL  )
 
 
-if (EXISTS "${NFS_RUNPATH}/") 
+if (NOT ${NFS_RUNPATH} STREQUAL "") 
    add_test( NAME python.ert.ecl.ecl_queue_LSF
              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ecl_submit_test LSF ${NFS_RUNPATH} )
