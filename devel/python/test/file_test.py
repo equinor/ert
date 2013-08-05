@@ -91,9 +91,9 @@ class FileTest( unittest.TestCase ):
         swat0.assign( 0.75 )
         rst_file.save_kw( swat0 )
         rst_file.close( )
-        self.assertFalse( file_equal( "ECLIPSE.FUNRST" , fmt_file ) )
+        self.assertFalse( file_equal( "ECLIPSE.FUNRST" , test_path(fmt_file)) )
         
-        rst_file1 = ecl.EclFile( fmt_file )
+        rst_file1 = ecl.EclFile( test_path(fmt_file) )
         rst_file2 = ecl.EclFile( "ECLIPSE.FUNRST" , flags = ecl.ECL_FILE_WRITABLE)
         
         swat1 = rst_file1["SWAT"][0]
@@ -106,7 +106,7 @@ class FileTest( unittest.TestCase ):
         rst_file2.close()
 
         # Random failure ....
-        self.assertTrue( file_equal( "ECLIPSE.FUNRST" , fmt_file ) ) 
+        self.assertTrue( file_equal( "ECLIPSE.FUNRST" , test_path(fmt_file)) ) 
         
 
 
