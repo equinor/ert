@@ -45,7 +45,7 @@ void create_runpath(enkf_main_type * enkf_main ) {
 
 int main(int argc , char ** argv) {
   enkf_main_install_SIGNALS();
-  test_work_area_type * work_area = test_work_area_alloc("enkf_forward_init_FIELD" , false);
+  test_work_area_type * work_area = test_work_area_alloc("enkf_forward_init_SURFACE" , false);
   const char * root_path = argv[1];
   const char * config_file = argv[2];
   const char * init_file = argv[3];
