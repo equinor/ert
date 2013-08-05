@@ -21,12 +21,19 @@ import unittest
 import ert
 import ert.ecl.ecl as ecl
 from   ert.util.stringlist import StringList
+from   ert.util.test_area import TestArea
 from   test_util import approx_equal, approx_equalv
 
 
 base = "ECLIPSE"
 path = "test-data/Statoil/ECLIPSE/Gurbat"
 case = "%s/%s" % (path , base)
+
+
+test_data_root = os.path.abspath( os.path.join( os.path.dirname( os.path.abspath( __file__)) , "../../"))
+
+def test_path( path ):
+    return os.path.join( test_data_root , path )
 
 
 def sum_get(*args):
@@ -40,18 +47,10 @@ def sum_get(*args):
 class SumTest( unittest.TestCase ):
 
     def setUp(self):
-        self.case = case
-        self.file_list = []
+        self.case = test_path( case )
         self.sum = ecl.EclSum( self.case )
         self.assertTrue( isinstance( self.sum , ecl.EclSum ))
 
-    def addFile( self , file ):
-        self.file_list.append( file )
-
-    def tearDown(self):
-        for file in self.file_list:
-            if os.path.exists( file ):
-                os.unlink( file )
 
     def test_load(self):
         self.assertTrue( self.sum , "Load failed")
@@ -147,7 +146,8 @@ class SumTest( unittest.TestCase ):
 
 
     def test_fwrite(self):
-        self.sum.fwrite(ecl_case = "/tmp/CASE" )
+        work_area = TestArea("python/sum-test/fwrite" , True)
+        self.sum.fwrite(ecl_case = "CASE" )
         self.assertTrue( True )
 
 
@@ -159,17 +159,17 @@ class SumTest( unittest.TestCase ):
 
 
     def test_restart(self):
-        hist = ecl.EclSum( "test-data/Statoil/ECLIPSE/sum-restart/history/T07-4A-W2011-18-P1" )
-        base = ecl.EclSum( "test-data/Statoil/ECLIPSE/sum-restart/prediction/BASECASE" )
-        pred = ecl.EclSum( "test-data/Statoil/ECLIPSE/sum-restart/prediction/BASECASE" , include_restart = False)
+        hist = ecl.EclSum( test_path("test-data/Statoil/ECLIPSE/sum-restart/history/T07-4A-W2011-18-P1") )
+        base = ecl.EclSum( test_path("test-data/Statoil/ECLIPSE/sum-restart/prediction/BASECASE") )
+        pred = ecl.EclSum( test_path("test-data/Statoil/ECLIPSE/sum-restart/prediction/BASECASE") , include_restart = False)
 
         self.assertTrue( pred )
 
 
     def test_case1(self ):
-        self.assertTrue( self.sum.path     == path )
+        self.assertTrue( self.sum.path     == test_path(path) )
         self.assertTrue( self.sum.base     == base )
-        self.assertTrue( self.sum.case     == case )
+        self.assertTrue( self.sum.case     == test_path(case) )
         self.assertTrue( self.sum.abs_path == os.path.realpath(os.path.join( os.getcwd() , path )))
 
 
