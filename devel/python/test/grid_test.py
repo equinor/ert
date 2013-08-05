@@ -21,17 +21,28 @@ import ert.ecl.ecl as ecl
 import datetime
 import time
 import os
+import os.path
 import unittest
 import ert
 import ert.ecl.ecl as ecl
 from   ert.util.tvector import DoubleVector
 from   ert.util.tvector import DoubleVector
+from   ert.util.test_area import TestArea
 from   numpy import isnan
 from   test_util import approx_equal, approx_equalv
+test_data_root = os.path.abspath( os.path.join( os.path.dirname( os.path.abspath( __file__)) , "../../"))
 
-egrid_file  = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
-grid_file   = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.GRID"
-grdecl_file = "test-data/Statoil/ECLIPSE/Gurbat/include/example_grid_sim.GRDECL"    
+def test_path( path ):
+    return os.path.join( test_data_root , path )
+
+def egrid_file():
+    return test_path( "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID" )
+
+def grid_file():
+    return test_path( "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.GRID")
+
+def grdecl_file():
+    return test_path( "test-data/Statoil/ECLIPSE/Gurbat/include/example_grid_sim.GRDECL")
 
 def load_does_not_exist():
     g = ecl.EclGrid( "/does/not/exist.EGRID" )
@@ -39,24 +50,13 @@ def load_does_not_exist():
 
 class GridTest( unittest.TestCase ):
 
-    def setUp(self):
-        self.file_list = []
-
-    def addFile( self , file ):
-        self.file_list.append( file )
-
-    def tearDown(self):
-        for file in self.file_list:
-            if os.path.exists( file ):
-                os.unlink( file )
-
     def testGRID( self ):
-        grid = ecl.EclGrid( grid_file )
+        grid = ecl.EclGrid( grid_file() )
         self.assertTrue( grid )
 
 
     def testEGRID( self ):
-        grid = ecl.EclGrid( egrid_file )
+        grid = ecl.EclGrid( egrid_file() )
         self.assertTrue( grid )
 
 
@@ -76,13 +76,13 @@ class GridTest( unittest.TestCase ):
 
 
     def testRect(self):
+        work_area = TestArea("python/grid-test/testRect" , True)
         a1 = 1.0
         a2 = 2.0
         a3 = 3.0
         grid = ecl.EclGrid.create_rectangular((9,9,9) , (a1,a2,a3))
-        grid.save_EGRID( "/tmp/rect.EGRID" )
-        grid2 = ecl.EclGrid( "/tmp/rect.EGRID")
-        self.addFile( "/tmp/rect.EGRID" )
+        grid.save_EGRID( "rect.EGRID" )
+        grid2 = ecl.EclGrid( "rect.EGRID")
         self.assertTrue( grid )
         self.assertTrue( grid2 )
         
@@ -108,60 +108,55 @@ class GridTest( unittest.TestCase ):
 
 
     def testCreate(self):
-        grid = self.create( grdecl_file )
+        grid = self.create( grdecl_file() )
         self.assertTrue( grid )
 
 
     def testACTNUM(self):
-        g1 = self.create( grdecl_file )
-        g2 = self.create( grdecl_file , load_actnum = False )
+        g1 = self.create( grdecl_file() )
+        g2 = self.create( grdecl_file() , load_actnum = False )
         self.assertTrue( g1.equal( g2 ) )
 
 
     def testTime(self):
         t0 = time.clock()
-        g1 = ecl.EclGrid( egrid_file )
+        g1 = ecl.EclGrid( egrid_file() )
         t1 = time.clock()
         t = t1 - t0
         self.assertTrue( t < 1.0 )
 
 
     def testSave(self):
-        self.addFile( "/tmp/test.EGRID" )
-        self.addFile( "/tmp/test.GRID" )
-        self.addFile( "/tmp/test.grdecl" )
+        work_area = TestArea("python/grid-test/testSave" , True)
+        g1 = ecl.EclGrid( egrid_file() )
 
-        g1 = ecl.EclGrid( egrid_file )
-
-        g1.save_EGRID( "/tmp/test.EGRID" )
-        g2 = ecl.EclGrid( "/tmp/test.EGRID" )
+        g1.save_EGRID( "test.EGRID" )
+        g2 = ecl.EclGrid( "test.EGRID" )
         self.assertTrue( g1.equal( g2 ) )
 
-        g1.save_GRID( "/tmp/test.GRID" )
-        g2 = ecl.EclGrid( "/tmp/test.GRID" )
+        g1.save_GRID( "test.GRID" )
+        g2 = ecl.EclGrid( "test.GRID" )
         self.assertTrue( g1.equal( g2 ) )
         
-        fileH = open("/tmp/test.grdecl" , "w")                                                  
+        fileH = open("test.grdecl" , "w")                                                  
         g1.save_grdecl( fileH )
         fileH.close()
-        g2 = self.create( "/tmp/test.grdecl" )
+        g2 = self.create( "test.grdecl" )
         self.assertTrue( g1.equal( g2 ) )
 
 
     def testCoarse(self):
-        self.addFile( "/tmp/LGC.EGRID" )
-        self.addFile( "/tmp/LGC.GRID" )
-
+        work_area = TestArea("python/grid-test/testCoarse" )
         testGRID = True
-        g1 = ecl.EclGrid( "test-data/Statoil/ECLIPSE/LGCcase/LGC_TESTCASE2.EGRID" )
+        g1 = ecl.EclGrid( test_path("test-data/Statoil/ECLIPSE/LGCcase/LGC_TESTCASE2.EGRID") )
         
-        g1.save_EGRID( "/tmp/LGC.EGRID" )
-        g2 = ecl.EclGrid( "/tmp/LGC.EGRID")
+        g1.save_EGRID( "LGC.EGRID" )
+        g2 = ecl.EclGrid( "LGC.EGRID")
         self.assertTrue( g1.equal(g2, verbose = True) )
         
         if testGRID:
-            g1.save_GRID( "/tmp/LGC.GRID" )
-            g3 = ecl.EclGrid( "/tmp/LGC.GRID")
+            g1.save_GRID( "LGC.GRID" )
+            g3 = ecl.EclGrid( "LGC.GRID")
             self.assertTrue( g1.equal(g3 , verbose = True) )
 
         self.assertTrue( g1.coarse_groups() == 3384)
@@ -173,19 +168,20 @@ class GridTest( unittest.TestCase ):
 
 
     def testDual(self):
-        grid = ecl.EclGrid( egrid_file )
+        work_area = TestArea("python/grid-test/testDual" , True)
+        grid = ecl.EclGrid( egrid_file() )
         self.assertFalse( grid.dual_grid )
         self.assertTrue( grid.nactive_fracture == 0 )
         
-        grid2 = ecl.EclGrid( grid_file )
+        grid2 = ecl.EclGrid( grid_file() )
         self.assertFalse( grid.dual_grid )
         self.assertTrue( grid.nactive_fracture == 0 )
         
-        dgrid = ecl.EclGrid( "test-data/Statoil/ECLIPSE/DualPoro/DUALPOR_MSW.EGRID" )
+        dgrid = ecl.EclGrid( test_path("test-data/Statoil/ECLIPSE/DualPoro/DUALPOR_MSW.EGRID") )
         self.assertTrue( dgrid.nactive == dgrid.nactive_fracture )
         self.assertTrue( dgrid.nactive == 46118 )
 
-        dgrid2 = ecl.EclGrid( "test-data/Statoil/ECLIPSE/DualPoro/DUALPOR_MSW.GRID" )
+        dgrid2 = ecl.EclGrid( test_path("test-data/Statoil/ECLIPSE/DualPoro/DUALPOR_MSW.GRID") )
         self.assertTrue( dgrid.nactive == dgrid.nactive_fracture )
         self.assertTrue( dgrid.nactive == 46118 )        
         self.assertTrue( dgrid.equal( dgrid2 ))
@@ -194,7 +190,7 @@ class GridTest( unittest.TestCase ):
         # The DUAL_DIFF grid has been manipulated to create a
         # situation where some cells are only matrix active, and some
         # cells are only fracture active.
-        dgrid = ecl.EclGrid( "test-data/Statoil/ECLIPSE/DualPoro/DUAL_DIFF.EGRID" )
+        dgrid = ecl.EclGrid( test_path("test-data/Statoil/ECLIPSE/DualPoro/DUAL_DIFF.EGRID") )
         self.assertTrue( dgrid.nactive == 106 )
         self.assertTrue( dgrid.nactive_fracture == 105 )
 
@@ -208,9 +204,8 @@ class GridTest( unittest.TestCase ):
         self.assertTrue( dgrid.get_active_index( global_index = 106 ) == -1)
         self.assertTrue( dgrid.get_global_index1F( 2 ) == 5 )
 
-        self.addFile( "/tmp/DUAL_DIFF.GRID" )
-        dgrid.save_GRID("/tmp/DUAL_DIFF.GRID")
-        dgrid2 = ecl.EclGrid( "/tmp/DUAL_DIFF.GRID" )
+        dgrid.save_GRID("DUAL_DIFF.GRID")
+        dgrid2 = ecl.EclGrid( "DUAL_DIFF.GRID" )
         self.assertTrue( dgrid.equal( dgrid2 ))
         
 
