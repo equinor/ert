@@ -25,10 +25,16 @@ import os.path
 import ert
 import ert.ecl.ecl as ecl
 from   test_util import approx_equal, approx_equalv, file_equal
-
+from   ert.util.test_area import TestArea
 
 file     = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST"
 fmt_file = "test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.FUNRST"
+
+test_data_root = os.path.abspath( os.path.join( os.path.dirname( os.path.abspath( __file__)) , "../../"))
+
+def test_path( path ):
+    return os.path.join( test_data_root , path )
+
 
 def load_missing():
     ecl.EclFile( "No/Does/not/exist")
@@ -36,44 +42,33 @@ def load_missing():
 
 class FileTest( unittest.TestCase ):
 
-    def setUp(self):
-        self.file_list = []
-
-    def addFile( self , file ):
-        self.file_list.append( file )
-
-    def tearDown(self):
-        for file in self.file_list:
-            if os.path.exists( file ):
-                os.unlink( file )
-            
-
+    
     def testIOError(self):
         self.assertRaises( IOError , load_missing)
 
     
     def test_fwrite( self ):
-        self.addFile( "/tmp/ECLIPSE.UNRST" )
-        rst_file = ecl.EclFile( file )
-        fortio = ecl.FortIO.writer("/tmp/ECLIPSE.UNRST")
+        work_area = TestArea("python/ecl_file/fwrite")
+        rst_file = ecl.EclFile( test_path(file) )
+        fortio = ecl.FortIO.writer("ECLIPSE.UNRST")
         rst_file.fwrite( fortio )
         fortio.close()
         rst_file.close()
-        self.assertTrue( file_equal( "/tmp/ECLIPSE.UNRST" , file ) ) 
+        self.assertTrue( file_equal( "ECLIPSE.UNRST" , test_path(file)) ) 
 
 
     def test_save(self):
-        self.addFile( "/tmp/ECLIPSE.UNRST" )
-        shutil.copyfile( file , "/tmp/ECLIPSE.UNRST" )
-        rst_file = ecl.EclFile( "/tmp/ECLIPSE.UNRST" , flags = ecl.ECL_FILE_WRITABLE )
+        work_area = TestArea("python/ecl_file/save")
+        work_area.copy_file( test_path( file ))
+        rst_file = ecl.EclFile( "ECLIPSE.UNRST" , flags = ecl.ECL_FILE_WRITABLE )
         swat0 = rst_file["SWAT"][0]
         swat0.assign( 0.75 )
         rst_file.save_kw( swat0 )
         rst_file.close( )
-        self.assertFalse( file_equal( "/tmp/ECLIPSE.UNRST" , file ) )
+        self.assertFalse( file_equal( "ECLIPSE.UNRST" , test_path(file)) )
         
-        rst_file1 = ecl.EclFile( file )
-        rst_file2 = ecl.EclFile( "/tmp/ECLIPSE.UNRST" , flags = ecl.ECL_FILE_WRITABLE)
+        rst_file1 = ecl.EclFile( test_path(file) )
+        rst_file2 = ecl.EclFile( "ECLIPSE.UNRST" , flags = ecl.ECL_FILE_WRITABLE)
         
         swat1 = rst_file1["SWAT"][0]
         swat2 = rst_file2["SWAT"][0]
@@ -85,21 +80,21 @@ class FileTest( unittest.TestCase ):
         rst_file2.close()
 
         # Random failure ....
-        self.assertTrue( file_equal( "/tmp/ECLIPSE.UNRST" , file ) ) 
+        self.assertTrue( file_equal( "ECLIPSE.UNRST" , test_path(file)) ) 
         
 
     def test_save_fmt(self):
-        self.addFile( "/tmp/ECLIPSE.FUNRST" )
-        shutil.copyfile( fmt_file , "/tmp/ECLIPSE.FUNRST" )
-        rst_file = ecl.EclFile( "/tmp/ECLIPSE.FUNRST" , flags = ecl.ECL_FILE_WRITABLE)
+        work_area = TestArea("python/ecl_file/save_fmt")
+        work_area.copy_file( test_path( test_path(fmt_file )))
+        rst_file = ecl.EclFile( "ECLIPSE.FUNRST" , flags = ecl.ECL_FILE_WRITABLE)
         swat0 = rst_file["SWAT"][0]
         swat0.assign( 0.75 )
         rst_file.save_kw( swat0 )
         rst_file.close( )
-        self.assertFalse( file_equal( "/tmp/ECLIPSE.FUNRST" , fmt_file ) )
+        self.assertFalse( file_equal( "ECLIPSE.FUNRST" , fmt_file ) )
         
         rst_file1 = ecl.EclFile( fmt_file )
-        rst_file2 = ecl.EclFile( "/tmp/ECLIPSE.FUNRST" , flags = ecl.ECL_FILE_WRITABLE)
+        rst_file2 = ecl.EclFile( "ECLIPSE.FUNRST" , flags = ecl.ECL_FILE_WRITABLE)
         
         swat1 = rst_file1["SWAT"][0]
         swat2 = rst_file2["SWAT"][0]
@@ -111,7 +106,7 @@ class FileTest( unittest.TestCase ):
         rst_file2.close()
 
         # Random failure ....
-        self.assertTrue( file_equal( "/tmp/ECLIPSE.FUNRST" , fmt_file ) ) 
+        self.assertTrue( file_equal( "ECLIPSE.FUNRST" , fmt_file ) ) 
         
 
 
