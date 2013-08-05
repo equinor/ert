@@ -45,10 +45,10 @@ void create_runpath(enkf_main_type * enkf_main ) {
 
 int main(int argc , char ** argv) {
   enkf_main_install_SIGNALS();
-  test_work_area_type * work_area = test_work_area_alloc("enkf_forward_init_GEN_PARAM" , false);
   const char * root_path = argv[1];
   const char * config_file = argv[2];
   const char * forward_init_string = argv[3];
+  test_work_area_type * work_area = test_work_area_alloc(config_file , false);
   test_work_area_copy_directory_content( work_area , root_path );
   {
     bool forward_init;
