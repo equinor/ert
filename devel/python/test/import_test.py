@@ -130,6 +130,8 @@ test_import("ert.util.stat")
 test_import("ert.util.util_func")
 test_import("ert.util.log")
 test_import("ert.util.stringlist")
+test_import("ert.util.libtest_util")
+test_import("ert.util.test_area")
 
 test_import("ert.well.libwell")
 test_import("ert.well.well_info")
