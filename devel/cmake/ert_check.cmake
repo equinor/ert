@@ -1,4 +1,5 @@
 check_function_exists( fseeko HAVE_FSEEKO )
+if (HAVE_HFSEEKO)
    add_definitions( -DHAVE_FSEEKO )                       
 endif()
 
