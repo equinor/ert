@@ -1,3 +1,7 @@
+check_function_exists( fseeko HAVE_FSEEKO )
+   add_definitions( -DHAVE_FSEEKO )                       
+endif()
+
 check_function_exists( regexec HAVE_REGEXP )
 if (HAVE_REGEXP)
   add_definitions( -DHAVE_REGEXP )
