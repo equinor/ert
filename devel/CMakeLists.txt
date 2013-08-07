@@ -22,6 +22,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    set(ERT_WINDOWS TRUE)
    add_definitions( -DERT_WINDOWS )
+   add_definitions( -DWINDOWS_LFS_SUPPORT )
 endif()    
 
 # Treat warnings as errors if not on Windows
