@@ -115,6 +115,7 @@ int main(int argc , char ** argv) {
 
         result = LOAD_SUCCESS;
         enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
+        stringlist_free( msg_list ); 
         test_assert_int_equal( result, LOAD_FAILURE );
       }
       
