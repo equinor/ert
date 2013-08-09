@@ -35,10 +35,10 @@ add_executable( enkf_state_report_step_compatible enkf_state_report_step_compati
 target_link_libraries( enkf_state_report_step_compatible enkf test_util )
 
 add_test( enkf_state_report_step_compatible_TRUE 
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true  config_ecl_sum_compatible TRUE)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true  config_ecl_sum_compatible_true TRUE)
 
 add_test( enkf_state_report_step_compatible_FALSE 
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_false  config_ecl_sum_compatible FALSE)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_false  config_ecl_sum_compatible_false FALSE)
                                                                       
 
 #-----------------------------------------------------------------
