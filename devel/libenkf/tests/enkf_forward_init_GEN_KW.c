@@ -109,13 +109,13 @@ int main(int argc , char ** argv) {
 
         test_assert_false( enkf_node_forward_init( gen_kw_node , "simulations/run0" , 0 ));
         enkf_state_forward_init( state , fs , &result );
-        test_assert_int_equal(FW_LOAD_FAILURE, result);
+        test_assert_int_equal(LOAD_FAILURE, result);
         
-        result = FW_LOAD_OK; 
+        result = LOAD_SUCCESS; 
         enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
 
         stringlist_free( msg_list );
-        test_assert_int_equal(FW_LOAD_FAILURE, result);
+        test_assert_int_equal(LOAD_FAILURE, result);
       }
       
       
@@ -127,7 +127,7 @@ int main(int argc , char ** argv) {
       }
       
       {
-        enkf_fw_init_result_enum result = FW_LOAD_OK; 
+        enkf_fw_init_result_enum result = LOAD_SUCCESS; 
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
@@ -138,11 +138,11 @@ int main(int argc , char ** argv) {
 
         test_assert_true( enkf_node_forward_init( gen_kw_node , "simulations/run0" , 0 ));
         enkf_state_forward_init( state , fs , &result );
-        test_assert_int_equal(FW_LOAD_OK, result);
+        test_assert_int_equal(LOAD_SUCCESS, result);
         enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
        
         stringlist_free( msg_list );
-        test_assert_int_equal(FW_LOAD_OK, result);
+        test_assert_int_equal(LOAD_SUCCESS, result);
 
         {
           double value;

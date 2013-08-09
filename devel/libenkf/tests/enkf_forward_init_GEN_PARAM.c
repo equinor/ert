@@ -111,7 +111,7 @@ int main(int argc , char ** argv) {
       }
       
       {
-        bool loadOK = true;
+        enkf_fw_init_result_enum result = LOAD_SUCCESS;
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
@@ -120,11 +120,11 @@ int main(int argc , char ** argv) {
         }
         
         test_assert_true( enkf_node_forward_init( gen_param_node , "simulations/run0" , 0 ));
-        enkf_state_forward_init( state , fs , &loadOK );
-        test_assert_true( loadOK );
-        enkf_state_load_from_forward_model( state , fs , &loadOK , false , msg_list );
+        enkf_state_forward_init( state , fs , &result );
+        test_assert_int_equal(LOAD_SUCCESS, result); 
+        enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
         stringlist_free( msg_list );
-        test_assert_true( loadOK );
+        test_assert_int_equal(LOAD_SUCCESS, result); 
 
         {
           double value;

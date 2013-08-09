@@ -128,9 +128,9 @@ typedef enum   {UNDEFINED   = 0 ,
                 
                 
 
-typedef enum { FW_LOAD_FAILURE  = 0,
-               FW_LOAD_OK       = 1,
-               FW_LOAD_WARNING  = 2 } enkf_fw_init_result_enum;
+typedef enum { LOAD_FAILURE              = 1,
+               LOAD_SUCCESS              = 2,
+               REPORT_STEP_INCOMPATIBLE  = 4 } enkf_fw_init_result_enum;
                
 
 
