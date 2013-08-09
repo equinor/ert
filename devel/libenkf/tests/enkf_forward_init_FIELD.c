@@ -136,11 +136,6 @@ int main(int argc , char ** argv) {
         test_assert_int_equal( result, LOAD_SUCCESS );
         enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
 
-        test_assert_true( enkf_node_forward_init( field_node , "simulations/run0" , 0));
-        enkf_state_forward_init( state , fs , &result );
-        test_assert_int_equal( result, LOAD_SUCCESS );
-        enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
-
         stringlist_free( msg_list );
         test_assert_int_equal( result, LOAD_SUCCESS );
 
