@@ -96,7 +96,7 @@ int main(int argc , char ** argv) {
       test_assert_true( util_is_directory( "simulations/run0" ));
       
       {
-        enkf_fw_init_result_enum  fw_init_result = LOAD_SUCCESS;
+        enkf_fw_init_result_enum  result = LOAD_SUCCESS;
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
@@ -110,18 +110,12 @@ int main(int argc , char ** argv) {
         util_unlink_existing( "simulations/run0/petro.grdecl" );
         
         test_assert_false( enkf_node_forward_init( field_node , "simulations/run0" , 0 ));
-        enkf_state_forward_init( state , fs , &fw_init_result );
-        test_assert_int_equal(fw_init_result, LOAD_FAILURE);
+        enkf_state_forward_init( state , fs , &result );
+        test_assert_int_equal( result, LOAD_FAILURE);
 
-        test_assert_false( enkf_node_forward_init( field_node , "simulations/run0" , 0 ));
-        enkf_state_forward_init( state , fs , &fw_init_result );
-        test_assert_int_equal(fw_init_result, LOAD_FAILURE);
-
-
-        fw_init_result = LOAD_SUCCESS; 
-        enkf_state_load_from_forward_model( state , fs , &fw_init_result , false , msg_list );
-        stringlist_free( msg_list );
-        test_assert_int_equal( fw_init_result, LOAD_FAILURE );
+        result = LOAD_SUCCESS;
+        enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
+        test_assert_int_equal( result, LOAD_FAILURE );
       }
       
 
