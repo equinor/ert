@@ -83,6 +83,7 @@ class SumTest( unittest.TestCase ):
         self.assertTrue( approx_equalv( groups , ['GMWIN','OP','WI']))
         
 
+
     def test_last( self ):
         sum = self.sum
         last = sum.get_last("FOPT")
@@ -258,6 +259,15 @@ class SumTest( unittest.TestCase ):
         self.assertTrue( wells[0] == "XXX" )
 
 
+    def test_segment(self):
+        sum = ecl.EclSum( test_path("test-data/Statoil/ECLIPSE/Oseberg/F8MLT/F8MLT-F4") )
+        segment_vars = sum.keys("SOFR:F-8:*")
+        self.assertTrue( "SOFR:F-8:1" in segment_vars)
+        for var in segment_vars:
+            tmp = var.split(":")
+            nr = int(tmp[2])
+            self.assertTrue( nr >= 0 )
+            
 
 
 def fast_suite():
@@ -279,6 +289,7 @@ def fast_suite():
     suite.addTest( SumTest( 'test_stringlist_gc'))
     suite.addTest( SumTest( 'test_stringlist_reference'))
     suite.addTest( SumTest( 'test_stringlist_setitem'))
+    suite.addTest( SumTest( 'test_segment'))
     return suite
 
 
