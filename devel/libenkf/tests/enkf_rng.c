@@ -31,6 +31,7 @@
 int main(int argc , char ** argv) {
   unsigned int rand1,rand2;
   {
+    test_work_area_type * work_area = test_work_area_alloc("enkf-rng-0", false);
     {
       enkf_main_type * enkf_main = enkf_main_alloc_empty();
       enkf_main_resize_ensemble( enkf_main , 10 );
@@ -51,12 +52,13 @@ int main(int argc , char ** argv) {
       enkf_main_free( enkf_main );
     }
     test_assert_uint_not_equal( rand1 , rand2 );
+    test_work_area_free( work_area );
   }
 
   /*****************************************************************/
 
   {
-    test_work_area_type * work_area = test_work_area_alloc("enkf-rng" , false );
+    test_work_area_type * work_area = test_work_area_alloc("enkf-rng-1" , false );
     const char * seed_file = "seed";
     {
       enkf_main_type * enkf_main = enkf_main_alloc_empty();
