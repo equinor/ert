@@ -22,13 +22,13 @@ import sys
 
 
 
-def make_enum(name , attrs):
+def make_enum(name , attributes):
     class cls(object):
         pass
 
     cls.__name__ = name
-    for key in attrs.keys():
-        setattr(cls , key , attrs[key])
+    for key in attributes.keys():
+        setattr(cls , key , attributes[key])
     return cls
 
 
