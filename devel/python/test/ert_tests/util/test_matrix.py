@@ -1,8 +1,6 @@
 from ert.util import Matrix
 from unittest2 import TestCase
 
-__author__ = 'jpb'
-
 class MyTestCase(TestCase):
     def test_matrix(self):
         m = Matrix(2, 2)

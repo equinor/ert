@@ -1,12 +1,10 @@
-from unittest2 import TestCase
+from unittest2 import TestCase, expectedFailure
 from ert.util import LookupTable
 import numpy
 
-__author__ = 'jpb'
-
 class TestLookupTable(TestCase):
 
-    def test_lookup_table(self):
+    def test_lookup_table_no_values(self):
         lookup = LookupTable()
 
         self.assertTrue(numpy.isnan(lookup.max))
@@ -17,13 +15,27 @@ class TestLookupTable(TestCase):
 
 
         lookup.append(0.0, 0.0)
-        lookup.append(1.0, 1.0)
+        lookup.append(1.0, 10.0)
 
-        self.assertEqual(lookup.max, 1.0)
-        self.assertEqual(lookup.min, 1.0)
+    @expectedFailure
+    def test_lookup_table_min_and_max(self):
+        lookup = LookupTable()
+
+        lookup.append(0.0, 0.0)
+        lookup.append(1.0, 10.0)
+
+        self.assertEqual(lookup.max, 10.0)
+        self.assertEqual(lookup.min, 0.0)
         self.assertEqual(lookup.arg_max, 1.0)
         self.assertEqual(lookup.arg_min, 0.0)
         self.assertEqual(len(lookup), 2)
 
-        self.assertEqual(lookup.interp(0.5), 0.5)
+
+    def test_lookup_table_interpolation(self):
+        lookup = LookupTable()
+
+        lookup.append(0.0, 0.0)
+        lookup.append(1.0, 10.0)
+
+        self.assertEqual(lookup.interp(0.5), 5.0)
 

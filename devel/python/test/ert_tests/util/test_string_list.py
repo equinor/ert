@@ -1,8 +1,6 @@
 from unittest2 import TestCase
 from ert.util import StringList
 
-__author__ = 'jpb'
-
 
 class TestStringList(TestCase):
     def test_del(self):

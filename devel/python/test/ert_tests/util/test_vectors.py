@@ -19,10 +19,7 @@
 import copy
 from unittest2 import TestCase
 
-from ert.util import DoubleVector, IntVector, BoolVector, StringList, quantile, quantile_sorted
-# import ert.util.stat    as stat
-# from   ert.util.util_func import *
-
+from ert.util import DoubleVector, IntVector, BoolVector
 
 class TestUtil(TestCase):
     def test_double_vector(self):
@@ -175,6 +172,7 @@ class TestUtil(TestCase):
         another_copy_of_a = copy.copy(a)
         self.assertEqual(list(a), list(another_copy_of_a))
 
+
     def test_div(self):
         v = IntVector()
         v[0] = 100
@@ -183,9 +181,6 @@ class TestUtil(TestCase):
         v /= 10
 
         self.assertEqual(list(v), [10, 1, 0])
-
-
-
 
 
     def test_true(self):

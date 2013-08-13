@@ -2,8 +2,6 @@ import random
 from unittest2 import TestCase
 from ert.util import DoubleVector, quantile, quantile_sorted
 
-__author__ = 'jpb'
-
 
 class TestStat(TestCase):
     def test_stat_quantiles(self):
