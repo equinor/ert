@@ -68,3 +68,8 @@ class TestStringList(TestCase):
 
         self.assertTrue("A" in s)
         self.assertTrue("Bjarne" not in s)
+
+    def test_append(self):
+        s = StringList(["A", "B"])
+        s.append("C")
+        self.assertEqual(list(s), ["A", "B", "C"])
