@@ -17,9 +17,11 @@
 
 
 import copy
+from datetime import datetime
 from unittest2 import TestCase
 
-from ert.util import DoubleVector, IntVector, BoolVector
+from ert.util import DoubleVector, IntVector, BoolVector, TimeVector, ctime
+
 
 class TestUtil(TestCase):
     def test_double_vector(self):
@@ -188,3 +190,27 @@ class TestUtil(TestCase):
         self.assertFalse(iv)    # Will invoke the __len__ function; could override with __nonzero__
         iv[0] = 1
         self.assertTrue(iv)
+
+
+    def test_asPythonObject(self):
+        v = DoubleVector.asPythonObject(0, DoubleVector.free)
+
+        self.assertIsInstance(v, DoubleVector)
+        self.assertIsNotNone(v.cfree)
+
+
+    def test_time_vector(self):
+        time_vector = TimeVector()
+
+        time1 = ctime(datetime(2013, 8, 13, 0, 0, 0))
+        time2 = ctime(datetime(2013, 8, 13, 1, 0, 0))
+
+        time_vector.default = time2
+
+        time_vector.append(time1)
+        time_vector[2] = time2
+
+        self.assertEqual(time_vector[0], time1)
+        self.assertEqual(time_vector[1], time2)
+        self.assertEqual(time_vector[2], time2)
+
