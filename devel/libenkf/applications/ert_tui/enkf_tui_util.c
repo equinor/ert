@@ -439,7 +439,7 @@ bool enkf_tui_util_sscanf_active_list( bool_vector_type * iactive , const char *
 */
 double enkf_tui_util_scanf_double_with_lower_limit(const char * prompt , int prompt_len , double min_value) {
   double value;
-  char * new_prompt = util_alloc_sprintf("%s [>%g]" , prompt , min_value );
+  char * new_prompt = util_alloc_sprintf("%s (greater than %g)" , prompt , min_value );
   do {
     value = util_scanf_double(new_prompt , prompt_len);
   } while (value <= min_value);
