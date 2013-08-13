@@ -21,6 +21,7 @@ from   ert.cwrap.cclass import CClass
 from ert.config import Unrecognized, CONFIG_LIB
 
 
+
 class SchemaItem(CClass):
     def __init__(self, keyword, required=False):
         c_ptr = cfunc.schema_alloc(keyword, required)
@@ -131,7 +132,6 @@ class ConfigParser(CClass):
 
 #-----------------------------------------------------------------
 
-
 cwrapper = CWrapper(CONFIG_LIB)
 cwrapper.registerType("config_parser", ConfigParser)
 cwrapper.registerType("schema_item", SchemaItem)
@@ -158,4 +158,5 @@ cfunc.iget_content_node = cwrapper.prototype("int config_content_item_iget_node(
 cfunc.content_node_iget = cwrapper.prototype("char* config_content_node_iget( content_node , int)")
 cfunc.content_node_size = cwrapper.prototype("int config_content_node_get_size( content_node )")
 cfunc.content_full_string = cwrapper.prototype("char* config_content_node_get_full_string( content_node , char* )")
+
 
