@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 
-from ert.cwrap.cenum import create_enum
+from ert.cwrap import create_enum
 from ert.config import CONFIG_LIB
 
 ContentType = create_enum(CONFIG_LIB, "config_schema_item_type_enum_iget", "ContentType")

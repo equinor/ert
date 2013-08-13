@@ -15,11 +15,9 @@
 #  for more details. 
 
 import os.path
-from   ert.cwrap.cwrap import *
-from   ert.cwrap.cclass import CClass
 
 from ert.config import Unrecognized, CONFIG_LIB
-
+from ert.cwrap import CClass, CWrapper, CWrapperNameSpace
 
 
 class SchemaItem(CClass):
@@ -38,11 +36,11 @@ class SchemaItem(CClass):
     def iget_type( self, index ):
         return cfunc.schema_iget_type(self, index)
 
-    def iset_type( self, index, type ):
-        cfunc.schema_iset_type(self, index, type)
+    def iset_type( self, index, schema_type ):
+        cfunc.schema_iset_type(self, index, schema_type)
 
-    def set_argc_minmax(self, min, max):
-        cfunc.schema_set_argc_minmax(self, min, max)
+    def set_argc_minmax(self, minimum, maximum):
+        cfunc.schema_set_argc_minmax(self, minimum, maximum)
 
 #-----------------------------------------------------------------
 
@@ -62,7 +60,7 @@ class ContentItem(CClass):
 
     def __getitem__(self, index):
         if isinstance(index, int):
-            if index >= 0 and index < self.__len__():
+            if (index >= 0) and (index < self.__len__()):
                 c_ptr = cfunc.iget_content_node(self, index)
                 return ContentNode.wrap(c_ptr, self)
             else:
@@ -89,7 +87,7 @@ class ContentNode(CClass):
 
     def __getitem__(self, index):
         if isinstance(index, int):
-            if index >= 0 and index < self.__len__():
+            if (index >= 0) and (index < self.__len__()):
                 return cfunc.content_node_iget(self, index)
             else:
                 raise IndexError

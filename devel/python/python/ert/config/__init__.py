@@ -13,9 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-
-import ert.cwrap.clib as clib
+from ert.cwrap import clib
 import ert.util
+
 CONFIG_LIB = clib.ert_load("libconfig.so")
 
 
