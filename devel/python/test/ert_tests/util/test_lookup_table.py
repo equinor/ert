@@ -17,7 +17,6 @@ class TestLookupTable(TestCase):
         lookup.append(0.0, 0.0)
         lookup.append(1.0, 10.0)
 
-    @expectedFailure
     def test_lookup_table_min_and_max(self):
         lookup = LookupTable()
 
