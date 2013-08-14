@@ -67,7 +67,7 @@ class EclSubmitTest( unittest.TestCase ):
         
 
     def test_LSF_submit(self):
-        root = os.path.join(self.nfs_work_path , getpass.getuser() , "ert-test/python/ecl_submit/LSF" )
+        root = os.path.join(self.nfs_work_path , getpass.getuser() , "ert-test/python/ecl_submit/LSF/%08d" % random.randint(0 , 100000000))
         if not os.path.exists( root ):
             os.makedirs( root )
         os.chdir( root )
@@ -94,7 +94,7 @@ class EclSubmitTest( unittest.TestCase ):
 
 
     def test_RSH_submit(self):
-        root = os.path.join(self.nfs_work_path , getpass.getuser() , "ert-test/python/ecl_submit/RSH" )
+        root = os.path.join(self.nfs_work_path , getpass.getuser() , "ert-test/python/ecl_submit/RSH/%08d" % random.randint(0 , 100000000))
         if not os.path.exists( root ):
             os.makedirs( root )
         os.chdir( root )

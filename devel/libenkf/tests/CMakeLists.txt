@@ -23,10 +23,12 @@ add_executable( enkf_forward_init_GEN_KW enkf_forward_init_GEN_KW.c )
 target_link_libraries( enkf_forward_init_GEN_KW enkf test_util )
 
 add_test( enkf_forward_init_GEN_KW_TRUE   
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_KW_true TRUE)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW 
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_KW_true TRUE)
 
 add_test( enkf_forward_init_GEN_KW_FALSE   
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_KW_false FALSE)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW 
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_KW_false FALSE)
 
 
 #-----------------------------------------------------------------
@@ -43,10 +45,12 @@ add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
 
 add_test( enkf_forward_init_GEN_PARAM_TRUE   
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_PARAM_true   TRUE)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM 
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_PARAM_true TRUE)
 
 add_test( enkf_forward_init_GEN_PARAM_FALSE  
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_PARAM_false FALSE)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM 
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_PARAM_false FALSE)
 
 #-----------------------------------------------------------------
 
