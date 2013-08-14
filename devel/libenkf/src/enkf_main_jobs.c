@@ -58,7 +58,7 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive   = bool_vector_alloc( 0 , true );
   bool rerun                   = true;
-  const char * target_case     = "AUTO-SMOOTHER";
+  const char * target_case     = stringlist_iget( args , 0 );
   
   bool_vector_iset( iactive , ens_size - 1 , true );
   enkf_main_run_smoother( enkf_main , target_case , rerun);
