@@ -80,15 +80,15 @@ typedef struct enkf_state_struct    enkf_state_type;
   void             * enkf_state_run_eclipse__(void * );
   void             * enkf_state_start_forward_model__(void * );
 
-  void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
+  void               enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
                                           enkf_fs_type * fs , 
-                                          enkf_fw_init_result_enum * result , 
+                                          int * result , 
                                           bool interactive , 
                                           stringlist_type * msg_list);
 
   void enkf_state_forward_init(enkf_state_type * enkf_state , 
                                enkf_fs_type * fs , 
-                               enkf_fw_init_result_enum * result );
+                               int * result );
     
   enkf_state_type  * enkf_state_alloc(int ,
                                       rng_type        * main_rng , 

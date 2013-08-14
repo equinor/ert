@@ -32,7 +32,7 @@ bool check_ecl_sum_compatible(const enkf_main_type * enkf_main)
   stringlist_type * msg_list = stringlist_alloc_new();
   enkf_state_type * state    = enkf_main_iget_state( enkf_main , 0 );
   enkf_fs_type    * fs       = enkf_main_get_fs( enkf_main );
-  enkf_fw_init_result_enum result = LOAD_SUCCESS; 
+  int result = LOAD_SUCCESS; 
 
   enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
   

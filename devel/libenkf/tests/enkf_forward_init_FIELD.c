@@ -96,7 +96,7 @@ int main(int argc , char ** argv) {
       test_assert_true( util_is_directory( "simulations/run0" ));
       
       {
-        enkf_fw_init_result_enum  result = LOAD_SUCCESS;
+        int  result = LOAD_SUCCESS;
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
@@ -122,7 +122,7 @@ int main(int argc , char ** argv) {
 
       util_copy_file( init_file , "simulations/run0/petro.grdecl");
       {
-        enkf_fw_init_result_enum result = LOAD_SUCCESS;
+        int result = LOAD_SUCCESS;
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {

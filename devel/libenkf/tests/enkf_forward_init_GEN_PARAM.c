@@ -111,7 +111,7 @@ int main(int argc , char ** argv) {
       }
       
       {
-        enkf_fw_init_result_enum result = LOAD_SUCCESS;
+        int result = LOAD_SUCCESS;
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
