@@ -19,5 +19,5 @@ import ert.util
 CONFIG_LIB = clib.ert_load("libconfig.so")
 
 
-from .config_enums import ContentType, Unrecognized
+from .config_enums import ContentTypeEnum, UnrecognizedEnum
 from .config_parser import ConfigParser , SchemaItem , ContentItem , ContentNode

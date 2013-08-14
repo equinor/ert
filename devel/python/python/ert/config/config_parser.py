@@ -16,7 +16,7 @@
 
 import os.path
 
-from ert.config import Unrecognized, CONFIG_LIB
+from ert.config import UnrecognizedEnum, CONFIG_LIB
 from ert.cwrap import CClass, CWrapper, CWrapperNameSpace
 
 
@@ -114,7 +114,7 @@ class ConfigParser(CClass):
 
 
     def parse( self, config_file, comment_string="--", include_kw="INCLUDE", define_kw="DEFINE",
-               unrecognized=Unrecognized.CONFIG_UNRECOGNIZED_WARN, validate=True):
+               unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN, validate=True):
         if os.path.exists(config_file):
             return cfunc.parse(self, config_file, comment_string, include_kw, define_kw, unrecognized, validate)
         else:

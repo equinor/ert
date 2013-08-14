@@ -17,6 +17,6 @@
 from ert.cwrap import create_enum
 from ert.config import CONFIG_LIB
 
-ContentType = create_enum(CONFIG_LIB, "config_schema_item_type_enum_iget", "ContentType")
+ContentTypeEnum = create_enum(CONFIG_LIB, "config_schema_item_type_enum_iget", "ContentTypeEnum")
 
-Unrecognized = create_enum(CONFIG_LIB, "config_schema_item_unrecognized_enum_iget", "Unrecognized")
+UnrecognizedEnum = create_enum(CONFIG_LIB, "config_schema_item_unrecognized_enum_iget", "UnrecognizedEnum")
