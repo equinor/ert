@@ -27,13 +27,16 @@
 #include <ert/util/arg_pack.h>
 
 #include <ert/enkf/state_map.h>
+#include <ert/enkf/enkf_types.h>
 
 
 void create_test() {
   state_map_type * state_map = state_map_alloc();
   test_assert_true( state_map_is_instance( state_map ));
+  test_assert_int_equal( 0 , state_map_get_size( state_map ));
   state_map_free( state_map );
 }
+
 
 
 

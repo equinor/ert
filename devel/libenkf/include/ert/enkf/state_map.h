@@ -29,6 +29,7 @@ extern "C" {
 
   state_map_type * state_map_alloc( );
   void             state_map_free( state_map_type * map );
+  int              state_map_get_size( const state_map_type * map);
 
   UTIL_IS_INSTANCE_HEADER( state_map );
 
