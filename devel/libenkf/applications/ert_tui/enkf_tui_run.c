@@ -35,8 +35,6 @@
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/enkf_analysis.h>
 #include <ert/enkf/ecl_config.h>
-#include <ert/enkf/analysis_config.h>
-#include <ert/enkf/analysis_iter_config.h>
 
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
@@ -116,74 +114,16 @@ void enkf_tui_run_smoother(void * arg) {
 
 
 
-void enkf_tui_run_iterated_ES(void * enkf_main) {
-  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
+void enkf_tui_run_iterated_ES(void * arg) {
+  enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
+  const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
   const int last_report = enkf_main_get_history_length( enkf_main );
-
-  {
-    model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
-    const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
-    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-    analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
-    int step1 = 0;
-    int step2 ;
-    int_vector_type * step_list = int_vector_alloc(0,0);
-    bool_vector_type * iactive = bool_vector_alloc(0 , true);
-    int iter  = 0;
-    int num_iter = analysis_iter_config_get_num_iterations( iter_config );
-    stringlist_type * node_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER );
-
-    if (ecl_config_has_schedule( ecl_config ))
-      step2 = util_scanf_int_with_limits("Last report",PROMPT_LEN , 0 , last_report);  
-    else
-      step2 = last_report;
-    
-    {
-      for (int step=step1; step <= step2; step++)
-        int_vector_append( step_list , step );
-    }
-    bool_vector_iset( iactive , ens_size - 1 , true );
-    
-    while (true) {
-      {
-        const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iter);
-        if (runpath_fmt != NULL) {
-          char * runpath_key = util_alloc_sprintf( "runpath-%d" , iter);
-          model_config_add_runpath( model_config , runpath_key , runpath_fmt);
-          model_config_select_runpath( model_config , runpath_key );
-          free( runpath_key );
-        }
-      }
-      
-      enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST);
-      {
-        const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iter );
-        enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
-        enkf_main_smoother_update(enkf_main , step_list , target_fs);
-          
-        enkf_main_copy_ensemble( enkf_main , 
-                                 enkf_main_get_current_fs( enkf_main ),
-                                 0 ,   // Smoother update will write on step 0
-                                 ANALYZED , 
-                                 target_fs_name , 
-                                 step1 , 
-                                 FORECAST , 
-                                 iactive , 
-                                 NULL , 
-                                 node_list );
-        
-        
-        enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
-      }
-      //iter = analysis_module_get_int(module, "ITER");
-      iter++;
-      if (iter == num_iter)
-        break;
-    }
-    int_vector_free( step_list );
-    bool_vector_free( iactive );
-  }
-  
+  int step2;
+  if (ecl_config_has_schedule( ecl_config ))
+    step2 = util_scanf_int_with_limits("Last report",PROMPT_LEN , 0 , last_report);  
+  else
+    step2 = last_report;
+  enkf_main_run_iterated_ES(enkf_main, step2);  
 }
 
 
