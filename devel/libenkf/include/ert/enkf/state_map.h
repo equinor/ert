@@ -24,12 +24,17 @@ extern "C" {
 
 #include <ert/util/type_macros.h>
 
+#include <ert/enkf/enkf_types.h>
+
   typedef struct state_map_struct state_map_type;
 
 
-  state_map_type * state_map_alloc( );
-  void             state_map_free( state_map_type * map );
-  int              state_map_get_size( const state_map_type * map);
+  state_map_type         * state_map_alloc( );
+  void                     state_map_free( state_map_type * map );
+  int                      state_map_get_size( state_map_type * map);
+  realisation_state_enum   state_map_iget( state_map_type * map , int index);
+  void                     state_map_iset( state_map_type * map ,int index , realisation_state_enum state);
+
 
   UTIL_IS_INSTANCE_HEADER( state_map );
 

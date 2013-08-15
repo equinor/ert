@@ -37,12 +37,33 @@ void create_test() {
   state_map_free( state_map );
 }
 
+void get_test( ) {
+  state_map_type * state_map = state_map_alloc();
+  test_assert_int_equal( STATE_UNDEFINED , state_map_iget( state_map , 0 ));
+  test_assert_int_equal( STATE_UNDEFINED , state_map_iget( state_map , 100 ));
+  state_map_free( state_map );
+}
+
+void set_test( ) {
+  state_map_type * state_map = state_map_alloc();
+  state_map_iset( state_map , 0 , STATE_HAS_DATA );
+  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( state_map , 0 ));
+
+  state_map_iset( state_map , 100 , STATE_HAS_DATA );
+  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( state_map , 100 ));
+
+  test_assert_int_equal( STATE_UNDEFINED , state_map_iget( state_map , 50 ));
+  test_assert_int_equal( 101 , state_map_get_size( state_map ));
+  state_map_free( state_map );
+}
+
+
 
 
 
 int main(int argc , char ** argv) {
   create_test();
-  
+  get_test();
   exit(0);
 }
 

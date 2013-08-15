@@ -33,7 +33,8 @@
 
 struct state_map_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int_vector_type * state;
+  int_vector_type  * state;
+  pthread_rwlock_t   rw_lock;
 };
 
 
@@ -44,6 +45,7 @@ state_map_type * state_map_alloc( ) {
   state_map_type * map = util_malloc( sizeof * map );
   UTIL_TYPE_ID_INIT( map , STATE_MAP_TYPE_ID );
   map->state = int_vector_alloc( 0 , STATE_UNDEFINED );
+  pthread_rwlock_init( &map->rw_lock , NULL);
   return map;
 }
 
@@ -53,6 +55,32 @@ void state_map_free( state_map_type * map ) {
 }
 
 
-int state_map_get_size( const state_map_type * map) {
-  return int_vector_size( map->state );
+int state_map_get_size( state_map_type * map) {
+  int size;
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    size = int_vector_size( map->state );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return size;
 }
+
+
+realisation_state_enum state_map_iget( state_map_type * map , int index) {
+  realisation_state_enum state;
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    state = int_vector_safe_iget( map->state , index );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return state;
+}
+
+void state_map_iset( state_map_type * map ,int index , realisation_state_enum state) {
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    int_vector_iset( map->state , index , state );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
