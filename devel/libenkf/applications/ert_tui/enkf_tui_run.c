@@ -126,6 +126,17 @@ void enkf_tui_run_iterated_ES(void * arg) {
   enkf_main_run_iterated_ES(enkf_main, step2);  
 }
 
+void enkf_tui_run_one_more_iteration(void * arg){
+  enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
+  const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
+  const int last_report = enkf_main_get_history_length( enkf_main );
+  int step2;
+  if (ecl_config_has_schedule( ecl_config ))
+    step2 = util_scanf_int_with_limits("Last report",PROMPT_LEN , 0 , last_report);  
+  else
+    step2 = last_report;
+  enkf_main_run_one_more_iteration(enkf_main, step2);
+}
 
 
 
@@ -161,7 +172,7 @@ void enkf_tui_run_exp(void * enkf_main) {
     free( prompt );
   }
   if (bool_vector_count_equal(iactive , true))
-    enkf_main_run_exp(enkf_main , iactive , true , init_step_parameters , start_report , init_state);
+    enkf_main_run_exp(enkf_main , iactive , true , init_step_parameters , start_report , init_state, true);
   
   bool_vector_free(iactive);
 }
@@ -187,7 +198,7 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
     util_safe_free( select_string );
     free( prompt );
   }
-  enkf_main_run_exp(enkf_main , iactive , false , init_step_parameters , start_report , init_state);
+  enkf_main_run_exp(enkf_main , iactive , false , init_step_parameters , start_report , init_state, true);
   bool_vector_free(iactive);
 }
 
@@ -312,6 +323,7 @@ void enkf_tui_run_menu(void * arg) {
     menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__       , enkf_main , NULL);
     menu_item_type * ES_item           = menu_add_item(menu , "Integrated smoother update"             , "iI" , enkf_tui_run_smoother      , enkf_main , NULL);
     menu_item_type * it_ES_item        = menu_add_item(menu , "Iterated smoother [RML-EnKF]"           , "tT" , enkf_tui_run_iterated_ES   , enkf_main , NULL);
+    menu_item_type * one_more_item     = menu_add_item(menu , "One more iteration"                     , "mM" , enkf_tui_run_one_more_iteration , enkf_main , NULL);
               
     if (!ecl_config_has_schedule( ecl_config )) {
       menu_item_disable( enkf_item );

@@ -1014,7 +1014,6 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * E       = NULL;
   matrix_type * D       = NULL;
   matrix_type * localA  = NULL;
-
   
 
 
@@ -1052,6 +1051,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     
     if (localA == NULL) 
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
+
 
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
@@ -1446,14 +1446,17 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
                        bool             simulate , 
                        int              init_step_parameters ,
                        int              start_report         ,
-                       state_enum       start_state) {
+                       state_enum       start_state          ,
+		       bool             initialize) {
 
   bool force_init = false;
   int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   run_mode_type run_mode = simulate ? ENSEMBLE_EXPERIMENT : INIT_ONLY;
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-    enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1, force_init);
+    if(initialize)
+      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1, force_init);
+
     stringlist_free( param_list );
   }  
   enkf_main_init_run( enkf_main , run_mode );
@@ -1645,7 +1648,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
         }
       }
       
-      enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST);
+       enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, false);
       if (iter == num_iter)
         break;
 
@@ -1654,19 +1657,17 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
         const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iter+1 );
         enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
         enkf_main_smoother_update(enkf_main , step_list , target_fs);
-          
+
         enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
                                  0 ,   // Smoother update will write on step 0
-                                 ANALYZED , 
+                                 ANALYSIS, 
                                  target_fs_name , 
                                  step1 , 
                                  FORECAST , 
                                  iactive , 
                                  NULL , 
                                  node_list );
-        
-        
         enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
       }
       iter++;
@@ -1678,27 +1679,46 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
 }
 
 void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
+  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
+  model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
+  int step1 = 0;
+  int_vector_type * step_list = int_vector_alloc(0,0);
+  bool_vector_type * iactive = bool_vector_alloc(0 , true);
+  stringlist_type * node_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER );
   {
-    const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iter+1 );
-    enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
-    enkf_main_smoother_update(enkf_main , step_list , target_fs);
-    
-    enkf_main_copy_ensemble( enkf_main , 
-			     enkf_main_get_current_fs( enkf_main ),
-			     0 ,   // Smoother update will write on step 0
-			     ANALYZED , 
-			     target_fs_name , 
-			     step1 , 
-			     FORECAST , 
-			     iactive , 
-			     NULL , 
-			     node_list );
-    
-    
-    enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+    for (int step=step1; step <= step2; step++)
+      int_vector_append( step_list , step );
   }
+  
+  const char * target_fs_name  = "ONE_MORE_ITERATION";
+  enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
+  enkf_main_smoother_update(enkf_main , step_list , target_fs);
+  
+  enkf_main_copy_ensemble( enkf_main , 
+			   enkf_main_get_current_fs( enkf_main ),
+			   0 ,   // Smoother update will write on step 0
+			   ANALYZED , 
+			   target_fs_name , 
+			   step1 , 
+			   FORECAST , 
+			   iactive , 
+			   NULL , 
+			   node_list );
+  
+  enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+  bool_vector_iset( iactive , ens_size - 1 , true );
+  const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , 999);
+  if (runpath_fmt != NULL) {
+    char * runpath_key = util_alloc_sprintf( "runpath-%d" , 999);
+    model_config_add_runpath( model_config , runpath_key , runpath_fmt);
+    model_config_select_runpath( model_config , runpath_key );
+    free( runpath_key );
+  }
+  
+  enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, false);
 }
-
 
 /*****************************************************************/
 /*  Filesystem copy functions                                    */
@@ -1790,9 +1810,15 @@ void enkf_main_initialize_from_existing__(enkf_main_type * enkf_main ,
   const char * target_case      = NULL;
 
   enkf_main_copy_ensemble(enkf_main , 
-                          source_case , source_report_step , source_state , 
-                          target_case , target_report_step , target_state , 
-                          iens_mask , ranking_key , node_list);
+                          source_case , 
+			  source_report_step , 
+			  source_state , 
+                          target_case , 
+			  target_report_step , 
+			  target_state , 
+                          iens_mask , 
+			  ranking_key , 
+			  node_list);
   
 }
 

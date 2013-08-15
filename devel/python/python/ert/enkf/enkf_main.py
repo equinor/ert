@@ -213,9 +213,9 @@ class EnKFMain(CClass):
         if mode == 1:
             cfunc.run_assimilation(self, boolPtr, init_step_parameter, simFrom, state)
         if mode == 2:
-            cfunc.run_exp(self, boolPtr, True, init_step_parameter, simFrom, state)
+            cfunc.run_exp(self, boolPtr, True, init_step_parameter, simFrom, state, True)
         if mode == 4:
-            cfunc.run_exp(self, boolPtr, False, init_step_parameter, simFrom, state)
+            cfunc.run_exp(self, boolPtr, False, init_step_parameter, simFrom, state, True)
         if mode == 5:
             cfunc.run_smoother(self, "AUTOSMOOTHER", True)
 
@@ -298,7 +298,7 @@ cfunc.is_initialized               = cwrapper.prototype("bool enkf_main_is_initi
 cfunc.iget_state                   = cwrapper.prototype("c_void_p enkf_main_iget_state(enkf_main, int)")
 cfunc.user_select_fs               = cwrapper.prototype("void enkf_main_user_select_fs(enkf_main , char*)") 
 cfunc.get_logh                     = cwrapper.prototype("void enkf_main_get_logh( enkf_main )")
-cfunc.run_exp                      = cwrapper.prototype("void enkf_main_run_exp( enkf_main, bool_vector, bool, int, int, int)")
+cfunc.run_exp                      = cwrapper.prototype("void enkf_main_run_exp( enkf_main, bool_vector, bool, int, int, int, bool)")
 cfunc.run_assimilation             = cwrapper.prototype("void enkf_main_run_assimilation( enkf_main, bool_vector, int, int, int)")
 cfunc.run_smoother                 = cwrapper.prototype("void enkf_main_run_smoother(enkf_main, char*, bool)")
 cfunc.get_current_fs               = cwrapper.prototype("char* enkf_main_get_current_fs(enkf_main)")
