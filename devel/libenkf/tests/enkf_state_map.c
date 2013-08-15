@@ -58,12 +58,59 @@ void set_test( ) {
 }
 
 
+void load_empty_test() {
+  state_map_type * state_map = state_map_fread_alloc( "File/does/not/exists" );
+  test_assert_true( state_map_is_instance( state_map ));
+  test_assert_int_equal( 0 , state_map_get_size( state_map ));
+  state_map_free( state_map );
+}
+
+
+void test_copy() {
+  state_map_type * state_map = state_map_alloc();
+  state_map_iset( state_map , 0 , STATE_HAS_DATA );
+  state_map_iset( state_map , 100 , STATE_HAS_DATA );
+  {
+    state_map_type * copy = state_map_alloc_copy( state_map );
+    test_assert_int_equal( state_map_get_size( copy ) , state_map_get_size( state_map ));
+
+    for (int i=0; i < state_map_get_size( copy ); i++)
+      test_assert_int_equal( state_map_iget( copy ,i ) , state_map_iget(state_map , i ));
+
+    test_assert_true( state_map_equal( copy , state_map ));
+    state_map_iset( state_map , 10 , STATE_HAS_DATA );
+    test_assert_false( state_map_equal( copy , state_map ));                      
+
+    state_map_free( copy );
+  }
+  state_map_free( state_map );
+}
+
+
+void test_io( ) {
+  test_work_area_type * work_area = test_work_area_alloc( "enkf-state-map" , false );
+  {
+    state_map_type * state_map = state_map_alloc();
+    state_map_type * copy;
+    state_map_iset( state_map , 0 , STATE_HAS_DATA );
+    state_map_iset( state_map , 100 , STATE_HAS_DATA );
+    state_map_fwrite( state_map , "map");
+    
+    copy = state_map_fread_alloc( "map" );
+    test_assert_true( state_map_equal( state_map , copy ));
+  }
+  test_work_area_free( work_area );
+}
 
 
 
 int main(int argc , char ** argv) {
   create_test();
   get_test();
+  set_test();
+  load_empty_test();
+  test_copy();
+  test_io();
   exit(0);
 }
 
