@@ -229,10 +229,10 @@ typedef enum {
 
 /*****************************************************************/
   typedef enum {
-    STATE_UNDEFINED = 0,
-    STATE_INITIALIZED = 1,
-    STATE_HAS_DATA = 2,
-    STATE_LOAD_FAILURE = 4
+    STATE_UNDEFINED = 1,
+    STATE_INITIALIZED = 2,
+    STATE_HAS_DATA = 4,
+    STATE_LOAD_FAILURE = 8
   } realisation_state_enum;
 
 typedef struct enkf_obs_struct enkf_obs_type;

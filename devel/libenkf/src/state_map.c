@@ -23,6 +23,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/bool_vector.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_types.h>
@@ -156,6 +157,31 @@ void state_map_fread( state_map_type * map , const char * filename) {
         util_abort("%s: failed to open:%s for reading \n",__func__ , filename );
     } else
       int_vector_reset( map->state );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
+
+void state_map_select_matching( state_map_type * map , bool_vector_type * select_target , int select_mask) {
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    bool_vector_reset( select_target );
+    bool_vector_iset( select_target , int_vector_size( map->state ) - 1, true );
+
+    {
+      bool * target_ptr = bool_vector_get_ptr( select_target );
+      const int * map_ptr = int_vector_get_ptr( map->state );
+
+      for (int i=0; i < int_vector_size( map->state ); i++) {
+        int state_value = map_ptr[i];
+        if (state_value & select_mask)
+          target_ptr[i] = true;
+        else
+          target_ptr[i] = false;
+        
+      }
+      
+    }
   }
   pthread_rwlock_unlock( &map->rw_lock );
 }

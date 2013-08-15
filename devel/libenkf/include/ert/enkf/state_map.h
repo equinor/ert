@@ -23,6 +23,7 @@ extern "C" {
 #endif 
 
 #include <ert/util/type_macros.h>
+#include <ert/util/bool_vector.h>
 
 #include <ert/enkf/enkf_types.h>
 
@@ -40,6 +41,7 @@ extern "C" {
   bool                     state_map_equal( state_map_type * map1 , state_map_type * map2);
   void                     state_map_fwrite( state_map_type * map , const char * filename);
   void                     state_map_fread( state_map_type * map , const char * filename);
+  void                     state_map_select_matching( state_map_type * map , bool_vector_type * select_target , int select_mask);
 
   UTIL_IS_INSTANCE_HEADER( state_map );
 
