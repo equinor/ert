@@ -124,10 +124,29 @@ void state_map_iset( state_map_type * map ,int index , realisation_state_enum st
 
 
 void state_map_fwrite( state_map_type * map , const char * filename) {
-  FILE * stream = util_mkdir_fopen( filename , "w");
-  if (stream) {
-    int_vector_fwrite( map->state , stream );
-    fclose( stream );
-  } else
-    util_abort("%s: failed to open:%s for writing \n",__func__ , filename );
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    FILE * stream = util_mkdir_fopen( filename , "w");
+    if (stream) {
+      int_vector_fwrite( map->state , stream );
+      fclose( stream );
+    } else
+      util_abort("%s: failed to open:%s for writing \n",__func__ , filename );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
+
+
+void state_map_fread( state_map_type * map , const char * filename) {
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    FILE * stream = util_fopen( filename , "r");
+    if (stream) {
+      int_vector_fread( map->state , stream );
+      fclose( stream );
+    } else
+      util_abort("%s: failed to open:%s for reading \n",__func__ , filename );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
 }

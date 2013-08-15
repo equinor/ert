@@ -38,6 +38,7 @@ extern "C" {
   void                     state_map_iset( state_map_type * map ,int index , realisation_state_enum state);
   bool                     state_map_equal( state_map_type * map1 , state_map_type * map2);
   void                     state_map_fwrite( state_map_type * map , const char * filename);
+  void                     state_map_fread( state_map_type * map , const char * filename);
 
   UTIL_IS_INSTANCE_HEADER( state_map );
 

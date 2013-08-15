@@ -91,13 +91,23 @@ void test_io( ) {
   test_work_area_type * work_area = test_work_area_alloc( "enkf-state-map" , false );
   {
     state_map_type * state_map = state_map_alloc();
-    state_map_type * copy;
+    state_map_type * copy1 , *copy2;
     state_map_iset( state_map , 0 , STATE_HAS_DATA );
     state_map_iset( state_map , 100 , STATE_HAS_DATA );
     state_map_fwrite( state_map , "map");
     
-    copy = state_map_fread_alloc( "map" );
-    test_assert_true( state_map_equal( state_map , copy ));
+    copy1 = state_map_fread_alloc( "map" );
+    test_assert_true( state_map_equal( state_map , copy1 ));
+    
+    copy2 = state_map_alloc();
+    state_map_fread( copy2 , "map" );
+    test_assert_true( state_map_equal( state_map , copy2 ));
+
+    state_map_iset( copy2 , 67 , STATE_HAS_DATA );
+    test_assert_false(state_map_equal( state_map , copy2 ));
+    
+    state_map_fread( copy2 , "map");
+    test_assert_true( state_map_equal( state_map , copy2 ));
   }
   test_work_area_free( work_area );
 }
