@@ -122,6 +122,12 @@ void state_map_iset( state_map_type * map ,int index , realisation_state_enum st
   pthread_rwlock_unlock( &map->rw_lock );
 }
 
+void state_map_update_undefined( state_map_type * map , int index , realisation_state_enum new_state) {
+  realisation_state_enum current_state = state_map_iget( map , index );
+  if (current_state == STATE_UNDEFINED)
+    state_map_iset( map , index , new_state );
+}
+
 
 void state_map_fwrite( state_map_type * map , const char * filename) {
   pthread_rwlock_rdlock( &map->rw_lock );

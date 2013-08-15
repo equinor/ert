@@ -117,6 +117,23 @@ void test_io( ) {
 
 
 
+void test_update_undefined( ) {
+  state_map_type * map = state_map_alloc( );
+  
+  state_map_iset( map , 10 , STATE_HAS_DATA );
+  test_assert_int_equal( STATE_UNDEFINED , state_map_iget( map , 5 ) );
+  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( map , 10 ) );
+
+  state_map_update_undefined( map , 5 , STATE_HAS_DATA );
+  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( map , 5 ) );
+  
+  state_map_update_undefined( map , 10 , STATE_INITIALIZED );
+  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( map , 10 ) );
+  
+  state_map_free( map );
+}
+
+
 int main(int argc , char ** argv) {
   create_test();
   get_test();
@@ -124,6 +141,7 @@ int main(int argc , char ** argv) {
   load_empty_test();
   test_copy();
   test_io();
+  test_update_undefined( );
   exit(0);
 }
 
