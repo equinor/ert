@@ -108,6 +108,9 @@ void test_io( ) {
     
     state_map_fread( copy2 , "map");
     test_assert_true( state_map_equal( state_map , copy2 ));
+
+    state_map_fread( copy2 , "DoesNotExis");
+    test_assert_int_equal( 0 , state_map_get_size( copy2 ));
   }
   test_work_area_free( work_area );
 }
