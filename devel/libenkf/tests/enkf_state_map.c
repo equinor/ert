@@ -145,18 +145,48 @@ void test_select_matching( ) {
   state_map_select_matching( map , mask1 , STATE_HAS_DATA | STATE_INITIALIZED );
   state_map_select_matching( map , mask2 , STATE_HAS_DATA | STATE_INITIALIZED );
   
-  test_assert_true( bool_vector_equal( mask1 , mask2 ));
-  test_assert_int_equal( state_map_get_size( map ) , bool_vector_size( mask2 ));
+  test_assert_int_equal( state_map_get_size( map ) , bool_vector_size( mask1 ));
   
   for (int i=0; i < bool_vector_size( mask1 ); i++) {
     if (i==10)
       test_assert_true( bool_vector_iget( mask1 , i ));
     else if (i== 20)
       test_assert_true( bool_vector_iget( mask1 , i ));
-    else
+    else {
       test_assert_false( bool_vector_iget( mask1 , i ));
+      test_assert_true( bool_vector_iget( mask2 , i ));
+    }
   }
+    
+  bool_vector_free( mask1 );
+  bool_vector_free( mask2 );
+  state_map_free( map );
+}
+
+
+void test_deselect_matching( ) {
+  state_map_type * map = state_map_alloc( );
+  bool_vector_type * mask1 = bool_vector_alloc(0 , false);
+  bool_vector_type * mask2 = bool_vector_alloc(1000 , true);
+
+  state_map_iset( map , 10 , STATE_HAS_DATA );
+  state_map_iset( map , 20 , STATE_INITIALIZED );
+  state_map_deselect_matching( map , mask1 , STATE_HAS_DATA | STATE_INITIALIZED );
+  state_map_deselect_matching( map , mask2 , STATE_HAS_DATA | STATE_INITIALIZED );
   
+  test_assert_int_equal( state_map_get_size( map ) , bool_vector_size( mask1 ));
+  
+  for (int i=0; i < bool_vector_size( mask1 ); i++) {
+    if (i==10)
+      test_assert_false( bool_vector_iget( mask1 , i ));
+    else if (i== 20)
+      test_assert_false( bool_vector_iget( mask2 , i ));
+    else {
+      test_assert_false( bool_vector_iget( mask1 , i ));
+      test_assert_true( bool_vector_iget( mask2 , i ));
+    }
+  }
+    
   bool_vector_free( mask1 );
   bool_vector_free( mask2 );
   state_map_free( map );
