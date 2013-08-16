@@ -2,7 +2,7 @@ from unittest2 import TestCase
 from ert.util import StringList
 
 
-class TestStringList(TestCase):
+class StringListTest(TestCase):
     def test_del(self):
         s = StringList( initial = ["A", "list"] )
         internal_list_of_strings = s.strings

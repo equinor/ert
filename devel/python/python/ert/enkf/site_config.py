@@ -15,15 +15,12 @@
 #  for more details. 
 
 import  ctypes
-from    ert.cwrap.cwrap        import *
-from    ert.cwrap.cclass       import CClass
-from    ert.util.tvector       import * 
 from    enkf_enum              import *
+from ert.cwrap import CClass, CWrapper, CWrapperNameSpace
+from ert.job_queue import ExtJoblist, JobQueue
+from ert.util import StringList
 import  libenkf
 from    ert.enkf.libenkf       import *
-from ert.job_queue.ext_joblist import ExtJoblist
-from ert.job_queue.job_queue import JobQueue
-from ert.util.stringlist import StringList
 
 
 

@@ -1,8 +1,8 @@
-from unittest2 import TestCase, expectedFailure
+from unittest2 import TestCase
 from ert.util import LookupTable
 import numpy
 
-class TestLookupTable(TestCase):
+class LookupTableTest(TestCase):
 
     def test_lookup_table_no_values(self):
         lookup = LookupTable()

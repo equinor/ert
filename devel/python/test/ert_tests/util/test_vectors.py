@@ -23,7 +23,7 @@ from unittest2 import TestCase
 from ert.util import DoubleVector, IntVector, BoolVector, TimeVector, ctime
 
 
-class TestUtil(TestCase):
+class UtilTest(TestCase):
     def test_double_vector(self):
         v = DoubleVector()
 
