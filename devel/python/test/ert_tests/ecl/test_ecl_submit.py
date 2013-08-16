@@ -43,10 +43,10 @@ class EclSubmitTest(ExtendedTestCase):
     def setUp(self):
         if hasattr(self, "argv"):
             if len(self.argv) > 0:
-                nfs_work_path = self.argv[0]
+                self.nfs_work_path = self.argv[0]
 
             if len(self.argv) > 1:
-                rsh_servers = self.argv[1]
+                self.rsh_servers = self.argv[1]
 
     def make_run_path(self, iens, LSF=False):
         run_path = "run%d" % iens
@@ -64,6 +64,11 @@ class EclSubmitTest(ExtendedTestCase):
 
 
 class LSFSubmitTest(EclSubmitTest):
+
+    def test_start_parameters(self):
+        self.assertIsNotNone(self.nfs_work_path, "NFS work path missing!")
+        self.assertIsNone(self.rsh_servers)
+
 
     #@skip("LSF not defined!")
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow LSF job submit skipped!")
