@@ -63,7 +63,7 @@ extern "C" {
                                     enkf_fs_type           * fs,
                                     const int_vector_type  * step_list , 
                                     state_enum               state,
-                                    int                      ens_size,
+                                    const bool_vector_type * ens_mask , 
                                     const enkf_state_type ** ensemble ,
                                     meas_data_type         * meas_data,
                                     obs_data_type          * obs_data,

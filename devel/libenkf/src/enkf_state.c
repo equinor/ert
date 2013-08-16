@@ -70,6 +70,7 @@
 #include <ert/enkf/ert_template.h>
 #include <ert/enkf/member_config.h>
 #include <ert/enkf/enkf_defaults.h>
+#include <ert/enkf/state_map.h>
 
 #define  ENKF_STATE_TYPE_ID 78132
 
@@ -280,16 +281,33 @@ static void shared_info_free(shared_info_type * shared_info) {
 /*****************************************************************/
 
 void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list, bool force_init) {
-  state_enum init_state = ANALYZED;
-  int ip;
-  for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
-    int iens = enkf_state_get_iens( enkf_state );
-    enkf_node_type * param_node = enkf_state_get_node( enkf_state , stringlist_iget( param_list , ip));
-    node_id_type node_id = {.report_step = 0, .iens = iens , .state = init_state };
-    if (force_init || (enkf_node_has_data( param_node , fs , node_id) == false)) {
-      if (enkf_node_initialize( param_node , iens , enkf_state->rng)) 
-        enkf_node_store( param_node , fs , true , node_id);
+  int iens = enkf_state_get_iens( enkf_state );
+  state_map_type * state_map = enkf_fs_get_state_map( fs );
+  realisation_state_enum current_state = state_map_iget(state_map, iens);
+  if (current_state == STATE_PARENT_FAILURE) {
+    printf("Found PARENT failure");
+    return;
+  }
+  else
+  {
+    state_enum init_state = ANALYZED;
+    bool initOK = true;
+    for (int ip = 0; ip < stringlist_get_size(param_list); ip++)
+    {
+      enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
+      node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
+      bool has_data = enkf_node_has_data(param_node, fs, node_id);
+
+      if (force_init || (has_data == false))
+      {
+        if (enkf_node_initialize(param_node, iens, enkf_state->rng))
+          enkf_node_store(param_node, fs, true, node_id);
+        else
+          initOK = false;
+      }
     }
+    state_map_iset(state_map , iens , STATE_INITIALIZED);
+    enkf_fs_fsync(fs);
   }
 }
 
@@ -1090,6 +1108,14 @@ void enkf_state_load_from_forward_model(enkf_state_type * enkf_state ,
     enkf_state_forward_init( enkf_state , fs , loadOK );
   
   enkf_state_internalize_results( enkf_state , fs , loadOK , interactive , msg_list );
+  {
+    state_map_type * state_map = enkf_fs_get_state_map( fs );
+    int iens = member_config_get_iens( enkf_state->my_config );
+    if (loadOK) 
+      state_map_iset( state_map , iens , STATE_HAS_DATA);
+    else
+      state_map_iset( state_map , iens , STATE_LOAD_FAILURE);
+  }
 }
 
 
@@ -1106,15 +1132,16 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
   int step1                    = arg_pack_iget_int( arg_pack , 3 );
   int step2                    = arg_pack_iget_int( arg_pack , 4 );
   bool interactive             = arg_pack_iget_bool( arg_pack , 5 );  
-  stringlist_type * msg_list = arg_pack_iget_ptr( arg_pack , 6 );
+  stringlist_type * msg_list   = arg_pack_iget_ptr( arg_pack , 6 );
+  int iens                     = member_config_get_iens( enkf_state->my_config );
   bool loadOK                  = true;
-
+  
   
   run_info_init_for_load( enkf_state->run_info , 
                           load_start , 
                           step1 , 
                           step2 , 
-                          member_config_get_iens( enkf_state->my_config ) , 
+                          iens , 
                           model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 
                           enkf_state->subst_list );
   
@@ -1123,7 +1150,6 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
     printf(".");
     fflush(stdout);
   } 
-  
   return NULL;
 }  
 
@@ -1305,7 +1331,7 @@ void enkf_state_fread(enkf_state_type * enkf_state , enkf_fs_type * fs , int mas
     if (enkf_node_include_type(enkf_node , mask)) {
       node_id_type node_id = {.report_step = report_step , 
                               .iens = member_config_get_iens( my_config ) , 
-                              state = state };
+                              .state = state };
       bool forward_init = enkf_node_use_forward_init( enkf_node );
       if (forward_init)
         enkf_node_try_load(enkf_node , fs , node_id );
@@ -1992,7 +2018,11 @@ static bool enkf_state_complete_forward_modelEXIT(enkf_state_type * enkf_state ,
     log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
     if (run_info->run_status != JOB_LOAD_FAILURE)
       run_info->run_status = JOB_RUN_FAILURE;
-    
+    {
+      state_map_type * state_map = enkf_fs_get_state_map( fs );
+      int iens = member_config_get_iens( enkf_state->my_config );
+      state_map_iset( state_map , iens , STATE_LOAD_FAILURE );
+    }
     return false;
   }
 }
