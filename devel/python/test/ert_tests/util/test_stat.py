@@ -1,9 +1,9 @@
 import random
-from unittest2 import TestCase
 from ert.util import DoubleVector, quantile, quantile_sorted
+from ert_tests import ExtendedTestCase
 
 
-class TestStat(TestCase):
+class StatTest(ExtendedTestCase):
     def test_stat_quantiles(self):
         v = DoubleVector()
         for i in range(100000):

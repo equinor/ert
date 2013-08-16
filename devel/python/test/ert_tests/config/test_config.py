@@ -15,59 +15,61 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 
-from unittest2 import TestCase, TestSuite, TextTestRunner
-from ert.config import ContentType, Unrecognized, SchemaItem, ContentItem, ContentNode, ConfigParser
+from unittest2 import TestSuite, TextTestRunner
+from ert.config import ContentTypeEnum, UnrecognizedEnum, SchemaItem, ContentItem, ContentNode, ConfigParser
+from ert_tests import ExtendedTestCase
 
 
-class ConfigTest(TestCase):
+class ConfigTest(ExtendedTestCase):
     def setUp( self ):
         self.file_list = []
 
 
     def test_enums(self):
-        self.assertTrue(ContentType.CONFIG_STRING)
-        self.assertTrue(ContentType.CONFIG_INVALID)
-        self.assertTrue(Unrecognized.CONFIG_UNRECOGNIZED_ERROR)
+        self.assertTrue(ContentTypeEnum.CONFIG_STRING)
+        self.assertTrue(ContentTypeEnum.CONFIG_INVALID)
+        self.assertTrue(UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR)
 
 
     def test_parse(self):
         conf = ConfigParser()
         conf.add("FIELD", False)
         schema_item = conf.add("RSH_HOST", False)
-        self.assertTrue(isinstance(schema_item, SchemaItem))
-        self.assertTrue(
-            conf.parse("test-data/local/config/simple_config", unrecognized=Unrecognized.CONFIG_UNRECOGNIZED_IGNORE))
+        self.assertIsInstance(schema_item, SchemaItem)
+        test_path = self.createTestPath("local/config/simple_config")
+        self.assertTrue(conf.parse(test_path, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_IGNORE))
+
 
         content_item = conf["RSH_HOST"]
-        self.assertTrue(isinstance(content_item, ContentItem))
-        self.assertTrue(conf["BJARNE"] is None)
+        self.assertIsInstance(content_item, ContentItem)
+        self.assertIsNone(conf["BJARNE"])
 
-        self.assertTrue(len(content_item) == 1)
+        self.assertEqual(len(content_item), 1)
         self.assertRaises(ValueError, content_item.__getitem__, "BJARNE")
         self.assertRaises(IndexError, content_item.__getitem__, 10)
 
         content_node = content_item[0]
-        self.assertTrue(isinstance(content_node, ContentNode))
+        self.assertIsInstance(content_node, ContentNode)
 
-        self.assertTrue(len(content_node) == 2)
+        self.assertEqual(len(content_node), 2)
         self.assertRaises(ValueError, content_node.__getitem__, "BJARNE")
         self.assertRaises(IndexError, content_node.__getitem__, 10)
-        self.assertTrue(content_node[1] == "be-lx633214:2")
+        self.assertEqual(content_node[1], "be-lx633214:2")
 
-        self.assertTrue(content_node.content(sep=",") == "be-lx655082:2,be-lx633214:2")
-        self.assertTrue(content_node.content() == "be-lx655082:2 be-lx633214:2")
+        self.assertEqual(content_node.content(sep=","), "be-lx655082:2,be-lx633214:2")
+        self.assertEqual(content_node.content(), "be-lx655082:2 be-lx633214:2")
 
         content_item = conf["FIELD"]
-        self.assertTrue(len(content_item) == 5)
+        self.assertEqual(len(content_item), 5)
         self.assertRaises(IOError, ConfigParser.parse, conf, "DoesNotExits")
 
 
     def test_schema(self):
         schema_item = SchemaItem("TestItem")
-        self.assertTrue(isinstance(schema_item, SchemaItem))
-        self.assertTrue(schema_item.iget_type(6) == ContentType.CONFIG_STRING)
-        schema_item.iset_type(0, ContentType.CONFIG_INT)
-        self.assertTrue(schema_item.iget_type(0) == ContentType.CONFIG_INT)
+        self.assertIsInstance(schema_item, SchemaItem)
+        self.assertEqual(schema_item.iget_type(6), ContentTypeEnum.CONFIG_STRING)
+        schema_item.iset_type(0, ContentTypeEnum.CONFIG_INT)
+        self.assertEqual(schema_item.iget_type(0), ContentTypeEnum.CONFIG_INT)
         schema_item.set_argc_minmax(3, 6)
 
 
