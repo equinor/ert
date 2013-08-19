@@ -18,7 +18,7 @@ class LatexTest(ExtendedTestCase):
         lx = LaTeX("%s/test_error.tex" % self.local_path)
         self.assertFalse(lx.compile())
 
-    @skip("Unknown errors!")
+    #@skip("Unknown errors!")
     def test_cleanup( self ):
         lx = LaTeX("%s/report_OK.tex" % self.statoil_path, in_place=True)
         self.assertTrue(lx.in_place)
@@ -38,7 +38,7 @@ class LatexTest(ExtendedTestCase):
         self.assertTrue(os.path.exists("%s/report_OK.log" % run_path))
 
 
-    @skip("Unknown errors!")
+    #@skip("Unknown errors!")
     def test_report(self):
         lx = LaTeX("%s/report_error.tex" % self.statoil_path)
         lx.timeout = 4
@@ -47,7 +47,7 @@ class LatexTest(ExtendedTestCase):
         lx = LaTeX("%s/report_OK.tex" % self.statoil_path)
         self.assertTrue(lx.compile())
 
-    @skip("Unknown errors!")
+    #@skip("Unknown errors!")
     def test_target(self):
         lx = LaTeX("%s/report_OK.tex" % self.statoil_path)
         self.assertTrue(lx.compile())
