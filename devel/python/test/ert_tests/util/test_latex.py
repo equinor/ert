@@ -1,5 +1,5 @@
 import os
-# from unittest2 import skip
+from unittest2 import skip
 from ert.util import LaTeX
 from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
