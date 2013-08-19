@@ -45,6 +45,7 @@ class LatexTest(ExtendedTestCase):
     def test_report(self):
         lx = LaTeX("%s/report_error.tex" % self.statoil_path)
         lx.timeout = 4
+        print(lx.runpath)
         self.assertFalse(lx.compile())
 
         lx = LaTeX("%s/report_OK.tex" % self.statoil_path)
