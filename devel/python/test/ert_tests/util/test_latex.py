@@ -19,7 +19,7 @@ class LatexTest(ExtendedTestCase):
         lx = LaTeX("%s/test_error.tex" % self.local_path)
         self.assertFalse(lx.compile())
 
-    @skip("Unknown errors!")
+    #@skip("Unknown errors!")
     def test_cleanup( self ):
         with TestAreaContext("latex") as work_area:
             work_area.copy_directory_content(self.statoil_path)
@@ -41,7 +41,7 @@ class LatexTest(ExtendedTestCase):
         self.assertTrue(os.path.exists("%s/report_OK.log" % run_path))
 
 
-    @skip("Unknown errors!")
+    #@skip("Unknown errors!")
     def test_report(self):
         lx = LaTeX("%s/report_error.tex" % self.statoil_path)
         lx.timeout = 4
@@ -50,7 +50,7 @@ class LatexTest(ExtendedTestCase):
         lx = LaTeX("%s/report_OK.tex" % self.statoil_path)
         self.assertTrue(lx.compile())
 
-    @skip("Unknown errors!")
+    #@skip("Unknown errors!")
     def test_target(self):
         lx = LaTeX("%s/report_OK.tex" % self.statoil_path)
         self.assertTrue(lx.compile())
