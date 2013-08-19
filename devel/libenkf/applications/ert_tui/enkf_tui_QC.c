@@ -63,7 +63,6 @@ void enkf_tui_QC_plot_get_PC( enkf_main_type * enkf_main , int step1 , int step2
                               matrix_type * PC , matrix_type * PC_obs) {
   
   bool_vector_type * ens_mask            = bool_vector_alloc(0 , false);
-  int               ens_size             = enkf_main_get_ensemble_size( enkf_main );
   obs_data_type  *  obs_data             = obs_data_alloc();
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   int_vector_type * step_list            = int_vector_alloc(0,0);    
