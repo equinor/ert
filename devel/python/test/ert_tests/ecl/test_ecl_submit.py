@@ -17,12 +17,12 @@
 #
 import os
 import getpass
-from unittest2 import TestSuite, TextTestRunner, skip, skipIf
+from unittest2 import skipIf
 import time
 import shutil
 from ert.ecl import EclQueue, EclSum
 from ert.job_queue import QueueDriverEnum, RSHDriver
-from ert.util import TestAreaContext
+from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
 
 
@@ -97,6 +97,9 @@ class LSFSubmitTest(EclSubmitTest):
 
 
 class RSHSubmitTest(EclSubmitTest):
+    def test_start_parameters(self):
+        self.assertIsNotNone(self.nfs_work_path, "NFS work path missing!")
+        self.assertIsNotNone(self.rsh_servers, "RSH servers missing!")
 
     #@skip("RSH not defined!")
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow RSH job submit skipped!")

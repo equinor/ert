@@ -80,9 +80,9 @@ add_test( NAME python.ert.util.ctime
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_ctime.CTimeTest)
 
-add_test( NAME python.ert.util.latex
-          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_latex.LatexTest )
+#add_test( NAME python.ert.util.latex
+#          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_latex.LatexTest )
 
 add_test( NAME python.ert.util.lookup_table
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
