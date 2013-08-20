@@ -9,7 +9,6 @@ from ert_tests import ExtendedTestCase
 class StringListTest(BaseCClass):
     def __init__(self):
         c_pointer = self.cNamespace().stringlist_alloc()
-        print("Stringlist initialized! " + str(c_pointer))
         super(StringListTest, self).__init__(c_pointer)
 
     def free(self):
