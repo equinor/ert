@@ -1661,7 +1661,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
         enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
                                  0 ,   // Smoother update will write on step 0
-                                 ANALYSIS, 
+                                 ANALYZED, 
                                  target_fs_name , 
                                  step1 , 
                                  FORECAST , 
