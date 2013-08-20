@@ -40,11 +40,17 @@ class BaseCClass(object):
         return new_obj
 
     def setParent(self, parent=None):
+        #Todo: should object types also be able to have parents?
         if self._is_reference:
             self._parent = parent
+        else:
+            raise UserWarning("Can only set parent on reference types!")
 
     def isReference(self):
         return self._is_reference
+
+    def parent(self):
+        return self._parent
 
     def free(self):
         raise NotImplementedError("A CClass requires a free method!")
