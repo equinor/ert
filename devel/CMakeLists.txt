@@ -22,15 +22,24 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    set(ERT_WINDOWS TRUE)
    add_definitions( -DERT_WINDOWS )
+#  This symbol must be defined to support large (> 2GB) files on windows.
+   add_definitions( -DWINDOWS_LFS )
 endif()    
 
-set( CMAKE_C_FLAGS    "-g -O2 -Wall -std=gnu99" )
-set( CMAKE_CXX_FLAGS  "-g -O2 -Wall" )
+# Treat warnings as errors if not on Windows
+if (ERT_WINDOWS)
+   set( CMAKE_C_FLAGS    "-O2" )
+   set( CMAKE_CXX_FLAGS  "-O2" )
+else()
+   set( CMAKE_C_FLAGS    "-std=gnu99 -g -O2 -Wall -Wno-unknown-pragmas " )
+   set( CMAKE_CXX_FLAGS  "-g -Wall -O2 ")
+endif()
 
 include(cmake/ert_check.cmake)
 include(cmake/ert_find.cmake)
 include(cmake/Modules/UseMultiArch.cmake)
-include(cmake/python.cmake)
+include(cmake/ert_link.cmake)
+
 
 set( INSTALL_GROUP          ""     CACHE STRING "Group to install as - blank to install as current group")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
@@ -45,8 +54,6 @@ else()
 endif()
 
 
-
-
 if (MSVC)
    add_definitions( -D__func__="\\"????\\"")
 endif()
@@ -55,8 +62,8 @@ endif()
 if (ERT_LINUX)
    set( NEED_LIBM TRUE )
    set( LINK_STATIC FALSE )
-   add_definitions( -DHAVE_PROC )
    set( NEED_LIBDL ON )    
+   add_definitions( -DHAVE_PROC )
 else()
    set( NEED_LIBM FALSE )
    set( LINK_STATIC TRUE )
@@ -112,10 +119,13 @@ if (BUILD_ERT)
 
    include_directories( ${PROJECT_SOURCE_DIR}/libenkf/include )
    add_subdirectory( libenkf )
+
+   install(DIRECTORY ${PROJECT_SOURCE_DIR}/share DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
 
 if (BUILD_PYTHON)
+   include(cmake/python.cmake2)
    add_subdirectory( python )
 endif()
 

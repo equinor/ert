@@ -1,2 +1,5 @@
-add_subdirectory( test )
+set(PYTHON_INSTALL_PREFIX "python")
+if (BUILD_TESTS)
+   add_subdirectory( test )
+endif()
 add_subdirectory( python )

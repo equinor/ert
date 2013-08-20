@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
-   The file 'lsf_driver_impl.c' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'lsf_driver.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -178,6 +178,20 @@ void lsf_job_free(lsf_job_type * job) {
   util_safe_free(job->lsf_jobnr_char);
   util_free_stringlist(job->exec_host , job->num_exec_host);
   free(job);
+}
+
+
+void lsf_job_export_hostnames( const lsf_job_type * job , stringlist_type * hostlist) {
+  int host_nr;
+  
+  stringlist_clear( hostlist );
+  for (host_nr = 0; host_nr < job->num_exec_host; host_nr++)
+    stringlist_append_copy( hostlist , job->exec_host[ host_nr ]);
+}
+
+
+long lsf_job_get_jobnr( const lsf_job_type * job ) {
+  return job->lsf_jobnr;
 }
 
 
@@ -668,9 +682,9 @@ void * lsf_driver_submit_job(void * __driver ,
       pthread_mutex_lock( &driver->submit_lock );
       
       if (submit_method == LSF_SUBMIT_INTERNAL) {
-        job->lsf_jobnr = lsf_driver_submit_internal_job( driver , run_path , job_name , submit_cmd , num_cpu , argc, argv);
+        job->lsf_jobnr = lsf_driver_submit_internal_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
       } else {
-        job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , run_path , job_name , submit_cmd , num_cpu , argc, argv);
+        job->lsf_jobnr      = lsf_driver_submit_shell_job( driver , lsf_stdout , job_name , submit_cmd , num_cpu , argc, argv);
         job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
         hash_insert_ref( driver->my_jobs , job->lsf_jobnr_char , NULL );   
       }
@@ -859,6 +873,16 @@ bool lsf_driver_has_option( const void * __driver , const char * option_key) {
   return false;
 }
 
+void lsf_driver_init_option_list(stringlist_type * option_list) {
+  stringlist_append_ref(option_list, LSF_QUEUE);
+  stringlist_append_ref(option_list, LSF_RESOURCE);
+  stringlist_append_ref(option_list, LSF_SERVER);
+  stringlist_append_ref(option_list, LSF_RSH_CMD);
+  stringlist_append_ref(option_list, LSF_LOGIN_SHELL);
+  stringlist_append_ref(option_list, LSF_BSUB_CMD);
+  stringlist_append_ref(option_list, LSF_BJOBS_CMD);
+  stringlist_append_ref(option_list, LSF_BKILL_CMD);
+}
 
 
 
