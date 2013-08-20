@@ -20,7 +20,8 @@ import datetime
 from unittest2 import skip, skipUnless, skipIf
 from ert.ecl import EclSum
 
-from ert.util import StringList, TestAreaContext
+from ert.util import StringList
+from ert.util.test_area import TestAreaContext
 
 from ert_tests import ExtendedTestCase
 
