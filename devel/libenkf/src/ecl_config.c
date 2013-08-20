@@ -358,7 +358,7 @@ void ecl_config_set_init_section( ecl_config_type * ecl_config , const char * in
      
   */
   if (ecl_config->can_restart) {  /* The <INIT> tag is set. */
-    ecl_config->input_init_section = util_realloc_string_copy( ecl_config->input_init_section , input_init_section );  /* input_init_section = path/to/init_section         */
+    ecl_config->input_init_section = util_realloc_string_copy( ecl_config->input_init_section , input_init_section );   /* input_init_section = path/to/init_section         */
     if (util_file_exists( ecl_config->input_init_section )) {                                                           /* init_section       = $CWD/path/to/init_section */ 
       util_safe_free( ecl_config->init_section );
       ecl_config->init_section = util_alloc_realpath(input_init_section);
@@ -367,10 +367,11 @@ void ecl_config_set_init_section( ecl_config_type * ecl_config , const char * in
       
       util_alloc_file_components( ecl_config->input_init_section , &path , NULL , NULL );
       if (path != NULL) 
-        util_abort("%s: When INIT_SECTION:%s is set to a non-existing file - you can not have any path components.\n",__func__ , input_init_section);
+        fprintf(stderr,"** Warning: %s: When INIT_SECTION:%s points to a non-existing file - you can not have any path components.\n",__func__ , input_init_section);
+      else 
+        ecl_config->init_section = util_alloc_string_copy(input_init_section);
       
       util_safe_free( path );
-      ecl_config->init_section = util_alloc_string_copy(input_init_section);
     }
   } else
     /* 
