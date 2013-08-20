@@ -81,9 +81,9 @@ add_test( enkf_forward_init_FIELD_FALSE
 #-----------------------------------------------------------------
 
 
-add_executable( enkf_iter_config enkf_iter_config.c )
-target_link_libraries( enkf_iter_config enkf test_util )
-add_test( enkf_iter_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_iter_config )
+#add_executable( enkf_iter_config enkf_iter_config.c )
+#target_link_libraries( enkf_iter_config enkf test_util )
+#add_test( enkf_iter_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_iter_config )
 
 add_executable( enkf_model_config enkf_model_config.c )
 target_link_libraries( enkf_model_config enkf test_util )
