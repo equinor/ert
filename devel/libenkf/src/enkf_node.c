@@ -293,7 +293,9 @@ enkf_var_type enkf_node_get_var_type(const enkf_node_type * enkf_node) {
   return enkf_config_node_get_var_type(enkf_node->config);
 }
 
-
+bool enkf_node_use_forward_init( const enkf_node_type * enkf_node ) {
+  return enkf_config_node_use_forward_init( enkf_node->config );
+}
 
 
 
@@ -339,21 +341,24 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fo
 
 
 bool enkf_node_user_get(enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , node_id_type node_id , double * value) {
+  return enkf_node_user_get_no_id( enkf_node , fs , key , node_id.report_step , node_id.iens , node_id.state , value );
+}
+
+bool enkf_node_user_get_no_id(enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int report_step, int iens, state_enum state , double * value) {
+  node_id_type node_id = {.report_step = report_step , .iens = iens, .state = state };
   bool loadOK;
   FUNC_ASSERT( enkf_node->user_get );
   {
     loadOK = enkf_node_try_load( enkf_node , fs , node_id);
     
     if (loadOK) 
-      return enkf_node->user_get(enkf_node->data , key , node_id.report_step,  node_id.state , value);
+      return enkf_node->user_get(enkf_node->data , key , report_step,  state , value);
     else {
       *value = 0;
       return false;
     }
-
   }
 }
-
 
 bool enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int iens , state_enum state , double_vector_type * values) {
   if (enkf_node->vector_storage) {
@@ -370,9 +375,9 @@ bool enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs ,
 
 
 
-void enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
+bool enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
   FUNC_ASSERT( enkf_node->fload );
-  enkf_node->fload( enkf_node->data , filename );
+  return enkf_node->fload( enkf_node->data , filename );
 }
 
 
@@ -418,6 +423,19 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node , const char * run_path , 
   enkf_node->__modified            = false;
   return loadOK;
 }
+
+
+bool enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path , int iens) {
+  char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , run_path , iens );
+  bool loadOK = false;
+  if (init_file) {
+    FUNC_ASSERT(enkf_node->fload);
+    loadOK = enkf_node->fload( enkf_node->data , init_file );
+  }
+  util_safe_free( init_file );
+  return loadOK;
+}
+
 
 
 bool enkf_node_forward_load_vector(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step1, int report_step2 , int iens ) {
@@ -845,19 +863,23 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
 */
 
 bool enkf_node_initialize(enkf_node_type *enkf_node, int iens , rng_type * rng) {
-  if (enkf_node->initialize != NULL) {
-    char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , iens );
-    bool   init = enkf_node->initialize(enkf_node->data , iens , init_file, rng);
-    if (init) {
-      enkf_node->__node_id.report_step = 0;
-      enkf_node->__node_id.state       = ANALYZED;
-      enkf_node->__node_id.iens        = iens;
-      enkf_node->__modified    = true;
-    } 
-    util_safe_free( init_file );
-    return init;
-  } else
-    return false;  /* No init performed */
+  if (enkf_node_use_forward_init( enkf_node ))
+    return false; // This node will be initialized by loading results from the forward model.
+  else {
+    if (enkf_node->initialize != NULL) {
+      char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , NULL , iens );
+      bool   init = enkf_node->initialize(enkf_node->data , iens , init_file, rng);
+      if (init) {
+        enkf_node->__node_id.report_step = 0;
+        enkf_node->__node_id.state       = ANALYZED;
+        enkf_node->__node_id.iens        = iens;
+        enkf_node->__modified    = true;
+      } 
+      util_safe_free( init_file );
+      return init;
+    } else
+      return false;  /* No init performed */
+  }
 }
 
 
@@ -1024,6 +1046,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->iaddsqr            = surface_iaddsqr__;
     node->imul               = surface_imul__;
     node->isqrt              = surface_isqrt__;
+    node->fload              = surface_fload__;
     break;
   case(FIELD):
     node->alloc              = field_alloc__;

@@ -59,7 +59,7 @@ extern "C" {
                                                    const char *  ,   /* Filename - can be NULL. */
                                                    fortio_type *);   /* fortio inistance for writing elements in restart files. */
   
-  typedef void          (fload_ftype)                     (      void *  , const char *);
+  typedef bool          (fload_ftype)                     (      void *  , const char *);
   typedef void          (read_from_buffer_ftype)          (      void *  , buffer_type * , int, state_enum );
   typedef bool          (write_to_buffer_ftype)           (const void *  , buffer_type * , int, state_enum );
   typedef bool          (has_data_ftype)                  (const void *  , int , state_enum); 
@@ -108,6 +108,7 @@ extern "C" {
 
 
   bool             enkf_node_user_get_vector( enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int iens , state_enum state , double_vector_type * values);
+  bool             enkf_node_user_get_no_id(enkf_node_type * enkf_node , enkf_fs_type * fs , const char * key , int report_step, int iens, state_enum state , double * value);
   bool             enkf_node_user_get(enkf_node_type *  , enkf_fs_type * , const char * , node_id_type , double * );
   enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);
   enkf_node_type * enkf_node_copyc(const enkf_node_type * );
@@ -118,6 +119,7 @@ extern "C" {
     void             enkf_node_free(enkf_node_type *enkf_node);
   */
 
+  bool             enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path , int iens);
   bool             enkf_node_has_data( enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id);
   void             enkf_node_free_data(enkf_node_type * );
   void             enkf_node_free__(void *);
@@ -126,6 +128,7 @@ extern "C" {
   void           * enkf_node_value_ptr(const enkf_node_type * );
   ert_impl_type    enkf_node_get_impl_type(const enkf_node_type * );
   enkf_var_type    enkf_node_get_var_type(const enkf_node_type * );
+  bool             enkf_node_use_forward_init( const enkf_node_type * enkf_node );
   void             enkf_node_clear_serial_state(enkf_node_type * );
   void             enkf_node_serialize(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id , const active_list_type * active_list , matrix_type * A , int row_offset , int column);
   void             enkf_node_deserialize(enkf_node_type *enkf_node , enkf_fs_type * fs , node_id_type node_id , const active_list_type * active_list , const matrix_type * A , int row_offset , int column);
@@ -156,7 +159,7 @@ extern "C" {
   enkf_node_type ** enkf_node_load_alloc_ensemble( const enkf_config_node_type * config_node , enkf_fs_type * fs , 
                                                    int report_step , int iens1 , int iens2 , state_enum state);
   enkf_node_type *  enkf_node_load_alloc( const enkf_config_node_type * config_node , enkf_fs_type * fs , node_id_type node_id);
-  void              enkf_node_fload( enkf_node_type * enkf_node , const char * filename );
+  bool              enkf_node_fload( enkf_node_type * enkf_node , const char * filename );
   void              enkf_node_load(enkf_node_type * enkf_node , enkf_fs_type * fs , node_id_type node_id );
   bool              enkf_node_store(enkf_node_type * enkf_node , enkf_fs_type * fs , bool force_vectors , node_id_type node_id);
   bool              enkf_node_store_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens , state_enum state);

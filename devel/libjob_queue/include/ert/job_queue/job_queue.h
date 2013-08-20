@@ -36,6 +36,7 @@ extern "C" {
   void                job_queue_submit_complete( job_queue_type * queue );
   job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
   void                job_queue_set_driver(job_queue_type * queue , queue_driver_type * driver);
+  bool                job_queue_has_driver(const job_queue_type * queue );
   //void                job_queue_set_size( job_queue_type * job_queue , int size );
   void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
   job_queue_type   *  job_queue_alloc( int  , const char * ok_file , const char * exit_file);
@@ -68,9 +69,7 @@ extern "C" {
   void *              job_queue_run_jobs__(void * );
   job_status_type     job_queue_iget_job_status(const job_queue_type * , int );
   const char        * job_queue_status_name( job_status_type status );
-  void                job_queue_set_max_running( job_queue_type * queue , int max_running );
-  int                 job_queue_inc_max_runnning( job_queue_type * queue, int delta );
-  int                 job_queue_get_max_running( const job_queue_type * queue );
+ 
   int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
   time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
   time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
@@ -97,7 +96,9 @@ extern "C" {
   const char        * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_stderr_file( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_run_path( const job_queue_type * queue , int job_index);
+  void                job_queue_iset_external_restart(job_queue_type * queue , int job_index);
   job_queue_node_type * job_queue_iget_job( job_queue_type * job_queue , int job_nr );
+  bool                job_queue_has_driver(const job_queue_type * queue );
 
 #ifdef __cplusplus
 }

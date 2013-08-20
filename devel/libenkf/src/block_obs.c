@@ -83,9 +83,10 @@ UTIL_IS_INSTANCE_FUNCTION(block_obs , BLOCK_OBS_TYPE_ID);
 
 
 
-static point_obs_type * point_obs_alloc( block_obs_source_type   source_type , int i , int j , int k , int active_index , char * sum_key , double value , double std) {
+static point_obs_type * point_obs_alloc( block_obs_source_type   source_type , int i , int j , int k , int active_index , const char * sum_key , double value , double std) {
   point_obs_type * point_obs = util_malloc( sizeof * point_obs );
   UTIL_TYPE_ID_INIT( point_obs , POINT_OBS_TYPE_ID );
+
   point_obs->source_type  = source_type;
   point_obs->i            = i;
   point_obs->j            = j;
@@ -169,7 +170,6 @@ block_obs_type * block_obs_alloc(const char   * obs_key,
   
   {
     block_obs_type * block_obs = util_malloc(sizeof * block_obs);
-    char           * sum_kw    = NULL;
 
     UTIL_TYPE_ID_INIT( block_obs , BLOCK_OBS_TYPE_ID );
     block_obs->obs_key         = util_alloc_string_copy(obs_key);
@@ -183,7 +183,7 @@ block_obs_type * block_obs_alloc(const char   * obs_key,
     {
       for (int l=0; l < size; l++) {
         int active_index = ecl_grid_get_active_index3( block_obs->grid , i[l],j[l],k[l]);
-        char * sum_key   = NULL;
+        const char * sum_key   = NULL;
         if (source_type == SOURCE_SUMMARY) 
           sum_key = stringlist_iget( summary_keys , l );
         
@@ -354,6 +354,20 @@ void block_obs_iget_ijk(const block_obs_type * block_obs , int block_nr , int * 
 
 int block_obs_get_size(const block_obs_type * block_obs) {
   return block_obs->size;
+}
+
+void block_obs_scale_std(block_obs_type * block_obs, double scale_factor) {
+  for (int i = 0; i < block_obs->size; i++) {
+    if (block_obs->point_list[i] != NULL) {
+      point_obs_type * point_observation = block_obs->point_list[i];
+      point_observation->std = point_observation->std * scale_factor;
+    }
+  }
+}
+
+void block_obs_scale_std__(void * block_obs, double scale_factor) {
+  block_obs_type * observation = block_obs_safe_cast(block_obs);
+  block_obs_scale_std(observation, scale_factor); 
 }
 
 

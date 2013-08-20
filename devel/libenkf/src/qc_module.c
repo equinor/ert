@@ -32,7 +32,7 @@
 #include <ert/enkf/runpath_list.h>
 
 #define QC_WORKFLOW_NAME    "QC"
-#define RUNPATH_LIST_FILE   "/tmp/ert_runpath_list"
+#define RUNPATH_LIST_FILE   ".ert_runpath_list"
 
 
 struct qc_module_struct {
@@ -54,13 +54,15 @@ qc_module_type * qc_module_alloc( ert_workflow_list_type * workflow_list , const
   qc_module->runpath_list = runpath_list_alloc();
   qc_module->runpath_list_file = NULL;
   qc_module_set_path( qc_module , qc_path );
-  qc_module_set_runpath_list_file( qc_module , RUNPATH_LIST_FILE );
+  qc_module_set_runpath_list_file( qc_module , NULL, RUNPATH_LIST_FILE );
+
   return qc_module;
 }
 
 
 void qc_module_free( qc_module_type * qc_module ) {
   util_safe_free( qc_module->qc_path );
+  util_safe_free( qc_module->runpath_list_file);
   runpath_list_free( qc_module->runpath_list );
   free( qc_module );
 }
@@ -75,9 +77,38 @@ void qc_module_export_runpath_list( const qc_module_type * qc_module ) {
   runpath_list_fprintf( qc_module->runpath_list , stream );
   fclose( stream );
 }
+  
+static void qc_module_set_runpath_list_file__( qc_module_type * qc_module , const char * runpath_list_file) {
+  util_safe_free( qc_module->runpath_list_file );
+  qc_module->runpath_list_file = util_alloc_string_copy( runpath_list_file );
+}
 
-void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * filename) {
-  qc_module->runpath_list_file = util_realloc_string_copy( qc_module->runpath_list_file , filename );
+
+void qc_module_set_runpath_list_file( qc_module_type * qc_module , const char * basepath, const char * filename) {
+
+  if (filename && util_is_abs_path( filename ))
+    qc_module_set_runpath_list_file__( qc_module , filename );
+  else {
+    const char * file = RUNPATH_LIST_FILE;
+
+    if (filename != NULL) 
+      file = filename;
+  
+    char * file_with_path_prefix = NULL;
+    if (basepath != NULL) {
+      file_with_path_prefix = util_alloc_filename(basepath, file, NULL);
+    }
+    else
+      file_with_path_prefix = util_alloc_string_copy(file);
+
+    {
+      char * absolute_path = util_alloc_abs_path(file_with_path_prefix);
+      qc_module_set_runpath_list_file__( qc_module , absolute_path );
+      free( absolute_path );
+    }
+    
+    free(file_with_path_prefix);
+  }
 }
 
 const char * qc_module_get_runpath_list_file( qc_module_type * qc_module) {
@@ -109,7 +140,7 @@ void qc_module_set_workflow( qc_module_type * qc_module , const char * qc_workfl
 }
 
 
-bool qc_module_run_workflow( qc_module_type * qc_module , void * self) {
+bool qc_module_run_workflow( const qc_module_type * qc_module , void * self) {
   bool verbose = false;
   if (qc_module->qc_workflow != NULL ) {
     if (!util_file_exists( qc_module->runpath_list_file ))
@@ -141,6 +172,9 @@ void qc_module_init( qc_module_type * qc_module , const config_type * config) {
     const char * qc_workflow = config_get_value_as_path(config , QC_WORKFLOW_KEY);
     qc_module_set_workflow( qc_module , qc_workflow );
   }
+  
+  if (config_item_set( config, RUNPATH_FILE_KEY)) 
+    qc_module_set_runpath_list_file(qc_module, NULL, config_get_value(config, RUNPATH_FILE_KEY));
 }
 
 
@@ -154,6 +188,9 @@ void qc_module_add_config_items( config_type * config ) {
   item = config_add_schema_item( config , QC_WORKFLOW_KEY , false );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
+  
+  item = config_add_schema_item( config , RUNPATH_FILE_KEY , false  );
+  config_schema_item_set_argc_minmax(item , 1 , 1 );
 }
 
 

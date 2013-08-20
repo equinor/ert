@@ -1,1 +1,7 @@
-add_python_target(python_config ${PYTHON_INSTALL_PREFIX}/ert/config "config;__init__;libconfig;config_enums;config_parser")
+set(PYTHON_SOURCES
+    __init__.py
+    config_enums.py
+    config_parser.py
+)
+
+add_python_package("Python ert.config" ${PYTHON_INSTALL_PREFIX}/ert/config "${PYTHON_SOURCES}" True)

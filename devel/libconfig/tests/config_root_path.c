@@ -27,28 +27,18 @@
 
 
 int main(int argc , char ** argv) {
-#ifdef ERT_LINUX
-  const char * root = "/tmp/root";
-  const char * rel_path = "rel/path";
-  const char * abs_path = "/tmp/root/abs/path";
-  const char * rel_true = "rel/path/XXX";
-  const char * abs_true = "/tmp/root/rel/path/XXX";
-  const char * path_true1 = "rel/path/XXX";
-  const char * path_true2 = "/tmp/root/rel/path/XXX";
-#endif
-  
   char * cwd = util_alloc_cwd();
 
   {
     config_root_path_type * root_path = config_root_path_alloc( NULL );
     
-    if (!test_string_equal( config_root_path_get_abs_path( root_path ) , cwd ))
+    if (!test_check_string_equal( config_root_path_get_abs_path( root_path ) , cwd ))
       test_error_exit("abs:path:%s   expeceted:%s \n",config_root_path_get_abs_path( root_path ) , cwd );
 
-    if (!test_string_equal( config_root_path_get_input_path( root_path ) , NULL ))
+    if (!test_check_string_equal( config_root_path_get_input_path( root_path ) , NULL ))
       test_error_exit("input:path:%s   expeceted:%s \n",config_root_path_get_input_path( root_path ) , NULL );
     
-    if (!test_string_equal( config_root_path_get_rel_path( root_path ) , NULL ))
+    if (!test_check_string_equal( config_root_path_get_rel_path( root_path ) , NULL ))
       test_error_exit("rel:path:%s   expeceted:%s \n",config_root_path_get_rel_path( root_path ) , NULL );
 
     
@@ -72,10 +62,10 @@ int main(int argc , char ** argv) {
     config_root_path_type * root_path1 = config_root_path_alloc( input_path );
     config_root_path_type * root_path2 = config_root_path_alloc( rel_path );
 
-    if (!test_string_equal( config_root_path_get_rel_path( root_path1 ) , config_root_path_get_rel_path( root_path2 )))
+    if (!test_check_string_equal( config_root_path_get_rel_path( root_path1 ) , config_root_path_get_rel_path( root_path2 )))
       test_error_exit("Rel: %s != %s \n",config_root_path_get_rel_path( root_path1 ) , config_root_path_get_rel_path( root_path2));
     
-    if (!test_string_equal( config_root_path_get_abs_path( root_path1 ) , config_root_path_get_abs_path( root_path2 )))
+    if (!test_check_string_equal( config_root_path_get_abs_path( root_path1 ) , config_root_path_get_abs_path( root_path2 )))
       test_error_exit("Abs: %s != %s \n",config_root_path_get_abs_path( root_path1 ) , config_root_path_get_abs_path( root_path2 ));
     
     config_root_path_free( root_path1 );

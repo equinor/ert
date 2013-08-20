@@ -69,6 +69,7 @@ extern "C" {
   char                        * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path);
   const char                  * enkf_main_get_current_fs( const enkf_main_type * enkf_main );
   void                          enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * case_path );
+  bool                          enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case);
   void                          enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
   void                          enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
   void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );
@@ -91,6 +92,7 @@ extern "C" {
   const char                  * enkf_main_get_data_file(const enkf_main_type * );
   const char                 ** enkf_main_get_well_list_ref(const enkf_main_type * , int *);
   
+
   bool                          enkf_main_get_endian_swap(const enkf_main_type * );
   bool                          enkf_main_get_fmt_file(const enkf_main_type * );
   bool                          enkf_main_has_key(const enkf_main_type * , const char *);
@@ -220,7 +222,7 @@ extern "C" {
   void                        enkf_main_fprintf_config( const enkf_main_type * enkf_main );
   int_vector_type           * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride);
 
-  const qc_module_type * enkf_main_get_qc_module( const enkf_main_type * enkf_main );
+  qc_module_type       * enkf_main_get_qc_module( const enkf_main_type * enkf_main );
   bool                   enkf_main_has_QC_workflow( const enkf_main_type * enkf_main );
 
   void enkf_main_get_PC( const enkf_main_type * enkf_main , 
@@ -244,6 +246,7 @@ extern "C" {
   enkf_main_type      * enkf_main_alloc_empty( );
 
   rng_config_type     * enkf_main_get_rng_config( const enkf_main_type * enkf_main );
+  void                  enkf_main_rng_init( enkf_main_type * enkf_main);
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 
