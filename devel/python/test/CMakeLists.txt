@@ -132,7 +132,7 @@ add_test( NAME python.ert.ecl.fortio
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_fortio.FortIOTest)
 
 
-add_test( NAME python.ert.ecl.ecl_grdecl
+add_test( NAME python.ert.ecl.ecl_grdecl                                      
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_grdecl.GRDECLTest )
 
@@ -184,7 +184,11 @@ add_test( NAME python.ert.config
 
 
 
-
+set_property( TEST python.ert.sched.sched           PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.fortio            PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_grdecl        PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_restart       PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.ert.ecl.ecl_region        PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.ert.ecl.ecl_file          PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.ert.ecl.ecl_queue_LOCAL   PROPERTY LABELS Python:StatoilData:Slow )
 set_property( TEST python.ert.ecl.ecl_sum           PROPERTY LABELS Python:StatoilData )
