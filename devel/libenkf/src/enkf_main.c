@@ -1658,7 +1658,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
         enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
         enkf_main_smoother_update(enkf_main , step_list , target_fs);
 
-        enkf_main_copy_ensemble( enkf_main , 
+	/*        enkf_main_copy_ensemble( enkf_main , 
                                  enkf_main_get_current_fs( enkf_main ),
                                  0 ,   // Smoother update will write on step 0
                                  ANALYZED, 
@@ -1667,7 +1667,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
                                  FORECAST , 
                                  iactive , 
                                  NULL , 
-                                 node_list );
+                                 node_list ); */
         enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
       }
       iter++;
@@ -1694,7 +1694,7 @@ void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
   
   const char * target_fs_name  = "ONE_MORE_ITERATION";
   enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
-  enkf_main_smoother_update(enkf_main , step_list , target_fs);
+  enkf_main_smoother_update(enkf_main , step_list , target_fs );
   
   enkf_main_copy_ensemble( enkf_main , 
 			   enkf_main_get_current_fs( enkf_main ),
