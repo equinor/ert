@@ -193,6 +193,13 @@ bool ecl_config_has_schedule( const ecl_config_type * ecl_config ) {
     return true;
 }
 
+bool ecl_config_has_init_section( const ecl_config_type * ecl_config ) {
+  if (ecl_config->init_section == NULL)
+    return false;
+  else
+    return true;
+}
+
 
 /**
    Observe: This function makes a hard assumption that the
