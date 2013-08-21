@@ -68,8 +68,12 @@ static void analysis_iter_config_set_runpath_fmt( analysis_iter_config_type * co
   }
 }
 
-static void analysis_iter_config_set_case_fmt( analysis_iter_config_type * config , const char * case_fmt) {
+void analysis_iter_config_set_case_fmt( analysis_iter_config_type * config , const char * case_fmt) {
   config->case_fmt = util_realloc_string_copy( config->case_fmt , case_fmt );
+}
+
+char * analysis_iter_config_get_case_fmt( analysis_iter_config_type * config) {
+  return config->case_fmt;
 }
 
 
