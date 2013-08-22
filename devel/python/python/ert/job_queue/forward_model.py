@@ -28,8 +28,7 @@ class ForwardModel(CClass):
             
     @property
     def alloc_joblist(self):
-        s = StringList(initial = None, c_ptr = cfunc.alloc_joblist(self))
-        return s
+        return cfunc.alloc_joblist(self)
 
     def iget_job(self, index):
         job = ExtJob( cfunc.iget_job( self, index ), parent = self)
@@ -52,5 +51,5 @@ cfunc = CWrapperNameSpace("forward_model")
 cfunc.free                       = cwrapper.prototype("void forward_model_free( forward_model )")
 cfunc.clear                      = cwrapper.prototype("void forward_model_clear(forward_model)")
 cfunc.add_job                    = cwrapper.prototype("c_void_p forward_model_add_job(forward_model, char*)")
-cfunc.alloc_joblist              = cwrapper.prototype("c_void_p forward_model_alloc_joblist(forward_model)")
+cfunc.alloc_joblist              = cwrapper.prototype("stringlist_obj forward_model_alloc_joblist(forward_model)")
 cfunc.iget_job                   = cwrapper.prototype("c_void_p forward_model_iget_job( forward_model, int)")
