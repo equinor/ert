@@ -1111,7 +1111,7 @@ void enkf_state_load_from_forward_model(enkf_state_type * enkf_state ,
   {
     state_map_type * state_map = enkf_fs_get_state_map( fs );
     int iens = member_config_get_iens( enkf_state->my_config );
-    if (loadOK) 
+    if (*loadOK) 
       state_map_iset( state_map , iens , STATE_HAS_DATA);
     else
       state_map_iset( state_map , iens , STATE_LOAD_FAILURE);
