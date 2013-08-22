@@ -32,7 +32,7 @@ class ExtJoblist(CClass):
 
     @property
     def alloc_list(self):
-        return StringList(c_ptr = cfunc.alloc_list( self ), parent = self)
+        return cfunc.alloc_list(self).setParent(self)
 
     def del_job(self, job):
         return cfunc.del_job(self, job)
@@ -54,7 +54,7 @@ cfunc = CWrapperNameSpace("ext_joblist")
 ##################################################################
 ##################################################################
 cfunc.free                       = cwrapper.prototype("void ext_joblist_free( ext_joblist )")
-cfunc.alloc_list                 = cwrapper.prototype("c_void_p ext_joblist_alloc_list(ext_joblist)")
+cfunc.alloc_list                 = cwrapper.prototype("stringlist_ref ext_joblist_alloc_list(ext_joblist)")
 cfunc.get_job                    = cwrapper.prototype("c_void_p ext_joblist_get_job(ext_joblist, char*)")
 cfunc.del_job                    = cwrapper.prototype("int ext_joblist_del_job(ext_joblist, char*)")
 cfunc.has_job                    = cwrapper.prototype("int ext_joblist_has_job(ext_joblist, char*)")
