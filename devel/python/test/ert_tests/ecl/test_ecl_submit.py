@@ -17,7 +17,7 @@
 #
 import os
 import getpass
-from unittest2 import skipIf
+from unittest2 import skipIf, expectedFailure
 import time
 import shutil
 from ert.ecl import EclQueue, EclSum
@@ -65,12 +65,12 @@ class EclSubmitTest(ExtendedTestCase):
 
 class LSFSubmitTest(EclSubmitTest):
 
+    @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow LSF job submit skipped!")
     def test_start_parameters(self):
         self.assertIsNotNone(self.nfs_work_path, "NFS work path missing!")
         self.assertIsNone(self.rsh_servers)
 
 
-    #@skip("LSF not defined!")
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow LSF job submit skipped!")
     def test_LSF_submit(self):
         root = os.path.join(self.nfs_work_path, getpass.getuser(), "ert-test/python/ecl_submit/LSF")
@@ -97,11 +97,11 @@ class LSFSubmitTest(EclSubmitTest):
 
 
 class RSHSubmitTest(EclSubmitTest):
+    @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow RSH job submit skipped!")
     def test_start_parameters(self):
         self.assertIsNotNone(self.nfs_work_path, "NFS work path missing!")
         self.assertIsNotNone(self.rsh_servers, "RSH servers missing!")
 
-    #@skip("RSH not defined!")
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow RSH job submit skipped!")
     def test_RSH_submit(self):
         root = os.path.join(self.nfs_work_path, getpass.getuser(), "ert-test/python/ecl_submit/RSH")
