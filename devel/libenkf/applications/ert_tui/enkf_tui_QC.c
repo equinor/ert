@@ -24,6 +24,7 @@
 #include <time.h>
 
 #include <ert/util/double_vector.h>
+#include <ert/util/int_vector.h>
 #include <ert/util/util.h>
 #include <ert/util/menu.h>
 #include <ert/util/arg_pack.h>
@@ -31,6 +32,7 @@
 #include <ert/util/bool_vector.h>
 #include <ert/util/msg.h>
 #include <ert/util/vector.h>
+#include <ert/util/type_vector_functions.h>
 
 #include <ert/plot/plot.h>
 #include <ert/plot/plot_dataset.h> 
@@ -68,10 +70,12 @@ void enkf_tui_QC_plot_get_PC( enkf_main_type * enkf_main , int step1 , int step2
   int_vector_type * step_list            = int_vector_alloc(0,0);    
   enkf_fs_type * source_fs               = enkf_main_get_fs( enkf_main);
   state_map_type * state_map             = enkf_fs_get_state_map(source_fs);
+  int_vector_type * ens_active_list;
   meas_data_type *  meas_data;
 
   state_map_select_matching(state_map , ens_mask , STATE_HAS_DATA);
-  meas_data = meas_data_alloc(ens_mask);
+  ens_active_list = bool_vector_alloc_active_list(ens_mask);
+  meas_data = meas_data_alloc(ens_active_list);
   {
     for (int step =step1; step <= step2; step++) 
       int_vector_append( step_list , step );
