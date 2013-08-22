@@ -10,6 +10,9 @@ set(TEST_SOURCES
     ert_tests/config/__init__.py
     ert_tests/config/test_config.py
 
+    ert_tests/cwrap/__init__.py
+    ert_tests/cwrap/test_cwrap.py
+
     ert_tests/ecl/__init__.py
     ert_tests/ecl/test_ecl_default.py
     ert_tests/ecl/test_ecl_file.py
@@ -181,6 +184,10 @@ add_test( NAME python.ert.config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.config.test_config.ConfigTest)
 
+#CWRAP
+add_test( NAME python.ert.cwrap
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_cwrap.CWRapTest)
 
 
 
