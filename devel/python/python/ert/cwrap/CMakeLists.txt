@@ -1,9 +1,11 @@
 set(PYTHON_SOURCES
     __init__.py
+    basecclass.py
     cclass.py
     cenum.py
     cfile.py
     clib.py
+    cnamespace.py
     cwrap.py
 )
 
