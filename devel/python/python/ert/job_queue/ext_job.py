@@ -20,87 +20,87 @@ from ert.job_queue import JOB_QUEUE_LIB
 class ExtJob(BaseCClass):
     def __init__(self, name, root_path, private, config_file = None):
         if config_file is None:
-            c_ptr = self.cNamespace().alloc(name, root_path, private)
+            c_ptr = ExtJob.cNamespace().alloc(name, root_path, private)
             super(ExtJob, self).__init__(c_ptr)
         else:
-            c_ptr = self.cNamespace().fscanf_alloc(name, root_path, private, config_file)
+            c_ptr = ExtJob.cNamespace().fscanf_alloc(name, root_path, private, config_file)
             super(ExtJob, self).__init__(c_ptr)
 
 
     def get_private_args_as_string(self):
-        return self.cNamespace().get_private_args_as_string(self)
+        return ExtJob.cNamespace().get_private_args_as_string(self)
 
     def set_private_args_as_string(self, args):
-        self.cNamespace().set_private_args_as_string(self, args)
+        ExtJob.cNamespace().set_private_args_as_string(self, args)
 
     def get_help_text(self):
-        return self.cNamespace().get_help_text(self)
+        return ExtJob.cNamespace().get_help_text(self)
 
     def is_private(self):
-        return self.cNamespace().is_private(self)
+        return ExtJob.cNamespace().is_private(self)
 
     def get_config_file(self):
-        return self.cNamespace().get_config_file(self)
+        return ExtJob.cNamespace().get_config_file(self)
 
     def set_config_file(self, config_file):
-        self.cNamespace().set_config_file(self, config_file)
+        ExtJob.cNamespace().set_config_file(self, config_file)
 
     def get_stdin_file(self):
-        return self.cNamespace().get_stdin_file(self)
+        return ExtJob.cNamespace().get_stdin_file(self)
 
     def set_stdin_file(self, filename):
-        self.cNamespace().set_stdin_file(self, filename)
+        ExtJob.cNamespace().set_stdin_file(self, filename)
 
     def get_stdout_file(self):
-        return self.cNamespace().get_stdout_file(self)
+        return ExtJob.cNamespace().get_stdout_file(self)
 
     def set_stdout_file(self, filename):
-        self.cNamespace().set_stdout_file(self, filename)
+        ExtJob.cNamespace().set_stdout_file(self, filename)
 
     def get_stderr_file(self):
-        return self.cNamespace().get_stderr_file(self)
+        return ExtJob.cNamespace().get_stderr_file(self)
 
     def set_stderr_file(self, filename):
-        self.cNamespace().set_stderr_file(self, filename)
+        ExtJob.cNamespace().set_stderr_file(self, filename)
 
     def get_target_file(self):
-        return self.cNamespace().get_target_file(self)
+        return ExtJob.cNamespace().get_target_file(self)
 
     def set_target_file(self, filename):
-        self.cNamespace().set_target_file(self, filename)
+        ExtJob.cNamespace().set_target_file(self, filename)
 
     def get_executable(self):
-        return self.cNamespace().get_executable(self)
+        return ExtJob.cNamespace().get_executable(self)
 
     def set_executable(self, executable):
-        self.cNamespace().set_executable(self, executable)
+        ExtJob.cNamespace().set_executable(self, executable)
 
     def get_max_running(self):
-        return self.cNamespace().get_max_running(self)
+        return ExtJob.cNamespace().get_max_running(self)
 
     def set_max_running(self, max_running):
-        self.cNamespace().set_max_running(self, max_running)
+        ExtJob.cNamespace().set_max_running(self, max_running)
 
     def get_max_running_minutes(self):
-        return self.cNamespace().get_max_running_minutes(self)
+        return ExtJob.cNamespace().get_max_running_minutes(self)
 
     def set_max_running_minutes(self, min_value):
-        self.cNamespace().set_max_running_minutes(self, min_value)
+        ExtJob.cNamespace().set_max_running_minutes(self, min_value)
 
     def get_environment(self):
-        return self.cNamespace().get_environment(self) #warn: fix return type
+        return ExtJob.cNamespace().get_environment(self) #warn: fix return type
 
     def set_environment(self, key, value):
-        self.cNamespace().set_environment(self, key, value)
+        ExtJob.cNamespace().set_environment(self, key, value)
 
     def clear_environment(self):
-        self.cNamespace().clear_environment(self)
+        ExtJob.cNamespace().clear_environment(self)
 
     def save(self):
-        self.cNamespace().save(self)
+        ExtJob.cNamespace().save(self)
 
     def free(self):
-        self.cNamespace().free(self)
+        ExtJob.cNamespace().free(self)
 
 ##################################################################
 

@@ -24,21 +24,21 @@ class ForwardModel(BaseCClass):
 
     def joblist(self):
         """ @rtype: StringList """
-        return self.cNamespace().alloc_joblist(self)
+        return ForwardModel.cNamespace().alloc_joblist(self)
 
     def iget_job(self, index):
         """ @rtype: ExtJob """
-        return self.cNamespace().iget_job(self, index).setParent(self)
+        return ForwardModel.cNamespace().iget_job(self, index).setParent(self)
 
     def add_job(self, name):
         """ @rtype: ExtJob """
-        return self.cNamespace().add_job(self, name).setParent(self)
+        return ForwardModel.cNamespace().add_job(self, name).setParent(self)
 
     def clear(self):
-        self.cNamespace().clear(self)
+        ForwardModel.cNamespace().clear(self)
 
     def free(self):
-        self.cNamespace().free(self)
+        ForwardModel.cNamespace().free(self)
 
 cwrapper = CWrapper(JOB_QUEUE_LIB)
 cwrapper.registerType("forward_model", ForwardModel)

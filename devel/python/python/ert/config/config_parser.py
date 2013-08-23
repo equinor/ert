@@ -22,21 +22,21 @@ from ert.cwrap import BaseCClass, CWrapper
 
 class SchemaItem(BaseCClass):
     def __init__(self, keyword, required=False):
-        c_ptr = self.cNamespace().alloc(keyword, required)
+        c_ptr = SchemaItem.cNamespace().alloc(keyword, required)
         super(SchemaItem, self).__init__(c_ptr)
 
 
     def iget_type( self, index ):
-        return self.cNamespace().iget_type(self, index)
+        return SchemaItem.cNamespace().iget_type(self, index)
 
     def iset_type( self, index, schema_type ):
-        self.cNamespace().iset_type(self, index, schema_type)
+        SchemaItem.cNamespace().iset_type(self, index, schema_type)
 
     def set_argc_minmax(self, minimum, maximum):
-        self.cNamespace().set_argc_minmax(self, minimum, maximum)
+        SchemaItem.cNamespace().set_argc_minmax(self, minimum, maximum)
 
     def free(self):
-        self.cNamespace().free(self)
+        SchemaItem.cNamespace().free(self)
 
 
 
@@ -47,13 +47,13 @@ class ContentItem(BaseCClass):
 
 
     def __len__(self):
-        return self.cNamespace().size(self)
+        return ContentItem.cNamespace().size(self)
 
 
     def __getitem__(self, index):
         if isinstance(index, int):
             if (index >= 0) and (index < self.__len__()):
-                return self.cNamespace().iget_content_node(self, index).setParent(self)
+                return ContentItem.cNamespace().iget_content_node(self, index).setParent(self)
             else:
                 raise IndexError
         else:
@@ -69,19 +69,19 @@ class ContentNode(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def __len__(self):
-        return self.cNamespace().size(self)
+        return ContentNode.cNamespace().size(self)
 
     def __getitem__(self, index):
         if isinstance(index, int):
             if (index >= 0) and (index < self.__len__()):
-                return self.cNamespace().iget(self, index)
+                return ContentNode.cNamespace().iget(self, index)
             else:
                 raise IndexError
         else:
             raise ValueError("[] operator must have integer index")
 
     def content(self, sep=" "):
-        return self.cNamespace().get_full_string(self, sep)
+        return ContentNode.cNamespace().get_full_string(self, sep)
 
     def free(self):
         pass
@@ -89,29 +89,29 @@ class ContentNode(BaseCClass):
 
 class ConfigParser(BaseCClass):
     def __init__(self):
-        c_ptr = self.cNamespace().alloc()
+        c_ptr = ConfigParser.cNamespace().alloc()
         super(ConfigParser, self).__init__(c_ptr)
 
     def add(self, keyword, required=False):
-        return self.cNamespace().add(self, keyword, required).setParent()
+        return ConfigParser.cNamespace().add(self, keyword, required).setParent()
 
     def parse(self, config_file, comment_string="--", include_kw="INCLUDE", define_kw="DEFINE",
                unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN, validate=True):
 
         if os.path.exists(config_file):
-            return self.cNamespace().parse(self, config_file, comment_string, include_kw, define_kw, unrecognized, validate)
+            return ConfigParser.cNamespace().parse(self, config_file, comment_string, include_kw, define_kw, unrecognized, validate)
         else:
             raise IOError("File: %s does not exists")
 
 
     def __getitem__(self, keyword):
-        if self.cNamespace().has_content(self, keyword):
-            return self.cNamespace().get_content(self, keyword).setParent(self)
+        if ConfigParser.cNamespace().has_content(self, keyword):
+            return ConfigParser.cNamespace().get_content(self, keyword).setParent(self)
         else:
             return None
 
     def free(self):
-        self.cNamespace().free(self)
+        ConfigParser.cNamespace().free(self)
 
 
 cwrapper = CWrapper(CONFIG_LIB)

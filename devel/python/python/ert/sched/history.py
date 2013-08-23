@@ -24,8 +24,9 @@ class HistoryType(BaseCClass):
 
     def get_source_string(self):
         """ @rtype: str """
-        return self.cNamespace().get_source_string(self)
+        return HistoryType.cNamespace().get_source_string(self)
 
+    #todo: change this to __init__?
     @staticmethod
     def alloc_from_refcase(refcase, use_history):
         """
@@ -42,7 +43,7 @@ class HistoryType(BaseCClass):
         return HistoryType.cNamespace().alloc_from_sched_file(":", sched_file)
 
     def free(self):
-        self.cNamespace().free(self)
+        HistoryType.cNamespace().free(self)
 
 
 cwrapper = CWrapper(SCHED_LIB)

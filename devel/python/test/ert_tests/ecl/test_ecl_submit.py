@@ -137,7 +137,7 @@ class RSHSubmitTest(EclSubmitTest):
 
 class LocalSubmitTest(EclSubmitTest):
 
-    #@skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow LOCAL job submit skipped!")
+    @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow LOCAL job submit skipped!")
     def test_LOCAL_submit(self):
         #work_area = TestArea("python/ecl_submit/LOCAL", True)
 

@@ -23,27 +23,27 @@ class ExtJoblist(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def get_jobs(self):
-        return self.cNamespace().get_jobs(self)
+        return ExtJoblist.cNamespace().get_jobs(self)
 
     def getAvailableJobNames(self):
         """ @rtype: StringList """
-        return self.cNamespace().alloc_list(self).setParent(self)
+        return ExtJoblist.cNamespac().alloc_list(self).setParent(self)
 
     def del_job(self, job):
-        return self.cNamespace().del_job(self, job)
+        return ExtJoblist.cNamespac().del_job(self, job)
 
     def has_job(self, job):
-        return self.cNamespace().has_job(self, job)
+        return ExtJoblist.cNamespac().has_job(self, job)
 
     def get_job(self, job):
         """ @rtype: ExtJob """
-        return self.cNamespace().get_job(self, job).setParent(self)
+        return ExtJoblist.cNamespac().get_job(self, job).setParent(self)
 
     def add_job(self, job_name, new_job):
-        self.cNamespace().add_job(self, job_name, new_job)
+        ExtJoblist.cNamespac().add_job(self, job_name, new_job)
 
     def free(self):
-        self.cNamespace().free(self)
+        ExtJoblist.cNamespac().free(self)
 
 cwrapper = CWrapper(JOB_QUEUE_LIB)
 cwrapper.registerType("ext_joblist", ExtJoblist)

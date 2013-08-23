@@ -20,19 +20,19 @@ from ert.util import ctime
 
 class SchedFile(BaseCClass):
     def __init__(self, filename, start_time):
-        c_ptr = self.cNamespace().parse(filename, ctime(start_time))
+        c_ptr = SchedFile.cNamespace().parse(filename, ctime(start_time))
         super(SchedFile, self).__init__(c_ptr)
 
     @property
     def length(self):
         """ @rtype: int """
-        return self.cNamespace().length(self)
+        return SchedFile.cNamespace().length(self)
 
     def write(self, filename, num_dates, add_end=True):
-        self.cNamespace().write(self, num_dates, filename, add_end)
+        SchedFile.cNamespace().write(self, num_dates, filename, add_end)
 
     def free(self):
-        self.cNamespace().free(self)
+        SchedFile.cNamespace().free(self)
 
 
 cwrapper = CWrapper(SCHED_LIB)
