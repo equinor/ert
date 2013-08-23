@@ -134,7 +134,7 @@ class JobQueue(BaseCClass):
         OK_file = None
         exit_file = None
 
-        c_ptr = self.cNamespace().alloc(max_submit, OK_file, exit_file)
+        c_ptr = JobQueue.cNamespace().alloc(max_submit, OK_file, exit_file)
         super(JobQueue, self).__init__(c_ptr)
 
         self.jobs = JobList()
@@ -147,7 +147,7 @@ class JobQueue(BaseCClass):
         self.start(blocking=False)
         if driver:
             self.driver = driver
-            self.cNamespace().set_driver(self, driver.c_ptr)
+            JobQueue.cNamespace().set_driver(self, driver.c_ptr)
 
 
     def kill_job(self, index):
@@ -160,7 +160,7 @@ class JobQueue(BaseCClass):
 
     def start( self, blocking=False):
         verbose = False
-        self.cNamespace().run_jobs(self, self.size, verbose)
+        JobQueue.cNamespace().run_jobs(self, self.size, verbose)
 
 
     def submit( self, cmd, run_path, job_name, argv, num_cpu=1):
@@ -172,7 +172,7 @@ class JobQueue(BaseCClass):
         callback_arg = None
         retry_callback = None
 
-        queue_index = self.cNamespace().cadd_job_mt(self,
+        queue_index = JobQueue.cNamespace().add_job_mt(self,
                                                     cmd,
                                                     done_callback,
                                                     retry_callback,
@@ -183,7 +183,7 @@ class JobQueue(BaseCClass):
                                                     len(argv),
                                                     c_argv)
 
-        job = Job(self.driver, self.cNamespace().get_job_ptr(self, queue_index), queue_index, False)
+        job = Job(self.driver, JobQueue.cNamespace().get_job_ptr(self, queue_index), queue_index, False)
 
         self.jobs.add_job(job, job_name)
         return job
@@ -203,7 +203,7 @@ class JobQueue(BaseCClass):
         """
         Will block as long as there are running jobs.
         """
-        while self.running:
+        while self.isRunning:
             time.sleep(1)
 
 
@@ -221,23 +221,23 @@ class JobQueue(BaseCClass):
         queue, in that case it is not necessary to call the
         submit_complete() method.
         """
-        self.cNamespace().submit_complete(self)
+        JobQueue.cNamespace().submit_complete(self)
 
 
-    def running(self):
-        return self.cNamespace().is_running(self)
+    def isRunning(self):
+        return JobQueue.cNamespace().is_running(self)
 
     def num_running( self ):
-        return self.cNamespace().num_running(self)
+        return JobQueue.cNamespace().num_running(self)
 
     def num_pending( self ):
-        return self.cNamespace().num_pending(self)
+        return JobQueue.cNamespace().num_pending(self)
 
     def num_waiting( self ):
-        return self.cNamespace().num_waiting(self)
+        return JobQueue.cNamespace().num_waiting(self)
 
     def num_complete( self ):
-        return self.cNamespace().num_complete(self)
+        return JobQueue.cNamespace().num_complete(self)
 
     def exists(self, index):
         job = self.__getitem__(index)
@@ -253,16 +253,16 @@ class JobQueue(BaseCClass):
         self.driver.set_max_running(max_running)
 
     def user_exit(self):
-        self.cNamespace().user_exit(self)
+        JobQueue.cNamespace().user_exit(self)
 
     def set_pause_on(self):
-        self.cNamespace().set_pause_on()
+        JobQueue.cNamespace().set_pause_on(self)
 
     def set_pause_off(self):
-        self.cNamespace().set_pause_off()
+        JobQueue.cNamespace().set_pause_off(self)
 
     def free(self):
-        self.cNamespace().free(self)
+        JobQueue.cNamespace().free(self)
 
 #################################################################
 
@@ -277,8 +277,8 @@ JobQueue.cNamespace().free            = cwrapper.prototype("void job_queue_free(
 JobQueue.cNamespace().set_max_running = cwrapper.prototype("void job_queue_set_max_running( job_queue , int)")
 JobQueue.cNamespace().get_max_running = cwrapper.prototype("int  job_queue_get_max_running( job_queue )")
 JobQueue.cNamespace().set_driver      = cwrapper.prototype("void job_queue_set_driver( job_queue , c_void_p )")
-JobQueue.cNamespace().cadd_job_mt     = cwrapper.prototype("int  job_queue_add_job_mt( job_queue , char* , c_void_p , c_void_p , c_void_p , int , char* , char* , int , char**)")
-JobQueue.cNamespace().cadd_job_st     = cwrapper.prototype("int  job_queue_add_job_st( job_queue , char* , c_void_p , c_void_p , c_void_p , int , char* , char* , int , char**)")
+JobQueue.cNamespace().add_job_mt     = cwrapper.prototype("int   job_queue_add_job_mt( job_queue , char* , c_void_p , c_void_p , c_void_p , int , char* , char* , int , char**)")
+JobQueue.cNamespace().add_job_st     = cwrapper.prototype("int   job_queue_add_job_st( job_queue , char* , c_void_p , c_void_p , c_void_p , int , char* , char* , int , char**)")
 JobQueue.cNamespace().start_queue     = cwrapper.prototype("void job_queue_run_jobs( job_queue , int , bool)")
 JobQueue.cNamespace().run_jobs        = cwrapper.prototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
 
@@ -289,9 +289,9 @@ JobQueue.cNamespace().num_pending     = cwrapper.prototype("int  job_queue_get_n
 
 JobQueue.cNamespace().is_running      = cwrapper.prototype("int  job_queue_is_running( job_queue )")
 JobQueue.cNamespace().submit_complete = cwrapper.prototype("void job_queue_submit_complete( job_queue )")
-JobQueue.cNamespace().get_job_ptr     = cwrapper.prototype("c_void_p job_queue_iget_job( job_queue , int)")
-JobQueue.cNamespace().iget_sim_start  = cwrapper.prototype("int   job_queue_iget_sim_start( job_queue , int)")
-JobQueue.cNamespace().get_active_size = cwrapper.prototype("int      job_queue_get_active_size( job_queue )")
+JobQueue.cNamespace().get_job_ptr     = cwrapper.prototype("c_void_p job_queue_iget_job( job_queue , int)") #warn fix return type
+JobQueue.cNamespace().iget_sim_start  = cwrapper.prototype("int job_queue_iget_sim_start( job_queue , int)")
+JobQueue.cNamespace().get_active_size = cwrapper.prototype("int job_queue_get_active_size( job_queue )")
 JobQueue.cNamespace().get_pause       = cwrapper.prototype("bool job_queue_get_pause(job_queue)")
 JobQueue.cNamespace().set_pause_on    = cwrapper.prototype("void job_queue_set_pause_on(job_queue)")
 JobQueue.cNamespace().set_pause_off   = cwrapper.prototype("void job_queue_set_pause_off(job_queue)")
