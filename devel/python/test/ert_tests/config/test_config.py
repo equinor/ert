@@ -70,3 +70,5 @@ class ConfigTest(ExtendedTestCase):
         schema_item.iset_type(0, ContentTypeEnum.CONFIG_INT)
         self.assertEqual(schema_item.iget_type(0), ContentTypeEnum.CONFIG_INT)
         schema_item.set_argc_minmax(3, 6)
+
+        del schema_item

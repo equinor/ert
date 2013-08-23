@@ -17,7 +17,7 @@
 #
 import os
 import getpass
-from unittest2 import skipIf, expectedFailure
+from unittest2 import skipIf
 import time
 import shutil
 from ert.ecl import EclQueue, EclSum
@@ -85,9 +85,9 @@ class LSFSubmitTest(EclSubmitTest):
         for iens in (range(num_submit)):
             run_path = self.make_run_path(iens, LSF=True)
             path_list.append(run_path)
-            job = queue.submit("%s/%s.DATA" % (run_path, LSF_base))
+            job = queue.submitDataFile("%s/%s.DATA" % (run_path, LSF_base))
 
-        while queue.running:
+        while queue.isRunning():
             time.sleep(1)
 
         for path in path_list:
@@ -125,14 +125,14 @@ class RSHSubmitTest(EclSubmitTest):
         for iens in (range(num_submit)):
             run_path = self.make_run_path(iens)
             path_list.append(run_path)
-            job = queue.submit("%s/%s.DATA" % (run_path, base))
+            job = queue.submitDataFile("%s/%s.DATA" % (run_path, base))
 
-        while queue.running:
+        while queue.isRunning():
             time.sleep(1)
 
         for path in path_list:
             sum = EclSum("%s/%s" % (path, base))
-            self.assertTrue(isinstance(sum, EclSum))
+            self.assertIsInstance(sum, EclSum)
             self.assertEqual(2, sum.last_report)
 
 class LocalSubmitTest(EclSubmitTest):
@@ -149,15 +149,15 @@ class LocalSubmitTest(EclSubmitTest):
             for iens in range(num_submit):
                 run_path = self.make_run_path(iens)
                 path_list.append(run_path)
-                job = queue.submit("%s/%s.DATA" % (run_path, base))
+                job = queue.submitDataFile("%s/%s.DATA" % (run_path, base))
 
             queue.submit_complete()
-            while queue.running:
+            while queue.isRunning():
                 time.sleep(1)
 
             for path in path_list:
                 sum = EclSum("%s/%s" % (path, base))
-                self.assertTrue(isinstance(sum, EclSum))
+                self.assertIsInstance(sum, EclSum)
                 self.assertEqual(2, sum.last_report)
                 shutil.rmtree(path)
 
