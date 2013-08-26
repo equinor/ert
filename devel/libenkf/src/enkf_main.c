@@ -1132,118 +1132,131 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 **/
 
 
-static void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode) {
+static bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode) {
   /*
      If merge_observations is true all observations in the time
      interval [step1+1,step2] will be used, otherwise only the last
      observation at step2 will be used.
   */
   enkf_fs_type * source_fs = enkf_main_get_fs(enkf_main);
-  double alpha       = analysis_config_get_alpha( enkf_main->analysis_config );
-  double std_cutoff  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
-  int current_step   = int_vector_get_last( step_list );
   state_map_type * source_state_map = enkf_fs_get_state_map( source_fs );
-  state_map_type * target_state_map = enkf_fs_get_state_map( target_fs );
-  bool_vector_type * ens_mask = bool_vector_alloc(0 , false);
-  int_vector_type * ens_active_list = int_vector_alloc(0,0);
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  const int active_ens_size = state_map_count_matching( source_state_map , STATE_HAS_DATA );
 
-  state_map_select_matching( source_state_map , ens_mask , STATE_HAS_DATA );
-  ens_active_list = bool_vector_alloc_active_list( ens_mask );
-  bool_vector_fprintf( ens_mask , stdout , "EnsMask" , "%3d" );
-  {
-    /*
-      Observations and measurements are collected in these temporary
-      structures. obs_data is a precursor for the 'd' vector, and
-      meas_forecast is a precursor for the 'S' matrix'.
+  if (analysis_config_have_enough_realisations(analysis_config , active_ens_size)) {
+    double alpha       = analysis_config_get_alpha( enkf_main->analysis_config );
+    double std_cutoff  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
+    int current_step   = int_vector_get_last( step_list );
+    state_map_type * target_state_map = enkf_fs_get_state_map( target_fs );
+    bool_vector_type * ens_mask = bool_vector_alloc(0 , false);
+    int_vector_type * ens_active_list = int_vector_alloc(0,0);
 
-      The reason for going via these temporary structures is to support
-      deactivating observations which should not be used in the update
-      process.
-    */
-    obs_data_type               * obs_data      = obs_data_alloc();
-    meas_data_type              * meas_forecast = meas_data_alloc( ens_active_list );
-    meas_data_type              * meas_analyzed = meas_data_alloc( ens_active_list );
-    local_config_type           * local_config  = enkf_main->local_config;
-    const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , current_step );  /* Only last step considered when forming local update */
-    hash_type                   * use_count     = hash_alloc();
-    const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
-    FILE                        * log_stream;
+    state_map_select_matching( source_state_map , ens_mask , STATE_HAS_DATA );
+    ens_active_list = bool_vector_alloc_active_list( ens_mask );
 
-    
+    bool_vector_fprintf( ens_mask , stdout , "EnsMask" , "%3d" );
     {
-      char * log_file;
-      if (int_vector_size( step_list ) == 1) 
-        log_file = util_alloc_sprintf("%s%c%04d" , log_path , UTIL_PATH_SEP_CHAR , int_vector_iget( step_list , 0));
-      else 
-        log_file = util_alloc_sprintf("%s%c%04d-%04d" , log_path , UTIL_PATH_SEP_CHAR , int_vector_iget( step_list , 0) , int_vector_get_last( step_list ));
-      log_stream = util_fopen( log_file , "w" );
-      
-      free( log_file );
-    }
+      /*
+        Observations and measurements are collected in these temporary
+        structures. obs_data is a precursor for the 'd' vector, and
+        meas_forecast is a precursor for the 'S' matrix'.
+        
+        The reason for going via these temporary structures is to support
+        deactivating observations which should not be used in the update
+        process.
+      */
+      obs_data_type               * obs_data      = obs_data_alloc();
+      meas_data_type              * meas_forecast = meas_data_alloc( ens_active_list );
+      meas_data_type              * meas_analyzed = meas_data_alloc( ens_active_list );
+      local_config_type           * local_config  = enkf_main->local_config;
+      const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , current_step );  /* Only last step considered when forming local update */
+      hash_type                   * use_count     = hash_alloc();
+      const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
+      FILE                        * log_stream;
+
     
-    for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
-      local_ministep_type * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
-      local_obsset_type   * obsset   = local_ministep_get_obsset( ministep );
-
-      obs_data_reset( obs_data );
-      meas_data_reset( meas_forecast );
+      {
+        char * log_file;
+        if (int_vector_size( step_list ) == 1) 
+          log_file = util_alloc_sprintf("%s%c%04d" , log_path , UTIL_PATH_SEP_CHAR , int_vector_iget( step_list , 0));
+        else 
+          log_file = util_alloc_sprintf("%s%c%04d-%04d" , log_path , UTIL_PATH_SEP_CHAR , int_vector_iget( step_list , 0) , int_vector_get_last( step_list ));
+        log_stream = util_fopen( log_file , "w" );
       
-      enkf_obs_get_obs_and_measure( enkf_main->obs, 
-                                    source_fs , 
-                                    step_list , 
-                                    FORECAST, 
-                                    ens_active_list , 
-                                    (const enkf_state_type **) enkf_main->ensemble, 
-                                    meas_forecast, 
-                                    obs_data , 
-                                    obsset );
-      
-
-      enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
-      
-      if (enkf_main->verbose)
-        enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , stdout );
-      enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , log_stream );
-
-      if (obs_data_get_active_size(obs_data) > 0)
-        enkf_main_analysis_update( enkf_main , 
-                                   target_fs , 
-                                   ens_mask , 
-                                   target_step , 
-                                   use_count , 
-                                   run_mode , 
-                                   int_vector_get_first( step_list ), 
-                                   current_step , 
-                                   ministep , 
-                                   meas_forecast , 
-                                   obs_data );
-    }
-    fclose( log_stream );
-
-    obs_data_free( obs_data );
-    meas_data_free( meas_forecast );
-    meas_data_free( meas_analyzed );
+        free( log_file );
+      }
     
-    enkf_main_inflate( enkf_main , target_fs , current_step , use_count);
-    hash_free( use_count );
+      for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
+        local_ministep_type * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
+        local_obsset_type   * obsset   = local_ministep_get_obsset( ministep );
 
-    if (target_state_map != source_state_map) {
-      state_map_set_from_inverted_mask( target_state_map , ens_mask , STATE_PARENT_FAILURE);
-      enkf_fs_fsync( target_fs );
-      printf("Setting Parent Failure\n");
+        obs_data_reset( obs_data );
+        meas_data_reset( meas_forecast );
+      
+        enkf_obs_get_obs_and_measure( enkf_main->obs, 
+                                      source_fs , 
+                                      step_list , 
+                                      FORECAST, 
+                                      ens_active_list , 
+                                      (const enkf_state_type **) enkf_main->ensemble, 
+                                      meas_forecast, 
+                                      obs_data , 
+                                      obsset );
+      
+
+        enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
+      
+        if (enkf_main->verbose)
+          enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , stdout );
+        enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , step_list , local_ministep_get_name( ministep ) , log_stream );
+
+        if (obs_data_get_active_size(obs_data) > 0)
+          enkf_main_analysis_update( enkf_main , 
+                                     target_fs , 
+                                     ens_mask , 
+                                     target_step , 
+                                     use_count , 
+                                     run_mode , 
+                                     int_vector_get_first( step_list ), 
+                                     current_step , 
+                                     ministep , 
+                                     meas_forecast , 
+                                     obs_data );
+      }
+      fclose( log_stream );
+
+      obs_data_free( obs_data );
+      meas_data_free( meas_forecast );
+      meas_data_free( meas_analyzed );
+    
+      enkf_main_inflate( enkf_main , target_fs , current_step , use_count);
+      hash_free( use_count );
+
+      if (target_state_map != source_state_map) {
+        state_map_set_from_inverted_mask( target_state_map , ens_mask , STATE_PARENT_FAILURE);
+        enkf_fs_fsync( target_fs );
+      }
     }
+    bool_vector_free( ens_mask );
+    int_vector_free( ens_active_list );
+    return true;
+  } else {
+    fprintf(stderr,"** Warning have %d active realisations. That is less than limit:%d - stopping assimilation.\n" , 
+            active_ens_size , 
+            analysis_config_get_min_realisations(analysis_config));
+    return false;
   }
-  bool_vector_free( ens_mask );
-  int_vector_free( ens_active_list );
+  
 }
+
 
 void enkf_main_assimilation_update(enkf_main_type * enkf_main , const int_vector_type * step_list) {
   enkf_main_UPDATE( enkf_main , step_list , enkf_main_get_fs( enkf_main ) , int_vector_get_last( step_list ) , ENKF_ASSIMILATION );
 }
 
 
-void enkf_main_smoother_update(enkf_main_type * enkf_main , const int_vector_type * step_list , enkf_fs_type * target_fs) {
-  enkf_main_UPDATE( enkf_main , step_list , target_fs , 0 , SMOOTHER_UPDATE );
+bool enkf_main_smoother_update(enkf_main_type * enkf_main , const int_vector_type * step_list , enkf_fs_type * target_fs) {
+  return enkf_main_UPDATE( enkf_main , step_list , target_fs , 0 , SMOOTHER_UPDATE );
 }
 
 
@@ -1402,7 +1415,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
       for (iens = 0; iens < ens_size; iens++) {        
         if (bool_vector_iget(iactive , iens)) {
           run_status_type run_status = enkf_state_get_simple_run_status( enkf_main->ensemble[iens] );
-
+          
           switch (run_status) {
           case JOB_RUN_FAILURE:
             enkf_main_report_run_failure( enkf_main , iens );
@@ -1584,27 +1597,37 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
       if (load_start > 0)
         load_start++;
       
+      enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter ,
+                         init_state_parameter , init_state_dynamic , report_step1 , report_step2);
       {
-        enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter ,
-                           init_state_parameter , init_state_dynamic , report_step1 , report_step2);
-
-        if (enkf_on) {
-          bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
-          int_vector_type * step_list;
-          int stride;
-
-          if (merge_observations)
-            stride = 1;
-          else
-            stride = 0;
-
-          step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , report_step2 , stride );
-
-          enkf_main_assimilation_update(enkf_main , step_list);
-          int_vector_free( step_list );
-          enkf_fs_fsync( enkf_main->dbase );
-        }
+        enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
+        state_map_type * state_map = enkf_fs_get_state_map(fs);
+        const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+        int active_ens_size = state_map_count_matching(state_map , STATE_HAS_DATA);
         
+        if (analysis_config_have_enough_realisations(analysis_config , active_ens_size)) {
+          if (enkf_on) {
+            bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
+            int_vector_type * step_list;
+            int stride;
+            
+            if (merge_observations)
+              stride = 1;
+            else
+              stride = 0;
+            
+            step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , report_step2 , stride );
+            
+            enkf_main_assimilation_update(enkf_main , step_list);
+            int_vector_free( step_list );
+            enkf_fs_fsync( enkf_main->dbase );
+          }
+        } else {
+          fprintf(stderr,"** Warning have %d active realisations. That is less than limit:%d - stopping assimilation" , 
+                  active_ens_size , 
+                  analysis_config_get_min_realisations(analysis_config));
+          break;
+        }
         prev_enkf_on = enkf_on;
       }
     }
@@ -1628,15 +1651,15 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
     enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT);
     enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0);
     {
+      bool update_done;
       time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
       enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_fs_name , false , true );
       {
         int stride = 1;
         int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
-        enkf_main_smoother_update( enkf_main , step_list , target_fs );
+        update_done = enkf_main_smoother_update( enkf_main , step_list , target_fs );
         int_vector_free( step_list );
       }
-      enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
       
       if (rerun) { 
         /* 
@@ -1650,8 +1673,12 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
            active runpath for the remaining part of this program
            invocation.
         */
-        model_config_select_runpath( enkf_main_get_model_config( enkf_main ) , RERUN_PATH_KEY );  
-        enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
+        if (update_done) {
+          enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
+          model_config_select_runpath( enkf_main_get_model_config( enkf_main ) , RERUN_PATH_KEY );  
+          enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
+        } else
+          fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
       }
     }
 
