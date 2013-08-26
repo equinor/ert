@@ -7,6 +7,12 @@ target_link_libraries( enkf_site_config enkf test_util )
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
 
+add_executable( enkf_state_map enkf_state_map.c )
+target_link_libraries( enkf_state_map enkf test_util )
+
+add_executable( enkf_meas_data enkf_meas_data.c )
+target_link_libraries( enkf_meas_data enkf test_util )
+
 add_executable( enkf_ensemble_GEN_PARAM enkf_ensemble_GEN_PARAM.c )
 target_link_libraries( enkf_ensemble_GEN_PARAM enkf test_util )
 
@@ -145,7 +151,8 @@ add_test( enkf_time_map1  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map )
 add_test( enkf_time_map2  ${EXECUTABLE_OUTPUT_PATH}/enkf_time_map ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.UNRST )
 add_test( enkf_ensemble_GEN_PARAM  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble_GEN_PARAM ${CMAKE_CURRENT_SOURCE_DIR}/data/ensemble/GEN_PARAM )
 add_test( enkf_ensemble  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble )
-
+add_test( enkf_state_map  ${EXECUTABLE_OUTPUT_PATH}/enkf_state_map )
+add_test( enkf_meas_data  ${EXECUTABLE_OUTPUT_PATH}/enkf_meas_data )
 
 set_property( TEST enkf_time_map2     PROPERTY LABELS StatoilData )
 set_property( TEST enkf_site_config   PROPERTY LABELS StatoilData )

@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <ert/util/arg_pack.h>
+
 
 
 
@@ -236,6 +236,14 @@ typedef enum {
   
 
 /*****************************************************************/
+  typedef enum {
+    STATE_UNDEFINED = 1,
+    STATE_INITIALIZED = 2,
+    STATE_HAS_DATA = 4,
+    STATE_LOAD_FAILURE = 8,
+    STATE_PARENT_FAILURE = 16
+  } realisation_state_enum;
+
 typedef struct enkf_obs_struct enkf_obs_type;
 
   
