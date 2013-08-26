@@ -22,11 +22,11 @@
 #include <stdbool.h>
 
 #include <ert/util/util.h>
-#include <ert/util/time_t_vector.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/bool_vector.h>
 #include <ert/util/type_macros.h>
 
-#include <ert/ecl/ecl_sum.h>
-
+#include <ert/enkf/enkf_types.h>
 #include <ert/enkf/state_map.h>
 
 
@@ -34,6 +34,8 @@
 
 struct state_map_struct {
   UTIL_TYPE_ID_DECLARATION;
+  int_vector_type  * state;
+  pthread_rwlock_t   rw_lock;
 };
 
 
@@ -43,10 +45,143 @@ UTIL_IS_INSTANCE_FUNCTION( state_map , STATE_MAP_TYPE_ID )
 state_map_type * state_map_alloc( ) {
   state_map_type * map = util_malloc( sizeof * map );
   UTIL_TYPE_ID_INIT( map , STATE_MAP_TYPE_ID );
+  map->state = int_vector_alloc( 0 , STATE_UNDEFINED );
+  pthread_rwlock_init( &map->rw_lock , NULL);
   return map;
 }
 
 
+state_map_type * state_map_fread_alloc( const char * filename ) {
+  state_map_type * map = state_map_alloc();
+  if (util_file_exists( filename )) {
+    FILE * stream = util_fopen( filename , "r");
+    int_vector_fread( map->state , stream );
+    fclose( stream );
+  } 
+  return map;
+}
+
+state_map_type * state_map_alloc_copy( state_map_type * map ) {
+  state_map_type * copy = state_map_alloc();
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    int_vector_memcpy( copy->state , map->state );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return copy;
+}
+
 void state_map_free( state_map_type * map ) {
   free( map );
+}
+
+
+int state_map_get_size( state_map_type * map) {
+  int size;
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    size = int_vector_size( map->state );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return size;
+}
+
+
+bool state_map_equal( state_map_type * map1 , state_map_type * map2) {
+  bool equal = true;
+  pthread_rwlock_rdlock( &map1->rw_lock );
+  pthread_rwlock_rdlock( &map2->rw_lock );
+  {
+    int size1 = int_vector_size( map1->state);
+    if (size1 != int_vector_size( map2->state))
+      equal = false;
+
+    if (equal) 
+      equal = int_vector_equal( map1->state , map2->state );
+  }
+  pthread_rwlock_unlock( &map1->rw_lock );
+  pthread_rwlock_unlock( &map2->rw_lock );
+  return equal;
+}
+
+
+realisation_state_enum state_map_iget( state_map_type * map , int index) {
+  realisation_state_enum state;
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    state = int_vector_safe_iget( map->state , index );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+  return state;
+}
+
+void state_map_iset( state_map_type * map ,int index , realisation_state_enum state) {
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    int_vector_iset( map->state , index , state );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
+void state_map_update_undefined( state_map_type * map , int index , realisation_state_enum new_state) {
+  realisation_state_enum current_state = state_map_iget( map , index );
+  if (current_state == STATE_UNDEFINED)
+    state_map_iset( map , index , new_state );
+}
+
+
+void state_map_fwrite( state_map_type * map , const char * filename) {
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    FILE * stream = util_mkdir_fopen( filename , "w");
+    if (stream) {
+      int_vector_fwrite( map->state , stream );
+      fclose( stream );
+    } else
+      util_abort("%s: failed to open:%s for writing \n",__func__ , filename );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
+
+
+void state_map_fread( state_map_type * map , const char * filename) {
+  pthread_rwlock_wrlock( &map->rw_lock );
+  {
+    if (util_file_exists( filename )) {
+      FILE * stream = util_fopen( filename , "r");
+      if (stream) {
+        int_vector_fread( map->state , stream );
+        fclose( stream );
+      } else
+        util_abort("%s: failed to open:%s for reading \n",__func__ , filename );
+    } else
+      int_vector_reset( map->state );
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
+}
+
+
+void state_map_select_matching( state_map_type * map , bool_vector_type * select_target , int select_mask) {
+  pthread_rwlock_rdlock( &map->rw_lock );
+  {
+    bool_vector_reset( select_target );
+    bool_vector_iset( select_target , int_vector_size( map->state ) - 1, true );
+
+    {
+      bool * target_ptr = bool_vector_get_ptr( select_target );
+      const int * map_ptr = int_vector_get_ptr( map->state );
+
+      for (int i=0; i < int_vector_size( map->state ); i++) {
+        int state_value = map_ptr[i];
+        if (state_value & select_mask)
+          target_ptr[i] = true;
+        else
+          target_ptr[i] = false;
+        
+      }
+      
+    }
+  }
+  pthread_rwlock_unlock( &map->rw_lock );
 }
