@@ -20,6 +20,7 @@ class BaseCClass(object):
 
     @classmethod
     def cNamespace(cls):
+        """ @rtype: CNamespace """
         if not BaseCClass.namespaces.has_key(cls):
             BaseCClass.namespaces[cls] = CNamespace(cls.__name__)
         return BaseCClass.namespaces[cls]
@@ -59,6 +60,7 @@ class BaseCClass(object):
         return self
 
     def isReference(self):
+        """ @rtype: bool """
         return self._is_reference
 
     def parent(self):
@@ -69,7 +71,7 @@ class BaseCClass(object):
 
     def __del__(self):
         if self.free is not None:
-            if not self._is_reference:
+            if hasattr(self, "_is_reference") and not self._is_reference:
                 # Important to check the c_pointer; in the case of failed object creation
                 # we can have a Python object with c_pointer == None.
                 if self._c_pointer > 0:

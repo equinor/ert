@@ -21,3 +21,5 @@ class CNamespace(object):
 
         self._functions[key] = value
         object.__setattr__(self, key, value)
+
+
