@@ -2139,7 +2139,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->templates          = ert_templates_alloc( enkf_main->subst_list );
   enkf_main->workflow_list      = ert_workflow_list_alloc( enkf_main->subst_list );
   enkf_main->qc_module          = qc_module_alloc( enkf_main->workflow_list , DEFAULT_QC_PATH );
-  enkf_main->analysis_config    = analysis_config_alloc_default( enkf_main->rng );   
+  enkf_main->analysis_config    = analysis_config_alloc( enkf_main->rng );   
   enkf_main->report_list        = ert_report_list_alloc( DEFAULT_REPORT_PATH , plot_config_get_path( enkf_main->plot_config ) );
   
   enkf_main_init_subst_list( enkf_main );
