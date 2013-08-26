@@ -92,10 +92,9 @@ bool state_map_equal( state_map_type * map1 , state_map_type * map2) {
   pthread_rwlock_rdlock( &map1->rw_lock );
   pthread_rwlock_rdlock( &map2->rw_lock );
   {
-    int size1 = int_vector_size( map1->state);
-    if (size1 != int_vector_size( map2->state))
+    if (int_vector_size( map1->state) != int_vector_size( map2->state))
       equal = false;
-
+    
     if (equal) 
       equal = int_vector_equal( map1->state , map2->state );
   }
