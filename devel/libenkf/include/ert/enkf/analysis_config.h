@@ -96,6 +96,12 @@ void                   analysis_config_set_PC_filename( analysis_config_type * c
 const char           * analysis_config_get_PC_filename( const analysis_config_type * config );
 void                   analysis_config_set_PC_path( analysis_config_type * config , const char * path );
 const char           * analysis_config_get_PC_path( const analysis_config_type * config );
+  void                 analysis_config_set_min_realisations( analysis_config_type * config , int min_realisations);
+  int                  analysis_config_get_min_realisations( const analysis_config_type * config );
+  bool                 analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations);
+
+
+  UTIL_IS_INSTANCE_HEADER( analysis_config );
 
 #ifdef __cplusplus
 }

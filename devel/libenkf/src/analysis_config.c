@@ -24,6 +24,7 @@
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/rng.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/config/config.h>
 
@@ -36,7 +37,10 @@
 #include <ert/enkf/analysis_iter_config.h>
 
 
+#define ANALYSIS_CONFIG_TYPE_ID 64431306
+
 struct analysis_config_struct {
+  UTIL_TYPE_ID_DECLARATION;
   hash_type                     * analysis_modules;
   analysis_module_type          * analysis_module;
   char                          * log_path;                    /* Points to directory with update logs. */
@@ -54,12 +58,13 @@ struct analysis_config_struct {
   bool                            single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
   rng_type                      * rng;  
   analysis_iter_config_type * iter_config;
+  int                         min_realisations; 
 }; 
 
 
 
 
-
+UTIL_IS_INSTANCE_FUNCTION( analysis_config , ANALYSIS_CONFIG_TYPE_ID )
 
 /*****************************************************************/
 /* 
@@ -116,7 +121,26 @@ ANALYSIS_SELECT  ModuleName
      
 /*****************************************************************/
 
+bool analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations) {
+  if (realisations) {
+    if (config->min_realisations) {
+      if (realisations >= config->min_realisations)
+        return true;
+      else
+        return false;
+    } else
+      return true;
+  } else
+    return false;
+}
 
+void analysis_config_set_min_realisations( analysis_config_type * config , int min_realisations) {
+  config->min_realisations = min_realisations;
+}
+
+int analysis_config_get_min_realisations( const analysis_config_type * config ) {
+  return config->min_realisations;
+}
 
 void analysis_config_set_alpha( analysis_config_type * config , double alpha) {
   config->overlap_alpha = alpha;
@@ -460,6 +484,7 @@ void analysis_config_free(analysis_config_type * config) {
 
 analysis_config_type * analysis_config_alloc( rng_type * rng ) {
   analysis_config_type * config = util_malloc( sizeof * config );
+  UTIL_TYPE_ID_INIT( config , ANALYSIS_CONFIG_TYPE_ID );
   
   config->log_path                  = NULL;
   config->PC_filename               = NULL;
@@ -477,6 +502,7 @@ analysis_config_type * analysis_config_alloc( rng_type * rng ) {
   analysis_config_set_store_PC( config                 , DEFAULT_STORE_PC );
   analysis_config_set_PC_filename( config              , DEFAULT_PC_FILENAME );
   analysis_config_set_PC_path( config                  , DEFAULT_PC_PATH );
+  analysis_config_set_min_realisations( config , 0 );
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
