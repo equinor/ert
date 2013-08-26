@@ -21,25 +21,26 @@
 #include <unistd.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/bool_vector.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/enkf/meas_data.h>
 
 
 
 void create_test() {
-  bool_vector_type * mask = bool_vector_alloc(0 , false);
-  bool_vector_iset( mask , 0 , true );
-  bool_vector_iset( mask , 10 , true );
-  bool_vector_iset( mask , 20 , true );
-  bool_vector_iset( mask , 30 , false );
-  {
-    meas_data_type * meas_data = meas_data_alloc( mask );
-    test_assert_int_equal( 3 , meas_data_get_ens_size( meas_data ));
+  int_vector_type * ens_active_list = int_vector_alloc(0 , false);
+  int_vector_append( ens_active_list , 10 );
+  int_vector_append( ens_active_list , 20 );
+  int_vector_append( ens_active_list , 30 );
 
+  {
+    meas_data_type * meas_data = meas_data_alloc( ens_active_list );
+    test_assert_int_equal( 3 , meas_data_get_ens_size( meas_data ));
+    
     meas_data_free( meas_data );
   }
-  bool_vector_free( mask );
+  
+  int_vector_free( ens_active_list );
 }
 
 

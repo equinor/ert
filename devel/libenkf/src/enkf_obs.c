@@ -268,7 +268,7 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
                                                  enkf_fs_type             * fs,
                                                  const local_obsdata_node_type * obs_node , 
                                                  state_enum                 state,
-                                                 const bool_vector_type    * ens_mask , 
+                                                 const int_vector_type     * ens_active_list , 
                                                  const enkf_state_type     **   ensemble ,
                                                  meas_data_type             *   meas_data,
                                                  obs_data_type              * obs_data,
@@ -355,25 +355,21 @@ static void enkf_obs_get_obs_and_measure_summary(const enkf_obs_type      * enkf
       for (int i = 0; i < obs_tstep_list_get_size( tstep_list ); i++) {
         int step = obs_tstep_list_iget( tstep_list , i );
         if (obs_vector_iget_active( obs_vector , step ) && active_list_iget( active_list , 0 /* Index into the scalar summary observation */)) {
-
-          int active_iens_index = 0;
-          const int ens_size = bool_vector_size( ens_mask );
-          for (int iens = 0; iens < ens_size; iens++) {
-            if (bool_vector_iget( ens_mask , iens)) {
-              const char * state_key = obs_vector_get_state_kw(obs_vector);
-              enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , state_key);
-              node_id_type node_id = {.report_step = step, 
-                                      .iens        = iens,
-                                      .state       = state };
-              
-              enkf_node_load( enkf_node , fs , node_id );
-
-              meas_block_iset(meas_block , 
-                              active_iens_index , active_count , 
-                              summary_get( enkf_node_value_ptr( enkf_node ) , node_id.report_step , node_id.state ));
-
-              active_iens_index++;
-            } 
+          
+          for (int iens_index = 0; iens_index < int_vector_size( ens_active_list ); iens_index++) {
+            const int iens = int_vector_iget( ens_active_list , iens_index );
+            const char * state_key = obs_vector_get_state_kw(obs_vector);
+            enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , state_key);
+            node_id_type node_id = {.report_step = step, 
+                                    .iens        = iens , 
+                                    .state       = state };
+            
+            enkf_node_load( enkf_node , fs , node_id );
+            
+            meas_block_iset(meas_block , 
+                            iens_index , active_count , 
+                            summary_get( enkf_node_value_ptr( enkf_node ) , node_id.report_step , node_id.state ));
+            
           }
           active_count++;
         } 
@@ -469,14 +465,13 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   enkf_fs_type           * fs,
                                   const int_vector_type  * step_list , 
                                   state_enum               state,
-                                  const bool_vector_type * ens_mask,
+                                  const int_vector_type * ens_active_list , 
                                   const enkf_state_type    ** ensemble ,
                                   meas_data_type           * meas_data,
                                   obs_data_type            * obs_data,
                                   const local_obsset_type  * obsset) {
-  
+
   local_obsdata_type * local_obsdata = local_obsdata_alloc( "OBS-SET" );
-  const int ens_size = bool_vector_count_equal( ens_mask , true );
   {
     hash_iter_type * iter = local_obsset_alloc_obs_iter( obsset );
     while ( !hash_iter_is_complete(iter) ) {
@@ -492,7 +487,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
     }
     hash_iter_free( iter );
   }
-  enkf_obs_get_obs_and_measure_data(enkf_obs , fs , local_obsdata , state , ens_size , ensemble , meas_data , obs_data );
+  enkf_obs_get_obs_and_measure_data(enkf_obs , fs , local_obsdata , state , ens_active_list , ensemble , meas_data , obs_data );
   local_obsdata_free( local_obsdata );
 }
 

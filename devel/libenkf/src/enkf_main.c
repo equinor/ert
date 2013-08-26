@@ -47,6 +47,7 @@
 #include <ert/util/log.h>
 #include <ert/util/node_ctype.h>
 #include <ert/util/string_util.h>
+#include <ert/util/type_vector_functions.h>
 
 #include <ert/config/config.h>
 #include <ert/config/config_schema_item.h>
@@ -1223,8 +1224,10 @@ static void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type 
   state_map_type * source_state_map = enkf_fs_get_state_map( source_fs );
   state_map_type * target_state_map = enkf_fs_get_state_map( target_fs );
   bool_vector_type * ens_mask = bool_vector_alloc(0 , false);
+  int_vector_type * ens_active_list = int_vector_alloc(0,0);
 
   state_map_select_matching( source_state_map , ens_mask , STATE_HAS_DATA );
+  ens_active_list = bool_vector_alloc_active_list( ens_mask );
   bool_vector_fprintf( ens_mask , stdout , "EnsMask" , "%3d" );
   {
     /*
@@ -1237,8 +1240,8 @@ static void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type 
       process.
     */
     obs_data_type               * obs_data      = obs_data_alloc();
-    meas_data_type              * meas_forecast = meas_data_alloc( ens_mask );
-    meas_data_type              * meas_analyzed = meas_data_alloc( ens_mask );
+    meas_data_type              * meas_forecast = meas_data_alloc( ens_active_list );
+    meas_data_type              * meas_analyzed = meas_data_alloc( ens_active_list );
     local_config_type           * local_config  = enkf_main->local_config;
     const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , current_step );  /* Only last step considered when forming local update */
     hash_type                   * use_count     = hash_alloc();
@@ -1268,7 +1271,7 @@ static void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type 
                                     source_fs , 
                                     step_list , 
                                     FORECAST, 
-                                    ens_mask,
+                                    ens_active_list , 
                                     (const enkf_state_type **) enkf_main->ensemble, 
                                     meas_forecast, 
                                     obs_data , 
@@ -1310,6 +1313,7 @@ static void enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type 
     }
   }
   bool_vector_free( ens_mask );
+  int_vector_free( ens_active_list );
 }
 
 void enkf_main_assimilation_update(enkf_main_type * enkf_main , const int_vector_type * step_list) {

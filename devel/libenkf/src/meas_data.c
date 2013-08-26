@@ -32,6 +32,7 @@
 #include <ert/util/matrix.h>
 #include <ert/util/set.h>
 #include <ert/util/vector.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/enkf/meas_data.h>
 
@@ -218,8 +219,8 @@ int meas_block_get_total_size( const meas_block_type * meas_block ) {
 
 UTIL_IS_INSTANCE_FUNCTION( meas_data , MEAS_DATA_TYPE_ID )
 
-meas_data_type * meas_data_alloc( const bool_vector_type * ens_mask ) {
-  int ens_size = bool_vector_count_equal( ens_mask , true );
+meas_data_type * meas_data_alloc( const int_vector_type * ens_active_list ) {
+  int ens_size = int_vector_size( ens_active_list );
   if (ens_size <= 0) 
     util_abort("%s: ens_size must be > 0 - aborting \n",__func__);
   {

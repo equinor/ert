@@ -24,6 +24,7 @@
 #include <time.h>
 
 #include <ert/util/double_vector.h>
+#include <ert/util/int_vector.h>
 #include <ert/util/util.h>
 #include <ert/util/menu.h>
 #include <ert/util/arg_pack.h>
@@ -32,6 +33,7 @@
 #include <ert/util/msg.h>
 #include <ert/util/vector.h>
 #include <ert/util/matrix.h>
+#include <ert/util/type_vector_functions.h>
 
 #include <ert/plot/plot.h>
 #include <ert/plot/plot_dataset.h> 
