@@ -43,6 +43,8 @@ extern "C" {
   void                     state_map_fread( state_map_type * map , const char * filename);
   void                     state_map_select_matching( state_map_type * map , bool_vector_type * select_target , int select_mask);
   void                     state_map_deselect_matching( state_map_type * map , bool_vector_type * select_target , int select_mask);
+  void                     state_map_set_from_inverted_mask(state_map_type * map, const bool_vector_type *mask , realisation_state_enum state);
+  void                     state_map_set_from_mask(state_map_type * map, const bool_vector_type *mask , realisation_state_enum state);
 
   UTIL_IS_INSTANCE_HEADER( state_map );
 

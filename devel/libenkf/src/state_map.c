@@ -188,3 +188,21 @@ void state_map_select_matching( state_map_type * map , bool_vector_type * select
  void state_map_deselect_matching( state_map_type * map , bool_vector_type * select_target , int select_mask) {
    state_map_select_matching__(map , select_target , select_mask , false );
 }
+
+
+ static void state_map_set_from_mask__( state_map_type * map , const bool_vector_type * mask , realisation_state_enum state, bool invert) {
+     const bool * mask_ptr = bool_vector_get_ptr(mask);
+     for (int i=0; i < bool_vector_size( mask); i++) {
+       if (mask_ptr[i] != invert)
+         state_map_iset(map , i , state);
+     }
+ }
+
+ void state_map_set_from_inverted_mask( state_map_type * state_map , const bool_vector_type * mask , realisation_state_enum state) {
+   state_map_set_from_mask__(state_map , mask , state , true);
+ }
+
+ void state_map_set_from_mask( state_map_type * state_map , const bool_vector_type * mask , realisation_state_enum state) {
+    state_map_set_from_mask__(state_map , mask , state , false);
+  }
+
