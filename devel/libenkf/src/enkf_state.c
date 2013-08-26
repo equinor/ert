@@ -1001,7 +1001,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , 
               
             } else {
               if (enkf_node_get_impl_type(enkf_node) != GEN_DATA) {
-                *result = LOAD_FAILURE; 
+                *result |= LOAD_FAILURE; 
                 log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
 
                 if (interactive) 
@@ -1105,7 +1105,7 @@ void enkf_state_forward_init(enkf_state_type * enkf_state ,
           if (enkf_node_forward_init(node , run_info->run_path , iens ))
             enkf_node_store( node , fs, false , node_id );
           else
-            *result = LOAD_FAILURE;
+            *result |= LOAD_FAILURE;
         }
 
       }
@@ -1130,7 +1130,7 @@ void enkf_state_load_from_forward_model(enkf_state_type * enkf_state ,
   {
     state_map_type * state_map = enkf_fs_get_state_map( fs );
     int iens = member_config_get_iens( enkf_state->my_config );
-    if (*result == LOAD_SUCCESS) 
+    if (*result & LOAD_SUCCESS) 
       state_map_iset( state_map , iens , STATE_HAS_DATA);
     else
       state_map_iset( state_map , iens , STATE_LOAD_FAILURE);
@@ -1164,6 +1164,12 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
                           enkf_state->subst_list );
   
   enkf_state_load_from_forward_model( enkf_state , fs , &result , interactive , msg_list );
+  if (result & REPORT_STEP_INCOMPATIBLE) {
+    // If refcase has been used for observations: crash and burn.
+    fprintf(stderr,"** Warning the timesteps in refcase and current simulation are not in accordance - something wrong with schedule file?\n");
+    result -= REPORT_STEP_INCOMPATIBLE;
+  }
+  
   if (interactive) {
     printf(".");
     fflush(stdout);
