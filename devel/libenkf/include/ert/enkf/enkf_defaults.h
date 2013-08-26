@@ -116,7 +116,8 @@
 #define DEFAULT_UPDATE_RESULTS          false
 #define DEFAULT_SINGLE_NODE_UPDATE      true
 #define DEFAULT_ANALYSIS_MODULE         "STD_ENKF"
-#define DEFAULT_ANALYSIS_NUM_ITERATIONS 1
+#define DEFAULT_ANALYSIS_NUM_ITERATIONS   1
+#define DEFAULT_ANALYSIS_MIN_REALISATIONS 0   // 0: No lower limit
 
 /* Default directories. */
 #define DEFAULT_QC_PATH          "QC"

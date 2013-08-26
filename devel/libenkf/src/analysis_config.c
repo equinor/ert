@@ -502,7 +502,7 @@ analysis_config_type * analysis_config_alloc( rng_type * rng ) {
   analysis_config_set_store_PC( config                 , DEFAULT_STORE_PC );
   analysis_config_set_PC_filename( config              , DEFAULT_PC_FILENAME );
   analysis_config_set_PC_path( config                  , DEFAULT_PC_PATH );
-  analysis_config_set_min_realisations( config , 0 );
+  analysis_config_set_min_realisations( config , DEFAULT_ANALYSIS_MIN_REALISATIONS );
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
