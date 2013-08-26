@@ -61,7 +61,6 @@
 #include <enkf_tui_plot_util.h>
 
 
-
 void enkf_tui_QC_plot_PC_list( void * arg ) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   const int last_report        = enkf_main_get_history_length( enkf_main );
@@ -70,7 +69,6 @@ void enkf_tui_QC_plot_PC_list( void * arg ) {
   matrix_type * PC_obs = matrix_alloc(1,1);
   vector_type * PC_list = vector_alloc_new();
   int ncomp = 1;
-  
   int iobs;
   for (iobs = 0; iobs < stringlist_get_size( obs_keys ); iobs++) {  
     local_obsdata_node_type * obsnode = local_obsdata_node_alloc( stringlist_iget( obs_keys , iobs ));
