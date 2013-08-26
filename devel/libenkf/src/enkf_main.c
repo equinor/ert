@@ -1009,51 +1009,62 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
                         double truncation_or_ncomp , 
                         matrix_type * PC , 
                         matrix_type * PC_obs ) {
-  
   state_enum   state                     = FORECAST;
-  int               ens_size             = enkf_main_get_ensemble_size( enkf_main );
+  enkf_fs_type * fs                      = enkf_main_get_fs( enkf_main );
+  state_map_type * state_map             = enkf_fs_get_state_map( fs );
+  bool_vector_type * ens_mask            = bool_vector_alloc(0 , false );
   obs_data_type  *  obs_data             = obs_data_alloc();
-  meas_data_type *  meas_data            = meas_data_alloc( ens_size );
-  
-  enkf_obs_get_obs_and_measure_data( enkf_main_get_obs( enkf_main ), 
-                                     enkf_main_get_fs( enkf_main ),
-                                     obsdata , 
-                                     state , 
-                                     ens_size , 
-                                     enkf_main_get_ensemble_const( enkf_main ),
-                                     meas_data , 
-                                     obs_data );
+  int_vector_type * ens_active_list; 
+  meas_data_type *  meas_data;
 
-  if (0)
-  {
-    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-    double std_cutoff = analysis_config_get_std_cutoff( analysis_config );
-    double alpha      = analysis_config_get_alpha( analysis_config );
-
-    enkf_analysis_deactivate_outliers( obs_data , meas_data  , std_cutoff , alpha);
-  }
-
-  {
-    int active_size      = obs_data_get_active_size( obs_data );
-    matrix_type * S      = meas_data_allocS( meas_data , active_size );
-    matrix_type * dObs   = obs_data_allocdObs( obs_data , active_size );
-    double truncation    = -1;
-    int ncomp            = -1;
-
-    if (truncation_or_ncomp < 1)
-      truncation = truncation_or_ncomp;
-    else
-      ncomp = (int) truncation_or_ncomp;
-
-    obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
-    enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
+  state_map_select_matching( state_map , ens_mask , STATE_HAS_DATA );
+  ens_active_list = bool_vector_alloc_active_list( ens_mask );
+  if (int_vector_size( ens_active_list )) {
+    meas_data = meas_data_alloc( ens_active_list );
     
-    matrix_free( S );
-    matrix_free( dObs );
-  }
+    enkf_obs_get_obs_and_measure_data( enkf_main_get_obs( enkf_main ), 
+                                       enkf_main_get_fs( enkf_main ),
+                                       obsdata , 
+                                       state , 
+                                       ens_active_list , 
+                                       enkf_main_get_ensemble_const( enkf_main ),
+                                       meas_data , 
+                                       obs_data );
+
+    if (0)
+      {
+        const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+        double std_cutoff = analysis_config_get_std_cutoff( analysis_config );
+        double alpha      = analysis_config_get_alpha( analysis_config );
+
+        enkf_analysis_deactivate_outliers( obs_data , meas_data  , std_cutoff , alpha);
+      }
+
+    {
+      int active_size      = obs_data_get_active_size( obs_data );
+      matrix_type * S      = meas_data_allocS( meas_data , active_size );
+      matrix_type * dObs   = obs_data_allocdObs( obs_data , active_size );
+      double truncation    = -1;
+      int ncomp            = -1;
+
+      if (truncation_or_ncomp < 1)
+        truncation = truncation_or_ncomp;
+      else
+        ncomp = (int) truncation_or_ncomp;
+
+      obs_data_scale( obs_data , S , NULL , NULL , NULL , dObs );
+      enkf_linalg_get_PC( S , dObs , truncation , ncomp , PC , PC_obs);
+    
+      matrix_free( S );
+      matrix_free( dObs );
+    }
   
-  obs_data_free( obs_data );
-  meas_data_free( meas_data );
+    bool_vector_free( ens_mask );
+    int_vector_free( ens_active_list );
+    obs_data_free( obs_data );
+    meas_data_free( meas_data );
+  } else
+    fprintf(stderr," ** Warning: no realisations with data - no plot created \n");
 }
 
 
