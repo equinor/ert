@@ -395,6 +395,9 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   
   if (config_item_set( config , RERUN_START_KEY ))
     analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , RERUN_START_KEY ));
+
+  if (config_item_set( config , MIN_REALIZATIONS_KEY ))
+    analysis_config_set_min_realisations( analysis , config_get_value_as_int( config , MIN_REALIZATIONS_KEY ));
   
   /* Loading external modules */
   {
@@ -540,6 +543,7 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , ENKF_RERUN_KEY              , false , CONFIG_BOOL);
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
   config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
+  config_add_key_value( config , MIN_REALIZATIONS_KEY        , false , CONFIG_INT );
 
   config_add_key_value( config , ANALYSIS_SELECT_KEY         , false , CONFIG_STRING);
 
