@@ -92,7 +92,7 @@ void enkf_tui_QC_plot_get_PC( enkf_main_type * enkf_main , int step1 , int step2
                                  source_fs ,
                                  step_list , 
                                  state, 
-                                 ens_mask,
+                                 ens_active_list , 
                                  (const enkf_state_type **) enkf_main_get_ensemble( enkf_main ),
                                  meas_data , 
                                  obs_data , 
