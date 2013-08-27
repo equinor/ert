@@ -1022,11 +1022,13 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     D = obs_data_allocD( obs_data , E , S );
   }
 
-  if (analysis_module_get_option( module , ANALYSIS_SCALE_DATA))
+  if (analysis_module_get_option( module , ANALYSIS_SCALE_DATA)){
     obs_data_scale( obs_data , S , E , D , R , dObs );
+  }
   
-  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
+  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)){
     localA = A;
+  }
 
   /*****************************************************************/
   
@@ -1049,8 +1051,9 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       matrix_free( PC_obs );
     }
     
-    if (localA == NULL) 
+    if (localA == NULL){
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
+    }
 
 
     while (!hash_iter_is_complete( dataset_iter )) {
@@ -1062,11 +1065,21 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
         
         enkf_main_serialize_dataset( enkf_main , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
 
-        if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
-          analysis_module_updateA( module , localA , S , R , dObs , E , D );
+        if (analysis_module_get_option( module , ANALYSIS_UPDATE_A)){
+	  if (analysis_module_get_option( module , ANALYSIS_ITERABLE)){
+	    int iteration = cases_config_get_iteration_number(enkf_fs_get_cases_config(src_fs));
+	    char iteration_str[15];
+	    sprintf(iteration_str,"%d",iteration);
+	    analysis_module_set_var( module , "NUM_ITER", iteration_str);
+	    analysis_module_updateA( module , localA , S , R , dObs , E , D );
+	  }
+	  else
+	    analysis_module_updateA( module , localA , S , R , dObs , E , D );
+	}
         else {
-          if (analysis_module_get_option( module , ANALYSIS_USE_A)) 
+          if (analysis_module_get_option( module , ANALYSIS_USE_A)){
             analysis_module_initX( module , X , localA , S , R , dObs , E , D );
+	  }
 
           matrix_inplace_matmul_mt2( A , X , tp );
         }
@@ -1628,7 +1641,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
     bool_vector_type * iactive = bool_vector_alloc(0 , true);
     int iter  = 0;
     int num_iter = analysis_iter_config_get_num_iterations( iter_config );
-    stringlist_type * node_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER );
+
 
     
     {
@@ -1657,18 +1670,9 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
         const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iter+1 );
         enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
         enkf_main_smoother_update(enkf_main , step_list , target_fs);
-
-	/*        enkf_main_copy_ensemble( enkf_main , 
-                                 enkf_main_get_current_fs( enkf_main ),
-                                 0 ,   // Smoother update will write on step 0
-                                 ANALYZED, 
-                                 target_fs_name , 
-                                 step1 , 
-                                 FORECAST , 
-                                 iactive , 
-                                 NULL , 
-                                 node_list ); */
         enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+	cases_config_set_iteration_number(enkf_fs_get_cases_config(target_fs), iter+1);
+
       }
       iter++;
     }
@@ -1683,29 +1687,21 @@ void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
   model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
+  enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+  cases_config_type * case_config = enkf_fs_get_cases_config( fs );
+  int iteration_number = cases_config_get_iteration_number( case_config );
   int step1 = 0;
   int_vector_type * step_list = int_vector_alloc(0,0);
   bool_vector_type * iactive = bool_vector_alloc(0 , true);
-  stringlist_type * node_list = ensemble_config_alloc_keylist_from_var_type( enkf_main_get_ensemble_config(enkf_main) , PARAMETER );
+
   {
     for (int step=step1; step <= step2; step++)
       int_vector_append( step_list , step );
   }
   
-  const char * target_fs_name  = "ONE_MORE_ITERATION";
+  const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iteration_number+1 );
   enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
   enkf_main_smoother_update(enkf_main , step_list , target_fs );
-  
-  enkf_main_copy_ensemble( enkf_main , 
-			   enkf_main_get_current_fs( enkf_main ),
-			   0 ,   // Smoother update will write on step 0
-			   ANALYZED , 
-			   target_fs_name , 
-			   step1 , 
-			   FORECAST , 
-			   iactive , 
-			   NULL , 
-			   node_list );
   
   enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
   bool_vector_iset( iactive , ens_size - 1 , true );
