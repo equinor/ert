@@ -284,29 +284,25 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
   int iens = enkf_state_get_iens( enkf_state );
   state_map_type * state_map = enkf_fs_get_state_map( fs );
   realisation_state_enum current_state = state_map_iget(state_map, iens);
-  if (current_state == STATE_PARENT_FAILURE) {
-    printf("Found PARENT failure");
+  if (current_state == STATE_PARENT_FAILURE)
     return;
-  }
-  else
-  {
+  else {
     state_enum init_state = ANALYZED;
-    bool initOK = true;
+
     for (int ip = 0; ip < stringlist_get_size(param_list); ip++)
     {
       enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
       node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
       bool has_data = enkf_node_has_data(param_node, fs, node_id);
 
-      if (force_init || (has_data == false))
+      if (force_init || (has_data == false) || (current_state == STATE_LOAD_FAILURE))
       {
-        if (enkf_node_initialize(param_node, iens, enkf_state->rng))
+        if (enkf_node_initialize(param_node, iens, enkf_state->rng)) {
           enkf_node_store(param_node, fs, true, node_id);
-        else
-          initOK = false;
+          state_map_iset(state_map , iens , STATE_INITIALIZED);
+        }
       }
     }
-    state_map_iset(state_map , iens , STATE_INITIALIZED);
     enkf_fs_fsync(fs);
   }
 }
