@@ -284,7 +284,7 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
   int iens = enkf_state_get_iens( enkf_state );
   state_map_type * state_map = enkf_fs_get_state_map( fs );
   realisation_state_enum current_state = state_map_iget(state_map, iens);
-  if (current_state == STATE_PARENT_FAILURE)
+  if ((current_state == STATE_PARENT_FAILURE) && (force_init == false))
     return;
   else {
     state_enum init_state = ANALYZED;
