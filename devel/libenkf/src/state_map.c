@@ -114,10 +114,32 @@ realisation_state_enum state_map_iget( state_map_type * map , int index) {
   return state;
 }
 
+static void state_map_iset__( state_map_type * map , int index , realisation_state_enum new_state) {
+  realisation_state_enum current_state = int_vector_safe_iget( map->state , index );
+  int target_mask = 0;
+
+  if (current_state == STATE_UNDEFINED)
+    target_mask = STATE_INITIALIZED | STATE_PARENT_FAILURE;
+  else if (current_state == STATE_INITIALIZED)
+    target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_INITIALIZED;
+  else if (current_state == STATE_HAS_DATA)
+    target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_PARENT_FAILURE;
+  else if (current_state == STATE_LOAD_FAILURE)
+    target_mask = STATE_HAS_DATA | STATE_INITIALIZED;
+  else if (current_state == STATE_PARENT_FAILURE)
+    target_mask = STATE_INITIALIZED;
+
+  if (new_state & target_mask)
+    int_vector_iset( map->state , index , new_state);
+  else
+    util_abort("%s: illegal state transition %d -> %d \n" , __func__ , current_state , new_state );
+  
+}
+
 void state_map_iset( state_map_type * map ,int index , realisation_state_enum state) {
   pthread_rwlock_wrlock( &map->rw_lock );
   {
-    int_vector_iset( map->state , index , state );
+    state_map_iset__( map , index , state );
   }
   pthread_rwlock_unlock( &map->rw_lock );
 }
@@ -210,7 +232,6 @@ void state_map_select_matching( state_map_type * map , bool_vector_type * select
    int count = 0;
    pthread_rwlock_rdlock( &state_map->rw_lock );
    {
-     int i;
      const int * map_ptr = int_vector_get_ptr( state_map->state );
      for (int i=0; i < int_vector_size( state_map->state ); i++) {
        int state_value = map_ptr[i];
