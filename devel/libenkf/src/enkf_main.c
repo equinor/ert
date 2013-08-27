@@ -1241,7 +1241,7 @@ static bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type 
     int_vector_free( ens_active_list );
     return true;
   } else {
-    fprintf(stderr,"** Warning have %d active realisations. That is less than limit:%d - stopping assimilation.\n" , 
+    fprintf(stderr,"** ERROR ** There are %d active realisations left, which is less than the minimum specified (%d) - stopping assimilation.\n" , 
             active_ens_size , 
             analysis_config_get_min_realisations(analysis_config));
     return false;
@@ -1623,7 +1623,7 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
             enkf_fs_fsync( enkf_main->dbase );
           }
         } else {
-          fprintf(stderr,"** Warning have %d active realisations. That is less than limit:%d - stopping assimilation" , 
+          fprintf(stderr,"** ERROR ** There are %d active realisations left, which is less than the minimum specified (%d) - stopping assimilation.\n" , 
                   active_ens_size , 
                   analysis_config_get_min_realisations(analysis_config));
           break;
