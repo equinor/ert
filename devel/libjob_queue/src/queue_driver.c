@@ -181,6 +181,8 @@ queue_driver_type * queue_driver_alloc(job_driver_type type) {
     default:
       util_abort("%s: unrecognized driver type:%d \n", __func__, type);
   }
+  
+  driver->max_running = 0;
   return driver;
 }
 
