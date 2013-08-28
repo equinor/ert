@@ -21,9 +21,12 @@ add_test( job_loadFail2 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_S
 add_test( job_loadFail3 ${EXECUTABLE_OUTPUT_PATH}/job_loadFail ${CMAKE_CURRENT_SOURCE_DIR}/data/internalFail ${CMAKE_CURRENT_SOURCE_DIR}/data/externalFail)
 
 
+add_executable( job_program_output job_program_output.c )
+target_link_libraries( job_program_output util test_util)
+
 add_executable( job_queue_test job_job_queue_test.c )
 target_link_libraries( job_queue_test job_queue test_util )
-add_test( job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_test )
+add_test( job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_test ${EXECUTABLE_OUTPUT_PATH}/job_program_output )
 
 add_executable( job_queue_driver_test job_queue_driver_test.c )
 target_link_libraries( job_queue_driver_test job_queue test_util )
@@ -47,6 +50,7 @@ add_executable( job_lsf_submit_test job_lsf_submit_test.c )
 target_link_libraries( job_lsf_submit_test job_queue util test_util )
 
 add_executable( job_program job_program.c )
+
 
 if (HAVE_LSF_LIBRARY)
    add_executable( job_lsb job_lsb.c )
