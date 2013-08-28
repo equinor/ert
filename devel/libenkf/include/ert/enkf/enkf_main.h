@@ -111,7 +111,7 @@ extern "C" {
   void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
 
   void                          enkf_main_assimilation_update(enkf_main_type * enkf_main , const int_vector_type * step_list);
-  void                          enkf_main_smoother_update(enkf_main_type * enkf_main , const int_vector_type * step_list , enkf_fs_type * target_fs);
+  bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , const int_vector_type * step_list , enkf_fs_type * target_fs);
 
   void                          enkf_main_run_exp(enkf_main_type * enkf_main            ,
                                                   bool_vector_type * iactive      , 

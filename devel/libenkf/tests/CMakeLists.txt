@@ -11,6 +11,10 @@ add_executable( enkf_pca_plot enkf_pca_plot.c )
 target_link_libraries( enkf_pca_plot enkf test_util)
 add_test( enkf_pca_plot ${EXECUTABLE_OUTPUT_PATH}/enkf_pca_plot)
 
+add_executable( enkf_analysis_config enkf_analysis_config.c )
+target_link_libraries( enkf_analysis_config enkf test_util )
+add_test( enkf_analysis  ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config )
+
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )
 
