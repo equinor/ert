@@ -210,8 +210,7 @@ void state_map_select_matching( state_map_type * map , bool_vector_type * select
    int count = 0;
    pthread_rwlock_rdlock( &state_map->rw_lock );
    {
-     int i;
-     const int * map_ptr = int_vector_get_ptr( state_map->state );
+    const int * map_ptr = int_vector_get_ptr(state_map->state);
      for (int i=0; i < int_vector_size( state_map->state ); i++) {
        int state_value = map_ptr[i];
        if (state_value & mask)
