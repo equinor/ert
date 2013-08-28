@@ -98,11 +98,11 @@ class ErtImportTest(ExtendedTestCase):
         self.assertImportable("ert.enkf.util.obs_vector")
         self.assertImportable("ert.enkf.util.time_map")
 
-    def test_ert_ert(self):
-        self.assertImportable("ert.ert")
-        self.assertImportable("ert.ert.c_enums")
-        self.assertImportable("ert.ert.enums")
-        self.assertImportable("ert.ert.ertwrapper")
+    # def test_ert_ert(self):
+    #     self.assertImportable("ert.ert")
+    #     self.assertImportable("ert.ert.c_enums")
+    #     self.assertImportable("ert.ert.enums")
+    #     self.assertImportable("ert.ert.ertwrapper")
 
     def test_ert_geo(self):
         self.assertImportable("ert.geo")
