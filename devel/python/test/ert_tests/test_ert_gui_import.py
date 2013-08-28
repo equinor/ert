@@ -79,10 +79,10 @@ class ErtGuiImportTest(ExtendedTestCase):
     def test_ert_gui_pages_config(self):
         self.assertImportable("ert_gui.pages.config")
         self.assertImportable("ert_gui.pages.config.analysis")
-        self.assertImportable("ert_gui.pages.config.configpages")
+        # self.assertImportable("ert_gui.pages.config.configpages")
         self.assertImportable("ert_gui.pages.config.eclipse")
-        self.assertImportable("ert_gui.pages.config.ensemble")
-        self.assertImportable("ert_gui.pages.config.observations")
+        # self.assertImportable("ert_gui.pages.config.ensemble")
+        # self.assertImportable("ert_gui.pages.config.observations")
         self.assertImportable("ert_gui.pages.config.plot")
         self.assertImportable("ert_gui.pages.config.queuesystem")
         self.assertImportable("ert_gui.pages.config.simulation")
