@@ -236,6 +236,20 @@ void test_set_from_mask() {
   }
 }
 
+
+void test_count_matching() {
+  state_map_type * map1 = state_map_alloc();
+  state_map_iset(map1 , 10 , STATE_HAS_DATA);
+  state_map_iset(map1 , 15 , STATE_HAS_DATA | STATE_LOAD_FAILURE);
+  state_map_iset(map1 , 20 , STATE_HAS_DATA | STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
+
+  test_assert_int_equal( 3 , state_map_count_matching( map1 , STATE_HAS_DATA));
+  test_assert_int_equal( 2 , state_map_count_matching( map1 , STATE_LOAD_FAILURE));
+  test_assert_int_equal( 1 , state_map_count_matching( map1 , STATE_PARENT_FAILURE));
+
+  state_map_free( map1 );
+}
+
 int main(int argc , char ** argv) {
   create_test();
   get_test();
@@ -246,6 +260,7 @@ int main(int argc , char ** argv) {
   test_io();
   test_update_undefined( );
   test_select_matching();
+  test_count_matching();
   exit(0);
 }
 
