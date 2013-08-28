@@ -14,7 +14,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import traceback
 
 from ert_tests import ExtendedTestCase
 
