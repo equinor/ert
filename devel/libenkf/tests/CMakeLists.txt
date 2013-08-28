@@ -7,6 +7,11 @@ target_link_libraries( enkf_site_config enkf test_util )
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
 
+
+add_executable( enkf_analysis_config enkf_analysis_config.c )
+target_link_libraries( enkf_analysis_config enkf test_util )
+add_test( enkf_analysis  ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config )
+
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )
 
