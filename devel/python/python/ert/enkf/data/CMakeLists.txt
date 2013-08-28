@@ -6,6 +6,7 @@ set(PYTHON_SOURCES
     gen_kw_config.py
     field.py
     field_config.py
+    summary_config.py
 )
 
-add_python_package("Python ert.enkf.data" ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)
+add_python_package("Python ert.enkf.data" ${PYTHON_INSTALL_PREFIX}/ert/enkf/data "${PYTHON_SOURCES}" True)

@@ -4,5 +4,5 @@ set(PYTHON_SOURCES
     time_map.py
 )
 
-add_python_package("Python ert.enkf.util" ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)
+add_python_package("Python ert.enkf.util" ${PYTHON_INSTALL_PREFIX}/ert/enkf/util "${PYTHON_SOURCES}" True)
 

@@ -10,7 +10,7 @@ from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
 
 
-class ENKFLibraryTest(ExtendedTestCase):
+class EnKFLibraryTest(ExtendedTestCase):
     def setUp(self):
         self.case_directory = self.createTestPath("local/simple_config/")
         self.site_config = os.getenv("ERT_SITE_CONFIG")

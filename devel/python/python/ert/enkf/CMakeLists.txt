@@ -1,3 +1,6 @@
+add_subdirectory( data )
+add_subdirectory( util )
+
 set(PYTHON_SOURCES
     __init__.py
     analysis_config.py
@@ -19,5 +22,4 @@ set(PYTHON_SOURCES
 
 add_python_package("Python ert.enkf" ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)
 
-add_subdirectory( data )
-add_subdirectory( util )
+
