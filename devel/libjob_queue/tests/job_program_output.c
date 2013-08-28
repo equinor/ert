@@ -19,7 +19,10 @@
 #include <unistd.h>
 #include <ert/util/util.h>
 int main( int argc , char ** argv) {
-  sleep(5); 
+  int sleep_time;
+  util_sscanf_int(argv[2], &sleep_time);
+  sleep(sleep_time);
+  
   char * filename = util_alloc_filename(argv[1], "OK", "status");
 
   FILE * file = util_fopen(filename, "w");

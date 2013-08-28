@@ -64,7 +64,9 @@ extern "C" {
                                            int argc , 
                                            const char ** argv );
 
-  void                job_queue_run_jobs(job_queue_type * , int , bool verbose);
+  void                job_queue_finalize(job_queue_type * queue);
+  void                job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_run, bool verbose, bool reset_queue);
+  void                job_queue_run_jobs(job_queue_type * queue, int num_total_run, bool verbose);
   void                job_queue_run_jobs_threaded(job_queue_type * queue , int num_total_run, bool verbose);
   void *              job_queue_run_jobs__(void * );
   job_status_type     job_queue_iget_job_status(const job_queue_type * , int );

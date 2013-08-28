@@ -993,7 +993,7 @@ static void job_queue_clear_status( job_queue_type * queue ) {
     load like states?? They 
 */
 
-static void job_queue_finalize(job_queue_type * queue) {
+void job_queue_finalize(job_queue_type * queue) {
   int i;
   
   for (i=0; i < queue->active_size; i++) 
@@ -1187,14 +1187,16 @@ int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
 
 /*****************************************************************/
 
-
+void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
+  job_queue_run_jobs_finalizeoptional(queue, num_total_run, verbose, true);
+}
 /**
    If the total number of jobs is not known in advance the job_queue_run_jobs
    function can be called with @num_total_run == 0. In that case it is paramount
    to call the function job_queue_submit_complete() whan all jobs have been submitted.
 */
 
-void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
+void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_run, bool verbose, bool reset_queue) {
   int trylock = pthread_mutex_trylock( &queue->run_mutex );
   if (trylock != 0)
     util_abort("%s: another thread is already running the queue_manager\n",__func__);
@@ -1349,7 +1351,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
     called the queue object should not be queried on any longer; that
     will silently give horribly wrong results.
   */
-  job_queue_finalize( queue );
+  if (reset_queue)
+    job_queue_finalize( queue );
+  
   pthread_mutex_unlock( &queue->run_mutex );
 }
 
