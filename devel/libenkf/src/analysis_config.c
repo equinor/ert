@@ -583,7 +583,7 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
   }
 
   if (config->overlap_alpha != DEFAULT_ENKF_ALPHA ) {
-    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_TRUNCATION_KEY );
+    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_ALPHA_KEY );
     fprintf( stream , CONFIG_FLOAT_FORMAT , config->overlap_alpha );
     fprintf( stream , "\n");
   }

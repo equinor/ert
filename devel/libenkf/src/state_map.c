@@ -121,7 +121,7 @@ static void state_map_iset__( state_map_type * map , int index , realisation_sta
   if (current_state == STATE_UNDEFINED)
     target_mask = STATE_INITIALIZED | STATE_PARENT_FAILURE;
   else if (current_state == STATE_INITIALIZED)
-    target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_INITIALIZED;
+    target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_INITIALIZED | STATE_PARENT_FAILURE;
   else if (current_state == STATE_HAS_DATA)
     target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_PARENT_FAILURE;
   else if (current_state == STATE_LOAD_FAILURE)
