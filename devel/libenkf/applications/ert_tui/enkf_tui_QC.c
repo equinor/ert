@@ -63,6 +63,7 @@
 #include <enkf_tui_plot_util.h>
 
 
+
 void enkf_tui_QC_plot_PC_list( void * arg ) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   const int last_report        = enkf_main_get_history_length( enkf_main );
