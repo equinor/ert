@@ -122,16 +122,19 @@ ANALYSIS_SELECT  ModuleName
 /*****************************************************************/
 
 bool analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations) {
-  if (realisations) {
-    if (config->min_realisations) {
-      if (realisations >= config->min_realisations)
+  if (config->min_realisations > 0) {
+    /* A value > 0 has been set in the config; compare with this value. */
+    if (realisations >= config->min_realisations)
         return true;
       else
         return false;
-    } else
+  } else {
+    /* No value has been set in the config; just compare the input with zero. */
+    if (realisations > 0)
       return true;
-  } else
-    return false;
+    else
+      return false;
+  }
 }
 
 void analysis_config_set_min_realisations( analysis_config_type * config , int min_realisations) {

@@ -318,7 +318,10 @@ void ecl_config_set_init_section( ecl_config_type * ecl_config , const char * in
        2. If the INIT_SECTION points to a not existing file:
 
           a. We assert that INIT_SECTION points to a pure filename,
-             i.e. /some/path/which/does/not/exist is NOT accepted.
+             i.e. /some/path/which/does/not/exist is NOT accepted. In
+             the case the input argument contain a path a error message
+             will be printed on stderr and the ->init_section will not
+             be set.
           b. The ecl_config->input_init_section is set to point to this
              file.
           c. WE TRUST THE USER TO SUPPLY CONTENT (THROUGH SOME FUNKY
