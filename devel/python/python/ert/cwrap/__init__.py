@@ -47,3 +47,5 @@ from .cwrap import CWrapper, CWrapperNameSpace
 
 from .cnamespace import CNamespace
 from .basecclass import BaseCClass
+from .basecenum import BaseCEnum
+
