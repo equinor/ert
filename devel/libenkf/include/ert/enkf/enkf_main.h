@@ -110,10 +110,10 @@ extern "C" {
   void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
 
   void                          enkf_main_assimilation_update(enkf_main_type * enkf_main , const int_vector_type * step_list);
-  void                          enkf_main_smoother_update(enkf_main_type * enkf_main , const int_vector_type * step_list , enkf_fs_type * target_fs);
+  bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , const int_vector_type * step_list , enkf_fs_type * target_fs);
 
   void                          enkf_main_run_exp(enkf_main_type * enkf_main            ,
-                                                  const bool_vector_type * iactive      , 
+                                                  bool_vector_type * iactive      , 
                                                   bool             simulate , 
                                                   int              init_step_parameters ,
                                                   int              start_report         ,
@@ -122,7 +122,7 @@ extern "C" {
 
   
   void                          enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
-                                                           const bool_vector_type * iactive      , 
+                                                           bool_vector_type * iactive      , 
                                                            int              init_step_parameters ,
                                                            int              start_report         ,
                                                            state_enum       start_state);

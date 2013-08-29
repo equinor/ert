@@ -119,6 +119,7 @@
 #define DEFAULT_ANALYSIS_NUM_ITERATIONS 4
 #define DEFAULT_ANALYSIS_ITER_CASE      "ITERATED_ENSEMBLE_SMOOTHER%d"
 #define DEFAULT_ANALYSIS_ITER_RUNPATH   "Simulations/Real%d"
+#define DEFAULT_ANALYSIS_MIN_REALISATIONS 0   // 0: No lower limit
 
 /* Default directories. */
 #define DEFAULT_QC_PATH          "QC"

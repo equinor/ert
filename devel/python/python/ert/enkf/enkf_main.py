@@ -15,10 +15,6 @@
 #  for more details. 
 
 import  ctypes
-from    ert.cwrap.cwrap           import *
-from    ert.cwrap.cclass          import CClass
-from    ert.util.tvector          import * 
-from    ert.job_queue.job_queue   import JobQueue
 from    ert.enkf.enkf_enum        import *
 from    ert.ert.enums             import *
 from    ert.enkf.ens_config       import *
@@ -37,7 +33,8 @@ from    ert.enkf.libenkf          import *
 from    ert.enkf.enkf_fs          import *
 from    ert.enkf.ert_templates    import *
 from    ert.enkf.enkf_state       import *
-from    ert.util.log              import *
+from ert.util import Log
+
 
 class EnKFMain(CClass):
     
