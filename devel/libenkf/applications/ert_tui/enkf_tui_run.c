@@ -377,6 +377,9 @@ void enkf_tui_run_menu(void * arg) {
       menu_item_disable( enkf_item );
       menu_item_disable( restart_enkf_item );
     }
+    
+    if (!ecl_config_has_init_section( ecl_config )) 
+      menu_item_disable( enkf_item );
 
     if (!model_config_has_history( model_config )) {
       menu_item_disable( it_ES_item );
