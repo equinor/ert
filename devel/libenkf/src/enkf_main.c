@@ -1641,7 +1641,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
     bool_vector_type * iactive = bool_vector_alloc(0 , true);
     int iter  = 0;
     int num_iter = analysis_iter_config_get_num_iterations( iter_config );
-
+    bool initialize = true;
 
     
     {
@@ -1653,6 +1653,9 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
     while (true) {
        {
         const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iter);
+	if (iter != 0) 
+	  initialize = false;
+	
         if (runpath_fmt != NULL) {
           char * runpath_key = util_alloc_sprintf( "runpath-%d" , iter);
           model_config_add_runpath( model_config , runpath_key , runpath_fmt);
@@ -1704,6 +1707,8 @@ void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
   enkf_main_smoother_update(enkf_main , step_list , target_fs );
   
   enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+  cases_config_set_iteration_number(enkf_fs_get_cases_config(target_fs), iteration_number+1);
+
   bool_vector_iset( iactive , ens_size - 1 , true );
   const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , 999);
   if (runpath_fmt != NULL) {
