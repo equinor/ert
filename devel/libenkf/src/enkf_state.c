@@ -1745,7 +1745,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * 
 
 bool enkf_state_complete_forward_modelOK__(void * arg );
 bool enkf_state_complete_forward_modelEXIT__(void * arg );
-
+bool enkf_state_complete_forward_modelRETRY__(void * arg );
 
 static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_fs_type * fs) {
   run_info_type       * run_info    = enkf_state->run_info;
@@ -1767,8 +1767,8 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_f
       run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
                                                     site_config_get_job_script( site_config ),
                                                     enkf_state_complete_forward_modelOK__ , 
-                                                    enkf_state_complete_forward_modelEXIT__ , 
-                                                    NULL,
+                                                    enkf_state_complete_forward_modelRETRY__ , 
+                                                    enkf_state_complete_forward_modelEXIT__,
                                                     load_arg , 
                                                     ecl_config_get_num_cpu( shared_info->ecl_config ),
                                                     run_info->run_path     , 
@@ -1996,42 +1996,6 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
 }
 
 
-
-
-static bool enkf_state_complete_forward_modelEXIT(enkf_state_type * enkf_state , enkf_fs_type * fs) {
-  const shared_info_type    * shared_info = enkf_state->shared_info;
-  run_info_type             * run_info    = enkf_state->run_info;
-  const member_config_type  * my_config   = enkf_state->my_config;
-  const int iens                          = member_config_get_iens( my_config );
-  /* 
-     The external queue system has said that the job failed - we
-     might give it another try from this scope, possibly involving a
-     resampling.
-  */
-
-  if (enkf_state_can_retry( enkf_state )) {
-    enkf_state_internal_retry( enkf_state , fs , false);
-    return true;
-  } else {
-    /* 
-       No more attempts for this job.
-    */
-    log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
-    if (run_info->run_status != JOB_LOAD_FAILURE)
-      run_info->run_status = JOB_RUN_FAILURE;
-    {
-      state_map_type * state_map = enkf_fs_get_state_map( fs );
-      int iens = member_config_get_iens( enkf_state->my_config );
-      state_map_iset( state_map , iens , STATE_LOAD_FAILURE );
-    }
-    return false;
-  }
-}
-
-
-
-
-
 bool enkf_state_complete_forward_modelOK__(void * arg ) {
   enkf_state_type * enkf_state;
   enkf_fs_type * fs;
@@ -2050,7 +2014,39 @@ bool enkf_state_complete_forward_modelOK__(void * arg ) {
 }
 
 
-bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
+
+static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , enkf_fs_type * fs, bool is_retry) {
+  const shared_info_type    * shared_info = enkf_state->shared_info;
+  run_info_type             * run_info    = enkf_state->run_info;
+  const member_config_type  * my_config   = enkf_state->my_config;
+  const int iens                          = member_config_get_iens( my_config );
+  /* 
+     The external queue system has said that the job failed - we
+     might give it another try from this scope, possibly involving a
+     resampling.
+   */
+
+  if (is_retry) {
+    if (enkf_state_can_retry(enkf_state)) {
+      enkf_state_internal_retry(enkf_state, fs, false);
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    log_add_fmt_message(shared_info->logh, 1, NULL, "[%03d:%04d-%04d] FAILED COMPLETELY.", iens, run_info->step1, run_info->step2);
+
+    if (run_info->run_status != JOB_LOAD_FAILURE)
+      run_info->run_status = JOB_RUN_FAILURE;
+
+    state_map_type * state_map = enkf_fs_get_state_map(fs);
+    int iens = member_config_get_iens(enkf_state->my_config);
+    state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
+    return false;
+  }
+}
+
+static bool enkf_state_complete_forward_model_EXIT_handler(void * arg, bool allow_retry ) {
   enkf_state_type * enkf_state;
   enkf_fs_type * fs;
   {
@@ -2060,11 +2056,17 @@ bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
     arg_pack_free( arg_pack );
   }
   
-  return enkf_state_complete_forward_modelEXIT( enkf_state , fs );
+  return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , fs, allow_retry );
 }
 
 
+bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
+  return enkf_state_complete_forward_model_EXIT_handler(arg, false );
+}
 
+bool enkf_state_complete_forward_modelRETRY__(void * arg ) {
+  return enkf_state_complete_forward_model_EXIT_handler(arg, true );
+}
 
 
 void * enkf_state_start_forward_model__(void * arg) {
@@ -2086,8 +2088,6 @@ void enkf_state_invalidate_cache( enkf_state_type * enkf_state ) {
   }
   hash_iter_free(iter);
 }
-
-
 
 
 /*****************************************************************/
