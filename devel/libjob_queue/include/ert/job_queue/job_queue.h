@@ -45,7 +45,8 @@ extern "C" {
   int                 job_queue_add_job_mt(job_queue_type * , 
                                            const char * run_cmd , 
                                            job_callback_ftype * done_callback, 
-                                           job_callback_ftype * retry_callback , 
+                                           job_callback_ftype * retry_callback,
+                                           job_callback_ftype * exit_callback,
                                            void * callback_arg , 
                                            int num_cpu , 
                                            const char * , 
@@ -56,7 +57,8 @@ extern "C" {
   int                 job_queue_add_job_st(job_queue_type * , 
                                            const char * run_cmd , 
                                            job_callback_ftype * done_callback, 
-                                           job_callback_ftype * retry_callback , 
+                                           job_callback_ftype * retry_callback,
+                                           job_callback_ftype * exit_callback,
                                            void * callback_arg , 
                                            int num_cpu , 
                                            const char * , 
@@ -77,6 +79,7 @@ extern "C" {
   time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
   job_driver_type     job_queue_lookup_driver_name( const char * driver_name );
   
+  //void                job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds); 
   bool                job_queue_kill_job( job_queue_type * queue , int job_index);
   bool                job_queue_is_running( const job_queue_type * queue );
   void                job_queue_set_max_submit( job_queue_type * job_queue , int max_submit );
