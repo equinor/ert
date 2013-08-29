@@ -1768,6 +1768,7 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_f
                                                     site_config_get_job_script( site_config ),
                                                     enkf_state_complete_forward_modelOK__ , 
                                                     enkf_state_complete_forward_modelEXIT__ , 
+                                                    NULL,
                                                     load_arg , 
                                                     ecl_config_get_num_cpu( shared_info->ecl_config ),
                                                     run_info->run_path     , 
