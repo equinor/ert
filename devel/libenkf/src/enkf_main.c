@@ -1664,7 +1664,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
         }
       }
       
-       enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, false);
+       enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, initialize);
       if (iter == num_iter)
         break;
 
