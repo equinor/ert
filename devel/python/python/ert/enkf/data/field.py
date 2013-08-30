@@ -17,23 +17,23 @@ from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 
 
-class FieldObs(BaseCClass):
+class Field(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def ijk_get_double(self, i, j, k):
-        return FieldObs.cNamespace().ijk_get_double(self, i, j, k)
+        return Field.cNamespace().ijk_get_double(self, i, j, k)
 
     def free(self):
-        FieldObs.cNamespace().free(self)
+        Field.cNamespace().free(self)
 
 
 ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
-cwrapper.registerType("field", FieldObs)
-cwrapper.registerType("field_obj", FieldObs.createPythonObject)
-cwrapper.registerType("field_ref", FieldObs.createCReference)
+cwrapper.registerType("field", Field)
+cwrapper.registerType("field_obj", Field.createPythonObject)
+cwrapper.registerType("field_ref", Field.createCReference)
 
-FieldObs.cNamespace().free = cwrapper.prototype("void field_free( field )")
-FieldObs.cNamespace().ijk_get_double = cwrapper.prototype("double field_ijk_get_double(field, int, int, int)")
+Field.cNamespace().free = cwrapper.prototype("void field_free( field )")
+Field.cNamespace().ijk_get_double = cwrapper.prototype("double field_ijk_get_double(field, int, int, int)")
