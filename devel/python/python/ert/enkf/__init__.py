@@ -38,5 +38,5 @@ from .model_config import ModelConfig
 from .plot_config import PlotConfig
 from .site_config import SiteConfig
 
-from ert.enkf.data import EnkfConfigNode, EnkfNode, GenDataConfig, GenKwConfig, FieldConfig, FieldObs
+from ert.enkf.data import EnkfConfigNode, EnkfNode, GenDataConfig, GenKwConfig, FieldConfig, Field
 
