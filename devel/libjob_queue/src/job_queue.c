@@ -277,18 +277,18 @@ struct job_queue_node_struct {
   void                  *callback_arg;
 };
 
-static const int status_index[] = {  JOB_QUEUE_NOT_ACTIVE ,         
-                                     JOB_QUEUE_WAITING    ,        
-                                     JOB_QUEUE_SUBMITTED  ,        
-                                     JOB_QUEUE_PENDING    ,         
-                                     JOB_QUEUE_RUNNING    ,        
-                                     JOB_QUEUE_DONE       ,        
-                                     JOB_QUEUE_EXIT       ,        
-                                     JOB_QUEUE_USER_KILLED ,        
-                                     JOB_QUEUE_USER_EXIT   ,        
-                                     JOB_QUEUE_SUCCESS    ,        
-                                     JOB_QUEUE_RUNNING_CALLBACK,   
-                                     JOB_QUEUE_FAILED };  
+static const int status_index[] = {  JOB_QUEUE_NOT_ACTIVE ,  // Initial, allocated job state, job not added                                - controlled by job_queue   
+                                     JOB_QUEUE_WAITING    ,  // The job is ready to be started                                             - controlled by job_queue
+                                     JOB_QUEUE_SUBMITTED  ,  // Job is submitted to driver - temporary state                               - controlled by job_queue
+                                     JOB_QUEUE_PENDING    ,  // Job is pending, before actual execution                                    - controlled by queue_driver
+                                     JOB_QUEUE_RUNNING    ,  // Job is executing                                                           - controlled by queue_driver
+                                     JOB_QUEUE_DONE       ,  // Job is done (sucessful or not), temporary state                            - controlled/returned by by queue_driver   
+                                     JOB_QUEUE_EXIT       ,  // Job is done, with exit status != 0, temporary state                        - controlled/returned by by queue_driver   
+                                     JOB_QUEUE_USER_EXIT  ,  // User / queue system has requested killing of job                           - controlled by job_queue / external scope
+                                     JOB_QUEUE_USER_KILLED,  // Job has been killed, due to JOB_QUEUE_USER_EXIT, FINAL STATE               - controlled by job_queue     
+                                     JOB_QUEUE_SUCCESS    ,  // All good, comes after JOB_QUEUE_DONE, with additional checks, FINAL STATE  - controlled by job_queue
+                                     JOB_QUEUE_RUNNING_CALLBACK, // Temporary state, while running requested callbacks after an ended job  - controlled by job_queue  
+                                     JOB_QUEUE_FAILED };     // Job has failed, no more retries, FINAL STATE  
 
 static const char* status_name[] = { "JOB_QUEUE_NOT_ACTIVE" ,         
                                      "JOB_QUEUE_WAITING"    ,        
@@ -506,11 +506,6 @@ static job_queue_node_type * job_queue_node_alloc( ) {
 }
 
 
-
-static void job_queue_node_set_status(job_queue_node_type * node, job_status_type status) {
-  node->job_status = status;
-}
-
 /*
   The error information is retained even after the job has completede
   completely, so that calling scope can ask for it - that is the
@@ -632,7 +627,7 @@ static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node
     job_status_type old_status = job_queue_node_get_status( node );
     
     if (new_status != old_status) {
-      job_queue_node_set_status(node , new_status);
+      node->job_status = new_status;
       queue->status_list[ STATUS_INDEX(old_status) ]--;
       queue->status_list[ STATUS_INDEX(new_status) ]++;
       
@@ -844,6 +839,10 @@ int job_queue_get_num_failed( const job_queue_type * queue) {
   return job_queue_iget_status_summary( queue , JOB_QUEUE_FAILED );
 }
 
+int job_queue_get_num_killed( const job_queue_type * queue) {
+  return job_queue_iget_status_summary( queue , JOB_QUEUE_USER_KILLED );
+}
+
 int job_queue_get_active_size( const job_queue_type * queue ) {
   return queue->active_size;
 }
@@ -870,10 +869,9 @@ void job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_sec
    to the queue system, and there is not yet established a mapping between
    external id and queue_index.
 */
-
-bool job_queue_kill_job( job_queue_type * queue , int job_index) {
+bool job_queue_kill_job_node( job_queue_type * queue , job_queue_node_type * node) {
   bool result = false;
-  job_queue_node_type * node = queue->jobs[job_index];
+  
   pthread_rwlock_wrlock( &node->job_lock );
   {
     if (node->job_status & JOB_QUEUE_CAN_KILL) {
@@ -896,6 +894,10 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
   return result;
 }
 
+bool job_queue_kill_job( job_queue_type * queue , int job_index) {
+  job_queue_node_type * node = queue->jobs[job_index];
+  return job_queue_kill_job_node(queue, node);
+}
 
 
 /**
@@ -1028,7 +1030,6 @@ bool job_queue_is_running( const job_queue_type * queue ) {
 static void job_queue_user_exit__( job_queue_type * queue ) {
   int queue_index;
   for (queue_index = 0; queue_index < queue->active_size; queue_index++) {
-    job_queue_kill_job(queue, queue_index);
     job_queue_change_node_status( queue , queue->jobs[queue_index] , JOB_QUEUE_USER_EXIT);
   }
 }
@@ -1101,7 +1102,6 @@ static void job_queue_handle_DONE( job_queue_type * queue , job_queue_node_type 
 }
 
 
-
 static void * job_queue_run_EXIT_callback( void * arg ) {
   job_queue_type * job_queue;
   job_queue_node_type * node;
@@ -1126,7 +1126,7 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
       node->submit_attempt = 0;
       job_queue_change_node_status(job_queue , node , JOB_QUEUE_WAITING);
     } else {
-      // kjør "exit" callback.
+      // It's time to call it a day
       if (node->exit_callback != NULL)
         node->exit_callback( node->callback_arg );
       job_queue_change_node_status(job_queue , node , JOB_QUEUE_FAILED);
@@ -1136,12 +1136,36 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
 }
 
 
-//static void job_queue_handle_USER_EXIT( job_queue_type * queue , job_queue_node_type * node) {
-//  //Pakk args, kill job, run job_queue_run_USER_EXIT_callback
-//  
-//  job_queue_kill_job();
-//  job_queue_node_set_status(node, JOB_QUEUE_USER_KILLED);
-//}
+static void * job_queue_run_USER_EXIT_callback( void * arg ) {
+  job_queue_type * job_queue;
+  job_queue_node_type * node;
+  {
+    arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+    job_queue = arg_pack_iget_ptr( arg_pack , 0 );
+    node = arg_pack_iget_ptr( arg_pack , 1 );
+    arg_pack_free( arg_pack );
+  }
+  job_queue_free_job_driver_data( job_queue , node );
+
+  // It's time to call it a day
+  if (node->exit_callback != NULL)
+    node->exit_callback( node->callback_arg );
+
+  job_queue_change_node_status(job_queue, node, JOB_QUEUE_USER_KILLED);
+  return NULL;
+}
+
+static void job_queue_handle_USER_EXIT( job_queue_type * queue , job_queue_node_type * node) {
+  // TODO: Right place for this?
+  job_queue_kill_job_node(queue, node);
+  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
+  {
+    arg_pack_type * arg_pack = arg_pack_alloc();
+    arg_pack_append_ptr( arg_pack , queue );
+    arg_pack_append_ptr( arg_pack , node );
+    thread_pool_add_job( queue->work_pool , job_queue_run_USER_EXIT_callback , arg_pack );
+  }
+}
 
 static void job_queue_handle_EXIT( job_queue_type * queue , job_queue_node_type * node) {
   job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
@@ -1202,16 +1226,21 @@ int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
 
 /*****************************************************************/
 
-//static void job_queue_request_killing_expired(job_queue_type *queue) {
-//  time_t start = node->sim_start;
-//  time_t now = time(NULL);
-//  double elapsed = 0;
-//  if (start >= node->submit_time)
-//    elapsed = difftime(now, start);
-//  if (elapsed > queue->max_duration) {
-//    job_queue_set
-//  }
-//}
+static void job_queue_check_expired(job_queue_type *queue) {
+  for (int i = 0; i < queue->active_size; i++) {
+    job_queue_node_type * node = queue->jobs[i];
+    if (job_queue_node_get_status(node) == JOB_QUEUE_RUNNING) {
+      time_t start = node->sim_start;
+      time_t now = time(NULL);
+      double elapsed = 0;
+      if (start >= node->submit_time)
+        elapsed = difftime(now, start);
+      if (elapsed > queue->max_duration) {
+        job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
+      }
+    }
+  }
+}
 
 void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
   job_queue_run_jobs_finalizeoptional(queue, num_total_run, verbose, true);
@@ -1246,6 +1275,9 @@ void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_
           job_queue_user_exit__( queue ); 
           local_user_exit = true;
         }
+        
+        job_queue_check_expired(queue);
+        
         /*****************************************************************/
         {
           bool update_status = job_queue_update_status( queue );
@@ -1259,7 +1291,7 @@ void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_
           {
             int num_complete = queue->status_list[ STATUS_INDEX(JOB_QUEUE_SUCCESS)   ] +   
                                queue->status_list[ STATUS_INDEX(JOB_QUEUE_FAILED)    ] +
-                               queue->status_list[ STATUS_INDEX(JOB_QUEUE_USER_EXIT) ];
+                               queue->status_list[ STATUS_INDEX(JOB_QUEUE_USER_KILLED) ];
 
             if ((num_total_run > 0) && (num_total_run == num_complete))
               /* The number of jobs completed is equal to the number
@@ -1345,9 +1377,9 @@ void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_
                   case(JOB_QUEUE_EXIT):
                     job_queue_handle_EXIT(queue, node);
                     break;
-//                  case(JOB_QUEUE_USER_EXIT):
-//                    job_queue_handle_USER_EXIT(queue, node);
-//                    break;
+                  case(JOB_QUEUE_USER_EXIT):
+                    job_queue_handle_USER_EXIT(queue, node);
+                    break;
                   default:
                     break;
                 }
