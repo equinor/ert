@@ -26,7 +26,7 @@ extern "C" {
 
 typedef struct cases_config_struct cases_config_type;
 
-  void                            cases_config_set_iteration_number( cases_config_type * config , int num_iterations);
+  bool                            cases_config_set_int( cases_config_type * config , const char * var_name, int num_iterations);
   int                             cases_config_get_iteration_number( const cases_config_type * config );
   void                            cases_config_fwrite( cases_config_type * config , const char * filename );
   void                            cases_config_fread( cases_config_type * config , const char * filename);
