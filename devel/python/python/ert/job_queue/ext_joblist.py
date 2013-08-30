@@ -23,27 +23,30 @@ class ExtJoblist(BaseCClass):
         raise NotImplementedError("Class can not be instantiated directly!")
 
     def get_jobs(self):
-        return ExtJoblist.cNamespace().get_jobs(self)
+        """ @rtype: Hash """
+        jobs = ExtJoblist.cNamespace().get_jobs(self)
+        jobs.setParent(self)
+        return jobs
 
     def getAvailableJobNames(self):
         """ @rtype: StringList """
-        return ExtJoblist.cNamespac().alloc_list(self).setParent(self)
+        return ExtJoblist.cNamespace().alloc_list(self).setParent(self)
 
     def del_job(self, job):
-        return ExtJoblist.cNamespac().del_job(self, job)
+        return ExtJoblist.cNamespace().del_job(self, job)
 
     def has_job(self, job):
-        return ExtJoblist.cNamespac().has_job(self, job)
+        return ExtJoblist.cNamespace().has_job(self, job)
 
     def get_job(self, job):
         """ @rtype: ExtJob """
-        return ExtJoblist.cNamespac().get_job(self, job).setParent(self)
+        return ExtJoblist.cNamespace().get_job(self, job).setParent(self)
 
     def add_job(self, job_name, new_job):
-        ExtJoblist.cNamespac().add_job(self, job_name, new_job)
+        ExtJoblist.cNamespace().add_job(self, job_name, new_job)
 
     def free(self):
-        ExtJoblist.cNamespac().free(self)
+        ExtJoblist.cNamespace().free(self)
 
 cwrapper = CWrapper(JOB_QUEUE_LIB)
 cwrapper.registerType("ext_joblist", ExtJoblist)
@@ -56,4 +59,4 @@ ExtJoblist.cNamespace().get_job = cwrapper.prototype("ext_job_ref ext_joblist_ge
 ExtJoblist.cNamespace().del_job = cwrapper.prototype("int ext_joblist_del_job(ext_joblist, char*)")
 ExtJoblist.cNamespace().has_job = cwrapper.prototype("int ext_joblist_has_job(ext_joblist, char*)")
 ExtJoblist.cNamespace().add_job = cwrapper.prototype("void ext_joblist_add_job(ext_joblist, char*, ext_joblist)")
-ExtJoblist.cNamespace().get_jobs = cwrapper.prototype("c_void_p ext_joblist_get_jobs(ext_joblist)")  #warn fix return type Hash!!!
+ExtJoblist.cNamespace().get_jobs = cwrapper.prototype("hash_ref ext_joblist_get_jobs(ext_joblist)")
