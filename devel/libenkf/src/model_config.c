@@ -188,7 +188,11 @@ bool model_config_select_runpath( model_config_type * model_config , const char 
 
 
 void model_config_set_runpath(model_config_type * model_config , const char * fmt) {
-  model_config_add_runpath(model_config , model_config->current_path_key , fmt);
+  if (model_config->current_path_key) {
+    model_config_add_runpath(model_config , model_config->current_path_key , fmt);
+    model_config_select_runpath( model_config , model_config->current_path_key );
+  } else
+    util_abort("%s: current path has not been set \n",__func__);
 }
 
 
