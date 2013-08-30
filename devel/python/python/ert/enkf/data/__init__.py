@@ -7,4 +7,4 @@ from .summary_config import SummaryConfig
 from .enkf_node import EnkfNode
 
 from .enkf_config_node import EnkfConfigNode
-from .field import FieldObs
+from .field import Field
