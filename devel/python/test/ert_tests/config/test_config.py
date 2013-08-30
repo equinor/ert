@@ -29,6 +29,9 @@ class ConfigTest(ExtendedTestCase):
         self.assertTrue(ContentTypeEnum.CONFIG_INVALID)
         self.assertTrue(UnrecognizedEnum.CONFIG_UNRECOGNIZED_ERROR)
 
+        self.assertEqual(ContentTypeEnum.CONFIG_STRING, 1)
+        self.assertEqual(ContentTypeEnum.CONFIG_INVALID, 512)
+
 
     def test_parse(self):
         conf = ConfigParser()
