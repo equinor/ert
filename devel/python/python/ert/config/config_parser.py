@@ -16,7 +16,7 @@
 
 import os.path
 
-from ert.config import UnrecognizedEnum, CONFIG_LIB
+from ert.config import UnrecognizedEnum, CONFIG_LIB, ContentTypeEnum
 from ert.cwrap import BaseCClass, CWrapper
 
 
@@ -26,10 +26,15 @@ class SchemaItem(BaseCClass):
         super(SchemaItem, self).__init__(c_ptr)
 
 
-    def iget_type( self, index ):
+    def iget_type( self, index):
+        """ @rtype: ContentTypeEnum """
         return SchemaItem.cNamespace().iget_type(self, index)
 
     def iset_type( self, index, schema_type ):
+        """
+        @type schema_type: ContentTypeEnum
+        """
+        assert isinstance(schema_type, ContentTypeEnum)
         SchemaItem.cNamespace().iset_type(self, index, schema_type)
 
     def set_argc_minmax(self, minimum, maximum):
@@ -59,8 +64,6 @@ class ContentItem(BaseCClass):
         else:
             raise ValueError("[] operator must have integer index")
 
-    def free(self):
-        pass
 
 class ContentNode(BaseCClass):
     # Not possible to create new python instances of this class
@@ -83,9 +86,6 @@ class ContentNode(BaseCClass):
     def content(self, sep=" "):
         return ContentNode.cNamespace().get_full_string(self, sep)
 
-    def free(self):
-        pass
-
 
 class ConfigParser(BaseCClass):
     def __init__(self):
@@ -97,6 +97,8 @@ class ConfigParser(BaseCClass):
 
     def parse(self, config_file, comment_string="--", include_kw="INCLUDE", define_kw="DEFINE",
                unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN, validate=True):
+
+        assert isinstance(unrecognized, UnrecognizedEnum)
 
         if os.path.exists(config_file):
             return ConfigParser.cNamespace().parse(self, config_file, comment_string, include_kw, define_kw, unrecognized, validate)
@@ -134,14 +136,14 @@ cwrapper.registerType("content_node_ref", ContentNode.createCReference)
 ConfigParser.cNamespace().alloc = cwrapper.prototype("c_void_p config_alloc( )")
 ConfigParser.cNamespace().add = cwrapper.prototype("schema_item_ref config_add_schema_item( config_parser , char* , bool)")
 ConfigParser.cNamespace().free = cwrapper.prototype("void config_free( config_parser )")
-ConfigParser.cNamespace().parse = cwrapper.prototype("bool config_parse( config_parser , char* , char* , char* , char* , int , bool )")
+ConfigParser.cNamespace().parse = cwrapper.prototype("bool config_parse( config_parser , char* , char* , char* , char* , config_unrecognized_enum , bool )")
 ConfigParser.cNamespace().has_content = cwrapper.prototype("bool config_has_content_item( config_parser , char*) ")
 ConfigParser.cNamespace().get_content = cwrapper.prototype("content_item_ref config_get_content_item( config_parser , char*) ")
 
 SchemaItem.cNamespace().alloc = cwrapper.prototype("c_void_p config_schema_item_alloc( char* , bool )")
 SchemaItem.cNamespace().free = cwrapper.prototype("void config_schema_item_free( schema_item )")
-SchemaItem.cNamespace().iget_type = cwrapper.prototype("int config_schema_item_iget_type( schema_item ,int)")
-SchemaItem.cNamespace().iset_type = cwrapper.prototype("void config_schema_item_iset_type( schema_item , int , int)")
+SchemaItem.cNamespace().iget_type = cwrapper.prototype("config_content_type_enum config_schema_item_iget_type( schema_item, int)")
+SchemaItem.cNamespace().iset_type = cwrapper.prototype("void config_schema_item_iset_type( schema_item , int , config_content_type_enum)")
 SchemaItem.cNamespace().set_argc_minmax = cwrapper.prototype("void config_schema_item_set_argc_minmax( schema_item , int , int)")
 
 ContentItem.cNamespace().size = cwrapper.prototype("int config_content_item_get_size( content_item )")
