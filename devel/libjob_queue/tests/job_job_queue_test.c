@@ -73,13 +73,16 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
   job_queue_set_driver(queue, driver);
   job_queue_set_max_job_duration(queue, 5);
   
+  int submitted_slowjobs = 0;
   for (int i = 0; i < number_of_jobs; i++) {
     char * runpath = util_alloc_sprintf("%s/%s_%d", test_work_area_get_cwd(work_area), "job", i);
     util_make_path(runpath);
 
     char * sleeptime = "1";
-    if (number_of_slowjobs-- > 0)
-      sleeptime = "10000";
+    if (submitted_slowjobs < number_of_slowjobs) {
+      sleeptime = "100";
+      submitted_slowjobs++;
+    }
 
     job_queue_add_job_st(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) { runpath, sleeptime });
 
@@ -88,7 +91,9 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
 
   job_queue_run_jobs_finalizeoptional(queue, number_of_jobs, true, false);
 
-  test_assert_int_equal(number_of_jobs, job_queue_get_num_complete(queue));
+  test_assert_int_equal(number_of_jobs - number_of_slowjobs, job_queue_get_num_complete(queue));
+  test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
+
   job_queue_finalize(queue);
   test_assert_int_equal(0, job_queue_get_num_complete(queue));
 

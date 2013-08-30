@@ -79,7 +79,7 @@ extern "C" {
   time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
   job_driver_type     job_queue_lookup_driver_name( const char * driver_name );
   
-  //void                job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds); 
+  void                job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds); 
   bool                job_queue_kill_job( job_queue_type * queue , int job_index);
   bool                job_queue_is_running( const job_queue_type * queue );
   void                job_queue_set_max_submit( job_queue_type * job_queue , int max_submit );
@@ -96,6 +96,7 @@ extern "C" {
   int                 job_queue_get_num_waiting( const job_queue_type * queue);
   int                 job_queue_get_num_complete( const job_queue_type * queue);
   int                 job_queue_get_num_failed( const job_queue_type * queue);
+  int                 job_queue_get_num_killed( const job_queue_type * queue);
   const char        * job_queue_iget_failed_job( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_error_reason( const job_queue_type * queue , int job_index);
   const char        * job_queue_iget_stderr_capture( const job_queue_type * queue , int job_index);
