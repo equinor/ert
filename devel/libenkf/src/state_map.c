@@ -132,7 +132,7 @@ static void state_map_iset__( state_map_type * map , int index , realisation_sta
   if (new_state & target_mask)
     int_vector_iset( map->state , index , new_state);
   else
-    util_abort("%s: illegal state transition %d -> %d \n" , __func__ , current_state , new_state );
+    util_abort("%s: illegal state transition for realisation:%d %d -> %d \n" , __func__ , index , current_state , new_state );
   
 }
 
