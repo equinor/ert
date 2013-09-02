@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     basecclass.py
+    basecenum.py
     cclass.py
     cenum.py
     cfile.py
