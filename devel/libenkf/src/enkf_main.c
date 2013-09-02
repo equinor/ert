@@ -2208,7 +2208,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->plot_config        = plot_config_alloc_default();                       
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = enkf_obs_alloc( );
-  enkf_main->model_config       = model_config_alloc_empty( );
+  enkf_main->model_config       = model_config_alloc( );
 
   enkf_main_rng_init( enkf_main );
   enkf_main->subst_func_pool    = subst_func_pool_alloc(  );
