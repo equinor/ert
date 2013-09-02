@@ -66,28 +66,49 @@
 
 void enkf_tui_QC_plot_PC_list( void * arg ) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
-  const int last_report        = enkf_main_get_history_length( enkf_main );
-  stringlist_type * obs_keys   = enkf_obs_alloc_keylist( enkf_main_get_obs( enkf_main ));
-  matrix_type * PC = matrix_alloc(1, 1);
-  matrix_type * PC_obs = matrix_alloc(1,1);
-  vector_type * PC_list = vector_alloc_new();
-  int ncomp = 1;
-  int iobs;
-  for (iobs = 0; iobs < stringlist_get_size( obs_keys ); iobs++) {  
-    local_obsdata_node_type * obsnode = local_obsdata_node_alloc( stringlist_iget( obs_keys , iobs ));
-    local_obsdata_type * obsdata = local_obsdata_alloc_wrapper( obsnode );
-    local_obsdata_node_add_range( obsnode , 0 , last_report );
+  stringlist_type * all_obs_keys   = enkf_obs_alloc_keylist( enkf_main_get_obs( enkf_main ));
+  stringlist_type * obs_keys = stringlist_alloc_new();
+
+  {
+    char * keys_input;
+    util_printf_prompt("Observation keys (wildcards allowed) - [default: all]", PROMPT_LEN, '=', "=> ");
+    keys_input = util_alloc_stdin_line();
+    if (keys_input)
     {
-      pca_plot_data_type * plot_data = enkf_main_alloc_pca_plot_data( enkf_main , obsdata , ncomp );
-      vector_append_owned_ref( PC_list , plot_data , pca_plot_data_free__ );
+      stringlist_type * pattern_list = stringlist_alloc_from_split(keys_input, " ,");
+      for (int i = 0; i < stringlist_get_size(pattern_list); i++)
+      {
+        const char * pattern = stringlist_iget(pattern_list, i);
+        stringlist_append_matching_elements(obs_keys, all_obs_keys, pattern);
+      }
+      free(keys_input);
     }
-    local_obsdata_free( obsdata );
   }
-  matrix_free( PC );
-  matrix_free( PC_obs );
+
+  if (stringlist_get_size(obs_keys) > 0)
+  {
+    const int last_report = enkf_main_get_history_length(enkf_main);
+    vector_type * PC_list = vector_alloc_new();
+    const int ncomp = 1;
+
+    for (int iobs = 0; iobs < stringlist_get_size(obs_keys); iobs++)
+    {
+      local_obsdata_node_type * obsnode = local_obsdata_node_alloc(stringlist_iget(obs_keys, iobs));
+      local_obsdata_type * obsdata = local_obsdata_alloc_wrapper(obsnode);
+      local_obsdata_node_add_range(obsnode, 0, last_report);
+      {
+        pca_plot_data_type * plot_data = enkf_main_alloc_pca_plot_data(enkf_main, obsdata, ncomp);
+        vector_append_owned_ref(PC_list, plot_data, pca_plot_data_free__);
+      }
+      local_obsdata_free(obsdata);
+    }
+    enkf_tui_plot_PC_list(enkf_main , PC_list);
+    vector_free(PC_list);
+  } else
+    printf("Sorry: no observation keys mathced the pattern(s).\n");
+
   stringlist_free( obs_keys );
-  enkf_tui_plot_PC_list( enkf_main , PC_list );
-  vector_free( PC_list );
+  stringlist_free( all_obs_keys );
 }
 
 
