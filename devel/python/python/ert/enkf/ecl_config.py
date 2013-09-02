@@ -29,6 +29,10 @@ class EclConfig(BaseCClass):
     def get_data_file(self):
         return EclConfig.cNamespace().get_data_file(self)
 
+    def set_data_file(self , datafile):
+        """ @rtype: UIReturn """
+        return EclConfig.cNamespace().set_data_file(self , datafile)
+
     def get_gridfile(self):
         """ @rtype: str """
         return EclConfig.cNamespace().get_gridfile(self)
@@ -87,6 +91,7 @@ cwrapper.registerType("ecl_config_ref", EclConfig.createCReference)
 EclConfig.cNamespace().free = cwrapper.prototype("void ecl_config_free( ecl_config )")
 EclConfig.cNamespace().get_eclbase = cwrapper.prototype("char* ecl_config_get_eclbase( ecl_config )")
 EclConfig.cNamespace().get_data_file = cwrapper.prototype("char* ecl_config_get_data_file(ecl_config)")
+EclConfig.cNamespace().set_data_file = cwrapper.prototype("ui_return_obj ecl_config_set_data_file(ecl_config , char*)")
 EclConfig.cNamespace().get_gridfile = cwrapper.prototype("char* ecl_config_get_gridfile(ecl_config)")
 EclConfig.cNamespace().set_gridfile = cwrapper.prototype("void ecl_config_set_grid(ecl_config, char*)")
 EclConfig.cNamespace().get_schedule_file = cwrapper.prototype("char* ecl_config_get_schedule_file(ecl_config)")
