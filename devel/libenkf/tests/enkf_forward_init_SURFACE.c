@@ -116,6 +116,11 @@ int main(int argc , char ** argv) {
         test_assert_false( loadOK );
 
         loadOK = true;
+        {
+          enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+          state_map_type * state_map = enkf_fs_get_state_map(fs);
+          state_map_iset(state_map , 0 , STATE_INITIALIZED);
+        }
         enkf_state_load_from_forward_model( state , fs , &loadOK , false , msg_list );
         stringlist_free( msg_list );
         test_assert_false( loadOK );
