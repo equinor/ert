@@ -71,7 +71,7 @@ extern "C" {
   const char                  * enkf_main_get_current_fs( const enkf_main_type * enkf_main );
   void                          enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * case_path );
   bool                          enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case);
-  void                          enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
+  ui_return_type *              enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
   ui_return_type *              enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
   void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );
   const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );

@@ -77,7 +77,7 @@ extern "C" {
   int                   ecl_config_get_last_history_restart( const ecl_config_type * );
   bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );
   void                  ecl_config_assert_restart( const ecl_config_type * ecl_config );
-  void                  ecl_config_set_eclbase( ecl_config_type * ecl_config , const char * eclbase_fmt );
+  ui_return_type *      ecl_config_set_eclbase( ecl_config_type * ecl_config , const char * eclbase_fmt );
   const char          * ecl_config_get_eclbase( const ecl_config_type * ecl_config );
   bool                  ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase);
   const char          * ecl_config_get_refcase_name( const ecl_config_type * ecl_config);

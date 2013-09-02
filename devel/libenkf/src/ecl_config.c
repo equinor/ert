@@ -283,12 +283,29 @@ void ecl_config_add_fixed_length_schedule_kw(ecl_config_type * ecl_config, const
  call enkf_state_update_eclbase() afterwards.
  */
 
-void ecl_config_set_eclbase(ecl_config_type * ecl_config, const char * eclbase_fmt)
+ui_return_type * ecl_config_set_eclbase(ecl_config_type * ecl_config, const char * eclbase_fmt)
 {
-  if (ecl_config->eclbase != NULL )
-    path_fmt_free(ecl_config->eclbase);
-  ecl_config->eclbase = path_fmt_alloc_path_fmt(eclbase_fmt);
+  if (ecl_util_valid_basename_fmt(eclbase_fmt)) {
+    if (ecl_config->eclbase != NULL )
+      path_fmt_free(ecl_config->eclbase);
+    ecl_config->eclbase = path_fmt_alloc_path_fmt(eclbase_fmt);
+
+    return ui_return_alloc(UI_RETURN_OK);
+  } else {
+    ui_return_type * ui_return = ui_return_alloc(UI_RETURN_FAIL);
+    {
+      char * error_msg = util_alloc_sprintf("The format string: %s was invalid as ECLBASE format", eclbase_fmt);
+      ui_return_add_error(ui_return, error_msg);
+      free(error_msg);
+    }
+    ui_return_add_help(ui_return , "The eclbase format must have all characters in the same case,");
+    ui_return_add_help(ui_return , "in addition it can contain a %d specifier which will be");
+    ui_return_add_help(ui_return , "with the realization number.");
+
+    return ui_return;
+  }
 }
+
 
 /**
  Observe that this function returns a (char *) - corresponding to
@@ -464,8 +481,12 @@ ecl_config_type * ecl_config_alloc_empty()
 
 void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
 {
-  if (config_item_set(config, ECLBASE_KEY))
-    ecl_config_set_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
+  if (config_item_set(config, ECLBASE_KEY)) {
+    ui_return_type * ui_return = ecl_config_set_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
+    if (ui_return_get_status(ui_return) != UI_RETURN_OK)
+      util_abort("%s: failed to set eclbase format. Error:%s\n", __func__ , ui_return_get_last_error(ui_return));
+    ui_return_free(ui_return);
+  }
 
   if (config_item_set(config, DATA_FILE_KEY))
   {
