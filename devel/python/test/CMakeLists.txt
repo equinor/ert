@@ -43,7 +43,7 @@ set(TEST_SOURCES
     ert_tests/util/test_stat.py
     ert_tests/util/test_string_list.py
     ert_tests/util/test_vectors.py
-
+    ert_tests/util/test_ui_return.py
 
     ecl_isosurf.py
     ens_config_test.py
@@ -79,6 +79,10 @@ add_test( NAME python.ert.import_all_ert_gui
 add_test( NAME python.ert.util.stringlist
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_string_list.StringListTest )
+          
+add_test( NAME python.ert.util.ui_return
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_ui_return.UIReturnTest )
 
 add_test( NAME python.ert.util.tvector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 

@@ -97,6 +97,8 @@ class ErtImportTest(ExtendedTestCase):
         self.assertImportable("ert.enkf.util")
         self.assertImportable("ert.enkf.util.obs_vector")
         self.assertImportable("ert.enkf.util.time_map")
+        self.assertImportable("ert.util.ui_return")
+    
 
     # def test_ert_ert(self):
     #     self.assertImportable("ert.ert")
