@@ -42,13 +42,25 @@ cases_config_type * cases_config_alloc( ) {
 }
 
 
-void cases_config_set_iteration_number( cases_config_type * config , int num_iterations) {
+static void cases_config_set_iteration_number( cases_config_type * config , int num_iterations) {
   config->iteration_number = num_iterations;    
 }
 
 int cases_config_get_iteration_number( const cases_config_type * config ) {
   return config->iteration_number;
 }
+
+bool cases_config_set_int( cases_config_type * cases_config , const char * var_name , int value) {
+  bool name_recognized = true;
+  if (strcmp( var_name , "iteration_number") == 0)
+    cases_config_set_iteration_number(cases_config, value);
+  else
+    name_recognized = false;
+
+  return name_recognized;
+}
+
+
 
 void cases_config_fwrite( cases_config_type * config , const char * filename ) {
   FILE * stream = util_mkdir_fopen(filename , "w");

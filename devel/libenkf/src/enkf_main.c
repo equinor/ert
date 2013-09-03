@@ -1795,7 +1795,7 @@ void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
   enkf_main_smoother_update(enkf_main , step_list , target_fs );
   
   enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
-  cases_config_set_iteration_number(enkf_fs_get_cases_config(target_fs), iteration_number+1);
+  cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
 
   bool_vector_iset( iactive , ens_size - 1 , true );
   const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , 999);
