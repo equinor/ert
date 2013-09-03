@@ -1754,11 +1754,16 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
 
       {
         const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iter+1 );
-        enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
-        enkf_main_smoother_update(enkf_main , step_list , target_fs);
-        enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+        if (target_fs_name == NULL){
+          fprintf(stderr,"Sorry: the updated ensemble will overwrite the current case in the iterated ensemble smoother.");
+          enkf_main_smoother_update(enkf_main , step_list , enkf_main_get_fs(enkf_main));
+        }
+        else{
+          enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
+          enkf_main_smoother_update(enkf_main , step_list , target_fs);
+          enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+        }
         cases_config_set_iteration_number(enkf_fs_get_cases_config(target_fs), iter+1);
-
       }
       iter++;
     }
