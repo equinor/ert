@@ -14,17 +14,22 @@ if (USE_RUNPATH)
    add_runpath( analysis )
 endif()
 
-# List of modules
-set( CMAKE_SHARED_MODULE_PREFIX "" )
-add_library( std_enkf  MODULE  std_enkf.c )
-add_library( sqrt_enkf MODULE sqrt_enkf.c )
-add_library( rml_enkf  MODULE rml_enkf.c rml_enkf_common.c )
+
+## List of modules
+#set( CMAKE_SHARED_MODULE_PREFIX "" )
+##add_library( std_enkf  MODULE  std_enkf.c )
+#add_library( sqrt_enkf MODULE sqrt_enkf.c )
+#add_library( rml_enkf  MODULE rml_enkf.c rml_enkf_common.c )
+#
+#ert_module( std_enkf std_enkf.c )
+
+
 
 #-----------------------------------------------------------------
 
 if (INSTALL_ERT)
    install(TARGETS analysis DESTINATION ${CMAKE_INSTALL_LIBDIR})
-   install(TARGETS rml_enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
+   #install(TARGETS rml_enkf DESTINATION ${CMAKE_INSTALL_LIBDIR})
    foreach(header ${header_files})
        install(FILES ../include/ert/analysis/${header} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ert/analysis)
    endforeach()

@@ -13,11 +13,11 @@
    FITNESS FOR A PARTICULAR PURPOSE.   
     
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   for more details.
 */
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h> 
+#include <string.h> 
 #include <stdio.h>
 #include <math.h>
 
@@ -30,8 +30,9 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/rml_enkf_common.h>
 #include <ert/analysis/std_enkf.h>
+
+#include <rml_enkf_common.h>
 
 /*
   A random 'magic' integer id which is used for run-time type checking
