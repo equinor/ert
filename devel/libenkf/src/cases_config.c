@@ -35,6 +35,7 @@ struct cases_config_struct {
   int               iteration_number;
 };
 
+
 cases_config_type * cases_config_alloc( ) {
   cases_config_type * config = util_malloc( sizeof * config );
   config->iteration_number = 0;
