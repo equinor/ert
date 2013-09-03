@@ -69,6 +69,7 @@
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
 
+
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/ecl_config.h>
@@ -100,6 +101,8 @@
 #include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/config_keys.h>
 #include <ert/enkf/runpath_list.h>
+#include <ert/enkf/analysis_config.h>
+#include <ert/enkf/analysis_iter_config.h>
 
 /**/
 
@@ -1043,18 +1046,18 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
-  
-
   if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
 
-  if (analysis_module_get_option( module , ANALYSIS_SCALE_DATA))
+  if (analysis_module_get_option( module , ANALYSIS_SCALE_DATA)){
     obs_data_scale( obs_data , S , E , D , R , dObs );
+  }
   
-  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)) 
+  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)){
     localA = A;
+  }
 
   /*****************************************************************/
   
@@ -1085,8 +1088,10 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       matrix_free( PC_obs );
     }
     
-    if (localA == NULL) 
+    if (localA == NULL){
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
+    }
+
 
     while (!hash_iter_is_complete( dataset_iter )) {
       const char * dataset_name = hash_iter_get_next_key( dataset_iter );
@@ -1097,11 +1102,21 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
         
         enkf_main_serialize_dataset( enkf_main , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
 
-        if (analysis_module_get_option( module , ANALYSIS_UPDATE_A))
-          analysis_module_updateA( module , localA , S , R , dObs , E , D );
+        if (analysis_module_get_option( module , ANALYSIS_UPDATE_A)){
+          if (analysis_module_get_option( module , ANALYSIS_ITERABLE)){
+            int iteration = cases_config_get_iteration_number(enkf_fs_get_cases_config(src_fs));
+            char iteration_str[15];
+            sprintf(iteration_str,"%d",iteration);
+            analysis_module_set_var( module , "NUM_ITER", iteration_str);
+            analysis_module_updateA( module , localA , S , R , dObs , E , D );
+          }
+          else
+            analysis_module_updateA( module , localA , S , R , dObs , E , D );
+        }
         else {
-          if (analysis_module_get_option( module , ANALYSIS_USE_A)) 
+          if (analysis_module_get_option( module , ANALYSIS_USE_A)){
             analysis_module_initX( module , X , localA , S , R , dObs , E , D );
+          }
 
           matrix_inplace_matmul_mt2( A , X , tp );
         }
@@ -1515,14 +1530,17 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
                        bool             simulate , 
                        int              init_step_parameters ,
                        int              start_report         ,
-                       state_enum       start_state) {
+                       state_enum       start_state          ,
+                       bool             initialize) {
 
   bool force_init = false;
   int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   run_mode_type run_mode = simulate ? ENSEMBLE_EXPERIMENT : INIT_ONLY;
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-    enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1, force_init);
+    if(initialize)
+      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1, force_init);
+
     stringlist_free( param_list );
   }  
   enkf_main_init_run( enkf_main , run_mode );
@@ -1695,6 +1713,96 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
   }
 }
 
+void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
+  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
+  {
+    model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
+    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+    analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
+    int step1 = 0;
+    int_vector_type * step_list = int_vector_alloc(0,0);
+    bool_vector_type * iactive = bool_vector_alloc(0 , true);
+    int iter  = 0;
+    int num_iter = analysis_iter_config_get_num_iterations( iter_config );
+    bool initialize = true;
+
+    
+    {
+      for (int step=step1; step <= step2; step++)
+        int_vector_append( step_list , step );
+    }
+    bool_vector_iset( iactive , ens_size - 1 , true );
+    
+    while (true) {
+       {
+        const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iter);
+        if (iter != 0) 
+          initialize = false;
+        
+        if (runpath_fmt != NULL) {
+          char * runpath_key = util_alloc_sprintf( "runpath-%d" , iter);
+          model_config_add_runpath( model_config , runpath_key , runpath_fmt);
+          model_config_select_runpath( model_config , runpath_key );
+          free( runpath_key );
+        }
+      }
+      
+       enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, initialize);
+      if (iter == num_iter)
+        break;
+
+
+      {
+        const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iter+1 );
+        enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
+        enkf_main_smoother_update(enkf_main , step_list , target_fs);
+        enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+        cases_config_set_iteration_number(enkf_fs_get_cases_config(target_fs), iter+1);
+
+      }
+      iter++;
+    }
+    int_vector_free( step_list );
+    bool_vector_free( iactive );
+  }
+  
+}
+
+void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
+  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
+  model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
+  enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+  cases_config_type * case_config = enkf_fs_get_cases_config( fs );
+  int iteration_number = cases_config_get_iteration_number( case_config );
+  int step1 = 0;
+  int_vector_type * step_list = int_vector_alloc(0,0);
+  bool_vector_type * iactive = bool_vector_alloc(0 , true);
+
+  {
+    for (int step=step1; step <= step2; step++)
+      int_vector_append( step_list , step );
+  }
+  
+  const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iteration_number+1 );
+  enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
+  enkf_main_smoother_update(enkf_main , step_list , target_fs );
+  
+  enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+  cases_config_set_iteration_number(enkf_fs_get_cases_config(target_fs), iteration_number+1);
+
+  bool_vector_iset( iactive , ens_size - 1 , true );
+  const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , 999);
+  if (runpath_fmt != NULL) {
+    char * runpath_key = util_alloc_sprintf( "runpath-%d" , 999);
+    model_config_add_runpath( model_config , runpath_key , runpath_fmt);
+    model_config_select_runpath( model_config , runpath_key );
+    free( runpath_key );
+  }
+  
+  enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, false);
+}
 
 /*****************************************************************/
 /*  Filesystem copy functions                                    */
@@ -1786,9 +1894,15 @@ void enkf_main_initialize_from_existing__(enkf_main_type * enkf_main ,
   const char * target_case      = NULL;
 
   enkf_main_copy_ensemble(enkf_main , 
-                          source_case , source_report_step , source_state , 
-                          target_case , target_report_step , target_state , 
-                          iens_mask , ranking_key , node_list);
+                          source_case , 
+                          source_report_step , 
+                          source_state , 
+                          target_case , 
+                          target_report_step , 
+                          target_state , 
+                          iens_mask , 
+                          ranking_key , 
+                          node_list);
   
 }
 
