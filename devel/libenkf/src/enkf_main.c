@@ -1719,7 +1719,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
     const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
-    int step1 = 0;
+    const int step1 = 0;
     int_vector_type * step_list = int_vector_alloc(0,0);
     bool_vector_type * iactive = bool_vector_alloc(0 , true);
     int iter  = 0;
@@ -1776,7 +1776,7 @@ void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
   enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
   cases_config_type * case_config = enkf_fs_get_cases_config( fs );
   int iteration_number = cases_config_get_iteration_number( case_config );
-  int step1 = 0;
+  const int step1 = 0;
   int_vector_type * step_list = int_vector_alloc(0,0);
   bool_vector_type * iactive = bool_vector_alloc(0 , true);
 
