@@ -169,9 +169,12 @@ class EnKFMain(BaseCClass):
         if mode == 1:
             EnKFMain.cNamespace().run_assimilation(self, boolPtr, init_step_parameter, simFrom, state)
         if mode == 2:
-            EnKFMain.cNamespace().run_exp(self, boolPtr, True, init_step_parameter, simFrom, state)
+            cfunc.run_exp(self, boolPtr, True, init_step_parameter, simFrom, state, True)
         if mode == 4:
-            EnKFMain.cNamespace().run_exp(self, boolPtr, False, init_step_parameter, simFrom, state)
+            cfunc.run_exp(self, boolPtr, False, init_step_parameter, simFrom, state, True)
+            EnKFMain.cNamespace().run_exp(self, boolPtr, True, init_step_parameter, simFrom, state, True)
+        if mode == 4:
+            EnKFMain.cNamespace().run_exp(self, boolPtr, False, init_step_parameter, simFrom, state, True)
         if mode == 5:
             EnKFMain.cNamespace().run_smoother(self, "AUTOSMOOTHER", True)
 
@@ -254,7 +257,7 @@ EnKFMain.cNamespace().iget_state = cwrapper.prototype("enkf_state_ref enkf_main_
 
 EnKFMain.cNamespace().get_logh = cwrapper.prototype("log_ref enkf_main_get_logh( enkf_main )")
 
-EnKFMain.cNamespace().run_exp = cwrapper.prototype("void enkf_main_run_exp( enkf_main, bool_vector, bool, int, int, int)")
+EnKFMain.cNamespace().run_exp = cwrapper.prototype("void enkf_main_run_exp( enkf_main, bool_vector, bool, int, int, int, bool)")
 EnKFMain.cNamespace().run_assimilation = cwrapper.prototype("void enkf_main_run_assimilation( enkf_main, bool_vector, int, int, int)")
 EnKFMain.cNamespace().run_smoother = cwrapper.prototype("void enkf_main_run_smoother(enkf_main, char*, bool)")
 EnKFMain.cNamespace().alloc_caselist = cwrapper.prototype("stringlist_ref enkf_main_alloc_caselist(enkf_main)")
@@ -267,3 +270,4 @@ EnKFMain.cNamespace().user_select_fs = cwrapper.prototype("void enkf_main_user_s
 EnKFMain.cNamespace().get_current_fs = cwrapper.prototype("char* enkf_main_get_current_fs(enkf_main)")
 EnKFMain.cNamespace().select_fs = cwrapper.prototype("void enkf_main_select_fs(enkf_main, char*)")
 EnKFMain.cNamespace().fs_exists = cwrapper.prototype("bool enkf_main_fs_exists(enkf_main, char*)")
+

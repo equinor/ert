@@ -128,6 +128,9 @@ void rml_enkf_set_subspace_dimension( rml_enkf_data_type * data , int subspace_d
     data->truncation = INVALID_TRUNCATION;
 }
 
+void rml_enkf_set_iteration_number( rml_enkf_data_type *data , int iteration_number ) {
+  data->iteration_nr = iteration_number;
+}
 
 
 void * rml_enkf_data_alloc( rng_type * rng) {
@@ -136,7 +139,7 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   
   rml_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   rml_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
-  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A;
+  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE;
   data->iteration_nr = 0;
   data->Std          = 0; 
   data->Cd           = NULL; 
@@ -296,6 +299,8 @@ bool rml_enkf_set_int( void * arg , const char * var_name , int value) {
     
     if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
       rml_enkf_set_subspace_dimension( module_data , value );
+    else if(strcmp( var_name , "NUM_ITER") == 0)
+      rml_enkf_set_iteration_number( module_data , value );
     else
       name_recognized = false;
 
