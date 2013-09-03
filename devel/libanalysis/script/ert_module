@@ -167,8 +167,6 @@ Link:    %s %s  %s
        make_XFLAG("L" , ["%s/lib64" % ert_root]) , 
        make_XFLAG("l" , default_lib_list))
 
-print sys.argv
-
 parser = OptionParser( usage ) 
 parser.add_option("--ert-root" , dest="ert_root" , action="store")
 parser.add_option("-I" , dest = "include_path_list", action = "append")
