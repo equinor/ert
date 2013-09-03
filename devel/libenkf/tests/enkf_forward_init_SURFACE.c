@@ -37,7 +37,7 @@ void create_runpath(enkf_main_type * enkf_main ) {
   int start_report         = 0;
   int init_step_parameters = 0;
   bool_vector_iset( iactive , ens_size - 1 , true );
-  enkf_main_run_exp(enkf_main , iactive , false , init_step_parameters , start_report , init_state);
+  enkf_main_run_exp(enkf_main , iactive , false , init_step_parameters , start_report , init_state, true);
   bool_vector_free(iactive);
 }
 
