@@ -48,6 +48,18 @@ add_test( enkf_forward_init_GEN_KW_FALSE
 
 #-----------------------------------------------------------------
 
+add_executable( enkf_state_report_step_compatible enkf_state_report_step_compatible.c )
+target_link_libraries( enkf_state_report_step_compatible enkf test_util )
+
+add_test( enkf_state_report_step_compatible_TRUE 
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true  config_ecl_sum_compatible_true TRUE)
+
+add_test( enkf_state_report_step_compatible_FALSE 
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_false  config_ecl_sum_compatible_false FALSE)
+                                                                      
+
+#-----------------------------------------------------------------
+
 add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
 
