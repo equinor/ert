@@ -31,10 +31,8 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/rml_enkf_common.h>
 
-
-
+#include <rml_enkf_common.h>
 
 /* This program contains common functions to both rml_enkf & rml_enkf_imodel*/
 

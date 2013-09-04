@@ -13,18 +13,24 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+
 from ert.cwrap import CWrapper, BaseCClass
-from ert.sched import SCHED_LIB, SchedFile
+from ert.sched import SCHED_LIB, SchedFile, HistorySourceEnum
 from ert.ecl import EclSum
 
 
-class HistoryType(BaseCClass):
+
+class History(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def get_source_string(self):
-        """ @rtype: str """
-        return HistoryType.cNamespace().get_source_string(self)
+    @staticmethod
+    def get_source_string(history_source_type):
+        """
+        @type history_source_type: HistorySourceEnum
+        @rtype: str
+        """
+        return History.cNamespace().get_source_string(history_source_type)
 
     #todo: change this to __init__?
     @staticmethod
@@ -34,24 +40,28 @@ class HistoryType(BaseCClass):
         @type use_history: bool
         @rtype: HistoryType
         """
-        return HistoryType.cNamespace().alloc_from_refcase(refcase, use_history)
+        return History.cNamespace().alloc_from_refcase(refcase, use_history)
 
     @staticmethod
     def alloc_from_sched_file(sched_file):
         """ @rtype: HistoryType """
         assert isinstance(sched_file, SchedFile)
-        return HistoryType.cNamespace().alloc_from_sched_file(":", sched_file)
+        return History.cNamespace().alloc_from_sched_file(":", sched_file)
 
     def free(self):
-        HistoryType.cNamespace().free(self)
+        History.cNamespace().free(self)
 
 
 cwrapper = CWrapper(SCHED_LIB)
-cwrapper.registerType("history_type", HistoryType)
-cwrapper.registerType("history_type_obj", HistoryType.createPythonObject)
-cwrapper.registerType("history_type_ref", HistoryType.createCReference)
+cwrapper.registerType("history", History)
+cwrapper.registerType("history_obj", History.createPythonObject)
+cwrapper.registerType("history_ref", History.createCReference)
 
-HistoryType.cNamespace().free = cwrapper.prototype("void history_free( history_type )")
-HistoryType.cNamespace().get_source_string = cwrapper.prototype("char* history_get_source_string(history_type)")
-HistoryType.cNamespace().alloc_from_refcase = cwrapper.prototype("history_type_obj history_alloc_from_refcase(ecl_sum, bool)")
-HistoryType.cNamespace().alloc_from_sched_file = cwrapper.prototype("history_type_obj history_alloc_from_sched_file(char*, sched_file)")
+
+
+History.cNamespace().free = cwrapper.prototype("void history_free( history )")
+History.cNamespace().get_source_string = cwrapper.prototype("char* history_get_source_string(history_source_enum)")
+History.cNamespace().alloc_from_refcase = cwrapper.prototype("history_obj history_alloc_from_refcase(ecl_sum, bool)")
+History.cNamespace().alloc_from_sched_file = cwrapper.prototype("history_obj history_alloc_from_sched_file(char*, sched_file)")
+
+# History.cNamespace().history_get_source_type = cwrapper.prototype("history_source_type_enum history_get_source_type(char*)")

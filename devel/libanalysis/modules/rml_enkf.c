@@ -13,11 +13,11 @@
    FITNESS FOR A PARTICULAR PURPOSE.   
     
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-   for more details. 
+   for more details.
 */
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h> 
+#include <string.h> 
 #include <stdio.h>
 #include <math.h>
 
@@ -30,8 +30,9 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/rml_enkf_common.h>
 #include <ert/analysis/std_enkf.h>
+
+#include <rml_enkf_common.h>
 
 /*
   A random 'magic' integer id which is used for run-time type checking
@@ -128,6 +129,9 @@ void rml_enkf_set_subspace_dimension( rml_enkf_data_type * data , int subspace_d
     data->truncation = INVALID_TRUNCATION;
 }
 
+void rml_enkf_set_iteration_number( rml_enkf_data_type *data , int iteration_number ) {
+  data->iteration_nr = iteration_number;
+}
 
 
 void * rml_enkf_data_alloc( rng_type * rng) {
@@ -136,7 +140,7 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   
   rml_enkf_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   rml_enkf_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
-  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A;
+  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE;
   data->iteration_nr = 0;
   data->Std          = 0; 
   data->Cd           = NULL; 
@@ -296,6 +300,8 @@ bool rml_enkf_set_int( void * arg , const char * var_name , int value) {
     
     if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
       rml_enkf_set_subspace_dimension( module_data , value );
+    else if(strcmp( var_name , "NUM_ITER") == 0)
+      rml_enkf_set_iteration_number( module_data , value );
     else
       name_recognized = false;
 
