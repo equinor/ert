@@ -1227,6 +1227,9 @@ int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
 /*****************************************************************/
 
 static void job_queue_check_expired(job_queue_type *queue) {
+  if (queue->max_duration <= 0)
+    return;
+  
   for (int i = 0; i < queue->active_size; i++) {
     job_queue_node_type * node = queue->jobs[i];
     if (job_queue_node_get_status(node) == JOB_QUEUE_RUNNING) {
