@@ -104,11 +104,10 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
 
 int main(int argc, char ** argv) {
   job_queue_set_driver_(LSF_DRIVER);
-  //job_queue_set_driver_(TORQUE_DRIVER);
-  //basic_run_jobs_test(argv[1], 100);
-
-  run_jobs_with_time_limit_test(argv[1], 10, 2);
-
+  job_queue_set_driver_(TORQUE_DRIVER);
+  basic_run_jobs_test(argv[1], 100);
+  run_jobs_with_time_limit_test(argv[1], 100, 13);
+  
   exit(0);
 }
 
