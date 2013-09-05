@@ -1299,7 +1299,7 @@ void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_
             if ((num_total_run > 0) && (num_total_run == num_complete))
               /* The number of jobs completed is equal to the number
                  of jobs we have said we want to run; so we are finished.
-              */
+              */ 
               cont = false;
             else {
               if (num_total_run == 0) {
@@ -1313,7 +1313,7 @@ void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_
                      2. The user has used job_queue_complete_submit()
                         to signal that no more jobs will be forthcoming.
                 */
-                if ((num_complete == queue->active_size) && queue->submit_complete)
+                if ((num_complete == queue->active_size) && queue->submit_complete) 
                   cont = false;
               }
             }
@@ -1438,6 +1438,16 @@ void job_queue_user_exit( job_queue_type * queue) {
 
 
 
+void * job_queue_run_jobs_nofinalize__(void * __arg_pack) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
+  job_queue_type * queue   = arg_pack_iget_ptr(arg_pack , 0);
+  int num_total_run        = arg_pack_iget_int(arg_pack , 1);
+  bool verbose             = arg_pack_iget_bool(arg_pack , 2);
+  
+  job_queue_run_jobs_finalizeoptional(queue , num_total_run , verbose, false);
+  arg_pack_free( arg_pack );
+  return NULL;
+}
 
 void * job_queue_run_jobs__(void * __arg_pack) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
@@ -1644,7 +1654,6 @@ bool job_queue_has_driver(const job_queue_type * queue ) {
   else
     return true;
 } 
-
 
 
 job_driver_type job_queue_lookup_driver_name( const char * driver_name ) {

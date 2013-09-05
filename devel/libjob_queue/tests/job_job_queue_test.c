@@ -19,10 +19,14 @@
 #include <stdbool.h>
 
 #include <ert/util/util.h>
+#include <ert/util/thread_pool.h>
+#include <ert/util/arg_pack.h>
+
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.h>
 
 #include <ert/job_queue/job_queue.h>
+
 
 void job_queue_set_driver_(job_driver_type driver_type) {
   job_queue_type * queue = job_queue_alloc(10, "OK", "ERROR");
@@ -56,7 +60,7 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
       submitted_slowjobs++;
     }
 
-    job_queue_add_job_mt(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) { runpath, sleeptime });
+    job_queue_add_job_st(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) { runpath, sleeptime });
 
     free(runpath);
   }
@@ -74,26 +78,59 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
   test_work_area_free(work_area);
 }
 
+
+void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_jobs, int number_of_slowjobs, char * sleep_short, char * sleep_long, int max_sleep) {
+  test_work_area_type * work_area = test_work_area_alloc("job_queue", false);
+  
+  job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "ERROR");
+  queue_driver_type * driver = queue_driver_alloc_local();
+  job_queue_set_driver(queue, driver);
+  job_queue_set_max_job_duration(queue, max_sleep);
+  
+  arg_pack_type * arg_pack = arg_pack_alloc();   
+  arg_pack_append_ptr( arg_pack , queue );
+  arg_pack_append_int( arg_pack , 0 );
+  arg_pack_append_bool( arg_pack , true );
+  
+  thread_pool_type * pool = thread_pool_alloc(1, true);
+  thread_pool_add_job(pool, job_queue_run_jobs_nofinalize__, arg_pack);
+  
+  int submitted_slowjobs = 0;
+  for (int i = 0; i < number_of_jobs; i++) {
+    char * runpath = util_alloc_sprintf("%s/%s_%d", test_work_area_get_cwd(work_area), "job", i);
+    util_make_path(runpath);
+
+    char * sleeptime = sleep_short;
+    if (submitted_slowjobs < number_of_slowjobs) {
+      sleeptime = sleep_long;
+      submitted_slowjobs++;
+    }
+
+    job_queue_add_job_mt(queue, executable_to_run, NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) { runpath, sleeptime });
+
+    free(runpath);
+  }
+  
+  job_queue_submit_complete(queue);
+  thread_pool_join(pool);
+
+  test_assert_int_equal(number_of_jobs - number_of_slowjobs, job_queue_get_num_complete(queue));
+  test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
+  job_queue_finalize(queue);
+  test_assert_int_equal(0, job_queue_get_num_complete(queue));
+  
+  job_queue_free(queue);
+  queue_driver_free(driver);
+  test_work_area_free(work_area);
+}
+
+
 int main(int argc, char ** argv) {
   job_queue_set_driver_(LSF_DRIVER);
   job_queue_set_driver_(TORQUE_DRIVER);
-  run_jobs_with_time_limit_test(argv[1], 100, 0, "1", "100", 0); // 0 as limit means no limit
-  run_jobs_with_time_limit_test(argv[1], 100, 13, "1", "100", 5);
+  run_jobs_with_time_limit_test(argv[1], 10, 0, "1", "100", 0); // 0 as limit means no limit
+  run_jobs_with_time_limit_test(argv[1], 100, 23, "1", "100", 5);
   
+  run_jobs_time_limit_multithreaded(argv[1], 100, 23, "1", "100", 5);
   exit(0);
 }
-
-/*
- int job_queue_add_job_st(job_queue_type * queue , 
-                         const char * run_cmd , 
-                         job_callback_ftype * done_callback, 
-                         job_callback_ftype * retry_callback, 
-                         void * callback_arg , 
-                         int num_cpu , 
-                         const char * run_path , 
-                         const char * job_name , 
-                         int argc , 
-             
- *             const char ** argv) {
- */
-
