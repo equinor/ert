@@ -71,6 +71,7 @@ extern "C" {
   void                job_queue_run_jobs(job_queue_type * queue, int num_total_run, bool verbose);
   void                job_queue_run_jobs_threaded(job_queue_type * queue , int num_total_run, bool verbose);
   void *              job_queue_run_jobs__(void * );
+  void *              job_queue_run_jobs_nofinalize__(void *);
   job_status_type     job_queue_iget_job_status(const job_queue_type * , int );
   const char        * job_queue_status_name( job_status_type status );
  
