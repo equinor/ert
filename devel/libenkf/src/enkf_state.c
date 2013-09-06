@@ -1119,7 +1119,7 @@ void enkf_state_forward_init(enkf_state_type * enkf_state ,
 
 void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
                                         enkf_fs_type * fs , 
-                                        int * result , 
+                                        int * result, 
                                         bool interactive , 
                                         stringlist_type * msg_list) {
 
@@ -1130,10 +1130,10 @@ void enkf_state_load_from_forward_model(enkf_state_type * enkf_state ,
   {
     state_map_type * state_map = enkf_fs_get_state_map( fs );
     int iens = member_config_get_iens( enkf_state->my_config );
-    if (*result & LOAD_SUCCESS) 
-      state_map_iset( state_map , iens , STATE_HAS_DATA);
-    else
+    if (*result & LOAD_FAILURE) 
       state_map_iset( state_map , iens , STATE_LOAD_FAILURE);
+    else
+      state_map_iset( state_map , iens , STATE_HAS_DATA);
   }
 }
 
@@ -1152,8 +1152,8 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
   int step2                    = arg_pack_iget_int( arg_pack , 4 );
   bool interactive             = arg_pack_iget_bool( arg_pack , 5 );  
   stringlist_type * msg_list = arg_pack_iget_ptr( arg_pack , 6 );
-  int  result = LOAD_SUCCESS; 
   int iens                     = member_config_get_iens( enkf_state->my_config );
+  int result                   = 0; 
   
   run_info_init_for_load( enkf_state->run_info , 
                           load_start , 
@@ -1990,7 +1990,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
   run_info_type             * run_info    = enkf_state->run_info;
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
-  int result                              = LOAD_SUCCESS; 
+  int result                              = 0; 
 
   
   /**
@@ -2009,7 +2009,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
   }
   
   
-  if (LOAD_SUCCESS == result) {
+  if (0 == result) {
     /*
       The loading succeded - so this is a howling success! We set
       the main status to JOB_QUEUE_ALL_OK and inform the queue layer
@@ -2023,7 +2023,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
     run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
     run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
   } 
-  return (LOAD_SUCCESS == result) ? true : false; 
+  return (0 == result) ? true : false; 
 }
 
 

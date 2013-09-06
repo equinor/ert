@@ -32,12 +32,12 @@ bool check_ecl_sum_compatible(const enkf_main_type * enkf_main)
   stringlist_type * msg_list = stringlist_alloc_new();
   enkf_state_type * state    = enkf_main_iget_state( enkf_main , 0 );
   enkf_fs_type    * fs       = enkf_main_get_fs( enkf_main );
-  int result = LOAD_SUCCESS; 
+  int error = 0; 
 
-  enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
+  enkf_state_load_from_forward_model( state , fs , &error , false , msg_list );
   
   stringlist_free( msg_list );
-  return (REPORT_STEP_INCOMPATIBLE == result) ? false : true; 
+  return (REPORT_STEP_INCOMPATIBLE & error) ? false : true; 
 }
 
 

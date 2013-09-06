@@ -96,7 +96,7 @@ int main(int argc , char ** argv) {
       test_assert_true( util_is_directory( "simulations/run0" ));
       
       {
-        int  result = LOAD_SUCCESS;
+        int error = 0;
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
@@ -110,19 +110,19 @@ int main(int argc , char ** argv) {
         util_unlink_existing( "simulations/run0/petro.grdecl" );
         
         test_assert_false( enkf_node_forward_init( field_node , "simulations/run0" , 0 ));
-        enkf_state_forward_init( state , fs , &result );
-        test_assert_int_equal( result, LOAD_FAILURE);
+        enkf_state_forward_init( state , fs , &error );
+        test_assert_true(LOAD_FAILURE & error);
 
-        result = LOAD_SUCCESS;
-        enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
+        error = 0;
+        enkf_state_load_from_forward_model( state , fs , &error , false , msg_list );
         stringlist_free( msg_list ); 
-        test_assert_int_equal( result, LOAD_FAILURE );
+        test_assert_true(LOAD_FAILURE & error);
       }
       
 
       util_copy_file( init_file , "simulations/run0/petro.grdecl");
       {
-        int result = LOAD_SUCCESS;
+        int error = 0;
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
@@ -130,14 +130,14 @@ int main(int argc , char ** argv) {
           enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
         }
         
-
+          
         test_assert_true( enkf_node_forward_init( field_node , "simulations/run0" , 0));
-        enkf_state_forward_init( state , fs , &result );
-        test_assert_int_equal( result, LOAD_SUCCESS );
-        enkf_state_load_from_forward_model( state , fs , &result , false , msg_list );
+        enkf_state_forward_init( state , fs , &error );
+        test_assert_int_equal( error, 0 );
+        enkf_state_load_from_forward_model( state , fs , &error , false , msg_list );
 
         stringlist_free( msg_list );
-        test_assert_int_equal( result, LOAD_SUCCESS );
+        test_assert_int_equal(error, 0); 
 
         {
           double value;
