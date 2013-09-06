@@ -165,6 +165,8 @@ add_test( enkf_meas_data  ${EXECUTABLE_OUTPUT_PATH}/enkf_meas_data )
 
 set_property( TEST enkf_time_map2     PROPERTY LABELS StatoilData )
 set_property( TEST enkf_site_config   PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_report_step_compatible_TRUE  PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_report_step_compatible_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_SURFACE_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_FALSE  PROPERTY LABELS StatoilData )
