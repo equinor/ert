@@ -47,11 +47,11 @@ void get_test( ) {
 
 void set_test( ) {
   state_map_type * state_map = state_map_alloc();
-  state_map_iset( state_map , 0 , STATE_HAS_DATA );
-  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( state_map , 0 ));
+  state_map_iset( state_map , 0 , STATE_INITIALIZED );
+  test_assert_int_equal( STATE_INITIALIZED , state_map_iget( state_map , 0 ));
 
-  state_map_iset( state_map , 100 , STATE_HAS_DATA );
-  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( state_map , 100 ));
+  state_map_iset( state_map , 100 , STATE_INITIALIZED );
+  test_assert_int_equal( STATE_INITIALIZED , state_map_iget( state_map , 100 ));
 
   test_assert_int_equal( STATE_UNDEFINED , state_map_iget( state_map , 50 ));
   test_assert_int_equal( 101 , state_map_get_size( state_map ));
@@ -73,30 +73,31 @@ void test_equal() {
 
   test_assert_true( state_map_equal( state_map1 , state_map2 ));
   for (int i =0; i < 25; i++) {
-    state_map_iset( state_map1 , i , STATE_HAS_DATA );
-    state_map_iset( state_map2 , i , STATE_HAS_DATA );
+    state_map_iset( state_map1 , i , STATE_INITIALIZED );
+    state_map_iset( state_map2 , i , STATE_INITIALIZED );
   }
   test_assert_true( state_map_equal( state_map1 , state_map2 ));
 
-  state_map_iset( state_map2 , 15 , STATE_UNDEFINED );
-  test_assert_false( state_map_equal( state_map1 , state_map2 ));
   state_map_iset( state_map2 , 15 , STATE_HAS_DATA );
+  test_assert_false( state_map_equal( state_map1 , state_map2 ));
+  state_map_iset( state_map2 , 15 , STATE_LOAD_FAILURE );
+  state_map_iset( state_map2 , 15 , STATE_INITIALIZED );
   test_assert_true( state_map_equal( state_map1 , state_map2 ));
   
-  state_map_iset( state_map2 , 150 , STATE_HAS_DATA );
+  state_map_iset( state_map2 , 150 , STATE_INITIALIZED );
   test_assert_false( state_map_equal( state_map1 , state_map2 ));
 }
 
 
 void test_copy() {
   state_map_type * state_map = state_map_alloc();
-  state_map_iset( state_map , 0 , STATE_HAS_DATA );
-  state_map_iset( state_map , 100 , STATE_HAS_DATA );
+  state_map_iset( state_map , 0 , STATE_INITIALIZED );
+  state_map_iset( state_map , 100 , STATE_INITIALIZED );
   {
     state_map_type * copy = state_map_alloc_copy( state_map );
     test_assert_true( state_map_equal( copy , state_map ));
 
-    state_map_iset( state_map , 10 , STATE_HAS_DATA );
+    state_map_iset( state_map , 10 , STATE_INITIALIZED );
     test_assert_false( state_map_equal( copy , state_map ));                      
     
     state_map_free( copy );
@@ -110,8 +111,8 @@ void test_io( ) {
   {
     state_map_type * state_map = state_map_alloc();
     state_map_type * copy1 , *copy2;
-    state_map_iset( state_map , 0 , STATE_HAS_DATA );
-    state_map_iset( state_map , 100 , STATE_HAS_DATA );
+    state_map_iset( state_map , 0 , STATE_INITIALIZED );
+    state_map_iset( state_map , 100 , STATE_INITIALIZED );
     state_map_fwrite( state_map , "map");
     
     copy1 = state_map_fread_alloc( "map" );
@@ -121,7 +122,7 @@ void test_io( ) {
     state_map_fread( copy2 , "map" );
     test_assert_true( state_map_equal( state_map , copy2 ));
 
-    state_map_iset( copy2 , 67 , STATE_HAS_DATA );
+    state_map_iset( copy2 , 67 , STATE_INITIALIZED );
     test_assert_false(state_map_equal( state_map , copy2 ));
     
     state_map_fread( copy2 , "map");
@@ -138,15 +139,15 @@ void test_io( ) {
 void test_update_undefined( ) {
   state_map_type * map = state_map_alloc( );
   
-  state_map_iset( map , 10 , STATE_HAS_DATA );
+  state_map_iset( map , 10 , STATE_INITIALIZED );
   test_assert_int_equal( STATE_UNDEFINED , state_map_iget( map , 5 ) );
-  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( map , 10 ) );
+  test_assert_int_equal( STATE_INITIALIZED , state_map_iget( map , 10 ) );
 
-  state_map_update_undefined( map , 5 , STATE_HAS_DATA );
-  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( map , 5 ) );
+  state_map_update_undefined( map , 5 , STATE_INITIALIZED );
+  test_assert_int_equal( STATE_INITIALIZED , state_map_iget( map , 5 ) );
   
   state_map_update_undefined( map , 10 , STATE_INITIALIZED );
-  test_assert_int_equal( STATE_HAS_DATA , state_map_iget( map , 10 ) );
+  test_assert_int_equal( STATE_INITIALIZED , state_map_iget( map , 10 ) );
   
   state_map_free( map );
 }
@@ -157,6 +158,7 @@ void test_select_matching( ) {
   bool_vector_type * mask1 = bool_vector_alloc(0 , false);
   bool_vector_type * mask2 = bool_vector_alloc(1000 , true);
 
+  state_map_iset( map , 10 , STATE_INITIALIZED );
   state_map_iset( map , 10 , STATE_HAS_DATA );
   state_map_iset( map , 20 , STATE_INITIALIZED );
   state_map_select_matching( map , mask1 , STATE_HAS_DATA | STATE_INITIALIZED );
@@ -186,6 +188,7 @@ void test_deselect_matching( ) {
   bool_vector_type * mask1 = bool_vector_alloc(0 , false);
   bool_vector_type * mask2 = bool_vector_alloc(1000 , true);
 
+  state_map_iset( map , 10 , STATE_INITIALIZED );
   state_map_iset( map , 10 , STATE_HAS_DATA );
   state_map_iset( map , 20 , STATE_INITIALIZED );
   state_map_deselect_matching( map , mask1 , STATE_HAS_DATA | STATE_INITIALIZED );
@@ -218,18 +221,18 @@ void test_set_from_mask() {
   bool_vector_iset(mask , 10 , true);
   bool_vector_iset(mask , 20 , true);
 
-  state_map_set_from_mask(map1 , mask , STATE_HAS_DATA);
-  state_map_set_from_inverted_mask(map2 , mask , STATE_HAS_DATA);
+  state_map_set_from_mask(map1 , mask , STATE_INITIALIZED);
+  state_map_set_from_inverted_mask(map2 , mask , STATE_INITIALIZED);
   test_assert_int_equal(21 , state_map_get_size(map1));
   test_assert_int_equal(21 , state_map_get_size(map2));
   for (i = 0; i < state_map_get_size(map1); i++) {
     if (i == 10 || i== 20) {
-      test_assert_int_equal( STATE_HAS_DATA , state_map_iget( map1 , i) );
+      test_assert_int_equal( STATE_INITIALIZED , state_map_iget( map1 , i) );
       test_assert_int_equal( STATE_UNDEFINED , state_map_iget(map2 , i));
     }
     else {
       test_assert_int_equal(STATE_UNDEFINED , state_map_iget(map1 , i ));
-      test_assert_int_equal( STATE_HAS_DATA , state_map_iget(map2 , i));
+      test_assert_int_equal( STATE_INITIALIZED , state_map_iget(map2 , i));
     }
 
 
@@ -239,13 +242,18 @@ void test_set_from_mask() {
 
 void test_count_matching() {
   state_map_type * map1 = state_map_alloc();
-  state_map_iset(map1 , 10 , STATE_HAS_DATA);
-  state_map_iset(map1 , 15 , STATE_HAS_DATA | STATE_LOAD_FAILURE);
-  state_map_iset(map1 , 20 , STATE_HAS_DATA | STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
+  state_map_iset(map1 , 10 , STATE_INITIALIZED );
 
-  test_assert_int_equal( 3 , state_map_count_matching( map1 , STATE_HAS_DATA));
-  test_assert_int_equal( 2 , state_map_count_matching( map1 , STATE_LOAD_FAILURE));
-  test_assert_int_equal( 1 , state_map_count_matching( map1 , STATE_PARENT_FAILURE));
+  state_map_iset(map1 , 15 , STATE_INITIALIZED );
+  state_map_iset(map1 , 15 , STATE_HAS_DATA );
+
+  state_map_iset(map1 , 16 , STATE_INITIALIZED );
+  state_map_iset(map1 , 16 , STATE_HAS_DATA );
+  state_map_iset(map1 , 16 , STATE_LOAD_FAILURE );
+  
+  test_assert_int_equal( 1 , state_map_count_matching( map1 , STATE_HAS_DATA));
+  test_assert_int_equal( 2 , state_map_count_matching( map1 , STATE_HAS_DATA | STATE_LOAD_FAILURE));
+  test_assert_int_equal( 3 , state_map_count_matching( map1 , STATE_HAS_DATA | STATE_LOAD_FAILURE | STATE_INITIALIZED));
 
   state_map_free( map1 );
 }

@@ -235,6 +235,7 @@ typedef enum {
   
 
 /*****************************************************************/
+/* Possible transitions: */
   typedef enum {
     STATE_UNDEFINED = 1,
     STATE_INITIALIZED = 2,
