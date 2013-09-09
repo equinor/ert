@@ -49,16 +49,16 @@ class EnKFTest(ExtendedTestCase):
 
             self.assertIsInstance(main.ensemble_config(), EnsConfig)
             self.assertIsInstance(main.analysis_config(), AnalysisConfig)
-            self.assertIsInstance(main.model_config(), ModelConfig)
+            self.assertIsInstance(main.getModelConfig(), ModelConfig)
             #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
-            self.assertIsInstance(main.site_config(), SiteConfig)
+            self.assertIsInstance(main.siteConfig(), SiteConfig)
             self.assertIsInstance(main.ecl_config(), EclConfig)
             self.assertIsInstance(main.plot_config(), PlotConfig)
 
             # self.main.load_obs(obs_config_file)
             self.assertIsInstance(main.get_obs(), EnkfObs)
             self.assertIsInstance(main.get_templates(), ErtTemplates)
-            self.assertIsInstance(main.get_fs(), EnkfFs)
+            self.assertIsInstance(main.getFileSystem(), EnkfFs)
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
             self.assertIsInstance(main.iget_state(0), EnKFState)
 

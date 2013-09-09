@@ -44,7 +44,9 @@ class EnKFLibraryTest(ExtendedTestCase):
             with self.assertRaises(AttributeError):
                 self.assertIsInstance(main.ecl_config().get_refcase(), EclSum)
 
-            time_map = main.get_fs().get_time_map()
+            file_system = main.getFileSystem()
+            self.assertEqual(file_system.getCaseName(), "default")
+            time_map = file_system.get_time_map()
             self.assertIsInstance(time_map, TimeMap)
 
             del main
