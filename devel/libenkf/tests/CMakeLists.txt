@@ -67,6 +67,18 @@ add_test( enkf_forward_init_GEN_KW_FALSE
 
 #-----------------------------------------------------------------
 
+add_executable( enkf_state_report_step_compatible enkf_state_report_step_compatible.c )
+target_link_libraries( enkf_state_report_step_compatible enkf test_util )
+
+add_test( enkf_state_report_step_compatible_TRUE 
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true  config_ecl_sum_compatible_true TRUE)
+
+add_test( enkf_state_report_step_compatible_FALSE 
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_false  config_ecl_sum_compatible_false FALSE)
+                                                                      
+
+#-----------------------------------------------------------------
+
 add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
 
@@ -172,6 +184,8 @@ add_test( enkf_meas_data  ${EXECUTABLE_OUTPUT_PATH}/enkf_meas_data )
 
 set_property( TEST enkf_time_map2     PROPERTY LABELS StatoilData )
 set_property( TEST enkf_site_config   PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_report_step_compatible_TRUE  PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_report_step_compatible_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_SURFACE_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_FALSE  PROPERTY LABELS StatoilData )
