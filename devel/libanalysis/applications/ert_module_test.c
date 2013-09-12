@@ -15,20 +15,22 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
-
-#include <dlfcn.h>
-#include <analysis_module.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <rng.h>
+#include <dlfcn.h>
+
+#include <ert/util/rng.h>
+
+#include <ert/analysis/analysis_module.h>
 
 
-void check_module( rng_type * rng , const char * lib_name ) {
+int check_module( rng_type * rng , const char * lib_name ) {
   analysis_module_load_status_enum  load_status;
   analysis_module_type * module = analysis_module_alloc_external__( rng , "MODULE" , lib_name , false , &load_status);
   if (module != NULL) {
     printf("Module loaded successfully\n");
     analysis_module_free( module );
+    return 0;
   } else {
     if (load_status == DLOPEN_FAILURE) {
       printf("\ndlerror(): %s\n\n",dlerror());
@@ -46,13 +48,11 @@ void check_module( rng_type * rng , const char * lib_name ) {
       printf("See documentation of \'symbol_table\' in modules.txt.\n\n");
     }
   }
+  return 1;
 }
 
 
 
 int main( int argc , char ** argv) {
-  int iarg;
-  for (iarg = 1; iarg < argc; iarg++) {
-    check_module( NULL , argv[iarg] );
-  }
+  exit( check_module( NULL , argv[1] ) );
 }

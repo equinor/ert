@@ -125,6 +125,13 @@ typedef enum   {UNDEFINED   = 0 ,
                              {.value = 6 , .name = "BOTH"}
 #define ENKF_STATE_ENUM_SIZE 4
 
+                
+                
+
+typedef enum { REPORT_STEP_INCOMPATIBLE  = 1,
+               LOAD_FAILURE              = 2 } enkf_fw_load_result_enum;
+               
+
 
 
 
@@ -228,6 +235,7 @@ typedef enum {
   
 
 /*****************************************************************/
+/* Possible transitions: */
   typedef enum {
     STATE_UNDEFINED = 1,
     STATE_INITIALIZED = 2,
