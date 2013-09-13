@@ -783,13 +783,8 @@ static bool enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
   const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
   
   if (ecl_config_active( ecl_config )) {
-<<<<<<< HEAD
-    bool eclipse_load = enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , loadOK, interactive , msg_list);
-    if (!eclipse_load)
-=======
     bool eclipse_load = enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , result, interactive , msg_list);
     if (!eclipse_load) 
->>>>>>> upstream/master
       fprintf(stderr , "** Warning: could not load ECLIPSE summary data from %s - this will probably fail later ...\n" , enkf_state->run_info->run_path);
     
     return eclipse_load;
