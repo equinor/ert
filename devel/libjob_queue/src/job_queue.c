@@ -272,22 +272,23 @@ struct job_queue_node_struct {
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
   pthread_rwlock_t       job_lock;        /* This lock provides read/write locking of the job_data field. */ 
   job_callback_ftype    *done_callback;
-  job_callback_ftype    *retry_callback;
+  job_callback_ftype    *retry_callback;  /* To determine if job can be retried */
+  job_callback_ftype    *exit_callback;   /* Callback to perform any cleanup */
   void                  *callback_arg;
 };
 
-static const int status_index[] = {  JOB_QUEUE_NOT_ACTIVE ,         
-                                     JOB_QUEUE_WAITING    ,        
-                                     JOB_QUEUE_SUBMITTED  ,        
-                                     JOB_QUEUE_PENDING    ,         
-                                     JOB_QUEUE_RUNNING    ,        
-                                     JOB_QUEUE_DONE       ,        
-                                     JOB_QUEUE_EXIT       ,        
-                                     JOB_QUEUE_USER_KILLED ,        
-                                     JOB_QUEUE_USER_EXIT   ,        
-                                     JOB_QUEUE_SUCCESS    ,        
-                                     JOB_QUEUE_RUNNING_CALLBACK,   
-                                     JOB_QUEUE_FAILED };  
+static const int status_index[] = {  JOB_QUEUE_NOT_ACTIVE ,  // Initial, allocated job state, job not added                                - controlled by job_queue   
+                                     JOB_QUEUE_WAITING    ,  // The job is ready to be started                                             - controlled by job_queue
+                                     JOB_QUEUE_SUBMITTED  ,  // Job is submitted to driver - temporary state                               - controlled by job_queue
+                                     JOB_QUEUE_PENDING    ,  // Job is pending, before actual execution                                    - controlled by queue_driver
+                                     JOB_QUEUE_RUNNING    ,  // Job is executing                                                           - controlled by queue_driver
+                                     JOB_QUEUE_DONE       ,  // Job is done (sucessful or not), temporary state                            - controlled/returned by by queue_driver   
+                                     JOB_QUEUE_EXIT       ,  // Job is done, with exit status != 0, temporary state                        - controlled/returned by by queue_driver   
+                                     JOB_QUEUE_USER_EXIT  ,  // User / queue system has requested killing of job                           - controlled by job_queue / external scope
+                                     JOB_QUEUE_USER_KILLED,  // Job has been killed, due to JOB_QUEUE_USER_EXIT, FINAL STATE               - controlled by job_queue     
+                                     JOB_QUEUE_SUCCESS    ,  // All good, comes after JOB_QUEUE_DONE, with additional checks, FINAL STATE  - controlled by job_queue
+                                     JOB_QUEUE_RUNNING_CALLBACK, // Temporary state, while running requested callbacks after an ended job  - controlled by job_queue  
+                                     JOB_QUEUE_FAILED };     // Job has failed, no more retries, FINAL STATE  
 
 static const char* status_name[] = { "JOB_QUEUE_NOT_ACTIVE" ,         
                                      "JOB_QUEUE_WAITING"    ,        
@@ -337,6 +338,7 @@ struct job_queue_struct {
   bool                       submit_complete;
   bool                       grow;                              /* The function adding new jobs is requesting the job_queue function to grow the jobs array. */
   int                        max_ok_wait_time;                  /* Seconds to wait for an OK file - when the job itself has said all OK. */
+  int                        max_duration;                      /* Maximum allowed time for a job to run, 0 = unlimited */
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
   pthread_mutex_t            status_mutex;                      /* This mutex ensure that the status-change code is only run by one thread. */
   pthread_mutex_t            run_mutex;                         /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
@@ -486,7 +488,7 @@ static void job_queue_node_clear(job_queue_node_type * node) {
   node->run_cmd             = NULL;
   node->argc                = 0;
   node->argv                = NULL;
-  
+  node->exit_callback       = NULL;
   node->retry_callback      = NULL;
   node->done_callback       = NULL;
   node->callback_arg        = NULL;
@@ -503,11 +505,6 @@ static job_queue_node_type * job_queue_node_alloc( ) {
   return node;
 }
 
-
-
-static void job_queue_node_set_status(job_queue_node_type * node, job_status_type status) {
-  node->job_status = status;
-}
 
 /*
   The error information is retained even after the job has completede
@@ -556,7 +553,8 @@ static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type
 static void job_queue_initialize_node(job_queue_type * queue , 
                                       const char * run_cmd , 
                                       job_callback_ftype * done_callback, 
-                                      job_callback_ftype * retry_callback, 
+                                      job_callback_ftype * retry_callback,
+                                      job_callback_ftype * exit_callback, 
                                       void * callback_arg , 
                                       int num_cpu , 
                                       const char * run_path , 
@@ -588,6 +586,7 @@ static void job_queue_initialize_node(job_queue_type * queue ,
     node->ok_file     = util_alloc_filename(node->run_path , queue->ok_file   , NULL);
   node->run_cmd = util_alloc_string_copy( run_cmd );
 
+  node->exit_callback  = exit_callback;
   node->retry_callback = retry_callback;
   node->done_callback  = done_callback;
   node->callback_arg   = callback_arg;
@@ -628,7 +627,7 @@ static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node
     job_status_type old_status = job_queue_node_get_status( node );
     
     if (new_status != old_status) {
-      job_queue_node_set_status(node , new_status);
+      node->job_status = new_status;
       queue->status_list[ STATUS_INDEX(old_status) ]--;
       queue->status_list[ STATUS_INDEX(new_status) ]++;
       
@@ -840,8 +839,16 @@ int job_queue_get_num_failed( const job_queue_type * queue) {
   return job_queue_iget_status_summary( queue , JOB_QUEUE_FAILED );
 }
 
+int job_queue_get_num_killed( const job_queue_type * queue) {
+  return job_queue_iget_status_summary( queue , JOB_QUEUE_USER_KILLED );
+}
+
 int job_queue_get_active_size( const job_queue_type * queue ) {
   return queue->active_size;
+}
+
+void job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_seconds) { 
+  queue->max_duration = max_duration_seconds;
 }
 
 /**
@@ -862,10 +869,9 @@ int job_queue_get_active_size( const job_queue_type * queue ) {
    to the queue system, and there is not yet established a mapping between
    external id and queue_index.
 */
-
-bool job_queue_kill_job( job_queue_type * queue , int job_index) {
+bool job_queue_kill_job_node( job_queue_type * queue , job_queue_node_type * node) {
   bool result = false;
-  job_queue_node_type * node = queue->jobs[job_index];
+  
   pthread_rwlock_wrlock( &node->job_lock );
   {
     if (node->job_status & JOB_QUEUE_CAN_KILL) {
@@ -888,6 +894,10 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
   return result;
 }
 
+bool job_queue_kill_job( job_queue_type * queue , int job_index) {
+  job_queue_node_type * node = queue->jobs[job_index];
+  return job_queue_kill_job_node(queue, node);
+}
 
 
 /**
@@ -993,7 +1003,7 @@ static void job_queue_clear_status( job_queue_type * queue ) {
     load like states?? They 
 */
 
-static void job_queue_finalize(job_queue_type * queue) {
+void job_queue_finalize(job_queue_type * queue) {
   int i;
   
   for (i=0; i < queue->active_size; i++) 
@@ -1017,13 +1027,9 @@ bool job_queue_is_running( const job_queue_type * queue ) {
 }
 
 
-
 static void job_queue_user_exit__( job_queue_type * queue ) {
   int queue_index;
-
-  
   for (queue_index = 0; queue_index < queue->active_size; queue_index++) {
-    job_queue_kill_job( queue , queue_index );
     job_queue_change_node_status( queue , queue->jobs[queue_index] , JOB_QUEUE_USER_EXIT);
   }
 }
@@ -1096,7 +1102,6 @@ static void job_queue_handle_DONE( job_queue_type * queue , job_queue_node_type 
 }
 
 
-
 static void * job_queue_run_EXIT_callback( void * arg ) {
   job_queue_type * job_queue;
   job_queue_node_type * node;
@@ -1120,13 +1125,47 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
          giving this job a brand new start. */
       node->submit_attempt = 0;
       job_queue_change_node_status(job_queue , node , JOB_QUEUE_WAITING);
-    } else
+    } else {
+      // It's time to call it a day
+      if (node->exit_callback != NULL)
+        node->exit_callback( node->callback_arg );
       job_queue_change_node_status(job_queue , node , JOB_QUEUE_FAILED);
+    }
   }
   return NULL;
 }
 
 
+static void * job_queue_run_USER_EXIT_callback( void * arg ) {
+  job_queue_type * job_queue;
+  job_queue_node_type * node;
+  {
+    arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+    job_queue = arg_pack_iget_ptr( arg_pack , 0 );
+    node = arg_pack_iget_ptr( arg_pack , 1 );
+    arg_pack_free( arg_pack );
+  }
+  job_queue_free_job_driver_data( job_queue , node );
+
+  // It's time to call it a day
+  if (node->exit_callback != NULL)
+    node->exit_callback( node->callback_arg );
+
+  job_queue_change_node_status(job_queue, node, JOB_QUEUE_USER_KILLED);
+  return NULL;
+}
+
+static void job_queue_handle_USER_EXIT( job_queue_type * queue , job_queue_node_type * node) {
+  // TODO: Right place for this?
+  job_queue_kill_job_node(queue, node);
+  job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
+  {
+    arg_pack_type * arg_pack = arg_pack_alloc();
+    arg_pack_append_ptr( arg_pack , queue );
+    arg_pack_append_ptr( arg_pack , node );
+    thread_pool_add_job( queue->work_pool , job_queue_run_USER_EXIT_callback , arg_pack );
+  }
+}
 
 static void job_queue_handle_EXIT( job_queue_type * queue , job_queue_node_type * node) {
   job_queue_change_node_status(queue , node , JOB_QUEUE_RUNNING_CALLBACK );
@@ -1187,6 +1226,28 @@ int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
 
 /*****************************************************************/
 
+static void job_queue_check_expired(job_queue_type *queue) {
+  if (queue->max_duration <= 0)
+    return;
+  
+  for (int i = 0; i < queue->active_size; i++) {
+    job_queue_node_type * node = queue->jobs[i];
+    if (job_queue_node_get_status(node) == JOB_QUEUE_RUNNING) {
+      time_t start = node->sim_start;
+      time_t now = time(NULL);
+      double elapsed = 0;
+      if (start >= node->submit_time)
+        elapsed = difftime(now, start);
+      if (elapsed > queue->max_duration) {
+        job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
+      }
+    }
+  }
+}
+
+void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
+  job_queue_run_jobs_finalizeoptional(queue, num_total_run, verbose, true);
+}
 
 /**
    If the total number of jobs is not known in advance the job_queue_run_jobs
@@ -1194,7 +1255,7 @@ int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
    to call the function job_queue_submit_complete() whan all jobs have been submitted.
 */
 
-void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
+void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_run, bool verbose, bool reset_queue) {
   int trylock = pthread_mutex_trylock( &queue->run_mutex );
   if (trylock != 0)
     util_abort("%s: another thread is already running the queue_manager\n",__func__);
@@ -1217,6 +1278,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           job_queue_user_exit__( queue ); 
           local_user_exit = true;
         }
+        
+        job_queue_check_expired(queue);
+        
         /*****************************************************************/
         {
           bool update_status = job_queue_update_status( queue );
@@ -1230,12 +1294,12 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           {
             int num_complete = queue->status_list[ STATUS_INDEX(JOB_QUEUE_SUCCESS)   ] +   
                                queue->status_list[ STATUS_INDEX(JOB_QUEUE_FAILED)    ] +
-                               queue->status_list[ STATUS_INDEX(JOB_QUEUE_USER_EXIT) ];
+                               queue->status_list[ STATUS_INDEX(JOB_QUEUE_USER_KILLED) ];
 
             if ((num_total_run > 0) && (num_total_run == num_complete))
               /* The number of jobs completed is equal to the number
                  of jobs we have said we want to run; so we are finished.
-              */
+              */ 
               cont = false;
             else {
               if (num_total_run == 0) {
@@ -1249,7 +1313,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                      2. The user has used job_queue_complete_submit()
                         to signal that no more jobs will be forthcoming.
                 */
-                if ((num_complete == queue->active_size) && queue->submit_complete)
+                if ((num_complete == queue->active_size) && queue->submit_complete) 
                   cont = false;
               }
             }
@@ -1303,21 +1367,27 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           
             {
               /*
-                Checking for complete / exited jobs.
-              */
+                Checking for complete / exited / overtime jobs
+               */
               int queue_index;
               for (queue_index = 0; queue_index < queue->active_size; queue_index++) {
-                job_queue_node_type * node = queue->jobs[queue_index];
-                switch ( job_queue_node_get_status(node) ) {
-                case(JOB_QUEUE_DONE):
-                  job_queue_handle_DONE( queue , node );
-                  break;
-                case(JOB_QUEUE_EXIT):
-                  job_queue_handle_EXIT( queue , node );
-                  break;
-                default:
-                  break;
+                job_queue_node_type * node = queue->jobs[queue_index];    
+                
+                switch (job_queue_node_get_status(node)) {
+                  case(JOB_QUEUE_DONE):
+                    job_queue_handle_DONE(queue, node);
+                    break;
+                  case(JOB_QUEUE_EXIT):
+                    job_queue_handle_EXIT(queue, node);
+                    break;
+                  case(JOB_QUEUE_USER_EXIT):
+                    job_queue_handle_USER_EXIT(queue, node);
+                    break;
+                  default:
+                    break;
                 }
+                
+                
               }
             }
             
@@ -1335,7 +1405,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                 util_usleep(queue->usleep_time);
           }
         }
-        
+
       } while ( cont );
       queue->running = false;
     }
@@ -1349,7 +1419,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
     called the queue object should not be queried on any longer; that
     will silently give horribly wrong results.
   */
-  job_queue_finalize( queue );
+  if (reset_queue)
+    job_queue_finalize( queue );
+  
   pthread_mutex_unlock( &queue->run_mutex );
 }
 
@@ -1366,6 +1438,16 @@ void job_queue_user_exit( job_queue_type * queue) {
 
 
 
+void * job_queue_run_jobs_nofinalize__(void * __arg_pack) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
+  job_queue_type * queue   = arg_pack_iget_ptr(arg_pack , 0);
+  int num_total_run        = arg_pack_iget_int(arg_pack , 1);
+  bool verbose             = arg_pack_iget_bool(arg_pack , 2);
+  
+  job_queue_run_jobs_finalizeoptional(queue , num_total_run , verbose, false);
+  arg_pack_free( arg_pack );
+  return NULL;
+}
 
 void * job_queue_run_jobs__(void * __arg_pack) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
@@ -1457,6 +1539,7 @@ static int job_queue_add_job__(job_queue_type * queue ,
                                const char * run_cmd , 
                                job_callback_ftype * done_callback, 
                                job_callback_ftype * retry_callback,
+                               job_callback_ftype * exit_callback,
                                void * callback_arg , 
                                int num_cpu , 
                                const char * run_path , 
@@ -1492,7 +1575,7 @@ static int job_queue_add_job__(job_queue_type * queue ,
     }
     pthread_mutex_unlock( &queue->queue_mutex );
     
-    job_queue_initialize_node(queue , run_cmd , done_callback , retry_callback , callback_arg , num_cpu , run_path , job_name , job_index , argc , argv);
+    job_queue_initialize_node(queue , run_cmd , done_callback , retry_callback , exit_callback, callback_arg , num_cpu , run_path , job_name , job_index , argc , argv);
     return job_index;   /* Handle used by the calling scope. */
   } else
     return -1;
@@ -1506,14 +1589,15 @@ static int job_queue_add_job__(job_queue_type * queue ,
 int job_queue_add_job_mt(job_queue_type * queue , 
                          const char * run_cmd , 
                          job_callback_ftype * done_callback, 
-                         job_callback_ftype * retry_callback, 
+                         job_callback_ftype * retry_callback,
+                         job_callback_ftype * exit_callback, 
                          void * callback_arg , 
                          int num_cpu , 
                          const char * run_path , 
                          const char * job_name , 
                          int argc , 
                          const char ** argv) { 
-  return job_queue_add_job__(queue , run_cmd , done_callback, retry_callback , callback_arg , num_cpu , run_path , job_name , argc , argv , true); 
+  return job_queue_add_job__(queue , run_cmd , done_callback, retry_callback, exit_callback , callback_arg , num_cpu , run_path , job_name , argc , argv , true); 
 }
 
 
@@ -1525,14 +1609,15 @@ int job_queue_add_job_mt(job_queue_type * queue ,
 int job_queue_add_job_st(job_queue_type * queue , 
                          const char * run_cmd , 
                          job_callback_ftype * done_callback, 
-                         job_callback_ftype * retry_callback, 
+                         job_callback_ftype * retry_callback,
+                         job_callback_ftype * exit_callback,
                          void * callback_arg , 
                          int num_cpu , 
                          const char * run_path , 
                          const char * job_name , 
                          int argc , 
                          const char ** argv) {
-  return job_queue_add_job__(queue , run_cmd , done_callback , retry_callback , callback_arg , num_cpu , run_path , job_name , argc , argv , false);
+  return job_queue_add_job__(queue , run_cmd , done_callback , retry_callback, exit_callback , callback_arg , num_cpu , run_path , job_name , argc , argv , false);
 }
 
 
@@ -1569,7 +1654,6 @@ bool job_queue_has_driver(const job_queue_type * queue ) {
   else
     return true;
 } 
-
 
 
 job_driver_type job_queue_lookup_driver_name( const char * driver_name ) {
@@ -1643,7 +1727,8 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   job_queue_type * queue  = util_malloc(sizeof * queue );
   queue->jobs             = NULL;
   queue->usleep_time      = 250000; /* 1000000 : 1 second */
-  queue->max_ok_wait_time = 60;     
+  queue->max_ok_wait_time = 60;   
+  queue->max_duration     = 0;  
   queue->max_submit       = max_submit;
   queue->driver           = NULL;
   queue->ok_file          = util_alloc_string_copy( ok_file );

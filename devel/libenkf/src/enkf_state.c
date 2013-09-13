@@ -284,29 +284,25 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
   int iens = enkf_state_get_iens( enkf_state );
   state_map_type * state_map = enkf_fs_get_state_map( fs );
   realisation_state_enum current_state = state_map_iget(state_map, iens);
-  if (current_state == STATE_PARENT_FAILURE) {
-    printf("Found PARENT failure");
+  if ((current_state == STATE_PARENT_FAILURE) && (force_init == false))
     return;
-  }
-  else
-  {
+  else {
     state_enum init_state = ANALYZED;
-    bool initOK = true;
+
     for (int ip = 0; ip < stringlist_get_size(param_list); ip++)
     {
       enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
       node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
       bool has_data = enkf_node_has_data(param_node, fs, node_id);
 
-      if (force_init || (has_data == false))
+      if (force_init || (has_data == false) || (current_state == STATE_LOAD_FAILURE))
       {
-        if (enkf_node_initialize(param_node, iens, enkf_state->rng))
+        if (enkf_node_initialize(param_node, iens, enkf_state->rng)) {
           enkf_node_store(param_node, fs, true, node_id);
-        else
-          initOK = false;
+          state_map_iset(state_map , iens , STATE_INITIALIZED);
+        }
       }
     }
-    state_map_iset(state_map , iens , STATE_INITIALIZED);
     enkf_fs_fsync(fs);
   }
 }
@@ -606,7 +602,7 @@ const char * enkf_state_get_eclbase( const enkf_state_type * enkf_state ) {
 }
 
 
-static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state , stringlist_type * messages , bool * loadOK) {
+static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state , stringlist_type * messages , int * result) {
   const run_info_type * run_info         = enkf_state->run_info;
   const ecl_config_type * ecl_config     = enkf_state->shared_info->ecl_config;
   const bool fmt_file                    = ecl_config_get_formatted(ecl_config);
@@ -668,7 +664,7 @@ static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state
           }
           ecl_sum_free( summary );
           summary = NULL;
-          *loadOK = false;
+          *result |= LOAD_FAILURE; 
         }
       }
     }
@@ -692,8 +688,21 @@ static void enkf_state_log_GEN_DATA_load( const enkf_node_type * enkf_node , int
 }
 
 
+static bool enkf_state_report_step_compatible(const enkf_state_type * enkf_state, const ecl_sum_type * ecl_sum_simulated) {
+  bool ret = true; 
 
-static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK, bool interactive , stringlist_type * msg_list) {
+  const model_config_type * model_config = enkf_state->shared_info->model_config;
+  const ecl_sum_type * ecl_sum_reference = model_config_get_refcase(model_config); 
+
+  if (ecl_sum_reference) //Can be NULL
+    ret = ecl_sum_report_step_compatible(ecl_sum_reference, ecl_sum_simulated); 
+  
+  return ret; 
+}
+
+
+
+static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , int * result, bool interactive , stringlist_type * msg_list) {
   const run_info_type   * run_info       = enkf_state->run_info;
   int        load_start                  = run_info->load_start;
   
@@ -702,10 +711,15 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
   
   {
     /* Looking for summary files on disk, and loading them. */
-    ecl_sum_type * summary = enkf_state_load_ecl_sum( enkf_state , msg_list , loadOK );
-    
+    ecl_sum_type * summary = enkf_state_load_ecl_sum( enkf_state , msg_list , result );
     /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
     if (summary != NULL) {
+      
+      /*Check the loaded summary against the reference ecl_sum_type */
+      if (!enkf_state_report_step_compatible(enkf_state, summary)) 
+        *result |= REPORT_STEP_INCOMPATIBLE;  
+       
+      
       /* The actual loading internalizing - from ecl_sum -> enkf_node. */
       const shared_info_type   * shared_info = enkf_state->shared_info;
       const int iens                         = member_config_get_iens( enkf_state->my_config );
@@ -726,7 +740,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                   if (interactive && enkf_node_get_impl_type(node) == GEN_DATA)
                     enkf_state_log_GEN_DATA_load( node , 0 , msg_list );
                 } else {
-                  *loadOK = false;
+                  *result |= LOAD_FAILURE; 
                   log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:----] Failed to load data for vector node:%s.",iens , enkf_node_get_key( node ));
                   if (interactive) 
                     stringlist_append_owned_ref( msg_list , util_alloc_sprintf("Failed to load vector:%s" , enkf_node_get_key( node )));
@@ -741,7 +755,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
                     if (interactive && enkf_node_get_impl_type(node) == GEN_DATA)
                       enkf_state_log_GEN_DATA_load( node , report_step , msg_list );
                   } else {
-                    *loadOK = false;
+                    *result |= LOAD_FAILURE; 
                     log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
                     if (interactive) 
                       stringlist_append_owned_ref( msg_list , util_alloc_sprintf("Failed to load node:%s at step:%d" , enkf_node_get_key( node ) , report_step));
@@ -765,13 +779,14 @@ static bool enkf_state_internalize_dynamic_eclipse_results(enkf_state_type * enk
 }
 
 
-static bool enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , bool * loadOK, bool interactive , stringlist_type * msg_list) {
+static bool enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , int * result, bool interactive , stringlist_type * msg_list) {
   const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
   
   if (ecl_config_active( ecl_config )) {
-    bool eclipse_load = enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , loadOK, interactive , msg_list);
+    bool eclipse_load = enkf_state_internalize_dynamic_eclipse_results( enkf_state , fs , model_config , result, interactive , msg_list);
     if (!eclipse_load) 
       fprintf(stderr , "** Warning: could not load ECLIPSE summary data from %s - this will probably fail later ...\n" , enkf_state->run_info->run_path);
+    
     return eclipse_load;
   } else
     return false;
@@ -813,7 +828,7 @@ static char * __realloc_static_kw(char * kw , int occurence) {
    When the state has been loaded it goes straight to disk.
 */
 
-static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , int report_step , bool store_vectors , bool * loadOK , bool interactive , stringlist_type * msg_list) {
+static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , enkf_fs_type * fs , const model_config_type * model_config , int report_step , bool store_vectors ,  int * result,  bool interactive , stringlist_type * msg_list) {
   member_config_type * my_config     = enkf_state->my_config;
   shared_info_type   * shared_info   = enkf_state->shared_info;
   run_info_type      * run_info      = enkf_state->run_info;
@@ -982,7 +997,7 @@ static void enkf_state_internalize_eclipse_state(enkf_state_type * enkf_state , 
               
             } else {
               if (enkf_node_get_impl_type(enkf_node) != GEN_DATA) {
-                *loadOK = false;
+                *result |= LOAD_FAILURE; 
                 log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
 
                 if (interactive) 
@@ -1007,14 +1022,14 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state ,
                                          const model_config_type * model_config , 
                                          int report_step , 
                                          bool store_vectors , 
-                                         bool * loadOK , 
+                                         int * result , 
                                          bool interactive , 
                                          stringlist_type * msg_list) {
 
   const ecl_config_type * ecl_config = enkf_state->shared_info->ecl_config;
  
   if (ecl_config_active( ecl_config ))
-    enkf_state_internalize_eclipse_state( enkf_state , fs , model_config , report_step , store_vectors , loadOK , interactive , msg_list);
+    enkf_state_internalize_eclipse_state( enkf_state , fs , model_config , report_step , store_vectors , result , interactive , msg_list);
 }
 
 
@@ -1029,7 +1044,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state ,
 */
    
 
-static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_fs_type * fs , bool * loadOK , bool interactive , stringlist_type * msg_list) {
+static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_fs_type * fs ,int * result , bool interactive , stringlist_type * msg_list) {
   run_info_type     * run_info     = enkf_state->run_info;
   model_config_type * model_config = enkf_state->shared_info->model_config;
   int report_step;
@@ -1040,7 +1055,7 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
     hence we must load the summary results first.
   */
   
-  if (enkf_state_internalize_dynamic_results(enkf_state , fs , model_config , loadOK, interactive , msg_list)) {
+  if (enkf_state_internalize_dynamic_results(enkf_state , fs , model_config , result, interactive , msg_list)) {
     int last_report = time_map_get_last_step( enkf_fs_get_time_map( fs ));
     
     /*
@@ -1056,7 +1071,7 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
       bool store_vectors = (report_step == last_report) ? true : false;
       
       if (model_config_load_state( model_config , report_step)) 
-        enkf_state_internalize_state(enkf_state , fs , model_config , report_step , store_vectors , loadOK , interactive , msg_list);
+        enkf_state_internalize_state(enkf_state , fs , model_config , report_step , store_vectors , result , interactive , msg_list);
     }
   } 
 }
@@ -1064,7 +1079,7 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
 
 void enkf_state_forward_init(enkf_state_type * enkf_state , 
                              enkf_fs_type * fs , 
-                             bool * loadOK ) {
+                             int * result ) {
   run_info_type * run_info   = enkf_state->run_info;
 
   if (run_info->step1 == 0) {
@@ -1086,7 +1101,7 @@ void enkf_state_forward_init(enkf_state_type * enkf_state ,
           if (enkf_node_forward_init(node , run_info->run_path , iens ))
             enkf_node_store( node , fs, false , node_id );
           else
-            *loadOK = false;
+            *result |= LOAD_FAILURE;
         }
 
       }
@@ -1100,21 +1115,21 @@ void enkf_state_forward_init(enkf_state_type * enkf_state ,
 
 void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
                                         enkf_fs_type * fs , 
-                                        bool * loadOK , 
+                                        int * result, 
                                         bool interactive , 
                                         stringlist_type * msg_list) {
 
   if (ensemble_config_have_forward_init( enkf_state->ensemble_config ))
-    enkf_state_forward_init( enkf_state , fs , loadOK );
+    enkf_state_forward_init( enkf_state , fs , result );
   
-  enkf_state_internalize_results( enkf_state , fs , loadOK , interactive , msg_list );
+  enkf_state_internalize_results( enkf_state , fs , result , interactive , msg_list );
   {
     state_map_type * state_map = enkf_fs_get_state_map( fs );
     int iens = member_config_get_iens( enkf_state->my_config );
-    if (*loadOK) 
-      state_map_iset( state_map , iens , STATE_HAS_DATA);
-    else
+    if (*result & LOAD_FAILURE) 
       state_map_iset( state_map , iens , STATE_LOAD_FAILURE);
+    else
+      state_map_iset( state_map , iens , STATE_HAS_DATA);
   }
 }
 
@@ -1132,10 +1147,9 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
   int step1                    = arg_pack_iget_int( arg_pack , 3 );
   int step2                    = arg_pack_iget_int( arg_pack , 4 );
   bool interactive             = arg_pack_iget_bool( arg_pack , 5 );  
-  stringlist_type * msg_list   = arg_pack_iget_ptr( arg_pack , 6 );
+  stringlist_type * msg_list = arg_pack_iget_ptr( arg_pack , 6 );
   int iens                     = member_config_get_iens( enkf_state->my_config );
-  bool loadOK                  = true;
-  
+  int result                   = 0; 
   
   run_info_init_for_load( enkf_state->run_info , 
                           load_start , 
@@ -1145,7 +1159,13 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
                           model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 
                           enkf_state->subst_list );
   
-  enkf_state_load_from_forward_model( enkf_state , fs , &loadOK , interactive , msg_list );
+  enkf_state_load_from_forward_model( enkf_state , fs , &result , interactive , msg_list );
+  if (result & REPORT_STEP_INCOMPATIBLE) {
+    // If refcase has been used for observations: crash and burn.
+    fprintf(stderr,"** Warning the timesteps in refcase and current simulation are not in accordance - something wrong with schedule file?\n");
+    result -= REPORT_STEP_INCOMPATIBLE;
+  }
+  
   if (interactive) {
     printf(".");
     fflush(stdout);
@@ -1745,7 +1765,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state, enkf_fs_type * 
 
 bool enkf_state_complete_forward_modelOK__(void * arg );
 bool enkf_state_complete_forward_modelEXIT__(void * arg );
-
+bool enkf_state_complete_forward_modelRETRY__(void * arg );
 
 static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_fs_type * fs) {
   run_info_type       * run_info    = enkf_state->run_info;
@@ -1767,7 +1787,8 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_f
       run_info->queue_index = job_queue_add_job_mt( shared_info->job_queue , 
                                                     site_config_get_job_script( site_config ),
                                                     enkf_state_complete_forward_modelOK__ , 
-                                                    enkf_state_complete_forward_modelEXIT__ , 
+                                                    enkf_state_complete_forward_modelRETRY__ , 
+                                                    enkf_state_complete_forward_modelEXIT__,
                                                     load_arg , 
                                                     ecl_config_get_num_cpu( shared_info->ecl_config ),
                                                     run_info->run_path     , 
@@ -1966,7 +1987,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
   run_info_type             * run_info    = enkf_state->run_info;
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
-  bool loadOK  = true;
+  int result                              = 0; 
 
   
   /**
@@ -1976,8 +1997,16 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
      is OK the final status is updated, otherwise: restart.
   */
   log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
-  enkf_state_load_from_forward_model(enkf_state , fs , &loadOK , false , NULL); 
-  if (loadOK) {
+  enkf_state_load_from_forward_model(enkf_state , fs , &result , false , NULL); 
+  
+  if (result & REPORT_STEP_INCOMPATIBLE) {
+    // If refcase has been used for observations: crash and burn.
+     fprintf(stderr,"** Warning the timesteps in refcase and current simulation are not in accordance - something wrong with schedule file?\n");
+     result -= REPORT_STEP_INCOMPATIBLE;
+  }
+  
+  
+  if (0 == result) {
     /*
       The loading succeded - so this is a howling success! We set
       the main status to JOB_QUEUE_ALL_OK and inform the queue layer
@@ -1991,44 +2020,8 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
     run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
     run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
   } 
-  return loadOK;
+  return (0 == result) ? true : false; 
 }
-
-
-
-
-static bool enkf_state_complete_forward_modelEXIT(enkf_state_type * enkf_state , enkf_fs_type * fs) {
-  const shared_info_type    * shared_info = enkf_state->shared_info;
-  run_info_type             * run_info    = enkf_state->run_info;
-  const member_config_type  * my_config   = enkf_state->my_config;
-  const int iens                          = member_config_get_iens( my_config );
-  /* 
-     The external queue system has said that the job failed - we
-     might give it another try from this scope, possibly involving a
-     resampling.
-  */
-
-  if (enkf_state_can_retry( enkf_state )) {
-    enkf_state_internal_retry( enkf_state , fs , false);
-    return true;
-  } else {
-    /* 
-       No more attempts for this job.
-    */
-    log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
-    if (run_info->run_status != JOB_LOAD_FAILURE)
-      run_info->run_status = JOB_RUN_FAILURE;
-    {
-      state_map_type * state_map = enkf_fs_get_state_map( fs );
-      int iens = member_config_get_iens( enkf_state->my_config );
-      state_map_iset( state_map , iens , STATE_LOAD_FAILURE );
-    }
-    return false;
-  }
-}
-
-
-
 
 
 bool enkf_state_complete_forward_modelOK__(void * arg ) {
@@ -2049,7 +2042,39 @@ bool enkf_state_complete_forward_modelOK__(void * arg ) {
 }
 
 
-bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
+
+static bool enkf_state_complete_forward_model_EXIT_handler__(enkf_state_type * enkf_state , enkf_fs_type * fs, bool is_retry) {
+  const shared_info_type    * shared_info = enkf_state->shared_info;
+  run_info_type             * run_info    = enkf_state->run_info;
+  const member_config_type  * my_config   = enkf_state->my_config;
+  const int iens                          = member_config_get_iens( my_config );
+  /* 
+     The external queue system has said that the job failed - we
+     might give it another try from this scope, possibly involving a
+     resampling.
+   */
+
+  if (is_retry) {
+    if (enkf_state_can_retry(enkf_state)) {
+      enkf_state_internal_retry(enkf_state, fs, false);
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    log_add_fmt_message(shared_info->logh, 1, NULL, "[%03d:%04d-%04d] FAILED COMPLETELY.", iens, run_info->step1, run_info->step2);
+
+    if (run_info->run_status != JOB_LOAD_FAILURE)
+      run_info->run_status = JOB_RUN_FAILURE;
+
+    state_map_type * state_map = enkf_fs_get_state_map(fs);
+    int iens = member_config_get_iens(enkf_state->my_config);
+    state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
+    return false;
+  }
+}
+
+static bool enkf_state_complete_forward_model_EXIT_handler(void * arg, bool allow_retry ) {
   enkf_state_type * enkf_state;
   enkf_fs_type * fs;
   {
@@ -2059,11 +2084,17 @@ bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
     arg_pack_free( arg_pack );
   }
   
-  return enkf_state_complete_forward_modelEXIT( enkf_state , fs );
+  return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , fs, allow_retry );
 }
 
 
+bool enkf_state_complete_forward_modelEXIT__(void * arg ) {
+  return enkf_state_complete_forward_model_EXIT_handler(arg, false );
+}
 
+bool enkf_state_complete_forward_modelRETRY__(void * arg ) {
+  return enkf_state_complete_forward_model_EXIT_handler(arg, true );
+}
 
 
 void * enkf_state_start_forward_model__(void * arg) {
@@ -2085,8 +2116,6 @@ void enkf_state_invalidate_cache( enkf_state_type * enkf_state ) {
   }
   hash_iter_free(iter);
 }
-
-
 
 
 /*****************************************************************/
