@@ -26,6 +26,8 @@ if (NOT DEFINED ${LSF_LIBRARY})
   set( HAVE_LSF_LIBRARY OFF )
 endif()
 
+set( HAVE_LSF_LIBRARY OFF )
+
 if (HAVE_LSF_LIBRARY) 
    include_directories( ${LSF_INCLUDE_PATH} )     
    add_definitions( -DHAVE_LSF_LIBRARY )
