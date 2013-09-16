@@ -507,9 +507,9 @@ static job_queue_node_type * job_queue_node_alloc( ) {
 
 
 /*
-  The error information is retained even after the job has completede
-  completely, so that calling scope can ask for it - that is the
-  reason there are separte free() and clear functions for the error related fields. 
+ The error information is retained even after the job has completed
+ completely, so that calling scope can ask for it - that is the
+ reason there are separate free() and clear functions for the error related fields.
 */
   
 static void job_queue_node_free_data(job_queue_node_type * node) {
@@ -518,6 +518,11 @@ static void job_queue_node_free_data(job_queue_node_type * node) {
   util_safe_free( node->ok_file );   
   util_safe_free( node->run_cmd );   
   util_free_stringlist( node->argv , node->argc );
+  if (node->callback_arg) {
+    arg_pack_free( node->callback_arg );
+    node->callback_arg = NULL;
+  }
+
   if (node->job_data != NULL) 
     util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }
@@ -1117,9 +1122,10 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
     job_queue_change_node_status( job_queue , node , JOB_QUEUE_WAITING );  /* The job will be picked up for antother go. */
   else {
     bool retry = false;
+
     if (node->retry_callback != NULL)
       retry = node->retry_callback( node->callback_arg );
-    
+
     if (retry) {
       /* OK - we have invoked the retry_callback() - and that has returned true;
          giving this job a brand new start. */
@@ -1127,6 +1133,7 @@ static void * job_queue_run_EXIT_callback( void * arg ) {
       job_queue_change_node_status(job_queue , node , JOB_QUEUE_WAITING);
     } else {
       // It's time to call it a day
+
       if (node->exit_callback != NULL)
         node->exit_callback( node->callback_arg );
       job_queue_change_node_status(job_queue , node , JOB_QUEUE_FAILED);
