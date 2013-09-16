@@ -1437,8 +1437,6 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
     int iens;
 
     state_map_deselect_matching( enkf_fs_get_state_map( fs ) , iactive , STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
-    bool_vector_fprintf( iactive , stdout , "IACTIVE" , "%2d");
-
 
     if (enkf_main->verbose) {
       if (run_mode == ENKF_ASSIMILATION)
