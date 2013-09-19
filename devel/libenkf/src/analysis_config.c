@@ -339,14 +339,14 @@ bool analysis_config_has_module(analysis_config_type * config , const char * mod
 bool analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
   if (analysis_config_has_module( config , module_name )) { 
     analysis_module_type * module = analysis_config_get_module( config , module_name );
-
+    
     if (analysis_module_get_option( module , ANALYSIS_ITERABLE)) {
       if (analysis_config_get_single_node_update( config )) {
-        fprintf(stderr," ** Warning: the module:%s requires the setting \"SINGLE_NODE_UPDATE FALSE\" in the config file.\n");
+        fprintf(stderr," ** Warning: the module:%s requires the setting \"SINGLE_NODE_UPDATE FALSE\" in the config file.\n" , module_name);
         fprintf(stderr," **          the module has NOT been selected. \n");
         
         return false;
-      }
+      } 
     }
     
     config->analysis_module = module;
