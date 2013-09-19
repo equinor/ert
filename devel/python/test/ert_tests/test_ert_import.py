@@ -152,5 +152,6 @@ class ErtImportTest(ExtendedTestCase):
         self.assertImportable("ert.well.well_state")
         self.assertImportable("ert.well.well_ts")
 
-
+    def test_ert_test_run(self):
+        self.assertImportable("ert.test_run")
 
