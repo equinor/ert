@@ -1776,6 +1776,8 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state , enkf_f
     enkf_state_init_eclipse( enkf_state , fs );
 
     if (run_info->run_mode != INIT_ONLY) {
+      // The job_queue_node will take ownership of this arg_pack; and destroy it when
+      // the job_queue_node is discarded.
       arg_pack_type             * load_arg      = arg_pack_alloc();
 
       /*
@@ -2032,13 +2034,7 @@ bool enkf_state_complete_forward_modelOK__(void * arg ) {
   enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
   fs         = arg_pack_iget_ptr( arg_pack , 1 );
 
-  {
-    bool callbackOK = enkf_state_complete_forward_modelOK( enkf_state , fs );
-    if (callbackOK)
-      arg_pack_free( arg_pack );
-    
-    return callbackOK;
-  }
+  return enkf_state_complete_forward_modelOK( enkf_state , fs );
 }
 
 
@@ -2081,7 +2077,6 @@ static bool enkf_state_complete_forward_model_EXIT_handler(void * arg, bool allo
     arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
     enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
     fs         = arg_pack_iget_ptr( arg_pack , 1 );
-    arg_pack_free( arg_pack );
   }
   
   return enkf_state_complete_forward_model_EXIT_handler__( enkf_state , fs, allow_retry );
