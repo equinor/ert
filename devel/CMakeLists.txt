@@ -59,14 +59,6 @@ else()
    endif()
 endif()
 
-if (HAVE_DLADDR)
-   set( NEED_LIBDL ON )    
-endif()
-
-if (BUILD_ERT)
-   set( NEED_LIBDL ON )    
-endif()
-
 if (MSVC)
    add_definitions( -D__func__="\\"????\\"")
 endif()
