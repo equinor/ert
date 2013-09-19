@@ -1,3 +1,12 @@
+find_library( DL_LIBRARY NAMES dl )
+find_path( DLFUNC_HEADER dlfcn.h )
+if (DL_LIBRARY AND DLFUNC_HEADER)
+    set(CMAKE_REQUIRED_LIBRARIES dl)
+    check_function_exists( dladdr HAVE_DLADDR )
+    if (HAVE_DLADDR)
+       add_definitions( -DHAVE_DLADDR )                       
+    endif()
+endif()
 #-----------------------------------------------------------------
 find_library( ZLIB_LIBRARY NAMES z )
 find_path( ZLIB_HEADER zlib.h /usr/include )
