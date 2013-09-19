@@ -3575,12 +3575,9 @@ bool enkf_main_case_is_initialized( const enkf_main_type * enkf_main , const cha
   if (fs) {
     bool initialized = enkf_main_case_is_initialized__(enkf_main , fs , __mask);
     enkf_main_close_alt_fs(enkf_main , fs);
-    printf("Have fs:%s" , case_name);
     return initialized;
-  } else {
-    printf("Could not find fs:%s\n" , case_name);
+  } else 
     return false;
-  }
 }
 
 
