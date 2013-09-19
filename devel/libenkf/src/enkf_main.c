@@ -188,6 +188,7 @@ void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 /*****************************************************************/
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
+UTIL_IS_INSTANCE_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
 analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
   return enkf_main->analysis_config;
@@ -2554,13 +2555,14 @@ void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
 //}
 
 
+/*
 void enkf_main_create_fs( enkf_main_type * enkf_main , const char * fs_path) {
   fs_driver_impl driver_id = model_config_get_dbase_type( enkf_main->model_config );
   void * arg = NULL;
   
   enkf_fs_create_fs( fs_path , driver_id , arg );
 }
-
+*/
 
 static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char * case_path) {
   const char * ens_path = model_config_get_enspath( enkf_main->model_config);
@@ -2697,13 +2699,13 @@ stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
 }
 
 
-void enkf_main_close_alt_fs(enkf_main_type * enkf_main , enkf_fs_type * fs) {
+void enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs) {
   if (fs != enkf_main->dbase) 
     enkf_fs_close( fs );
 }
 
 
-enkf_fs_type * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
+enkf_fs_type * enkf_main_get_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
   enkf_fs_type * alt_fs = enkf_main->dbase;
   if (case_path != NULL) {
     char * new_mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
@@ -3532,7 +3534,7 @@ int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const cha
    all realizations will be checked).
 */
 
-bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_type * __mask) {
+static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * __mask) {
   stringlist_type  * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
   bool_vector_type * mask;
   bool initialized = true;
@@ -3542,18 +3544,18 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
   else
     mask = bool_vector_alloc(0 , true );
   
-  do {
+  while ((ikey < stringlist_get_size( parameter_keys )) && (initialized)) {
     const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
     int iens = 0;
     do {
       if (bool_vector_safe_iget( mask , iens)) {
         node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
-        initialized = enkf_config_node_has_node( config_node , enkf_main->dbase , node_id);
+        initialized = enkf_config_node_has_node( config_node , fs , node_id);
       }
       iens++;
     } while ((iens < enkf_main->ens_size) && (initialized));
     ikey++;
-  } while ((ikey < stringlist_get_size( parameter_keys )) && (initialized));
+  }
   
   stringlist_free( parameter_keys );
   if (__mask == NULL)
@@ -3562,6 +3564,19 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
 }
 
 
+bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_type * __mask) {
+  return enkf_main_case_is_initialized__(enkf_main , enkf_main->dbase , __mask);
+}
+
+bool enkf_main_case_is_initialized( const enkf_main_type * enkf_main , const char * case_name ,  bool_vector_type * __mask) {
+  enkf_fs_type * fs = enkf_main_get_alt_fs(enkf_main , case_name , true , false);
+  if (fs) {
+    bool initialized = enkf_main_case_is_initialized__(enkf_main , fs , __mask);
+    enkf_main_close_alt_fs(enkf_main , fs);
+    return initialized;
+  } else 
+    return false;
+}
 
 
 void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
