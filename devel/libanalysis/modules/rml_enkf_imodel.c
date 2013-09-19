@@ -32,8 +32,9 @@
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
 #include <ert/analysis/enkf_linalg.h>
-#include <ert/analysis/rml_enkf_common.h>
 #include <ert/analysis/std_enkf.h>
+
+#include <rml_enkf_common.h>
 
 /*
   A random 'magic' integer id which is used for run-time type checking
@@ -473,7 +474,6 @@ long rml_enkf_imodel_get_options( void * arg , long flag ) {
 
 
  bool rml_enkf_imodel_has_var( const void * arg, const char * var_name) {
-   const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
    {
      if (strcmp(var_name , "ITER") == 0)
        return true;
