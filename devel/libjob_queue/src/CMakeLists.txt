@@ -19,9 +19,7 @@ if (USE_RUNPATH)
    add_runpath( job_queue )
 endif()
 
-if (NEED_LIBDL)
-   target_link_libraries( job_queue dl )
-endif()
+target_link_libraries( job_queue dl )
 
 if (INSTALL_ERT)
    install(TARGETS job_queue DESTINATION ${CMAKE_INSTALL_LIBDIR})
