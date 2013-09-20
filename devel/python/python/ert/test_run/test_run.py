@@ -76,7 +76,7 @@ class TestRun:
     
     def run(self):
         if len(self.workflows):
-            with TestAreaContext(self.name , True) as work_area:
+            with TestAreaContext(self.name , False) as work_area:
                 print "Working in:%s" % work_area.get_cwd()
                 work_area.copy_parent_directory( self.config_file() )
 
