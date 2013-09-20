@@ -14,8 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
+from ert.enkf.enums.enkf_state_type_enum import EnkfStateType
 
-from ert.util import Log
+from ert.util import Log, BoolVector
 from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, ErtTemplates, LocalConfig, ModelConfig, EnsConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfFs
 from ert.util import SubstitutionList, StringList
 
@@ -59,7 +60,7 @@ class EnKFMain(BaseCClass):
     def resizeEnsemble(self, value):
         EnKFMain.cNamespace().resize_ensemble(self, value)
 
-    def ensemble_config(self):
+    def ensembleConfig(self):
         """ @rtype: EnsConfig """
         return EnKFMain.cNamespace().get_ens_config(self).setParent(self)
 
@@ -153,16 +154,18 @@ class EnKFMain(BaseCClass):
         site_conf_file = EnKFMain.cNamespace().get_site_config_file(self)
         return site_conf_file
 
-    def initialize_from_scratch(self, parameter_list, iens1, iens2, force_init=True):
+    def initializeFromScratch(self, parameter_list, iens1, iens2, force_init=True):
         EnKFMain.cNamespace().initialize_from_scratch(self, parameter_list, iens1, iens2, force_init)
 
 
 
-    def get_history_length(self):
+    def getHistoryLength(self):
         return EnKFMain.cNamespace().get_history_length(self)
 
-    def initialize_from_existing__(self, source_case, source_report_step, source_state, member_mask, ranking_key,
+    def initializeFromExistingCase(self, source_case, source_report_step, source_state, member_mask, ranking_key,
                                    node_list):
+        assert isinstance(source_state, EnkfStateType)
+
         EnKFMain.cNamespace().initialize_from_existing__(self, source_case, source_report_step, source_state, member_mask, ranking_key,
                                          node_list)
 
@@ -182,8 +185,9 @@ class EnKFMain(BaseCClass):
     def get_observation_count(self, user_key):
         return EnKFMain.cNamespace().get_observation_count(self, user_key)
 
-    def is_initialized(self):
-        return EnKFMain.cNamespace().is_initialized(self)
+    def isInitialized(self):
+        """ @rtype: bool """
+        return EnKFMain.cNamespace().is_initialized(self, None) # what is the bool_vector mask???
 
     def run(self, boolPtr, init_step_parameter, simFrom, state, mode):
         #{"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4, "SMOOTHER" : 5}
@@ -213,7 +217,7 @@ class EnKFMain(BaseCClass):
     def fprintf_config(self):
         EnKFMain.cNamespace().fprintf_config(self)
 
-    def select_fs(self, path):
+    def selectFileSystem(self, path):
         EnKFMain.cNamespace().select_fs(self, path)
 
     def fs_exists(self, case):
@@ -222,6 +226,18 @@ class EnKFMain(BaseCClass):
     def saveConfig(self):
         #EnKFMain.cNamespace().fprintf_config(self)
         pass
+
+    def runIteratedEnsembleSmoother(self, last_report_step):
+        #warn: Remember to select correct analysis module RML
+        EnKFMain.cNamespace().run_iterated_ensemble_smoother(self, last_report_step)
+
+    def runOneMoreIteration(self, last_report_step):
+        #warn: need some way of validating that the case has run
+        EnKFMain.cNamespace().run_one_more_iteration(self, last_report_step)
+
+
+    def isCaseInitialized(self, case):
+        return EnKFMain.cNamespace().is_case_initialized(self, case, None)
 
 ##################################################################
 
@@ -263,11 +279,12 @@ EnKFMain.cNamespace().get_templates = cwrapper.prototype("ert_templates_ref enkf
 EnKFMain.cNamespace().get_site_config_file = cwrapper.prototype("char* enkf_main_get_site_config_file(enkf_main)")
 EnKFMain.cNamespace().initialize_from_scratch = cwrapper.prototype("void enkf_main_initialize_from_scratch(enkf_main, stringlist, int, int, bool)")
 EnKFMain.cNamespace().get_history_length = cwrapper.prototype("int enkf_main_get_history_length(enkf_main)")
-EnKFMain.cNamespace().initialize_from_existing__ = cwrapper.prototype("void enkf_main_initialize_from_existing__(enkf_main, char*, int, int, bool_vector, char*, stringlist)")
+EnKFMain.cNamespace().initialize_from_existing__ = cwrapper.prototype("void enkf_main_initialize_from_existing__(enkf_main, char*, int, enkf_state_type_enum, bool_vector, char*, stringlist)")
 EnKFMain.cNamespace().copy_ensemble = cwrapper.prototype("void enkf_main_copy_ensemble(enkf_main, char*, int, int, char*, int, int, bool_vector, char*, stringlist)")
 EnKFMain.cNamespace().get_observations = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)")
 EnKFMain.cNamespace().get_observation_count = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
-EnKFMain.cNamespace().is_initialized = cwrapper.prototype("bool enkf_main_is_initialized(enkf_main)")
+EnKFMain.cNamespace().is_initialized = cwrapper.prototype("bool enkf_main_is_initialized(enkf_main, bool_vector)")
+EnKFMain.cNamespace().is_case_initialized = cwrapper.prototype("bool enkf_main_case_is_initialized(enkf_main, char*, bool_vector)")
 EnKFMain.cNamespace().iget_state = cwrapper.prototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
 
 EnKFMain.cNamespace().get_logh = cwrapper.prototype("log_ref enkf_main_get_logh( enkf_main )")
@@ -285,3 +302,4 @@ EnKFMain.cNamespace().user_select_fs = cwrapper.prototype("void enkf_main_user_s
 # EnKFMain.cNamespace().get_current_fs = cwrapper.prototype("char* enkf_main_get_current_fs(enkf_main)")
 EnKFMain.cNamespace().select_fs = cwrapper.prototype("void enkf_main_select_fs(enkf_main, char*)")
 EnKFMain.cNamespace().fs_exists = cwrapper.prototype("bool enkf_main_fs_exists(enkf_main, char*)")
+

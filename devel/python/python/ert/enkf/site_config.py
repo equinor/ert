@@ -138,7 +138,7 @@ class SiteConfig(BaseCClass):
         host_list = SiteConfig.cNamespace().get_rsh_host_list(self)
         return host_list
 
-    def add_rsh_host(self, host, max_running):
+    def addRshHost(self, host, max_running):
         SiteConfig.cNamespace().add_rsh_host(self, host, max_running)
 
     def free(self):
