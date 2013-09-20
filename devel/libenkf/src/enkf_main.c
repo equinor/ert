@@ -1438,8 +1438,6 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
     int iens;
 
     state_map_deselect_matching( enkf_fs_get_state_map( fs ) , iactive , STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
-    bool_vector_fprintf( iactive , stdout , "IACTIVE" , "%2d");
-
 
     if (enkf_main->verbose) {
       if (run_mode == ENKF_ASSIMILATION)
@@ -1457,12 +1455,14 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
       pthread_t        queue_thread;
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
       
+      
       /* Start the queue */
       if (run_mode != INIT_ONLY) {
         arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
         arg_pack_append_ptr(queue_args  , job_queue);
         arg_pack_append_int(queue_args  , job_size);
         arg_pack_append_bool(queue_args , verbose_queue);
+        job_queue_reset(job_queue);
         pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
       }
 
