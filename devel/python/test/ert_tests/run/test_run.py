@@ -16,10 +16,10 @@ class RunTest(ExtendedTestCase):
 
     def test_cmd(self):
         tr = TestRun("test-data/local/run/config.txt")
-        self.assertEqual( tr.get_cmd() , TestRun.ert_cmd )
+        self.assertEqual( tr.ert_cmd , TestRun.ert_cmd )
 
-        tr.set_cmd("/tmp/test")
-        self.assertEqual( "/tmp/test" , tr.get_cmd() )
+        tr.ert_cmd = "/tmp/test"
+        self.assertEqual( "/tmp/test" , tr.ert_cmd )
 
 
     def test_args(self):

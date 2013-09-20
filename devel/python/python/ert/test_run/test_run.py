@@ -23,9 +23,9 @@ class TestRun:
 
     def __init__(self , config_file , name = None):
         if os.path.exists( config_file ):
-            self._config_file = config_file
-            self.ert_cmd = TestRun.ert_cmd
-            self.path_prefix = TestRun.path_prefix
+            self.__config_file = config_file
+            self.__ert_cmd = TestRun.ert_cmd
+            self.__path_prefix = TestRun.path_prefix
             
             self.args = []
             self.workflows = []
@@ -43,16 +43,29 @@ class TestRun:
 
 
     def config_file(self):
-        return self._config_file
+        return self.__config_file
 
+    #-----------------------------------------------------------------
+
+    def set_path_prefix(self , path_prefix):
+        self.__path_prefix = path_prefix
     
-    def get_cmd(self):
-        return self.ert_cmd
+    def get_path_prefix(self):
+        return self.__path_prefix
 
+    path_prefix = property( get_path_prefix , set_path_prefix )
 
-    def set_cmd(self , cmd):
-        self.ert_cmd = cmd
-        
+    #-----------------------------------------------------------------
+    
+    def get_ert_cmd(self):
+        return self.__ert_cmd
+
+    def set_ert_cmd(self , cmd):
+        self.__ert_cmd = cmd
+
+    ert_cmd = property( get_ert_cmd , set_ert_cmd)
+
+    #-----------------------------------------------------------------
 
     def get_args(self):
         return self.args
