@@ -83,7 +83,7 @@ extern "C" {
   bool                job_queue_is_running( const job_queue_type * queue );
   void                job_queue_set_max_submit( job_queue_type * job_queue , int max_submit );
   int                 job_queue_get_max_submit(const job_queue_type * job_queue );
-  
+  bool                job_queue_get_open(const job_queue_type * job_queue);
   bool                job_queue_get_pause( const job_queue_type * job_queue );
   void                job_queue_set_pause_on( job_queue_type * job_queue);
   void                job_queue_set_pause_off( job_queue_type * job_queue);
