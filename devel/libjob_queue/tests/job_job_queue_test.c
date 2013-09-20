@@ -69,8 +69,8 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
 
   test_assert_int_equal(number_of_jobs - number_of_slowjobs, job_queue_get_num_complete(queue));
   test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
-
-  //test_assert_int_equal(0, job_queue_get_num_complete(queue));
+  job_queue_reset(queue);
+  test_assert_int_equal(0, job_queue_get_num_complete(queue));
 
   job_queue_free(queue);
   queue_driver_free(driver);
@@ -115,8 +115,8 @@ void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_j
 
   test_assert_int_equal(number_of_jobs - number_of_slowjobs, job_queue_get_num_complete(queue));
   test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
-  //job_queue_reset(queue);
-  //test_assert_int_equal(0, job_queue_get_num_complete(queue));
+  job_queue_reset(queue);
+  test_assert_int_equal(0, job_queue_get_num_complete(queue));
   
   job_queue_free(queue);
   queue_driver_free(driver);
