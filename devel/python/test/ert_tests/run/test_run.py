@@ -41,15 +41,14 @@ class RunTest(ExtendedTestCase):
         self.assertEqual( tr.get_workflows() , ["wf1" , "wf2"])
 
         
-    def test_start_no_workflow(self):
+    def test_run_no_workflow(self):
         tr = TestRun("test-data/local/run/config.txt")
         with self.assertRaises(Exception):
-            tr.start()
+            tr.run()
 
         tr.add_workflow("wf1")
         tr.start()
-
-
+        
             
     def test_name(self):
         tr = TestRun("test-data/local/run/config.txt" , "Name")
