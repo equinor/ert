@@ -1246,9 +1246,12 @@ static void job_queue_check_expired(job_queue_type *queue) {
   }
 }
 
+bool job_queue_get_open(const job_queue_type * job_queue) {
+  return job_queue->open;
+}
 
 void job_queue_check_open(job_queue_type* queue) {
-  if (!queue->open) 
+  if (!job_queue_get_open(queue)) 
     util_abort("%s: queue not open and not ready for use; method job_queue_reset must be called before using the queue - aborting\n", __func__ );
 }
 
