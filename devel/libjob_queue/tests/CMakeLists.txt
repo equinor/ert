@@ -42,9 +42,10 @@ add_test( job_queue_driver_test ${EXECUTABLE_OUTPUT_PATH}/job_queue_driver_test 
 #
 set(LSF_SERVERS "LOCAL" CACHE STRING  "List of LSF servers for testing")
 
-
-add_executable( job_lsf_test job_lsf_test.c )
-target_link_libraries( job_lsf_test job_queue util test_util )
+if (HAVE_LSF_LIBRARY)
+   add_executable( job_lsf_test job_lsf_test.c )
+   target_link_libraries( job_lsf_test job_queue util test_util )
+endif()
 
 add_executable( job_lsf_submit_test job_lsf_submit_test.c )
 target_link_libraries( job_lsf_submit_test job_queue util test_util )
