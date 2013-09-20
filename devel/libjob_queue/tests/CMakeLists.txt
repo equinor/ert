@@ -45,12 +45,9 @@ set(LSF_SERVERS "LOCAL" CACHE STRING  "List of LSF servers for testing")
 if (HAVE_LSF_LIBRARY)
    add_executable( job_lsf_test job_lsf_test.c )
    target_link_libraries( job_lsf_test job_queue util test_util )
+   add_test( job_lsf_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_test )
 endif()
 
-add_executable( job_lsf_submit_test job_lsf_submit_test.c )
-target_link_libraries( job_lsf_submit_test job_queue util test_util )
-
-add_executable( job_program job_program.c )
 
 
 if (HAVE_LSF_LIBRARY)
@@ -59,8 +56,10 @@ if (HAVE_LSF_LIBRARY)
    add_test( job_lsb ${EXECUTABLE_OUTPUT_PATH}/job_lsb )
 endif()
 
+add_executable( job_lsf_submit_test job_lsf_submit_test.c )
+target_link_libraries( job_lsf_submit_test job_queue util test_util )
+add_executable( job_program job_program.c )
 
-add_test( job_lsf_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_test )
 if (LSF_SERVERS)
    add_test( job_lsf_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_lsf_submit_test ${EXECUTABLE_OUTPUT_PATH}/job_program ${LSF_SERVERS})
    set_property( TEST job_lsf_submit_test PROPERTY LABELS LSF)

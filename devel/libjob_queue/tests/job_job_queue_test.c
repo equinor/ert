@@ -65,12 +65,15 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
     free(runpath);
   }
 
-  job_queue_run_jobs_finalizeoptional(queue, number_of_jobs, true, false);
+  job_queue_run_jobs(queue, number_of_jobs, true);
 
   test_assert_int_equal(number_of_jobs - number_of_slowjobs, job_queue_get_num_complete(queue));
   test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
+  
+  test_assert_bool_equal(false, job_queue_get_open(queue));
+  job_queue_reset(queue);
+  test_assert_bool_equal(true, job_queue_get_open(queue));
 
-  job_queue_finalize(queue);
   test_assert_int_equal(0, job_queue_get_num_complete(queue));
 
   job_queue_free(queue);
@@ -93,7 +96,7 @@ void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_j
   arg_pack_append_bool( arg_pack , true );
   
   thread_pool_type * pool = thread_pool_alloc(1, true);
-  thread_pool_add_job(pool, job_queue_run_jobs_nofinalize__, arg_pack);
+  thread_pool_add_job(pool, job_queue_run_jobs__, arg_pack);
   
   int submitted_slowjobs = 0;
   for (int i = 0; i < number_of_jobs; i++) {
@@ -116,7 +119,9 @@ void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_j
 
   test_assert_int_equal(number_of_jobs - number_of_slowjobs, job_queue_get_num_complete(queue));
   test_assert_int_equal(number_of_slowjobs, job_queue_get_num_killed(queue));
-  job_queue_finalize(queue);
+  test_assert_bool_equal(false, job_queue_get_open(queue));
+  job_queue_reset(queue);
+  test_assert_bool_equal(true, job_queue_get_open(queue));
   test_assert_int_equal(0, job_queue_get_num_complete(queue));
   
   job_queue_free(queue);
