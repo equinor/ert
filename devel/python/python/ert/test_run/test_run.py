@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
 import os.path
+import subprocess
 from   ert.util import TestAreaContext
 
 class TestRun:
@@ -22,7 +23,7 @@ class TestRun:
     def __init__(self , config_file , name = None):
         if os.path.exists( config_file ):
             self._config_file = config_file
-            self._ert_cmd = TestRun.ert_cmd
+            self.ert_cmd = TestRun.ert_cmd
             self.args = []
             self.workflows = []
             if name:
@@ -38,11 +39,11 @@ class TestRun:
 
     
     def get_cmd(self):
-        return self._ert_cmd
+        return self.ert_cmd
 
 
     def set_cmd(self , cmd):
-        self._ert_cmd = cmd
+        self.ert_cmd = cmd
         
 
     def get_args(self):
@@ -60,12 +61,25 @@ class TestRun:
     def add_workflow(self , workflow):
         self.workflows.append( workflow )
 
+
+    def __run(self , work_area ):
+        argList = [self.ert_cmd]
+        for arg in self.args:
+            argList.append( arg )
+
+        argList.append( self.config_file() )
+        for wf in self.workflows:
+            argList.append( wf )
+
+        return subprocess.call( argList )
+
     
-    def start(self):
+    def run(self):
         if len(self.workflows):
-            pass
             with TestAreaContext(self.name , True) as work_area:
-                print work_area.get_cwd()
-                pass
+                print "Working in:%s" % work_area.get_cwd()
+                work_area.copy_parent_directory( self.config_file() )
+
+                status = self.__run( work_area )
         else:
             raise Exception("Must have added workflows before invoking start()")
