@@ -19,17 +19,25 @@ from   ert.util import TestAreaContext
 
 class TestRun:
     ert_cmd = "ert"
+    path_prefix = None
 
     def __init__(self , config_file , name = None):
         if os.path.exists( config_file ):
             self._config_file = config_file
             self.ert_cmd = TestRun.ert_cmd
+            self.path_prefix = TestRun.path_prefix
+            
             self.args = []
             self.workflows = []
             if name:
                 self.name = name
             else:
                 self.name = config_file.replace("/" , ".")
+                while True:
+                    if self.name[0] == ".":
+                        self.name = self.name[1:]
+                    else:
+                        break
         else:
             raise IOError("No such file or directory: %s" % config_file)
 
@@ -76,7 +84,7 @@ class TestRun:
     
     def run(self):
         if len(self.workflows):
-            with TestAreaContext(self.name , False) as work_area:
+            with TestAreaContext(self.name , prefix = self.path_prefix) as work_area:
                 print "Working in:%s" % work_area.get_cwd()
                 work_area.copy_parent_directory( self.config_file() )
 
