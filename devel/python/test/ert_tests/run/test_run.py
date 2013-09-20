@@ -57,3 +57,8 @@ class RunTest(ExtendedTestCase):
         tr = TestRun("test-data/local/run/config.txt")
         self.assertEqual( "test-data.local.run.config.txt" , tr.name )
         
+
+    def test_runpath(self):
+        tr = TestRun("test-data/local/run/config.txt" , "Name")
+        self.assertEqual( TestRun.path_prefix , tr.path_prefix )
+        
