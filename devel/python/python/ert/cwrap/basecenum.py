@@ -82,6 +82,9 @@ class BaseCEnum(object):
         value = self.value & other.value
         return self.__resolveOrCreateEnum(value)
 
+    def __int__(self):
+        return self.value
+
     @classmethod
     def __createEnum(cls, value):
         enum = cls.__new__(cls)
