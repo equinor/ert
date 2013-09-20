@@ -299,10 +299,10 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
       {
         if (enkf_node_initialize(param_node, iens, enkf_state->rng)) {
           enkf_node_store(param_node, fs, true, node_id);
-          state_map_iset(state_map , iens , STATE_INITIALIZED);
         }
       }
     }
+    state_map_update_undefined(state_map , iens , STATE_INITIALIZED);
     enkf_fs_fsync(fs);
   }
 }
