@@ -24,6 +24,7 @@ from ert.enkf.util import ObsVector, TimeMap
 
 from .enkf_enum import EnkfStateEnum, EnkfRunEnum
 
+from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
 from .block_obs import BlockObs
 from .ecl_config import EclConfig
