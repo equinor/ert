@@ -331,7 +331,7 @@ struct job_queue_struct {
   queue_driver_type       * driver;                             /* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
   int                        status_list[JOB_QUEUE_MAX_STATE];  /* The number of jobs in the different states. */
   int                        old_status_list[JOB_QUEUE_MAX_STATE]; /* Should the display be updated ?? */
-
+  bool                       open;                              /* True if the queue has been reset and is ready for use, false if the queue has been used and not reset */
   bool                       user_exit;                         /* If there comes an external signal to abondond the whole thing user_exit will be set to true, and things start to dwindle down. */ 
   bool                       running;
   bool                       pause_on;
@@ -1008,7 +1008,7 @@ static void job_queue_clear_status( job_queue_type * queue ) {
     load like states?? They 
 */
 
-void job_queue_finalize(job_queue_type * queue) {
+void job_queue_reset(job_queue_type * queue) {
   int i;
   
   for (i=0; i < queue->active_size; i++) 
@@ -1023,6 +1023,7 @@ void job_queue_finalize(job_queue_type * queue) {
   queue->submit_complete = false;
   queue->pause_on        = false;
   queue->user_exit       = false;
+  queue->open            = true; 
   queue->active_size     = 0;
 }
 
@@ -1252,8 +1253,13 @@ static void job_queue_check_expired(job_queue_type *queue) {
   }
 }
 
-void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
-  job_queue_run_jobs_finalizeoptional(queue, num_total_run, verbose, true);
+bool job_queue_get_open(const job_queue_type * job_queue) {
+  return job_queue->open;
+}
+
+void job_queue_check_open(job_queue_type* queue) {
+  if (!job_queue_get_open(queue)) 
+    util_abort("%s: queue not open and not ready for use; method job_queue_reset must be called before using the queue - aborting\n", __func__ );
 }
 
 /**
@@ -1262,12 +1268,16 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
    to call the function job_queue_submit_complete() whan all jobs have been submitted.
 */
 
-void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_run, bool verbose, bool reset_queue) {
+void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
   int trylock = pthread_mutex_trylock( &queue->run_mutex );
   if (trylock != 0)
     util_abort("%s: another thread is already running the queue_manager\n",__func__);
   else {
     /* OK - we have got an exclusive lock to the run_jobs code. */
+    
+    //Check if queue is open. Fails hard if not open
+    job_queue_check_open(queue); 
+    
     const int NUM_WORKER_THREADS = 16;
     queue->running = true;
     queue->work_pool = thread_pool_alloc( NUM_WORKER_THREADS , true );
@@ -1421,13 +1431,16 @@ void job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_
     thread_pool_join( queue->work_pool );
     thread_pool_free( queue->work_pool );
   }
+  
   /*
-    Observe that after the job_queue_finalize() function has been
-    called the queue object should not be queried on any longer; that
-    will silently give horribly wrong results.
-  */
-  if (reset_queue)
-    job_queue_finalize( queue );
+  Set the queue's "open" flag to false to signal that the queue is not ready to be used in a 
+  new job_queue_run_jobs or job_queue_add_job method call as it has not been reset yet. Not 
+  resetting the queue here implies that the queue object is still available for queries after 
+  this method has finished 
+   */
+  
+  queue->open = false; 
+  
   
   pthread_mutex_unlock( &queue->run_mutex );
 }
@@ -1444,17 +1457,6 @@ void job_queue_user_exit( job_queue_type * queue) {
 }
 
 
-
-void * job_queue_run_jobs_nofinalize__(void * __arg_pack) {
-  arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
-  job_queue_type * queue   = arg_pack_iget_ptr(arg_pack , 0);
-  int num_total_run        = arg_pack_iget_int(arg_pack , 1);
-  bool verbose             = arg_pack_iget_bool(arg_pack , 2);
-  
-  job_queue_run_jobs_finalizeoptional(queue , num_total_run , verbose, false);
-  arg_pack_free( arg_pack );
-  return NULL;
-}
 
 void * job_queue_run_jobs__(void * __arg_pack) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
@@ -1554,6 +1556,9 @@ static int job_queue_add_job__(job_queue_type * queue ,
                                int argc , 
                                const char ** argv, 
                                bool mt) {
+  
+  //Fail hard if queue is not open
+  job_queue_check_open(queue); 
   
   if (!queue->user_exit) {/* We do not accept new jobs if a user-shutdown has been iniated. */
     int job_index;        // This should be better protected lockwise
@@ -1740,6 +1745,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->driver           = NULL;
   queue->ok_file          = util_alloc_string_copy( ok_file );
   queue->exit_file        = util_alloc_string_copy( exit_file );
+  queue->open             = true; 
   queue->user_exit        = false;
   queue->pause_on         = false;
   queue->running          = false;
@@ -1756,8 +1762,6 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   pthread_mutex_init( &queue->queue_mutex  , NULL);
   pthread_mutex_init( &queue->run_mutex    , NULL );
 
-  
-  
   return queue;
 }
 
