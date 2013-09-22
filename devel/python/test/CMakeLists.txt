@@ -59,7 +59,7 @@ set(TEST_SOURCES
 )
 
 
-add_python_package("Python test" "${PYTHON_INSTALL_PREFIX}/test" "${TEST_SOURCES}" True)
+add_python_package("Python test" "${PYTHON_INSTALL_PREFIX}/test" "${TEST_SOURCES}" False)
 
 # The test data is located in the current source directory; that is
 # the reason we set that as the working directory for the test
