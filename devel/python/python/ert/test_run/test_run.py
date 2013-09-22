@@ -18,13 +18,13 @@ import subprocess
 from   ert.util import TestAreaContext
 
 class TestRun:
-    ert_cmd = "ert"
+    __ert_cmd = "ert"
     path_prefix = None
 
     def __init__(self , config_file , name = None):
         if os.path.exists( config_file ):
             self.__config_file = config_file
-            self.__ert_cmd = TestRun.ert_cmd
+            self.__ert_cmd = TestRun.__ert_cmd
             self.__path_prefix = TestRun.path_prefix
             
             self.args = []
@@ -84,7 +84,7 @@ class TestRun:
 
 
     def __run(self , work_area ):
-        argList = [self.ert_cmd]
+        argList = [ self.ert_cmd ]
         for arg in self.args:
             argList.append( arg )
 
