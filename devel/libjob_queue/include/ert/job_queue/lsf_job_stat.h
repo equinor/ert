@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2011  Statoil ASA, Norway. 
     
-   The file 'plplot_driver.h' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'lsf_driver.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -16,22 +16,16 @@
    for more details. 
 */
 
-#ifndef __PLPLOT_DRIVER_H__
-#define __PLPLOT_DRIVER_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <stdbool.h>
-
-#include <ert/plot/plot_driver.h>
-
-  void               plplot_close_driver( plot_driver_type * driver );
-  bool               plplot_driver_check_init_arg( const void * init_arg );
-  plot_driver_type * plplot_driver_alloc(const void * init_arg); 
-
-#ifdef __cplusplus
-}
-#endif
-
+#ifdef HAVE_LSF_LIBRARY
+#include <lsf/lsbatch.h>
+#else
+#define JOB_STAT_NULL         0
+#define JOB_STAT_PEND         1
+#define JOB_STAT_SSUSP        0x08       
+#define JOB_STAT_USUSP        0x10       
+#define JOB_STAT_PSUSP        0x02                            		
+#define JOB_STAT_RUN          0x04
+#define JOB_STAT_EXIT         0x20
+#define JOB_STAT_DONE         0x40       
+#define JOB_STAT_UNKWN        0x10000    
 #endif

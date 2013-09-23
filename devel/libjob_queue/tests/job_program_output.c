@@ -1,7 +1,7 @@
 /*
-   Copyright (C) 2011  Statoil ASA, Norway. 
+   Copyright (C) 2012  Statoil ASA, Norway. 
     
-   The file 'plplot_driver.h' is part of ERT - Ensemble based Reservoir Tool. 
+   The file 'job_program.c' is part of ERT - Ensemble based Reservoir Tool. 
     
    ERT is free software: you can redistribute it and/or modify 
    it under the terms of the GNU General Public License as published by 
@@ -15,23 +15,18 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
    for more details. 
 */
+#include <stdlib.h>
+#include <unistd.h>
+#include <ert/util/util.h>
+int main( int argc , char ** argv) {
+  int sleep_time;
+  util_sscanf_int(argv[2], &sleep_time);
+  sleep(sleep_time);
+  
+  char * filename = util_alloc_filename(argv[1], "OK", "status");
 
-#ifndef __PLPLOT_DRIVER_H__
-#define __PLPLOT_DRIVER_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <stdbool.h>
-
-#include <ert/plot/plot_driver.h>
-
-  void               plplot_close_driver( plot_driver_type * driver );
-  bool               plplot_driver_check_init_arg( const void * init_arg );
-  plot_driver_type * plplot_driver_alloc(const void * init_arg); 
-
-#ifdef __cplusplus
+  FILE * file = util_fopen(filename, "w");
+  fprintf(file, "All good");
+  util_fclose(file);
+  exit(0);
 }
-#endif
-
-#endif

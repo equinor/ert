@@ -336,6 +336,7 @@ void enkf_tui_run_menu(void * arg) {
     if (!model_config_has_history( model_config )) {
       menu_item_disable( it_ES_item );
       menu_item_disable( ES_item );
+      menu_item_disable( one_more_item );
     }
   }
   menu_add_separator(menu);
