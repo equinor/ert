@@ -50,7 +50,7 @@ class ForwardModelPanel(HelpedWidget):
         self.addHelpButton()
 
     def createWidgets(self, parent):
-        self.searchableList = SearchableList(parent, list_height=150, list_width=150, ignore_case=True, order_editable=True)
+        self.searchableList = SearchableList(parent, list_height=150, list_width=150, order_editable=True)
         self.addWidget(self.searchableList)
         self.connect(self.searchableList, QtCore.SIGNAL('currentItemChanged(QListWidgetItem, QListWidgetItem)'),self.changeParameter)
         self.connect(self.searchableList, QtCore.SIGNAL('addItem(QListWidgetItem)'), self.addItem)

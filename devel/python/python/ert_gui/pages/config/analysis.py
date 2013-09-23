@@ -25,61 +25,62 @@ from ert_gui.widgets.pathchooser import PathChooser
 from PyQt4 import QtGui
 import ert.enkf
 
+
 def createAnalysisPage(configPanel, parent):
     configPanel.startPage("Analysis")
 
     r = configPanel.addRow(CheckBox(parent, "ENKF rerun", "config/analysis/enkf_rerun", "Perform rerun"))
-    r.initialize = lambda ert : ert.main.analysis_config.get_rerun 
-    r.getter = lambda ert : ert.main.analysis_config.get_rerun
-    r.setter = lambda ert, value : ert.main.analysis_config.set_rerun( value)
+    r.initialize = lambda ert: ert.analysis_config().get_rerun()
+    r.getter = lambda ert: ert.analysis_config().get_rerun()
+    r.setter = lambda ert, value: ert.analysis_config().set_rerun(value)
 
-    r = configPanel.addRow(IntegerSpinner(parent, "Rerun start", "config/analysis/rerun_start",  0, 100000))
-    r.initialize = lambda ert : ert.main.analysis_config.get_rerun_start
-    r.getter = lambda ert : ert.main.analysis_config.get_rerun_start
-    r.setter = lambda ert, value : ert.main.analysis_config.set_rerun_start( value)
+    r = configPanel.addRow(IntegerSpinner(parent, "Rerun start", "config/analysis/rerun_start", 0, 100000))
+    r.initialize = lambda ert: ert.analysis_config().get_rerun_start()
+    r.getter = lambda ert: ert.analysis_config().get_rerun_start()
+    r.setter = lambda ert, value: ert.analysis_config().set_rerun_start(value)
 
     r = configPanel.addRow(PathChooser(parent, "ENKF schedule file", "config/analysis/enkf_sched_file"))
-    r.initialize = lambda ert : ert.main.model_config.get_enkf_sched_file
-    r.getter = lambda ert : ert.main.model_config.get_enkf_sched_file
-    r.setter = lambda ert, value : ert.main.model_config.set_enkf_sched_file(str(value))
+    r.initialize = lambda ert: ert.model_config().get_enkf_sched_file()
+    r.getter = lambda ert: ert.model_config().get_enkf_sched_file()
+    r.setter = lambda ert, value: ert.model_config().set_enkf_sched_file(str(value))
 
-    r = configPanel.addRow(ert_gui.widgets.tablewidgets.KeywordList(parent, "Local config", "config/analysis/local_config"))
-    r.newKeywordPopup = lambda list : QtGui.QFileDialog.getOpenFileName(r, "Select a path", "")
+    r = configPanel.addRow(
+        ert_gui.widgets.tablewidgets.KeywordList(parent, "Local config", "config/analysis/local_config"))
+    r.newKeywordPopup = lambda list: QtGui.QFileDialog.getOpenFileName(r, "Select a path", "")
 
     def get_local_config_files(ert):
-        local_config = ert.main.local_config
-        config_files_pointer = ert.main.local_config.get_config_files
+        local_config = ert.local_config()
+        config_files_pointer = ert.local_config().get_config_files()
         return config_files_pointer
 
     r.initialize = get_local_config_files
     r.getter = get_local_config_files
 
     def add_config_file(ert, value):
-        local_config = ert.main.local_config
-        ert.main.local_config.clear_config_files
+        local_config = ert.local_config()
+        ert.local_config.clear_config_files()
 
         for file in value:
-            ert.main.local_config.add_config_file( file)
+            ert.local_config.add_config_file(file)
 
     r.setter = add_config_file
 
     r = configPanel.addRow(PathChooser(parent, "Update log", "config/analysis/update_log"))
-    r.initialize = lambda ert : ert.main.analysis_config.get_log_path
-    r.getter = lambda ert : ert.main.analysis_config.get_log_path
-    r.setter = lambda ert, value : ert.main.analysis_config.set_log_path( str(value))
-
+    r.initialize = lambda ert: ert.analysis_config().get_log_path()
+    r.getter = lambda ert: ert.analysis_config().get_log_path()
+    r.setter = lambda ert, value: ert.analysis_config().set_log_path(str(value))
 
     configPanel.startGroup("EnKF")
 
     r = configPanel.addRow(DoubleSpinner(parent, "Alpha", "config/analysis/enkf_alpha", 0, 100000, 2))
-    r.initialize = lambda ert : ert.main.analysis_config.get_alpha
-    r.getter = lambda ert : ert.main.analysis_config.get_alpha
-    r.setter = lambda ert, value : ert.main.analysis_config.set_alpha( value)
+    r.initialize = lambda ert: ert.analysis_config().get_alpha()
+    r.getter = lambda ert: ert.analysis_config().get_alpha()
+    r.setter = lambda ert, value: ert.analysis_config().set_alpha(value)
 
     r = configPanel.addRow(CheckBox(parent, "Merge Observations", "config/analysis/enkf_merge_observations", "Perform merge"))
-    r.initialize = lambda ert : ert.main.analysis_config.get_merge_observations 
-    r.getter = lambda ert : ert.main.analysis_config.get_merge_observations
-    r.setter = lambda ert, value : ert.main.analysis_config.set_merge_observations( value)
+    r.initialize = lambda ert: ert.analysis_config().get_merge_observations()
+    r.getter = lambda ert: ert.analysis_config().get_merge_observations()
+    r.setter = lambda ert, value: ert.analysis_config().set_merge_observations(value)
 
     configPanel.endGroup()
     configPanel.endPage()

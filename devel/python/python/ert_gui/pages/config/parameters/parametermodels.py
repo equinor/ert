@@ -15,7 +15,7 @@
 #  for more details. 
 
 
-from ert.ert.enums import enkf_impl_type, field_type
+from ert.ert.enums import enkf_impl_type, field_type, gen_data_file_format
 from PyQt4.QtCore import QObject
 from PyQt4.Qt import SIGNAL
 
@@ -91,8 +91,8 @@ class DataModel(Model):
         Model.__init__(self, name)
         self.name = name
 
-        self["input_format"] = ""
-        self["output_format"] = ""
+        self["input_format"] = gen_data_file_format.GEN_DATA_UNDEFINED
+        self["output_format"] = gen_data_file_format.GEN_DATA_UNDEFINED
         self["template_file"] = ""
         self["template_key"] = ""
         self["init_file_fmt"] = ""

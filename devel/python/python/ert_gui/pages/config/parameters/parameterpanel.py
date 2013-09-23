@@ -60,8 +60,8 @@ class ParameterPanel(HelpedWidget):
         self.addWidget(self.pagesWidget)
 
         self.connect(self.searchableList, QtCore.SIGNAL('currentItemChanged(QListWidgetItem, QListWidgetItem)'), self.changeParameter)
-        self.connect(self.searchableList, QtCore.SIGNAL('addItem(QListWidgetItem)'), self.addItem)
-        self.connect(self.searchableList, QtCore.SIGNAL('removeItem(QListWidgetItem)'), self.removeItem)
+        self.connect(self.searchableList, QtCore.SIGNAL('addItem(QListWidget)'), self.addItem)
+        self.connect(self.searchableList, QtCore.SIGNAL('removeItem(QListWidget)'), self.removeItem)
 
         #self.addHelpButton()
 
