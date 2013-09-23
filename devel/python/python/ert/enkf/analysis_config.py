@@ -15,7 +15,7 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
-
+from ert.enkf import AnalysisIterConfig
 
 class AnalysisConfig(BaseCClass):
     def __init__(self):
@@ -51,6 +51,10 @@ class AnalysisConfig(BaseCClass):
     def set_merge_observations(self, merge_observations):
         return AnalysisConfig.cNamespace().set_merge_observations(self, merge_observations)
 
+    def get_iter_config(self):
+        """ @rtype: AnalysisIterConfig """
+        return AnalysisConfig.cNamespace().get_iter_config(self).setParent(self)
+
     def free(self):
         AnalysisConfig.cNamespace().free(self)
 
@@ -73,4 +77,4 @@ AnalysisConfig.cNamespace().get_alpha              = cwrapper.prototype("double 
 AnalysisConfig.cNamespace().set_alpha              = cwrapper.prototype("void analysis_config_set_alpha(analysis_config, double)")
 AnalysisConfig.cNamespace().get_merge_observations = cwrapper.prototype("bool analysis_config_get_merge_observations(analysis_config)")
 AnalysisConfig.cNamespace().set_merge_observations = cwrapper.prototype("void analysis_config_set_merge_observations(analysis_config, bool)")
-
+AnalysisConfig.cNamespace().get_iter_config        = cwrapper.prototype("analysis_iter_config_ref analysis_config_get_iter_config(analysis_config)")
