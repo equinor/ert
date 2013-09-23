@@ -1,6 +1,6 @@
 import os
 from ert.ecl import EclSum
-from ert.enkf import BlockObs, AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, EnkfStateEnum
+from ert.enkf import BlockObs, AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig
 from ert.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, EnsConfig
 from ert.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, PlotConfig
 from ert.enkf.enkf_main import EnKFMain
@@ -26,9 +26,6 @@ class EnKFLibraryTest(ExtendedTestCase):
                 temp = cls()
 
 
-    def test_enums(self):
-        print(EnkfStateEnum.enum_names)
-
     def test_ecl_config_creation(self):
         with self.assertRaises(NotImplementedError):
             ecl_config = EclConfig()
@@ -44,7 +41,9 @@ class EnKFLibraryTest(ExtendedTestCase):
             with self.assertRaises(AttributeError):
                 self.assertIsInstance(main.ecl_config().get_refcase(), EclSum)
 
-            time_map = main.get_fs().get_time_map()
+            file_system = main.getFileSystem()
+            self.assertEqual(file_system.getCaseName(), "default")
+            time_map = file_system.get_time_map()
             self.assertIsInstance(time_map, TimeMap)
 
             del main
