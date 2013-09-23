@@ -4,5 +4,5 @@ set(PYTHON_SOURCES
     enkf_var_type_enum.py
 )
 
-add_python_package("Python ert.enkf.util" ${PYTHON_INSTALL_PREFIX}/ert/enkf/util "${PYTHON_SOURCES}" True)
+add_python_package("Python ert.enkf.enums" ${PYTHON_INSTALL_PREFIX}/ert/enkf/util "${PYTHON_SOURCES}" True)
 
