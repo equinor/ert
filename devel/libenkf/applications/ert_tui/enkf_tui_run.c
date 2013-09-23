@@ -318,6 +318,7 @@ void enkf_tui_run_menu(void * arg) {
   {
     const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
     const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+    const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
     
     menu_item_type * enkf_item         = menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start         , enkf_main , NULL);
     menu_item_type * restart_enkf_item = menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__       , enkf_main , NULL);
@@ -332,6 +333,9 @@ void enkf_tui_run_menu(void * arg) {
     
     if (!ecl_config_has_init_section( ecl_config )) 
       menu_item_disable( enkf_item );
+
+    if (!analysis_config_get_module_option(analysis_config , ANALYSIS_ITERABLE))
+      menu_item_disable( it_ES_item );
 
     if (!model_config_has_history( model_config )) {
       menu_item_disable( it_ES_item );
