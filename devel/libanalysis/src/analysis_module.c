@@ -82,9 +82,12 @@ static analysis_module_type * analysis_module_alloc_empty( const char * user_nam
   module->get_int         = NULL;
   module->get_double      = NULL;
   module->get_ptr         = NULL;
-  module->user_name     = util_alloc_string_copy( user_name );
-  module->symbol_table  = util_alloc_string_copy( symbol_table );
-  module->lib_name      = util_alloc_string_copy( lib_name );
+  module->alloc           = NULL;
+
+  module->user_name       = util_alloc_string_copy( user_name );
+  module->symbol_table    = util_alloc_string_copy( symbol_table );
+  module->lib_name        = util_alloc_string_copy( lib_name );
+
   return module;
 }
 
@@ -120,7 +123,7 @@ static analysis_module_type * analysis_module_alloc__( rng_type * rng ,
   module->get_double        = table->get_double;
   module->get_ptr           = table->get_ptr;
 
-  if (module->alloc != NULL)
+  if (module->alloc)
     module->module_data = module->alloc( rng );
 
   if (!analysis_module_internal_check( module )) {
@@ -383,7 +386,7 @@ bool analysis_module_get_option( const analysis_module_type * module , long flag
 
 
 bool analysis_module_has_var( const analysis_module_type * module , const char * var) {
-  if (module->has_var != NULL)
+  if (module->has_var)
     return module->has_var( module->module_data , var );
   else
     return false;
