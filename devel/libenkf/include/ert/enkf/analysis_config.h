@@ -47,6 +47,7 @@ void                   analysis_config_load_internal_module( analysis_config_typ
 void                   analysis_config_load_internal_modules( analysis_config_type * analysis );
 void                   analysis_config_reload_module( analysis_config_type * config , const char * module_name);
 bool                   analysis_config_get_module_option( const analysis_config_type * config , long flag);
+bool                   analysis_config_load_external_module( analysis_config_type * config , const char * user_name , const char * lib_name);
 
 stringlist_type      * analysis_config_alloc_module_names( analysis_config_type * config );
 const char           * analysis_config_get_log_path( const analysis_config_type * config );
