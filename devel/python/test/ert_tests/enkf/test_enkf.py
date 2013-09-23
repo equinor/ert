@@ -16,8 +16,7 @@
 #  for more details.
 
 import os
-from ert.enkf import EnkfStateEnum, EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState
-from ert.enkf.local_config import LocalConfig
+from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfRunEnum, EnkfVarType
 from ert.enkf.enkf_main import EnKFMain
 from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
@@ -38,8 +37,20 @@ class EnKFTest(ExtendedTestCase):
             del main
 
     def test_enum(self):
-        self.assertEqual(EnkfStateEnum.FORECAST, 2)
-        self.assertEqual(EnkfStateEnum.ANALYZED, 4)
+        self.assertEqual(EnkfStateType.UNDEFINED, 0)
+        self.assertEqual(EnkfStateType.FORECAST, 2)
+        self.assertEqual(EnkfStateType.ANALYZED, 4)
+        self.assertEqual(EnkfStateType.BOTH, 6)
+
+        self.assertEqual(EnkfRunEnum.ENKF_ASSIMILATION, 1)
+        self.assertEqual(EnkfRunEnum.ENSEMBLE_EXPERIMENT, 2)
+
+        self.assertEqual(EnkfVarType.INVALID_VAR, None)
+        self.assertEqual(EnkfVarType.PARAMETER, 1)
+        self.assertEqual(EnkfVarType.DYNAMIC_STATE, 2)
+        self.assertEqual(EnkfVarType.DYNAMIC_RESULT, 4)
+        self.assertEqual(EnkfVarType.STATIC_STATE, None)
+        self.assertEqual(EnkfVarType.INDEX_STATE, None)
 
     def test_config( self ):
         with TestAreaContext("enkf_test") as work_area:
@@ -47,18 +58,18 @@ class EnKFTest(ExtendedTestCase):
 
             main = EnKFMain("simple_config/minimum_config", self.site_config_file)
 
-            self.assertIsInstance(main.ensemble_config(), EnsConfig)
+            self.assertIsInstance(main.ensembleConfig(), EnsConfig)
             self.assertIsInstance(main.analysis_config(), AnalysisConfig)
-            self.assertIsInstance(main.model_config(), ModelConfig)
+            self.assertIsInstance(main.getModelConfig(), ModelConfig)
             #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
-            self.assertIsInstance(main.site_config(), SiteConfig)
+            self.assertIsInstance(main.siteConfig(), SiteConfig)
             self.assertIsInstance(main.ecl_config(), EclConfig)
             self.assertIsInstance(main.plot_config(), PlotConfig)
 
             # self.main.load_obs(obs_config_file)
             self.assertIsInstance(main.get_obs(), EnkfObs)
             self.assertIsInstance(main.get_templates(), ErtTemplates)
-            self.assertIsInstance(main.get_fs(), EnkfFs)
+            self.assertIsInstance(main.getFileSystem(), EnkfFs)
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
             self.assertIsInstance(main.iget_state(0), EnKFState)
 
