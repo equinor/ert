@@ -25,6 +25,7 @@
 #include <ert/util/matrix.h>
 #include <ert/util/util.h>
 #include <ert/util/rng.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/analysis/analysis_module.h>
 #include <ert/analysis/analysis_table.h>
@@ -213,6 +214,7 @@ bool analysis_module_internal( const analysis_module_type * module ) {
 /*****************************************************************/
 
 static UTIL_SAFE_CAST_FUNCTION( analysis_module , ANALYSIS_MODULE_TYPE_ID )
+UTIL_IS_INSTANCE_FUNCTION( analysis_module , ANALYSIS_MODULE_TYPE_ID )
 
 
 void analysis_module_free( analysis_module_type * module ) {

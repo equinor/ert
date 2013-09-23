@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+#include <ert/util/type_macros.h>
 #include <ert/util/matrix.h>
 
 
@@ -103,6 +104,8 @@ extern "C" {
   double                 analysis_module_get_double( const analysis_module_type * module , const char * var);
   int                    analysis_module_get_int( const analysis_module_type * module , const char * var);
   void *                 analysis_module_get_ptr( const analysis_module_type * module , const char * var);
+
+  UTIL_IS_INSTANCE_HEADER( analysis_module );
 
 #ifdef  __cplusplus
 }
