@@ -27,8 +27,8 @@ class BaseCClass(object):
 
     @classmethod
     def from_param(cls, c_class_object):
-        if not isinstance(c_class_object, BaseCClass):
-            raise ValueError("c_class_object must be an BaseCClass instance!")
+        if c_class_object is not None and not isinstance(c_class_object, BaseCClass):
+            raise ValueError("c_class_object must be a BaseCClass instance!")
 
         if c_class_object is None or not hasattr(c_class_object, "_c_pointer"):
             return ctypes.c_void_p()
