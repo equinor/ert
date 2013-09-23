@@ -4,6 +4,7 @@ add_subdirectory( util )
 set(PYTHON_SOURCES
     __init__.py
     analysis_config.py
+    analysis_iter_config.py
     block_obs.py
     ecl_config.py
     enkf_enum.py
