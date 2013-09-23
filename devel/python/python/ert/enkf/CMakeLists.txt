@@ -1,4 +1,5 @@
 add_subdirectory( data )
+add_subdirectory( enums )
 add_subdirectory( util )
 
 set(PYTHON_SOURCES
