@@ -1,5 +1,3 @@
-import ert.enkf
-
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .field_config import FieldConfig
