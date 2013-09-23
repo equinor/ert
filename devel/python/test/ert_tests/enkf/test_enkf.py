@@ -47,7 +47,7 @@ class EnKFTest(ExtendedTestCase):
 
             main = EnKFMain("simple_config/minimum_config", self.site_config_file)
 
-            self.assertIsInstance(main.ensemble_config(), EnsConfig)
+            self.assertIsInstance(main.ensembleConfig(), EnsConfig)
             self.assertIsInstance(main.analysis_config(), AnalysisConfig)
             self.assertIsInstance(main.getModelConfig(), ModelConfig)
             #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
