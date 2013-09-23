@@ -21,9 +21,7 @@ clib.ert_load("libanalysis.so")
 ENKF_LIB = clib.ert_load("libenkf.so")
 
 from .util import ObsVector, TimeMap
-from .enums import EnkfStateType, EnkfVarType
-
-from .enkf_enum import EnkfStateEnum, EnkfRunEnum
+from .enums import EnkfStateType, EnkfVarType, EnkfRunEnum
 
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig

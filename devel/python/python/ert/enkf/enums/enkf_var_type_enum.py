@@ -18,9 +18,12 @@ from ert.enkf import ENKF_LIB
 
 
 class EnkfVarType(BaseCEnum):
+    INVALID_VAR = None
     PARAMETER = None
     DYNAMIC_STATE = None
     DYNAMIC_RESULT = None
+    STATIC_STATE = None
+    INDEX_STATE = None
 
 
 EnkfVarType.addEnum("PARAMETER", 1)

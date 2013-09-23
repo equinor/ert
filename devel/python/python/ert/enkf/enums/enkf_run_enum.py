@@ -17,23 +17,13 @@ from ert.cwrap import BaseCEnum
 from ert.enkf import ENKF_LIB
 
 
-class EnkfStateType(BaseCEnum):
-    UNDEFINED = None
-    FORECAST = None
-    ANALYZED = None
-    BOTH = None
-
-    INITIALIZATION_TYPES = None
+class EnkfRunEnum(BaseCEnum):
+    ENKF_ASSIMILATION = None
+    ENSEMBLE_EXPERIMENT = None
 
 
-# EnkfStateType.addEnum("UNDEFINED", 0)
-# EnkfStateType.addEnum("FORECAST", 2)
-# EnkfStateType.addEnum("ANALYZED", 4)
-# EnkfStateType.addEnum("BOTH", 6)
-EnkfStateType.populateEnum(ENKF_LIB, "enkf_state_enum_iget")
-EnkfStateType.registerEnum(ENKF_LIB, "enkf_state_type_enum")
-
-EnkfStateType.INITIALIZATION_TYPES = [EnkfStateType.ANALYZED, EnkfStateType.FORECAST]
+EnkfRunEnum.populateEnum(ENKF_LIB, "enkf_run_enum_iget")
+EnkfRunEnum.registerEnum(ENKF_LIB, "enkf_run_enum")
 
 
 

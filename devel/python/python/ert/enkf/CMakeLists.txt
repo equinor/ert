@@ -8,7 +8,6 @@ set(PYTHON_SOURCES
     analysis_iter_config.py
     block_obs.py
     ecl_config.py
-    enkf_enum.py
     enkf_fs.py
     enkf_main.py
     enkf_obs.py
