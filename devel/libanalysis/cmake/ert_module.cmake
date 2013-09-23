@@ -1,6 +1,6 @@
 function( ert_module module args source_files )
     
-    set( build_file ${CMAKE_CURRENT_BINARY_DIR}/${module}.so )
+    set( build_file ${LIBRARY_OUTPUT_PATH}/${module}.so )
     set( depends analysis )
     set( arg_string "${module} ${args}")
     separate_arguments( arg_list UNIX_COMMAND "${arg_string}")
