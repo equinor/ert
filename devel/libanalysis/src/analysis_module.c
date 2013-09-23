@@ -375,7 +375,10 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
 
 
 bool analysis_module_get_option( const analysis_module_type * module , long flag) {
-  return (flag & module->get_options( module->module_data , flag ));
+  if ((flag & module->get_options( module->module_data , flag )) == flag)
+      return true;
+  else
+      return false;
 }
 
 
