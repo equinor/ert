@@ -260,13 +260,16 @@ void analysis_config_load_internal_module( analysis_config_type * config ,
 
 
 
-void analysis_config_load_external_module( analysis_config_type * config , 
+bool analysis_config_load_external_module( analysis_config_type * config ,
                                            const char * user_name , const char * lib_name) {
   analysis_module_type * module = analysis_module_alloc_external( config->rng , user_name , lib_name );
-  if (module != NULL)
+  if (module != NULL) {
     hash_insert_hash_owned_ref( config->analysis_modules , user_name , module , analysis_module_free__ );
-  else
+    return true;
+  } else {
     fprintf(stderr,"** Warning: failed to load module %s from %s.\n",user_name , lib_name);
+    return false;
+  }
 }
 
 
@@ -335,6 +338,16 @@ analysis_module_type * analysis_config_get_module( analysis_config_type * config
 bool analysis_config_has_module(analysis_config_type * config , const char * module_name) {
   return hash_has_key( config->analysis_modules , module_name );
 }
+
+bool analysis_config_get_module_option( const analysis_config_type * config , long flag) {
+  if (config->analysis_module) {
+    printf("Iterable: %d \n", analysis_module_get_option( config->analysis_module , flag));
+    return analysis_module_get_option(config->analysis_module , flag);
+  }
+  else
+    return false;
+}
+
 
 bool analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
   if (analysis_config_has_module( config , module_name )) { 
