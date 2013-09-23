@@ -70,7 +70,6 @@ class ErtImportTest(ExtendedTestCase):
         self.assertImportable("ert.enkf.analysis_iter_config")
         self.assertImportable("ert.enkf.block_obs")
         self.assertImportable("ert.enkf.ecl_config")
-        self.assertImportable("ert.enkf.enkf_enum")
         self.assertImportable("ert.enkf.enkf_fs")
         self.assertImportable("ert.enkf.enkf_main")
         self.assertImportable("ert.enkf.enkf_obs")
