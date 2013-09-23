@@ -189,10 +189,13 @@ class EnKFMain(BaseCClass):
         #{"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4, "SMOOTHER" : 5}
         if mode == 1:
             EnKFMain.cNamespace().run_assimilation(self, boolPtr, init_step_parameter, simFrom, state)
+
         if mode == 2:
             EnKFMain.cNamespace().run_exp(self, boolPtr, True, init_step_parameter, simFrom, state, True)
+
         if mode == 4:
-            EnKFMain.cNamespace().run_exp(self, boolPtr, False, init_step_parameter, simFrom, state, True)
+            EnKFMain.cNamespace().run_exp(self, boolPtr, False, init_step_parameter, simFrom, state , True)
+
         if mode == 5:
             EnKFMain.cNamespace().run_smoother(self, "AUTOSMOOTHER", True)
 
@@ -282,4 +285,3 @@ EnKFMain.cNamespace().user_select_fs = cwrapper.prototype("void enkf_main_user_s
 # EnKFMain.cNamespace().get_current_fs = cwrapper.prototype("char* enkf_main_get_current_fs(enkf_main)")
 EnKFMain.cNamespace().select_fs = cwrapper.prototype("void enkf_main_select_fs(enkf_main, char*)")
 EnKFMain.cNamespace().fs_exists = cwrapper.prototype("bool enkf_main_fs_exists(enkf_main, char*)")
-

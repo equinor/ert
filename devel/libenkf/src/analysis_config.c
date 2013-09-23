@@ -338,7 +338,18 @@ bool analysis_config_has_module(analysis_config_type * config , const char * mod
 
 bool analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
   if (analysis_config_has_module( config , module_name )) { 
-    config->analysis_module = analysis_config_get_module( config , module_name );
+    analysis_module_type * module = analysis_config_get_module( config , module_name );
+    
+    if (analysis_module_get_option( module , ANALYSIS_ITERABLE)) {
+      if (analysis_config_get_single_node_update( config )) {
+        fprintf(stderr," ** Warning: the module:%s requires the setting \"SINGLE_NODE_UPDATE FALSE\" in the config file.\n" , module_name);
+        fprintf(stderr," **          the module has NOT been selected. \n");
+        
+        return false;
+      } 
+    }
+    
+    config->analysis_module = module;
     return true;
   } else {
     if (config->analysis_module == NULL)
@@ -586,7 +597,7 @@ void analysis_config_fprintf_config( analysis_config_type * config , FILE * stre
   }
 
   if (config->overlap_alpha != DEFAULT_ENKF_ALPHA ) {
-    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_TRUNCATION_KEY );
+    fprintf( stream , CONFIG_KEY_FORMAT   , ENKF_ALPHA_KEY );
     fprintf( stream , CONFIG_FLOAT_FORMAT , config->overlap_alpha );
     fprintf( stream , "\n");
   }

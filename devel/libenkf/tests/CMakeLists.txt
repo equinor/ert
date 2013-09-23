@@ -7,6 +7,9 @@ target_link_libraries( enkf_site_config enkf test_util )
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
 
+add_executable( enkf_pca_plot enkf_pca_plot.c )
+target_link_libraries( enkf_pca_plot enkf test_util)
+add_test( enkf_pca_plot ${EXECUTABLE_OUTPUT_PATH}/enkf_pca_plot)
 
 add_executable( enkf_cases_config enkf_cases_config.c )
 target_link_libraries( enkf_cases_config enkf test_util )
@@ -28,6 +31,22 @@ target_link_libraries( enkf_ensemble_GEN_PARAM enkf test_util )
 add_executable( enkf_ensemble enkf_ensemble.c )
 target_link_libraries( enkf_ensemble enkf test_util )
 
+add_executable( enkf_local_obsdata_node enkf_local_obsdata_node.c )
+target_link_libraries( enkf_local_obsdata_node enkf test_util)
+add_test( enkf_local_obsdata_node ${EXECUTABLE_OUTPUT_PATH}/enkf_local_obsdata_node )
+
+add_executable( enkf_local_obsdata enkf_local_obsdata.c )
+target_link_libraries( enkf_local_obsdata enkf test_util)
+add_test( enkf_local_obsdata ${EXECUTABLE_OUTPUT_PATH}/enkf_local_obsdata )
+
+add_executable( enkf_active_list enkf_active_list.c )
+target_link_libraries( enkf_active_list enkf test_util)
+add_test( enkf_active_list ${EXECUTABLE_OUTPUT_PATH}/enkf_active_list )
+
+add_executable( enkf_obs_tstep_list enkf_obs_tstep_list.c )
+target_link_libraries( enkf_obs_tstep_list enkf test_util)
+add_test( enkf_obs_tstep_list ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_tstep_list )
+
 add_executable( enkf_main enkf_main.c )
 target_link_libraries( enkf_main enkf test_util )
 add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
@@ -45,6 +64,18 @@ add_test( enkf_forward_init_GEN_KW_FALSE
           ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW 
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_KW_false FALSE)
 
+
+#-----------------------------------------------------------------
+
+add_executable( enkf_state_report_step_compatible enkf_state_report_step_compatible.c )
+target_link_libraries( enkf_state_report_step_compatible enkf test_util )
+
+add_test( enkf_state_report_step_compatible_TRUE 
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true  config_ecl_sum_compatible_true TRUE)
+
+add_test( enkf_state_report_step_compatible_FALSE 
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_false  config_ecl_sum_compatible_false FALSE)
+                                                                      
 
 #-----------------------------------------------------------------
 
@@ -153,6 +184,8 @@ add_test( enkf_meas_data  ${EXECUTABLE_OUTPUT_PATH}/enkf_meas_data )
 
 set_property( TEST enkf_time_map2     PROPERTY LABELS StatoilData )
 set_property( TEST enkf_site_config   PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_report_step_compatible_TRUE  PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_report_step_compatible_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_SURFACE_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_FALSE  PROPERTY LABELS StatoilData )
