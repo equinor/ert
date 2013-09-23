@@ -336,7 +336,12 @@ void enkf_tui_run_menu(void * arg) {
 
     if (!analysis_config_get_module_option(analysis_config , ANALYSIS_ITERABLE))
       menu_item_disable( it_ES_item );
-
+    else {
+      menu_item_disable( enkf_item );
+      menu_item_disable( restart_enkf_item );
+      menu_item_disable( ES_item );
+    }
+      
     if (!model_config_has_history( model_config )) {
       menu_item_disable( it_ES_item );
       menu_item_disable( ES_item );
@@ -372,5 +377,4 @@ void enkf_tui_run_menu(void * arg) {
   menu_add_item(menu , "Help"                                  , "hH" , enkf_tui_help_menu_run   , enkf_main , NULL); 
   menu_run(menu);
   menu_free(menu);
-
 }
