@@ -336,6 +336,14 @@ bool analysis_config_has_module(analysis_config_type * config , const char * mod
   return hash_has_key( config->analysis_modules , module_name );
 }
 
+bool analysis_config_get_module_option( const analysis_config_type * config , long flag) {
+  if (config->analysis_module)
+    return analysis_module_get_option(config->analysis_module , flag);
+  else
+    return false;
+}
+
+
 bool analysis_config_select_module( analysis_config_type * config , const char * module_name ) {
   if (analysis_config_has_module( config , module_name )) { 
     analysis_module_type * module = analysis_config_get_module( config , module_name );
