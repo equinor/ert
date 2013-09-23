@@ -19,7 +19,6 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 
 import datetime
 import time
-from ert.ert.erttypes import time_t
 
 from ert_gui.widgets.util import print_timing
 from ert_gui.pages.plot.plotdata import PlotData

@@ -55,7 +55,7 @@ def createSimulationsPage(configPanel, parent):
     def get_forward_model(ert):
         site_config = ert.main.site_config
         installed_jobs = ert.main.site_config.get_installed_jobs
-        available_jobs = installed_jobs.alloc_list
+        available_jobs = installed_jobs.getAvailableJobNames()
 
         result = {'available_jobs': available_jobs}
 
@@ -170,7 +170,7 @@ def createSimulationsPage(configPanel, parent):
 
     def get_run_templates(ert):
         templates = ert.main.get_templates
-        template_names = templates.alloc_list
+        template_names = templates.getTemplateNames()
         
         result = []
         for name in template_names:

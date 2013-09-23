@@ -34,7 +34,7 @@ class RunWidget(HelpedWidget):
     state_enum = {"UNDEFINED" : 0, "SERIALIZED" : 1, "FORECAST" : 2, "ANALYZED" : 4, "BOTH" : 6}
 
     def __init__(self, parent=None):
-        HelpedWidget.__init__(self, parent, widgetLabel="", helpLabel="") #
+        HelpedWidget.__init__(self, parent, widget_label="", help_label="") #
 
         self.addLayout(self.createPanel(parent))
 

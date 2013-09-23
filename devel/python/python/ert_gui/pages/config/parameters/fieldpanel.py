@@ -38,8 +38,8 @@ class FieldPanel(QtGui.QFrame):
         self.fieldModel = FieldModel("")
 
         self.fieldType = ComboChoice(self, field_type.values(), "", "config/ensemble/field_type")
-        self.fieldType.setter = lambda model, value: self.typeChanged(field_type[str(value)])
-        self.fieldType.getter = lambda model: str(self.fieldModel["type"])
+        self.fieldType.setter = lambda model, value: self.typeChanged(value)
+        self.fieldType.getter = lambda model: self.fieldModel["type"]
         self.fieldType.initialize = ContentModel.emptyInitializer
 
         self.min = DoubleBox(self, "", "config/ensemble/field_min")

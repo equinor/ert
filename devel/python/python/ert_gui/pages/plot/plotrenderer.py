@@ -16,7 +16,8 @@
 
 
 from matplotlib.dates import AutoDateLocator, datetime, matplotlib
-import ert.ert.erttypes as erttypes
+from ert.util import ctime
+
 
 class PlotRenderer:
     """An abstract plotter that plots data"""
@@ -39,7 +40,7 @@ class PlotRenderer:
     def __convertDate(self, ert_time):
         """Convert normal dates to matplotlib dates."""
         if ert_time is None:
-            ert_time = erttypes.time_t(0)
+            ert_time = ctime(0)
 
         if isinstance(ert_time, datetime.date):
             return matplotlib.dates.date2num(ert_time)

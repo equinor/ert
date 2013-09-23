@@ -16,6 +16,7 @@
 
 
 from PyQt4 import QtGui, QtCore
+from ert_gui import widgets
 from ert_gui.widgets.configpanel import ConfigPanel
 from ert_gui.widgets.pathchooser import PathChooser
 from ert_gui.widgets.tablewidgets import KeywordTable
@@ -198,7 +199,7 @@ class JobConfigPanel(ConfigPanel):
             job = jid(ert)
             job.set_max_running_minutes(value)
 
-        def get_max_running(ert):
+        def get_max_running_minutes(ert):
             job = jid(ert)
             return job.get_max_running_minutes
         

@@ -22,7 +22,6 @@ import ert.ert.ertwrapper as ertwrapper
 import ert.ert.enums as enums
 from PyQt4.QtGui import QWidget, QFormLayout, QSpinBox, QComboBox
 from PyQt4.QtCore import SIGNAL
-from ert.ert.erttypes import time_t, time_vector
 import numpy
 from ert.util.tvector import DoubleVector
 import datetime

@@ -12,12 +12,11 @@
 #  FITNESS FOR A PARTICULAR PURPOSE.   
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
-
+#  for more details.
+from ert.util import ctime
 
 from plotconfig import PlotConfig
 import matplotlib
-from ert.ert.erttypes import time_t
 import datetime
 from  PyQt4.QtCore import QObject, SIGNAL, pyqtSignal
 
@@ -159,8 +158,8 @@ class PlotSettings(QObject):
         else:
             x_limit = self._x_limits[0]
 
-        if not x_limit is None and data_type == "time" and not isinstance(x_limit, time_t):
-            x_limit = time_t(long(round(x_limit)))
+        if not x_limit is None and data_type == "time" and not isinstance(x_limit, ctime):
+            x_limit = ctime(long(round(x_limit)))
 
         return x_limit
 
@@ -177,8 +176,8 @@ class PlotSettings(QObject):
         else:
             x_limit = self._x_limits[1]
 
-        if not x_limit is None and data_type == "time" and not isinstance(x_limit, time_t):
-            x_limit = time_t(long(round(x_limit)))
+        if not x_limit is None and data_type == "time" and not isinstance(x_limit, ctime):
+            x_limit = ctime(long(round(x_limit)))
 
         return x_limit
 

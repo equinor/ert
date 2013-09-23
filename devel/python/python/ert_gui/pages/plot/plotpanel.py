@@ -35,7 +35,8 @@ from plotconfig import PlotConfigPanel
 from PyQt4.QtGui import QTabWidget, QFormLayout, QFrame, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QToolButton, QMainWindow
 from PyQt4.QtGui import QCalendarWidget
 import plotsettings
-import ert.ert.erttypes as erttypes
+
+from ert.util import ctime
 
 class PlotPanel(QtGui.QWidget):
     
@@ -116,10 +117,10 @@ class PlotPanel(QtGui.QWidget):
             self.v_zoom_slider.setMaxValue(plot_settings.getMaxYZoom())
             self.v_zoom_slider.blockSignals(state)
 
-            if isinstance(x_min, erttypes.time_t):
+            if isinstance(x_min, ctime):
                 x_min = x_min.value
 
-            if isinstance(x_max, erttypes.time_t):
+            if isinstance(x_max, ctime):
                 x_max = x_max.value
 
             #todo: time data on y-axis

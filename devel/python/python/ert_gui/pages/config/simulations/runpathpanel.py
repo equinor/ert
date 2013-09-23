@@ -118,7 +118,7 @@ class RunpathMemberItemDelegate(QtGui.QStyledItemDelegate):
 class RunpathMemberPanel(HelpedWidget):
     """A dialog that shows the progress of a simulation"""
     def __init__(self, parent=None, widgetLabel="", helpLabel=""):
-        HelpedWidget.__init__(self, widgetLabel=widgetLabel, helpLabel=helpLabel)
+        HelpedWidget.__init__(self, widget_label=widgetLabel, help_label=helpLabel)
 
         layout = QtGui.QVBoxLayout()
         self.runpath_member_list = RunpathMemberList()

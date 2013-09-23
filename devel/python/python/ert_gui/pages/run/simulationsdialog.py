@@ -42,7 +42,7 @@ class SimulationsDialog(QtGui.QDialog):
         self.simulationProgress.setValue(0)
         self.connect(self.simulationProgress, QtCore.SIGNAL('setValue(int)'), self.updateProgress)
 
-        self.cogwheel = Cogwheel(size=20)
+        self.cogwheel = Cogwheel(size=40)
 
         memberLayout = QtGui.QVBoxLayout()
 

@@ -15,7 +15,6 @@
 #  for more details. 
 
 
-from ert.ert.erttypes import time_t
 from ert_gui.widgets.helpedwidget import ContentModel
 from ert_gui.widgets.util import print_timing, resourceIcon
 from ert_gui.pages.config.parameters.parametermodels import DataModel, KeywordModel, FieldModel, SummaryModel
@@ -112,12 +111,12 @@ class PlotDataFetcher(ContentModel, QObject):
             ert = self.getModel()
 
             if self.fs_for_comparison_plots:
-                fs_for_comparison_plots.__del__
+                self.fs_for_comparison_plots.__del__
                 self.fs_for_comparison_plots = None
                 self.comparison_fs_name = "None"
 
             if not new_fs == "None":
-                self.fs_for_comparison_plots = ert.main.get_alt_fs(new_fs, false, true)
+                self.fs_for_comparison_plots = ert.main.get_alt_fs(new_fs, False, True)
                 self.comparison_fs_name = new_fs
 
             self.__dataChanged()

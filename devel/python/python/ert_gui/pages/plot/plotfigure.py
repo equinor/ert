@@ -20,8 +20,8 @@ import matplotlib.lines
 import matplotlib.text
 
 import numpy
-import ert.ert.erttypes as erttypes
 import plotsettings
+
 from plotrenderer import DefaultPlotRenderer
 
 class PlotFigure:

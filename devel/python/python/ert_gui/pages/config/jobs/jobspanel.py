@@ -47,7 +47,7 @@ class JobsPanel(HelpedWidget):
         self.addWidget(self.pagesWidget)
 
     def createWidgets(self, parent):
-        self.searchableList = SearchableList(parent, list_height=200, list_width=150, ignore_case=True)
+        self.searchableList = SearchableList(parent, list_height=200, list_width=150)
         self.addWidget(self.searchableList)
         self.connect(self.searchableList , QtCore.SIGNAL('currentItemChanged(QListWidgetItem, QListWidgetItem)'),self.changeParameter)
         self.connect(self.searchableList , QtCore.SIGNAL('addItem(QListWidgetItem)'), self.addItem)

@@ -94,7 +94,7 @@ class InitPanel(QtGui.QFrame):
 
     def createCurrentCaseCombo(self):
         """Creates the combo that enables selection of the current case"""
-        self.currentCase = ComboChoice(self, ["none"], help="init/current_case_selection")
+        self.currentCase = ComboChoice(self, ["none"], help_link="init/current_case_selection")
         self.currentCase.combo.setMinimumWidth(150)
 
         def initialize_cases(ert):
