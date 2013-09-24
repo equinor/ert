@@ -49,6 +49,10 @@ class BaseCEnum(object):
     def enums(cls):
         return list(cls.enum_namespace[cls])
 
+    @classmethod
+    def has_element(cls , element):
+        return hasattr(cls , element)
+
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self.value == other.value
