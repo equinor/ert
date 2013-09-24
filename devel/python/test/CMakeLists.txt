@@ -224,6 +224,13 @@ add_test( NAME python.ert.cwrap.basecenum
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_basecenum.BaseCEnumTest)
 
 
+#ANALYSIS
+add_test( NAME python.ert.analysis.enums
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.analysis.test_options_enum.AnalysisOptionsEnumTest)
+
+
+
 
 set_property( TEST python.ert.sched.sched           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.ert.ecl.fortio            PROPERTY LABELS Python:StatoilData )
