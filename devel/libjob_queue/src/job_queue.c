@@ -1005,7 +1005,7 @@ static void job_queue_clear_status( job_queue_type * queue ) {
 
 void job_queue_reset(job_queue_type * queue) {
   int i;
-  
+
   for (i=0; i < queue->active_size; i++) 
     job_queue_node_finalize(queue->jobs[i]);
   
@@ -1693,12 +1693,14 @@ static void job_queue_grow( job_queue_type * queue ) {
   int alloc_size                  = util_int_max( 2 * queue->alloc_size , JOB_QUEUE_START_SIZE );
   job_queue_node_type ** new_jobs = util_calloc(alloc_size , sizeof * queue->jobs );
   job_queue_node_type ** old_jobs = queue->jobs;
-  if (old_jobs != NULL)
+  if (old_jobs != NULL) 
     memcpy( new_jobs , queue->jobs , queue->alloc_size * sizeof * queue->jobs );
+  
+  
   {
     int i;
     /* Creating the new nodes. */
-    for (i = queue->alloc_size; i < alloc_size; i++) 
+    for (i = queue->alloc_size; i < alloc_size; i++)
       new_jobs[i] = job_queue_node_alloc();
     
     /* Assigning the job pointer to the new array. */
@@ -1797,8 +1799,9 @@ void job_queue_free(job_queue_type * queue) {
   util_safe_free( queue->exit_file );
   {
     int i;
-    for (i=0; i < queue->active_size; i++) 
+    for (i=0; i < queue->alloc_size; i++) 
       job_queue_node_free(queue->jobs[i]);
+    
     free(queue->jobs);
   }
   free(queue);
