@@ -58,8 +58,8 @@ class BaseCEnumTest(ExtendedTestCase):
         with self.assertRaises(AssertionError):
             e = enum.ONE ^ enum2.ONE
 
-        self.assertTrue( enum.has_element("ONE") )
-        self.assertFalse( enum.has_element("DoesNotExist") )
+        self.assertTrue( enum.hasElement("ONE") )
+        self.assertFalse( enum.hasElement("DoesNotExist") )
 
 
     def test_enum_populate_from_c(self):

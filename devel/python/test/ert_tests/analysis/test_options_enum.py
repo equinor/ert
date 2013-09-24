@@ -21,8 +21,8 @@ from ert.analysis import AnalysisModuleOptionsEnum
 
 class AnalysisOptionsEnumTest(ExtendedTestCase):
     def test_items(self):
-        self.assertTrue( AnalysisModuleOptionsEnum.has_element( "ANALYSIS_NEED_ED" ))
-        self.assertTrue( AnalysisModuleOptionsEnum.has_element( "ANALYSIS_USE_A" ))
-        self.assertTrue( AnalysisModuleOptionsEnum.has_element( "ANALYSIS_UPDATE_A" ))
-        self.assertTrue( AnalysisModuleOptionsEnum.has_element( "ANALYSIS_SCALE_DATA" ))
-        self.assertTrue( AnalysisModuleOptionsEnum.has_element( "ANALYSIS_ITERABLE" ))
+        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_NEED_ED" ))
+        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_USE_A" ))
+        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_UPDATE_A" ))
+        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_SCALE_DATA" ))
+        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_ITERABLE" ))
