@@ -50,7 +50,7 @@ class BaseCEnum(object):
         return list(cls.enum_namespace[cls])
 
     @classmethod
-    def has_element(cls , element):
+    def hasElement(cls , element):
         return hasattr(cls , element)
 
     def __eq__(self, other):
