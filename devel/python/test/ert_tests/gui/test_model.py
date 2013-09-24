@@ -4,35 +4,42 @@ from ert_tests import ExtendedTestCase
 
 
 class EmptyModel(ErtConnector, BasicModelMixin):
-    def initialize(self):
-        pass
+    def __init__(self):
+        super(EmptyModel, self).__init__()
 
 
 class TestModel(ErtConnector, BasicModelMixin):
+    TEST_EVENT = "test_event"
 
     def __init__(self):
-        self.observable().addEvent("event")
-
-    def initialize(self):
         self.value = None
-        self.observable().notify("event")
+        super(TestModel, self).__init__()
+
+    def registerDefaultEvents(self):
+        self.observable().addEvent(TestModel.TEST_EVENT)
 
     def getValue(self):
         return self.value
 
     def setValue(self, value):
         self.value = value
-        self.observable().notify("event")
+        self.observable().notify(TestModel.TEST_EVENT)
+
+    def hasErt(self):
+        return self.ert() is not None
 
 
 
 
 class ModelTest(ExtendedTestCase):
 
+
     def setUp(self):
         model = TestModel()
         model.setValue(None)
 
+    def tearDown(self):
+        TestModel().setValue(None)
         ErtConnector.setErt(None)
 
     def test_abstract_model(self):
@@ -60,38 +67,24 @@ class ModelTest(ExtendedTestCase):
         def observe():
             self.assertEqual(model.getValue(), 2)
 
-        model.observable().attach("event", observe)
+        model.observable().attach(TestModel.TEST_EVENT, observe)
 
-        model.setValue(2)
+        model.setValue(2) # will call the observe function
 
-        model.observable().detach("event", observe)
-
-        model.setValue(None)
-
-        self.assertEqual(model.getValue(), None)
+        model.observable().detach(TestModel.TEST_EVENT, observe)
 
 
-    def test_initializer(self):
+    def test_ertification(self):
         model = TestModel()
 
-        def init():
-            if model.getValue() is None:
-                raise ValueError("Init")
-            else:
-                self.assertEqual(model.getValue(), "Correct")
+        self.assertFalse(TestModel().hasErt())
 
-        model.observable().attach("event", init)
-
-        with self.assertRaises(ValueError):
-            ErtConnector.setErt("ERT")
-
+        ErtConnector.setErt("ERT")
         self.assertEqual(model.ert(), "ERT")
 
-        model.setValue("Correct")
+        self.assertTrue(TestModel().hasErt())
 
-        model.observable().detach("event", init)
 
-        model.setValue(None)
 
 
     def test_observability(self):
