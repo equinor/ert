@@ -1,6 +1,6 @@
 #  Copyright (C) 2011  Statoil ASA, Norway. 
 #   
-#  The file 'spinnerwidgets.py' is part of ERT - Ensemble based Reservoir Tool. 
+#  The file 'double_spinner.py' is part of ERT - Ensemble based Reservoir Tool.
 #   
 #  ERT is free software: you can redistribute it and/or modify 
 #  it under the terms of the GNU General Public License as published by 
@@ -12,45 +12,10 @@
 #  FITNESS FOR A PARTICULAR PURPOSE.   
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
-
-
+#  for more details.
 from PyQt4 import QtGui, QtCore
-from helpedwidget import HelpedWidget
+from ert_gui.widgets.helped_widget import HelpedWidget
 
-class IntegerSpinner(HelpedWidget):
-    """A spinner widget for integers. The data structure expected and sent to the getter and setter is an integer."""
-    def __init__(self, parent=None, spinnerLabel="Number", help="", min=0, max=10):
-        """Construct a spinner widget for integers"""
-        HelpedWidget.__init__(self, parent, spinnerLabel, help)
-
-        self.spinner = QtGui.QSpinBox(self)
-        self.spinner.setMinimum(min)
-        self.spinner.setMaximum(max)
-        #self.connect(self.pathLine, QtCore.SIGNAL('textChanged(QString)'), self.validatePath)
-        self.addWidget(self.spinner)
-
-        self.infoLabel = QtGui.QLabel()
-        self.infoLabel.setHidden(True)
-        self.addWidget(self.infoLabel)
-
-        self.addStretch()
-        self.addHelpButton()
-
-        #self.connect(self.spinner, QtCore.SIGNAL('valueChanged(int)'), self.updateContent)
-        self.connect(self.spinner, QtCore.SIGNAL('editingFinished()'), self.contentsChanged)
-
-    def contentsChanged(self):
-        """Called whenever the contents of the spinner changes."""
-        self.updateContent(self.spinner.value())
-
-    def fetchContent(self):
-        """Retrieves data from the model and inserts it into the spinner"""
-        self.spinner.setValue(self.getFromModel())
-
-    def setInfo(self, info):
-        self.infoLabel.setText(info)
-        self.infoLabel.setHidden(False)
 
 class DoubleSpinner(HelpedWidget):
     """A spinner widget for doubles. The data structure expected and sent to the getter and setter is a double."""
