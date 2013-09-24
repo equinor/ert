@@ -698,9 +698,14 @@ double enkf_linalg_data_mismatch(matrix_type *D , matrix_type *R , matrix_type *
 {
   matrix_type * tmp = matrix_alloc (matrix_get_columns(D), matrix_get_columns(R));
   double mean;
- 
+  
+  printf("-----------------------------------------------------------------\n");
+  printf("%s:%d Calling matrix_dgemm() \n",__func__ , __LINE__);
   matrix_dgemm(tmp, D, R,true, false, 1.0, 0.0);
+  printf("-----------------------------------------------------------------\n");
+  printf("%s:%d Calling matrix_dgemm() \n",__func__ , __LINE__);
   matrix_dgemm(Sk, tmp, D, false, false, 1.0, 0.0);
+  printf("-----------------------------------------------------------------\n");
 
   printf("The data mismatch computed");
                                   
