@@ -103,7 +103,7 @@ extern "C" {
     job which is not in this state, the only thing happening is that the
     function job_queue_kill_simulation() wil return false.
    */
-#define JOB_QUEUE_CAN_KILL    (JOB_QUEUE_WAITING + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING + JOB_QUEUE_SUBMITTED)
+#define JOB_QUEUE_CAN_KILL    (JOB_QUEUE_WAITING + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING + JOB_QUEUE_SUBMITTED + JOB_QUEUE_USER_EXIT)
 
 
 
