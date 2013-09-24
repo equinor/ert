@@ -377,7 +377,7 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
 }
 
 
-bool analysis_module_get_option( const analysis_module_type * module , long flag) {
+bool analysis_module_check_option( const analysis_module_type * module , long flag) {
   if ((flag & module->get_options( module->module_data , flag )) == flag)
       return true;
   else
@@ -430,3 +430,11 @@ void * analysis_module_get_ptr( const analysis_module_type * module , const char
   
   return NULL;
 }
+
+
+/*****************************************************************/
+
+const char * analysis_module_flag_enum_iget( int index, int * value) {
+  return util_enum_iget( index , ANALYSIS_MODULE_FLAG_ENUM_SIZE , (const util_enum_element_type []) { ANALYSIS_MODULE_FLAG_ENUM_DEFS }, value);
+}
+

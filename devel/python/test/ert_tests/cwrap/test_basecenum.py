@@ -58,6 +58,9 @@ class BaseCEnumTest(ExtendedTestCase):
         with self.assertRaises(AssertionError):
             e = enum.ONE ^ enum2.ONE
 
+        self.assertTrue( enum.hasElement("ONE") )
+        self.assertFalse( enum.hasElement("DoesNotExist") )
+
 
     def test_enum_populate_from_c(self):
         class ContentTypeEnum(BaseCEnum):
