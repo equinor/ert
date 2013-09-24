@@ -35,12 +35,12 @@ class ModelTest(ExtendedTestCase):
 
 
     def setUp(self):
-        model = TestModel()
-        model.setValue(None)
+        TestModel().setValue(None)
 
     def tearDown(self):
         TestModel().setValue(None)
         ErtConnector.setErt(None)
+
 
     def test_abstract_model(self):
         model = EmptyModel()
@@ -48,17 +48,9 @@ class ModelTest(ExtendedTestCase):
         with self.assertRaises(NotImplementedError):
             model.getValue()
 
-        # with self.assertRaises(NotImplementedError):
-        #     model.getCollection()
-
         with self.assertRaises(NotImplementedError):
             model.setValue("Error")
 
-        # with self.assertRaises(NotImplementedError):
-        #     model.createValue("Error")
-        #
-        # with self.assertRaises(NotImplementedError):
-        #     model.removeValue("Error")
 
 
     def test_observer(self):
@@ -83,8 +75,6 @@ class ModelTest(ExtendedTestCase):
         self.assertEqual(model.ert(), "ERT")
 
         self.assertTrue(TestModel().hasErt())
-
-
 
 
     def test_observability(self):
