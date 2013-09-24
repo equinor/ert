@@ -31,6 +31,7 @@ set(TEST_SOURCES
     ert_tests/enkf/__init__.py
     ert_tests/enkf/test_enkf.py
     ert_tests/enkf/test_enkf_library.py
+    ert_tests/enkf/test_analysis_config.py
 
     ert_tests/sched/__init__.py
     ert_tests/sched/test_sched.py
@@ -119,6 +120,11 @@ add_test( NAME python.ert.enkf
 add_test( NAME python.ert.enkf_library
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_enkf_library.EnKFLibraryTest)
+
+add_test( NAME python.ert.enkf_analysis_config
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_analysis_config.AnalysisConfigTest)
+
 
 #ECL
 
@@ -216,6 +222,13 @@ add_test( NAME python.ert.cwrap.basecclass
 add_test( NAME python.ert.cwrap.basecenum
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_basecenum.BaseCEnumTest)
+
+
+#ANALYSIS
+add_test( NAME python.ert.analysis.enums
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.analysis.test_options_enum.AnalysisOptionsEnumTest)
+
 
 
 
