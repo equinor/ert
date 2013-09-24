@@ -19,7 +19,9 @@ from ert.enkf import AnalysisIterConfig
 
 class AnalysisConfig(BaseCClass):
     def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+        c_ptr = AnalysisConfig.cNamespace().alloc()
+        super(AnalysisConfig , self).__init__(c_ptr)
+
 
     def get_rerun(self):
         return AnalysisConfig.cNamespace().get_rerun(self)
@@ -55,6 +57,12 @@ class AnalysisConfig(BaseCClass):
         """ @rtype: AnalysisIterConfig """
         return AnalysisConfig.cNamespace().get_iter_config(self).setParent(self)
 
+    def get_min_realisations(self):
+        return AnalysisConfig.cNamespace().get_min_realisations( self )
+
+    def set_min_realisations(self , min_realisations):
+        AnalysisConfig.cNamespace().set_min_realisations( self , min_realisations )
+
     def free(self):
         AnalysisConfig.cNamespace().free(self)
 
@@ -65,7 +73,7 @@ cwrapper.registerType("analysis_config", AnalysisConfig)
 cwrapper.registerType("analysis_config_obj", AnalysisConfig.createPythonObject)
 cwrapper.registerType("analysis_config_ref", AnalysisConfig.createCReference)
 
-
+AnalysisConfig.cNamespace().alloc                  = cwrapper.prototype("c_void_p analysis_config_alloc()")
 AnalysisConfig.cNamespace().free                   = cwrapper.prototype("void analysis_config_free( analysis_config )")
 AnalysisConfig.cNamespace().get_rerun              = cwrapper.prototype("int analysis_config_get_rerun( analysis_config )")
 AnalysisConfig.cNamespace().set_rerun              = cwrapper.prototype("void analysis_config_set_rerun( analysis_config, bool)")
@@ -78,3 +86,5 @@ AnalysisConfig.cNamespace().set_alpha              = cwrapper.prototype("void an
 AnalysisConfig.cNamespace().get_merge_observations = cwrapper.prototype("bool analysis_config_get_merge_observations(analysis_config)")
 AnalysisConfig.cNamespace().set_merge_observations = cwrapper.prototype("void analysis_config_set_merge_observations(analysis_config, bool)")
 AnalysisConfig.cNamespace().get_iter_config        = cwrapper.prototype("analysis_iter_config_ref analysis_config_get_iter_config(analysis_config)")
+AnalysisConfig.cNamespace().get_min_realisations   = cwrapper.prototype("bool analysis_config_get_min_realisations(analysis_config)")
+AnalysisConfig.cNamespace().set_min_realisations   = cwrapper.prototype("void analysis_config_set_min_realisations(analysis_config, bool)")
