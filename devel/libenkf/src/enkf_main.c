@@ -1127,18 +1127,17 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
-  if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
+  if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
 
-  if (analysis_module_get_option( module , ANALYSIS_SCALE_DATA)){
+  if (analysis_module_check_option( module , ANALYSIS_SCALE_DATA)){
     obs_data_scale( obs_data , S , E , D , R , dObs );
   }
   
-  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)){
+  if (analysis_module_check_option( module , ANALYSIS_USE_A) || analysis_module_check_option(module , ANALYSIS_UPDATE_A))
     localA = A;
-  }
 
   /*****************************************************************/
   
@@ -1193,8 +1192,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
         
         enkf_main_serialize_dataset( enkf_main , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
 
-        if (analysis_module_get_option( module , ANALYSIS_UPDATE_A)){
-          if (analysis_module_get_option( module , ANALYSIS_ITERABLE)){
+        if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
+          if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
             int iteration = cases_config_get_iteration_number(enkf_fs_get_cases_config(src_fs));
             char iteration_str[15];
             sprintf(iteration_str,"%d",iteration);
@@ -1205,7 +1204,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
             analysis_module_updateA( module , localA , S , R , dObs , E , D );
         }
         else {
-          if (analysis_module_get_option( module , ANALYSIS_USE_A)){
+          if (analysis_module_check_option( module , ANALYSIS_USE_A)){
             analysis_module_initX( module , X , localA , S , R , dObs , E , D );
           }
 
