@@ -1628,9 +1628,9 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
   run_mode_type run_mode = simulate ? ENSEMBLE_EXPERIMENT : INIT_ONLY;
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-    if(initialize)
+    if (initialize)
       enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1, force_init);
-
+    
     stringlist_free( param_list );
   }  
   enkf_main_init_run( enkf_main , run_mode );
