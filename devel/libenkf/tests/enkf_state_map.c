@@ -107,7 +107,7 @@ void test_copy() {
 
 
 void test_io( ) {
-  test_work_area_type * work_area = test_work_area_alloc( "enkf-state-map" , false );
+  test_work_area_type * work_area = test_work_area_alloc( "enkf-state-map" );
   {
     state_map_type * state_map = state_map_alloc();
     state_map_type * copy1 , *copy2;
