@@ -209,6 +209,43 @@ void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_j
   test_work_area_free(work_area);
 }
 
+void JobQueueRunJobs_ReuseQueue_AllOk(char ** argv) {
+  printf("Running JobQueueRunJobs_ReuseQueue_AllOk\n");
+
+  int number_of_jobs = 20;
+  int number_of_queue_reuse = 10; 
+  
+  test_work_area_type * work_area = test_work_area_alloc("job_queue", false);
+
+  job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "ERROR");
+  queue_driver_type * driver = queue_driver_alloc_local();
+  job_queue_set_driver(queue, driver);
+    
+  for (int j = 0; j < number_of_queue_reuse; j++) {
+    for (int i = 0; i < number_of_jobs; i++) {
+      char * runpath = util_alloc_sprintf("%s/%s_%d", test_work_area_get_cwd(work_area), "job", i);
+      util_make_path(runpath);
+
+      job_queue_add_job_st(queue, argv[1], NULL, NULL, NULL, NULL, 1, runpath, "Testjob", 2, (const char *[2]) {runpath, "0" });
+
+      free(runpath);
+    }
+
+    job_queue_run_jobs(queue,number_of_jobs, true); 
+
+    test_assert_int_equal(number_of_jobs, job_queue_get_num_complete(queue));
+    test_assert_bool_equal(false, job_queue_get_open(queue));
+    job_queue_reset(queue);
+    test_assert_bool_equal(true, job_queue_get_open(queue));
+    test_assert_int_equal(0, job_queue_get_num_complete(queue));
+  }
+  job_queue_free(queue);
+  queue_driver_free(driver);
+  test_work_area_free(work_area);
+  
+}
+
+
 void JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun(char ** argv) {
   printf("Running JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun\n");
 
@@ -345,17 +382,19 @@ void JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWith
 }
 
 int main(int argc, char ** argv) {
-  //  job_queue_set_driver_(LSF_DRIVER);
-  //  job_queue_set_driver_(TORQUE_DRIVER);
-  //
-  //  JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun(argv);
-  //  JobQueueSetMaxDuration_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
-  //  JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
-  //
-  //  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShort_OnlyMinRealizationsAreRun(argv);
-  //  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationLooong_AllRealizationsAreRun(argv);
-  //  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationSemiLong_MoreThanMinRealizationsAreRun(argv);
-  //  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShortButMinRealizationsIsAll_AllRealizationsAreRun(argv);
+  job_queue_set_driver_(LSF_DRIVER);
+  job_queue_set_driver_(TORQUE_DRIVER);
+
+  JobQueueRunJobs_ReuseQueue_AllOk(argv); 
+  
+  JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun(argv);
+  JobQueueSetMaxDuration_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
+  JobQueueSetMaxDurationRunJobsLoopInThread_Duration5Seconds_KillsAllJobsWithDurationMoreThan5Seconds(argv);
+  
+  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShort_OnlyMinRealizationsAreRun(argv);
+  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationLooong_AllRealizationsAreRun(argv);
+  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationSemiLong_MoreThanMinRealizationsAreRun(argv);
+  JobQueueSetMaxDurationAfterMinRealizations_MaxDurationShortButMinRealizationsIsAll_AllRealizationsAreRun(argv);
 
   JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun(argv);
   JobQueueSetStopTime_StopTimeLate_AllRealisationsAreRun(argv);
