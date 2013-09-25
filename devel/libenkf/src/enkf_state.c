@@ -302,7 +302,7 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
         }
       }
     }
-    state_map_update_undefined(state_map , iens , STATE_INITIALIZED);
+    state_map_update_matching(state_map , iens , STATE_UNDEFINED | STATE_LOAD_FAILURE , STATE_INITIALIZED);
     enkf_fs_fsync(fs);
   }
 }

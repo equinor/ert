@@ -45,6 +45,14 @@ extern "C" {
 #define ANALYSIS_SCALE_DATA          16
 #define ANALYSIS_ITERABLE            32       // The module can bu uused as an iterative smoother.
 
+#define ANALYSIS_MODULE_FLAG_ENUM_SIZE 5
+#define ANALYSIS_MODULE_FLAG_ENUM_DEFS {.value = ANALYSIS_NEED_ED     , .name = "ANALYSIS_NEED_ED"},\
+                                       {.value = ANALYSIS_USE_A       , .name = "ANALYSIS_USE_A"},\
+                                       {.value = ANALYSIS_UPDATE_A    , .name = "ANALYSIS_UPDATE_A"},\
+                                       {.value = ANALYSIS_SCALE_DATA  , .name = "ANALYSIS_SCALE_DATA"},\
+                                       {.value = ANALYSIS_ITERABLE    , .name = "ANALYSIS_ITERABLE"}
+
+
 #define EXTERNAL_MODULE_NAME "analysis_table" 
 #define EXTERNAL_MODULE_SYMBOL analysis_table
 
@@ -97,13 +105,16 @@ extern "C" {
   bool                   analysis_module_set_var( analysis_module_type * module , const char * var_name , const char * string_value );
   const char           * analysis_module_get_table_name( const analysis_module_type * module);
   const char           * analysis_module_get_name( const analysis_module_type * module );
-  bool                   analysis_module_get_option( const analysis_module_type * module , long flag);
+  bool                   analysis_module_check_option( const analysis_module_type * module , long flag);
   void                   analysis_module_complete_update( analysis_module_type * module );
 
   bool                   analysis_module_has_var( const analysis_module_type * module , const char * var );
   double                 analysis_module_get_double( const analysis_module_type * module , const char * var);
   int                    analysis_module_get_int( const analysis_module_type * module , const char * var);
   void *                 analysis_module_get_ptr( const analysis_module_type * module , const char * var);
+  const char           * analysis_module_flag_enum_iget( int index, int * value);
+  
+
 
   UTIL_IS_INSTANCE_HEADER( analysis_module );
 
