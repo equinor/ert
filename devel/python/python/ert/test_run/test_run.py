@@ -127,13 +127,23 @@ class TestRun(object):
     def run(self):
         if len(self.workflows):
             with TestAreaContext(self.name , prefix = self.path_prefix , store_area = True) as work_area:
+                test_cwd = work_area.get_cwd()
                 work_area.copy_parent_content( self.abs_config_file )
                 status = self.__run( work_area )
+                global_status = status[0]
+
                 status_list = [ status ]
                 if status[0]:
                     for (check_func , arg) in self.check_list:
-                        status_list.append( check_func( arg ))
-            return status_list
+                        status = check_func( arg )
+                        status_list.append( status )
+                        if not status[0]:
+                            global_status = False
+
+                if not global_status:
+                    work_area.set_store( True )
+                    
+            return (global_status , test_cwd , status_list)
         else:
             raise Exception("Must have added workflows before invoking start()")
             
