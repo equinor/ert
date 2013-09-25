@@ -66,10 +66,35 @@ class ObservableTest(ExtendedTestCase):
         observable.detach("event2", event2)
 
         # no exception raised when notify list is empty
-        # with self.assertRaises(ValueError):
-        #     observable.notify("event2")
+        observable.notify("event2")
 
         with self.assertRaises(LookupError):
             observable.detach("event3", event2)
+
+    def test_weak_references(self):
+        observable = Observable("Event observer")
+        observable.addEvent("event")
+
+        class WeakTest(object):
+            def __init__(self):
+                self.value = 0
+
+            def listener(self):
+                raise AssertionError("This should be caught!")
+
+        o = WeakTest()
+
+        observable.attach("event", o.listener)
+
+        with self.assertRaises(AssertionError):
+            observable.notify("event")
+
+        del o
+
+        observable.notify("event") # Should not raise assertion error
+
+
+
+
 
 
