@@ -1,4 +1,4 @@
-from ert.test_run import TestRun
+from ert.test_run import TestRun , path_exists
 from ert_tests import ExtendedTestCase
 
     
@@ -11,12 +11,12 @@ class RunTest(ExtendedTestCase):
             TestRun("Does/notExist")
             
         tr = TestRun("test-data/local/run/config.txt")
-        self.assertEqual( tr.config_file() , "test-data/local/run/config.txt")
+        self.assertEqual( tr.config_file , "config.txt")
 
 
     def test_cmd(self):
         tr = TestRun("test-data/local/run/config.txt")
-        self.assertEqual( tr.ert_cmd , TestRun.ert_cmd )
+        self.assertEqual( tr.ert_cmd , TestRun.default_ert_cmd )
 
         tr.ert_cmd = "/tmp/test"
         self.assertEqual( "/tmp/test" , tr.ert_cmd )
@@ -46,10 +46,7 @@ class RunTest(ExtendedTestCase):
         with self.assertRaises(Exception):
             tr.run()
 
-        tr.add_workflow("wf1")
-        tr.start()
-        
-            
+                    
     def test_name(self):
         tr = TestRun("test-data/local/run/config.txt" , "Name")
         self.assertEqual( "Name" , tr.name )
@@ -60,5 +57,15 @@ class RunTest(ExtendedTestCase):
 
     def test_runpath(self):
         tr = TestRun("test-data/local/run/config.txt" , "Name")
-        self.assertEqual( TestRun.path_prefix , tr.path_prefix )
+        self.assertEqual( TestRun.default_path_prefix , tr.path_prefix )
         
+
+    def test_check(self):
+        tr = TestRun("test-data/local/run/config.txt" , "Name")
+        tr.add_check( path_exists , "some/file" )
+
+        with self.assertRaises(Exception):
+            tr.add_check( 25 , "arg")
+
+        with self.assertRaises(Exception):
+            tr.add_check( func_does_not_exist , "arg")
