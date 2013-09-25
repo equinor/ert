@@ -32,6 +32,9 @@ set(TEST_SOURCES
     ert_tests/enkf/test_enkf.py
     ert_tests/enkf/test_enkf_library.py
 
+    ert_tests/job_queue/__init__.py
+    ert_tests/job_queue/test_job_queue.py
+
     ert_tests/sched/__init__.py
     ert_tests/sched/test_sched.py
 
@@ -198,6 +201,12 @@ add_test( NAME python.ert.ecl.ecl_sum
 add_test( NAME python.ert.sched.sched
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.sched.test_sched.SchedFileTest)
+
+#JOB QUEUE
+add_test( NAME python.ert.job_queue.job_status_type_enum
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_job_queue.JobQueueTest)
+
 
 #CONFIG
 add_test( NAME python.ert.config
