@@ -118,7 +118,7 @@ class BaseCEnum(object):
         try:
             func = getattr(library, enum_provider_function)
         except AttributeError:
-            raise ValueError("Could not find enum description function:%s - can not load enum:%s." % (enum_provider_function, cls.__name__))
+            raise ValueError("Could not find enum description function: %s - can not load enum: %s." % (enum_provider_function, cls.__name__))
 
         func.restype = ctypes.c_char_p
         func.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_int)]
