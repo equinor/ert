@@ -17,7 +17,7 @@ class EnKFLibraryTest(ExtendedTestCase):
 
 
     def test_failed_class_creation(self):
-        classes = [AnalysisConfig, BlockObs, FieldConfig, GenKwConfig, GenDataConfig,
+        classes = [BlockObs, FieldConfig, GenKwConfig, GenDataConfig,
                    EnkfConfigNode, EnkfFs, EnkfObs, TimeMap, ObsVector, EnKFState, EnsConfig,
                    ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, PlotConfig, SiteConfig]
 
