@@ -340,10 +340,8 @@ bool analysis_config_has_module(analysis_config_type * config , const char * mod
 }
 
 bool analysis_config_get_module_option( const analysis_config_type * config , long flag) {
-  if (config->analysis_module) {
-    printf("Iterable: %d \n", analysis_module_get_option( config->analysis_module , flag));
-    return analysis_module_get_option(config->analysis_module , flag);
-  }
+  if (config->analysis_module)
+    return analysis_module_check_option(config->analysis_module , flag);
   else
     return false;
 }
@@ -353,11 +351,10 @@ bool analysis_config_select_module( analysis_config_type * config , const char *
   if (analysis_config_has_module( config , module_name )) { 
     analysis_module_type * module = analysis_config_get_module( config , module_name );
     
-    if (analysis_module_get_option( module , ANALYSIS_ITERABLE)) {
+    if (analysis_module_check_option( module , ANALYSIS_ITERABLE)) {
       if (analysis_config_get_single_node_update( config )) {
         fprintf(stderr," ** Warning: the module:%s requires the setting \"SINGLE_NODE_UPDATE FALSE\" in the config file.\n" , module_name);
         fprintf(stderr," **          the module has NOT been selected. \n");
-        
         return false;
       } 
     }

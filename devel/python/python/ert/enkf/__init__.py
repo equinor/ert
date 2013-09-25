@@ -17,7 +17,7 @@
 
 import ert.cwrap.clib as clib
 
-clib.ert_load("libanalysis.so")
+import ert.analysis
 ENKF_LIB = clib.ert_load("libenkf.so")
 
 from .util import ObsVector, TimeMap
