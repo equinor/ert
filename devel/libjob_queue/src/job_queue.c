@@ -339,6 +339,7 @@ struct job_queue_struct {
   bool                       grow;                              /* The function adding new jobs is requesting the job_queue function to grow the jobs array. */
   int                        max_ok_wait_time;                  /* Seconds to wait for an OK file - when the job itself has said all OK. */
   int                        max_duration;                      /* Maximum allowed time for a job to run, 0 = unlimited */
+  time_t                     stop_time;                         /* A job is only allowed to run until this time. 0 = no time set, ignore stop_time */
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
   pthread_mutex_t            status_mutex;                      /* This mutex ensure that the status-change code is only run by one thread. */
   pthread_mutex_t            run_mutex;                         /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
@@ -856,6 +857,19 @@ void job_queue_set_max_job_duration(job_queue_type * queue, int max_duration_sec
   queue->max_duration = max_duration_seconds;
 }
 
+int job_queue_get_max_job_duration(const job_queue_type * queue) {
+  return queue->max_duration; 
+}
+
+void job_queue_set_job_stop_time(job_queue_type * queue, time_t time) {
+  queue->stop_time = time; 
+} 
+
+
+time_t job_queue_get_job_stop_time(const job_queue_type * queue) {
+  return queue->stop_time; 
+}
+
 /**
    Observe that jobs with status JOB_QUEUE_WAITING can also be killed; for those
    jobs the kill should be interpreted as "Forget about this job for now and set
@@ -1234,20 +1248,28 @@ int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
 
 /*****************************************************************/
 
-static void job_queue_check_expired(job_queue_type *queue) {
-  if (queue->max_duration <= 0)
+static void job_queue_check_expired(job_queue_type * queue) {
+  if ((job_queue_get_max_job_duration(queue) <= 0) && (job_queue_get_job_stop_time(queue) <= 0))
     return;
   
   for (int i = 0; i < queue->active_size; i++) {
     job_queue_node_type * node = queue->jobs[i];
+
     if (job_queue_node_get_status(node) == JOB_QUEUE_RUNNING) {
-      time_t start = node->sim_start;
       time_t now = time(NULL);
-      double elapsed = 0;
-      if (start >= node->submit_time)
-        elapsed = difftime(now, start);
-      if (elapsed > queue->max_duration) {
-        job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
+      if ( job_queue_get_max_job_duration(queue) > 0) {
+        time_t start = node->sim_start;
+        double elapsed = 0;
+        if (start >= node->submit_time)
+          elapsed = difftime(now, start);
+        if (elapsed > job_queue_get_max_job_duration(queue)) {
+          job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
+        }
+      }
+      if (job_queue_get_job_stop_time(queue) > 0) {
+        if (now >= job_queue_get_job_stop_time(queue)) {
+          job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
+        }
       }
     }
   }
@@ -1743,6 +1765,7 @@ job_queue_type * job_queue_alloc(int  max_submit               ,
   queue->usleep_time      = 250000; /* 1000000 : 1 second */
   queue->max_ok_wait_time = 60;   
   queue->max_duration     = 0;  
+  queue->stop_time        = 0; 
   queue->max_submit       = max_submit;
   queue->driver           = NULL;
   queue->ok_file          = util_alloc_string_copy( ok_file );
