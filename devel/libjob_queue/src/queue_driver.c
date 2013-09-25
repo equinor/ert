@@ -379,7 +379,7 @@ const char * queue_driver_type_enum_iget(int index, int * value) {
   }, value);
 }
 
-const char * queue_driver_status_emun_iget(int index, int * value) {
+const char * queue_driver_status_enum_iget(int index, int * value) {
 
   return util_enum_iget(index, JOB_STATUS_ENUM_SIZE, (const util_enum_element_type []) {
     JOB_STATUS_ENUM_DEFS
