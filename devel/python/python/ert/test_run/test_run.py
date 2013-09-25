@@ -13,6 +13,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details. 
+import random
 import os.path
 import subprocess
 from   ert.util import TestAreaContext
@@ -30,7 +31,7 @@ class TestRun(object):
     default_path_prefix = None
 
     def __init__(self , config_file , name = None):
-        if os.path.exists( config_file ):
+        if os.path.exists( config_file ) and os.path.isfile( config_file ):
             self.__ert_cmd = TestRun.default_ert_cmd
             self.path_prefix = TestRun.default_path_prefix
             self.config_file = config_file
@@ -47,8 +48,9 @@ class TestRun(object):
                         self.name = self.name[1:]
                     else:
                         break
+            self.name += "/%08d" % random.randint(0,100000000)
         else:
-            raise IOError("No such file or directory: %s" % config_file)
+            raise IOError("No such config file: %s" % config_file)
     
 
     def get_config_file(self):
