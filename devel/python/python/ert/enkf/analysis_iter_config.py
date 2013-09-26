@@ -52,5 +52,5 @@ AnalysisIterConfig.cNamespace().set_num_iterations = cwrapper.prototype("void an
 AnalysisIterConfig.cNamespace().get_num_iterations = cwrapper.prototype("int analysis_iter_config_get_num_iterations(analysis_iter_config)")
 AnalysisIterConfig.cNamespace().set_case_fmt = cwrapper.prototype("void analysis_iter_config_set_case_fmt( analysis_iter_config , char* )")
 AnalysisIterConfig.cNamespace().get_case_fmt = cwrapper.prototype("char* analysis_iter_config_get_case_fmt( analysis_iter_config)")
-# AnalysisIterConfig.cNamespace().set_runpath_fmt = cwrapper.prototype("void analysis_iter_config_set_runpath_fmt( analysis_iter_config_type * config , char*)");
-# AnalysisIterConfig.cNamespace().get_runpath_fmt = cwrapper.prototype("char* analysis_iter_config_get_runpath_fmt( analysis_iter_config)")
+AnalysisIterConfig.cNamespace().set_runpath_fmt = cwrapper.prototype("void analysis_iter_config_set_runpath_fmt( analysis_iter_config_type * config , char*)");
+AnalysisIterConfig.cNamespace().get_runpath_fmt = cwrapper.prototype("char* analysis_iter_config_get_runpath_fmt( analysis_iter_config)")
