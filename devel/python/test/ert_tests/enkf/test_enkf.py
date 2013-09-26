@@ -37,20 +37,13 @@ class EnKFTest(ExtendedTestCase):
             del main
 
     def test_enum(self):
-        self.assertEqual(EnkfStateType.UNDEFINED, 0)
-        self.assertEqual(EnkfStateType.FORECAST, 2)
-        self.assertEqual(EnkfStateType.ANALYZED, 4)
-        self.assertEqual(EnkfStateType.BOTH, 6)
+
+        self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "libenkf/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(EnkfStateType, "state_enum", "libenkf/include/ert/enkf/enkf_types.h")
 
         self.assertEqual(EnkfRunEnum.ENKF_ASSIMILATION, 1)
         self.assertEqual(EnkfRunEnum.ENSEMBLE_EXPERIMENT, 2)
 
-        self.assertEqual(EnkfVarType.INVALID_VAR, None)
-        self.assertEqual(EnkfVarType.PARAMETER, 1)
-        self.assertEqual(EnkfVarType.DYNAMIC_STATE, 2)
-        self.assertEqual(EnkfVarType.DYNAMIC_RESULT, 4)
-        self.assertEqual(EnkfVarType.STATIC_STATE, None)
-        self.assertEqual(EnkfVarType.INDEX_STATE, None)
 
     def test_config( self ):
         with TestAreaContext("enkf_test") as work_area:
@@ -71,6 +64,6 @@ class EnKFTest(ExtendedTestCase):
             self.assertIsInstance(main.get_templates(), ErtTemplates)
             self.assertIsInstance(main.getFileSystem(), EnkfFs)
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
-            self.assertIsInstance(main.iget_state(0), EnKFState)
+            self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
             del main

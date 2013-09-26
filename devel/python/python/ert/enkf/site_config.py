@@ -125,7 +125,7 @@ class SiteConfig(BaseCClass):
     def set_license_root_pathmax_submit(self, path):
         SiteConfig.cNamespace().set_license_root_path( self , path)
 
-    def queue_is_running(self):
+    def isQueueRunning(self):
         """ @rtype: bool """
         return SiteConfig.cNamespace().queue_is_running( self )
 

@@ -28,44 +28,7 @@ from .enkf_run_enum import EnkfRunEnum
 # enkf_impl_type.GEN_DATA = enkf_impl_type("Data", 113)
 #
 #
-# class ert_job_status_type(enum):
-#     """These "enum" values are all copies from the header file "basic_queue_driver.h"."""
-#     # Observe that the status strings are available from the function: libjob_queue.job_queue_status_name( status_code )
-#     NOT_ACTIVE  = None
-#     LOADING     = None
-#     WAITING     = None
-#     SUBMITTED   = None
-#     PENDING     = None
-#     RUNNING     = None
-#     DONE        = None
-#     EXIT        = None
-#     RUN_OK      = None
-#     RUN_FAIL    = None
-#     ALL_OK      = None
-#     ALL_FAIL    = None
-#     USER_KILLED = None
-#     USER_EXIT   = None
-#     SUCCESS     = None
-#     RUNNING_CALLBACK = None
-#     FAILED      = None
-#
-# ert_job_status_type.NOT_ACTIVE = ert_job_status_type("JOB_QUEUE_NOT_ACTIVE", 1)
-# ert_job_status_type.LOADING = ert_job_status_type("JOB_QUEUE_LOADING", 2)
-# ert_job_status_type.WAITING = ert_job_status_type("JOB_QUEUE_WAITING", 4)
-# ert_job_status_type.SUBMITTED = ert_job_status_type("JOB_QUEUE_SUBMITTED", 8)
-# ert_job_status_type.PENDING = ert_job_status_type("JOB_QUEUE_PENDING", 16)
-# ert_job_status_type.RUNNING = ert_job_status_type("JOB_QUEUE_RUNNING", 32)
-# ert_job_status_type.DONE = ert_job_status_type("JOB_QUEUE_DONE", 64)
-# ert_job_status_type.EXIT = ert_job_status_type("JOB_QUEUE_EXIT", 128)
-# ert_job_status_type.RUN_OK = ert_job_status_type("JOB_QUEUE_RUN_OK", 256)
-# ert_job_status_type.RUN_FAIL = ert_job_status_type("JOB_QUEUE_RUN_FAIL", 512)
-# ert_job_status_type.ALL_OK = ert_job_status_type("JOB_QUEUE_ALL_OK", 1024)
-# ert_job_status_type.ALL_FAIL = ert_job_status_type("JOB_QUEUE_ALL_FAIL", 2048)
-# ert_job_status_type.USER_KILLED = ert_job_status_type("JOB_QUEUE_USER_KILLED", 4096)
-# ert_job_status_type.USER_EXIT = ert_job_status_type("JOB_QUEUE_USER_EXIT", 8192)
-# ert_job_status_type.SUCCESS = ert_job_status_type("JOB_QUEUE_SUCCESS", 16384)
-# ert_job_status_type.RUNNING_CALLBACK = ert_job_status_type("JOB_QUEUE_RUNNING_CALLBACK", 32768)
-# ert_job_status_type.JOB_QUEUE_FAILED = ert_job_status_type("JOB_QUEUE_FAILED", 65536)
+
 #
 #
 #

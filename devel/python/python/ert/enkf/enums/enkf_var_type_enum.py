@@ -26,9 +26,12 @@ class EnkfVarType(BaseCEnum):
     INDEX_STATE = None
 
 
+EnkfVarType.addEnum("INVALID_VAR", 0)
 EnkfVarType.addEnum("PARAMETER", 1)
 EnkfVarType.addEnum("DYNAMIC_STATE", 2)
 EnkfVarType.addEnum("DYNAMIC_RESULT", 4)
+EnkfVarType.addEnum("STATIC_STATE", 8)
+EnkfVarType.addEnum("INDEX_STATE", 16)
 EnkfVarType.registerEnum(ENKF_LIB, "enkf_var_type_enum")
 
 
