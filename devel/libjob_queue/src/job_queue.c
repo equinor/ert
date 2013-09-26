@@ -865,9 +865,12 @@ void job_queue_set_job_stop_time(job_queue_type * queue, time_t time) {
   queue->stop_time = time; 
 } 
 
-
 time_t job_queue_get_job_stop_time(const job_queue_type * queue) {
   return queue->stop_time; 
+}
+
+void job_queue_set_auto_job_stop_time(job_queue_type * queue) {
+  //do clever stuff
 }
 
 /**
