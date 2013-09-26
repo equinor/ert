@@ -8,7 +8,7 @@ class weak_callable:
 
     def __call__(self, *args, **kws):
         if self.__object is not None:
-            return self.__method(self.__object, *args, **kws)
+            return self.__method(self.__object(), *args, **kws)
         else:
             return self.__method(*args, **kws)
 
