@@ -1404,7 +1404,26 @@ static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , in
                        job_queue_iget_run_path( job_queue , queue_index));
 }
 
+static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
+  job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
 
+  int min_realisations = analysis_config_get_min_realisations(enkf_main->analysis_config);
+  bool cont = true;
+  if (0 >= min_realisations);
+    cont = false;
+
+  while (cont) {
+    //Check if minimum number of realizations have run, and if so, kill the rest after a certain time
+    if ((job_queue_get_num_complete(job_queue) >= min_realisations)) {
+      job_queue_set_auto_job_stop_time(job_queue);
+      cont = false;
+    }
+
+    if (cont) {
+      util_usleep(1000);
+    }
+  }
+}
 
 /**
   If all simulations have completed successfully the function will
@@ -1517,6 +1536,11 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
       if (run_mode != INIT_ONLY) {
         job_queue_submit_complete( job_queue );
         log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
+        
+        if (analysis_config_get_stop_long_running(enkf_main_get_analysis_config( enkf_main ))) {
+          enkf_main_monitor_job_queue( enkf_main );
+        }
+        
         pthread_join( queue_thread , NULL );   /* Wait for the job_queue_run_jobs() function to complete. */
       }
     }

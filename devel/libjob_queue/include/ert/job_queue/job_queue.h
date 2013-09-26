@@ -82,6 +82,7 @@ extern "C" {
   int                 job_queue_get_max_job_duration(const job_queue_type * queue); 
   void                job_queue_set_job_stop_time(job_queue_type * queue, time_t time); 
   time_t              job_queue_get_job_stop_time(const job_queue_type * queue); 
+  void                job_queue_set_auto_job_stop_time(job_queue_type * queue);
   bool                job_queue_kill_job( job_queue_type * queue , int job_index);
   bool                job_queue_is_running( const job_queue_type * queue );
   void                job_queue_set_max_submit( job_queue_type * job_queue , int max_submit );
