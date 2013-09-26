@@ -46,7 +46,6 @@ class Observable(object):
 
         dead_references = []
         for observer_ref in self.observers[event]:
-            print(observer_ref)
             observer_function = observer_ref()
             # print("%s %s" % (observer_ref, observer_function))
             if observer_function is not None:
