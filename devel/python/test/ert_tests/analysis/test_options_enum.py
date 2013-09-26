@@ -21,8 +21,5 @@ from ert.analysis import AnalysisModuleOptionsEnum
 
 class AnalysisOptionsEnumTest(ExtendedTestCase):
     def test_items(self):
-        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_NEED_ED" ))
-        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_USE_A" ))
-        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_UPDATE_A" ))
-        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_SCALE_DATA" ))
-        self.assertTrue( AnalysisModuleOptionsEnum.hasElement( "ANALYSIS_ITERABLE" ))
+        source_file_path = "libanalysis/include/ert/analysis/analysis_module.h"
+        self.assertEnumIsFullyDefined(AnalysisModuleOptionsEnum, "analysis_module_flag_enum", source_file_path)
