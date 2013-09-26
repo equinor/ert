@@ -18,8 +18,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <lsf/lsbatch.h>
-
 #include <ert/util/util.h>
 #include <ert/util/test_util.h>
 

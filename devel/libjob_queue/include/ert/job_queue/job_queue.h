@@ -66,12 +66,10 @@ extern "C" {
                                            int argc , 
                                            const char ** argv );
 
-  void                job_queue_finalize(job_queue_type * queue);
-  void                job_queue_run_jobs_finalizeoptional(job_queue_type * queue , int num_total_run, bool verbose, bool reset_queue);
+  void                job_queue_reset(job_queue_type * queue);
   void                job_queue_run_jobs(job_queue_type * queue, int num_total_run, bool verbose);
   void                job_queue_run_jobs_threaded(job_queue_type * queue , int num_total_run, bool verbose);
   void *              job_queue_run_jobs__(void * );
-  void *              job_queue_run_jobs_nofinalize__(void *);
   job_status_type     job_queue_iget_job_status(const job_queue_type * , int );
   const char        * job_queue_status_name( job_status_type status );
  
@@ -85,7 +83,7 @@ extern "C" {
   bool                job_queue_is_running( const job_queue_type * queue );
   void                job_queue_set_max_submit( job_queue_type * job_queue , int max_submit );
   int                 job_queue_get_max_submit(const job_queue_type * job_queue );
-  
+  bool                job_queue_get_open(const job_queue_type * job_queue);
   bool                job_queue_get_pause( const job_queue_type * job_queue );
   void                job_queue_set_pause_on( job_queue_type * job_queue);
   void                job_queue_set_pause_off( job_queue_type * job_queue);
