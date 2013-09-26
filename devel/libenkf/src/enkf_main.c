@@ -1761,9 +1761,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
   }
   
   {
-    bool_vector_type * iactive = bool_vector_alloc( 0 , true );
-    bool_vector_iset( iactive , ens_size - 1 , true );
-
+    bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
     enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT);
     enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0);
     {
@@ -1802,68 +1800,78 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
   }
 }
 
-void enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int iteration_number, analysis_iter_config_type * iter_config, int_vector_type * step_list, bool_vector_type * iactive, model_config_type * model_config){
+bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int iteration_number, analysis_iter_config_type * iter_config, int_vector_type * step_list, bool_vector_type * iactive, model_config_type * model_config){
   const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iteration_number+1 );
-  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   const int step1 = 0;
+  bool updateOK = false;
+
   if (target_fs_name == NULL){
     fprintf(stderr,"Sorry: the updated ensemble will overwrite the current case in the iterated ensemble smoother.");
-    enkf_main_smoother_update(enkf_main , step_list , enkf_main_get_fs(enkf_main));
-  }
-  else{
+    updateOK = enkf_main_smoother_update(enkf_main , step_list , enkf_main_get_fs(enkf_main));
+  } else {
     enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
-    enkf_main_smoother_update(enkf_main , step_list , target_fs );
+    updateOK = enkf_main_smoother_update(enkf_main , step_list , target_fs );
     enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
   }
 
-  bool_vector_iset( iactive , ens_size - 1 , true );
-  const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iteration_number);
-  if (runpath_fmt != NULL) {
-    char * runpath_key = util_alloc_sprintf( "runpath-%d" , 999);
-    model_config_add_runpath( model_config , runpath_key , runpath_fmt);
-    model_config_select_runpath( model_config , runpath_key );
-    free( runpath_key );
+  if (updateOK) {
+    const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iteration_number);
+    if (runpath_fmt != NULL ) {
+      char * runpath_key = util_alloc_sprintf("runpath-%d", 999);
+      model_config_add_runpath(model_config, runpath_key, runpath_fmt);
+      model_config_select_runpath(model_config, runpath_key);
+      free(runpath_key);
+    }
+    enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, false);
   }
-  
-  enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, false);
+
+  return updateOK;
 }
 
+
+
 void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
+  const int ens_size = enkf_main_get_ensemble_size(enkf_main);
+  model_config_type * model_config = enkf_main_get_model_config(enkf_main);
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
+  int_vector_type * step_list = int_vector_alloc(0, 0);
+  bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
+
+
+  const int step1 = 0;
+  int iter = 0;
+  int num_iter = analysis_iter_config_get_num_iterations(iter_config);
   {
-    const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
-    model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
-    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-    analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
-    const int step1 = 0;
-    int_vector_type * step_list = int_vector_alloc(0,0);
-    bool_vector_type * iactive = bool_vector_alloc(0 , true);
-    int iter  = 0;
-    int num_iter = analysis_iter_config_get_num_iterations( iter_config );
+    for (int step = step1; step <= step2; step++)
+      int_vector_append(step_list, step);
+  }
+
+  {
+    const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iter);
+    if (runpath_fmt != NULL )
     {
-      for (int step=step1; step <= step2; step++)
-        int_vector_append( step_list , step );
+      char * runpath_key = util_alloc_sprintf("runpath-%d", iter);
+      model_config_add_runpath(model_config, runpath_key, runpath_fmt);
+      model_config_select_runpath(model_config, runpath_key);
+      free(runpath_key);
     }
-    bool_vector_iset( iactive , ens_size - 1 , true );
-    const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iter);
-    if (runpath_fmt != NULL) {
-      char * runpath_key = util_alloc_sprintf( "runpath-%d" , iter);
-      model_config_add_runpath( model_config , runpath_key , runpath_fmt);
-      model_config_select_runpath( model_config , runpath_key );
-      free( runpath_key );
-    }
-    enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, true);    
-    while (true) {
-      if (iter == num_iter)
-        break;
-      
-      enkf_main_iterate_smoother(enkf_main, step2, iter, iter_config, step_list, iactive, model_config);   
-      iter++;
-    }
-    int_vector_free( step_list );
-    bool_vector_free( iactive );
   }
   
+  enkf_main_run_exp(enkf_main, iactive, true, step1, step1, FORECAST, true);
+  while (true)
+  {
+    if (iter == num_iter)
+      break;
+
+    if (enkf_main_iterate_smoother(enkf_main, step2, iter, iter_config, step_list, iactive, model_config))
+      iter++;
+    else
+      break;
+  }
+  int_vector_free(step_list);
+  bool_vector_free(iactive);
 }
 
 void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
