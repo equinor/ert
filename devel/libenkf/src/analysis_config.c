@@ -57,8 +57,9 @@ struct analysis_config_struct {
   bool                            update_results;              /* Should result values like e.g. WWCT be updated? */
   bool                            single_node_update;          /* When creating the default ALL_ACTIVE local configuration. */ 
   rng_type                      * rng;  
-  analysis_iter_config_type * iter_config;
-  int                         min_realisations; 
+  analysis_iter_config_type     * iter_config;
+  int                             min_realisations; 
+  bool                            stop_long_running;
 }; 
 
 
@@ -135,6 +136,14 @@ bool analysis_config_have_enough_realisations( const analysis_config_type * conf
     else
       return false;
   }
+}
+
+void analysis_config_set_stop_long_running( analysis_config_type * config, bool stop_long_running ) {
+  config->stop_long_running = stop_long_running;
+} 
+
+bool analysis_config_get_stop_long_running( const analysis_config_type * config) {
+  return config->stop_long_running;
 }
 
 void analysis_config_set_min_realisations( analysis_config_type * config , int min_realisations) {
@@ -423,6 +432,9 @@ void analysis_config_init( analysis_config_type * analysis , const config_type *
   if (config_item_set( config , MIN_REALIZATIONS_KEY ))
     analysis_config_set_min_realisations( analysis , config_get_value_as_int( config , MIN_REALIZATIONS_KEY ));
   
+  if (config_item_set( config , STOP_LONG_RUNNING_KEY ))
+    analysis_config_set_stop_long_running( analysis , config_get_value_as_bool( config , STOP_LONG_RUNNING_KEY ));
+  
   /* Loading external modules */
   {
     const config_content_item_type * load_item = config_get_content_item( config , ANALYSIS_LOAD_KEY );
@@ -529,7 +541,8 @@ analysis_config_type * analysis_config_alloc( rng_type * rng ) {
   analysis_config_set_store_PC( config                 , DEFAULT_STORE_PC );
   analysis_config_set_PC_filename( config              , DEFAULT_PC_FILENAME );
   analysis_config_set_PC_path( config                  , DEFAULT_PC_PATH );
-  analysis_config_set_min_realisations( config , DEFAULT_ANALYSIS_MIN_REALISATIONS );
+  analysis_config_set_min_realisations( config         , DEFAULT_ANALYSIS_MIN_REALISATIONS );
+  analysis_config_set_stop_long_running( config        , DEFAULT_ANALYSIS_STOP_LONG_RUNNING );
 
   config->analysis_module  = NULL;
   config->analysis_modules = hash_alloc();
@@ -568,6 +581,7 @@ void analysis_config_add_config_items( config_type * config ) {
   config_add_key_value( config , RERUN_START_KEY             , false , CONFIG_INT);
   config_add_key_value( config , UPDATE_LOG_PATH_KEY         , false , CONFIG_STRING);
   config_add_key_value( config , MIN_REALIZATIONS_KEY        , false , CONFIG_INT );
+  config_add_key_value( config , STOP_LONG_RUNNING_KEY       , false , CONFIG_BOOL );
 
   config_add_key_value( config , ANALYSIS_SELECT_KEY         , false , CONFIG_STRING);
 

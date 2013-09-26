@@ -168,6 +168,7 @@ extern "C" {
 #define  WORKFLOW_JOB_DIRECTORY_KEY        "WORKFLOW_JOB_DIRECTORY"
 #define  LOAD_WORKFLOW_KEY                 "LOAD_WORKFLOW"                       
 #define  LOAD_WORKFLOW_JOB_KEY             "LOAD_WORKFLOW_JOB"
+#define  STOP_LONG_RUNNING_KEY             "STOP_LONG_RUNNING"
 
 #define CONFIG_BOOL_STRING( var ) (var) ? "TRUE" : "FALSE"
 
