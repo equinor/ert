@@ -64,8 +64,8 @@ extern "C" {
   /*****************************************************************/
   
   typedef struct enkf_main_struct enkf_main_type;
-  void                          enkf_main_close_alt_fs(enkf_main_type * enkf_main , enkf_fs_type * fs);
-  enkf_fs_type                * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
+  void                          enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs);
+  enkf_fs_type                * enkf_main_get_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
   stringlist_type             * enkf_main_alloc_caselist( const enkf_main_type * enkf_main );
   void                          enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path );
   char                        * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path);
@@ -226,6 +226,7 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   void                        enkf_main_install_SIGNALS(void);
   const                char * enkf_main_get_SVN_VERSION( void );
   const                char * enkf_main_get_COMPILE_TIME( void );
+  bool                        enkf_main_case_is_initialized( const enkf_main_type * enkf_main , const char * case_name ,  bool_vector_type * __mask);
   bool                        enkf_main_is_initialized( const enkf_main_type * enkf_main ,bool_vector_type * __mask);
   void                        enkf_main_del_node(enkf_main_type * enkf_main , const char * key);
   void                        enkf_main_update_node( enkf_main_type * enkf_main , const char * key );
@@ -266,6 +267,7 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   void                  enkf_main_rng_init( enkf_main_type * enkf_main);
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
+UTIL_IS_INSTANCE_HEADER(enkf_main);
 
 #ifdef __cplusplus
 }

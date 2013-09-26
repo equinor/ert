@@ -188,6 +188,7 @@ void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 /*****************************************************************/
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main , ENKF_MAIN_ID)
+UTIL_IS_INSTANCE_FUNCTION(enkf_main , ENKF_MAIN_ID)
 
 analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
   return enkf_main->analysis_config;
@@ -1131,18 +1132,17 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
-  if (analysis_module_get_option( module , ANALYSIS_NEED_ED)) {
+  if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
   }
 
-  if (analysis_module_get_option( module , ANALYSIS_SCALE_DATA)){
+  if (analysis_module_check_option( module , ANALYSIS_SCALE_DATA)){
     obs_data_scale( obs_data , S , E , D , R , dObs );
   }
   
-  if (analysis_module_get_option( module , ANALYSIS_USE_A | ANALYSIS_UPDATE_A)){
+  if (analysis_module_check_option( module , ANALYSIS_USE_A) || analysis_module_check_option(module , ANALYSIS_UPDATE_A))
     localA = A;
-  }
 
   /*****************************************************************/
   
@@ -1197,8 +1197,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
         
         enkf_main_serialize_dataset( enkf_main , dataset , step2 ,  use_count , active_size , row_offset , tp , serialize_info);
 
-        if (analysis_module_get_option( module , ANALYSIS_UPDATE_A)){
-          if (analysis_module_get_option( module , ANALYSIS_ITERABLE)){
+        if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
+          if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
             int iteration = cases_config_get_iteration_number(enkf_fs_get_cases_config(src_fs));
             char iteration_str[15];
             sprintf(iteration_str,"%d",iteration);
@@ -1209,7 +1209,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
             analysis_module_updateA( module , localA , S , R , dObs , E , D );
         }
         else {
-          if (analysis_module_get_option( module , ANALYSIS_USE_A)){
+          if (analysis_module_check_option( module , ANALYSIS_USE_A)){
             analysis_module_initX( module , X , localA , S , R , dObs , E , D );
           }
 
@@ -1442,8 +1442,6 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
     int iens;
 
     state_map_deselect_matching( enkf_fs_get_state_map( fs ) , iactive , STATE_LOAD_FAILURE | STATE_PARENT_FAILURE);
-    bool_vector_fprintf( iactive , stdout , "IACTIVE" , "%2d");
-
 
     if (enkf_main->verbose) {
       if (run_mode == ENKF_ASSIMILATION)
@@ -1461,12 +1459,14 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
       pthread_t        queue_thread;
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
       
+      
       /* Start the queue */
       if (run_mode != INIT_ONLY) {
         arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
         arg_pack_append_ptr(queue_args  , job_queue);
         arg_pack_append_int(queue_args  , job_size);
         arg_pack_append_bool(queue_args , verbose_queue);
+        job_queue_reset(job_queue);
         pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
       }
 
@@ -1633,9 +1633,9 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
   run_mode_type run_mode = simulate ? ENSEMBLE_EXPERIMENT : INIT_ONLY;
   {
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-    if(initialize)
+    if (initialize)
       enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1, force_init);
-
+    
     stringlist_free( param_list );
   }  
   enkf_main_init_run( enkf_main , run_mode );
@@ -2561,13 +2561,14 @@ void enkf_main_update_node( enkf_main_type * enkf_main , const char * key ) {
 //}
 
 
+/*
 void enkf_main_create_fs( enkf_main_type * enkf_main , const char * fs_path) {
   fs_driver_impl driver_id = model_config_get_dbase_type( enkf_main->model_config );
   void * arg = NULL;
   
   enkf_fs_create_fs( fs_path , driver_id , arg );
 }
-
+*/
 
 static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char * case_path) {
   const char * ens_path = model_config_get_enspath( enkf_main->model_config);
@@ -2704,13 +2705,13 @@ stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
 }
 
 
-void enkf_main_close_alt_fs(enkf_main_type * enkf_main , enkf_fs_type * fs) {
+void enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs) {
   if (fs != enkf_main->dbase) 
     enkf_fs_close( fs );
 }
 
 
-enkf_fs_type * enkf_main_get_alt_fs(enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
+enkf_fs_type * enkf_main_get_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
   enkf_fs_type * alt_fs = enkf_main->dbase;
   if (case_path != NULL) {
     char * new_mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
@@ -3539,7 +3540,7 @@ int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const cha
    all realizations will be checked).
 */
 
-bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_type * __mask) {
+static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , enkf_fs_type * fs , bool_vector_type * __mask) {
   stringlist_type  * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
   bool_vector_type * mask;
   bool initialized = true;
@@ -3549,18 +3550,18 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
   else
     mask = bool_vector_alloc(0 , true );
   
-  do {
+  while ((ikey < stringlist_get_size( parameter_keys )) && (initialized)) {
     const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
     int iens = 0;
     do {
       if (bool_vector_safe_iget( mask , iens)) {
         node_id_type node_id = {.report_step = 0 , .iens = iens , .state = ANALYZED };
-        initialized = enkf_config_node_has_node( config_node , enkf_main->dbase , node_id);
+        initialized = enkf_config_node_has_node( config_node , fs , node_id);
       }
       iens++;
     } while ((iens < enkf_main->ens_size) && (initialized));
     ikey++;
-  } while ((ikey < stringlist_get_size( parameter_keys )) && (initialized));
+  }
   
   stringlist_free( parameter_keys );
   if (__mask == NULL)
@@ -3569,6 +3570,19 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
 }
 
 
+bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_type * __mask) {
+  return enkf_main_case_is_initialized__(enkf_main , enkf_main->dbase , __mask);
+}
+
+bool enkf_main_case_is_initialized( const enkf_main_type * enkf_main , const char * case_name ,  bool_vector_type * __mask) {
+  enkf_fs_type * fs = enkf_main_get_alt_fs(enkf_main , case_name , true , false);
+  if (fs) {
+    bool initialized = enkf_main_case_is_initialized__(enkf_main , fs , __mask);
+    enkf_main_close_alt_fs(enkf_main , fs);
+    return initialized;
+  } else 
+    return false;
+}
 
 
 void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * stream ) {
