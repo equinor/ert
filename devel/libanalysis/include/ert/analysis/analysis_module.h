@@ -39,11 +39,14 @@ extern "C" {
 */
 
 
-#define ANALYSIS_NEED_ED              1
-#define ANALYSIS_USE_A                4       // The module will read the content of A - but not modify it.
-#define ANALYSIS_UPDATE_A             8       // The update will be based on modifying A directly, and not on an X matrix. 
-#define ANALYSIS_SCALE_DATA          16
-#define ANALYSIS_ITERABLE            32       // The module can bu uused as an iterative smoother.
+typedef enum {
+    ANALYSIS_NEED_ED    = 1,
+    ANALYSIS_USE_A      = 4,       // The module will read the content of A - but not modify it.
+    ANALYSIS_UPDATE_A   = 8,       // The update will be based on modifying A directly, and not on an X matrix.
+    ANALYSIS_SCALE_DATA = 16,
+    ANALYSIS_ITERABLE   = 32       // The module can bu used as an iterative smoother.
+} analysis_module_flag_enum;
+
 
 #define ANALYSIS_MODULE_FLAG_ENUM_SIZE 5
 #define ANALYSIS_MODULE_FLAG_ENUM_DEFS {.value = ANALYSIS_NEED_ED     , .name = "ANALYSIS_NEED_ED"},\
