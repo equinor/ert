@@ -1540,10 +1540,9 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
           case JOB_RUN_OK:
             break;
           default:
-            util_abort("%s: invalid job status:%s \n",__func__ , run_status );
+            util_abort("%s: invalid job status:%d \n",__func__ , run_status );
           }
           totalOK = totalOK && ( run_status == JOB_RUN_OK );
-
         }
       }
       enkf_fs_fsync( enkf_main->dbase );
