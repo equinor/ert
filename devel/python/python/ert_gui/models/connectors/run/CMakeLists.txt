@@ -4,7 +4,11 @@ set(PYTHON_SOURCES
     ensemble_experiment.py
     iterated_smoother.py
     one_more_iteration.py
+    run_members.py
+    run_status.py
     simulation_mode.py
+    simulation_runner.py
+    simulations_tracker.py
     smoother.py
 )
 

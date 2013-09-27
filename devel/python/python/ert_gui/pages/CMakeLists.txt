@@ -5,6 +5,7 @@ set(PYTHON_SOURCES
     message_center.py
     popup_dialog.py
     queue_system_configuration.py
+    run_dialog.py
     simulation_panel.py
 )
 

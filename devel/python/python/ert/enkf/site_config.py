@@ -129,7 +129,7 @@ class SiteConfig(BaseCClass):
         """ @rtype: bool """
         return SiteConfig.cNamespace().queue_is_running( self )
 
-    def get_job_queue(self):
+    def getJobQueue(self):
         """ @rtype: JobQueue """
         return  SiteConfig.cNamespace().get_job_queue(self).setParent(self)
 
