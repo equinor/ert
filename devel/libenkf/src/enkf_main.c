@@ -1098,6 +1098,12 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
 }
 
 
+static void assert_matrix_size(const matrix_type * m , const char * name , int rows , int columns) {
+  if (!matrix_check_dims(m , rows , columns))
+      util_abort("%s: matrix mismatch %s:[%d,%d]   - expected:[%d, %d]", __func__ , name , matrix_get_rows(m) , matrix_get_columns(m) , rows , columns);
+}
+
+
 
 static void enkf_main_analysis_update( enkf_main_type * enkf_main , 
                                        enkf_fs_type * target_fs ,
@@ -1127,9 +1133,16 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
+
+  assert_matrix_size(X , "X" , ens_size , ens_size);
+  assert_matrix_size(S , "S" , active_size , ens_size);
+  assert_matrix_size(R , "R" , active_size , active_size);
   if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
+
+    assert_matrix_size( E , "E" , active_size , ens_size);
+    assert_matrix_size( D , "D" , active_size , ens_size);
   }
 
   if (analysis_module_check_option( module , ANALYSIS_SCALE_DATA)){
