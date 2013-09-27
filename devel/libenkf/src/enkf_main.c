@@ -1406,10 +1406,10 @@ static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , in
 
 static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
   job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-
   int min_realisations = analysis_config_get_min_realisations(enkf_main->analysis_config);
+  
   bool cont = true;
-  if (0 >= min_realisations);
+  if (0 >= min_realisations)
     cont = false;
 
   while (cont) {
@@ -1420,7 +1420,7 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
     }
 
     if (cont) {
-      util_usleep(1000);
+      util_usleep(100);
     }
   }
 }
@@ -1538,6 +1538,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
         log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
         
         if (analysis_config_get_stop_long_running(enkf_main_get_analysis_config( enkf_main ))) {
+          printf("\n IN METHOD enkf_main_run_step, STOP LONG RUNNING IS TRUE");
           enkf_main_monitor_job_queue( enkf_main );
         }
         

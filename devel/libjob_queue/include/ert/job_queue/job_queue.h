@@ -75,6 +75,7 @@ extern "C" {
  
   int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
   time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
+  time_t              job_queue_iget_sim_end( job_queue_type * queue, int job_index); 
   time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);
   job_driver_type     job_queue_lookup_driver_name( const char * driver_name );
   

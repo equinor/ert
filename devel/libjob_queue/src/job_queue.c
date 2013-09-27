@@ -270,6 +270,7 @@ struct job_queue_node_struct {
   char                 **argv;            /* The commandline arguments. */
   time_t                 submit_time;     /* When was the job added to job_queue - the FIRST TIME. */
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
+  time_t                 sim_end ;        /* When did the job finish successfully */
   pthread_rwlock_t       job_lock;        /* This lock provides read/write locking of the job_data field. */ 
   job_callback_ftype    *done_callback;
   job_callback_ftype    *retry_callback;  /* To determine if job can be retried */
@@ -493,6 +494,8 @@ static void job_queue_node_clear(job_queue_node_type * node) {
   node->retry_callback      = NULL;
   node->done_callback       = NULL;
   node->callback_arg        = NULL;
+  node->sim_start           = 0;
+  node->sim_end             = 0; 
 }
 
 
@@ -596,7 +599,8 @@ static void job_queue_initialize_node(job_queue_type * queue ,
   node->retry_callback = retry_callback;
   node->done_callback  = done_callback;
   node->callback_arg   = callback_arg;
-  node->sim_start      = -1;
+  node->sim_start      = 0;
+  node->sim_end        = 0; 
   node->submit_time    = time( NULL );
 
   /* Now the job is ready to be picked by the queue manager. */
@@ -639,6 +643,10 @@ static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node
       
       if (new_status == JOB_QUEUE_RUNNING) 
         node->sim_start = time( NULL );
+      
+      if (new_status == JOB_QUEUE_SUCCESS)
+        node->sim_end = time( NULL ); 
+      
       status_change = true;
 
       if (new_status == JOB_QUEUE_FAILED)
@@ -870,7 +878,18 @@ time_t job_queue_get_job_stop_time(const job_queue_type * queue) {
 }
 
 void job_queue_set_auto_job_stop_time(job_queue_type * queue) {
-  //do clever stuff
+  time_t sum_run_time_succeded_jobs = 0;
+  int num_succeded_jobs = 0;
+  for (int i = 0; i < queue->active_size; ++i) {
+    if (JOB_QUEUE_SUCCESS == job_queue_iget_job_status(queue,i)) {
+      sum_run_time_succeded_jobs += difftime(job_queue_iget_sim_end(queue, i), job_queue_iget_sim_start(queue, i));
+      ++num_succeded_jobs; 
+    }
+  }
+
+  time_t avg_run_time_succeded_jobs = sum_run_time_succeded_jobs / num_succeded_jobs;
+  time_t stop_time = time(NULL) + (avg_run_time_succeded_jobs * 0.25);
+  job_queue_set_job_stop_time(queue, stop_time); 
 }
 
 /**
@@ -962,6 +981,11 @@ time_t job_queue_iget_sim_start( job_queue_type * queue, int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
   return node->sim_start;
 }
+
+time_t job_queue_iget_sim_end( job_queue_type * queue, int job_index) {
+  job_queue_node_type * node = queue->jobs[job_index];
+  return node->sim_end;
+} 
 
 time_t job_queue_iget_submit_time( job_queue_type * queue, int job_index) {
   job_queue_node_type * node = queue->jobs[job_index];
