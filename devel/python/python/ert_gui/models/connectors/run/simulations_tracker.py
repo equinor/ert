@@ -56,12 +56,14 @@ class SimulationsTracker(ListModelMixin):
 
         waiting_state = SimulationStateStatus("Waiting", JobStatusType.JOB_QUEUE_NOT_ACTIVE | JobStatusType.JOB_QUEUE_WAITING | JobStatusType.JOB_QUEUE_SUBMITTED, SimulationStateStatus.WAITING, total_count)
         pending_state = SimulationStateStatus("Pending", JobStatusType.JOB_QUEUE_PENDING, SimulationStateStatus.PENDING, total_count)
-        running_state = SimulationStateStatus("Running", JobStatusType.JOB_QUEUE_RUNNING, SimulationStateStatus.RUNNING, total_count)
+        running_state = SimulationStateStatus("Running", JobStatusType.JOB_QUEUE_RUNNING | JobStatusType.JOB_QUEUE_EXIT | JobStatusType.JOB_QUEUE_RUNNING_CALLBACK, SimulationStateStatus.RUNNING, total_count)
         killed_state = SimulationStateStatus("User killed", JobStatusType.JOB_QUEUE_USER_KILLED | JobStatusType.JOB_QUEUE_USER_EXIT, SimulationStateStatus.USER_KILLED, total_count)
         failed_state = SimulationStateStatus("Failed", JobStatusType.JOB_QUEUE_FAILED, SimulationStateStatus.FAILED, total_count)
         done_state = SimulationStateStatus("Finished", JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS, SimulationStateStatus.FINISHED, total_count)
-        # unknown enum values ends up in finished
+
         self.states = [waiting_state, pending_state, running_state, killed_state, failed_state, done_state]
+
+        self.__checkForUnusedEnums()
 
     def __statusChanged(self):
         status_counts = RunStatusModel().getStatusCounts()
@@ -82,5 +84,17 @@ class SimulationsTracker(ListModelMixin):
     def getList(self):
         """ @rtype: list of SimulationStateStatus """
         return list(self.states)
+
+    def __checkForUnusedEnums(self):
+
+        for enum in JobStatusType.enums():
+            used = False
+            for state in self.states:
+                if enum in state.state:
+                    used = True
+
+            if not used:
+                raise AssertionError("Enum identifier '%s' not used!" % enum)
+
 
 
