@@ -886,10 +886,12 @@ void job_queue_set_auto_job_stop_time(job_queue_type * queue) {
       ++num_succeded_jobs; 
     }
   }
-
-  time_t avg_run_time_succeded_jobs = sum_run_time_succeded_jobs / num_succeded_jobs;
-  time_t stop_time = time(NULL) + (avg_run_time_succeded_jobs * 0.25);
-  job_queue_set_job_stop_time(queue, stop_time); 
+  
+  if (num_succeded_jobs > 0) {
+    time_t avg_run_time_succeded_jobs = sum_run_time_succeded_jobs / num_succeded_jobs;
+    time_t stop_time = time(NULL) + (avg_run_time_succeded_jobs * 0.25);
+    job_queue_set_job_stop_time(queue, stop_time); 
+  }
 }
 
 /**
