@@ -1145,10 +1145,9 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
     assert_matrix_size( D , "D" , active_size , ens_size);
   }
 
-  if (analysis_module_check_option( module , ANALYSIS_SCALE_DATA)){
+  if (analysis_module_check_option( module , ANALYSIS_SCALE_DATA))
     obs_data_scale( obs_data , S , E , D , R , dObs );
-  }
-  
+
   if (analysis_module_check_option( module , ANALYSIS_USE_A) || analysis_module_check_option(module , ANALYSIS_UPDATE_A))
     localA = A;
 
@@ -1191,9 +1190,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       matrix_free( PC_obs );
     }
     
-    if (localA == NULL){
+    if (localA == NULL)
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
-    }
 
 
     while (!hash_iter_is_complete( dataset_iter )) {
