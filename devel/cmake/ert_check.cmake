@@ -128,6 +128,11 @@ if (ISREG_POSIX)
   add_definitions( -DHAVE_ISREG )
 endif()
 
+try_run( RUN_RESULT COMPILE_RESULT ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_mktime1970.c )
+if (RUN_RESULT)
+   add_defintions( -DTIME_T_1970 )
+endif()
+
 set( CMAKE_C_FLAGS ${CMAKE_C_FLAGS_main} )
 set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_main} )
 
