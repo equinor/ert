@@ -1,9 +1,10 @@
 from ert_gui.models.connectors import RunPathModel, EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel, IsCaseInitializedModel
-from ert_gui.models.connectors.run import SimulationModeModel
-from ert_gui.models.connectors.run.one_more_iteration import OneMoreIteration
+from ert_gui.models.connectors.run import SimulationModeModel, OneMoreIteration
 from ert_gui.models.mixins.connectorless import FunctionButtonModel
 from ert_gui.pages.message_center import MessageCenter
+from ert_gui.models.connectors.run.simulation_runner import SimulationRunner
+from ert_gui.pages.run_dialog import RunDialog
 from ert_gui.widgets.button import Button
 from ert_gui.widgets.combo_choice import ComboChoice
 from ert_gui.widgets.integer_spinner import IntegerSpinner
@@ -41,7 +42,8 @@ class SimulationPanel(RowPanel):
         self.run = FunctionButtonModel("Run", self.runSimulation)
         self.run.setEnabled(SimulationModeModel().getCurrentChoice().buttonIsEnabled())
 
-        self.run_button = Button(self.run, help_link="run/run")
+        self.run_button = Button(self.run, label="Start simulation", help_link="run/run")
+        self.run_button.addStretch()
 
         self.config_and_run = FunctionButtonModel("Configure and Run", self.configureAndRunSimulation)
         self.config_and_run.setEnabled(SimulationModeModel().getCurrentChoice().buttonIsEnabled())
@@ -56,6 +58,7 @@ class SimulationPanel(RowPanel):
 
         simulation_mode_model.observable().attach(SimulationModeModel.CURRENT_CHOICE_CHANGED_EVENT, self.toggleSimulationMode)
 
+        self.updateSimulationStatus()
 
 
     def updateSimulationStatus(self):
@@ -64,7 +67,16 @@ class SimulationPanel(RowPanel):
 
     def runSimulation(self):
         simulation_model = SimulationModeModel().getCurrentChoice()
-        simulation_model.buttonTriggered()
+
+        simulation_runner = SimulationRunner(simulation_model)
+
+
+        dialog = RunDialog(simulation_runner)
+        simulation_runner.start()
+        dialog.exec_()
+
+        self.updateSimulationStatus()
+
 
     def configureAndRunSimulation(self):
         simulation_model = SimulationModeModel().getCurrentChoice()

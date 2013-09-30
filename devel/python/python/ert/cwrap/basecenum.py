@@ -85,6 +85,9 @@ class BaseCEnum(object):
     def __int__(self):
         return self.value
 
+    def __contains__(self, item):
+        return self & item == item
+
     @classmethod
     def __createEnum(cls, value):
         enum = cls.__new__(cls)

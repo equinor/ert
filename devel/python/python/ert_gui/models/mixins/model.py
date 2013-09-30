@@ -6,7 +6,7 @@ class AbstractMethodError(NotImplementedError):
 
 
 class ModelMixin(object):
-    def __init__(self):
+    def __init__(self, *args):
         pass
         # print("%s init" % self.__class__.__name__)
 

@@ -255,7 +255,7 @@ class JobQueue(BaseCClass):
     def set_max_running( self, max_running ):
         self.driver.set_max_running(max_running)
 
-    def user_exit(self):
+    def killAllJobs(self):
         JobQueue.cNamespace().user_exit(self)
 
     def set_pause_on(self):

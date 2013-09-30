@@ -10,6 +10,7 @@ set(PYTHON_SOURCES
     model.py
     path_model.py
     range_model.py
+    run_model.py
     selectable_list_model.py
     selectable_model.py
     spinner_model.py
