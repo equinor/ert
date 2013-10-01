@@ -104,6 +104,8 @@ int                    analysis_config_get_min_realisations( const analysis_conf
 bool                   analysis_config_have_enough_realisations( const analysis_config_type * config , int realisations);
 void                   analysis_config_set_stop_long_running( analysis_config_type * config, bool stop_long_running );
 bool                   analysis_config_get_stop_long_running( const analysis_config_type * config);
+void                   analysis_config_set_max_runtime( analysis_config_type * config, int max_runtime  ); 
+int                    analysis_config_get_max_runtime( const analysis_config_type * config ); 
 
 
   UTIL_IS_INSTANCE_HEADER( analysis_config );

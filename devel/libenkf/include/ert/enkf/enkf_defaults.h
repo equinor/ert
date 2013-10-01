@@ -121,6 +121,7 @@
 #define DEFAULT_ANALYSIS_ITER_RUNPATH      "Simulations/Real%d"
 #define DEFAULT_ANALYSIS_MIN_REALISATIONS  0   // 0: No lower limit
 #define DEFAULT_ANALYSIS_STOP_LONG_RUNNING false 
+#define DEFAULT_MAX_RUNTIME                0
 
 
 /* Default directories. */

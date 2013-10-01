@@ -1418,7 +1418,13 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
       job_queue_set_auto_job_stop_time(job_queue);
       cont = false;
     }
-
+    
+    //Check if minimum number of realizations is not possible. If so, it is time to give up
+    int possible_sucesses = job_queue_get_num_running(job_queue) + job_queue_get_num_waiting(job_queue) + job_queue_get_num_pending(job_queue) + job_queue_get_num_complete(job_queue); 
+    if (possible_sucesses < min_realisations) {
+      cont = false; 
+    }
+    
     if (cont) {
       util_usleep(100);
     }
@@ -1537,8 +1543,10 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
         job_queue_submit_complete( job_queue );
         log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
         
+        int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main )); 
+        job_queue_set_max_job_duration(job_queue, max_runtime); 
+        
         if (analysis_config_get_stop_long_running(enkf_main_get_analysis_config( enkf_main ))) {
-          printf("\n IN METHOD enkf_main_run_step, STOP LONG RUNNING IS TRUE");
           enkf_main_monitor_job_queue( enkf_main );
         }
         
