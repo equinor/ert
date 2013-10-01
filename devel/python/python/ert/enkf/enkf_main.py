@@ -177,8 +177,9 @@ class EnKFMain(BaseCClass):
                             target_state, member_mask, ranking_key, node_list)
 
 
-    def iget_state(self, ens_memb):
-        return EnKFMain.cNamespace().iget_state(self, ens_memb).setParent(self)
+    def getMemberRunningState(self, ensemble_member):
+        """ @rtype: EnKFState """
+        return EnKFMain.cNamespace().iget_state(self, ensemble_member).setParent(self)
 
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         EnKFMain.cNamespace().get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std)
@@ -189,6 +190,10 @@ class EnKFMain(BaseCClass):
     def isInitialized(self):
         """ @rtype: bool """
         return EnKFMain.cNamespace().is_initialized(self, None) # what is the bool_vector mask???
+
+    def runEnsembleExperiment(self, member_list, total_member_count):
+        member_mask = BoolVector.createFromList(total_member_count, member_list)
+        EnKFMain.cNamespace().run_exp(self, member_mask, True, 0, 0, EnkfStateType.ANALYZED, True)
 
     def run(self, boolPtr, init_step_parameter, simFrom, state, mode):
         #{"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4, "SMOOTHER" : 5}
@@ -290,7 +295,7 @@ EnKFMain.cNamespace().iget_state = cwrapper.prototype("enkf_state_ref enkf_main_
 
 EnKFMain.cNamespace().get_logh = cwrapper.prototype("log_ref enkf_main_get_logh( enkf_main )")
 
-EnKFMain.cNamespace().run_exp = cwrapper.prototype("void enkf_main_run_exp( enkf_main, bool_vector, bool, int, int, int, bool)")
+EnKFMain.cNamespace().run_exp = cwrapper.prototype("void enkf_main_run_exp( enkf_main, bool_vector, bool, int, int, enkf_state_type_enum, bool)")
 EnKFMain.cNamespace().run_assimilation = cwrapper.prototype("void enkf_main_run_assimilation( enkf_main, bool_vector, int, int, int)")
 EnKFMain.cNamespace().run_smoother = cwrapper.prototype("void enkf_main_run_smoother(enkf_main, char*, bool)")
 EnKFMain.cNamespace().alloc_caselist = cwrapper.prototype("stringlist_obj enkf_main_alloc_caselist(enkf_main)")

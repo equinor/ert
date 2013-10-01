@@ -110,9 +110,10 @@
 #
 #-------------------- </Example shell script> --------------------
 
-from PyQt4 import QtGui, QtCore
 import sys
 import os
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QApplication, QSplashScreen
 from ert.enkf import EnKFMain
 from ert_gui.main_window import GertMainWindow
 from ert_gui.models import ErtConnector
@@ -130,16 +131,17 @@ from ert_gui.widgets.util import resourceImage
 
 
 def main():
-    app = QtGui.QApplication(sys.argv) #Early so that QT is initialized before other imports
+    QApplication.setGraphicsSystem("raster")
+    app = QApplication(sys.argv) #Early so that QT is initialized before other imports
 
-    splash = QtGui.QSplashScreen(resourceImage("newsplash"), QtCore.Qt.WindowStaysOnTopHint)
+    splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
     splash.show()
-    splash.showMessage("Starting up...", QtCore.Qt.AlignLeft, QtCore.Qt.white)
+    splash.showMessage("Starting up...", Qt.AlignLeft, Qt.white)
     app.processEvents()
 
     HelpDock.setHelpLinkPrefix(os.getenv("ERT_SHARE_PATH") + "/gui/help/")
 
-    splash.showMessage("Bootstrapping...", QtCore.Qt.AlignLeft, QtCore.Qt.white)
+    splash.showMessage("Bootstrapping...", Qt.AlignLeft, Qt.white)
     app.processEvents()
 
     strict = True
@@ -179,7 +181,7 @@ def main():
         window = GertMainWindow()
         window.setSaveFunction(ert.saveConfig())
 
-        splash.showMessage("Creating GUI...", QtCore.Qt.AlignLeft, QtCore.Qt.white)
+        splash.showMessage("Creating GUI...", Qt.AlignLeft, Qt.white)
         app.processEvents()
 
         simulation_panel = SimulationPanel()
@@ -187,7 +189,7 @@ def main():
         configuration_panel = ConfigurationPanel()
         window.addTab(configuration_panel.getName(), configuration_panel)
 
-        splash.showMessage("Communicating with ERT...", QtCore.Qt.AlignLeft, QtCore.Qt.white)
+        splash.showMessage("Communicating with ERT...", Qt.AlignLeft, Qt.white)
         app.processEvents()
 
 

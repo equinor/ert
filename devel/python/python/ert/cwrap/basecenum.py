@@ -49,10 +49,6 @@ class BaseCEnum(object):
     def enums(cls):
         return list(cls.enum_namespace[cls])
 
-    @classmethod
-    def hasElement(cls , element):
-        return hasattr(cls , element)
-
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self.value == other.value
@@ -89,6 +85,9 @@ class BaseCEnum(object):
     def __int__(self):
         return self.value
 
+    def __contains__(self, item):
+        return self & item == item
+
     @classmethod
     def __createEnum(cls, value):
         enum = cls.__new__(cls)
@@ -122,7 +121,7 @@ class BaseCEnum(object):
         try:
             func = getattr(library, enum_provider_function)
         except AttributeError:
-            raise ValueError("Could not find enum description function:%s - can not load enum:%s." % (enum_provider_function, cls.__name__))
+            raise ValueError("Could not find enum description function: %s - can not load enum: %s." % (enum_provider_function, cls.__name__))
 
         func.restype = ctypes.c_char_p
         func.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_int)]

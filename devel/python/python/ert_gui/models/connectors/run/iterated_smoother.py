@@ -16,7 +16,7 @@ class IteratedSmoother(ErtConnector, ButtonModelMixin):
         return "Iterated Smoother"
 
     def buttonIsEnabled(self):
-        return True
+        return False
 
 
 
