@@ -17,8 +17,8 @@ class ErtConnector(object):
     """
     __ert = None
 
-    def __init__(self):
-        super(ErtConnector, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(ErtConnector, self).__init__(*args, **kwargs)
 
     def __new__(cls, *args):
         if cls is ErtConnector:

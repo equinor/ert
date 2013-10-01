@@ -14,8 +14,10 @@ set(PYTHON_SOURCES
     integer_spinner.py
     keyword_list.py
     keyword_table.py
+    legend.py
     path_chooser.py
     path_format.py
+    progress.py
     reloadbutton.py
     row_group.py
     row_panel.py

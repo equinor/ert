@@ -4,12 +4,11 @@ from ert_gui.models.mixins import SelectableListModelMixin
 from ert.util import StringList
 
 
-class InitializationMembersModel(ErtConnector, SelectableListModelMixin):
-
+class RunMembersModel(ErtConnector, SelectableListModelMixin):
 
     def __init__(self):
         EnsembleSizeModel().observable().attach(EnsembleSizeModel.SPINNER_VALUE_CHANGED_EVENT, self.__ensembleSizeChanged)
-        super(InitializationMembersModel, self).__init__()
+        super(RunMembersModel, self).__init__()
 
     def __ensembleSizeChanged(self):
         self.observable().notify(SelectableListModelMixin.LIST_CHANGED_EVENT)

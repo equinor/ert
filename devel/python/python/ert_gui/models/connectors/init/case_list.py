@@ -7,7 +7,7 @@ class CaseList(ErtConnector, ListModelMixin):
     def getList(self):
         fs = self.ert().getFileSystem()
         case_list = self.ert().getCaseList()
-        return case_list
+        return sorted(case_list)
 
     def addItem(self, value):
         self.ert().selectFileSystem(value)
