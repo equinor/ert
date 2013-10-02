@@ -36,7 +36,7 @@ int main(int argc , char ** argv) {
   
   
 #endif
-  test_work_area_type * work_area = test_work_area_alloc( "config_path_elm" );
+  test_work_area_type * work_area = test_work_area_alloc( "config_path_elm" , true );
   const char * root = test_work_area_get_cwd( work_area );
   char * abs_path = util_alloc_filename( root , "rel/path" , NULL);
   char * abs_true = util_alloc_filename( root , "rel/path/XXX" , NULL);

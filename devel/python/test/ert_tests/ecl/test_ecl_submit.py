@@ -141,7 +141,7 @@ class LocalSubmitTest(EclSubmitTest):
     def test_LOCAL_submit(self):
         #work_area = TestArea("python/ecl_submit/LOCAL", True)
 
-        with TestAreaContext("python/ecl_submit/LOCAL") as work_area:
+        with TestAreaContext("python/ecl_submit/LOCAL", True) as work_area:
             num_submit = 4
             queue = EclQueue(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=2)
             path_list = []

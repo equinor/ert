@@ -42,7 +42,7 @@ void job_queue_set_driver_(job_driver_type driver_type) {
 }
 
 void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs, int number_of_slowjobs, char * sleep_short, char * sleep_long, int max_sleep) {
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
+  test_work_area_type * work_area = test_work_area_alloc("job_queue", false);
   
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "ERROR");
   queue_driver_type * driver = queue_driver_alloc_local();
@@ -83,7 +83,7 @@ void run_jobs_with_time_limit_test(char * executable_to_run, int number_of_jobs,
 
 
 void run_jobs_time_limit_multithreaded(char * executable_to_run, int number_of_jobs, int number_of_slowjobs, char * sleep_short, char * sleep_long, int max_sleep) {
-  test_work_area_type * work_area = test_work_area_alloc("job_queue");
+  test_work_area_type * work_area = test_work_area_alloc("job_queue", false);
   
   job_queue_type * queue = job_queue_alloc(number_of_jobs, "OK.status", "ERROR");
   queue_driver_type * driver = queue_driver_alloc_local();
