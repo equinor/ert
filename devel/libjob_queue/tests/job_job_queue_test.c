@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2012  Statoil ASA, Norway. 
+   Copyright (C) 2013  Statoil ASA, Norway. 
     
    The file 'job_queue_test.c' is part of ERT - Ensemble based Reservoir Tool. 
     
@@ -53,19 +53,6 @@ void submit_jobs_to_queue(job_queue_type * queue, test_work_area_type * work_are
     }
     free(runpath);
   }
-}
-
-void job_queue_set_driver_(job_driver_type driver_type) {
-  job_queue_type * queue = job_queue_alloc(10, "OK", "ERROR");
-  queue_driver_type * driver = queue_driver_alloc(driver_type);
-  test_assert_false(job_queue_has_driver(queue));
-
-  job_queue_set_driver(queue, driver);
-  test_assert_true(job_queue_has_driver(queue));
-
-  job_queue_free(queue);
-  queue_driver_free(driver);
-
 }
 
 void monitor_job_queue(job_queue_type * queue, int max_job_duration, time_t stop_time, int min_realizations) {
@@ -461,9 +448,6 @@ void JobQueueSetAutoStopTime_AllJobsAreFinished_AutoStopDoesNothing(char ** argv
 }
 
 int main(int argc, char ** argv) {
-  job_queue_set_driver_(LSF_DRIVER);
-  job_queue_set_driver_(TORQUE_DRIVER);
-
   JobQueueRunJobs_ReuseQueue_AllOk(argv);
 
   JobQueueSetMaxDuration_DurationZero_AllRealisationsAreRun(argv);

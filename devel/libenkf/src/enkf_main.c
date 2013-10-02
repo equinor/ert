@@ -1426,7 +1426,7 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
     }
     
     if (cont) {
-      util_usleep(100);
+      util_usleep(10000);
     }
   }
 }
