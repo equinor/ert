@@ -14,8 +14,8 @@ int main(int argc, char ** argv) {
   {
     time_t t = mktime( &ts );
     if (t == -1) 
-      exit(0);
-    else
       exit(1);
+    else
+      exit(0);
   }
 }
