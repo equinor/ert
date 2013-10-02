@@ -78,9 +78,6 @@ if (GETOPT_HEADER)
 endif()
 #-----------------------------------------------------------------
 find_path( UNISTD_HEADER unistd.h /usr/include )
-if (UNISTD_HEADER)
-   add_definitions( -DHAVE_UNISTD )
-endif()
 
 if (ERT_WINDOWS)
    find_library( SHLWAPI_LIBRARY NAMES Shlwapi )
