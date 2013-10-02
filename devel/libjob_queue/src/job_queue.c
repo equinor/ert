@@ -1285,12 +1285,9 @@ static void job_queue_check_expired(job_queue_type * queue) {
     job_queue_node_type * node = queue->jobs[i];
 
     if (job_queue_node_get_status(node) == JOB_QUEUE_RUNNING) {
-      time_t now = time(NULL);
+      time_t now = time(NULL); 
       if ( job_queue_get_max_job_duration(queue) > 0) {
-        time_t start = node->sim_start;
-        double elapsed = 0;
-        if (start >= node->submit_time)
-          elapsed = difftime(now, start);
+        double elapsed = difftime(now, node->sim_start);
         if (elapsed > job_queue_get_max_job_duration(queue)) {
           job_queue_change_node_status(queue, node, JOB_QUEUE_USER_EXIT);
         }
