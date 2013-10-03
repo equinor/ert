@@ -701,6 +701,7 @@ double enkf_linalg_data_mismatch(matrix_type *D , matrix_type *R , matrix_type *
   
   printf("-----------------------------------------------------------------\n");
   printf("%s:%d Calling matrix_dgemm() \n",__func__ , __LINE__);
+  //            C   A  B
   matrix_dgemm(tmp, D, R,true, false, 1.0, 0.0);
   printf("-----------------------------------------------------------------\n");
   printf("%s:%d Calling matrix_dgemm() \n",__func__ , __LINE__);
@@ -715,7 +716,7 @@ double enkf_linalg_data_mismatch(matrix_type *D , matrix_type *R , matrix_type *
  return mean;
 }
 
-void enkf_linalg_Covariance(matrix_type *Cd, matrix_type *E, double nsc ,int nrobs)
+void enkf_linalg_Covariance(matrix_type *Cd, const matrix_type *E, double nsc ,int nrobs)
 {
   matrix_matlab_dump( E, "matrixE.dat");
   printf("Starting Dgemm for EE(T)\n");

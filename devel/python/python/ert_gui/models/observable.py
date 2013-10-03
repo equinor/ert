@@ -1,3 +1,6 @@
+from ert_gui.models import WeakMethod
+
+
 class Observable(object):
 
     def __init__(self, name):
@@ -18,7 +21,8 @@ class Observable(object):
             raise LookupError("Observer do not have an event of type: %s" % str(event))
 
         if not observer_function in self.observers[event]:
-            self.observers[event].append(observer_function)
+            weak_ref = WeakMethod(observer_function)
+            self.observers[event].append(weak_ref)
 
     def detach(self, event, observer_function):
 
@@ -40,8 +44,18 @@ class Observable(object):
         if debug_message is not None:
             print("Notification: %s - %s " % (event, str(debug_message)))
 
-        for observer in self.observers[event]:
-            observer()
+        dead_references = []
+        for observer_ref in self.observers[event]:
+            observer_function = observer_ref()
+            # print("%s %s" % (observer_ref, observer_function))
+            if observer_function is not None:
+                observer_function()
+            else:
+                dead_references.append(observer_ref)
+
+        for reference in dead_references:
+            self.observers[event].remove(reference)
+            print("Removed dead reference: %s" % reference)
 
     def __str__(self):
         return "Observable %s: %s" % (self.name, str(self.observers.keys()))

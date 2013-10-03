@@ -44,7 +44,7 @@ class RowPanel(QWidget):
         if row_widget.getLabel() is None or row_widget.getLabel() == "":
             self.__layout.addWidget(row_widget, self.__row, 1, 1, 3)
         else:
-            self.__layout.addWidget(QLabel(row_widget.getLabel()), self.__row, 1, Qt.AlignRight | Qt.AlignTop)
+            self.__layout.addWidget(QLabel(row_widget.getLabel()), self.__row, 1, Qt.AlignLeft | Qt.AlignTop)
             self.__layout.addWidget(row_widget, self.__row, 3)
 
         if not configurator is None:

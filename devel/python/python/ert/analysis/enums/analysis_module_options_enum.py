@@ -18,7 +18,11 @@ from ert.analysis import ANALYSIS_LIB
 
 
 class AnalysisModuleOptionsEnum(BaseCEnum):
-    pass
+    ANALYSIS_NEED_ED = None
+    ANALYSIS_USE_A = None
+    ANALYSIS_UPDATE_A = None
+    ANALYSIS_SCALE_DATA = None
+    ANALYSIS_ITERABLE = None
  
 AnalysisModuleOptionsEnum.populateEnum(ANALYSIS_LIB , "analysis_module_flag_enum_iget")
 AnalysisModuleOptionsEnum.registerEnum(ANALYSIS_LIB , "analysis_module_options_enum")

@@ -60,8 +60,7 @@ class GridTest(ExtendedTestCase):
 
 
     def test_rect(self):
-        #work_area = TestArea("python/grid-test/testRect", True)
-        with TestAreaContext("python/grid-test/testRect", True):
+        with TestAreaContext("python/grid-test/testRect"):
             a1 = 1.0
             a2 = 2.0
             a3 = 3.0
@@ -111,8 +110,7 @@ class GridTest(ExtendedTestCase):
 
 
     def test_save(self):
-        #work_area = TestArea("python/grid-test/testSave", True)
-        with TestAreaContext("python/grid-test/testSave", True):
+        with TestAreaContext("python/grid-test/testSave"):
             g1 = EclGrid(self.egrid_file())
 
             g1.save_EGRID("test.EGRID")
@@ -155,8 +153,7 @@ class GridTest(ExtendedTestCase):
 
     @skipIf(ExtendedTestCase.slowTestShouldNotRun(), "Slow test of dual grid skipped!")
     def test_dual(self):
-        #work_area = TestArea("python/grid-test/testDual", True)
-        with TestAreaContext("python/grid-test/testDual", True):
+        with TestAreaContext("python/grid-test/testDual"):
             grid = EclGrid(self.egrid_file())
             self.assertFalse(grid.dual_grid)
             self.assertTrue(grid.nactive_fracture == 0)
