@@ -15,6 +15,7 @@ option( INSTALL_ERT         "Should anything be installed when issuing make inst
 
 
 include( CheckFunctionExists )
+include( CheckTypeSize )
 ENABLE_TESTING()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
