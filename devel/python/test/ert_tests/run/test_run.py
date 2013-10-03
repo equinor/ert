@@ -49,10 +49,10 @@ class RunTest(ExtendedTestCase):
                     
     def test_name(self):
         tr = TestRun("test-data/local/run/config.txt" , "Name")
-        self.assertEqual( "Name" , tr.name )
+        self.assertEqual( "Name" , tr.name[:4] )
 
         tr = TestRun("test-data/local/run/config.txt")
-        self.assertEqual( "test-data.local.run.config.txt" , tr.name )
+        self.assertEqual( "test-data.local.run.config.txt" , tr.name[:len("test-data/local/run/config.txt")] )
         
 
     def test_runpath(self):
