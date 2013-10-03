@@ -128,6 +128,14 @@ if (ISREG_POSIX)
   add_definitions( -DHAVE_ISREG )
 endif()
 
+check_type_size(time_t SIZE_OF_TIME_T)
+if (${SIZE_OF_TIME_T} EQUAL 8)
+    try_run( RUN_RESULT COMPILE_RESULT ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_mktime_before1970.c )
+    if (RUN_RESULT)
+        add_defintions( -DTIME_T_64BIT_ACCEPT_PRE1970 )
+    endif()
+endif()
+
 set( CMAKE_C_FLAGS ${CMAKE_C_FLAGS_main} )
 set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_main} )
 
