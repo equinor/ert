@@ -3,6 +3,7 @@ set(RSH_SERVERS "" CACHE STRING  "List of nodes which will be used to test the R
 
 set(TEST_SOURCES
     ert_tests/__init__.py
+    ert_tests/source_enumerator.py
     ert_tests/run_tests.py
     ert_tests/test_ert_import.py
     ert_tests/test_ert_gui_import.py
@@ -33,6 +34,9 @@ set(TEST_SOURCES
     ert_tests/enkf/test_enkf_library.py
     ert_tests/enkf/test_analysis_config.py
 
+    ert_tests/job_queue/__init__.py
+    ert_tests/job_queue/test_job_queue.py
+
     ert_tests/sched/__init__.py
     ert_tests/sched/test_sched.py
 
@@ -45,6 +49,8 @@ set(TEST_SOURCES
     ert_tests/util/test_string_list.py
     ert_tests/util/test_vectors.py
 
+    ert_tests/run/__init__.py
+    ert_tests/run/test_run.py
 
     ecl_isosurf.py
     ens_config_test.py
@@ -58,7 +64,7 @@ set(TEST_SOURCES
 )
 
 
-add_python_package("Python test" "${PYTHON_INSTALL_PREFIX}/test" "${TEST_SOURCES}" True)
+add_python_package("Python test" "${PYTHON_INSTALL_PREFIX}/test" "${TEST_SOURCES}" False)
 
 # The test data is located in the current source directory; that is
 # the reason we set that as the working directory for the test
@@ -205,6 +211,12 @@ add_test( NAME python.ert.sched.sched
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.sched.test_sched.SchedFileTest)
 
+#JOB QUEUE
+add_test( NAME python.ert.job_queue.job_status_type_enum
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.job_queue.test_job_queue.JobQueueTest)
+
+
 #CONFIG
 add_test( NAME python.ert.config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -223,6 +235,10 @@ add_test( NAME python.ert.cwrap.basecenum
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.cwrap.test_basecenum.BaseCEnumTest)
 
+#TESTRUN
+add_test( NAME python.ert.test_run
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.run.test_run.RunTest )
 
 #ANALYSIS
 add_test( NAME python.ert.analysis.enums
@@ -245,10 +261,9 @@ set_property( TEST python.ert.ecl.ecl_rft           PROPERTY LABELS Python:Stato
 set_property( TEST python.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
 #set_property( TEST python.import_local              PROPERTY LABELS Python:StatoilBuild )
 
-set_property( TEST python.ert.import_all_ert            PROPERTY LABELS Python)
-set_property( TEST python.ert.import_all_ert_gui        PROPERTY LABELS Python)
+set_property( TEST python.ert.test_run              PROPERTY LABELS Python)
+set_property( TEST python.ert.import_all_ert        PROPERTY LABELS Python)
+set_property( TEST python.ert.import_all_ert_gui    PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
 set_property( TEST python.ert.util.stringlist       PROPERTY LABELS Python )
 set_property( TEST python.ert.util.tvector          PROPERTY LABELS Python )
-#set_property( TEST python.ert.import_all_ert            PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
-set_property( TEST python.ert.import_all_ert_gui        PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
 

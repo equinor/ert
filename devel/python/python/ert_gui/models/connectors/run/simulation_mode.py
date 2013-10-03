@@ -8,7 +8,7 @@ class SimulationModeModel(ErtConnector, ChoiceModelMixin):
     __modes = [EnsembleExperiment(), EnkfAssimilation(), Smoother(), IteratedSmoother()]
 
     def __init__(self):
-        self.__value = SimulationModeModel.__modes[1]
+        self.__value = SimulationModeModel.__modes[0]
         super(SimulationModeModel, self).__init__()
 
     def getChoices(self):
