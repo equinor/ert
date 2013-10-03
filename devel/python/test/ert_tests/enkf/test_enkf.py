@@ -18,6 +18,7 @@
 import os
 from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfRunEnum, EnkfVarType
 from ert.enkf.enkf_main import EnKFMain
+from ert.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
 from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
 
@@ -40,6 +41,7 @@ class EnKFTest(ExtendedTestCase):
 
         self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfStateType, "state_enum", "libenkf/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "libenkf/include/ert/enkf/obs_vector.h")
 
         self.assertEqual(EnkfRunEnum.ENKF_ASSIMILATION, 1)
         self.assertEqual(EnkfRunEnum.ENSEMBLE_EXPERIMENT, 2)
@@ -60,7 +62,7 @@ class EnKFTest(ExtendedTestCase):
             self.assertIsInstance(main.plot_config(), PlotConfig)
 
             # self.main.load_obs(obs_config_file)
-            self.assertIsInstance(main.get_obs(), EnkfObs)
+            self.assertIsInstance(main.getObservations(), EnkfObs)
             self.assertIsInstance(main.get_templates(), ErtTemplates)
             self.assertIsInstance(main.getFileSystem(), EnkfFs)
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)

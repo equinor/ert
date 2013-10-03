@@ -15,6 +15,8 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
+from ert.enkf.enums import EnkfObservationImplementationType
+from ert.enkf.observations.summary_observation import SummaryObservation
 
 
 class ObsVector(BaseCClass):
@@ -25,16 +27,26 @@ class ObsVector(BaseCClass):
         """ @rtype: str """
         return ObsVector.cNamespace().get_state_kw(self)
 
-    def iget_node(self, index):
-        ObsVector.cNamespace().iget_node(self, index) #warn: should return something!
+    def getNode(self, index):
+        pointer = ObsVector.cNamespace().iget_node(self, index)
 
-    def get_num_active(self):
+        node_type = self.getImplementationType()
+        if node_type == EnkfObservationImplementationType.SUMMARY_OBS:
+            return SummaryObservation.createCReference(pointer, self)
+        else:
+            raise AssertionError("Node type '%s' currently not supported!" % node_type)
+
+    def getActiveCount(self):
         """ @rtype: int """
         return ObsVector.cNamespace().get_num_active(self)
 
-    def iget_active(self, index):
+    def isActive(self, index):
         """ @rtype: bool """
         return ObsVector.cNamespace().iget_active(self, index)
+
+    def getImplementationType(self):
+        """ @rtype: EnkfObservationImplementationType """
+        return ObsVector.cNamespace().get_impl_type(self)
 
     def free(self):
         ObsVector.cNamespace().free(self)
@@ -45,12 +57,9 @@ cwrapper.registerType("obs_vector", ObsVector)
 cwrapper.registerType("obs_vector_obj", ObsVector.createPythonObject)
 cwrapper.registerType("obs_vector_ref", ObsVector.createCReference)
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
-
 ObsVector.cNamespace().free = cwrapper.prototype("void obs_vector_free( obs_vector )")
 ObsVector.cNamespace().get_state_kw = cwrapper.prototype("char* obs_vector_get_state_kw( obs_vector )")
 ObsVector.cNamespace().iget_node = cwrapper.prototype("c_void_p obs_vector_iget_node( obs_vector, int)")
 ObsVector.cNamespace().get_num_active = cwrapper.prototype("int obs_vector_get_num_active( obs_vector )")
 ObsVector.cNamespace().iget_active = cwrapper.prototype("bool obs_vector_iget_active( obs_vector, int)")
+ObsVector.cNamespace().get_impl_type = cwrapper.prototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")

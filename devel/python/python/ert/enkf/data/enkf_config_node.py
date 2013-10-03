@@ -60,6 +60,10 @@ class EnkfConfigNode(BaseCClass):
     def get_init_file_fmt(self):
         return EnkfConfigNode.cNamespace().get_init_file_fmt(self)
 
+    def getObservationKeys(self):
+        """ @rtype:  """
+        return EnkfConfigNode.cNamespace().get_obs_keys(self).setParent(self)
+
     def free(self):
         EnkfConfigNode.cNamespace().free(self)
 
@@ -93,3 +97,4 @@ EnkfConfigNode.cNamespace().get_min_std_file = cwrapper.prototype("char* enkf_co
 EnkfConfigNode.cNamespace().get_enkf_infile = cwrapper.prototype("char* enkf_config_node_get_enkf_infile(enkf_config_node)")
 EnkfConfigNode.cNamespace().get_init_file_fmt = cwrapper.prototype("char* enkf_config_node_get_init_file_fmt(enkf_config_node)")
 EnkfConfigNode.cNamespace().get_var_type = cwrapper.prototype("c_void_p enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
+EnkfConfigNode.cNamespace().get_obs_keys = cwrapper.prototype("stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)")
