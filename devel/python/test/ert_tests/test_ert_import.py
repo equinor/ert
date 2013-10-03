@@ -104,9 +104,13 @@ class ErtImportTest(ExtendedTestCase):
         self.assertImportable("ert.enkf.enums.enkf_state_type_enum")
         self.assertImportable("ert.enkf.enums.enkf_var_type_enum")
 
+    def test_ert_enkf_observations(self):
+        self.assertImportable("ert.enkf.observations")
+        self.assertImportable("ert.enkf.observations.obs_vector")
+        self.assertImportable("ert.enkf.observations.summary_observation")
+
     def test_ert_enkf_util(self):
         self.assertImportable("ert.enkf.util")
-        self.assertImportable("ert.enkf.util.obs_vector")
         self.assertImportable("ert.enkf.util.time_map")
 
     def test_ert_geo(self):
