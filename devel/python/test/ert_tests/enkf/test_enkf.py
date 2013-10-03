@@ -18,7 +18,7 @@
 import os
 from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfRunEnum, EnkfVarType
 from ert.enkf.enkf_main import EnKFMain
-from ert.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
+from ert.enkf.enums import EnkfObservationImplementationType
 from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
 

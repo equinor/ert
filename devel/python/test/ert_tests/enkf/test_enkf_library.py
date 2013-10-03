@@ -1,11 +1,11 @@
 import os
 from ert.ecl import EclSum
-from ert.enkf import BlockObs, AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig
+from ert.enkf import BlockObs, AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, ObsVector
 from ert.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, EnsConfig
 from ert.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, PlotConfig
 from ert.enkf.enkf_main import EnKFMain
 
-from ert.enkf.util import ObsVector, TimeMap
+from ert.enkf.util import TimeMap
 from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
 
