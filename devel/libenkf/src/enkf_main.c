@@ -3117,7 +3117,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       util_alloc_file_components(_model_config , &path , &base , &ext);
 
     if (path != NULL) {
-      if (chdir(path) != 0)
+      if (util_chdir(path) != 0)
         util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
       
       if (verbose)
