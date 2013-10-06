@@ -62,7 +62,7 @@ import cwrap.clib
 import sys
 import warnings
 
-required_version_hex = 0x02060000
+required_version_hex = 0x02070000
 
 ert_lib_path = os.getenv("ERT_LIBRARY_PATH")
 if ert_lib_path:

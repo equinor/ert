@@ -1,3 +1,5 @@
 add_subdirectory( ert )
-add_subdirectory( ert_gui )
+if (ERT_BUILD_GUI)
+   add_subdirectory( ert_gui )
+endif()
 
