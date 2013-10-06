@@ -34,4 +34,7 @@ class AnalysisConfigTest(ExtendedTestCase):
         self.assertTrue( ac.get_stop_long_running() )
 
 
+    def test_analysis_modules(self):
+        ac = AnalysisConfig()
+        self.assertIsNone( ac.activeModuleName() )
        
