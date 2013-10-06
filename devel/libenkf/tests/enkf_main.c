@@ -31,7 +31,7 @@
 
 
 void test_case_initialized() {
-  test_work_area_type * work_area = test_work_area_alloc("enkf_main_case_initialized" , true);
+  test_work_area_type * work_area = test_work_area_alloc("enkf_main_case_initialized" );
   {
     enkf_main_type * enkf_main = enkf_main_alloc_empty();
     model_config_type * model_config = enkf_main_get_model_config(enkf_main);
