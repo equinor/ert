@@ -1297,7 +1297,13 @@ static bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type 
       const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
       FILE                        * log_stream;
 
-    
+      
+      if ((local_updatestep_get_num_ministep( updatestep ) > 1) && 
+          (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE))) {
+            util_exit("** ERROR: Can not combine iterable modules with multi step updates - sorry\n");
+          }
+          
+
       {
         char * log_file;
         if (int_vector_size( step_list ) == 1) 
