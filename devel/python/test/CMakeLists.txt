@@ -6,7 +6,6 @@ set(TEST_SOURCES
     ert_tests/source_enumerator.py
     ert_tests/run_tests.py
     ert_tests/test_ert_import.py
-    ert_tests/test_ert_gui_import.py
 
     ert_tests/config/__init__.py
     ert_tests/config/test_config.py
@@ -63,6 +62,9 @@ set(TEST_SOURCES
     ctest_run.py
 )
 
+if (ERT_BUILD_GUI) 
+   LIST(APPEND ${TEST_SOURCES} ert_tests/test_ert_gui_import.py)
+endif()
 
 add_python_package("Python test" "${PYTHON_INSTALL_PREFIX}/test" "${TEST_SOURCES}" False)
 
@@ -76,9 +78,12 @@ add_test( NAME python.ert.import_all_ert
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.test_ert_import.ErtImportTest )
 
-add_test( NAME python.ert.import_all_ert_gui
-          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.test_ert_gui_import.ErtGuiImportTest )
+
+if (ERT_BUILD_GUI) 
+   add_test( NAME python.ert.import_all_ert_gui
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.test_ert_gui_import.ErtGuiImportTest )
+endif()
 
 
 #UTIL
@@ -131,6 +136,17 @@ add_test( NAME python.ert.enkf_analysis_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_analysis_config.AnalysisConfigTest)
 
+
+#GUI
+if (ERT_BUILD_GUI) 
+   add_test( NAME python.ert_gui.models
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.test_model.ModelTest)
+
+   add_test( NAME python.ert_gui.models.observable
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.test_observable.ObservableTest)
+endif()
 
 #ECL
 
@@ -263,7 +279,12 @@ set_property( TEST python.ert.ecl.ecl_grid          PROPERTY LABELS Python:Stato
 
 set_property( TEST python.ert.test_run              PROPERTY LABELS Python)
 set_property( TEST python.ert.import_all_ert        PROPERTY LABELS Python)
-set_property( TEST python.ert.import_all_ert_gui    PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
 set_property( TEST python.ert.util.stringlist       PROPERTY LABELS Python )
 set_property( TEST python.ert.util.tvector          PROPERTY LABELS Python )
 
+if (ERT_BUILD_GUI)
+   set_property( TEST python.ert.import_all_ert_gui    PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
+   set_property( TEST python.ert.import_all_ert_gui    PROPERTY LABELS Python)
+   set_property( TEST python.ert_gui.models            PROPERTY LABELS Python)
+   set_property( TEST python.ert_gui.models.observable PROPERTY LABELS Python)
+endif()
