@@ -103,6 +103,7 @@ class ErtImportTest(ExtendedTestCase):
         self.assertImportable("ert.enkf.enums.enkf_run_enum")
         self.assertImportable("ert.enkf.enums.enkf_state_type_enum")
         self.assertImportable("ert.enkf.enums.enkf_var_type_enum")
+        self.assertImportable("ert.enkf.enums.load_fail_type_enum")
 
     def test_ert_enkf_observations(self):
         self.assertImportable("ert.enkf.observations")
