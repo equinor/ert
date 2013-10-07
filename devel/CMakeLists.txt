@@ -13,6 +13,7 @@ option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 option( BUILD_SHARED_LIBS   "Build shared libraries" ON )
 option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
 option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
+option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" ON)
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
@@ -27,6 +28,20 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 #  This symbol must be defined to support large (> 2GB) files on windows.
    add_definitions( -DWINDOWS_LFS )
 endif()    
+
+if (ERT_USE_OPENMP)
+   find_package(OpenMP)
+   if (OPENMP_FOUND) 
+       message(STATUS "Enabling OpenMP support")
+       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_CLAGS}")
+       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_CLAGS}")
+       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+       set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_SHARED_LINKER_FLAGS}")
+   else()
+       message(STATUS "OpenMP package not found - OpenMP disabled")
+   endif()
+endif()
+
 
 # Treat warnings as errors if not on Windows
 if (ERT_WINDOWS)
