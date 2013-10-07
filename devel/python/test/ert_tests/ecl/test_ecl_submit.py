@@ -17,7 +17,12 @@
 #
 import os
 import getpass
-from unittest2 import skipIf
+
+try:
+    from unittest2 import skipIf
+except ImportError:
+    from unittest import skipIf
+
 import time
 import shutil
 from ert.ecl import EclQueue, EclSum
