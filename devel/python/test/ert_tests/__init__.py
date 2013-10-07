@@ -16,7 +16,12 @@
 import numbers
 import os
 import traceback
-from unittest2 import TestCase
+
+try:
+    from unittest2 import TestCase
+except ImportError:
+    from unittest import TestCase
+
 from ert_tests.source_enumerator import SourceEnumerator
 
 
