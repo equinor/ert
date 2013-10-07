@@ -75,9 +75,15 @@ class ObservableTest(ExtendedTestCase):
         observable = Observable("Event observer")
         observable.addEvent("event")
 
+        self.addAndRemoveListener(observable) #the listener dies when the method returns.
+
+        observable.notify("event") # Should not raise assertion error
+
+    def addAndRemoveListener(self, observable):
+
         class WeakTest(object):
             def __init__(self):
-                self.value = 0
+                super(WeakTest, self).__init__()
 
             def listener(self):
                 raise AssertionError("This should be caught!")
@@ -88,13 +94,3 @@ class ObservableTest(ExtendedTestCase):
 
         with self.assertRaises(AssertionError):
             observable.notify("event")
-
-        del o
-
-        observable.notify("event") # Should not raise assertion error
-
-
-
-
-
-
