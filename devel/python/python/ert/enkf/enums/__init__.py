@@ -1,6 +1,8 @@
+from .load_fail_type_enum import LoadFailTypeEnum
 from .enkf_var_type_enum import EnkfVarType
 from .enkf_state_type_enum import EnkfStateType
 from .enkf_run_enum import EnkfRunEnum
+from .enkf_obs_impl_type_enum import EnkfObservationImplementationType
 
 
 
