@@ -22,7 +22,16 @@ from ert_tests import ExtendedTestCase
 
 class AnalysisConfigTest(ExtendedTestCase):
 
-    def test_min_realisations(self):
+    def test_keywords_for_monitoring_simulation_runtime(self):
         ac = AnalysisConfig()
         ac.set_min_realisations( 100 )
         self.assertEqual( 100 , ac.get_min_realisations() )
+        
+        ac.set_max_runtime( 50 )
+        self.assertEqual( 50 , ac.get_max_runtime() )
+
+        ac.set_stop_long_running( True )
+        self.assertTrue( ac.get_stop_long_running() )
+
+
+       

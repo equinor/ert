@@ -1098,6 +1098,12 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
 }
 
 
+static void assert_matrix_size(const matrix_type * m , const char * name , int rows , int columns) {
+  if (!matrix_check_dims(m , rows , columns))
+      util_abort("%s: matrix mismatch %s:[%d,%d]   - expected:[%d, %d]", __func__ , name , matrix_get_rows(m) , matrix_get_columns(m) , rows , columns);
+}
+
+
 
 static void enkf_main_analysis_update( enkf_main_type * enkf_main , 
                                        enkf_fs_type * target_fs ,
@@ -1127,15 +1133,21 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
   matrix_type * localA  = NULL;
   int_vector_type * iens_active_index = bool_vector_alloc_active_index_list(ens_mask , -1);
 
+
+  assert_matrix_size(X , "X" , ens_size , ens_size);
+  assert_matrix_size(S , "S" , active_size , ens_size);
+  assert_matrix_size(R , "R" , active_size , active_size);
   if (analysis_module_check_option( module , ANALYSIS_NEED_ED)) {
     E = obs_data_allocE( obs_data , enkf_main->rng , ens_size , active_size );
     D = obs_data_allocD( obs_data , E , S );
+
+    assert_matrix_size( E , "E" , active_size , ens_size);
+    assert_matrix_size( D , "D" , active_size , ens_size);
   }
 
-  if (analysis_module_check_option( module , ANALYSIS_SCALE_DATA)){
+  if (analysis_module_check_option( module , ANALYSIS_SCALE_DATA))
     obs_data_scale( obs_data , S , E , D , R , dObs );
-  }
-  
+
   if (analysis_module_check_option( module , ANALYSIS_USE_A) || analysis_module_check_option(module , ANALYSIS_UPDATE_A))
     localA = A;
 
@@ -1178,9 +1190,8 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
       matrix_free( PC_obs );
     }
     
-    if (localA == NULL){
+    if (localA == NULL)
       analysis_module_initX( module , X , NULL , S , R , dObs , E , D );
-    }
 
 
     while (!hash_iter_is_complete( dataset_iter )) {
@@ -1404,7 +1415,32 @@ static void enkf_main_report_load_failure( const enkf_main_type * enkf_main , in
                        job_queue_iget_run_path( job_queue , queue_index));
 }
 
+static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
+  job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+  int min_realisations = analysis_config_get_min_realisations(enkf_main->analysis_config);
+  
+  bool cont = true;
+  if (0 >= min_realisations)
+    cont = false;
 
+  while (cont) {
+    //Check if minimum number of realizations have run, and if so, kill the rest after a certain time
+    if ((job_queue_get_num_complete(job_queue) >= min_realisations)) {
+      job_queue_set_auto_job_stop_time(job_queue);
+      cont = false;
+    }
+    
+    //Check if minimum number of realizations is not possible. If so, it is time to give up
+    int possible_sucesses = job_queue_get_num_running(job_queue) + job_queue_get_num_waiting(job_queue) + job_queue_get_num_pending(job_queue) + job_queue_get_num_complete(job_queue); 
+    if (possible_sucesses < min_realisations) {
+      cont = false; 
+    }
+    
+    if (cont) {
+      util_usleep(10000);
+    }
+  }
+}
 
 /**
   If all simulations have completed successfully the function will
@@ -1517,6 +1553,14 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
       if (run_mode != INIT_ONLY) {
         job_queue_submit_complete( job_queue );
         log_add_message(enkf_main->logh , 1 , NULL , "All jobs submitted to internal queue - waiting for completion" ,  false);
+        
+        int max_runtime = analysis_config_get_max_runtime(enkf_main_get_analysis_config( enkf_main )); 
+        job_queue_set_max_job_duration(job_queue, max_runtime); 
+        
+        if (analysis_config_get_stop_long_running(enkf_main_get_analysis_config( enkf_main ))) {
+          enkf_main_monitor_job_queue( enkf_main );
+        }
+        
         pthread_join( queue_thread , NULL );   /* Wait for the job_queue_run_jobs() function to complete. */
       }
     }
@@ -1540,10 +1584,9 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
           case JOB_RUN_OK:
             break;
           default:
-            util_abort("%s: invalid job status:%s \n",__func__ , run_status );
+            util_abort("%s: invalid job status:%d \n",__func__ , run_status );
           }
           totalOK = totalOK && ( run_status == JOB_RUN_OK );
-
         }
       }
       enkf_fs_fsync( enkf_main->dbase );
@@ -1762,9 +1805,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
   }
   
   {
-    bool_vector_type * iactive = bool_vector_alloc( 0 , true );
-    bool_vector_iset( iactive , ens_size - 1 , true );
-
+    bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
     enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT);
     enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0);
     {
@@ -1803,68 +1844,78 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
   }
 }
 
-void enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int iteration_number, analysis_iter_config_type * iter_config, int_vector_type * step_list, bool_vector_type * iactive, model_config_type * model_config){
+bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int iteration_number, analysis_iter_config_type * iter_config, int_vector_type * step_list, bool_vector_type * iactive, model_config_type * model_config){
   const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iteration_number+1 );
-  const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   const int step1 = 0;
+  bool updateOK = false;
+
   if (target_fs_name == NULL){
     fprintf(stderr,"Sorry: the updated ensemble will overwrite the current case in the iterated ensemble smoother.");
-    enkf_main_smoother_update(enkf_main , step_list , enkf_main_get_fs(enkf_main));
-  }
-  else{
+    updateOK = enkf_main_smoother_update(enkf_main , step_list , enkf_main_get_fs(enkf_main));
+  } else {
     enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
-    enkf_main_smoother_update(enkf_main , step_list , target_fs );
+    updateOK = enkf_main_smoother_update(enkf_main , step_list , target_fs );
     enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
   }
 
-  bool_vector_iset( iactive , ens_size - 1 , true );
-  const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iteration_number);
-  if (runpath_fmt != NULL) {
-    char * runpath_key = util_alloc_sprintf( "runpath-%d" , 999);
-    model_config_add_runpath( model_config , runpath_key , runpath_fmt);
-    model_config_select_runpath( model_config , runpath_key );
-    free( runpath_key );
+  if (updateOK) {
+    const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iteration_number);
+    if (runpath_fmt != NULL ) {
+      char * runpath_key = util_alloc_sprintf("runpath-%d", 999);
+      model_config_add_runpath(model_config, runpath_key, runpath_fmt);
+      model_config_select_runpath(model_config, runpath_key);
+      free(runpath_key);
+    }
+    enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, false);
   }
-  
-  enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, false);
+
+  return updateOK;
 }
 
+
+
 void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
+  const int ens_size = enkf_main_get_ensemble_size(enkf_main);
+  model_config_type * model_config = enkf_main_get_model_config(enkf_main);
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
+  int_vector_type * step_list = int_vector_alloc(0, 0);
+  bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
+
+
+  const int step1 = 0;
+  int iter = 0;
+  int num_iter = analysis_iter_config_get_num_iterations(iter_config);
   {
-    const int ens_size    = enkf_main_get_ensemble_size( enkf_main );
-    model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
-    const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-    analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
-    const int step1 = 0;
-    int_vector_type * step_list = int_vector_alloc(0,0);
-    bool_vector_type * iactive = bool_vector_alloc(0 , true);
-    int iter  = 0;
-    int num_iter = analysis_iter_config_get_num_iterations( iter_config );
+    for (int step = step1; step <= step2; step++)
+      int_vector_append(step_list, step);
+  }
+
+  {
+    const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iter);
+    if (runpath_fmt != NULL )
     {
-      for (int step=step1; step <= step2; step++)
-        int_vector_append( step_list , step );
+      char * runpath_key = util_alloc_sprintf("runpath-%d", iter);
+      model_config_add_runpath(model_config, runpath_key, runpath_fmt);
+      model_config_select_runpath(model_config, runpath_key);
+      free(runpath_key);
     }
-    bool_vector_iset( iactive , ens_size - 1 , true );
-    const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt( iter_config , iter);
-    if (runpath_fmt != NULL) {
-      char * runpath_key = util_alloc_sprintf( "runpath-%d" , iter);
-      model_config_add_runpath( model_config , runpath_key , runpath_fmt);
-      model_config_select_runpath( model_config , runpath_key );
-      free( runpath_key );
-    }
-    enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST, true);    
-    while (true) {
-      if (iter == num_iter)
-        break;
-      
-      enkf_main_iterate_smoother(enkf_main, step2, iter, iter_config, step_list, iactive, model_config);   
-      iter++;
-    }
-    int_vector_free( step_list );
-    bool_vector_free( iactive );
   }
   
+  enkf_main_run_exp(enkf_main, iactive, true, step1, step1, FORECAST, true);
+  while (true)
+  {
+    if (iter == num_iter)
+      break;
+
+    if (enkf_main_iterate_smoother(enkf_main, step2, iter, iter_config, step_list, iactive, model_config))
+      iter++;
+    else
+      break;
+  }
+  int_vector_free(step_list);
+  bool_vector_free(iactive);
 }
 
 void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
@@ -3066,7 +3117,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       util_alloc_file_components(_model_config , &path , &base , &ext);
 
     if (path != NULL) {
-      if (chdir(path) != 0)
+      if (util_chdir(path) != 0)
         util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
       
       if (verbose)

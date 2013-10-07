@@ -58,10 +58,25 @@ class AnalysisConfig(BaseCClass):
         return AnalysisConfig.cNamespace().get_iter_config(self).setParent(self)
 
     def get_min_realisations(self):
+        """ @rtype: int """
         return AnalysisConfig.cNamespace().get_min_realisations( self )
 
     def set_min_realisations(self , min_realisations):
         AnalysisConfig.cNamespace().set_min_realisations( self , min_realisations )
+
+    def get_stop_long_running(self):
+        """ @rtype: bool """
+        return AnalysisConfig.cNamespace().get_stop_long_running( self )
+    
+    def set_stop_long_running(self, stop_long_running):
+        AnalysisConfig.cNamespace().set_stop_long_running(self, stop_long_running)
+  
+    def get_max_runtime(self):
+        """ @rtype: int """
+        return AnalysisConfig.cNamespace().get_max_runtime( self )
+
+    def set_max_runtime(self, max_runtime):
+        AnalysisConfig.cNamespace().set_max_runtime( self, max_runtime )
 
     def free(self):
         AnalysisConfig.cNamespace().free(self)
@@ -86,5 +101,9 @@ AnalysisConfig.cNamespace().set_alpha              = cwrapper.prototype("void an
 AnalysisConfig.cNamespace().get_merge_observations = cwrapper.prototype("bool analysis_config_get_merge_observations(analysis_config)")
 AnalysisConfig.cNamespace().set_merge_observations = cwrapper.prototype("void analysis_config_set_merge_observations(analysis_config, bool)")
 AnalysisConfig.cNamespace().get_iter_config        = cwrapper.prototype("analysis_iter_config_ref analysis_config_get_iter_config(analysis_config)")
-AnalysisConfig.cNamespace().get_min_realisations   = cwrapper.prototype("bool analysis_config_get_min_realisations(analysis_config)")
-AnalysisConfig.cNamespace().set_min_realisations   = cwrapper.prototype("void analysis_config_set_min_realisations(analysis_config, bool)")
+AnalysisConfig.cNamespace().get_min_realisations   = cwrapper.prototype("int analysis_config_get_min_realisations(analysis_config)")
+AnalysisConfig.cNamespace().set_min_realisations   = cwrapper.prototype("void analysis_config_set_min_realisations(analysis_config, int)")
+AnalysisConfig.cNamespace().get_max_runtime        = cwrapper.prototype("int analysis_config_get_max_runtime(analysis_config)")
+AnalysisConfig.cNamespace().set_max_runtime        = cwrapper.prototype("void analysis_config_set_max_runtime(analysis_config, int)")
+AnalysisConfig.cNamespace().get_stop_long_running  = cwrapper.prototype("bool analysis_config_get_stop_long_running(analysis_config)")
+AnalysisConfig.cNamespace().set_stop_long_running  = cwrapper.prototype("void analysis_config_set_stop_long_running(analysis_config, bool)")

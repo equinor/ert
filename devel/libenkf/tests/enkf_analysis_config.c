@@ -88,15 +88,20 @@ void test_current_module_options() {
   analysis_config_free( ac );
 }
 
-
-
-
+void test_stop_long_running( ) {
+  analysis_config_type * ac = create_analysis_config( );
+  test_assert_bool_equal( false , analysis_config_get_stop_long_running( ac ) );
+  analysis_config_set_stop_long_running( ac , true );
+  test_assert_bool_equal( true , analysis_config_get_stop_long_running( ac ) );
+  analysis_config_free( ac );
+}
 
 int main(int argc , char ** argv) {  
   test_create();
   test_min_realisations();
   test_continue();
   test_current_module_options();
+  test_stop_long_running();
   exit(0);
 }
 

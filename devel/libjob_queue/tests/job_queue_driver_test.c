@@ -28,6 +28,20 @@
 #include <ert/job_queue/torque_driver.h>
 #include <ert/job_queue/rsh_driver.h>
 
+void job_queue_set_driver_(job_driver_type driver_type) {
+  job_queue_type * queue = job_queue_alloc(10, "OK", "ERROR");
+  queue_driver_type * driver = queue_driver_alloc(driver_type);
+  test_assert_false(job_queue_has_driver(queue));
+
+  job_queue_set_driver(queue, driver);
+  test_assert_true(job_queue_has_driver(queue));
+
+  job_queue_free(queue);
+  queue_driver_free(driver);
+
+   
+}
+
 void set_option_max_running_max_running_value_set() {
   queue_driver_type * driver_torque = queue_driver_alloc(TORQUE_DRIVER);
   test_assert_true(queue_driver_set_option(driver_torque, MAX_RUNNING, "42"));
@@ -138,6 +152,11 @@ void get_driver_option_lists() {
 }
 
 int main(int argc, char ** argv) {
+  job_queue_set_driver_(LSF_DRIVER);
+  job_queue_set_driver_(LOCAL_DRIVER);
+  job_queue_set_driver_(RSH_DRIVER);
+  job_queue_set_driver_(TORQUE_DRIVER);
+  
   set_option_max_running_max_running_value_set();
   set_option_max_running_max_running_option_set();
   set_option_invalid_option_returns_false();
