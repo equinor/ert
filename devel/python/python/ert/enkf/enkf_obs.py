@@ -49,6 +49,14 @@ class EnkfObs(BaseCClass):
         """ @rtype: ctime """
         return EnkfObs.cNamespace().iget_obs_time(self, index)
 
+    def addObservationVector(self, observation_key, observation_vector):
+        assert isinstance(observation_key, str)
+        assert isinstance(observation_vector, ObsVector)
+
+        observation_vector.convertToCReference(self)
+
+        EnkfObs.cNamespace().add_obs_vector(self, observation_key, observation_vector)
+
     def free(self):
         EnkfObs.cNamespace().free(self)
 
@@ -64,3 +72,4 @@ EnkfObs.cNamespace().alloc_typed_keylist = cwrapper.prototype("stringlist_obj en
 EnkfObs.cNamespace().has_key             = cwrapper.prototype("bool enkf_obs_has_key(enkf_obs, char*)")
 EnkfObs.cNamespace().get_vector          = cwrapper.prototype("obs_vector_ref enkf_obs_get_vector(enkf_obs, char*)")
 EnkfObs.cNamespace().iget_obs_time       = cwrapper.prototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
+EnkfObs.cNamespace().add_obs_vector      = cwrapper.prototype("void enkf_obs_add_obs_vector(enkf_obs, char*, obs_vector)")

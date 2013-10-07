@@ -19,8 +19,18 @@ from ert.enkf import ENKF_LIB
 
 
 class SummaryObservation(BaseCClass):
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+    def __init__(self, summary_key, observation_key, value, std, auto_corrf_name=None, auto_corrf_param=0.0):
+        assert isinstance(summary_key, str)
+        assert isinstance(observation_key, str)
+        assert isinstance(value, float)
+        assert isinstance(std, float)
+
+        if auto_corrf_name is not None:
+            assert isinstance(auto_corrf_name, str)
+
+        assert isinstance(auto_corrf_param, float)
+        pointer = SummaryObservation.cNamespace().alloc(summary_key, observation_key, value, std, auto_corrf_name, auto_corrf_param)
+        super(SummaryObservation, self).__init__(pointer)
 
     def getValue(self):
         """ @rtype: float """
@@ -34,6 +44,10 @@ class SummaryObservation(BaseCClass):
         """ @rtype: str """
         return SummaryObservation.cNamespace().get_summary_key(self)
 
+    def free(self):
+        SummaryObservation.cNamespace().free(self)
+
+
 
 
 cwrapper = CWrapper(ENKF_LIB)
@@ -41,6 +55,8 @@ cwrapper.registerType("summary_obs", SummaryObservation)
 cwrapper.registerType("summary_obs_obj", SummaryObservation.createPythonObject)
 cwrapper.registerType("summary_obs_ref", SummaryObservation.createCReference)
 
+SummaryObservation.cNamespace().alloc = cwrapper.prototype("c_void_p summary_obs_alloc(char*, char*, double, double, char*, double)")
+SummaryObservation.cNamespace().free = cwrapper.prototype("void summary_obs_free(summary_obs)")
 SummaryObservation.cNamespace().get_value = cwrapper.prototype("double summary_obs_get_value(summary_obs)")
 SummaryObservation.cNamespace().get_std = cwrapper.prototype("double summary_obs_get_std(summary_obs)")
 SummaryObservation.cNamespace().get_summary_key = cwrapper.prototype("char* summary_obs_get_summary_key(summary_obs)")
