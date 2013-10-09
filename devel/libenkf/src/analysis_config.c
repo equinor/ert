@@ -396,6 +396,16 @@ analysis_module_type * analysis_config_get_active_module( analysis_config_type *
   return config->analysis_module;
 }
 
+
+const char * analysis_config_get_active_module_name( const analysis_config_type * config ) {
+  if (config->analysis_module)
+    return analysis_module_get_name( config->analysis_module );
+  else
+    return NULL;
+}
+
+
+
 /*****************************************************************/
 
 

@@ -80,6 +80,9 @@ class AnalysisConfig(BaseCClass):
 
     def free(self):
         AnalysisConfig.cNamespace().free(self)
+        
+    def activeModuleName(self):
+        return AnalysisConfig.cNamespace().get_active_module_name(self)
 
     ##################################################################
 
@@ -107,3 +110,4 @@ AnalysisConfig.cNamespace().get_max_runtime        = cwrapper.prototype("int ana
 AnalysisConfig.cNamespace().set_max_runtime        = cwrapper.prototype("void analysis_config_set_max_runtime(analysis_config, int)")
 AnalysisConfig.cNamespace().get_stop_long_running  = cwrapper.prototype("bool analysis_config_get_stop_long_running(analysis_config)")
 AnalysisConfig.cNamespace().set_stop_long_running  = cwrapper.prototype("void analysis_config_set_stop_long_running(analysis_config, bool)")
+AnalysisConfig.cNamespace().get_active_module_name  = cwrapper.prototype("char* analysis_config_get_active_module_name(analysis_config)")
