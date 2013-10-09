@@ -23,11 +23,10 @@ set(PYTHON_SOURCES
     row_panel.py
     search_box.py
     string_box.py
-    tablewidgets.py
     util.py
     validated_dialog.py
     warning_panel.py
 )
 
-add_python_package("Python ert_gui.widgets"  ${PYTHON_INSTALL_PREFIX}/ert_gui/widgets "${PYTHON_SOURCES}" True)
+add_python_package("python.ert_gui.widgets"  ${PYTHON_INSTALL_PREFIX}/ert_gui/widgets "${PYTHON_SOURCES}" True)
 
