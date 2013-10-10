@@ -7,7 +7,7 @@ class BaseCClass(object):
 
     def __init__(self, c_pointer, parent=None, is_reference=False):
         if not c_pointer > 0:
-            raise ValueError("Must have a valid pointer value!")
+            raise ValueError("Must have a valid pointer value! Expected %d > 0" % c_pointer)
 
         self.__c_pointer = c_pointer
         self.__parent = parent
