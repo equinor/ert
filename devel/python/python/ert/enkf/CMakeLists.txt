@@ -17,7 +17,7 @@ set(PYTHON_SOURCES
     site_config.py
 )
 
-add_python_package("Python ert.enkf"  ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)
+add_python_package("python.ert.enkf"  ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHON_SOURCES}" True)
 
 add_subdirectory(data)
 add_subdirectory(enums)

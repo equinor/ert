@@ -7,5 +7,5 @@ set(PYTHON_SOURCES
     load_fail_type_enum.py
 )
 
-add_python_package("Python ert.enkf.enums"  ${PYTHON_INSTALL_PREFIX}/ert/enkf/enums "${PYTHON_SOURCES}" True)
+add_python_package("python.ert.enkf.enums"  ${PYTHON_INSTALL_PREFIX}/ert/enkf/enums "${PYTHON_SOURCES}" True)
 
