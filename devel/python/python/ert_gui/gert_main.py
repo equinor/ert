@@ -118,6 +118,7 @@ from ert.enkf import EnKFMain
 from ert_gui.main_window import GertMainWindow
 from ert_gui.models import ErtConnector
 from ert_gui.pages.configuration_panel import ConfigurationPanel
+from ert_gui.pages.plot_panel import PlotPanel
 from ert_gui.pages.simulation_panel import SimulationPanel
 from ert_gui.widgets.help_dock import HelpDock
 
@@ -131,7 +132,7 @@ from ert_gui.widgets.util import resourceImage
 
 
 def main():
-    QApplication.setGraphicsSystem("raster")
+    # QApplication.setGraphicsSystem("raster")
     app = QApplication(sys.argv) #Early so that QT is initialized before other imports
 
     splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
@@ -188,6 +189,8 @@ def main():
         window.addTab(simulation_panel.getName(), simulation_panel)
         configuration_panel = ConfigurationPanel()
         window.addTab(configuration_panel.getName(), configuration_panel)
+        plot_panel = PlotPanel()
+        window.addTab(plot_panel.getName(), plot_panel)
 
         splash.showMessage("Communicating with ERT...", Qt.AlignLeft, Qt.white)
         app.processEvents()
