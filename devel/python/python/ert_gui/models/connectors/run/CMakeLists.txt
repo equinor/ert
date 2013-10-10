@@ -12,5 +12,5 @@ set(PYTHON_SOURCES
     smoother.py
 )
 
-add_python_package("Python ert_gui.models.connectors.run"  ${PYTHON_INSTALL_PREFIX}/ert_gui/models/connectors/run "${PYTHON_SOURCES}" True)
+add_python_package("python.ert_gui.models.connectors.run"  ${PYTHON_INSTALL_PREFIX}/ert_gui/models/connectors/run "${PYTHON_SOURCES}" True)
 
