@@ -17,6 +17,6 @@ set(PYTHON_SOURCES
     text_model.py
 )
 
-add_python_package("Python ert_gui.models.mixins"  ${PYTHON_INSTALL_PREFIX}/ert_gui/models/mixins "${PYTHON_SOURCES}" True)
+add_python_package("python.ert_gui.models.mixins"  ${PYTHON_INSTALL_PREFIX}/ert_gui/models/mixins "${PYTHON_SOURCES}" True)
 
 add_subdirectory(connectorless)
