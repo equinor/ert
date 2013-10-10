@@ -15,7 +15,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-import traceback
 
 from ert_tests import ExtendedTestCase
 from ert_tests.import_tester import ImportTester
