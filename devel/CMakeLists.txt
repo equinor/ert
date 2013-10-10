@@ -13,7 +13,7 @@ option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 option( BUILD_SHARED_LIBS   "Build shared libraries" ON )
 option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
 option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
-option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" ON)
+option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" OFF)
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
