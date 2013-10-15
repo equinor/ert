@@ -183,14 +183,13 @@ const char * ecl_config_get_schedule_prediction_file(const ecl_config_type * ecl
 }
 
 /**
- Observe: The real schedule prediction functionality is implemented
- as a special GEN_KW node in ensemble_config.
+   Observe: The real schedule prediction functionality is implemented
+   as a special GEN_KW node in ensemble_config.
  */
 
 void ecl_config_set_schedule_prediction_file(ecl_config_type * ecl_config, const char * schedule_prediction_file)
 {
-  ecl_config->schedule_prediction_file = util_realloc_string_copy(ecl_config->schedule_prediction_file,
-      schedule_prediction_file);
+  ecl_config->schedule_prediction_file = util_realloc_string_copy(ecl_config->schedule_prediction_file, schedule_prediction_file);
 }
 
 const char * ecl_config_get_schedule_file(const ecl_config_type * ecl_config)
@@ -366,8 +365,6 @@ stringlist_type * ecl_config_get_static_kw_list(const ecl_config_type * ecl_conf
   return ecl_config->user_static_kw;
 }
 
-void ecl_config_set_init_section(ecl_config_type * ecl_config, const char * input_init_section)
-{
   /* The semantic regarding INIT_SECTION is as follows:
 
    1. If the INIT_SECTION points to an existing file - the
@@ -418,9 +415,22 @@ void ecl_config_set_init_section(ecl_config_type * ecl_config, const char * inpu
    Case 3: This case has just the right amount of information for
    initialisation, but it is 'consistently unable' to restart.
 
-   */
+*/
+
+ui_return_type * ecl_config_validate_init_section(const ecl_config_type * ecl_config, const char * input_init_section) {
   if (ecl_config->can_restart)
-  { /* The <INIT> tag is set. */
+    return ui_return_alloc( UI_RETURN_OK );
+  else {
+    ui_return_type * ui_return = ui_return_alloc(UI_RETURN_FAIL);
+    ui_return_add_error( ui_return , "The <INIT> tag was not found in datafile - can not set INIT_SECTION keyword\n");
+    return ui_return;
+  }
+}
+
+
+void ecl_config_set_init_section(ecl_config_type * ecl_config, const char * input_init_section) {
+  if (ecl_config->can_restart)  { 
+    /* The <INIT> tag is set. */
     ecl_config->input_init_section = util_realloc_string_copy(ecl_config->input_init_section, input_init_section); /* input_init_section = path/to/init_section         */
     if (util_file_exists(ecl_config->input_init_section))
     { /* init_section       = $CWD/path/to/init_section */
@@ -444,8 +454,8 @@ void ecl_config_set_init_section(ecl_config_type * ecl_config, const char * inpu
   }
   else
     /* 
-     The <INIT> tag is not set - we can not utilize the
-     input_init_section info, and we just ignore it.
+       The <INIT> tag is not set - we can not utilize the
+       input_init_section info, and we just ignore it.
      */
     fprintf(stderr,
         "** Warning: <INIT> tag was not found in datafile - can not utilize INIT_SECTION keyword - ignored.\n");
