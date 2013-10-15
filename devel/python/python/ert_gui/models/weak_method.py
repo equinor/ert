@@ -1,7 +1,7 @@
 from weakref import *
 
 
-class weak_callable:
+class weak_callable(object):
     def __init__(self, obj, func):
         self.__object = obj
         self.__method = func
