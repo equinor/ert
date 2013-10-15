@@ -35,6 +35,7 @@
 #include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_io_config.h>
+#include <ert/ecl/ecl_util.h>
 
 #include <ert/enkf/enkf_util.h>
 #include <ert/enkf/ecl_config.h>
@@ -529,8 +530,17 @@ void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
     ui_return_free(ui_return);
   }
 
-  if (config_item_set(config, GRID_KEY))
-    ecl_config_set_grid(ecl_config, config_iget(config, GRID_KEY, 0, 0));
+  if (config_item_set(config, GRID_KEY)) {
+    const char * grid_file = config_iget(config, GRID_KEY, 0, 0);
+    ui_return_type * ui_return = ecl_config_validate_grid( ecl_config , grid_file);
+    if (ui_return_get_status(ui_return) == UI_RETURN_OK)
+      ecl_config_set_grid(ecl_config, grid_file );
+    else
+      util_abort("%s: failed to set grid file:%s  Error:%s \n",__func__ , grid_file , ui_return_get_last_error(ui_return));
+    
+    ui_return_free( ui_return );
+  }
+  
 
   if (config_item_set(config, ADD_FIXED_LENGTH_SCHEDULE_KW_KEY))
   {
@@ -705,13 +715,13 @@ const char * ecl_config_get_gridfile(const ecl_config_type * ecl_config)
 }
 
 /**
- The ecl_config object isolated supports run-time changing of the
- grid, however this does not (in general) apply to the system as a
- whole. Other objects which internalize pointers (i.e. field_config
- objects) to an ecl_grid_type instance will be left with dangling
- pointers; and things will probably die an ugly death. So - changing
- grid runtime should be done with extreme care.
- */
+   The ecl_config object isolated supports run-time changing of the
+   grid, however this does not (in general) apply to the system as a
+   whole. Other objects which internalize pointers (i.e. field_config
+   objects) to an ecl_grid_type instance will be left with dangling
+   pointers; and things will probably die an ugly death. So - changing
+   grid runtime should be done with extreme care.
+*/
 
 void ecl_config_set_grid(ecl_config_type * ecl_config, const char * grid_file)
 {
@@ -719,6 +729,25 @@ void ecl_config_set_grid(ecl_config_type * ecl_config, const char * grid_file)
     ecl_grid_free(ecl_config->grid);
   ecl_config->grid = ecl_grid_alloc(grid_file);
 }
+
+ui_return_type * ecl_config_validate_grid( const ecl_config_type * ecl_config , const char * grid_file ) {
+  ui_return_type * ui_return;
+  if (util_file_exists( grid_file )) {
+    ecl_file_enum file_type = ecl_util_get_file_type( grid_file , NULL , NULL );
+    if ((file_type == ECL_EGRID_FILE) || (file_type == ECL_GRID_FILE))
+      ui_return =  ui_return_alloc( UI_RETURN_OK );
+    else {
+      ui_return =  ui_return_alloc( UI_RETURN_FAIL );
+      ui_return_add_error( ui_return , "Input argument is not a GRID/EGRID file");
+    }
+  } else {
+    ui_return =  ui_return_alloc( UI_RETURN_FAIL );
+    ui_return_add_error( ui_return , "Input argument does not exist.");
+  }
+  return ui_return;
+}
+
+
 
 ecl_refcase_list_type * ecl_config_get_refcase_list(const ecl_config_type * ecl_config)
 {

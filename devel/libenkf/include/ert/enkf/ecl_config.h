@@ -58,6 +58,11 @@ extern "C" {
   const char          * ecl_config_get_init_section(const ecl_config_type * ecl_config);
   const char          * ecl_config_get_equil_init_file(const ecl_config_type * );
 
+  void                  ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file );
+  const char          * ecl_config_get_gridfile( const ecl_config_type * ecl_config );
+  ecl_grid_type       * ecl_config_get_grid(const ecl_config_type * );    
+  ui_return_type      * ecl_config_validate_grid( const ecl_config_type * ecl_config , const char * grid_file );
+
   void                  ecl_config_static_kw_init( ecl_config_type * ecl_config , const config_type * config );
   bool                  ecl_config_active( const ecl_config_type * config );
   time_t                ecl_config_get_end_date( const ecl_config_type * ecl_config );
@@ -66,7 +71,6 @@ extern "C" {
   const char          * ecl_config_get_schedule_prediction_file( const ecl_config_type * ecl_config );
   void                  ecl_config_set_schedule_prediction_file( ecl_config_type * ecl_config , const char * schedule_prediction_file );
   sched_file_type     * ecl_config_get_sched_file(const ecl_config_type * );
-  
   
 
   int                   ecl_config_get_num_cpu( const ecl_config_type * ecl_config );
@@ -83,9 +87,6 @@ extern "C" {
   const ecl_sum_type  * ecl_config_get_refcase(const ecl_config_type * ecl_config);
   bool                  ecl_config_has_refcase( const ecl_config_type * ecl_config );
   ecl_refcase_list_type * ecl_config_get_refcase_list( const ecl_config_type * ecl_config );
-  ecl_grid_type       * ecl_config_get_grid(const ecl_config_type * );
-  void                  ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file );
-  const char          * ecl_config_get_gridfile( const ecl_config_type * ecl_config );
   int                   ecl_config_get_last_history_restart( const ecl_config_type * );
   bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );
   void                  ecl_config_assert_restart( const ecl_config_type * ecl_config );
