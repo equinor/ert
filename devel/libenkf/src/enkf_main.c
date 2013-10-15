@@ -382,9 +382,11 @@ static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
 
 
 ui_return_type * enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file ) {
-  ui_return_type * ui_return = ecl_config_set_data_file( enkf_main->ecl_config , data_file );
-  if (ui_return_get_status(ui_return) == UI_RETURN_OK)
+  ui_return_type * ui_return = ecl_config_validate_data_file( enkf_main->ecl_config , data_file );
+  if (ui_return_get_status(ui_return) == UI_RETURN_OK) {
+    ecl_config_set_data_file( enkf_main->ecl_config , data_file );
     enkf_main_update_num_cpu( enkf_main );
+  }
   return ui_return;
 }
 

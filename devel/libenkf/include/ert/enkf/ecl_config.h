@@ -38,6 +38,17 @@ extern "C" {
 
 
   typedef struct ecl_config_struct ecl_config_type;
+
+  void                  ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file);
+  ui_return_type *      ecl_config_validate_data_file(const ecl_config_type * ecl_config, const char * data_file);
+
+  void                  ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file);
+  ui_return_type *      ecl_config_validate_schedule_file(const ecl_config_type * ecl_config , const char * schedule_file);
+  
+  void                  ecl_config_set_eclbase( ecl_config_type * ecl_config , const char * eclbase_fmt );
+  ui_return_type *      ecl_config_set_eclbase( const ecl_config_type * ecl_config , const char * eclbase_fmt );
+
+
   void                  ecl_config_static_kw_init( ecl_config_type * ecl_config , const config_type * config );
   bool                  ecl_config_active( const ecl_config_type * config );
   time_t                ecl_config_get_end_date( const ecl_config_type * ecl_config );
@@ -49,10 +60,10 @@ extern "C" {
   const char          * ecl_config_get_schedule_target(const ecl_config_type * );
   sched_file_type     * ecl_config_get_sched_file(const ecl_config_type * );
   bool                  ecl_config_has_schedule( const ecl_config_type * ecl_config );
-  ui_return_type      * ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file);
+  
+  
 
   int                   ecl_config_get_num_cpu( const ecl_config_type * ecl_config );
-  ui_return_type *      ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file);
   void                  ecl_config_init( ecl_config_type * ecl_config , const config_type * config);
   void                  ecl_config_free( ecl_config_type *);
   bool                  ecl_config_include_static_kw(const ecl_config_type * , const char * );
@@ -77,7 +88,6 @@ extern "C" {
   int                   ecl_config_get_last_history_restart( const ecl_config_type * );
   bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );
   void                  ecl_config_assert_restart( const ecl_config_type * ecl_config );
-  ui_return_type *      ecl_config_set_eclbase( ecl_config_type * ecl_config , const char * eclbase_fmt );
   const char          * ecl_config_get_eclbase( const ecl_config_type * ecl_config );
   bool                  ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase);
   const char          * ecl_config_get_refcase_name( const ecl_config_type * ecl_config);

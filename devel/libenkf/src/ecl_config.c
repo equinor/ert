@@ -121,27 +121,10 @@ void ecl_config_assert_restart(const ecl_config_type * ecl_config)
   }
 }
 
-ui_return_type * ecl_config_set_data_file(ecl_config_type * ecl_config, const char * data_file)
-{
-  if (util_file_exists(data_file))
-  {
-    ecl_config->data_file = util_realloc_string_copy(ecl_config->data_file, data_file);
-    {
-      FILE * stream = util_fopen(ecl_config->data_file, "r");
-      parser_type * parser = parser_alloc(NULL, NULL, NULL, NULL, "--", "\n");
-      char * init_tag = enkf_util_alloc_tagged_string("INIT");
-
-      ecl_config->can_restart = parser_fseek_string(parser, stream, init_tag, false, true);
-
-      free(init_tag);
-      parser_free(parser);
-      fclose(stream);
-    }
-    ecl_config->start_date = ecl_util_get_start_date(ecl_config->data_file);
-    ecl_config->num_cpu = ecl_util_get_num_cpu(ecl_config->data_file);
-    
+ui_return_type * ecl_config_validate_data_file(const ecl_config_type * ecl_config, const char * data_file) {
+  if (util_file_exists(data_file)) 
     return ui_return_alloc(UI_RETURN_OK);
-  } else {
+  else {
     ui_return_type * ui_return = ui_return_alloc(UI_RETURN_FAIL);
     char * error_msg = util_alloc_sprintf("File not found:%s" , data_file);
     ui_return_add_error(ui_return , error_msg);
@@ -149,6 +132,25 @@ ui_return_type * ecl_config_set_data_file(ecl_config_type * ecl_config, const ch
     return ui_return;
   }
 }
+
+
+void ecl_config_set_data_file(ecl_config_type * ecl_config, const char * data_file) {
+  ecl_config->data_file = util_realloc_string_copy(ecl_config->data_file, data_file);
+  {
+    FILE * stream = util_fopen(ecl_config->data_file, "r");
+    parser_type * parser = parser_alloc(NULL, NULL, NULL, NULL, "--", "\n");
+    char * init_tag = enkf_util_alloc_tagged_string("INIT");
+    
+    ecl_config->can_restart = parser_fseek_string(parser, stream, init_tag, false, true);
+    
+    free(init_tag);
+    parser_free(parser);
+    fclose(stream);
+  }
+  ecl_config->start_date = ecl_util_get_start_date(ecl_config->data_file);
+  ecl_config->num_cpu = ecl_util_get_num_cpu(ecl_config->data_file);
+}
+
 
 const char * ecl_config_get_data_file(const ecl_config_type * ecl_config)
 {
@@ -215,55 +217,58 @@ bool ecl_config_has_init_section(const ecl_config_type * ecl_config)
     return true;
 }
 
-/**
- Observe: This function makes a hard assumption that the
- ecl_config->start_date has already been set. (And should not be
- changed either ...)
- */
 
-ui_return_type * ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file)
-{
+
+ui_return_type * ecl_config_validate_schedule_file(const ecl_config_type * ecl_config , const char * schedule_file) {
   if ((ecl_config->start_date != -1) && (util_file_exists(schedule_file)))
-  {
-    {
-      char * base; /* The schedule target file will be without any path component */
-      char * ext;
-      util_alloc_file_components(schedule_file, NULL, &base, &ext);
-      ecl_config->schedule_target_file = util_alloc_filename(NULL, base, ext);
-      free(ext);
-      free(base);
-    }
-
-    ecl_config->sched_file = sched_file_alloc(ecl_config->start_date);
-    sched_file_parse(ecl_config->sched_file, schedule_file);
-    ecl_config->last_history_restart = sched_file_get_num_restart_files(ecl_config->sched_file) - 1; /* We keep track of this - so we can stop assimilation at the end of history */
-
-    {
-      hash_iter_type * iter = hash_iter_alloc(ecl_config->fixed_length_kw);
-      while (!hash_iter_is_complete(iter))
-      {
-        const char * key = hash_iter_get_next_key(iter);
-        int length = hash_get_int(ecl_config->fixed_length_kw, key);
-
-        sched_file_add_fixed_length_kw(ecl_config->sched_file, key, length);
-      }
-      hash_iter_free(iter);
-    }
-
     return ui_return_alloc(UI_RETURN_OK);
-  } else {
+  else {
     ui_return_type * ui_return = ui_return_alloc(UI_RETURN_FAIL);
-
+    
     if (ecl_config->start_date == -1)
       ui_return_add_error(ui_return, "You must set the ECLIPSE datafile before you can set the SCHEDULE file.");
-
+    
     if (!util_file_exists(schedule_file)) {
       char * error_msg = util_alloc_sprintf("SCHEDULE file:%s not found" , schedule_file);
       ui_return_add_error(ui_return , error_msg);
       free(error_msg);
     }
-
+    
     return ui_return;
+  }
+}
+
+
+/**
+   Observe: This function makes a hard assumption that the
+   ecl_config->start_date has already been set. (And should not be
+   changed either ...)
+*/
+
+void ecl_config_set_schedule_file(ecl_config_type * ecl_config, const char * schedule_file)
+{
+  {
+    char * base; /* The schedule target file will be without any path component */
+    char * ext;
+    util_alloc_file_components(schedule_file, NULL, &base, &ext);
+    ecl_config->schedule_target_file = util_alloc_filename(NULL, base, ext);
+    free(ext);
+    free(base);
+  }
+  
+  ecl_config->sched_file = sched_file_alloc(ecl_config->start_date);
+  sched_file_parse(ecl_config->sched_file, schedule_file);
+  ecl_config->last_history_restart = sched_file_get_num_restart_files(ecl_config->sched_file) - 1; /* We keep track of this - so we can stop assimilation at the end of history */
+
+  {
+    hash_iter_type * iter = hash_iter_alloc(ecl_config->fixed_length_kw);
+    while (!hash_iter_is_complete(iter)) {
+      const char * key = hash_iter_get_next_key(iter);
+      int length = hash_get_int(ecl_config->fixed_length_kw, key);
+      
+      sched_file_add_fixed_length_kw(ecl_config->sched_file, key, length);
+    }
+    hash_iter_free(iter);
   }
 }
 
@@ -277,21 +282,11 @@ void ecl_config_add_fixed_length_schedule_kw(ecl_config_type * ecl_config, const
 
 }
 
-/**
- The value of eclbase is in addition internalized in each enkf_state
- object, i.e. the _set routine must be called from enkf_main, and
- call enkf_state_update_eclbase() afterwards.
- */
 
-ui_return_type * ecl_config_set_eclbase(ecl_config_type * ecl_config, const char * eclbase_fmt)
-{
-  if (ecl_util_valid_basename_fmt(eclbase_fmt)) {
-    if (ecl_config->eclbase != NULL )
-      path_fmt_free(ecl_config->eclbase);
-    ecl_config->eclbase = path_fmt_alloc_path_fmt(eclbase_fmt);
-
+ui_return_type * ecl_config_validate_eclbase(const ecl_config_type * ecl_config, const char * eclbase_fmt) {
+  if (ecl_util_valid_basename_fmt(eclbase_fmt)) 
     return ui_return_alloc(UI_RETURN_OK);
-  } else {
+  else {
     ui_return_type * ui_return = ui_return_alloc(UI_RETURN_FAIL);
     {
       char * error_msg = util_alloc_sprintf("The format string: %s was invalid as ECLBASE format", eclbase_fmt);
@@ -304,6 +299,19 @@ ui_return_type * ecl_config_set_eclbase(ecl_config_type * ecl_config, const char
 
     return ui_return;
   }
+}
+
+/**
+ The value of eclbase is in addition internalized in each enkf_state
+ object, i.e. the _set routine must be called from enkf_main, and
+ call enkf_state_update_eclbase() afterwards.
+ */
+
+void ecl_config_set_eclbase(ecl_config_type * ecl_config, const char * eclbase_fmt)
+{
+  if (ecl_config->eclbase != NULL )
+    path_fmt_free(ecl_config->eclbase);
+  ecl_config->eclbase = path_fmt_alloc_path_fmt(eclbase_fmt);
 }
 
 
@@ -482,21 +490,30 @@ ecl_config_type * ecl_config_alloc_empty()
 void ecl_config_init(ecl_config_type * ecl_config, const config_type * config)
 {
   if (config_item_set(config, ECLBASE_KEY)) {
-    ui_return_type * ui_return = ecl_config_set_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
-    if (ui_return_get_status(ui_return) != UI_RETURN_OK)
+    ui_return_type * ui_return = ecl_config_validate_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
+    if (ui_return_get_status(ui_return) == UI_RETURN_OK)
+      ecl_config_set_eclbase(ecl_config, config_iget(config, ECLBASE_KEY, 0, 0));
+    else 
       util_abort("%s: failed to set eclbase format. Error:%s\n", __func__ , ui_return_get_last_error(ui_return));
     ui_return_free(ui_return);
   }
 
-  if (config_item_set(config, DATA_FILE_KEY))
+  if (config_item_set(config, DATA_FILE_KEY)) 
   {
-    ui_return_type * ui_return = ecl_config_set_data_file(ecl_config, config_iget(config, DATA_FILE_KEY, 0, 0));
+    ui_return_type * ui_return = ecl_config_validate_data_file(ecl_config, config_iget(config, DATA_FILE_KEY, 0, 0));
+    if (ui_return_get_status( ui_return ) == UI_RETURN_OK)
+      ecl_config_set_data_file( ecl_config, config_iget(config, DATA_FILE_KEY, 0, 0) );
+    else
+      util_abort("%s: problem setting ECLIPSE data file\n",__func__ , ui_return_get_last_error(ui_return));
+    
     ui_return_free(ui_return);
   }
-
+  
   if (config_item_set(config, SCHEDULE_FILE_KEY)) {
-    ui_return_type * ui_return = ecl_config_set_schedule_file(ecl_config, config_iget(config, SCHEDULE_FILE_KEY, 0, 0));
-    if (ui_return_get_status(ui_return) != UI_RETURN_OK)
+    ui_return_type * ui_return = ecl_config_validate_schedule_file(ecl_config, config_iget(config, SCHEDULE_FILE_KEY, 0, 0));
+    if (ui_return_get_status(ui_return) == UI_RETURN_OK)
+      ecl_config_set_schedule_file(ecl_config, config_iget(config, SCHEDULE_FILE_KEY, 0, 0));
+    else
       util_abort("%s: failed to set schedule file. Error:%s\n",__func__ , ui_return_get_last_error(ui_return));
 
     ui_return_free(ui_return);
