@@ -46,6 +46,7 @@ class PlotPanel(QWidget):
 
         self.setLayout(layout)
 
+        json.dumps(ObservationsModel().getAllObservations())
         # print(json.dumps(ObservationsModel().getAllObservations()))
 
 
