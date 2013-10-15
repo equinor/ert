@@ -132,7 +132,7 @@ from ert_gui.widgets.util import resourceImage
 
 
 def main():
-    # QApplication.setGraphicsSystem("raster")
+    QApplication.setGraphicsSystem("raster")
     app = QApplication(sys.argv) #Early so that QT is initialized before other imports
 
     splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
