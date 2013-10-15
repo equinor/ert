@@ -1302,7 +1302,13 @@ static bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type 
       const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
       FILE                        * log_stream;
 
-    
+      
+      if ((local_updatestep_get_num_ministep( updatestep ) > 1) && 
+          (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE))) {
+            util_exit("** ERROR: Can not combine iterable modules with multi step updates - sorry\n");
+          }
+          
+
       {
         char * log_file;
         if (int_vector_size( step_list ) == 1) 
@@ -1697,157 +1703,167 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
                                 int              init_step_parameters ,
                                 int              start_report         ,
                                 state_enum       start_state) {
-  bool force_init = false;
-  int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-    enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1 , force_init );
-    stringlist_free( param_list );
-  }  
-  bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
-  int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
-  enkf_main_init_run( enkf_main , ENKF_ASSIMILATION);
-  {
-    bool analyzed_start = false;
-    bool prev_enkf_on;
-    const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
-    const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
-    const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
-    int inode;
+
+  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
+    bool force_init = false;
+    int ens_size = enkf_main_get_ensemble_size( enkf_main );
+    {
+      stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1 , force_init );
+      stringlist_free( param_list );
+    }  
+    bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
+    int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
+    enkf_main_init_run( enkf_main , ENKF_ASSIMILATION);
+    {
+      bool analyzed_start = false;
+      bool prev_enkf_on;
+      const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
+      const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
+      const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
+      int inode;
     
-    if (start_state == ANALYZED)
-      analyzed_start = true;
-    else if (start_state == FORECAST)
-      analyzed_start = false;
-    else
-      util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
+      if (start_state == ANALYZED)
+        analyzed_start = true;
+      else if (start_state == FORECAST)
+        analyzed_start = false;
+      else
+        util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
     
-    prev_enkf_on = analyzed_start;
-    for (inode = start_inode; inode < num_nodes; inode++) {
-      const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-      state_enum init_state_parameter;
-      state_enum init_state_dynamic;
-      int      init_step_parameter;
-      int      load_start;
-      int      report_step1;
-      int      report_step2;
-      bool     enkf_on;
+      prev_enkf_on = analyzed_start;
+      for (inode = start_inode; inode < num_nodes; inode++) {
+        const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
+        state_enum init_state_parameter;
+        state_enum init_state_dynamic;
+        int      init_step_parameter;
+        int      load_start;
+        int      report_step1;
+        int      report_step2;
+        bool     enkf_on;
 
 
-      enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on );
-      if (inode == start_inode)
-        report_step1 = start_report;  /* If we are restarting from somewhere. */
+        enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on );
+        if (inode == start_inode)
+          report_step1 = start_report;  /* If we are restarting from somewhere. */
       
-      if (rerun) {
-        /* rerun ... */
-        load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
-        init_step_parameter  = report_step1;
-        init_state_dynamic   = FORECAST;
-        init_state_parameter = ANALYZED;
-        report_step1         = rerun_start;
-      } else {
-        if (prev_enkf_on)
-          init_state_dynamic = ANALYZED;
-        else
-          init_state_dynamic = FORECAST;
-        /*
-          This is not a rerun - and then parameters and dynamic
-          data should be initialized from the same report step.
-        */
-        init_step_parameter  = report_step1;
-        init_state_parameter = init_state_dynamic;
-        load_start = report_step1;
-      }
-      
-      if (load_start > 0)
-        load_start++;
-      
-      enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter ,
-                         init_state_parameter , init_state_dynamic , report_step1 , report_step2);
-      {
-        enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
-        state_map_type * state_map = enkf_fs_get_state_map(fs);
-        const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
-        int active_ens_size = state_map_count_matching(state_map , STATE_HAS_DATA);
-        
-        if (analysis_config_have_enough_realisations(analysis_config , active_ens_size)) {
-          if (enkf_on) {
-            bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
-            int_vector_type * step_list;
-            int stride;
-            
-            if (merge_observations)
-              stride = 1;
-            else
-              stride = 0;
-            
-            step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , report_step2 , stride );
-            
-            enkf_main_assimilation_update(enkf_main , step_list);
-            int_vector_free( step_list );
-            enkf_fs_fsync( enkf_main->dbase );
-          }
+        if (rerun) {
+          /* rerun ... */
+          load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
+          init_step_parameter  = report_step1;
+          init_state_dynamic   = FORECAST;
+          init_state_parameter = ANALYZED;
+          report_step1         = rerun_start;
         } else {
-          fprintf(stderr,"** ERROR ** There are %d active realisations left, which is less than the minimum specified (%d) - stopping assimilation.\n" , 
-                  active_ens_size , 
-                  analysis_config_get_min_realisations(analysis_config));
-          break;
+          if (prev_enkf_on)
+            init_state_dynamic = ANALYZED;
+          else
+            init_state_dynamic = FORECAST;
+          /*
+            This is not a rerun - and then parameters and dynamic
+            data should be initialized from the same report step.
+          */
+          init_step_parameter  = report_step1;
+          init_state_parameter = init_state_dynamic;
+          load_start = report_step1;
         }
-        prev_enkf_on = enkf_on;
+      
+        if (load_start > 0)
+          load_start++;
+      
+        enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter ,
+                           init_state_parameter , init_state_dynamic , report_step1 , report_step2);
+        {
+          enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
+          state_map_type * state_map = enkf_fs_get_state_map(fs);
+          const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+          int active_ens_size = state_map_count_matching(state_map , STATE_HAS_DATA);
+        
+          if (analysis_config_have_enough_realisations(analysis_config , active_ens_size)) {
+            if (enkf_on) {
+              bool merge_observations = analysis_config_get_merge_observations( enkf_main->analysis_config );
+              int_vector_type * step_list;
+              int stride;
+            
+              if (merge_observations)
+                stride = 1;
+              else
+                stride = 0;
+            
+              step_list = enkf_main_update_alloc_step_list( enkf_main , load_start , report_step2 , stride );
+            
+              enkf_main_assimilation_update(enkf_main , step_list);
+              int_vector_free( step_list );
+              enkf_fs_fsync( enkf_main->dbase );
+            }
+          } else {
+            fprintf(stderr,"** ERROR ** There are %d active realisations left, which is less than the minimum specified (%d) - stopping assimilation.\n" , 
+                    active_ens_size , 
+                    analysis_config_get_min_realisations(analysis_config));
+            break;
+          }
+          prev_enkf_on = enkf_on;
+        }
       }
     }
-  }
+  } else
+    fprintf(stderr,"** ERROR: EnKF assimilation can not be combined with an iterable analysis module.\n");
 }
 
 
 void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool rerun) {
-  bool force_init = false;
-  int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-    enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1 , force_init);
-    stringlist_free( param_list );
-  }
-  
-  {
-    bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
-    enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT);
-    enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0);
+  analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
+    bool force_init = false;
+    int ens_size = enkf_main_get_ensemble_size( enkf_main );
     {
-      bool update_done;
-      time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
-      enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_fs_name , false , true );
+      stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1 , force_init);
+      stringlist_free( param_list );
+    }
+    
+    {
+      bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
+      enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT);
+      enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0);
       {
-        int stride = 1;
-        int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
-        update_done = enkf_main_smoother_update( enkf_main , step_list , target_fs );
-        int_vector_free( step_list );
+        bool update_done;
+        time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
+        enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_fs_name , false , true );
+        {
+          int stride = 1;
+          int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
+          update_done = enkf_main_smoother_update( enkf_main , step_list , target_fs );
+          int_vector_free( step_list );
+        }
+        
+        if (rerun) { 
+          /* 
+             IFF a rerun path has been added with the RERUN_PATH config
+             key the model_config object will select that runpath as the
+             currently active one. If no path has been created with the
+             RERUN_PATH config option the model_config_select_runpath()
+             call will fail silently.
+             
+             The runpath select with this call will remain the currently
+             active runpath for the remaining part of this program
+             invocation.
+          */
+          if (update_done) {
+            enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
+            model_config_select_runpath( enkf_main_get_model_config( enkf_main ) , RERUN_PATH_KEY );  
+            enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
+          } else
+            fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
+        }
       }
       
-      if (rerun) { 
-        /* 
-           IFF a rerun path has been added with the RERUN_PATH config
-           key the model_config object will select that runpath as the
-           currently active one. If no path has been created with the
-           RERUN_PATH config option the model_config_select_runpath()
-           call will fail silently.
-
-           The runpath select with this call will remain the currently
-           active runpath for the remaining part of this program
-           invocation.
-        */
-        if (update_done) {
-          enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
-          model_config_select_runpath( enkf_main_get_model_config( enkf_main ) , RERUN_PATH_KEY );  
-          enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
-        } else
-          fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
-      }
+      bool_vector_free( iactive );
     }
-
-    bool_vector_free( iactive );
-  }
+  } else
+    fprintf(stderr,"** ERROR: The normal smoother should not be combined with an iterable analysis module\n");
 }
+
 
 bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int iteration_number, analysis_iter_config_type * iter_config, int_vector_type * step_list, bool_vector_type * iactive, model_config_type * model_config){
   const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iteration_number+1 );
@@ -1881,47 +1897,54 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int itera
 
 
 void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
-  const int ens_size = enkf_main_get_ensemble_size(enkf_main);
-  model_config_type * model_config = enkf_main_get_model_config(enkf_main);
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
-  analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
-  int_vector_type * step_list = int_vector_alloc(0, 0);
-  bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
-
-
-  const int step1 = 0;
-  int iter = 0;
-  int num_iter = analysis_iter_config_get_num_iterations(iter_config);
-  {
-    for (int step = step1; step <= step2; step++)
-      int_vector_append(step_list, step);
-  }
-
-  {
-    const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iter);
-    if (runpath_fmt != NULL )
-    {
-      char * runpath_key = util_alloc_sprintf("runpath-%d", iter);
-      model_config_add_runpath(model_config, runpath_key, runpath_fmt);
-      model_config_select_runpath(model_config, runpath_key);
-      free(runpath_key);
-    }
-  }
   
-  enkf_main_run_exp(enkf_main, iactive, true, step1, step1, FORECAST, true);
-  while (true)
-  {
-    if (iter == num_iter)
-      break;
+  if (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
+    const int ens_size = enkf_main_get_ensemble_size(enkf_main);
+    model_config_type * model_config = enkf_main_get_model_config(enkf_main);
+    analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
+    int_vector_type * step_list = int_vector_alloc(0, 0);
+    bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
 
-    if (enkf_main_iterate_smoother(enkf_main, step2, iter, iter_config, step_list, iactive, model_config))
-      iter++;
-    else
-      break;
-  }
-  int_vector_free(step_list);
-  bool_vector_free(iactive);
+
+    const int step1 = 0;
+    int iter = 0;
+    int num_iter = analysis_iter_config_get_num_iterations(iter_config);
+    {
+      for (int step = step1; step <= step2; step++)
+        int_vector_append(step_list, step);
+    }
+
+    {
+      const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iter);
+      if (runpath_fmt != NULL )
+        {
+          char * runpath_key = util_alloc_sprintf("runpath-%d", iter);
+          model_config_add_runpath(model_config, runpath_key, runpath_fmt);
+          model_config_select_runpath(model_config, runpath_key);
+          free(runpath_key);
+        }
+    }
+  
+    enkf_main_run_exp(enkf_main, iactive, true, step1, step1, FORECAST, true);
+    while (true)
+      {
+        if (iter == num_iter)
+          break;
+
+        if (enkf_main_iterate_smoother(enkf_main, step2, iter, iter_config, step_list, iactive, model_config))
+          iter++;
+        else
+          break;
+      }
+    int_vector_free(step_list);
+    bool_vector_free(iactive);
+  } else
+    fprintf(stderr,"** ERROR: The current analysis module:%s can not be used for iterations \n",
+            analysis_config_get_active_module_name( analysis_config ));
 }
+
+
 
 void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
   model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 

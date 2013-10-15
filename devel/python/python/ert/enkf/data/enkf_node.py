@@ -37,6 +37,11 @@ class EnkfNode(BaseCClass):
     def vector_storage(self):
         return EnkfNode.cNamespace().vector_storage(self)
 
+    def getConfig(self):
+        """ @rtype: EnkfConfigNode """
+        #todo: fix this!!!! wrong return type in prototype!
+        return EnkfNode.cNamespace().get_config(self).setParent(self)
+
     def free(self):
         EnkfNode.cNamespace().free(self)
 
@@ -56,3 +61,6 @@ EnkfNode.cNamespace().user_get = cwrapper.prototype("bool enkf_node_user_get_no_
 EnkfNode.cNamespace().user_get_vector = cwrapper.prototype("bool enkf_node_user_get_vector( enkf_node , enkf_fs , char*, int, c_uint, double_vector)")
 EnkfNode.cNamespace().value_ptr = cwrapper.prototype("c_void_p enkf_node_value_ptr(enkf_node)")
 EnkfNode.cNamespace().vector_storage = cwrapper.prototype("bool enkf_node_vector_storage(enkf_node)")
+
+#todo fix this
+EnkfNode.cNamespace().get_config = cwrapper.prototype("c_void_p enkf_node_get_config(enkf_node)")

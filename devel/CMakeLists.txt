@@ -13,6 +13,7 @@ option( BUILD_PYTHON        "Run py_compile on the python wrappers" OFF)
 option( BUILD_SHARED_LIBS   "Build shared libraries" ON )
 option( INSTALL_ERT         "Should anything be installed when issuing make install?" ON)
 option( ERT_BUILD_GUI       "Should the pyQt based gui be compiled and installed" OFF )
+option( ERT_USE_OPENMP      "Use OpenMP - currently only in EclGrid" OFF)
 
 include( CheckFunctionExists )
 include( CheckTypeSize )
@@ -28,6 +29,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    add_definitions( -DWINDOWS_LFS )
 endif()    
 
+
 # Treat warnings as errors if not on Windows
 if (ERT_WINDOWS)
    set( CMAKE_C_FLAGS    "-O2" )
@@ -36,6 +38,18 @@ else()
    set( CMAKE_C_FLAGS    "-std=gnu99 -g -O2 -Wall -Wno-unknown-pragmas " )
    set( CMAKE_CXX_FLAGS  "-g -Wall -O2 ")
 endif()
+
+if (ERT_USE_OPENMP)
+   find_package(OpenMP)
+   if (OPENMP_FOUND) 
+       message(STATUS "Enabling OpenMP support")
+       # The actual use of OpenMP is only in the libecl library - the compile flags is only applied there.
+   else()
+       set( ERT_USE_OPENMP OFF )
+       message(STATUS "OpenMP package not found - OpenMP disabled")
+   endif()
+endif()
+
 
 include(cmake/ert_check.cmake)
 include(cmake/ert_find.cmake)

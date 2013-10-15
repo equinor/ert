@@ -17,7 +17,12 @@
 
 import os
 import datetime
-from unittest2 import skip, skipUnless, skipIf
+
+try:
+    from unittest2 import skipIf, skipUnless, skipIf
+except ImportError:
+    from unittest import skipIf, skipUnless, skipIf
+
 from ert.ecl import EclSum
 
 from ert.util import StringList, TimeVector, DoubleVector

@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 #  Copyright (C) 2013  Statoil ASA, Norway.
 #
-#  The file 'test_ert_import.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'content_type_enum.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,19 +13,20 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
-
-from ert_tests import ExtendedTestCase
-from ert_tests.import_tester import ImportTester
+from ert.cwrap import BaseCEnum
+from ert.enkf import ENKF_LIB
 
 
-class ImportTest(ExtendedTestCase):
+class LoadFailTypeEnum(BaseCEnum):
+    LOAD_FAIL_SILENT = None
+    LOAD_FAIL_WARN = None
+    LOAD_FAIL_EXIT = None
 
-    def test_ert(self):
-        module = __import__("ert")
-        path = os.path.abspath(module.__file__)
-        path = os.path.dirname(path)
 
-        self.assertTrue(ImportTester.importRecursively(path, "ert"))
+LoadFailTypeEnum.addEnum("LOAD_FAIL_SILENT", 0)
+LoadFailTypeEnum.addEnum("LOAD_FAIL_WARN", 2)
+LoadFailTypeEnum.addEnum("LOAD_FAIL_EXIT", 4)
+LoadFailTypeEnum.registerEnum(ENKF_LIB, "load_fail_type")
+
 
 

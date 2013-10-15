@@ -52,7 +52,7 @@ def addSubDirectories(directories):
 
 def addPythonPackage(relative_module_path):
     module_name = ".".join(relative_module_path.split("/"))
-    template = "add_python_package(\"Python %s\"  ${PYTHON_INSTALL_PREFIX}/%s \"${PYTHON_SOURCES}\" True)"
+    template = "add_python_package(\"python.%s\"  ${PYTHON_INSTALL_PREFIX}/%s \"${PYTHON_SOURCES}\" True)"
 
     return template % (module_name, relative_module_path)
 

@@ -28,8 +28,6 @@ class EnKFMain(BaseCClass):
         super(EnKFMain, self).__init__(c_ptr)
 
 
-
-
     def getFileSystem(self):
         """ @rtype: EnkfFs """
         return EnKFMain.cNamespace().get_fs(self).setParent(self)
@@ -122,7 +120,8 @@ class EnKFMain(BaseCClass):
     def del_node(self, key):
         EnKFMain.cNamespace().del_node(self, key)
 
-    def get_obs(self):
+    def getObservations(self):
+        """ @rtype: EnkfObs """
         return EnKFMain.cNamespace().get_obs(self).setParent(self)
 
     def load_obs(self, obs_config_file):
@@ -217,8 +216,8 @@ class EnKFMain(BaseCClass):
         """ @rtype: EnkfFs """
         return EnKFMain.cNamespace().get_alt_fs(self, fs, read_only, create).setParent(self)
 
-    def createNewConfig(config_file, storage_path, case_name, dbase_type, num_realizations):
-        EnKFMain.cNamespace().create_new_config(config_file, storage_path, case_name, dbase_type, num_realizations)
+    def createNewConfig(self, storage_path, case_name, dbase_type, num_realizations):
+        EnKFMain.cNamespace().create_new_config(self, storage_path, case_name, dbase_type, num_realizations)
 
     def fprintf_config(self):
         EnKFMain.cNamespace().fprintf_config(self)

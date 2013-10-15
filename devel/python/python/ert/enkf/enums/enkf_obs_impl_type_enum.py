@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 #  Copyright (C) 2013  Statoil ASA, Norway.
 #
-#  The file 'test_ert_import.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'enkf_obs_impl_type_enum.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,19 +13,20 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
-
-from ert_tests import ExtendedTestCase
-from ert_tests.import_tester import ImportTester
+from ert.cwrap import BaseCEnum
+from ert.enkf import ENKF_LIB
 
 
-class ImportTest(ExtendedTestCase):
+class EnkfObservationImplementationType(BaseCEnum):
+    GEN_OBS = None
+    SUMMARY_OBS = None
+    BLOCK_OBS = None
 
-    def test_ert(self):
-        module = __import__("ert")
-        path = os.path.abspath(module.__file__)
-        path = os.path.dirname(path)
+EnkfObservationImplementationType.addEnum("GEN_OBS", 1)
+EnkfObservationImplementationType.addEnum("SUMMARY_OBS", 2)
+EnkfObservationImplementationType.addEnum("BLOCK_OBS", 3)
 
-        self.assertTrue(ImportTester.importRecursively(path, "ert"))
+EnkfObservationImplementationType.registerEnum(ENKF_LIB, "enkf_obs_impl_type")
+
 
 
