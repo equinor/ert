@@ -1,20 +1,20 @@
 from ert.util import UIReturn
-from ert.util import UIReturnStatus
+from ert.util import UIReturnStatusEnum
 from ert_tests import ExtendedTestCase
 
 class UIReturnTest(ExtendedTestCase):
 
     def test_create(self):
-        ui_return = UIReturn(UIReturnStatus.UI_RETURN_OK)
+        ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_OK)
         self.assertTrue(ui_return)
         
-        ui_return = UIReturn(UIReturnStatus.UI_RETURN_FAIL)
+        ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_FAIL)
         self.assertFalse(ui_return)
     
         self.assertEqual(0 , len(ui_return))
         
     def test_help(self):
-        ui_return = UIReturn(UIReturnStatus.UI_RETURN_OK)
+        ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_OK)
         self.assertEqual("" , ui_return.help_text())
         
         ui_return.add_help("Help1")
@@ -25,7 +25,7 @@ class UIReturnTest(ExtendedTestCase):
         
     
     def test_error_raises_OK(self):
-        ui_return = UIReturn(UIReturnStatus.UI_RETURN_OK)
+        ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_OK)
         with self.assertRaises(ValueError):
             ui_return.add_error("Error1")
             ui_return.last_error()
@@ -33,7 +33,7 @@ class UIReturnTest(ExtendedTestCase):
             
             
     def test_add_error(self):
-        ui_return = UIReturn(UIReturnStatus.UI_RETURN_FAIL)
+        ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_FAIL)
         ui_return.add_error("Error1")
         ui_return.add_error("Error2")
         ui_return.add_error("Error3")
@@ -44,7 +44,7 @@ class UIReturnTest(ExtendedTestCase):
     
     
     def test_iget_error(self):
-        ui_return = UIReturn(UIReturnStatus.UI_RETURN_FAIL)
+        ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_FAIL)
         ui_return.add_error("Error1")
         ui_return.add_error("Error2")
         ui_return.add_error("Error3")
