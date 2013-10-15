@@ -58,12 +58,15 @@ class UIReturnTest(ExtendedTestCase):
             ui_return.iget_error("XX")
         
         
-        ui_return = UIReturn(UIReturnStatus.UI_RETURN_OK)
+        ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_OK)
         errorList = []
         for index in range(len(ui_return)):
             errorList.append(ui_return.iget_error(index))
         self.assertEqual(errorList , [])
         
-        
-        
+    def test_status_enum(self):
+        source_file_path = "libert_util/include/ert/util/ui_return.h"
+        self.assertEnumIsFullyDefined(UIReturnStatusEnum, "ui_return_status_enum", source_file_path)
+
+
         
