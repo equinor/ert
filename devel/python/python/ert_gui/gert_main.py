@@ -187,7 +187,7 @@ def main():
 
         simulation_panel = SimulationPanel()
         window.addTab(simulation_panel.getName(), simulation_panel)
-        configuration_panel = ConfigurationPanel()
+        configuration_panel = ConfigurationPanel(os.path.basename(enkf_config))
         window.addTab(configuration_panel.getName(), configuration_panel)
         plot_panel = PlotPanel()
         window.addTab(plot_panel.getName(), plot_panel)

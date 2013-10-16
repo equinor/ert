@@ -13,7 +13,7 @@ from ert_gui.widgets.search_box import SearchBox
 
 class ConfigurationPanel(RowPanel):
 
-    def __init__(self):
+    def __init__(self, config_file):
         RowPanel.__init__(self, "Configuration")
 
         central_widget = QWidget()
@@ -30,10 +30,7 @@ class ConfigurationPanel(RowPanel):
         layout.addWidget(search)
         layout.addWidget(ide, 1)
 
-        os.chdir("/private/jpb/Projects/ert/TestCase")
-
-        config_file = ""
-        with open("config") as f:
+        with open(config_file) as f:
             config_file = f.read()
 
         highlighter = KeywordHighlighter(ide.document())
