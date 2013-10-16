@@ -30,7 +30,7 @@ class ImportTester(object):
 
         result = True
 
-        for entry in entries:
+        for entry in sorted(entries):
             import_success = True
 
             entry_path = os.path.join(path, entry)
