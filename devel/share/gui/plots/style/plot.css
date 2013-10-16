@@ -1,0 +1,79 @@
+/* Copyright (C) 2013 Statoil ASA, Norway. */
+/*   */
+/* The file 'plot.css' is part of ERT - Ensemble based Reservoir Tool. */
+/*   */
+/* ERT is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
+/*    */
+/* ERT is distributed in the hope that it will be useful, but WITHOUT ANY */
+/* WARRANTY; without even the implied warranty of MERCHANTABILITY or */
+/* FITNESS FOR A PARTICULAR PURPOSE.   */
+/*    */
+/* See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> */
+/* for more details. */
+
+.plot {
+    display: inline-block;
+    margin: 20px;
+    padding: 10px;
+    float: left;
+    border: 1px solid black;
+    background-color: white;
+
+}
+
+.plot-svg {
+    display: block;
+    margin: 20px;
+    padding: 0;
+    width: 1024px;
+    height: 512px;
+}
+
+.plot-title {
+    font-size: large;
+    width: auto;
+    text-align: center;
+    margin: 10px;
+    /*color: goldenrod;*/
+
+}
+
+.axis path, .axis line {
+    fill: none;
+    stroke: #000000;
+    shape-rendering: crispEdges;
+}
+
+.axis line.minor {
+    fill: none;
+    stroke-dasharray: 1, 4;
+}
+
+.pale line {
+    fill: none;
+    stroke: #999;
+    stroke-dasharray: 2, 2;
+}
+
+.plot-line {
+    fill: none;
+
+    stroke: #000;
+    stroke-opacity: 1;
+    stroke-width: 1px;
+}
+
+.area-fill {
+    fill: #FC8D59;
+    fill-opacity: 0.1;
+    /*fill: rgba(150, 150, 150, 0.6);*/
+    /*fill: rgba(200, 200, 200, 0.6);*/
+}
+
+/*.area-fill:hover {*/
+    /*fill: rgba(150, 150, 150, 0.1);*/
+
+/*}*/
