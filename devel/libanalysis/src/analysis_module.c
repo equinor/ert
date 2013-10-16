@@ -354,7 +354,9 @@ bool analysis_module_set_var( analysis_module_type * module , const char * var_n
     double double_value;
     if (util_sscanf_double( string_value , &double_value )) 
       set_ok = analysis_module_set_double( module , var_name , double_value );
-
+    
+    if (!set_ok )
+      fprintf(stderr,"tried to set double, failed");
     if (set_ok)
       return true;
   }

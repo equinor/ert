@@ -323,10 +323,14 @@ long rml_enkf_get_options( void * arg , long flag ) {
 
 
  bool rml_enkf_has_var( const void * arg, const char * var_name) {
-   if (strcmp(var_name , "ITER") == 0)
-     return true;
-   else
-     return false;
+   bool ret = false; 
+   
+   if ((strcmp(var_name , "ITER") == 0) || 
+       (strcmp(var_name , "NUM_ITER") == 0) || 
+       (strcmp(var_name , "ENKF_TRUNCATION_KEY_") == 0)) {
+     ret = true; 
+   }
+   return ret; 
  }
 
 
@@ -339,6 +343,16 @@ long rml_enkf_get_options( void * arg , long flag ) {
        return module_data->iteration_nr;
      else
        return -1;
+   }
+ }
+ 
+  double rml_enkf_get_double( const void * arg, const char * var_name) {
+   const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
+   {
+     if (strcmp(var_name , "ENKF_TRUNCATION_KEY_") == 0)
+       return module_data->truncation;
+     else
+       return -1.0;
    }
  }
 
@@ -373,7 +387,7 @@ analysis_table_type SYMBOL_TABLE = {
     .complete_update = NULL,
     .has_var         = rml_enkf_has_var,
     .get_int         = rml_enkf_get_int,
-    .get_double      = NULL,
+    .get_double      = rml_enkf_get_double,
     .get_ptr         = NULL, 
 };
 
