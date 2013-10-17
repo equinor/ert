@@ -17,12 +17,14 @@ from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.util import StringList
 from ert.ecl import EclSum
-
+from ert.ecl import EclGrid
+from ert.util import UIReturn
 
 class EclConfig(BaseCClass):
     def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
-
+        c_pointer = EclConfig.cNamespace().alloc()
+        super(EclConfig, self).__init__(c_pointer)
+        
     def get_eclbase(self):
         return EclConfig.cNamespace().get_eclbase(self)
 
@@ -88,6 +90,7 @@ cwrapper.registerType("ecl_config_obj", EclConfig.createPythonObject)
 cwrapper.registerType("ecl_config_ref", EclConfig.createCReference)
 
 
+EclConfig.cNamespace().alloc = cwrapper.prototype("c_void_p ecl_config_alloc( )")
 EclConfig.cNamespace().free = cwrapper.prototype("void ecl_config_free( ecl_config )")
 EclConfig.cNamespace().get_eclbase = cwrapper.prototype("char* ecl_config_get_eclbase( ecl_config )")
 EclConfig.cNamespace().get_data_file = cwrapper.prototype("char* ecl_config_get_data_file(ecl_config)")
