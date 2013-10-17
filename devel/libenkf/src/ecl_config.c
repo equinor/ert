@@ -329,10 +329,25 @@ const char * ecl_config_get_eclbase(const ecl_config_type * ecl_config)
 /**
  Can be called with @refcase == NULL - which amounts to clearing the
  current refcase.
- */bool ecl_config_load_refcase(ecl_config_type * ecl_config, const char * refcase)
+*/
+bool ecl_config_load_refcase(ecl_config_type * ecl_config, const char * refcase)
 {
   return ecl_refcase_list_set_default(ecl_config->refcase_list, refcase);
 }
+
+
+ui_return_type * ecl_config_validate_refcase( const ecl_config_type * ecl_config , const char * refcase) {
+  if (ecl_sum_case_exists( refcase ))
+    return ui_return_alloc( UI_RETURN_OK );
+  else {
+    ui_return_type * ui_return = ui_return_alloc( UI_RETURN_FAIL );
+    char * error_msg = util_alloc_sprintf( "Could not load summary case from:%s \n",refcase);
+    ui_return_add_error( ui_return , error_msg );
+    free( error_msg );
+    return ui_return;
+  }
+}
+
 
 /**
  Will return NULL if no refcase is set.

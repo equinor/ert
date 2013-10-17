@@ -81,7 +81,8 @@ extern "C" {
   bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
   void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
   bool                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
-  
+  ui_return_type              * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
+
   ert_report_list_type        * enkf_main_get_report_list( const enkf_main_type * enkf_main );
   ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
   void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
@@ -120,7 +121,7 @@ extern "C" {
                                                   int              init_step_parameters ,
                                                   int              start_report         ,
                                                   state_enum       start_state          ,
-						  bool             initialize);
+                                                  bool             initialize);
 
   
   void                          enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
