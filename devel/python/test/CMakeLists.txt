@@ -145,6 +145,10 @@ add_test( NAME python.tests.ert.enkf_analysis_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_analysis_config.AnalysisConfigTest)
 
+add_test( NAME python.tests.ert.enkf_ecl_config
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ecl_config.EclConfigTest)
+
 
 #GUI
 if (ERT_BUILD_GUI) 

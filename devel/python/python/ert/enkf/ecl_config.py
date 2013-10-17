@@ -35,12 +35,22 @@ class EclConfig(BaseCClass):
         """ @rtype: UIReturn """
         return EclConfig.cNamespace().set_data_file(self , datafile)
 
+    #-----------------------------------------------------------------
+
     def get_gridfile(self):
         """ @rtype: str """
         return EclConfig.cNamespace().get_gridfile(self)
 
     def set_gridfile(self, gridfile):
         EclConfig.cNamespace().set_gridfile(self, gridfile)
+    
+    def validateGridFile(self , gridfile):
+        return EclConfig.cNamespace().validate_gridfile(self, gridfile)
+        
+    def get_grid(self):
+        return EclConfig.cNamespace().get_grid(self)
+        
+    #-----------------------------------------------------------------
 
     def get_schedule_file(self):
         return EclConfig.cNamespace().get_schedule_file(self)
@@ -97,6 +107,7 @@ EclConfig.cNamespace().get_data_file = cwrapper.prototype("char* ecl_config_get_
 EclConfig.cNamespace().set_data_file = cwrapper.prototype("ui_return_obj ecl_config_set_data_file(ecl_config , char*)")
 EclConfig.cNamespace().get_gridfile = cwrapper.prototype("char* ecl_config_get_gridfile(ecl_config)")
 EclConfig.cNamespace().set_gridfile = cwrapper.prototype("void ecl_config_set_grid(ecl_config, char*)")
+EclConfig.cNamespace().validate_gridfile = cwrapper.prototype("ui_return_obj ecl_config_validate_grid(ecl_config, char*)")
 EclConfig.cNamespace().get_schedule_file = cwrapper.prototype("char* ecl_config_get_schedule_file(ecl_config)")
 EclConfig.cNamespace().set_schedule_file = cwrapper.prototype("void ecl_config_set_schedule_file(ecl_config, char*)")
 EclConfig.cNamespace().get_init_section = cwrapper.prototype("char* ecl_config_get_init_section(ecl_config)")
