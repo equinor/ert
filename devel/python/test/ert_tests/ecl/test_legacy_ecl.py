@@ -44,7 +44,12 @@ class LegacyEclTest(TestCase):
 
         self.assertEqual(ecl.EclRegion, new_ecl.EclRegion)
 
-        self.assertEqual(ecl.ecl_default.default.ecl_version, new_ecl.EclDefault.ecl_version())
+        try:
+            self.assertEqual(ecl.ecl_default.default.ecl_version, new_ecl.EclDefault.ecl_version())
+        except NotImplementedError:
+            with self.assertRaises(NotImplementedError):
+                ecl.ecl_default.default.ecl_version
+                new_ecl.EclDefault.ecl_version()
 
         self.assertEqual(ecl.EclQueue, new_ecl.EclQueue)
 
