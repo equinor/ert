@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    html {
+        height: 100%;
+    }
+
+    body {
+        /*font-family: sans-serif;*/
+        /*font-size: smaller;*/
+        min-width: 350px;
+        height: 90%;
+        background-color: #eee;
+    }
+
+    .list-title {
+        font-family: verdana;
+        font-variant: small-caps;
+        font-size: large;
+    }
+
+    .list-item {
+        font-family: verdana, Arial, monospace;
+        font-size: x-small;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .list-item:hover {
+        background-color: hotpink;
+    }
+
+    .data_type_list {
+        display: inline-block;
+        margin: 20px;
+        padding: 10px;
+        float: left;
+        border: 1px solid black;
+        /*border-radius: 10px;*/
+        background-color: white;
+        /*box-shadow: 10px 10px 15px 5px #aaaaaa;*/
+        /*-webkit-box-shadow: 5px 5px 10px 2px #aaaaaa;*/
+        /*box-shadow: 5px 5px 10px 2px #aaaaaa;*/
+
+    }
+
+    .map {
+        display: inline-block;
+        margin: 20px;
+        padding: 10px;
+        float: left;
+        border: 1px solid black;
+        /*border-radius: 10px;*/
+        background-color: white;
+        /*box-shadow: 10px 10px 15px 5px #aaaaaa;*/
+        box-shadow: 5px 5px 10px 2px #aaaaaa;
+    }
+
+
+
+
+</style>
+
+<link rel="stylesheet" type="text/css" href="style/plot.css"/>
+<body>
+<script src="libs/d3.v3.js"></script>
+<script src="scripts/link_list.js"></script>
+<script src="scripts/plot.js"></script>
+<script>
+    var date_format = d3.time.format("%Y-%m-%d %H:%M:%S");
+
+    /*function createStatistics(data) {
+        var statistics = {max: Number.MIN_VALUE, min:Number.MAX_VALUE, std: 0.0};
+
+        for (var i = 0; i < data.length; i++) {
+            var sample = data[i];
+
+            var value = sample["value"];
+            statistics["max"] = Math.max(statistics["max"], value);
+            statistics["min"] = Math.min(statistics["min"], value);
+
+            if(sample.hasOwnProperty("standard_deviation")) {
+                statistics["std"] = Math.max(statistics["std"], sample["standard_deviation"]);
+            }
+        }
+
+//        console.log(statistics);
+
+        return statistics;
+    } */
+
+    /*function dateify(iso_date) {
+        return date_format.parse(iso_date);
+    }*/
+
+    var plot_data = null;
+
+    var data_type_list_element = d3.select("body").append("div").attr("id", "data_type_list").attr("class", "data_type_list");
+    var data_type_list = new DataTypeList(data_type_list_element, [], 150, 200);
+
+
+    var plot_element = d3.select("body").append("div").attr("id", "plot");
+    var plot = new Plot(plot_element, {name: "No data", data: []});
+
+    data_type_list.setClickFunction(function(data_type) {
+        plot.setData(plot_data[data_type]);
+    });
+
+    d3.json("observations.json", function(data) {
+
+        plot_data = data;
+        var keys = data.sample_lists_keys;
+        data_type_list.updateList(keys);
+        plot.setData(data[keys[0]]);
+
+    });
+
+
+    /*d3.json("observations.json", function(data) {
+        var keys = [];
+        var all_plot_data = {};
+        for (var key in data) {
+            if(data.hasOwnProperty(key)) {
+                keys.push(key);
+                var single_plot_data = {};
+                single_plot_data["data"] = data[key]["data"];
+                single_plot_data["name"] = key;
+                single_plot_data["first_report_step"] = dateify(data[key]["first_report_step"]);
+                single_plot_data["last_report_step"] = dateify(data[key]["last_report_step"]);
+                single_plot_data["statistics"] = createStatistics(data[key]["data"]);
+
+                all_plot_data[key] = single_plot_data;
+
+                for (var i = 0; i < single_plot_data["data"].length; i++ ) {
+                    single_plot_data["data"][i].report_step_date = dateify(single_plot_data["data"][i].report_step);
+
+                }
+
+            }
+        }
+        keys.sort();
+        all_plot_data["keys"] = keys;
+        all_plot_data["first_report"] = keys;
+
+        plot_data = all_plot_data;
+        data_type_list.updateList(keys);
+        plot.setData(all_plot_data[keys[0]]);
+
+    });*/
+
+
+</script>
