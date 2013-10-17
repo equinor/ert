@@ -485,7 +485,7 @@ static void ecl_config_init_static_kw(ecl_config_type * ecl_config)
     [i]);
 }
 
-ecl_config_type * ecl_config_alloc_empty()
+ecl_config_type * ecl_config_alloc()
 {
   ecl_config_type * ecl_config = util_malloc(sizeof *ecl_config);
 
