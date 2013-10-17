@@ -140,7 +140,7 @@ void * rml_enkf_imodel_data_alloc( rng_type * rng) {
   
   rml_enkf_imodel_set_truncation( data , DEFAULT_ENKF_TRUNCATION_ );
   rml_enkf_imodel_set_subspace_dimension( data , DEFAULT_SUBSPACE_DIMENSION );
-  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE;
+  data->option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE + ANALYSIS_SCALE_DATA;
   data->iteration_nr = 0;
   data->Std          = 0; 
   return data;
