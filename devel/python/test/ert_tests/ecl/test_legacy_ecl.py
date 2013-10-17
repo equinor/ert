@@ -61,11 +61,29 @@ class LegacyEclTest(TestCase):
         self.assertEqual(ecl.ECL_GAS_PHASE, EclPhaseEnum.ECL_GAS_PHASE)
         self.assertEqual(ecl.ECL_WATER_PHASE, EclPhaseEnum.ECL_WATER_PHASE)
 
-
-
     def test_ecl_defaults(self):
-        self.assertIsNotNone(ecl_default.default.ecl_version)
-        self.assertIsNotNone(ecl_default.default.driver_options)
-        self.assertIsNotNone(ecl_default.default.ecl_cmd)
-        self.assertIsNotNone(ecl_default.default.driver_type)
-        self.assertIsNotNone(ecl_default.default.lsf_resource_request)
+        # Should be either non-null, or throw an NotImplementedError.
+        try:
+            self.assertIsNotNone(ecl_default.default.ecl_version)
+        except NotImplementedError:
+            pass
+
+        try:
+            self.assertIsNotNone(ecl_default.default.driver_options)
+        except NotImplementedError:
+            pass
+
+        try:
+            self.assertIsNotNone(ecl_default.default.ecl_cmd)
+        except NotImplementedError:
+            pass
+ 
+        try:
+            self.assertIsNotNone(ecl_default.default.driver_type)
+        except NotImplementedError:
+            pass
+
+        try:
+            self.assertIsNotNone(ecl_default.default.lsf_resource_request)
+        except NotImplementedError:
+            pass
