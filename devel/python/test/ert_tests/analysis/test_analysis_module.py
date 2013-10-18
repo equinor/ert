@@ -42,7 +42,7 @@ class AnalysisModuleTest(ExtendedTestCase):
 
         self.assertFalse(am.getInternal())
 
-        self.assertTrue(am.setVar("NUM_ITER", "1"))
+        self.assertTrue(am.setVar("ITER", "1"))
 
         self.assertEqual(am.getTableName(), "analysis_table")
 
@@ -52,7 +52,7 @@ class AnalysisModuleTest(ExtendedTestCase):
 
         self.assertTrue(am.hasVar("ITER"))
 
-        self.assertIsInstance(am.getDouble("ENKF_TRUNCATION_KEY_"), float)
+        self.assertIsInstance(am.getDouble("ENKF_TRUNCATION"), float)
 
         self.assertIsInstance(am.getInt("ITER"), int)
 

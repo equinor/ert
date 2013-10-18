@@ -475,7 +475,7 @@ long rml_enkf_imodel_get_options( void * arg , long flag ) {
 
  bool rml_enkf_imodel_has_var( const void * arg, const char * var_name) {
    {
-     if (strcmp(var_name , "ITER") == 0)
+     if (strcmp(var_name , ENKF_ITER_KEY_) == 0)
        return true;
      else
        return false;
@@ -488,7 +488,7 @@ long rml_enkf_imodel_get_options( void * arg , long flag ) {
  int rml_enkf_imodel_get_int( const void * arg, const char * var_name) {
    const rml_enkf_imodel_data_type * module_data = rml_enkf_imodel_data_safe_cast_const( arg );
    {
-     if (strcmp(var_name , "ITER") == 0)
+     if (strcmp(var_name , ENKF_ITER_KEY_) == 0)
        return module_data->iteration_nr;
      else
        return -1;

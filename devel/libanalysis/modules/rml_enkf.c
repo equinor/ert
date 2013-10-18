@@ -123,6 +123,10 @@ void rml_enkf_set_truncation( rml_enkf_data_type * data , double truncation ) {
     data->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
 }
 
+void rml_enkf_set_lambda0(rml_enkf_data_type * data , double lambda0 ) {
+  data->lambda0 = lambda0; 
+}
+
 void rml_enkf_set_subspace_dimension( rml_enkf_data_type * data , int subspace_dimension) {
   data->subspace_dimension = subspace_dimension;
   if (subspace_dimension > 0)
@@ -144,7 +148,7 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   data->iteration_nr = 0;
   data->Std          = 0; 
   data->state        = NULL;
-  data->lambda0      = 1;
+  data->lambda0      = 1.0;
   return data;
 }
 
@@ -287,10 +291,10 @@ bool rml_enkf_set_double( void * arg , const char * var_name , double value) {
   {
     bool name_recognized = true;
 
-    if ((strcmp( var_name , ENKF_TRUNCATION_KEY_) == 0) ||
-        (strcmp( var_name , LAMBDA0_KEY) == 0)) {
+    if (strcmp( var_name , ENKF_TRUNCATION_KEY_) == 0)
       rml_enkf_set_truncation( module_data , value );
-    }
+    else if (strcmp( var_name , ENKF_LAMBDA0_KEY_) == 0) 
+      rml_enkf_set_lambda0( module_data , value );
     else
       name_recognized = false;
 
@@ -306,7 +310,7 @@ bool rml_enkf_set_int( void * arg , const char * var_name , int value) {
     
     if (strcmp( var_name , ENKF_NCOMP_KEY_) == 0)
       rml_enkf_set_subspace_dimension( module_data , value );
-    else if(strcmp( var_name , "NUM_ITER") == 0)
+    else if(strcmp( var_name , ENKF_ITER_KEY_) == 0)
       rml_enkf_set_iteration_number( module_data , value );
     else
       name_recognized = false;
@@ -328,10 +332,9 @@ long rml_enkf_get_options( void * arg , long flag ) {
  bool rml_enkf_has_var( const void * arg, const char * var_name) {
    bool ret = false; 
    
-   if ((strcmp(var_name , "ITER") == 0)                 || 
-       (strcmp(var_name , "NUM_ITER") == 0)             || 
-       (strcmp(var_name , "ENKF_TRUNCATION_KEY_") == 0) ||
-       (strcmp(var_name , "LAMBDA0_KEY__") == 0)) {
+   if ((strcmp(var_name , ENKF_ITER_KEY_) == 0)       || 
+       (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0) ||
+       (strcmp(var_name , ENKF_LAMBDA0_KEY_) == 0)) {
      ret = true; 
    }
    return ret; 
