@@ -148,7 +148,7 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   data->iteration_nr = 0;
   data->Std          = 0; 
   data->state        = NULL;
-  data->lambda0      = 1.0;
+  data->lambda0      = -1.0;
   return data;
 }
 
@@ -214,7 +214,13 @@ void rml_enkf_updateA(void * module_data ,
     Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
     Std_new = matrix_diag_std(Skm,Sk_new);
     data->state = matrix_realloc_copy(data->state , A);
-    rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda0,Ud,Wd,VdT);
+    
+    if (data->lambda0 < 0) 
+      data->lambda = pow(10,floor(log10(Sk_new/(2*nrobs))));
+    else
+      data->lambda = data->lambda0; 
+    
+    rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
     data->Sk  = Sk_new;
     data->Std = Std_new;
     printf("Prior Objective function value is %5.3f \n", data->Sk);
@@ -356,10 +362,10 @@ long rml_enkf_get_options( void * arg , long flag ) {
   double rml_enkf_get_double( const void * arg, const char * var_name) {
    const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
    {
-     if ((strcmp(var_name , "ENKF_TRUNCATION_KEY_") == 0) ||
-         (strcmp(var_name , "LAMBDA0_") == 0)) {
+     if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0) 
        return module_data->truncation;
-     }
+     else if (strcmp(var_name , "LAMBDA0_") == 0) 
+      return module_data->lambda0; 
      else
        return -1.0;
    }
