@@ -58,6 +58,11 @@ class EclConfig(BaseCClass):
     def set_schedule_file(self, schedule_file):
         EclConfig.cNamespace().set_schedule_file(self, schedule_file)
 
+    def validateScheduleFile(self , schedule_file):
+        return EclConfig.cNamespace.validate_schedule_file( self , schedule_file )
+
+    #-----------------------------------------------------------------
+
     def get_init_section(self):
         return EclConfig.cNamespace().get_init_section(self)
 
@@ -110,6 +115,7 @@ EclConfig.cNamespace().set_gridfile = cwrapper.prototype("void ecl_config_set_gr
 EclConfig.cNamespace().validate_gridfile = cwrapper.prototype("ui_return_obj ecl_config_validate_grid(ecl_config, char*)")
 EclConfig.cNamespace().get_schedule_file = cwrapper.prototype("char* ecl_config_get_schedule_file(ecl_config)")
 EclConfig.cNamespace().set_schedule_file = cwrapper.prototype("void ecl_config_set_schedule_file(ecl_config, char*)")
+EclConfig.cNamespace().validate_schedule_file = cwrapper.prototype("void ecl_config_validate_schedule_file(ecl_config, char*)")
 EclConfig.cNamespace().get_init_section = cwrapper.prototype("char* ecl_config_get_init_section(ecl_config)")
 EclConfig.cNamespace().set_init_section = cwrapper.prototype("void ecl_config_set_init_section(ecl_config, char*)")
 EclConfig.cNamespace().get_refcase_name = cwrapper.prototype("char* ecl_config_get_refcase_name(ecl_config)")
