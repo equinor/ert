@@ -13,6 +13,7 @@ extern "C" {
 #define  DEFAULT_ENKF_TRUNCATION_  0.98
 #define  ENKF_TRUNCATION_KEY_      "ENKF_TRUNCATION"
 #define  ENKF_NCOMP_KEY_           "ENKF_NCOMP" 
+#define  LAMBDA0_KEY               "LAMBDA0"
 
   typedef struct std_enkf_data_struct std_enkf_data_type;
 

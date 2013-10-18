@@ -16,7 +16,7 @@
 #  for more details.
 
 
-from ert.cwrap import BaseCEnum1
+from ert.cwrap import BaseCEnum
 from ert.analysis import ANALYSIS_LIB
 
 

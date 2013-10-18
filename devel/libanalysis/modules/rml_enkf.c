@@ -89,7 +89,8 @@ struct rml_enkf_data_struct {
   long      option_flags;
 
   int       iteration_nr;          // Keep track of the outer iteration loop
-  double    lambda;                 // parameter to control the search direction in Marquardt levenberg optimization
+  double    lambda;                // parameter to control the search direction in Marquardt levenberg optimization
+  double    lambda0;               // Initial lambda value
   double    Sk;                    // Objective function value
   double    Std;                   // Standard Deviation of the Objective function
   matrix_type *state;
@@ -143,6 +144,7 @@ void * rml_enkf_data_alloc( rng_type * rng) {
   data->iteration_nr = 0;
   data->Std          = 0; 
   data->state        = NULL;
+  data->lambda0      = 1;
   return data;
 }
 
@@ -207,9 +209,8 @@ void rml_enkf_updateA(void * module_data ,
   if (data->iteration_nr == 0) {
     Sk_new = enkf_linalg_data_mismatch(D,Cd,Skm);  //Calculate the intitial data mismatch term
     Std_new = matrix_diag_std(Skm,Sk_new);
-    data->lambda = pow(10,floor(log10(Sk_new/(2*nrobs))));
     data->state = matrix_realloc_copy(data->state , A);
-    rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda,Ud,Wd,VdT);
+    rml_enkf_common_initA__(A,S,Cd,E,D,truncation,data->lambda0,Ud,Wd,VdT);
     data->Sk  = Sk_new;
     data->Std = Std_new;
     printf("Prior Objective function value is %5.3f \n", data->Sk);
@@ -286,8 +287,10 @@ bool rml_enkf_set_double( void * arg , const char * var_name , double value) {
   {
     bool name_recognized = true;
 
-    if (strcmp( var_name , ENKF_TRUNCATION_KEY_) == 0)
+    if ((strcmp( var_name , ENKF_TRUNCATION_KEY_) == 0) ||
+        (strcmp( var_name , LAMBDA0_KEY) == 0)) {
       rml_enkf_set_truncation( module_data , value );
+    }
     else
       name_recognized = false;
 
@@ -325,9 +328,10 @@ long rml_enkf_get_options( void * arg , long flag ) {
  bool rml_enkf_has_var( const void * arg, const char * var_name) {
    bool ret = false; 
    
-   if ((strcmp(var_name , "ITER") == 0) || 
-       (strcmp(var_name , "NUM_ITER") == 0) || 
-       (strcmp(var_name , "ENKF_TRUNCATION_KEY_") == 0)) {
+   if ((strcmp(var_name , "ITER") == 0)                 || 
+       (strcmp(var_name , "NUM_ITER") == 0)             || 
+       (strcmp(var_name , "ENKF_TRUNCATION_KEY_") == 0) ||
+       (strcmp(var_name , "LAMBDA0_KEY__") == 0)) {
      ret = true; 
    }
    return ret; 
@@ -349,8 +353,10 @@ long rml_enkf_get_options( void * arg , long flag ) {
   double rml_enkf_get_double( const void * arg, const char * var_name) {
    const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
    {
-     if (strcmp(var_name , "ENKF_TRUNCATION_KEY_") == 0)
+     if ((strcmp(var_name , "ENKF_TRUNCATION_KEY_") == 0) ||
+         (strcmp(var_name , "LAMBDA0_") == 0)) {
        return module_data->truncation;
+     }
      else
        return -1.0;
    }
