@@ -21,9 +21,11 @@ from ert.enkf import EclConfig
 from ert_tests import ExtendedTestCase
 from ert.util import UIReturn
 
-EGRID_file  = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
-SMSPEC_file = "Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
-DATA_file   = "Statoil/ECLIPSE/Gurbat/ECLIPSE.DATA"
+EGRID_file    = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
+SMSPEC_file   = "Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
+DATA_file     = "Statoil/ECLIPSE/Gurbat/ECLIPSE.DATA"
+SCHEDULE_file = "Statoil/ECLIPSE/Gurbat/target.SCH"
+
 
 class EclConfigTest(ExtendedTestCase):
 
@@ -70,3 +72,22 @@ class EclConfigTest(ExtendedTestCase):
         self.assertTrue( ui )
         ec.setDataFile( dfile )
         self.assertEqual( dfile , ec.getDataFile() )
+
+
+    def test_schedule_file(self):
+        ec = EclConfig()
+        ui = ec.validateScheduleFile( "DoesNotExist" )
+        self.assertFalse( ui )
+
+        dfile = self.createTestPath( DATA_file )
+        sfile = self.createTestPath( SCHEDULE_file )
+        
+        ui = ec.validateScheduleFile( sfile )
+        self.assertFalse( ui )
+
+        ec.setDataFile( dfile )
+        ui = ec.validateScheduleFile( sfile )
+        self.assertTrue( ui )
+
+        ec.setScheduleFile( sfile )
+        self.assertEqual( sfile , ec.getScheduleFile() )
