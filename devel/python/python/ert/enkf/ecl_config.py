@@ -25,8 +25,15 @@ class EclConfig(BaseCClass):
         c_pointer = EclConfig.cNamespace().alloc()
         super(EclConfig, self).__init__(c_pointer)
         
-    def get_eclbase(self):
+    def getEclBase(self):
         return EclConfig.cNamespace().get_eclbase(self)
+
+    def validateEclBase(self , eclbase_fmt):
+        return EclConfig.cNamespace().validate_eclbase(self , eclbase_fmt)
+
+    # Warning: You should probably use the EnkFMain.setEclBase() method to update the Eclipse basename format
+    def setEclBase(self , eclbase):
+        EclConfig.cNamespace().set_eclbase( self , eclbase )
 
     def get_data_file(self):
         return EclConfig.cNamespace().get_data_file(self)
@@ -107,7 +114,11 @@ cwrapper.registerType("ecl_config_ref", EclConfig.createCReference)
 
 EclConfig.cNamespace().alloc = cwrapper.prototype("c_void_p ecl_config_alloc( )")
 EclConfig.cNamespace().free = cwrapper.prototype("void ecl_config_free( ecl_config )")
+
 EclConfig.cNamespace().get_eclbase = cwrapper.prototype("char* ecl_config_get_eclbase( ecl_config )")
+EclConfig.cNamespace().validate_eclbase = cwrapper.prototype("ui_return_obj ecl_config_validate_eclbase( ecl_config , char*)")
+EclConfig.cNamespace().set_eclbase = cwrapper.prototype("void ecl_config_set_eclbase( ecl_config , char*)")
+
 EclConfig.cNamespace().get_data_file = cwrapper.prototype("char* ecl_config_get_data_file(ecl_config)")
 EclConfig.cNamespace().set_data_file = cwrapper.prototype("ui_return_obj ecl_config_set_data_file(ecl_config , char*)")
 EclConfig.cNamespace().get_gridfile = cwrapper.prototype("char* ecl_config_get_gridfile(ecl_config)")

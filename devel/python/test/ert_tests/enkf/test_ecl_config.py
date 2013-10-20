@@ -43,5 +43,18 @@ class EclConfigTest(ExtendedTestCase):
         self.assertFalse( ui )
 
 
+
+    def test_eclbase(self):
+        ec = EclConfig()
+        ui = ec.validateEclBase( "MixedCase%d" )
+        self.assertFalse( ui )
+
+        ui = ec.validateEclBase( "CASE%s" )
+        self.assertFalse( ui )
+
+        ui = ec.validateEclBase( "CASE%d" )
+        self.assertTrue( ui )
+        ec.setEclBase("CASE%d")
+        self.assertEqual( "CASE%d" , ec.getEclBase())
         
     
