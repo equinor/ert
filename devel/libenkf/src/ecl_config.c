@@ -477,6 +477,25 @@ void ecl_config_set_init_section(ecl_config_type * ecl_config, const char * inpu
         "** Warning: <INIT> tag was not found in datafile - can not utilize INIT_SECTION keyword - ignored.\n");
 }
 
+
+/**
+ This just returns the string which has been set with the
+ ecl_config_set_init_section() function, whereas the
+ ecl_config_get_equil_init_file() function will return the absolute
+ path to the init_section (if it exists).
+ */
+
+const char * ecl_config_get_init_section(const ecl_config_type * ecl_config)
+{
+  return ecl_config->input_init_section;
+}
+
+const char * ecl_config_get_equil_init_file(const ecl_config_type * ecl_config)
+{
+  return ecl_config->init_section;
+}
+
+
 static void ecl_config_init_static_kw(ecl_config_type * ecl_config)
 {
   int i;
@@ -799,22 +818,6 @@ sched_file_type * ecl_config_get_sched_file(const ecl_config_type * ecl_config)
   return ecl_config->sched_file;
 }
 
-/**
- This just returns the string which has been set with the
- ecl_config_set_init_section() function, whereas the
- ecl_config_get_equil_init_file() function will return the absolute
- path to the init_section (if it exists).
- */
-
-const char * ecl_config_get_init_section(const ecl_config_type * ecl_config)
-{
-  return ecl_config->input_init_section;
-}
-
-const char * ecl_config_get_equil_init_file(const ecl_config_type * ecl_config)
-{
-  return ecl_config->init_section;
-}
 
 const char * ecl_config_get_schedule_target(const ecl_config_type * ecl_config)
 {

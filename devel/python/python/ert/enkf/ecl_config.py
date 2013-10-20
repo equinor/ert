@@ -77,11 +77,16 @@ class EclConfig(BaseCClass):
 
     #-----------------------------------------------------------------
 
-    def get_init_section(self):
+    def getInitSection(self):
         return EclConfig.cNamespace().get_init_section(self)
 
-    def set_init_section(self, init_section):
+    def setInitSection(self, init_section):
         EclConfig.cNamespace().set_init_section(self, init_section)
+
+    def validateInitSection(self, init_section):
+        return EclConfig.cNamespace().validate_init_section(self, init_section)
+
+    #-----------------------------------------------------------------
 
     def get_refcase_name(self):
         return EclConfig.cNamespace().get_refcase_name(self)
@@ -140,6 +145,8 @@ EclConfig.cNamespace().validate_schedule_file = cwrapper.prototype("ui_return_ob
 
 EclConfig.cNamespace().get_init_section = cwrapper.prototype("char* ecl_config_get_init_section(ecl_config)")
 EclConfig.cNamespace().set_init_section = cwrapper.prototype("void ecl_config_set_init_section(ecl_config, char*)")
+EclConfig.cNamespace().validate_init_section = cwrapper.prototype("ui_return_obj ecl_config_validate_init_section(ecl_config, char*)")
+
 EclConfig.cNamespace().get_refcase_name = cwrapper.prototype("char* ecl_config_get_refcase_name(ecl_config)")
 EclConfig.cNamespace().load_refcase = cwrapper.prototype("void ecl_config_load_refcase(ecl_config, char*)")
 EclConfig.cNamespace().get_static_kw_list = cwrapper.prototype("stringlist_ref ecl_config_get_static_kw_list(ecl_config)")
