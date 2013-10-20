@@ -23,6 +23,7 @@ from ert.util import UIReturn
 
 EGRID_file  = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
 SMSPEC_file = "Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
+DATA_file   = "Statoil/ECLIPSE/Gurbat/ECLIPSE.DATA"
 
 class EclConfigTest(ExtendedTestCase):
 
@@ -58,3 +59,14 @@ class EclConfigTest(ExtendedTestCase):
         self.assertEqual( "CASE%d" , ec.getEclBase())
         
     
+
+    def test_datafile(self):
+        ec = EclConfig()
+        ui = ec.validateDataFile( "DoesNotExist" )
+        self.assertFalse( ui )
+
+        dfile = self.createTestPath( DATA_file )
+        ui = ec.validateDataFile( dfile )
+        self.assertTrue( ui )
+        ec.setDataFile( dfile )
+        self.assertEqual( dfile , ec.getDataFile() )

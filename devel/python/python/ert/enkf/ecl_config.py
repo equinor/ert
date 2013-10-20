@@ -25,6 +25,8 @@ class EclConfig(BaseCClass):
         c_pointer = EclConfig.cNamespace().alloc()
         super(EclConfig, self).__init__(c_pointer)
         
+    #-----------------------------------------------------------------
+
     def getEclBase(self):
         return EclConfig.cNamespace().get_eclbase(self)
 
@@ -35,12 +37,17 @@ class EclConfig(BaseCClass):
     def setEclBase(self , eclbase):
         EclConfig.cNamespace().set_eclbase( self , eclbase )
 
-    def get_data_file(self):
+    #-----------------------------------------------------------------
+
+    def getDataFile(self):
         return EclConfig.cNamespace().get_data_file(self)
 
-    def set_data_file(self , datafile):
+    def setDataFile(self , datafile):
+        EclConfig.cNamespace().set_data_file(self , datafile)
+
+    def validateDataFile( self , datafile ):
         """ @rtype: UIReturn """
-        return EclConfig.cNamespace().set_data_file(self , datafile)
+        return EclConfig.cNamespace().validate_data_file( self , datafile )
 
     #-----------------------------------------------------------------
 
@@ -120,7 +127,9 @@ EclConfig.cNamespace().validate_eclbase = cwrapper.prototype("ui_return_obj ecl_
 EclConfig.cNamespace().set_eclbase = cwrapper.prototype("void ecl_config_set_eclbase( ecl_config , char*)")
 
 EclConfig.cNamespace().get_data_file = cwrapper.prototype("char* ecl_config_get_data_file(ecl_config)")
-EclConfig.cNamespace().set_data_file = cwrapper.prototype("ui_return_obj ecl_config_set_data_file(ecl_config , char*)")
+EclConfig.cNamespace().set_data_file = cwrapper.prototype("void ecl_config_set_data_file(ecl_config , char*)")
+EclConfig.cNamespace().validate_data_file = cwrapper.prototype("ui_return_obj ecl_config_validate_data_file(ecl_config , char*)")
+
 EclConfig.cNamespace().get_gridfile = cwrapper.prototype("char* ecl_config_get_gridfile(ecl_config)")
 EclConfig.cNamespace().set_gridfile = cwrapper.prototype("void ecl_config_set_grid(ecl_config, char*)")
 EclConfig.cNamespace().validate_gridfile = cwrapper.prototype("ui_return_obj ecl_config_validate_grid(ecl_config, char*)")
