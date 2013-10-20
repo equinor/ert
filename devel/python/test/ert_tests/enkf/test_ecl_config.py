@@ -20,6 +20,7 @@ import os.path
 from ert.enkf import EclConfig
 from ert_tests import ExtendedTestCase
 from ert.util import UIReturn
+from ert.ecl  import EclSum
 
 EGRID_file    = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
 SMSPEC_file   = "Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
@@ -117,3 +118,19 @@ class EclConfigTest(ExtendedTestCase):
         self.assertTrue( ifile , ec.getInitSection() )
 
 
+    def test_refcase( self ):
+        ec = EclConfig()
+        dfile = self.createTestPath( DATA_file )
+
+        ui = ec.validateRefcase( "Does/not/exist" )
+        self.assertFalse( ui )
+
+        ui = ec.validateRefcase( dfile )
+        self.assertTrue( ui )
+        ec.loadRefcase( dfile )
+        refcase = ec.getRefcase()
+        self.assertTrue( isinstance( refcase , EclSum ))
+        refcaseName = ec.getRefcaseName() + ".DATA"
+        self.assertEqual( dfile , refcaseName )
+        
+    

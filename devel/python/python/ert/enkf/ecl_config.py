@@ -94,15 +94,20 @@ class EclConfig(BaseCClass):
 
     #-----------------------------------------------------------------
 
-    def get_refcase_name(self):
+    def getRefcaseName(self):
         return EclConfig.cNamespace().get_refcase_name(self)
 
-    def load_refcase(self, refcase):
+    def loadRefcase(self, refcase):
         EclConfig.cNamespace().load_refcase(self, refcase)
 
-    def get_refcase(self):
+    def getRefcase(self):
         """ @rtype: EclSum """
-        return EclConfig.cNamespace().get_refcase(self).setParent(self)
+        refcase = EclConfig.cNamespace().get_refcase(self)
+        refcase.setParent(self)
+        return refcase
+
+    def validateRefcase(self , refcase):
+        return EclConfig.cNamespace().validate_refcase( self , refcase )
         
     #-----------------------------------------------------------------
 
@@ -149,8 +154,9 @@ EclConfig.cNamespace().set_init_section = cwrapper.prototype("void ecl_config_se
 EclConfig.cNamespace().validate_init_section = cwrapper.prototype("ui_return_obj ecl_config_validate_init_section(ecl_config, char*)")
 
 EclConfig.cNamespace().get_refcase_name = cwrapper.prototype("char* ecl_config_get_refcase_name(ecl_config)")
-EclConfig.cNamespace().load_refcase = cwrapper.prototype("void ecl_config_load_refcase(ecl_config, char*)")
 EclConfig.cNamespace().get_refcase = cwrapper.prototype("ecl_sum_ref ecl_config_get_refcase(ecl_config)")
+EclConfig.cNamespace().load_refcase = cwrapper.prototype("void ecl_config_load_refcase(ecl_config, char*)")
+EclConfig.cNamespace().validate_refcase = cwrapper.prototype("ui_return_obj ecl_config_validate_refcase(ecl_config, char*)")
 
 EclConfig.cNamespace().get_static_kw_list = cwrapper.prototype("stringlist_ref ecl_config_get_static_kw_list(ecl_config)")
 EclConfig.cNamespace().clear_static_kw = cwrapper.prototype("void ecl_config_clear_static_kw(ecl_config)")
