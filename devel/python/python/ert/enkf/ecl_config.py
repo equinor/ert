@@ -25,6 +25,9 @@ class EclConfig(BaseCClass):
         c_pointer = EclConfig.cNamespace().alloc()
         super(EclConfig, self).__init__(c_pointer)
         
+    def free(self):
+        EclConfig.cNamespace().free(self)
+
     #-----------------------------------------------------------------
 
     def getEclBase(self):
@@ -63,7 +66,7 @@ class EclConfig(BaseCClass):
         
     def get_grid(self):
         return EclConfig.cNamespace().get_grid(self)
-        
+
     #-----------------------------------------------------------------
 
     def getScheduleFile(self):
@@ -74,6 +77,9 @@ class EclConfig(BaseCClass):
 
     def validateScheduleFile(self , schedule_file):
         return EclConfig.cNamespace().validate_schedule_file( self , schedule_file )
+
+    def get_sched_file(self):
+        return EclConfig.cNamespace().get_sched_file(self)
 
     #-----------------------------------------------------------------
 
@@ -94,28 +100,21 @@ class EclConfig(BaseCClass):
     def load_refcase(self, refcase):
         EclConfig.cNamespace().load_refcase(self, refcase)
 
-    def get_static_kw_list(self):
-        """ @rtype: StringList """
-        return EclConfig.cNamespace().get_static_kw_list(self).setParent(self)
-
     def get_refcase(self):
         """ @rtype: EclSum """
         return EclConfig.cNamespace().get_refcase(self).setParent(self)
+        
+    #-----------------------------------------------------------------
+
+    def get_static_kw_list(self):
+        """ @rtype: StringList """
+        return EclConfig.cNamespace().get_static_kw_list(self).setParent(self)
 
     def clear_static_kw(self):
         EclConfig.cNamespace().clear_static_kw(self)
 
     def add_static_kw(self, kw):
         EclConfig.cNamespace().add_static_kw(self, kw)
-
-    def get_grid(self):
-        return EclConfig.cNamespace().get_grid(self)
-
-    def get_sched_file(self):
-        return EclConfig.cNamespace().get_sched_file(self)
-
-    def free(self):
-        EclConfig.cNamespace().free(self)
 
 
 cwrapper = CWrapper(ENKF_LIB)
@@ -138,10 +137,12 @@ EclConfig.cNamespace().validate_data_file = cwrapper.prototype("ui_return_obj ec
 EclConfig.cNamespace().get_gridfile = cwrapper.prototype("char* ecl_config_get_gridfile(ecl_config)")
 EclConfig.cNamespace().set_gridfile = cwrapper.prototype("void ecl_config_set_grid(ecl_config, char*)")
 EclConfig.cNamespace().validate_gridfile = cwrapper.prototype("ui_return_obj ecl_config_validate_grid(ecl_config, char*)")
+EclConfig.cNamespace().get_grid = cwrapper.prototype("c_void_p ecl_config_get_grid(ecl_config)")  #todo: fix return type!!!
 
 EclConfig.cNamespace().get_schedule_file = cwrapper.prototype("char* ecl_config_get_schedule_file(ecl_config)")
 EclConfig.cNamespace().set_schedule_file = cwrapper.prototype("void ecl_config_set_schedule_file(ecl_config, char*)")
 EclConfig.cNamespace().validate_schedule_file = cwrapper.prototype("ui_return_obj ecl_config_validate_schedule_file(ecl_config, char*)")
+EclConfig.cNamespace().get_sched_file = cwrapper.prototype("c_void_p ecl_config_get_sched_file(ecl_config)") #todo: fix return type!!!
 
 EclConfig.cNamespace().get_init_section = cwrapper.prototype("char* ecl_config_get_init_section(ecl_config)")
 EclConfig.cNamespace().set_init_section = cwrapper.prototype("void ecl_config_set_init_section(ecl_config, char*)")
@@ -149,10 +150,9 @@ EclConfig.cNamespace().validate_init_section = cwrapper.prototype("ui_return_obj
 
 EclConfig.cNamespace().get_refcase_name = cwrapper.prototype("char* ecl_config_get_refcase_name(ecl_config)")
 EclConfig.cNamespace().load_refcase = cwrapper.prototype("void ecl_config_load_refcase(ecl_config, char*)")
+EclConfig.cNamespace().get_refcase = cwrapper.prototype("ecl_sum_ref ecl_config_get_refcase(ecl_config)")
+
 EclConfig.cNamespace().get_static_kw_list = cwrapper.prototype("stringlist_ref ecl_config_get_static_kw_list(ecl_config)")
 EclConfig.cNamespace().clear_static_kw = cwrapper.prototype("void ecl_config_clear_static_kw(ecl_config)")
 EclConfig.cNamespace().add_static_kw = cwrapper.prototype("void ecl_config_add_static_kw(ecl_config, char*)")
 
-EclConfig.cNamespace().get_grid = cwrapper.prototype("c_void_p ecl_config_get_grid(ecl_config)")  #todo: fix return type!!!
-EclConfig.cNamespace().get_refcase = cwrapper.prototype("ecl_sum_ref ecl_config_get_refcase(ecl_config)")
-EclConfig.cNamespace().get_sched_file = cwrapper.prototype("c_void_p ecl_config_get_sched_file(ecl_config)") #todo: fix return type!!!

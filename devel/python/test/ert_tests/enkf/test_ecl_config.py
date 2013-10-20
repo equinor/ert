@@ -115,3 +115,5 @@ class EclConfigTest(ExtendedTestCase):
         self.assertTrue( ui )
         ec.setInitSection( ifile )
         self.assertTrue( ifile , ec.getInitSection() )
+
+
