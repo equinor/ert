@@ -34,6 +34,11 @@ set(TEST_SOURCES
     ert_tests/enkf/test_enkf_library.py
     ert_tests/enkf/test_analysis_config.py
 
+
+    ert_tests/analysis/__init__.py
+    ert_tests/analysis/test_options_enum.py
+    ert_tests/analysis/test_analysis_module.py
+
     ert_tests/job_queue/__init__.py
     ert_tests/job_queue/test_job_queue.py
 
@@ -274,6 +279,9 @@ add_test( NAME python.tests.ert.analysis.enums
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.analysis.test_options_enum.AnalysisOptionsEnumTest)
 
+add_test( NAME python.ert.analysis.analysis_module
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.analysis.test_analysis_module.AnalysisModuleTest)
 
 
 
