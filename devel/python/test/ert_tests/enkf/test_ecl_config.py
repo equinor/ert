@@ -24,6 +24,8 @@ from ert.util import UIReturn
 EGRID_file    = "Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID"
 SMSPEC_file   = "Statoil/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
 DATA_file     = "Statoil/ECLIPSE/Gurbat/ECLIPSE.DATA"
+INIT_file     = "Statoil/ECLIPSE/Gurbat/EQUIL.INC"
+DATA_INIT_file= "Statoil/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
 SCHEDULE_file = "Statoil/ECLIPSE/Gurbat/target.SCH"
 
 
@@ -81,7 +83,9 @@ class EclConfigTest(ExtendedTestCase):
 
         dfile = self.createTestPath( DATA_file )
         sfile = self.createTestPath( SCHEDULE_file )
-        
+
+        # Setting the schedule file should fail before the datafile
+        # (i.e. startdate) has been set.
         ui = ec.validateScheduleFile( sfile )
         self.assertFalse( ui )
 
@@ -91,3 +95,23 @@ class EclConfigTest(ExtendedTestCase):
 
         ec.setScheduleFile( sfile )
         self.assertEqual( sfile , ec.getScheduleFile() )
+
+
+    def test_init_section(self):
+        ec = EclConfig()
+        dfile = self.createTestPath( DATA_file )
+        difile = self.createTestPath( DATA_INIT_file )
+        ifile = self.createTestPath( INIT_file )
+        
+        ui = ec.validateInitSection( ifile )
+        self.assertFalse( ui )
+        
+        ec.setDataFile( dfile )
+        ui = ec.validateInitSection( ifile )
+        self.assertFalse( ui )
+
+        ec.setDataFile( difile )
+        ui = ec.validateInitSection( ifile )
+        self.assertTrue( ui )
+        ec.setInitSection( ifile )
+        self.assertTrue( ifile , ec.getInitSection() )
