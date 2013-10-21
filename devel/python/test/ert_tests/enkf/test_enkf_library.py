@@ -35,7 +35,7 @@ class EnKFLibraryTest(ExtendedTestCase):
             self.assertIsInstance(main.analysis_config(), AnalysisConfig)
             self.assertIsInstance(main.ecl_config(), EclConfig)
 
-            with self.assertRaises(AttributeError):
+            with self.assertRaises(ValueError): # Null pointer!
                 self.assertIsInstance(main.ecl_config().get_refcase(), EclSum)
 
             file_system = main.getFileSystem()
