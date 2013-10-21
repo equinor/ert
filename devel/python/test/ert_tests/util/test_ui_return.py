@@ -1,5 +1,5 @@
 from ert.util import UIReturn
-from ert.util import UIReturnStatusEnum
+from ert.util.enums import UIReturnStatusEnum
 from ert_tests import ExtendedTestCase
 
 class UIReturnTest(ExtendedTestCase):
@@ -28,7 +28,11 @@ class UIReturnTest(ExtendedTestCase):
         ui_return = UIReturn(UIReturnStatusEnum.UI_RETURN_OK)
         with self.assertRaises(ValueError):
             ui_return.add_error("Error1")
+
+        with self.assertRaises(ValueError):
             ui_return.last_error()
+
+        with self.assertRaises(ValueError):
             ui_return.first_error()
             
             
