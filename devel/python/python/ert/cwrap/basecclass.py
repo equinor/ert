@@ -6,8 +6,11 @@ class BaseCClass(object):
     namespaces = {}
 
     def __init__(self, c_pointer, parent=None, is_reference=False):
-        if not c_pointer > 0:
-            raise ValueError("Must have a valid pointer value! Expected %d > 0" % c_pointer)
+        if c_pointer == 0 or c_pointer is None:
+            raise ValueError("Must have a valid (not null) pointer value!")
+
+        if c_pointer < 0:
+            raise ValueError("The pointer value is negative! This may be correct, but usually is not!")
 
         self.__c_pointer = c_pointer
         self.__parent = parent
