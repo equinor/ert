@@ -53,6 +53,7 @@ set(TEST_SOURCES
     ert_tests/util/test_stat.py
     ert_tests/util/test_string_list.py
     ert_tests/util/test_vectors.py
+    ert_tests/util/test_ui_return.py
 
     ert_tests/run/__init__.py
     ert_tests/run/test_run.py
@@ -100,6 +101,10 @@ endif()
 add_test( NAME python.tests.ert.util.stringlist
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_string_list.StringListTest )
+          
+add_test( NAME python.ert.util.ui_return
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_ui_return.UIReturnTest )
 
 add_test( NAME python.tests.ert.util.tvector
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
@@ -144,6 +149,10 @@ add_test( NAME python.tests.ert.enkf_library
 add_test( NAME python.tests.ert.enkf_analysis_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_analysis_config.AnalysisConfigTest)
+
+add_test( NAME python.tests.ert.enkf_ecl_config
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_ecl_config.EclConfigTest)
 
 
 #GUI
