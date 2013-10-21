@@ -17,6 +17,7 @@ from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf import AnalysisIterConfig
 
+
 class AnalysisConfig(BaseCClass):
     def __init__(self):
         c_ptr = AnalysisConfig.cNamespace().alloc()
@@ -84,6 +85,9 @@ class AnalysisConfig(BaseCClass):
     def activeModuleName(self):
         return AnalysisConfig.cNamespace().get_active_module_name(self)
 
+    def getModuleList(self):
+        return AnalysisConfig.cNamespace().get_module_list(self)
+
     ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
@@ -110,4 +114,6 @@ AnalysisConfig.cNamespace().get_max_runtime        = cwrapper.prototype("int ana
 AnalysisConfig.cNamespace().set_max_runtime        = cwrapper.prototype("void analysis_config_set_max_runtime(analysis_config, int)")
 AnalysisConfig.cNamespace().get_stop_long_running  = cwrapper.prototype("bool analysis_config_get_stop_long_running(analysis_config)")
 AnalysisConfig.cNamespace().set_stop_long_running  = cwrapper.prototype("void analysis_config_set_stop_long_running(analysis_config, bool)")
-AnalysisConfig.cNamespace().get_active_module_name  = cwrapper.prototype("char* analysis_config_get_active_module_name(analysis_config)")
+AnalysisConfig.cNamespace().get_active_module_name = cwrapper.prototype("char* analysis_config_get_active_module_name(analysis_config)")
+AnalysisConfig.cNamespace().get_module_list        = cwrapper.prototype("stringlist_obj analysis_config_alloc_module_names(analysis_config)")
+                                            
