@@ -120,19 +120,12 @@ class CWrapper:
             if hasattr(return_type, "__call__"):
                 #The return type is a callable check if it is bound and the instance is a BaseCClass
                 if hasattr(return_type, "__self__") and issubclass(return_type.__self__, BaseCClass):
-                    print(return_type.__self__, return_type)
                     func.restype = ctypes.c_void_p
 
-                    def returnFunc(result, func, arguments):
-                        print("Return func: %s " % result)
+                    def returnFunction(result, func, arguments):
                         return return_type(result)
 
-                    # func.errcheck = lambda result, func, arguments : return_func
-                    func.errcheck = returnFunc
-
-                if hasattr(return_type, "__self__") and not issubclass(return_type.__self__, BaseCClass):
-                    print(return_type.__self__)
-
+                    func.errcheck = returnFunction
 
 
             if len(arguments) == 1 and arguments[0].strip() == "":
