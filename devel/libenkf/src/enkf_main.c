@@ -206,10 +206,14 @@ void enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clea
 }
 
 
-void enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt) {
-  ecl_config_set_eclbase( enkf_main->ecl_config , eclbase_fmt);
-  for (int iens = 0; iens < enkf_main->ens_size; iens++) 
-    enkf_state_update_eclbase( enkf_main->ensemble[iens] );
+ui_return_type * enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt) {
+  ui_return_type * ui_return = ecl_config_validate_eclbase( enkf_main->ecl_config , eclbase_fmt);
+  if (ui_return_get_status(ui_return) == UI_RETURN_OK) {
+    ecl_config_set_eclbase( enkf_main->ecl_config , eclbase_fmt );
+    for (int iens = 0; iens < enkf_main->ens_size; iens++)
+      enkf_state_update_eclbase(enkf_main->ensemble[iens]);
+  }
+  return ui_return;
 }
 
 void enkf_main_init_jobname( enkf_main_type * enkf_main) {
@@ -224,8 +228,14 @@ void enkf_main_set_jobname( enkf_main_type * enkf_main , const char * jobname_fm
 }
 
 
+ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path) {
+  return ecl_config_validate_refcase( enkf_main->ecl_config , refcase_path );
+}
+
+
 bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
   bool set_refcase = ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
+  
   model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
   ensemble_config_set_refcase( enkf_main->ensemble_config , ecl_config_get_refcase( enkf_main->ecl_config ));
   
@@ -378,9 +388,13 @@ static void enkf_main_update_num_cpu( enkf_main_type * enkf_main ) {
 }
 
 
-void enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file ) {
-  ecl_config_set_data_file( enkf_main->ecl_config , data_file );
-  enkf_main_update_num_cpu( enkf_main );
+ui_return_type * enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file ) {
+  ui_return_type * ui_return = ecl_config_validate_data_file( enkf_main->ecl_config , data_file );
+  if (ui_return_get_status(ui_return) == UI_RETURN_OK) {
+    ecl_config_set_data_file( enkf_main->ecl_config , data_file );
+    enkf_main_update_num_cpu( enkf_main );
+  }
+  return ui_return;
 }
 
 
@@ -2480,7 +2494,7 @@ enkf_main_type * enkf_main_alloc_empty( ) {
   enkf_main->rng_config         = rng_config_alloc( );
   enkf_main->site_config        = site_config_alloc_empty();
   enkf_main->ensemble_config    = ensemble_config_alloc_empty();
-  enkf_main->ecl_config         = ecl_config_alloc_empty();
+  enkf_main->ecl_config         = ecl_config_alloc();
   enkf_main->plot_config        = plot_config_alloc_default();                       
   enkf_main->ranking_table      = ranking_table_alloc( 0 );
   enkf_main->obs                = enkf_obs_alloc( );
