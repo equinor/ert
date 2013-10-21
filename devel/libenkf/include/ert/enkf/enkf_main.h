@@ -33,6 +33,7 @@ extern "C" {
 #include <ert/util/int_vector.h>
 #include <ert/util/matrix.h>
 #include <ert/util/path_fmt.h>
+#include <ert/util/ui_return.h>
 
 #include <ert/sched/sched_file.h>
 
@@ -71,8 +72,8 @@ extern "C" {
   const char                  * enkf_main_get_current_fs( const enkf_main_type * enkf_main );
   void                          enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * case_path );
   bool                          enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case);
-  void                          enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
-  void                          enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
+  ui_return_type *              enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
+  ui_return_type *              enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
   void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );
   const char                  * enkf_main_get_user_config_file( const enkf_main_type * enkf_main );
   void                          enkf_main_set_rft_config_file( enkf_main_type * enkf_main , const char * rft_config_file );
@@ -80,7 +81,8 @@ extern "C" {
   bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
   void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
   bool                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
-  
+  ui_return_type              * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
+
   ert_report_list_type        * enkf_main_get_report_list( const enkf_main_type * enkf_main );
   ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
   void                          enkf_main_set_log_file( enkf_main_type * enkf_main , const char * log_file );
@@ -119,7 +121,7 @@ extern "C" {
                                                   int              init_step_parameters ,
                                                   int              start_report         ,
                                                   state_enum       start_state          ,
-						  bool             initialize);
+                                                  bool             initialize);
 
   
   void                          enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
