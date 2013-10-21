@@ -27,9 +27,6 @@ class EnKFLibraryTest(ExtendedTestCase):
 
 
     def test_ecl_config_creation(self):
-        with self.assertRaises(NotImplementedError):
-            ecl_config = EclConfig()
-
         with TestAreaContext("enkf_library_test") as work_area:
             work_area.copy_directory(self.case_directory)
 
@@ -39,7 +36,7 @@ class EnKFLibraryTest(ExtendedTestCase):
             self.assertIsInstance(main.ecl_config(), EclConfig)
 
             with self.assertRaises(ValueError): # Null pointer!
-                self.assertIsInstance(main.ecl_config().get_refcase(), EclSum)
+                self.assertIsInstance(main.ecl_config().getRefcase(), EclSum)
 
             file_system = main.getFileSystem()
             self.assertEqual(file_system.getCaseName(), "default")
