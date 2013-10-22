@@ -58,7 +58,7 @@ class EclConfig(BaseCClass):
         """ @rtype: StringList """
         return EclConfig.cNamespace().get_static_kw_list(self).setParent(self)
 
-    def get_refcase(self):
+    def getRefcase(self):
         """ @rtype: EclSum """
         return EclConfig.cNamespace().get_refcase(self).setParent(self)
 

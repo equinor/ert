@@ -4,7 +4,7 @@ from PyQt4.QtCore import QUrl, Qt
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
 from PyQt4.QtNetwork import QNetworkProxy
 from PyQt4.QtWebKit import QWebView, QWebPage
-from ert_gui.models.connectors.plot.observations import ObservationsModel
+from ert_gui.models.connectors.plot.ensemble_summary_plot import EnsembleSummaryPlot
 
 
 class PlotWebPage(QWebPage):
@@ -46,7 +46,9 @@ class PlotPanel(QWidget):
 
         self.setLayout(layout)
 
-        # print(json.dumps(ObservationsModel().getAllObservations()))
+
+
+        # print(json.dumps(EnsembleSummaryPlot().getPlotData()))
 
 
 

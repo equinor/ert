@@ -65,38 +65,18 @@
 <body>
 <script src="libs/d3.v3.js"></script>
 <script src="scripts/link_list.js"></script>
+<script src="scripts/std_plot.js"></script>
 <script src="scripts/plot.js"></script>
+<script src="scripts/plot_line.js"></script>
+<script src="scripts/plot_area.js"></script>
 <script>
     var date_format = d3.time.format("%Y-%m-%d %H:%M:%S");
 
-    /*function createStatistics(data) {
-        var statistics = {max: Number.MIN_VALUE, min:Number.MAX_VALUE, std: 0.0};
-
-        for (var i = 0; i < data.length; i++) {
-            var sample = data[i];
-
-            var value = sample["value"];
-            statistics["max"] = Math.max(statistics["max"], value);
-            statistics["min"] = Math.min(statistics["min"], value);
-
-            if(sample.hasOwnProperty("standard_deviation")) {
-                statistics["std"] = Math.max(statistics["std"], sample["standard_deviation"]);
-            }
-        }
-
-//        console.log(statistics);
-
-        return statistics;
-    } */
-
-    /*function dateify(iso_date) {
-        return date_format.parse(iso_date);
-    }*/
 
     var plot_data = null;
 
     var data_type_list_element = d3.select("body").append("div").attr("id", "data_type_list").attr("class", "data_type_list");
-    var data_type_list = new DataTypeList(data_type_list_element, [], 150, 200);
+    var data_type_list = new DataTypeList(data_type_list_element, [], 150, 512);
 
 
     var plot_element = d3.select("body").append("div").attr("id", "plot");
@@ -106,47 +86,27 @@
         plot.setData(plot_data[data_type]);
     });
 
-    d3.json("observations.json", function(data) {
+    d3.json("plot_data.json", function(data) {
 
         plot_data = data;
-        var keys = data.sample_lists_keys;
-        data_type_list.updateList(keys);
-        plot.setData(data[keys[0]]);
+
+        var list_items = [];
+        for(var i = 0; i < data.keys.length; i++) {
+            var key = data.keys[i];
+
+            var item = {};
+            item["name"] = key;
+            item["highlight"] = data.observation_keys.indexOf(key) >= 0;
+
+            list_items.push(item);
+        }
+
+        data_type_list.updateList(list_items);
+        plot.setData(data[data.keys[0]]);
 
     });
 
 
-    /*d3.json("observations.json", function(data) {
-        var keys = [];
-        var all_plot_data = {};
-        for (var key in data) {
-            if(data.hasOwnProperty(key)) {
-                keys.push(key);
-                var single_plot_data = {};
-                single_plot_data["data"] = data[key]["data"];
-                single_plot_data["name"] = key;
-                single_plot_data["first_report_step"] = dateify(data[key]["first_report_step"]);
-                single_plot_data["last_report_step"] = dateify(data[key]["last_report_step"]);
-                single_plot_data["statistics"] = createStatistics(data[key]["data"]);
-
-                all_plot_data[key] = single_plot_data;
-
-                for (var i = 0; i < single_plot_data["data"].length; i++ ) {
-                    single_plot_data["data"][i].report_step_date = dateify(single_plot_data["data"][i].report_step);
-
-                }
-
-            }
-        }
-        keys.sort();
-        all_plot_data["keys"] = keys;
-        all_plot_data["first_report"] = keys;
-
-        plot_data = all_plot_data;
-        data_type_list.updateList(keys);
-        plot.setData(all_plot_data[keys[0]]);
-
-    });*/
 
 
 </script>

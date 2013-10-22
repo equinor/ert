@@ -57,11 +57,14 @@ DataTypeList.prototype.fillTable = function(data) {
         .attr("class", "list-item")
         .on("click", function(d, i) {
             if (self.click_function != null) {
-                self.click_function(d);
+                self.click_function(d["name"]);
             }
         })
         .text(function (d) {
-            return d;
+            if(d["highlight"]) {
+                return "* " + d["name"];
+            }
+            return d["name"];
         });
 
 };
