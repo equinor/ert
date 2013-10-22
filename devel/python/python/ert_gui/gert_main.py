@@ -132,7 +132,7 @@ from ert_gui.widgets.util import resourceImage
 
 
 def main():
-    # QApplication.setGraphicsSystem("raster")
+    QApplication.setGraphicsSystem("raster")
     app = QApplication(sys.argv) #Early so that QT is initialized before other imports
 
     splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
@@ -187,7 +187,7 @@ def main():
 
         simulation_panel = SimulationPanel()
         window.addTab(simulation_panel.getName(), simulation_panel)
-        configuration_panel = ConfigurationPanel()
+        configuration_panel = ConfigurationPanel(os.path.basename(enkf_config))
         window.addTab(configuration_panel.getName(), configuration_panel)
         plot_panel = PlotPanel()
         window.addTab(plot_panel.getName(), plot_panel)
