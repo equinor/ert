@@ -303,6 +303,8 @@ set_property( TEST python.tests.ert.import                PROPERTY LABELS Python
 set_property( TEST python.tests.ert.util.stringlist       PROPERTY LABELS Python )
 set_property( TEST python.tests.ert.util.tvector          PROPERTY LABELS Python )
 
+set_property( TEST python.tests.ert.enkf                  PROPERTY LABELS Python:StatoilData )
+
 if (ERT_BUILD_GUI)
    set_property( TEST python.tests.ert_gui.import         PROPERTY ENVIRONMENT "ERT_SHARE_PATH=${PROJECT_SOURCE_PATH}/share")
    set_property( TEST python.tests.ert_gui.import         PROPERTY LABELS Python)
