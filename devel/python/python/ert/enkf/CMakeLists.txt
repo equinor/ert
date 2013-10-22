@@ -22,4 +22,5 @@ add_python_package("python.ert.enkf"  ${PYTHON_INSTALL_PREFIX}/ert/enkf "${PYTHO
 add_subdirectory(data)
 add_subdirectory(enums)
 add_subdirectory(observations)
+add_subdirectory(plot)
 add_subdirectory(util)
