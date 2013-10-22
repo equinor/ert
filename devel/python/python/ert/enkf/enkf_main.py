@@ -16,9 +16,10 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf.enums.enkf_state_type_enum import EnkfStateType
 
-from ert.util import Log, BoolVector
+
+from ert.util import Log, UIReturn, BoolVector
 from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, ErtTemplates, LocalConfig, ModelConfig, EnsConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfFs
-from ert.util import SubstitutionList, StringList
+from ert.util import SubstitutionList , StringList
 
 
 class EnKFMain(BaseCClass):
@@ -260,7 +261,7 @@ EnKFMain.cNamespace().get_analysis_config = cwrapper.prototype("analysis_config_
 EnKFMain.cNamespace().get_site_config = cwrapper.prototype("site_config_ref enkf_main_get_site_config( enkf_main)")
 EnKFMain.cNamespace().get_ecl_config = cwrapper.prototype("ecl_config_ref enkf_main_get_ecl_config( enkf_main)")
 EnKFMain.cNamespace().get_plot_config = cwrapper.prototype("plot_config_ref enkf_main_get_plot_config( enkf_main)")
-EnKFMain.cNamespace().set_eclbase = cwrapper.prototype("void enkf_main_set_eclbase( enkf_main, char*)")
+EnKFMain.cNamespace().set_eclbase = cwrapper.prototype("ui_return_obj enkf_main_set_eclbase( enkf_main, char*)")
 EnKFMain.cNamespace().set_datafile = cwrapper.prototype("void enkf_main_set_data_file( enkf_main, char*)")
 EnKFMain.cNamespace().get_schedule_prediction_file = cwrapper.prototype("char* enkf_main_get_schedule_prediction_file( enkf_main )")
 EnKFMain.cNamespace().set_schedule_prediction_file = cwrapper.prototype("void enkf_main_set_schedule_prediction_file( enkf_main , char*)")
