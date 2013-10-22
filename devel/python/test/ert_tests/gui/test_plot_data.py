@@ -1,4 +1,4 @@
-from ert_gui.models.connectors.plot.observations import DictProperty
+from ert.enkf.plot import DictProperty
 from ert_tests import ExtendedTestCase
 
 
