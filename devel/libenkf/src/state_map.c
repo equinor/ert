@@ -196,8 +196,8 @@ static void state_map_select_matching__( state_map_type * map , bool_vector_type
   {
     {
       const int * map_ptr = int_vector_get_ptr( map->state );
-
-      for (int i=0; i < int_vector_size( map->state ); i++) {
+      int size = util_int_min(int_vector_size( map->state ), bool_vector_size(select_target)); 
+      for (int i=0; i < size; i++) {
         int state_value = map_ptr[i];
         if (state_value & select_mask) 
           bool_vector_iset( select_target , i , select);
