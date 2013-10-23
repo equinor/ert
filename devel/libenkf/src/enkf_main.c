@@ -1036,7 +1036,8 @@ void enkf_main_init_PC( const enkf_main_type * enkf_main ,
   state_enum   state                     = FORECAST;
   enkf_fs_type * fs                      = enkf_main_get_fs( enkf_main );
   state_map_type * state_map             = enkf_fs_get_state_map( fs );
-  bool_vector_type * ens_mask            = bool_vector_alloc(0 , false );
+  const int total_ens_size               = enkf_main_get_ensemble_size(enkf_main);
+  bool_vector_type * ens_mask            = bool_vector_alloc(total_ens_size , false );
   obs_data_type  *  obs_data             = obs_data_alloc();
   int_vector_type * ens_active_list; 
   meas_data_type *  meas_data;
@@ -1099,7 +1100,6 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   {
     matrix_type * PC = matrix_alloc(1,1);
     matrix_type * PC_obs = matrix_alloc(1,1);
-
 
     enkf_main_init_PC(  enkf_main , obs_data , truncation_or_ncomp , PC , PC_obs );
     pca_plot_data = pca_plot_data_alloc( local_obsdata_get_name( obs_data ) , PC , PC_obs );
