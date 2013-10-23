@@ -83,7 +83,7 @@ class EnKFMain(BaseCClass):
         """ @rtype: SiteConfig """
         return EnKFMain.cNamespace().get_site_config(self).setParent(self)
 
-    def ecl_config(self):
+    def eclConfig(self):
         """ @rtype: EclConfig """
         return EnKFMain.cNamespace().get_ecl_config(self).setParent(self)
 

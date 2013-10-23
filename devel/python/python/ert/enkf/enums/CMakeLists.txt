@@ -4,6 +4,7 @@ set(PYTHON_SOURCES
     enkf_run_enum.py
     enkf_state_type_enum.py
     enkf_var_type_enum.py
+    ert_impl_type_enum.py
     load_fail_type_enum.py
 )
 

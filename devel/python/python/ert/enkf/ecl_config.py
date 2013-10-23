@@ -20,6 +20,7 @@ from ert.ecl import EclSum
 from ert.ecl import EclGrid
 from ert.util import UIReturn
 
+
 class EclConfig(BaseCClass):
     def __init__(self):
         c_pointer = EclConfig.cNamespace().alloc()

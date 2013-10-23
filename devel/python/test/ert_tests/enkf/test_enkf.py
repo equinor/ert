@@ -20,6 +20,7 @@ from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConf
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enkf_main import EnKFMain
 from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum
+from ert.enkf.enums.ert_impl_type_enum import ErtImplType
 from ert.enkf.observations.summary_observation import SummaryObservation
 from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
@@ -43,6 +44,8 @@ class EnKFTest(ExtendedTestCase):
 
         self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfStateType, "state_enum", "libenkf/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(ErtImplType, "ert_impl_type", "libenkf/include/ert/enkf/enkf_types.h")
+
         self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "libenkf/include/ert/enkf/obs_vector.h")
         self.assertEnumIsFullyDefined(LoadFailTypeEnum, "load_fail_type", "libenkf/include/ert/enkf/summary_config.h")
 
@@ -105,7 +108,7 @@ class EnKFTest(ExtendedTestCase):
             self.assertIsInstance(main.getModelConfig(), ModelConfig)
             #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
             self.assertIsInstance(main.siteConfig(), SiteConfig)
-            self.assertIsInstance(main.ecl_config(), EclConfig)
+            self.assertIsInstance(main.eclConfig(), EclConfig)
             self.assertIsInstance(main.plot_config(), PlotConfig)
 
             # self.main.load_obs(obs_config_file)

@@ -1,1 +1,1 @@
-from .observations import ObservationsModel
+from .ensemble_summary_plot import EnsembleSummaryPlot
