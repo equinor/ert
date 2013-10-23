@@ -86,7 +86,6 @@ class SimulationsTracker(ListModelMixin):
         return list(self.states)
 
     def __checkForUnusedEnums(self):
-
         for enum in JobStatusType.enums():
             used = False
             for state in self.states:

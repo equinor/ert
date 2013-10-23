@@ -22,6 +22,17 @@ class RunStatusModel(ErtConnector, ModelMixin):
         self.observable().addEvent(RunStatusModel.STATUS_CHANGED_EVENT)
 
 
+    def __processStatus(self, selected_members):
+        self.__resetStatusFlag()
+        for member in selected_members:
+            state = self.ert().getMemberRunningState(member)
+            status = state.getRunStatus()
+
+            self.__setMemberStatus(member, status)
+        self.__updateStatusCount()
+        self.__checkStatusChangedFlag() # Emit once for all members if any changes has occurred
+        time.sleep(0.5)
+
     def startStatusPoller(self):
         assert not self.__is_running, "Job already started!"
 
@@ -34,19 +45,10 @@ class RunStatusModel(ErtConnector, ModelMixin):
         self.__resetMemberStatus()
 
         while self.ert().siteConfig().isQueueRunning():
-            self.__resetStatusFlag()
+            self.__processStatus(selected_members)
 
-            for member in selected_members:
-                state = self.ert().getMemberRunningState(member)
-                status = state.getRunStatus()
+        self.__processStatus(selected_members) # catch all the latest changes
 
-                self.__setMemberStatus(member, status)
-
-            self.__updateStatusCount()
-
-            self.__checkStatusChangedFlag() # Emit once for all members if any changes has occurred
-
-            time.sleep(0.5)
 
         self.__is_running = False
 

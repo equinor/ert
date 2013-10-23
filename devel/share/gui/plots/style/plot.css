@@ -66,13 +66,36 @@
     stroke-width: 1px;
 }
 
-.area-fill {
+.observation-plot-line {
+    fill: none;
+
+    stroke: #000;
+    stroke-opacity: 1;
+    stroke-width: 1px;
+    stroke-dasharray: 5,5;
+}
+
+.observation-plot-area {
     fill: #FC8D59;
     fill-opacity: 0.1;
     /*fill: rgba(150, 150, 150, 0.6);*/
     /*fill: rgba(200, 200, 200, 0.6);*/
 }
 
+
+.observation-std-point {
+    fill: #ffffff;
+    fill-opacity: 0.0;
+    stroke: #000000;
+}
+
+.refcase-plot-line {
+    fill: none;
+
+    stroke: #000;
+    stroke-opacity: 1;
+    stroke-width: 2px;
+}
 /*.area-fill:hover {*/
     /*fill: rgba(150, 150, 150, 0.1);*/
 
