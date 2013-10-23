@@ -1101,7 +1101,6 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
     matrix_type * PC = matrix_alloc(1,1);
     matrix_type * PC_obs = matrix_alloc(1,1);
 
-    printf("IN METHOD enkf_main_alloc_pca_plot_data;\n"); 
     enkf_main_init_PC(  enkf_main , obs_data , truncation_or_ncomp , PC , PC_obs );
     pca_plot_data = pca_plot_data_alloc( local_obsdata_get_name( obs_data ) , PC , PC_obs );
 
