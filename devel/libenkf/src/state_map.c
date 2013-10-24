@@ -114,22 +114,30 @@ realisation_state_enum state_map_iget( state_map_type * map , int index) {
   return state;
 }
 
-static void state_map_iset__( state_map_type * map , int index , realisation_state_enum new_state) {
-  realisation_state_enum current_state = int_vector_safe_iget( map->state , index );
+bool state_map_legal_transition( realisation_state_enum state1 , realisation_state_enum state2) {
   int target_mask = 0;
 
-  if (current_state == STATE_UNDEFINED)
+  if (state1 == STATE_UNDEFINED)
     target_mask = STATE_INITIALIZED | STATE_PARENT_FAILURE;
-  else if (current_state == STATE_INITIALIZED)
+  else if (state1 == STATE_INITIALIZED)
     target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_INITIALIZED | STATE_PARENT_FAILURE;
-  else if (current_state == STATE_HAS_DATA)
+  else if (state1 == STATE_HAS_DATA)
     target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_PARENT_FAILURE;
-  else if (current_state == STATE_LOAD_FAILURE)
+  else if (state1 == STATE_LOAD_FAILURE)
     target_mask = STATE_HAS_DATA | STATE_INITIALIZED;
-  else if (current_state == STATE_PARENT_FAILURE)
-    target_mask = STATE_INITIALIZED;
+  else if (state1 == STATE_PARENT_FAILURE)
+    target_mask = STATE_INITIALIZED | STATE_PARENT_FAILURE;
+  
+  if (state2 & target_mask)
+    return true;
+  else
+    return false;
+}
 
-  if (new_state & target_mask)
+static void state_map_iset__( state_map_type * map , int index , realisation_state_enum new_state) {
+  realisation_state_enum current_state = int_vector_safe_iget( map->state , index );
+
+  if (state_map_legal_transition( current_state , new_state ))
     int_vector_iset( map->state , index , new_state);
   else
     util_abort("%s: illegal state transition for realisation:%d %d -> %d \n" , __func__ , index , current_state , new_state );
