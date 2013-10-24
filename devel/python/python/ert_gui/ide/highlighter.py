@@ -1,26 +1,21 @@
-import re
-from PyQt4.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
-from ert_gui.ide.handlers.data_file_handler import DataFileHandler
-from ert_gui.ide.handlers.define_handler import DefineHandler
-from ert_gui.ide.handlers.grid_handler import GridHandler
-from ert_gui.ide.handlers.init_section_handler import InitSectionHandler
-from ert_gui.ide.handlers.install_job_handler import InstallJobHandler
-from ert_gui.ide.handlers.num_realizations_handler import NumRealizationsHandler
-from ert_gui.ide.handlers.queue_option_handler import QueueOptionHandler
-from ert_gui.ide.handlers.queue_system_handler import QueueSystemHandler
-from ert_gui.ide.handlers.schedule_file_handler import ScheduleFileHandler
-from ert_gui.ide.handlers.unknown_handler import UnknownHandler
-from ert_gui.ide.keyword import Keyword
+from PyQt4.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
 
+from ert_gui.ide.keywords import ErtKeywords
+from ert_gui.ide.keywords.configuration_line_builder import ConfigurationLineBuilder
+from ert_gui.ide.keywords.data import Keyword
+
+
+class ConfigurationLineUserData(QTextBlockUserData):
+    def __init__(self, configuration_line):
+        QTextBlockUserData.__init__(self)
+        self.configuration_line = configuration_line
 
 class KeywordHighlighter(QSyntaxHighlighter):
-    COMMENT_STATE = 1
     def __init__(self, document):
         QSyntaxHighlighter.__init__(self, document)
 
-        self.comment_pattern = r'.*?(--.*)'
-        self.keyword_pattern = re.compile('^\s*([A-Z_]+)\s')
-        self.parameter_pattern = re.compile('\s+?(\S+)\s*?')
+        self.clb = ConfigurationLineBuilder(ErtKeywords())
+
 
         self.comment_format = QTextCharFormat()
         self.comment_format.setForeground(QColor(0, 128, 0))
@@ -43,54 +38,61 @@ class KeywordHighlighter(QSyntaxHighlighter):
 
         self.search_string = ""
 
-        self.handlers = []
-        self.handlers.append(DefineHandler())
-        self.handlers.append(QueueOptionHandler())
-        self.handlers.append(QueueSystemHandler())
-        self.handlers.append(NumRealizationsHandler())
-        self.handlers.append(InstallJobHandler())
-        self.handlers.append(GridHandler())
-        self.handlers.append(ScheduleFileHandler())
-        self.handlers.append(InitSectionHandler())
-        self.handlers.append(DataFileHandler())
 
-        self.handler_names = [handler.keyword_name for handler in self.handlers]
+    def formatKeyword(self, keyword):
+        assert isinstance(keyword, Keyword)
+        if keyword.hasKeywordDefinition():
+            keyword_format = QTextCharFormat(self.keyword_format)
 
-        self.handlers.append(UnknownHandler())
+            if not keyword.validationStatus():
+                keyword_format.merge(self.error_format)
+
+            self.formatToken(keyword, keyword_format)
+        else:
+            self.formatToken(keyword, self.error_format)
 
 
     def highlightBlock(self, complete_block):
         block = unicode(complete_block)
 
-        comment_match = re.match(self.comment_pattern, block)
-        if comment_match is not None:
-            self.setFormat(comment_match.start(1), comment_match.end(1), self.comment_format)
-            block = block[0:comment_match.start(1)]
+        self.clb.processLine(block)
 
 
-        keyword_match = re.match(self.keyword_pattern, block)
+        if self.clb.hasComment():
+            self.setFormat(self.clb.commentIndex(), len(block) - self.clb.commentIndex(), self.comment_format)
 
-        if keyword_match is not None:
-            value_match = self.parameter_pattern.finditer(block, keyword_match.end(1))
+        if not self.clb.hasConfigurationLine():
+            count = len(block)
 
-            keyword = Keyword(keyword_match.group(1), keyword_match.start(1), keyword_match.end(1))
+            if self.clb.hasComment():
+                count = self.clb.commentIndex()
 
-            for match in value_match:
-                keyword.addParameter(match.group(1), match.start(1), match.end(1))
-
-            for handler in self.handlers:
-                if handler.isHandlerFor(keyword):
-                    handler.handle(keyword, self)
-                    break
+            self.setFormat(0, count, self.error_format)
 
 
-        elif comment_match is None and keyword_match is None and len(block.strip()) > 0:
-            self.setFormat(0, len(block), self.error_format)
+        if self.clb.hasConfigurationLine():
+            cl = self.clb.configurationLine()
+            self.setCurrentBlockUserData(ConfigurationLineUserData(cl))
 
-        if self.search_string != "":
-            for match in re.finditer("(%s)" % self.search_string, complete_block):
-                print(match.group(1), match.start(1), match.end(1))
-                self.setFormat(match.start(1), match.end(1) - match.start(1), self.search_format)
+            self.formatKeyword(cl.keyword())
+
+            arguments = cl.arguments()
+
+            for argument in arguments:
+                if argument.argumentType() is None:
+                    pass
+
+                elif argument.argumentType().isBuiltIn():
+                    self.formatToken(argument, self.builtin_format)
+
+                if not argument.validationStatus():
+                    self.formatToken(argument, self.error_format)
+
+
+        # if self.search_string != "":
+        #     for match in re.finditer("(%s)" % self.search_string, complete_block):
+        #         print(match.group(1), match.start(1), match.end(1))
+        #         self.setFormat(match.start(1), match.end(1) - match.start(1), self.search_format)
 
 
     def setSearchString(self, string):
@@ -99,3 +101,5 @@ class KeywordHighlighter(QSyntaxHighlighter):
             self.rehighlight()
 
 
+    def formatToken(self, token, highlight_format):
+        self.setFormat(token.fromIndex(), token.count(), highlight_format)

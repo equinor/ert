@@ -7,7 +7,6 @@ from ert_gui.widgets.search_box import SearchBox
 
 
 def main():
-    QApplication.setGraphicsSystem("raster")
     app = QApplication(sys.argv) #Early so that QT is initialized before other imports
 
 
@@ -33,7 +32,6 @@ def main():
         config_file = f.read()
 
     highlighter = KeywordHighlighter(ide.document())
-    ide.handler_names = sorted(highlighter.handler_names)
 
     search.filterChanged.connect(highlighter.setSearchString)
 
