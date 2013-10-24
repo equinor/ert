@@ -13,6 +13,8 @@ class IDEPanel(QPlainTextEdit):
         self.setCursorWidth(2)
         self.installEventFilter(self)
 
+        self.cursorPositionChanged.connect(self.showHelp)
+
         self.completer = QCompleter(self)
         self.completer.setWidget(self)
         # self.completer.
@@ -29,7 +31,15 @@ class IDEPanel(QPlainTextEdit):
         select_fragment = QShortcut(QKeySequence("Ctrl+J"), self)
         select_fragment.activated.connect(self.selectFragment)
 
-        self.handler_names = []
+    def showHelp(self):
+        text_cursor = self.textCursor()
+        user_data = text_cursor.block().userData()
+
+        if user_data is not None:
+            configuration_line = user_data.configuration_line
+
+            if configuration_line.keyword().hasKeywordDefinition():
+                print(configuration_line.keyword().keywordDefinition().documentation)
 
 
 
@@ -40,9 +50,17 @@ class IDEPanel(QPlainTextEdit):
 
             user_data = text_cursor.block().userData()
             if user_data is not None:
-                keyword = user_data.keyword
+                configuration_line = user_data.configuration_line
+                # if configuration_line.keyword().hasKeywordDefinition():
+                #     print(configuration_line.keyword().keywordDefinition().documentation)
 
-                self.setToolTip(keyword.errorMessage())
+                if pos in configuration_line.keyword():
+                    self.setToolTip(configuration_line.keyword().validationStatus().message())
+                else:
+                    for argument in configuration_line.arguments():
+                        if pos in argument:
+                            self.setToolTip(argument.validationStatus().message())
+
             else:
                 self.setToolTip("")
 
