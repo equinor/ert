@@ -25,6 +25,6 @@ class ErtKeywords(object):
         return item in self.keywords
 
     def __getitem__(self, item):
-        """ @rtype: ConfigurationLineDefinitionDefinition """
+        """ @rtype: ConfigurationLineDefinition """
         return self.keywords[item]
 

@@ -15,7 +15,7 @@ class ErtKeywordTest(ExtendedTestCase):
         num_realizations = keywords["NUM_REALIZATIONS"]
 
 
-        self.assertEqual(num_realizations.documentLink(), "ensemble/num_realizations")
+        self.assertEqual(num_realizations.documentationLink(), "ensemble/num_realizations")
         self.assertEqual(num_realizations.group(), "Ensemble")
         self.assertEqual(num_realizations.keywordDefinition().name(), "NUM_REALIZATIONS")
         self.assertIsInstance(num_realizations.argumentDefinitions()[0], IntegerArgument)
@@ -28,7 +28,7 @@ class ErtKeywordTest(ExtendedTestCase):
         self.assertTrue("QUEUE_SYSTEM" in keywords)
         keyword = keywords["QUEUE_SYSTEM"]
 
-        self.assertEqual(keyword.documentLink(), "queue_system/queue_system")
+        self.assertEqual(keyword.documentationLink(), "queue_system/queue_system")
         self.assertEqual(keyword.group(), "Queue System")
 
 #     def test_num_realizations(self):

@@ -29,7 +29,7 @@ class ConfigurationLineDefinitionTest(ExtendedTestCase):
                                           group="Group")
 
         self.assertTrue(cld.isRequired())
-        self.assertEqual(cld.documentLink(), "help/path")
+        self.assertEqual(cld.documentationLink(), "help/path")
 
         keyword_definition = cld.keywordDefinition()
         self.assertIsInstance(keyword_definition, KeywordDefinition)

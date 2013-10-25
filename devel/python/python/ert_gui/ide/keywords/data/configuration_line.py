@@ -7,91 +7,58 @@ class ConfigurationLine(object):
     ARGUMENT_ERROR = "Keyword has an argument error!"
     UNKNOWN_KEYWORD = "Unknown keyword!"
 
-    def __init__(self, keyword, arguments):
+    def __init__(self, keyword, arguments, documentation_link, group, required=False):
+        """
+         @type keyword: Keyword
+         @type arguments: list of Argument
+         @type documentation_link: str
+         @type group: str
+         @type required: bool
+        """
         super(ConfigurationLine, self).__init__()
 
-        #: :type: Keyword
         self.__keyword = keyword
-        self.__arguments = []
-        keyword.setValidationStatus(ValidationStatus())
+        self.__arguments = arguments
+        self.__documentation_link = documentation_link
+        self.__required = required
+        self.__group = group
+        self.__validation_status = {}
 
-        if keyword.hasKeywordDefinition():
-            #: :type: list of ArgumentDefinition
-            arg_defs = keyword.keywordDefinition().arguments
-
-            arg_def_count = len(arg_defs)
-            arg_count = len(arguments)
-
-            #todo check if last argument is optional....
+        self.__validateTokens()
 
 
-            if arg_count > arg_def_count:
-                # merge last input arguments
+    def __validateTokens(self):
+        keyword_validation_status = ValidationStatus()
 
-                last_arg_def = arg_defs[len(arg_defs) - 1]
+        if not self.__keyword.hasKeywordDefinition():
+            keyword_validation_status.setFailed()
+            keyword_validation_status.addToMessage(ConfigurationLine.UNKNOWN_KEYWORD)
 
-                if last_arg_def.consumeRestOfLine():
-                    from_arg = arguments[arg_def_count - 1]
-                    to_arg = arguments[arg_count - 1]
+        self.__validation_status[self.__keyword] = keyword_validation_status
 
-                    last_argument = Argument(from_arg.fromIndex(), to_arg.toIndex(), from_arg.line())
-                    arguments = arguments[0:arg_def_count]
-                    arguments[len(arguments) - 1] = last_argument
+        argument_error = False
+        for argument in self.__arguments:
+            argument_validation_status = ValidationStatus()
 
-                else:
-                    from_arg = arguments[arg_def_count]
-                    to_arg = arguments[arg_count - 1]
+            if not argument.hasArgumentDefinition():
+                argument_validation_status.setFailed()
+                argument_validation_status.addToMessage(ConfigurationLine.ARGUMENT_NOT_EXPECTED)
 
-                    last_argument = Argument(from_arg.fromIndex(), to_arg.toIndex(), from_arg.line())
-                    arguments = arguments[0:arg_def_count]
-                    arguments.append(last_argument)
+                argument_error = True
+            else:
+                arg_def = argument.argumentDefinition()
+                argument_validation_status = arg_def.validate(argument.value())
 
-            if arg_count < arg_def_count:
-                # pad with empty arguments
-                line = keyword.line()
+            self.__validation_status[argument] = argument_validation_status
 
-                for index in range(arg_def_count - arg_count):
-                    empty_argument = Argument(len(line), len(line), line)
-                    arguments.append(empty_argument)
+        if argument_error:
+            keyword_validation_status.setFailed()
+            keyword_validation_status.addToMessage(ConfigurationLine.ARGUMENT_ERROR)
 
-
-            failed_argument = False
-            for index in range(len(arguments)):
-
-                arg = arguments[index]
-
-                if index < len(arg_defs):
-                    arg_def = arg_defs[index]
-                    validation_status = arg_def.validate(arg.value())
-
-                    arg.setValidationStatus(validation_status)
-                    arg.setArgumentType(arg_def)
-                else:
-                    validation_status = ValidationStatus()
-                    validation_status.setFailed()
-                    validation_status.addToMessage(ConfigurationLine.ARGUMENT_NOT_EXPECTED)
-                    arg.setValidationStatus(validation_status)
-
-                if not arg.validationStatus():
-                    failed_argument = True
-
-                self.__arguments.append(arg)
-
-            if failed_argument:
-                keyword.validationStatus().setFailed()
-                keyword.validationStatus().addToMessage(ConfigurationLine.ARGUMENT_ERROR)
-
-        else:
-            keyword.validationStatus().setFailed()
-            keyword.validationStatus().addToMessage(ConfigurationLine.UNKNOWN_KEYWORD)
-
-            self.__arguments = arguments
-
-            for argument in arguments:
-                status = ValidationStatus()
-                status.setFailed()
-                status.addToMessage(ConfigurationLine.ARGUMENT_NOT_EXPECTED)
-                argument.setValidationStatus(status)
+            for argument in self.__arguments:
+                argument_validation_status = self.validationStatusForToken(argument)
+                if not argument_validation_status:
+                    keyword_validation_status.addToMessage(argument_validation_status.message())
 
 
     def keyword(self):
@@ -102,3 +69,18 @@ class ConfigurationLine(object):
         """ @rtype: list of Argument """
         return self.__arguments
 
+    def isRequired(self):
+        """ @rtype: bool """
+        return self.__required
+
+    def documentLink(self):
+        """ @rtype: str """
+        return self.__documentation_link
+
+    def group(self):
+        """ @rtype: str """
+        return self.__group
+
+    def validationStatusForToken(self, token):
+        """ @rtype: ValidationStatus """
+        return self.__validation_status[token]
