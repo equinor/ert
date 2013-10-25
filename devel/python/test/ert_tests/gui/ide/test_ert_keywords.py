@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument, StringArgument
+from ert_gui.ide.keywords.definitions import IntegerArgument, StringArgument, BoolArgument
 from ert_gui.ide.keywords import ErtKeywords
 from ert_tests import ExtendedTestCase
 
@@ -39,6 +39,8 @@ class ErtKeywordTest(ExtendedTestCase):
     def test_control_simulations_keywords(self):
         self.keywordTest("MAX_RUNTIME", [IntegerArgument], "control_simulations/max_runtime", "Simulation Control")
         self.keywordTest("MIN_REALIZATIONS", [IntegerArgument], "control_simulations/min_realizations", "Simulation Control")
+        self.keywordTest("STOP_LONG_RUNNING", [BoolArgument], "control_simulations/stop_long_running", "Simulation Control")
+
 
 #
 

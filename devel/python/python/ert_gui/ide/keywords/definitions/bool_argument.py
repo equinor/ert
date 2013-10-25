@@ -5,7 +5,7 @@ from ert_gui.ide.keywords.definitions import ArgumentDefinition
 
 class BoolArgument(ArgumentDefinition):
 
-    NOT_BOOL = "The argument must be a bool."
+    NOT_BOOL = "The argument must be TRUE or FALSE."
 
     pattern  = re.compile("^TRUE|FALSE$")
 
