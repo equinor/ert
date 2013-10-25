@@ -23,7 +23,7 @@ class ConfigurationLineDefinition(object):
         """ @rtype: list of ArgumentDefinition """
         return self.__argument_definitions
 
-    def documentLink(self):
+    def documentationLink(self):
         """ @rtype: str """
         return self.__documentation_link
 

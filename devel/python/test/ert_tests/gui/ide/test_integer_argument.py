@@ -4,9 +4,6 @@ from ert_tests import ExtendedTestCase
 
 class IntegerArgumentTest(ExtendedTestCase):
 
-
-
-
     def test_default_integer_argument(self):
         integer = IntegerArgument()
 
@@ -49,6 +46,7 @@ class IntegerArgumentTest(ExtendedTestCase):
         range_string = "%d <= %d" % (from_value, value)
         self.assertEqual(validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string)
 
+
     def test_integer_range_argument_to(self):
         to_value = 99
         integer = IntegerArgument(to_value=to_value)
@@ -62,6 +60,7 @@ class IntegerArgumentTest(ExtendedTestCase):
 
         range_string = "%d <= %d" % (value, to_value)
         self.assertEqual(validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string)
+
 
     def test_integer_range_argument(self):
         from_value = 10

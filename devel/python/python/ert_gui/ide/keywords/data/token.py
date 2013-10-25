@@ -6,7 +6,6 @@ class Token(object):
         self.__from_index = from_index
         self.__to_index = to_index
         self.__line = line
-        self.__validation_status = None
 
     def value(self):
         """ @rtype: str """
@@ -27,13 +26,6 @@ class Token(object):
     def count(self):
         """ @rtype: int """
         return self.toIndex() - self.fromIndex()
-
-    def validationStatus(self):
-        """ @rtype: ValidationStatus """
-        return self.__validation_status
-
-    def setValidationStatus(self, validation_status):
-        self.__validation_status = validation_status
 
     def __contains__(self, item):
         assert isinstance(item, int)

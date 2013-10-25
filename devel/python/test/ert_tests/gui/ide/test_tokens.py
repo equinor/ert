@@ -15,7 +15,6 @@ class TokenTest(ExtendedTestCase):
         self.assertTrue(5 in token)
         self.assertTrue(9 in token)
         self.assertTrue(not 10 in token)
-        self.assertIsNone(token.validationStatus())
 
 
     def test_empty_token(self):
