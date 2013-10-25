@@ -122,7 +122,7 @@ bool state_map_legal_transition( realisation_state_enum state1 , realisation_sta
   else if (state1 == STATE_INITIALIZED)
     target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_INITIALIZED | STATE_PARENT_FAILURE;
   else if (state1 == STATE_HAS_DATA)
-    target_mask = STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_PARENT_FAILURE;
+    target_mask = STATE_INITIALIZED | STATE_LOAD_FAILURE | STATE_HAS_DATA | STATE_PARENT_FAILURE;
   else if (state1 == STATE_LOAD_FAILURE)
     target_mask = STATE_HAS_DATA | STATE_INITIALIZED;
   else if (state1 == STATE_PARENT_FAILURE)
