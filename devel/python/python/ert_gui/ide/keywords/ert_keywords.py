@@ -1,6 +1,8 @@
 from ert_gui.ide.keywords.definitions import ConfigurationLineDefinition
+from ert_gui.ide.keywords.eclipse_keywords import EclipseKeywords
 from ert_gui.ide.keywords.ensemble_keywords import EnsembleKeywords
 from ert_gui.ide.keywords.queue_system_keywords import QueueSystemKeywords
+from ert_gui.ide.keywords.simulation_control_keywords import SimulationControlKeywords
 
 
 class ErtKeywords(object):
@@ -10,7 +12,9 @@ class ErtKeywords(object):
         self.keywords = {}
 
         EnsembleKeywords(self)
+        EclipseKeywords(self)
         QueueSystemKeywords(self)
+        SimulationControlKeywords(self)
 
     def addKeyword(self, keyword):
         assert isinstance(keyword, ConfigurationLineDefinition)

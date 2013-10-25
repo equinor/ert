@@ -9,6 +9,7 @@ class StringArgument(ArgumentDefinition):
     PATTERN = re.compile("^[\S]+$")
     PATTERN_WITH_SPACE = re.compile("^[\S| ]+$")
 
+
     def __init__(self, allow_space=False, **kwargs):
         super(StringArgument, self).__init__(**kwargs)
         self.__allow_space = allow_space
