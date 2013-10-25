@@ -19,7 +19,7 @@ class ConfigurationLineTest(ExtendedTestCase):
         self.assertEqual(cl.keyword(), keyword)
         self.assertEqual(cl.arguments()[0], argument)
 
-        self.assertEqual(cl.documentLink(), "help/link")
+        self.assertEqual(cl.documentationLink(), "help/link")
         self.assertEqual(cl.group(), "group")
         self.assertTrue(cl.isRequired())
 

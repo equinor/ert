@@ -39,7 +39,7 @@ class IDEPanel(QPlainTextEdit):
             configuration_line = user_data.configuration_line
 
             if configuration_line.keyword().hasKeywordDefinition():
-                print(configuration_line.keyword().keywordDefinition().documentation)
+                print(configuration_line.documentationLink())
 
 
 
@@ -50,16 +50,17 @@ class IDEPanel(QPlainTextEdit):
 
             user_data = text_cursor.block().userData()
             if user_data is not None:
+                #: :type: ConfigurationLine
                 configuration_line = user_data.configuration_line
                 # if configuration_line.keyword().hasKeywordDefinition():
                 #     print(configuration_line.keyword().keywordDefinition().documentation)
 
                 if pos in configuration_line.keyword():
-                    self.setToolTip(configuration_line.keyword().validationStatus().message())
+                    self.setToolTip(configuration_line.validationStatusForToken(configuration_line.keyword()).message())
                 else:
                     for argument in configuration_line.arguments():
                         if pos in argument:
-                            self.setToolTip(argument.validationStatus().message())
+                            self.setToolTip(configuration_line.validationStatusForToken(argument).message())
 
             else:
                 self.setToolTip("")

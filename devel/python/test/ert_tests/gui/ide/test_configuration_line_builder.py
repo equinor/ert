@@ -44,6 +44,8 @@ class ConfigurationLineBuilderTest(ExtendedTestCase):
 
         arguments = config_line.arguments()
         self.assertEqual(len(arguments), 1)
+
+        self.assertFalse(config_line.validationStatusForToken(config_line.keyword()))
         self.assertFalse(config_line.validationStatusForToken(arguments[0]))
 
 
@@ -116,6 +118,7 @@ class ConfigurationLineBuilderTest(ExtendedTestCase):
         self.assertEqual(arguments[1].value(), "LSF_BJOBS_CMD")
         self.assertEqual(arguments[2].value(), "")
 
+        self.assertFalse(config_line.validationStatusForToken(config_line.keyword()))
 
         self.assertTrue(config_line.validationStatusForToken(arguments[0]))
         self.assertTrue(config_line.validationStatusForToken(arguments[1]))

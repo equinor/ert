@@ -99,7 +99,8 @@ class ConfigurationLineBuilder(object):
 
 
         for index in range(len(args)):
-            args[index].setArgumentDefinition(arg_defs[index])
+            if index < len(arg_defs):
+                args[index].setArgumentDefinition(arg_defs[index])
 
 
         return args
