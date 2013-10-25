@@ -41,7 +41,8 @@ class IDEPanel(QPlainTextEdit):
             if configuration_line.keyword().hasKeywordDefinition():
                 print(configuration_line.documentationLink())
 
-
+    def getText(self):
+        return str(self.document().toPlainText())
 
     def eventFilter(self, qobject, qevent):
         if qobject == self and qevent.type() == QEvent.ToolTip:

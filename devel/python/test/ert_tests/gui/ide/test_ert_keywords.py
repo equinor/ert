@@ -4,57 +4,42 @@ from ert_tests import ExtendedTestCase
 
 
 class ErtKeywordTest(ExtendedTestCase):
-#
-#
-    def test_num_realizations(self):
-        keywords = ErtKeywords()
 
-        self.assertTrue("NUM_REALIZATIONS" in keywords)
+    def setUp(self):
+        self.keywords = ErtKeywords()
 
-        #: :type: ConfigurationLineDefinition
-        num_realizations = keywords["NUM_REALIZATIONS"]
+    def keywordTest(self, name, argument_types, documentation_link, group, required=False):
+        self.assertTrue(name in self.keywords)
+
+        cld = self.keywords[name]
+
+        self.assertEqual(cld.keywordDefinition().name(), name)
+        self.assertEqual(cld.group(), group)
+        self.assertEqual(cld.documentationLink(), documentation_link)
+        self.assertEqual(cld.isRequired(), required)
+
+        arguments = cld.argumentDefinitions()
+
+        self.assertEqual(len(arguments), len(argument_types))
+
+        for index in range(len(arguments)):
+            self.assertIsInstance(arguments[index], argument_types[index])
 
 
-        self.assertEqual(num_realizations.documentationLink(), "ensemble/num_realizations")
-        self.assertEqual(num_realizations.group(), "Ensemble")
-        self.assertEqual(num_realizations.keywordDefinition().name(), "NUM_REALIZATIONS")
-        self.assertIsInstance(num_realizations.argumentDefinitions()[0], IntegerArgument)
-        self.assertTrue(num_realizations.isRequired())
+
+    def test_ensemble_keywords(self):
+        self.keywordTest("NUM_REALIZATIONS", [IntegerArgument], "ensemble/num_realizations", "Ensemble", True)
 
 
-    def test_queue_option(self):
-        keywords = ErtKeywords()
+    def test_queue_system_keywords(self):
+        self.keywordTest("QUEUE_SYSTEM", [StringArgument], "queue_system/queue_system", "Queue System")
+        self.keywordTest("QUEUE_OPTION", [StringArgument, StringArgument, StringArgument], "queue_system/queue_option", "Queue System")
 
-        self.assertTrue("QUEUE_SYSTEM" in keywords)
-        keyword = keywords["QUEUE_SYSTEM"]
 
-        self.assertEqual(keyword.documentationLink(), "queue_system/queue_system")
-        self.assertEqual(keyword.group(), "Queue System")
+    def test_control_simulations_keywords(self):
+        self.keywordTest("MAX_RUNTIME", [IntegerArgument], "control_simulations/max_runtime", "Simulation Control")
+        self.keywordTest("MIN_REALIZATIONS", [IntegerArgument], "control_simulations/min_realizations", "Simulation Control")
 
-#     def test_num_realizations(self):
-#
-#         test_line = "NUM_REALIZATIONS 45"
-#
-#
-#     def test_queue_option(self):
-#         keywords = ErtKeywords()
-#
-#         self.assertTrue("QUEUE_OPTION" in keywords)
-#
-#         queue_option = keywords["QUEUE_OPTION"]
-#
-#         self.assertEqual(queue_option.name, "QUEUE_OPTION")
-#         self.assertEqual(queue_option.documentation, "queue_system/queue_option")
-#         self.assertEqual(queue_option.group, "Queue System")
-#         self.assertIsInstance(queue_option.arguments[0], StringArgument)
-#         self.assertIsInstance(queue_option.arguments[1], StringArgument)
-#         self.assertIsInstance(queue_option.arguments[2], StringArgument)
-#
-#         self.assertTrue(queue_option.arguments[0].isBuiltIn())
-#         self.assertTrue(queue_option.arguments[1].isBuiltIn())
-#         self.assertFalse(queue_option.arguments[2].isBuiltIn())
-#
-#
 #
 
 

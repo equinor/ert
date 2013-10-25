@@ -1,6 +1,9 @@
 from .argument_definition import ArgumentDefinition
 from .integer_argument import IntegerArgument
 from .string_argument import StringArgument
+from .bool_argument import BoolArgument
+from .float_argument import FloatArgument
+from .path_argument import PathArgument
 
 from .argument_definition import ArgumentDefinition
 from .keyword_definition import KeywordDefinition
