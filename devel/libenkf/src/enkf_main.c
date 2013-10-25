@@ -1377,6 +1377,7 @@ static bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type 
 
       if (target_state_map != source_state_map) {
         state_map_set_from_inverted_mask( target_state_map , ens_mask , STATE_PARENT_FAILURE);
+        state_map_set_from_mask( target_state_map , ens_mask , STATE_INITIALIZED );
         enkf_fs_fsync( target_fs );
       }
     }

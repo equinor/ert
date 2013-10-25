@@ -300,7 +300,7 @@ void test_transitions() {
   test_assert_true( state_map_legal_transition(STATE_INITIALIZED  , STATE_PARENT_FAILURE ));    // Should maybe false - if the commenta baove is taken into account.
   
   test_assert_false( state_map_legal_transition(STATE_HAS_DATA , STATE_UNDEFINED ));
-  test_assert_false( state_map_legal_transition(STATE_HAS_DATA  , STATE_INITIALIZED ));
+  test_assert_true( state_map_legal_transition(STATE_HAS_DATA  , STATE_INITIALIZED ));
   test_assert_true( state_map_legal_transition(STATE_HAS_DATA  , STATE_HAS_DATA ));
   test_assert_true( state_map_legal_transition(STATE_HAS_DATA  , STATE_LOAD_FAILURE ));
   test_assert_true( state_map_legal_transition(STATE_HAS_DATA  , STATE_PARENT_FAILURE ));   // Rerun
