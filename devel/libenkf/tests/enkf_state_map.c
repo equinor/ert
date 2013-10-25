@@ -283,6 +283,43 @@ void test_count_matching() {
   state_map_free( map1 );
 }
 
+// Probably means that the target should be explicitly set to
+// undefined before workflows which automatically change case.
+void test_transitions() {
+
+  test_assert_false( state_map_legal_transition(STATE_UNDEFINED , STATE_UNDEFINED ));
+  test_assert_true( state_map_legal_transition(STATE_UNDEFINED  , STATE_INITIALIZED ));
+  test_assert_false( state_map_legal_transition(STATE_UNDEFINED , STATE_HAS_DATA ));
+  test_assert_false( state_map_legal_transition(STATE_UNDEFINED , STATE_LOAD_FAILURE ));
+  test_assert_true( state_map_legal_transition(STATE_UNDEFINED  , STATE_PARENT_FAILURE ));
+  
+  test_assert_false( state_map_legal_transition(STATE_INITIALIZED , STATE_UNDEFINED ));
+  test_assert_true( state_map_legal_transition(STATE_INITIALIZED  , STATE_INITIALIZED ));
+  test_assert_true( state_map_legal_transition(STATE_INITIALIZED  , STATE_HAS_DATA ));
+  test_assert_true( state_map_legal_transition(STATE_INITIALIZED  , STATE_LOAD_FAILURE ));
+  test_assert_true( state_map_legal_transition(STATE_INITIALIZED  , STATE_PARENT_FAILURE ));    // Should maybe false - if the commenta baove is taken into account.
+  
+  test_assert_false( state_map_legal_transition(STATE_HAS_DATA , STATE_UNDEFINED ));
+  test_assert_false( state_map_legal_transition(STATE_HAS_DATA  , STATE_INITIALIZED ));
+  test_assert_true( state_map_legal_transition(STATE_HAS_DATA  , STATE_HAS_DATA ));
+  test_assert_true( state_map_legal_transition(STATE_HAS_DATA  , STATE_LOAD_FAILURE ));
+  test_assert_true( state_map_legal_transition(STATE_HAS_DATA  , STATE_PARENT_FAILURE ));   // Rerun
+
+  test_assert_false( state_map_legal_transition(STATE_LOAD_FAILURE , STATE_UNDEFINED ));
+  test_assert_true( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_INITIALIZED ));
+  test_assert_true( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_HAS_DATA ));
+  test_assert_false( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_LOAD_FAILURE ));
+  test_assert_false( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_PARENT_FAILURE ));   
+
+  test_assert_false( state_map_legal_transition(STATE_PARENT_FAILURE , STATE_UNDEFINED ));
+  test_assert_true( state_map_legal_transition(STATE_PARENT_FAILURE  , STATE_INITIALIZED ));
+  test_assert_false( state_map_legal_transition(STATE_PARENT_FAILURE  , STATE_HAS_DATA ));
+  test_assert_false( state_map_legal_transition(STATE_PARENT_FAILURE  , STATE_LOAD_FAILURE ));
+  test_assert_true( state_map_legal_transition(STATE_PARENT_FAILURE  , STATE_PARENT_FAILURE ));   
+}
+
+
+
 int main(int argc , char ** argv) {
   create_test();
   get_test();
@@ -294,6 +331,7 @@ int main(int argc , char ** argv) {
   test_update_undefined( );
   test_select_matching();
   test_count_matching();
+  test_transitions();
   exit(0);
 }
 
