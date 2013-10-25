@@ -49,6 +49,9 @@ class ConfigurationLine(object):
                 arg_def = argument.argumentDefinition()
                 argument_validation_status = arg_def.validate(argument.value())
 
+                if not argument_validation_status:
+                    argument_error = True
+
             self.__validation_status[argument] = argument_validation_status
 
         if argument_error:
@@ -73,7 +76,7 @@ class ConfigurationLine(object):
         """ @rtype: bool """
         return self.__required
 
-    def documentLink(self):
+    def documentationLink(self):
         """ @rtype: str """
         return self.__documentation_link
 

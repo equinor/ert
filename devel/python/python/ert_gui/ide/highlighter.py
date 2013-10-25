@@ -39,12 +39,12 @@ class KeywordHighlighter(QSyntaxHighlighter):
         self.search_string = ""
 
 
-    def formatKeyword(self, keyword):
+    def formatKeyword(self, keyword, validation_status):
         assert isinstance(keyword, Keyword)
         if keyword.hasKeywordDefinition():
             keyword_format = QTextCharFormat(self.keyword_format)
 
-            if not keyword.validationStatus():
+            if not validation_status:
                 keyword_format.merge(self.error_format)
 
             self.formatToken(keyword, keyword_format)
@@ -74,18 +74,18 @@ class KeywordHighlighter(QSyntaxHighlighter):
             cl = self.clb.configurationLine()
             self.setCurrentBlockUserData(ConfigurationLineUserData(cl))
 
-            self.formatKeyword(cl.keyword())
+            self.formatKeyword(cl.keyword(), cl.validationStatusForToken(cl.keyword()))
 
             arguments = cl.arguments()
 
             for argument in arguments:
-                if argument.argumentType() is None:
+                if not argument.hasArgumentDefinition():
                     pass
 
-                elif argument.argumentType().isBuiltIn():
+                elif argument.argumentDefinition().isBuiltIn():
                     self.formatToken(argument, self.builtin_format)
 
-                if not argument.validationStatus():
+                if not cl.validationStatusForToken(argument):
                     self.formatToken(argument, self.error_format)
 
 
