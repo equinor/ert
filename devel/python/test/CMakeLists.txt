@@ -55,6 +55,24 @@ set(TEST_SOURCES
     ert_tests/util/test_vectors.py
     ert_tests/util/test_ui_return.py
 
+    ert_tests/gui/__init__.py
+    ert_tests/gui/test_model.py
+    ert_tests/gui/test_observable.py
+    ert_tests/gui/test_plot_data.py
+
+    ert_tests/gui/ide/__init__.py
+    ert_tests/gui/ide/test_bool_argument.py
+    ert_tests/gui/ide/test_configuration_line.py
+    ert_tests/gui/ide/test_configuration_line_builder.py
+    ert_tests/gui/ide/test_configuration_line_definition.py
+    ert_tests/gui/ide/test_configuration_line_parser.py
+    ert_tests/gui/ide/test_ert_keywords.py
+    ert_tests/gui/ide/test_float_argument.py
+    ert_tests/gui/ide/test_integer_argument.py
+    ert_tests/gui/ide/test_path_argument.py
+    ert_tests/gui/ide/test_tokens.py
+
+
     ert_tests/run/__init__.py
     ert_tests/run/test_run.py
 
@@ -164,6 +182,54 @@ if (ERT_BUILD_GUI)
    add_test( NAME python.tests.ert_gui.models.observable
              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.test_observable.ObservableTest)
+
+   add_test( NAME python.tests.ert_gui.models.plot_data
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.test_plot_data.PlotDataTest)
+
+   add_test( NAME python.tests.ert_gui.ide.bool_argument
+                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                   COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_bool_argument.BoolArgumentTest)
+
+   add_test( NAME python.tests.ert_gui.ide.integer_argument
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_integer_argument.IntegerArgumentTest)
+
+    add_test( NAME python.tests.ert_gui.ide.float_argument
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                      COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_float_argument.FloatArgumentTest)
+
+    add_test( NAME python.tests.ert_gui.ide.path_argument
+                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_path_argument.PathArgumentTest)
+
+
+    add_test( NAME python.tests.ert_gui.ide.test_configuration_line
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_configuration_line.ConfigurationLineTest)
+
+    add_test( NAME python.tests.ert_gui.ide.test_configuration_line_builder
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_configuration_line_builder.ConfigurationLineBuilderTest)
+
+    add_test( NAME python.tests.ert_gui.ide.test_configuration_line_definition
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_configuration_line_definition.ConfigurationLineDefinitionTest)
+
+    add_test( NAME python.tests.ert_gui.ide.test_configuration_line_parser
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_configuration_line_parser.ConfigurationLineParserTest)
+
+
+
+    add_test( NAME python.tests.ert_gui.ide.ert_keywords
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_ert_keywords.ErtKeywordTest)
+
+    add_test( NAME python.tests.ert_gui.ide.tokens
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_tokens.TokenTest)
+
 endif()
 
 #ECL
