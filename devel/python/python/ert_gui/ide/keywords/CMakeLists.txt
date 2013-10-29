@@ -14,6 +14,9 @@ set(PYTHON_SOURCES
     run_keywords.py
     simulation_control_keywords.py
     workflow_keywords.py
+    qt_keywords.py
+    unix_environment_keywords.py
+    advanced_keywords.py
 )
 
 add_python_package("python.ert_gui.ide.keywords"  ${PYTHON_INSTALL_PREFIX}/ert_gui/ide/keywords "${PYTHON_SOURCES}" True)

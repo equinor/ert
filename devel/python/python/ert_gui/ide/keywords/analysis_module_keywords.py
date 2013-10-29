@@ -9,12 +9,13 @@ class AnalysisModuleKeywords(object):
         ert_keywords.addKeyword(self.addAnalysisLoad())
         ert_keywords.addKeyword(self.addAnalysisSelect())
         ert_keywords.addKeyword(self.addAnalysisCopy())
+        ert_keywords.addKeyword(self.addAnalysisSetVar())
 
 
 
     def addAnalysisLoad(self):
         analysis_load = ConfigurationLineDefinition(keyword=KeywordDefinition("ANALYSIS_LOAD"),
-                                                    arguments=[StringArgument(),StringArgument()],
+                                                    arguments=[StringArgument(),PathArgument()],
                                                     documentation_link="analysis_module/analysis_load",
                                                     required=False,
                                                     group=self.group)
@@ -30,6 +31,16 @@ class AnalysisModuleKeywords(object):
                                                       group=self.group)
         return analysis_select
 
+
+    def addAnalysisSetVar(self):
+        analysis_set_var = ConfigurationLineDefinition(keyword=KeywordDefinition("ANALYSIS_SET_VAR"),
+                                                       arguments=[StringArgument(),
+                                                                  StringArgument(),
+                                                                  StringArgument(rest_of_line=True,allow_space=True)],
+                                                       documentation_link="analysis_module/analysis_set_var",
+                                                       required=False,
+                                                       group=self.group)
+        return analysis_set_var
 
 
 

@@ -58,7 +58,7 @@ class EnsembleKeywords(object):
 
     def addSelectCase(self):
         select_case = ConfigurationLineDefinition(keyword=KeywordDefinition("SELECT_CASE"),
-                                                  arguments=[PathArgument()],
+                                                  arguments=[StringArgument()],
                                                   documentation_link="ensemble/select_case",
                                                   required=False,
                                                   group=self.group)
@@ -67,7 +67,7 @@ class EnsembleKeywords(object):
 
     def addHistorySource(self):
         history_source = ConfigurationLineDefinition(keyword=KeywordDefinition("HISTORY_SOURCE"),
-                                                  arguments=[StringArgument()],
+                                                  arguments=[StringArgument(built_in=True)],
                                                   documentation_link="ensemble/history_source",
                                                   required=False,
                                                   group=self.group)
