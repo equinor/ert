@@ -34,8 +34,7 @@ class ConfigurationPanel(RowPanel):
             config_file = f.read()
 
         highlighter = KeywordHighlighter(ide.document())
-        ide.handler_names = sorted(highlighter.handler_names)
-
+        
         search.filterChanged.connect(highlighter.setSearchString)
 
         ide.document().setPlainText(config_file)
