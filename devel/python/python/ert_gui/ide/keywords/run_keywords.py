@@ -70,7 +70,8 @@ class RunKeywords(object):
 
     def addForwardModel(self):
         forward_model = ConfigurationLineDefinition(keyword=KeywordDefinition("FORWARD_MODEL"),
-                                                    arguments=[StringArgument(), StringArgument()],
+                                                    arguments=[StringArgument(),
+                                                               StringArgument(rest_of_line=True, allow_space=True)],
                                                     documentation_link="ensemble/forward_model",
                                                     required=False,
                                                     group=self.group)

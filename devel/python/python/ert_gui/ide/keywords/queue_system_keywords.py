@@ -86,7 +86,7 @@ class QueueSystemKeywords(object):
 
     def addRshHost(self):
         rsh_host = ConfigurationLineDefinition(keyword = KeywordDefinition("RSH_HOST"),
-                                               arguments=[StringArgument(), StringArgument(rest_of_line=True)],
+                                               arguments=[StringArgument(), StringArgument(rest_of_line=True, allow_space=True)],
                                                documentation_link="queue_system/rsh_host",
                                                group=self.group)
         return rsh_host

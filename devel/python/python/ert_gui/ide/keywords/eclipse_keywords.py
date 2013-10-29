@@ -73,7 +73,9 @@ class EclipseKeywords(object):
 
     def addDataKw(self):
         data_kw = ConfigurationLineDefinition(keyword=KeywordDefinition("DATA_KW"),
-                                                    arguments=[StringArgument(), StringArgument()],
+                                                    arguments=[StringArgument(),
+                                                               StringArgument(),
+                                                               StringArgument(rest_of_line=True, allow_space=True)],
                                                     documentation_link="ensemble/data_kw",
                                                     required=False,
                                                     group=self.group)

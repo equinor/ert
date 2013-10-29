@@ -19,7 +19,6 @@ class EnkfControlKeywords(object):
         ert_keywords.addKeyword(self.addEnkfScaling())
         ert_keywords.addKeyword(self.addEnkfTruncation())
         ert_keywords.addKeyword(self.addUpdateLogPath())
-        ert_keywords.addKeyword(self.addSchedulePredictionFile())
 
 
 
@@ -83,7 +82,7 @@ class EnkfControlKeywords(object):
 
     def addEnkfMode(self):
         enkf_mode = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_MODE"),
-                                                    arguments=[StringArgument()],
+                                                    arguments=[StringArgument(built_in=True)],
                                                     documentation_link="enkf_control/enkf_mode",
                                                     required=False,
                                                     group=self.group)
@@ -148,11 +147,3 @@ class EnkfControlKeywords(object):
         return update_log_path
 
 
-
-    def addSchedulePredictionFile(self):
-        schedule_prediction_file = ConfigurationLineDefinition(keyword=KeywordDefinition("SCHEDULE_PREDICTION_FILE"),
-                                                      arguments=[PathArgument()],
-                                                      documentation_link="enkf_control/schedule_prediction_file",
-                                                      required=False,
-                                                      group=self.group)
-        return schedule_prediction_file

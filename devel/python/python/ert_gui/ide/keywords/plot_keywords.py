@@ -99,7 +99,7 @@ class PlotKeywords(object):
 
     def addRefcaseList(self):
         refcase_list = ConfigurationLineDefinition(keyword=KeywordDefinition("REFCASE_LIST"),
-                                                   arguments=[PathArgument(), StringArgument(rest_of_line=True)],
+                                                   arguments=[PathArgument(), StringArgument(rest_of_line=True,allow_space=True)],
                                                    documentation_link="plot/refcase_list",
                                                    required=False,
                                                    group=self.group)
