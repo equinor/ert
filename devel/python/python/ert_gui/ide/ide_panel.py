@@ -6,8 +6,6 @@ from PyQt4.QtGui import QPlainTextEdit, QTextOption, QCompleter, QStringListMode
 class IDEPanel(QPlainTextEdit):
     def __init__(self):
         QPlainTextEdit.__init__(self)
-        self.setMinimumWidth(1000)
-        self.setMinimumHeight(800)
         self.setWordWrapMode(QTextOption.NoWrap)
         self.setFont(QFont("monospace", 10))
         self.setCursorWidth(2)
