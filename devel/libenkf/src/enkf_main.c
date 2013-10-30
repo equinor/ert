@@ -2811,7 +2811,7 @@ enkf_fs_type * enkf_main_get_alt_fs(const enkf_main_type * enkf_main , const cha
                              model_config_get_dbase_type( enkf_main->model_config ) , 
                              model_config_get_dbase_args( enkf_main->model_config ));
       }
-      alt_fs = enkf_fs_open( new_mount_point , read_only );
+      alt_fs = enkf_fs_mount( new_mount_point , read_only );
     }
     free( new_mount_point );
   }
