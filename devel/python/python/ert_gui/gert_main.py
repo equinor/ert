@@ -131,6 +131,10 @@ from ert_gui.newconfig import NewConfigurationDialog
 from ert_gui.widgets.util import resourceImage
 
 
+def reloadGERT():
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
 def main():
     QApplication.setGraphicsSystem("raster")
     app = QApplication(sys.argv) #Early so that QT is initialized before other imports
@@ -187,8 +191,11 @@ def main():
 
         simulation_panel = SimulationPanel()
         window.addTab(simulation_panel.getName(), simulation_panel)
+
         configuration_panel = ConfigurationPanel(os.path.basename(enkf_config))
+        configuration_panel.reloadApplication.connect(reloadGERT)
         window.addTab(configuration_panel.getName(), configuration_panel)
+
         plot_panel = PlotPanel()
         window.addTab(plot_panel.getName(), plot_panel)
 

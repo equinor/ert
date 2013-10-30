@@ -1,49 +1,74 @@
-import os
-from PyQt4.QtGui import QWidget, QVBoxLayout
+import shutil
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QToolButton, QStyle, QStyleOption, QMessageBox, QSizePolicy
 from ert_gui.ide.highlighter import KeywordHighlighter
 from ert_gui.ide.ide_panel import IDEPanel
-from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.queue_system.queue_system_selector import QueueSystemSelector
-from ert_gui.pages.case_init_configuration import CaseInitializationConfigurationPanel
-from ert_gui.pages.queue_system_configuration import QueueSystemConfigurationPanel
-from ert_gui.widgets.combo_choice import ComboChoice
-from ert_gui.widgets.row_panel import RowPanel
 from ert_gui.widgets.search_box import SearchBox
 
 
-class ConfigurationPanel(RowPanel):
+class ConfigurationPanel(QWidget):
 
-    def __init__(self, config_file):
-        RowPanel.__init__(self, "Configuration")
+    reloadApplication = pyqtSignal()
 
-        central_widget = QWidget()
+    def __init__(self, config_file_path):
+        QWidget.__init__(self)
 
-        def getLabel():
-            return ""
-        central_widget.getLabel = getLabel
         layout = QVBoxLayout()
-        central_widget.setLayout(layout)
+
+        toolbar = QToolBar("toolbar")
+
+        # start_icon = toolbar.style().standardIcon(QStyle.SP_MediaPlay)
+        # start_action = toolbar.addAction(start_icon, "Run simulations")
+        # start_action.triggered.connect(self.start)
+        #
+        # toolbar.addSeparator()
+
+        save_icon = toolbar.style().standardIcon(QStyle.SP_DialogSaveButton)
+        save_action = toolbar.addAction(save_icon, "Save")
+        save_action.triggered.connect(self.save)
+
+        reload_icon = toolbar.style().standardIcon(QStyle.SP_BrowserReload)
+        reload_action = toolbar.addAction(reload_icon, "Reload")
+        reload_action.triggered.connect(self.reload)
+
+        toolbar.addSeparator()
+
+        stretchy_separator = QWidget()
+        stretchy_separator.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        toolbar.addWidget(stretchy_separator)
+
+
+
 
         search = SearchBox()
-        ide = IDEPanel()
+        search.setMaximumWidth(200)
+        search.setContentsMargins(5, 2, 5, 2)
 
-        layout.addWidget(search)
-        layout.addWidget(ide, 1)
+        toolbar.addWidget(search)
 
-        with open(config_file) as f:
-            config_file = f.read()
+        layout.addWidget(toolbar)
 
-        highlighter = KeywordHighlighter(ide.document())
+        self.ide_panel = IDEPanel()
+        layout.addWidget(self.ide_panel, 1)
+
+        self.config_file_path = config_file_path
+
+        with open(config_file_path) as f:
+            config_file_text = f.read()
+
+        highlighter = KeywordHighlighter(self.ide_panel.document())
         
         search.filterChanged.connect(highlighter.setSearchString)
 
-        ide.document().setPlainText(config_file)
+        self.ide_panel.document().setPlainText(config_file_text)
 
-        cursor = ide.textCursor()
+        cursor = self.ide_panel.textCursor()
         cursor.setPosition(0)
-        ide.setTextCursor(cursor)
-        ide.setFocus()
-        self.addRow(central_widget)
+        self.ide_panel.setTextCursor(cursor)
+        self.ide_panel.setFocus()
+
+
+        self.setLayout(layout)
 
         # self.addLabeledSeparator("Case initialization")
         # case_combo = ComboChoice(CaseSelectorModel(), "Current case", "init/current_case_selection")
@@ -58,5 +83,25 @@ class ConfigurationPanel(RowPanel):
         # self.addRow(queue_system_combo, queue_system_configurator)
 
 
+    def getName(self):
+        return "Configuration"
+
+    def save(self):
+        backup_path = "%s.backup" % self.config_file_path
+        shutil.copyfile(self.config_file_path, backup_path)
+
+        with open(self.config_file_path, "w") as f:
+            f.write(self.ide_panel.getText())
+
+        message = "To make your changes current, a reload of the configuration file is required. Would you like to reload now?"
+        result = QMessageBox.information(self, "Reload required!", message, QMessageBox.Yes | QMessageBox.No)
+
+        if result == QMessageBox.Yes:
+            self.reload()
 
 
+    def reload(self):
+        self.reloadApplication.emit()
+
+    def start(self):
+        print("Start!")
