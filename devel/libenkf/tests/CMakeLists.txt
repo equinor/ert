@@ -4,9 +4,9 @@ target_link_libraries( enkf_runpath_list enkf test_util )
 add_executable( enkf_site_config enkf_site_config.c )
 target_link_libraries( enkf_site_config enkf test_util )
 
-add_executable( enkf_plot_member enkf_plot_member.c )
-target_link_libraries( enkf_plot_member enkf test_util )
-add_test( enkf_plot_member ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_member)
+add_executable( enkf_plot_tvector enkf_plot_tvector.c )
+target_link_libraries( enkf_plot_tvector enkf test_util )
+add_test( enkf_plot_tvector ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_tvector)
 
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
