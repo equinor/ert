@@ -157,9 +157,9 @@ class ErtKeywordTest(ExtendedTestCase):
 
     def test_report_keywords(self):
         self.keywordTest("REPORT_CONTEXT", [StringArgument, StringArgument], "report/report_context", "Report")
-        self.keywordTest("REPORT_LIST", [StringArgument, StringArgument], "report/report_list", "Report")
+        self.keywordTest("REPORT_LIST", [StringArgument], "report/report_list", "Report")
         self.keywordTest("REPORT_PATH", [PathArgument], "report/report_path", "Report")
-        self.keywordTest("REPORT_SEARCH_PATH", [PathArgument, StringArgument], "report/report_search_path", "Report")
+        self.keywordTest("REPORT_SEARCH_PATH", [StringArgument], "report/report_search_path", "Report")
         self.keywordTest("REPORT_WELL_LIST", [StringArgument, StringArgument], "report/report_well_list", "Report")
         self.keywordTest("REPORT_GROUP_LIST", [StringArgument, StringArgument], "report/report_group_list", "Report")
         self.keywordTest("REPORT_TIMEOUT", [IntegerArgument], "report/report_timeout", "Report")

@@ -28,7 +28,7 @@ class ReportKeywords(object):
 
     def addReportList(self):
         report_list = ConfigurationLineDefinition(keyword=KeywordDefinition("REPORT_LIST"),
-                                                  arguments=[StringArgument(), StringArgument(rest_of_line=True,allow_space=True)],
+                                                  arguments=[StringArgument(rest_of_line=True,allow_space=True)],
                                                   documentation_link="report/report_list",
                                                   required=False,
                                                   group=self.group)
@@ -48,7 +48,7 @@ class ReportKeywords(object):
 
     def addReportSearchPath(self):
         report_search_path = ConfigurationLineDefinition(keyword=KeywordDefinition("REPORT_SEARCH_PATH"),
-                                                     arguments=[PathArgument(),StringArgument(rest_of_line=True,allow_space=True)],
+                                                     arguments=[StringArgument(rest_of_line=True,allow_space=True)],
                                                      documentation_link="report/report_search_path",
                                                      required=False,
                                                      group=self.group)
