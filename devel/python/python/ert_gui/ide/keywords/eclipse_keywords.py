@@ -15,6 +15,8 @@ class EclipseKeywords(object):
         ert_keywords.addKeyword(self.addInitSection())
         ert_keywords.addKeyword(self.addScheduleFile())
         ert_keywords.addKeyword(self.addDataKw())
+        ert_keywords.addKeyword(self.addEquilInitFile())
+
 
 
     def addDataFile(self):
@@ -24,6 +26,14 @@ class EclipseKeywords(object):
                                                 required=True,
                                                 group=self.group)
         return data_file
+
+
+    def addEquilInitFile(self):
+        equil_init_file = ConfigurationLineDefinition(keyword=KeywordDefinition("EQUIL_INIT_FILE"),
+                                                      arguments=[PathArgument()],
+                                                      documentation_link="eclipse/equil_init_file",
+                                                      group=self.group)
+        return equil_init_file
 
 
 
@@ -74,7 +84,6 @@ class EclipseKeywords(object):
     def addDataKw(self):
         data_kw = ConfigurationLineDefinition(keyword=KeywordDefinition("DATA_KW"),
                                                     arguments=[StringArgument(),
-                                                               StringArgument(),
                                                                StringArgument(rest_of_line=True, allow_space=True)],
                                                     documentation_link="ensemble/data_kw",
                                                     required=False,

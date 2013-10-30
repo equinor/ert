@@ -11,6 +11,9 @@ class ParametrizationKeywords(object):
         ert_keywords.addKeyword(self.addGenKw())
         ert_keywords.addKeyword(self.addSummary())
         ert_keywords.addKeyword(self.addGenParam())
+        ert_keywords.addKeyword(self.addDBaseType())
+        ert_keywords.addKeyword(self.addStoreSeed())
+        ert_keywords.addKeyword(self.addLoadSeed())
 
 
 
@@ -68,3 +71,29 @@ class ParametrizationKeywords(object):
                                               required=False,
                                               group=self.group)
         return summary
+
+    def addDBaseType(self):
+        dbase_type = ConfigurationLineDefinition(keyword=KeywordDefinition("DBASE_TYPE"),
+                                                  arguments=[StringArgument()],
+                                                  documentation_link="parametrization/dbase_type",
+                                                  required=False,
+                                                  group=self.group)
+        return dbase_type
+
+
+    def addStoreSeed(self):
+        store_seed = ConfigurationLineDefinition(keyword=KeywordDefinition("STORE_SEED"),
+                                                  arguments=[StringArgument(built_in=True)],
+                                                  documentation_link="parametrization/store_seed",
+                                                  required=False,
+                                                  group=self.group)
+        return store_seed
+
+
+    def addLoadSeed(self):
+        load_seed = ConfigurationLineDefinition(keyword=KeywordDefinition("LOAD_SEED"),
+                                                arguments=[StringArgument(built_in=True)],
+                                                documentation_link="parametrization/load_seed",
+                                                required=False,
+                                                group=self.group)
+        return load_seed
