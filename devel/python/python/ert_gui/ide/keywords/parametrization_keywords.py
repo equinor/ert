@@ -42,7 +42,7 @@ class ParametrizationKeywords(object):
         gen_kw = ConfigurationLineDefinition(keyword=KeywordDefinition("GEN_KW"),
                                             arguments=[StringArgument(),
                                                        StringArgument(),
-                                                       StringArgument(built_in=True,allow_space=True)],
+                                                       StringArgument(rest_of_line=True,allow_space=True)],
                                             documentation_link="parametrization/gen_kw",
                                             required=False,
                                             group=self.group)
@@ -63,7 +63,7 @@ class ParametrizationKeywords(object):
 
     def addSummary(self):
         summary = ConfigurationLineDefinition(keyword=KeywordDefinition("SUMMARY"),
-                                              arguments=[StringArgument()],
+                                              arguments=[StringArgument(rest_of_line=True,allow_space=True)],
                                               documentation_link="parametrization/summary",
                                               required=False,
                                               group=self.group)

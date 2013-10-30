@@ -10,12 +10,15 @@ class AnalysisModuleKeywords(object):
         ert_keywords.addKeyword(self.addAnalysisSelect())
         ert_keywords.addKeyword(self.addAnalysisCopy())
         ert_keywords.addKeyword(self.addAnalysisSetVar())
+        ert_keywords.addKeyword(self.addIterRunpath())
+        ert_keywords.addKeyword(self.addIterCase())
+        ert_keywords.addKeyword(self.addIterCount())
 
 
 
     def addAnalysisLoad(self):
         analysis_load = ConfigurationLineDefinition(keyword=KeywordDefinition("ANALYSIS_LOAD"),
-                                                    arguments=[StringArgument(),PathArgument()],
+                                                    arguments=[StringArgument(),StringArgument()],
                                                     documentation_link="analysis_module/analysis_load",
                                                     required=False,
                                                     group=self.group)
@@ -51,3 +54,31 @@ class AnalysisModuleKeywords(object):
                                                     required=False,
                                                     group=self.group)
         return analysis_copy
+
+
+
+    def addIterRunpath(self):
+        iter_runpath = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_RUNPATH"),
+                                                   arguments=[PathArgument()],
+                                                   documentation_link="analysis_module/iter_runpath",
+                                                   required=False,
+                                                   group=self.group)
+        return iter_runpath
+
+
+    def addIterCase(self):
+        iter_case = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_CASE"),
+                                                   arguments=[StringArgument()],
+                                                   documentation_link="analysis_module/iter_case",
+                                                   required=False,
+                                                   group=self.group)
+        return iter_case
+
+
+    def addIterCount(self):
+        iter_count = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_COUNT"),
+                                                 arguments=[IntegerArgument()],
+                                                 documentation_link="analysis_module/iter_count",
+                                                 required=False,
+                                                 group=self.group)
+        return iter_count

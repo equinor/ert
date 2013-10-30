@@ -15,8 +15,10 @@ class RunKeywords(object):
         ert_keywords.addKeyword(self.addForwardModel())
         ert_keywords.addKeyword(self.addJobScript())
         ert_keywords.addKeyword(self.addRunTemplate())
-
-
+        ert_keywords.addKeyword(self.addLogLevel())
+        ert_keywords.addKeyword(self.addLogFile())
+        ert_keywords.addKeyword(self.addMaxSubmit())
+        ert_keywords.addKeyword(self.addMaxResample())
 
 
 
@@ -83,8 +85,7 @@ class RunKeywords(object):
 
     def addForwardModel(self):
         forward_model = ConfigurationLineDefinition(keyword=KeywordDefinition("FORWARD_MODEL"),
-                                                    arguments=[StringArgument(),
-                                                               StringArgument(rest_of_line=True, allow_space=True)],
+                                                    arguments=[StringArgument(rest_of_line=True, allow_space=True)],
                                                     documentation_link="run/forward_model",
                                                     required=False,
                                                     group=self.group)
@@ -105,3 +106,39 @@ class RunKeywords(object):
                                                  required=False,
                                                  group=self.group)
         return run_template
+
+
+    def addLogLevel(self):
+        log_level = ConfigurationLineDefinition(keyword=KeywordDefinition("LOG_LEVEL"),
+                                                      arguments=[IntegerArgument()],
+                                                      documentation_link="run/log_level",
+                                                      required=False,
+                                                      group=self.group)
+        return log_level
+
+
+    def addLogFile(self):
+        log_file = ConfigurationLineDefinition(keyword=KeywordDefinition("LOG_FILE"),
+                                                      arguments=[PathArgument()],
+                                                      documentation_link="run/log_file",
+                                                      required=False,
+                                                      group=self.group)
+        return log_file
+
+
+
+    def addMaxSubmit(self):
+        max_submit = ConfigurationLineDefinition(keyword = KeywordDefinition("MAX_SUBMIT"),
+                                                      arguments=[IntegerArgument()],
+                                                      documentation_link="run/max_submit",
+                                                      group=self.group)
+        return max_submit
+
+
+    def addMaxResample(self):
+        max_resample = ConfigurationLineDefinition(keyword=KeywordDefinition("MAX_RESAMPLE"),
+                                                  arguments=[IntegerArgument()],
+                                                  documentation_link="run/max_resample",
+                                                  required=False,
+                                                  group=self.group)
+        return max_resample
