@@ -12,6 +12,10 @@ add_executable( enkf_plot_data enkf_plot_data.c )
 target_link_libraries( enkf_plot_data enkf test_util )
 add_test( enkf_plot_data ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data)
 
+add_executable( enkf_plot_data_fs enkf_plot_data_fs.c )
+target_link_libraries( enkf_plot_data_fs enkf test_util )
+add_test( enkf_plot_data_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/plotData/config )
+
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
 
@@ -198,6 +202,7 @@ add_test( enkf_ensemble  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble )
 add_test( enkf_state_map  ${EXECUTABLE_OUTPUT_PATH}/enkf_state_map )
 add_test( enkf_meas_data  ${EXECUTABLE_OUTPUT_PATH}/enkf_meas_data )
 
+set_property( TEST enkf_plot_data_fs  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_time_map2     PROPERTY LABELS StatoilData )
 set_property( TEST enkf_site_config   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_report_step_compatible_TRUE  PROPERTY LABELS StatoilData )
