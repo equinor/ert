@@ -25,7 +25,6 @@
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/member_config.h>
 #include <ert/enkf/enkf_plot_member.h>
-#include <ert/enkf/enkf_plot_arg.h>
 #include <ert/enkf/enkf_plot_data.h>
 
 
@@ -33,7 +32,6 @@
 struct enkf_plot_data_struct {
   time_t                   start_time;
   bool                     time_mode;
-  enkf_plot_arg_type     * shared_arg;
   /*-----------------------------------------------------------------*/
   int                      alloc_size;
   int                      size;
@@ -47,11 +45,10 @@ static void enkf_plot_data_resize( enkf_plot_data_type * plot_data , int new_siz
   {
     int iens;
     for (iens = plot_data->alloc_size; iens < new_size; iens++) 
-      plot_data->ensemble[iens] = enkf_plot_member_alloc( plot_data->shared_arg , plot_data->start_time );
+      plot_data->ensemble[iens] = enkf_plot_member_alloc( );
   }
   plot_data->alloc_size = new_size;
 }
-
 
 
 void enkf_plot_data_free( enkf_plot_data_type * plot_data ) {
@@ -61,8 +58,6 @@ void enkf_plot_data_free( enkf_plot_data_type * plot_data ) {
       enkf_plot_member_free( plot_data->ensemble[iens] );
   }
   
-  if (plot_data->shared_arg != NULL)
-    enkf_plot_arg_free( plot_data->shared_arg );
   free( plot_data );
 }
 
@@ -79,7 +74,6 @@ enkf_plot_data_type * enkf_plot_data_alloc( time_t start_time ) {
   plot_data->ensemble   = NULL;
   enkf_plot_data_resize( plot_data , 32 );
   
-  plot_data->shared_arg = NULL;
   return plot_data;
 }
 
@@ -109,7 +103,7 @@ void * enkf_plot_data_load__( void *arg ) {
       enkf_plot_member_type * plot_member = plot_data->ensemble[iens];
       
       enkf_plot_member_safe_cast( plot_member );
-      enkf_plot_member_load( plot_member , enkf_node , fs , user_key , iens , state , plot_data->shared_arg , plot_data->time_mode , step1 , step2 );
+      enkf_plot_member_load( plot_member , enkf_node , fs , user_key , iens , state , plot_data->time_mode , step1 , step2 );
       
     }
   }

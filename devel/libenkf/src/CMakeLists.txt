@@ -65,7 +65,6 @@ set( source_files
      enkf_plot_member.c 
      qc_module.c 
      ert_report_list.c 
-     enkf_plot_arg.c 
      runpath_list.c 
      ert_workflow_list.c 
      analysis_iter_config.c 
@@ -155,7 +154,6 @@ set( header_files
      enkf_plot_member.h 
      qc_module.h 
      ert_report_list.h 
-     enkf_plot_arg.h 
      runpath_list.h 
      ert_workflow_list.h 
      analysis_iter_config.h 
