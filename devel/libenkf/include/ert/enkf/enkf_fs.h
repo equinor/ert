@@ -45,6 +45,9 @@ extern "C" {
   void              enkf_fs_fsync( enkf_fs_type * fs );
   void              enkf_fs_add_index_node(enkf_fs_type *  , int , int , const char * , enkf_var_type, ert_impl_type);
 
+  int               enkf_fs_get_refcount( const enkf_fs_type * fs );
+  enkf_fs_type    * enkf_fs_get_ref( enkf_fs_type * fs );
+  enkf_fs_type    * enkf_fs_get_weakref( enkf_fs_type * fs );
   void              enkf_fs_umount( enkf_fs_type * fs );
   enkf_fs_type    * enkf_fs_mount( const char * path , bool read_only);
   int               enkf_fs_get_version104( const char * path );

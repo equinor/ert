@@ -64,8 +64,9 @@ extern "C" {
   /*****************************************************************/
   
   typedef struct enkf_main_struct enkf_main_type;
-  void                          enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs);
-  enkf_fs_type                * enkf_main_get_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
+  //void                          enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs);
+  bool                          enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path);
+  enkf_fs_type                * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
   stringlist_type             * enkf_main_alloc_caselist( const enkf_main_type * enkf_main );
   void                          enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path );
   char                        * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path);
