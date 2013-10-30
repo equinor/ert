@@ -72,6 +72,9 @@ set(TEST_SOURCES
     ert_tests/gui/ide/test_path_argument.py
     ert_tests/gui/ide/test_tokens.py
 
+    ert_tests/gui/ide/wizards/__init__.py
+    ert_tests/gui/ide/wizards/test_tree_structure.py
+
 
     ert_tests/run/__init__.py
     ert_tests/run/test_run.py
@@ -120,7 +123,7 @@ add_test( NAME python.tests.ert.util.stringlist
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_string_list.StringListTest )
           
-add_test( NAME python.ert.util.ui_return
+add_test( NAME python.tests.ert.util.ui_return
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.util.test_ui_return.UIReturnTest )
 
@@ -229,6 +232,10 @@ if (ERT_BUILD_GUI)
     add_test( NAME python.tests.ert_gui.ide.tokens
               WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
               COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_tokens.TokenTest)
+
+    add_test( NAME python.tests.ert_gui.ide.wizards.tree_structure
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.wizards.test_tree_structure.TreeStructureTest)
 
 endif()
 
@@ -345,7 +352,7 @@ add_test( NAME python.tests.ert.analysis.enums
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.analysis.test_options_enum.AnalysisOptionsEnumTest)
 
-add_test( NAME python.ert.analysis.analysis_module
+add_test( NAME python.tests.ert.analysis.analysis_module
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.analysis.test_analysis_module.AnalysisModuleTest)
 
