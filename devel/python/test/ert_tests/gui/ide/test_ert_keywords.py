@@ -28,12 +28,13 @@ class ErtKeywordTest(ExtendedTestCase):
 
     def test_eclipse_keywords(self):
         self.keywordTest("DATA_FILE", [PathArgument], "eclipse/data_file", "Eclipse", True)
+        self.keywordTest("EQUIL_INIT_FILE", [PathArgument], "eclipse/equil_init_file", "Eclipse")
         self.keywordTest("ECLBASE", [StringArgument], "eclipse/ecl_base", "Eclipse", True)
         self.keywordTest("JOBNAME", [StringArgument], "eclipse/job_name", "Eclipse", True)
         self.keywordTest("GRID", [PathArgument], "eclipse/grid", "Eclipse", True)
         self.keywordTest("INIT_SECTION", [PathArgument], "eclipse/init_section", "Eclipse", True)
         self.keywordTest("SCHEDULE_FILE", [PathArgument], "ensemble/schedule_file", "Eclipse", True)
-        self.keywordTest("DATA_KW", [StringArgument, StringArgument, StringArgument], "ensemble/data_kw", "Eclipse")
+        self.keywordTest("DATA_KW", [StringArgument, StringArgument], "ensemble/data_kw", "Eclipse")
 
     def test_ensemble_keywords(self):
         self.keywordTest("NUM_REALIZATIONS", [IntegerArgument], "ensemble/num_realizations", "Ensemble", True)
@@ -46,9 +47,6 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("INCLUDE", [PathArgument], "ensemble/include", "Ensemble")
         self.keywordTest("OBS_CONFIG", [PathArgument], "ensemble/obs_config", "Ensemble")
         self.keywordTest("RESULT_PATH", [PathArgument], "ensemble/result_path", "Ensemble")
-        self.keywordTest("DBASE_TYPE", [StringArgument], "ensemble/dbase_type", "Ensemble")
-        self.keywordTest("STORE_SEED", [StringArgument], "ensemble/store_seed", "Ensemble")
-        self.keywordTest("LOAD_SEED", [StringArgument], "ensemble/load_seed", "Ensemble")
 
 
     def test_run_keywords(self):
@@ -78,6 +76,9 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("GEN_KW", [StringArgument,StringArgument,StringArgument], "parametrization/gen_kw", "Parametrization")
         self.keywordTest("GEN_PARAM", [StringArgument,StringArgument,StringArgument], "parametrization/gen_param", "Parametrization")
         self.keywordTest("SUMMARY", [StringArgument], "parametrization/summary", "Parametrization")
+        self.keywordTest("DBASE_TYPE", [StringArgument], "parametrization/dbase_type", "Parametrization")
+        self.keywordTest("STORE_SEED", [StringArgument], "parametrization/store_seed", "Parametrization")
+        self.keywordTest("LOAD_SEED", [StringArgument], "parametrization/load_seed", "Parametrization")
 
     def test_enkf_control_keywords(self):
         self.keywordTest("ENKF_ALPHA", [FloatArgument], "enkf_control/enkf_alpha", "Enkf Control")

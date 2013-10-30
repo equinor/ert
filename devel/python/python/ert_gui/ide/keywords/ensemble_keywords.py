@@ -16,9 +16,6 @@ class EnsembleKeywords(object):
         ert_keywords.addKeyword(self.addInclude())
         ert_keywords.addKeyword(self.addObsConfig())
         ert_keywords.addKeyword(self.addResultPath())
-        ert_keywords.addKeyword(self.addDBaseType())
-        ert_keywords.addKeyword(self.addStoreSeed())
-        ert_keywords.addKeyword(self.addLoadSeed())
 
 
 
@@ -116,29 +113,4 @@ class EnsembleKeywords(object):
 
 
 
-    def addDBaseType(self):
-        dbase_type = ConfigurationLineDefinition(keyword=KeywordDefinition("DBASE_TYPE"),
-                                                  arguments=[StringArgument()],
-                                                  documentation_link="ensemble/dbase_type",
-                                                  required=False,
-                                                  group=self.group)
-        return dbase_type
-
-
-    def addStoreSeed(self):
-        store_seed = ConfigurationLineDefinition(keyword=KeywordDefinition("STORE_SEED"),
-                                                  arguments=[StringArgument(built_in=True)],
-                                                  documentation_link="ensemble/store_seed",
-                                                  required=False,
-                                                  group=self.group)
-        return store_seed
-
-
-    def addLoadSeed(self):
-        load_seed = ConfigurationLineDefinition(keyword=KeywordDefinition("LOAD_SEED"),
-                                                arguments=[StringArgument(built_in=True)],
-                                                documentation_link="ensemble/load_seed",
-                                                required=False,
-                                                group=self.group)
-        return load_seed
 
