@@ -14,7 +14,7 @@ set(PYTHON_SOURCES
     run_keywords.py
     simulation_control_keywords.py
     workflow_keywords.py
-    qt_keywords.py
+    qc_keywords.py
     unix_environment_keywords.py
     advanced_keywords.py
 )
