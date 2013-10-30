@@ -1,9 +1,9 @@
 import json
 import os
-from PyQt4.QtCore import QUrl, Qt
+from PyQt4.QtCore import QUrl, Qt, QObject, pyqtSignal, pyqtSlot, QVariant
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
 from PyQt4.QtNetwork import QNetworkProxy
-from PyQt4.QtWebKit import QWebView, QWebPage
+from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
 from ert_gui.models.connectors.plot.ensemble_summary_plot import EnsembleSummaryPlot
 
 
@@ -20,6 +20,21 @@ class PlotWebView(QWebView):
         QWebView.__init__(self)
         self.setPage(PlotWebPage())
         self.setRenderHint(QPainter.Antialiasing, True)
+        self.setContextMenuPolicy(Qt.NoContextMenu)
+        self.settings().setAttribute(QWebSettings.JavascriptEnabled, True)
+        self.settings().setAttribute(QWebSettings.LocalContentCanAccessFileUrls, True)
+        self.settings().setAttribute(QWebSettings.LocalContentCanAccessRemoteUrls, True)
+
+
+class PlotContextObject(QObject):
+    def __init__(self, data, parent=None):
+        QObject.__init__(self, parent)
+        self.__data = data
+
+    @pyqtSlot(result=QVariant)
+    def getPlotData(self):
+        return self.__data
+
 
 
 class PlotPanel(QWidget):
@@ -37,12 +52,21 @@ class PlotPanel(QWidget):
 
         layout = QGridLayout()
 
-        web_view = PlotWebView()
-        web_view.setUrl(QUrl("file://%s" % path))
+        self.web_view = PlotWebView()
+        self.web_view.page().mainFrame().javaScriptWindowObjectCleared.connect(self.applyContextObject)
+
+
+        self.web_view.setUrl(QUrl("file://%s" % path))
+
+        self.context_object = PlotContextObject(EnsembleSummaryPlot().getPlotData(), self)
+        self.applyContextObject()
+
+
+
         # web_view.page().mainFrame().setScrollBarPolicy(Qt.Horizontal, Qt.ScrollBarAlwaysOff)
         # web_view.page().mainFrame().setScrollBarPolicy(Qt.Vertical, Qt.ScrollBarAlwaysOff)
-        web_view.show()
-        layout.addWidget(web_view)
+        # web_view.show()
+        layout.addWidget(self.web_view)
 
         self.setLayout(layout)
 
@@ -50,11 +74,16 @@ class PlotPanel(QWidget):
 
         # print(json.dumps(EnsembleSummaryPlot().getPlotData()))
 
+    def applyContextObject(self):
+       self.web_view.page().mainFrame().addToJavaScriptWindowObject("plot_dat_source", self.context_object)
 
 
     def getName(self):
         return "Plot"
 
+
+    def scream(self):
+        print("Apappa ja ja!")
 
 
 
