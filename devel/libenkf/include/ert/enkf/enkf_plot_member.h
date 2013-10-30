@@ -36,13 +36,19 @@ extern "C" {
   typedef struct enkf_plot_member_struct enkf_plot_member_type;
   
   UTIL_SAFE_CAST_HEADER( enkf_plot_member );
+  UTIL_IS_INSTANCE_HEADER( enkf_plot_member );
 
-  enkf_plot_member_type * enkf_plot_member_alloc( enkf_plot_arg_type * shared_arg , time_t start_time);
-  void                    enkf_plot_member_reset( enkf_plot_member_type * plot_member , enkf_plot_arg_type * shared_arg , bool time_mode );
-  void                    enkf_plot_member_load( enkf_plot_member_type * plot_member , enkf_node_type * enkf_node , enkf_fs_type * fs , const char * user_key , int iens , state_enum state , enkf_plot_arg_type * shared_arg , bool time_mode , int step1 , int step2);
+  enkf_plot_member_type * enkf_plot_member_alloc( );
+  void                    enkf_plot_member_load( enkf_plot_member_type * plot_member , enkf_node_type * enkf_node , enkf_fs_type * fs , const char * user_key , int iens , state_enum state , bool time_mode , int step1 , int step2);
   void                    enkf_plot_member_load__( void *arg );
   void                    enkf_plot_member_free__( void * arg );
   void                    enkf_plot_member_free( enkf_plot_member_type * plot_member );
+  int                     enkf_plot_member_size( const enkf_plot_member_type * plot_member );
+  void                    enkf_plot_member_iset( enkf_plot_member_type * plot_member , int index , time_t time , double value);
+  double                  enkf_plot_member_iget_value( const enkf_plot_member_type * plot_member , int index);
+  time_t                  enkf_plot_member_iget_time( const enkf_plot_member_type * plot_member , int index);
+  bool                    enkf_plot_member_iget_active( const enkf_plot_member_type * plot_member , int index);
+  bool                    enkf_plot_member_all_active( const enkf_plot_member_type * plot_member );
 
 #ifdef __cplusplus
 }

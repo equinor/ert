@@ -18,62 +18,86 @@
 #include <ert/util/util.h>
 #include <ert/util/double_vector.h>
 #include <ert/util/time_t_vector.h>
+#include <ert/util/bool_vector.h>
 
 #include <ert/enkf/enkf_plot_member.h>
-#include <ert/enkf/enkf_plot_arg.h>
 
 #define ENKF_PLOT_MEMBER_ID 6111861
 
 struct enkf_plot_member_struct {
   UTIL_TYPE_ID_DECLARATION;
   double_vector_type        * data;
-  enkf_plot_arg_type        * arg;
-  time_t                      start_time;  
-  bool                        time_mode;
-  bool                        shared_arg;
+  double_vector_type        * work;
+  time_t_vector_type        * time;
+  bool_vector_type          * mask;
 };
 
 
 
 UTIL_SAFE_CAST_FUNCTION( enkf_plot_member , ENKF_PLOT_MEMBER_ID )
+UTIL_IS_INSTANCE_FUNCTION( enkf_plot_member , ENKF_PLOT_MEMBER_ID )
      
-enkf_plot_member_type * enkf_plot_member_alloc( enkf_plot_arg_type * shared_arg , time_t start_time) {
+
+
+static void enkf_plot_member_reset( enkf_plot_member_type * plot_member ) {
+  double_vector_reset( plot_member->data );
+  time_t_vector_reset( plot_member->time );
+  bool_vector_reset( plot_member->mask );
+}
+
+
+enkf_plot_member_type * enkf_plot_member_alloc( ) {
   enkf_plot_member_type * plot_member = util_malloc( sizeof * plot_member);
   UTIL_TYPE_ID_INIT( plot_member , ENKF_PLOT_MEMBER_ID );
 
-  plot_member->data          = double_vector_alloc( 0 , 0 );
-  plot_member->shared_arg    = true;
-  plot_member->start_time    = start_time;
-  enkf_plot_member_reset( plot_member , shared_arg , false );
-  
+  plot_member->data = double_vector_alloc( 0 , 0 );
+  plot_member->time = time_t_vector_alloc(-1 , 0);
+  plot_member->mask = bool_vector_alloc( false , 0 );
+  plot_member->work = double_vector_alloc(0,0);
+  enkf_plot_member_reset( plot_member );
   return plot_member;
 }
 
 
-void enkf_plot_member_reset( enkf_plot_member_type * plot_member , enkf_plot_arg_type * shared_arg , bool time_mode) {
-  if (!plot_member->shared_arg)
-    enkf_plot_arg_free( plot_member->arg );
-  
-  plot_member->time_mode  = time_mode;
-  if (shared_arg == NULL) {
-    plot_member->arg = enkf_plot_arg_alloc( plot_member->time_mode , plot_member->start_time );
-    plot_member->shared_arg = false;
-  } else {
-    plot_member->arg = shared_arg;
-    plot_member->shared_arg = true;
-  }
-}
-
-
-
-
 void enkf_plot_member_free( enkf_plot_member_type * plot_member ) {
   double_vector_free( plot_member->data );
-  if (!plot_member->shared_arg)
-    enkf_plot_arg_free( plot_member->arg );
-  free( plot_member );
+  double_vector_free( plot_member->work );
+  time_t_vector_free( plot_member->time );
+  bool_vector_free( plot_member->mask );
 }
 
+
+bool enkf_plot_member_all_active( const enkf_plot_member_type * plot_member ) {
+  bool all_active = true;
+  for (int i=0; i < bool_vector_size( plot_member->mask ); i++) 
+    all_active = all_active && bool_vector_iget(plot_member->mask , i );
+
+  return all_active;
+}
+
+
+int enkf_plot_member_size( const enkf_plot_member_type * plot_member ) {
+  return bool_vector_size( plot_member->mask );
+}
+
+
+void enkf_plot_member_iset( enkf_plot_member_type * plot_member , int index , time_t time , double value) {
+  time_t_vector_iset( plot_member->time , index , time );
+  double_vector_iset( plot_member->data , index , value );
+  bool_vector_iset( plot_member->mask , index , true );
+}
+
+double enkf_plot_member_iget_value( const enkf_plot_member_type * plot_member , int index) {
+  return double_vector_iget( plot_member->data , index);
+}
+
+time_t enkf_plot_member_iget_time( const enkf_plot_member_type * plot_member , int index) {
+  return time_t_vector_iget( plot_member->time , index);
+}
+
+bool enkf_plot_member_iget_active( const enkf_plot_member_type * plot_member , int index) {
+  return bool_vector_iget( plot_member->mask , index );
+}
 
 
 void enkf_plot_member_free__( void * arg ) {
@@ -90,17 +114,19 @@ void enkf_plot_member_load( enkf_plot_member_type * plot_member ,
                             const char * user_key , 
                             int iens , 
                             state_enum state , 
-                            enkf_plot_arg_type * shared_arg , 
                             bool time_mode , 
                             int step1 , int step2) {
-  enkf_plot_member_reset( plot_member , shared_arg , time_mode );
-
-  if (enkf_node_vector_storage( enkf_node )) 
-    enkf_node_user_get_vector(enkf_node , fs , user_key , iens , state , plot_member->data);
-  else {
-    if (shared_arg != NULL)
-      util_abort("%s: implementation error - shared arg can ONLY be used with vector nodes\n",__func__);
-    enkf_plot_arg_reset( plot_member->arg , time_mode , plot_member->start_time);
+  enkf_plot_member_reset( plot_member );
+  const time_map_type * time_map = enkf_fs_get_time_map( fs );
+  
+  if (enkf_node_vector_storage( enkf_node )) {
+    enkf_node_user_get_vector(enkf_node , fs , user_key , iens , state , plot_member->work);
+    for (int step = 0; step < time_map_get_size(time_map); step++) 
+      enkf_plot_member_iset( plot_member , 
+                             step , 
+                             double_vector_iget( plot_member->work , step ) , 
+                             time_map_iget( time_map , step ));
+  } else {
     int step;
     node_id_type node_id = {.iens        = iens,
                             .state       = state, 
@@ -110,37 +136,14 @@ void enkf_plot_member_load( enkf_plot_member_type * plot_member ,
       double value;
       node_id.report_step = step;
       if (enkf_node_user_get(enkf_node , fs , user_key , node_id , &value)) {
-        //??
-        //??
+        enkf_plot_member_iset( plot_member , 
+                               step , 
+                               value , 
+                               time_map_iget( time_map , step ));
       }
     }
-  }
-  
-  /*if (enkf_node_vector_storage( enkf_node )) {
-    enkf_node_user_get_vector(enkf_node , fs , user_key , iens , state , plot_member->data);
-    time_t_vector_memcpy( plot_member->sim_time , member_config_get_sim_time_ref( plot_member->member_config , fs));
-    if (step1 > 0) {
-    time_t_vector_idel_block( plot_member->sim_time , 0 , step1 );
-      double_vector_idel_block( plot_member->data , 0 , step1 );
-    }
-  } else {
-    int step;
-    node_id_type node_id = {.iens        = iens,
-                            .state       = state, 
-                            .report_step = 0 };
 
-    double_vector_reset( plot_member->data );
-    time_t_vector_reset( plot_member->sim_time );
-
-    for (step = step1 ; step <= step2; step++) {
-      double value;
-      if (enkf_node_user_get(enkf_node , fs , user_key , node_id , &value)) {
-        double_vector_append( plot_member->data , value);
-        time_t_vector_append( plot_member->sim_time , member_config_iget_sim_time( plot_member->member_config , step , fs ));
-      }
-    }
   }
-  */
 }
 
 
