@@ -422,7 +422,9 @@ void enkf_main_free(enkf_main_type * enkf_main){
   enkf_obs_free(enkf_main->obs);
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
-  if (enkf_main->dbase != NULL) enkf_fs_close( enkf_main->dbase );
+  if (enkf_main->dbase != NULL) 
+    enkf_fs_umount( enkf_main->dbase );
+
   util_safe_free( enkf_main->current_fs_case );
 
   if (log_is_open( enkf_main->logh ))
@@ -2709,7 +2711,7 @@ static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char
 
 
 static void enkf_main_close_fs( enkf_main_type * enkf_main ) {
-  enkf_fs_close( enkf_main->dbase );
+  enkf_fs_umount( enkf_main->dbase );
   enkf_main->dbase = NULL;
 }
 
@@ -2791,7 +2793,7 @@ stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
 
 void enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs) {
   if (fs != enkf_main->dbase) 
-    enkf_fs_close( fs );
+    enkf_fs_umount( fs );
 }
 
 

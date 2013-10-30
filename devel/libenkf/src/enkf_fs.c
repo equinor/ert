@@ -548,7 +548,7 @@ static void enkf_fs_free_driver(fs_driver_type * driver) {
 }
 
 
-void enkf_fs_close( enkf_fs_type * fs ) {
+void enkf_fs_umount( enkf_fs_type * fs ) {
   enkf_fs_fsync( fs );
   enkf_fs_fwrite_misfit( fs );
 
