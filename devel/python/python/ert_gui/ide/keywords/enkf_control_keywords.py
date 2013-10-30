@@ -21,8 +21,6 @@ class EnkfControlKeywords(object):
         ert_keywords.addKeyword(self.addUpdateLogPath())
         ert_keywords.addKeyword(self.addRerunStart())
         ert_keywords.addKeyword(self.addUpdateResults())
-        ert_keywords.addKeyword(self.addLogLevel())
-        ert_keywords.addKeyword(self.addLogFile())
 
 
     def addEnkfAlpha(self):
@@ -158,23 +156,6 @@ class EnkfControlKeywords(object):
                                                       required=False,
                                                       group=self.group)
         return update_log_path
-
-    def addLogLevel(self):
-        log_level = ConfigurationLineDefinition(keyword=KeywordDefinition("LOG_LEVEL"),
-                                                      arguments=[IntegerArgument()],
-                                                      documentation_link="enkf_control/log_level",
-                                                      required=False,
-                                                      group=self.group)
-        return log_level
-
-
-    def addLogFile(self):
-        log_file = ConfigurationLineDefinition(keyword=KeywordDefinition("LOG_FILE"),
-                                                      arguments=[PathArgument()],
-                                                      documentation_link="enkf_control/log_file",
-                                                      required=False,
-                                                      group=self.group)
-        return log_file
 
 
     def addUpdateResults(self):

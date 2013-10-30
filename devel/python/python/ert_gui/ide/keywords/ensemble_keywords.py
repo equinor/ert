@@ -16,14 +16,9 @@ class EnsembleKeywords(object):
         ert_keywords.addKeyword(self.addInclude())
         ert_keywords.addKeyword(self.addObsConfig())
         ert_keywords.addKeyword(self.addResultPath())
-        ert_keywords.addKeyword(self.addUMask())
-        ert_keywords.addKeyword(self.addMaxResample())
         ert_keywords.addKeyword(self.addDBaseType())
         ert_keywords.addKeyword(self.addStoreSeed())
         ert_keywords.addKeyword(self.addLoadSeed())
-        ert_keywords.addKeyword(self.addIterRunpath())
-        ert_keywords.addKeyword(self.addIterCase())
-        ert_keywords.addKeyword(self.addIterCount())
 
 
 
@@ -121,23 +116,6 @@ class EnsembleKeywords(object):
 
 
 
-    def addUMask(self):
-        umask = ConfigurationLineDefinition(keyword=KeywordDefinition("UMASK"),
-                                                  arguments=[IntegerArgument()],
-                                                  documentation_link="ensemble/umask",
-                                                  required=False,
-                                                  group=self.group)
-        return umask
-
-
-    def addMaxResample(self):
-        max_resample = ConfigurationLineDefinition(keyword=KeywordDefinition("MAX_RESAMPLE"),
-                                                  arguments=[IntegerArgument()],
-                                                  documentation_link="ensemble/max_resample",
-                                                  required=False,
-                                                  group=self.group)
-        return max_resample
-
     def addDBaseType(self):
         dbase_type = ConfigurationLineDefinition(keyword=KeywordDefinition("DBASE_TYPE"),
                                                   arguments=[StringArgument()],
@@ -164,29 +142,3 @@ class EnsembleKeywords(object):
                                                 group=self.group)
         return load_seed
 
-
-    def addIterRunpath(self):
-        iter_runpath = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_RUNPATH"),
-                                                   arguments=[PathArgument()],
-                                                   documentation_link="ensemble/iter_runpath",
-                                                   required=False,
-                                                   group=self.group)
-        return iter_runpath
-
-
-    def addIterCase(self):
-        iter_case = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_CASE"),
-                                                   arguments=[StringArgument()],
-                                                   documentation_link="ensemble/iter_case",
-                                                   required=False,
-                                                   group=self.group)
-        return iter_case
-
-
-    def addIterCount(self):
-        iter_count = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_COUNT"),
-                                                 arguments=[IntegerArgument()],
-                                                 documentation_link="ensemble/iter_count",
-                                                 required=False,
-                                                 group=self.group)
-        return iter_count
