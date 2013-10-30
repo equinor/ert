@@ -19,6 +19,7 @@ class QueueSystemKeywords(object):
         ert_keywords.addKeyword(self.addRshHost())
         ert_keywords.addKeyword(self.addRshCommand())
         ert_keywords.addKeyword(self.addMaxRunningRsh())
+        ert_keywords.addKeyword(self.addMaxSubmit())
 
 
     def addQueueOption(self):
@@ -106,3 +107,11 @@ class QueueSystemKeywords(object):
                                                       documentation_link="queue_system/max_running_rsh",
                                                       group=self.group)
         return max_running_rsh
+
+
+    def addMaxSubmit(self):
+        max_submit = ConfigurationLineDefinition(keyword = KeywordDefinition("MAX_SUBMIT"),
+                                                      arguments=[IntegerArgument()],
+                                                      documentation_link="queue_system/max_submit",
+                                                      group=self.group)
+        return max_submit

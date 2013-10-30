@@ -12,6 +12,7 @@ class ReportKeywords(object):
         ert_keywords.addKeyword(self.addReportPath())
         ert_keywords.addKeyword(self.addReportWellList())
         ert_keywords.addKeyword(self.addReportGroupList())
+        ert_keywords.addKeyword(self.addReportTimeout())
 
 
 
@@ -70,3 +71,11 @@ class ReportKeywords(object):
                                                      required=False,
                                                      group=self.group)
         return report_group_list
+
+    def addReportTimeout(self):
+        report_timeout = ConfigurationLineDefinition(keyword=KeywordDefinition("REPORT_TIMEOUT"),
+                                                     arguments=[IntegerArgument()],
+                                                     documentation_link="report/report_timeout",
+                                                     required=False,
+                                                     group=self.group)
+        return report_timeout

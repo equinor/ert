@@ -19,7 +19,10 @@ class EnkfControlKeywords(object):
         ert_keywords.addKeyword(self.addEnkfScaling())
         ert_keywords.addKeyword(self.addEnkfTruncation())
         ert_keywords.addKeyword(self.addUpdateLogPath())
-
+        ert_keywords.addKeyword(self.addRerunStart())
+        ert_keywords.addKeyword(self.addUpdateResults())
+        ert_keywords.addKeyword(self.addLogLevel())
+        ert_keywords.addKeyword(self.addLogFile())
 
 
     def addEnkfAlpha(self):
@@ -118,6 +121,16 @@ class EnkfControlKeywords(object):
         return enkf_rerun
 
 
+    def addRerunStart(self):
+        rerun_start = ConfigurationLineDefinition(keyword=KeywordDefinition("RERUN_START"),
+                                                 arguments=[IntegerArgument()],
+                                                 documentation_link="enkf_control/rerun_start",
+                                                 required=False,
+                                                 group=self.group)
+        return rerun_start
+
+
+
     def addEnkfScaling(self):
         enkf_scaling = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_SCALING"),
                                                    arguments=[BoolArgument()],
@@ -146,4 +159,29 @@ class EnkfControlKeywords(object):
                                                       group=self.group)
         return update_log_path
 
+    def addLogLevel(self):
+        log_level = ConfigurationLineDefinition(keyword=KeywordDefinition("LOG_LEVEL"),
+                                                      arguments=[IntegerArgument()],
+                                                      documentation_link="enkf_control/log_level",
+                                                      required=False,
+                                                      group=self.group)
+        return log_level
+
+
+    def addLogFile(self):
+        log_file = ConfigurationLineDefinition(keyword=KeywordDefinition("LOG_FILE"),
+                                                      arguments=[PathArgument()],
+                                                      documentation_link="enkf_control/log_file",
+                                                      required=False,
+                                                      group=self.group)
+        return log_file
+
+
+    def addUpdateResults(self):
+        update_results = ConfigurationLineDefinition(keyword=KeywordDefinition("UPDATE_RESULTS"),
+                                                     arguments=[BoolArgument()],
+                                                     documentation_link="enkf_control/update_results",
+                                                     required=False,
+                                                     group=self.group)
+        return update_results
 

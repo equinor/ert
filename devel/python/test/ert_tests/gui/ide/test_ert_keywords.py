@@ -43,17 +43,30 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("SELECT_CASE", [StringArgument], "ensemble/select_case", "Ensemble")
         self.keywordTest("HISTORY_SOURCE", [StringArgument], "ensemble/history_source", "Ensemble")
         self.keywordTest("REFCASE", [PathArgument], "ensemble/refcase", "Ensemble")
+        self.keywordTest("INCLUDE", [PathArgument], "ensemble/include", "Ensemble")
         self.keywordTest("OBS_CONFIG", [PathArgument], "ensemble/obs_config", "Ensemble")
         self.keywordTest("RESULT_PATH", [PathArgument], "ensemble/result_path", "Ensemble")
+        self.keywordTest("UMASK", [IntegerArgument], "ensemble/umask", "Ensemble")
+        self.keywordTest("MAX_RESAMPLE", [IntegerArgument], "ensemble/max_resample", "Ensemble")
+        self.keywordTest("DBASE_TYPE", [StringArgument], "ensemble/dbase_type", "Ensemble")
+        self.keywordTest("STORE_SEED", [StringArgument], "ensemble/store_seed", "Ensemble")
+        self.keywordTest("LOAD_SEED", [StringArgument], "ensemble/load_seed", "Ensemble")
+        self.keywordTest("ITER_RUNPATH", [PathArgument], "ensemble/iter_runpath", "Ensemble")
+        self.keywordTest("ITER_CASE", [StringArgument], "ensemble/iter_case", "Ensemble")
+        self.keywordTest("ITER_COUNT", [IntegerArgument], "ensemble/iter_count", "Ensemble")
+
 
     def test_run_keywords(self):
-        self.keywordTest("INSTALL_JOB", [StringArgument, PathArgument], "ensemble/install_job", "Run")
-        self.keywordTest("DELETE_RUNPATH", [StringArgument], "ensemble/delete_runpath", "Run")
-        self.keywordTest("KEEP_RUNPATH", [StringArgument], "ensemble/keep_runpath", "Run")
-        self.keywordTest("RUNPATH", [PathArgument], "ensemble/runpath", "Run")
-        self.keywordTest("RUNPATH_FILE", [PathArgument], "ensemble/runpath_file", "Run")
-        self.keywordTest("FORWARD_MODEL", [StringArgument, StringArgument], "ensemble/forward_model", "Run")
-        self.keywordTest("JOB_SCRIPT", [PathArgument], "ensemble/job_script", "Run")
+        self.keywordTest("INSTALL_JOB", [StringArgument, PathArgument], "run/install_job", "Run")
+        self.keywordTest("DELETE_RUNPATH", [StringArgument], "run/delete_runpath", "Run")
+        self.keywordTest("KEEP_RUNPATH", [StringArgument], "run/keep_runpath", "Run")
+        self.keywordTest("RUNPATH", [PathArgument], "run/runpath", "Run")
+        self.keywordTest("RERUN_PATH", [PathArgument], "run/rerun_path", "Run")
+        self.keywordTest("RUNPATH_FILE", [PathArgument], "run/runpath_file", "Run")
+        self.keywordTest("FORWARD_MODEL", [StringArgument, StringArgument], "run/forward_model", "Run")
+        self.keywordTest("JOB_SCRIPT", [PathArgument], "run/job_script", "Run")
+        self.keywordTest("RUN_TEMPLATE", [PathArgument, StringArgument], "run/run_template", "Run")
+
 
     def test_control_simulations_keywords(self):
         self.keywordTest("MAX_RUNTIME", [IntegerArgument], "control_simulations/max_runtime", "Simulation Control")
@@ -78,9 +91,14 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("ENKF_MERGE_OBSERVATIONS", [BoolArgument], "enkf_control/enkf_merge_observations", "Enkf Control")
         self.keywordTest("ENKF_NCOMP", [IntegerArgument], "enkf_control/enkf_ncomp", "Enkf Control")
         self.keywordTest("ENKF_RERUN", [BoolArgument], "enkf_control/enkf_rerun", "Enkf Control")
+        self.keywordTest("RERUN_START", [IntegerArgument], "enkf_control/rerun_start", "Enkf Control")
         self.keywordTest("ENKF_SCALING", [BoolArgument], "enkf_control/enkf_scaling", "Enkf Control")
         self.keywordTest("ENKF_TRUNCATION", [FloatArgument], "enkf_control/enkf_truncation", "Enkf Control")
         self.keywordTest("UPDATE_LOG_PATH", [PathArgument], "enkf_control/update_log_path", "Enkf Control")
+        self.keywordTest("LOG_LEVEL", [IntegerArgument], "enkf_control/log_level", "Enkf Control")
+        self.keywordTest("LOG_FILE", [PathArgument], "enkf_control/log_file", "Enkf Control")
+        self.keywordTest("UPDATE_RESULTS", [BoolArgument], "enkf_control/update_results", "Enkf Control")
+
 
     def test_analysis_module_keywords(self):
         self.keywordTest("ANALYSIS_LOAD", [StringArgument,PathArgument], "analysis_module/analysis_load", "Analysis Module")
@@ -105,6 +123,8 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("RSH_HOST", [StringArgument, StringArgument], "queue_system/rsh_host", "Queue System")
         self.keywordTest("RSH_COMMAND", [PathArgument], "queue_system/rsh_command", "Queue System")
         self.keywordTest("MAX_RUNNING_RSH", [IntegerArgument], "queue_system/max_running_rsh", "Queue System")
+        self.keywordTest("MAX_SUBMIT", [IntegerArgument], "queue_system/max_submit", "Queue System")
+
 
     def test_plot_keywords(self):
         self.keywordTest("IMAGE_VIEWER", [PathArgument], "plot/image_viewer", "Plot")
@@ -143,6 +163,8 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("REPORT_SEARCH_PATH", [PathArgument, StringArgument], "report/report_search_path", "Report")
         self.keywordTest("REPORT_WELL_LIST", [StringArgument, StringArgument], "report/report_well_list", "Report")
         self.keywordTest("REPORT_GROUP_LIST", [StringArgument, StringArgument], "report/report_group_list", "Report")
+        self.keywordTest("REPORT_TIMEOUT", [IntegerArgument], "report/report_timeout", "Report")
+
 
     def test_unix_environment_keywords(self):
         self.keywordTest("SETENV", [StringArgument, StringArgument], "unix_environment/setenv", "Unix")
