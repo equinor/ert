@@ -38,7 +38,7 @@ extern "C" {
   UTIL_IS_INSTANCE_HEADER( enkf_plot_tvector );
 
   enkf_plot_tvector_type * enkf_plot_tvector_alloc( );
-  void                    enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector , enkf_node_type * enkf_node , enkf_fs_type * fs , const char * user_key , int iens , state_enum state , bool time_mode , int step1 , int step2);
+  void                    enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector , enkf_node_type * enkf_node , enkf_fs_type * fs , const char * user_key , int iens , state_enum state);
   void                    enkf_plot_tvector_load__( void *arg );
   void                    enkf_plot_tvector_free__( void * arg );
   void                    enkf_plot_tvector_free( enkf_plot_tvector_type * plot_tvector );

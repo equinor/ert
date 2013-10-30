@@ -21,19 +21,20 @@
 #include <ert/util/double_vector.h>
 #include <ert/util/vector.h>
 #include <ert/util/thread_pool.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_plot_tvector.h>
 #include <ert/enkf/enkf_plot_data.h>
 
 
+#define ENKF_PLOT_DATA_TYPE_ID 3331063
 
 struct enkf_plot_data_struct {
-  time_t                   start_time;
-  bool                     time_mode;
-  /*-----------------------------------------------------------------*/
-  int                      alloc_size;
-  int                      size;
+  UTIL_TYPE_ID_DECLARATION;
+  const enkf_config_node_type * config_node;
+  int                       alloc_size;
+  int                       size;
   enkf_plot_tvector_type ** ensemble;
 };
 
@@ -60,21 +61,21 @@ void enkf_plot_data_free( enkf_plot_data_type * plot_data ) {
   free( plot_data );
 }
 
+UTIL_IS_INSTANCE_FUNCTION( enkf_plot_data , ENKF_PLOT_DATA_TYPE_ID )
 
 
-enkf_plot_data_type * enkf_plot_data_alloc( time_t start_time ) {
+enkf_plot_data_type * enkf_plot_data_alloc( const enkf_config_node_type * config_node ) {
   enkf_plot_data_type * plot_data = util_malloc( sizeof * plot_data);
-  
-  plot_data->start_time = start_time;
-  plot_data->time_mode  = false;
-
-  plot_data->alloc_size = 0;
-  plot_data->size       = 0;
-  plot_data->ensemble   = NULL;
+  UTIL_TYPE_ID_INIT( plot_data , ENKF_PLOT_DATA_TYPE_ID );
+  plot_data->size        = 0;
+  plot_data->config_node = config_node;
+  plot_data->alloc_size  = 0;
+  plot_data->ensemble    = NULL;
   enkf_plot_data_resize( plot_data , 32 );
   
   return plot_data;
 }
+
 
 
 void * enkf_plot_data_load__( void *arg ) {
@@ -84,11 +85,9 @@ void * enkf_plot_data_load__( void *arg ) {
   enkf_fs_type * fs                   = arg_pack_iget_ptr( arg_pack , 2 );
   const char * user_key               = arg_pack_iget_const_ptr( arg_pack , 3 );
   state_enum state                    = arg_pack_iget_int( arg_pack , 4 );
-  int step1                           = arg_pack_iget_int( arg_pack , 5 );
-  int step2                           = arg_pack_iget_int( arg_pack , 6 );
-  const int_vector_type * iens_list   = arg_pack_iget_ptr( arg_pack , 7 );         
-  int index1                          = arg_pack_iget_int( arg_pack , 8 );
-  int index2                          = arg_pack_iget_int( arg_pack , 9 );
+  const int_vector_type * iens_list   = arg_pack_iget_ptr( arg_pack , 5 );         
+  int index1                          = arg_pack_iget_int( arg_pack , 6 );
+  int index2                          = arg_pack_iget_int( arg_pack , 7 );
 
   enkf_node_type * enkf_node = enkf_node_alloc( config_node ); // Shared node used for all loading.
   
@@ -102,7 +101,7 @@ void * enkf_plot_data_load__( void *arg ) {
       enkf_plot_tvector_type * plot_tvector = plot_data->ensemble[iens];
       
       enkf_plot_tvector_safe_cast( plot_tvector );
-      enkf_plot_tvector_load( plot_tvector , enkf_node , fs , user_key , iens , state , plot_data->time_mode , step1 , step2 );
+      enkf_plot_tvector_load( plot_tvector , enkf_node , fs , user_key , iens , state );
       
     }
   }
@@ -119,12 +118,9 @@ void enkf_plot_data_load( enkf_plot_data_type * plot_data ,
                           enkf_fs_type * fs , 
                           const char * user_key , 
                           state_enum state , 
-                          const bool_vector_type * active ,
-                          bool time_mode,
-                          int step1 , int step2) {
+                          const bool_vector_type * active) {
   int iens;
   int_vector_type * iens_list = int_vector_alloc( 0 , 0 );
-  plot_data->time_mode = time_mode;
   {
     int ens_size = bool_vector_size( active );
 
@@ -154,8 +150,6 @@ void enkf_plot_data_load( enkf_plot_data_type * plot_data ,
       arg_pack_append_const_ptr( arg_list[i] , user_key );
       
       arg_pack_append_int( arg_list[i] , state );
-      arg_pack_append_int( arg_list[i] , step1 );
-      arg_pack_append_int( arg_list[i] , step2 );
 
       {
         int index1 = i * block_size;

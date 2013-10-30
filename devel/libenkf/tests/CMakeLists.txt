@@ -8,6 +8,10 @@ add_executable( enkf_plot_tvector enkf_plot_tvector.c )
 target_link_libraries( enkf_plot_tvector enkf test_util )
 add_test( enkf_plot_tvector ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_tvector)
 
+add_executable( enkf_plot_data enkf_plot_data.c )
+target_link_libraries( enkf_plot_data enkf test_util )
+add_test( enkf_plot_data ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data)
+
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
 
@@ -26,9 +30,9 @@ add_test( enkf_analysis  ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config)
 add_executable( enkf_analysis_config_ext_module enkf_analysis_config_ext_module.c )
 target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
 add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module 
-	rml_enkf ${LIBRARY_OUTPUT_PATH}/rml_enkf.so
-	rmli_enkf ${LIBRARY_OUTPUT_PATH}/rmli_enkf.so )
-	
+        rml_enkf ${LIBRARY_OUTPUT_PATH}/rml_enkf.so
+        rmli_enkf ${LIBRARY_OUTPUT_PATH}/rmli_enkf.so )
+        
 
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )

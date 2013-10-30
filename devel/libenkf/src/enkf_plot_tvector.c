@@ -113,11 +113,11 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
                             enkf_fs_type * fs , 
                             const char * user_key , 
                             int iens , 
-                            state_enum state , 
-                            bool time_mode , 
-                            int step1 , int step2) {
+                             state_enum state) {
   enkf_plot_tvector_reset( plot_tvector );
   time_map_type * time_map = enkf_fs_get_time_map( fs );
+  int step1 = 0;
+  int step2 = time_map_get_last_step( time_map );
   
   if (enkf_node_vector_storage( enkf_node )) {
     enkf_node_user_get_vector(enkf_node , fs , user_key , iens , state , plot_tvector->work);
