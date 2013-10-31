@@ -26,7 +26,7 @@
 
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_main.h>
-
+#include <ert/enkf/enkf_plot_tvector.h>
 
 
 void test_load_summary( enkf_main_type * enkf_main , const char * summary_key) {
@@ -39,7 +39,7 @@ void test_load_summary( enkf_main_type * enkf_main , const char * summary_key) {
     enkf_plot_data_load( plot_data , enkf_fs , NULL , FORECAST , NULL );
     test_assert_int_equal( 25 , enkf_plot_data_get_size( plot_data ));
     {
-      enkf_plot_vector_type * plot_vector = enkf_plot_data_iget( plot_data , 10 );
+      enkf_plot_tvector_type * plot_vector = enkf_plot_data_iget( plot_data , 10 );
       test_assert_true( enkf_plot_tvector_is_instance( plot_vector ));
     }
     enkf_fs_umount( enkf_fs );
