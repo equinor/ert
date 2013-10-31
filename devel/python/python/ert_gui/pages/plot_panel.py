@@ -31,9 +31,9 @@ class PlotContextObject(QObject):
         QObject.__init__(self, parent)
         self.__data = data
 
-    @pyqtSlot(result=QVariant)
+    @pyqtSlot(result=str)
     def getPlotData(self):
-        return self.__data
+        return json.dumps(EnsembleSummaryPlot().getPlotData())
 
 
 
@@ -54,36 +54,24 @@ class PlotPanel(QWidget):
 
         self.web_view = PlotWebView()
         self.web_view.page().mainFrame().javaScriptWindowObjectCleared.connect(self.applyContextObject)
-
-
         self.web_view.setUrl(QUrl("file://%s" % path))
 
         self.context_object = PlotContextObject(EnsembleSummaryPlot().getPlotData(), self)
         self.applyContextObject()
 
-
-
-        # web_view.page().mainFrame().setScrollBarPolicy(Qt.Horizontal, Qt.ScrollBarAlwaysOff)
-        # web_view.page().mainFrame().setScrollBarPolicy(Qt.Vertical, Qt.ScrollBarAlwaysOff)
-        # web_view.show()
         layout.addWidget(self.web_view)
 
         self.setLayout(layout)
 
 
-
         # print(json.dumps(EnsembleSummaryPlot().getPlotData()))
 
     def applyContextObject(self):
-       self.web_view.page().mainFrame().addToJavaScriptWindowObject("plot_dat_source", self.context_object)
+       self.web_view.page().mainFrame().addToJavaScriptWindowObject("plot_data_source", self.context_object)
 
 
     def getName(self):
         return "Plot"
-
-
-    def scream(self):
-        print("Apappa ja ja!")
 
 
 
