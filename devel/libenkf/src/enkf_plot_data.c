@@ -34,7 +34,6 @@
 struct enkf_plot_data_struct {
   UTIL_TYPE_ID_DECLARATION;
   const enkf_config_node_type * config_node;
-  int                       alloc_size;
   int                       size;
   enkf_plot_tvector_type ** ensemble;
 };
@@ -42,28 +41,28 @@ struct enkf_plot_data_struct {
 
 
 static void enkf_plot_data_resize( enkf_plot_data_type * plot_data , int new_size ) {
-  if (new_size != plot_data->alloc_size) {
+  if (new_size != plot_data->size) {
     int iens;
     
-    if (new_size < plot_data->alloc_size) {
-      for (iens = new_size; iens < plot_data->alloc_size; iens++) 
+    if (new_size < plot_data->size) {
+      for (iens = new_size; iens < plot_data->size; iens++) 
         enkf_plot_tvector_free( plot_data->ensemble[iens] );
     }
 
     plot_data->ensemble = util_realloc( plot_data->ensemble , new_size * sizeof * plot_data->ensemble);
     
-    if (new_size > plot_data->alloc_size) {
-      for (iens = plot_data->alloc_size; iens < new_size; iens++) 
+    if (new_size > plot_data->size) {
+      for (iens = plot_data->size; iens < new_size; iens++) 
         plot_data->ensemble[iens] = enkf_plot_tvector_alloc( plot_data->config_node );
     } 
-    plot_data->alloc_size = new_size;
+    plot_data->size = new_size;
   }
 }
 
 
 void enkf_plot_data_free( enkf_plot_data_type * plot_data ) {
   int iens;
-  for (iens = 0; iens < plot_data->alloc_size; iens++) {
+  for (iens = 0; iens < plot_data->size; iens++) {
     if ( plot_data->ensemble[iens] != NULL)
       enkf_plot_tvector_free( plot_data->ensemble[iens] );
   }
@@ -77,12 +76,9 @@ UTIL_IS_INSTANCE_FUNCTION( enkf_plot_data , ENKF_PLOT_DATA_TYPE_ID )
 enkf_plot_data_type * enkf_plot_data_alloc( const enkf_config_node_type * config_node ) {
   enkf_plot_data_type * plot_data = util_malloc( sizeof * plot_data);
   UTIL_TYPE_ID_INIT( plot_data , ENKF_PLOT_DATA_TYPE_ID );
-  plot_data->size        = 0;
   plot_data->config_node = config_node;
-  plot_data->alloc_size  = 0;
+  plot_data->size        = 0;
   plot_data->ensemble    = NULL;
-  enkf_plot_data_resize( plot_data , 32 );
-  
   return plot_data;
 }
 
@@ -106,13 +102,13 @@ void enkf_plot_data_load( enkf_plot_data_type * plot_data ,
   int ens_size = state_map_get_size( state_map );
   bool_vector_type * mask;
   
-
   if (input_mask)
     mask = bool_vector_alloc_copy( input_mask );
   else
-    mask = bool_vector_alloc( ens_size , true );
+    mask = bool_vector_alloc( ens_size , false );
   state_map_select_matching( state_map , mask , STATE_HAS_DATA );
-  
+
+  enkf_plot_data_resize( plot_data , ens_size );
   {
     for (int iens = 0; iens < ens_size ; iens++) {
       if (bool_vector_iget( mask , iens)) {
@@ -122,7 +118,6 @@ void enkf_plot_data_load( enkf_plot_data_type * plot_data ,
       }
     }
   }
-
-  state_map_free( state_map );
+  bool_vector_free( mask );
 }
   
