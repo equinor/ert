@@ -26,7 +26,7 @@
 
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_main.h>
-
+#include <ert/enkf/enkf_plot_tvector.h>
 
 
 void test_load_summary( enkf_main_type * enkf_main , const char * summary_key) {
