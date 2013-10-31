@@ -14,6 +14,8 @@ class ParametrizationKeywords(object):
         ert_keywords.addKeyword(self.addDBaseType())
         ert_keywords.addKeyword(self.addStoreSeed())
         ert_keywords.addKeyword(self.addLoadSeed())
+        ert_keywords.addKeyword(self.addGenKwTagFormat())
+        ert_keywords.addKeyword(self.addSurface())
 
 
 
@@ -51,6 +53,14 @@ class ParametrizationKeywords(object):
                                             group=self.group)
         return gen_kw
 
+
+    def addGenKwTagFormat(self):
+        gen_kw_tag_format = ConfigurationLineDefinition(keyword=KeywordDefinition("GEN_KW_TAG_FORMAT"),
+                                                        arguments=[StringArgument(built_in=True,allow_space=True)],
+                                                        documentation_link="parametrization/gen_kw_tag_format",
+                                                        required=False,
+                                                        group=self.group)
+        return gen_kw_tag_format
 
 
     def addGenParam(self):
@@ -97,3 +107,12 @@ class ParametrizationKeywords(object):
                                                 required=False,
                                                 group=self.group)
         return load_seed
+
+
+    def addSurface(self):
+        surface = ConfigurationLineDefinition(keyword=KeywordDefinition("SURFACE"),
+                                                arguments=[StringArgument(rest_of_line=True,allow_space=True)],
+                                                documentation_link="parametrization/surface",
+                                                required=False,
+                                                group=self.group)
+        return surface
