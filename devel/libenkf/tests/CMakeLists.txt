@@ -4,6 +4,18 @@ target_link_libraries( enkf_runpath_list enkf test_util )
 add_executable( enkf_site_config enkf_site_config.c )
 target_link_libraries( enkf_site_config enkf test_util )
 
+add_executable( enkf_plot_tvector enkf_plot_tvector.c )
+target_link_libraries( enkf_plot_tvector enkf test_util )
+add_test( enkf_plot_tvector ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_tvector)
+
+add_executable( enkf_plot_data enkf_plot_data.c )
+target_link_libraries( enkf_plot_data enkf test_util )
+add_test( enkf_plot_data ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data)
+
+add_executable( enkf_plot_data_fs enkf_plot_data_fs.c )
+target_link_libraries( enkf_plot_data_fs enkf test_util )
+add_test( enkf_plot_data_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/plotData/config )
+
 add_executable( enkf_time_map enkf_time_map.c )
 target_link_libraries( enkf_time_map enkf test_util )
 
@@ -22,9 +34,9 @@ add_test( enkf_analysis  ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config)
 add_executable( enkf_analysis_config_ext_module enkf_analysis_config_ext_module.c )
 target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
 add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module 
-	rml_enkf ${LIBRARY_OUTPUT_PATH}/rml_enkf.so
-	rmli_enkf ${LIBRARY_OUTPUT_PATH}/rmli_enkf.so )
-	
+        rml_enkf ${LIBRARY_OUTPUT_PATH}/rml_enkf.so
+        rmli_enkf ${LIBRARY_OUTPUT_PATH}/rmli_enkf.so )
+        
 
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )
@@ -57,6 +69,14 @@ add_test( enkf_obs_tstep_list ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_tstep_list )
 add_executable( enkf_main enkf_main.c )
 target_link_libraries( enkf_main enkf test_util )
 add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
+
+add_executable( enkf_main_fs enkf_main_fs.c )
+target_link_libraries( enkf_main_fs enkf test_util )
+add_test( enkf_main_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_main_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/plotData/config )
+
+add_executable( enkf_fs enkf_fs.c )
+target_link_libraries( enkf_fs enkf test_util )
+add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs )
 
 
 #-----------------------------------------------------------------
@@ -190,6 +210,7 @@ add_test( enkf_ensemble  ${EXECUTABLE_OUTPUT_PATH}/enkf_ensemble )
 add_test( enkf_state_map  ${EXECUTABLE_OUTPUT_PATH}/enkf_state_map )
 add_test( enkf_meas_data  ${EXECUTABLE_OUTPUT_PATH}/enkf_meas_data )
 
+set_property( TEST enkf_plot_data_fs  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_time_map2     PROPERTY LABELS StatoilData )
 set_property( TEST enkf_site_config   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_report_step_compatible_TRUE  PROPERTY LABELS StatoilData )
@@ -198,4 +219,5 @@ set_property( TEST enkf_forward_init_SURFACE_FALSE  PROPERTY LABELS StatoilData 
 set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_TRUE   PROPERTY LABELS StatoilData )
+set_property( TEST enkf_main_fs   PROPERTY LABELS StatoilData )
 
