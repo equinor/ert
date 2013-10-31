@@ -21,6 +21,14 @@ class EnkfControlKeywords(object):
         ert_keywords.addKeyword(self.addUpdateLogPath())
         ert_keywords.addKeyword(self.addRerunStart())
         ert_keywords.addKeyword(self.addUpdateResults())
+        ert_keywords.addKeyword(self.addEnkfCrossValidation())
+        ert_keywords.addKeyword(self.addEnkfKernelRegression())
+        ert_keywords.addKeyword(self.addEnkfKernelFunction())
+        ert_keywords.addKeyword(self.addEnkfKernelParam())
+        ert_keywords.addKeyword(self.addEnkfSchedFile())
+        ert_keywords.addKeyword(self.addCaseTable())
+        ert_keywords.addKeyword(self.addContainer())
+
 
 
     def addEnkfAlpha(self):
@@ -165,4 +173,68 @@ class EnkfControlKeywords(object):
                                                      required=False,
                                                      group=self.group)
         return update_results
+
+
+    def addEnkfCrossValidation(self):
+        cross_validation = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_CROSS_VALIDATION"),
+                                                       arguments=[StringArgument()],
+                                                       documentation_link="enkf_control/enkf_cross_validation",
+                                                       required=False,
+                                                        group=self.group)
+        return cross_validation
+
+
+    def addEnkfKernelRegression(self):
+        kernel_regression = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_KERNEL_REGRESSION"),
+                                                        arguments=[StringArgument()],
+                                                        documentation_link="enkf_control/enkf_kernel_regression",
+                                                        required=False,
+                                                        group=self.group)
+        return kernel_regression
+
+
+    def addEnkfKernelFunction(self):
+        kernel_function = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_KERNEL_FUNCTION"),
+                                                      arguments=[StringArgument()],
+                                                      documentation_link="enkf_control/enkf_kernel_function",
+                                                      required=False,
+                                                      group=self.group)
+        return kernel_function
+
+
+    def addEnkfKernelParam(self):
+        kernel_param = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_KERNEL_PARAM"),
+                                                      arguments=[StringArgument()],
+                                                      documentation_link="enkf_control/enkf_kernel_param",
+                                                      required=False,
+                                                      group=self.group)
+        return kernel_param
+
+
+    def addEnkfSchedFile(self):
+        sched_file = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_SCHED_FILE"),
+                                                 arguments=[PathArgument()],
+                                                 documentation_link="enkf_control/enkf_sched_file",
+                                                 required=False,
+                                                 group=self.group)
+        return sched_file
+
+
+
+    def addCaseTable(self):
+        case_table = ConfigurationLineDefinition(keyword=KeywordDefinition("CASE_TABLE"),
+                                                 arguments=[StringArgument()],
+                                                 documentation_link="enkf_control/case_table",
+                                                 required=False,
+                                                 group=self.group)
+        return case_table
+
+
+    def addContainer(self):
+        container = ConfigurationLineDefinition(keyword=KeywordDefinition("CONTAINER"),
+                                                 arguments=[StringArgument(rest_of_line=True,allow_space=True)],
+                                                 documentation_link="enkf_control/container",
+                                                 required=False,
+                                                 group=self.group)
+        return container
 

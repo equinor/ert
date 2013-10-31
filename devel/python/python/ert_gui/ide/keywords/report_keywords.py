@@ -13,6 +13,7 @@ class ReportKeywords(object):
         ert_keywords.addKeyword(self.addReportWellList())
         ert_keywords.addKeyword(self.addReportGroupList())
         ert_keywords.addKeyword(self.addReportTimeout())
+        ert_keywords.addKeyword(self.addReportLarge())
 
 
 
@@ -79,3 +80,12 @@ class ReportKeywords(object):
                                                      required=False,
                                                      group=self.group)
         return report_timeout
+
+
+    def addReportLarge(self):
+        report_large = ConfigurationLineDefinition(keyword=KeywordDefinition("REPORT_LARGE"),
+                                                     arguments=[BoolArgument()],
+                                                     documentation_link="report/report_large",
+                                                     required=False,
+                                                     group=self.group)
+        return report_large

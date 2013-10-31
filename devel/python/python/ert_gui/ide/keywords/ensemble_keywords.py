@@ -7,7 +7,6 @@ class EnsembleKeywords(object):
         self.group = "Ensemble"
 
         ert_keywords.addKeyword(self.addNumRealizations())
-        ert_keywords.addKeyword(self.addEnkfScheduleFile())
         ert_keywords.addKeyword(self.addEnsPath())
         ert_keywords.addKeyword(self.addSelectCase())
         ert_keywords.addKeyword(self.addEndDate())
@@ -16,6 +15,10 @@ class EnsembleKeywords(object):
         ert_keywords.addKeyword(self.addInclude())
         ert_keywords.addKeyword(self.addObsConfig())
         ert_keywords.addKeyword(self.addResultPath())
+        ert_keywords.addKeyword(self.addLicensePath())
+        ert_keywords.addKeyword(self.addLocalConfig())
+        ert_keywords.addKeyword(self.addRefcaseList())
+
 
 
 
@@ -28,15 +31,6 @@ class EnsembleKeywords(object):
                                                        group=self.group)
         return num_realizations
 
-
-
-    def addEnkfScheduleFile(self):
-        enkf_schedule_file = ConfigurationLineDefinition(keyword=KeywordDefinition("ENKF_SCHED_FILE"),
-                                                         arguments=[PathArgument()],
-                                                         documentation_link="ensemble/enkf_sched_file",
-                                                         required=False,
-                                                         group=self.group)
-        return enkf_schedule_file
 
     def addEndDate(self):
         end_date = ConfigurationLineDefinition(keyword=KeywordDefinition("END_DATE"),
@@ -84,6 +78,16 @@ class EnsembleKeywords(object):
         return refcase
 
 
+    def addRefcaseList(self):
+        refcase_list = ConfigurationLineDefinition(keyword=KeywordDefinition("REFCASE_LIST"),
+                                                  arguments=[StringArgument(rest_of_line=True,allow_space=True)],
+                                                  documentation_link="ensemble/refcase_list",
+                                                  required=False,
+                                                  group=self.group)
+        return refcase_list
+
+
+
     def addInclude(self):
         include = ConfigurationLineDefinition(keyword=KeywordDefinition("INCLUDE"),
                                               arguments=[PathArgument()],
@@ -112,5 +116,20 @@ class EnsembleKeywords(object):
         return result_path
 
 
+    def addLicensePath(self):
+        license_path = ConfigurationLineDefinition(keyword=KeywordDefinition("LICENSE_PATH"),
+                                                  arguments=[PathArgument()],
+                                                  documentation_link="ensemble/license_path",
+                                                  required=False,
+                                                  group=self.group)
+        return license_path
 
+
+    def addLocalConfig(self):
+        local_config = ConfigurationLineDefinition(keyword=KeywordDefinition("LOCAL_CONFIG"),
+                                                  arguments=[StringArgument(rest_of_line=True,allow_space=True)],
+                                                  documentation_link="ensemble/local_config",
+                                                  required=False,
+                                                  group=self.group)
+        return local_config
 

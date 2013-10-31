@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument
+from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument, BoolArgument
 
 
 class RunKeywords(object):
@@ -19,6 +19,7 @@ class RunKeywords(object):
         ert_keywords.addKeyword(self.addLogFile())
         ert_keywords.addKeyword(self.addMaxSubmit())
         ert_keywords.addKeyword(self.addMaxResample())
+        ert_keywords.addKeyword(self.addPreClearRunpath())
 
 
 
@@ -142,3 +143,12 @@ class RunKeywords(object):
                                                   required=False,
                                                   group=self.group)
         return max_resample
+
+
+    def addPreClearRunpath(self):
+        pre_clear_runpath = ConfigurationLineDefinition(keyword=KeywordDefinition("PRE_CLEAR_RUNPATH"),
+                                                  arguments=[BoolArgument()],
+                                                  documentation_link="run/pre_clear_runpath",
+                                                  required=False,
+                                                  group=self.group)
+        return pre_clear_runpath
