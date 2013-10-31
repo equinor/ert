@@ -591,8 +591,11 @@ static void enkf_fs_free_driver(fs_driver_type * driver) {
 
 
 void enkf_fs_umount( enkf_fs_type * fs ) {
-  enkf_fs_fsync( fs );
-  enkf_fs_fwrite_misfit( fs );
+  if (!fs->read_only) {
+    enkf_fs_fsync( fs );
+    enkf_fs_fwrite_misfit( fs );
+  }
+  
   {
     int refcount = enkf_fs_decref( fs );
 
