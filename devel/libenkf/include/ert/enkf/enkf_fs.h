@@ -43,11 +43,13 @@ extern "C" {
   const      char * enkf_fs_get_case_name( const enkf_fs_type * fs );
 
   void              enkf_fs_fsync( enkf_fs_type * fs );
-  enkf_fs_type *    enkf_fs_mount(const char * , fs_driver_impl , const char * select_case, bool update_map, bool read_only);
   void              enkf_fs_add_index_node(enkf_fs_type *  , int , int , const char * , enkf_var_type, ert_impl_type);
 
-  void              enkf_fs_close( enkf_fs_type * fs );
-  enkf_fs_type    * enkf_fs_open( const char * path , bool read_only);
+  int               enkf_fs_get_refcount( const enkf_fs_type * fs );
+  enkf_fs_type    * enkf_fs_get_ref( enkf_fs_type * fs );
+  enkf_fs_type    * enkf_fs_get_weakref( enkf_fs_type * fs );
+  void              enkf_fs_umount( enkf_fs_type * fs );
+  enkf_fs_type    * enkf_fs_mount( const char * path , bool read_only);
   int               enkf_fs_get_version104( const char * path );
   void              enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , buffer_type * buffer , const char * node_key, enkf_var_type var_type,  
                                         int report_step , int iens , state_enum state);

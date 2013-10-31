@@ -235,13 +235,34 @@ struct enkf_fs_struct {
   path_fmt_type             * case_member_fmt;
   path_fmt_type             * case_tstep_fmt;
   path_fmt_type             * case_tstep_member_fmt;
+
+  int                         refcount; 
 };
+
 
 /*****************************************************************/
 
 
 UTIL_SAFE_CAST_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
+
+static int enkf_fs_incref( enkf_fs_type * fs ) {
+  fs->refcount++;
+  return fs->refcount;
+}
+
+static int enkf_fs_decref( enkf_fs_type * fs ) {
+  fs->refcount--;
+  if (fs->refcount < 0)
+    util_abort("%s: internal fuckup. The filesystem refcount:%d is < 0 \n",__func__ , fs->refcount);
+  return fs->refcount;
+}
+
+int enkf_fs_get_refcount( const enkf_fs_type * fs ) {
+  return fs->refcount;
+}
+
+
 
 static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_only) {
   enkf_fs_type * fs          = util_malloc(sizeof * fs );
@@ -257,6 +278,7 @@ static enkf_fs_type * enkf_fs_alloc_empty( const char * mount_point , bool read_
   fs->dynamic_analyzed       = NULL;
   fs->read_only              = read_only;
   fs->mount_point            = util_alloc_string_copy( mount_point );
+  fs->refcount               = 0;
   if (mount_point == NULL)
     util_abort("%s: fatal internal error: mount_point == NULL \n",__func__);
   {
@@ -492,11 +514,29 @@ static void enkf_fs_fwrite_misfit( enkf_fs_type * fs ) {
 }
 
 
-enkf_fs_type * enkf_fs_open( const char * mount_point , bool read_only) {
-  enkf_fs_type * fs = NULL;
-  FILE * stream = fs_driver_open_fstab( mount_point , false );
+enkf_fs_type * enkf_fs_get_weakref( enkf_fs_type * fs ) {
+  return fs;
+}
 
+
+enkf_fs_type * enkf_fs_get_ref( enkf_fs_type * fs ) {
+  if (enkf_fs_is_instance( fs )) {
+    enkf_fs_incref( fs );
+    return fs;
+  } else {
+    util_abort("%s: tried to get enkf_fs reference from object which was not an existing enkf_fs reference\n",__func__);
+    return NULL;
+  }
+}
+
+
+
+
+enkf_fs_type * enkf_fs_mount( const char * mount_point , bool read_only) {
+  FILE * stream = fs_driver_open_fstab( mount_point , false );
+  
   if (stream != NULL) {
+    enkf_fs_type * fs = NULL;
     fs_driver_assert_magic( stream );
     fs_driver_assert_version( stream , mount_point );
     {
@@ -519,8 +559,10 @@ enkf_fs_type * enkf_fs_open( const char * mount_point , bool read_only) {
     enkf_fs_fread_cases_config( fs );
     enkf_fs_fread_state_map( fs );
     enkf_fs_fread_misfit( fs );
+    
+    return enkf_fs_get_ref( fs );
   }
-  return fs;
+  return NULL;
 }
 
 
@@ -548,28 +590,33 @@ static void enkf_fs_free_driver(fs_driver_type * driver) {
 }
 
 
-void enkf_fs_close( enkf_fs_type * fs ) {
+void enkf_fs_umount( enkf_fs_type * fs ) {
   enkf_fs_fsync( fs );
   enkf_fs_fwrite_misfit( fs );
+  {
+    int refcount = enkf_fs_decref( fs );
 
-  enkf_fs_free_driver( fs->dynamic_forecast );
-  enkf_fs_free_driver( fs->dynamic_analyzed );
-  enkf_fs_free_driver( fs->parameter );
-  enkf_fs_free_driver( fs->eclipse_static );
-  enkf_fs_free_driver( fs->index );
-
-  util_safe_free( fs->case_name );
-  util_safe_free( fs->root_path );
-  util_safe_free( fs->mount_point );
-  path_fmt_free( fs->case_fmt );
-  path_fmt_free( fs->case_member_fmt );
-  path_fmt_free( fs->case_tstep_fmt );
-  path_fmt_free( fs->case_tstep_member_fmt );
-
-  state_map_free( fs->state_map );
-  time_map_free( fs->time_map );
-  cases_config_free( fs->cases_config );
-  free( fs );
+    if (refcount == 0) {
+      enkf_fs_free_driver( fs->dynamic_forecast );
+      enkf_fs_free_driver( fs->dynamic_analyzed );
+      enkf_fs_free_driver( fs->parameter );
+      enkf_fs_free_driver( fs->eclipse_static );
+      enkf_fs_free_driver( fs->index );
+      
+      util_safe_free( fs->case_name );
+      util_safe_free( fs->root_path );
+      util_safe_free( fs->mount_point );
+      path_fmt_free( fs->case_fmt );
+      path_fmt_free( fs->case_member_fmt );
+      path_fmt_free( fs->case_tstep_fmt );
+      path_fmt_free( fs->case_tstep_member_fmt );
+      
+      state_map_free( fs->state_map );
+      time_map_free( fs->time_map );
+      cases_config_free( fs->cases_config );
+      free( fs );
+    } 
+  }
 }
 
 

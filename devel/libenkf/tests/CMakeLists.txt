@@ -70,6 +70,14 @@ add_executable( enkf_main enkf_main.c )
 target_link_libraries( enkf_main enkf test_util )
 add_test( enkf_main  ${EXECUTABLE_OUTPUT_PATH}/enkf_main )
 
+add_executable( enkf_main_fs enkf_main_fs.c )
+target_link_libraries( enkf_main_fs enkf test_util )
+add_test( enkf_main_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_main_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/plotData/config )
+
+add_executable( enkf_fs enkf_fs.c )
+target_link_libraries( enkf_fs enkf test_util )
+add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs )
+
 
 #-----------------------------------------------------------------
 
@@ -211,4 +219,5 @@ set_property( TEST enkf_forward_init_SURFACE_FALSE  PROPERTY LABELS StatoilData 
 set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_TRUE   PROPERTY LABELS StatoilData )
+set_property( TEST enkf_main_fs   PROPERTY LABELS StatoilData )
 
