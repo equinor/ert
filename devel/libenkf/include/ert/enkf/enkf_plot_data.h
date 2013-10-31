@@ -31,18 +31,19 @@ extern "C" {
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_types.h>
+#include <ert/enkf/enkf_plot_tvector.h>
 
   typedef struct enkf_plot_data_struct enkf_plot_data_type;
   
-  enkf_plot_data_type * enkf_plot_data_alloc( );
+  enkf_plot_data_type * enkf_plot_data_alloc( const enkf_config_node_type * config_node );
   void                  enkf_plot_data_free( enkf_plot_data_type * plot_data );
   void                  enkf_plot_data_load( enkf_plot_data_type * plot_data , 
-                                             enkf_config_node_type * config_node , 
                                              enkf_fs_type * fs , 
                                              const char * user_key , 
                                              state_enum state , 
-                                             const bool_vector_type * active);
-
+                                             const bool_vector_type * input_mask);
+  int                   enkf_plot_data_get_size( const enkf_plot_data_type * plot_data );
+  enkf_plot_tvector_type * enkf_plot_data_iget( const enkf_plot_data_type * plot_data , int index);
 
   UTIL_IS_INSTANCE_HEADER( enkf_plot_data );
 

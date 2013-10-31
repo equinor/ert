@@ -3597,11 +3597,6 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 }
 
 
-enkf_plot_data_type * enkf_main_alloc_plot_data( enkf_main_type * enkf_main ) {
-  enkf_plot_data_type * plot_data = enkf_plot_data_alloc( ecl_config_get_start_date( enkf_main_get_ecl_config( enkf_main )));
-  
-  return plot_data;
-}
 
 /*****************************************************************/
 

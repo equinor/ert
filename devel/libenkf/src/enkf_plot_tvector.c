@@ -21,15 +21,19 @@
 #include <ert/util/bool_vector.h>
 
 #include <ert/enkf/enkf_plot_tvector.h>
+#include <ert/enkf/enkf_config_node.h>
+#include <ert/enkf/enkf_node.h>
+
 
 #define ENKF_PLOT_TVECTOR_ID 6111861
 
 struct enkf_plot_tvector_struct {
   UTIL_TYPE_ID_DECLARATION;
-  double_vector_type        * data;
-  double_vector_type        * work;
-  time_t_vector_type        * time;
-  bool_vector_type          * mask;
+  double_vector_type          * data;
+  double_vector_type          * work;
+  time_t_vector_type          * time;
+  bool_vector_type            * mask;
+  const enkf_config_node_type * config_node;
 };
 
 
@@ -46,7 +50,7 @@ static void enkf_plot_tvector_reset( enkf_plot_tvector_type * plot_tvector ) {
 }
 
 
-enkf_plot_tvector_type * enkf_plot_tvector_alloc( ) {
+enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * config_node ) {
   enkf_plot_tvector_type * plot_tvector = util_malloc( sizeof * plot_tvector);
   UTIL_TYPE_ID_INIT( plot_tvector , ENKF_PLOT_TVECTOR_ID );
 
@@ -54,6 +58,8 @@ enkf_plot_tvector_type * enkf_plot_tvector_alloc( ) {
   plot_tvector->time = time_t_vector_alloc(-1 , 0);
   plot_tvector->mask = bool_vector_alloc( false , 0 );
   plot_tvector->work = double_vector_alloc(0,0);
+  
+  plot_tvector->config_node = config_node;
   enkf_plot_tvector_reset( plot_tvector );
   return plot_tvector;
 }
@@ -100,27 +106,24 @@ bool enkf_plot_tvector_iget_active( const enkf_plot_tvector_type * plot_tvector 
 }
 
 
-void enkf_plot_tvector_free__( void * arg ) {
-  enkf_plot_tvector_type * plot_tvector = enkf_plot_tvector_safe_cast( arg );
-  enkf_plot_tvector_free( plot_tvector );
-}
 
 
 
 
 void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector , 
-                            enkf_node_type * enkf_node , 
-                            enkf_fs_type * fs , 
-                            const char * user_key , 
-                            int iens , 
+                             enkf_fs_type * fs , 
+                             const char * index_key , 
+                             int iens , 
                              state_enum state) {
+
   enkf_plot_tvector_reset( plot_tvector );
   time_map_type * time_map = enkf_fs_get_time_map( fs );
   int step1 = 0;
   int step2 = time_map_get_last_step( time_map );
+  enkf_node_type * work_node = enkf_node_alloc( plot_tvector->config_node );
   
-  if (enkf_node_vector_storage( enkf_node )) {
-    enkf_node_user_get_vector(enkf_node , fs , user_key , iens , state , plot_tvector->work);
+  if (enkf_node_vector_storage( work_node )) {
+    enkf_node_user_get_vector(work_node , fs , index_key , iens , state , plot_tvector->work);
     for (int step = 0; step < time_map_get_size(time_map); step++) 
       enkf_plot_tvector_iset( plot_tvector , 
                              step , 
@@ -135,15 +138,16 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
     for (step = step1 ; step <= step2; step++) {
       double value;
       node_id.report_step = step;
-      if (enkf_node_user_get(enkf_node , fs , user_key , node_id , &value)) {
+
+      if (enkf_node_user_get(work_node , fs , index_key , node_id , &value)) {
         enkf_plot_tvector_iset( plot_tvector , 
                                step , 
                                value , 
                                time_map_iget( time_map , step ));
       }
     }
-
   }
+  enkf_node_free( work_node );
 }
 
 

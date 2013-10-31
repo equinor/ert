@@ -32,7 +32,7 @@
 
 
 void create_test() {
-  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( NULL , 0 );
+  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( NULL  );
   test_assert_true( enkf_plot_tvector_is_instance( tvector ));
   enkf_plot_tvector_free( tvector );
 }
@@ -40,7 +40,7 @@ void create_test() {
 
 
 void test_iset() {
-  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( NULL , 0 );
+  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( NULL);
   enkf_plot_tvector_iset( tvector , 10 , 0 , 100 );
 
   test_assert_int_equal( 11 , enkf_plot_tvector_size( tvector  ));
@@ -58,7 +58,7 @@ void test_iset() {
 
 
 void test_all_active() {
-  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( NULL , 0 );
+  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( NULL  );
   test_assert_true( enkf_plot_tvector_all_active( tvector ));
 
   enkf_plot_tvector_iset( tvector , 00 , 0 , 100 );
@@ -74,7 +74,7 @@ void test_all_active() {
 
 
 void test_iget() {
-  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( NULL , 0 );
+  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( NULL  );
   enkf_plot_tvector_iset( tvector , 0 , 0 , 0 );
   enkf_plot_tvector_iset( tvector , 1 , 1 , 10 );
   enkf_plot_tvector_iset( tvector , 2 , 2 , 20 );

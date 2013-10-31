@@ -23,12 +23,17 @@
 
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.h>
+
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_main.h>
 
 
-void test_load( enkf_main_type * enkf_main , const char * casename ) {
-  enkf_plot_data_type * plot_data = enkf_plot_data_alloc();
+
+void test_load_summary( enkf_main_type * enkf_main , const char * summary_key) {
+  ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
+  const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , summary_key );
+  enkf_plot_data_type * plot_data = enkf_plot_data_alloc( config_node );
+
   enkf_plot_data_free( plot_data );
 }
 
@@ -46,7 +51,7 @@ int main(int argc, char ** argv) {
     const char * site_config = "/project/res/etc/ERT/site-config";
     enkf_main_type * enkf_main = enkf_main_bootstrap( site_config , model_config , false , false );
 
-    test_load(enkf_main , "enkf");
+    test_load_summary(enkf_main , "WWCT:OP_3");
     enkf_main_free( enkf_main );
   }  
 

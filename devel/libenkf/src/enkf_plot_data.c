@@ -26,6 +26,7 @@
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_plot_tvector.h>
 #include <ert/enkf/enkf_plot_data.h>
+#include <ert/enkf/state_map.h>
 
 
 #define ENKF_PLOT_DATA_TYPE_ID 3331063
@@ -41,13 +42,22 @@ struct enkf_plot_data_struct {
 
 
 static void enkf_plot_data_resize( enkf_plot_data_type * plot_data , int new_size ) {
-  plot_data->ensemble = util_realloc( plot_data->ensemble , sizeof * plot_data->ensemble * new_size );
-  {
+  if (new_size != plot_data->alloc_size) {
     int iens;
-    for (iens = plot_data->alloc_size; iens < new_size; iens++) 
-      plot_data->ensemble[iens] = enkf_plot_tvector_alloc( );
+    
+    if (new_size < plot_data->alloc_size) {
+      for (iens = new_size; iens < plot_data->alloc_size; iens++) 
+        enkf_plot_tvector_free( plot_data->ensemble[iens] );
+    }
+
+    plot_data->ensemble = util_realloc( plot_data->ensemble , new_size * sizeof * plot_data->ensemble);
+    
+    if (new_size > plot_data->alloc_size) {
+      for (iens = plot_data->alloc_size; iens < new_size; iens++) 
+        plot_data->ensemble[iens] = enkf_plot_tvector_alloc( plot_data->config_node );
+    } 
+    plot_data->alloc_size = new_size;
   }
-  plot_data->alloc_size = new_size;
 }
 
 
@@ -76,104 +86,43 @@ enkf_plot_data_type * enkf_plot_data_alloc( const enkf_config_node_type * config
   return plot_data;
 }
 
+enkf_plot_tvector_type * enkf_plot_data_iget( const enkf_plot_data_type * plot_data , int index) {
+  return plot_data->ensemble[index];
+}
 
 
-void * enkf_plot_data_load__( void *arg ) {
-  arg_pack_type * arg_pack            = arg_pack_safe_cast( arg );
-  enkf_plot_data_type * plot_data     = arg_pack_iget_ptr( arg_pack , 0 );
-  enkf_config_node_type * config_node = arg_pack_iget_ptr( arg_pack , 1 );
-  enkf_fs_type * fs                   = arg_pack_iget_ptr( arg_pack , 2 );
-  const char * user_key               = arg_pack_iget_const_ptr( arg_pack , 3 );
-  state_enum state                    = arg_pack_iget_int( arg_pack , 4 );
-  const int_vector_type * iens_list   = arg_pack_iget_ptr( arg_pack , 5 );         
-  int index1                          = arg_pack_iget_int( arg_pack , 6 );
-  int index2                          = arg_pack_iget_int( arg_pack , 7 );
-
-  enkf_node_type * enkf_node = enkf_node_alloc( config_node ); // Shared node used for all loading.
-  
-  for (int index = index1; index < index2; index++) {
-    int iens = int_vector_iget( iens_list , index );
-    if (iens >= plot_data->alloc_size)
-      // This must be protected by a lock of some sort ....
-      enkf_plot_data_resize( plot_data , 2*iens + 1);
-    
-    {
-      enkf_plot_tvector_type * plot_tvector = plot_data->ensemble[iens];
-      
-      enkf_plot_tvector_safe_cast( plot_tvector );
-      enkf_plot_tvector_load( plot_tvector , enkf_node , fs , user_key , iens , state );
-      
-    }
-  }
-
-  enkf_node_free( enkf_node );
-  return NULL;
+int enkf_plot_data_get_size( const enkf_plot_data_type * plot_data ) {
+  return plot_data->size;
 }
 
 
 
-
 void enkf_plot_data_load( enkf_plot_data_type * plot_data , 
-                          enkf_config_node_type * config_node , 
                           enkf_fs_type * fs , 
-                          const char * user_key , 
+                          const char * index_key , 
                           state_enum state , 
-                          const bool_vector_type * active) {
-  int iens;
-  int_vector_type * iens_list = int_vector_alloc( 0 , 0 );
+                          const bool_vector_type * input_mask) {
+  state_map_type * state_map = enkf_fs_get_state_map( fs );
+  int ens_size = state_map_get_size( state_map );
+  bool_vector_type * mask;
+  
+
+  if (input_mask)
+    mask = bool_vector_alloc_copy( input_mask );
+  else
+    mask = bool_vector_alloc( ens_size , true );
+  state_map_select_matching( state_map , mask , STATE_HAS_DATA );
+  
   {
-    int ens_size = bool_vector_size( active );
-
-    for (iens = 0; iens < ens_size; iens++) {
-      if (bool_vector_iget( active , iens ))
-        int_vector_append( iens_list , iens );
-    }
-  }
-  
-  
-  {
-    int active_size = int_vector_size( iens_list );
-    int num_threads = 4;
-    int block_size  = active_size / num_threads;
-    arg_pack_type ** arg_list = util_calloc( num_threads , sizeof * arg_list );
-    thread_pool_type * tp = thread_pool_alloc( num_threads , true );
-  
-    if (block_size == 0)  /* Fewer tasks than threads */
-      block_size = 1;
-  
-    for (int i=0; i < num_threads; i++) {
-      arg_list[i] = arg_pack_alloc();
-
-      arg_pack_append_ptr( arg_list[i] , plot_data );
-      arg_pack_append_ptr( arg_list[i] , config_node );
-      arg_pack_append_ptr( arg_list[i] , fs );
-      arg_pack_append_const_ptr( arg_list[i] , user_key );
-      
-      arg_pack_append_int( arg_list[i] , state );
-
-      {
-        int index1 = i * block_size;
-        int index2 = index1 + block_size;
-        
-        if (index1 < active_size) {
-          if (index2 > active_size)
-            index2 = active_size;
-        }  
-        
-        arg_pack_append_ptr( arg_list[i] , iens_list );
-        arg_pack_append_int( arg_list[i] , index1 );
-        arg_pack_append_int( arg_list[i] , index2 );
+    for (int iens = 0; iens < ens_size ; iens++) {
+      if (bool_vector_iget( mask , iens)) {
+        // thread_pool here?
+        enkf_plot_tvector_type * vector = enkf_plot_data_iget( plot_data , iens );
+        enkf_plot_tvector_load( vector , fs , index_key , iens , state );
       }
-      
-      thread_pool_add_job(tp , enkf_plot_data_load__ , arg_list[i]);
     }
-    
-    thread_pool_join( tp );
-    thread_pool_free( tp );
-    for (int i=0; i < num_threads; i++) 
-      arg_pack_free( arg_list[i] );
-    free( arg_list );
   }
-  int_vector_free( iens_list );
+
+  state_map_free( state_map );
 }
   
