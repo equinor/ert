@@ -6,7 +6,9 @@ from ert_gui.ide.ide_panel import IDEPanel
 from ert_gui.widgets.search_box import SearchBox
 
 
+
 def main():
+    QApplication.setGraphicsSystem("raster")
     app = QApplication(sys.argv) #Early so that QT is initialized before other imports
 
 
@@ -25,7 +27,7 @@ def main():
     layout.addWidget(search)
     layout.addWidget(ide, 1)
 
-    os.chdir("/private/jpb/Projects/ert/TestCase")
+    os.chdir("/private/chflo/ERT-code/TestCase")
 
     config_file = ""
     with open("config") as f:
@@ -43,6 +45,13 @@ def main():
     ide.setFocus()
 
     main_window.show()
+
+
+
+    def save():
+        print(ide.getText())
+
+    #button.clicked.connect(save)
 
     sys.exit(app.exec_())
 
