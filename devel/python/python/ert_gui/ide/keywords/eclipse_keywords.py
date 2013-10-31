@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, StringArgument
+from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, StringArgument, BoolArgument
 from ert_gui.ide.keywords.definitions.path_argument import PathArgument
 
 
@@ -16,6 +16,7 @@ class EclipseKeywords(object):
         ert_keywords.addKeyword(self.addScheduleFile())
         ert_keywords.addKeyword(self.addDataKw())
         ert_keywords.addKeyword(self.addEquilInitFile())
+        ert_keywords.addKeyword(self.addIgnoreSchedule())
 
 
 
@@ -79,6 +80,15 @@ class EclipseKeywords(object):
                                                     required=True,
                                                     group=self.group)
         return schedule_file
+
+
+    def addIgnoreSchedule(self):
+        ignore_schedule = ConfigurationLineDefinition(keyword=KeywordDefinition("IGNORE_SCHEDULE"),
+                                                    arguments=[BoolArgument()],
+                                                    documentation_link="ensemble/ignore_schedule",
+                                                    required=False,
+                                                    group=self.group)
+        return ignore_schedule
 
 
     def addDataKw(self):

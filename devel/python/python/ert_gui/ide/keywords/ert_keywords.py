@@ -36,6 +36,7 @@ class ErtKeywords(object):
         QCKeywords(self)
         UnixEnvironmentKeywords(self)
 
+
     def addKeyword(self, keyword):
         assert isinstance(keyword, ConfigurationLineDefinition)
 
