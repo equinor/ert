@@ -115,6 +115,7 @@ import os
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QSplashScreen
 from ert.enkf import EnKFMain
+from ert_gui.ide.wizards import WizardView
 from ert_gui.main_window import GertMainWindow
 from ert_gui.models import ErtConnector
 from ert_gui.pages.configuration_panel import ConfigurationPanel
@@ -195,6 +196,16 @@ def main():
         configuration_panel = ConfigurationPanel(os.path.basename(enkf_config))
         configuration_panel.reloadApplication.connect(reloadGERT)
         window.addTab(configuration_panel.getName(), configuration_panel)
+
+        wizard_panel = WizardView()
+        wizard_panel.addGroup("Parameters")
+        wizard_panel.addItemToGroup("Parameters", "Summary")
+        wizard_panel.addItemToGroup("Parameters", "Field")
+        wizard_panel.addItemToGroup("Parameters", "Data Keyword")
+        wizard_panel.addGroup("Eclipse")
+        wizard_panel.addGroup("Observations")
+        wizard_panel.expandAll()
+        window.addDock("Wizards", wizard_panel)
 
         plot_panel = PlotPanel()
         window.addTab(plot_panel.getName(), plot_panel)
