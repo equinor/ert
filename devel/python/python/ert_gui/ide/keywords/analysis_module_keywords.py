@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument
+from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument, FloatArgument, BoolArgument
 
 
 class AnalysisModuleKeywords(object):
@@ -13,6 +13,8 @@ class AnalysisModuleKeywords(object):
         ert_keywords.addKeyword(self.addIterRunpath())
         ert_keywords.addKeyword(self.addIterCase())
         ert_keywords.addKeyword(self.addIterCount())
+        ert_keywords.addKeyword(self.addStdCutoff())
+        ert_keywords.addKeyword(self.addSingleNodeUpdate())
 
 
 
@@ -82,3 +84,21 @@ class AnalysisModuleKeywords(object):
                                                  required=False,
                                                  group=self.group)
         return iter_count
+
+
+    def addStdCutoff(self):
+        std_cutoff = ConfigurationLineDefinition(keyword=KeywordDefinition("STD_CUTOFF"),
+                                                 arguments=[FloatArgument()],
+                                                 documentation_link="analysis_module/std_cutoff",
+                                                 required=False,
+                                                 group=self.group)
+        return std_cutoff
+
+
+    def addSingleNodeUpdate(self):
+        single_node_update = ConfigurationLineDefinition(keyword=KeywordDefinition("SINGLE_NODE_UPDATE"),
+                                                 arguments=[BoolArgument()],
+                                                 documentation_link="analysis_module/single_node_update",
+                                                 required=False,
+                                                 group=self.group)
+        return single_node_update

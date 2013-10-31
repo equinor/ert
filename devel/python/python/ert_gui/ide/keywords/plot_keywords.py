@@ -14,7 +14,7 @@ class PlotKeywords(object):
         ert_keywords.addKeyword(self.addPlotWidth())
         ert_keywords.addKeyword(self.addPlotHeight())
         ert_keywords.addKeyword(self.addPlotRefcase())
-        ert_keywords.addKeyword(self.addRefcaseList())
+        ert_keywords.addKeyword(self.addPlotRefcaseList())
         ert_keywords.addKeyword(self.addPlotPath())
         ert_keywords.addKeyword(self.addRftConfig())
         ert_keywords.addKeyword(self.addRftPath())
@@ -97,13 +97,13 @@ class PlotKeywords(object):
 
 
 
-    def addRefcaseList(self):
-        refcase_list = ConfigurationLineDefinition(keyword=KeywordDefinition("REFCASE_LIST"),
-                                                   arguments=[StringArgument(rest_of_line=True,allow_space=True)],
-                                                   documentation_link="plot/refcase_list",
-                                                   required=False,
-                                                   group=self.group)
-        return refcase_list
+    def addPlotRefcaseList(self):
+        plot_refcase_list = ConfigurationLineDefinition(keyword=KeywordDefinition("PLOT_REFCASE_LIST"),
+                                                        arguments=[StringArgument(rest_of_line=True,allow_space=True)],
+                                                        documentation_link="plot/plot_refcase_list",
+                                                        required=False,
+                                                        group=self.group)
+        return plot_refcase_list
 
 
     def addPlotPath(self):
@@ -113,6 +113,7 @@ class PlotKeywords(object):
                                                 required=False,
                                                 group=self.group)
         return plot_path
+
 
 
     def addRftConfig(self):
