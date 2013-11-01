@@ -21,7 +21,6 @@ function PlotLine() {
     var duration = 250;
     var plot_style = "";
 
-
     function plot(selection) {
         var line = d3.svg.line().x(x).y(y).interpolate("basis");
 
