@@ -37,6 +37,9 @@ extern "C" {
   UTIL_SAFE_CAST_HEADER( enkf_plot_tvector );
   UTIL_IS_INSTANCE_HEADER( enkf_plot_tvector );
 
+  
+  
+  void                     enkf_plot_tvector_reset( enkf_plot_tvector_type * plot_tvector );
   enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * config_node );
   void                     enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector , enkf_fs_type * fs , const char * user_key , int iens , state_enum state);
   void                     enkf_plot_tvector_free( enkf_plot_tvector_type * plot_tvector );

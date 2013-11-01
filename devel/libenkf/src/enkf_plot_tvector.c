@@ -44,7 +44,7 @@ UTIL_IS_INSTANCE_FUNCTION( enkf_plot_tvector , ENKF_PLOT_TVECTOR_ID )
      
 
 
-static void enkf_plot_tvector_reset( enkf_plot_tvector_type * plot_tvector ) {
+void enkf_plot_tvector_reset( enkf_plot_tvector_type * plot_tvector ) {
   double_vector_reset( plot_tvector->data );
   time_t_vector_reset( plot_tvector->time );
   bool_vector_reset( plot_tvector->mask );
@@ -66,7 +66,6 @@ enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * 
   else
     plot_tvector->summary_mode = false;
   
-  enkf_plot_tvector_reset( plot_tvector );
   return plot_tvector;
 }
 
@@ -134,12 +133,11 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
                              int iens , 
                              state_enum state) {
 
-  enkf_plot_tvector_reset( plot_tvector );
   time_map_type * time_map = enkf_fs_get_time_map( fs );
   int step1 = 0;
   int step2 = time_map_get_last_step( time_map );
-  enkf_node_type * work_node = enkf_node_alloc( plot_tvector->config_node );
-  
+  enkf_node_type * work_node  = enkf_node_alloc( plot_tvector->config_node );
+                             
   if (enkf_node_vector_storage( work_node )) {
     enkf_node_user_get_vector(work_node , fs , index_key , iens , state , plot_tvector->work);
     for (int step = 0; step < time_map_get_size(time_map); step++) 
