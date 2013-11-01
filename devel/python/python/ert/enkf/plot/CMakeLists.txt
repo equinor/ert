@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     data_fetcher.py
+    ensemble_data_fetcher.py
     observation_data_fetcher.py
     plot_data_fetcher.py
     refcase_data_fetcher.py
