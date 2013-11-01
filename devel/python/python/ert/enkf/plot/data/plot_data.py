@@ -9,8 +9,8 @@ class PlotData(dict):
 
     min_x = DictProperty("min_x")
     max_x = DictProperty("max_x")
-    min_value = DictProperty("min_value")
-    max_value = DictProperty("max_value")
+    min_y = DictProperty("min_y")
+    max_y = DictProperty("max_y")
 
     def __init__(self):
         super(PlotData, self).__init__()
@@ -22,8 +22,8 @@ class PlotData(dict):
 
         self.min_x = None
         self.max_x = None
-        self.min_value = None
-        self.max_value = None
+        self.min_y = None
+        self.max_y = None
 
 
     def setRefcase(self, refcase):
@@ -41,15 +41,16 @@ class PlotData(dict):
         else:
             self.max_x = max(self.max_x, refcase.max_x)
 
-        if self.min_value is None:
-            self.min_value = refcase.statistics.min_value
+        if self.min_y is None:
+            self.min_y = refcase.statistics.min_y
         else:
-            self.min_value = min(self.min_value, refcase.statistics.min_value)
+            self.min_y = min(self.min_y, refcase.statistics.min_y)
 
-        if self.max_value is None:
-            self.max_value = refcase.statistics.max_value
+        if self.max_y is None:
+            self.max_y = refcase.statistics.max_y
         else:
-            self.max_value = max(self.max_value, refcase.statistics.max_value)
+            self.max_y = max(self.max_y, refcase.statistics.max_y)
+
 
     def setObservations(self, observations):
         assert isinstance(observations, SampleList)
@@ -66,16 +67,16 @@ class PlotData(dict):
         else:
             self.max_x = max(self.max_x, observations.max_x)
 
-        if self.min_value is None:
-            self.min_value = self.adjustMinValue(observations.statistics.min_value, observations.statistics.min_with_std)
+        if self.min_y is None:
+            self.min_y = self.adjustMinValue(observations.statistics.min_y, observations.statistics.min_y_with_std)
         else:
-            mv = self.adjustMinValue(observations.statistics.min_value, observations.statistics.min_with_std)
-            self.min_value = min(self.min_value, mv)
+            mv = self.adjustMinValue(observations.statistics.min_y, observations.statistics.min_y_with_std)
+            self.min_y = min(self.min_y, mv)
 
-        if self.max_value is None:
-            self.max_value = observations.statistics.max_with_std
+        if self.max_y is None:
+            self.max_y = observations.statistics.max_y_with_std
         else:
-            self.max_value = max(self.max_value, observations.statistics.max_with_std)
+            self.max_y = max(self.max_y, observations.statistics.max_y_with_std)
 
 
     def adjustMinValue(self, value, value_with_std):
@@ -84,5 +85,30 @@ class PlotData(dict):
 
         return value_with_std
 
+
+
+    def setEnsemble(self, ensemble):
+        self.ensemble = ensemble
+
+        for realization in ensemble:
+            if self.min_x is None:
+                self.min_x = realization.min_x
+            else:
+                self.min_x = min(self.min_x, realization.min_x)
+
+            if self.max_x is None:
+                self.max_x = realization.max_x
+            else:
+                self.max_x = max(self.max_x, realization.max_x)
+
+            if self.min_y is None:
+                self.min_y = realization.statistics.min_y
+            else:
+                self.min_y = min(self.min_y, realization.statistics.min_y)
+
+            if self.max_y is None:
+                self.max_y = realization.statistics.max_y
+            else:
+                self.max_y = max(self.max_y, realization.statistics.max_y)
 
 

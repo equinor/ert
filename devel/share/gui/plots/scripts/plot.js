@@ -80,11 +80,11 @@ function Plot(element, data) {
     };
 
     var top_function = function(d) {
-        return d["value"] + d["std"];
+        return d["y"] + d["std"];
     };
 
     var bottom_function = function(d) {
-        return self.adjustY(d["value"], d["std"]);
+        return self.adjustY(d["y"], d["std"]);
     };
 
     this.x = function (d) {
@@ -92,7 +92,7 @@ function Plot(element, data) {
     };
 
     this.y = function (d) {
-        return self.y_scale(d["value"]);
+        return self.y_scale(d["y"]);
     };
 
     this.y_min = function (d) {
@@ -133,16 +133,19 @@ function Plot(element, data) {
         .style("refcase-plot-line")
         .duration(this.duration);
 
+    this.ensemble_line = PlotLine()
+        .x(this.x)
+        .y(this.y)
+        .style("ensemble-plot-line")
+        .duration(this.duration);
+
 }
 
 Plot.prototype.setData = function(data) {
-
-//    var data = data["observations"];
-
     this.title.text(data["name"]);
 
-    var min = data["min_value"];
-    var max = data["max_value"];
+    var min = data["min_y"];
+    var max = data["max_y"];
     this.y_scale.domain([min, max]).nice();
     this.x_scale.domain([new Date(data["min_x"] * 1000), new Date(data["max_x"] * 1000)]).nice();
 
@@ -192,6 +195,21 @@ Plot.prototype.setData = function(data) {
         refcase_line.call(this.refcase_line);
     }
 
+
+    var ensemble_lines;
+
+    if(data["ensemble"] != null) {
+        var ensemble_samples = [];
+        for (var index = 0; index < data["ensemble"].length; index++) {
+            ensemble_samples.push(data["ensemble"][index]["samples"]);
+        }
+        ensemble_lines = this.plot.selectAll(".ensemble-plot-line").data(ensemble_samples);
+        ensemble_lines.call(this.ensemble_line);
+
+    } else {
+        ensemble_lines = this.plot.selectAll(".ensemble-plot-line").data([]);
+        ensemble_lines.call(this.ensemble_line);
+    }
 
     this.svg.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
     this.svg.select(".x.axis").transition().duration(this.duration).call(this.x_axis);

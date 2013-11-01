@@ -96,6 +96,14 @@
     stroke-opacity: 1;
     stroke-width: 2px;
 }
+
+.ensemble-plot-line {
+    fill: none;
+
+    stroke: #007fff;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
 /*.area-fill:hover {*/
     /*fill: rgba(150, 150, 150, 0.1);*/
 
