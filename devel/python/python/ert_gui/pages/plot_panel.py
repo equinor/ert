@@ -33,7 +33,7 @@ class PlotContextObject(QObject):
 
     @pyqtSlot(result=str)
     def getPlotData(self):
-        return json.dumps(EnsembleSummaryPlot().getPlotData())
+        return json.dumps(self.__data)
 
 
 
@@ -48,7 +48,6 @@ class PlotPanel(QWidget):
 
         root_path = os.getenv("ERT_SHARE_PATH")
         path = os.path.join(root_path, "gui/plots/plot.html")
-        # print(path)
 
         layout = QGridLayout()
 
@@ -65,6 +64,11 @@ class PlotPanel(QWidget):
 
 
         # print(json.dumps(EnsembleSummaryPlot().getPlotData()))
+
+        # with open("plot_data.json", "w") as f:
+        #      f.write(json.dumps(EnsembleSummaryPlot().getPlotData()))
+
+
 
     def applyContextObject(self):
        self.web_view.page().mainFrame().addToJavaScriptWindowObject("plot_data_source", self.context_object)
