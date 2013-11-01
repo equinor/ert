@@ -60,6 +60,13 @@ static void enkf_plot_data_resize( enkf_plot_data_type * plot_data , int new_siz
 }
 
 
+static void enkf_plot_data_reset( enkf_plot_data_type * plot_data ) {
+  int iens;
+  for (iens = 0; iens < plot_data->size; iens++) 
+    enkf_plot_tvector_reset( plot_data->ensemble[iens] );
+}
+
+
 void enkf_plot_data_free( enkf_plot_data_type * plot_data ) {
   int iens;
   for (iens = 0; iens < plot_data->size; iens++) {
@@ -107,8 +114,10 @@ void enkf_plot_data_load( enkf_plot_data_type * plot_data ,
   else
     mask = bool_vector_alloc( ens_size , false );
   state_map_select_matching( state_map , mask , STATE_HAS_DATA );
+  bool_vector_fprintf( mask , stdout , "mask" , "%2d");
 
   enkf_plot_data_resize( plot_data , ens_size );
+  enkf_plot_data_reset( plot_data );
   {
     for (int iens = 0; iens < ens_size ; iens++) {
       if (bool_vector_iget( mask , iens)) {
