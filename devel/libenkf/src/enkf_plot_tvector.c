@@ -23,7 +23,7 @@
 #include <ert/enkf/enkf_plot_tvector.h>
 #include <ert/enkf/enkf_config_node.h>
 #include <ert/enkf/enkf_node.h>
-
+#include <ert/enkf/summary.h>
 
 #define ENKF_PLOT_TVECTOR_ID 6111861
 
@@ -34,6 +34,7 @@ struct enkf_plot_tvector_struct {
   time_t_vector_type          * time;
   bool_vector_type            * mask;
   const enkf_config_node_type * config_node;
+  bool summary_mode;
 };
 
 
@@ -60,6 +61,11 @@ enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * 
   plot_tvector->work = double_vector_alloc(0,0);
   
   plot_tvector->config_node = config_node;
+  if (enkf_config_node_get_impl_type( config_node ) == SUMMARY)
+    plot_tvector->summary_mode = true;
+  else
+    plot_tvector->summary_mode = false;
+  
   enkf_plot_tvector_reset( plot_tvector );
   return plot_tvector;
 }
@@ -89,9 +95,21 @@ int enkf_plot_tvector_size( const enkf_plot_tvector_type * plot_tvector ) {
 
 void enkf_plot_tvector_iset( enkf_plot_tvector_type * plot_tvector , int index , time_t time , double value) {
   time_t_vector_iset( plot_tvector->time , index , time );
-  double_vector_iset( plot_tvector->data , index , value );
-  bool_vector_iset( plot_tvector->mask , index , true );
+  bool active_value = true;
+
+  /* This is to handle holes in the summary vector storage. */
+  if (plot_tvector->summary_mode && !summary_active_value( value )) 
+    active_value = false;
+    
+  if (active_value) {
+    double_vector_iset( plot_tvector->data , index , value );
+    bool_vector_iset( plot_tvector->mask , index , true );
+  } else 
+    bool_vector_iset( plot_tvector->mask , index , false );
+
 }
+
+
 
 double enkf_plot_tvector_iget_value( const enkf_plot_tvector_type * plot_tvector , int index) {
   return double_vector_iget( plot_tvector->data , index);
