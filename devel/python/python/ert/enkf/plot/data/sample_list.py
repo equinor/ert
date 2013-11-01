@@ -1,4 +1,4 @@
-from ert.enkf.plot.data import DictProperty, Sample, SampleStatistics
+from ert.enkf.plot.data import DictProperty, Sample, SimpleSample, SampleStatistics
 
 
 class SampleList(dict):
@@ -21,10 +21,11 @@ class SampleList(dict):
         self.continuous_line = True
 
     def addSample(self, sample):
-        assert isinstance(sample, Sample)
+        assert isinstance(sample, Sample) or isinstance(sample, SimpleSample)
 
         self.samples.append(sample)
-        # self.samples.sort(key=Sample.index)
         self.statistics.addSample(sample)
-        if sample.single_point:
-            self.continuous_line = False
+
+        if isinstance(sample, Sample):
+            if sample.single_point:
+                self.continuous_line = False

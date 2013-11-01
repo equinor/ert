@@ -34,7 +34,7 @@ class RefcaseDataFetcher(DataFetcher):
             assert isinstance(node, EclSumNode)
 
             sample = Sample()
-            sample.value = node.value
+            sample.y = node.value
             sample.group = key
             sample.name = key
             sample.index = index

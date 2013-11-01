@@ -24,11 +24,11 @@ class EnsConfig(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def has_key(self, key):
+    def hasKey(self, key):
         """ @rtype: bool """
         return EnsConfig.cNamespace().has_key(self, key)
 
-    def get_node(self, key):
+    def getNode(self, key):
         """ @rtype: EnkfConfigNode """
         return EnsConfig.cNamespace().get_node(self, key).setParent(self)
 

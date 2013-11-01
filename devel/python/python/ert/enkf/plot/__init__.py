@@ -1,4 +1,4 @@
-from .data import DictProperty, Sample, SampleStatistics, SampleList, SampleListCollection, PlotData
+from .data import DictProperty, Sample, SimpleSample, SampleStatistics, SampleList, SampleListCollection, PlotData
 
 from .data_fetcher import DataFetcher
 from .observation_data_fetcher import ObservationDataFetcher

@@ -1,10 +1,21 @@
 from ert.enkf.plot.data import DictProperty
 
 
+class SimpleSample(dict):
+    x = DictProperty("x")
+    y = DictProperty("y")
+
+    def __init__(self):
+        super(SimpleSample, self).__init__()
+
+        self.x = 0.0
+        self.y = 0.0
+
+
 class Sample(dict):
     index = DictProperty("index")
     x = DictProperty("x")
-    value = DictProperty("value")
+    y = DictProperty("y")
     std = DictProperty("std")
 
     group = DictProperty("group")
@@ -16,7 +27,7 @@ class Sample(dict):
 
         self.index = None
         self.x = 0.0
-        self.value = 0.0
+        self.y = 0.0
         self.std = 0.0
 
         self.group = None

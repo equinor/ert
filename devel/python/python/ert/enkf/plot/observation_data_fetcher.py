@@ -39,7 +39,7 @@ class ObservationDataFetcher(DataFetcher):
                 #: :type: SummaryObservation
                 node = observation_data.getNode(index)
 
-                sample.value = node.getValue()
+                sample.y = node.getValue()
                 sample.std = node.getStandardDeviation()
                 sample.group = node.getSummaryKey()
                 sample.name = key
