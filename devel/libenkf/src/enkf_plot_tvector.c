@@ -126,9 +126,9 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
     enkf_node_user_get_vector(work_node , fs , index_key , iens , state , plot_tvector->work);
     for (int step = 0; step < time_map_get_size(time_map); step++) 
       enkf_plot_tvector_iset( plot_tvector , 
-                             step , 
-                             double_vector_iget( plot_tvector->work , step ) , 
-                             time_map_iget( time_map , step ));
+                              step , 
+                              time_map_iget( time_map , step ) , 
+                              double_vector_iget( plot_tvector->work , step ));
   } else {
     int step;
     node_id_type node_id = {.iens        = iens,
@@ -141,9 +141,9 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
 
       if (enkf_node_user_get(work_node , fs , index_key , node_id , &value)) {
         enkf_plot_tvector_iset( plot_tvector , 
-                               step , 
-                               value , 
-                               time_map_iget( time_map , step ));
+                                step , 
+                                time_map_iget( time_map , step ) , 
+                                value );
       }
     }
   }
