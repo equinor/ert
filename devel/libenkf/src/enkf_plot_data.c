@@ -53,7 +53,7 @@ static void enkf_plot_data_resize( enkf_plot_data_type * plot_data , int new_siz
     
     if (new_size > plot_data->size) {
       for (iens = plot_data->size; iens < new_size; iens++) 
-        plot_data->ensemble[iens] = enkf_plot_tvector_alloc( plot_data->config_node );
+        plot_data->ensemble[iens] = enkf_plot_tvector_alloc( plot_data->config_node , iens);
     } 
     plot_data->size = new_size;
   }
@@ -123,7 +123,7 @@ void enkf_plot_data_load( enkf_plot_data_type * plot_data ,
       if (bool_vector_iget( mask , iens)) {
         // thread_pool here?
         enkf_plot_tvector_type * vector = enkf_plot_data_iget( plot_data , iens );
-        enkf_plot_tvector_load( vector , fs , index_key , iens , state );
+        enkf_plot_tvector_load( vector , fs , index_key , state );
       }
     }
   }

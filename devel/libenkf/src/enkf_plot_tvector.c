@@ -34,6 +34,7 @@ struct enkf_plot_tvector_struct {
   time_t_vector_type          * time;
   bool_vector_type            * mask;
   const enkf_config_node_type * config_node;
+  int  iens;
   bool summary_mode;
 };
 
@@ -51,7 +52,7 @@ void enkf_plot_tvector_reset( enkf_plot_tvector_type * plot_tvector ) {
 }
 
 
-enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * config_node ) {
+enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * config_node , int iens) {
   enkf_plot_tvector_type * plot_tvector = util_malloc( sizeof * plot_tvector);
   UTIL_TYPE_ID_INIT( plot_tvector , ENKF_PLOT_TVECTOR_ID );
 
@@ -59,7 +60,8 @@ enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * 
   plot_tvector->time = time_t_vector_alloc(-1 , 0);
   plot_tvector->mask = bool_vector_alloc( false , 0 );
   plot_tvector->work = double_vector_alloc(0,0);
-  
+  plot_tvector->iens = iens;
+
   plot_tvector->config_node = config_node;
   if (enkf_config_node_get_impl_type( config_node ) == SUMMARY)
     plot_tvector->summary_mode = true;
@@ -130,7 +132,6 @@ bool enkf_plot_tvector_iget_active( const enkf_plot_tvector_type * plot_tvector 
 void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector , 
                              enkf_fs_type * fs , 
                              const char * index_key , 
-                             int iens , 
                              state_enum state) {
 
   time_map_type * time_map = enkf_fs_get_time_map( fs );
@@ -139,7 +140,7 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
   enkf_node_type * work_node  = enkf_node_alloc( plot_tvector->config_node );
                              
   if (enkf_node_vector_storage( work_node )) {
-    enkf_node_user_get_vector(work_node , fs , index_key , iens , state , plot_tvector->work);
+    enkf_node_user_get_vector(work_node , fs , index_key , plot_tvector->iens , state , plot_tvector->work);
     for (int step = 0; step < time_map_get_size(time_map); step++) 
       enkf_plot_tvector_iset( plot_tvector , 
                               step , 
@@ -147,7 +148,7 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
                               double_vector_iget( plot_tvector->work , step ));
   } else {
     int step;
-    node_id_type node_id = {.iens        = iens,
+    node_id_type node_id = {.iens        = plot_tvector->iens,
                             .state       = state, 
                             .report_step = 0 };
     

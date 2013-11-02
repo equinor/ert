@@ -34,7 +34,7 @@
 
 void create_test() {
   enkf_config_node_type * config_node = enkf_config_node_alloc_summary("KEY" , LOAD_FAIL_SILENT);
-  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( config_node );
+  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( config_node , 0 );
   test_assert_true( enkf_plot_tvector_is_instance( tvector ));
   enkf_plot_tvector_free( tvector );
 }
@@ -43,7 +43,7 @@ void create_test() {
 
 void test_iset() {
   enkf_config_node_type * config_node = enkf_config_node_alloc_summary("KEY" , LOAD_FAIL_SILENT);
-  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( config_node );
+  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( config_node , 0 );
   enkf_plot_tvector_iset( tvector , 10 , 0 , 100 );
 
   test_assert_int_equal( 11 , enkf_plot_tvector_size( tvector  ));
@@ -62,7 +62,7 @@ void test_iset() {
 
 void test_all_active() {
   enkf_config_node_type * config_node = enkf_config_node_alloc_summary("KEY" , LOAD_FAIL_SILENT);
-  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( config_node );
+  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( config_node , 0);
   test_assert_true( enkf_plot_tvector_all_active( tvector ));
 
   enkf_plot_tvector_iset( tvector , 00 , 0 , 100 );
@@ -79,7 +79,7 @@ void test_all_active() {
 
 void test_iget() {
   enkf_config_node_type * config_node = enkf_config_node_alloc_summary("KEY" , LOAD_FAIL_SILENT);
-  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( config_node );
+  enkf_plot_tvector_type * tvector = enkf_plot_tvector_alloc( config_node , 0);
   enkf_plot_tvector_iset( tvector , 0 , 0 , 0 );
   enkf_plot_tvector_iset( tvector , 1 , 100 , 10 );
   enkf_plot_tvector_iset( tvector , 2 , 200 , 20 );
