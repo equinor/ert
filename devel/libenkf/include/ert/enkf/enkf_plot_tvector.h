@@ -40,8 +40,9 @@ extern "C" {
   
   
   void                     enkf_plot_tvector_reset( enkf_plot_tvector_type * plot_tvector );
-  enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * config_node );
-  void                     enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector , enkf_fs_type * fs , const char * user_key , int iens , state_enum state);
+  enkf_plot_tvector_type * enkf_plot_tvector_alloc( const enkf_config_node_type * config_node , int iens);
+  void                     enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector , enkf_fs_type * fs , const char * user_key , state_enum state);
+  void *                   enkf_plot_tvector_load__( void * arg );
   void                     enkf_plot_tvector_free( enkf_plot_tvector_type * plot_tvector );
   void                     enkf_plot_tvector_iset( enkf_plot_tvector_type * plot_tvector , int index , time_t time , double value);
   
@@ -50,6 +51,7 @@ extern "C" {
   time_t                  enkf_plot_tvector_iget_time( const enkf_plot_tvector_type * plot_tvector , int index);
   bool                    enkf_plot_tvector_iget_active( const enkf_plot_tvector_type * plot_tvector , int index);
   bool                    enkf_plot_tvector_all_active( const enkf_plot_tvector_type * plot_tvector );
+  
 
 #ifdef __cplusplus
 }
