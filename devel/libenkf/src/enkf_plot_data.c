@@ -36,6 +36,7 @@ struct enkf_plot_data_struct {
   const enkf_config_node_type * config_node;
   int                       size;
   enkf_plot_tvector_type ** ensemble;
+  arg_pack_type          ** work_arg;
 };
 
 
@@ -45,15 +46,20 @@ static void enkf_plot_data_resize( enkf_plot_data_type * plot_data , int new_siz
     int iens;
     
     if (new_size < plot_data->size) {
-      for (iens = new_size; iens < plot_data->size; iens++) 
+      for (iens = new_size; iens < plot_data->size; iens++) {
         enkf_plot_tvector_free( plot_data->ensemble[iens] );
+        arg_pack_free( plot_data->work_arg[iens] );
+      }
     }
 
     plot_data->ensemble = util_realloc( plot_data->ensemble , new_size * sizeof * plot_data->ensemble);
+    plot_data->work_arg = util_realloc( plot_data->work_arg , new_size * sizeof * plot_data->work_arg);
     
     if (new_size > plot_data->size) {
-      for (iens = plot_data->size; iens < new_size; iens++) 
+      for (iens = plot_data->size; iens < new_size; iens++) { 
         plot_data->ensemble[iens] = enkf_plot_tvector_alloc( plot_data->config_node , iens);
+        plot_data->work_arg[iens] = arg_pack_alloc();
+      }
     } 
     plot_data->size = new_size;
   }
@@ -62,18 +68,21 @@ static void enkf_plot_data_resize( enkf_plot_data_type * plot_data , int new_siz
 
 static void enkf_plot_data_reset( enkf_plot_data_type * plot_data ) {
   int iens;
-  for (iens = 0; iens < plot_data->size; iens++) 
+  for (iens = 0; iens < plot_data->size; iens++) {
     enkf_plot_tvector_reset( plot_data->ensemble[iens] );
+    arg_pack_clear( plot_data->work_arg[iens] );
+  }
 }
 
 
 void enkf_plot_data_free( enkf_plot_data_type * plot_data ) {
   int iens;
   for (iens = 0; iens < plot_data->size; iens++) {
-    if ( plot_data->ensemble[iens] != NULL)
-      enkf_plot_tvector_free( plot_data->ensemble[iens] );
+    enkf_plot_tvector_free( plot_data->ensemble[iens] );
+    arg_pack_free( plot_data->work_arg[iens]);
   }
-  
+  free( plot_data->work_arg );
+  free( plot_data->ensemble );
   free( plot_data );
 }
 
@@ -86,6 +95,7 @@ enkf_plot_data_type * enkf_plot_data_alloc( const enkf_config_node_type * config
   plot_data->config_node = config_node;
   plot_data->size        = 0;
   plot_data->ensemble    = NULL;
+  plot_data->work_arg    = NULL;
   return plot_data;
 }
 
@@ -97,6 +107,7 @@ enkf_plot_tvector_type * enkf_plot_data_iget( const enkf_plot_data_type * plot_d
 int enkf_plot_data_get_size( const enkf_plot_data_type * plot_data ) {
   return plot_data->size;
 }
+
 
 
 
@@ -119,14 +130,26 @@ void enkf_plot_data_load( enkf_plot_data_type * plot_data ,
   enkf_plot_data_resize( plot_data , ens_size );
   enkf_plot_data_reset( plot_data );
   {
+    const int num_cpu = 4;
+    thread_pool_type * tp = thread_pool_alloc( num_cpu , true );
     for (int iens = 0; iens < ens_size ; iens++) {
       if (bool_vector_iget( mask , iens)) {
         // thread_pool here?
         enkf_plot_tvector_type * vector = enkf_plot_data_iget( plot_data , iens );
-        enkf_plot_tvector_load( vector , fs , index_key , state );
+        arg_pack_type * work_arg = plot_data->work_arg[iens];
+
+        arg_pack_append_ptr( work_arg , vector );
+        arg_pack_append_ptr( work_arg , fs );
+        arg_pack_append_const_ptr( work_arg , index_key );
+        arg_pack_append_int( work_arg , state );
+
+        thread_pool_add_job( tp , enkf_plot_tvector_load__ , work_arg );
       }
     }
+    thread_pool_join( tp );
+    thread_pool_free( tp );
   }
   bool_vector_free( mask );
 }
+
   

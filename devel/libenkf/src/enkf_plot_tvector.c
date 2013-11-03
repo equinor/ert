@@ -168,4 +168,14 @@ void enkf_plot_tvector_load( enkf_plot_tvector_type * plot_tvector ,
 }
 
 
+void * enkf_plot_tvector_load__( void * arg ) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  enkf_plot_tvector_type * tvector = arg_pack_iget_ptr( arg_pack , 0 );
+  enkf_fs_type * fs = arg_pack_iget_ptr( arg_pack , 1 );
+  const char * index_key = arg_pack_iget_ptr( arg_pack , 2 );
+  state_enum state = arg_pack_iget_int( arg_pack , 3 );
+
+  enkf_plot_tvector_load( tvector , fs , index_key , state );
+                      return NULL;
+}
 
