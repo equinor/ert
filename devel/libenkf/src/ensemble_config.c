@@ -787,13 +787,15 @@ stringlist_type * ensemble_config_alloc_keylist_from_impl_type(const ensemble_co
 bool ensemble_config_has_impl_type(const  ensemble_config_type * config, const ert_impl_type impl_type) {
   bool ret = false; 
   hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
-    while (!hash_iter_is_complete( iter )) {
-      const char * key = hash_iter_get_next_key(iter);
-      if (enkf_config_node_get_impl_type( hash_get(config->config_nodes , key)) == impl_type)
-        ret = true; 
+  while (!hash_iter_is_complete( iter )) {
+    const char * key = hash_iter_get_next_key(iter);
+    if (enkf_config_node_get_impl_type( hash_get(config->config_nodes , key)) == impl_type) {
+      ret = true; 
+      break; 
     }
-    hash_iter_free(iter);
-    return ret; 
+  }
+  hash_iter_free(iter);
+  return ret; 
 }
 
 
