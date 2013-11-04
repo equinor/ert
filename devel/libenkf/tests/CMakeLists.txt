@@ -87,6 +87,18 @@ add_test( enkf_state_report_step_compatible_FALSE
 
 #-----------------------------------------------------------------
 
+add_executable( enkf_state_skip_summary_load_test enkf_state_skip_summary_load_test.c )
+target_link_libraries( enkf_state_skip_summary_load_test enkf test_util )
+
+add_test( enkf_state_summary_vars_present
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_skip_summary_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_summary_vars_config  config_summary_vars TRUE)
+
+add_test( enkf_state_no_summary_vars_present 
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_skip_summary_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_no_summary_vars_config  config_no_summary_vars FALSE)
+                                                                      
+
+#-----------------------------------------------------------------
+
 add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
 

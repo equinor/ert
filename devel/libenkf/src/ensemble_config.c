@@ -671,7 +671,9 @@ void ensemble_config_init(ensemble_config_type * ensemble_config , const config_
   ensemble_config_init_GEN_DATA( ensemble_config , config );
   ensemble_config_init_GEN_KW(ensemble_config , config ); 
   ensemble_config_init_SURFACE( ensemble_config , config );
+  
   ensemble_config_init_SUMMARY( ensemble_config , config , refcase );
+  
   ensemble_config_init_FIELD( ensemble_config , config , grid );
   
   
@@ -782,6 +784,17 @@ stringlist_type * ensemble_config_alloc_keylist_from_impl_type(const ensemble_co
 }
 
 
+bool ensemble_config_has_impl_type(const  ensemble_config_type * config, const ert_impl_type impl_type) {
+  bool ret = false; 
+  hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
+    while (!hash_iter_is_complete( iter )) {
+      const char * key = hash_iter_get_next_key(iter);
+      if (enkf_config_node_get_impl_type( hash_get(config->config_nodes , key)) == impl_type)
+        ret = true; 
+    }
+    hash_iter_free(iter);
+    return ret; 
+}
 
 
 void ensemble_config_init_internalization( ensemble_config_type * config ) {
