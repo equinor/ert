@@ -1,4 +1,4 @@
-from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition
+from ert_gui.ide.keywords.definitions import IntegerArgument, BoolArgument, ConfigurationLineDefinition, KeywordDefinition
 
 
 class SimulationControlKeywords(object):
@@ -10,11 +10,12 @@ class SimulationControlKeywords(object):
 
         ert_keywords.addKeyword(self.addMaxRuntime())
         ert_keywords.addKeyword(self.addMinRealizations())
+        ert_keywords.addKeyword(self.addStopLongRunning())
 
 
     def addMaxRuntime(self):
         max_runtime = ConfigurationLineDefinition(keyword=KeywordDefinition("MAX_RUNTIME"),
-                                                   arguments=[IntegerArgument(from_value=1)],
+                                                   arguments=[IntegerArgument(from_value=0)],
                                                    documentation_link="control_simulations/max_runtime",
                                                    required=False,
                                                    group=self.group)
@@ -31,3 +32,11 @@ class SimulationControlKeywords(object):
                                                    group=self.group)
         return min_realizations
 
+
+    def addStopLongRunning(self):
+        stop_long_running = ConfigurationLineDefinition(keyword=KeywordDefinition("STOP_LONG_RUNNING"),
+                                                        arguments=[BoolArgument()],
+                                                        documentation_link="control_simulations/stop_long_running",
+                                                        required=False,
+                                                        group=self.group)
+        return stop_long_running
