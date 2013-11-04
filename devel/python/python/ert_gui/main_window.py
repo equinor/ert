@@ -1,5 +1,5 @@
 from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QMainWindow, QTabWidget, qApp
+from PyQt4.QtGui import QMainWindow, QTabWidget, qApp, QDockWidget
 from ert_gui.widgets.help_dock import HelpDock
 
 
@@ -41,8 +41,8 @@ class GertMainWindow(QMainWindow):
         file_menu.addAction("Save Config File", self.__save)
         file_menu.addAction("Close", self.__quit)
 
-        view_menu = self.menuBar().addMenu("&View")
-        view_menu.addAction(self.help_dock.toggleViewAction())
+        self.__view_menu = self.menuBar().addMenu("&View")
+        self.__view_menu.addAction(self.help_dock.toggleViewAction())
 
     def __quit(self):
         self.__saveSettings()
@@ -63,5 +63,15 @@ class GertMainWindow(QMainWindow):
         settings = QSettings("Statoil", "ErtGui")
         self.restoreGeometry(settings.value("geometry").toByteArray())
         self.restoreState(settings.value("windowState").toByteArray())
+
+    def addDock(self, name, widget, area=Qt.RightDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
+        dock_widget = QDockWidget(name)
+        dock_widget.setObjectName("%sDock" % name)
+        dock_widget.setWidget(widget)
+        dock_widget.setAllowedAreas(allowed_areas)
+        self.addDockWidget(area, dock_widget)
+        self.__view_menu.addAction(dock_widget.toggleViewAction())
+        return dock_widget
+
 
 

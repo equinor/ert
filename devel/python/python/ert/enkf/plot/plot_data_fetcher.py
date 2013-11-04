@@ -1,4 +1,6 @@
+import time
 from ert.enkf.plot import DataFetcher, PlotData, SampleListCollection, ObservationDataFetcher, RefcaseDataFetcher
+from ert.enkf.plot.ensemble_data_fetcher import EnsembleDataFetcher
 
 
 class PlotDataFetcher(DataFetcher):
@@ -9,6 +11,7 @@ class PlotDataFetcher(DataFetcher):
     def fetchData(self):
         observations = ObservationDataFetcher(self.ert()).fetchData()
         refcase = RefcaseDataFetcher(self.ert()).fetchData()
+        ensemble_plot_data = EnsembleDataFetcher(self.ert()).fetchData()
 
         result = {}
         result["keys"] = []
@@ -26,6 +29,17 @@ class PlotDataFetcher(DataFetcher):
 
             result[key].setRefcase(sample_list)
 
+
+        sorted_keys = sorted(ensemble_plot_data.keys())
+        for key in sorted_keys:
+            if not key in result:
+                result[key] = PlotData()
+                result[key].name = key
+                result["keys"].append(key)
+
+            result[key].setEnsemble(ensemble_plot_data[key])
+
+
         for key in observations.sample_lists_keys:
             sample_list = observations[key]
             """ @type: SampleList """
@@ -37,6 +51,7 @@ class PlotDataFetcher(DataFetcher):
 
             result["observation_keys"].append(key)
             result[key].setObservations(sample_list)
+
 
         result["keys"] = sorted(result["keys"])
         result["observation_keys"] = sorted(result["observation_keys"])

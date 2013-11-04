@@ -174,8 +174,9 @@ static void enkf_tui_fs_copy_ensemble__(
 
   {
     /* If the current target_case does not exist it is automatically created by the select_write_dir function */
-    enkf_fs_type * src_fs    = enkf_main_get_alt_fs( enkf_main , source_case , true , false );
-    enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_case , false, true );
+    enkf_fs_type * src_fs    = enkf_main_mount_alt_fs( enkf_main , source_case , true , false );
+    enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false, true );
+    
     stringlist_type * nodes;
     
     if(only_parameters)
@@ -211,8 +212,8 @@ static void enkf_tui_fs_copy_ensemble__(
       }
     }
    
-    enkf_main_close_alt_fs( enkf_main , src_fs );
-    enkf_main_close_alt_fs( enkf_main , target_fs );
+    enkf_fs_umount( src_fs );
+    enkf_fs_umount( target_fs );
     
     msg_free(msg , true);
     stringlist_free(nodes);

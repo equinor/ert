@@ -22,3 +22,5 @@ class SampleListCollection(dict):
         self.sample_lists_keys.append(sample_list.group)
         self.sample_lists_keys.sort()
         self[sample_list.group] = sample_list
+
+

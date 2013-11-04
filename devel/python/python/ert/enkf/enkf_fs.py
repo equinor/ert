@@ -58,7 +58,7 @@ cwrapper.registerType("enkf_fs", EnkfFs)
 cwrapper.registerType("enkf_fs_obj", EnkfFs.createPythonObject)
 cwrapper.registerType("enkf_fs_ref", EnkfFs.createCReference)
 
-EnkfFs.cNamespace().close = cwrapper.prototype("void enkf_fs_close(enkf_fs)")
+EnkfFs.cNamespace().umount = cwrapper.prototype("void enkf_fs_umount(enkf_fs)")
 EnkfFs.cNamespace().has_node = cwrapper.prototype("bool enkf_fs_has_node(enkf_fs, char*, c_uint, int, int, c_uint)")
 EnkfFs.cNamespace().has_vector = cwrapper.prototype("bool enkf_fs_has_vector(enkf_fs, char*, c_uint, int, c_uint)")
 EnkfFs.cNamespace().fread_node = cwrapper.prototype("void enkf_fs_fread_node(enkf_fs, buffer, char*, c_uint, int, int, c_uint)")

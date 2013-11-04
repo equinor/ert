@@ -302,7 +302,7 @@ EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprint
 EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_create_new_config(char* , char*, char* , char* , int)")
 
 EnKFMain.cNamespace().get_fs = cwrapper.prototype("enkf_fs_ref enkf_main_get_fs(enkf_main)")
-EnKFMain.cNamespace().get_alt_fs = cwrapper.prototype("enkf_fs_ref enkf_main_get_alt_fs(enkf_main , char* , bool , bool)")
+EnKFMain.cNamespace().get_alt_fs = cwrapper.prototype("enkf_fs_ref enkf_main_mount_alt_fs(enkf_main , char* , bool , bool)")
 EnKFMain.cNamespace().user_select_fs = cwrapper.prototype("void enkf_main_user_select_fs(enkf_main , char*)")
 # EnKFMain.cNamespace().get_current_fs = cwrapper.prototype("char* enkf_main_get_current_fs(enkf_main)")
 EnKFMain.cNamespace().select_fs = cwrapper.prototype("void enkf_main_select_fs(enkf_main, char*)")

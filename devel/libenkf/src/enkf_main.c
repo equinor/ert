@@ -422,7 +422,9 @@ void enkf_main_free(enkf_main_type * enkf_main){
   enkf_obs_free(enkf_main->obs);
   ranking_table_free( enkf_main->ranking_table );
   enkf_main_free_ensemble( enkf_main );
-  if (enkf_main->dbase != NULL) enkf_fs_close( enkf_main->dbase );
+  if (enkf_main->dbase != NULL) 
+    enkf_fs_umount( enkf_main->dbase );
+
   util_safe_free( enkf_main->current_fs_case );
 
   if (log_is_open( enkf_main->logh ))
@@ -1839,7 +1841,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
       {
         bool update_done;
         time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
-        enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_fs_name , false , true );
+        enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
         {
           int stride = 1;
           int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
@@ -1884,7 +1886,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int itera
     fprintf(stderr,"Sorry: the updated ensemble will overwrite the current case in the iterated ensemble smoother.");
     updateOK = enkf_main_smoother_update(enkf_main , step_list , enkf_main_get_fs(enkf_main));
   } else {
-    enkf_fs_type * target_fs     = enkf_main_get_alt_fs(enkf_main , target_fs_name , false , true );
+    enkf_fs_type * target_fs     = enkf_main_mount_alt_fs(enkf_main , target_fs_name , false , true );
     updateOK = enkf_main_smoother_update(enkf_main , step_list , target_fs );
     enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
@@ -1997,8 +1999,9 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
   const int ens_size            = enkf_main_get_ensemble_size( enkf_main );
   
   {
-    enkf_fs_type * source_fs = enkf_main_get_alt_fs( enkf_main , source_case , true , false );
-    enkf_fs_type * target_fs = enkf_main_get_alt_fs( enkf_main , target_case , false , true );
+    enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , true , false );
+    enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false , true );
+
     {
       int * ranking_permutation;
       int inode , src_iens;
@@ -2031,9 +2034,8 @@ void enkf_main_copy_ensemble(enkf_main_type * enkf_main        ,
       if (ranking_permutation == NULL) 
         free( ranking_permutation );
     }
-
-    enkf_main_close_alt_fs( enkf_main , source_fs );
-    enkf_main_close_alt_fs( enkf_main , target_fs );
+    enkf_fs_umount( source_fs );
+    enkf_fs_umount( target_fs );
   }
 }
 
@@ -2709,13 +2711,13 @@ static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char
 
 
 static void enkf_main_close_fs( enkf_main_type * enkf_main ) {
-  enkf_fs_close( enkf_main->dbase );
+  enkf_fs_umount( enkf_main->dbase );
   enkf_main->dbase = NULL;
 }
 
 
 enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
-  return enkf_main->dbase;
+  return enkf_fs_get_weakref( enkf_main->dbase );
 }
 
 
@@ -2788,50 +2790,88 @@ stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
   return case_list;
 }
 
+void enkf_main_create_fs( const enkf_main_type * enkf_main , const char * case_path ) {
+  char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
 
-void enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs) {
-  if (fs != enkf_main->dbase) 
-    enkf_fs_close( fs );
+  enkf_fs_create_fs( new_mount_point,
+                     model_config_get_dbase_type( enkf_main->model_config ) , 
+                     model_config_get_dbase_args( enkf_main->model_config ));
+  
+  free( new_mount_point );
 }
 
 
-enkf_fs_type * enkf_main_get_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
-  enkf_fs_type * alt_fs = enkf_main->dbase;
-  if (case_path != NULL) {
-    char * new_mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
-    const char * current_mount_point = NULL;
-    
-    if (enkf_main->dbase != NULL)
-      current_mount_point = enkf_fs_get_mount_point( enkf_main->dbase );
+bool enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path) {
+  char * mount_point               = enkf_main_alloc_mount_point( enkf_main , case_path );
+  const char * current_mount_point = NULL;
+  bool is_current;
+  
+  if (enkf_main->dbase != NULL)
+    current_mount_point = enkf_fs_get_mount_point( enkf_main->dbase );
+  
+  is_current = util_string_equal( mount_point , current_mount_point );
+  free( mount_point );
+  return is_current;
+}
 
-    if (!util_string_equal( new_mount_point , current_mount_point )) {
+
+/*
+  All the return values from this function must be closed with
+  enkf_fs_umount(). If the return value is just a reference to the
+  current existing case the function will increase the reference count
+  on that enkf_fs instance, and the corresponding enkf_usmount will
+  decrease it again.
+*/
+
+enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
+  if (enkf_main_case_is_current( enkf_main , case_path ))
+    // Fast path - we just return a reference to the currently selected case;
+    // with increased refcount.
+    return enkf_fs_get_ref( enkf_main->dbase ); 
+  else {
+    // We have asked for an alterantive fs - must mount and possibly create that first.
+    enkf_fs_type * new_fs = NULL;
+    if (case_path != NULL) {
+      char * new_mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
+
       if (!enkf_fs_exists( new_mount_point )) {
         if (create)
-          enkf_fs_create_fs( new_mount_point,
-                             model_config_get_dbase_type( enkf_main->model_config ) , 
-                             model_config_get_dbase_args( enkf_main->model_config ));
+          enkf_main_create_fs( enkf_main , case_path );
       }
-      alt_fs = enkf_fs_open( new_mount_point , read_only );
+      
+      new_fs = enkf_fs_mount( new_mount_point , read_only );
+      free( new_mount_point );
     }
-    free( new_mount_point );
+    return new_fs;
   }
-  return alt_fs;
 }
+
 
 
 
 void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
-  enkf_fs_type * new_fs = enkf_main_get_alt_fs( enkf_main , case_path , false , true );
-  
-  if (new_fs != NULL) 
-    enkf_main_set_fs( enkf_main , new_fs , case_path);
+  if (enkf_main_case_is_current( enkf_main , case_path ))
+    return;  /* We have tried to select the currently selected case - just return. */
   else {
-    const char * ens_path = model_config_get_enspath( enkf_main->model_config );
-    util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
+
+    enkf_fs_type * new_fs = enkf_main_mount_alt_fs( enkf_main , case_path , false , true );
+    if (enkf_main->dbase == new_fs)
+      util_abort("%s : return reference to current FS in situation where that should not happen.\n",__func__);
+    
+    if (new_fs != NULL) 
+      enkf_main_set_fs( enkf_main , new_fs , case_path);
+    else {
+      const char * ens_path = model_config_get_enspath( enkf_main->model_config );
+      util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
+    }
+
   }
 }
 
 
+/*
+  Return a weak reference - i.e. the refocunt is not increased.
+*/
 const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
   return enkf_main->current_fs_case;
 }
@@ -3597,11 +3637,6 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 }
 
 
-enkf_plot_data_type * enkf_main_alloc_plot_data( enkf_main_type * enkf_main ) {
-  enkf_plot_data_type * plot_data = enkf_plot_data_alloc( ecl_config_get_start_date( enkf_main_get_ecl_config( enkf_main )));
-  
-  return plot_data;
-}
 
 /*****************************************************************/
 
@@ -3659,10 +3694,10 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
 }
 
 bool enkf_main_case_is_initialized( const enkf_main_type * enkf_main , const char * case_name ,  bool_vector_type * __mask) {
-  enkf_fs_type * fs = enkf_main_get_alt_fs(enkf_main , case_name , true , false);
+  enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main , case_name , true , false);
   if (fs) {
     bool initialized = enkf_main_case_is_initialized__(enkf_main , fs , __mask);
-    enkf_main_close_alt_fs(enkf_main , fs);
+    enkf_fs_umount( fs );
     return initialized;
   } else 
     return false;

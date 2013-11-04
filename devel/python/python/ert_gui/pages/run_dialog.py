@@ -18,7 +18,7 @@ class RunDialog(QDialog):
 
         assert isinstance(run_model, SimulationRunner)
         self.run_model = run_model
-        self.run_model.observable().attach(SimulationRunner.SIMULATION_FINISHED_EVENT, self.simulationFinished.emit)
+        self.run_model.observable().attach(SimulationRunner.SIMULATION_FINISHED_EVENT, self.simulationDone)
 
 
         layout = QVBoxLayout()
@@ -67,6 +67,9 @@ class RunDialog(QDialog):
         timer.setInterval(500)
         timer.timeout.connect(self.setRunningTime)
         timer.start()
+
+    def simulationDone(self):
+        self.simulationFinished.emit()
 
     def setRunningTime(self):
         self.running_time.setText("Running time: %d seconds" % self.run_model.getRunningTime())
