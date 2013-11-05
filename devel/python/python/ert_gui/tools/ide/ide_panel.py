@@ -3,7 +3,7 @@ from PyQt4.QtCore import Qt, QEvent, QDir, QRegExp, QChar
 from PyQt4.QtGui import QPlainTextEdit, QTextOption, QCompleter, QStringListModel, QFont, QColor, QShortcut, QKeySequence, QTextCursor, QFileSystemModel, QTextDocument
 
 
-class IDEPanel(QPlainTextEdit):
+class IdePanel(QPlainTextEdit):
     def __init__(self):
         QPlainTextEdit.__init__(self)
         self.setWordWrapMode(QTextOption.NoWrap)
