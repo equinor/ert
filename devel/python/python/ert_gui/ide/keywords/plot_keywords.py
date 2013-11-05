@@ -126,9 +126,9 @@ class PlotKeywords(object):
 
 
     def addRftPath(self):
-        rft_path = ConfigurationLineDefinition(keyword=KeywordDefinition("RFT_PATH"),
+        rft_path = ConfigurationLineDefinition(keyword=KeywordDefinition("RFTPATH"),
                                                  arguments=[PathArgument()],
-                                                 documentation_link="plot/rft_path",
+                                                 documentation_link="plot/rftpath",
                                                  required=False,
                                                  group=self.group)
         return rft_path
