@@ -15,3 +15,4 @@ class IdeTool(Tool):
             self.ide_window = IdeWindow(self.path, self.parent())
 
         self.ide_window.show()
+        self.ide_window.activateWindow()
