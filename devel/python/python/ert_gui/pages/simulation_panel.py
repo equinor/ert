@@ -71,7 +71,6 @@ class SimulationPanel(RowPanel):
 
         simulation_runner = SimulationRunner(simulation_model)
 
-
         dialog = RunDialog(simulation_runner)
         simulation_runner.start()
         dialog.exec_()
