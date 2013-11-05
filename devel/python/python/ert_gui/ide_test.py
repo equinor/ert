@@ -2,12 +2,16 @@ import os
 import sys
 from PyQt4.QtGui import QApplication, QMainWindow, QVBoxLayout, QWidget
 from ert_gui.ide.highlighter import KeywordHighlighter
-from ert_gui.tools.ide.ide_panel import IDEPanel
+from ert_gui.tools.ide.ide_panel import IdePanel
 from ert_gui.widgets.search_box import SearchBox
 
 
 
 def main():
+    if len(sys.argv) == 1:
+        print("Missing configuration file!")
+        sys.exit(1)
+
     QApplication.setGraphicsSystem("raster")
     app = QApplication(sys.argv) #Early so that QT is initialized before other imports
 
@@ -22,15 +26,14 @@ def main():
     search = SearchBox()
 
 
-    ide = IDEPanel()
+    ide = IdePanel()
 
     layout.addWidget(search)
     layout.addWidget(ide, 1)
 
-    os.chdir("/private/chflo/ERT-code/TestCase")
 
-    config_file = ""
-    with open("config") as f:
+    path = sys.argv[1]
+    with open(path) as f:
         config_file = f.read()
 
     highlighter = KeywordHighlighter(ide.document())
@@ -45,13 +48,6 @@ def main():
     ide.setFocus()
 
     main_window.show()
-
-
-
-    def save():
-        print(ide.getText())
-
-    #button.clicked.connect(save)
 
     sys.exit(app.exec_())
 
