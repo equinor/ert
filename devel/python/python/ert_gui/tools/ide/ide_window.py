@@ -20,11 +20,13 @@ class IdeWindow(QMainWindow):
 
         wizard_panel = WizardView()
         wizard_panel.addGroup("Parameters")
-        wizard_panel.addItemToGroup("Parameters", "Summary")
-        wizard_panel.addItemToGroup("Parameters", "Field")
-        wizard_panel.addItemToGroup("Parameters", "Data Keyword")
+        wizard_panel.addItemToGroup("Parameters", "Add Summary key")
+        wizard_panel.addItemToGroup("Parameters", "Add Field parameter")
+        wizard_panel.addItemToGroup("Parameters", "Add Data Keyword")
         wizard_panel.addGroup("Eclipse")
+        wizard_panel.addItemToGroup("Eclipse", "Setup Eclipse parameters")
         wizard_panel.addGroup("Observations")
+        wizard_panel.addItemToGroup("Observations", "Add Observations")
         wizard_panel.expandAll()
         self.addDock("Wizards", wizard_panel)
 
