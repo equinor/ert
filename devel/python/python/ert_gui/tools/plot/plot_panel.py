@@ -2,7 +2,6 @@ import json
 import os
 from PyQt4.QtCore import QUrl, Qt, QObject, pyqtSignal, pyqtSlot, QVariant
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
-from PyQt4.QtNetwork import QNetworkProxy
 from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
 from ert_gui.models.connectors.plot.ensemble_summary_plot import EnsembleSummaryPlot
 
@@ -41,10 +40,6 @@ class PlotPanel(QWidget):
 
     def __init__(self):
         QWidget.__init__(self)
-
-        proxy = QNetworkProxy(QNetworkProxy.HttpProxy, "www-proxy.statoil.no", 80)
-        QNetworkProxy.setApplicationProxy(proxy)
-
 
         root_path = os.getenv("ERT_SHARE_PATH")
         path = os.path.join(root_path, "gui/plots/plot.html")

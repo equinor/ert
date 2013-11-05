@@ -1,8 +1,8 @@
 import shutil
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QToolButton, QStyle, QStyleOption, QMessageBox, QSizePolicy
+from PyQt4.QtGui import QWidget, QVBoxLayout, QToolBar, QStyle, QMessageBox, QSizePolicy
 from ert_gui.ide.highlighter import KeywordHighlighter
-from ert_gui.ide.ide_panel import IDEPanel
+from ert_gui.tools.ide import IdePanel
 from ert_gui.widgets.search_box import SearchBox
 
 
@@ -48,7 +48,7 @@ class ConfigurationPanel(QWidget):
 
         layout.addWidget(toolbar)
 
-        self.ide_panel = IDEPanel()
+        self.ide_panel = IdePanel()
         layout.addWidget(self.ide_panel, 1)
 
         self.config_file_path = config_file_path

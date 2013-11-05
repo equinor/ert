@@ -115,12 +115,12 @@ import os
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QSplashScreen
 from ert.enkf import EnKFMain
-from ert_gui.ide.wizards import WizardView
 from ert_gui.main_window import GertMainWindow
 from ert_gui.models import ErtConnector
-from ert_gui.pages.configuration_panel import ConfigurationPanel
-from ert_gui.pages.plot_panel import PlotPanel
 from ert_gui.pages.simulation_panel import SimulationPanel
+from ert_gui.tools.ide import IdeTool
+from ert_gui.tools.plot import PlotTool
+from ert_gui.tools.export import ExportTool
 from ert_gui.widgets.help_dock import HelpDock
 
 import ert_gui.widgets.util
@@ -134,6 +134,7 @@ from ert_gui.widgets.util import resourceImage
 
 def reloadGERT():
     python = sys.executable
+    #todo cleanup enkf main!!!
     os.execl(python, python, *sys.argv)
 
 def main():
@@ -184,40 +185,24 @@ def main():
         ert = EnKFMain(enkf_config, site_config=site_config, strict=strict)
         ErtConnector.setErt(ert)
 
-        window = GertMainWindow()
-        window.setSaveFunction(ert.saveConfig())
 
         splash.showMessage("Creating GUI...", Qt.AlignLeft, Qt.white)
         app.processEvents()
 
-        simulation_panel = SimulationPanel()
-        window.addTab(simulation_panel.getName(), simulation_panel)
 
-        configuration_panel = ConfigurationPanel(os.path.basename(enkf_config))
-        configuration_panel.reloadApplication.connect(reloadGERT)
-        window.addTab(configuration_panel.getName(), configuration_panel)
+        window = GertMainWindow()
+        window.setWidget(SimulationPanel())
+        window.addTool(IdeTool(os.path.basename(enkf_config)))
+        window.addTool(PlotTool())
+        window.addTool(ExportTool())
 
-        wizard_panel = WizardView()
-        wizard_panel.addGroup("Parameters")
-        wizard_panel.addItemToGroup("Parameters", "Summary")
-        wizard_panel.addItemToGroup("Parameters", "Field")
-        wizard_panel.addItemToGroup("Parameters", "Data Keyword")
-        wizard_panel.addGroup("Eclipse")
-        wizard_panel.addGroup("Observations")
-        wizard_panel.expandAll()
-        window.addDock("Wizards", wizard_panel)
-
-        plot_panel = PlotPanel()
-        window.addTab(plot_panel.getName(), plot_panel)
 
         splash.showMessage("Communicating with ERT...", Qt.AlignLeft, Qt.white)
         app.processEvents()
 
 
-
         window.show()
         splash.finish(window)
-
 
 
         HelpDock.setHelpMessageLink("welcome_to_ert")
