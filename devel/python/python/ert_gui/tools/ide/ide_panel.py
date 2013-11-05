@@ -1,9 +1,10 @@
 import re
 from PyQt4.QtCore import Qt, QEvent, QDir, QRegExp, QChar
 from PyQt4.QtGui import QPlainTextEdit, QTextOption, QCompleter, QStringListModel, QFont, QColor, QShortcut, QKeySequence, QTextCursor, QFileSystemModel, QTextDocument
+from ert_gui.widgets.help_dock import HelpDock
 
 
-class IDEPanel(QPlainTextEdit):
+class IdePanel(QPlainTextEdit):
     def __init__(self):
         QPlainTextEdit.__init__(self)
         self.setWordWrapMode(QTextOption.NoWrap)
@@ -37,7 +38,8 @@ class IDEPanel(QPlainTextEdit):
             configuration_line = user_data.configuration_line
 
             if configuration_line.keyword().hasKeywordDefinition():
-                print(configuration_line.documentationLink())
+                HelpDock.getInstance().setHelpMessageLink("config/" + configuration_line.documentationLink())
+                # print(configuration_line.documentationLink())
 
     def getText(self):
         return str(self.document().toPlainText())

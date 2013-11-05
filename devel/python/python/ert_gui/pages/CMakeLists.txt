@@ -3,7 +3,6 @@ set(PYTHON_SOURCES
     case_init_configuration.py
     configuration_panel.py
     message_center.py
-    plot_panel.py
     popup_dialog.py
     queue_system_configuration.py
     run_dialog.py
