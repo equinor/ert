@@ -1,7 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
     highlighter.py
-    ide_panel.py
     keyword.py
     parameter.py
 )

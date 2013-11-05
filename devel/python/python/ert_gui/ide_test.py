@@ -2,7 +2,7 @@ import os
 import sys
 from PyQt4.QtGui import QApplication, QMainWindow, QVBoxLayout, QWidget
 from ert_gui.ide.highlighter import KeywordHighlighter
-from ert_gui.ide.ide_panel import IDEPanel
+from ert_gui.tools.ide.ide_panel import IDEPanel
 from ert_gui.widgets.search_box import SearchBox
 
 
