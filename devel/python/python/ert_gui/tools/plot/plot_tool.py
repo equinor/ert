@@ -8,7 +8,6 @@ class PlotTool(Tool):
         super(PlotTool, self).__init__("Create Plot", util.resourceIcon("ide/chart_curve_add"))
 
     def trigger(self):
-
         plot_window = PlotWindow(self.parent())
         plot_window.show()
 

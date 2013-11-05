@@ -120,6 +120,7 @@ from ert_gui.models import ErtConnector
 from ert_gui.pages.simulation_panel import SimulationPanel
 from ert_gui.tools.ide import IdeTool
 from ert_gui.tools.plot import PlotTool
+from ert_gui.tools.export import ExportTool
 from ert_gui.widgets.help_dock import HelpDock
 
 import ert_gui.widgets.util
@@ -193,6 +194,7 @@ def main():
         window.setWidget(SimulationPanel())
         window.addTool(IdeTool(os.path.basename(enkf_config)))
         window.addTool(PlotTool())
+        window.addTool(ExportTool())
 
 
         splash.showMessage("Communicating with ERT...", Qt.AlignLeft, Qt.white)
