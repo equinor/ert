@@ -1,4 +1,4 @@
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtGui import QMainWindow, QDockWidget
 from ert_gui.ide.wizards import WizardView
 from ert_gui.pages.configuration_panel import ConfigurationPanel
@@ -6,12 +6,15 @@ from ert_gui.widgets.help_dock import HelpDock
 
 
 class IdeWindow(QMainWindow):
+    reloadTriggered = pyqtSignal()
+
     def __init__(self, path, parent):
         QMainWindow.__init__(self, parent)
 
         self.resize(900, 900)
 
         self.__configuration_panel = ConfigurationPanel(path)
+        self.__configuration_panel.reloadApplication.connect(self.reloadTriggered)
         self.setCentralWidget(self.__configuration_panel)
         self.setWindowTitle("Configuration")
         self.activateWindow()
