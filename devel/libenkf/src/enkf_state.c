@@ -280,33 +280,32 @@ static void shared_info_free(shared_info_type * shared_info) {
 /** Helper classes complete - starting on the enkf_state proper object. */
 /*****************************************************************/
 
-void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list, bool force_init) {
-  int iens = enkf_state_get_iens( enkf_state );
-  state_map_type * state_map = enkf_fs_get_state_map( fs );
-  realisation_state_enum current_state = state_map_iget(state_map, iens);
-  if ((current_state == STATE_PARENT_FAILURE) && (force_init == false))
-    return;
-  else {
-    state_enum init_state = ANALYZED;
+void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , const stringlist_type * param_list, init_mode_enum init_mode) {
+  if (init_mode != INIT_NONE) {
+    int iens = enkf_state_get_iens( enkf_state );
+    state_map_type * state_map = enkf_fs_get_state_map( fs );
+    realisation_state_enum current_state = state_map_iget(state_map, iens);
+    if ((current_state == STATE_PARENT_FAILURE) && (init_mode != INIT_FORCE))
+      return;
+    else {
+      state_enum init_state = ANALYZED;
 
-    for (int ip = 0; ip < stringlist_get_size(param_list); ip++)
-    {
-      enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
-      node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
-      bool has_data = enkf_node_has_data(param_node, fs, node_id);
-
-      if (force_init || (has_data == false) || (current_state == STATE_LOAD_FAILURE))
-      {
-        if (enkf_node_initialize(param_node, iens, enkf_state->rng)) {
-          enkf_node_store(param_node, fs, true, node_id);
+      for (int ip = 0; ip < stringlist_get_size(param_list); ip++)
+        {
+          enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
+          node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
+          bool has_data = enkf_node_has_data(param_node, fs, node_id);
+          
+          if ((init_mode == INIT_FORCE) || (has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
+            if (enkf_node_initialize(param_node, iens, enkf_state->rng)) 
+              enkf_node_store(param_node, fs, true, node_id);
+          }
         }
-      }
+      state_map_update_matching(state_map , iens , STATE_UNDEFINED | STATE_LOAD_FAILURE , STATE_INITIALIZED);
+      enkf_fs_fsync(fs);
     }
-    state_map_update_matching(state_map , iens , STATE_UNDEFINED | STATE_LOAD_FAILURE , STATE_INITIALIZED);
-    enkf_fs_fsync(fs);
   }
 }
-
 
 
 
