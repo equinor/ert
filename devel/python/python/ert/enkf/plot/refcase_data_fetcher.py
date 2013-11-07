@@ -14,6 +14,9 @@ class RefcaseDataFetcher(DataFetcher):
         """ @rtype: SampleListCollection """
         return self.getRefcaseData()
 
+    def hasRefcase(self):
+        """ @rtype: bool """
+        return self.ert().eclConfig().hasRefcase()
 
     def getRefCase(self):
         """ @rtype: EclSum """
@@ -47,6 +50,9 @@ class RefcaseDataFetcher(DataFetcher):
 
 
     def getRefcaseData(self):
+        if not self.hasRefcase():
+            return SampleListCollection()
+
         keys = self.getSummaryKeys()
         first_report_step_time = self.getFirstReportStepTime()
         last_report_step_time = self.getLastReportStepTime()

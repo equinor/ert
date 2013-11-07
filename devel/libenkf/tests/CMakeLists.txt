@@ -232,4 +232,6 @@ set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS StatoilData 
 set_property( TEST enkf_forward_init_FIELD_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_TRUE   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_main_fs   PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_summary_vars_present PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_no_summary_vars_present PROPERTY LABELS StatoilData )
 

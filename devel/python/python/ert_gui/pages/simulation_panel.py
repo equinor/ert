@@ -2,6 +2,7 @@ from ert_gui.models.connectors import RunPathModel, EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel, IsCaseInitializedModel
 from ert_gui.models.connectors.run import SimulationModeModel, OneMoreIteration
 from ert_gui.models.mixins.connectorless import FunctionButtonModel
+from ert_gui.pages.case_init_configuration import CaseInitializationConfigurationPanel
 from ert_gui.pages.message_center import MessageCenter
 from ert_gui.models.connectors.run.simulation_runner import SimulationRunner
 from ert_gui.pages.run_dialog import RunDialog
@@ -24,7 +25,7 @@ class SimulationPanel(RowPanel):
 
         case_model = CaseSelectorModel()
         case_selector = ComboChoice(case_model, "Current case", "init/current_case_selection")
-        self.addRow(case_selector)
+        self.addRow(case_selector, CaseInitializationConfigurationPanel(), configuration_title="Manage cases")
 
         # Give a warning if the case is not initialized!
         IsCaseInitializedModel().observable().attach(IsCaseInitializedModel.TEXT_VALUE_CHANGED_EVENT, self.updateSimulationStatus)
@@ -69,7 +70,6 @@ class SimulationPanel(RowPanel):
         simulation_model = SimulationModeModel().getCurrentChoice()
 
         simulation_runner = SimulationRunner(simulation_model)
-
 
         dialog = RunDialog(simulation_runner)
         simulation_runner.start()

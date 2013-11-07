@@ -43,7 +43,7 @@ class WeakMethod(object):
 
     def __eq__(self, other):
         if isinstance(other, WeakMethod):
-            return super(WeakMethod, self).__eq__(other)
+            return self.__dict__ == other.__dict__
         else:
             try:
                 o = ref(other.__self__)

@@ -796,7 +796,6 @@ const ecl_sum_type * ecl_config_get_refcase(const ecl_config_type * ecl_config)
 bool ecl_config_has_refcase(const ecl_config_type * ecl_config)
 {
   const ecl_sum_type * refcase = ecl_config_get_refcase(ecl_config);
-  printf("refcase:%p \n", refcase);
   if (refcase)
     return true;
   else

@@ -107,8 +107,12 @@ class EclConfig(BaseCClass):
         refcase.setParent(self)
         return refcase
 
-    def validateRefcase(self , refcase):
+    def validateRefcase(self, refcase):
         return EclConfig.cNamespace().validate_refcase( self , refcase )
+
+    def hasRefcase(self):
+        """ @rtype: bool """
+        return EclConfig.cNamespace().has_refcase(self)
         
     #-----------------------------------------------------------------
 
@@ -158,6 +162,7 @@ EclConfig.cNamespace().get_refcase_name = cwrapper.prototype("char* ecl_config_g
 EclConfig.cNamespace().get_refcase = cwrapper.prototype("ecl_sum_ref ecl_config_get_refcase(ecl_config)")
 EclConfig.cNamespace().load_refcase = cwrapper.prototype("void ecl_config_load_refcase(ecl_config, char*)")
 EclConfig.cNamespace().validate_refcase = cwrapper.prototype("ui_return_obj ecl_config_validate_refcase(ecl_config, char*)")
+EclConfig.cNamespace().has_refcase = cwrapper.prototype("bool ecl_config_has_refcase(ecl_config)")
 
 EclConfig.cNamespace().get_static_kw_list = cwrapper.prototype("stringlist_ref ecl_config_get_static_kw_list(ecl_config)")
 EclConfig.cNamespace().clear_static_kw = cwrapper.prototype("void ecl_config_clear_static_kw(ecl_config)")
