@@ -109,7 +109,10 @@ void enkf_tui_run_restart__(void * enkf_main) {
 
 void enkf_tui_run_smoother(void * arg) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
-  enkf_main_run_smoother(enkf_main , "AUTO-SMOOTHER" , true );
+  int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
+  enkf_main_run_smoother(enkf_main , "AUTO-SMOOTHER" , iactive , true );
+  bool_vector_free( iactive );
 }
 
 
