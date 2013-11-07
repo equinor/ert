@@ -7,4 +7,6 @@ add_python_package("python.ert_gui.tools"  ${PYTHON_INSTALL_PREFIX}/ert_gui/tool
 
 add_subdirectory(export)
 add_subdirectory(ide)
+add_subdirectory(manage_cases)
 add_subdirectory(plot)
+add_subdirectory(workflows)

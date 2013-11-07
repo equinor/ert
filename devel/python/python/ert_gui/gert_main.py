@@ -119,8 +119,10 @@ from ert_gui.main_window import GertMainWindow
 from ert_gui.models import ErtConnector
 from ert_gui.pages.simulation_panel import SimulationPanel
 from ert_gui.tools.ide import IdeTool
+from ert_gui.tools.manage_cases.manage_cases_tool import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.export import ExportTool
+from ert_gui.tools.workflows.workflows_tool import WorkflowsTool
 from ert_gui.widgets.help_dock import HelpDock
 
 import ert_gui.widgets.util
@@ -195,6 +197,9 @@ def main():
         window.addTool(IdeTool(os.path.basename(enkf_config)))
         window.addTool(PlotTool())
         window.addTool(ExportTool())
+        window.addTool(WorkflowsTool())
+        window.addTool(ManageCasesTool())
+
 
 
         splash.showMessage("Communicating with ERT...", Qt.AlignLeft, Qt.white)
