@@ -1819,13 +1819,11 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
 }
 
 
-void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool rerun) {
+void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , bool rerun) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     bool force_init = false;
-    int ens_size = enkf_main_get_ensemble_size( enkf_main );
     {
-      bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
       enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT , force_init);
       enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0);
       {
@@ -1859,8 +1857,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
             fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
         }
       }
-      
-      bool_vector_free( iactive );
+
     }
   } else
     fprintf(stderr,"** ERROR: The normal smoother should not be combined with an iterable analysis module\n");
