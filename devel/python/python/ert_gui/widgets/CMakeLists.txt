@@ -5,6 +5,7 @@ set(PYTHON_SOURCES
     button.py
     check_list.py
     checkbox.py
+    closable_dialog.py
     cogwheel.py
     combo_choice.py
     double_box.py

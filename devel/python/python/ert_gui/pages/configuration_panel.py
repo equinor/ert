@@ -27,9 +27,9 @@ class ConfigurationPanel(QWidget):
         save_action = toolbar.addAction(save_icon, "Save")
         save_action.triggered.connect(self.save)
 
-        reload_icon = toolbar.style().standardIcon(QStyle.SP_BrowserReload)
-        reload_action = toolbar.addAction(reload_icon, "Reload")
-        reload_action.triggered.connect(self.reload)
+        # reload_icon = toolbar.style().standardIcon(QStyle.SP_BrowserReload)
+        # reload_action = toolbar.addAction(reload_icon, "Reload")
+        # reload_action.triggered.connect(self.reload)
 
         toolbar.addSeparator()
 

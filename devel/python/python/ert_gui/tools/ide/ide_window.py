@@ -1,4 +1,4 @@
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtGui import QMainWindow, QDockWidget
 from ert_gui.ide.wizards import WizardView
 from ert_gui.pages.configuration_panel import ConfigurationPanel
@@ -6,12 +6,15 @@ from ert_gui.widgets.help_dock import HelpDock
 
 
 class IdeWindow(QMainWindow):
+    reloadTriggered = pyqtSignal()
+
     def __init__(self, path, parent):
         QMainWindow.__init__(self, parent)
 
         self.resize(900, 900)
 
         self.__configuration_panel = ConfigurationPanel(path)
+        self.__configuration_panel.reloadApplication.connect(self.reloadTriggered)
         self.setCentralWidget(self.__configuration_panel)
         self.setWindowTitle("Configuration")
         self.activateWindow()
@@ -30,19 +33,20 @@ class IdeWindow(QMainWindow):
         wizard_panel.expandAll()
         self.addDock("Wizards", wizard_panel)
 
-        self.__help_dock = HelpDock.getInstance()
+        self.__help_dock = HelpDock.getInstance() # todo Turn HelpDock into a panel
         help_dock = self.addDockWidget(Qt.RightDockWidgetArea, self.__help_dock)
 
 
     def closeEvent(self, q_close_event):
         self.hide()
-        q_close_event.accept()
+        q_close_event.ignore()
 
     def addDock(self, name, widget, area=Qt.RightDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
         dock_widget = QDockWidget(name)
         dock_widget.setObjectName("%sDock" % name)
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
+
         self.addDockWidget(area, dock_widget)
         self.__view_menu.addAction(dock_widget.toggleViewAction())
         return dock_widget
