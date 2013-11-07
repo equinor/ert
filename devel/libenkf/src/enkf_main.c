@@ -1883,7 +1883,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int itera
   } else {
     enkf_fs_type * target_fs     = enkf_main_mount_alt_fs(enkf_main , target_fs_name , false , true );
     updateOK = enkf_main_smoother_update__(enkf_main , step_list , target_fs );
-    enkf_main_set_fs(enkf_main , target_fs , enkf_fs_get_case_name( target_fs ));
+    enkf_main_set_fs(enkf_main , target_fs , NULL);
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
   }
 
@@ -2741,8 +2741,11 @@ void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
 }
 
 
-void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path ) {
+void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
   if (enkf_main->dbase != fs) {
+    if (!case_path)
+      case_path = enkf_fs_get_case_name( fs );
+    
     if (enkf_main->dbase != NULL)
       enkf_main_close_fs( enkf_main );
     enkf_main->dbase = fs;
