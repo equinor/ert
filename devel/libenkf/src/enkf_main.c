@@ -1671,11 +1671,20 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 */
 
 
-void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
-  const ext_joblist_type * joblist = site_config_get_installed_jobs( enkf_main->site_config);
-
-  model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode );
+void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode , bool force_init) {
+  {
+    const ext_joblist_type * joblist = site_config_get_installed_jobs( enkf_main->site_config);
+    model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode );
+  }
+  
   enkf_main_init_internalization(enkf_main , run_mode);
+
+  {
+    int ens_size = enkf_main_get_ensemble_size( enkf_main );
+    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+    enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1 , force_init);
+    stringlist_free( param_list );
+  }
 }
 
 
@@ -1690,16 +1699,9 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
                        bool             initialize) {
 
   bool force_init = false;
-  int ens_size    = enkf_main_get_ensemble_size( enkf_main );
   run_mode_type run_mode = simulate ? ENSEMBLE_EXPERIMENT : INIT_ONLY;
-  {
-    stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-    if (initialize)
-      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1, force_init);
-    
-    stringlist_free( param_list );
-  }  
-  enkf_main_init_run( enkf_main , run_mode );
+  
+  enkf_main_init_run( enkf_main , run_mode , force_init);
   {
     int load_start                  = start_report;
     state_enum init_state_parameter = start_state;
@@ -1719,15 +1721,9 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     bool force_init = false;
-    int ens_size = enkf_main_get_ensemble_size( enkf_main );
-    {
-      stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1 , force_init );
-      stringlist_free( param_list );
-    }  
     bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
     int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
-    enkf_main_init_run( enkf_main , ENKF_ASSIMILATION);
+    enkf_main_init_run( enkf_main , ENKF_ASSIMILATION , force_init);
     {
       bool analyzed_start = false;
       bool prev_enkf_on;
@@ -1829,14 +1825,8 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
     bool force_init = false;
     int ens_size = enkf_main_get_ensemble_size( enkf_main );
     {
-      stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1 , force_init);
-      stringlist_free( param_list );
-    }
-    
-    {
       bool_vector_type * iactive = bool_vector_alloc( ens_size , true );
-      enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT);
+      enkf_main_init_run( enkf_main , ENSEMBLE_EXPERIMENT , force_init);
       enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0);
       {
         bool update_done;
