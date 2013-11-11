@@ -2011,8 +2011,6 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
      result -= REPORT_STEP_INCOMPATIBLE;
   }
   
-  if (result & SUMMARY_NOT_LOADED)
-    result -= SUMMARY_NOT_LOADED; 
   
   if (!(result & LOAD_FAILURE)) {
     /*
