@@ -63,7 +63,7 @@ class EnKFMain(BaseCClass):
         """ @rtype: EnsConfig """
         return EnKFMain.cNamespace().get_ens_config(self).setParent(self)
 
-    def analysis_config(self):
+    def analysisConfig(self):
         """ @rtype: AnalysisConfig """
         return EnKFMain.cNamespace().get_analysis_config(self).setParent(self)
 
