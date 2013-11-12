@@ -1056,8 +1056,6 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
   */
   
   bool load_summary = ensemble_config_has_impl_type(enkf_state->ensemble_config, SUMMARY);
-  if (!load_summary)
-    *result |= SUMMARY_NOT_LOADED;
         
   if (load_summary && enkf_state_internalize_dynamic_results(enkf_state , fs , model_config , result, interactive , msg_list)) {
     int last_report = time_map_get_last_step( enkf_fs_get_time_map( fs ));
