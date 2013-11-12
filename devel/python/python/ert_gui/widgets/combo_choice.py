@@ -15,6 +15,8 @@
 #  for more details.
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QComboBox
+import gc
+import sys
 from ert_gui.models.mixins import ChoiceModelMixin
 from ert_gui.widgets.helped_widget import HelpedWidget
 
@@ -52,6 +54,7 @@ class ComboChoice(HelpedWidget):
         self.getCurrentFromModel()
 
 
+
     def selectionChanged(self, index):
         assert 0 <= index < len(self.choice_list), "Should not happen! Index out of range: 0 <= %i < %i" % (index, len(self.choice_list))
 
@@ -87,3 +90,9 @@ class ComboChoice(HelpedWidget):
             self.combo.addItem(str(choice))
 
         self.combo.blockSignals(block)
+
+
+    def cleanup(self):
+        self.model.observable().detach(ChoiceModelMixin.CURRENT_CHOICE_CHANGED_EVENT, self.getCurrentFromModel)
+        self.model.observable().detach(ChoiceModelMixin.CHOICE_LIST_CHANGED_EVENT, self.updateChoicesFromModel)
+
