@@ -45,6 +45,7 @@ class HelpedWidget(QWidget):
         self.setMinimumHeight(20)
 
         HelpedWidget.__error_popup = None
+        self.destroyed.connect(self.cleanup)
 
 
     def getLabel(self):
@@ -106,7 +107,9 @@ class HelpedWidget(QWidget):
             HelpedWidget.__error_popup.hide()
 
 
-
+    def cleanup(self):
+        """ Remove any model attachment or similar. Called when QT object is destroyed."""
+        pass
 
 
 
