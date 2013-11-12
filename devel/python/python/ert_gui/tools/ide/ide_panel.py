@@ -16,7 +16,6 @@ class IdePanel(QPlainTextEdit):
 
         self.completer = QCompleter(self)
         self.completer.setWidget(self)
-        # self.completer.
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.activated.connect(self.insertCompletion)
 
