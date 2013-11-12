@@ -3,7 +3,7 @@ from ert.enkf import ModelConfig
 from ert_gui.models.mixins import BasicModelMixin
 
 
-class RunPathModel(ErtConnector, BasicModelMixin):
+class RerunPathModel(ErtConnector, BasicModelMixin):
     def getValue(self):
         """ @rtype: str """
         return self.getModelConfig().getRunpathAsString()
