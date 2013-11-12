@@ -56,9 +56,9 @@ class ConfigurationPanel(QWidget):
         with open(config_file_path) as f:
             config_file_text = f.read()
 
-        highlighter = KeywordHighlighter(self.ide_panel.document())
+        self.highlighter = KeywordHighlighter(self.ide_panel.document())
         
-        search.filterChanged.connect(highlighter.setSearchString)
+        search.filterChanged.connect(self.highlighter.setSearchString)
 
         self.ide_panel.document().setPlainText(config_file_text)
 

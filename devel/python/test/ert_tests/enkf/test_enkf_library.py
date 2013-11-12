@@ -32,7 +32,7 @@ class EnKFLibraryTest(ExtendedTestCase):
 
             main = EnKFMain("simple_config/minimum_config", self.site_config)
 
-            self.assertIsInstance(main.analysis_config(), AnalysisConfig)
+            self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
             self.assertIsInstance(main.eclConfig(), EclConfig)
 
             with self.assertRaises(ValueError): # Null pointer!

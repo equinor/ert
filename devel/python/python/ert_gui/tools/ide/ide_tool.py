@@ -18,4 +18,5 @@ class IdeTool(Tool):
             self.ide_window().reloadTriggered.connect(self.reload_function)
 
         self.ide_window().show()
+        self.ide_window().raise_()
         self.ide_window().activateWindow()
