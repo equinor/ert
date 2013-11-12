@@ -1,6 +1,5 @@
 set(PYTHON_SOURCES
     __init__.py
-    case_init_configuration.py
     configuration_panel.py
     message_center.py
     popup_dialog.py

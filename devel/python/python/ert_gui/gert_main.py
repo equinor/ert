@@ -117,12 +117,13 @@ from PyQt4.QtGui import QApplication, QSplashScreen
 from ert.enkf import EnKFMain
 from ert_gui.main_window import GertMainWindow
 from ert_gui.models import ErtConnector
-from ert_gui.pages.simulation_panel import SimulationPanel
+from ert_gui.simulation.simulation_panel import SimulationPanel
+
 from ert_gui.tools.ide import IdeTool
-from ert_gui.tools.manage_cases.manage_cases_tool import ManageCasesTool
+from ert_gui.tools.manage_cases import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.export import ExportTool
-from ert_gui.tools.workflows.workflows_tool import WorkflowsTool
+from ert_gui.tools.workflows import WorkflowsTool
 from ert_gui.widgets.help_dock import HelpDock
 
 import ert_gui.widgets.util
@@ -151,7 +152,6 @@ class Ert(object):
 
 
 def main():
-    QApplication.setGraphicsSystem("raster")
     app = QApplication(sys.argv) #Early so that QT is initialized before other imports
 
     splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
