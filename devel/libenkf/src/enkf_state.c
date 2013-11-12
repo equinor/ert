@@ -2010,7 +2010,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
   }
   
   
-  if (!(result & LOAD_FAILURE)) {
+  if (0 == result) {
     /*
       The loading succeded - so this is a howling success! We set
       the main status to JOB_QUEUE_ALL_OK and inform the queue layer
@@ -2024,7 +2024,7 @@ static bool enkf_state_complete_forward_modelOK(enkf_state_type * enkf_state , e
     run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
     run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
   } 
-  return (result & LOAD_FAILURE) ? false : true; 
+  return (0 == result) ? true : false; 
 }
 
 
