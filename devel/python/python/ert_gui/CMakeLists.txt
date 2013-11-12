@@ -11,5 +11,6 @@ add_python_package("python.ert_gui"  ${PYTHON_INSTALL_PREFIX}/ert_gui "${PYTHON_
 add_subdirectory(ide)
 add_subdirectory(models)
 add_subdirectory(pages)
+add_subdirectory(simulation)
 add_subdirectory(tools)
 add_subdirectory(widgets)
