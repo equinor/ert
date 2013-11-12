@@ -129,7 +129,8 @@ typedef enum   {UNDEFINED   = 0 ,
                 
 
 typedef enum { REPORT_STEP_INCOMPATIBLE  = 1,
-               LOAD_FAILURE              = 2 } enkf_fw_load_result_enum;
+               LOAD_FAILURE              = 2,
+               SUMMARY_NOT_LOADED        = 4} enkf_fw_load_result_enum;
                
 
 
