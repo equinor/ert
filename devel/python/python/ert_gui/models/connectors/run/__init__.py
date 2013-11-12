@@ -1,9 +1,12 @@
 from .run_members import RunMembersModel
 
+from .target_case_model import TargetCaseModel
+from .active_realizations_model import ActiveRealizationsModel
+
 from .enkf_assimilation import EnkfAssimilation
 from .ensemble_experiment import EnsembleExperiment
 from .iterated_smoother import IteratedSmoother
-from .smoother import Smoother
+from .ensemble_smoother import EnsembleSmoother
 from .simulation_mode import SimulationModeModel
 from .iterated_smoother import IteratedSmoother
 from .one_more_iteration import OneMoreIteration

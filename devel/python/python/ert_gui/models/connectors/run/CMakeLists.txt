@@ -1,7 +1,10 @@
 set(PYTHON_SOURCES
     __init__.py
+    active_realizations_model.py
+    analysis_module_model.py
     enkf_assimilation.py
     ensemble_experiment.py
+    ensemble_smoother.py
     iterated_smoother.py
     one_more_iteration.py
     run_members.py
@@ -9,7 +12,7 @@ set(PYTHON_SOURCES
     simulation_mode.py
     simulation_runner.py
     simulations_tracker.py
-    smoother.py
+    target_case_model.py
 )
 
 add_python_package("python.ert_gui.models.connectors.run"  ${PYTHON_INSTALL_PREFIX}/ert_gui/models/connectors/run "${PYTHON_SOURCES}" True)
