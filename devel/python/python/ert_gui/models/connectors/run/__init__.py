@@ -1,6 +1,7 @@
 from .run_members import RunMembersModel
 
 from .target_case_model import TargetCaseModel
+from .analysis_module_model import AnalysisModuleModel
 from .active_realizations_model import ActiveRealizationsModel
 
 from .enkf_assimilation import EnkfAssimilation
