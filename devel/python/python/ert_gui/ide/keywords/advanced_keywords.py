@@ -1,4 +1,5 @@
 from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument
+from ert_gui.ide.keywords.definitions.proper_name_argument import ProperNameArgument
 
 
 class AdvancedKeywords(object):
@@ -36,7 +37,7 @@ class AdvancedKeywords(object):
 
     def addDefine(self):
         define = ConfigurationLineDefinition(keyword=KeywordDefinition("DEFINE"),
-                                             arguments=[StringArgument(),
+                                             arguments=[ProperNameArgument(),
                                                         StringArgument(rest_of_line=True,allow_space=True)],
                                              documentation_link="advanced/define",
                                              required=False,

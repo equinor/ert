@@ -1,5 +1,6 @@
 from ert_gui.ide.keywords.definitions import IntegerArgument, StringArgument, BoolArgument, PathArgument, FloatArgument
 from ert_gui.ide.keywords import ErtKeywords
+from ert_gui.ide.keywords.definitions.proper_name_argument import ProperNameArgument
 from ert_tests import ExtendedTestCase
 
 
@@ -129,7 +130,7 @@ class ErtKeywordTest(ExtendedTestCase):
     def test_advanced_keywords(self):
         self.keywordTest("ADD_FIXED_LENGTH_SCHEDULE_KW", [StringArgument, StringArgument], "advanced/add_fixed_length_schedule_kw", "Advanced")
         self.keywordTest("ADD_STATIC_KW", [StringArgument, StringArgument], "advanced/add_static_kw", "Advanced")
-        self.keywordTest("DEFINE", [StringArgument, StringArgument], "advanced/define", "Advanced")
+        self.keywordTest("DEFINE", [ProperNameArgument, StringArgument], "advanced/define", "Advanced")
         self.keywordTest("SCHEDULE_PREDICTION_FILE", [PathArgument], "advanced/schedule_prediction_file", "Advanced")
 
     def test_queue_system_keywords(self):

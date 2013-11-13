@@ -70,6 +70,9 @@ set(TEST_SOURCES
     ert_tests/gui/ide/test_float_argument.py
     ert_tests/gui/ide/test_integer_argument.py
     ert_tests/gui/ide/test_path_argument.py
+    ert_tests/gui/ide/test_path_argument.py
+    ert_tests/gui/ide/test_proper_name_argument.py
+    ert_tests/gui/ide/test_range_string_argument.py
     ert_tests/gui/ide/test_tokens.py
 
     ert_tests/gui/ide/wizards/__init__.py
@@ -187,24 +190,32 @@ if (ERT_BUILD_GUI)
              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.test_observable.ObservableTest)
 
    add_test( NAME python.tests.ert_gui.models.plot_data
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.test_plot_data.PlotDataTest)
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.test_plot_data.PlotDataTest)
 
    add_test( NAME python.tests.ert_gui.ide.bool_argument
-                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                   COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_bool_argument.BoolArgumentTest)
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_bool_argument.BoolArgumentTest)
 
    add_test( NAME python.tests.ert_gui.ide.integer_argument
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                  COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_integer_argument.IntegerArgumentTest)
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+             COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_integer_argument.IntegerArgumentTest)
 
     add_test( NAME python.tests.ert_gui.ide.float_argument
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                      COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_float_argument.FloatArgumentTest)
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_float_argument.FloatArgumentTest)
 
     add_test( NAME python.tests.ert_gui.ide.path_argument
-                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_path_argument.PathArgumentTest)
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_path_argument.PathArgumentTest)
+
+    add_test( NAME python.tests.ert_gui.ide.proper_name_argument
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_proper_name_argument.ProperNameArgumentTest)
+
+    add_test( NAME python.tests.ert_gui.ide.range_string_argument
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.gui.ide.test_range_string_argument.RangeStringArgumentTest)
 
 
     add_test( NAME python.tests.ert_gui.ide.test_configuration_line

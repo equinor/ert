@@ -7,7 +7,6 @@ from .dictionary_model import DictionaryModelMixin
 from .list_model import ListModelMixin
 from .path_model import PathModelMixin
 from .boolean_model import BooleanModelMixin
-from .text_model import TextModelMixin
 from .selectable_model import SelectableModelMixin
 from .selectable_list_model import SelectableListModelMixin
 from .button_model import ButtonModelMixin
