@@ -222,7 +222,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   bool_vector_type * iactive = bool_vector_alloc( 0 , false );
   run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
   
-  enkf_main_init_run(enkf_main , run_mode , false);  /* This is ugly */
+  enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);  /* This is ugly */
   
   step1 = 0;
   step2 = last_report;  /** Observe that for the summary data it will load all the available data anyway. */

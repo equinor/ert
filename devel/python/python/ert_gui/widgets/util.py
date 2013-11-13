@@ -26,6 +26,7 @@ img_prefix = ""
 
 def resourceIcon(name):
     """Load an image as an icon"""
+    # print("Icon used: %s" % name)
     return QtGui.QIcon(img_prefix + name)
 
 def resourceStateIcon(on, off):

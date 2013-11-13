@@ -1,10 +1,10 @@
 from ert_gui.models import ErtConnector
 from ert_gui.models.connectors.ensemble_resizer import EnsembleSizeModel
 from ert_gui.models.connectors.run import RunMembersModel
-from ert_gui.models.mixins import ButtonModelMixin, RunModelMixin
+from ert_gui.models.mixins import RunModelMixin
 
 
-class EnsembleExperiment(ErtConnector, RunModelMixin, ButtonModelMixin):
+class EnsembleExperiment(ErtConnector, RunModelMixin):
 
     def startSimulations(self):
         selected_members = [int(member) for member in RunMembersModel().getSelectedItems()]
@@ -15,17 +15,6 @@ class EnsembleExperiment(ErtConnector, RunModelMixin, ButtonModelMixin):
     def killAllSimulations(self):
         job_queue = self.ert().siteConfig().getJobQueue()
         job_queue.killAllJobs()
-
-
-    def buttonTriggered(self):
-        self.startSimulations()
-        self.observable().notify(ButtonModelMixin.BUTTON_TRIGGERED_EVENT)
-
-    def getButtonName(self):
-        return "Run"
-
-    def buttonIsEnabled(self):
-        return True
 
     def __str__(self):
         return "Ensemble Experiment"
