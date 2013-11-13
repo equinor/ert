@@ -101,7 +101,7 @@ int main(int argc , char ** argv) {
 
         {
           run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
-          enkf_main_init_run(enkf_main , run_mode , false);     /* This is ugly */
+          enkf_main_init_run(enkf_main , NULL , run_mode , INIT_NONE);     /* This is ugly */
         }
         
         
@@ -132,7 +132,7 @@ int main(int argc , char ** argv) {
 
         {
           run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
-          enkf_main_init_run(enkf_main , run_mode , false);     /* This is ugly */
+          enkf_main_init_run(enkf_main , NULL , run_mode , INIT_NONE);     /* This is ugly */
         }
         
           
