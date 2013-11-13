@@ -111,10 +111,10 @@ add_executable( enkf_state_skip_summary_load_test enkf_state_skip_summary_load_t
 target_link_libraries( enkf_state_skip_summary_load_test enkf test_util )
 
 add_test( enkf_state_summary_vars_present
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_skip_summary_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_summary_vars_config  config_summary_vars TRUE)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_skip_summary_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_summary_vars_config  config_summary_vars)
 
 add_test( enkf_state_no_summary_vars_present 
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_skip_summary_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_no_summary_vars_config  config_no_summary_vars FALSE)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_state_skip_summary_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_no_summary_vars_config  config_no_summary_vars)
                                                                       
 
 #-----------------------------------------------------------------
