@@ -63,6 +63,8 @@ class SimulationsTracker(ListModelMixin):
         done_state = SimulationStateStatus("Finished", JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS, SimulationStateStatus.FINISHED)
 
         self.states = [waiting_state, pending_state, running_state, killed_state, failed_state, done_state]
+        self.__done_state = done_state
+        self.__progress = 0
 
         self.__checkForUnusedEnums()
 
@@ -81,12 +83,19 @@ class SimulationsTracker(ListModelMixin):
                 if status in state.state:
                     state.count += count
 
+        self.__progress = float(self.__done_state.count) / total_count
+
+
         self.observable().notify(ListModelMixin.LIST_CHANGED_EVENT)
 
 
     def getList(self):
         """ @rtype: list of SimulationStateStatus """
         return list(self.states)
+
+    def getProgress(self):
+        return  self.__progress
+
 
     def __checkForUnusedEnums(self):
         for enum in JobStatusType.enums():
@@ -97,6 +106,8 @@ class SimulationsTracker(ListModelMixin):
 
             if not used:
                 raise AssertionError("Enum identifier '%s' not used!" % enum)
+
+
 
 
 

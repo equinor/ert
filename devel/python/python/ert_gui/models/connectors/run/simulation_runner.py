@@ -5,15 +5,19 @@ from ert_gui.models.mixins import ModelMixin, RunModelMixin
 
 
 class SimulationRunner(Thread, ModelMixin):
+    SIMULATION_PHASE_CHANGED_EVENT = "simulation_phase_changed_event"
     SIMULATION_FINISHED_EVENT = "simulation_finished_event"
 
-    def __init__(self, button_model):
+    def __init__(self, run_model):
         super(SimulationRunner, self).__init__(name="enkf_main_run_thread")
         self.setDaemon(True)
 
-        assert isinstance(button_model, RunModelMixin)
+        assert isinstance(run_model, RunModelMixin)
 
-        self.__model = button_model
+        run_model.observable().attach(RunModelMixin.RUN_PHASE_CHANGED_EVENT, self.phaseChanged)
+
+        self.__model = run_model
+
 
         self.__job_start_time  = 0
         self.__job_stop_time = 0
@@ -21,6 +25,7 @@ class SimulationRunner(Thread, ModelMixin):
     def registerDefaultEvents(self):
         super(SimulationRunner, self).registerDefaultEvents()
         self.observable().addEvent(SimulationRunner.SIMULATION_FINISHED_EVENT)
+        self.observable().addEvent(SimulationRunner.SIMULATION_PHASE_CHANGED_EVENT)
 
 
     def run(self):
@@ -44,6 +49,17 @@ class SimulationRunner(Thread, ModelMixin):
 
     def killAllSimulations(self):
         self.__model.killAllSimulations()
+
+
+    def getTotalProgress(self):
+        phase = self.__model.currentPhase()
+        phase_count = self.__model.phaseCount()
+
+        return phase, phase_count
+
+
+    def phaseChanged(self):
+        self.observable().notify(SimulationRunner.SIMULATION_PHASE_CHANGED_EVENT)
 
 
 
