@@ -16,3 +16,12 @@ class RangeStringArgumentTest(ExtendedTestCase):
         self.assertFalse(argument.validate("s5"))
         self.assertFalse(argument.validate("1-10,5-4*"))
 
+
+        self.assertTrue(argument.validate("1 - 5, 2,3 ,4"))
+
+
+        argument = RangeStringArgument(max_value=10)
+
+        self.assertTrue(argument.validate("1-5, 9"))
+        self.assertFalse(argument.validate("10"))
+
