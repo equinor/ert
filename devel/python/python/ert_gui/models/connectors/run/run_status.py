@@ -1,6 +1,5 @@
 import time
 from ert_gui.models import ErtConnector
-from ert_gui.models.connectors.run import RunMembersModel
 from ert_gui.models.mixins import ModelMixin
 
 
@@ -15,6 +14,7 @@ class RunStatusModel(ErtConnector, ModelMixin):
         self.__status_count = {}
 
         self.__is_running = False
+        self.job_queue = None
 
 
     def registerDefaultEvents(self):
@@ -22,13 +22,12 @@ class RunStatusModel(ErtConnector, ModelMixin):
         self.observable().addEvent(RunStatusModel.STATUS_CHANGED_EVENT)
 
 
-    def __processStatus(self, selected_members):
+    def __processStatus(self):
         self.__resetStatusFlag()
-        for member in selected_members:
-            state = self.ert().getMemberRunningState(member)
-            status = state.getRunStatus()
+        for job_number in range(len(self.job_queue)):
+            status = self.job_queue.getJobStatus(job_number)
+            self.__setMemberStatus(job_number, status)
 
-            self.__setMemberStatus(member, status)
         self.__updateStatusCount()
         self.__checkStatusChangedFlag() # Emit once for all members if any changes has occurred
         time.sleep(0.5)
@@ -36,18 +35,19 @@ class RunStatusModel(ErtConnector, ModelMixin):
     def startStatusPoller(self):
         assert not self.__is_running, "Job already started!"
 
-        while not self.ert().siteConfig().isQueueRunning():
+        self.job_queue = self.ert().siteConfig().getJobQueue()
+
+        while not self.job_queue.isRunning():
             time.sleep(0.5)
 
         self.__is_running = True
 
-        selected_members = [int(member) for member in RunMembersModel().getSelectedItems()]
         self.__resetMemberStatus()
 
-        while self.ert().siteConfig().isQueueRunning():
-            self.__processStatus(selected_members)
+        while self.job_queue.isRunning():
+            self.__processStatus()
 
-        self.__processStatus(selected_members) # catch all the latest changes
+        self.__processStatus() # catch all the latest changes
 
 
         self.__is_running = False
@@ -56,13 +56,16 @@ class RunStatusModel(ErtConnector, ModelMixin):
     def getStatusCounts(self):
         return dict(self.__status_count)
 
-    def __setMemberStatus(self, member, status):
-        if not self.__status.has_key(member):
-            self.__status[member] = status
+    def getActiveCount(self):
+        return len(self.job_queue)
+
+    def __setMemberStatus(self, job_number, status):
+        if not self.__status.has_key(job_number):
+            self.__status[job_number] = status
             self.__setStatusChangedFlag()
 
-        if self.__status[member] != status:
-            self.__status[member] = status
+        if self.__status[job_number] != status:
+            self.__status[job_number] = status
             self.__setStatusChangedFlag()
 
     def __resetStatusFlag(self):
@@ -81,8 +84,8 @@ class RunStatusModel(ErtConnector, ModelMixin):
     def __updateStatusCount(self):
         self.__status_count.clear()
 
-        for member in self.__status:
-            status = self.__status[member]
+        for job_number in self.__status:
+            status = self.__status[job_number]
 
             if not self.__status_count.has_key(status):
                 self.__status_count[status] = 0

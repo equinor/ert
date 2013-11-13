@@ -31,7 +31,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         active_realizations_model = ActiveRealizationsModel()
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
-        self.active_realizations_field.setValidator(RangeStringArgument())
+        self.active_realizations_field.setValidator(RangeStringArgument(number_of_realizations_model.getValue()))
         layout.addRow(self.active_realizations_field.getLabel(), self.active_realizations_field)
 
         self.active_realizations_field.validationChanged.connect(self.simulationConfigurationChanged)

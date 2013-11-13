@@ -1,3 +1,4 @@
+from ert.util.tvector import BoolVector
 from ert_gui.models import ErtConnector
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.mixins import BasicModelMixin
@@ -36,6 +37,23 @@ class ActiveRealizationsModel(ErtConnector, BasicModelMixin):
     def getDefaultValue(self):
         size = EnsembleSizeModel().getValue()
         return "0-%d" % (size - 1)
+
+    def getActiveRealizationsMask(self):
+        count = EnsembleSizeModel().getValue()
+
+        mask = BoolVector.active_mask(self.getValue())
+
+        print(self.getValue(), self.__custom)
+
+        if mask is None:
+            raise ValueError("Error while parsing range string!")
+
+        if len(mask) > count:
+            raise ValueError("Mask size changed %d != %d!" % (count, len(mask)))
+
+        return mask
+
+
 
 
 

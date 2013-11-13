@@ -1,16 +1,13 @@
 from ert_gui.models import ErtConnector
-from ert_gui.models.connectors.ensemble_resizer import EnsembleSizeModel
-from ert_gui.models.connectors.run import RunMembersModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel
 from ert_gui.models.mixins import RunModelMixin
 
 
 class EnsembleExperiment(ErtConnector, RunModelMixin):
 
     def startSimulations(self):
-        selected_members = [int(member) for member in RunMembersModel().getSelectedItems()]
-        total_member_count = EnsembleSizeModel().getSpinnerValue()
-
-        self.ert().runEnsembleExperiment(selected_members, total_member_count)
+        active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
+        self.ert().runEnsembleExperiment(active_realization_mask)
 
     def killAllSimulations(self):
         job_queue = self.ert().siteConfig().getJobQueue()

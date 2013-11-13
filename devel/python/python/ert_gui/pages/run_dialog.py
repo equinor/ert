@@ -1,4 +1,4 @@
-from PyQt4.QtCore import Qt, pyqtSignal, QTimer, pyqtSlot
+from PyQt4.QtCore import Qt, pyqtSignal, QTimer
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
 from ert_gui.models.connectors.run import SimulationRunner, SimulationsTracker
 from ert_gui.widgets.legend import Legend
@@ -36,9 +36,11 @@ class RunDialog(QDialog):
         layout.addWidget(self.progress)
 
         legend_layout = QHBoxLayout()
-
+        self.legends = {}
         for state in states:
-            legend_layout.addWidget(Legend(state.name, QColor(*state.color)))
+            self.legends[state] = Legend("%s (%d/%d)", QColor(*state.color))
+            self.legends[state].updateLegend(state.name, 0, 0)
+            legend_layout.addWidget(self.legends[state])
 
         layout.addLayout(legend_layout)
 
@@ -79,6 +81,7 @@ class RunDialog(QDialog):
 
         for state in states:
             self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
+            self.legends[state].updateLegend(state.name, state.count, state.total_count)
 
 
     def killJobs(self):

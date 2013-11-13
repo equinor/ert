@@ -59,6 +59,7 @@ class StringBox(HelpedWidget):
                 palette = QPalette()
                 palette.setColor(QPalette.Text, Qt.black)
                 self.box_string.setPalette(palette)
+                self.stringBoxChanged()
 
 
     def stringBoxChanged(self):
