@@ -1488,10 +1488,10 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
     ecl_config_assert_restart( enkf_main_get_ecl_config( enkf_main ) );
   
   {
-    enkf_fs_type * fs        = enkf_main_get_fs( enkf_main );            
-    bool     verbose_queue   = enkf_main->verbose;
-    int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
-    const int ens_size       = enkf_main_get_ensemble_size( enkf_main );
+    enkf_fs_type * fs         = enkf_main_get_fs( enkf_main );            
+    bool     verbose_queue    = enkf_main->verbose;
+    int  max_internal_submit  = model_config_get_max_internal_submit(enkf_main->model_config);
+    const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
     int   job_size;
     int iens;
 
@@ -1531,9 +1531,9 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
         runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
         runpath_list_clear( runpath_list );
         
-        for (iens = 0; iens < ens_size; iens++) {
+        for (iens = 0; iens < active_ens_size; iens++) {
           enkf_state_type * enkf_state = enkf_main->ensemble[iens];
-          if (bool_vector_safe_iget(iactive , iens)) {
+          if (bool_vector_iget(iactive , iens)) {
             int load_start = step1;
             if (step1 > 0)
               load_start++;
@@ -1593,7 +1593,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
        subset (with offset > 0) of realisations are simulated. */
     if (run_mode != INIT_ONLY) {
       bool totalOK = true;
-      for (iens = 0; iens < ens_size; iens++) {        
+      for (iens = 0; iens < active_ens_size; iens++) {        
         if (bool_vector_iget(iactive , iens)) {
           run_status_type run_status = enkf_state_get_simple_run_status( enkf_main->ensemble[iens] );
           
@@ -1689,13 +1689,13 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
                        state_enum       start_state          ,
                        bool             initialize) {
 
-  bool force_init = false;
-  int ens_size    = enkf_main_get_ensemble_size( enkf_main );
-  run_mode_type run_mode = simulate ? ENSEMBLE_EXPERIMENT : INIT_ONLY;
+  bool force_init           = false;
+  run_mode_type run_mode    = simulate ? ENSEMBLE_EXPERIMENT : INIT_ONLY;
   {
+    const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
     if (initialize)
-      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , ens_size - 1, force_init);
+      enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , active_ens_size - 1, force_init);
     
     stringlist_free( param_list );
   }  
