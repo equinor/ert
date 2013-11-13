@@ -8,6 +8,7 @@ class EnsembleExperiment(ErtConnector, RunModelMixin):
     def startSimulations(self):
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
         self.ert().runEnsembleExperiment(active_realization_mask)
+        self.setPhase(1) # done...
 
     def killAllSimulations(self):
         job_queue = self.ert().siteConfig().getJobQueue()

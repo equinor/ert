@@ -28,6 +28,8 @@ class Progress(QFrame):
         self.__states = {}
         """@type: dict of (object, State)"""
 
+        self.__shiny = False
+
     def addState(self, state, state_color, progress=0.0):
         state_tracker = StateTracker(state, state_color, progress)
         self.__state_order.append(state_tracker)
@@ -63,14 +65,15 @@ class Progress(QFrame):
 
             x += width
 
-        #Shiny overlay!
-        gradient = QLinearGradient(rect.width() / 2, 0, rect.width() / 2, rect.height())
-        gradient.setColorAt(0, QColor(255, 255, 255, 0))
-        gradient.setColorAt(0.2, QColor(255, 255, 255, 200))
-        gradient.setColorAt(0.4, QColor(255, 255, 255, 0))
-        gradient.setColorAt(0.85, QColor(255, 255, 255, 0))
-        gradient.setColorAt(0.85, QColor(0, 0, 0, 0))
-        gradient.setColorAt(1, QColor(0, 0, 0, 127))
-        painter.fillRect(rect, gradient)
+        if self.__shiny:
+            #Shiny overlay!
+            gradient = QLinearGradient(rect.width() / 2, 0, rect.width() / 2, rect.height())
+            gradient.setColorAt(0, QColor(255, 255, 255, 0))
+            gradient.setColorAt(0.2, QColor(255, 255, 255, 200))
+            gradient.setColorAt(0.4, QColor(255, 255, 255, 0))
+            gradient.setColorAt(0.85, QColor(255, 255, 255, 0))
+            gradient.setColorAt(0.85, QColor(0, 0, 0, 0))
+            gradient.setColorAt(1, QColor(0, 0, 0, 127))
+            painter.fillRect(rect, gradient)
 
 

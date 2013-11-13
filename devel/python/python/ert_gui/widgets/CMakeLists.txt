@@ -24,6 +24,7 @@ set(PYTHON_SOURCES
     row_group.py
     row_panel.py
     search_box.py
+    simple_progress.py
     string_box.py
     util.py
     validated_dialog.py
