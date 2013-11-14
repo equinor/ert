@@ -190,9 +190,9 @@ class EnKFMain(BaseCClass):
         """ @rtype: bool """
         return EnKFMain.cNamespace().is_initialized(self, None) # what is the bool_vector mask???
 
-    def runEnsembleExperiment(self, member_list, total_member_count):
-        member_mask = BoolVector.createFromList(total_member_count, member_list)
-        EnKFMain.cNamespace().run_exp(self, member_mask, True, 0, 0, EnkfStateType.ANALYZED, True)
+    def runEnsembleExperiment(self, active_realization_mask):
+        assert isinstance(active_realization_mask, BoolVector)
+        EnKFMain.cNamespace().run_exp(self, active_realization_mask, True, 0, 0, EnkfStateType.ANALYZED, True)
 
     def run(self, boolPtr, init_step_parameter, simFrom, state, mode):
         #{"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4, "SMOOTHER" : 5}
