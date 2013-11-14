@@ -92,3 +92,6 @@ class RunStatusModel(ErtConnector, ModelMixin):
 
             self.__status_count[status] += 1
 
+    def waitUntilFinished(self):
+        while self.__is_running:
+            time.sleep(0.1)

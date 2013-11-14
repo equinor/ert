@@ -7,7 +7,7 @@ class EnsembleExperiment(ErtConnector, RunModelMixin):
 
     def startSimulations(self):
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
-        self.ert().runEnsembleExperiment(active_realization_mask)
+        self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
         self.setPhase(1) # done...
 
     def killAllSimulations(self):

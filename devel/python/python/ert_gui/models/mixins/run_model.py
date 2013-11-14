@@ -3,10 +3,12 @@ from ert_gui.models.mixins import ModelMixin, AbstractMethodError
 
 class RunModelMixin(ModelMixin):
     RUN_PHASE_CHANGED_EVENT = "run_phase_changed_event"
+    RUN_FAILED_EVENT = "run_failed_event"
 
     def registerDefaultEvents(self):
         super(RunModelMixin, self).registerDefaultEvents()
         self.observable().addEvent(RunModelMixin.RUN_PHASE_CHANGED_EVENT)
+        self.observable().addEvent(RunModelMixin.RUN_FAILED_EVENT)
 
 
     def __init__(self, phase_count=1, *args):
@@ -35,3 +37,5 @@ class RunModelMixin(ModelMixin):
         self.__phase = phase
         self.observable().notify(RunModelMixin.RUN_PHASE_CHANGED_EVENT)
 
+    def runFailed(self, message=""):
+        self.observable().notify(RunModelMixin.RUN_FAILED_EVENT, message)

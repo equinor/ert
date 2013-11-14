@@ -28,13 +28,17 @@ class SimulationRunner(Thread, ModelMixin):
         self.observable().addEvent(SimulationRunner.SIMULATION_PHASE_CHANGED_EVENT)
 
 
-    def run(self):
-        self.__job_start_time = int(time.time())
-
-        status_thread = Thread(name = "enkf_main_run_status_poll_thread")
+    def startStatusThread(self):
+        status_thread = Thread(name="enkf_main_run_status_poll_thread")
         status_thread.setDaemon(True)
         status_thread.run = RunStatusModel().startStatusPoller
         status_thread.start()
+        return status_thread
+
+    def run(self):
+        self.__job_start_time = int(time.time())
+
+        self.startStatusThread()
 
         self.__model.startSimulations()
         self.__job_stop_time = int(time.time())
@@ -60,6 +64,13 @@ class SimulationRunner(Thread, ModelMixin):
 
     def phaseChanged(self):
         self.observable().notify(SimulationRunner.SIMULATION_PHASE_CHANGED_EVENT)
+
+        phase, phase_count = self.getTotalProgress()
+        if phase < phase_count:
+            RunStatusModel().waitUntilFinished()
+            self.startStatusThread()
+
+
 
 
 

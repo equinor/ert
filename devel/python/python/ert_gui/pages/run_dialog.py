@@ -20,7 +20,7 @@ class RunDialog(QDialog):
         assert isinstance(simulation_runner, SimulationRunner)
         self.__simulation_runner = simulation_runner
         self.__simulation_runner.observable().attach(SimulationRunner.SIMULATION_FINISHED_EVENT, self.simulationDone)
-        self.__simulation_runner.observable().attach(SimulationRunner.SIMULATION_PHASE_CHANGED_EVENT, self.statusChanged)
+        self.__simulation_runner.observable().attach(SimulationRunner.SIMULATION_PHASE_CHANGED_EVENT, self.phaseChanged)
 
 
         layout = QVBoxLayout()
@@ -97,6 +97,9 @@ class RunDialog(QDialog):
             progress = 1.0
 
         self.total_progress.setProgress(progress)
+
+    def phaseChanged(self):
+        self.statusChanged()
 
 
     def killJobs(self):
