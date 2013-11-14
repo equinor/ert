@@ -34,5 +34,5 @@ class IsCaseInitializedModel(ErtConnector, BooleanModelMixin, BasicModelMixin):
         True if the current case is initialized!
         @rtype: bool
         """
-        return self.ert().isInitialized()
+        return self.ert().getEnkfFsManager().isInitialized()
 

@@ -40,6 +40,8 @@ class CWrapper:
     @classmethod
     def registerType(cls, type_name, value):
         """Register a type against a legal ctypes type or a callable (or class)"""
+        # if type_name in cls.registered_types:
+        #     print("Type %s already exists!" % type_name)
         cls.registered_types[type_name] = value
 
     @classmethod
