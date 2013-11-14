@@ -2,8 +2,7 @@ from PyQt4.QtGui import QFormLayout
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
 from ert_gui.models.connectors import RunPathModel, EnsembleSizeModel, RerunPathModel
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.run import ActiveRealizationsModel, EnsembleSmoother, TargetCaseModel
-from ert_gui.models.connectors.run.analysis_module_model import AnalysisModuleModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, EnsembleSmoother, TargetCaseModel, AnalysisModuleModel
 from ert_gui.simulation import SimulationConfigPanel
 from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.combo_choice import ComboChoice

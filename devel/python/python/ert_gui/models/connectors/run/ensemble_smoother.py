@@ -1,11 +1,19 @@
+import time
 from ert_gui.models import ErtConnector
-from ert_gui.models.mixins import ButtonModelMixin, RunModelMixin
+from ert_gui.models.mixins import RunModelMixin
 
 
-class EnsembleSmoother(ErtConnector, RunModelMixin, ButtonModelMixin):
+class EnsembleSmoother(ErtConnector, RunModelMixin):
+
+    def __init__(self):
+        super(EnsembleSmoother, self).__init__(phase_count=2)
 
     def startSimulations(self):
-        print("Running: %s" % self)
+        time.sleep(10)
+        self.setPhase(1)
+        time.sleep(5)
+        self.setPhase(2)
+
 
     def killAllSimulations(self):
         print("Kill All %s" % self)
