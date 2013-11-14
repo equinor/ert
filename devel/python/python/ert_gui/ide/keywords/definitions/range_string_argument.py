@@ -8,9 +8,9 @@ class RangeStringArgument(ArgumentDefinition):
     VALUE_NOT_IN_RANGE = "A value must be in the range from 0 to %d."
 
 
-    PATTERN = re.compile("^[0-9\-, ]+$")
-    RANGE_PATTERN = re.compile("^ ?([0-9]+) ?- ?([0-9]+) ?$")
-    NUMBER_PATTERN = re.compile("^ ?([0-9]+) ?$")
+    PATTERN = re.compile("^[0-9\-, \t]+$")
+    RANGE_PATTERN = re.compile("^[ \t]*([0-9]+)[ \t]*-[ \t]*([0-9]+)[ \t]*$")
+    NUMBER_PATTERN = re.compile("^[ \t]*([0-9]+)[ \t]*$")
 
 
     def __init__(self, max_value=None, **kwargs):
