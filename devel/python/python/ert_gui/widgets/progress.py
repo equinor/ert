@@ -29,6 +29,7 @@ class Progress(QFrame):
         """@type: dict of (object, State)"""
 
         self.__shiny = False
+        self.count = 0
 
     def addState(self, state, state_color, progress=0.0):
         state_tracker = StateTracker(state, state_color, progress)
@@ -36,6 +37,7 @@ class Progress(QFrame):
         self.__states[state] = state_tracker
 
     def updateState(self, state, progress):
+        self.count += 1
         self.__states[state].setProgress(progress)
         self.update()
 

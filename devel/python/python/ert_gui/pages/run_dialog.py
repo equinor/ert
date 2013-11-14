@@ -76,29 +76,42 @@ class RunDialog(QDialog):
         timer.timeout.connect(self.setRunningTime)
         timer.start()
 
+        self.__updating = False
+        self.__update_queued = False
+
     def simulationDone(self):
         self.simulationFinished.emit()
 
     def setRunningTime(self):
         self.running_time.setText("Running time: %d seconds" % self.__simulation_runner.getRunningTime())
 
+        if not self.__updating and self.__update_queued:
+            self.statusChanged()
+
     def statusChanged(self):
-        states = self.simulations_tracker.getList()
+        if not self.__updating:
+            self.__updating = True
+            self.__update_queued = False
+            states = self.simulations_tracker.getList()
 
-        for state in states:
-            self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
-            self.legends[state].updateLegend(state.name, state.count, state.total_count)
+            for state in states:
+                self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
+                self.legends[state].updateLegend(state.name, state.count, state.total_count)
 
-        phase, phase_count = self.__simulation_runner.getTotalProgress()
+            phase, phase_count = self.__simulation_runner.getTotalProgress()
 
-        if phase < phase_count:
-            progress = float(phase + self.simulations_tracker.getProgress()) / phase_count
+            if phase < phase_count:
+                progress = float(phase + self.simulations_tracker.getProgress()) / phase_count
+            else:
+                progress = 1.0
+
+            self.total_progress.setProgress(progress)
+            self.__updating = False
         else:
-            progress = 1.0
-
-        self.total_progress.setProgress(progress)
+            self.__update_queued = True
 
     def phaseChanged(self):
+        self.simulations_tracker.resetProgress()
         self.statusChanged()
 
 

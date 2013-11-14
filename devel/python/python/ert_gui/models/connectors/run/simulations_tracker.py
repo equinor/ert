@@ -106,6 +106,13 @@ class SimulationsTracker(ListModelMixin):
             if not used:
                 raise AssertionError("Enum identifier '%s' not used!" % enum)
 
+    def resetProgress(self):
+        for state in self.states:
+            state.count = 0
+
+        self.__progress = 0
+
+
 
 
 

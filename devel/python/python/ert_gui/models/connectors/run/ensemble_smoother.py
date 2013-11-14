@@ -11,6 +11,7 @@ class EnsembleSmoother(ErtConnector, RunModelMixin):
         super(EnsembleSmoother, self).__init__(phase_count=2)
 
     def startSimulations(self):
+        self.setPhase(0)
         module_name = AnalysisModuleModel().getCurrentChoice()
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 

@@ -1,5 +1,6 @@
 from threading import Thread
 import time
+from ert_gui.models.connectors.init.case_list import CaseList
 from ert_gui.models.connectors.run.run_status import RunStatusModel
 from ert_gui.models.mixins import ModelMixin, RunModelMixin
 
@@ -43,6 +44,8 @@ class SimulationRunner(Thread, ModelMixin):
         self.__model.startSimulations()
         self.__job_stop_time = int(time.time())
 
+        CaseList().externalModificationNotification()
+
         self.observable().notify(SimulationRunner.SIMULATION_FINISHED_EVENT)
 
     def getRunningTime(self):
@@ -69,6 +72,7 @@ class SimulationRunner(Thread, ModelMixin):
         if phase < phase_count:
             RunStatusModel().waitUntilFinished()
             self.startStatusThread()
+
 
 
 
