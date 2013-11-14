@@ -1,5 +1,6 @@
 from ert.cwrap import CWrapper, BaseCClass
-from ert.enkf import ENKF_LIB, EnkfStateType
+from ert.enkf import ENKF_LIB, EnkfStateType, EnkfFs
+from ert.enkf.enums import EnkfInitModeEnum
 from ert.util import BoolVector
 
 
@@ -14,7 +15,15 @@ class EnkfSimulationRunner(BaseCClass):
         assert isinstance(active_realization_mask, BoolVector)
         EnkfSimulationRunner.cNamespace().run_exp(self, active_realization_mask, True, 0, 0, EnkfStateType.ANALYZED, True)
 
+    def runSimpleStep(self, active_realization_mask, initialization_mode):
+        assert isinstance(active_realization_mask, BoolVector)
+        assert isinstance(initialization_mode, EnkfInitModeEnum)
+        EnkfSimulationRunner.cNamespace().run_simple_step(self, active_realization_mask, initialization_mode)
 
+    def smootherUpdate(self, target_fs):
+        """ @rtype: bool """
+        assert isinstance(target_fs, EnkfFs)
+        return EnkfSimulationRunner.cNamespace().smoother_update(self, target_fs)
 
 
     # def run(self, boolPtr, init_step_parameter, simFrom, state, mode):
@@ -45,3 +54,6 @@ cwrapper.registerType("enkf_simulation_runner", EnkfSimulationRunner)
 EnkfSimulationRunner.cNamespace().run_exp           = cwrapper.prototype("void enkf_main_run_exp(enkf_simulation_runner, bool_vector, bool, int, int, enkf_state_type_enum, bool)")
 EnkfSimulationRunner.cNamespace().run_assimilation  = cwrapper.prototype("void enkf_main_run_assimilation(enkf_simulation_runner, bool_vector, int, int, int)")
 EnkfSimulationRunner.cNamespace().run_smoother      = cwrapper.prototype("void enkf_main_run_smoother(enkf_simulation_runner, char*, bool)")
+
+EnkfSimulationRunner.cNamespace().run_simple_step   = cwrapper.prototype("void enkf_main_run_simple_step(enkf_simulation_runner, bool_vector, enkf_init_mode_enum)")
+EnkfSimulationRunner.cNamespace().smoother_update   = cwrapper.prototype("bool enkf_main_smoother_update(enkf_simulation_runner, enkf_fs)")

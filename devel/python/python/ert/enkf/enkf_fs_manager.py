@@ -55,13 +55,26 @@ class EnkfFsManager(BaseCClass):
     def set_case_table(self, case_table_file):
         EnkfFsManager.cNamespace().set_case_table(self, case_table_file)
 
+    def mountAlternativeFileSystem(self, case, read_only, create):
+        """ @rtype: EnkfFs """
+        assert isinstance(case, str)
+        assert isinstance(read_only, bool)
+        assert isinstance(create, bool)
+        return EnkfFsManager.cNamespace().mount_alt_fs(self, case, read_only, create)
+
+    def switchFileSystem(self, files_system):
+        assert isinstance(files_system, EnkfFs)
+        EnkfFsManager.cNamespace().switch_fs(self, files_system, None)
+
+
 
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("enkf_fs_manager", EnkfFsManager)
 
 EnkfFsManager.cNamespace().get_fs = cwrapper.prototype("enkf_fs_ref enkf_main_get_fs(enkf_fs_manager)")
-EnkfFsManager.cNamespace().get_alt_fs = cwrapper.prototype("enkf_fs_ref enkf_main_mount_alt_fs(enkf_fs_manager, char*, bool, bool)")
+EnkfFsManager.cNamespace().mount_alt_fs = cwrapper.prototype("enkf_fs_ref enkf_main_mount_alt_fs(enkf_fs_manager, char*, bool, bool)")
+EnkfFsManager.cNamespace().switch_fs = cwrapper.prototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
 EnkfFsManager.cNamespace().user_select_fs = cwrapper.prototype("void enkf_main_user_select_fs(enkf_fs_manager, char*)")
 # EnkfFsManager.cNamespace().get_current_fs = cwrapper.prototype("char* enkf_main_get_current_fs(enkf_fs_manager)")
 EnkfFsManager.cNamespace().select_fs = cwrapper.prototype("void enkf_main_select_fs(enkf_fs_manager, char*)")
