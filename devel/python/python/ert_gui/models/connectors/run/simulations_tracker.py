@@ -96,7 +96,6 @@ class SimulationsTracker(ListModelMixin):
     def getProgress(self):
         return  self.__progress
 
-
     def __checkForUnusedEnums(self):
         for enum in JobStatusType.enums():
             used = False
