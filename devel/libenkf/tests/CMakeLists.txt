@@ -119,6 +119,19 @@ add_test( enkf_state_no_summary_vars_present
 
 #-----------------------------------------------------------------
 
+
+add_executable( enkf_export_field_test enkf_export_field_test.c )
+target_link_libraries( enkf_export_field_test  enkf test_util )
+
+add_test( enkf_export_field_PERMX_to_roff_test
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config PERMX enkf_export_field_test/export_fields_roff_test/PermXRoffExport%d.roff FALSE)
+          
+add_test( enkf_export_field_PERMX_to_roff_test_selected_realizations
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config PERMX enkf_export_field_test/export_fields_roff_test_real/PermXRoffExport%d.roff TRUE 0,1-2 )
+
+#-----------------------------------------------------------------
+
+
 add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
 

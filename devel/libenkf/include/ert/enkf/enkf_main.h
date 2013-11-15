@@ -60,7 +60,8 @@ extern "C" {
 #include <ert/enkf/qc_module.h>
 #include <ert/enkf/rng_config.h>
 #include <ert/enkf/pca_plot_data.h>
-
+#include <ert/enkf/field_config.h>
+  
   /*****************************************************************/
   
   typedef struct enkf_main_struct enkf_main_type;
@@ -172,7 +173,7 @@ extern "C" {
   
   void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
   void         enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
-  const char * enkf_main_get_image_viewer(const enkf_main_type * );
+   const char * enkf_main_get_image_viewer(const enkf_main_type * );
   const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main );
   const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
   void         enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, bool force_init);
@@ -266,6 +267,13 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
 
   rng_config_type     * enkf_main_get_rng_config( const enkf_main_type * enkf_main );
   void                  enkf_main_rng_init( enkf_main_type * enkf_main);
+  
+  void enkf_main_export_field(const enkf_main_type * enkf_main, 
+                              const ensemble_config_type * ensemble_config_type, 
+                              const char * kw, 
+                              const char * path,
+                              int_vector_type * realization_list, 
+                              field_file_format_type file_type);  
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
