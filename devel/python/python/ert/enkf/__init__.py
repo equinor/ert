@@ -25,6 +25,8 @@ from .enums import EnkfStateType, EnkfVarType, EnkfRunEnum, LoadFailTypeEnum, En
 from .util import TimeMap
 from .enkf_fs import EnkfFs
 
+from .ert_workflow_list import ErtWorkflowList
+
 from .observations import SummaryObservation, ObsVector
 
 from .analysis_iter_config import AnalysisIterConfig
