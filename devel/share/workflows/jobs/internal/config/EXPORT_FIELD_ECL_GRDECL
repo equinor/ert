@@ -1,0 +1,4 @@
+INTERNAL    True
+FUNCTION    enkf_main_export_field_to_ECL_JOB
+MIN_ARG     2
+ARG_TYPE    0 STRING
