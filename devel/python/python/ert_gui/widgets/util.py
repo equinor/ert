@@ -41,9 +41,11 @@ def resourceImage(name):
     return QtGui.QPixmap(img_prefix + name)
 
 
-
-
-
+def resourceMovie(name):
+    """ @rtype: QMovie """
+    movie = QtGui.QMovie(img_prefix + name)
+    movie.start()
+    return movie
 
 
 
