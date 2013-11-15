@@ -19,10 +19,10 @@ class RunModelMixin(ModelMixin):
         super(RunModelMixin, self).__init__(*args)
         self.__phase = 0
         self.__phase_count = phase_count
-        self.__finished = False
+        self.__phase_update_count = 0
+
         self.__job_start_time  = 0
         self.__job_stop_time = 0
-        self.__current_progress = 0.0
 
     def startSimulations(self):
         raise AbstractMethodError(self, "startSimulations")
@@ -45,12 +45,12 @@ class RunModelMixin(ModelMixin):
 
         if phase == 0:
             self.__job_start_time = int(time.time())
-            self.__current_progress = 0.0
 
         if phase == self.__phase_count:
             self.__job_stop_time = int(time.time())
 
         self.__phase = phase
+        self.__phase_update_count = 0
         self.observable().notify(RunModelMixin.RUN_PHASE_CHANGED_EVENT)
 
 
@@ -95,12 +95,11 @@ class RunModelMixin(ModelMixin):
     def getProgress(self):
         """ @rtype: float """
         if self.isFinished():
-            self.__current_progress = 1.0
-        elif not self.isQueueRunning() and self.currentPhase() == 0:
-            pass # leave current progress as is (between phases...)
-        elif not self.isQueueRunning() and self.currentPhase() > 0:
-            self.__current_progress = float(self.currentPhase()) / self.phaseCount()
+            current_progress = 1.0
+        elif not self.isQueueRunning() and self.__phase_update_count > 0:
+            current_progress = (self.__phase + 1.0) / self.__phase_count
         else:
+            self.__phase_update_count += 1
             queue_status = self.getQueueStatus()
             queue_size = self.getQueueSize()
 
@@ -112,13 +111,13 @@ class RunModelMixin(ModelMixin):
                     done_count += queue_status[state]
 
             phase_progress = float(done_count) / queue_size
-            self.__current_progress = (self.__phase + phase_progress) / self.__phase_count
+            current_progress = (self.__phase + phase_progress) / self.__phase_count
 
-        return self.__current_progress
+        return current_progress
 
     def ert(self):
         """ @rtype: EnkfMain """
-        pass  # gets implemented by extending classes -> (todo) should make this as an abstract implementing class...
+        pass  # gets implemented by extending classes (ErtConnector) -> (todo) should make this as an abstract implementing class...
 
 
 
