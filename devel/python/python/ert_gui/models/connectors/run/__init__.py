@@ -7,3 +7,4 @@ from .ensemble_smoother import EnsembleSmoother
 from .simulation_mode import SimulationModeModel
 
 from .simulations_tracker import SimulationsTracker
+from .workflows_model import WorkflowsModel
