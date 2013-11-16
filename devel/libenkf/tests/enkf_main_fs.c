@@ -77,8 +77,29 @@ int main(int argc, char ** argv) {
       enkf_fs_umount( default_fs );
       test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
     }
-    
+    /*****************************************************************/
+    {
+      enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , "default" , false , false );
+      test_assert_int_equal( 2 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
+      
+      enkf_main_set_fs( enkf_main , fs , NULL );
+      test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
+    }
+    {
+      enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , "enkf" , false , false );
+      enkf_fs_type * current = enkf_main_mount_alt_fs( enkf_main , "default" , false , false);
+      
 
+      test_assert_int_equal( 2 , enkf_fs_get_refcount( current ));
+      test_assert_int_equal( 1 , enkf_fs_get_refcount( fs));
+      enkf_main_set_fs( enkf_main , fs , NULL);
+      test_assert_int_equal( 1 , enkf_fs_get_refcount( fs));
+      test_assert_int_equal( 1 , enkf_fs_get_refcount( current ));
+      enkf_fs_umount( current );
+    }
+
+    
+    
 
     test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
     enkf_main_free( enkf_main );
