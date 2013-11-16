@@ -9,7 +9,8 @@ class SimpleProgress(QFrame):
         self.setFrameStyle(QFrame.Panel | QFrame.Plain)
 
         self.background_color = QColor(255, 255, 255)
-        self.color = QColor(0, 128, 255)
+        # self.color = QColor(0, 128, 255)
+        self.color = QColor(255, 200, 128)
 
         self.setMinimumHeight(15)
         self.setMaximumHeight(15)

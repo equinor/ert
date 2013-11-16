@@ -39,6 +39,7 @@ class ComboChoice(HelpedWidget):
         model.observable().attach(ChoiceModelMixin.CHOICE_LIST_CHANGED_EVENT, self.updateChoicesFromModel)
 
         self.combo = QComboBox()
+        self.combo.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
         self.combo.addItem("Fail!")
 
