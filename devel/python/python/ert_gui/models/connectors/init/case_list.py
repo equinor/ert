@@ -13,9 +13,13 @@ class CaseList(ErtConnector, ListModelMixin):
         self.ert().getEnkfFsManager().selectFileSystem(value)
         self.observable().notify(ListModelMixin.LIST_CHANGED_EVENT)
 
+
     # def removeItem(self, value):
     #     print("Remove item: %s" % value)
     #     pass
+
+    def externalModificationNotification(self):
+        self.observable().notify(ListModelMixin.LIST_CHANGED_EVENT)
 
 
 
