@@ -103,7 +103,8 @@ class RunWorkflowWidget(QWidget):
 
     def workflowFinishedWithFail(self):
         workflow_name = WorkflowsModel().getCurrentChoice()
-        QMessageBox.critical(self, "Workflow failed!", "The workflow '%s' failed!" % workflow_name)
+        error = WorkflowsModel().getError()
+        QMessageBox.critical(self, "Workflow failed!", "The workflow '%s' failed!\n\n%s" % (workflow_name, error))
         self.__running_workflow_dialog.reject()
         self.__running_workflow_dialog = None
 
