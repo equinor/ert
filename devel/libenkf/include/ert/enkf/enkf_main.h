@@ -269,7 +269,6 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   void                  enkf_main_rng_init( enkf_main_type * enkf_main);
   
   void enkf_main_export_field(const enkf_main_type * enkf_main, 
-                              const ensemble_config_type * ensemble_config_type, 
                               const char * kw, 
                               const char * path,
                               int_vector_type * realization_list, 

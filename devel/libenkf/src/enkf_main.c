@@ -3880,7 +3880,6 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 
 
 void enkf_main_export_field(const enkf_main_type * enkf_main, 
-                            const ensemble_config_type * ensemble_config_type,  
                             const char * kw, 
                             const char * path, 
                             int_vector_type * realization_list,
@@ -3898,9 +3897,10 @@ void enkf_main_export_field(const enkf_main_type * enkf_main,
   
   const enkf_config_node_type * config_node = NULL;
   bool node_found = false; 
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   
-  if (ensemble_config_has_key(ensemble_config_type, kw)) {
-    config_node = ensemble_config_get_node(ensemble_config_type, kw); 
+  if (ensemble_config_has_key(ensemble_config, kw)) {
+    config_node = ensemble_config_get_node(ensemble_config, kw); 
     if (config_node && enkf_config_node_get_impl_type(config_node) == FIELD) {
       node_found = true; 
     } else
