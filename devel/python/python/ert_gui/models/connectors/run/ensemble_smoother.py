@@ -12,6 +12,7 @@ class EnsembleSmoother(ErtConnector, RunModelMixin):
 
     def startSimulations(self):
         self.setPhase(0)
+
         module_name = AnalysisModuleModel().getCurrentChoice()
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 
@@ -46,6 +47,3 @@ class EnsembleSmoother(ErtConnector, RunModelMixin):
 
     def __str__(self):
         return "Ensemble Smoother"
-
-
-
