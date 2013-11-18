@@ -140,7 +140,7 @@ void * enkf_main_export_field_JOB(void * self, const stringlist_type * args) {
 
 void * enkf_main_export_field_to_RMS_JOB(void * self, const stringlist_type * args) {
   const char *      field            = stringlist_iget(args, 1); 
-  const char *      file_name        = stringlist_iget(args, 2); 
+  char *            file_name        = stringlist_iget(args, 2); 
   int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
   
   int arg_index = 3;
@@ -150,8 +150,9 @@ void * enkf_main_export_field_to_RMS_JOB(void * self, const stringlist_type * ar
     
   char * file_name_with_ext = util_alloc_string_copy(file_name); 
   char *ext = strrchr(file_name_with_ext , '.');
-  if (ext == NULL) 
-    util_strcat_realloc(file_name_with_ext, ".roff");
+  if (ext == NULL) {
+    file_name_with_ext = util_strcat_realloc(file_name, ".roff");
+  }
 
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
@@ -164,7 +165,7 @@ void * enkf_main_export_field_to_RMS_JOB(void * self, const stringlist_type * ar
 
 void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * args) {
   const char *      field            = stringlist_iget(args, 1); 
-  const char *      file_name        = stringlist_iget(args, 2); 
+  char *            file_name        = stringlist_iget(args, 2); 
   int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
   
   int arg_index = 2;
@@ -175,7 +176,7 @@ void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * ar
   char * file_name_with_ext = util_alloc_string_copy(file_name); 
   char *ext = strrchr(file_name_with_ext , '.');
   if (ext == NULL) 
-    util_strcat_realloc(file_name_with_ext, ".grdecl");
+    file_name_with_ext = util_strcat_realloc(file_name, ".grdecl");
   
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
