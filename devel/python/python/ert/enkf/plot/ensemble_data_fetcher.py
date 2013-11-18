@@ -52,7 +52,7 @@ class EnsembleDataFetcher(DataFetcher):
     def getEnsembleDataForKey(self, key):
         """ @rtype: list of SampleList """
         ensemble_config_node = self.getEnsembleConfigNode(key)
-        enkf_fs = self.ert().getFileSystem()
+        enkf_fs = self.ert().getEnkfFsManager().getFileSystem()
         enkf_plot_data = EnsemblePlotData(ensemble_config_node, enkf_fs)
 
         result = []

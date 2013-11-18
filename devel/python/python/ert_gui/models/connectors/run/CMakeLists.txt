@@ -2,15 +2,9 @@ set(PYTHON_SOURCES
     __init__.py
     active_realizations_model.py
     analysis_module_model.py
-    enkf_assimilation.py
     ensemble_experiment.py
     ensemble_smoother.py
-    iterated_smoother.py
-    one_more_iteration.py
-    run_members.py
-    run_status.py
     simulation_mode.py
-    simulation_runner.py
     simulations_tracker.py
     target_case_model.py
 )

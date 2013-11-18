@@ -1,6 +1,7 @@
 from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QFrame, QToolButton
-from ert_gui.models.connectors.run import SimulationModeModel, SimulationRunner
+from ert_gui.models.connectors.init import CaseList
+from ert_gui.models.connectors.run import SimulationModeModel
 from ert_gui.pages.run_dialog import RunDialog
 from ert_gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert_gui.simulation.ensemble_smoother_panel import EnsembleSmootherPanel
@@ -67,11 +68,13 @@ class SimulationPanel(QWidget):
         return SimulationModeModel().getCurrentChoice()
 
     def runSimulation(self):
-        simulation_runner = SimulationRunner(self.getCurrentSimulationMode())
+        run_model = self.getCurrentSimulationMode()
 
-        dialog = RunDialog(simulation_runner)
-        simulation_runner.start()
+        dialog = RunDialog(run_model)
+        dialog.startSimulation()
         dialog.exec_()
+
+        CaseList().externalModificationNotification() # simulations may have added new cases.
 
 
     def toggleSimulationMode(self):

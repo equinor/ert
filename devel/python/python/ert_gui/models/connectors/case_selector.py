@@ -15,14 +15,14 @@ class CaseModel(ErtConnector, ChoiceModelMixin):
 
     def getChoices(self):
         """ @rtype: StringList """
-        fs = self.ert().getFileSystem()
-        case_list = self.ert().getCaseList()
+        fs = self.ert().getEnkfFsManager().getFileSystem()
+        case_list = self.ert().getEnkfFsManager().getCaseList()
         return case_list
 
     def getCurrentChoice(self):
         """ @rtype: str """
         case_list = self.getChoices()
-        current_case = self.ert().getFileSystem()
+        current_case = self.ert().getEnkfFsManager().getFileSystem()
         return current_case.getCaseName()
 
     @may_take_a_long_time

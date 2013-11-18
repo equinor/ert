@@ -43,8 +43,6 @@ class ActiveRealizationsModel(ErtConnector, BasicModelMixin):
 
         mask = BoolVector.active_mask(self.getValue())
 
-        print(self.getValue(), self.__custom)
-
         if mask is None:
             raise ValueError("Error while parsing range string!")
 
