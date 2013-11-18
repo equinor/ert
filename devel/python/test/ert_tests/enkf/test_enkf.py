@@ -19,8 +19,7 @@ import os
 from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConfig, PlotConfig, EnkfObs, ErtTemplates, EnkfFs, EnKFState, EnkfStateType, EnkfRunEnum, EnkfVarType, ObsVector
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enkf_main import EnKFMain
-from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum
-from ert.enkf.enums.ert_impl_type_enum import ErtImplType
+from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum, EnkfInitModeEnum, ErtImplType
 from ert.enkf.observations.summary_observation import SummaryObservation
 from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
@@ -38,13 +37,14 @@ class EnKFTest(ExtendedTestCase):
             work_area.copy_directory(self.case_directory)
             main = EnKFMain("simple_config/minimum_config", self.site_config_file)
             self.assertTrue(main, "Load failed")
-            del main
+            main.free()
 
     def test_enum(self):
 
         self.assertEnumIsFullyDefined(EnkfVarType, "enkf_var_type", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfStateType, "state_enum", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(ErtImplType, "ert_impl_type", "libenkf/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(EnkfInitModeEnum, "init_mode_enum", "libenkf/include/ert/enkf/enkf_types.h")
 
         self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "libenkf/include/ert/enkf/obs_vector.h")
         self.assertEnumIsFullyDefined(LoadFailTypeEnum, "load_fail_type", "libenkf/include/ert/enkf/summary_config.h")
@@ -93,7 +93,7 @@ class EnKFTest(ExtendedTestCase):
                 self.assertEqual(summary_key, summary_observation_node.getSummaryKey())
 
 
-
+            main.free()
 
 
 
@@ -104,7 +104,7 @@ class EnKFTest(ExtendedTestCase):
             main = EnKFMain("simple_config/minimum_config", self.site_config_file)
 
             self.assertIsInstance(main.ensembleConfig(), EnsConfig)
-            self.assertIsInstance(main.analysis_config(), AnalysisConfig)
+            self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
             self.assertIsInstance(main.getModelConfig(), ModelConfig)
             #self.assertIsInstance(main.local_config(), LocalConfig) #warn: Should this be None?
             self.assertIsInstance(main.siteConfig(), SiteConfig)
@@ -114,8 +114,8 @@ class EnKFTest(ExtendedTestCase):
             # self.main.load_obs(obs_config_file)
             self.assertIsInstance(main.getObservations(), EnkfObs)
             self.assertIsInstance(main.get_templates(), ErtTemplates)
-            self.assertIsInstance(main.getFileSystem(), EnkfFs)
+            self.assertIsInstance(main.getEnkfFsManager().getFileSystem(), EnkfFs)
             # self.assertIsInstance(main.iget_member_config(0), MemberConfig)
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
-            del main
+            main.free()

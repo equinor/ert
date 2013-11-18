@@ -5,10 +5,12 @@ set(PYTHON_SOURCES
     button.py
     check_list.py
     checkbox.py
+    closable_dialog.py
     cogwheel.py
     combo_choice.py
     double_box.py
     double_spinner.py
+    error_popup.py
     help_dock.py
     helped_widget.py
     integer_spinner.py
@@ -22,6 +24,7 @@ set(PYTHON_SOURCES
     row_group.py
     row_panel.py
     search_box.py
+    simple_progress.py
     string_box.py
     util.py
     validated_dialog.py

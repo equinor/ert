@@ -32,18 +32,18 @@ class EnKFLibraryTest(ExtendedTestCase):
 
             main = EnKFMain("simple_config/minimum_config", self.site_config)
 
-            self.assertIsInstance(main.analysis_config(), AnalysisConfig)
+            self.assertIsInstance(main.analysisConfig(), AnalysisConfig)
             self.assertIsInstance(main.eclConfig(), EclConfig)
 
             with self.assertRaises(ValueError): # Null pointer!
                 self.assertIsInstance(main.eclConfig().getRefcase(), EclSum)
 
-            file_system = main.getFileSystem()
+            file_system = main.getEnkfFsManager().getFileSystem()
             self.assertEqual(file_system.getCaseName(), "default")
             time_map = file_system.get_time_map()
             self.assertIsInstance(time_map, TimeMap)
 
-            del main
+            main.free()
 
 
 
