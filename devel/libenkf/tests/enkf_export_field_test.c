@@ -50,7 +50,8 @@ int main(int argc , char ** argv) {
   const char * config_file = argv[2];
   const char * field       = argv[3];
   const char * file_name   = argv[4];
-  bool check_range  = (0 == strcmp(argv[5], "TRUE")) ? true : false; 
+  const char * check_range_str = argv[5]; 
+  bool check_range = util_string_equal(check_range_str, "TRUE"); 
    
   test_work_area_type * work_area = test_work_area_alloc(config_file );
   test_work_area_copy_directory_content( work_area , config_path );
