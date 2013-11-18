@@ -2740,23 +2740,58 @@ void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
   stringlist_free( gen_data_keys );
 }
 
+static void enkf_main_update_case_link( enkf_main_type * enkf_main , const char * case_path) {
+  enkf_main_link_current_fs__( enkf_main , case_path);
+  enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
+  enkf_main_gen_data_special( enkf_main );
+  enkf_main_add_subst_kw( enkf_main , "ERT-CASE" , enkf_main->current_fs_case , "Current case" , true );
+  enkf_main_add_subst_kw( enkf_main , "ERTCASE"  , enkf_main->current_fs_case , "Current case" , true );
+}
+
+
+/**
+   The enkf_fs instances employ a simple reference counting
+   scheme. The main point with this system is to avoid opening the
+   full timesystem more than necessary (this is quite compute
+   intensive). This is essentially achieved by:
+
+      1. Create new fs instances by using the function
+         enkf_main_mount_alt_fs() - depending on the input arguments
+         this will either create a new enkf_fs instance or it will
+         just return a pointer to currently open fs instance; with an
+         increased refcount.
+
+      2. When you are finished with working with filesystem pointer
+         call enkf_fs_unmount() - this will reduce the refcount with
+         one, and eventually discard the complete datastructure when
+         the refcount has reached zero.
+
+      3. By using the function enkf_main_get_fs() /
+         enkf_fs_get_weakref() you get a pointer to the current fs
+         instance WITHOUT INCREASING THE REFCOUNT. This means that
+         scope calling one of these functions does not get any
+         ownership to the enkf_fs instance.
+     
+   The enkf_main instance will take ownership of the enkf_fs instance;
+   this implies that the calling scope must have proper ownership of
+   the fs instance which is passed in. The return value from
+   enkf_main_get_fs() can NOT be used as input to this function; this
+   is not checked for in any way - but the crash will be horrible if
+   this is not adhered to.
+*/
+
 
 void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
-  if (enkf_main->dbase != fs) {
-    if (!case_path)
-      case_path = enkf_fs_get_case_name( fs );
+  if (!case_path)
+    case_path = enkf_fs_get_case_name( fs );
     
-    if (enkf_main->dbase != NULL)
-      enkf_main_close_fs( enkf_main );
-    enkf_main->dbase = fs;
-
-    enkf_main_link_current_fs__( enkf_main , case_path);
-    enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
-    enkf_main_gen_data_special( enkf_main );
-    enkf_main_add_subst_kw( enkf_main , "ERT-CASE" , enkf_main->current_fs_case , "Current case" , true );
-    enkf_main_add_subst_kw( enkf_main , "ERTCASE"  , enkf_main->current_fs_case , "Current case" , true );
-  }
+  if (enkf_main->dbase != NULL) 
+    enkf_main_close_fs( enkf_main );
+    
+  enkf_main->dbase = fs;
+  enkf_main_update_case_link( enkf_main , case_path );
 }
+
 
 
 stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
