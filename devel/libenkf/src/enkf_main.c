@@ -3879,15 +3879,16 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 
 
 
-void enkf_main_export_field(const enkf_main_type * enkf_main, 
+bool enkf_main_export_field(const enkf_main_type * enkf_main, 
                             const char * kw, 
                             const char * path, 
                             int_vector_type * realization_list,
                             field_file_format_type file_type) {
   
+  bool ret = false; 
   if (!util_char_in('%', strlen(path), path) || !util_char_in('d', strlen(path), path)) {
     printf("EXPORT FIELD: There must be a %%d in the file name\n"); 
-    return; 
+    return false; 
   }
   
   if (0 == int_vector_size(realization_list)) {
@@ -3903,10 +3904,10 @@ void enkf_main_export_field(const enkf_main_type * enkf_main,
     config_node = ensemble_config_get_node(ensemble_config, kw); 
     if (config_node && enkf_config_node_get_impl_type(config_node) == FIELD) {
       node_found = true; 
-    } else
-    printf("Did not find a FIELD %s node\n", kw);
+    } else 
+      printf("Did not find a FIELD %s node\n", kw);
   } else 
-    printf("Ensemble config does not have key %s\n", kw);
+      printf("Ensemble config does not have key %s\n", kw);
 
   if (node_found) {
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
@@ -3932,14 +3933,18 @@ void enkf_main_export_field(const enkf_main_type * enkf_main,
           const field_type * field = enkf_node_value_ptr(node);
           const bool output_transform = true;
           field_export(field , filename , NULL , file_type , output_transform);
+          ret = true; 
         }
         free(filename);
-      } else 
-        printf("Warning: could not load realization:%d \n", realization_no);
+      } else {
+          printf("Warning: could not load realization:%d \n", realization_no);
+          ret = false; 
+        }
     } 
   
     enkf_node_free(node);
     path_fmt_free(export_path); 
     printf("Finished export of FIELD %s\n", kw);
   }
+  return ret; 
 }

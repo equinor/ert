@@ -68,7 +68,7 @@ int main(int argc , char ** argv) {
   if (util_char_in('%', strlen(file_name), file_name) && util_char_in('d', strlen(file_name), file_name)) {
     enkf_main_type * enkf_main = enkf_main_bootstrap( NULL , config_file , true , true );
     field_file_format_type file_type = field_config_default_export_format(file_name); 
-    enkf_main_export_field(enkf_main, field, file_name, realization_list, file_type);
+    test_assert_true(enkf_main_export_field(enkf_main, field, file_name, realization_list, file_type));
     enkf_main_free( enkf_main );
   } else
       printf("There must be a %%d in the file name\n"); 
