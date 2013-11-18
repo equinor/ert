@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    run_workflow_widget.py
     workflows_tool.py
 )
 

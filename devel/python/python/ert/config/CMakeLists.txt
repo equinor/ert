@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    config_error.py
     config_parser.py
     content_type_enum.py
     unrecognized_enum.py

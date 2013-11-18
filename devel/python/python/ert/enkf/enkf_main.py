@@ -15,7 +15,7 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 
-from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager
+from ert.enkf import AnalysisConfig, EclConfig, EnkfObs, EnKFState, LocalConfig, ModelConfig, EnsConfig, PlotConfig, SiteConfig, ENKF_LIB, EnkfSimulationRunner, EnkfFsManager, ErtWorkflowList
 from ert.util import SubstitutionList, Log
 
 
@@ -168,6 +168,10 @@ class EnKFMain(BaseCClass):
         """ @rtype: EnkfFsManager """
         return self.__fs_manager
 
+    def getWorkflowList(self):
+        """ @rtype: ErtWorkflowList """
+        return EnKFMain.cNamespace().get_workflow_list(self).setParent(self)
+
 ##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
@@ -214,6 +218,8 @@ EnKFMain.cNamespace().get_observation_count = cwrapper.prototype("int enkf_main_
 EnKFMain.cNamespace().iget_state = cwrapper.prototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
 
 EnKFMain.cNamespace().get_logh = cwrapper.prototype("log_ref enkf_main_get_logh( enkf_main )")
+
+EnKFMain.cNamespace().get_workflow_list = cwrapper.prototype("ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)")
 
 
 EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprintf_config(enkf_main)")
