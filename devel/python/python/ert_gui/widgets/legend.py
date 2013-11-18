@@ -30,7 +30,7 @@ class Legend(QWidget):
     def __init__(self, legend, color):
         QWidget.__init__(self)
 
-        self.setMinimumWidth(130)
+        self.setMinimumWidth(140)
 
         self.legend = legend
 
