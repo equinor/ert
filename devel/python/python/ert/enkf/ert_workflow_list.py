@@ -1,3 +1,4 @@
+from ert.config import ConfigError
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.util import StringList
@@ -23,8 +24,13 @@ class ErtWorkflowList(BaseCClass):
     def setVerbose(self, verbose):
         ErtWorkflowList.cNamespace().set_verbose(self, verbose)
 
+    def getLastError(self):
+        """ @rtype: ConfigError """
+        return ErtWorkflowList.cNamespace().get_last_error(self).setParent(self)
+
     def free(self):
         ErtWorkflowList.cNamespace().free(self)
+
 
 
 cwrapper = CWrapper(ENKF_LIB)
@@ -39,3 +45,4 @@ ErtWorkflowList.cNamespace().alloc_namelist = cwrapper.prototype("stringlist_obj
 ErtWorkflowList.cNamespace().run_workflow = cwrapper.prototype("bool ert_workflow_list_run_workflow(ert_workflow_list, char*, c_void_p)")
 ErtWorkflowList.cNamespace().has_workflow = cwrapper.prototype("bool ert_workflow_list_has_workflow(ert_workflow_list, char*)")
 ErtWorkflowList.cNamespace().set_verbose  = cwrapper.prototype("void ert_workflow_list_set_verbose(ert_workflow_list, bool)")
+ErtWorkflowList.cNamespace().get_last_error  = cwrapper.prototype("config_error_ref ert_workflow_list_get_last_error(ert_workflow_list)")
