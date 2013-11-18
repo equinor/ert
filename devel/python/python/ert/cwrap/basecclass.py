@@ -17,7 +17,7 @@ class BaseCClass(object):
         self.__is_reference = is_reference
 
     def __new__(cls, *more, **kwargs):
-        obj = super(BaseCClass, cls).__new__(cls, *more, **kwargs)
+        obj = super(BaseCClass, cls).__new__(cls)
         obj.__c_pointer = None
         obj.__parent = None
         obj.__is_reference = False

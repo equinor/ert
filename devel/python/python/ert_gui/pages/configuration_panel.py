@@ -27,9 +27,9 @@ class ConfigurationPanel(QWidget):
         save_action = toolbar.addAction(save_icon, "Save")
         save_action.triggered.connect(self.save)
 
-        reload_icon = toolbar.style().standardIcon(QStyle.SP_BrowserReload)
-        reload_action = toolbar.addAction(reload_icon, "Reload")
-        reload_action.triggered.connect(self.reload)
+        # reload_icon = toolbar.style().standardIcon(QStyle.SP_BrowserReload)
+        # reload_action = toolbar.addAction(reload_icon, "Reload")
+        # reload_action.triggered.connect(self.reload)
 
         toolbar.addSeparator()
 
@@ -56,9 +56,9 @@ class ConfigurationPanel(QWidget):
         with open(config_file_path) as f:
             config_file_text = f.read()
 
-        highlighter = KeywordHighlighter(self.ide_panel.document())
+        self.highlighter = KeywordHighlighter(self.ide_panel.document())
         
-        search.filterChanged.connect(highlighter.setSearchString)
+        search.filterChanged.connect(self.highlighter.setSearchString)
 
         self.ide_panel.document().setPlainText(config_file_text)
 

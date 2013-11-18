@@ -1,3 +1,4 @@
+import re
 from PyQt4.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
 
 from ert_gui.ide.keywords import ErtKeywords
@@ -89,10 +90,9 @@ class KeywordHighlighter(QSyntaxHighlighter):
                     self.formatToken(argument, self.error_format)
 
 
-        # if self.search_string != "":
-        #     for match in re.finditer("(%s)" % self.search_string, complete_block):
-        #         print(match.group(1), match.start(1), match.end(1))
-        #         self.setFormat(match.start(1), match.end(1) - match.start(1), self.search_format)
+        if self.search_string != "":
+            for match in re.finditer("(%s)" % self.search_string, complete_block):
+                self.setFormat(match.start(1), match.end(1) - match.start(1), self.search_format)
 
 
     def setSearchString(self, string):

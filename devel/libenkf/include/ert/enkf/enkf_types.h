@@ -129,9 +129,8 @@ typedef enum   {UNDEFINED   = 0 ,
                 
 
 typedef enum { REPORT_STEP_INCOMPATIBLE  = 1,
-               LOAD_FAILURE              = 2,
-               SUMMARY_NOT_LOADED        = 4} enkf_fw_load_result_enum;
-               
+               LOAD_FAILURE              = 2} enkf_fw_load_result_enum;
+            
 
 
 
@@ -244,6 +243,15 @@ typedef enum {
     STATE_LOAD_FAILURE = 8,
     STATE_PARENT_FAILURE = 16
   } realisation_state_enum;
+
+
+  typedef enum {
+    INIT_NONE = 0,
+    INIT_CONDITIONAL = 1,
+    INIT_FORCE = 2
+  } init_mode_enum;
+  
+
 
 typedef struct enkf_obs_struct enkf_obs_type;
 
