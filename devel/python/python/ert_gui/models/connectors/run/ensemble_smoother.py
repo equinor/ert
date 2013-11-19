@@ -11,7 +11,8 @@ class EnsembleSmoother(ErtConnector, RunModelMixin):
         super(EnsembleSmoother, self).__init__(phase_count=2)
 
     def startSimulations(self):
-        self.setPhase(0)
+        self.setPhase(0, "Running simulations...")
+        self.setIndeterminate(False)
 
         module_name = AnalysisModuleModel().getCurrentChoice()
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
@@ -24,6 +25,9 @@ class EnsembleSmoother(ErtConnector, RunModelMixin):
 
         self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL)
 
+        self.setPhaseName("Analyzing...")
+        self.setIndeterminate(True)
+
         target_case_name = TargetCaseModel().getValue()
         target_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(target_case_name, read_only=False, create=True)
 
@@ -33,12 +37,13 @@ class EnsembleSmoother(ErtConnector, RunModelMixin):
             self.runFailed("Analysis of simulation failed!")
             return
 
-        self.setPhase(1)
+        self.setPhase(1, "Running simulations...")
+        self.setIndeterminate(False)
 
         self.ert().getEnkfFsManager().switchFileSystem(target_fs)
         self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_NONE)
 
-        self.setPhase(2)
+        self.setPhase(2, "Simulations completed.")
 
 
     def killAllSimulations(self):
