@@ -24,56 +24,35 @@
 #include <ert/util/test_work_area.h>
 #include <ert/util/util.h>
 #include <ert/util/string_util.h>
+#include <ert/util/bool_vector.h>
 
+#include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_main.h>
 
 
-void test_int_vector(const int_vector_type * list , int length , ...) {
-  va_list ap;
-  int i;
-  va_start(ap , length);
-  test_assert_int_equal( length , int_vector_size( list ));
-
-  for (i =0; i < int_vector_size( list ); i++) {
-    int value = va_arg(ap , int);
-    test_assert_int_equal( int_vector_iget( list , i ) , value);
-  }
-
-  va_end(ap);
-}
-
-
-int main(int argc , char ** argv) {
+int main(int argc , const char ** argv) {
   enkf_main_install_SIGNALS();
   
-  const char * config_path = argv[1];
-  const char * config_file = argv[2];
-  const char * field       = argv[3];
-  const char * file_name   = argv[4];
-  const char * check_range_str = argv[5]; 
-  bool check_range = util_string_equal(check_range_str, "TRUE"); 
-   
+  const char * config_path  = argv[1];
+  const char * config_file  = argv[2];
+  const char * job_dir_path = argv[3]; 
+    
   test_work_area_type * work_area = test_work_area_alloc(config_file );
   test_work_area_copy_directory_content( work_area , config_path );
-  test_work_area_set_store(work_area, true); 
-  
-  int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of input arguments
-  int arg_index = 6;
-  for (; arg_index < argc; ++arg_index) {  
-    string_util_update_active_list(argv[arg_index], realization_list); 
-  }
-  
-  if (check_range)
-    test_int_vector( realization_list , 3 , 0,1,2);
 
-  if (util_char_in('%', strlen(file_name), file_name) && util_char_in('d', strlen(file_name), file_name)) {
-    enkf_main_type * enkf_main = enkf_main_bootstrap( NULL , config_file , true , true );
-    field_file_format_type file_type = field_config_default_export_format(file_name); 
-    test_assert_true(enkf_main_export_field(enkf_main, field, file_name, realization_list, file_type));
-    enkf_main_free( enkf_main );
-  } else
-      printf("There must be a %%d in the file name\n"); 
-  
+  enkf_main_type * enkf_main = enkf_main_bootstrap( NULL , config_file , true , true );  
+  run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
+  bool_vector_type * iactive = bool_vector_alloc(3, true); 
+  enkf_main_init_run(enkf_main , iactive, run_mode , INIT_FORCE);     /* This is ugly */
+  bool_vector_free(iactive); 
+
+  ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list(enkf_main);
+  log_type * logh = enkf_main_get_logh(enkf_main); 
+  ert_workflow_list_add_jobs_in_directory(workflow_list, job_dir_path, logh); 
+   if (ert_workflow_list_has_workflow( workflow_list , "EXPORT_FIELDS" )) {
+      test_assert_true(ert_workflow_list_run_workflow(workflow_list  , "EXPORT_FIELDS" , enkf_main)) ;
+   }
+
+  enkf_main_free( enkf_main );
   test_work_area_free(work_area); 
-  int_vector_free(realization_list);  
 }

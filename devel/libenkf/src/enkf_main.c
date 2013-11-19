@@ -3925,14 +3925,9 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
     return false; 
   }
   
-  if (0 == int_vector_size(realization_list)) {
-      const char * range_str = util_alloc_sprintf("0-%d", enkf_main_get_ensemble_size( enkf_main )-1); 
-      string_util_update_active_list(range_str, realization_list); 
-  }
-  
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const enkf_config_node_type * config_node = NULL;
   bool node_found = false; 
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   
   if (ensemble_config_has_key(ensemble_config, kw)) {
     config_node = ensemble_config_get_node(ensemble_config, kw); 
@@ -3944,16 +3939,17 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
       printf("Ensemble config does not have key %s\n", kw);
 
   if (node_found) {
-    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
-    enkf_node_type * node = enkf_node_alloc(config_node);
-    path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
+    enkf_node_type * node = NULL;
 
     int iens;
     for (iens = 0; iens < int_vector_size(realization_list); ++iens) {
       int realization_no = int_vector_iget(realization_list, iens); 
-      node_id_type node_id = {.report_step = 0 , .iens = realization_no , .state = BOTH };
-      if (enkf_node_try_load(node , fs , node_id)) {
+      node = enkf_state_get_node(enkf_main->ensemble[realization_no] , kw);
+      if (node) {
+        path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
         char * filename = path_fmt_alloc_path( export_path , false , realization_no);
+        path_fmt_free(export_path); 
+        
         {
           char * path;
           util_alloc_file_components(filename , &path , NULL , NULL);
@@ -3970,15 +3966,15 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
           ret = true; 
         }
         free(filename);
-      } else {
-          printf("Warning: could not load realization:%d \n", realization_no);
-          ret = false; 
-        }
+      } else 
+          printf("%s : enkf_state_get_node returned NULL for parameters  %d, %s \n", __func__, realization_no, kw);
     } 
-  
-    enkf_node_free(node);
-    path_fmt_free(export_path); 
-    printf("Finished export of FIELD %s\n", kw);
   }
+  
+  if (ret)
+    printf("Successful export of FIELD %s\n", kw);
+  else 
+    printf("Errors during export of FIELD %s\n", kw);
+
   return ret; 
 }

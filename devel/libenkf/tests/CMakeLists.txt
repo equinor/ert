@@ -123,17 +123,8 @@ add_test( enkf_state_no_summary_vars_present
 add_executable( enkf_export_field_test enkf_export_field_test.c )
 target_link_libraries( enkf_export_field_test  enkf test_util )
 
-add_test( enkf_export_field_PERMX_to_roff_test
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config PERMX enkf_export_field_test/export_fields_roff_test/PermXRoffExport%d.roff FALSE)
-          
-add_test( enkf_export_field_PERMX_to_roff_selected_realizations_test
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config PERMX enkf_export_field_test/export_fields_roff_test_real/PermXRoffExport%d.roff TRUE 0-2 )
-
-add_test( enkf_export_field_PERMZ_to_grdecl_selected_realizations_test
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config PERMZ enkf_export_field_test/export_fields_ecl_test_real/PermXRoffExport%d.grdecl TRUE 0, 1-2 )
-
-add_test( enkf_export_field_PERMZ_to_grdecl_no_ext_test
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config PERMZ enkf_export_field_test/export_fields_ecl_test_no_ext/PermXRoffExport%d TRUE 0, 1-2 )
+add_test( enkf_export_field_test
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config jobs)
 
 #-----------------------------------------------------------------
 
