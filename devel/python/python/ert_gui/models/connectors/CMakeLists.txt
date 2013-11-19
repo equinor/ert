@@ -2,8 +2,6 @@ set(PYTHON_SOURCES
     __init__.py
     case_selector.py
     ensemble_resizer.py
-    rerun_path.py
-    run_path.py
 )
 
 add_python_package("python.ert_gui.models.connectors"  ${PYTHON_INSTALL_PREFIX}/ert_gui/models/connectors "${PYTHON_SOURCES}" True)

@@ -54,7 +54,7 @@ class AnalysisConfig(BaseCClass):
     def set_merge_observations(self, merge_observations):
         return AnalysisConfig.cNamespace().set_merge_observations(self, merge_observations)
 
-    def get_iter_config(self):
+    def getAnalysisIterConfig(self):
         """ @rtype: AnalysisIterConfig """
         return AnalysisConfig.cNamespace().get_iter_config(self).setParent(self)
 
