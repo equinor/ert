@@ -31,7 +31,16 @@ class RunDialog(QDialog):
         self.total_progress = SimpleProgress()
         layout.addWidget(self.total_progress)
 
+
+        status_layout = QHBoxLayout()
+        status_layout.addStretch()
+        self.__status_label = QLabel()
+        status_layout.addWidget(self.__status_label)
+        status_layout.addStretch()
+        layout.addLayout(status_layout)
+
         self.progress = Progress()
+        self.progress.setIndeterminateColor(self.total_progress.color)
         for state in states:
             self.progress.addState(state.state, QColor(*state.color), 100.0 * state.count / state.total_count)
 
@@ -67,8 +76,6 @@ class RunDialog(QDialog):
         self.done_button.clicked.connect(self.accept)
         self.simulationFinished.connect(self.hideKillAndShowDone)
 
-
-
         self.__updating = False
         self.__update_queued = False
         self.__simulation_started = False
@@ -92,21 +99,32 @@ class RunDialog(QDialog):
     def updateRunStatus(self):
         self.total_progress.setProgress(self.__run_model.getProgress())
 
-        total_count = self.__run_model.getQueueSize()
-        queue_status = self.__run_model.getQueueStatus()
+        self.__status_label.setText(self.__run_model.getPhaseName())
+
         states = self.simulations_tracker.getList()
 
-        for state in states:
-            state.count = 0
-            state.total_count = total_count
+        if self.__run_model.isIndeterminate():
+            self.progress.setIndeterminate(True)
 
-        for state in states:
-            for queue_state in queue_status:
-                if queue_state in state.state:
-                    state.count += queue_status[queue_state]
+            for state in states:
+                self.legends[state].updateLegend(state.name, 0, 0)
 
-            self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
-            self.legends[state].updateLegend(state.name, state.count, state.total_count)
+        else:
+            self.progress.setIndeterminate(False)
+            total_count = self.__run_model.getQueueSize()
+            queue_status = self.__run_model.getQueueStatus()
+
+            for state in states:
+                state.count = 0
+                state.total_count = total_count
+
+            for state in states:
+                for queue_state in queue_status:
+                    if queue_state in state.state:
+                        state.count += queue_status[queue_state]
+
+                self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
+                self.legends[state].updateLegend(state.name, state.count, state.total_count)
 
         self.setRunningTime()
 
@@ -114,7 +132,28 @@ class RunDialog(QDialog):
             self.hideKillAndShowDone()
 
     def setRunningTime(self):
-        self.running_time.setText("Running time: %d seconds" % self.__run_model.getRunningTime())
+        days = 0
+        hours = 0
+        minutes = 0
+        seconds = self.__run_model.getRunningTime()
+
+        if seconds >= 60:
+            minutes, seconds = divmod(seconds, 60)
+
+        if minutes >= 60:
+            hours, minutes = divmod(minutes, 60)
+
+        if hours >= 24:
+            days, hours = divmod(hours, 24)
+
+        if days > 0:
+            self.running_time.setText("Running time: %d days %d hours %d minutes %d seconds" % (days, hours, minutes, seconds))
+        elif hours > 0:
+            self.running_time.setText("Running time: %d hours %d minutes %d seconds" % (hours, minutes, seconds))
+        elif minutes > 0:
+            self.running_time.setText("Running time: %d minutes %d seconds" % (minutes, seconds))
+        else:
+            self.running_time.setText("Running time: %d seconds" % seconds)
 
 
     def killJobs(self):

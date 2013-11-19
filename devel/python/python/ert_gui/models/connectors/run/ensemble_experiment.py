@@ -6,10 +6,11 @@ from ert_gui.models.mixins import RunModelMixin
 class EnsembleExperiment(ErtConnector, RunModelMixin):
 
     def startSimulations(self):
-        self.setPhase(0)
+        self.setPhase(0, "Running simulations...")
+        self.setIndeterminate(False)
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
         self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
-        self.setPhase(1) # done...
+        self.setPhase(1, "Simulations completed.") # done...
 
     def killAllSimulations(self):
         job_queue = self.ert().siteConfig().getJobQueue()

@@ -20,9 +20,13 @@ class RunModelMixin(ModelMixin):
         self.__phase = 0
         self.__phase_count = phase_count
         self.__phase_update_count = 0
+        self.__phase_name = "Not defined"
 
         self.__job_start_time  = 0
         self.__job_stop_time = 0
+        self.__indeterminate = False
+
+
 
     def startSimulations(self):
         raise AbstractMethodError(self, "startSimulations")
@@ -31,15 +35,33 @@ class RunModelMixin(ModelMixin):
         raise AbstractMethodError(self, "killAllSimulations")
 
     def phaseCount(self):
+        """ @rtype: int """
         return self.__phase_count
 
+    def setPhaseCount(self, phase_count):
+        self.__phase_count = phase_count
+        self.setPhase(0, "")
+
     def currentPhase(self):
+        """ @rtype: int """
         return self.__phase
 
+    def setPhaseName(self, phase_name):
+        self.__phase_name = phase_name
+
+    def getPhaseName(self):
+        """ @rtype: str """
+        return self.__phase_name
+
+    def setIndeterminate(self, indeterminate):
+        self.__indeterminate = indeterminate
+
     def isFinished(self):
+        """ @rtype: bool """
         return self.__phase == self.__phase_count
 
-    def setPhase(self, phase):
+    def setPhase(self, phase, phase_name):
+        self.setPhaseName(phase_name)
         if not 0 <= phase <= self.__phase_count:
             raise ValueError("Phase must be an integer from 0 to less than %d." % self.__phase_count)
 
@@ -114,6 +136,10 @@ class RunModelMixin(ModelMixin):
             current_progress = (self.__phase + phase_progress) / self.__phase_count
 
         return current_progress
+
+    def isIndeterminate(self):
+        """ @rtype: bool """
+        return not self.isFinished() and self.__indeterminate
 
     def ert(self):
         """ @rtype: EnkfMain """
