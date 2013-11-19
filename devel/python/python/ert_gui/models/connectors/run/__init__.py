@@ -5,6 +5,7 @@ from .iterated_analysis_module_model import IteratedAnalysisModuleModel
 from .active_realizations_model import ActiveRealizationsModel
 from .number_of_iterations import NumberOfIterationsModel
 
+from .base_run_model import BaseRunModel
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_smoother import EnsembleSmoother
 from .iterated_ensemble_smoother import IteratedEnsembleSmoother

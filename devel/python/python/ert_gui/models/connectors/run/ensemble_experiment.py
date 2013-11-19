@@ -1,23 +1,16 @@
-from ert_gui.models import ErtConnector
-from ert_gui.models.connectors.run import ActiveRealizationsModel
-from ert_gui.models.mixins import RunModelMixin
+from ert_gui.models.connectors.run import ActiveRealizationsModel, BaseRunModel
 
 
-class EnsembleExperiment(ErtConnector, RunModelMixin):
+class EnsembleExperiment(BaseRunModel):
 
-    def startSimulations(self):
-        self.setPhase(0, "Running simulations...")
-        self.setIndeterminate(False)
+    def __init__(self):
+        super(EnsembleExperiment, self).__init__("Ensemble Experiment")
+
+    def runSimulations(self):
+        self.setPhase(0, "Running simulations...", indeterminate=False)
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
         self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
         self.setPhase(1, "Simulations completed.") # done...
-
-    def killAllSimulations(self):
-        job_queue = self.ert().siteConfig().getJobQueue()
-        job_queue.killAllJobs()
-
-    def __str__(self):
-        return "Ensemble Experiment"
 
 
 
