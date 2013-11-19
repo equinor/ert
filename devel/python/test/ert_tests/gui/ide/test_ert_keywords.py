@@ -1,6 +1,7 @@
 from ert_gui.ide.keywords.definitions import IntegerArgument, StringArgument, BoolArgument, PathArgument, FloatArgument
 from ert_gui.ide.keywords import ErtKeywords
 from ert_gui.ide.keywords.definitions.proper_name_argument import ProperNameArgument
+from ert_gui.ide.keywords.definitions.proper_name_format_argument import ProperNameFormatArgument
 from ert_tests import ExtendedTestCase
 
 
@@ -121,7 +122,7 @@ class ErtKeywordTest(ExtendedTestCase):
         self.keywordTest("ANALYSIS_SET_VAR", [StringArgument, StringArgument, StringArgument], "analysis_module/analysis_set_var", "Analysis Module")
         self.keywordTest("ANALYSIS_COPY", [StringArgument, StringArgument], "analysis_module/analysis_copy", "Analysis Module")
         self.keywordTest("ITER_RUNPATH", [PathArgument], "analysis_module/iter_runpath", "Analysis Module")
-        self.keywordTest("ITER_CASE", [StringArgument], "analysis_module/iter_case", "Analysis Module")
+        self.keywordTest("ITER_CASE", [ProperNameFormatArgument], "analysis_module/iter_case", "Analysis Module")
         self.keywordTest("ITER_COUNT", [IntegerArgument], "analysis_module/iter_count", "Analysis Module")
         self.keywordTest("STD_CUTOFF", [FloatArgument], "analysis_module/std_cutoff", "Analysis Module")
         self.keywordTest("SINGLE_NODE_UPDATE", [BoolArgument], "analysis_module/single_node_update", "Analysis Module")
