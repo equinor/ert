@@ -10,4 +10,4 @@ from .boolean_model import BooleanModelMixin
 from .selectable_model import SelectableModelMixin
 from .selectable_list_model import SelectableListModelMixin
 from .button_model import ButtonModelMixin
-from .run_model import RunModelMixin
+from .run_model import RunModelMixin, ErtRunError
