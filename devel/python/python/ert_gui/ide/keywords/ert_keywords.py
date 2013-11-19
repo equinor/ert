@@ -20,6 +20,7 @@ class ErtKeywords(object):
         super(ErtKeywords, self).__init__()
 
         self.keywords = {}
+        self.groups = {}
 
         EnsembleKeywords(self)
         RunKeywords(self)
@@ -37,6 +38,18 @@ class ErtKeywords(object):
         UnixEnvironmentKeywords(self)
 
 
+        # group_names = sorted(self.groups.keys())
+        #
+        # for group in group_names:
+        #     print(group)
+        #     keywords = self.groups[group]
+        #     for keyword in keywords:
+        #         print("  %s" % keyword.keywordDefinition().name())
+
+
+
+
+
     def addKeyword(self, keyword):
         assert isinstance(keyword, ConfigurationLineDefinition)
 
@@ -45,6 +58,13 @@ class ErtKeywords(object):
             raise ValueError("Keyword %s already in Ert keyword list!" % name)
 
         self.keywords[name] = keyword
+
+        group = keyword.group()
+
+        if not group in self.groups:
+            self.groups[group] = []
+
+        self.groups[group].append(keyword)
 
     def __contains__(self, item):
         return item in self.keywords
