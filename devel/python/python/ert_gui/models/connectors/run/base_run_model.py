@@ -33,47 +33,59 @@ class BaseRunModel(ErtConnector, RunModelMixin):
     def runSimulations(self):
         raise AbstractMethodError(self, "runSimulations")
 
+
     def killAllSimulations(self):
         job_queue = self.ert().siteConfig().getJobQueue()
         job_queue.killAllJobs()
+
 
     def phaseCount(self):
         """ @rtype: int """
         return self.__phase_count
 
+
     def setPhaseCount(self, phase_count):
         self.__phase_count = phase_count
         self.setPhase(0, "")
+
 
     def currentPhase(self):
         """ @rtype: int """
         return self.__phase
 
+
     def setPhaseName(self, phase_name, indeterminate=None):
         self.__phase_name = phase_name
         self.setIndeterminate(indeterminate)
+
 
     def getPhaseName(self):
         """ @rtype: str """
         return self.__phase_name
 
+
     def setIndeterminate(self, indeterminate):
         if indeterminate is not None:
             self.__indeterminate = indeterminate
+
 
     def isFinished(self):
         """ @rtype: bool """
         return self.__phase == self.__phase_count or self.hasRunFailed()
 
+
     def hasRunFailed(self):
         return self.__failed
+
 
     def getFailMessage(self):
         """ @rtype: str """
         return self.__fail_message
 
+
     def __simulationEnded(self):
         self.__job_stop_time = int(time.time())
+
 
     def setPhase(self, phase, phase_name, indeterminate=None):
         self.setPhaseName(phase_name)
@@ -107,6 +119,7 @@ class BaseRunModel(ErtConnector, RunModelMixin):
 
         return queue_size
 
+
     def getQueueStatus(self):
         """ @rtype: dict of (JobStatusType, int) """
         job_queue = self.ert().siteConfig().getJobQueue()
@@ -127,6 +140,7 @@ class BaseRunModel(ErtConnector, RunModelMixin):
     def isQueueRunning(self):
         """ @rtype: bool """
         return self.ert().siteConfig().getJobQueue().isRunning()
+
 
     def getProgress(self):
         """ @rtype: float """
@@ -151,9 +165,11 @@ class BaseRunModel(ErtConnector, RunModelMixin):
 
         return current_progress
 
+
     def isIndeterminate(self):
         """ @rtype: bool """
         return not self.isFinished() and self.__indeterminate
+
 
     def __str__(self):
         return self.__name

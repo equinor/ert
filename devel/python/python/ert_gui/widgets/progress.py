@@ -90,7 +90,7 @@ class Progress(QFrame):
 
                 painter.fillRect(x, y, state_width, height, state.color)
 
-                x += width
+                x += state_width
         else:
             painter.fillRect(rect, self.__indeterminate_color)
 
