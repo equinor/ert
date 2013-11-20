@@ -115,11 +115,11 @@ void * enkf_main_scale_obs_std_JOB(void * self, const stringlist_type * args ) {
 
 
 void * enkf_main_export_field_JOB(void * self, const stringlist_type * args) {
-  const char *      field            = stringlist_iget(args, 1); 
-  const char *      file_name        = stringlist_iget(args, 2); 
+  const char *      field            = stringlist_iget(args, 0); 
+  const char *      file_name        = stringlist_iget(args, 1); 
   int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
   
-  char * range_str = stringlist_alloc_joined_substring( args , 3 , stringlist_get_size(args), "");  
+  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
   string_util_update_active_list(range_str, realization_list); 
   
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
@@ -139,11 +139,11 @@ void * enkf_main_export_field_JOB(void * self, const stringlist_type * args) {
 }
 
 void * enkf_main_export_field_to_RMS_JOB(void * self, const stringlist_type * args) {
-  const char *      field            = stringlist_iget(args, 1); 
-  const char *      file_name        = stringlist_iget(args, 2); 
+  const char *      field            = stringlist_iget(args, 0); 
+  const char *      file_name        = stringlist_iget(args, 1); 
   int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
   
-  char * range_str = stringlist_alloc_joined_substring( args , 3 , stringlist_get_size(args), "");  
+  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
   string_util_update_active_list(range_str, realization_list); 
     
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
@@ -165,11 +165,11 @@ void * enkf_main_export_field_to_RMS_JOB(void * self, const stringlist_type * ar
 }
 
 void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * args) {
-  const char *      field            = stringlist_iget(args, 1); 
-  const char *      file_name        = stringlist_iget(args, 2); 
+  const char *      field            = stringlist_iget(args, 0); 
+  const char *      file_name        = stringlist_iget(args, 1); 
   int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
 
-  char * range_str = stringlist_alloc_joined_substring( args , 3 , stringlist_get_size(args), "");  
+  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
   string_util_update_active_list(range_str, realization_list); 
   
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
