@@ -1478,13 +1478,18 @@ static void enkf_main_monitor_job_queue ( const enkf_main_type * enkf_main) {
   }
 }
 
+void enkf_main_run_post_workflow( enkf_main_type * enkf_main ) {
+  qc_module_run_workflow( enkf_main->qc_module , enkf_main );
+}
+
+
 /**
   If all simulations have completed successfully the function will
   return true, otherwise it will return false.  
 */
 
 
-static void enkf_main_run_step(enkf_main_type * enkf_main       ,
+static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
                                run_mode_type    run_mode        ,
                                bool_vector_type * iactive ,
                                int load_start                   ,      /* For internalizing results, and the first step in the update when merging. */
@@ -1626,12 +1631,12 @@ static void enkf_main_run_step(enkf_main_type * enkf_main       ,
         }
       }
       enkf_fs_fsync( enkf_main->dbase );
-      if (totalOK) {
+      if (totalOK) 
         log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded.");
-        if (run_mode != ENKF_ASSIMILATION)
-          qc_module_run_workflow( enkf_main->qc_module , enkf_main );
-      }
-    }
+
+      return totalOK;
+    } else
+      return false;
   }
 }
 
@@ -1718,7 +1723,8 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
     int load_start                  = start_report;
     state_enum init_state_parameter = start_state;
     state_enum init_state_dynamic   = start_state;
-    enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , -1);
+    if (enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , -1))
+      enkf_main_run_post_workflow(enkf_main);
   }
 }
 
@@ -1831,9 +1837,9 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
 }
 
 
-void enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_enum init_mode) {
+bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_enum init_mode) {
   enkf_main_init_run( enkf_main , iactive , ENSEMBLE_EXPERIMENT , init_mode);
-  enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
+  return enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
 }
 
 
@@ -1841,7 +1847,8 @@ void enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * i
 void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , bool rerun) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
-    enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL);
+    if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL))
+      enkf_main_run_post_workflow(enkf_main);
     {
       enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
       bool update_done = enkf_main_smoother_update( enkf_main , target_fs );
@@ -1861,7 +1868,8 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
           model_config_select_runpath( enkf_main_get_model_config( enkf_main ) , RERUN_PATH_KEY );  
-          enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE );
+          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE ))
+            enkf_main_run_post_workflow(enkf_main);
         } else {
           fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
           enkf_fs_umount( target_fs );
