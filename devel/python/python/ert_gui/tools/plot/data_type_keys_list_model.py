@@ -5,6 +5,9 @@ from ert_gui.widgets import util
 
 
 class DataTypeKeysListModel(QAbstractItemModel):
+    DEFAULT_DATA_TYPE = QColor(255, 255, 255)
+    HAS_OBSERVATIONS = QColor(237, 218, 116)
+
     def __init__(self):
         QAbstractItemModel.__init__(self)
         self.__icon = util.resourceIcon("ide/small/bullet_star")
@@ -37,7 +40,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
             #         return QColor(0, 0, 200)
             elif role == Qt.BackgroundRole:
                 if DataTypeKeysModel().isObservationKey(item):
-                    return QColor(237, 218, 116)
+                    return self.HAS_OBSERVATIONS
 
         return QVariant()
 
