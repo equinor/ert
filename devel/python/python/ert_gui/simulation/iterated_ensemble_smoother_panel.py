@@ -40,7 +40,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
 
         iterated_target_case_format_model = IteratedTargetCaseFormatModel()
-        self.iterated_target_case_format_field = StringBox(iterated_target_case_format_model, "Iterated target case format", "config/simulation/iterated_target_case_format")
+        self.iterated_target_case_format_field = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         self.iterated_target_case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow(self.iterated_target_case_format_field.getLabel(), self.iterated_target_case_format_field)
 
