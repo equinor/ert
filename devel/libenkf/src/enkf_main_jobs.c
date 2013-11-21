@@ -17,8 +17,11 @@
 */
 
 #include <ert/util/stringlist.h>
+#include <ert/util/string_util.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/enkf/enkf_main.h>
+#include <ert/enkf/field_config.h>
 
 
 void * enkf_main_exit_JOB(void * self , const stringlist_type * args ) {
@@ -109,3 +112,81 @@ void * enkf_main_scale_obs_std_JOB(void * self, const stringlist_type * args ) {
   }
   return NULL;
 }
+
+
+void * enkf_main_export_field_JOB(void * self, const stringlist_type * args) {
+  const char *      field            = stringlist_iget(args, 0); 
+  const char *      file_name        = stringlist_iget(args, 1); 
+  int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
+  
+  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
+  string_util_update_active_list(range_str, realization_list); 
+  
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  if (0 == int_vector_size(realization_list)) {
+      const char * range_str = util_alloc_sprintf("0-%d", enkf_main_get_ensemble_size( enkf_main )-1); 
+      string_util_update_active_list(range_str, realization_list); 
+  }  
+  
+  field_file_format_type file_type = field_config_default_export_format(file_name); 
+  if ((RMS_ROFF_FILE == file_type) || (ECL_GRDECL_FILE == file_type)) 
+    enkf_main_export_field(enkf_main, field, file_name, realization_list, file_type);
+  else
+    printf("EXPORT_FIELD filename argument: File extension must be either .roff or .grdecl\n"); 
+    
+  int_vector_free(realization_list);  
+  return NULL; 
+}
+
+void * enkf_main_export_field_to_RMS_JOB(void * self, const stringlist_type * args) {
+  const char *      field            = stringlist_iget(args, 0); 
+  const char *      file_name        = stringlist_iget(args, 1); 
+  int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
+  
+  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
+  string_util_update_active_list(range_str, realization_list); 
+    
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  if (0 == int_vector_size(realization_list)) {
+      const char * range_str = util_alloc_sprintf("0-%d", enkf_main_get_ensemble_size( enkf_main )-1); 
+      string_util_update_active_list(range_str, realization_list); 
+  }  
+  
+  char * file_name_with_ext = util_alloc_string_copy(file_name); 
+  char *ext = strrchr(file_name_with_ext , '.');
+  if (ext == NULL) {
+    file_name_with_ext = util_strcat_realloc(file_name_with_ext, ".roff");
+  }
+
+  enkf_main_export_field(enkf_main, field, file_name_with_ext, realization_list, RMS_ROFF_FILE);
+
+  int_vector_free(realization_list);  
+  return NULL; 
+}
+
+void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * args) {
+  const char *      field            = stringlist_iget(args, 0); 
+  const char *      file_name        = stringlist_iget(args, 1); 
+  int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
+
+  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
+  string_util_update_active_list(range_str, realization_list); 
+  
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  if (0 == int_vector_size(realization_list)) {
+      const char * range_str = util_alloc_sprintf("0-%d", enkf_main_get_ensemble_size( enkf_main )-1); 
+      string_util_update_active_list(range_str, realization_list); 
+  }  
+  
+  char * file_name_with_ext = util_alloc_string_copy(file_name); 
+  char *ext = strrchr(file_name_with_ext , '.');
+  if (ext == NULL) 
+    file_name_with_ext = util_strcat_realloc(file_name_with_ext, ".grdecl");
+  
+  enkf_main_export_field(enkf_main, field, file_name_with_ext, realization_list, ECL_GRDECL_FILE);
+
+  int_vector_free(realization_list);  
+  return NULL; 
+}
+
+

@@ -119,6 +119,16 @@ add_test( enkf_state_no_summary_vars_present
 
 #-----------------------------------------------------------------
 
+
+add_executable( enkf_export_field_test enkf_export_field_test.c )
+target_link_libraries( enkf_export_field_test  enkf test_util )
+
+add_test( enkf_export_field_test
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config)
+
+#-----------------------------------------------------------------
+
+
 add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
 
@@ -234,4 +244,5 @@ set_property( TEST enkf_forward_init_FIELD_TRUE   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_main_fs   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_summary_vars_present PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_no_summary_vars_present PROPERTY LABELS StatoilData )
+set_property( TEST enkf_export_field_test PROPERTY LABELS StatoilData )
 

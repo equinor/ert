@@ -104,6 +104,7 @@
 #include <ert/enkf/pca_plot_data.h>
 #include <ert/enkf/analysis_config.h>
 #include <ert/enkf/analysis_iter_config.h>
+#include <ert/enkf/field.h>
 
 /**/
 
@@ -3911,3 +3912,69 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 }
 
 
+
+bool enkf_main_export_field(const enkf_main_type * enkf_main, 
+                            const char * kw, 
+                            const char * path, 
+                            int_vector_type * realization_list,
+                            field_file_format_type file_type) {
+  
+  bool ret = false; 
+  if (!util_char_in('%', strlen(path), path) || !util_char_in('d', strlen(path), path)) {
+    printf("EXPORT FIELD: There must be a %%d in the file name\n"); 
+    return false; 
+  }
+  
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const enkf_config_node_type * config_node = NULL;
+  bool node_found = false; 
+  
+  if (ensemble_config_has_key(ensemble_config, kw)) {
+    config_node = ensemble_config_get_node(ensemble_config, kw); 
+    if (config_node && enkf_config_node_get_impl_type(config_node) == FIELD) {
+      node_found = true; 
+    } else 
+      printf("Did not find a FIELD %s node\n", kw);
+  } else 
+      printf("Ensemble config does not have key %s\n", kw);
+
+  if (node_found) {
+    enkf_node_type * node = NULL;
+
+    int iens;
+    for (iens = 0; iens < int_vector_size(realization_list); ++iens) {
+      int realization_no = int_vector_iget(realization_list, iens); 
+      node = enkf_state_get_node(enkf_main->ensemble[realization_no] , kw);
+      if (node) {
+        path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
+        char * filename = path_fmt_alloc_path( export_path , false , realization_no);
+        path_fmt_free(export_path); 
+        
+        {
+          char * path;
+          util_alloc_file_components(filename , &path , NULL , NULL);
+          if (path != NULL) {
+            util_make_path( path );
+            free( path );
+          }
+        }
+
+        {
+          const field_type * field = enkf_node_value_ptr(node);
+          const bool output_transform = true;
+          field_export(field , filename , NULL , file_type , output_transform);
+          ret = true; 
+        }
+        free(filename);
+      } else 
+          printf("%s : enkf_state_get_node returned NULL for parameters  %d, %s \n", __func__, realization_no, kw);
+    } 
+  }
+  
+  if (ret)
+    printf("Successful export of FIELD %s\n", kw);
+  else 
+    printf("Errors during export of FIELD %s\n", kw);
+
+  return ret; 
+}
