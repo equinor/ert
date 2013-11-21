@@ -352,7 +352,7 @@ long rml_enkf_get_options( void * arg , long flag ) {
  int rml_enkf_get_int( const void * arg, const char * var_name) {
    const rml_enkf_data_type * module_data = rml_enkf_data_safe_cast_const( arg );
    {
-     if (strcmp(var_name , "ITER") == 0)
+     if (strcmp(var_name , ENKF_ITER_KEY_) == 0)
        return module_data->iteration_nr;
      else
        return -1;
@@ -364,7 +364,7 @@ long rml_enkf_get_options( void * arg , long flag ) {
    {
      if (strcmp(var_name , ENKF_TRUNCATION_KEY_) == 0) 
        return module_data->truncation;
-     else if (strcmp(var_name , "LAMBDA0_") == 0) 
+     else if (strcmp(var_name , ENKF_LAMBDA0_KEY_) == 0)
       return module_data->lambda0; 
      else
        return -1.0;

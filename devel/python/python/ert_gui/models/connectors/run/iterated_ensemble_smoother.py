@@ -55,16 +55,17 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         analysis_module = self.setAnalysisModule()
 
+        analysis_module.setVar("ITER", str(0))
         self.runAndPostProcess(0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
 
         for phase in range(1, self.phaseCount()):
-            analysis_module.setVar("ITER", str(phase))
             target_fs = self.createTargetCaseFileSystem(phase)
 
             self.analyzeStep(target_fs)
 
             self.ert().getEnkfFsManager().switchFileSystem(target_fs)
 
+            analysis_module.setVar("ITER", str(phase))
             self.runAndPostProcess(phase, phase_count, EnkfInitModeEnum.INIT_NONE)
 
 

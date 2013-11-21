@@ -1222,10 +1222,6 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 
         if (analysis_module_check_option( module , ANALYSIS_UPDATE_A)){
           if (analysis_module_check_option( module , ANALYSIS_ITERABLE)){
-            int iteration = cases_config_get_iteration_number(enkf_fs_get_cases_config(src_fs));
-            char iteration_str[15];
-            sprintf(iteration_str,"%d",iteration);
-            analysis_module_set_var( module , "NUM_ITER", iteration_str);
             analysis_module_updateA( module , localA , S , R , dObs , E , D );
           }
           else
