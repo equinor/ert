@@ -67,9 +67,14 @@ class PlotDataFetcher(DataFetcher):
         refcase = RefcaseDataFetcher(self.ert()).getRefcaseDataForKey(key)
         ensemble_plot_data = EnsembleDataFetcher(self.ert()).getEnsembleDataForKey(key)
 
-        plot_data.setObservations(observations)
-        plot_data.setRefcase(refcase)
-        plot_data.setEnsemble(ensemble_plot_data)
+        if not observations is None:
+            plot_data.setObservations(observations)
+
+        if not refcase is None:
+            plot_data.setRefcase(refcase)
+
+        if len(ensemble_plot_data) > 0:
+            plot_data.setEnsemble(ensemble_plot_data)
 
         return plot_data
 

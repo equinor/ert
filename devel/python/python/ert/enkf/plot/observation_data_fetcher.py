@@ -25,11 +25,10 @@ class ObservationDataFetcher(DataFetcher):
         """ @rtype: SampleList """
         obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
 
-        sample_list = SampleList()
-
         if len(obs_keys) == 0:
-            return sample_list
+            return None
 
+        sample_list = SampleList()
         sample_list.group = key
         sample_list.min_x = self.getFirstReportStep()
         sample_list.max_x = self.getLastReportStep()

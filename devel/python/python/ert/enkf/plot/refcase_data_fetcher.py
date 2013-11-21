@@ -51,7 +51,7 @@ class RefcaseDataFetcher(DataFetcher):
     def getRefcaseDataForKey(self, key):
         """ @rtype: SampleList """
         if not self.hasRefcase():
-            return SampleList()
+            return None
 
         sample_list = SampleList()
         sample_list.min_x = self.getFirstReportStepTime()
