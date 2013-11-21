@@ -1881,10 +1881,14 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
 }
 
 
-bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int iteration_number, analysis_iter_config_type * iter_config, int_vector_type * step_list, bool_vector_type * iactive, model_config_type * model_config){
-  const char * target_fs_name  = analysis_iter_config_iget_case( iter_config , iteration_number+1 );
+bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number, const char * target_fs_name , bool_vector_type * iactive) {
   const int step1 = 0;
+  const int step2 = enkf_main_get_history_length( enkf_main );
   bool updateOK = false;
+  int_vector_type * step_list = int_vector_alloc(0, 0);
+  
+  for (int step = step1; step <= step2; step++)
+    int_vector_append(step_list, step);
 
   if (target_fs_name == NULL){
     fprintf(stderr,"Sorry: the updated ensemble will overwrite the current case in the iterated ensemble smoother.");
@@ -1897,6 +1901,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int itera
   }
 
   if (updateOK) {
+    /*
     const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iteration_number);
     if (runpath_fmt != NULL ) {
       char * runpath_key = util_alloc_sprintf("runpath-%d", 999);
@@ -1904,32 +1909,28 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int step2, int itera
       model_config_select_runpath(model_config, runpath_key);
       free(runpath_key);
     }
-    enkf_main_run_exp(enkf_main , iactive , true , step1 , step1 , FORECAST);
+    */
+    enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , step1 , -1 );
   }
-
+  int_vector_free(step_list);
   return updateOK;
 }
 
 
 
-void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
+void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   
   if (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
     model_config_type * model_config = enkf_main_get_model_config(enkf_main);
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
-    int_vector_type * step_list = int_vector_alloc(0, 0);
     bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
-
+    
 
     const int step1 = 0;
     int iter = 0;
     int num_iter = analysis_iter_config_get_num_iterations(iter_config);
-    {
-      for (int step = step1; step <= step2; step++)
-        int_vector_append(step_list, step);
-    }
 
     {
       const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iter);
@@ -1942,18 +1943,20 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int step2) {
         }
     }
   
-    enkf_main_run_exp(enkf_main, iactive, true, step1, step1, FORECAST);
-    while (true)
-      {
-        if (iter == num_iter)
-          break;
+    enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
+    if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , step1 , step1 , step1 , -1))
+      enkf_main_run_post_workflow(enkf_main);
+    
+    while (true) {
+      const char * target_fs_name = analysis_iter_config_iget_case( iter_config , iter );
+      if (iter == num_iter)
+        break;
 
-        if (enkf_main_iterate_smoother(enkf_main, step2, iter, iter_config, step_list, iactive, model_config))
-          iter++;
-        else
-          break;
-      }
-    int_vector_free(step_list);
+      if (enkf_main_iterate_smoother(enkf_main, iter, target_fs_name , iactive))
+        iter++;
+      else
+        break;
+    }
     bool_vector_free(iactive);
   } else
     fprintf(stderr,"** ERROR: The current analysis module:%s can not be used for iterations \n",
@@ -1970,14 +1973,9 @@ void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
   cases_config_type * case_config = enkf_fs_get_cases_config( fs );
   int iteration_number = cases_config_get_iteration_number( case_config );
   const int step1 = 0;
-  int_vector_type * step_list = int_vector_alloc(0,0);
   bool_vector_type * iactive = bool_vector_alloc(0 , true);
 
-  {
-    for (int step=step1; step <= step2; step++)
-      int_vector_append( step_list , step );
-  }
-  enkf_main_iterate_smoother(enkf_main, step2, iteration_number, iter_config, step_list, iactive, model_config);
+  enkf_main_iterate_smoother(enkf_main, iteration_number, "ONE-MORE" , iactive);
 }
 
 /*****************************************************************/

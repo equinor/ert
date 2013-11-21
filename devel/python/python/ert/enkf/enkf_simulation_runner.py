@@ -15,6 +15,9 @@ class EnkfSimulationRunner(BaseCClass):
         assert isinstance(initialization_mode, EnkfInitModeEnum)
         EnkfSimulationRunner.cNamespace().run_simple_step(self, active_realization_mask, initialization_mode)
 
+    def iterateSmoother( self , iter_nr , target_case , active_realization_mask):
+        EnkfSimulationRunner.cNamespace().iterate_smoother(self , iter_nr , target_case , active_realization_mask)
+    
         
     def runEnsembleExperiment(self, active_realization_mask):
         return self.runSimpleStep(active_realization_mask , EnkfInitModeEnum.INIT_CONDITIONAL)
@@ -60,3 +63,4 @@ EnkfSimulationRunner.cNamespace().run_smoother      = cwrapper.prototype("void e
 EnkfSimulationRunner.cNamespace().run_simple_step   = cwrapper.prototype("bool enkf_main_run_simple_step(enkf_simulation_runner, bool_vector, enkf_init_mode_enum)")
 EnkfSimulationRunner.cNamespace().smoother_update   = cwrapper.prototype("bool enkf_main_smoother_update(enkf_simulation_runner, enkf_fs)")
 EnkfSimulationRunner.cNamespace().run_post_workflow = cwrapper.prototype("void enkf_main_run_post_workflow(enkf_simulation_runner)")
+EnkfSimulationRunner.cNamespace().iterate_smoother  = cwrapper.prototype("bool enkf_main_iterate_smoother(enkf_simulation_runner , iter_nr , target_case , active_realization_mask)")

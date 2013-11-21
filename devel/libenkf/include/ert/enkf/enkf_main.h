@@ -135,7 +135,8 @@ extern "C" {
                                                            state_enum       start_state);
 
   void                          enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , bool rerun);
-  void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int last_report);
+  bool                          enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number, const char * target_fs_name , bool_vector_type * iactive);
+  void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main);
   void                          enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2);
   void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
