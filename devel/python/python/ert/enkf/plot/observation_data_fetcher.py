@@ -21,6 +21,28 @@ class ObservationDataFetcher(DataFetcher):
         return self.ert().getObservations().getObservationTime(history_length - 1).ctime()
 
 
+    def getObservationsForKey(self, key):
+        """ @rtype: SampleList """
+        obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
+
+        sample_list = SampleList()
+
+        if len(obs_keys) == 0:
+            return sample_list
+
+        sample_list.group = key
+        sample_list.min_x = self.getFirstReportStep()
+        sample_list.max_x = self.getLastReportStep()
+
+        for obs_key in obs_keys:
+            observations = self.getObservations(obs_key)
+
+            for observation in observations:
+                sample_list.addSample(observation)
+
+        return sample_list
+
+
     def getObservations(self, key):
         """ @rtype: list of Sample """
         observations = self.ert().getObservations()

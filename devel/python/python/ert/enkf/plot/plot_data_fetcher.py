@@ -58,4 +58,21 @@ class PlotDataFetcher(DataFetcher):
 
         return result
 
+    def fetchDataForKey(self, key):
+        """ @rtype: PlotData """
+        plot_data = PlotData()
+        plot_data.name = key
+
+        observations = ObservationDataFetcher(self.ert()).getObservationsForKey(key)
+        refcase = RefcaseDataFetcher(self.ert()).getRefcaseDataForKey(key)
+        ensemble_plot_data = EnsembleDataFetcher(self.ert()).getEnsembleDataForKey(key)
+
+        plot_data.setObservations(observations)
+        plot_data.setRefcase(refcase)
+        plot_data.setEnsemble(ensemble_plot_data)
+
+        return plot_data
+
+
+
 

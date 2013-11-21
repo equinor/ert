@@ -1,9 +1,8 @@
 import json
 import os
-from PyQt4.QtCore import QUrl, Qt, QObject, pyqtSignal, pyqtSlot, QVariant
+from PyQt4.QtCore import QUrl, Qt, pyqtSlot, pyqtSignal
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
 from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
-from ert_gui.models.connectors.plot.ensemble_summary_plot import EnsembleSummaryPlot
 
 
 class PlotWebPage(QWebPage):
@@ -25,32 +24,24 @@ class PlotWebView(QWebView):
         self.settings().setAttribute(QWebSettings.LocalContentCanAccessRemoteUrls, True)
 
 
-class PlotContextObject(QObject):
-    def __init__(self, data, parent=None):
-        QObject.__init__(self, parent)
-        self.__data = data
-
-    @pyqtSlot(result=str)
-    def getPlotData(self):
-        return json.dumps(self.__data)
-
-
 
 class PlotPanel(QWidget):
+    plotReady = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, plot_url):
         QWidget.__init__(self)
 
+        self.__data = []
         root_path = os.getenv("ERT_SHARE_PATH")
-        path = os.path.join(root_path, "gui/plots/plot.html")
+        path = os.path.join(root_path, plot_url)
 
         layout = QGridLayout()
 
         self.web_view = PlotWebView()
         self.web_view.page().mainFrame().javaScriptWindowObjectCleared.connect(self.applyContextObject)
         self.web_view.setUrl(QUrl("file://%s" % path))
+        self.web_view.loadFinished.connect(self.loadFinished)
 
-        self.context_object = PlotContextObject(EnsembleSummaryPlot().getPlotData(), self)
         self.applyContextObject()
 
         layout.addWidget(self.web_view)
@@ -58,19 +49,23 @@ class PlotPanel(QWidget):
         self.setLayout(layout)
 
 
-        # print(json.dumps(EnsembleSummaryPlot().getPlotData()))
+    @pyqtSlot(result=str)
+    def getPlotData(self):
+        return json.dumps(self.__data)
 
-        # with open("plot_data.json", "w") as f:
-        #      f.write(json.dumps(EnsembleSummaryPlot().getPlotData()))
 
+    def setPlotData(self, data):
+        self.__data = data
+        self.web_view.page().mainFrame().evaluateJavaScript("updatePlot();")
 
 
     def applyContextObject(self):
-       self.web_view.page().mainFrame().addToJavaScriptWindowObject("plot_data_source", self.context_object)
+       self.web_view.page().mainFrame().addToJavaScriptWindowObject("plot_data_source", self)
 
 
-    def getName(self):
-        return "Plot"
+    def loadFinished(self, ok):
+        self.plotReady.emit()
+
 
 
 
