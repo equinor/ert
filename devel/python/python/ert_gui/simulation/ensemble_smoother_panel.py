@@ -23,9 +23,9 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         run_path_label = ActiveLabel(run_path_model, "Runpath", "config/simulation/runpath")
         layout.addRow(run_path_label.getLabel(), run_path_label)
 
-        re_run_path_model = RerunPathModel()
-        re_run_path_label = ActiveLabel(re_run_path_model, "Rerunpath", "config/simulation/rerunpath")
-        layout.addRow(re_run_path_label.getLabel(), re_run_path_label)
+        # re_run_path_model = RerunPathModel()
+        # re_run_path_label = ActiveLabel(re_run_path_model, "Rerunpath", "config/simulation/rerunpath")
+        # layout.addRow(re_run_path_label.getLabel(), re_run_path_label)
 
 
         number_of_realizations_model = EnsembleSizeModel()
