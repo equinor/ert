@@ -29,5 +29,5 @@ class CaseModel(ErtConnector, ChoiceModelMixin):
     def setCurrentChoice(self, case):
         case = str(case)
         if not case == "":
-            self.ert().userSelectFileSystem(case)
+            self.ert().getEnkfFsManager().userSelectFileSystem(case)
             self.observable().notify(self.CURRENT_CHOICE_CHANGED_EVENT)

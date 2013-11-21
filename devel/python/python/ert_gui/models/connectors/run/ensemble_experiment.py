@@ -1,4 +1,5 @@
 from ert_gui.models.connectors.run import ActiveRealizationsModel, BaseRunModel
+from ert_gui.models.mixins.run_model import ErtRunError
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -9,7 +10,14 @@ class EnsembleExperiment(BaseRunModel):
     def runSimulations(self):
         self.setPhase(0, "Running simulations...", indeterminate=False)
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
-        self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
+        success = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
+
+        if not success:
+            raise ErtRunError("Simulation failed!")
+
+        self.setPhaseName("Post processing...", indeterminate=True)
+        self.ert().getEnkfSimulationRunner().runPostWorkflow()
+
         self.setPhase(1, "Simulations completed.") # done...
 
 
