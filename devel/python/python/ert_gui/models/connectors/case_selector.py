@@ -9,9 +9,9 @@ class CaseModel(ErtConnector, ChoiceModelMixin):
         self.observable().addEvent(self.CURRENT_CHOICE_CHANGED_EVENT)
         self.observable().addEvent(self.CHOICE_LIST_CHANGED_EVENT)
 
-    def initialize(self):
-        self.observable().notify(self.CHOICE_LIST_CHANGED_EVENT)
-        self.observable().notify(self.CURRENT_CHOICE_CHANGED_EVENT)
+    # def initialize(self):
+    #     self.observable().notify(self.CHOICE_LIST_CHANGED_EVENT)
+    #     self.observable().notify(self.CURRENT_CHOICE_CHANGED_EVENT)
 
     def getChoices(self):
         """ @rtype: StringList """

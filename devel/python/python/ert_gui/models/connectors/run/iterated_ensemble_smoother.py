@@ -17,6 +17,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
+        return self.ert().analysisConfig().getModule(module_name)
+
 
     def runAndPostProcess(self, phase, phase_count,  mode):
         self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase + 1, phase_count), indeterminate=False)
@@ -51,11 +53,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
         phase_count = iteration_count
         self.setPhaseCount(phase_count)
 
-        self.setAnalysisModule()
+        analysis_module = self.setAnalysisModule()
 
         self.runAndPostProcess(0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
 
         for phase in range(1, self.phaseCount()):
+            analysis_module.setVar("ITER", str(phase))
             target_fs = self.createTargetCaseFileSystem(phase)
 
             self.analyzeStep(target_fs)
