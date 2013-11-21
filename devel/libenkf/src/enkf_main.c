@@ -2059,7 +2059,7 @@ void enkf_main_initialize_from_existing__(enkf_main_type * enkf_main ,
   
   const int target_report_step  = 0;
   const state_enum target_state = ANALYZED;
-  const char * target_case      = NULL;
+  const char * target_case      = enkf_main->current_fs_case;
 
   enkf_main_copy_ensemble(enkf_main , 
                           source_case , 
