@@ -4,6 +4,7 @@
 */.svn/
 *.pyc
 *~
+*.user
 
 # /devel/libenkf/src/
 /devel/libenkf/src/.faultlist
