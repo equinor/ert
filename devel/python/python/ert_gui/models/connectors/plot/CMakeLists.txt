@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    data_type_keys_model.py
     ensemble_summary_plot.py
 )
 
