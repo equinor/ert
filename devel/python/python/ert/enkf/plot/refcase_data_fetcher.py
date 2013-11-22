@@ -26,7 +26,7 @@ class RefcaseDataFetcher(DataFetcher):
         """ @rtype: StringList """
         return self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)
 
-    def getRefcaseDataForKey(self, key):
+    def __getRefcaseDataForKey(self, key):
         """ @rtype: list of Sample """
         refcase = self.getRefCase()
         vector = refcase.get_vector(key, report_only=True)
@@ -48,6 +48,24 @@ class RefcaseDataFetcher(DataFetcher):
 
         return result
 
+    def getRefcaseDataForKey(self, key):
+        """ @rtype: SampleList """
+        if not self.hasRefcase():
+            return None
+
+        sample_list = SampleList()
+        sample_list.min_x = self.getFirstReportStepTime()
+        sample_list.max_x = self.getLastReportStepTime()
+
+        data = self.__getRefcaseDataForKey(key)
+
+        for sample_point in data:
+            sample_list.group = sample_point.group
+            sample_list.addSample(sample_point)
+
+        return sample_list
+
+
 
     def getRefcaseData(self):
         if not self.hasRefcase():
@@ -59,7 +77,7 @@ class RefcaseDataFetcher(DataFetcher):
 
         result = SampleListCollection()
         for key in keys:
-            data = self.getRefcaseDataForKey(key)
+            data = self.__getRefcaseDataForKey(key)
 
             for sample_point in data:
                 if not sample_point.group in result:

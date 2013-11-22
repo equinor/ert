@@ -8,5 +8,8 @@ class EnsembleSummaryPlot(ErtConnector, ModelMixin):
     def getPlotData(self):
         return PlotDataFetcher(self.ert()).fetchData()
 
+    def getPlotDataForKey(self, key):
+        return PlotDataFetcher(self.ert()).fetchDataForKey(key)
+
 
 

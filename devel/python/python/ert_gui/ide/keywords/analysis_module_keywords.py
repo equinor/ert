@@ -1,4 +1,5 @@
 from ert_gui.ide.keywords.definitions import IntegerArgument, KeywordDefinition, ConfigurationLineDefinition, PathArgument, StringArgument, FloatArgument, BoolArgument
+from ert_gui.ide.keywords.definitions.proper_name_format_argument import ProperNameFormatArgument
 
 
 class AnalysisModuleKeywords(object):
@@ -70,7 +71,7 @@ class AnalysisModuleKeywords(object):
 
     def addIterCase(self):
         iter_case = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_CASE"),
-                                                   arguments=[StringArgument()],
+                                                   arguments=[ProperNameFormatArgument()],
                                                    documentation_link="analysis_module/iter_case",
                                                    required=False,
                                                    group=self.group)

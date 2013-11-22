@@ -1,5 +1,5 @@
 from PyQt4.QtGui import QToolButton
-from ert_gui.models.connectors.init import InitializeFromScratchModel
+from ert_gui.models.connectors.init import InitializeFromScratchModel, CaseSelectorModel
 from ert_gui.models.connectors.init.case_list import CaseList
 from ert_gui.models.connectors.init.init_from_existing import InitializeFromExistingCaseModel
 from ert_gui.models.connectors.init.init_history_length import HistoryLengthModel
@@ -45,7 +45,13 @@ class CaseInitializationConfigurationPanel(RowPanel):
     def addInitializeFromScratchTab(self):
         self.addTab("Initialize from scratch")
 
+        case_model = CaseSelectorModel()
+        case_selector = ComboChoice(case_model, "Target case", "init/current_case_selection")
+        self.addRow(case_selector)
+
         row_group = RowGroup()
+
+
         parameter_model = InitializationParametersModel()
         parameter_check_list = CheckList(parameter_model, "Parameters", "init/select_parameters")
         parameter_check_list.setMaximumWidth(300)
@@ -69,6 +75,9 @@ class CaseInitializationConfigurationPanel(RowPanel):
     def addInitializeFromExistingTab(self):
         self.addTab("Initialize from existing")
 
+        case_model = CaseSelectorModel()
+        target_case_selector = ComboChoice(case_model, "Target case", "init/current_case_selection")
+        self.addRow(target_case_selector)
 
         initialized_cases = ComboChoice(InitializedCaseSelectorModel(), "Source case", "init/source_case")
         self.addRow(initialized_cases)
@@ -89,6 +98,8 @@ class CaseInitializationConfigurationPanel(RowPanel):
         end_of_time.setText("End of time")
         end_of_time.clicked.connect(history_length.setToMax)
         timestep_group.addWidget(end_of_time)
+
+        timestep_group.addGroupStretch()
 
         self.addRow(timestep_group)
 
