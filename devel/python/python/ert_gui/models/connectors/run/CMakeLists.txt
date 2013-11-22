@@ -7,13 +7,11 @@ set(PYTHON_SOURCES
     ensemble_smoother.py
     iterated_analysis_module_model.py
     iterated_ensemble_smoother.py
-    iterated_run_path.py
-    iterated_target_case_format_model.py
     number_of_iterations.py
-    rerun_path.py
     run_path.py
     simulation_mode.py
     simulations_tracker.py
+    target_case_format_model.py
     target_case_model.py
     workflows_model.py
 )
