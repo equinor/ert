@@ -2,7 +2,7 @@ from PyQt4.QtGui import QFormLayout
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameFormatArgument
 from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.run import ActiveRealizationsModel, IteratedEnsembleSmoother, IteratedAnalysisModuleModel, NumberOfIterationsModel, IteratedRunPathModel, IteratedTargetCaseFormatModel, RunPathModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, IteratedEnsembleSmoother, IteratedAnalysisModuleModel, NumberOfIterationsModel, TargetCaseFormatModel, RunPathModel
 from ert_gui.simulation import SimulationConfigPanel
 from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.combo_choice import ComboChoice
@@ -39,7 +39,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow(iterated_analysis_module_choice.getLabel(), iterated_analysis_module_choice)
 
 
-        iterated_target_case_format_model = IteratedTargetCaseFormatModel()
+        iterated_target_case_format_model = TargetCaseFormatModel()
         self.iterated_target_case_format_field = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         self.iterated_target_case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow(self.iterated_target_case_format_field.getLabel(), self.iterated_target_case_format_field)

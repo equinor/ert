@@ -1,7 +1,6 @@
-import time
 from ert.enkf.enums import EnkfInitModeEnum
 from ert_gui.models.connectors.run import NumberOfIterationsModel, ActiveRealizationsModel, IteratedAnalysisModuleModel, BaseRunModel
-from ert_gui.models.connectors.run.iterated_target_case_format_model import IteratedTargetCaseFormatModel
+from ert_gui.models.connectors.run.target_case_format_model import TargetCaseFormatModel
 from ert_gui.models.mixins import ErtRunError
 
 
@@ -34,7 +33,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
 
     def createTargetCaseFileSystem(self, phase):
-        target_case_format = IteratedTargetCaseFormatModel().getValue()
+        target_case_format = TargetCaseFormatModel().getValue()
         target_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(target_case_format % phase, read_only=False, create=True)
 
         return target_fs
@@ -67,7 +66,5 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
             analysis_module.setVar("ITER", str(phase))
             self.runAndPostProcess(phase, phase_count, EnkfInitModeEnum.INIT_NONE)
-
-
 
         self.setPhase(phase_count, "Simulations completed.")

@@ -3,14 +3,12 @@ from ert_gui.models.connectors.init.case_selector import CaseSelectorModel
 from ert_gui.models.mixins import BasicModelMixin
 
 
-class IteratedTargetCaseFormatModel(ErtConnector, BasicModelMixin):
-
-
+class TargetCaseFormatModel(ErtConnector, BasicModelMixin):
     def __init__(self):
         self.__target_case_fmt = self.getDefaultName()
         self.__custom = False
         CaseSelectorModel().observable().attach(CaseSelectorModel.CURRENT_CHOICE_CHANGED_EVENT, self.__caseChanged)
-        super(IteratedTargetCaseFormatModel, self).__init__()
+        super(TargetCaseFormatModel, self).__init__()
 
     def getValue(self):
         """ @rtype: str """
