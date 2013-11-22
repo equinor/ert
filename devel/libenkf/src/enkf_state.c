@@ -602,76 +602,79 @@ const char * enkf_state_get_eclbase( const enkf_state_type * enkf_state ) {
 
 
 static ecl_sum_type * enkf_state_load_ecl_sum(const enkf_state_type * enkf_state , stringlist_type * messages , int * result) {
-  const run_info_type * run_info         = enkf_state->run_info;
   const ecl_config_type * ecl_config     = enkf_state->shared_info->ecl_config;
-  const bool fmt_file                    = ecl_config_get_formatted(ecl_config);
-  const char * eclbase                   = enkf_state_get_eclbase( enkf_state );
+  if (ecl_config_active( ecl_config )) {
+    const run_info_type * run_info         = enkf_state->run_info;
+    const bool fmt_file                    = ecl_config_get_formatted(ecl_config);
+    const char * eclbase                   = enkf_state_get_eclbase( enkf_state );
   
 
-  stringlist_type * data_files           = stringlist_alloc_new();
-  char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
-  char * unified_file                    = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_UNIFIED_SUMMARY_FILE , fmt_file ,  -1);
-  ecl_sum_type * summary                 = NULL;   
+    stringlist_type * data_files           = stringlist_alloc_new();
+    char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
+    char * unified_file                    = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_UNIFIED_SUMMARY_FILE , fmt_file ,  -1);
+    ecl_sum_type * summary                 = NULL;   
       
-  /* Should we load from a unified summary file, or from several non-unified files? */
-  if (unified_file != NULL) 
-    /* Use unified file: */
-    stringlist_append_ref( data_files , unified_file);
-  else {
-    /* Use several non unified files. */       
-    /* Bypassing the query to model_config_load_results() */
-    int report_step = run_info->load_start;
-    if (report_step == 0)
-      report_step++;     // Ignore looking for the .S0000 summary file (it does not exist).
-    while (true) {
-      char * summary_file = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
+    /* Should we load from a unified summary file, or from several non-unified files? */
+    if (unified_file != NULL) 
+      /* Use unified file: */
+      stringlist_append_ref( data_files , unified_file);
+    else {
+      /* Use several non unified files. */       
+      /* Bypassing the query to model_config_load_results() */
+      int report_step = run_info->load_start;
+      if (report_step == 0)
+        report_step++;     // Ignore looking for the .S0000 summary file (it does not exist).
+      while (true) {
+        char * summary_file = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
       
-      if (summary_file != NULL)
-        stringlist_append_owned_ref( data_files , summary_file);
-      else
-        /* 
-           We stop the loading at first 'hole' in the series of summary files;
-           the internalize layer must report failure if we are missing data.
-        */
-        break;
+        if (summary_file != NULL)
+          stringlist_append_owned_ref( data_files , summary_file);
+        else
+          /* 
+             We stop the loading at first 'hole' in the series of summary files;
+             the internalize layer must report failure if we are missing data.
+          */
+          break;
       
-      if ((run_info->run_mode == ENKF_ASSIMILATION) && (report_step == run_info->step2))
-        break;
+        if ((run_info->run_mode == ENKF_ASSIMILATION) && (report_step == run_info->step2))
+          break;
 
-      report_step++;
-    }
-  }  
+        report_step++;
+      }
+    }  
   
-  if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) {
-    summary = ecl_sum_fread_alloc(header_file , data_files , SUMMARY_KEY_JOIN_STRING );
-    {
-      time_t end_time = ecl_config_get_end_date( ecl_config );
-      if (end_time > 0) {
-        if (ecl_sum_get_end_time( summary ) < end_time) {
-          /* The summary vector was shorter than expected; we interpret this as
-             a simulation failure and discard the current summary instance. */
-          {
-            int end_day,end_month,end_year;
-            int sum_day,sum_month,sum_year;
+    if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) {
+      summary = ecl_sum_fread_alloc(header_file , data_files , SUMMARY_KEY_JOIN_STRING );
+      {
+        time_t end_time = ecl_config_get_end_date( ecl_config );
+        if (end_time > 0) {
+          if (ecl_sum_get_end_time( summary ) < end_time) {
+            /* The summary vector was shorter than expected; we interpret this as
+               a simulation failure and discard the current summary instance. */
+            {
+              int end_day,end_month,end_year;
+              int sum_day,sum_month,sum_year;
             
-            util_set_date_values( end_time , &end_day , &end_month , &end_year );
-            util_set_date_values( ecl_sum_get_end_time( summary ) , &sum_day , &sum_month , &sum_year );
-            stringlist_append_owned_ref( messages , 
-                                         util_alloc_sprintf("Summary ended at %02d/%02d/%4d - expected at least END_DATE: %02d/%02d/%4d" , 
-                                                            sum_day , sum_month , sum_year , 
-                                                            end_day , end_month , end_year ));
+              util_set_date_values( end_time , &end_day , &end_month , &end_year );
+              util_set_date_values( ecl_sum_get_end_time( summary ) , &sum_day , &sum_month , &sum_year );
+              stringlist_append_owned_ref( messages , 
+                                           util_alloc_sprintf("Summary ended at %02d/%02d/%4d - expected at least END_DATE: %02d/%02d/%4d" , 
+                                                              sum_day , sum_month , sum_year , 
+                                                              end_day , end_month , end_year ));
+            }
+            ecl_sum_free( summary );
+            summary = NULL;
+            *result |= LOAD_FAILURE; 
           }
-          ecl_sum_free( summary );
-          summary = NULL;
-          *result |= LOAD_FAILURE; 
         }
       }
     }
-  }
-  stringlist_free( data_files );
-  util_safe_free( header_file );
-  util_safe_free( unified_file );
-  return summary;
+    stringlist_free( data_files );
+    util_safe_free( header_file );
+    util_safe_free( unified_file );
+    return summary;
+  } else
+    return NULL;
 }
 
 
