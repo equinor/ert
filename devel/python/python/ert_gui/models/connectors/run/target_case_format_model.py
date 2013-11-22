@@ -10,9 +10,11 @@ class TargetCaseFormatModel(ErtConnector, BasicModelMixin):
         CaseSelectorModel().observable().attach(CaseSelectorModel.CURRENT_CHOICE_CHANGED_EVENT, self.__caseChanged)
         super(TargetCaseFormatModel, self).__init__()
 
+
     def getValue(self):
         """ @rtype: str """
         return self.__target_case_fmt
+
 
     def setValue(self, target_case):
         if target_case is None or target_case.strip() == "" or target_case == self.getDefaultName():
@@ -26,8 +28,10 @@ class TargetCaseFormatModel(ErtConnector, BasicModelMixin):
 
 
     def getDefaultName(self):
+        """ @rtype: str """
         case_name = CaseSelectorModel().getCurrentChoice()
         return "%s_%%d" % case_name
+
 
     def __caseChanged(self):
         if not self.__custom:
