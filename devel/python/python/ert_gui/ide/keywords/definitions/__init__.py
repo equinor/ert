@@ -5,6 +5,7 @@ from .bool_argument import BoolArgument
 from .float_argument import FloatArgument
 from .path_argument import PathArgument
 from .proper_name_argument import ProperNameArgument
+from .proper_name_format_argument import ProperNameFormatArgument
 from .range_string_argument import RangeStringArgument
 
 from .argument_definition import ArgumentDefinition

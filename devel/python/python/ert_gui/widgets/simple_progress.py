@@ -23,8 +23,8 @@ class SimpleProgress(QFrame):
         self.__progress = progress
         self.update()
 
-    def paintEvent(self, paintevent):
-        QFrame.paintEvent(self, paintevent)
+    def paintEvent(self, paint_event):
+        QFrame.paintEvent(self, paint_event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing, True)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
@@ -40,7 +40,6 @@ class SimpleProgress(QFrame):
         width = floor(rect.width() * self.__progress)
 
         painter.fillRect(x, y, width, height, self.color)
-
 
         if self.__shiny:
             #Shiny overlay!

@@ -2,6 +2,7 @@ set(PYTHON_SOURCES
     __init__.py
     ensemble_experiment_panel.py
     ensemble_smoother_panel.py
+    iterated_ensemble_smoother_panel.py
     simulation_config_panel.py
     simulation_panel.py
 )

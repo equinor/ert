@@ -1,22 +1,24 @@
-from ert_gui.models import ErtConnector
-from ert_gui.models.connectors.run import ActiveRealizationsModel
-from ert_gui.models.mixins import RunModelMixin
+from ert_gui.models.connectors.run import ActiveRealizationsModel, BaseRunModel
+from ert_gui.models.mixins.run_model import ErtRunError
 
 
-class EnsembleExperiment(ErtConnector, RunModelMixin):
+class EnsembleExperiment(BaseRunModel):
 
-    def startSimulations(self):
-        self.setPhase(0)
+    def __init__(self):
+        super(EnsembleExperiment, self).__init__("Ensemble Experiment")
+
+    def runSimulations(self):
+        self.setPhase(0, "Running simulations...", indeterminate=False)
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
-        self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
-        self.setPhase(1) # done...
+        success = self.ert().getEnkfSimulationRunner().runEnsembleExperiment(active_realization_mask)
 
-    def killAllSimulations(self):
-        job_queue = self.ert().siteConfig().getJobQueue()
-        job_queue.killAllJobs()
+        if not success:
+            raise ErtRunError("Simulation failed!")
 
-    def __str__(self):
-        return "Ensemble Experiment"
+        self.setPhaseName("Post processing...", indeterminate=True)
+        self.ert().getEnkfSimulationRunner().runPostWorkflow()
+
+        self.setPhase(1, "Simulations completed.") # done...
 
 
 

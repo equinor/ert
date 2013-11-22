@@ -8,6 +8,7 @@ set(PYTHON_SOURCES
     keyword_definition.py
     path_argument.py
     proper_name_argument.py
+    proper_name_format_argument.py
     range_string_argument.py
     string_argument.py
 )

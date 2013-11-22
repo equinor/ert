@@ -30,6 +30,7 @@ class WorkflowsModel(ErtConnector, ListModelMixin, ChoiceModelMixin):
         workflow_name = self.getCurrentChoice()
         return self.ert().getWorkflowList().runWorkflow(workflow_name)
 
+
     def getError(self):
         error = self.ert().getWorkflowList().getLastError()
 

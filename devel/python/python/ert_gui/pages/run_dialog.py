@@ -1,16 +1,15 @@
 from threading import Thread
-from PyQt4.QtCore import Qt, pyqtSignal, QTimer
+from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QSize
 from PyQt4.QtGui import QDialog, QVBoxLayout, QLayout, QMessageBox, QPushButton, QHBoxLayout, QColor, QLabel
 from ert_gui.models.connectors.run import SimulationsTracker
 from ert_gui.models.mixins.run_model import RunModelMixin
+from ert_gui.widgets import util
 from ert_gui.widgets.legend import Legend
 from ert_gui.widgets.progress import Progress
 from ert_gui.widgets.simple_progress import SimpleProgress
 
 
 class RunDialog(QDialog):
-
-    simulationFinished = pyqtSignal()
 
     def __init__(self, run_model):
         QDialog.__init__(self)
@@ -31,7 +30,16 @@ class RunDialog(QDialog):
         self.total_progress = SimpleProgress()
         layout.addWidget(self.total_progress)
 
+
+        status_layout = QHBoxLayout()
+        status_layout.addStretch()
+        self.__status_label = QLabel()
+        status_layout.addWidget(self.__status_label)
+        status_layout.addStretch()
+        layout.addLayout(status_layout)
+
         self.progress = Progress()
+        self.progress.setIndeterminateColor(self.total_progress.color)
         for state in states:
             self.progress.addState(state.state, QColor(*state.color), 100.0 * state.count / state.total_count)
 
@@ -53,6 +61,19 @@ class RunDialog(QDialog):
         self.done_button.setHidden(True)
 
         button_layout = QHBoxLayout()
+
+        size = 20
+        spin_movie = util.resourceMovie("ide/loading.gif")
+        spin_movie.setSpeed(60)
+        spin_movie.setScaledSize(QSize(size, size))
+        spin_movie.start()
+
+        self.processing_animation = QLabel()
+        self.processing_animation.setMaximumSize(QSize(size, size))
+        self.processing_animation.setMinimumSize(QSize(size, size))
+        self.processing_animation.setMovie(spin_movie)
+
+        button_layout.addWidget(self.processing_animation)
         button_layout.addWidget(self.running_time)
         button_layout.addStretch()
         button_layout.addWidget(self.kill_button)
@@ -65,13 +86,14 @@ class RunDialog(QDialog):
 
         self.kill_button.clicked.connect(self.killJobs)
         self.done_button.clicked.connect(self.accept)
-        self.simulationFinished.connect(self.hideKillAndShowDone)
-
-
 
         self.__updating = False
         self.__update_queued = False
         self.__simulation_started = False
+
+        self.__update_timer = QTimer(self)
+        self.__update_timer.setInterval(500)
+        self.__update_timer.timeout.connect(self.updateRunStatus)
 
 
     def startSimulation(self):
@@ -80,41 +102,77 @@ class RunDialog(QDialog):
         simulation_thread.run = self.__run_model.startSimulations
         simulation_thread.start()
 
-        timer = QTimer(self)
-        timer.setInterval(500)
-        timer.timeout.connect(self.updateRunStatus)
-        timer.start()
+        self.__update_timer.start()
 
 
-    def simulationDone(self):
-        self.simulationFinished.emit()
-
-    def updateRunStatus(self):
-        self.total_progress.setProgress(self.__run_model.getProgress())
-
-        total_count = self.__run_model.getQueueSize()
-        queue_status = self.__run_model.getQueueStatus()
-        states = self.simulations_tracker.getList()
-
-        for state in states:
-            state.count = 0
-            state.total_count = total_count
-
-        for state in states:
-            for queue_state in queue_status:
-                if queue_state in state.state:
-                    state.count += queue_status[queue_state]
-
-            self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
-            self.legends[state].updateLegend(state.name, state.count, state.total_count)
-
-        self.setRunningTime()
-
+    def checkIfRunFinished(self):
         if self.__run_model.isFinished():
             self.hideKillAndShowDone()
 
+            if self.__run_model.hasRunFailed():
+                error = self.__run_model.getFailMessage()
+                QMessageBox.critical(self, "Simulations failed!", "The simulation failed with the following error:\n\n%s" % error)
+                self.reject()
+
+
+    def updateRunStatus(self):
+        self.checkIfRunFinished()
+
+        self.total_progress.setProgress(self.__run_model.getProgress())
+
+        self.__status_label.setText(self.__run_model.getPhaseName())
+
+        states = self.simulations_tracker.getList()
+
+        if self.__run_model.isIndeterminate():
+            self.progress.setIndeterminate(True)
+
+            for state in states:
+                self.legends[state].updateLegend(state.name, 0, 0)
+
+        else:
+            self.progress.setIndeterminate(False)
+            total_count = self.__run_model.getQueueSize()
+            queue_status = self.__run_model.getQueueStatus()
+
+            for state in states:
+                state.count = 0
+                state.total_count = total_count
+
+            for state in states:
+                for queue_state in queue_status:
+                    if queue_state in state.state:
+                        state.count += queue_status[queue_state]
+
+                self.progress.updateState(state.state, 100.0 * state.count / state.total_count)
+                self.legends[state].updateLegend(state.name, state.count, state.total_count)
+
+        self.setRunningTime()
+
+
     def setRunningTime(self):
-        self.running_time.setText("Running time: %d seconds" % self.__run_model.getRunningTime())
+        days = 0
+        hours = 0
+        minutes = 0
+        seconds = self.__run_model.getRunningTime()
+
+        if seconds >= 60:
+            minutes, seconds = divmod(seconds, 60)
+
+        if minutes >= 60:
+            hours, minutes = divmod(minutes, 60)
+
+        if hours >= 24:
+            days, hours = divmod(hours, 24)
+
+        if days > 0:
+            self.running_time.setText("Running time: %d days %d hours %d minutes %d seconds" % (days, hours, minutes, seconds))
+        elif hours > 0:
+            self.running_time.setText("Running time: %d hours %d minutes %d seconds" % (hours, minutes, seconds))
+        elif minutes > 0:
+            self.running_time.setText("Running time: %d minutes %d seconds" % (minutes, seconds))
+        else:
+            self.running_time.setText("Running time: %d seconds" % seconds)
 
 
     def killJobs(self):
@@ -122,8 +180,11 @@ class RunDialog(QDialog):
 
         if kill_job == QMessageBox.Yes:
             self.__run_model.killAllSimulations()
-            QDialog.reject(self)
+            self.reject()
+
 
     def hideKillAndShowDone(self):
+        self.__update_timer.stop()
+        self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.done_button.setHidden(False)

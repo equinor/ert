@@ -1,8 +1,8 @@
 from PyQt4.QtGui import QFormLayout
 from ert_gui.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
-from ert_gui.models.connectors import RunPathModel, EnsembleSizeModel, RerunPathModel
+from ert_gui.models.connectors import EnsembleSizeModel
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.models.connectors.run import ActiveRealizationsModel, EnsembleSmoother, TargetCaseModel, AnalysisModuleModel
+from ert_gui.models.connectors.run import ActiveRealizationsModel, EnsembleSmoother, TargetCaseModel, AnalysisModuleModel, RunPathModel
 from ert_gui.simulation import SimulationConfigPanel
 from ert_gui.widgets.active_label import ActiveLabel
 from ert_gui.widgets.combo_choice import ComboChoice
@@ -23,9 +23,9 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         run_path_label = ActiveLabel(run_path_model, "Runpath", "config/simulation/runpath")
         layout.addRow(run_path_label.getLabel(), run_path_label)
 
-        re_run_path_model = RerunPathModel()
-        re_run_path_label = ActiveLabel(re_run_path_model, "Rerunpath", "config/simulation/rerunpath")
-        layout.addRow(re_run_path_label.getLabel(), re_run_path_label)
+        # re_run_path_model = RerunPathModel()
+        # re_run_path_label = ActiveLabel(re_run_path_model, "Rerunpath", "config/simulation/rerunpath")
+        # layout.addRow(re_run_path_label.getLabel(), re_run_path_label)
 
 
         number_of_realizations_model = EnsembleSizeModel()
