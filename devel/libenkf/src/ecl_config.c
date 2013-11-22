@@ -92,9 +92,10 @@ struct ecl_config_struct
 
 bool ecl_config_active(const ecl_config_type * config)
 {
-  if ((config->eclbase == NULL )&& (config->data_file == NULL))return false;
+  if ((config->eclbase == NULL )&& (config->data_file == NULL))
+    return false;
   else
-  return true;
+    return true;
 }
 
   /**
