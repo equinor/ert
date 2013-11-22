@@ -1,6 +1,5 @@
 set(PYTHON_SOURCES
     __init__.py
-    case_selector.py
     ensemble_resizer.py
 )
 

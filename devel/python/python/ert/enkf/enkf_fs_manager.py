@@ -16,13 +16,13 @@ class EnkfFsManager(BaseCClass):
     def selectFileSystem(self, path):
         EnkfFsManager.cNamespace().select_fs(self, path)
 
-    def fs_exists(self, case):
-        """ @rtype: bool """
-        return EnkfFsManager.cNamespace().fs_exists(self, case)
-
-    def get_alt_fs(self, fs, read_only, create):
-        """ @rtype: EnkfFs """
-        return EnkfFsManager.cNamespace().get_alt_fs(self, fs, read_only, create).setParent(self)
+    # def fs_exists(self, case):
+    #     """ @rtype: bool """
+    #     return EnkfFsManager.cNamespace().fs_exists(self, case)
+    #
+    # def get_alt_fs(self, fs, read_only, create):
+    #     """ @rtype: EnkfFs """
+    #     return EnkfFsManager.cNamespace().get_alt_fs(self, fs, read_only, create).setParent(self)
 
     def isInitialized(self):
         """ @rtype: bool """
