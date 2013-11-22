@@ -44,7 +44,7 @@ class HelpedWidget(QWidget):
         self.setLayout(self.widget_layout)
         self.setMinimumHeight(20)
 
-        HelpedWidget.__error_popup = None
+        HelpedWidget.__error_popup = ErrorPopup()
         self.destroyed.connect(self.cleanup)
 
 
@@ -89,12 +89,15 @@ class HelpedWidget(QWidget):
         return self.validation_message is None
 
 
+    def hideValidationLabel(self):
+        self.validation_label.setHidden(True)
+
     def enterEvent(self, event):
         QWidget.enterEvent(self, event)
         MessageCenter().setHelpMessageLink(self.help_link)
 
-        if HelpedWidget.__error_popup is None:
-            HelpedWidget.__error_popup = ErrorPopup()
+        # if HelpedWidget.__error_popup is None:
+        #     HelpedWidget.__error_popup = ErrorPopup()
 
         if self.validation_message is not None:
             HelpedWidget.__error_popup.presentError(self, self.validation_message)
