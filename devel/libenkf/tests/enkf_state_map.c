@@ -320,6 +320,34 @@ void test_transitions() {
 
 
 
+void test_readonly() {
+  {
+    state_map_type * map1 = state_map_fread_alloc_readonly("FileDoesNotExist");
+    
+    test_assert_true(state_map_is_instance(map1));
+    test_assert_int_equal(0 , state_map_get_size( map1 ));
+    state_map_free(map1);
+  }
+  {
+    test_work_area_type * work_area = test_work_area_alloc("state-map");
+    state_map_type * map1 = state_map_alloc();
+    
+    state_map_iset(map1 , 5 , STATE_INITIALIZED);
+    state_map_iset(map1 , 9 , STATE_INITIALIZED);
+
+    state_map_fwrite(map1 , "map1");
+    {
+      state_map_type * map2 = state_map_fread_alloc_readonly("map1");
+      
+      test_assert_true(state_map_equal(map1 , map2));
+      state_map_free(map2);
+    }
+    test_work_area_free( work_area );
+    state_map_free(map1);
+  }
+}
+
+
 int main(int argc , char ** argv) {
   create_test();
   get_test();
@@ -332,6 +360,7 @@ int main(int argc , char ** argv) {
   test_select_matching();
   test_count_matching();
   test_transitions();
+  test_readonly();
   exit(0);
 }
 
