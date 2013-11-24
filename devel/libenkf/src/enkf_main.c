@@ -2881,6 +2881,13 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
 }
 
 
+state_map_type * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path) {
+  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
+  state_map_type * state_map = enkf_fs_alloc_readonly_state_map( mount_point );
+  free( mount_point );
+  return state_map;
+}
+
 
 
 void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
