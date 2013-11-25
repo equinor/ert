@@ -258,8 +258,12 @@ void state_map_set_from_mask( state_map_type * state_map , const bool_vector_typ
   state_map_set_from_mask__(state_map , mask , state , false);
 }
 
+bool state_map_is_readonly(const state_map_type * state_map) {
+  return state_map->read_only;
+}
 
- int state_map_count_matching( state_map_type * state_map , int mask) {
+
+int state_map_count_matching( state_map_type * state_map , int mask) {
    int count = 0;
    pthread_rwlock_rdlock( &state_map->rw_lock );
    {

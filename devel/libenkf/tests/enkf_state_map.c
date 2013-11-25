@@ -35,6 +35,7 @@ void create_test() {
   state_map_type * state_map = state_map_alloc();
   test_assert_true( state_map_is_instance( state_map ));
   test_assert_int_equal( 0 , state_map_get_size( state_map ));
+  test_assert_false( state_map_is_readonly( state_map ));
   state_map_free( state_map );
 }
 
@@ -326,6 +327,7 @@ void test_readonly() {
     
     test_assert_true(state_map_is_instance(map1));
     test_assert_int_equal(0 , state_map_get_size( map1 ));
+    test_assert_true( state_map_is_readonly( map1 ));
     state_map_free(map1);
   }
   {
