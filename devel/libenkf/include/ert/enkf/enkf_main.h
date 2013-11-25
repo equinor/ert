@@ -68,6 +68,7 @@ extern "C" {
   //void                          enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs);
   bool                          enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path);
   enkf_fs_type                * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
+  state_map_type              * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path);
   stringlist_type             * enkf_main_alloc_caselist( const enkf_main_type * enkf_main );
   void                          enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path );
   char                        * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path);

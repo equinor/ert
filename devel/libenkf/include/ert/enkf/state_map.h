@@ -32,6 +32,7 @@ extern "C" {
 
   state_map_type         * state_map_alloc( );
   state_map_type         * state_map_fread_alloc( const char * filename );
+  state_map_type         * state_map_fread_alloc_readonly( const char * filename );
   state_map_type         * state_map_alloc_copy( state_map_type * map );
   void                     state_map_free( state_map_type * map );
   int                      state_map_get_size( state_map_type * map);

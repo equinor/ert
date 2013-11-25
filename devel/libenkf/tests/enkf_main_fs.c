@@ -25,7 +25,7 @@
 #include <ert/util/test_work_area.h>
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_main.h>
-
+#include <ert/enkf/state_map.h>
 
 
 
@@ -49,6 +49,12 @@ int main(int argc, char ** argv) {
     test_assert_false( enkf_main_case_is_current( enkf_main , "does_not_exist"));
 
     test_assert_int_equal( 1 , enkf_fs_get_refcount( enkf_main_get_fs( enkf_main )));
+    {
+      state_map_type * map1 = enkf_fs_get_state_map( enkf_main_get_fs( enkf_main ));
+      state_map_type * map2 = enkf_main_alloc_readonly_state_map(enkf_main , "enkf");
+      test_assert_true(state_map_equal( map1 , map2 ));
+      state_map_free( map2 );
+    }
     {
       enkf_fs_type * fs1 = enkf_main_mount_alt_fs( enkf_main , "default" , false , false);
       enkf_fs_type * fs2 = enkf_main_mount_alt_fs( enkf_main , "enkf" , false , false);
