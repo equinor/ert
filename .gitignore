@@ -22,3 +22,8 @@
 
 # Ignore the ert_local python file which is needed to run some python tests
 /devel/python/python/ert/ecl/ecl_local.py
+/devel/GPATH
+/devel/GRTAGS
+/devel/GTAGS
+/devel/gtags.sh
+/cmake.sh
