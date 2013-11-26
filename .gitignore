@@ -6,6 +6,12 @@
 *~
 *.user
 
+#pyCharm project
+.idea
+
+#to make python tests run in-source
+devel/python/lib64
+
 # /devel/libenkf/src/
 /devel/libenkf/src/.faultlist
 
