@@ -273,7 +273,9 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                               const char * kw, 
                               const char * path,
                               int_vector_type * realization_list, 
-                              field_file_format_type file_type);  
+                              field_file_format_type file_type,
+                              int report_step,
+                              state_enum state);  
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
