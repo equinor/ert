@@ -2860,11 +2860,15 @@ bool enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * c
 */
 
 enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
-  if (enkf_main_case_is_current( enkf_main , case_path ))
+  if (enkf_main_case_is_current( enkf_main , case_path )) {
     // Fast path - we just return a reference to the currently selected case;
     // with increased refcount.
-    return enkf_fs_get_ref( enkf_main->dbase ); 
-  else {
+    if(!read_only) {
+        enkf_fs_type * fs = enkf_main->dbase;
+        enkf_fs_set_writable(fs);
+    }
+    return enkf_fs_get_ref( enkf_main->dbase );
+  } else {
     // We have asked for an alterantive fs - must mount and possibly create that first.
     enkf_fs_type * new_fs = NULL;
     if (case_path != NULL) {

@@ -65,11 +65,30 @@ void test_refcount() {
   test_work_area_free( work_area );
 }
 
+void test_read_only() {
+  test_work_area_type * work_area = test_work_area_alloc("enkf_fs/read_only");
+
+  enkf_fs_create_fs("mnt" , BLOCK_FS_DRIVER_ID , NULL );
+  {
+    enkf_fs_type * fs_false = enkf_fs_mount( "mnt" , false );
+    test_assert_false(enkf_fs_is_read_only(fs_false));
+
+    enkf_fs_umount( fs_false );
+
+    enkf_fs_type * fs_true = enkf_fs_mount( "mnt" , true );
+    test_assert_true(enkf_fs_is_read_only(fs_true));
+
+    enkf_fs_umount( fs_true );
+  }
+  test_work_area_free( work_area );
+}
+
 
 
 
 int main(int argc, char ** argv) {
   test_mount();
   test_refcount();
+  test_read_only();
   exit(0);
 }

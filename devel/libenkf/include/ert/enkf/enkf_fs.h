@@ -41,6 +41,8 @@ extern "C" {
   const      char * enkf_fs_get_mount_point( const enkf_fs_type * fs );
   const      char * enkf_fs_get_root_path( const enkf_fs_type * fs );
   const      char * enkf_fs_get_case_name( const enkf_fs_type * fs );
+  bool              enkf_fs_is_read_only(const enkf_fs_type * fs);
+  void              enkf_fs_set_writable(enkf_fs_type * fs);
 
   void              enkf_fs_fsync( enkf_fs_type * fs );
   void              enkf_fs_add_index_node(enkf_fs_type *  , int , int , const char * , enkf_var_type, ert_impl_type);

@@ -823,6 +823,15 @@ const char * enkf_fs_get_case_name( const enkf_fs_type * fs ) {
   return fs->case_name;
 }
 
+
+bool enkf_fs_is_read_only(const enkf_fs_type * fs) {
+    return fs->read_only;
+}
+
+void enkf_fs_set_writable(enkf_fs_type * fs) {
+    fs->read_only = false;
+}
+
 void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {
   printf("-----------------------------------------------------------------\n");
   printf("fs...................: %p \n",fs );
