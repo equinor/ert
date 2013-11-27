@@ -117,8 +117,11 @@ void * enkf_main_export_field_JOB(void * self, const stringlist_type * args) {
   const char *      field            = stringlist_iget(args, 0); 
   const char *      file_name        = stringlist_iget(args, 1); 
   int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
-  
-  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
+  int               report_step      = 0;
+  util_sscanf_int(stringlist_iget(args,2), &report_step);
+  state_enum        state            = enkf_types_get_state_enum(stringlist_iget(args, 3)); 
+    
+  char * range_str = stringlist_alloc_joined_substring( args , 4 , stringlist_get_size(args), "");  
   string_util_update_active_list(range_str, realization_list); 
   
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
@@ -129,7 +132,7 @@ void * enkf_main_export_field_JOB(void * self, const stringlist_type * args) {
   
   field_file_format_type file_type = field_config_default_export_format(file_name); 
   if ((RMS_ROFF_FILE == file_type) || (ECL_GRDECL_FILE == file_type)) 
-    enkf_main_export_field(enkf_main, field, file_name, realization_list, file_type);
+    enkf_main_export_field(enkf_main, field, file_name, realization_list, file_type, report_step, state);
   else
     printf("EXPORT_FIELD filename argument: File extension must be either .roff or .grdecl\n"); 
     
@@ -141,8 +144,11 @@ void * enkf_main_export_field_to_RMS_JOB(void * self, const stringlist_type * ar
   const char *      field            = stringlist_iget(args, 0); 
   const char *      file_name        = stringlist_iget(args, 1); 
   int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
+  int               report_step      = 0;
+  util_sscanf_int(stringlist_iget(args,2), &report_step);
+  state_enum        state            = enkf_types_get_state_enum(stringlist_iget(args, 3)); 
   
-  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
+  char * range_str = stringlist_alloc_joined_substring( args , 4 , stringlist_get_size(args), "");  
   string_util_update_active_list(range_str, realization_list); 
     
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
@@ -157,7 +163,7 @@ void * enkf_main_export_field_to_RMS_JOB(void * self, const stringlist_type * ar
     file_name_with_ext = util_strcat_realloc(file_name_with_ext, ".roff");
   }
 
-  enkf_main_export_field(enkf_main, field, file_name_with_ext, realization_list, RMS_ROFF_FILE);
+  enkf_main_export_field(enkf_main, field, file_name_with_ext, realization_list, RMS_ROFF_FILE, report_step, state);
 
   int_vector_free(realization_list);  
   return NULL; 
@@ -167,8 +173,11 @@ void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * ar
   const char *      field            = stringlist_iget(args, 0); 
   const char *      file_name        = stringlist_iget(args, 1); 
   int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
-
-  char * range_str = stringlist_alloc_joined_substring( args , 2 , stringlist_get_size(args), "");  
+  int               report_step      = 0;
+  util_sscanf_int(stringlist_iget(args,2), &report_step);
+  state_enum        state            = enkf_types_get_state_enum(stringlist_iget(args, 3)); 
+  
+  char * range_str = stringlist_alloc_joined_substring( args , 4 , stringlist_get_size(args), "");  
   string_util_update_active_list(range_str, realization_list); 
   
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
@@ -182,7 +191,7 @@ void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * ar
   if (ext == NULL) 
     file_name_with_ext = util_strcat_realloc(file_name_with_ext, ".grdecl");
   
-  enkf_main_export_field(enkf_main, field, file_name_with_ext, realization_list, ECL_GRDECL_FILE);
+  enkf_main_export_field(enkf_main, field, file_name_with_ext, realization_list, ECL_GRDECL_FILE, report_step, state);
 
   int_vector_free(realization_list);  
   return NULL; 

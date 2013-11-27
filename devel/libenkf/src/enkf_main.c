@@ -3919,7 +3919,9 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
                             const char * kw, 
                             const char * path, 
                             int_vector_type * realization_list,
-                            field_file_format_type file_type) {
+                            field_file_format_type file_type,
+                            int report_step, 
+                            state_enum state) {
   
   bool ret = false; 
   if (!util_char_in('%', strlen(path), path) || !util_char_in('d', strlen(path), path)) {
@@ -3946,28 +3948,33 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
     int iens;
     for (iens = 0; iens < int_vector_size(realization_list); ++iens) {
       int realization_no = int_vector_iget(realization_list, iens); 
+      enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
+      node_id_type node_id = {.report_step = report_step , .iens = realization_no , .state = state };
       node = enkf_state_get_node(enkf_main->ensemble[realization_no] , kw);
       if (node) {
-        path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
-        char * filename = path_fmt_alloc_path( export_path , false , realization_no);
-        path_fmt_free(export_path); 
-        
-        {
-          char * path;
-          util_alloc_file_components(filename , &path , NULL , NULL);
-          if (path != NULL) {
-            util_make_path( path );
-            free( path );
-          }
-        }
+        if (enkf_node_try_load(node , fs , node_id)) {
+          path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
+          char * filename = path_fmt_alloc_path( export_path , false , realization_no);
+          path_fmt_free(export_path); 
 
-        {
-          const field_type * field = enkf_node_value_ptr(node);
-          const bool output_transform = true;
-          field_export(field , filename , NULL , file_type , output_transform);
-          ret = true; 
-        }
-        free(filename);
+          {
+            char * path;
+            util_alloc_file_components(filename , &path , NULL , NULL);
+            if (path != NULL) {
+              util_make_path( path );
+              free( path );
+            }
+          }
+
+          {
+            const field_type * field = enkf_node_value_ptr(node);
+            const bool output_transform = true;
+            field_export(field , filename , NULL , file_type , output_transform);
+            ret = true; 
+          }
+          free(filename);
+        } else
+          printf("%s : enkf_node_try_load returned returned false \n", __func__);
       } else 
           printf("%s : enkf_state_get_node returned NULL for parameters  %d, %s \n", __func__, realization_no, kw);
     } 
