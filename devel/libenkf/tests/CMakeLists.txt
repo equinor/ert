@@ -126,6 +126,7 @@ target_link_libraries( enkf_export_field_test  enkf test_util )
 add_test( enkf_export_field_test
           ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config)
 
+
 #-----------------------------------------------------------------
 
 

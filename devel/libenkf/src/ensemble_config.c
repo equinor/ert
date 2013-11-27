@@ -376,7 +376,7 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
           const char * data_key                   = hash_safe_get( options , KEY_KEY);
           const char * result_file                = hash_safe_get( options , RESULT_FILE_KEY);
           const char * min_std_file               = hash_safe_get( options , MIN_STD_KEY);
-          const char *  forward_string            = hash_safe_get( options , FORWARD_INIT_KEY );
+          const char * forward_string             = hash_safe_get( options , FORWARD_INIT_KEY );
           enkf_config_node_type * config_node;
           bool forward_init = false;
           
@@ -385,13 +385,16 @@ void ensemble_config_init_GEN_DATA( ensemble_config_type * ensemble_config , con
               fprintf(stderr,"** Warning: parsing %s as bool failed - using FALSE \n",forward_string);
           }
           
-          config_node = ensemble_config_add_gen_data( ensemble_config , node_key , forward_init);
-          enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
-          {
-            const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
-            if (!gen_data_config_is_valid( gen_data_config ))
-              util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , node_key);
-          }
+          if (util_int_format_count( result_file ) == 1) {
+            config_node = ensemble_config_add_gen_data( ensemble_config , node_key , forward_init);
+            enkf_config_node_update_gen_data( config_node , input_format , output_format , init_file_fmt , template , data_key , ecl_file , result_file , min_std_file);
+            {
+              const gen_data_config_type * gen_data_config = enkf_config_node_get_ref( config_node );
+              if (!gen_data_config_is_valid( gen_data_config ))
+                util_abort("%s: sorry the gen_param key:%s is not valid \n",__func__ , node_key);
+            }
+          } else
+            fprintf(stderr , "** WARNING: The RESULT_FILE: attribute must point to a filename format with an embedded %%d - the GEN_DATA key:%s will be ignored\n", node_key);
         }
         hash_free( options );
       }
