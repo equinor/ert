@@ -53,6 +53,8 @@ class StateMapTest(ExtendedTestCase):
         self.assertEqual(state_map[4], RealizationStateEnum.STATE_UNDEFINED)
         self.assertEqual(state_map[5], RealizationStateEnum.STATE_INITIALIZED)
 
+        self.assertFalse(state_map.isReadOnly())
+
 
     def test_state_map_transitions(self):
         self.assertTrue(StateMap.isLegalTransition(RealizationStateEnum.STATE_UNDEFINED, RealizationStateEnum.STATE_INITIALIZED))

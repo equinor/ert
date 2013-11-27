@@ -48,6 +48,9 @@ class StateMap(BaseCClass):
 
 
     def __setitem__(self, index, value):
+        if self.isReadOnly():
+            raise UserWarning("This State Map is read only!")
+
         if not isinstance(index, int):
             raise TypeError("Expected an integer")
 
@@ -68,10 +71,15 @@ class StateMap(BaseCClass):
 
         return StateMap.cNamespace().is_legal_transition(realization_state1, realization_state2)
 
+
+    def isReadOnly(self):
+        """ @rtype: bool """
+        return StateMap.cNamespace().is_read_only(self)
+
+
     def free(self):
         StateMap.cNamespace().free(self)
 
-##################################################################
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("state_map", StateMap)
@@ -83,4 +91,5 @@ StateMap.cNamespace().free = cwrapper.prototype("void state_map_free(state_map)"
 StateMap.cNamespace().size = cwrapper.prototype("int state_map_get_size(state_map)")
 StateMap.cNamespace().iget = cwrapper.prototype("realisation_state_enum state_map_iget(state_map, int)")
 StateMap.cNamespace().iset = cwrapper.prototype("void state_map_iset(state_map, int, realisation_state_enum)")
+StateMap.cNamespace().is_read_only = cwrapper.prototype("bool state_map_is_readonly(state_map)")
 StateMap.cNamespace().is_legal_transition = cwrapper.prototype("bool state_map_legal_transition(realisation_state_enum, realisation_state_enum)")
