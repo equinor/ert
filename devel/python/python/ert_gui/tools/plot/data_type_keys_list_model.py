@@ -35,9 +35,6 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
             if role == Qt.DisplayRole:
                 return item
-            # elif role == Qt.DecorationRole:
-            #     if DataTypeKeysModel().isObservationKey(item):
-            #         return QColor(0, 0, 200)
             elif role == Qt.BackgroundRole:
                 if DataTypeKeysModel().isObservationKey(item):
                     return self.HAS_OBSERVATIONS

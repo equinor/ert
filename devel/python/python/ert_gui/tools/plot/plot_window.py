@@ -1,5 +1,5 @@
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QMainWindow, QDockWidget
+from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.plot import EnsembleSummaryPlot
 from ert_gui.tools.plot import PlotPanel
 from ert_gui.tools.plot import DataTypeKeysWidget
@@ -16,16 +16,30 @@ class PlotWindow(QMainWindow):
         self.setWindowTitle("Plotting")
         self.activateWindow()
 
+        self.central_tab = QTabWidget()
+        self.setCentralWidget(self.central_tab)
+
         self.plot_panel = PlotPanel("gui/plots/simple_plot.html")
         self.plot_panel.plotReady.connect(self.plotReady)
-        self.setCentralWidget(self.plot_panel)
+        self.central_tab.addTab(self.plot_panel, "Ensemble plot")
+
+        self.plot_debug_panel = PlotPanel("gui/plots/simple_debug_plot.html")
+        self.plot_debug_panel.plotReady.connect(self.plotReady)
+        self.central_tab.addTab(self.plot_debug_panel, "Debug")
 
         self.data_type_keys_widget = DataTypeKeysWidget()
         self.data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self.data_type_keys_widget)
 
         self.case_selection_widget = CaseSelectionWidget()
+        self.case_selection_widget.caseSelectionChanged.connect(self.caseSelectionChanged)
         self.addDock("Plot case", self.case_selection_widget)
+
+        self.__data_type_key = None
+        self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
+
+
+
 
 
 
@@ -41,8 +55,18 @@ class PlotWindow(QMainWindow):
 
 
     def plotReady(self):
-        self.data_type_keys_widget.selectDefault()
+        if self.plot_panel.isReady() and self.plot_debug_panel.isReady():
+            self.data_type_keys_widget.selectDefault()
+
+
+    def caseSelectionChanged(self):
+        self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
+        self.keySelected(self.__data_type_key)
 
     @may_take_a_long_time
     def keySelected(self, key):
-        self.plot_panel.setPlotData(EnsembleSummaryPlot().getPlotDataForKey(str(key)))
+        self.__data_type_key = str(key)
+        print("Key selected: %s for %s" % (key, self.__plot_cases))
+        data = EnsembleSummaryPlot().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
+        self.plot_panel.setPlotData(data)
+        self.plot_debug_panel.setPlotData(data)

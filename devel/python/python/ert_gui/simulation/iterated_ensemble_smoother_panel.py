@@ -56,7 +56,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def isConfigurationValid(self):
-        return self.iterated_target_case_format_field.isValid() and self.active_realizations_field.isValid()
+        analysis_module = IteratedAnalysisModuleModel().getCurrentChoice()
+        return self.iterated_target_case_format_field.isValid() and self.active_realizations_field.isValid() and analysis_module is not None
 
 
 

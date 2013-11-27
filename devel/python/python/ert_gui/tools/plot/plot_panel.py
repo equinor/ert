@@ -22,6 +22,7 @@ class PlotWebView(QWebView):
         self.settings().setAttribute(QWebSettings.JavascriptEnabled, True)
         self.settings().setAttribute(QWebSettings.LocalContentCanAccessFileUrls, True)
         self.settings().setAttribute(QWebSettings.LocalContentCanAccessRemoteUrls, True)
+        self.settings().clearMemoryCaches()
 
 
 
@@ -31,6 +32,7 @@ class PlotPanel(QWidget):
     def __init__(self, plot_url):
         QWidget.__init__(self)
 
+        self.__ready = False
         self.__data = []
         root_path = os.getenv("ERT_SHARE_PATH")
         path = os.path.join(root_path, plot_url)
@@ -49,6 +51,7 @@ class PlotPanel(QWidget):
         self.setLayout(layout)
 
 
+
     @pyqtSlot(result=str)
     def getPlotData(self):
         return json.dumps(self.__data)
@@ -64,7 +67,12 @@ class PlotPanel(QWidget):
 
 
     def loadFinished(self, ok):
+        self.__ready = True
         self.plotReady.emit()
+
+
+    def isReady(self):
+        return self.__ready
 
 
 

@@ -72,6 +72,18 @@ class EnsembleDataFetcher(DataFetcher):
 
         return result
 
+    def getEnsembleDataForKeyAndCase(self, key, case):
+        """ @rtype: list of SampleList """
+        ensemble_config_node = self.getEnsembleConfigNode(key)
+        enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)
+        enkf_plot_data = EnsemblePlotData(ensemble_config_node, enkf_fs)
+
+        result = []
+        for index in range(len(enkf_plot_data)):
+            result.append(self.getRealizationData(key, enkf_plot_data[index]))
+
+        return result
+
 
 
 
