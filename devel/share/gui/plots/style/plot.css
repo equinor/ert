@@ -78,6 +78,10 @@
 .observation-plot-area {
     fill: #FC8D59;
     fill-opacity: 0.1;
+
+    stroke: #FC8D59;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
     /*fill: rgba(150, 150, 150, 0.6);*/
     /*fill: rgba(200, 200, 200, 0.6);*/
 }
@@ -137,10 +141,61 @@
     fill: none;
 
     /*stroke: #007fff;*/
-    stroke: #BEAED4;
+    stroke: #beaed4;
     stroke-opacity: 0.2;
     stroke-width: 2px;
 }
+
+
+.ensemble-plot-area-1 {
+    fill: #386CB0;
+    fill-opacity: 0.3;
+
+    /*stroke: #007fff;*/
+    stroke: #386CB0;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+
+.ensemble-plot-area-2 {
+    fill: #7FC97F;
+    fill-opacity: 0.3;
+
+    /*stroke: #007fff;*/
+    stroke: #7FC97F;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+
+.ensemble-plot-area-3 {
+    fill: #FDC086;
+    fill-opacity: 0.3;
+
+    /*stroke: #007fff;*/
+    stroke: #FDC086;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+.ensemble-plot-area-4 {
+    fill: #F0027F;
+    fill-opacity: 0.3;
+
+    /*stroke: #007fff;*/
+    stroke: #F0027F;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+.ensemble-plot-area-5 {
+    fill: #beaed4;
+    fill-opacity: 0.3;
+
+    /*stroke: #007fff;*/
+    stroke: #beaed4;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+
+
 
 /*.area-fill:hover {*/
     /*fill: rgba(150, 150, 150, 0.1);*/
