@@ -2,6 +2,7 @@ from ert.enkf import EnsConfig
 from ert.enkf.ensemble_data import EnsemblePlotData, EnsemblePlotDataVector
 from ert.enkf.enums import ErtImplType
 from ert.enkf.plot import SimpleSample, SampleListCollection, SampleList
+from ert.enkf.plot.data.sample_statistics import SampleStatistics
 from ert.enkf.plot.data_fetcher import DataFetcher
 
 
@@ -76,13 +77,21 @@ class EnsembleDataFetcher(DataFetcher):
         """ @rtype: list of SampleList """
         ensemble_config_node = self.getEnsembleConfigNode(key)
         enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)
-        enkf_plot_data = EnsemblePlotData(ensemble_config_node, enkf_fs)
+        ensemble_plot_data = EnsemblePlotData(ensemble_config_node, enkf_fs)
 
+        statistics = []
         result = []
-        for index in range(len(enkf_plot_data)):
-            result.append(self.getRealizationData(key, enkf_plot_data[index]))
+        for index in range(len(ensemble_plot_data)):
+            sample_list = self.getRealizationData(key, ensemble_plot_data[index])
+            result.append(sample_list)
 
-        return result
+            for index in range(len(sample_list.samples)):
+                if index == len(statistics):
+                    statistics.append(SampleStatistics())
+                statistics[index].addSample(sample_list.samples[index])
+
+
+        return result, statistics
 
 
 

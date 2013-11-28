@@ -24,6 +24,10 @@ class PlotWindow(QMainWindow):
         self.plot_panel.plotReady.connect(self.plotReady)
         self.central_tab.addTab(self.plot_panel, "Ensemble plot")
 
+        self.plot_overview_panel = PlotPanel("Plot", "gui/plots/simple_overview_plot.html")
+        self.plot_overview_panel.plotReady.connect(self.plotReady)
+        self.central_tab.addTab(self.plot_overview_panel, "Ensemble overview plot")
+
         self.plot_debug_panel = PlotPanel("Debug", "gui/plots/simple_debug_plot.html")
         self.plot_debug_panel.plotReady.connect(self.plotReady)
         self.central_tab.addTab(self.plot_debug_panel, "Debug")
@@ -55,8 +59,11 @@ class PlotWindow(QMainWindow):
         return dock_widget
 
 
+    def checkPlotStatus(self):
+        return self.plot_panel.isReady() and self.plot_debug_panel.isReady() and self.plot_overview_panel.isReady()
+
     def plotReady(self):
-        if self.plot_panel.isReady() and self.plot_debug_panel.isReady():
+        if self.checkPlotStatus():
             self.data_type_keys_widget.selectDefault()
 
 
@@ -68,8 +75,9 @@ class PlotWindow(QMainWindow):
     def keySelected(self, key):
         self.__data_type_key = str(key)
 
-        if self.plot_panel.isReady() and self.plot_debug_panel.isReady():
+        if self.checkPlotStatus():
             # print("Key selected: %s for %s" % (key, self.__plot_cases))
             data = EnsembleSummaryPlot().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
             self.plot_panel.setPlotData(data)
+            self.plot_overview_panel.setPlotData(data)
             self.plot_debug_panel.setPlotData(data)

@@ -92,9 +92,9 @@ class PlotDataFetcher(DataFetcher):
             plot_data.setRefcase(refcase)
 
         for case in cases:
-            ensemble_plot_data = EnsembleDataFetcher(self.ert()).getEnsembleDataForKeyAndCase(key, case)
+            ensemble_plot_data, ensemble_statistics = EnsembleDataFetcher(self.ert()).getEnsembleDataForKeyAndCase(key, case)
             if len(ensemble_plot_data) > 0:
-                plot_data.addEnsemble(case, ensemble_plot_data)
+                plot_data.addEnsemble(case, ensemble_plot_data, ensemble_statistics)
 
         return plot_data
 
