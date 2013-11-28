@@ -97,13 +97,51 @@
     stroke-width: 2px;
 }
 
-.ensemble-plot-line {
+.ensemble-plot-line-1 {
     fill: none;
 
-    stroke: #007fff;
+    /*stroke: #007fff;*/
+    stroke: #386CB0;
     stroke-opacity: 0.2;
     stroke-width: 2px;
 }
+
+.ensemble-plot-line-2 {
+    fill: none;
+
+    /*stroke: #007fff;*/
+    stroke: #7FC97F;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+
+.ensemble-plot-line-3 {
+    fill: none;
+
+    /*stroke: #007fff;*/
+    stroke: #FDC086;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+
+.ensemble-plot-line-4 {
+    fill: none;
+
+    /*stroke: #007fff;*/
+    stroke: #F0027F;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+
+.ensemble-plot-line-5 {
+    fill: none;
+
+    /*stroke: #007fff;*/
+    stroke: #BEAED4;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
+}
+
 /*.area-fill:hover {*/
     /*fill: rgba(150, 150, 150, 0.1);*/
 

@@ -11,5 +11,8 @@ class EnsembleSummaryPlot(ErtConnector, ModelMixin):
     def getPlotDataForKey(self, key):
         return PlotDataFetcher(self.ert()).fetchDataForKey(key)
 
+    def getPlotDataForKeyAndCases(self, key, cases):
+        return PlotDataFetcher(self.ert()).fetchDataForKeyAndCases(key, cases)
+
 
 

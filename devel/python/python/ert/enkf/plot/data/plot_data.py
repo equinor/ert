@@ -5,6 +5,7 @@ class PlotData(dict):
     observations = DictProperty("observations")
     refcase = DictProperty("refcase")
     ensemble = DictProperty("ensemble")
+    ensemble_names = DictProperty("ensemble_names")
     name = DictProperty("name")
 
     min_x = DictProperty("min_x")
@@ -18,6 +19,7 @@ class PlotData(dict):
         self.observations = None
         self.refcase = None
         self.ensemble = None
+        self.ensemble_names = []
         self.name = None
 
         self.min_x = None
@@ -87,8 +89,36 @@ class PlotData(dict):
 
 
 
-    def setEnsemble(self, ensemble):
-        self.ensemble = ensemble
+    # def setEnsemble(self, ensemble):
+    #     self.ensemble = ensemble
+    #
+    #     for realization in ensemble:
+    #         if self.min_x is None:
+    #             self.min_x = realization.min_x
+    #         else:
+    #             self.min_x = min(self.min_x, realization.min_x)
+    #
+    #         if self.max_x is None:
+    #             self.max_x = realization.max_x
+    #         else:
+    #             self.max_x = max(self.max_x, realization.max_x)
+    #
+    #         if self.min_y is None:
+    #             self.min_y = realization.statistics.min_y
+    #         else:
+    #             self.min_y = min(self.min_y, realization.statistics.min_y)
+    #
+    #         if self.max_y is None:
+    #             self.max_y = realization.statistics.max_y
+    #         else:
+    #             self.max_y = max(self.max_y, realization.statistics.max_y)
+
+    def addEnsemble(self, case, ensemble):
+        if self.ensemble is None:
+            self.ensemble = []
+
+        self.ensemble.append(ensemble)
+        self.ensemble_names.append(case)
 
         for realization in ensemble:
             if self.min_x is None:
