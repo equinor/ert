@@ -78,6 +78,10 @@
 .observation-plot-area {
     fill: #FC8D59;
     fill-opacity: 0.1;
+
+    stroke: #FC8D59;
+    stroke-opacity: 0.2;
+    stroke-width: 2px;
     /*fill: rgba(150, 150, 150, 0.6);*/
     /*fill: rgba(200, 200, 200, 0.6);*/
 }
