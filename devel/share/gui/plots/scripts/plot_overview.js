@@ -1,6 +1,6 @@
 // Copyright (C) 2013 Statoil ASA, Norway.
 //
-// The file 'plot.js' is part of ERT - Ensemble based Reservoir Tool.
+// The file 'plot_overview.js' is part of ERT - Ensemble based Reservoir Tool.
 //
 // ERT is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -105,6 +105,18 @@ function Plot(element, data) {
         return self.y_scale(top_function(d));
     };
 
+    this.y_overview_min = function (d) {
+        return self.y_scale(d["min_y"]);
+    };
+
+    this.y_overview_max = function (d) {
+        return self.y_scale(d["max_y"]);
+    };
+
+    this.x_overview = function (d) {
+        return self.x_scale(new Date(d["max_x"] * 1000));
+    };
+
     this.duration = 0;
 
     this.std_plot = StdPlot()
@@ -136,13 +148,14 @@ function Plot(element, data) {
         .duration(this.duration);
 
 
-    this.ensemble_styles = ["ensemble-plot-line-1", "ensemble-plot-line-2", "ensemble-plot-line-3", "ensemble-plot-line-4", "ensemble-plot-line-5"];
-    this.ensemble_lines = {};
+    this.ensemble_styles = ["ensemble-plot-area-1", "ensemble-plot-area-2", "ensemble-plot-area-3", "ensemble-plot-area-4", "ensemble-plot-area-5"];
+    this.ensemble_areas = {};
     for (var index in this.ensemble_styles) {
         var style = this.ensemble_styles[index];
-        this.ensemble_lines[style] = PlotLine()
-            .x(this.x)
-            .y(this.y)
+        this.ensemble_areas[style] = PlotArea()
+            .x(this.x_overview)
+            .y_min(this.y_overview_min)
+            .y_max(this.y_overview_max)
             .style(style)
             .duration(this.duration);
     }
@@ -231,27 +244,24 @@ Plot.prototype.setData = function(data) {
         refcase_line.call(this.refcase_line);
     }
 
-    for(var ensemble_index in data["ensemble_names"]) {
+    for(var ensemble_index in data["ensemble_statistics"]) {
         var ensemble_style = this.ensemble_styles[ensemble_index];
-        var name = data["ensemble_names"][ensemble_index];
+        var name = data["ensemble_statistics"][ensemble_index];
 
-        var ensemble_samples = [];
-        for (var index = 0; index < data["ensemble"][ensemble_index].length; index++) {
-            ensemble_samples.push(data["ensemble"][ensemble_index][index]["samples"]);
-        }
-        var ensemble_lines = this.plot.selectAll("." + ensemble_style).data(ensemble_samples);
-        ensemble_lines.call(this.ensemble_lines[ensemble_style]);
+        var ensemble_samples = data["ensemble_statistics"][ensemble_index];
+        var ensemble_areas = this.plot.selectAll("." + ensemble_style).data([ensemble_samples]);
+        ensemble_areas.call(this.ensemble_areas[ensemble_style]);
     }
 
     var from = 0;
-    if (data["ensemble_names"] != null) {
+    if (data["ensemble_statistics"] != null) {
         from = data["ensemble_names"].length;
     }
 
     for(var style_index = from; style_index < this.ensemble_styles.length; style_index++) {
         var style = this.ensemble_styles[style_index];
         var removed_ensemble_lines = this.plot.selectAll("." + style).data([]);
-        removed_ensemble_lines.call(this.ensemble_lines[style]);
+        removed_ensemble_lines.call(this.ensemble_areas[style]);
     }
 
     this.plot_group.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
