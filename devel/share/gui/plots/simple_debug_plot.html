@@ -57,10 +57,12 @@
     function initialize() {
         if (typeof plot_data_source != 'undefined') {
             updatePlot();
+            plot_data_source.htmlInitialized();
         } else {
             console.log("Unable to load data!");
             alert("Unable to load data!");
         }
+
     }
 
     function updatePlot() {
@@ -72,6 +74,9 @@
         node.innerHTML = JSON.stringify(json, undefined, 4);
     }
 
+    function setSize(width, height) {
+        //console.log("Debug: " + width + " - " + height);
+    }
 
 
 </script>
