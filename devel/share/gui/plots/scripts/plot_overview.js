@@ -252,17 +252,17 @@ Plot.prototype.setData = function(data) {
         var ensemble_areas = this.plot.selectAll("." + ensemble_style).data([ensemble_samples]);
         ensemble_areas.call(this.ensemble_areas[ensemble_style]);
     }
-//
-//    var from = 0;
-//    if (data["ensemble_names"] != null) {
-//        from = data["ensemble_names"].length;
-//    }
-//
-//    for(var style_index = from; style_index < this.ensemble_styles.length; style_index++) {
-//        var style = this.ensemble_styles[style_index];
-//        var removed_ensemble_lines = this.plot.selectAll("." + style).data([]);
-//        removed_ensemble_lines.call(this.ensemble_lines[style]);
-//    }
+
+    var from = 0;
+    if (data["ensemble_statistics"] != null) {
+        from = data["ensemble_names"].length;
+    }
+
+    for(var style_index = from; style_index < this.ensemble_styles.length; style_index++) {
+        var style = this.ensemble_styles[style_index];
+        var removed_ensemble_lines = this.plot.selectAll("." + style).data([]);
+        removed_ensemble_lines.call(this.ensemble_areas[style]);
+    }
 
     this.plot_group.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
     this.plot_group.select(".x.axis").transition().duration(this.duration).call(this.x_axis);
