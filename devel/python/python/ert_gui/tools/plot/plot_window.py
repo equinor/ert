@@ -11,7 +11,8 @@ class PlotWindow(QMainWindow):
     def __init__(self, parent):
         QMainWindow.__init__(self, parent)
 
-        self.resize(500, 500)
+        self.setMinimumWidth(750)
+        self.setMinimumHeight(500)
 
         self.setWindowTitle("Plotting")
         self.activateWindow()
@@ -19,11 +20,11 @@ class PlotWindow(QMainWindow):
         self.central_tab = QTabWidget()
         self.setCentralWidget(self.central_tab)
 
-        self.plot_panel = PlotPanel("gui/plots/simple_plot.html")
+        self.plot_panel = PlotPanel("Plot", "gui/plots/simple_plot.html")
         self.plot_panel.plotReady.connect(self.plotReady)
         self.central_tab.addTab(self.plot_panel, "Ensemble plot")
 
-        self.plot_debug_panel = PlotPanel("gui/plots/simple_debug_plot.html")
+        self.plot_debug_panel = PlotPanel("Debug", "gui/plots/simple_debug_plot.html")
         self.plot_debug_panel.plotReady.connect(self.plotReady)
         self.central_tab.addTab(self.plot_debug_panel, "Debug")
 
@@ -66,7 +67,9 @@ class PlotWindow(QMainWindow):
     @may_take_a_long_time
     def keySelected(self, key):
         self.__data_type_key = str(key)
-        print("Key selected: %s for %s" % (key, self.__plot_cases))
-        data = EnsembleSummaryPlot().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
-        self.plot_panel.setPlotData(data)
-        self.plot_debug_panel.setPlotData(data)
+
+        if self.plot_panel.isReady() and self.plot_debug_panel.isReady():
+            # print("Key selected: %s for %s" % (key, self.__plot_cases))
+            data = EnsembleSummaryPlot().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
+            self.plot_panel.setPlotData(data)
+            self.plot_debug_panel.setPlotData(data)

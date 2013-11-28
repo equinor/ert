@@ -16,7 +16,8 @@
 
 
 function Plot(element, data) {
-    var margin = {left: 90, right: 20, top: 20, bottom: 30};
+    this.stored_data = [];
+    this.margin = {left: 90, right: 20, top: 20, bottom: 30};
     this.root_elemenet = element;
 
     var group = this.root_elemenet.append("div")
@@ -27,17 +28,18 @@ function Plot(element, data) {
         .attr("class", "plot-title")
         .text(data.name);
 
-    var plot_group = group.append("div")
+    this.plot_group = group.append("svg")
         .attr("class", "plot-svg");
 
-    this.svg = plot_group.append("svg")
-        .attr("width", plot_group.style("width"))
-        .attr("height", plot_group.style("height"));
+    this.width = 1024 - this.margin.left - this.margin.right;
+    this.height = 512 - this.margin.top - this.margin.bottom;
 
-    this.width = this.svg.attr("width").replace("px", "") - margin.left - margin.right;
-    this.height = this.svg.attr("height").replace("px", "") - margin.top - margin.bottom;
-
-    this.svg = this.svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    this.svg = this.plot_group
+        .append("g")
+        .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
+        .style("width", this.width + "px")
+        .style("height", this.height + "px")
+        .attr("fill", "rgb(255, 128, 0)");
 
     this.x_scale = d3.time.scale().range([0, this.width]);
     this.y_scale = d3.scale.linear().range([this.height, 0]).nice();
@@ -56,14 +58,14 @@ function Plot(element, data) {
         .orient("bottom")
         .tickSubdivide(true);
 
-    this.svg.append("g")
+    this.plot_group.append("g")
         .attr("class", "y axis pale")
-        .attr("transform", "translate(0, 0)")
+        .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         .call(this.y_axis);
 
-    this.svg.append("g")
+    this.plot_group.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0, " + (this.height) + ")")
+        .attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")")
         .call(this.x_axis);
 
 
@@ -103,7 +105,7 @@ function Plot(element, data) {
         return self.y_scale(top_function(d));
     };
 
-    this.duration = 250;
+    this.duration = 0;
 
     this.std_plot = StdPlot()
         .radius(2.5)
@@ -145,18 +147,44 @@ function Plot(element, data) {
             .duration(this.duration);
     }
 
-
-
 }
 
+Plot.prototype.resize = function(width, height) {
+    //Some magic margins...
+    width = width - 80;
+    height = height - 70;
+
+    this.width = width - this.margin.left - this.margin.right;
+    this.height = height - this.margin.top - this.margin.bottom;
+
+    this.x_scale.range([0, this.width]);
+    this.y_scale.range([this.height, 0]).nice();
+
+    this.y_axis.tickSize(-this.width, -this.width);
+
+    this.plot_group.style("width", width + "px");
+    this.plot_group.style("height", height + "px");
+
+    this.svg.style("width", this.width + "px");
+    this.svg.style("height", this.height + "px");
+
+    this.setData(this.stored_data);
+
+    this.plot_group.select(".x.axis")
+        .attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")");
+};
+
+
+
 Plot.prototype.setData = function(data) {
+    this.stored_data = data;
+
     this.title.text(data["name"]);
 
     var min = data["min_y"];
     var max = data["max_y"];
     this.y_scale.domain([min, max]).nice();
     this.x_scale.domain([new Date(data["min_x"] * 1000), new Date(data["max_x"] * 1000)]).nice();
-
 
     var observation_std_points;
     var observation_line;
@@ -203,7 +231,6 @@ Plot.prototype.setData = function(data) {
         refcase_line.call(this.refcase_line);
     }
 
-
     for(var ensemble_index in data["ensemble_names"]) {
         var ensemble_style = this.ensemble_styles[ensemble_index];
         var name = data["ensemble_names"][ensemble_index];
@@ -216,14 +243,17 @@ Plot.prototype.setData = function(data) {
         ensemble_lines.call(this.ensemble_lines[ensemble_style]);
     }
 
+    var from = 0;
+    if (data["ensemble_names"] != null) {
+        from = data["ensemble_names"].length;
+    }
 
-    for(var style_index = data["ensemble_names"].length; style_index < this.ensemble_styles.length; style_index++) {
+    for(var style_index = from; style_index < this.ensemble_styles.length; style_index++) {
         var style = this.ensemble_styles[style_index];
         var removed_ensemble_lines = this.plot.selectAll("." + style).data([]);
         removed_ensemble_lines.call(this.ensemble_lines[style]);
     }
 
-
-    this.svg.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
-    this.svg.select(".x.axis").transition().duration(this.duration).call(this.x_axis);
+    this.plot_group.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
+    this.plot_group.select(".x.axis").transition().duration(this.duration).call(this.x_axis);
 };

@@ -24,25 +24,9 @@
         }
 
         body {
-            /*font-family: sans-serif;*/
-            /*font-size: smaller;*/
-            min-width: 350px;
             height: 90%;
             background-color: #eee;
         }
-
-        .map {
-            display: inline-block;
-            margin: 20px;
-            padding: 10px;
-            float: left;
-            border: 1px solid black;
-            /*border-radius: 10px;*/
-            background-color: white;
-            /*box-shadow: 10px 10px 15px 5px #aaaaaa;*/
-            box-shadow: 5px 5px 10px 2px #aaaaaa;
-        }
-
 
     </style>
 
@@ -54,29 +38,37 @@
 <script src="scripts/plot.js"></script>
 <script src="scripts/plot_line.js"></script>
 <script src="scripts/plot_area.js"></script>
+<!--<script src="data.js"></script>-->
 
 <script>
-    var plot = [];
+    var plot = null;
 
     function initialize() {
-        if (typeof plot_data_source != 'undefined') {
+        if (!(typeof plot_data_source === 'undefined')) {
             createPlot();
             updatePlot();
+            plot_data_source.htmlInitialized();
         } else {
+//            createPlot();
+//            plot.setData(data);
             console.log("Unable to load data!");
             alert("Unable to load data!");
         }
     }
 
     function createPlot() {
-        var plot_element = d3.select("body").append("div").attr("id", "plot");
-        plot = new Plot(plot_element, {name: "No data", data: []});
+        plot = new Plot(d3.select("body"), {name: "No data", data: []});
     }
 
     function updatePlot() {
-        plot.setData(eval('(' + plot_data_source.getPlotData() + ')'));
+        var json = plot_data_source.getPlotData();
+        var data = eval('(' + json + ')');
+        plot.setData(data);
     }
 
+    function setSize(width, height) {
+        plot.resize(width - 50, height - 100);
+    }
 
 </script>
 
