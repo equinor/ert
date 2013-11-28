@@ -1940,7 +1940,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
     }
   
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
-    if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , step1 , step1 , step1 , -1))
+    if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , step1 , -1))
       enkf_main_run_post_workflow(enkf_main);
     
     while (true) {
@@ -1962,13 +1962,13 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
 
 
 void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
-  model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
-  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-  analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
+  //model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
+  //const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  //analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
   enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
   cases_config_type * case_config = enkf_fs_get_cases_config( fs );
   int iteration_number = cases_config_get_iteration_number( case_config );
-  const int step1 = 0;
+  //const int step1 = 0;
   bool_vector_type * iactive = bool_vector_alloc(0 , true);
 
   enkf_main_iterate_smoother(enkf_main, iteration_number, "ONE-MORE" , iactive);
