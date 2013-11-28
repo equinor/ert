@@ -133,11 +133,19 @@ function Plot(element, data) {
         .style("refcase-plot-line")
         .duration(this.duration);
 
-    this.ensemble_line = PlotLine()
-        .x(this.x)
-        .y(this.y)
-        .style("ensemble-plot-line")
-        .duration(this.duration);
+
+    this.ensemble_styles = ["ensemble-plot-line-1", "ensemble-plot-line-2", "ensemble-plot-line-3", "ensemble-plot-line-4", "ensemble-plot-line-5"];
+    this.ensemble_lines = {};
+    for (var index in this.ensemble_styles) {
+        var style = this.ensemble_styles[index];
+        this.ensemble_lines[style] = PlotLine()
+            .x(this.x)
+            .y(this.y)
+            .style(style)
+            .duration(this.duration);
+    }
+
+
 
 }
 
@@ -196,22 +204,26 @@ Plot.prototype.setData = function(data) {
     }
 
 
-    var ensemble_lines;
+    for(var ensemble_index in data["ensemble_names"]) {
+        var ensemble_style = this.ensemble_styles[ensemble_index];
+        var name = data["ensemble_names"][ensemble_index];
 
-    if(data["ensemble"] != null) {
         var ensemble_samples = [];
-        for (var index = 0; index < data["ensemble"].length; index++) {
-            ensemble_samples.push(data["ensemble"][index]["samples"]);
+        for (var index = 0; index < data["ensemble"][ensemble_index].length; index++) {
+            ensemble_samples.push(data["ensemble"][ensemble_index][index]["samples"]);
         }
-        ensemble_lines = this.plot.selectAll(".ensemble-plot-line").data(ensemble_samples);
-        ensemble_lines.call(this.ensemble_line);
-
-    } else {
-        ensemble_lines = this.plot.selectAll(".ensemble-plot-line").data([]);
-        ensemble_lines.call(this.ensemble_line);
+        var ensemble_lines = this.plot.selectAll("." + ensemble_style).data(ensemble_samples);
+        ensemble_lines.call(this.ensemble_lines[ensemble_style]);
     }
+
+
+    for(var style_index = data["ensemble_names"].length; style_index < this.ensemble_styles.length; style_index++) {
+        var style = this.ensemble_styles[style_index];
+        var removed_ensemble_lines = this.plot.selectAll("." + style).data([]);
+        removed_ensemble_lines.call(this.ensemble_lines[style]);
+    }
+
 
     this.svg.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
     this.svg.select(".x.axis").transition().duration(this.duration).call(this.x_axis);
-
 };

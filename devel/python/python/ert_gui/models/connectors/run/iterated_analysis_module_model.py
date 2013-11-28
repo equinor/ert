@@ -30,14 +30,10 @@ class IteratedAnalysisModuleModel(ErtConnector, ChoiceModelMixin):
             elif "RML_ENKF" in modules:
                 self.__value = "RML_ENKF"
             else:
-                self.__value = modules[0]
+                if len(modules) > 0:
+                    self.__value = modules[0]
         return self.__value
 
     def setCurrentChoice(self, value):
         self.__value = value
         self.observable().notify(self.CURRENT_CHOICE_CHANGED_EVENT)
-
-
-
-
-
