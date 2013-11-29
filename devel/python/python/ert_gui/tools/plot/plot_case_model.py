@@ -63,6 +63,13 @@ class PlotCaseModel(QAbstractItemModel):
         CaseList().observable().detach(CaseList.LIST_CHANGED_EVENT, self.updateItems)
 
 
+    def __iter__(self):
+        cur = 0
+        while cur < self.rowCount():
+            yield self.itemAt(self.index(cur, 0))
+            cur += 1
+
+
 
 
 
