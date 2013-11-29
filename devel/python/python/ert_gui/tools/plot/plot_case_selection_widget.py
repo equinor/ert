@@ -8,7 +8,7 @@ class CaseSelectionWidget(QWidget):
 
     caseSelectionChanged = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, current_case):
         QWidget.__init__(self)
 
         self.__model = PlotCaseModel()
@@ -33,7 +33,7 @@ class CaseSelectionWidget(QWidget):
         self.__case_layout.setMargin(0)
         layout.addLayout(self.__case_layout)
 
-        self.addCaseSelector(disabled=True)
+        self.addCaseSelector(disabled=True, current_case=current_case)
         layout.addStretch()
 
         self.setLayout(layout)
@@ -45,7 +45,7 @@ class CaseSelectionWidget(QWidget):
         return [str(self.__case_selectors[widget].currentText()) for widget in self.__case_selectors_order]
 
 
-    def addCaseSelector(self, disabled=False):
+    def addCaseSelector(self, disabled=False, current_case=None):
         if len(self.__case_selectors_order) == 5:
             return
 
@@ -59,7 +59,18 @@ class CaseSelectionWidget(QWidget):
         combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         combo.setMinimumContentsLength(20)
         combo.setModel(self.__model)
+
+        if current_case is not None:
+            index = 0
+            for item in self.__model:
+                if item == current_case:
+                    combo.setCurrentIndex(index)
+                    break
+                index += 1
+
         combo.currentIndexChanged.connect(self.caseSelectionChanged.emit)
+
+
 
         layout.addWidget(combo, 1)
 
