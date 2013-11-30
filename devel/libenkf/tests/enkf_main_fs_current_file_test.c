@@ -33,7 +33,9 @@ void test_current_file_not_present_symlink_present(const char * site_config, con
     test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
     test_assert_false(util_file_exists("Storage/current"));
     test_assert_true(util_file_exists("Storage/current_case"));
-    test_assert_string_equal(enkf_main_read_current_case_file(enkf_main), "enkf"); 
+    char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+    test_assert_string_equal(current_case, "enkf"); 
+    free(current_case);
     enkf_main_free(enkf_main);
 }
 
@@ -42,7 +44,9 @@ void test_current_file_present(const char * site_config, const char * model_conf
     enkf_main_type * enkf_main = enkf_main_bootstrap( site_config , model_config , false , false );
     test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
     test_assert_false(util_file_exists("Storage/current"));
-    test_assert_string_equal(enkf_main_read_current_case_file(enkf_main), "enkf"); 
+    char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+    test_assert_string_equal(current_case, "enkf"); 
+    free(current_case); 
     enkf_main_free(enkf_main);
 }
 
@@ -52,12 +56,20 @@ void test_change_case(const char * site_config, const char * model_config) {
     enkf_main_select_fs( enkf_main , "default");
     test_assert_true( enkf_main_case_is_current( enkf_main , "default"));
     test_assert_false( enkf_main_case_is_current(enkf_main , "enkf"));
-    test_assert_string_equal(enkf_main_read_current_case_file(enkf_main), "default"); 
-    
+    {
+      char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+      test_assert_string_equal(current_case, "default"); 
+      free(current_case); 
+    }
+
     enkf_main_select_fs( enkf_main , "enkf");
     test_assert_true( enkf_main_case_is_current( enkf_main , "enkf"));
     test_assert_false( enkf_main_case_is_current(enkf_main , "default"));
-    test_assert_string_equal(enkf_main_read_current_case_file(enkf_main), "enkf"); 
+    {
+      char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+      test_assert_string_equal(current_case, "enkf"); 
+      free(current_case); 
+    }
     
     enkf_fs_type * enkf_fs = enkf_main_mount_alt_fs( enkf_main , "default" , false , false );
     enkf_main_select_fs( enkf_main , "default");
