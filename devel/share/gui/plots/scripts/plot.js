@@ -31,6 +31,9 @@ function Plot(element, data) {
     this.plot_group = group.append("svg")
         .attr("class", "plot-svg");
 
+    this.legend_group = group.append("div")
+        .attr("class", "plot-legend-group");
+
     this.width = 1024 - this.margin.left - this.margin.right;
     this.height = 512 - this.margin.top - this.margin.bottom;
 
@@ -136,7 +139,7 @@ function Plot(element, data) {
         .duration(this.duration);
 
 
-    this.ensemble_styles = ["ensemble-plot-line-1", "ensemble-plot-line-2", "ensemble-plot-line-3", "ensemble-plot-line-4", "ensemble-plot-line-5"];
+    this.ensemble_styles = ["ensemble-plot-1", "ensemble-plot-2", "ensemble-plot-3", "ensemble-plot-4", "ensemble-plot-5"];
     this.ensemble_lines = {};
     for (var index in this.ensemble_styles) {
         var style = this.ensemble_styles[index];
@@ -146,6 +149,8 @@ function Plot(element, data) {
             .style(style)
             .duration(this.duration);
     }
+
+    this.legend = PlotLegend();
 
 }
 
@@ -186,6 +191,8 @@ Plot.prototype.setData = function(data) {
     this.y_scale.domain([min, max]).nice();
     this.x_scale.domain([new Date(data["min_x"] * 1000), new Date(data["max_x"] * 1000)]).nice();
 
+    var legends = [];
+
     var observation_std_points;
     var observation_line;
     var observation_std_area;
@@ -199,10 +206,15 @@ Plot.prototype.setData = function(data) {
             observation_line = this.plot.selectAll(".observation-plot-line").data([observation_samples]);
             observation_std_area = this.plot.selectAll(".observation-plot-area").data([observation_samples]);
             observation_std_points = this.plot.selectAll(".observation-std-point").data([]);
+
+            legends.push({"style": "observation-plot-line", "name": "Observation"});
+            legends.push({"style": "observation-plot-area", "name": "Observation error"});
         } else {
             observation_line = this.plot.selectAll(".observation-plot-line").data([]);
             observation_std_area = this.plot.selectAll(".observation-plot-area").data([]);
             observation_std_points = this.plot.selectAll(".observation-std-point").data(observation_samples);
+
+            legends.push({"style": "observation-std-point", "name": "Observation error bar"});
         }
 
         observation_line.call(this.observation_line);
@@ -226,6 +238,8 @@ Plot.prototype.setData = function(data) {
         refcase_line = this.plot.selectAll(".refcase-plot-line").data([refcase_samples]);
         refcase_line.call(this.refcase_line);
 
+        legends.push({"style": "refcase-plot-line", "name": "Refcase"});
+
     } else {
         refcase_line = this.plot.selectAll(".refcase-plot-line").data([]);
         refcase_line.call(this.refcase_line);
@@ -241,6 +255,8 @@ Plot.prototype.setData = function(data) {
         }
         var ensemble_lines = this.plot.selectAll("." + ensemble_style).data(ensemble_samples);
         ensemble_lines.call(this.ensemble_lines[ensemble_style]);
+
+        legends.push({"style": ensemble_style, "name": data["ensemble_names"][ensemble_index]});
     }
 
     var from = 0;
@@ -253,6 +269,8 @@ Plot.prototype.setData = function(data) {
         var removed_ensemble_lines = this.plot.selectAll("." + style).data([]);
         removed_ensemble_lines.call(this.ensemble_lines[style]);
     }
+
+    this.legend_group.selectAll(".plot-legend").data(legends).call(this.legend);
 
     this.plot_group.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
     this.plot_group.select(".x.axis").transition().duration(this.duration).call(this.x_axis);
