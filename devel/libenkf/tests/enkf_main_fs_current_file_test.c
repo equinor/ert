@@ -93,6 +93,7 @@ int main(int argc, char ** argv) {
   test_current_file_present(site_config, model_config);
   test_change_case(site_config, model_config);
 
+  free(model_config); 
   test_work_area_free( work_area );
   exit(0);
 }
