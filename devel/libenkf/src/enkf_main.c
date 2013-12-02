@@ -2766,7 +2766,7 @@ char* enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main) {
   char * current_case = NULL;  
   const char * ens_path = model_config_get_enspath( enkf_main->model_config);
   char * current_case_file = util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL); 
-  if (util_file_exists(current_case_file)) {
+  if (enkf_main_current_case_file_exists(enkf_main)) {
     FILE * stream = util_fopen( current_case_file  , "r");
     current_case = util_fscanf_alloc_token(stream); 
     util_fclose(stream);
@@ -2801,7 +2801,7 @@ char* enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main) {
          instance WITHOUT INCREASING THE REFCOUNT. This means that
          scope calling one of these functions does not get any
          ownership to the enkf_fs instance.
-     
+ 
    The enkf_main instance will take ownership of the enkf_fs instance;
    this implies that the calling scope must have proper ownership of
    the fs instance which is passed in. The return value from
