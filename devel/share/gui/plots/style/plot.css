@@ -15,13 +15,11 @@
 /* for more details. */
 
 .plot {
-    display: inline-block;
     margin: 20px;
     padding: 10px;
-    float: left;
     border: 1px solid black;
     background-color: white;
-
+    display: inline-block;
 }
 
 .plot-svg {
@@ -40,6 +38,49 @@
     /*color: goldenrod;*/
 
 }
+
+.plot-legend-group {
+    /*background-color: #7FC97F;*/
+    margin-left: auto;
+    margin-right: auto;
+    display: inline-block;
+    float: right;
+
+}
+
+.plot-legend {
+    display: inline;
+    margin-right: 15px;
+}
+
+
+.plot-legend-label {
+    font-family: Helvetica,serif;
+    font-size: small;
+    font-variant: small-caps;
+    display: inline-block;
+    padding-left: 5px;
+}
+
+.plot-legend-box {
+    border: solid 1px #000;
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    background-color: darkorchid;
+}
+
+.plot-legend-line {
+    border: 2px none #000;
+    border-top-style: dotted;
+
+    width: 10px;
+    height: 1px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+
 
 .axis path, .axis line {
     fill: none;
@@ -72,18 +113,17 @@
     stroke: #000;
     stroke-opacity: 1;
     stroke-width: 1px;
-    stroke-dasharray: 5,5;
+    stroke-dasharray: 5, 5;
 }
 
 .observation-plot-area {
-    fill: #FC8D59;
-    fill-opacity: 0.1;
+    fill: #000;
+    fill-opacity: 0.15;
 
-    stroke: #FC8D59;
+    stroke: #000;
     stroke-opacity: 0.2;
     stroke-width: 2px;
-    /*fill: rgba(150, 150, 150, 0.6);*/
-    /*fill: rgba(200, 200, 200, 0.6);*/
+    stroke-dasharray: 5, 5;
 }
 
 
@@ -101,53 +141,7 @@
     stroke-width: 2px;
 }
 
-.ensemble-plot-line-1 {
-    fill: none;
-
-    /*stroke: #007fff;*/
-    stroke: #386CB0;
-    stroke-opacity: 0.2;
-    stroke-width: 2px;
-}
-
-.ensemble-plot-line-2 {
-    fill: none;
-
-    /*stroke: #007fff;*/
-    stroke: #7FC97F;
-    stroke-opacity: 0.2;
-    stroke-width: 2px;
-}
-
-.ensemble-plot-line-3 {
-    fill: none;
-
-    /*stroke: #007fff;*/
-    stroke: #FDC086;
-    stroke-opacity: 0.2;
-    stroke-width: 2px;
-}
-
-.ensemble-plot-line-4 {
-    fill: none;
-
-    /*stroke: #007fff;*/
-    stroke: #F0027F;
-    stroke-opacity: 0.2;
-    stroke-width: 2px;
-}
-
-.ensemble-plot-line-5 {
-    fill: none;
-
-    /*stroke: #007fff;*/
-    stroke: #beaed4;
-    stroke-opacity: 0.2;
-    stroke-width: 2px;
-}
-
-
-.ensemble-plot-area-1 {
+.ensemble-plot-1 {
     fill: #386CB0;
     fill-opacity: 0.3;
 
@@ -157,7 +151,7 @@
     stroke-width: 2px;
 }
 
-.ensemble-plot-area-2 {
+.ensemble-plot-2 {
     fill: #7FC97F;
     fill-opacity: 0.3;
 
@@ -167,7 +161,7 @@
     stroke-width: 2px;
 }
 
-.ensemble-plot-area-3 {
+.ensemble-plot-3 {
     fill: #FDC086;
     fill-opacity: 0.3;
 
@@ -176,7 +170,7 @@
     stroke-opacity: 0.2;
     stroke-width: 2px;
 }
-.ensemble-plot-area-4 {
+.ensemble-plot-4 {
     fill: #F0027F;
     fill-opacity: 0.3;
 
@@ -185,7 +179,7 @@
     stroke-opacity: 0.2;
     stroke-width: 2px;
 }
-.ensemble-plot-area-5 {
+.ensemble-plot-5 {
     fill: #beaed4;
     fill-opacity: 0.3;
 

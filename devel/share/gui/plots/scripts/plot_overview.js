@@ -31,6 +31,9 @@ function Plot(element, data) {
     this.plot_group = group.append("svg")
         .attr("class", "plot-svg");
 
+    this.legend_group = group.append("div")
+        .attr("class", "plot-legend-group");
+
     this.width = 1024 - this.margin.left - this.margin.right;
     this.height = 512 - this.margin.top - this.margin.bottom;
 
@@ -38,8 +41,7 @@ function Plot(element, data) {
         .append("g")
         .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         .style("width", this.width + "px")
-        .style("height", this.height + "px")
-        .attr("fill", "rgb(255, 128, 0)");
+        .style("height", this.height + "px");
 
     this.x_scale = d3.time.scale().range([0, this.width]);
     this.y_scale = d3.scale.linear().range([this.height, 0]).nice();
@@ -148,7 +150,7 @@ function Plot(element, data) {
         .duration(this.duration);
 
 
-    this.ensemble_styles = ["ensemble-plot-area-1", "ensemble-plot-area-2", "ensemble-plot-area-3", "ensemble-plot-area-4", "ensemble-plot-area-5"];
+    this.ensemble_styles = ["ensemble-plot-1", "ensemble-plot-2", "ensemble-plot-3", "ensemble-plot-4", "ensemble-plot-5"];
     this.ensemble_areas = {};
     for (var index in this.ensemble_styles) {
         var style = this.ensemble_styles[index];
@@ -159,6 +161,9 @@ function Plot(element, data) {
             .style(style)
             .duration(this.duration);
     }
+
+
+    this.legend = PlotLegend();
 
 }
 
@@ -199,6 +204,9 @@ Plot.prototype.setData = function(data) {
     this.y_scale.domain([min, max]).nice();
     this.x_scale.domain([new Date(data["min_x"] * 1000), new Date(data["max_x"] * 1000)]).nice();
 
+
+    var legends = [];
+
     var observation_std_points;
     var observation_line;
     var observation_std_area;
@@ -212,15 +220,21 @@ Plot.prototype.setData = function(data) {
             observation_line = this.plot.selectAll(".observation-plot-line").data([observation_samples]);
             observation_std_area = this.plot.selectAll(".observation-plot-area").data([observation_samples]);
             observation_std_points = this.plot.selectAll(".observation-std-point").data([]);
+
+            legends.push({"style": "observation-plot-line", "name": "Observation"});
+            legends.push({"style": "observation-plot-area", "name": "Observation error"});
         } else {
             observation_line = this.plot.selectAll(".observation-plot-line").data([]);
             observation_std_area = this.plot.selectAll(".observation-plot-area").data([]);
             observation_std_points = this.plot.selectAll(".observation-std-point").data(observation_samples);
+
+            legends.push({"style": "observation-std-point", "name": "Observation error bar"});
         }
 
         observation_line.call(this.observation_line);
         observation_std_area.call(this.observation_std_area);
         observation_std_points.call(this.std_plot);
+
     } else {
         observation_line = this.plot.selectAll(".observation-plot-line").data([]);
         observation_std_area = this.plot.selectAll(".observation-plot-area").data([]);
@@ -239,10 +253,13 @@ Plot.prototype.setData = function(data) {
         refcase_line = this.plot.selectAll(".refcase-plot-line").data([refcase_samples]);
         refcase_line.call(this.refcase_line);
 
+        legends.push({"style": "refcase-plot-line", "name": "Refcase"});
+
     } else {
         refcase_line = this.plot.selectAll(".refcase-plot-line").data([]);
         refcase_line.call(this.refcase_line);
     }
+
 
     for(var ensemble_index in data["ensemble_statistics"]) {
         var ensemble_style = this.ensemble_styles[ensemble_index];
@@ -251,6 +268,8 @@ Plot.prototype.setData = function(data) {
         var ensemble_samples = data["ensemble_statistics"][ensemble_index];
         var ensemble_areas = this.plot.selectAll("." + ensemble_style).data([ensemble_samples]);
         ensemble_areas.call(this.ensemble_areas[ensemble_style]);
+
+        legends.push({"style": ensemble_style, "name": data["ensemble_names"][ensemble_index]});
     }
 
     var from = 0;
@@ -263,6 +282,8 @@ Plot.prototype.setData = function(data) {
         var removed_ensemble_lines = this.plot.selectAll("." + style).data([]);
         removed_ensemble_lines.call(this.ensemble_areas[style]);
     }
+
+    this.legend_group.selectAll(".plot-legend").data(legends).call(this.legend);
 
     this.plot_group.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
     this.plot_group.select(".x.axis").transition().duration(this.duration).call(this.x_axis);

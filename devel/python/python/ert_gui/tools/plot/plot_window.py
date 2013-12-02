@@ -1,5 +1,6 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
+from ert_gui.models.connectors.init.case_selector import CaseSelectorModel
 from ert_gui.models.connectors.plot import EnsembleSummaryPlot
 from ert_gui.tools.plot import PlotPanel
 from ert_gui.tools.plot import DataTypeKeysWidget
@@ -36,7 +37,9 @@ class PlotWindow(QMainWindow):
         self.data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self.data_type_keys_widget)
 
-        self.case_selection_widget = CaseSelectionWidget()
+
+        current_case = CaseSelectorModel().getCurrentChoice()
+        self.case_selection_widget = CaseSelectionWidget(current_case)
         self.case_selection_widget.caseSelectionChanged.connect(self.caseSelectionChanged)
         self.addDock("Plot case", self.case_selection_widget)
 
