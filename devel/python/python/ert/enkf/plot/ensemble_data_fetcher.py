@@ -73,6 +73,7 @@ class EnsembleDataFetcher(DataFetcher):
 
         return result
 
+
     def getEnsembleDataForKeyAndCase(self, key, case):
         """ @rtype: list of SampleList """
         ensemble_config_node = self.getEnsembleConfigNode(key)

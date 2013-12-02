@@ -32,6 +32,7 @@ function PlotLine() {
             .append("path")
             .attr("class", plot_style)
             .attr("d", line)
+            .style("fill", "none")
             .style("opacity", 0.0)
             .transition()
             .duration(duration)
