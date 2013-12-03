@@ -1,5 +1,6 @@
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel, QDoubleSpinBox
+from ert_gui.tools.plot import ReportStepWidget
 
 
 class PlotScaleWidget(QWidget):
@@ -18,6 +19,11 @@ class PlotScaleWidget(QWidget):
 
         self.addScaler(PlotScaleWidget.Y_MIN)
         self.addScaler(PlotScaleWidget.Y_MAX)
+        self.__layout.addSpacing(10)
+
+        report_step_widget = ReportStepWidget()
+        self.__layout.addWidget(report_step_widget)
+
         self.__layout.addStretch()
 
         self.setLayout(self.__layout)

@@ -17,6 +17,7 @@ set(PYTHON_SOURCES
     keyword_list.py
     keyword_table.py
     legend.py
+    list_spin_box.py
     path_chooser.py
     path_format.py
     progress.py
