@@ -262,6 +262,7 @@ const char      * enkf_types_get_var_name(enkf_var_type var_type);
 ert_impl_type     enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(ert_impl_type );
 ert_impl_type     enkf_types_check_impl_type(const char * );
+state_enum        enkf_types_get_state_enum(const char *);
 
 #ifdef __cplusplus
 }

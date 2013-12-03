@@ -75,6 +75,7 @@ extern "C" {
   const char                  * enkf_main_get_current_fs( const enkf_main_type * enkf_main );
   void                          enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * case_path );
   bool                          enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case);
+  char *                        enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main); 
   ui_return_type *              enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
   ui_return_type *              enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
   void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );
@@ -276,7 +277,9 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                               const char * kw, 
                               const char * path,
                               int_vector_type * realization_list, 
-                              field_file_format_type file_type);  
+                              field_file_format_type file_type,
+                              int report_step,
+                              state_enum state);  
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
