@@ -47,7 +47,7 @@ class PlotWindow(QMainWindow):
 
         self.plot_scale_widget = PlotScaleWidget()
         self.plot_scale_widget.plotScalesChanged.connect(self.scalesChanged)
-        self.addDock("Plot scales", self.plot_scale_widget)
+        self.addDock("Plot metrics", self.plot_scale_widget)
 
         self.__data_type_key = None
         self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
