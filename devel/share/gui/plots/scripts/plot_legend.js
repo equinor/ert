@@ -50,7 +50,7 @@ function PlotLegend() {
                 return d["name"];
             });
 
-        var labels = selection.selectAll(".plot-legend-label")
+        selection.selectAll(".plot-legend-label")
             .data(function(d) {
                 return [d];
             })
