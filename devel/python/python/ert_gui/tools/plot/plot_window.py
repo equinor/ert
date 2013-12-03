@@ -5,6 +5,7 @@ from ert_gui.models.connectors.plot import EnsembleSummaryPlot
 from ert_gui.tools.plot import PlotPanel
 from ert_gui.tools.plot import DataTypeKeysWidget
 from ert_gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
+from ert_gui.tools.plot.plot_scale_widget import PlotScaleWidget
 from ert_gui.widgets.util import may_take_a_long_time
 
 
@@ -43,10 +44,13 @@ class PlotWindow(QMainWindow):
         self.case_selection_widget.caseSelectionChanged.connect(self.caseSelectionChanged)
         self.addDock("Plot case", self.case_selection_widget)
 
+
+        self.plot_scale_widget = PlotScaleWidget()
+        self.plot_scale_widget.plotScalesChanged.connect(self.scalesChanged)
+        self.addDock("Plot scales", self.plot_scale_widget)
+
         self.__data_type_key = None
         self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
-
-
 
 
 
@@ -73,6 +77,12 @@ class PlotWindow(QMainWindow):
     def caseSelectionChanged(self):
         self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
         self.keySelected(self.__data_type_key)
+
+    def scalesChanged(self):
+        ymin = self.plot_scale_widget.getYMin()
+        ymax = self.plot_scale_widget.getYMax()
+        self.plot_panel.setYScales(ymin, ymax)
+        self.plot_overview_panel.setYScales(ymin, ymax)
 
     @may_take_a_long_time
     def keySelected(self, key):

@@ -70,6 +70,15 @@ class PlotPanel(QWidget):
         self.__data = data
         self.web_view.page().mainFrame().evaluateJavaScript("updatePlot();")
 
+    def setYScales(self, min, max):
+        if min is None:
+            min = "null"
+
+        if max is None:
+            max = "null"
+
+        self.web_view.page().mainFrame().evaluateJavaScript("setYScales(%s,%s);" % (min, max))
+
 
     def applyContextObject(self):
         self.web_view.page().mainFrame().addToJavaScriptWindowObject("plot_data_source", self)

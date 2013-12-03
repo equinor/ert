@@ -20,6 +20,9 @@ function Plot(element, data) {
     this.margin = {left: 90, right: 20, top: 20, bottom: 30};
     this.root_elemenet = element;
 
+    this.custom_y_min = null;
+    this.custom_y_max = null;
+
     var group = this.root_elemenet.append("div")
         .attr("class", "plot");
 
@@ -173,10 +176,17 @@ Plot.prototype.resize = function(width, height) {
     this.svg.style("width", this.width + "px");
     this.svg.style("height", this.height + "px");
 
-    this.setData(this.stored_data);
-
     this.plot_group.select(".x.axis")
         .attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")");
+
+    this.setData(this.stored_data);
+};
+
+Plot.prototype.setYScales = function(min, max) {
+    this.custom_y_min = min;
+    this.custom_y_max = max;
+
+    this.setData(this.stored_data);
 };
 
 
@@ -188,6 +198,15 @@ Plot.prototype.setData = function(data) {
 
     var min = data["min_y"];
     var max = data["max_y"];
+
+    if (this.custom_y_min != null) {
+        min = this.custom_y_min;
+    }
+
+    if (this.custom_y_max != null) {
+        max = this.custom_y_max;
+    }
+
     this.y_scale.domain([min, max]).nice();
     this.x_scale.domain([new Date(data["min_x"] * 1000), new Date(data["max_x"] * 1000)]).nice();
 
