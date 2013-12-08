@@ -1,4 +1,4 @@
-from PyQt4.QtGui import QToolButton
+from PyQt4.QtGui import QToolButton, QComboBox, QTextEdit
 from ert_gui.models.connectors.init import InitializeFromScratchModel, CaseSelectorModel
 from ert_gui.models.connectors.init.case_list import CaseList
 from ert_gui.models.connectors.init.init_from_existing import InitializeFromExistingCaseModel
@@ -6,9 +6,11 @@ from ert_gui.models.connectors.init.init_history_length import HistoryLengthMode
 from ert_gui.models.connectors.init.init_members import InitializationMembersModel
 from ert_gui.models.connectors.init.init_parameters import InitializationParametersModel
 from ert_gui.models.connectors.init.initialized_case_selector import InitializedCaseSelectorModel
+from ert_gui.tools.manage_cases.all_cases_model import AllCasesModel
 from ert_gui.widgets.button import Button
 from ert_gui.widgets.check_list import CheckList
 from ert_gui.widgets.combo_choice import ComboChoice
+from ert_gui.widgets.helped_widget import HelpedWidget
 from ert_gui.widgets.integer_spinner import IntegerSpinner
 from ert_gui.widgets.keyword_list import KeywordList
 from ert_gui.widgets.row_group import RowGroup
@@ -20,10 +22,12 @@ class CaseInitializationConfigurationPanel(RowPanel):
 
     def __init__(self):
         RowPanel.__init__(self, "Case Management")
+        self.setMinimumWidth(600)
 
         self.addCreateNewCaseTab()
         self.addInitializeFromScratchTab()
         self.addInitializeFromExistingTab()
+        self.addShowCaseInfo()
 
         self.endTabs()
 
@@ -124,3 +128,49 @@ class CaseInitializationConfigurationPanel(RowPanel):
         self.addRow(Button(initialize_from_existing, help_link="init/initialize_from_existing"))
 
         self.addSpace(10)
+
+
+    def addShowCaseInfo(self):
+        self.addTab("Case Info")
+
+        case_widget = HelpedWidget("Select case", "init/select_case_for_info")
+
+        model = AllCasesModel()
+        self.combo = QComboBox()
+        self.combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
+        self.combo.setMinimumContentsLength(20)
+        self.combo.setModel(model)
+        self.combo.currentIndexChanged.connect(self.showInfoForCase)
+
+        case_widget.addWidget(self.combo)
+        case_widget.addStretch()
+        self.addRow(case_widget)
+
+
+        area_widget = HelpedWidget("Case info", "init/selected_case_info")
+
+        self.text_area = QTextEdit()
+        self.text_area.setReadOnly(True)
+        self.text_area.setMinimumHeight(300)
+
+        area_widget.addWidget(self.text_area)
+        area_widget.addStretch()
+        self.addRow(area_widget)
+
+        self.showInfoForCase()
+
+
+    def showInfoForCase(self):
+        case = self.combo.currentText()
+
+        states = CaseList().getCaseRealizationStates(str(case))
+
+        html = "<table>"
+        for index in range(len(states)):
+            html += "<tr><td width=30>%d.</td><td>%s</td></tr>" % (index, str(states[index]))
+
+        html += "</table>"
+
+
+        self.text_area.setHtml(html)
+

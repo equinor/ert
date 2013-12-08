@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (C) 2013 Statoil ASA, Norway. -->
 <!--   -->
-<!-- The file 'simple_plot.html' is part of ERT - Ensemble based Reservoir Tool. -->
+<!-- The file 'simple_debug_plot.html' is part of ERT - Ensemble based Reservoir Tool. -->
 <!--   -->
 <!-- ERT is free software: you can redistribute it and/or modify -->
 <!-- it under the terms of the GNU General Public License as published by -->
@@ -24,9 +24,25 @@
         }
 
         body {
+            /*font-family: sans-serif;*/
+            /*font-size: smaller;*/
+            min-width: 350px;
             height: 90%;
             background-color: #eee;
         }
+
+        .map {
+            display: inline-block;
+            margin: 20px;
+            padding: 10px;
+            float: left;
+            border: 1px solid black;
+            /*border-radius: 10px;*/
+            background-color: white;
+            /*box-shadow: 10px 10px 15px 5px #aaaaaa;*/
+            box-shadow: 5px 5px 10px 2px #aaaaaa;
+        }
+
 
     </style>
 
@@ -34,42 +50,34 @@
 </head>
 
 <script src="libs/d3.v3.js"></script>
-<script src="scripts/std_plot.js"></script>
-<script src="scripts/plot.js"></script>
-<script src="scripts/plot_line.js"></script>
-<script src="scripts/plot_area.js"></script>
-<script src="scripts/plot_legend.js"></script>
-<!--<script src="data.js"></script>-->
 
 <script>
-    var plot = null;
+    var node = null;
 
     function initialize() {
-        if (!(typeof plot_data_source === 'undefined')) {
-            createPlot();
+        if (typeof plot_data_source != 'undefined') {
             updatePlot();
             plot_data_source.htmlInitialized();
         } else {
-//            createPlot();
-//            plot.setData(data);
             console.log("Unable to load data!");
             alert("Unable to load data!");
         }
-    }
 
-    function createPlot() {
-        plot = new Plot(d3.select("body"), {name: "No data", data: []});
     }
 
     function updatePlot() {
-        var json = plot_data_source.getPlotData();
-        var data = eval('(' + json + ')');
-        plot.setData(data);
+        var json = eval('(' + plot_data_source.getPlotData() + ')');
+        if(node != null) {
+            document.body.removeChild(node);
+        }
+        node = document.body.appendChild(document.createElement('pre'));
+        node.innerHTML = JSON.stringify(json, undefined, 4);
     }
 
     function setSize(width, height) {
-        plot.resize(width - 50, height - 100);
+        //console.log("Debug: " + width + " - " + height);
     }
+
 
 </script>
 

@@ -282,21 +282,6 @@ void JobQueueSetStopTime_StopTimeLate_AllRealisationsAreRun(char ** argv) {
   run_and_monitor_jobs(argv[1], max_duration_time, stoptime, min_realizations, num_expected_completed, interval_between_jobs);
 }
 
-void JobQueueSetStopTime_StopTimeMedium_MoreThanMinRealisationsAreRun(char ** argv) {
-  printf("Running JobQueueSetStopTime_StopTimeMedium_MoreThanMinRealisationsAreRun\n");
-
-  //Use stop_time to to stop jobs after min_realizations are finished
-  int min_realizations = 1;
-  int num_expected_completed = 2;
-  int max_duration_time = 0;
-  int interval_between_jobs = 3;
-  time_t currenttime;
-  time(&currenttime);
-  time_t stoptime = currenttime + 5;
-  run_and_monitor_jobs(argv[1], max_duration_time, stoptime, min_realizations, num_expected_completed, interval_between_jobs);
-
-}
-
 void JobQueueSetStopTimeAndMaxDuration_MaxDurationShort_StopTimeLate_MinRealisationsAreRun(char ** argv) {
   printf("Running JobQueueSetStopTimeAndMaxDuration_MaxDurationShort_StopTimeLong_MinRealisationsAreRun\n");
 
@@ -495,7 +480,6 @@ int main(int argc, char ** argv) {
 
   JobQueueSetStopTime_StopTimeEarly_MinRealisationsAreRun(argv);
   JobQueueSetStopTime_StopTimeLate_AllRealisationsAreRun(argv);
-  JobQueueSetStopTime_StopTimeMedium_MoreThanMinRealisationsAreRun(argv);
 
   JobQueueSetStopTimeAndMaxDuration_MaxDurationShort_StopTimeLate_MinRealisationsAreRun(argv);
   JobQueueSetStopTimeAndMaxDuration_MaxDurationLong_StopTimeEarly_MinRealisationsAreRun(argv);

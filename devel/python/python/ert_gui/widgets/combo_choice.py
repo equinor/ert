@@ -15,8 +15,6 @@
 #  for more details.
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QComboBox
-import gc
-import sys
 from ert_gui.models.mixins import ChoiceModelMixin
 from ert_gui.widgets.helped_widget import HelpedWidget
 

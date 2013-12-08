@@ -1,5 +1,6 @@
 set(PYTHON_SOURCES
     __init__.py
+    all_cases_model.py
     case_init_configuration.py
     manage_cases_tool.py
 )

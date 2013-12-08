@@ -1,6 +1,6 @@
 // Copyright (C) 2013 Statoil ASA, Norway.
 //
-// The file 'plot.js' is part of ERT - Ensemble based Reservoir Tool.
+// The file 'plot_overview.js' is part of ERT - Ensemble based Reservoir Tool.
 //
 // ERT is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -41,8 +41,7 @@ function Plot(element, data) {
         .append("g")
         .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
         .style("width", this.width + "px")
-        .style("height", this.height + "px")
-        .attr("fill", "rgb(255, 128, 0)");
+        .style("height", this.height + "px");
 
     this.x_scale = d3.time.scale().range([0, this.width]);
     this.y_scale = d3.scale.linear().range([this.height, 0]).nice();
@@ -108,6 +107,18 @@ function Plot(element, data) {
         return self.y_scale(top_function(d));
     };
 
+    this.y_overview_min = function (d) {
+        return self.y_scale(d["min_y"]);
+    };
+
+    this.y_overview_max = function (d) {
+        return self.y_scale(d["max_y"]);
+    };
+
+    this.x_overview = function (d) {
+        return self.x_scale(new Date(d["max_x"] * 1000));
+    };
+
     this.duration = 0;
 
     this.std_plot = StdPlot()
@@ -140,15 +151,17 @@ function Plot(element, data) {
 
 
     this.ensemble_styles = ["ensemble-plot-1", "ensemble-plot-2", "ensemble-plot-3", "ensemble-plot-4", "ensemble-plot-5"];
-    this.ensemble_lines = {};
+    this.ensemble_areas = {};
     for (var index in this.ensemble_styles) {
         var style = this.ensemble_styles[index];
-        this.ensemble_lines[style] = PlotLine()
-            .x(this.x)
-            .y(this.y)
+        this.ensemble_areas[style] = PlotArea()
+            .x(this.x_overview)
+            .y_min(this.y_overview_min)
+            .y_max(this.y_overview_max)
             .style(style)
             .duration(this.duration);
     }
+
 
     this.legend = PlotLegend();
 
@@ -191,6 +204,7 @@ Plot.prototype.setData = function(data) {
     this.y_scale.domain([min, max]).nice();
     this.x_scale.domain([new Date(data["min_x"] * 1000), new Date(data["max_x"] * 1000)]).nice();
 
+
     var legends = [];
 
     var observation_std_points;
@@ -220,6 +234,7 @@ Plot.prototype.setData = function(data) {
         observation_line.call(this.observation_line);
         observation_std_area.call(this.observation_std_area);
         observation_std_points.call(this.std_plot);
+
     } else {
         observation_line = this.plot.selectAll(".observation-plot-line").data([]);
         observation_std_area = this.plot.selectAll(".observation-plot-area").data([]);
@@ -245,29 +260,27 @@ Plot.prototype.setData = function(data) {
         refcase_line.call(this.refcase_line);
     }
 
-    for(var ensemble_index in data["ensemble_names"]) {
-        var ensemble_style = this.ensemble_styles[ensemble_index];
-        var name = data["ensemble_names"][ensemble_index];
 
-        var ensemble_samples = [];
-        for (var index = 0; index < data["ensemble"][ensemble_index].length; index++) {
-            ensemble_samples.push(data["ensemble"][ensemble_index][index]["samples"]);
-        }
-        var ensemble_lines = this.plot.selectAll("." + ensemble_style).data(ensemble_samples);
-        ensemble_lines.call(this.ensemble_lines[ensemble_style]);
+    for(var ensemble_index in data["ensemble_statistics"]) {
+        var ensemble_style = this.ensemble_styles[ensemble_index];
+        var name = data["ensemble_statistics"][ensemble_index];
+
+        var ensemble_samples = data["ensemble_statistics"][ensemble_index];
+        var ensemble_areas = this.plot.selectAll("." + ensemble_style).data([ensemble_samples]);
+        ensemble_areas.call(this.ensemble_areas[ensemble_style]);
 
         legends.push({"style": ensemble_style, "name": data["ensemble_names"][ensemble_index]});
     }
 
     var from = 0;
-    if (data["ensemble_names"] != null) {
+    if (data["ensemble_statistics"] != null) {
         from = data["ensemble_names"].length;
     }
 
     for(var style_index = from; style_index < this.ensemble_styles.length; style_index++) {
         var style = this.ensemble_styles[style_index];
         var removed_ensemble_lines = this.plot.selectAll("." + style).data([]);
-        removed_ensemble_lines.call(this.ensemble_lines[style]);
+        removed_ensemble_lines.call(this.ensemble_areas[style]);
     }
 
     this.legend_group.selectAll(".plot-legend").data(legends).call(this.legend);
