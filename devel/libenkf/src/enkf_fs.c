@@ -495,6 +495,18 @@ static void enkf_fs_fread_state_map( enkf_fs_type * fs ) {
 }
 
 
+state_map_type * enkf_fs_alloc_readonly_state_map( const char * mount_point ) {
+  path_fmt_type * path_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_PATH );
+  char * filename = path_fmt_alloc_file( path_fmt , false , mount_point , STATE_MAP_FILE);
+
+  state_map_type * state_map = state_map_fread_alloc_readonly( filename );
+
+  path_fmt_free( path_fmt );
+  free( filename );
+  return state_map;
+}
+
+
 
 static void enkf_fs_fread_misfit( enkf_fs_type * fs ) {
   FILE * stream = enkf_fs_open_excase_file( fs , MISFIT_ENSEMBLE_FILE );
@@ -809,6 +821,15 @@ const char * enkf_fs_get_root_path( const enkf_fs_type * fs ) {
 
 const char * enkf_fs_get_case_name( const enkf_fs_type * fs ) {
   return fs->case_name;
+}
+
+
+bool enkf_fs_is_read_only(const enkf_fs_type * fs) {
+    return fs->read_only;
+}
+
+void enkf_fs_set_writable(enkf_fs_type * fs) {
+    fs->read_only = false;
 }
 
 void enkf_fs_debug_fprintf( const enkf_fs_type * fs) {

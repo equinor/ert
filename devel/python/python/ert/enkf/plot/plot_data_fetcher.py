@@ -78,6 +78,26 @@ class PlotDataFetcher(DataFetcher):
 
         return plot_data
 
+    def fetchDataForKeyAndCases(self, key, cases):
+        plot_data = PlotData()
+        plot_data.name = key
+
+        observations = ObservationDataFetcher(self.ert()).getObservationsForKey(key)
+        refcase = RefcaseDataFetcher(self.ert()).getRefcaseDataForKey(key)
+
+        if not observations is None:
+            plot_data.setObservations(observations)
+
+        if not refcase is None:
+            plot_data.setRefcase(refcase)
+
+        for case in cases:
+            ensemble_plot_data, ensemble_statistics = EnsembleDataFetcher(self.ert()).getEnsembleDataForKeyAndCase(key, case)
+            if len(ensemble_plot_data) > 0:
+                plot_data.addEnsemble(case, ensemble_plot_data, ensemble_statistics)
+
+        return plot_data
+
 
 
 

@@ -1,5 +1,5 @@
 from ert.cwrap import CWrapper, BaseCClass
-from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType
+from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap
 from ert.util import StringList
 
 
@@ -8,6 +8,8 @@ class EnkfFsManager(BaseCClass):
     def __init__(self, enkf_main):
         assert isinstance(enkf_main, BaseCClass)
         super(EnkfFsManager, self).__init__(enkf_main.from_param(enkf_main).value, parent=enkf_main, is_reference=True)
+        self.__cached_file_systems = {}
+        """ @type: dict of (str, EnkfFs) """
 
 
     def isCaseInitialized(self, case):
@@ -16,13 +18,13 @@ class EnkfFsManager(BaseCClass):
     def selectFileSystem(self, path):
         EnkfFsManager.cNamespace().select_fs(self, path)
 
-    def fs_exists(self, case):
-        """ @rtype: bool """
-        return EnkfFsManager.cNamespace().fs_exists(self, case)
-
-    def get_alt_fs(self, fs, read_only, create):
-        """ @rtype: EnkfFs """
-        return EnkfFsManager.cNamespace().get_alt_fs(self, fs, read_only, create).setParent(self)
+    # def fs_exists(self, case):
+    #     """ @rtype: bool """
+    #     return EnkfFsManager.cNamespace().fs_exists(self, case)
+    #
+    # def get_alt_fs(self, fs, read_only, create):
+    #     """ @rtype: EnkfFs """
+    #     return EnkfFsManager.cNamespace().get_alt_fs(self, fs, read_only, create).setParent(self)
 
     def isInitialized(self):
         """ @rtype: bool """
@@ -52,19 +54,40 @@ class EnkfFsManager(BaseCClass):
     def initializeFromScratch(self, parameter_list, iens1, iens2, force_init=True):
         EnkfFsManager.cNamespace().initialize_from_scratch(self, parameter_list, iens1, iens2, force_init)
 
-    def set_case_table(self, case_table_file):
-        EnkfFsManager.cNamespace().set_case_table(self, case_table_file)
+    # def set_case_table(self, case_table_file):
+    #     EnkfFsManager.cNamespace().set_case_table(self, case_table_file)
 
     def mountAlternativeFileSystem(self, case, read_only, create):
         """ @rtype: EnkfFs """
         assert isinstance(case, str)
         assert isinstance(read_only, bool)
         assert isinstance(create, bool)
-        return EnkfFsManager.cNamespace().mount_alt_fs(self, case, read_only, create)
+
+        if case in self.__cached_file_systems and not read_only:
+            fs = self.__cached_file_systems[case]
+
+            if fs.isReadOnly():
+                print("Removed a read only file system from cache: %s" % case)
+                del self.__cached_file_systems[case]
+
+        if not case in self.__cached_file_systems:
+            print("Added a file system to cache: %s" % case)
+            self.__cached_file_systems[case] = EnkfFsManager.cNamespace().mount_alt_fs(self, case, read_only, create)
+        else:
+            print("Provided a file system from cache: %s" % case)
+
+        return self.__cached_file_systems[case]
+
 
     def switchFileSystem(self, files_system):
         assert isinstance(files_system, EnkfFs)
         EnkfFsManager.cNamespace().switch_fs(self, files_system, None)
+
+
+    def getStateMapForCase(self, case):
+        """ @rtype: StateMap """
+        assert isinstance(case, str)
+        return EnkfFsManager.cNamespace().alloc_readonly_state_map(self, case)
 
 
 
@@ -86,4 +109,6 @@ EnkfFsManager.cNamespace().initialize_from_scratch = cwrapper.prototype("void en
 EnkfFsManager.cNamespace().is_initialized = cwrapper.prototype("bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)")
 EnkfFsManager.cNamespace().is_case_initialized = cwrapper.prototype("bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)")
 EnkfFsManager.cNamespace().initialize_from_existing = cwrapper.prototype("void enkf_main_initialize_from_existing__(enkf_fs_manager, char*, int, enkf_state_type_enum, bool_vector, char*, stringlist)")
+
+EnkfFsManager.cNamespace().alloc_readonly_state_map = cwrapper.prototype("state_map_obj enkf_main_alloc_readonly_state_map(enkf_fs_manager, char*)")
 

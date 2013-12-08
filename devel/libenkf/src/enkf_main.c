@@ -1940,7 +1940,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
     }
   
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
-    if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , step1 , step1 , step1 , -1))
+    if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , step1 , -1))
       enkf_main_run_post_workflow(enkf_main);
     
     while (true) {
@@ -1962,13 +1962,13 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
 
 
 void enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2) {
-  model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
-  const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
-  analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
+  //model_config_type * model_config = enkf_main_get_model_config( enkf_main ); 
+  //const analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
+  //analysis_iter_config_type * iter_config = analysis_config_get_iter_config( analysis_config );
   enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
   cases_config_type * case_config = enkf_fs_get_cases_config( fs );
   int iteration_number = cases_config_get_iteration_number( case_config );
-  const int step1 = 0;
+  //const int step1 = 0;
   bool_vector_type * iactive = bool_vector_alloc(0 , true);
 
   enkf_main_iterate_smoother(enkf_main, iteration_number, "ONE-MORE" , iactive);
@@ -2654,22 +2654,8 @@ void enkf_main_create_fs( enkf_main_type * enkf_main , const char * fs_path) {
 }
 */
 
-static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char * case_path) {
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
-  
-  /* 1: Create a symlink pointing to the currently open case. */
-  {
-    char * current_link = util_alloc_filename( ens_path , CURRENT_CASE , NULL );
-    {
-      if (util_entry_exists( current_link ))
-        unlink( current_link );
-      symlink( case_path , current_link );
-    }
-    free( current_link );
-  }
-
-
-  /* 2: Update a small text file with the name of the host currently
+static void update_case_log(enkf_main_type * enkf_main , const char * case_path) {
+  /*  : Update a small text file with the name of the host currently
         running ert, the pid number of the process, the active case
         and when it started. 
         
@@ -2678,6 +2664,9 @@ static void enkf_main_link_current_fs__( enkf_main_type * enkf_main , const char
         is in the file. For that reason we open with mode 'a' instead
         of 'w'.
   */
+  
+  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  
   {
     int buffer_size = 256;
     char * current_host = util_alloc_filename( ens_path , CASE_LOG , NULL );
@@ -2743,8 +2732,21 @@ void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
   stringlist_free( gen_data_keys );
 }
 
-static void enkf_main_update_case_link( enkf_main_type * enkf_main , const char * case_path) {
-  enkf_main_link_current_fs__( enkf_main , case_path);
+
+static void enkf_main_write_current_case_file( const enkf_main_type * enkf_main, const char * case_path) {
+  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  const char * base = CURRENT_CASE_FILE; 
+  char * current_case_file = util_alloc_filename(ens_path , base, NULL);
+  FILE * stream = util_fopen( current_case_file  , "w");
+  fprintf(stream , case_path ); 
+  util_fclose(stream);
+  free(current_case_file);
+}
+
+static void enkf_main_update_current_case( enkf_main_type * enkf_main , const char * case_path) {
+  enkf_main_write_current_case_file(enkf_main, case_path); 
+  update_case_log(enkf_main , case_path);
+  
   enkf_main->current_fs_case = util_realloc_string_copy( enkf_main->current_fs_case , case_path);
   enkf_main_gen_data_special( enkf_main );
   enkf_main_add_subst_kw( enkf_main , "ERT-CASE" , enkf_main->current_fs_case , "Current case" , true );
@@ -2752,6 +2754,31 @@ static void enkf_main_update_case_link( enkf_main_type * enkf_main , const char 
 }
 
 
+static bool enkf_main_current_case_file_exists( const enkf_main_type * enkf_main) {
+  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  char * current_case_file = util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL); 
+  bool exists = util_file_exists(current_case_file); 
+  free(current_case_file);
+  return exists; 
+}
+
+char* enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main) {
+  char * current_case = NULL;  
+  const char * ens_path = model_config_get_enspath( enkf_main->model_config);
+  char * current_case_file = util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL); 
+  if (enkf_main_current_case_file_exists(enkf_main)) {
+    FILE * stream = util_fopen( current_case_file  , "r");
+    current_case = util_fscanf_alloc_token(stream); 
+    util_fclose(stream);
+  } else {
+    util_abort("%s: File: storage/current_case not found, aborting! \n",__func__);
+  }
+  free(current_case_file);  
+  return current_case; 
+}
+
+  
+  
 /**
    The enkf_fs instances employ a simple reference counting
    scheme. The main point with this system is to avoid opening the
@@ -2774,7 +2801,7 @@ static void enkf_main_update_case_link( enkf_main_type * enkf_main , const char 
          instance WITHOUT INCREASING THE REFCOUNT. This means that
          scope calling one of these functions does not get any
          ownership to the enkf_fs instance.
-     
+ 
    The enkf_main instance will take ownership of the enkf_fs instance;
    this implies that the calling scope must have proper ownership of
    the fs instance which is passed in. The return value from
@@ -2792,8 +2819,8 @@ void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const ch
     enkf_main_close_fs( enkf_main );
     
   enkf_main->dbase = fs;
-  enkf_main_update_case_link( enkf_main , case_path );
-}
+  enkf_main_update_current_case(enkf_main, case_path); 
+ }
 
 
 
@@ -2810,7 +2837,7 @@ stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main ) {
           dp = readdir( ens_dir );
           if (dp != NULL) {
             if (!(util_string_equal( dp->d_name , ".") || util_string_equal(dp->d_name , ".."))) {
-              if (!util_string_equal( dp->d_name , CURRENT_CASE)) {
+              if (!util_string_equal( dp->d_name , CURRENT_CASE_FILE)) {
                 char * full_path = util_alloc_filename( ens_path , dp->d_name , NULL);
                 if (util_is_directory( full_path ))
                   stringlist_append_copy( case_list , dp->d_name );
@@ -2860,11 +2887,15 @@ bool enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * c
 */
 
 enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
-  if (enkf_main_case_is_current( enkf_main , case_path ))
+  if (enkf_main_case_is_current( enkf_main , case_path )) {
     // Fast path - we just return a reference to the currently selected case;
     // with increased refcount.
-    return enkf_fs_get_ref( enkf_main->dbase ); 
-  else {
+    if(!read_only) {
+        enkf_fs_type * fs = enkf_main->dbase;
+        enkf_fs_set_writable(fs);
+    }
+    return enkf_fs_get_ref( enkf_main->dbase );
+  } else {
     // We have asked for an alterantive fs - must mount and possibly create that first.
     enkf_fs_type * new_fs = NULL;
     if (case_path != NULL) {
@@ -2882,6 +2913,13 @@ enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const c
   }
 }
 
+
+state_map_type * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path) {
+  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
+  state_map_type * state_map = enkf_fs_alloc_readonly_state_map( mount_point );
+  free( mount_point );
+  return state_map;
+}
 
 
 
@@ -2929,21 +2967,26 @@ void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_ca
   if (root_version == -1 || root_version == 105) {
     if (input_case == NULL) {
       char * current_mount_point = util_alloc_filename( ens_path , CURRENT_CASE , NULL);
-      
-      if (enkf_fs_exists( current_mount_point )) {
-        // We will mount the case under the 'current' link; we use
-        // readlink to get hold of the actual target before calling the 
-        // enkf_main_select_fs() function
+
+      if (enkf_main_current_case_file_exists(enkf_main)) { 
+        char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
+        enkf_main_select_fs(enkf_main, current_case);
+        free (current_case);
+      } else if (enkf_fs_exists( current_mount_point ) && util_is_link( current_mount_point )) {
+        /*If the current_case file does not exists, but the 'current' symlink does we use readlink to 
+          get hold of the actual target before calling the  enkf_main_select_fs() function. We then 
+          write the current_case file and delete the symlink.*/
         char * target_case = util_alloc_atlink_target( ens_path , CURRENT_CASE );
-        enkf_main_select_fs( enkf_main , target_case );  // Selecting (a new) default case
+        enkf_main_select_fs( enkf_main , target_case );  
+        unlink(current_mount_point); 
+        enkf_main_write_current_case_file(enkf_main, target_case); 
         free( target_case );
+        free( current_mount_point );
       } else 
         enkf_main_select_fs( enkf_main , DEFAULT_CASE );  // Selecting (a new) default case
-
-      free( current_mount_point );
     } else
       enkf_main_select_fs( enkf_main , input_case );
-  }  else {
+  } else {
     fprintf(stderr,"Sorry: the filesystem located in %s must be upgraded before the current ERT version can read it.\n" , ens_path);
     exit(1);
   }

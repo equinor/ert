@@ -68,12 +68,14 @@ extern "C" {
   //void                          enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs);
   bool                          enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path);
   enkf_fs_type                * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
+  state_map_type              * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path);
   stringlist_type             * enkf_main_alloc_caselist( const enkf_main_type * enkf_main );
   void                          enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path );
   char                        * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path);
   const char                  * enkf_main_get_current_fs( const enkf_main_type * enkf_main );
   void                          enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * case_path );
   bool                          enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case);
+  char *                        enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main); 
   ui_return_type *              enkf_main_set_eclbase( enkf_main_type * enkf_main , const char * eclbase_fmt);
   ui_return_type *              enkf_main_set_data_file( enkf_main_type * enkf_main , const char * data_file );
   void                          enkf_main_set_user_config_file( enkf_main_type * enkf_main , const char * user_config_file );

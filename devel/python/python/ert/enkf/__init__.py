@@ -43,6 +43,7 @@ from .local_config import LocalConfig
 from .model_config import ModelConfig
 from .plot_config import PlotConfig
 from .site_config import SiteConfig
+from .state_map import StateMap
 from .enkf_simulation_runner import EnkfSimulationRunner
 from .enkf_fs_manager import EnkfFsManager
 
