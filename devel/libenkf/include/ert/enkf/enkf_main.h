@@ -280,6 +280,8 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                               field_file_format_type file_type,
                               int report_step,
                               state_enum state);  
+  
+  bool enkf_main_export_field_job(const enkf_main_type * enkf_main,const stringlist_type * args, field_file_format_type file_type);
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
