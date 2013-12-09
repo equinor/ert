@@ -3958,10 +3958,6 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 
 
 
-
-
-
-
 bool enkf_main_export_field(const enkf_main_type * enkf_main, 
                             const char * kw, 
                             const char * path, 
