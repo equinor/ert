@@ -54,7 +54,7 @@ void surface_clear(surface_type * surface) {
 
 bool surface_fload( surface_type * surface , const char * filename ) {
   bool ret = false; 
-  if (filename != NULL) {
+  if (filename) {
     const geo_surface_type * base_surface = surface_config_get_base_surface( surface->config );
     ret = geo_surface_fload_irap_zcoord( base_surface , filename , surface->data );
   }
