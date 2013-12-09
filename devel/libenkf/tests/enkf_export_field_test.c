@@ -29,6 +29,27 @@
 #include <ert/enkf/enkf_types.h>
 #include <ert/enkf/enkf_main.h>
 
+void check_exported_files_exists() {
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field/PermZ0.grdecl"));
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field/PermZ2.grdecl"));
+
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ0"));
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ1"));
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ2"));
+
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX0.roff"));
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX1.roff"));
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX2.roff"));
+
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX0.grdecl"));
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX1.grdecl"));
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX2.grdecl"));
+
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermZ0"));
+  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermZ1")); 
+}
+
+
 
 int main(int argc , const char ** argv) {
   enkf_main_install_SIGNALS();
@@ -50,28 +71,10 @@ int main(int argc , const char ** argv) {
   ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list(enkf_main);
   log_type * logh = enkf_main_get_logh(enkf_main); 
   ert_workflow_list_add_jobs_in_directory(workflow_list, job_dir_path, logh); 
-  
   test_assert_true(ert_workflow_list_has_workflow( workflow_list , "EXPORT_FIELDS" ));  
-        
   test_assert_true(ert_workflow_list_run_workflow(workflow_list  , "EXPORT_FIELDS" , enkf_main));
 
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field/PermZ0.grdecl"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field/PermZ2.grdecl"));
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ0.roff"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ1.roff"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermZ2.roff"));
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX0.roff"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX1.roff"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_rms_roff/PermX2.roff"));
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX0.grdecl"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX1.grdecl"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermX2.grdecl"));
-
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermZ0.grdecl"));
-  test_assert_true(util_file_exists("TEST_EXPORT/test_export_field_ecl_grdecl/PermZ1.grdecl")); 
+  check_exported_files_exists(); 
 
   enkf_main_free( enkf_main );
   test_work_area_free(work_area); 
