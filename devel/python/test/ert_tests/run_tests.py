@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+import sys
 
 try:
     from unittest2 import TestLoader, TextTestRunner
@@ -26,6 +28,7 @@ def importClass(classpath):
     m = __import__(classpath[0:dot], globals(), locals(), [classname])
     return getattr(m, classname)
 
+
 def getTestsFromTestClass(test_class_path, argv=None):
     klass = importClass(test_class_path)
     klass.argv = argv
@@ -34,7 +37,4 @@ def getTestsFromTestClass(test_class_path, argv=None):
 
 
 if __name__ == '__main__':
-    # runTestsInDirectory()
-    runTestsInClass("ert_tests.util.test_string_list.StringListTest")
-
-    print(getTestsFromTestClass("ert_tests.util.test_string_list.StringListTest"))
+    runTestsInDirectory()
