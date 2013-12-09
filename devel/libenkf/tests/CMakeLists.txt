@@ -181,6 +181,23 @@ add_test( enkf_forward_init_FIELD_FALSE
 
 #-----------------------------------------------------------------
 
+add_executable( enkf_forward_init_transform enkf_forward_init_transform.c )
+target_link_libraries( enkf_forward_init_transform enkf test_util )
+
+add_test( enkf_forward_init_transform_TRUE
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_transform
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_true
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
+          TRUE)
+
+add_test( enkf_forward_init_transform_FALSE
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_transform
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform transform_forward_init_false
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/transform/petro.grdecl
+          FALSE)
+
+#-----------------------------------------------------------------
+
 
 add_executable( enkf_iter_config enkf_iter_config.c )
 target_link_libraries( enkf_iter_config enkf test_util )
@@ -246,6 +263,8 @@ set_property( TEST enkf_forward_init_SURFACE_FALSE  PROPERTY LABELS StatoilData 
 set_property( TEST enkf_forward_init_SURFACE_TRUE   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_forward_init_FIELD_TRUE   PROPERTY LABELS StatoilData )
+set_property( TEST enkf_forward_init_transform_TRUE   PROPERTY LABELS StatoilData )
+set_property( TEST enkf_forward_init_transform_FALSE  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_main_fs   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_summary_vars_present PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_no_summary_vars_present PROPERTY LABELS StatoilData )

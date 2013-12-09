@@ -427,13 +427,9 @@ bool enkf_node_forward_load(enkf_node_type *enkf_node , const char * run_path , 
 
 bool enkf_node_forward_init(enkf_node_type * enkf_node , const char * run_path , int iens) {
   char * init_file = enkf_config_node_alloc_initfile( enkf_node->config , run_path , iens );
-  bool loadOK = false;
-  if (init_file) {
-    FUNC_ASSERT(enkf_node->fload);
-    loadOK = enkf_node->fload( enkf_node->data , init_file );
-  }
+  bool init = enkf_node->initialize(enkf_node->data , iens , init_file, NULL);
   util_safe_free( init_file );
-  return loadOK;
+  return init;
 }
 
 
