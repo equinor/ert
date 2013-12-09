@@ -53,15 +53,18 @@ void surface_clear(surface_type * surface) {
 }
 
 bool surface_fload( surface_type * surface , const char * filename ) {
-  const geo_surface_type * base_surface = surface_config_get_base_surface( surface->config );
-  return geo_surface_fload_irap_zcoord( base_surface , filename , surface->data );
+  bool ret = false; 
+  if (filename != NULL) {
+    const geo_surface_type * base_surface = surface_config_get_base_surface( surface->config );
+    ret = geo_surface_fload_irap_zcoord( base_surface , filename , surface->data );
+  }
+  return ret; 
 }
 
 
 
 bool surface_initialize(surface_type *surface , int iens , const char * filename , rng_type * rng) {
-  surface_fload(surface , filename );
-  return true;
+  return surface_fload(surface , filename );
 }
 
 

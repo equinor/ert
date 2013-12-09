@@ -669,7 +669,7 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
 
   if (output_transform) field_output_transform(field);
   {
-    
+  
     /*  Writes the field to in ecl_kw format to a new file.  */
     if ((file_type == ECL_KW_FILE_ALL_CELLS) || (file_type == ECL_KW_FILE_ACTIVE_CELLS)) {
       fortio_type * fortio;
@@ -685,7 +685,7 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
       fortio_fclose(fortio);
     } else if (file_type == ECL_GRDECL_FILE) {
       /* Writes the field to a new grdecl file. */
-      FILE * stream = util_fopen(file , "w");
+      FILE * stream = util_mkdir_fopen(file , "w");
       field_ecl_grdecl_export(field , stream);
       fclose(stream);
     } else if (file_type == RMS_ROFF_FILE) 
@@ -728,6 +728,7 @@ void field_ecl_write(const field_type * field , const char * run_path , const ch
 
 
 bool field_initialize(field_type *field , int iens , const char * init_file , rng_type * rng) {
+  bool ret = false; 
   if (init_file != NULL) {
     if (field_fload(field , init_file )) {
       field_func_type * init_transform   = field_config_get_init_transform(field->config);
@@ -741,11 +742,11 @@ bool field_initialize(field_type *field , int iens , const char * init_file , rn
         if (!field_check_finite( field ))
           util_exit("Sorry: after applying the init transform field:%s contains nan/inf or similar malformed values.\n" , field_config_get_key( field->config ));
       }
-      return true; 
+      ret = true;  
     }
-  } 
-  
-  return false;  /* The field is initialized as part of the forward model. */
+  }
+
+  return ret;  
 } 
 
 
