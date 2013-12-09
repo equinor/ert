@@ -130,7 +130,7 @@ bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , const char * init_file ,
   
   bool ret = false; 
   
-  if (init_file != NULL) 
+  if (init_file) 
     ret = gen_kw_fload(gen_kw , init_file );
   else {
     const double mean = 0.0; /* Mean and std are hardcoded - the variability should be in the transformation. */

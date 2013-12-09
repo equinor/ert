@@ -729,7 +729,7 @@ void field_ecl_write(const field_type * field , const char * run_path , const ch
 
 bool field_initialize(field_type *field , int iens , const char * init_file , rng_type * rng) {
   bool ret = false; 
-  if (init_file != NULL) {
+  if (init_file) {
     if (field_fload(field , init_file )) {
       field_func_type * init_transform   = field_config_get_init_transform(field->config);
       /* 
@@ -737,7 +737,7 @@ bool field_initialize(field_type *field , int iens , const char * init_file , rn
          the data, not as the output transform which is done on a copy of
          prior to export.
       */
-      if (init_transform != NULL) {
+      if (init_transform) {
         field_apply(field , init_transform);
         if (!field_check_finite( field ))
           util_exit("Sorry: after applying the init transform field:%s contains nan/inf or similar malformed values.\n" , field_config_get_key( field->config ));
