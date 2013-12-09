@@ -3958,27 +3958,7 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 
 
 
-bool enkf_main_export_field_job(const enkf_main_type * enkf_main, const stringlist_type * args, field_file_format_type file_type) {
-  const char *      field            = stringlist_iget(args, 0); 
-  const char *      file_name        = stringlist_iget(args, 1); 
-  int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
-  int               report_step      = 0;
-  util_sscanf_int(stringlist_iget(args,2), &report_step);
-  state_enum        state            = enkf_types_get_state_enum(stringlist_iget(args, 3)); 
-    
-  char * range_str = stringlist_alloc_joined_substring( args , 4 , stringlist_get_size(args), "");  
-  string_util_update_active_list(range_str, realization_list); 
-  
-  if (0 == int_vector_size(realization_list)) {
-      const char * range_str = util_alloc_sprintf("0-%d", enkf_main_get_ensemble_size( enkf_main )-1); 
-      string_util_update_active_list(range_str, realization_list); 
-  }  
-  
-  enkf_main_export_field(enkf_main,field, file_name, realization_list, file_type, report_step, state) ; 
-  
-  int_vector_free(realization_list);  
-  return true; 
-}
+
 
 
 
