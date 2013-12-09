@@ -303,7 +303,7 @@ Plot.prototype.setData = function(data) {
         removed_ensemble_lines.call(this.ensemble_areas[style]);
     }
 
-    this.legend_group.selectAll(".plot-legend").data(legends).call(this.legend);
+//    this.legend_group.selectAll(".plot-legend").data(legends).call(this.legend);
 
     this.plot_group.select(".y.axis").transition().duration(this.duration).call(this.y_axis);
     this.plot_group.select(".x.axis").transition().duration(this.duration).call(this.x_axis);
