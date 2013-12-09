@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (C) 2013 Statoil ASA, Norway. -->
 <!--   -->
-<!-- The file 'simple_plot.html' is part of ERT - Ensemble based Reservoir Tool. -->
+<!-- The file 'histogram.html' is part of ERT - Ensemble based Reservoir Tool. -->
 <!--   -->
 <!-- ERT is free software: you can redistribute it and/or modify -->
 <!-- it under the terms of the GNU General Public License as published by -->
@@ -34,17 +34,10 @@
 </head>
 
 <script src="libs/d3.v3.js"></script>
-<script src="scripts/styles.js"></script>
-<script src="scripts/canvas_plot.js"></script>
-<script src="scripts/canvas_plot_line.js"></script>
-<script src="scripts/canvas_plot_area.js"></script>
-<script src="scripts/canvas_error_bar.js"></script>
-<script src="scripts/canvas_plot_circle.js"></script>
-<script src="scripts/canvas_plot_legend.js"></script>
-<script src="data.js"></script>
+<script src="scripts/histogram.js"></script>
 
 <script>
-    var plot = null;
+    var histogram = null;
 
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
@@ -52,29 +45,31 @@
             updatePlot();
             plot_data_source.htmlInitialized();
         } else {
-            createPlot();
-            plot.setData(data);
+//            createPlot();
+//            plot.setData(data);
             console.log("Unable to load data!");
             alert("Unable to load data!");
         }
     }
 
     function createPlot() {
-        plot = new Plot(d3.select("body"), {name: "No data", data: []});
+        var histogram_div = d3.select("body").append("div").attr("class", "histogram-div");
+        histogram = new Histogram(histogram_div);
     }
 
     function updatePlot() {
-        var json = plot_data_source.getPlotData();
-        var data = eval('(' + json + ')');
-        plot.setData(data);
+//        var json = plot_data_source.getPlotData();
+//        var data = eval('(' + json + ')');
+//        histogram.setData(data);
+        histogram(d3.range(1000).map(d3.random.irwinHall(10)));
     }
 
     function setSize(width, height) {
-        plot.resize(width - 50, height - 100);
+        histogram.resize(width - 50, height - 100);
     }
 
     function setYScales(min, max) {
-        plot.setYScales(min, max);
+//        histogram.setYScales(min, max);
     }
 
 </script>
