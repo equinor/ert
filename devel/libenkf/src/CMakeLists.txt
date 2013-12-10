@@ -97,6 +97,7 @@ set( header_files
      enkf_state.h 
      enkf_util.h 
      enkf_main.h 
+     enkf_main_jobs.h 
      enkf_node.h 
      enkf_fs.h 
      gen_kw_config.h 
