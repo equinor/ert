@@ -102,7 +102,7 @@ int main(int argc , char ** argv) {
     test_assert_int_equal(error, 0); 
   }
 
-  check_original_exported_data_equal(field_node);
+  test_assert_true(check_original_exported_data_equal(field_node));
 
   enkf_main_free(enkf_main);    
   test_work_area_free(work_area); 
