@@ -394,6 +394,7 @@ set_property( TEST python.tests.ert.ecl.ecl_queue_LOCAL   PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_sum           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_kw            PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_rft           PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
 
