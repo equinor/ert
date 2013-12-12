@@ -33,6 +33,12 @@ class EnsemblePlotData(BaseCClass):
         """ @rtype: EnsemblePlotDataVector """
         return EnsemblePlotData.cNamespace().get(self, index)
 
+    def __iter__(self):
+        cur = 0
+        while cur < len(self):
+            yield self[cur]
+            cur += 1
+
 
     def free(self):
         EnsemblePlotData.cNamespace().free(self)
