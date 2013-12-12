@@ -1492,6 +1492,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
                                int init_step_parameter          ,
                                state_enum init_state_parameter  ,
                                state_enum init_state_dynamic    ,
+                               int iter                         ,
                                int step1                        ,
                                int step2) {
 
@@ -1544,7 +1545,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
         enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
         runpath_list_type * runpath_list = qc_module_get_runpath_list( enkf_main->qc_module );
         runpath_list_clear( runpath_list );
-        
+
         for (iens = 0; iens < active_ens_size; iens++) {
           enkf_state_type * enkf_state = enkf_main->ensemble[iens];
           if (bool_vector_iget(iactive , iens)) {
@@ -1560,6 +1561,7 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
                                 init_state_parameter,
                                 init_state_dynamic  ,
                                 load_start ,
+                                iter ,
                                 step1 ,
                                 step2 );
 
@@ -1719,7 +1721,7 @@ void enkf_main_run_exp(enkf_main_type * enkf_main            ,
     int load_start                  = start_report;
     state_enum init_state_parameter = start_state;
     state_enum init_state_dynamic   = start_state;
-    if (enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , -1))
+    if (enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , 0, start_report , -1))
       enkf_main_run_post_workflow(enkf_main);
   }
 }
@@ -1794,7 +1796,7 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
           load_start++;
       
         enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter ,
-                           init_state_parameter , init_state_dynamic , report_step1 , report_step2);
+                           init_state_parameter , init_state_dynamic , 0, report_step1 , report_step2);
         {
           enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
           state_map_type * state_map = enkf_fs_get_state_map(fs);
@@ -1835,7 +1837,7 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
 
 bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_enum init_mode) {
   enkf_main_init_run( enkf_main , iactive , ENSEMBLE_EXPERIMENT , init_mode);
-  return enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0 , 0 );
+  return enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0, 0 , 0 );
 }
 
 
@@ -1906,7 +1908,9 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
       free(runpath_key);
     }
     */
-    enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , step1 , -1 );
+
+    //enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int iens) {
+    enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iteration_number,  step1 , -1 );
   }
   int_vector_free(step_list);
   return updateOK;
@@ -1940,7 +1944,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
     }
   
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
-    if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , step1 , -1))
+    if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iter, step1 , -1))
       enkf_main_run_post_workflow(enkf_main);
     
     while (true) {
