@@ -1835,9 +1835,9 @@ void enkf_main_run_assimilation(enkf_main_type * enkf_main            ,
 }
 
 
-bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_enum init_mode) {
+bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_enum init_mode, int iter) {
   enkf_main_init_run( enkf_main , iactive , ENSEMBLE_EXPERIMENT , init_mode);
-  return enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , 0, 0 , 0 );
+  return enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , 0 , 0 , ANALYZED , UNDEFINED , iter, 0 , 0 );
 }
 
 
@@ -1845,28 +1845,16 @@ bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * i
 void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , bool rerun) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
-    if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL))
+    if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL, 0))
       enkf_main_run_post_workflow(enkf_main);
     {
       enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
       bool update_done = enkf_main_smoother_update( enkf_main , target_fs );
       
       if (rerun) { 
-        /* 
-           IFF a rerun path has been added with the RERUN_PATH config
-           key the model_config object will select that runpath as the
-           currently active one. If no path has been created with the
-           RERUN_PATH config option the model_config_select_runpath()
-           call will fail silently.
-           
-           The runpath select with this call will remain the currently
-           active runpath for the remaining part of this program
-           invocation.
-        */
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
-          model_config_select_runpath( enkf_main_get_model_config( enkf_main ) , RERUN_PATH_KEY );  
-          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE ))
+          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, 1))
             enkf_main_run_post_workflow(enkf_main);
         } else {
           fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
@@ -1898,20 +1886,9 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
     cases_config_set_int(enkf_fs_get_cases_config(target_fs), "iteration_number", iteration_number+1);
   }
 
-  if (updateOK) {
-    /*
-    const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iteration_number);
-    if (runpath_fmt != NULL ) {
-      char * runpath_key = util_alloc_sprintf("runpath-%d", 999);
-      model_config_add_runpath(model_config, runpath_key, runpath_fmt);
-      model_config_select_runpath(model_config, runpath_key);
-      free(runpath_key);
-    }
-    */
-
-    //enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int iens) {
+  if (updateOK)
     enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iteration_number,  step1 , -1 );
-  }
+
   int_vector_free(step_list);
   return updateOK;
 }
@@ -1923,7 +1900,6 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
   
   if (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
-    model_config_type * model_config = enkf_main_get_model_config(enkf_main);
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
     bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
     
@@ -1932,17 +1908,6 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
     int iter = 0;
     int num_iter = analysis_iter_config_get_num_iterations(iter_config);
 
-    {
-      const char * runpath_fmt = analysis_iter_config_iget_runpath_fmt(iter_config, iter);
-      if (runpath_fmt != NULL )
-        {
-          char * runpath_key = util_alloc_sprintf("runpath-%d", iter);
-          model_config_add_runpath(model_config, runpath_key, runpath_fmt);
-          model_config_select_runpath(model_config, runpath_key);
-          free(runpath_key);
-        }
-    }
-  
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
     if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iter, step1 , -1))
       enkf_main_run_post_workflow(enkf_main);
@@ -2283,8 +2248,7 @@ static void enkf_main_init_user_config( const enkf_main_type * enkf_main , confi
   config_schema_item_iset_type( item , 0 , CONFIG_EXISTING_PATH );
 
   config_add_key_value(config , RUNPATH_KEY , false , CONFIG_STRING);
-  config_add_key_value(config , RERUN_PATH_KEY , false , CONFIG_STRING);
-  
+
   item = config_add_schema_item(config , ENSPATH_KEY , false  );
   config_schema_item_set_argc_minmax(item , 1 , 1 );
 
