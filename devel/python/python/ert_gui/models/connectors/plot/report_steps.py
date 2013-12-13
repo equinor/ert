@@ -21,7 +21,7 @@ class ReportStepsModel(ErtConnector, ListModelMixin):
 
 
     def getList(self):
-        """ @rtype: list of str """
+        """ @rtype: list of ctime """
         return [c_time for c_time in self.getReportSteps()]
 
 
