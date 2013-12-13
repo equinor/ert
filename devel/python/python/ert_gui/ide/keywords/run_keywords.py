@@ -10,7 +10,6 @@ class RunKeywords(object):
         ert_keywords.addKeyword(self.addKeepRunpath())
         ert_keywords.addKeyword(self.addInstallJob())
         ert_keywords.addKeyword(self.addRunpath())
-        ert_keywords.addKeyword(self.addRerunPath())
         ert_keywords.addKeyword(self.addRunpathFile())
         ert_keywords.addKeyword(self.addForwardModel())
         ert_keywords.addKeyword(self.addJobScript())
@@ -63,15 +62,6 @@ class RunKeywords(object):
                                                   required=False,
                                                   group=self.group)
         return runpath
-
-
-    def addRerunPath(self):
-        rerun_path = ConfigurationLineDefinition(keyword=KeywordDefinition("RERUN_PATH"),
-                                                  arguments=[PathArgument()],
-                                                  documentation_link="run/rerun_path",
-                                                  required=False,
-                                                  group=self.group)
-        return rerun_path
 
 
 
