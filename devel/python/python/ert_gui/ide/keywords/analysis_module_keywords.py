@@ -11,7 +11,6 @@ class AnalysisModuleKeywords(object):
         ert_keywords.addKeyword(self.addAnalysisSelect())
         ert_keywords.addKeyword(self.addAnalysisCopy())
         ert_keywords.addKeyword(self.addAnalysisSetVar())
-        ert_keywords.addKeyword(self.addIterRunpath())
         ert_keywords.addKeyword(self.addIterCase())
         ert_keywords.addKeyword(self.addIterCount())
         ert_keywords.addKeyword(self.addStdCutoff())
@@ -59,14 +58,6 @@ class AnalysisModuleKeywords(object):
         return analysis_copy
 
 
-
-    def addIterRunpath(self):
-        iter_runpath = ConfigurationLineDefinition(keyword=KeywordDefinition("ITER_RUNPATH"),
-                                                   arguments=[PathArgument()],
-                                                   documentation_link="analysis_module/iter_runpath",
-                                                   required=False,
-                                                   group=self.group)
-        return iter_runpath
 
 
     def addIterCase(self):
