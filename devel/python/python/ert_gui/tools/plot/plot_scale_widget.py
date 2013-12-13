@@ -52,7 +52,8 @@ class PlotScaleWidget(QWidget):
         spinner.setMinimumWidth(75)
         max = 999999999999
         spinner.setRange(-max,max)
-        spinner.valueChanged.connect(self.plotScalesChanged)
+        # spinner.valueChanged.connect(self.plotScalesChanged)
+        spinner.editingFinished.connect(self.plotScalesChanged)
         layout.addWidget(spinner)
 
 
