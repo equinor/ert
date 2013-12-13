@@ -13,3 +13,4 @@ set(PYTHON_SOURCES
 
 add_python_package("python.ert_gui.tools.plot"  ${PYTHON_INSTALL_PREFIX}/ert_gui/tools/plot "${PYTHON_SOURCES}" True)
 
+add_subdirectory(data)
