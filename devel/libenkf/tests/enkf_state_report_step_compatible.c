@@ -75,7 +75,7 @@ int main(int argc , char ** argv) {
     int step1 = 1; 
     int step2 = 1; 
     
-    enkf_state_init_run(state, run_mode, active, max_internal_sumbit, init_step_parameter, init_state_parameter, init_state_dynamic, load_start, step1, step2); 
+    enkf_state_init_run(state, run_mode, active, max_internal_sumbit, init_step_parameter, init_state_parameter, init_state_dynamic, load_start, 0, step1, step2);
   }
 
   test_assert_bool_equal(check_compatible, check_ecl_sum_compatible(enkf_main));

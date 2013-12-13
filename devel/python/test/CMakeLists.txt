@@ -28,6 +28,7 @@ set(TEST_SOURCES
     ert_tests/ecl/test_rft.py
     ert_tests/ecl/test_rft_cell.py
     ert_tests/ecl/test_sum.py
+    ert_tests/ecl/test_ecl_sum_vector.py
 
     ert_tests/enkf/__init__.py
     ert_tests/enkf/test_enkf.py
@@ -326,6 +327,10 @@ add_test( NAME python.tests.ert.ecl.ecl_sum
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_sum.SumTest)
 
+add_test( NAME python.tests.ert.ecl.ecl_sum_vector
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.ecl.test_ecl_sum_vector.EclSumVectorTest)
+
 
 
 
@@ -384,6 +389,7 @@ set_property( TEST python.tests.ert.ecl.ecl_queue_LOCAL   PROPERTY LABELS Python
 set_property( TEST python.tests.ert.ecl.ecl_sum           PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_kw            PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_rft           PROPERTY LABELS Python:StatoilData )
+set_property( TEST python.tests.ert.ecl.ecl_sum_vector    PROPERTY LABELS Python:StatoilData )
 set_property( TEST python.tests.ert.ecl.ecl_grid          PROPERTY LABELS Python:StatoilData:Slow )
 #set_property( TEST python.tests.import_local             PROPERTY LABELS Python:StatoilBuild )
 

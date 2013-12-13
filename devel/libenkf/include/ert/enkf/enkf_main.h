@@ -120,7 +120,7 @@ extern "C" {
   bool                          enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * target_fs);
 
   void                          enkf_main_run_post_workflow( enkf_main_type * enkf_main );
-  bool                          enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_enum init_mode);
+  bool                          enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * iactive , init_mode_enum init_mode, int iter);
 
   void                          enkf_main_run_exp(enkf_main_type * enkf_main            ,
                                                   bool_vector_type * iactive      , 
@@ -280,7 +280,8 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                               field_file_format_type file_type,
                               int report_step,
                               state_enum state);  
-
+  
+  
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
 
