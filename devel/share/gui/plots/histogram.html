@@ -34,6 +34,8 @@
 </head>
 
 <script src="libs/d3.v3.js"></script>
+<script src="scripts/styles.js"></script>
+<script src="scripts/canvas_plot_rect.js"></script>
 <script src="scripts/histogram.js"></script>
 
 <script>
@@ -58,10 +60,8 @@
     }
 
     function updatePlot() {
-//        var json = plot_data_source.getPlotData();
-//        var data = eval('(' + json + ')');
-//        histogram.setData(data);
-        histogram(d3.range(1000).map(d3.random.irwinHall(10)));
+        var data = plot_data_source.getPlotData();
+        histogram(data);
     }
 
     function setSize(width, height) {
