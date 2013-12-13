@@ -68,10 +68,8 @@
   is selected with model_config_select_runpath(). However this
   implementation is quite different from the way manipulation of the
   runpath is exposed to the user: The runpath is controlled through
-  the RUNPATH config key (key DEFAULT_RUNPATH_KEY in the hash table),
-  and the optional RERUN_PATH config key (key RERUN_PATH_KEY in the
-  hash table). These two semantically predefined runpaths are the two
-  only options visible to the user.
+  the RUNPATH config key (key DEFAULT_RUNPATH_KEY in the hash table)
+  This semantically predefined runpath is the only option visible to the user.
  */
 
 #define MODEL_CONFIG_TYPE_ID 661053
@@ -413,14 +411,7 @@ void model_config_init(model_config_type * model_config ,
     model_config_add_runpath( model_config , DEFAULT_RUNPATH_KEY , config_get_value(config , RUNPATH_KEY) );
     model_config_select_runpath( model_config , DEFAULT_RUNPATH_KEY );
   }
-  
-  if (config_item_set( config, RERUN_PATH_KEY)) 
-    model_config_add_runpath( model_config , RERUN_PATH_KEY , config_get_value(config , RERUN_PATH_KEY) );
 
-  if (sched_file != NULL) {
-
-  }
-  
   {
     history_source_type source_type = DEFAULT_HISTORY_SOURCE;
 

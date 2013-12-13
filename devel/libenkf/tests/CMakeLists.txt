@@ -210,6 +210,15 @@ add_executable( enkf_iter_config enkf_iter_config.c )
 target_link_libraries( enkf_iter_config enkf test_util )
 add_test( enkf_iter_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_iter_config )
 
+
+add_executable( enkf_state_runpath_test enkf_state_runpath_test.c )
+target_link_libraries( enkf_state_runpath_test enkf test_util )
+add_test( enkf_state_runpath_test  ${EXECUTABLE_OUTPUT_PATH}/enkf_state_runpath_test
+                                   ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/enkf_state_runpath
+                                   config_runpath_single_run
+                                   config_runpath_multiple_iterations )
+
+
 add_executable( enkf_model_config enkf_model_config.c )
 target_link_libraries( enkf_model_config enkf test_util )
 add_test( enkf_model_config  ${EXECUTABLE_OUTPUT_PATH}/enkf_model_config )
@@ -278,3 +287,4 @@ set_property( TEST enkf_state_no_summary_vars_present PROPERTY LABELS StatoilDat
 set_property( TEST enkf_export_field_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_select_case_job   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_main_fs_current_file_test  PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_runpath_test  PROPERTY LABELS StatoilData )

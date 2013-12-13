@@ -95,7 +95,8 @@ typedef struct run_info_struct {
   int                     num_internal_submit;   
   int                     load_start;           /* When loading back results - start at this step. */
   int                     step1;                /* The forward model is integrated: step1 -> step2 */
-  int                     step2;                  
+  int                     step2;
+  int                     iter;
   char                  * run_path;             /* The currently used  runpath - is realloced / freed for every step. */
   run_mode_type           run_mode;             /* What type of run this is */
   int                     queue_index;          /* The job will in general have a different index in the queue than the iens number. */
@@ -157,7 +158,7 @@ struct enkf_state_struct {
 static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt_type * run_path_fmt, const subst_list_type * state_subst_list) {
   util_safe_free(run_info->run_path);
   {
-    char * tmp1 = path_fmt_alloc_path(run_path_fmt , false , iens , run_info->step1 , run_info->step2);   /* 1: Replace the %d with iens */
+    char * tmp1 = path_fmt_alloc_path(run_path_fmt , false , iens, run_info->iter);   /* 1: Replace first %d with iens, if a second %d replace with iter */
     char * tmp2 = subst_list_alloc_filtered_string( state_subst_list , tmp1 );                            /* 2: Filter out various magic strings like <CASE> and <CWD>. */
     run_info->run_path = util_alloc_abs_path( tmp2 );                                                     /* 3: Ensure that the path is absolute. */
     free( tmp1 );
@@ -209,7 +210,8 @@ static void run_info_set(run_info_type * run_info        ,
                          state_enum init_state_dynamic   ,
                          int load_start                  , 
                          int step1                       , 
-                         int step2                       ,      
+                         int step2                       ,
+                         int iter                        ,
                          int iens                             , 
                          path_fmt_type * run_path_fmt ,
                          const subst_list_type * state_subst_list) {
@@ -223,6 +225,7 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->run_mode             = run_mode;
   run_info->max_internal_submit  = max_internal_submit;
   run_info->num_internal_submit  = 0;
+  run_info->iter                 = iter;
   run_info_init_for_load( run_info , load_start , step1 , step2 , iens , run_path_fmt , state_subst_list);
 }
 
@@ -2169,6 +2172,7 @@ void enkf_state_init_run(enkf_state_type * state ,
                          state_enum init_state_parameter , 
                          state_enum init_state_dynamic   , 
                          int load_start          , 
+                         int iter                ,
                          int step1               , 
                          int step2) {
 
@@ -2186,6 +2190,7 @@ void enkf_state_init_run(enkf_state_type * state ,
                 load_start , 
                 step1 , 
                 step2 , 
+                iter ,
                 member_config_get_iens( my_config ), 
                 model_config_get_runpath_fmt( shared_info->model_config ),
                 state->subst_list );
