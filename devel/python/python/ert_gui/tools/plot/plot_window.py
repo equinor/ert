@@ -27,9 +27,9 @@ class PlotWindow(QMainWindow):
         self.plot_overview_panel.plotReady.connect(self.plotReady)
         self.central_tab.addTab(self.plot_overview_panel, "Ensemble overview plot")
 
-        # self.histogram_panel = PlotPanel("Histogram", "gui/plots/histogram.html")
-        # self.histogram_panel.plotReady.connect(self.plotReady)
-        # self.central_tab.addTab(self.histogram_panel, "Histogram")
+        self.histogram_panel = PlotPanel("Histogram", "gui/plots/histogram.html")
+        self.histogram_panel.plotReady.connect(self.plotReady)
+        self.central_tab.addTab(self.histogram_panel, "Histogram")
 
         self.data_type_keys_widget = DataTypeKeysWidget()
         self.data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
@@ -64,8 +64,7 @@ class PlotWindow(QMainWindow):
 
 
     def checkPlotStatus(self):
-        # return self.plot_panel.isReady() and self.histogram_panel.isReady() and self.plot_overview_panel.isReady()
-        return self.plot_panel.isReady() and self.plot_overview_panel.isReady()
+        return self.plot_panel.isReady() and self.histogram_panel.isReady() and self.plot_overview_panel.isReady()
 
     def plotReady(self):
         if self.checkPlotStatus():
@@ -93,4 +92,4 @@ class PlotWindow(QMainWindow):
 
             self.plot_panel.setPlotData(data)
             self.plot_overview_panel.setPlotData(data)
-            # self.histogram_panel.setPlotData(data)
+            self.histogram_panel.setPlotData(data)
