@@ -2,7 +2,6 @@ from ert.enkf import EnsConfig
 from ert.enkf.ensemble_data import EnsemblePlotData
 from ert.enkf.enums import ErtImplType
 from ert.enkf.plot.data_fetcher import DataFetcher
-from ert_gui.time_it import timeit
 
 
 class EnsembleDataFetcher(DataFetcher):
@@ -22,7 +21,6 @@ class EnsembleDataFetcher(DataFetcher):
         return ensemble_config.getNode(key)
 
 
-    # @timeit
     def fetchData(self, key, case=None):
         ensemble_config_node = self.getEnsembleConfigNode(key)
         enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)

@@ -1,6 +1,5 @@
 from ert.enkf import EnkfObservationImplementationType
 from ert.enkf.plot import DataFetcher
-from ert_gui.time_it import timeit
 
 
 class ObservationDataFetcher(DataFetcher):
@@ -62,7 +61,6 @@ class ObservationDataFetcher(DataFetcher):
         return y - std
 
 
-    # @timeit
     def fetchData(self, key, case=None):
         obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
         history_length = self.ert().getHistoryLength()

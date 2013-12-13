@@ -2,12 +2,10 @@ from ert.enkf.plot import EnsembleDataFetcher, ObservationDataFetcher, RefcaseDa
 from ert_gui.tools.plot.data import PlotData
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins import ModelMixin
-from ert_gui.time_it import timeit
 
 
 class PlotDataFetcher(ErtConnector, ModelMixin):
 
-    @timeit
     def getPlotDataForKeyAndCases(self, key, cases):
         plot_data = PlotData(key)
 
