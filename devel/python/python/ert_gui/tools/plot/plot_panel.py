@@ -2,7 +2,6 @@ import os
 from PyQt4.QtCore import QUrl, Qt, pyqtSlot, pyqtSignal, QObject
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
 from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
-from ert_gui.time_it import timeit
 from ert_gui.tools.plot.data import PlotData
 
 
@@ -66,7 +65,6 @@ class PlotPanel(QWidget):
         self.__html_ready = True
         self.checkStatus()
 
-    @timeit
     def setPlotData(self, data):
         self.__data = data
         self.web_view.page().mainFrame().evaluateJavaScript("updatePlot();")

@@ -252,7 +252,7 @@ BasePlot.prototype.renderObservations = function(context, data) {
             this.circle_renderer(context, x_values[y_values.length - 1], y_values[y_values.length - 1]);
 
             this.addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.circledLine);
-            this.addLegend(STYLES["observation_area"], "Observation", CanvasPlotLegend.filledCircle);
+            this.addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
         } else {
 
             var obs_x_samples = data.observationXValues();
