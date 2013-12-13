@@ -35,6 +35,7 @@
 
 <script src="libs/d3.v3.js"></script>
 <script src="scripts/styles.js"></script>
+<script src="scripts/base_plot.js"></script>
 <script src="scripts/canvas_plot_overview.js"></script>
 <script src="scripts/canvas_plot_line.js"></script>
 <script src="scripts/canvas_plot_area.js"></script>
@@ -59,12 +60,11 @@
     }
 
     function createPlot() {
-        plot = new Plot(d3.select("body"), {name: "No data", data: []});
+        plot = new OverviewPlot(d3.select("body"));
     }
 
     function updatePlot() {
-        var json = plot_data_source.getPlotData();
-        var data = eval('(' + json + ')');
+        var data = plot_data_source.getPlotData();
         plot.setData(data);
     }
 
