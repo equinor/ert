@@ -1,6 +1,7 @@
 from ert.cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap
 from ert.util import StringList
+from ert_gui.time_it import timeit
 
 
 class EnkfFsManager(BaseCClass):
@@ -57,6 +58,7 @@ class EnkfFsManager(BaseCClass):
     # def set_case_table(self, case_table_file):
     #     EnkfFsManager.cNamespace().set_case_table(self, case_table_file)
 
+    @timeit
     def mountAlternativeFileSystem(self, case, read_only, create):
         """ @rtype: EnkfFs """
         assert isinstance(case, str)

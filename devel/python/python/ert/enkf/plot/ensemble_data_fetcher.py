@@ -1,20 +1,14 @@
 from ert.enkf import EnsConfig
-from ert.enkf.ensemble_data import EnsemblePlotData, EnsemblePlotDataVector
+from ert.enkf.ensemble_data import EnsemblePlotData
 from ert.enkf.enums import ErtImplType
-from ert.enkf.plot import SimpleSample, SampleListCollection, SampleList
-from ert.enkf.plot.data.sample_statistics import SampleStatistics
 from ert.enkf.plot.data_fetcher import DataFetcher
+from ert_gui.time_it import timeit
 
 
 class EnsembleDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(EnsembleDataFetcher, self).__init__(ert)
-        self.report_times = {}
 
-
-    def fetchData(self):
-        """ @rtype: SampleListCollection """
-        return self.getEnsembleData()
 
     def getSummaryKeys(self):
         """ @rtype: StringList """
@@ -27,79 +21,73 @@ class EnsembleDataFetcher(DataFetcher):
         assert ensemble_config.hasKey(key)
         return ensemble_config.getNode(key)
 
-    def getRealizationData(self, key, ensemble_plot_data_vector):
-        """ @rtype: SampleList """
-        assert isinstance(ensemble_plot_data_vector, EnsemblePlotDataVector)
 
-        samples = SampleList()
-        samples.group = key
-        active_count = 0
-        for index in range(len(ensemble_plot_data_vector)):
-            if ensemble_plot_data_vector.isActive(index):
-                sample = SimpleSample()
-                sample.y = ensemble_plot_data_vector.getValue(index)
-                sample.x = ensemble_plot_data_vector.getTime(index).ctime()
-
-                samples.addSample(sample)
-                active_count += 1
-
-        samples.min_x = samples.statistics.min_x
-        samples.max_x = samples.statistics.max_x
-
-        return samples
-
-
-
-    def getEnsembleDataForKey(self, key):
-        """ @rtype: list of SampleList """
-        ensemble_config_node = self.getEnsembleConfigNode(key)
-        enkf_fs = self.ert().getEnkfFsManager().getFileSystem()
-        enkf_plot_data = EnsemblePlotData(ensemble_config_node, enkf_fs)
-
-        result = []
-        for index in range(len(enkf_plot_data)):
-            result.append(self.getRealizationData(key, enkf_plot_data[index]))
-
-
-        return result
-
-
-    def getEnsembleData(self):
-        keys = self.getSummaryKeys()
-
-        result = {}
-        for key in keys:
-            result[key] = self.getEnsembleDataForKey(key)
-
-        return result
-
-
-    def getEnsembleDataForKeyAndCase(self, key, case):
-        """ @rtype: list of SampleList """
+    # @timeit
+    def fetchData(self, key, case=None):
         ensemble_config_node = self.getEnsembleConfigNode(key)
         enkf_fs = self.ert().getEnkfFsManager().mountAlternativeFileSystem(case, True, False)
         ensemble_plot_data = EnsemblePlotData(ensemble_config_node, enkf_fs)
 
-        statistics = []
-        result = []
-        for index in range(len(ensemble_plot_data)):
-            sample_list = self.getRealizationData(key, ensemble_plot_data[index])
-            result.append(sample_list)
+        data = {
+            "x": [],
+            "y": [],
+            "min_y_values": None,
+            "max_y_values": None,
+            "min_y": None,
+            "max_y": None,
+            "min_x": None,
+            "max_x": None
+        }
 
-            for index in range(len(sample_list.samples)):
-                if index == len(statistics):
-                    statistics.append(SampleStatistics())
-                statistics[index].addSample(sample_list.samples[index])
+        for vector in ensemble_plot_data:
+            if data["x"] is None or data["y"] is None:
+                data["x"] = []
+                data["y"] = []
+
+            if data["min_y_values"] is None or data["max_y_values"] is None:
+                data["min_y_values"] = []
+                data["max_y_values"] = []
+
+                for index in range(len(vector)):
+                    if vector.isActive(index):
+                        data["min_y_values"].append(vector.getValue(index))
+                        data["max_y_values"].append(vector.getValue(index))
 
 
-        return result, statistics
+            x = []
+            y = []
+            data["x"].append(x)
+            data["y"].append(y)
+
+            active_index = 0
+            for index in range(len(vector)):
+                if vector.isActive(index):
+                    y_value = vector.getValue(index)
+                    y.append(y_value)
+
+                    x_value = vector.getTime(index).ctime()
+                    x.append(x_value)
+
+                    if data["min_x"] is None or data["min_x"] > x_value:
+                        data["min_x"] = x_value
+
+                    if data["max_x"] is None or data["max_x"] < x_value:
+                        data["max_x"] = x_value
+
+                    if data["min_y"] is None or data["min_y"] > y_value:
+                        data["min_y"] = y_value
+
+                    if data["max_y"] is None or data["max_y"] < y_value:
+                        data["max_y"] = y_value
 
 
+                    if data["min_y_values"][active_index] is None or data["min_y_values"][active_index] > y_value:
+                        data["min_y_values"][active_index] = y_value
+
+                    if data["max_y_values"][active_index] is None or data["max_y_values"][active_index] < y_value:
+                        data["max_y_values"][active_index] = y_value
 
 
+                    active_index += 1
 
-
-
-
-
-
+        return data

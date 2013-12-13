@@ -8,7 +8,7 @@ class DataFetcher(object):
         self.__ert = ert
 
 
-    def fetchData(self):
+    def fetchData(self, key, case=None):
         raise NotImplementedError()
 
     def ert(self):

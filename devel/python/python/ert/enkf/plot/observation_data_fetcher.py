@@ -1,5 +1,6 @@
 from ert.enkf import EnkfObservationImplementationType
-from ert.enkf.plot import DataFetcher, Sample, SampleListCollection, SampleList
+from ert.enkf.plot import DataFetcher
+from ert_gui.time_it import timeit
 
 
 class ObservationDataFetcher(DataFetcher):
@@ -13,87 +14,76 @@ class ObservationDataFetcher(DataFetcher):
         keys = sorted(keys)
         return keys
 
-    def getFirstReportStep(self):
-        return self.ert().getObservations().getObservationTime(0).ctime()
 
-    def getLastReportStep(self):
-        history_length = self.ert().getHistoryLength()
-        return self.ert().getObservations().getObservationTime(history_length - 1).ctime()
-
-
-    def getObservationsForKey(self, key):
-        """ @rtype: SampleList """
-        obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
-
-        if len(obs_keys) == 0:
-            return None
-
-        sample_list = SampleList()
-        sample_list.group = key
-        sample_list.min_x = self.getFirstReportStep()
-        sample_list.max_x = self.getLastReportStep()
-
-        for obs_key in obs_keys:
-            observations = self.getObservations(obs_key)
-
-            for observation in observations:
-                sample_list.addSample(observation)
-
-        return sample_list
-
-
-    def getObservations(self, key):
-        """ @rtype: list of Sample """
+    def __getObservationData(self, key, data):
         observations = self.ert().getObservations()
         assert observations.hasKey(key)
+
         observation_data = observations.getObservationsVector(key)
         active_count = observation_data.getActiveCount()
 
-        result = []
         history_length = self.ert().getHistoryLength()
         for index in range(0, history_length):
             if observation_data.isActive(index):
-                sample = Sample()
-                sample.index = index
-                sample.x = observations.getObservationTime(index).ctime()
+                x_value = int(observations.getObservationTime(index).ctime())
+                data["x"].append(x_value)
 
                 #: :type: SummaryObservation
                 node = observation_data.getNode(index)
 
-                sample.y = node.getValue()
-                sample.std = node.getStandardDeviation()
-                sample.group = node.getSummaryKey()
-                sample.name = key
+                y_value = node.getValue()
+                std = node.getStandardDeviation()
+                data["y"].append(float(y_value))
+                data["std"].append(float(std))
+
+                if data["min_x"] is None or data["min_x"] > x_value:
+                    data["min_x"] = x_value
+
+                if data["max_x"] is None or data["max_x"] < x_value:
+                    data["max_x"] = x_value
+
+
+                adjusted_y = self.adjustY(y_value, std)
+
+                if data["min_y"] is None or data["min_y"] > adjusted_y:
+                    data["min_y"] = adjusted_y
+
+                if data["max_y"] is None or data["max_y"] < y_value + std:
+                    data["max_y"] = y_value + std
 
                 if active_count == 1:
-                    sample.single_point = True
+                    data["continuous"] = False
 
-                result.append(sample)
+    @staticmethod
+    def adjustY(y, std):
+        if y >= 0:
+            return max(0, y - std)
 
-        return result
-
-    def getAllObservations(self):
-        keys = self.getObservationKeys()
-
-        result = SampleListCollection()
-
-        for key in keys:
-            observations = self.getObservations(key)
-
-            for observation in observations:
-                if not observation.group in result:
-                    sample_list = SampleList()
-                    sample_list.group = observation.group
-                    sample_list.min_x = self.getFirstReportStep()
-                    sample_list.max_x = self.getLastReportStep()
-
-                    result.addSampleList(sample_list)
-
-                result[observation.group].addSample(observation)
-
-        return result
-
-    def fetchData(self):
-        return self.getAllObservations()
+        return y - std
 
 
+    # @timeit
+    def fetchData(self, key, case=None):
+        obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
+        history_length = self.ert().getHistoryLength()
+
+        data = {"continuous": True,
+                "x": None,
+                "y": None,
+                "std": None,
+                "min_y": None,
+                "max_y": None,
+                "min_x": None,
+                "max_x": None}
+
+        if len(obs_keys) == 0:
+            return data
+
+        data["x"] = []
+        data["y"] = []
+        data["std"] = []
+
+        for obs_key in obs_keys:
+            self.__getObservationData(obs_key, data)
+
+        return data
