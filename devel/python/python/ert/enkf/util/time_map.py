@@ -15,17 +15,47 @@
 #  for more details.
 from ert.cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB
+from ert.util import ctime
 
 
 class TimeMap(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def iget_sim_days(self, step):
+    def getSimulationDays(self, step):
+        """ @rtype: double """
+        if not isinstance(step, int):
+            raise TypeError("Expected an integer")
+
+        size = len(self)
+        if step < 0 or step >= size:
+            raise IndexError("Index out of range: 0 <= %d < %d" % (step, size))
+
         return TimeMap.cNamespace().iget_sim_days(self, step)
 
-    def iget(self, step):
-        return TimeMap.cNamespace().iget(self, step)
+
+    def __getitem__(self, index):
+        """ @rtype: ctime """
+        if not isinstance(index, int):
+            raise TypeError("Expected an integer")
+
+        size = len(self)
+        if index < 0 or index >= size:
+            raise IndexError("Index out of range: 0 <= %d < %d" % (index, size))
+
+        return TimeMap.cNamespace().iget(self, index)
+
+
+    def __iter__(self):
+        cur = 0
+
+        while cur < len(self):
+            yield self[cur]
+            cur += 1
+
+    def __len__(self):
+        """ @rtype: int """
+        return TimeMap.cNamespace().size(self)
 
     def free(self):
         TimeMap.cNamespace().free(self)
@@ -42,4 +72,5 @@ cwrapper.registerType("time_map_ref", TimeMap.createCReference)
 
 TimeMap.cNamespace().free = cwrapper.prototype("void time_map_free( time_map )")
 TimeMap.cNamespace().iget_sim_days = cwrapper.prototype("double time_map_iget_sim_days(time_map, int)")
-TimeMap.cNamespace().iget = cwrapper.prototype("int time_map_iget(time_map, int)")
+TimeMap.cNamespace().iget = cwrapper.prototype("time_t time_map_iget(time_map, int)")
+TimeMap.cNamespace().size = cwrapper.prototype("int time_map_get_size(time_map)")

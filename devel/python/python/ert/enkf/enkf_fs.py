@@ -37,7 +37,7 @@ class EnkfFs(BaseCClass):
         buffer = Buffer(100)
         EnkfFs.cNamespace().fread_vector(self, buffer, key, type, member, value)
 
-    def get_time_map(self):
+    def getTimeMap(self):
         return EnkfFs.cNamespace().get_time_map(self).setParent(self)
 
     def getCaseName(self):

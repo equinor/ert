@@ -1,10 +1,8 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
-from ert_gui.models.connectors.init.case_selector import CaseSelectorModel
-from ert_gui.models.connectors.plot import EnsembleSummaryPlot
-from ert_gui.tools.plot import PlotPanel
-from ert_gui.tools.plot import DataTypeKeysWidget
-from ert_gui.tools.plot.plot_case_selection_widget import CaseSelectionWidget
+from ert_gui.models.connectors.init import CaseSelectorModel
+from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotScaleWidget
+from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
 
 
@@ -25,13 +23,13 @@ class PlotWindow(QMainWindow):
         self.plot_panel.plotReady.connect(self.plotReady)
         self.central_tab.addTab(self.plot_panel, "Ensemble plot")
 
-        self.plot_overview_panel = PlotPanel("Plot", "gui/plots/simple_overview_plot.html")
+        self.plot_overview_panel = PlotPanel("oPlot", "gui/plots/simple_overview_plot.html")
         self.plot_overview_panel.plotReady.connect(self.plotReady)
         self.central_tab.addTab(self.plot_overview_panel, "Ensemble overview plot")
 
-        self.plot_debug_panel = PlotPanel("Debug", "gui/plots/simple_debug_plot.html")
-        self.plot_debug_panel.plotReady.connect(self.plotReady)
-        self.central_tab.addTab(self.plot_debug_panel, "Debug")
+        self.histogram_panel = PlotPanel("Histogram", "gui/plots/histogram.html")
+        self.histogram_panel.plotReady.connect(self.plotReady)
+        self.central_tab.addTab(self.histogram_panel, "Histogram")
 
         self.data_type_keys_widget = DataTypeKeysWidget()
         self.data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
@@ -43,10 +41,13 @@ class PlotWindow(QMainWindow):
         self.case_selection_widget.caseSelectionChanged.connect(self.caseSelectionChanged)
         self.addDock("Plot case", self.case_selection_widget)
 
+
+        self.plot_scale_widget = PlotScaleWidget()
+        self.plot_scale_widget.plotScalesChanged.connect(self.scalesChanged)
+        self.addDock("Plot metrics", self.plot_scale_widget)
+
         self.__data_type_key = None
         self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
-
-
 
 
 
@@ -63,7 +64,7 @@ class PlotWindow(QMainWindow):
 
 
     def checkPlotStatus(self):
-        return self.plot_panel.isReady() and self.plot_debug_panel.isReady() and self.plot_overview_panel.isReady()
+        return self.plot_panel.isReady() and self.histogram_panel.isReady() and self.plot_overview_panel.isReady()
 
     def plotReady(self):
         if self.checkPlotStatus():
@@ -74,13 +75,21 @@ class PlotWindow(QMainWindow):
         self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
         self.keySelected(self.__data_type_key)
 
+    def scalesChanged(self):
+        ymin = self.plot_scale_widget.getYMin()
+        ymax = self.plot_scale_widget.getYMax()
+        self.plot_panel.setYScales(ymin, ymax)
+        self.plot_overview_panel.setYScales(ymin, ymax)
+
     @may_take_a_long_time
     def keySelected(self, key):
         self.__data_type_key = str(key)
 
         if self.checkPlotStatus():
             # print("Key selected: %s for %s" % (key, self.__plot_cases))
-            data = EnsembleSummaryPlot().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
+            data = PlotDataFetcher().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
+            data.setParent(self)
+
             self.plot_panel.setPlotData(data)
             self.plot_overview_panel.setPlotData(data)
-            self.plot_debug_panel.setPlotData(data)
+            self.histogram_panel.setPlotData(data)

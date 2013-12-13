@@ -40,7 +40,7 @@ class EnKFLibraryTest(ExtendedTestCase):
 
             file_system = main.getEnkfFsManager().getFileSystem()
             self.assertEqual(file_system.getCaseName(), "default")
-            time_map = file_system.get_time_map()
+            time_map = file_system.getTimeMap()
             self.assertIsInstance(time_map, TimeMap)
 
             main.free()

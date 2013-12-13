@@ -1,8 +1,8 @@
-import json
 import os
-from PyQt4.QtCore import QUrl, Qt, pyqtSlot, pyqtSignal
+from PyQt4.QtCore import QUrl, Qt, pyqtSlot, pyqtSignal, QObject
 from PyQt4.QtGui import QWidget, QGridLayout, QPainter
 from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
+from ert_gui.tools.plot.data import PlotData
 
 
 class PlotWebPage(QWebPage):
@@ -36,7 +36,8 @@ class PlotPanel(QWidget):
         self.__name = name
         self.__ready = False
         self.__html_ready = False
-        self.__data = []
+        self.__data = PlotData("invalid", parent=self)
+
         root_path = os.getenv("ERT_SHARE_PATH")
         path = os.path.join(root_path, plot_url)
 
@@ -54,10 +55,9 @@ class PlotPanel(QWidget):
         self.web_view.setUrl(QUrl("file://%s" % path))
 
 
-    @pyqtSlot(result=str)
+    @pyqtSlot(result=QObject)
     def getPlotData(self):
-        return json.dumps(self.__data)
-
+        return self.__data
 
     @pyqtSlot()
     def htmlInitialized(self):
@@ -65,10 +65,18 @@ class PlotPanel(QWidget):
         self.__html_ready = True
         self.checkStatus()
 
-
     def setPlotData(self, data):
         self.__data = data
         self.web_view.page().mainFrame().evaluateJavaScript("updatePlot();")
+
+    def setYScales(self, min, max):
+        if min is None:
+            min = "null"
+
+        if max is None:
+            max = "null"
+
+        self.web_view.page().mainFrame().evaluateJavaScript("setYScales(%s,%s);" % (min, max))
 
 
     def applyContextObject(self):
