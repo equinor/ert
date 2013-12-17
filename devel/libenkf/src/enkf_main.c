@@ -1897,7 +1897,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
 
 void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
-  
+
   if (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
@@ -1917,23 +1917,24 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
     if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iter, step1 , -1))
       enkf_main_run_post_workflow(enkf_main);
 
-
-    ++iter;
+    iter++;
     while (true) {
       const char * target_fs_name = analysis_iter_config_iget_case( iter_config , iter );
-      if (iter == num_iter)
-        break;
 
       if (enkf_main_iterate_smoother(enkf_main, iter, target_fs_name , iactive)) {
         enkf_main_run_post_workflow(enkf_main);
         iter++;
       } else
         break;
+
+      if (iter == num_iter)
+        break;
     }
     bool_vector_free(iactive);
   } else
     fprintf(stderr,"** ERROR: The current analysis module:%s can not be used for iterations \n",
             analysis_config_get_active_module_name( analysis_config ));
+
 }
 
 
