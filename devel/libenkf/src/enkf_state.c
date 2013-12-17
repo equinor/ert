@@ -1186,10 +1186,14 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
   int step1                    = arg_pack_iget_int( arg_pack , 3 );
   int step2                    = arg_pack_iget_int( arg_pack , 4 );
   bool interactive             = arg_pack_iget_bool( arg_pack , 5 );  
-  stringlist_type * msg_list = arg_pack_iget_ptr( arg_pack , 6 );
+  stringlist_type * msg_list   = arg_pack_iget_ptr( arg_pack , 6 );
+  bool manual_load             = arg_pack_iget_bool( arg_pack , 7 );
   int iens                     = member_config_get_iens( enkf_state->my_config );
-  int result                   = 0; 
+  int * result                 = arg_pack_iget_ptr( arg_pack , 8 );
   
+  if (manual_load)
+    state_map_update_undefined(enkf_fs_get_state_map(fs) , iens , STATE_INITIALIZED);
+
   run_info_init_for_load( enkf_state->run_info , 
                           load_start , 
                           step1 , 
@@ -1198,11 +1202,11 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
                           model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 
                           enkf_state->subst_list );
   
-  enkf_state_load_from_forward_model( enkf_state , fs , &result , interactive , msg_list );
-  if (result & REPORT_STEP_INCOMPATIBLE) {
+  enkf_state_load_from_forward_model( enkf_state , fs , result , interactive , msg_list );
+  if (*result & REPORT_STEP_INCOMPATIBLE) {
     // If refcase has been used for observations: crash and burn.
     fprintf(stderr,"** Warning the timesteps in refcase and current simulation are not in accordance - something wrong with schedule file?\n");
-    result -= REPORT_STEP_INCOMPATIBLE;
+    *result -= REPORT_STEP_INCOMPATIBLE;
   }
   
   if (interactive) {
