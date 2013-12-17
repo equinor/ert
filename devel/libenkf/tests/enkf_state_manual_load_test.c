@@ -50,6 +50,7 @@ int test_load_manually_to_new_case(enkf_main_type * enkf_main) {
 
     enkf_state_load_from_forward_model_mt(arg_pack);
 
+    arg_pack_free(arg_pack);
     return result;
 }
 
