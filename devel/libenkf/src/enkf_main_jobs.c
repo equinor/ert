@@ -132,8 +132,10 @@ static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const 
   util_sscanf_int(stringlist_iget(args,2), &report_step);
   state_enum        state            = enkf_types_get_state_enum(stringlist_iget(args, 3)); 
 
-  if (BOTH == state)
-      util_abort("\nField export jobs only supports state_enum ANALYZED or FORECAST, not BOTH. Aborting job.....\n");
+  if (BOTH == state) {
+      fprintf(stderr,"** Field export jobs only supports state_enum ANALYZED or FORECAST, not BOTH.\n");
+      return;
+  }
 
   char * range_str = stringlist_alloc_joined_substring( args , 4 , stringlist_get_size(args), "");  
   string_util_update_active_list(range_str, realization_list); 
