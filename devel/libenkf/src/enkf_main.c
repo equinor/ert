@@ -1887,7 +1887,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
   }
 
   if (updateOK)
-    enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iteration_number,  step1 , -1 );
+     enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iteration_number,  step1 , -1 );
 
   int_vector_free(step_list);
   return updateOK;
@@ -1908,18 +1908,26 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
     int iter = 0;
     int num_iter = analysis_iter_config_get_num_iterations(iter_config);
 
+    const char * iter0_fs_name = analysis_iter_config_iget_case( iter_config , iter );
+    enkf_fs_type * iter0_fs = enkf_main_mount_alt_fs(enkf_main , iter0_fs_name , false , true );
+    enkf_main_set_fs(enkf_main , iter0_fs , NULL);
+    cases_config_set_int(enkf_fs_get_cases_config(iter0_fs), "iteration_number", iter + 1);
+
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
     if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iter, step1 , -1))
       enkf_main_run_post_workflow(enkf_main);
-    
+
+
+    ++iter;
     while (true) {
       const char * target_fs_name = analysis_iter_config_iget_case( iter_config , iter );
       if (iter == num_iter)
         break;
 
-      if (enkf_main_iterate_smoother(enkf_main, iter, target_fs_name , iactive))
+      if (enkf_main_iterate_smoother(enkf_main, iter, target_fs_name , iactive)) {
+        enkf_main_run_post_workflow(enkf_main);
         iter++;
-      else
+      } else
         break;
     }
     bool_vector_free(iactive);
