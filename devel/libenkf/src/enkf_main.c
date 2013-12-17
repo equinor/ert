@@ -1909,9 +1909,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
     int num_iter = analysis_iter_config_get_num_iterations(iter_config);
 
     const char * iter0_fs_name = analysis_iter_config_iget_case( iter_config , iter );
-    enkf_fs_type * iter0_fs = enkf_main_mount_alt_fs(enkf_main , iter0_fs_name , false , true );
-    enkf_main_set_fs(enkf_main , iter0_fs , NULL);
-    cases_config_set_int(enkf_fs_get_cases_config(iter0_fs), "iteration_number", iter + 1);
+    enkf_main_select_fs( enkf_main , iter0_fs_name );
 
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
     if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iter, step1 , -1))
