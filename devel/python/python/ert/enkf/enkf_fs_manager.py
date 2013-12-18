@@ -1,5 +1,5 @@
 from ert.cwrap import CWrapper, BaseCClass
-from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap
+from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap, TimeMap
 from ert.util import StringList
 
 
@@ -89,6 +89,11 @@ class EnkfFsManager(BaseCClass):
         assert isinstance(case, str)
         return EnkfFsManager.cNamespace().alloc_readonly_state_map(self, case)
 
+    def getTimeMapForCase(self, case):
+        """ @rtype: TimeMap """
+        assert isinstance(case, str)
+        return EnkfFsManager.cNamespace().alloc_readonly_time_map(self, case)
+
 
 
 
@@ -111,4 +116,5 @@ EnkfFsManager.cNamespace().is_case_initialized = cwrapper.prototype("bool enkf_m
 EnkfFsManager.cNamespace().initialize_from_existing = cwrapper.prototype("void enkf_main_initialize_from_existing__(enkf_fs_manager, char*, int, enkf_state_type_enum, bool_vector, char*, stringlist)")
 
 EnkfFsManager.cNamespace().alloc_readonly_state_map = cwrapper.prototype("state_map_obj enkf_main_alloc_readonly_state_map(enkf_fs_manager, char*)")
+EnkfFsManager.cNamespace().alloc_readonly_time_map = cwrapper.prototype("time_map_obj enkf_main_alloc_readonly_time_map(enkf_fs_manager, char*)")
 
