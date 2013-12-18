@@ -14,6 +14,7 @@
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
 #  for more details.
+import datetime
 try:
     from unittest2 import skipIf
 except ImportError:
@@ -37,8 +38,14 @@ class FileTest(ExtendedTestCase):
         self.assertAlmostEqual(  0.0 , rst_file.iget_restart_sim_days(0) )
         self.assertAlmostEqual( 31.0 , rst_file.iget_restart_sim_days(1) )
         self.assertAlmostEqual( 274.0 , rst_file.iget_restart_sim_days(10) )
-        print "OK - "
 
+        with self.assertRaises(KeyError):
+            rst_file.restart_get_kw("Missing" , dtime = datetime.date( 2004,1,1))
+
+        with self.assertRaises(IndexError):
+            rst_file.restart_get_kw("SWAT" , dtime = datetime.date( 1985 , 1 , 1))
+            
+            
 
 
     def test_IOError(self):
@@ -111,3 +118,4 @@ class FileTest(ExtendedTestCase):
             # Random failure ....
             self.assertFilesAreEqual("ECLIPSE.FUNRST", self.test_fmt_file)
 
+            
