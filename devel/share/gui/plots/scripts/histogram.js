@@ -17,15 +17,17 @@
 
 function Histogram(element) {
     var stored_data = [];
-    var margin = {left: 90, right: 20, top: 20, bottom: 30};
-    var bin_count = 30;
-    var histogram_style = "";
+    var stored_case_name = "";
+
+    var margin = {left: 30, right: 30, top: 20, bottom: 30};
+
+    var style = STYLES["default"];
 
     var count_format = d3.format("d");
-    var value_format = d3.format("s");
+    var value_format = d3.format("0.02sdfs");
 
     var group = element.append("div")
-        .attr("class", "plot");
+        .attr("class", "histogram");
 
 
     var title = group.append("div")
@@ -33,6 +35,9 @@ function Histogram(element) {
         .text("Histogram");
 
     var histogram_area = group.append("div").attr("class", "plot-area");
+
+    var legend_group = group.append("div")
+        .attr("class", "plot-legend-group");
 
     var histogram_group = histogram_area.append("svg")
         .attr("class", "plot-svg");
@@ -61,6 +66,7 @@ function Histogram(element) {
     var y_axis = d3.svg.axis()
         .scale(y_scale)
         .tickFormat(count_format)
+        .ticks(5)
         .orient("left")
         .tickSize(-width, -width);
 
@@ -79,8 +85,13 @@ function Histogram(element) {
         .attr("transform", "translate(" + margin.left + ", " + (height + margin.top) + ")")
         .call(x_axis);
 
-    var rect_renderer = CanvasRect().x(x_scale).y(y_scale).margin(0, 1, 0, 1);
+    var histogram_renderer = HistogramRenderer().x(x_scale).y(y_scale).margin(0, 1, 0, 1);
+    var line_renderer = CanvasPlotLine().x(x_scale).y(y_scale);
+    var area_renderer = CanvasPlotArea().x(x_scale).y(y_scale);
+    var circle_renderer = CanvasCircle().x(x_scale).y(y_scale);
 
+    var legend = CanvasPlotLegend();
+    var legend_list = [];
 
     var setYDomain = function(min_y, max_y) {
         y_scale.domain([min_y, max_y]).nice();
@@ -105,59 +116,86 @@ function Histogram(element) {
         x_scale.domain([min, max]).nice();
     };
 
+    var resetLegends = function() {
+        legend_list = [];
+    };
 
-    function histogram(data) {
+    var addLegend = function(style, name, render_function) {
+        legend_list.push({"style": style, "name": name,"render_function": render_function});
+    };
+
+    function histogram(data, case_name) {
         stored_data = data;
+        stored_case_name = case_name;
+
+        resetLegends();
+
         title.text(data.name());
 
-        if(data.hasBoundaries()) {
-            setXDomain(data.minY(), data.maxY());
-        }
+        var context = canvas.node().getContext("2d");
+        context.save();
+        context.clearRect(0, 0, width, height);
 
-        if(data.hasEnsembleData()) {
-            var context = canvas.node().getContext("2d");
-            context.save();
-            context.clearRect(0, 0, width, height);
 
-            var case_list = data.caseList();
+        if(data.hasObservation()) {
+            line_renderer.style(STYLES["observation"]);
+            var obs = data.observation();
+            var top = data.maxCount() + 1;
+            line_renderer(context, [obs, obs], [0, top]);
+            addLegend(STYLES["observation"], "Observation", CanvasPlotLegend.circledLine);
 
-            for(var case_index = 0; case_index < case_list.length; case_index++)  {
-                var case_name = case_list[case_index];
-                var samples = data.reportStepSamples(case_name);
-                var style = STYLES[("ensemble_" + (case_index + 1))];
+            var error = data.observationError();
+            area_renderer.style(STYLES["observation_area"]);
+            area_renderer(context, [obs - error, obs + error, obs + error, obs - error], [top, top, 0, 0]);
 
-                var bins = d3.layout.histogram().bins(x_scale.ticks(bin_count))(samples);
-                setYDomain(0, d3.max(bins, function(d) { return d.y; }));
-
-                rect_renderer.style(style);
-                for(var i = 0; i < bins.length; i++) {
-                    var value = bins[i];
-                    rect_renderer(context, value.x, 0, value.x + value.dx, value.y);
-                }
+            var circle_count = 5;
+            var step = (top) / (circle_count - 1);
+            for(var index = 0; index < circle_count; index++) {
+                circle_renderer(context, obs, step * index);
             }
 
-            context.restore();
+
+            addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
+
+
         }
 
+        if(data.hasRefcase()) {
+            line_renderer.style(STYLES["refcase"]);
+            line_renderer(context, [data.refcase(), data.refcase()], [0, data.maxCount() + 1]);
+            addLegend(STYLES["refcase"], "Refcase", CanvasPlotLegend.simpleLine);
+        }
 
-        histogram_group.select(".y.axis").transition().duration(0).call(y_axis);
-        histogram_group.select(".x.axis").transition().duration(0).call(x_axis);
+        if(data.hasCaseHistogram(case_name)) {
+
+            var case_histogram = data.caseHistogram(case_name);
+
+            var bin_count = data.numberOfBins();
+            var min_x = data.min();
+            var max_x = data.max();
+
+            var max_count = data.maxCount();
+
+            var bins = d3.layout.histogram()
+                .bins(bin_count)
+                .range([min_x, max_x])
+                .bins(bin_count)(case_histogram.samples());
+
+            setYDomain(0, max_count);
+            setXDomain(min_x, max_x);
+
+            histogram_renderer.style(style);
+            histogram_renderer(context, bins);
+
+            addLegend(style, case_name, CanvasPlotLegend.filledCircle);
+
+            legend_group.selectAll(".plot-legend").data(legend_list).call(legend);
+            histogram_group.select(".y.axis").transition().duration(0).call(y_axis);
+            histogram_group.select(".x.axis").transition().duration(0).call(x_axis);
+        }
+
+        context.restore();
     }
-
-    histogram.bins = function(value) {
-        if (!arguments.length) return bin_count;
-        bin_count = value;
-        return histogram;
-    };
-
-
-    histogram.style = function(value) {
-        if (!arguments.length) return histogram_style;
-        histogram_style = value;
-        return histogram;
-    };
-
-
 
     histogram.resize = function(w, h) {
         w = w - 80;
@@ -182,9 +220,14 @@ function Histogram(element) {
         histogram_group.select(".x.axis")
             .attr("transform", "translate(" + margin.left + ", " + (height + margin.top) + ")");
 
-        histogram(stored_data);
+        histogram(stored_data, stored_case_name);
+    };
+
+    histogram.style = function (value) {
+        if (!arguments.length) return style;
+        style = value;
+        return histogram;
     };
 
     return histogram;
-
 }

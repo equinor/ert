@@ -58,12 +58,13 @@ function Plot(element) {
         var case_name = case_list[case_index];
         var line_renderer = self.line_renderers[case_index];
 
-        var x_values = data.ensembleXValues(case_name);
-        var y_values_list = data.ensembleYValues(case_name);
+        var ensemble_data = data.ensembleData(case_name);
+        var x_values = ensemble_data.xValues();
+        var y_values_list = ensemble_data.yValues();
 
         self.tracker.loopStart();
         for (var i = realization; i < y_values_list.length; i++) {
-            line_renderer(context, x_values[i], y_values_list[i]);
+            line_renderer(context, x_values, y_values_list[i]);
             realization++;
 
             if(self.tracker.shouldLoopStop()) {
@@ -86,26 +87,26 @@ function Plot(element) {
     };
 
 
-    var renderEnsembleDirect = function(context, data) {
-        if(data.hasEnsembleData()) {
-            var case_list = data.caseList();
-
-            for(var case_index = 0; case_index < case_list.length; case_index++) {
-                var style = STYLES["ensemble_" + (case_index + 1)];
-                var case_name = case_list[case_index];
-                var line_renderer = self.line_renderers[case_index];
-
-                var x_values = data.ensembleXValues(case_name);
-                var y_values_list = data.ensembleYValues(case_name);
-
-                for (var realization = 0; realization < y_values_list.length; realization++) {
-                    line_renderer(context, x_values[realization], y_values_list[realization]);
-                }
-
-                self.plot.addLegend(style, case_name, CanvasPlotLegend.simpleLine);
-            }
-        }
-    };
+//    var renderEnsembleDirect = function(context, data) {
+//        if(data.hasEnsembleData()) {
+//            var case_list = data.caseList();
+//
+//            for(var case_index = 0; case_index < case_list.length; case_index++) {
+//                var style = STYLES["ensemble_" + (case_index + 1)];
+//                var case_name = case_list[case_index];
+//                var line_renderer = self.line_renderers[case_index];
+//
+//                var x_values = data.ensembleXValues(case_name);
+//                var y_values_list = data.ensembleYValues(case_name);
+//
+//                for (var realization = 0; realization < y_values_list.length; realization++) {
+//                    line_renderer(context, x_values[realization], y_values_list[realization]);
+//                }
+//
+//                self.plot.addLegend(style, case_name, CanvasPlotLegend.simpleLine);
+//            }
+//        }
+//    };
 
     this.plot.setRenderCallback(renderEnsembleProgressively);
 }

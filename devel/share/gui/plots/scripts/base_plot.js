@@ -212,10 +212,11 @@ BasePlot.prototype.addLegend = function(style, name, render_function) {
 
 BasePlot.prototype.renderObservations = function(context, data) {
     if(data.hasObservationData()) {
-        if(data.observationIsContinuous()) {
-            var x_values = data.observationXValues();
-            var y_values = data.observationYValues();
-            var std_values = data.observationStdValues();
+        var obs_data = data.observationData();
+        if(obs_data.isContinuous()) {
+            var x_values = obs_data.xValues();
+            var y_values = obs_data.yValues();
+            var std_values = obs_data.stdValues();
 
             var obs_x_area_samples = [];
             var obs_y_area_samples = [];
@@ -255,9 +256,9 @@ BasePlot.prototype.renderObservations = function(context, data) {
             this.addLegend(STYLES["observation_area"], "Observation error", CanvasPlotLegend.filledCircle);
         } else {
 
-            var obs_x_samples = data.observationXValues();
-            var obs_y_samples = data.observationYValues();
-            var obs_std_samples = data.observationStdValues();
+            var obs_x_samples = obs_data.xValues();
+            var obs_y_samples = obs_data.yValues();
+            var obs_std_samples = obs_data.stdValues();
 
             for (var index = 0; index < obs_x_samples.length; index++) {
                 var x = obs_x_samples[index];
@@ -275,10 +276,11 @@ BasePlot.prototype.renderObservations = function(context, data) {
 
 BasePlot.prototype.renderRefcase = function(context, data) {
     if(data.hasRefcaseData()) {
+        var refcase_data = data.refcaseData();
         var style = STYLES["refcase"];
 
         this.line_renderer.style(style);
-        this.line_renderer(context, data.refcaseXValues(), data.refcaseYValues());
+        this.line_renderer(context, refcase_data.xValues(), refcase_data.yValues());
 
         this.addLegend(style, "Refcase", CanvasPlotLegend.simpleLine);
     }
