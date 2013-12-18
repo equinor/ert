@@ -35,11 +35,20 @@
 
 <script src="libs/d3.v3.js"></script>
 <script src="scripts/styles.js"></script>
-<script src="scripts/canvas_plot_rect.js"></script>
+<script src="scripts/canvas_plot_legend.js"></script>
+<script src="scripts/canvas_plot_line.js"></script>
+<script src="scripts/canvas_plot_area.js"></script>
+<script src="scripts/canvas_plot_circle.js"></script>
+<script src="scripts/histogram_renderer.js"></script>
 <script src="scripts/histogram.js"></script>
 
 <script>
+    var stored_data = null;
+    var histogram_div = null;
     var histogram = null;
+    var stored_width = 1000;
+    var stored_height = 500;
+    var styles = [];
 
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
@@ -55,17 +64,49 @@
     }
 
     function createPlot() {
-        var histogram_div = d3.select("body").append("div").attr("class", "histogram-div");
-        histogram = new Histogram(histogram_div);
+        histogram_div = d3.select("body").append("div").attr("class", "histogram-div");
+
+        for (var style_index = 1; style_index <= 5; style_index++) {
+            styles.push(STYLES["ensemble_" + style_index]);
+        }
+
     }
 
     function updatePlot() {
-        var data = plot_data_source.getPlotData();
-        histogram(data);
+        stored_data = plot_data_source.getPlotData();
+
+        if (stored_data != null) {
+            var histogram_data = null;
+            if(stored_data.hasObservationData()) {
+                var xdata = stored_data.observationData().xValues();
+                histogram_data = stored_data.histogramData(xdata[xdata.length - 2]);
+            } else {
+                histogram_data = stored_data.histogramData(stored_data.lastReportStepTime());
+            }
+
+            var case_list = stored_data.caseList();
+
+            histogram_div.selectAll(".histogram").remove();
+
+            for(var index = 0; index < case_list.length; index++) {
+                var histogram = new Histogram(histogram_div);
+                histogram.style(styles[index]);
+                histogram(histogram_data, case_list[index]);
+
+                var count = Math.max(case_list.length, 1);
+
+                var height = Math.max(250, (stored_height - 20 * count) / count);
+
+                histogram.resize(stored_width, height);
+            }
+        }
     }
 
     function setSize(width, height) {
-        histogram.resize(width - 50, height - 100);
+        stored_width = width;
+        stored_height = height - 75;
+
+        updatePlot();
     }
 
     function setYScales(min, max) {

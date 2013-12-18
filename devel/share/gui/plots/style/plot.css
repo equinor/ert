@@ -22,6 +22,14 @@
     display: inline-block;
 }
 
+.histogram {
+    margin: 5px;
+    padding: 10px;
+    border: 1px solid black;
+    background-color: white;
+    display: inline-block;
+}
+
 .plot-svg {
     display: block;
     margin: 0;
@@ -83,6 +91,13 @@
     vertical-align: middle;
 }
 
+/*.histograms {*/
+
+/*}*/
+
+/*.histogram-div {*/
+
+/*}*/
 
 
 .histogram-svg {

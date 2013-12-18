@@ -71,5 +71,44 @@ var STYLES = {
         line_cap: "butt"
     },
 
-    ensemble_colors: ["ensemble_1", "ensemble_2", "ensemble_3", "ensemble_4", "ensemble_5"]
+    ensemble_colors: ["ensemble_1", "ensemble_2", "ensemble_3", "ensemble_4", "ensemble_5"],
+
+
+
 };
+
+
+STYLES.parseColor = function(input) {
+    var result = [255, 255, 255, 1];
+
+    var match = input.match(/^rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+\.?\d*)\s*\)$/i);
+    if(match) {
+        result[0] = match[1];
+        result[1] = match[2];
+        result[2] = match[3];
+        result[3] = parseFloat(match[4]);
+        return result;
+    }
+
+    return result;
+};
+
+
+STYLES.asRgb = function(r, g, b) {
+    return "rgb(" + r + "," + g + "," + b + ")";
+};
+
+STYLES.asRgba = function(r, g, b, a) {
+    return "rgba(" + r + "," + g + "," + b + "," + a + ")";
+};
+
+
+STYLES.componentToHex = function(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+};
+
+STYLES.rgbToHex = function(r, g, b) {
+    return "#" + CanvasPlotLegend.componentToHex(r) + CanvasPlotLegend.componentToHex(g) + CanvasPlotLegend.componentToHex(b);
+};
+
