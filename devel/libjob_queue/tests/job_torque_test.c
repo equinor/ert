@@ -40,6 +40,7 @@ void setoption_setalloptions_optionsset() {
   test_option(driver, TORQUE_NUM_NODES, "36");
   test_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "1");
   test_option(driver, TORQUE_KEEP_QSUB_OUTPUT, "0");
+  test_option(driver, TORQUE_CLUSTER_LABEL, "thecluster");
 
   printf("Options OK\n");
   torque_driver_free(driver);
@@ -66,13 +67,14 @@ void getoption_nooptionsset_defaultoptionsreturned() {
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_KEEP_QSUB_OUTPUT), "0");
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_CPUS_PER_NODE), "1");
   test_assert_string_equal(torque_driver_get_option(driver, TORQUE_NUM_NODES), "1");
+  test_assert_string_equal(torque_driver_get_option(driver, TORQUE_CLUSTER_LABEL), NULL );
 
   printf("Default options OK\n");
   torque_driver_free(driver);
 }
 
 void create_submit_script_script_according_to_input() {
-  test_work_area_type * work_area = test_work_area_alloc("job_torque_test" , true);
+  test_work_area_type * work_area = test_work_area_alloc("job_torque_test" );
   const char * script_filename = "qsub_script.sh";
 
   {

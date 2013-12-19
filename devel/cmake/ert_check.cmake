@@ -1,3 +1,8 @@
+check_function_exists( fseeko HAVE_FSEEKO )
+if (HAVE_HFSEEKO)
+   add_definitions( -DHAVE_FSEEKO )                       
+endif()
+
 check_function_exists( regexec HAVE_REGEXP )
 if (HAVE_REGEXP)
   add_definitions( -DHAVE_REGEXP )
@@ -38,6 +43,18 @@ if (HAVE_GETUID)
   add_definitions( -DHAVE_GETUID )
 endif()
 
+check_function_exists( _chdir HAVE_WINDOWS_CHDIR)
+if (HAVE_WINDOWS_CHDIR)
+   add_definitions( -DHAVE_WINDOWS_CHDIR)
+else()
+   check_function_exists( chdir HAVE_CHDIR)
+   if (HAVE_CHDIR)
+      add_definitions( -DHAVE_CHDIR)
+   else()
+      message(FATAL_ERROR "Could not find chdir() / _chdir() functions")
+   endif()
+endif()
+
 check_function_exists( localtime_r HAVE_LOCALTIME_R )
 if (HAVE_LOCALTIME_R)
   add_definitions( -DHAVE_LOCALTIME_R )
@@ -69,11 +86,14 @@ if (HAVE_SETENV)
   add_definitions( -DPOSIX_SETENV )
 endif()
 
-
-
 check_function_exists( opendir HAVE_OPENDIR )
 if (HAVE_OPENDIR)
   add_definitions( -DHAVE_OPENDIR )
+endif()
+
+check_function_exists( getpwuid HAVE_GETPWUID )
+if (HAVE_GETPWUID)
+  add_definitions( -DHAVE_GETPWUID )
 endif()
 
 # The usleep() check uses the symbol HAVE__USLEEP with double
@@ -120,5 +140,14 @@ if (ISREG_POSIX)
   add_definitions( -DHAVE_ISREG )
 endif()
 
+check_type_size(time_t SIZE_OF_TIME_T)
+if (${SIZE_OF_TIME_T} EQUAL 8)
+    try_run( RUN_RESULT COMPILE_RESULT ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/cmake/Tests/test_mktime_before1970.c )
+    if (RUN_RESULT)
+        add_defintions( -DTIME_T_64BIT_ACCEPT_PRE1970 )
+    endif()
+endif()
+
 set( CMAKE_C_FLAGS ${CMAKE_C_FLAGS_main} )
 set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_main} )
+
