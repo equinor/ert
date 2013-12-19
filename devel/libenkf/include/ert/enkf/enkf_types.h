@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <ert/util/arg_pack.h>
+
 
 
 
@@ -124,6 +124,13 @@ typedef enum   {UNDEFINED   = 0 ,
                              {.value = 4 , .name = "ANALYZED"},\
                              {.value = 6 , .name = "BOTH"}
 #define ENKF_STATE_ENUM_SIZE 4
+
+                
+                
+
+typedef enum { REPORT_STEP_INCOMPATIBLE  = 1,
+               LOAD_FAILURE              = 2} enkf_fw_load_result_enum;
+            
 
 
 
@@ -228,6 +235,24 @@ typedef enum {
   
 
 /*****************************************************************/
+/* Possible transitions: */
+  typedef enum {
+    STATE_UNDEFINED = 1,
+    STATE_INITIALIZED = 2,
+    STATE_HAS_DATA = 4,
+    STATE_LOAD_FAILURE = 8,
+    STATE_PARENT_FAILURE = 16
+  } realisation_state_enum;
+
+
+  typedef enum {
+    INIT_NONE = 0,
+    INIT_CONDITIONAL = 1,
+    INIT_FORCE = 2
+  } init_mode_enum;
+  
+
+
 typedef struct enkf_obs_struct enkf_obs_type;
 
   
@@ -237,6 +262,7 @@ const char      * enkf_types_get_var_name(enkf_var_type var_type);
 ert_impl_type     enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(ert_impl_type );
 ert_impl_type     enkf_types_check_impl_type(const char * );
+state_enum        enkf_types_get_state_enum(const char *);
 
 #ifdef __cplusplus
 }

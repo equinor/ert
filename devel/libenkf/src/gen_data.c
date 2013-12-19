@@ -305,7 +305,6 @@ bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * fi
   } 
   gen_data_set_data__(gen_data , size , report_step , load_type , buffer );
   util_safe_free(buffer);
-  printf("Returning %s:%d \n",filename , has_file);
   return has_file;
 }
 
@@ -354,12 +353,13 @@ bool gen_data_forward_load(gen_data_type * gen_data , const char * ecl_file , co
 
 
 bool gen_data_initialize(gen_data_type * gen_data , int iens , const char * init_file , rng_type * rng) {
-  if (init_file != NULL) {
+  bool ret = false; 
+  if (init_file) {
     if (!gen_data_fload_with_report_step(gen_data , init_file , 0))
       util_abort("%s: could not find file:%s \n",__func__ , init_file);
-    return true;
-  } else
-    return false; /* No init performed ... */
+    ret = true; 
+  }
+  return ret; 
 }
 
 

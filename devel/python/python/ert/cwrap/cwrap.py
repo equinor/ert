@@ -23,59 +23,60 @@ correct restype and argtypes attributes of the function objects.
 import ctypes
 import re
 import sys
+from ert.cwrap import BaseCClass
 
 
-prototype_pattern = "(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]" 
-
+prototype_pattern = "(?P<return>[a-zA-Z][a-zA-Z0-9_*]*) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]"
 
 class CWrapper:
     # Observe that registered_types is a class attribute, shared
     # between all CWrapper instances.
     registered_types = {}
-    pattern          = re.compile( prototype_pattern )
+    pattern = re.compile(prototype_pattern)
 
-    def __init__( self , lib ):
+    def __init__( self, lib ):
         self.lib = lib
 
     @classmethod
-    def registerType(cls, type, value ):
-        """Register a type against a legal ctypes type"""
-        cls.registered_types[type] = value
+    def registerType(cls, type_name, value):
+        """Register a type against a legal ctypes type or a callable (or class)"""
+        # if type_name in cls.registered_types:
+        #     print("Type %s already exists!" % type_name)
+        cls.registered_types[type_name] = value
 
     @classmethod
     def registerDefaultTypes(cls):
         """Registers the default available types for prototyping."""
-        cls.registerType("void"    ,  None)
-        cls.registerType("c_ptr"   ,  ctypes.c_void_p)
-        cls.registerType("int"     ,  ctypes.c_int)
-        cls.registerType("int*"    ,  ctypes.POINTER(ctypes.c_int))
-        cls.registerType("size_t"  ,  ctypes.c_size_t)
-        cls.registerType("size_t*" ,  ctypes.POINTER(ctypes.c_size_t))
-        cls.registerType("bool"    ,  ctypes.c_int)
-        cls.registerType("bool*"   ,  ctypes.POINTER(ctypes.c_int))
-        cls.registerType("long"    ,  ctypes.c_long)
-        cls.registerType("long*"   ,  ctypes.POINTER(ctypes.c_long))
-        cls.registerType("char"    ,  ctypes.c_char)
-        cls.registerType("char*"   ,  ctypes.c_char_p)
-        cls.registerType("char**"  ,  ctypes.POINTER(ctypes.c_char_p))
-        cls.registerType("float"   ,  ctypes.c_float)
-        cls.registerType("float*"  ,  ctypes.POINTER(ctypes.c_float))
-        cls.registerType("double"  ,  ctypes.c_double)
-        cls.registerType("double*" ,  ctypes.POINTER(ctypes.c_double))
+        cls.registerType("void", None)
+        cls.registerType("void*", ctypes.c_void_p)
+        cls.registerType("int", ctypes.c_int)
+        cls.registerType("int*", ctypes.POINTER(ctypes.c_int))
+        cls.registerType("size_t", ctypes.c_size_t)
+        cls.registerType("size_t*", ctypes.POINTER(ctypes.c_size_t))
+        cls.registerType("bool", ctypes.c_int)
+        cls.registerType("bool*", ctypes.POINTER(ctypes.c_int))
+        cls.registerType("long", ctypes.c_long)
+        cls.registerType("long*", ctypes.POINTER(ctypes.c_long))
+        cls.registerType("char", ctypes.c_char)
+        cls.registerType("char*", ctypes.c_char_p)
+        cls.registerType("char**", ctypes.POINTER(ctypes.c_char_p))
+        cls.registerType("float", ctypes.c_float)
+        cls.registerType("float*", ctypes.POINTER(ctypes.c_float))
+        cls.registerType("double", ctypes.c_double)
+        cls.registerType("double*", ctypes.POINTER(ctypes.c_double))
 
 
-
-    def __parseType(self, type):
+    def __parseType(self, type_name):
         """Convert a prototype definition type from string to a ctypes legal type."""
-        type = type.strip()
+        type_name = type_name.strip()
 
-        if CWrapper.registered_types.has_key(type):
-            return CWrapper.registered_types[type]
+        if CWrapper.registered_types.has_key(type_name):
+            return CWrapper.registered_types[type_name]
         else:
-            return getattr(ctypes , type)
+            return getattr(ctypes, type_name)
 
-        
-    def prototype(self, prototype , lib = None):
+
+    def prototype(self, prototype, lib=None):
         """
         Defines the return type and arguments for a C-function
 
@@ -99,6 +100,9 @@ class CWrapper:
             double* -> POINTER(c_double)
             char* -> c_char_p
             ...
+
+        In addition, user register types are recognized and any type registered as a reference
+        to BaseCClass createCReference and createPythonObject are treated as pointers and converted automatically.
         """
 
         match = re.match(CWrapper.pattern, prototype)
@@ -107,11 +111,24 @@ class CWrapper:
             return None
         else:
             restype = match.groupdict()["return"]
-            functioname = match.groupdict()["function"]
+            function_name = match.groupdict()["function"]
             arguments = match.groupdict()["arguments"].split(",")
 
-            func = getattr(self.lib , functioname)
-            func.restype = self.__parseType(restype)
+            func = getattr(self.lib, function_name)
+
+            return_type = self.__parseType(restype)
+            func.restype = return_type
+
+            if hasattr(return_type, "__call__"):
+                #The return type is a callable check if it is bound and the instance is a BaseCClass
+                if hasattr(return_type, "__self__") and issubclass(return_type.__self__, BaseCClass):
+                    func.restype = ctypes.c_void_p
+
+                    def returnFunction(result, func, arguments):
+                        return return_type(result)
+
+                    func.errcheck = returnFunction
+
 
             if len(arguments) == 1 and arguments[0].strip() == "":
                 func.argtypes = []
@@ -123,26 +140,26 @@ class CWrapper:
 
             return func
 
-    def safe_prototype(self,pattern , lib = None):
+    def safe_prototype(self, pattern, lib=None):
         try:
             func = self.prototype(pattern, lib)
         except AttributeError:
             func = None
             sys.stderr.write("****Defunct function call: %s\n" % pattern)
         return func
-                
-         
+
+
     def print_types(self):
         for ctype in self.registered_types.keys():
-            print "%16s -> %s" % (ctype , self.registered_types[ ctype ])
-
+            print "%16s -> %s" % (ctype, self.registered_types[ctype])
 
 
 class CWrapperNameSpace:
-    def __init__( self , name ):
+    def __init__( self, name ):
         self.name = name
-        
+
     def __str__(self):
         return "%s wrapper" % self.name
+
 
 CWrapper.registerDefaultTypes()

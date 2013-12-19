@@ -48,7 +48,7 @@ int main(int argc , char ** argv) {
   const char * root_path = argv[1];
   const char * config_file = argv[2];
   const char * forward_init_string = argv[3];
-  test_work_area_type * work_area = test_work_area_alloc(config_file , false);
+  test_work_area_type * work_area = test_work_area_alloc(config_file );
   test_work_area_copy_directory_content( work_area , root_path );
   {
     bool forward_init;
@@ -95,7 +95,7 @@ int main(int argc , char ** argv) {
       
       {
         run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
-        enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
+        enkf_main_init_run(enkf_main , NULL , run_mode , INIT_NONE);     /* This is ugly */
         
         
         test_assert_false( enkf_node_has_data( gen_param_node , fs, node_id ));
@@ -111,20 +111,27 @@ int main(int argc , char ** argv) {
       }
       
       {
-        bool loadOK = true;
+        int error = 0;
         stringlist_type * msg_list = stringlist_alloc_new();
 
         {
           run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
-          enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
+          enkf_main_init_run(enkf_main , NULL , run_mode , INIT_NONE );     /* This is ugly */
         }
         
         test_assert_true( enkf_node_forward_init( gen_param_node , "simulations/run0" , 0 ));
-        enkf_state_forward_init( state , fs , &loadOK );
-        test_assert_true( loadOK );
-        enkf_state_load_from_forward_model( state , fs , &loadOK , false , msg_list );
+        
+        enkf_state_forward_init( state , fs , &error );
+        test_assert_int_equal(0, error); 
+         {
+          enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+          state_map_type * state_map = enkf_fs_get_state_map(fs);
+          state_map_iset(state_map , 0 , STATE_INITIALIZED);
+        }
+        enkf_state_load_from_forward_model( state , fs , &error , false , msg_list );
+
         stringlist_free( msg_list );
-        test_assert_true( loadOK );
+        test_assert_int_equal(0, error); 
 
         {
           double value;

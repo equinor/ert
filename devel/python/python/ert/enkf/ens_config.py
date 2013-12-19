@@ -12,70 +12,72 @@
 #  FITNESS FOR A PARTICULAR PURPOSE.   
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  for more details.
+from ert.cwrap import BaseCClass, CWrapper
+from ert.enkf import ENKF_LIB
+from ert.enkf.data import EnkfConfigNode
+from ert.enkf.enums import EnkfVarType, ErtImplType
+from ert.util import StringList
 
-import  ctypes
-from    ert.cwrap.cwrap       import *
-from    ert.cwrap.cclass      import CClass
-from    ert.util.tvector      import * 
-from    ert.enkf.enkf_enum             import *
-import  ert.enkf.libenkf
-from    ert.ecl.ecl_grid import EclGrid
-from    ert.enkf.enkf_config_node import EnkfConfigNode
-from    ert.util.stringlist   import StringList
 
-class EnsConfig(CClass):
-    
-    def __init__(self , c_ptr , parent = None):
-        if parent:
-            self.init_cref( c_ptr , parent)
-        else:
-            self.init_cobj( c_ptr , cfunc.free )    
-        
-    def has_key(self , key):
-        return cfunc.has_key( self ,key )
+class EnsConfig(BaseCClass):
+    def __init__(self):
+        raise NotImplementedError("Class can not be instantiated directly!")
 
-    def get_node(self, key):
-        node = EnkfConfigNode( cfunc.get_node(self, key), parent = self)
-        return node
-    
-    @property
+    def hasKey(self, key):
+        """ @rtype: bool """
+        return EnsConfig.cNamespace().has_key(self, key)
+
+    def getNode(self, key):
+        """ @rtype: EnkfConfigNode """
+        return EnsConfig.cNamespace().get_node(self, key).setParent(self)
+
     def alloc_keylist(self):
-        key_list = StringList( c_ptr = cfunc.alloc_keylist(self), parent = self)
-        return key_list
-       
+        """ @rtype: StringList """
+        return EnsConfig.cNamespace().alloc_keylist(self)
+
     def add_summary(self, key):
-        node = EnkfConfigNode( cfunc.add_summary(self, key, 2), parent = self)
-        return node
+        """ @rtype: EnkfConfigNode """
+        return EnsConfig.cNamespace().add_summary(self, key, 2).setParent(self)
 
     def add_gen_kw(self, key):
-        node = EnkfConfigNode( cfunc.add_gen_kw(self, key), parent = self)
-        return node
+        """ @rtype: EnkfConfigNode """
+        return EnsConfig.cNamespace().add_gen_kw(self, key).setParent(self)
 
     def add_gen_data(self, key):
-        node = EnkfConfigNode( cfunc.add_gen_data(self, key), parent = self)
-        return node
-    
+        """ @rtype: EnkfConfigNode """
+        return EnsConfig.cNamespace().add_gen_data(self, key).setParent(self)
+
     def add_field(self, key, eclipse_grid):
-        node = EnkfConfigNode( cfunc.add_field(self, key, eclipse_grid), parent = self)
-        return node
-    
-    def alloc_keylist_from_var_type(self, var_mask):
-        return StringList(c_ptr = cfunc.alloc_keylist_from_var_type(self,var_mask), parent = self)
+        """ @rtype: EnkfConfigNode """
+        return EnsConfig.cNamespace().add_field(self, key, eclipse_grid).setParent(self)
 
-##################################################################
+    def getKeylistFromVarType(self, var_mask):
+        """ @rtype: StringList """
+        assert isinstance(var_mask, EnkfVarType)
+        return EnsConfig.cNamespace().alloc_keylist_from_var_type(self, var_mask)
 
-cwrapper = CWrapper( libenkf.lib )
-cwrapper.registerType( "ens_config" , EnsConfig )
+    def getKeylistFromImplType(self, ert_impl_type):
+        """ @rtype: StringList """
+        assert isinstance(ert_impl_type, ErtImplType)
+        return EnsConfig.cNamespace().alloc_keylist_from_impl_type(self, ert_impl_type)
 
-cfunc = CWrapperNameSpace("ens_config")
+    def free(self):
+        EnsConfig.cNamespace().free(self)
 
-cfunc.free                        = cwrapper.prototype("void ensemble_config_free( ens_config )")
-cfunc.has_key                     = cwrapper.prototype("bool ensemble_config_has_key( ens_config , char* )")
-cfunc.get_node                    = cwrapper.prototype("c_void_p ensemble_config_get_node( ens_config , char*)")
-cfunc.alloc_keylist               = cwrapper.prototype("c_void_p ensemble_config_alloc_keylist( ens_config )")
-cfunc.add_summary                 = cwrapper.prototype("c_void_p ensemble_config_add_summary( ens_config, char*, int)")
-cfunc.add_gen_kw                  = cwrapper.prototype("c_void_p ensemble_config_add_gen_kw( ens_config, char*)")
-cfunc.add_gen_data                = cwrapper.prototype("c_void_p ensemble_config_add_gen_data( ens_config, char*)")
-cfunc.add_field                   = cwrapper.prototype("c_void_p ensemble_config_add_field( ens_config, char*, ecl_grid)")
-cfunc.alloc_keylist_from_var_type = cwrapper.prototype("c_void_p ensemble_config_alloc_keylist_from_var_type(ens_config, int)")
+
+cwrapper = CWrapper(ENKF_LIB)
+cwrapper.registerType("ens_config", EnsConfig)
+cwrapper.registerType("ens_config_obj", EnsConfig.createPythonObject)
+cwrapper.registerType("ens_config_ref", EnsConfig.createCReference)
+
+EnsConfig.cNamespace().free = cwrapper.prototype("void ensemble_config_free( ens_config )")
+EnsConfig.cNamespace().has_key = cwrapper.prototype("bool ensemble_config_has_key( ens_config , char* )")
+EnsConfig.cNamespace().get_node = cwrapper.prototype("enkf_config_node_ref ensemble_config_get_node( ens_config , char*)")
+EnsConfig.cNamespace().alloc_keylist = cwrapper.prototype("stringlist_obj ensemble_config_alloc_keylist( ens_config )")
+EnsConfig.cNamespace().add_summary = cwrapper.prototype("enkf_config_node_ref ensemble_config_add_summary( ens_config, char*, int)")
+EnsConfig.cNamespace().add_gen_kw = cwrapper.prototype("enkf_config_node_ref ensemble_config_add_gen_kw( ens_config, char*)")
+EnsConfig.cNamespace().add_gen_data = cwrapper.prototype("enkf_config_node_ref ensemble_config_add_gen_data( ens_config, char*)")
+EnsConfig.cNamespace().add_field = cwrapper.prototype("enkf_config_node_ref ensemble_config_add_field( ens_config, char*, ecl_grid)")
+EnsConfig.cNamespace().alloc_keylist_from_var_type = cwrapper.prototype("stringlist_obj ensemble_config_alloc_keylist_from_var_type(ens_config, enkf_var_type_enum)")
+EnsConfig.cNamespace().alloc_keylist_from_impl_type = cwrapper.prototype("stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, ert_impl_type_enum)")

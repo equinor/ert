@@ -12,53 +12,64 @@
 #  FITNESS FOR A PARTICULAR PURPOSE.   
 #   
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
-#  for more details. 
+#  for more details.
+from ert.cwrap import BaseCClass, CWrapper
+from ert.enkf import ENKF_LIB
 
-import  ctypes
-from    ert.cwrap.cwrap       import *
-from    ert.cwrap.cclass      import CClass
-from    ert.util.tvector      import * 
-from    enkf_enum             import *
-import  libenkf
-from    ert.util.stringlist   import StringList
-from ert.enkf.obs_vector import ObsVector
+from ert.util import StringList
+from ert.enkf.observations import ObsVector
 
-class EnkfObs(CClass):
+
+class EnkfObs(BaseCClass):
     
-    def __init__(self , c_ptr , parent = None):
-        if parent:
-            self.init_cref( c_ptr , parent)
-        else:
-            self.init_cobj( c_ptr , cfunc.free )
-            
-    @property
+    def __init__(self):
+        raise NotImplementedError("Class can not be instantiated directly!")
+
     def get_config_file(self):
-        return cfunc.get_config_file(self)
+        """ @rtype: Str """
+        return EnkfObs.cNamespace().get_config_file(self)
 
-    def alloc_typed_keylist(self, type):
-        return StringList(c_ptr = cfunc.alloc_typed_keylist(self, type), parent = self)
+    def getTypedKeylist(self, observation_implementation_type):
+        """
+         @type observation_implementation_type: EnkfObservationImplementationType
+         @rtype: StringList
+        """
+        return EnkfObs.cNamespace().alloc_typed_keylist(self, observation_implementation_type)
 
-    @property
-    def has_key(self, key):
-        return cfunc.has_key(self, key)
+    def hasKey(self, key):
+        """ @rtype: bool """
+        return EnkfObs.cNamespace().has_key(self, key)
 
-    @property
-    def get_vector(self, key):
-        return ObsVector(cfunc.get_vector(self,key), parent = self)
+    def getObservationsVector(self, key):
+        """ @rtype: ObsVector """
+        assert isinstance(key, str)
+        return EnkfObs.cNamespace().get_vector(self, key).setParent(self)
 
-##################################################################
+    def getObservationTime(self, index):
+        """ @rtype: ctime """
+        return EnkfObs.cNamespace().iget_obs_time(self, index)
 
-cwrapper = CWrapper( libenkf.lib )
-cwrapper.registerType( "enkf_obs" , EnkfObs )
+    def addObservationVector(self, observation_key, observation_vector):
+        assert isinstance(observation_key, str)
+        assert isinstance(observation_vector, ObsVector)
 
-# 3. Installing the c-functions used to manipulate ecl_kw instances.
-#    These functions are used when implementing the EclKW class, not
-#    used outside this scope.
-cfunc = CWrapperNameSpace("enkf_obs")
+        observation_vector.convertToCReference(self)
+
+        EnkfObs.cNamespace().add_obs_vector(self, observation_key, observation_vector)
+
+    def free(self):
+        EnkfObs.cNamespace().free(self)
 
 
-cfunc.free                = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
-cfunc.get_config_file     = cwrapper.prototype("char* enkf_obs_get_config_file( enkf_obs )")
-cfunc.alloc_typed_keylist = cwrapper.prototype("c_void_p enkf_obs_alloc_typed_keylist(enkf_obs, int)")
-cfunc.has_key             = cwrapper.prototype("bool enkf_obs_has_key(enkf_obs, char*)")
-cfunc.get_vector          = cwrapper.prototype("c_void_p enkf_obs_get_vector(enkf_obs, char*)")
+cwrapper = CWrapper(ENKF_LIB)
+cwrapper.registerType("enkf_obs", EnkfObs)
+cwrapper.registerType("enkf_obs_obj", EnkfObs.createPythonObject)
+cwrapper.registerType("enkf_obs_ref", EnkfObs.createCReference)
+
+EnkfObs.cNamespace().free                = cwrapper.prototype("void enkf_obs_free( enkf_obs )")
+EnkfObs.cNamespace().get_config_file     = cwrapper.prototype("char* enkf_obs_get_config_file( enkf_obs )")
+EnkfObs.cNamespace().alloc_typed_keylist = cwrapper.prototype("stringlist_obj enkf_obs_alloc_typed_keylist(enkf_obs, enkf_obs_impl_type)")
+EnkfObs.cNamespace().has_key             = cwrapper.prototype("bool enkf_obs_has_key(enkf_obs, char*)")
+EnkfObs.cNamespace().get_vector          = cwrapper.prototype("obs_vector_ref enkf_obs_get_vector(enkf_obs, char*)")
+EnkfObs.cNamespace().iget_obs_time       = cwrapper.prototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
+EnkfObs.cNamespace().add_obs_vector      = cwrapper.prototype("void enkf_obs_add_obs_vector(enkf_obs, char*, obs_vector)")

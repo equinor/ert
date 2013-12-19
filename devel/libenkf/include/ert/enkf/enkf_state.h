@@ -67,7 +67,7 @@ typedef struct enkf_state_struct    enkf_state_type;
   bool               enkf_state_resubmit_simulation( enkf_state_type * enkf_state , enkf_fs_type * fs , bool resample);
   bool               enkf_state_kill_simulation( const enkf_state_type * enkf_state );
   void *             enkf_state_load_from_forward_model_mt( void * arg );
-  void               enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs, const stringlist_type * param_list , bool force_init);
+  void               enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs, const stringlist_type * param_list , init_mode_enum init_mode);
   void               enkf_state_fread(enkf_state_type *  , enkf_fs_type * fs , int  , int  , state_enum );
   bool               enkf_state_get_analyzed(const enkf_state_type * );
   void               enkf_state_set_analyzed(enkf_state_type * , bool );
@@ -80,15 +80,15 @@ typedef struct enkf_state_struct    enkf_state_type;
   void             * enkf_state_run_eclipse__(void * );
   void             * enkf_state_start_forward_model__(void * );
 
-  void enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
+  void               enkf_state_load_from_forward_model(enkf_state_type * enkf_state , 
                                           enkf_fs_type * fs , 
-                                          bool * loadOK , 
+                                          int * result , 
                                           bool interactive , 
                                           stringlist_type * msg_list);
 
   void enkf_state_forward_init(enkf_state_type * enkf_state , 
                                enkf_fs_type * fs , 
-                               bool * loadOK );
+                               int * result );
     
   enkf_state_type  * enkf_state_alloc(int ,
                                       rng_type        * main_rng , 
@@ -125,7 +125,7 @@ typedef struct enkf_state_struct    enkf_state_type;
 
   rng_type         * enkf_state_get_rng( const enkf_state_type * enkf_state );
   unsigned int       enkf_state_get_random( enkf_state_type * enkf_state );
-
+  
 /*****************************************************************/
   void enkf_state_set_inactive(enkf_state_type * state);
   
@@ -136,7 +136,8 @@ typedef struct enkf_state_struct    enkf_state_type;
                            int init_step_parameter , 
                            state_enum init_state_parameter , 
                            state_enum init_state_dynamic , 
-                           int load_start , 
+                           int load_start ,
+                           int iter ,
                            int step1 , 
                            int step2 );
   int enkf_state_get_queue_index(const enkf_state_type * enkf_state);

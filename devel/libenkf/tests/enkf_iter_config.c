@@ -27,6 +27,7 @@
 #include <ert/util/thread_pool.h>
 #include <ert/util/arg_pack.h>
 
+#include <ert/enkf/enkf_defaults.h>
 #include <ert/enkf/analysis_iter_config.h>
 #include <ert/enkf/config_keys.h>
 
@@ -36,7 +37,6 @@ char * create_config_file( const char * enspath_fmt , const char * runpath_fmt ,
   char * config_file = util_alloc_tmp_file(TMP_PATH , "iter-config" , false);
   FILE * stream = util_fopen( config_file , "w");
   fprintf(stream , "%s  %s\n" , ITER_CASE_KEY , enspath_fmt);
-  fprintf(stream , "%s  %s\n" , ITER_RUNPATH_KEY , runpath_fmt);
   fprintf(stream , "%s  %d\n" , ITER_COUNT_KEY   , iter_count);
   fclose( stream );
   return config_file;
@@ -56,22 +56,20 @@ int main(int argc , char ** argv) {
   test_assert_true( config_parse( config , config_file , NULL , NULL , NULL , CONFIG_UNRECOGNIZED_ERROR , true));
 
   test_assert_true( config_item_set( config , ITER_CASE_KEY ));
-  test_assert_true( config_item_set( config , ITER_RUNPATH_KEY ));
   test_assert_true( config_item_set( config , ITER_COUNT_KEY ));
 
   {
     analysis_iter_config_type * iter_config = analysis_iter_config_alloc();
-    test_assert_string_equal( analysis_iter_config_iget_case( iter_config , 5) , NULL );
-    test_assert_string_equal( analysis_iter_config_iget_runpath_fmt( iter_config , 5) , NULL );
-    
+    char itercase[50];
+    sprintf(itercase,DEFAULT_ANALYSIS_ITER_CASE,5);
+    test_assert_string_equal( analysis_iter_config_iget_case( iter_config , 5) , itercase );
     analysis_iter_config_init( iter_config , config );
     
     test_assert_int_equal( analysis_iter_config_get_num_iterations( iter_config ) , iter_count );
     test_assert_string_equal( analysis_iter_config_iget_case( iter_config , 5) , "iter5");
-    test_assert_string_equal( analysis_iter_config_iget_runpath_fmt( iter_config , 5) , "run/iter5/real%d" );    
-    
+        
     analysis_iter_config_free( iter_config );
-  }
+   }
   remove( config_file );
   free( config_file );
   config_free( config );

@@ -125,8 +125,13 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 
 bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , const char * init_file , rng_type * rng ) {
-  if (init_file != NULL) 
-    gen_kw_fload(gen_kw , init_file );
+  if (!init_file && !rng)
+    util_abort("%s internal error: both init_file and rng are NULL", __func__); 
+  
+  bool ret = false; 
+  
+  if (init_file) 
+    ret = gen_kw_fload(gen_kw , init_file );
   else {
     const double mean = 0.0; /* Mean and std are hardcoded - the variability should be in the transformation. */
     const double std  = 1.0; 
@@ -135,9 +140,10 @@ bool gen_kw_initialize(gen_kw_type *gen_kw , int iens , const char * init_file ,
     
     for (i=0; i < data_size; i++) 
       gen_kw->data[i] = enkf_util_rand_normal(mean , std , rng);
-    
+   
+    ret = true; 
   }
-  return true;
+  return ret;
 }
 
 
@@ -260,7 +266,7 @@ bool gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
     if (!readOK) {
       int counter = 0;
       readOK = true;
-      fseek( stream , 0 , SEEK_SET );
+      util_fseek( stream , 0 , SEEK_SET );
       
       while ((counter < size) && readOK) {
         char key[128];
