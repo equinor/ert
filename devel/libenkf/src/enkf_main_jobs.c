@@ -60,9 +60,15 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive   = bool_vector_alloc( ens_size , true );
-  bool rerun                   = true;
   const char * target_case     = stringlist_iget( args , 0 );
-  
+  bool valid                   = true;
+  bool rerun = (stringlist_get_size(args) >= 2) ? stringlist_iget_as_bool(args, 1, &valid) : true;
+
+  if (!valid) {
+      fprintf(stderr, "** Warning: Function %s : Second argument must be a bool value. Exiting job\n", __func__);
+      return NULL;
+  }
+
   enkf_main_run_smoother( enkf_main , target_case , iactive , rerun);
   bool_vector_free( iactive );
   return NULL;
@@ -121,6 +127,28 @@ void * enkf_main_select_case_JOB( void * self , const stringlist_type * args) {
   enkf_main_select_fs( enkf_main , new_case );
   return NULL;
 }
+
+
+void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  const char * new_case = stringlist_iget( args , 0 );
+  enkf_main_mount_alt_fs( enkf_main , new_case , false , true );
+  return NULL;
+}
+
+
+void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
+  int result = 0;
+  int iens = 0;
+  for (; iens < enkf_main_get_ensemble_size(enkf_main); ++iens) {
+    enkf_state_type * enkf_state = enkf_main_iget_state(enkf_main, iens);
+    enkf_state_load_from_forward_model(enkf_state, fs, &result, false, NULL);
+  }
+  return NULL;
+}
+
 
 /*****************************************************************/
 
