@@ -1895,20 +1895,17 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
 
 
 
-void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
+void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2) {  //[iter1, iter2)
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
 
   if (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
     bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
+    int iter = iter1;
     
-
     const int step1 = 0;
-    int iter = 0;
-    int num_iter = analysis_iter_config_get_num_iterations(iter_config);
-
-    const char * iter0_fs_name = analysis_iter_config_iget_case( iter_config , iter );
+    const char * iter0_fs_name = analysis_iter_config_iget_case( iter_config , iter1 );
     enkf_main_select_fs( enkf_main , iter0_fs_name );
 
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
@@ -1925,7 +1922,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
       } else
         break;
 
-      if (iter == num_iter)
+      if (iter == iter2)
         break;
     }
     bool_vector_free(iactive);

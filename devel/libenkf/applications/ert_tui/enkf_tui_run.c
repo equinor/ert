@@ -119,7 +119,10 @@ void enkf_tui_run_smoother(void * arg) {
 
 void enkf_tui_run_iterated_ES(void * arg) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( arg );
-  enkf_main_run_iterated_ES(enkf_main);  
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
+  int num_iter = analysis_iter_config_get_num_iterations(iter_config);
+  enkf_main_run_iterated_ES(enkf_main , 0 , num_iter );  
 }
 
 void enkf_tui_run_one_more_iteration(void * arg){
