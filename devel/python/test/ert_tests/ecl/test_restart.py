@@ -35,6 +35,7 @@ class RestartTest(ExtendedTestCase):
     def addFile( self, filename ):
         self.file_list.append(filename)
 
+
     def tearDown(self):
         for f in self.file_list:
             if os.path.exists(f):
@@ -122,7 +123,7 @@ class RestartTest(ExtendedTestCase):
 
         self.assertTrue(kw1.equal(kw2))
         self.assertTrue(kw1.equal(kw3))
-
-        kw4 = f.restart_get_kw("SWAT", datetime.datetime(2009, 3, 1))
-        self.assertIsNone(kw4)
-
+        
+        with self.assertRaises(IndexError):
+            kw4 = f.restart_get_kw("SWAT", datetime.datetime(2009, 3, 17))
+            
