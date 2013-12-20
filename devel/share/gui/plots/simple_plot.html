@@ -71,11 +71,15 @@
     }
 
     function setSize(width, height) {
-        plot.resize(width - 50, height - 100);
+        plot.resize(width, height - 75);
     }
 
-    function setYScales(min, max) {
-        plot.setYScales(min, max);
+    function setValueScales(min, max) {
+        plot.setValueScales(min, max);
+    }
+
+    function setReportStepTime(report_step_time) {
+        // Not supported by this plot
     }
 
 </script>
