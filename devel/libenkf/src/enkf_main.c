@@ -2897,6 +2897,13 @@ state_map_type * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf
 }
 
 
+time_map_type * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path ) {
+  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
+  time_map_type * time_map = enkf_fs_alloc_readonly_time_map( mount_point );
+  free( mount_point );
+  return time_map;
+}
+
 
 void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
   if (enkf_main_case_is_current( enkf_main , case_path ))

@@ -38,10 +38,12 @@ struct time_map_struct {
   time_t_vector_type * map;
   pthread_rwlock_t     rw_lock;
   bool                 modified;
+  bool                 read_only;
 };
 
 
 UTIL_SAFE_CAST_FUNCTION( time_map , TIME_MAP_TYPE_ID )
+UTIL_IS_INSTANCE_FUNCTION( time_map , TIME_MAP_TYPE_ID ) 
 
 time_map_type * time_map_alloc( ) {
   time_map_type * map = util_malloc( sizeof * map );
@@ -49,9 +51,24 @@ time_map_type * time_map_alloc( ) {
 
   map->map = time_t_vector_alloc(0 , DEFAULT_TIME );
   map->modified = false;
+  map->read_only = false;
   pthread_rwlock_init( &map->rw_lock , NULL);
   return map;
 }
+
+
+time_map_type * time_map_fread_alloc_readonly( const char * filename) {
+  if (util_file_exists(filename)) {
+    time_map_type * tm = time_map_alloc();
+    time_map_fread( tm , filename );
+    tm->read_only = true;
+    return tm;
+  } else {
+    util_abort("%s: tried to instantiate time_map from non-existing file:%s \n",__func__ , filename );
+    return NULL;
+  }
+}
+
 
 bool time_map_equal( const time_map_type * map1 , const time_map_type * map2) {
   return time_t_vector_equal( map1->map , map2->map );
@@ -63,6 +80,10 @@ void time_map_free( time_map_type * map ) {
   free( map );
 }
 
+
+bool time_map_is_readonly( const time_map_type * tm) {
+  return tm->read_only;
+}
 
 /**
    Must hold the write lock. 
@@ -138,7 +159,10 @@ time_t time_map_iget( time_map_type * map , int step ) {
   return t;
 }
 
-
+static void time_map_assert_writable( const time_map_type * map) {
+  if (map->read_only)
+    util_abort("%s: attempt to modify read-only time-map. \n",__func__);
+}
 
 
 /**
@@ -163,6 +187,7 @@ void time_map_fwrite( time_map_type * map , const char * filename ) {
 
 
 void time_map_fread( time_map_type * map , const char * filename) {
+  time_map_assert_writable( map );
   pthread_rwlock_wrlock( &map->rw_lock );
   {
     if (util_file_exists( filename )) {
@@ -180,6 +205,8 @@ void time_map_fread( time_map_type * map , const char * filename) {
   time_map_get_last_step( map );
   map->modified = false;
 }
+
+
 
 
 
@@ -222,6 +249,7 @@ double time_map_get_end_days( time_map_type * map) {
 
 bool time_map_update( time_map_type * map , int step , time_t time) {
   bool updateOK;
+  time_map_assert_writable( map );
   pthread_rwlock_wrlock( &map->rw_lock );
   {
     updateOK = time_map_update__( map , step , time );
@@ -233,6 +261,7 @@ bool time_map_update( time_map_type * map , int step , time_t time) {
 
 bool time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum) {
   bool updateOK;
+  time_map_assert_writable( map );
   pthread_rwlock_wrlock( &map->rw_lock );
   {
     updateOK = time_map_summary_update__( map , ecl_sum );
@@ -243,6 +272,7 @@ bool time_map_summary_update( time_map_type * map , const ecl_sum_type * ecl_sum
 
 
 void time_map_clear( time_map_type * map ) {
+  time_map_assert_writable( map );
   pthread_rwlock_wrlock( &map->rw_lock );
   {
     time_t_vector_reset( map->map );
