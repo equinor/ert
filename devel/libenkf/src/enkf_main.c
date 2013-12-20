@@ -1903,10 +1903,19 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2)
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
     bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
     int iter = iter1;
+    enkf_fs_type * current_case = enkf_main_get_fs( enkf_main );
+
     
     const int step1 = 0;
-    const char * iter0_fs_name = analysis_iter_config_iget_case( iter_config , iter1 );
-    enkf_main_select_fs( enkf_main , iter0_fs_name );
+    const char * initial_case_name = analysis_iter_config_iget_case( iter_config , iter1 );
+
+
+    if (!util_string_equal( initial_case_name , enkf_fs_get_case_name( current_case ))) {
+      enkf_fs_type * initial_case = enkf_main_mount_alt_fs( enkf_main , initial_case_name , false , true);
+      bool force_copy = true;
+      // Currently does nothing; 
+      enkf_main_set_fs( enkf_main , initial_case , NULL );
+    }
 
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
     if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iter, step1 , -1))
