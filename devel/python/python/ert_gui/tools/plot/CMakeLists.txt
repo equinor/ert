@@ -4,8 +4,8 @@ set(PYTHON_SOURCES
     data_type_keys_widget.py
     plot_case_model.py
     plot_case_selection_widget.py
+    plot_metrics_widget.py
     plot_panel.py
-    plot_scale_widget.py
     plot_tool.py
     plot_window.py
     report_step_widget.py
