@@ -1,3 +1,4 @@
+import time
 from ert.cwrap import CWrapper, BaseCClass
 from ert.enkf import ENKF_LIB, EnkfFs, EnkfStateType, StateMap, TimeMap
 from ert.util import StringList
@@ -67,14 +68,17 @@ class EnkfFsManager(BaseCClass):
             fs = self.__cached_file_systems[case]
 
             if fs.isReadOnly():
-                print("Removed a read only file system from cache: %s" % case)
+                print("[EnkfFsManager] Removed a read only file system from cache: %s" % case)
                 del self.__cached_file_systems[case]
 
         if not case in self.__cached_file_systems:
-            print("Added a file system to cache: %s" % case)
+            # print("Added a file system to cache: %s" % case)
+            before = time.time()
             self.__cached_file_systems[case] = EnkfFsManager.cNamespace().mount_alt_fs(self, case, read_only, create)
-        else:
-            print("Provided a file system from cache: %s" % case)
+            after = time.time()
+            print("[EnkfFsManager] Mounting of filesystem '%s' took %2.2f s." % (case, (after - before)))
+        # else:
+        #     print("Provided a file system from cache: %s" % case)
 
         return self.__cached_file_systems[case]
 

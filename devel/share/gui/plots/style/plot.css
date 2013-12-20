@@ -15,7 +15,7 @@
 /* for more details. */
 
 .plot {
-    margin: 20px;
+    margin: 5px;
     padding: 10px;
     border: 1px solid black;
     background-color: white;
@@ -40,7 +40,7 @@
     font-size: large;
     width: auto;
     text-align: center;
-    margin: 10px;
+    margin: 0px;
     /*color: goldenrod;*/
 
 }

@@ -69,14 +69,20 @@ class PlotPanel(QWidget):
         self.__data = data
         self.web_view.page().mainFrame().evaluateJavaScript("updatePlot();")
 
-    def setYScales(self, min, max):
-        if min is None:
-            min = "null"
+    def setValueScales(self, value_min, value_max):
+        if value_min is None:
+            value_min = "null"
 
-        if max is None:
-            max = "null"
+        if value_max is None:
+            value_max = "null"
 
-        self.web_view.page().mainFrame().evaluateJavaScript("setYScales(%s,%s);" % (min, max))
+        self.web_view.page().mainFrame().evaluateJavaScript("setValueScales(%s,%s);" % (value_min, value_max))
+
+    def setReportStepTime(self, report_step_time):
+        if report_step_time is None:
+            report_step_time = "null"
+
+        self.web_view.page().mainFrame().evaluateJavaScript("setReportStepTime(%s);" % (report_step_time))
 
 
     def applyContextObject(self):

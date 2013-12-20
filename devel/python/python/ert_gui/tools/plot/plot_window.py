@@ -1,7 +1,7 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotScaleWidget
+from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget
 from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
 
@@ -16,40 +16,41 @@ class PlotWindow(QMainWindow):
         self.setWindowTitle("Plotting")
         self.activateWindow()
 
-        self.central_tab = QTabWidget()
-        self.setCentralWidget(self.central_tab)
+        self.__central_tab = QTabWidget()
+        self.setCentralWidget(self.__central_tab)
 
-        self.plot_panel = PlotPanel("Plot", "gui/plots/simple_plot.html")
-        self.plot_panel.plotReady.connect(self.plotReady)
-        self.central_tab.addTab(self.plot_panel, "Ensemble plot")
 
-        self.plot_overview_panel = PlotPanel("oPlot", "gui/plots/simple_overview_plot.html")
-        self.plot_overview_panel.plotReady.connect(self.plotReady)
-        self.central_tab.addTab(self.plot_overview_panel, "Ensemble overview plot")
+        self.__plot_panels = []
+        self.addPlotPanel("Ensemble plot", "gui/plots/simple_plot.html", short_name="Plot")
+        self.addPlotPanel("Ensemble overview plot", "gui/plots/simple_overview_plot.html", short_name="oPlot")
+        self.addPlotPanel("Histogram", "gui/plots/histogram.html", short_name="Histogram")
 
-        self.histogram_panel = PlotPanel("Histogram", "gui/plots/histogram.html")
-        self.histogram_panel.plotReady.connect(self.plotReady)
-        self.central_tab.addTab(self.histogram_panel, "Histogram")
-
-        self.data_type_keys_widget = DataTypeKeysWidget()
-        self.data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
-        self.addDock("Data types", self.data_type_keys_widget)
-
+        self.__data_type_keys_widget = DataTypeKeysWidget()
+        self.__data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
+        self.addDock("Data types", self.__data_type_keys_widget)
 
         current_case = CaseSelectorModel().getCurrentChoice()
-        self.case_selection_widget = CaseSelectionWidget(current_case)
-        self.case_selection_widget.caseSelectionChanged.connect(self.caseSelectionChanged)
-        self.addDock("Plot case", self.case_selection_widget)
+        self.__case_selection_widget = CaseSelectionWidget(current_case)
+        self.__case_selection_widget.caseSelectionChanged.connect(self.caseSelectionChanged)
+        self.addDock("Plot case", self.__case_selection_widget)
 
-
-        self.plot_scale_widget = PlotScaleWidget()
-        self.plot_scale_widget.plotScalesChanged.connect(self.scalesChanged)
-        self.addDock("Plot metrics", self.plot_scale_widget)
+        self.__plot_metrics_widget = PlotMetricsWidget()
+        self.__plot_metrics_widget.plotScalesChanged.connect(self.scalesChanged)
+        self.__plot_metrics_widget.reportStepTimeChanged.connect(self.reportStepTimeChanged)
+        self.addDock("Plot metrics", self.__plot_metrics_widget)
 
         self.__data_type_key = None
-        self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
+        self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
 
 
+    def addPlotPanel(self, name, path, short_name=None):
+        if short_name is None:
+            short_name = name
+
+        plot_panel = PlotPanel(short_name, path)
+        plot_panel.plotReady.connect(self.plotReady)
+        self.__plot_panels.append(plot_panel)
+        self.__central_tab.addTab(plot_panel, name)
 
 
     def addDock(self, name, widget, area=Qt.LeftDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
@@ -64,32 +65,43 @@ class PlotWindow(QMainWindow):
 
 
     def checkPlotStatus(self):
-        return self.plot_panel.isReady() and self.histogram_panel.isReady() and self.plot_overview_panel.isReady()
+        for plot_panel in self.__plot_panels:
+            if not plot_panel.isReady():
+                return False
+
+        return True
 
     def plotReady(self):
         if self.checkPlotStatus():
-            self.data_type_keys_widget.selectDefault()
+            self.__data_type_keys_widget.selectDefault()
 
 
     def caseSelectionChanged(self):
-        self.__plot_cases = self.case_selection_widget.getPlotCaseNames()
+        self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
         self.keySelected(self.__data_type_key)
 
     def scalesChanged(self):
-        ymin = self.plot_scale_widget.getYMin()
-        ymax = self.plot_scale_widget.getYMax()
-        self.plot_panel.setYScales(ymin, ymax)
-        self.plot_overview_panel.setYScales(ymin, ymax)
+        value_min = self.__plot_metrics_widget.getValueMin()
+        value_max = self.__plot_metrics_widget.getValueMax()
+
+        for plot_panel in self.__plot_panels:
+            plot_panel.setValueScales(value_min, value_max)
+
+    def reportStepTimeChanged(self):
+        t = self.__plot_metrics_widget.getSelectedReportStepTime()
+
+        for plot_panel in self.__plot_panels:
+            plot_panel.setReportStepTime(t)
+
 
     @may_take_a_long_time
     def keySelected(self, key):
         self.__data_type_key = str(key)
 
         if self.checkPlotStatus():
-            # print("Key selected: %s for %s" % (key, self.__plot_cases))
             data = PlotDataFetcher().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)
             data.setParent(self)
 
-            self.plot_panel.setPlotData(data)
-            self.plot_overview_panel.setPlotData(data)
-            self.histogram_panel.setPlotData(data)
+            for plot_panel in self.__plot_panels:
+                plot_panel.setPlotData(data)
+

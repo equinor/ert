@@ -27,15 +27,8 @@ function HistogramRenderer() {
         context.strokeStyle = "rgba(0, 0, 0, 0.5)";
 
         var fill = style["fill"];
-        var rgba = STYLES.parseColor(fill);
 
-        var a = rgba[3];
-        var ab = (1 - rgba[3]) * 255;
-        var r = parseInt(rgba[0] * a + ab);
-        var g = parseInt(rgba[1] * a + ab);
-        var b = parseInt(rgba[2] * a + ab);
-
-        context.fillStyle = STYLES.asRgba(r, g, b, 1.0);
+        context.fillStyle = STYLES.blendWithWhite(fill, 1.0);
 
         for(var j = 0; j < histogram_values.length; j++) {
             var value = histogram_values[j];
