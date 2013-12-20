@@ -66,8 +66,8 @@ OverviewPlot.prototype.resize = function(width, height) {
     this.plot.resize(width, height);
 };
 
-OverviewPlot.prototype.setYScales = function(min, max) {
-    this.plot.setYScales(min, max);
+OverviewPlot.prototype.setValueScales = function(min, max) {
+    this.plot.setValueScales(min, max);
 };
 
 OverviewPlot.prototype.setYDomain = function(min_y, max_y) {

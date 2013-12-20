@@ -44,6 +44,15 @@ function BasePlot(element) {
         .style("left", (this.margin.left) + "px")
         .style("z-index", 5);
 
+    this.overlay_canvas = plot_area.append("canvas")
+        .attr("id", "plot-overlay-canvas")
+        .attr("width", this.width)
+        .attr("height", this.height)
+        .style("position", "absolute")
+        .style("top", (this.margin.top) + "px")
+        .style("left", (this.margin.left) + "px")
+        .style("z-index", 5);
+
     this.plot_group = plot_area.append("svg")
         .attr("class", "plot-svg")
         .style("z-index", 10);
@@ -122,13 +131,14 @@ BasePlot.prototype.resize = function(width, height) {
     this.plot_group.style("width", width + "px").style("height", height + "px");
 
     this.canvas.attr("width", this.width).attr("height", this.height);
+    this.overlay_canvas.attr("width", this.width).attr("height", this.height);
 
     this.plot_group.select(".x.axis").attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")");
 
     this.setData(this.stored_data);
 };
 
-BasePlot.prototype.setYScales = function(min, max) {
+BasePlot.prototype.setValueScales = function(min, max) {
     this.custom_y_min = min;
     this.custom_y_max = max;
 
@@ -172,28 +182,29 @@ BasePlot.prototype.setData = function(data) {
 };
 
 BasePlot.prototype.render = function() {
-//    var now = Date.now();
-
     var data = this.stored_data;
 
     this.resetLegends();
+
+    this.plot_group.select(".y.axis").transition().duration(0).call(this.y_axis);
+    this.plot_group.select(".x.axis").transition().duration(0).call(this.x_axis);
 
     var context = this.canvas.node().getContext("2d");
     context.save();
     context.clearRect(0, 0, this.width, this.height);
 
-    this.renderObservations(context, data);
-    this.renderRefcase(context, data);
+    var overlay_context = this.overlay_canvas.node().getContext("2d");
+    overlay_context.save();
+    overlay_context.clearRect(0, 0, this.width, this.height);
+
     this.render_callback(context, data);
+    this.renderObservations(overlay_context, data);
+    this.renderRefcase(overlay_context, data);
 
     this.legend_group.selectAll(".plot-legend").data(this.legend_list).call(this.legend);
 
-    this.plot_group.select(".y.axis").transition().duration(0).call(this.y_axis);
-    this.plot_group.select(".x.axis").transition().duration(0).call(this.x_axis);
-
+    overlay_context.restore();
     context.restore();
-
-//    console.log("Time: " + (Date.now() - now));
 };
 
 BasePlot.prototype.setRenderCallback = function(callback) {

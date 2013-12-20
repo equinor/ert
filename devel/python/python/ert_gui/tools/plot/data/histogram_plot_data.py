@@ -125,7 +125,6 @@ class HistogramPlotData(QObject):
     def observationError(self):
         return self.__observation_error
 
-
     @pyqtSlot(QString, result=bool)
     def hasCaseHistogram(self, case_name):
         return str(case_name) in self.__case_histograms
@@ -154,7 +153,9 @@ class HistogramPlotData(QObject):
 
         return max_sample_count
 
-
+    @pyqtSlot(QString, result=bool)
+    def isValid(self, case_name):
+        return self.hasObservation() or self.hasRefcase() or self.hasCaseHistogram(case_name)
 
     @pyqtSlot(result=int)
     def numberOfBins(self):

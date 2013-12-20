@@ -115,8 +115,8 @@ Plot.prototype.resize = function(width, height) {
     this.plot.resize(width, height);
 };
 
-Plot.prototype.setYScales = function(min, max) {
-    this.plot.setYScales(min, max);
+Plot.prototype.setValueScales = function(min, max) {
+    this.plot.setValueScales(min, max);
 };
 
 Plot.prototype.setYDomain = function(min_y, max_y) {

@@ -3,12 +3,19 @@ from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel, QD
 from ert_gui.tools.plot import ReportStepWidget
 
 
-class PlotScaleWidget(QWidget):
+class PlotMetricsWidget(QWidget):
 
-    Y_MIN = "Y Minimum"
-    Y_MAX = "Y Maximum"
+    VALUE_MIN = "Value Minimum"
+    VALUE_MAX = "Value Maximum"
+
+    DEPTH_MIN = "Depth Minimum"
+    DEPTH_MAX = "Depth Maximum"
+
+    TIME_MIN = "Time Minimum"
+    TIME_MAX = "Time Maximum"
 
     plotScalesChanged = pyqtSignal()
+    reportStepTimeChanged = pyqtSignal()
 
     def __init__(self):
         QWidget.__init__(self)
@@ -17,12 +24,13 @@ class PlotScaleWidget(QWidget):
 
         self.__layout = QVBoxLayout()
 
-        self.addScaler(PlotScaleWidget.Y_MIN)
-        self.addScaler(PlotScaleWidget.Y_MAX)
+        self.addScaler(PlotMetricsWidget.VALUE_MIN)
+        self.addScaler(PlotMetricsWidget.VALUE_MAX)
         self.__layout.addSpacing(10)
 
-        report_step_widget = ReportStepWidget()
-        self.__layout.addWidget(report_step_widget)
+        self.__report_step_widget = ReportStepWidget()
+        self.__report_step_widget.reportStepTimeSelected.connect(self.reportStepTimeChanged)
+        self.__layout.addWidget(self.__report_step_widget)
 
         self.__layout.addStretch()
 
@@ -72,18 +80,22 @@ class PlotScaleWidget(QWidget):
         self.plotScalesChanged.emit()
 
 
-    def getYMin(self):
-        scaler = self.__scalers[PlotScaleWidget.Y_MIN]
+    def getValueMin(self):
+        scaler = self.__scalers[PlotMetricsWidget.VALUE_MIN]
 
         if scaler["checkbox"].isChecked():
             return scaler["spinner"].value()
         else:
             return None
 
-    def getYMax(self):
-        scaler = self.__scalers[PlotScaleWidget.Y_MAX]
+    def getValueMax(self):
+        scaler = self.__scalers[PlotMetricsWidget.VALUE_MAX]
 
         if scaler["checkbox"].isChecked():
             return scaler["spinner"].value()
         else:
             return None
+
+    def getSelectedReportStepTime(self):
+        """ @rtype: ctime """
+        return self.__report_step_widget.getSelectedValue().ctime()

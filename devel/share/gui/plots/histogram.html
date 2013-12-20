@@ -44,11 +44,14 @@
 
 <script>
     var stored_data = null;
-    var histogram_div = null;
-    var histogram = null;
     var stored_width = 1000;
     var stored_height = 500;
-    var styles = [];
+    var stored_histogram_height = 500;
+    var stored_report_step_time = null;
+
+    var histogram_div = null;
+    var histograms = [];
+    var style_count = 5;
 
     function initialize() {
         if (!(typeof plot_data_source === 'undefined')) {
@@ -66,51 +69,79 @@
     function createPlot() {
         histogram_div = d3.select("body").append("div").attr("class", "histogram-div");
 
-        for (var style_index = 1; style_index <= 5; style_index++) {
-            styles.push(STYLES["ensemble_" + style_index]);
-        }
+        for (var index = 0; index < STYLES.ensemble_colors.length; index++) {
+            var histogram = new Histogram(histogram_div);
+            histogram.setVisible(false);
+            var style_name = STYLES.ensemble_colors[index];
+            histogram.style(STYLES[style_name]);
 
+            histograms.push(histogram);
+        }
     }
 
     function updatePlot() {
         stored_data = plot_data_source.getPlotData();
 
         if (stored_data != null) {
-            var histogram_data = null;
-            if(stored_data.hasObservationData()) {
-                var xdata = stored_data.observationData().xValues();
-                histogram_data = stored_data.histogramData(xdata[xdata.length - 2]);
-            } else {
+            var histogram_data;
+
+            if(stored_report_step_time == null) {
                 histogram_data = stored_data.histogramData(stored_data.lastReportStepTime());
+            } else {
+                histogram_data = stored_data.histogramData(stored_report_step_time);
             }
 
             var case_list = stored_data.caseList();
 
-            histogram_div.selectAll(".histogram").remove();
-
+            calculateSize(stored_width, stored_height);
             for(var index = 0; index < case_list.length; index++) {
-                var histogram = new Histogram(histogram_div);
-                histogram.style(styles[index]);
+                var histogram = histograms[index];
+                histogram.setVisible(true);
+                histogram.setSize(stored_width, stored_histogram_height);
                 histogram(histogram_data, case_list[index]);
+            }
 
-                var count = Math.max(case_list.length, 1);
-
-                var height = Math.max(250, (stored_height - 20 * count) / count);
-
-                histogram.resize(stored_width, height);
+            for(var index = case_list.length; index < style_count; index++) {
+                var histogram = histograms[index];
+                histogram.setVisible(false);
             }
         }
     }
 
-    function setSize(width, height) {
+    function calculateSize(width, height) {
         stored_width = width;
-        stored_height = height - 75;
+        stored_height = height;
 
-        updatePlot();
+        if(stored_data != null) {
+            var case_list = stored_data.caseList();
+            var count = Math.max(case_list.length, 1);
+            stored_histogram_height = Math.max(250, ((stored_height - 50) - 20 * count) / count);
+        }
     }
 
-    function setYScales(min, max) {
-//        histogram.setYScales(min, max);
+    function setSize(width, height) {
+        calculateSize(width, height);
+
+        for(var i = 0; i < histograms.length; i++) {
+            var histogram = histograms[i];
+            histogram.setSize(stored_width, stored_histogram_height);
+            histogram();
+        }
+    }
+
+    function setValueScales(min, max) {
+        for(var i = 0; i < histograms.length; i++) {
+            var histogram = histograms[i];
+            histogram.setValueScales(min, max);
+            histogram();
+        }
+
+    }
+
+    function setReportStepTime(report_step_time) {
+        stored_report_step_time = report_step_time;
+        updatePlot();
+
     }
 
 </script>

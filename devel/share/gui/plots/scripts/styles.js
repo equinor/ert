@@ -23,57 +23,55 @@ var STYLES = {
     },
     observation_area: {
         stroke: "rgba(0, 0, 0, 0.15)",
-        fill: "rgba(0, 0, 0, 0.10)",
+        fill: "rgba(0, 0, 0, 0.2)",
         stroke_width: 2,
         dash_array: [],
         line_cap: "butt"
     },
     refcase: {
-        stroke: "rgba(0, 0, 0, 1.0)",
+        stroke: "rgba(0, 0, 0, 0.7)",
         fill: "rgba(0, 0, 0, 0.0)",
         stroke_width: 2,
         dash_array: [],
         line_cap: "butt"
     },
     ensemble_1: {
-        stroke: "rgba(56, 108, 176, 0.2)",
-        fill: "rgba(56, 108, 176, 0.3)",
-        stroke_width: 2,
+        stroke: "rgba(56, 108, 176, 0.8)",
+        fill: "rgba(56, 108, 176, 0.5)",
+        stroke_width: 1,
         dash_array: [],
         line_cap: "butt"
     },
     ensemble_2: {
-        stroke: "rgba(127, 201, 127, 0.2)",
-        fill: "rgba(127, 201, 127, 0.3)",
-        stroke_width: 2,
+        stroke: "rgba(127, 201, 127, 0.8)",
+        fill: "rgba(127, 201, 127, 0.5)",
+        stroke_width: 1,
         dash_array: [],
         line_cap: "butt"
     },
     ensemble_3: {
-        stroke: "rgba(253, 192, 134, 0.2)",
-        fill: "rgba(253, 192, 134, 0.3)",
-        stroke_width: 2,
+        stroke: "rgba(253, 192, 134, 0.8)",
+        fill: "rgba(253, 192, 134, 0.5)",
+        stroke_width: 1,
         dash_array: [],
         line_cap: "butt"
     },
     ensemble_4: {
-        stroke: "rgba(240, 2, 127, 0.2)",
-        fill: "rgba(240, 2, 127, 0.3)",
-        stroke_width: 2,
+        stroke: "rgba(240, 2, 127, 0.8)",
+        fill: "rgba(240, 2, 127, 0.5)",
+        stroke_width: 1,
         dash_array: [],
         line_cap: "butt"
     },
     ensemble_5: {
-        stroke: "rgba(191, 91, 23, 0.2)",
-        fill: "rgba(191, 91, 23, 0.3)",
+        stroke: "rgba(191, 91, 23, 0.8)",
+        fill: "rgba(191, 91, 23, 0.5)",
         stroke_width: 2,
         dash_array: [],
         line_cap: "butt"
     },
 
-    ensemble_colors: ["ensemble_1", "ensemble_2", "ensemble_3", "ensemble_4", "ensemble_5"],
-
-
+    ensemble_colors: ["ensemble_1", "ensemble_2", "ensemble_3", "ensemble_4", "ensemble_5"]
 
 };
 
@@ -112,3 +110,23 @@ STYLES.rgbToHex = function(r, g, b) {
     return "#" + CanvasPlotLegend.componentToHex(r) + CanvasPlotLegend.componentToHex(g) + CanvasPlotLegend.componentToHex(b);
 };
 
+
+STYLES.blendWithWhite = function(color, result_alpha) {
+    var rgba = STYLES.parseColor(color);
+
+    var a = rgba[3];
+    var ab = (1 - rgba[3]) * 255;
+    var r = parseInt(rgba[0] * a + ab);
+    var g = parseInt(rgba[1] * a + ab);
+    var b = parseInt(rgba[2] * a + ab);
+
+    return STYLES.asRgba(r, g, b, result_alpha);
+};
+
+
+var alpha = 0.7;
+STYLES["ensemble_1"]["fill"] = STYLES.blendWithWhite(STYLES["ensemble_1"]["fill"], alpha);
+STYLES["ensemble_2"]["fill"] = STYLES.blendWithWhite(STYLES["ensemble_2"]["fill"], alpha);
+STYLES["ensemble_3"]["fill"] = STYLES.blendWithWhite(STYLES["ensemble_3"]["fill"], alpha);
+STYLES["ensemble_4"]["fill"] = STYLES.blendWithWhite(STYLES["ensemble_4"]["fill"], alpha);
+STYLES["ensemble_5"]["fill"] = STYLES.blendWithWhite(STYLES["ensemble_5"]["fill"], alpha);
