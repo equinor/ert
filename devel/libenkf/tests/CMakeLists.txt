@@ -111,6 +111,13 @@ add_test( enkf_state_report_step_compatible_FALSE
 
 #-----------------------------------------------------------------
 
+add_executable( enkf_state_manual_load_test enkf_state_manual_load_test.c )
+target_link_libraries( enkf_state_manual_load_test enkf test_util )
+add_test( enkf_state_manual_load_test  ${EXECUTABLE_OUTPUT_PATH}/enkf_state_manual_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true  config_ecl_sum_compatible_true)
+
+#-----------------------------------------------------------------
+
+
 add_executable( enkf_state_skip_summary_load_test enkf_state_skip_summary_load_test.c )
 target_link_libraries( enkf_state_skip_summary_load_test enkf test_util )
 
@@ -288,3 +295,4 @@ set_property( TEST enkf_export_field_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_select_case_job   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_main_fs_current_file_test  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_runpath_test  PROPERTY LABELS StatoilData )
+set_property( TEST enkf_state_manual_load_test PROPERTY LABELS StatoilData )

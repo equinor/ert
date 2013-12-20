@@ -1887,7 +1887,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
   }
 
   if (updateOK)
-    enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iteration_number,  step1 , -1 );
+     enkf_main_run_step( enkf_main , ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iteration_number,  step1 , -1 );
 
   int_vector_free(step_list);
   return updateOK;
@@ -1897,7 +1897,7 @@ bool enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number
 
 void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
-  
+
   if (analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
     analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
@@ -1908,24 +1908,31 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main) {
     int iter = 0;
     int num_iter = analysis_iter_config_get_num_iterations(iter_config);
 
+    const char * iter0_fs_name = analysis_iter_config_iget_case( iter_config , iter );
+    enkf_main_select_fs( enkf_main , iter0_fs_name );
+
     enkf_main_init_run(enkf_main , iactive , ENSEMBLE_EXPERIMENT , INIT_CONDITIONAL);
     if (enkf_main_run_step(enkf_main, ENSEMBLE_EXPERIMENT , iactive , step1 , step1 , FORECAST , FORECAST , iter, step1 , -1))
       enkf_main_run_post_workflow(enkf_main);
-    
+
+    iter++;
     while (true) {
       const char * target_fs_name = analysis_iter_config_iget_case( iter_config , iter );
-      if (iter == num_iter)
+
+      if (enkf_main_iterate_smoother(enkf_main, iter, target_fs_name , iactive)) {
+        enkf_main_run_post_workflow(enkf_main);
+        iter++;
+      } else
         break;
 
-      if (enkf_main_iterate_smoother(enkf_main, iter, target_fs_name , iactive))
-        iter++;
-      else
+      if (iter == num_iter)
         break;
     }
     bool_vector_free(iactive);
   } else
     fprintf(stderr,"** ERROR: The current analysis module:%s can not be used for iterations \n",
             analysis_config_get_active_module_name( analysis_config ));
+
 }
 
 
