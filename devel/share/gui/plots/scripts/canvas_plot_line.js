@@ -14,37 +14,6 @@
 // See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 // for more details.
 
-
-var CP = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
-if (CP && CP.lineTo) {
-    CP.dashedLine = function (x, y, x2, y2, dash_array) {
-        if (!dash_array) dash_array = [10, 5];
-
-        this.save();
-
-        var dx = (x2 - x), dy = (y2 - y);
-        var length = Math.sqrt(dx * dx + dy * dy);
-        var rotation = Math.atan2(dy, dx);
-
-        this.translate(x, y);
-        this.moveTo(0, 0);
-        this.rotate(rotation);
-
-        var dash_count = dash_array.length;
-        var dash_index = 0, draw = true;
-        x = 0;
-        while (length > x) {
-            x += dash_array[dash_index++ % dash_count];
-            if (x > length) x = length;
-            draw ? this.lineTo(x, 0) : this.moveTo(x, 0);
-            draw = !draw;
-        }
-        this.restore();
-
-    }
-}
-
-
 function CanvasPlotLine() {
     var X = function (d) { return d; };
     var Y = function (d) { return d; };
@@ -55,18 +24,10 @@ function CanvasPlotLine() {
         context.strokeStyle = style["stroke"];
         context.lineCap = style["line_cap"];
 
-        var dashed = false;
-        if (style["dash_array"].length > 0) {
-            dashed = true;
-        }
-
-        if (dashed) {
-            var prev_x = null;
-            var prev_y = null;
-        }
+        var length = Math.min(x_samples.length, y_samples.length);
 
         context.beginPath();
-        for (var index in x_samples) {
+        for (var index = 0; index < length; index++) {
             var x_sample = x_samples[index];
             var y_sample = y_samples[index];
             var x = X(x_sample);
@@ -74,22 +35,12 @@ function CanvasPlotLine() {
 
             if (index == 0) {
                 context.moveTo(x, y);
-                prev_x = x;
-                prev_y = y;
             } else {
-                if (dashed) {
-                    context.dashedLine(prev_x, prev_y, x, y, style["dash_array"]);
-                    prev_x = x;
-                    prev_y = y;
-                } else {
-                    context.lineTo(x, y);
-                }
+                context.lineTo(x, y);
             }
         }
 
-
         context.stroke();
-
     }
 
     render.x = function (value) {

@@ -4,7 +4,7 @@ from .data_type_keys_widget import DataTypeKeysWidget
 from .plot_case_model import PlotCaseModel
 from .plot_case_selection_widget import CaseSelectionWidget
 from .report_step_widget import ReportStepWidget
-from .plot_scale_widget import PlotScaleWidget
+from .plot_metrics_widget import PlotMetricsWidget
 
 
 from .plot_panel import PlotPanel
