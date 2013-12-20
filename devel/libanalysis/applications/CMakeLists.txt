@@ -5,4 +5,11 @@ if (USE_RUNPATH)
    add_runpath( ert_module_test )
 endif()
 
-install(TARGETS ert_module_test DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+set (destination ${CMAKE_INSTALL_PREFIX}/bin)
+
+install(TARGETS ert_module_test DESTINATION ${destination})
+
+if (INSTALL_GROUP)
+   install(CODE "EXECUTE_PROCESS(COMMAND chgrp ${INSTALL_GROUP} ${destination}/ert_module_test)")
+   install(CODE "EXECUTE_PROCESS(COMMAND chmod g+w ${destination}/ert_module_test)")
+endif()
