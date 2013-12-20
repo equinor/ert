@@ -21,59 +21,26 @@
 
 
 import os
+import sys
 from optparse import OptionParser
 
-gui_main        = "gert_main"   # Extensions pyc / py will be tried by the script
-
-
-def get_ert_env( root_path ):
-    ert_env = {}
-    
-    ert_lib    = "%s/lib"    % root_path
+def set_ert_env( root_path ):
     ert_share  = "%s/share"  % root_path 
-    ert_python = "%s/python" % root_path 
-
-    if os.getenv("LD_LIBRARY_PATH"):
-        LD_LIBRARY_PATH = "%s:%s" % (ert_lib , os.getenv("LD_LIBRARY_PATH"))
-    else:
-        LD_LIBRARY_PATH = "%s"    % (ert_lib)
-    ert_env["LD_LIBRARY_PATH"] = LD_LIBRARY_PATH
 
     if not os.getenv("ERT_SHARE_PATH"):
-        ert_env["ERT_SHARE_PATH"]  = ert_share
-
-    if os.getenv("PYTHONPATH"):
-        PYTHONPATH = "%s:%s" % (ert_python , os.getenv("PYTHONPATH"))
-    else:
-        PYTHONPATH = "%s" % ert_python
-    ert_env["PYTHONPATH"] = PYTHONPATH
-    
-    return ert_env
+        os.environ["ERT_SHARE_PATH"]  = ert_share
             
 
-def exec_ert( exec_arg , ert_env):
-    program = exec_arg[0]
-
-    if ert_env:
-        for var in ert_env.keys():
-            os.environ[var] = ert_env[var]
-        if os.path.isabs( program ):
-            os.execvpe( program , exec_arg , os.environ )
-        else:
-            os.execvpe( program , exec_arg , os.environ )
-    else:
-        os.execv( program , exec_arg )
-        
-    # WTF - exec returned
-    sys.exit("Executing the proper ert program failed??")
-
-
-def exec_ert_gui( root_path , ert_env , arg_list ):
-    main_py = "%s/python/ert_gui/%s.py" % (root_path , gui_main)
-    
-    exec_arg = [ "python" , main_py] + arg_list
-    exec_ert( exec_arg , ert_env )
-
+def exec_ert_gui( root_path ):
+    try:
+        import ert_gui.gert_main as gert_main
+    except ImportError:
+        ert_python = "%s/python" % root_path 
+        sys.path.append(ert_python)
+        import ert_gui.gert_main as gert_main
+   
+    gert_main.main( sys.argv )
+     
 
 def main():
     usage = "gert CONFIG_FILE"
@@ -81,8 +48,8 @@ def main():
     (options , args) = parser.parse_args()
 
     ert_root_path = os.path.realpath(os.path.join(os.path.dirname( os.path.abspath( __file__)) , ".."))
-    ert_env = get_ert_env(ert_root_path)
-    exec_ert_gui(ert_root_path, ert_env, args)
+    set_ert_env(ert_root_path)
+    exec_ert_gui(ert_root_path)
 
 
 if __name__ == "__main__":
