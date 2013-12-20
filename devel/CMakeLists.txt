@@ -2,7 +2,9 @@ cmake_minimum_required( VERSION 2.8 )
 project( ERT C CXX )
 
 set( ERT_VERSION_MAJOR 1 )
-set( ERT_VERSION_MINOR 3 )
+set( ERT_VERSION_MINOR 4 )
+set( ERT_VERSION_MICRO X )
+
 
 option( BUILD_ERT           "Build the full ERT application - Linux only" OFF)
 option( BUILD_ENS_PLOT      "Build small Eclipse plotting program - no" OFF)

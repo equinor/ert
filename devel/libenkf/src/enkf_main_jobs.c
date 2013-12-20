@@ -72,10 +72,11 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
 void * enkf_main_iterated_smoother_JOB( void * self , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive   = bool_vector_alloc( 0 , true );
-
-  bool_vector_iset( iactive , ens_size - 1 , true );
-  enkf_main_run_iterated_ES( enkf_main);
+  const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
+  analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
+  int num_iter = analysis_iter_config_get_num_iterations(iter_config);
+  
+  enkf_main_run_iterated_ES( enkf_main , 0 , num_iter);
   return NULL;
 }
 
