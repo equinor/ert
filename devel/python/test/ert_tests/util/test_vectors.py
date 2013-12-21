@@ -17,7 +17,7 @@
 
 
 import copy
-from datetime import datetime
+import datetime
 
 try:
     from unittest2 import TestCase
@@ -241,8 +241,8 @@ class UtilTest(TestCase):
     def test_time_vector(self):
         time_vector = TimeVector()
 
-        time1 = ctime(datetime(2013, 8, 13, 0, 0, 0))
-        time2 = ctime(datetime(2013, 8, 13, 1, 0, 0))
+        time1 = ctime(datetime.datetime(2013, 8, 13, 0, 0, 0))
+        time2 = ctime(datetime.datetime(2013, 8, 13, 1, 0, 0))
 
         time_vector.setDefault(time2)
 
@@ -269,3 +269,52 @@ class UtilTest(TestCase):
 
         for index, value in enumerate(range(1, 6)):
             self.assertEqual(vector[index], value)
+
+
+    def test_time_vector_regular(self):
+        start = datetime.datetime(2010 , 1 , 1 , 0,0,0)
+        end = datetime.datetime(2010 , 2 , 1 , 0,0,0)
+
+        with self.assertRaises(TypeError):
+            trange = TimeVector.createRegular( start , end , "1X" )
+
+        with self.assertRaises(TypeError):
+            trange = TimeVector.createRegular( start , end , "1" )
+
+        with self.assertRaises(TypeError):
+            trange = TimeVector.createRegular( start , end , "X" )
+
+        with self.assertRaises(TypeError):
+            trange = TimeVector.createRegular( start , end , "1.5Y" )
+
+        trange = TimeVector.createRegular(start , end , "d")
+        trange = TimeVector.createRegular(start , end , "D")
+        trange = TimeVector.createRegular(start , end , "1d")
+        self.assertEqual( trange[0] , start )
+        self.assertEqual( trange[-1] , end )
+        date = start
+        delta = datetime.timedelta(days = 1)
+        for t in trange:
+            self.assertEqual(t ,  date)
+            date += delta
+        
+        
+        end = datetime.datetime(2010 , 1 , 10 , 0,0,0)
+        trange = TimeVector.createRegular(start , end , "2d")
+        self.assertEqual( 5 , len(trange))
+        self.assertTrue(  trange[-1] == datetime.datetime(2010 , 1 , 9 , 0,0,0))
+        
+
+        end = datetime.datetime(2012 , 1 , 10 , 0,0,0)
+        trange = TimeVector.createRegular(start , end , "3M")
+        self.assertTrue( trange[-1] == datetime.datetime(2012 , 1 , 1 , 0,0,0))
+        self.assertTrue( trange[1]  == datetime.datetime(2010 , 4  , 1 , 0,0,0))
+        self.assertTrue( trange[2]  == datetime.datetime(2010 , 7  , 1 , 0,0,0))
+        self.assertTrue( trange[3]  == datetime.datetime(2010 , 10 , 1 , 0,0,0))
+        self.assertTrue( trange[4]  == datetime.datetime(2011 , 1 , 1 , 0,0,0))
+
+        start = datetime.datetime(1980 , 1 , 1 , 0,0,0)
+        end = datetime.datetime(2020 , 1 , 1 , 0,0,0)
+        trange = TimeVector.createRegular(start , end , "2Y")
+        for (y,t) in zip(xrange(1980,2022,2) , trange):
+            self.assertTrue( t == datetime.datetime(y,1,1,0,0,0) )
