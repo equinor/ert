@@ -3933,10 +3933,80 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 
 
 
+void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_type * iactive, stringlist_type ** realizations_msg_list) {
+  enkf_fs_type * fs = enkf_main_get_fs( enkf_main );
+  const int last_report = -1;
+  const int ens_size = enkf_main_get_ensemble_size( enkf_main );
+  int step1,step2;
+
+  run_mode_type run_mode = ENSEMBLE_EXPERIMENT;
+
+  enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);  /* This is ugly */
+
+  step1 = 0;
+  step2 = last_report;  /** Observe that for the summary data it will load all the available data anyway. */
+
+
+  int iens;
+  arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
+  thread_pool_type * tp = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
+
+
+  for (iens = 0; iens < ens_size; ++iens) {
+    arg_pack_type * arg_pack = arg_pack_alloc();
+    arg_list[iens] = arg_pack;
+
+    if (bool_vector_iget(iactive, iens)) {
+      enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
+
+      arg_pack_append_ptr( arg_pack , enkf_state);                                        /* 0: */
+      arg_pack_append_ptr( arg_pack , fs );                                               /* 1: */
+      arg_pack_append_int( arg_pack , step1 );                                            /* 2: This will be the load start parameter for the run_info struct. */
+      arg_pack_append_int( arg_pack , step1 );                                            /* 3: Step1 */
+      arg_pack_append_int( arg_pack , step2 );                                            /* 4: Step2 For summary data it will load the whole goddamn thing anyway.*/
+      arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */
+      arg_pack_append_ptr(arg_pack, realizations_msg_list[iens]);                         /* 6: List of interactive mode messages. */
+      arg_pack_append_bool( arg_pack, true );                                             /* 7: Manual load */
+      int result = 0;
+      arg_pack_append_ptr( arg_pack, &result );                                           /* 8: Result */
+
+      thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
+
+    }
+  }
+
+  thread_pool_join( tp );
+  thread_pool_free( tp );
+  printf("\n");
+
+  for (iens = 0; iens < ens_size; ++iens) {
+    arg_pack_free(arg_list[iens]);
+  }
+  free( arg_list );
+}
+
+
+
+bool_vector_type * alloc_iactive_list(int ens_size, const stringlist_type * strings, int start_index) {
+  bool_vector_type * iactive = bool_vector_alloc(ens_size, false);
+  char * range_str = NULL;
+
+  if (stringlist_get_size(strings) > start_index)
+    range_str = stringlist_alloc_joined_substring( strings , start_index , stringlist_get_size(strings), "");
+  else
+    range_str = util_alloc_sprintf("0-%d", ens_size-1);
+
+  string_util_update_active_mask(range_str, iactive);
+  return iactive;
+}
+
+
+
+
 bool enkf_main_export_field(const enkf_main_type * enkf_main, 
                             const char * kw, 
                             const char * path, 
-                            int_vector_type * realization_list,
+                            bool_vector_type * iactive,
                             field_file_format_type file_type,
                             int report_step, 
                             state_enum state) {
@@ -3963,38 +4033,39 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
   if (node_found) {
     enkf_node_type * node = NULL;
 
+    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
     int iens;
-    for (iens = 0; iens < int_vector_size(realization_list); ++iens) {
-      int realization_no = int_vector_iget(realization_list, iens); 
-      enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
-      node_id_type node_id = {.report_step = report_step , .iens = realization_no , .state = state };
-      node = enkf_state_get_node(enkf_main->ensemble[realization_no] , kw);
-      if (node) {
-        if (enkf_node_try_load(node , fs , node_id)) {
-          path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
-          char * filename = path_fmt_alloc_path( export_path , false , realization_no);
-          path_fmt_free(export_path); 
+    for (iens = 0; iens < bool_vector_size(iactive); ++iens) {
+      if (bool_vector_iget(iactive, iens)) {
+        node_id_type node_id = {.report_step = report_step , .iens = iens , .state = state };
+        node = enkf_state_get_node(enkf_main->ensemble[iens] , kw);
+        if (node) {
+          if (enkf_node_try_load(node , fs , node_id)) {
+            path_fmt_type * export_path = path_fmt_alloc_path_fmt( path );
+            char * filename = path_fmt_alloc_path( export_path , false , iens);
+            path_fmt_free(export_path);
 
-          {
-            char * path;
-            util_alloc_file_components(filename , &path , NULL , NULL);
-            if (path != NULL) {
-              util_make_path( path );
-              free( path );
+            {
+              char * path;
+              util_alloc_file_components(filename , &path , NULL , NULL);
+              if (path != NULL) {
+                util_make_path( path );
+                free( path );
+              }
             }
-          }
 
-          {
-            const field_type * field = enkf_node_value_ptr(node);
-            const bool output_transform = true;
-            field_export(field , filename , NULL , file_type , output_transform);
-            ret = true; 
-          }
-          free(filename);
+            {
+              const field_type * field = enkf_node_value_ptr(node);
+              const bool output_transform = true;
+              field_export(field , filename , NULL , file_type , output_transform);
+              ret = true;
+            }
+            free(filename);
+          } else
+            printf("%s : enkf_node_try_load returned returned false \n", __func__);
         } else
-          printf("%s : enkf_node_try_load returned returned false \n", __func__);
-      } else 
-          printf("%s : enkf_state_get_node returned NULL for parameters  %d, %s \n", __func__, realization_no, kw);
+            printf("%s : enkf_state_get_node returned NULL for parameters  %d, %s \n", __func__, iens, kw);
+       }
     } 
   }
   
