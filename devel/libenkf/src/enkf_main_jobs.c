@@ -188,13 +188,9 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
 
 void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
-  enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
-  int result = 0;
-  int iens = 0;
-  for (; iens < enkf_main_get_ensemble_size(enkf_main); ++iens) {
-    enkf_state_type * enkf_state = enkf_main_iget_state(enkf_main, iens);
-    enkf_state_load_from_forward_model(enkf_state, fs, &result, false, NULL);
-  }
+  bool_vector_type * iactive = alloc_iactive_list(enkf_main_get_ensemble_size(enkf_main), args, 0);
+  enkf_main_load_from_forward_model(enkf_main, iactive, NULL);
+  bool_vector_free(iactive);
   return NULL;
 }
 
@@ -204,7 +200,6 @@ void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
 static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const stringlist_type * args, field_file_format_type file_type) {
   const char *      field            = stringlist_iget(args, 0); 
   const char *      file_name        = stringlist_iget(args, 1); 
-  int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
   int               report_step      = 0;
   util_sscanf_int(stringlist_iget(args,2), &report_step);
   state_enum        state            = enkf_types_get_state_enum(stringlist_iget(args, 3)); 
@@ -214,17 +209,11 @@ static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const 
       return;
   }
 
-  char * range_str = stringlist_alloc_joined_substring( args , 4 , stringlist_get_size(args), "");  
-  string_util_update_active_list(range_str, realization_list); 
-  
-  if (0 == int_vector_size(realization_list)) {
-      const char * range_str = util_alloc_sprintf("0-%d", enkf_main_get_ensemble_size( enkf_main )-1); 
-      string_util_update_active_list(range_str, realization_list); 
-  }  
-  
-  enkf_main_export_field(enkf_main,field, file_name, realization_list, file_type, report_step, state) ; 
-  int_vector_free(realization_list);  
+  bool_vector_type * iactive = alloc_iactive_list(enkf_main_get_ensemble_size(enkf_main), args, 4);
+  enkf_main_export_field(enkf_main,field, file_name, iactive, file_type, report_step, state) ;
+  bool_vector_free(iactive);
 }
+
 
 
 void * enkf_main_export_field_JOB(void * self, const stringlist_type * args) {
