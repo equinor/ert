@@ -210,10 +210,9 @@ static void enkf_tui_display_load_msg( int iens , const stringlist_type * msg_li
 
 
 void enkf_tui_run_manual_load__( void * arg ) {
-  enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg );
-  enkf_fs_type * fs                            = enkf_main_get_fs( enkf_main ); 
-  const int last_report                        = -1;
-  const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
+  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+  const int last_report      = -1;
+  const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   int step1,step2;
   bool_vector_type * iactive = bool_vector_alloc( 0 , false );
   run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
@@ -237,35 +236,15 @@ void enkf_tui_run_manual_load__( void * arg ) {
 
 
   if (bool_vector_count_equal( iactive , true )) {
-    int iens;
-    arg_pack_type ** arg_list = util_calloc( ens_size , sizeof * arg_list );
-    thread_pool_type * tp = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
+   int iens;
+   
 
-    for (iens = 0; iens < ens_size; iens++) {
-      arg_pack_type * arg_pack = arg_pack_alloc();
-      arg_list[iens] = arg_pack;
-      
-      if (bool_vector_iget(iactive , iens)) {
-        enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
-
-        arg_pack_append_ptr( arg_pack , enkf_state);                                        /* 0: */
-        arg_pack_append_ptr( arg_pack , fs );                                               /* 1: */
-        arg_pack_append_int( arg_pack , step1 );                                            /* 2: This will be the load start parameter for the run_info struct. */
-        arg_pack_append_int( arg_pack , step1 );                                            /* 3: Step1 */ 
-        arg_pack_append_int( arg_pack , step2 );                                            /* 4: Step2 For summary data it will load the whole goddamn thing anyway.*/
-        arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */                  
-        arg_pack_append_owned_ptr( arg_pack , stringlist_alloc_new() , stringlist_free__);  /* 6: List of interactive mode messages. */
-        arg_pack_append_bool( arg_pack, true );                                             /* 7: Manual load */
-        int result = 0;
-        arg_pack_append_ptr( arg_pack, &result );                                           /* 8: Result */
-        thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
-        
-      }
+    stringlist_type ** realizations_msg_list = util_calloc( ens_size , sizeof * realizations_msg_list );
+    for (iens = 0; iens < ens_size; ++iens) {
+        realizations_msg_list[iens] = stringlist_alloc_new();
     }
-    
-    thread_pool_join( tp );
-    thread_pool_free( tp );
-    printf("\n");
+
+    enkf_main_load_from_forward_model(enkf_main, iactive, realizations_msg_list);
 
     {
       qc_module_type * qc_module = enkf_main_get_qc_module( enkf_main );
@@ -282,17 +261,15 @@ void enkf_tui_run_manual_load__( void * arg ) {
     }
 
     for (iens = 0; iens < ens_size; iens++) {
-      if (bool_vector_iget(iactive , iens)) {
-        stringlist_type * msg_list = arg_pack_iget_ptr( arg_list[iens] , 6 );
-        if (stringlist_get_size( msg_list ))
+      if (bool_vector_iget(iactive, iens)) {
+        stringlist_type * msg_list = realizations_msg_list[iens];
+        if (stringlist_get_size( msg_list )) {
           enkf_tui_display_load_msg( iens , msg_list );
+          stringlist_free(msg_list);
+        }
       }
     }
-    
-    
-    for (iens = 0; iens < ens_size; iens++) 
-      arg_pack_free( arg_list[iens]);
-    free( arg_list );      
+    free(realizations_msg_list);
   }
   bool_vector_free( iactive );
 }
