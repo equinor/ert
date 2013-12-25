@@ -278,6 +278,44 @@ class SumTest(ExtendedTestCase):
         key_index = self.ecl_sum.get_general_var_index("FOPT")
         self.assertIsInstance(self.ecl_sum.alloc_data_vector(key_index, True), DoubleVector)
 
+    def test_timeRange(self):
+        sum = EclSum(self.case)
+        with self.assertRaises(TypeError):
+            trange = sum.timeRange(interval = "1")
+            trange = sum.timeRange(interval = "1X")
+            trange = sum.timeRange(interval = "YY")
+            trange = sum.timeRange(interval = "MY")
+
+        with self.assertRaises(ValueError):
+            trange = sum.timeRange( start = datetime.datetime(2000,1,1) , end = datetime.datetime(1999,1,1) )
+
+        sim_start = datetime.datetime(2000, 1, 1, 0, 0, 0)
+        sim_end = datetime.datetime(2004, 12, 31, 0, 0, 0)
+        trange = sum.timeRange( interval = "1Y")
+        self.assertTrue( trange[0] == datetime.date( 2000 , 1 , 1 ))
+        self.assertTrue( trange[1] == datetime.date( 2001 , 1 , 1 ))
+        self.assertTrue( trange[2] == datetime.date( 2002 , 1 , 1 ))
+        self.assertTrue( trange[3] == datetime.date( 2003 , 1 , 1 ))
+        self.assertTrue( trange[4] == datetime.date( 2004 , 1 , 1 ))
+        self.assertTrue( trange[5] == datetime.date( 2005 , 1 , 1 ))
+
+        trange = sum.timeRange( interval = "1M")
+        self.assertTrue( trange[0] == datetime.date( 2000 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2005 , 1 , 1 ))
+
+        trange = sum.timeRange( start = datetime.date( 2002 , 1 , 15), interval = "1M")
+        self.assertTrue( trange[0] == datetime.date( 2002 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2005 , 1 , 1 ))
+
+        trange = sum.timeRange( start = datetime.date( 2002 , 1 , 15) , end = datetime.date( 2003 , 1 , 15), interval = "1M")
+        self.assertTrue( trange[0] == datetime.date( 2002 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2003 , 2 , 1 ))
+
+        trange = sum.timeRange( start = datetime.date( 2002 , 1 , 15) , end = datetime.datetime( 2003 , 1 , 15,0,0,0), interval = "1M")
+        self.assertTrue( trange[0] == datetime.date( 2002 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2003 , 2 , 1 ))
+
+
 
     # Loading this dataset is a test of loading a case where one report step is missing.
     def test_Heidrun(self):
