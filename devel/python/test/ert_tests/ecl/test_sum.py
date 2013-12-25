@@ -332,4 +332,17 @@ class SumTest(ExtendedTestCase):
         with self.assertRaises(KeyError):
             trange = TimeVector.createRegular( sum.start_time , sum.end_time , "1M" )
             prod = sum.blockedProduction("NoNotThis" , trange)
-
+        
+        trange = sum.timeRange(interval = "6M")
+        wprod1 = sum.blockedProduction("WOPT:OP_1" , trange)
+        wprod2 = sum.blockedProduction("WOPT:OP_2" , trange)
+        wprod3 = sum.blockedProduction("WOPT:OP_3" , trange)
+        wprod4 = sum.blockedProduction("WOPT:OP_4" , trange)
+        wprod5 = sum.blockedProduction("WOPT:OP_5" , trange)
+    
+        fprod = sum.blockedProduction("FOPT" , trange)
+        gprod = sum.blockedProduction("GOPT:OP" , trange)
+        wprod = wprod1 + wprod2 + wprod3 + wprod4 + wprod5
+        for (w,f,g) in zip(wprod, fprod,gprod):
+            self.assertAlmostEqualScaled( w , f )
+            self.assertAlmostEqualScaled( w , g )
