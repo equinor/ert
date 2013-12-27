@@ -58,8 +58,8 @@ class NPVTest(ExtendedTestCase):
     def test_expression(self):
         npv = EclNPV( self.case )
         self.assertIsNone( npv.getExpression() )
-        npv.setExpression( "[FOPT] - [FGIT]")
-        self.assertEqual( npv.getExpression() , "[FOPT] - [FGIT]")
+        npv.setExpression( "[FOPT]*$OIL_PRICE - [FGIT]*$GAS_PRICE")
+        self.assertEqual( npv.getExpression() , "[FOPT]*$OIL_PRICE - [FGIT]*$GAS_PRICE")
         self.assertIn( "FOPT" , npv.getKeyList() )
         self.assertIn( "FGIT" , npv.getKeyList() )
 
