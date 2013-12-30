@@ -63,12 +63,29 @@ class NPVTest(ExtendedTestCase):
         self.assertIn( "FOPT" , npv.getKeyList() )
         self.assertIn( "FGIT" , npv.getKeyList() )
 
+        with self.assertRaises(ValueError):
+            npv.parseExpression("[FOPT")
 
         with self.assertRaises(ValueError):
-            npv.setExpression("[FOPT")
-
-        with self.assertRaises(ValueError):
-            npv.setExpression("FOPT]")
+            npv.parseExpression("FOPT]")
 
         with self.assertRaises(KeyError):
-            npv.setExpression("[FoPT]")
+            npv.parseExpression("[FoPT]")
+            
+        with self.assertRaises(ValueError):
+            npv.parseExpression("[FOPR]")
+            
+        parsedExpression = npv.parseExpression("[FOPT]")
+        self.assertEqual( parsedExpression , "FOPT[i]")
+        self.assertEqual( 1 , len(npv.getKeyList() ))
+
+
+        parsedExpression = npv.parseExpression("[FOPT]*2 + [FGPT] - [WOPT:OP_1]")
+        self.assertEqual( parsedExpression , "FOPT[i]*2 + FGPT[i] - WOPT_OP_1[i]")
+        keyList = npv.getKeyList()
+        self.assertEqual( 3 , len(keyList))
+        self.assertIn( "FOPT" , keyList )
+        self.assertIn( "FGPT" , keyList )
+        self.assertIn( "WOPT:OP_1" , keyList )
+
+        
