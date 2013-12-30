@@ -181,7 +181,8 @@ void * enkf_main_select_case_JOB( void * self , const stringlist_type * args) {
 void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   const char * new_case = stringlist_iget( args , 0 );
-  enkf_main_mount_alt_fs( enkf_main , new_case , false , true );
+  enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , new_case , false , true );
+  enkf_fs_umount(fs);
   return NULL;
 }
 
