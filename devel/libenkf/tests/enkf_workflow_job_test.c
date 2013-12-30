@@ -102,13 +102,12 @@ int main(int argc , const char ** argv) {
   log_type * logh = enkf_main_get_logh(enkf_main);
   ert_workflow_list_add_jobs_in_directory(workflow_list, job_dir_path, logh);
 
-  /*test_smoother_job(workflow_list);
+  test_smoother_job(workflow_list);
   test_create_case_job(enkf_main, workflow_list);
-  test_create_case_workflow(enkf_main, workflow_list);*/
+  test_create_case_workflow(enkf_main, workflow_list);
   test_load_results_job(enkf_main, workflow_list);
-  //test_load_results_workflow(enkf_main, workflow_list);
+  test_load_results_workflow(enkf_main, workflow_list);
   
-
 
   enkf_main_free( enkf_main );
   test_work_area_free(work_area); 
