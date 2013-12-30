@@ -275,6 +275,9 @@ class UtilTest(TestCase):
         start = datetime.datetime(2010 , 1 , 1 , 0,0,0)
         end = datetime.datetime(2010 , 2 , 1 , 0,0,0)
 
+        with self.assertRaises(ValueError):
+            trange = TimeVector.createRegular( end , start , "1X" )
+
         with self.assertRaises(TypeError):
             trange = TimeVector.createRegular( start , end , "1X" )
 
@@ -290,8 +293,8 @@ class UtilTest(TestCase):
         trange = TimeVector.createRegular(start , end , "d")
         trange = TimeVector.createRegular(start , end , "D")
         trange = TimeVector.createRegular(start , end , "1d")
-        self.assertEqual( trange[0] , start )
-        self.assertEqual( trange[-1] , end )
+        self.assertEqual( trange[0].datetime()  , start )
+        self.assertEqual( trange[-1].datetime() , end )
         date = start
         delta = datetime.timedelta(days = 1)
         for t in trange:
@@ -301,8 +304,8 @@ class UtilTest(TestCase):
         
         end = datetime.datetime(2010 , 1 , 10 , 0,0,0)
         trange = TimeVector.createRegular(start , end , "2d")
+        self.assertEqual(  trange[-1].datetime() ,  datetime.datetime(2010 , 1 , 9 , 0,0,0))
         self.assertEqual( 5 , len(trange))
-        self.assertTrue(  trange[-1] == datetime.datetime(2010 , 1 , 9 , 0,0,0))
         
 
         end = datetime.datetime(2012 , 1 , 10 , 0,0,0)
