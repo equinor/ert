@@ -332,6 +332,14 @@ class SumTest(ExtendedTestCase):
         with self.assertRaises(KeyError):
             trange = TimeVector.createRegular( sum.start_time , sum.end_time , "1M" )
             prod = sum.blockedProduction("NoNotThis" , trange)
+
+        trange = sum.timeRange(interval = "2Y")
+        self.assertTrue( trange[0]  == datetime.date( 2000 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2006 , 1 , 1 ))
+
+        trange = sum.timeRange(interval = "5Y")
+        self.assertTrue( trange[0]  == datetime.date( 2000 , 1 , 1 ))
+        self.assertTrue( trange[-1] == datetime.date( 2005 , 1 , 1 ))
         
         trange = sum.timeRange(interval = "6M")
         wprod1 = sum.blockedProduction("WOPT:OP_1" , trange)
