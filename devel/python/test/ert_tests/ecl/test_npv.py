@@ -17,6 +17,7 @@
 
 import os
 import datetime
+import math
 
 try:
     from unittest2 import skipIf, skipUnless, skipIf
@@ -88,4 +89,31 @@ class NPVTest(ExtendedTestCase):
         self.assertIn( "FGPT" , keyList )
         self.assertIn( "WOPT:OP_1" , keyList )
 
+
+    def test_period(self):
+        npv = EclNPV( self.case )
+        self.assertIsNone(npv.start)
+        self.assertIsNone(npv.end)
+        self.assertEqual("1Y" , npv.interval)
+
+
+    def test_eval(self):
+        npv = EclNPV(self.case)
+        npv.compile("[FOPT]")
+        npv1 = npv.evalNPV()
+
+        npv2 = 0
+        sum = EclSum(self.case)
+        trange = sum.timeRange()
+        fopr = sum.blockedProduction("FOPT" , trange)
+        for v in fopr:
+            npv2 += v
+        self.assertAlmostEqual( npv1 , npv2 )
         
+        npv.compile("[FOPT] - 0.5*[FOPT] - 0.5*[FOPT]")
+        npv1 = npv.evalNPV()
+        self.assertTrue( abs(npv1) < 1e-2 )
+
+        npv.compile("[WOPT:OP_1] - 0.5*[WOPT:OP_1] - 0.5*[WOPT:OP_1]")
+        npv1 = npv.evalNPV()
+        self.assertTrue( abs(npv1) < 1e-2 )
