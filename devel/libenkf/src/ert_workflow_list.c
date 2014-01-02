@@ -117,8 +117,7 @@ void ert_workflow_list_add_job( ert_workflow_list_type * workflow_list , const c
 
 
  bool ert_workflow_list_has_job( const ert_workflow_list_type * workflow_list, const char * job_name) {
-  const workflow_job_type * job = workflow_joblist_get_job(workflow_list->joblist , job_name);
-  return (NULL != job);
+  return workflow_joblist_has_job(workflow_list->joblist , job_name);
  }
 
 

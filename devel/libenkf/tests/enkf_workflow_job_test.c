@@ -53,6 +53,7 @@ void test_create_case_workflow(enkf_main_type * enkf_main, ert_workflow_list_typ
 
 void test_load_results_job(enkf_main_type * enkf_main, ert_workflow_list_type * workflow_list) {
   test_assert_true(ert_workflow_list_has_job(workflow_list, "LOAD_RESULTS"));
+  test_assert_false(ert_workflow_list_has_job(workflow_list, "DUMMY_JOB"));
 
   int ens_size = enkf_main_get_ensemble_size(enkf_main);
   bool_vector_type * iactive = bool_vector_alloc(3, false);
