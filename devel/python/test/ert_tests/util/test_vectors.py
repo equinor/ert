@@ -253,6 +253,9 @@ class UtilTest(TestCase):
         self.assertEqual(time_vector[1], time2)
         self.assertEqual(time_vector[2], time2)
 
+        tv1 = TimeVector( default_value = datetime.date( 2000 , 1,1) , initial_size = 2)
+        self.assertEqual( tv1[0] , datetime.date(2000,1,1))
+
 
     def test_permutation_vector(self):
         vector = DoubleVector()
@@ -269,6 +272,7 @@ class UtilTest(TestCase):
 
         for index, value in enumerate(range(1, 6)):
             self.assertEqual(vector[index], value)
+
 
 
     def test_time_vector_regular(self):
