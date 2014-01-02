@@ -211,16 +211,12 @@ static void enkf_tui_display_load_msg( int iens , const stringlist_type * msg_li
 
 void enkf_tui_run_manual_load__( void * arg ) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-  const int last_report      = -1;
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
-  int step1,step2;
   bool_vector_type * iactive = bool_vector_alloc( 0 , false );
-  run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
+  run_mode_type run_mode     = ENSEMBLE_EXPERIMENT;
   
   enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);  /* This is ugly */
-  
-  step1 = 0;
-  step2 = last_report;  /** Observe that for the summary data it will load all the available data anyway. */
+
   {
     char * prompt = util_alloc_sprintf("Which realizations to load  (Ex: 1,3-5) <Enter for all> [M to return to menu] : [ensemble size:%d] : " , ens_size);
     char * select_string;
@@ -233,15 +229,11 @@ void enkf_tui_run_manual_load__( void * arg ) {
     free( prompt );
   }
 
-
-
   if (bool_vector_count_equal( iactive , true )) {
-   int iens;
-   
-
     stringlist_type ** realizations_msg_list = util_calloc( ens_size , sizeof * realizations_msg_list );
-    for (iens = 0; iens < ens_size; ++iens) {
-        realizations_msg_list[iens] = stringlist_alloc_new();
+    int iens = 0;
+    for (; iens < ens_size; ++iens) {
+      realizations_msg_list[iens] = stringlist_alloc_new();
     }
 
     enkf_main_load_from_forward_model(enkf_main, iactive, realizations_msg_list);
@@ -250,17 +242,16 @@ void enkf_tui_run_manual_load__( void * arg ) {
       qc_module_type * qc_module = enkf_main_get_qc_module( enkf_main );
       runpath_list_type * runpath_list = qc_module_get_runpath_list( qc_module );
 
-      for (iens = 0; iens < ens_size; iens++) {
+      for (iens = 0; iens < ens_size; ++iens) {
         if (bool_vector_iget(iactive , iens)) {
           const enkf_state_type * state = enkf_main_iget_state( enkf_main , iens );
           runpath_list_add( runpath_list , iens , enkf_state_get_run_path( state ) , enkf_state_get_eclbase( state ));
         }
       }
-
       qc_module_export_runpath_list( qc_module );
     }
 
-    for (iens = 0; iens < ens_size; iens++) {
+    for (iens = 0; iens < ens_size; ++iens) {
       if (bool_vector_iget(iactive, iens)) {
         stringlist_type * msg_list = realizations_msg_list[iens];
         if (stringlist_get_size( msg_list )) {
@@ -271,6 +262,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
     }
     free(realizations_msg_list);
   }
+
   bool_vector_free( iactive );
 }
 
