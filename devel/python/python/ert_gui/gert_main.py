@@ -151,8 +151,8 @@ class Ert(object):
         return self.__ert
 
 
-def main():
-    app = QApplication(sys.argv) #Early so that QT is initialized before other imports
+def main(argv):
+    app = QApplication(argv) #Early so that QT is initialized before other imports
 
     splash = QSplashScreen(resourceImage("newsplash"), Qt.WindowStaysOnTopHint)
     splash.show()
@@ -166,7 +166,7 @@ def main():
 
     strict = True
     site_config = os.getenv("ERT_SITE_CONFIG")
-    if len(sys.argv) == 1:
+    if len(argv) == 1:
         print("-----------------------------------------------------------------")
         print("-- You must supply the name of configuration file as the first --")
         print("-- commandline argument:                                       --")
@@ -177,7 +177,7 @@ def main():
         print("-- create a new configuration file.                            --")
         print("-----------------------------------------------------------------")
     else:
-        enkf_config = sys.argv[1]
+        enkf_config = argv[1]
         if not os.path.exists(enkf_config):
             print("Trying to start new config")
             new_configuration_dialog = NewConfigurationDialog(enkf_config)
@@ -229,7 +229,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
 
 
 
