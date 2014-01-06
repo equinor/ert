@@ -1,3 +1,5 @@
+from .scale_tracker import ScaleTracker
+
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_keys_widget import DataTypeKeysWidget
 
