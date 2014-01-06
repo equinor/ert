@@ -131,7 +131,8 @@ class EnsemblePlotData(QObject):
 
         result = []
         for realization in self.__y_values:
-            result.append(realization[index])  # todo check length
+            if len(realization) > 0:
+                result.append(realization[index])  # todo check length
 
         return result
 
