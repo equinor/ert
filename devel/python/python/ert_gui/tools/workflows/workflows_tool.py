@@ -14,4 +14,5 @@ class WorkflowsTool(Tool):
         run_workflow_widget = RunWorkflowWidget()
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())
         dialog.exec_()
+        CaseList().externalModificationNotification() # workflow may have added new cases.
 
