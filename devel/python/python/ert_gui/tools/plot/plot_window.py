@@ -1,7 +1,7 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QDockWidget, QTabWidget
 from ert_gui.models.connectors.init import CaseSelectorModel
-from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget
+from ert_gui.tools.plot import PlotPanel, DataTypeKeysWidget, CaseSelectionWidget, PlotMetricsWidget, ScaleTracker
 from ert_gui.tools.plot.data import PlotDataFetcher
 from ert_gui.widgets.util import may_take_a_long_time
 
@@ -39,8 +39,11 @@ class PlotWindow(QMainWindow):
         self.__plot_metrics_widget.reportStepTimeChanged.connect(self.reportStepTimeChanged)
         self.addDock("Plot metrics", self.__plot_metrics_widget)
 
+
         self.__data_type_key = None
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
+        self.__value_scale_tracker = ScaleTracker("Value")
+
 
 
     def addPlotPanel(self, name, path, short_name=None):
@@ -84,8 +87,11 @@ class PlotWindow(QMainWindow):
         value_min = self.__plot_metrics_widget.getValueMin()
         value_max = self.__plot_metrics_widget.getValueMax()
 
+        self.__value_scale_tracker.setScaleValues(self.__data_type_key, value_min, value_max)
+
         for plot_panel in self.__plot_panels:
             plot_panel.setValueScales(value_min, value_max)
+
 
     def reportStepTimeChanged(self):
         t = self.__plot_metrics_widget.getSelectedReportStepTime()
@@ -97,6 +103,11 @@ class PlotWindow(QMainWindow):
     @may_take_a_long_time
     def keySelected(self, key):
         self.__data_type_key = str(key)
+
+        value_min = self.__value_scale_tracker.getMinimumScaleValue(self.__data_type_key)
+        value_max = self.__value_scale_tracker.getMaximumScaleValue(self.__data_type_key)
+
+        self.__plot_metrics_widget.setValueScales(value_min, value_max)
 
         if self.checkPlotStatus():
             data = PlotDataFetcher().getPlotDataForKeyAndCases(self.__data_type_key, self.__plot_cases)

@@ -139,10 +139,13 @@ BasePlot.prototype.resize = function(width, height) {
 };
 
 BasePlot.prototype.setValueScales = function(min, max) {
-    this.custom_y_min = min;
-    this.custom_y_max = max;
 
-    this.setData(this.stored_data);
+    if(this.custom_y_min != min || this.custom_y_max != max) {
+        this.custom_y_min = min;
+        this.custom_y_max = max;
+
+        this.setData(this.stored_data);
+    }
 };
 
 

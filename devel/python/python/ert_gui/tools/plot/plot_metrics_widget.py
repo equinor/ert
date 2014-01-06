@@ -1,4 +1,4 @@
-from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSignal, Qt
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel, QDoubleSpinBox
 from ert_gui.tools.plot import ReportStepWidget
 
@@ -95,6 +95,34 @@ class PlotMetricsWidget(QWidget):
             return scaler["spinner"].value()
         else:
             return None
+
+
+    def setValueScales(self, value_min, value_max):
+        self.__updateScale(PlotMetricsWidget.VALUE_MIN, value_min)
+        self.__updateScale(PlotMetricsWidget.VALUE_MAX, value_max)
+        self.plotScalesChanged.emit()
+
+
+    def __updateScale(self, name, value):
+        scaler = self.__scalers[name]
+        if value is None:
+            scaler["checkbox"].blockSignals(True)
+            scaler["checkbox"].setCheckState(Qt.Unchecked)
+            scaler["checkbox"].blockSignals(False)
+        else:
+            scaler["checkbox"].blockSignals(True)
+            scaler["checkbox"].setCheckState(Qt.Checked)
+            scaler["checkbox"].blockSignals(False)
+
+            scaler["spinner"].blockSignals(True)
+            scaler["spinner"].setValue(value)
+            scaler["spinner"].blockSignals(False)
+
+        checked = scaler["checkbox"].isChecked()
+        scaler["label"].setEnabled(checked)
+        scaler["spinner"].setEnabled(checked)
+
+
 
     def getSelectedReportStepTime(self):
         """ @rtype: ctime """
