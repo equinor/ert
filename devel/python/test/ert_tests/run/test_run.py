@@ -12,6 +12,12 @@ class RunTest(ExtendedTestCase):
             
         tr = TestRun("test-data/local/run/config.txt")
         self.assertEqual( tr.config_file , "config.txt")
+        self.assertEqual(tr.ert_version , "stable")
+
+
+    def test_args(self):
+        tr = TestRun("test-data/local/run/config.txt" , args=["-v" , "latest"])
+        self.assertEqual(tr.ert_version , "latest")
 
 
     def test_cmd(self):
@@ -23,13 +29,9 @@ class RunTest(ExtendedTestCase):
 
 
     def test_args(self):
-        tr = TestRun("test-data/local/run/config.txt")
-        self.assertEqual( tr.get_args() , [])
-
-        tr.add_arg("-v")
-        self.assertEqual( tr.get_args() , ["-v"])
-        tr.add_arg("latest")
-        self.assertEqual( tr.get_args() , ["-v" , "latest"])
+        tr = TestRun("test-data/local/run/config.txt" , args = ["arg1","arg2","-v","latest"])
+        self.assertEqual( tr.get_args() , ["arg1","arg2"])
+        self.assertEqual(tr.ert_version , "latest")
 
 
     def test_workflows(self):
@@ -48,7 +50,7 @@ class RunTest(ExtendedTestCase):
 
                     
     def test_name(self):
-        tr = TestRun("test-data/local/run/config.txt" , "Name")
+        tr = TestRun("test-data/local/run/config.txt" , name = "Name")
         self.assertEqual( "Name" , tr.name[:4] )
 
         tr = TestRun("test-data/local/run/config.txt")
