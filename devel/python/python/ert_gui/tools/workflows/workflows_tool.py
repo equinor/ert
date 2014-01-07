@@ -1,3 +1,4 @@
+from ert_gui.models.connectors.init import CaseList
 from ert_gui.models.connectors.run.workflows_model import WorkflowsModel
 from ert_gui.tools import Tool
 from ert_gui.tools.workflows import RunWorkflowWidget
