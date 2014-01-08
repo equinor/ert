@@ -249,8 +249,8 @@ void enkf_tui_run_manual_load__( void * arg ) {
     }
 
     for (iens = 0; iens < ens_size; ++iens) {
+      stringlist_type * msg_list = realizations_msg_list[iens];
       if (bool_vector_iget(iactive, iens)) {
-        stringlist_type * msg_list = realizations_msg_list[iens];
         if (stringlist_get_size( msg_list )) {
           enkf_tui_display_load_msg( iens , msg_list );
         }
