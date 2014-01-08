@@ -78,6 +78,17 @@ static void create_exjob( const char * workflow , const char * bin_path)
 }
 
 
+void test_has_job(const char * job) {
+  workflow_joblist_type * joblist = workflow_joblist_alloc();
+  test_assert_false( workflow_joblist_has_job( joblist , "NoNotThis"));
+  
+  workflow_joblist_add_job_from_file( joblist , "CREATE_FILE" , job);
+  test_assert_true( workflow_joblist_has_job( joblist  , "CREATE_FILE"));
+  
+  workflow_joblist_free( joblist );
+}
+
+
 int main( int argc , char ** argv) {
   const char * exjob_file = "job";
   const char * bin_path = argv[1];
@@ -86,6 +97,7 @@ int main( int argc , char ** argv) {
 
   signal(SIGSEGV , util_abort_signal);    
   create_exjob( exjob_file , bin_path );
+  test_has_job( exjob_file );
   {
     
     int int_value = rand();
