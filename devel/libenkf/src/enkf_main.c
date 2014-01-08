@@ -3987,16 +3987,14 @@ void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_t
   for (iens = 0; iens < ens_size; ++iens) {
     if (bool_vector_iget(iactive, iens)) {
       arg_pack_type * args = arg_list[iens];
-
       int * result = arg_pack_iget_ptr(args, 8);
 
       if (*result & LOAD_FAILURE)
         fprintf(stderr, "** Warning: Function %s: Realization %d load failure\n", __func__, iens);
       else if (*result & REPORT_STEP_INCOMPATIBLE)
         fprintf(stderr, "** Warning: Function %s: Reliazation %d report step incompatible\n", __func__, iens);
-
-      arg_pack_free(arg_list[iens]);
     }
+    arg_pack_free(arg_list[iens]);
   }
   free( arg_list );
 }

@@ -256,9 +256,9 @@ void enkf_tui_run_manual_load__( void * arg ) {
         stringlist_type * msg_list = realizations_msg_list[iens];
         if (stringlist_get_size( msg_list )) {
           enkf_tui_display_load_msg( iens , msg_list );
-          stringlist_free(msg_list);
         }
       }
+      stringlist_free(msg_list);
     }
     free(realizations_msg_list);
   }
