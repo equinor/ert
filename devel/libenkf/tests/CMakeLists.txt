@@ -82,6 +82,10 @@ add_executable( enkf_fs enkf_fs.c )
 target_link_libraries( enkf_fs enkf test_util )
 add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs )
 
+add_executable( enkf_ert_test_context enkf_ert_test_context.c )
+target_link_libraries( enkf_ert_test_context ert-test test_util )
+add_test( enkf_ert_test_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_test_context ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert/config_GEN_KW_true )
+
 
 #-----------------------------------------------------------------
 

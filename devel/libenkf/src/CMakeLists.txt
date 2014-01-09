@@ -168,9 +168,9 @@ set( header_files
      cases_config.h 
      state_map.h)
 
-
 add_library( enkf  ${LIBRARY_TYPE} ${source_files} )
 set_target_properties( enkf PROPERTIES VERSION 1.0 SOVERSION 1.0 )
+
 
 
 #configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/CMake/config/ert_build_info.h.in
@@ -191,4 +191,13 @@ if (INSTALL_ERT)
    endforeach()
 endif()
 
+#-----------------------------------------------------------------
 
+if (BUILD_TESTS) 
+   add_library( ert-test  ${LIBRARY_TYPE} ert_test_context.c )
+   target_link_libraries( ert-test enkf )
+   if (USE_RUNPATH)
+      add_runpath( ert-test )
+   endif()
+endif()
+      
