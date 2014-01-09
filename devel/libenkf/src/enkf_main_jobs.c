@@ -141,7 +141,26 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
 void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   bool_vector_type * iactive = alloc_iactive_list_from_stringlist(enkf_main_get_ensemble_size(enkf_main), args, 0);
-  enkf_main_load_from_forward_model(enkf_main, iactive, NULL);
+  int ens_size = enkf_main_get_ensemble_size(enkf_main);
+  stringlist_type ** realizations_msg_list = util_calloc(ens_size, sizeof * realizations_msg_list);
+  int iens = 0;
+  for (; iens < ens_size; ++iens)
+      realizations_msg_list[iens] = stringlist_alloc_new();
+
+  enkf_main_load_from_forward_model(enkf_main, iactive, realizations_msg_list);
+
+  for (iens = 0; iens < ens_size; ++iens) {
+      stringlist_type * msg = realizations_msg_list[iens];
+      if (stringlist_get_size(msg)) {
+        int msg_count = 0;
+        for (; msg_count < stringlist_get_size(msg); ++msg_count)
+          fprintf(stderr, "** Warning: Function %s : Load of realization number %d returned the following warning: %s\n", __func__, iens, stringlist_iget(msg, msg_count));
+      }
+      stringlist_free(msg);
+   }
+
+  free(realizations_msg_list);
+
   bool_vector_free(iactive);
   return NULL;
 }
