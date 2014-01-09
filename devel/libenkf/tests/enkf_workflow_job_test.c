@@ -28,6 +28,11 @@
 #include <ert/enkf/enkf_main.h>
 #include <ert/enkf/enkf_main_jobs.h>
 
+
+void test_ensemble_run_job(ert_workflow_list_type * workflow_list) {
+   test_assert_true(ert_workflow_list_has_job(workflow_list, "ENSEMBLE_RUN"));
+}
+
 void test_smoother_job(ert_workflow_list_type * workflow_list) {
    test_assert_true(ert_workflow_list_has_job(workflow_list, "RUN_SMOOTHER"));
 }
@@ -103,6 +108,7 @@ int main(int argc , const char ** argv) {
   log_type * logh = enkf_main_get_logh(enkf_main);
   ert_workflow_list_add_jobs_in_directory(workflow_list, job_dir_path, logh);
 
+  test_ensemble_run_job(workflow_list);
   test_smoother_job(workflow_list);
   test_create_case_job(enkf_main, workflow_list);
   test_create_case_workflow(enkf_main, workflow_list);
