@@ -72,6 +72,9 @@ class PlotWindow(QMainWindow):
             if not plot_panel.isReady():
                 return False
 
+        if len(self.__plot_cases) == 0:
+            return False
+
         return True
 
     def plotReady(self):
