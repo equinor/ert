@@ -56,6 +56,11 @@ class SumTest(ExtendedTestCase):
         self.assertIsNotNone(self.ecl_sum, "Load failed")
 
 
+    def test_invalid(self):
+        with self.assertRaises(AssertionError):
+            sum = EclSum("Does/not/exist")
+
+
     def test_interp(self):
         sum = self.ecl_sum
 

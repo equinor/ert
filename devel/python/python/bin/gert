@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+#   
+#  The file 'gert' is part of ERT - Ensemble based Reservoir Tool. 
+#   
+#  ERT is free software: you can redistribute it and/or modify 
+#  it under the terms of the GNU General Public License as published by 
+#  the Free Software Foundation, either version 3 of the License, or 
+#  (at your option) any later version. 
+#   
+#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY 
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+#  FITNESS FOR A PARTICULAR PURPOSE.   
+#   
+#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html> 
+#  for more details. 
+
+#--------------------------------------------------------------------------------
+# Script used to start gert.
+# Should be located in the bin-directory in the ERT installation tree.
+#--------------------------------------------------------------------------------
+
+
+import os
+import sys
+from optparse import OptionParser
+
+def set_ert_env( root_path ):
+    ert_share  = "%s/share"  % root_path 
+
+    if not os.getenv("ERT_SHARE_PATH"):
+        os.environ["ERT_SHARE_PATH"]  = ert_share
+            
+
+def exec_ert_gui( root_path ):
+    try:
+        import ert_gui.gert_main as gert_main
+    except ImportError:
+        ert_python = "%s/python" % root_path 
+        sys.path.append(ert_python)
+        import ert_gui.gert_main as gert_main
+   
+    gert_main.main( sys.argv )
+     
+
+def main():
+    usage = "gert CONFIG_FILE"
+    parser = OptionParser( usage )
+    (options , args) = parser.parse_args()
+
+    ert_root_path = os.path.realpath(os.path.join(os.path.dirname( os.path.abspath( __file__)) , ".."))
+    set_ert_env(ert_root_path)
+    exec_ert_gui(ert_root_path)
+
+
+if __name__ == "__main__":
+    main()

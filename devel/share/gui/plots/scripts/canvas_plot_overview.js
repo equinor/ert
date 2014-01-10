@@ -23,14 +23,16 @@ function OverviewPlot(element) {
     var renderEnsemble = function(context, data) {
         if(data.hasEnsembleData()) {
             var case_list = data.caseList();
+
             for(var i = 0; i < case_list.length; i++) {
                 var style = STYLES[("ensemble_" + (i + 1))];
                 var case_name = case_list[i];
+                var ensemble_data = data.ensembleData(case_name);
 
-                var x_values = data.ensembleXValues(case_name)[0];
-                var y_min_values = data.ensembleMinYValues(case_name);
-                var y_max_values = data.ensembleMaxYValues(case_name);
+                var x_values = ensemble_data.xValues();
 
+                var y_min_values = ensemble_data.yMinValues();
+                var y_max_values = ensemble_data.yMaxValues();
 
                 var x_area_values = [];
                 var y_area_values = [];
@@ -64,8 +66,8 @@ OverviewPlot.prototype.resize = function(width, height) {
     this.plot.resize(width, height);
 };
 
-OverviewPlot.prototype.setYScales = function(min, max) {
-    this.plot.setYScales(min, max);
+OverviewPlot.prototype.setValueScales = function(min, max) {
+    this.plot.setValueScales(min, max);
 };
 
 OverviewPlot.prototype.setYDomain = function(min_y, max_y) {
