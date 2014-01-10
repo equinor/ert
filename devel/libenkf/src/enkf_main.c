@@ -4023,11 +4023,11 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
                             state_enum state) {
   
   bool ret = false; 
-  if (!util_char_in('%', strlen(path), path) || !util_char_in('d', strlen(path), path)) {
-    printf("EXPORT FIELD: There must be a %%d in the file name\n"); 
+  if (util_int_format_count(path) < 1) {
+    printf("EXPORT FIELD: There must be a %%d in the file name\n");
     return ret;
   }
-  
+
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const enkf_config_node_type * config_node = NULL;
   bool node_found = false; 
