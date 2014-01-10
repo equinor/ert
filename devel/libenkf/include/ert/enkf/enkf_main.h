@@ -284,7 +284,6 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
 
 
   void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_type * iactive, stringlist_type ** realizations_msg_list);
-  bool_vector_type * alloc_iactive_list_from_stringlist(int ens_size, const stringlist_type * strings, int index);
   
   
 UTIL_SAFE_CAST_HEADER(enkf_main);

@@ -3998,22 +3998,6 @@ void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_t
 
 
 
-bool_vector_type * alloc_iactive_list_from_stringlist(int ens_size, const stringlist_type * strings, int start_index) {
-  bool_vector_type * iactive = bool_vector_alloc(ens_size, false);
-  char * range_str = NULL;
-
-  if (stringlist_get_size(strings) > start_index)
-    range_str = stringlist_alloc_joined_substring( strings , start_index , stringlist_get_size(strings), "");
-  else
-    range_str = util_alloc_sprintf("0-%d", ens_size-1);
-
-  string_util_update_active_mask(range_str, iactive);
-  return iactive;
-}
-
-
-
-
 bool enkf_main_export_field(const enkf_main_type * enkf_main, 
                             const char * kw, 
                             const char * path, 
