@@ -68,6 +68,7 @@ extern "C" {
   //void                          enkf_main_close_alt_fs(const enkf_main_type * enkf_main , enkf_fs_type * fs);
   bool                          enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path);
   enkf_fs_type                * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create);
+  time_map_type               * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path );
   state_map_type              * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path);
   stringlist_type             * enkf_main_alloc_caselist( const enkf_main_type * enkf_main );
   void                          enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path );
@@ -138,7 +139,7 @@ extern "C" {
 
   void                          enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , bool rerun);
   bool                          enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number, const char * target_fs_name , bool_vector_type * iactive);
-  void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main);
+  void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1 , int iter2);
   void                          enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2);
   void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
   void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
