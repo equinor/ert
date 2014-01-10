@@ -24,6 +24,20 @@
 #include <ert/enkf/field_config.h>
 
 
+static bool_vector_type * alloc_iactive_vector_from_range(const stringlist_type * range, int startindex, int ens_size) {
+  bool_vector_type * iactive;
+  if (stringlist_get_size(range) > startindex) {
+    char * arg_string = stringlist_alloc_joined_substring( range, startindex, stringlist_get_size(range), "");
+    iactive = bool_vector_alloc(ens_size, false);
+    string_util_update_active_mask( arg_string, iactive );
+    free ( arg_string );
+  } else {
+    iactive = bool_vector_alloc(ens_size, true);
+  }
+  return iactive;
+}
+
+
 void * enkf_main_exit_JOB(void * self , const stringlist_type * args ) {
   enkf_main_type  * enkf_main = enkf_main_safe_cast( self );
   enkf_main_exit( enkf_main );
@@ -94,7 +108,7 @@ void * enkf_main_analysis_update_JOB( void * self , const stringlist_type * args
 void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive   = alloc_iactive_list_from_stringlist(enkf_main_get_ensemble_size(enkf_main), args, 0);
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, ens_size);
 
   bool_vector_iset( iactive , ens_size - 1 , true );
   enkf_main_run_exp( enkf_main , iactive , true , 0 , 0 , ANALYZED);
@@ -187,7 +201,7 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
 
 void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
-  bool_vector_type * iactive = alloc_iactive_list_from_stringlist(enkf_main_get_ensemble_size(enkf_main), args, 0);
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, enkf_main_get_ensemble_size(enkf_main));
   int ens_size = enkf_main_get_ensemble_size(enkf_main);
   stringlist_type ** realizations_msg_list = util_calloc(ens_size, sizeof * realizations_msg_list);
   int iens = 0;
@@ -227,7 +241,7 @@ static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const 
       return;
   }
 
-  bool_vector_type * iactive = alloc_iactive_list_from_stringlist(enkf_main_get_ensemble_size(enkf_main), args, 4);
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 4, enkf_main_get_ensemble_size(enkf_main));
   enkf_main_export_field(enkf_main,field, file_name, iactive, file_type, report_step, state) ;
   bool_vector_free(iactive);
 }
