@@ -75,3 +75,14 @@ void ert_test_context_free( ert_test_context_type * test_context ) {
   
   free( test_context );
 }
+
+
+bool ert_test_context_install_workflow_job( ert_test_context_type * test_context , const char * job_name , const char * job_file) {
+  if (util_file_exists( job_file )) {
+    enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
+    ert_workflow_list_type * workflow_list = enkf_main_get_workflow_list( enkf_main );
+    ert_workflow_list_add_job( workflow_list , job_name , job_file );
+    return ert_workflow_list_has_job( workflow_list , job_name );
+  } else
+    return false;
+}

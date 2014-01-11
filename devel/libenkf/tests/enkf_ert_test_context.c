@@ -58,11 +58,25 @@ void test_create_valid( const char * config_file ) {
 
 
 
+void test_install_job( const char * config_file, const char * job_file_OK , const char * job_file_ERROR) {
+  ert_test_context_type * test_context = ert_test_context_alloc("CREATE_CONTEXT_JOB" , config_file , NULL );
+
+  test_assert_false( ert_test_context_install_workflow_job( test_context , "JOB" , "File/does/not/exist"));
+  test_assert_false( ert_test_context_install_workflow_job( test_context , "ERROR" , job_file_ERROR));
+  test_assert_true( ert_test_context_install_workflow_job( test_context , "OK" , job_file_OK));
+  
+  ert_test_context_free( test_context );
+}
+
 
 int main( int argc , char ** argv) {
   char * config_file = argv[1];
+  char * wf_job_fileOK = argv[2];
+  char * wf_job_fileERROR = argv[3];
+
   test_create_invalid( "DoesNotExist" );
   test_create_valid( config_file );
+  test_install_job( config_file , wf_job_fileOK, wf_job_fileERROR );
 }
 
 

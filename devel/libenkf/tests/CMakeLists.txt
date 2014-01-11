@@ -86,7 +86,9 @@ add_executable( enkf_ert_test_context enkf_ert_test_context.c )
 target_link_libraries( enkf_ert_test_context ert-test test_util )
 add_test( enkf_ert_test_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_test_context 
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/config
-          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/wf_job)
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/wf_job
+          ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/wf_job_fail)
+
 
 add_executable( enkf_analysis_update_job enkf_analysis_update_job.c )
 target_link_libraries( enkf_analysis_update_job ert-test test_util )

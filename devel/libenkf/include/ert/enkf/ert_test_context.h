@@ -20,6 +20,8 @@
 #ifndef ERT_TEST_CONTEXT_H
 #define ERT_TEST_CONTEXT_H
 
+#include <stdbool.h>
+
 #include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_main.h>
@@ -33,7 +35,7 @@ typedef struct ert_test_context_struct ert_test_context_type;
 ert_test_context_type * ert_test_context_alloc( const char * test_name , const char * model_config , const char * site_config);
 void                    ert_test_context_free( ert_test_context_type * test_context );
 enkf_main_type        * ert_test_context_get_main( ert_test_context_type * test_context );
-
+bool                    ert_test_context_install_workflow_job( ert_test_context_type * test_context , const char * job_name , const char * job_file);
 
 UTIL_IS_INSTANCE_HEADER( ert_test_context );
 
