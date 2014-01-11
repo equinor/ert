@@ -36,6 +36,10 @@ ert_test_context_type * ert_test_context_alloc( const char * test_name , const c
 void                    ert_test_context_free( ert_test_context_type * test_context );
 enkf_main_type        * ert_test_context_get_main( ert_test_context_type * test_context );
 bool                    ert_test_context_install_workflow_job( ert_test_context_type * test_context , const char * job_name , const char * job_file);
+bool                    ert_test_context_run_worklow_job( ert_test_context_type * test_context , const char * job_name, const stringlist_type * args);
+void                    ert_test_context_fwrite_workflow_job( FILE * stream , const char * job_name , const stringlist_type * args);
+bool                    ert_test_context_install_workflow( ert_test_context_type * test_context , const char * workflow_name , const char * workflow_file);
+bool                    ert_test_context_run_worklow( ert_test_context_type * test_context , const char * workflow_name);
 
 UTIL_IS_INSTANCE_HEADER( ert_test_context );
 
