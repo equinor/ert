@@ -152,6 +152,13 @@ add_test( enkf_export_field_test
           ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config)
 
 
+add_executable( enkf_workflow_job_test enkf_workflow_job_test.c )
+target_link_libraries( enkf_workflow_job_test enkf test_util )
+
+add_test( enkf_workflow_job_test
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_workflow_job_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config)
+
+
 add_executable( enkf_select_case_job enkf_select_case_job.c )
 target_link_libraries( enkf_select_case_job  enkf test_util )
 
@@ -306,6 +313,7 @@ set_property( TEST enkf_main_fs   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_summary_vars_present PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_no_summary_vars_present PROPERTY LABELS StatoilData )
 set_property( TEST enkf_export_field_test PROPERTY LABELS StatoilData )
+set_property( TEST enkf_workflow_job_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_select_case_job   PROPERTY LABELS StatoilData )
 set_property( TEST enkf_main_fs_current_file_test  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_runpath_test  PROPERTY LABELS StatoilData )
