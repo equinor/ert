@@ -189,7 +189,7 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
 
 void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
-  bool_vector_type * iactive = alloc_iactive_list(enkf_main_get_ensemble_size(enkf_main), args, 0);
+  bool_vector_type * iactive = alloc_iactive_list_from_stringlist(enkf_main_get_ensemble_size(enkf_main), args, 0);
   enkf_main_load_from_forward_model(enkf_main, iactive, NULL);
   bool_vector_free(iactive);
   return NULL;
@@ -210,7 +210,7 @@ static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const 
       return;
   }
 
-  bool_vector_type * iactive = alloc_iactive_list(enkf_main_get_ensemble_size(enkf_main), args, 4);
+  bool_vector_type * iactive = alloc_iactive_list_from_stringlist(enkf_main_get_ensemble_size(enkf_main), args, 4);
   enkf_main_export_field(enkf_main,field, file_name, iactive, file_type, report_step, state) ;
   bool_vector_free(iactive);
 }

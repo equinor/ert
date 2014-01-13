@@ -121,7 +121,6 @@ bool ert_workflow_list_has_job( const ert_workflow_list_type * workflow_list , c
 }
 
 
-
 void ert_workflow_list_add_jobs_in_directory( ert_workflow_list_type * workflow_list , const char * path , log_type * logh) {
   DIR * dirH = opendir( path );
   if (dirH) {
