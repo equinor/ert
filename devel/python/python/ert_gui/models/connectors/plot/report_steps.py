@@ -16,11 +16,15 @@ class ReportStepsModel(ErtConnector, ListModelMixin):
         """ @rtype: TimeMap """
         if self.__time_map is None:
             case_list = CaseList().getAllCasesWithData()
+
             for case in case_list:
                 time_map = self.ert().getEnkfFsManager().getTimeMapForCase(case)
 
                 if len(time_map) > 0:
                     self.__time_map = time_map
+
+            if self.__time_map is None:
+                self.__time_map = []
 
         return self.__time_map
 
