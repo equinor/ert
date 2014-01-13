@@ -45,6 +45,7 @@
 #define WORKFLOW_JOB_STRING_TYPE "STRING"
 #define WORKFLOW_JOB_INT_TYPE    "INT"
 #define WORKFLOW_JOB_FLOAT_TYPE  "FLOAT"
+#define WORKFLOW_JOB_BOOL_TYPE    "BOOL"
 
 #define WORKFLOW_JOB_TYPE_ID 614441
 
@@ -90,7 +91,7 @@ config_type * workflow_job_alloc_config() {
     item = config_add_schema_item( config , ARG_TYPE_KEY , false );
     config_schema_item_set_argc_minmax( item , 2 , 2 );
     config_schema_item_iset_type( item , 0 , CONFIG_INT );
-    config_schema_item_set_indexed_selection_set( item , 1 , 3 , (const char *[3]) {WORKFLOW_JOB_STRING_TYPE , WORKFLOW_JOB_INT_TYPE , WORKFLOW_JOB_FLOAT_TYPE});
+    config_schema_item_set_indexed_selection_set( item , 1 , 4 , (const char *[4]) {WORKFLOW_JOB_STRING_TYPE , WORKFLOW_JOB_INT_TYPE , WORKFLOW_JOB_FLOAT_TYPE, WORKFLOW_JOB_BOOL_TYPE});
 
     /*****************************************************************/
     item = config_add_schema_item( config , EXECUTABLE_KEY , false );
@@ -206,6 +207,8 @@ static void workflow_job_iset_argtype_string( workflow_job_type * workflow_job ,
     type = CONFIG_INT;
   else if (strcmp( arg_type , WORKFLOW_JOB_FLOAT_TYPE) == 0)
     type = CONFIG_FLOAT;
+  else if (strcmp( arg_type , WORKFLOW_JOB_BOOL_TYPE) == 0)
+    type = CONFIG_BOOL;
 
   if (type != CONFIG_INVALID)
     workflow_job_iset_argtype( workflow_job , iarg , type );
