@@ -55,7 +55,32 @@ void * enkf_main_assimilation_JOB( void * self , const stringlist_type * args ) 
   return NULL;
 }
 
+void * enkf_main_analysis_enkf_update_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
+  enkf_fs_type * target_fs = enkf_main_get_fs( enkf_main );
+  int target_step;
+  int_vector_type * step_list;
 
+  
+  // Argument 0: The number of the step to write to
+  if (stringlist_get_size(args) > 1) 
+    util_sscanf_int(stringlist_iget( args , 1) , &target_step);
+  else
+    target_step = 0;
+
+  // Argument 1 - ??: The timesteps to use in the update
+  if (stringlist_get_size( args ) > 2) {
+    char * step_args = stringlist_alloc_joined_substring(args , 2 , stringlist_get_size(args) , " ");
+    step_list = string_util_alloc_active_list( step_args );
+    free( step_args );
+  } else 
+    step_list = int_vector_alloc(1,target_step);
+  
+  enkf_main_UPDATE( enkf_main , step_list , target_fs , target_step , SMOOTHER_UPDATE);
+  
+  int_vector_free( step_list );
+  return NULL;
+}
 
 
 
