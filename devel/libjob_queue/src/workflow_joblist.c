@@ -59,11 +59,6 @@ void workflow_joblist_free( workflow_joblist_type * joblist) {
 }
 
 
-bool workflow_joblist_has_job( const workflow_joblist_type * joblist , const char * job_name) {
- workflow_job_type * job = hash_safe_get(joblist->joblist, job_name);
- return (NULL != job);
-}
-
 const workflow_job_type * workflow_joblist_get_job( const workflow_joblist_type * joblist , const char * job_name) {
   return hash_get( joblist->joblist , job_name );
 }
