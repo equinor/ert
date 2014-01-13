@@ -42,15 +42,6 @@ class AnalysisIterConfig(BaseCClass):
     def caseFormatSet(self):
         return AnalysisIterConfig.cNamespace().case_fmt_set(self)
 
-    def getRunpathFormat(self):
-        """ @rtype: str """
-        return AnalysisIterConfig.cNamespace().get_runpath_fmt(self)
-
-    def setRunpathFormat(self, runpath_fmt):
-        AnalysisIterConfig.cNamespace().set_runpath_fmt(self, runpath_fmt)
-
-    ##################################################################
-
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("analysis_iter_config", AnalysisIterConfig)
 cwrapper.registerType("analysis_iter_config_obj", AnalysisIterConfig.createPythonObject)
