@@ -58,15 +58,13 @@ time_map_type * time_map_alloc( ) {
 
 
 time_map_type * time_map_fread_alloc_readonly( const char * filename) {
-  if (util_file_exists(filename)) {
-    time_map_type * tm = time_map_alloc();
+  time_map_type * tm = time_map_alloc();
+
+  if (util_file_exists(filename)) 
     time_map_fread( tm , filename );
-    tm->read_only = true;
-    return tm;
-  } else {
-    util_abort("%s: tried to instantiate time_map from non-existing file:%s \n",__func__ , filename );
-    return NULL;
-  }
+  tm->read_only = true;
+
+  return tm;
 }
 
 
