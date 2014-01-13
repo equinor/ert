@@ -19,7 +19,8 @@ from ert.enkf import ENKF_LIB
 
 class AnalysisIterConfig(BaseCClass):
     def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
+        c_ptr = AnalysisIterConfig.cNamespace().alloc()
+        super(AnalysisIterConfig , self).__init__(c_ptr)
 
     def getNumIterations(self):
         """ @rtype: int """
@@ -28,12 +29,18 @@ class AnalysisIterConfig(BaseCClass):
     def setNumIterations(self, num_iterations):
         AnalysisIterConfig.cNamespace().set_num_iterations(self, num_iterations)
 
+    def numIterationsSet(self):
+        return AnalysisIterConfig.cNamespace().num_iterations_set(self)
+
     def getCaseFormat(self):
         """ @rtype: str """
         return AnalysisIterConfig.cNamespace().get_case_fmt(self)
 
     def setCaseFormat(self, case_fmt):
         AnalysisIterConfig.cNamespace().set_case_fmt(self, case_fmt)
+
+    def caseFormatSet(self):
+        return AnalysisIterConfig.cNamespace().case_fmt_set(self)
 
     def getRunpathFormat(self):
         """ @rtype: str """
@@ -50,8 +57,11 @@ cwrapper.registerType("analysis_iter_config_obj", AnalysisIterConfig.createPytho
 cwrapper.registerType("analysis_iter_config_ref", AnalysisIterConfig.createCReference)
 
 
+AnalysisIterConfig.cNamespace().alloc = cwrapper.prototype("c_void_p analysis_iter_config_alloc( )")
 AnalysisIterConfig.cNamespace().free = cwrapper.prototype("void analysis_iter_config_free( analysis_iter_config )")
 AnalysisIterConfig.cNamespace().set_num_iterations = cwrapper.prototype("void analysis_iter_config_set_num_iterations(analysis_iter_config, int)")
 AnalysisIterConfig.cNamespace().get_num_iterations = cwrapper.prototype("int analysis_iter_config_get_num_iterations(analysis_iter_config)")
+AnalysisIterConfig.cNamespace().num_iterations_set = cwrapper.prototype("bool analysis_iter_config_num_iterations_set(analysis_iter_config)")
 AnalysisIterConfig.cNamespace().set_case_fmt = cwrapper.prototype("void analysis_iter_config_set_case_fmt( analysis_iter_config , char* )")
 AnalysisIterConfig.cNamespace().get_case_fmt = cwrapper.prototype("char* analysis_iter_config_get_case_fmt( analysis_iter_config)")
+AnalysisIterConfig.cNamespace().case_fmt_set = cwrapper.prototype("bool analysis_iter_config_case_fmt_set(analysis_iter_config)")
