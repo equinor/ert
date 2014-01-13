@@ -155,6 +155,13 @@ void test_read_only() {
     test_assert_int_equal( 3 , time_map_get_size( tm ));
     time_map_free( tm );
   }
+  {
+    time_map_type * tm = time_map_fread_alloc_readonly( "DoesNotExist");
+    test_assert_true( time_map_is_instance( tm ));
+    test_assert_true( time_map_is_readonly( tm ));
+    test_assert_int_equal(0 , time_map_get_size( tm ));
+    time_map_free( tm );
+  }
   test_work_area_free( work_area );
 }
 
