@@ -277,10 +277,13 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   bool enkf_main_export_field(const enkf_main_type * enkf_main, 
                               const char * kw, 
                               const char * path,
-                              int_vector_type * realization_list, 
+                              bool_vector_type * iactive,
                               field_file_format_type file_type,
                               int report_step,
                               state_enum state);  
+
+
+  void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_type * iactive, stringlist_type ** realizations_msg_list);
   
   
 UTIL_SAFE_CAST_HEADER(enkf_main);

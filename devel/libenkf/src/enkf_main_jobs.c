@@ -24,6 +24,20 @@
 #include <ert/enkf/field_config.h>
 
 
+static bool_vector_type * alloc_iactive_vector_from_range(const stringlist_type * range, int startindex, int ens_size) {
+  bool_vector_type * iactive;
+  if (stringlist_get_size(range) > startindex) {
+    char * arg_string = stringlist_alloc_joined_substring( range, startindex, stringlist_get_size(range), "");
+    iactive = bool_vector_alloc(ens_size, false);
+    string_util_update_active_mask( arg_string, iactive );
+    free ( arg_string );
+  } else {
+    iactive = bool_vector_alloc(ens_size, true);
+  }
+  return iactive;
+}
+
+
 void * enkf_main_exit_JOB(void * self , const stringlist_type * args ) {
   enkf_main_type  * enkf_main = enkf_main_safe_cast( self );
   enkf_main_exit( enkf_main );
@@ -45,13 +59,11 @@ void * enkf_main_assimilation_JOB( void * self , const stringlist_type * args ) 
 void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive   = bool_vector_alloc( 0 , true );
-
-  // Ignore args until string_utils is in place ..... 
-  // if (stringlist_get_size( args ) 
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, ens_size);
 
   bool_vector_iset( iactive , ens_size - 1 , true );
   enkf_main_run_exp( enkf_main , iactive , true , 0 , 0 , ANALYZED);
+  bool_vector_free(iactive);
   return NULL;
 }
 
@@ -60,9 +72,15 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive   = bool_vector_alloc( ens_size , true );
-  bool rerun                   = true;
   const char * target_case     = stringlist_iget( args , 0 );
-  
+  bool valid                   = true;
+  bool rerun = (stringlist_get_size(args) >= 2) ? stringlist_iget_as_bool(args, 1, &valid) : true;
+
+  if (!valid) {
+      fprintf(stderr, "** Warning: Function %s : Second argument must be a bool value. Exiting job\n", __func__);
+      return NULL;
+  }
+
   enkf_main_run_smoother( enkf_main , target_case , iactive , rerun);
   bool_vector_free( iactive );
   return NULL;
@@ -71,7 +89,6 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
 
 void * enkf_main_iterated_smoother_JOB( void * self , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
-  int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
   const analysis_config_type * analysis_config = enkf_main_get_analysis_config(enkf_main);
   analysis_iter_config_type * iter_config = analysis_config_get_iter_config(analysis_config);
   int num_iter = analysis_iter_config_get_num_iterations(iter_config);
@@ -123,12 +140,49 @@ void * enkf_main_select_case_JOB( void * self , const stringlist_type * args) {
   return NULL;
 }
 
+
+void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  const char * new_case = stringlist_iget( args , 0 );
+  enkf_fs_type * fs = enkf_main_mount_alt_fs( enkf_main , new_case , false , true );
+  enkf_fs_umount(fs);
+  return NULL;
+}
+
+
+void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, enkf_main_get_ensemble_size(enkf_main));
+  int ens_size = enkf_main_get_ensemble_size(enkf_main);
+  stringlist_type ** realizations_msg_list = util_calloc(ens_size, sizeof * realizations_msg_list);
+  int iens = 0;
+  for (; iens < ens_size; ++iens)
+      realizations_msg_list[iens] = stringlist_alloc_new();
+
+  enkf_main_load_from_forward_model(enkf_main, iactive, realizations_msg_list);
+
+  for (iens = 0; iens < ens_size; ++iens) {
+      stringlist_type * msg = realizations_msg_list[iens];
+      if (stringlist_get_size(msg)) {
+        int msg_count = 0;
+        for (; msg_count < stringlist_get_size(msg); ++msg_count)
+          fprintf(stderr, "** Warning: Function %s : Load of realization number %d returned the following warning: %s\n", __func__, iens, stringlist_iget(msg, msg_count));
+      }
+      stringlist_free(msg);
+   }
+
+  free(realizations_msg_list);
+
+  bool_vector_free(iactive);
+  return NULL;
+}
+
+
 /*****************************************************************/
 
 static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const stringlist_type * args, field_file_format_type file_type) {
   const char *      field            = stringlist_iget(args, 0); 
   const char *      file_name        = stringlist_iget(args, 1); 
-  int_vector_type * realization_list = string_util_alloc_active_list(""); //Realizations range: rest of optional input arguments
   int               report_step      = 0;
   util_sscanf_int(stringlist_iget(args,2), &report_step);
   state_enum        state            = enkf_types_get_state_enum(stringlist_iget(args, 3)); 
@@ -138,17 +192,11 @@ static void enkf_main_jobs_export_field(const enkf_main_type * enkf_main, const 
       return;
   }
 
-  char * range_str = stringlist_alloc_joined_substring( args , 4 , stringlist_get_size(args), "");  
-  string_util_update_active_list(range_str, realization_list); 
-  
-  if (0 == int_vector_size(realization_list)) {
-      const char * range_str = util_alloc_sprintf("0-%d", enkf_main_get_ensemble_size( enkf_main )-1); 
-      string_util_update_active_list(range_str, realization_list); 
-  }  
-  
-  enkf_main_export_field(enkf_main,field, file_name, realization_list, file_type, report_step, state) ; 
-  int_vector_free(realization_list);  
+  bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 4, enkf_main_get_ensemble_size(enkf_main));
+  enkf_main_export_field(enkf_main,field, file_name, iactive, file_type, report_step, state) ;
+  bool_vector_free(iactive);
 }
+
 
 
 void * enkf_main_export_field_JOB(void * self, const stringlist_type * args) {
