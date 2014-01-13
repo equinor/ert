@@ -92,7 +92,9 @@ add_test( enkf_ert_test_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_test_context
 
 add_executable( enkf_analysis_update_job enkf_analysis_update_job.c )
 target_link_libraries( enkf_analysis_update_job ert-test test_util )
-add_test( enkf_analysis_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_update_job ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config )
+add_test( enkf_analysis_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_update_job 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config 
+          ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/ANALYSIS_UPDATE )
 
 
 #-----------------------------------------------------------------
