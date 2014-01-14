@@ -44,17 +44,17 @@ typedef struct block_obs_struct block_obs_type;
   } block_obs_source_type;
 
 
-  block_obs_type * block_obs_alloc(const char   * obs_label,
-                                   block_obs_source_type source_type , 
-                                   const stringlist_type * summary_keys , 
-                                   const void * data_config , 
-                                   const ecl_grid_type * grid , 
-                                   int            size,
-                                   const int    * i,
-                                   const int    * j,
-                                   const int    * k,
-                                   const double * obs_value,
-                                   const double * obs_std);
+  block_obs_type * block_obs_alloc_complete(const char   * obs_label,
+                                            block_obs_source_type source_type , 
+                                            const stringlist_type * summary_keys , 
+                                            const void * data_config , 
+                                            const ecl_grid_type * grid , 
+                                            int            size,
+                                            const int    * i,
+                                            const int    * j,
+                                            const int    * k,
+                                            const double * obs_value,
+                                            const double * obs_std);
   
 void block_obs_free(
   block_obs_type * block_obs);

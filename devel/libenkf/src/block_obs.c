@@ -154,17 +154,17 @@ static void block_obs_resize( block_obs_type * block_obs , int new_size) {
 /**
    The input vectors i,j,k should contain offset zero values.
 */
-block_obs_type * block_obs_alloc(const char   * obs_key,
-                                 block_obs_source_type source_type , 
-                                 const stringlist_type * summary_keys , 
-                                 const void * data_config , 
-                                 const ecl_grid_type * grid ,
-                                 int            size,
-                                 const int    * i,
-                                 const int    * j,
-                                 const int    * k,
-                                 const double * obs_value,
-                                 const double * obs_std)
+block_obs_type * block_obs_alloc_complete(const char   * obs_key,
+                                          block_obs_source_type source_type , 
+                                          const stringlist_type * summary_keys , 
+                                          const void * data_config , 
+                                          const ecl_grid_type * grid ,
+                                          int            size,
+                                          const int    * i,
+                                          const int    * j,
+                                          const int    * k,
+                                          const double * obs_value,
+                                          const double * obs_std)
 {
   block_obs_validate_ijk( grid , size , i,j,k);
   
