@@ -104,6 +104,8 @@ static point_obs_type * point_obs_alloc( block_obs_source_type   source_type , i
 
 
 
+
+
 static void point_obs_free( point_obs_type * point_obs ) {
   util_safe_free( point_obs->sum_key );
   free( point_obs );
@@ -158,18 +160,31 @@ static void block_obs_validate_ijk( const ecl_grid_type * grid , int size, const
 
 
 static void block_obs_append_point( block_obs_type * block_obs , point_obs_type * point) {
-  vector_append_owned_ref(block_obs->point_list , point , point_obs_free__);
+  if (point->source_type == block_obs->source_type)
+    vector_append_owned_ref(block_obs->point_list , point , point_obs_free__);
+  else
+    util_abort("%s: fatal internal error - mixing points with different source type in one block_obs instance.\n",__func__);
 }
 
+
 void block_obs_append_field_obs( block_obs_type * block_obs , int i , int j , int k , double value , double std) {
-  
+  int active_index = ecl_grid_get_active_index3( block_obs->grid , i , j , k );
+  point_obs_type * point_obs = point_obs_alloc( SOURCE_FIELD , i , j , k , active_index , NULL , value , std);
+  block_obs_append_point( block_obs , point_obs );
+}
+
+
+void block_obs_append_summary_obs( block_obs_type * block_obs , int i , int j , int k , const char * sum_key , double value , double std) {
+  int active_index = ecl_grid_get_active_index3( block_obs->grid , i , j , k );
+  point_obs_type * point_obs = point_obs_alloc( SOURCE_SUMMARY , i , j , k , active_index , sum_key , value , std);
+  block_obs_append_point( block_obs , point_obs );
 }
 
 
 block_obs_type * block_obs_alloc(const char * obs_key,
                                  const void * data_config , 
                                  const ecl_grid_type * grid) {
-  if (!(field_config_is_instance( data_config ) || summary_config_is_instance( data_config ))) 
+  if (!(field_config_is_instance( data_config ) || container_config_is_instance( data_config ))) 
     return NULL;
 
   {
@@ -213,12 +228,13 @@ block_obs_type * block_obs_alloc_complete(const char   * obs_key,
     block_obs_type * block_obs = block_obs_alloc( obs_key , data_config , grid );
     {
       for (int l=0; l < size; l++) {
-        int active_index = ecl_grid_get_active_index3( block_obs->grid , i[l],j[l],k[l]);
-        const char * sum_key   = NULL;
-        if (source_type == SOURCE_SUMMARY) 
-          sum_key = stringlist_iget( summary_keys , l );
-        
-        block_obs_append_point( block_obs , point_obs_alloc(source_type , i[l] , j[l] , k[l] , active_index , sum_key , obs_value[l] , obs_std[l]));
+
+        if (source_type == SOURCE_SUMMARY) {
+          const char * sum_key = stringlist_iget( summary_keys , l );
+          block_obs_append_summary_obs( block_obs , i[l] , j[l] , k[l] , sum_key , obs_value[l] , obs_std[l]);
+        } else
+          block_obs_append_field_obs( block_obs , i[l] , j[l] , k[l] , obs_value[l] , obs_std[l]);
+
       }
     }
     return block_obs;

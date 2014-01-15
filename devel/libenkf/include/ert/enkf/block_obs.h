@@ -77,8 +77,8 @@ void        block_obs_iget_ijk(const block_obs_type * block_obs , int block_nr ,
 
 void        block_obs_scale_std(block_obs_type * block_obs, double scale_factor);
 void        block_obs_scale_std__(void * block_obs, double scale_factor);
-
-
+void        block_obs_append_field_obs( block_obs_type * block_obs , int i , int j , int k , double value , double std);
+void        block_obs_append_summary_obs( block_obs_type * block_obs , int i , int j , int k , const char * sum_key , double value , double std);
 
 VOID_FREE_HEADER(block_obs);
 VOID_GET_OBS_HEADER(block_obs);
