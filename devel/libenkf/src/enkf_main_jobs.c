@@ -148,7 +148,7 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
   bool_vector_type * iactive   = bool_vector_alloc( ens_size , true );
   const char * target_case     = stringlist_iget( args , 0 );
   bool valid                   = true;
-  bool rerun = (stringlist_get_size(args) >= 2) ? stringlist_iget_as_bool(args, 1, &valid) : true;
+  bool rerun = (stringlist_get_size(args) >= 2) ? stringlist_iget_as_bool(args, 1, &valid) : false;
 
   if (!valid) {
       fprintf(stderr, "** Warning: Function %s : Second argument must be a bool value. Exiting job\n", __func__);
