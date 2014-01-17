@@ -75,16 +75,14 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
   bool_vector_type * iactive   = bool_vector_alloc( ens_size , true );
   bool valid                   = true;
   const char * target_case;
-  enkf_fs_type * target_fs = enkf_fs_get_ref( enkf_main_get_fs( enkf_main ));
+  enkf_fs_type * target_fs     = enkf_main_get_fs( enkf_main );
 
 
   // Argument 0: Which case to write to. Default current case.
   if (stringlist_get_size(args)) {
     target_case = stringlist_iget( args , 0 );
-    if (strcmp( target_case , CURRENT_CASE_STRING) == 0) {
-      target_fs = enkf_main_get_fs( enkf_main );
+    if (strcmp( target_case , CURRENT_CASE_STRING) == 0)
       target_case = enkf_fs_get_case_name(target_fs);
-    }
   } else
     target_case = enkf_fs_get_case_name(target_fs);
 
