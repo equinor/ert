@@ -56,6 +56,11 @@ typedef struct block_obs_struct block_obs_type;
                                             const double * obs_value,
                                             const double * obs_std);
   
+  block_obs_type * block_obs_alloc(const char * obs_key,
+                                   const void * data_config , 
+                                   const ecl_grid_type * grid);
+
+  
 void block_obs_free(
   block_obs_type * block_obs);
 

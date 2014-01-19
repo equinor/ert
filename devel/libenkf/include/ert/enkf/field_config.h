@@ -26,6 +26,7 @@ extern "C" {
 
 #include <ert/util/path_fmt.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_grid.h>
@@ -186,6 +187,7 @@ void field_config_fprintf_config( const field_config_type * config , enkf_var_ty
 
 
 /*Generated headers */
+  UTIL_IS_INSTANCE_HEADER(field_config);
 UTIL_SAFE_CAST_HEADER(field_config);
 UTIL_SAFE_CAST_HEADER_CONST(field_config);
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
