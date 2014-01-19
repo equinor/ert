@@ -32,6 +32,7 @@ extern "C" {
   
   enkf_plot_blockdata_type * enkf_plot_blockdata_alloc( const block_obs_type * block_obs );
   void enkf_plot_blockdata_free( enkf_plot_blockdata_type * data );
+  int  enkf_plot_blockdata_get_size( const enkf_plot_blockdata_type * data );
   
   UTIL_IS_INSTANCE_HEADER( enkf_plot_blockdata );
 

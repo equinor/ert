@@ -33,6 +33,7 @@ void test_create() {
   {
     enkf_plot_blockdata_type * block_data = enkf_plot_blockdata_alloc( block_obs );
     test_assert_true( enkf_plot_blockdata_is_instance( block_data ));
+    test_assert_int_equal( 0 , enkf_plot_blockdata_get_size( block_data ));
     enkf_plot_blockdata_free( block_data );
   }
   

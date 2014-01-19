@@ -33,6 +33,7 @@
 
 struct enkf_plot_blockdata_struct {
   UTIL_TYPE_ID_DECLARATION;
+  int size;
   const block_obs_type * block_obs;
 };
 
@@ -44,6 +45,7 @@ enkf_plot_blockdata_type * enkf_plot_blockdata_alloc( const block_obs_type * blo
   enkf_plot_blockdata_type * data = util_malloc( sizeof * data );
   UTIL_TYPE_ID_INIT( data , ENKF_PLOT_BLOCKDATA_TYPE_ID );
   data->block_obs = block_obs;
+  data->size = 0;
   return data;
 }
 
@@ -53,3 +55,8 @@ void enkf_plot_blockdata_free( enkf_plot_blockdata_type * data ) {
   free( data );
 }
 
+
+
+int enkf_plot_blockdata_get_size( const enkf_plot_blockdata_type * data ) {
+  return data->size;
+}
