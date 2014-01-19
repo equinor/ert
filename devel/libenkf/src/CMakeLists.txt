@@ -63,6 +63,7 @@ set( source_files
      surface_config.c 
      enkf_plot_data.c 
      enkf_plot_blockdata.c 
+     enkf_plot_blockvector.c 
      enkf_plot_tvector.c 
      qc_module.c 
      ert_report_list.c 
@@ -154,6 +155,7 @@ set( header_files
      local_context.h 
      enkf_plot_data.h 
      enkf_plot_blockdata.h
+     enkf_plot_blockvector.h
      enkf_plot_tvector.h 
      qc_module.h 
      ert_report_list.h 

@@ -110,6 +110,10 @@ add_executable( enkf_plot_blockdata enkf_plot_blockdata.c )
 target_link_libraries( enkf_plot_blockdata enkf test_util )
 add_test( enkf_plot_blockdata  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata )
 
+add_executable( enkf_plot_blockvector enkf_plot_blockvector.c )
+target_link_libraries( enkf_plot_blockvector enkf test_util )
+add_test( enkf_plot_blockvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockvector )
+
 
 #-----------------------------------------------------------------
 
