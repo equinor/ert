@@ -723,7 +723,8 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
         }
         
         {
-          block_obs_type * block_obs  = block_obs_alloc_complete(obs_label, source_type , summary_keys , container_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
+          block_obs_type * block_obs  = block_obs_alloc_complete(obs_label, source_type , summary_keys , enkf_config_node_get_ref(container_config) , 
+                                                                 grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
           if (block_obs != NULL) {
             obs_vector = obs_vector_alloc( BLOCK_OBS , obs_label , container_config, size );
             obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
