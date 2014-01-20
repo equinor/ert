@@ -35,20 +35,36 @@ struct analysis_iter_config_struct {
   char            * case_fmt;
   stringlist_type * storage;
   int               num_iterations;
+
+  bool              case_set;   
+  bool              num_iterations_set; 
 };
 
 
 void analysis_iter_config_set_num_iterations( analysis_iter_config_type * config , int num_iterations) {
-  config->num_iterations = num_iterations;    
+  config->num_iterations = num_iterations; 
+  config->num_iterations_set = true;
 }
 
 int analysis_iter_config_get_num_iterations( const analysis_iter_config_type * config ) {
   return config->num_iterations;
 }
 
+bool analysis_iter_config_num_iterations_set( const analysis_iter_config_type * config ) {
+  return config->num_iterations_set;
+}
+
+
 void analysis_iter_config_set_case_fmt( analysis_iter_config_type * config , const char * case_fmt) {
   config->case_fmt = util_realloc_string_copy( config->case_fmt , case_fmt );
+  config->case_set = true;
 }
+
+
+bool analysis_iter_config_case_fmt_set( const analysis_iter_config_type * config ) {
+  return config->case_set;
+}
+
 
 char * analysis_iter_config_get_case_fmt( analysis_iter_config_type * config) {
   return config->case_fmt;
@@ -61,6 +77,9 @@ analysis_iter_config_type * analysis_iter_config_alloc() {
    analysis_iter_config_set_case_fmt( config, DEFAULT_ANALYSIS_ITER_CASE);
    config->storage = stringlist_alloc_new();
    analysis_iter_config_set_num_iterations( config , DEFAULT_ANALYSIS_NUM_ITERATIONS );
+
+   config->num_iterations_set = false;
+   config->case_set = false;
    return config;
 }
 

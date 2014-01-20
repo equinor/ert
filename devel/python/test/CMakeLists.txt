@@ -34,6 +34,7 @@ set(TEST_SOURCES
     ert_tests/enkf/test_enkf.py
     ert_tests/enkf/test_enkf_library.py
     ert_tests/enkf/test_analysis_config.py
+    ert_tests/enkf/test_analysis_iter_config.py
     ert_tests/enkf/test_state_map.py
 
 
@@ -175,6 +176,10 @@ add_test( NAME python.tests.ert.enkf.enkf_library
 add_test( NAME python.tests.ert.enkf.analysis_config
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
           COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_analysis_config.AnalysisConfigTest)
+
+add_test( NAME python.tests.ert.enkf.analysis_iter_config
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMAND ctest_run.py ${PROJECT_BINARY_DIR}/${PYTHON_INSTALL_PREFIX} ert_tests.enkf.test_analysis_iter_config.AnalysisIterConfigTest)
 
 add_test( NAME python.tests.ert.enkf.state_map
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
