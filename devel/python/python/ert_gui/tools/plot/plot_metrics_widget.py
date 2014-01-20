@@ -1,6 +1,8 @@
 from PyQt4.QtCore import pyqtSignal, Qt
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel, QDoubleSpinBox
+from ert_gui.models.connectors.plot import ReportStepsModel
 from ert_gui.tools.plot import ReportStepWidget
+from ert_gui.widgets.list_spin_box import ListSpinBox
 
 
 class PlotMetricsWidget(QWidget):
@@ -23,9 +25,19 @@ class PlotMetricsWidget(QWidget):
         self.__scalers = {}
 
         self.__layout = QVBoxLayout()
+        self.__time_map = ReportStepsModel().getList()
+        self.__time_index_map = {}
+        for index in range(len(self.__time_map)):
+            time = self.__time_map[index]
+            self.__time_index_map[time] = index
 
-        self.addScaler(PlotMetricsWidget.VALUE_MIN)
-        self.addScaler(PlotMetricsWidget.VALUE_MAX)
+
+        self.addScaler(PlotMetricsWidget.VALUE_MIN, self.__createDoubleSpinner())
+        self.addScaler(PlotMetricsWidget.VALUE_MAX, self.__createDoubleSpinner())
+
+        self.addScaler(PlotMetricsWidget.TIME_MIN, self.__createTimeSpinner(True))
+        self.addScaler(PlotMetricsWidget.TIME_MAX, self.__createTimeSpinner(False))
+
         self.__layout.addSpacing(10)
 
         self.__report_step_widget = ReportStepWidget()
@@ -36,8 +48,30 @@ class PlotMetricsWidget(QWidget):
 
         self.setLayout(self.__layout)
 
+    def __createDoubleSpinner(self):
+        spinner = QDoubleSpinBox()
+        spinner.setEnabled(False)
+        spinner.setMinimumWidth(75)
+        max = 999999999999
+        spinner.setRange(-max,max)
+        # spinner.valueChanged.connect(self.plotScalesChanged)
+        spinner.editingFinished.connect(self.plotScalesChanged)
+        return spinner
 
-    def addScaler(self, name):
+    def __createTimeSpinner(self, min_value):
+        def converter(item):
+            return "%s" % (str(item.date()))
+
+        spinner = ListSpinBox(self.__time_map)
+        spinner.setEnabled(False)
+        spinner.setMinimumWidth(75)
+        spinner.valueChanged[int].connect(self.plotScalesChanged)
+        spinner.setStringConverter(converter)
+        if(min_value):
+            spinner.setValue(0)
+        return spinner
+
+    def addScaler(self, name, spinner):
         widget = QWidget()
 
         layout = QHBoxLayout()
@@ -55,15 +89,7 @@ class PlotMetricsWidget(QWidget):
 
         layout.addStretch()
 
-        spinner = QDoubleSpinBox()
-        spinner.setEnabled(False)
-        spinner.setMinimumWidth(75)
-        max = 999999999999
-        spinner.setRange(-max,max)
-        # spinner.valueChanged.connect(self.plotScalesChanged)
-        spinner.editingFinished.connect(self.plotScalesChanged)
         layout.addWidget(spinner)
-
 
         self.__layout.addWidget(widget)
 
@@ -79,6 +105,23 @@ class PlotMetricsWidget(QWidget):
 
         self.plotScalesChanged.emit()
 
+    def getTimeMin(self):
+        scaler = self.__scalers[PlotMetricsWidget.TIME_MIN]
+
+        if scaler["checkbox"].isChecked():
+            index =scaler["spinner"].value()
+            return self.__time_map[index]
+        else:
+            return None
+
+    def getTimeMax(self):
+        scaler = self.__scalers[PlotMetricsWidget.TIME_MAX]
+
+        if scaler["checkbox"].isChecked():
+            index = scaler["spinner"].value()
+            return self.__time_map[index]
+        else:
+            return None
 
     def getValueMin(self):
         scaler = self.__scalers[PlotMetricsWidget.VALUE_MIN]
@@ -96,11 +139,22 @@ class PlotMetricsWidget(QWidget):
         else:
             return None
 
+    def updateScales(self,time_min, time_max, value_min, value_max):
+        self.setTimeScales(time_min, time_max)
+        self.setValueScales(value_min, value_max)
+        self.plotScalesChanged.emit()
+
+    def setTimeScales(self, time_min, time_max):
+        time_max = self.__time_index_map.get(time_max, None)
+        time_min = self.__time_index_map.get(time_min, None)
+        self.__updateScale(PlotMetricsWidget.TIME_MIN, time_min)
+        self.__updateScale(PlotMetricsWidget.TIME_MAX, time_max)
+
 
     def setValueScales(self, value_min, value_max):
         self.__updateScale(PlotMetricsWidget.VALUE_MIN, value_min)
         self.__updateScale(PlotMetricsWidget.VALUE_MAX, value_max)
-        self.plotScalesChanged.emit()
+
 
 
     def __updateScale(self, name, value):

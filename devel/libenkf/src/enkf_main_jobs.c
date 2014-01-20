@@ -142,12 +142,25 @@ void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) 
 }
 
 
+#define CURRENT_CASE_STRING "*"
 void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive   = bool_vector_alloc( ens_size , true );
-  const char * target_case     = stringlist_iget( args , 0 );
   bool valid                   = true;
+  const char * target_case;
+  enkf_fs_type * target_fs     = enkf_main_get_fs( enkf_main );
+
+
+  // Argument 0: Which case to write to. Default current case.
+  if (stringlist_get_size(args)) {
+    target_case = stringlist_iget( args , 0 );
+    if (strcmp( target_case , CURRENT_CASE_STRING) == 0)
+      target_case = enkf_fs_get_case_name(target_fs);
+  } else
+    target_case = enkf_fs_get_case_name(target_fs);
+
+  //Argument 1: Rerun. Default false.
   bool rerun = (stringlist_get_size(args) >= 2) ? stringlist_iget_as_bool(args, 1, &valid) : false;
 
   if (!valid) {
@@ -159,6 +172,7 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
   bool_vector_free( iactive );
   return NULL;
 }
+#undef CURRENT_CASE_STRING
 
 
 void * enkf_main_iterated_smoother_JOB( void * self , const stringlist_type * args ) {

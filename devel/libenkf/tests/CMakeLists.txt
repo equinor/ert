@@ -180,10 +180,13 @@ add_test( enkf_export_field_test
 
 
 add_executable( enkf_workflow_job_test enkf_workflow_job_test.c )
-target_link_libraries( enkf_workflow_job_test enkf test_util )
+target_link_libraries( enkf_workflow_job_test ert-test test_util )
 
 add_test( enkf_workflow_job_test
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_workflow_job_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_workflow_job_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/CREATE_CASE
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS)
+
 
 
 add_executable( enkf_select_case_job enkf_select_case_job.c )
