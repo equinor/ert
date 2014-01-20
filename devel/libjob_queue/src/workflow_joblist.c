@@ -59,11 +59,6 @@ void workflow_joblist_free( workflow_joblist_type * joblist) {
 }
 
 
-bool workflow_joblist_has_job( const workflow_joblist_type * joblist , const char * job_name) {
- workflow_job_type * job = hash_safe_get(joblist->joblist, job_name);
- return (NULL != job);
-}
-
 const workflow_job_type * workflow_joblist_get_job( const workflow_joblist_type * joblist , const char * job_name) {
   return hash_get( joblist->joblist , job_name );
 }
@@ -74,6 +69,11 @@ void workflow_joblist_add_job( workflow_joblist_type * joblist , const workflow_
   workflow_job_update_config_compiler( job , joblist->workflow_compiler );
 }
 
+
+bool workflow_joblist_has_job( const workflow_joblist_type * joblist , const char * job_name) {
+ workflow_job_type * job = hash_safe_get(joblist->joblist, job_name);
+ return (NULL != job);
+}
 
 bool workflow_joblist_add_job_from_file( workflow_joblist_type * joblist , const char * job_name , const char * config_file ) {
   workflow_job_type * job = workflow_job_config_alloc( job_name , joblist->job_config , config_file );
