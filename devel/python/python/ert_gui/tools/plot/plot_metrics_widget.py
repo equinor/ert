@@ -29,7 +29,7 @@ class PlotMetricsWidget(QWidget):
         self.__time_index_map = {}
         for index in range(len(self.__time_map)):
             time = self.__time_map[index]
-            self.__time_index_map[time.value] = index
+            self.__time_index_map[time] = index
 
 
         self.addScaler(PlotMetricsWidget.VALUE_MIN, self.__createDoubleSpinner())
