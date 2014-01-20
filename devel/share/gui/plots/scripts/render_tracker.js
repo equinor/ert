@@ -26,7 +26,7 @@ function IncrementalRenderTracker() {
 
 IncrementalRenderTracker.prototype.start = function(render_function) {
     if(this.is_running) {
-        console.log("Rendering -> activating kill!");
+//        console.log("Rendering -> activating kill!");
         this.should_stop = true;
     }
 
@@ -43,7 +43,7 @@ IncrementalRenderTracker.prototype.run = function(self, render_function) {
         render_function();
 
     } else {
-        console.log("Waiting!");
+//        console.log("Waiting!");
         window.setTimeout(function() { self.run(self, render_function); }, 15);
     }
 };
@@ -65,7 +65,7 @@ IncrementalRenderTracker.prototype.shouldLoopStop = function() {
 IncrementalRenderTracker.prototype.stoppedRendering = function() {
     this.is_running = false;
     this.should_stop = false;
-    console.log("Rendering time: " + this.runningTime() + " ms");
+//    console.log("Rendering time: " + this.runningTime() + " ms");
 };
 
 IncrementalRenderTracker.prototype.runningTime = function() {
