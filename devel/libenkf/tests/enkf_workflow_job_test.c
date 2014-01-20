@@ -39,7 +39,7 @@ void test_create_case_job(const char * config_file, const char * job_file) {
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
 
   char * new_case = util_alloc_filename( "storage" , "newly_created_case" , NULL);
-  test_assert_true(util_file_exists(new_case));
+  test_assert_true(util_is_directory(new_case));
   free(new_case);
 
   stringlist_free( args );
