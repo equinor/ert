@@ -1137,7 +1137,7 @@ static void enkf_node_container_add( enkf_node_type * node , const enkf_node_typ
 
 
 
-enkf_node_type * enkf_node_container_alloc(const enkf_config_node_type * config, hash_type * node_hash) {
+enkf_node_type * enkf_node_alloc_shared_container(const enkf_config_node_type * config, hash_type * node_hash) {
   enkf_node_type * container_node = enkf_node_alloc( config );
   {
     for (int i=0; i < enkf_config_node_container_size( config ); i++) {

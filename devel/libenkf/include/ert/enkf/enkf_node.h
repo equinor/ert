@@ -167,7 +167,7 @@ extern "C" {
   bool              enkf_node_try_load_vector(enkf_node_type *enkf_node , enkf_fs_type * fs , int iens , state_enum state);
   bool              enkf_node_exists( enkf_node_type *enkf_node , enkf_fs_type * fs , int report_step , int iens , state_enum state);
   bool              enkf_node_vector_storage( const enkf_node_type * node );
-  enkf_node_type  * enkf_node_container_alloc(const enkf_config_node_type * config, hash_type * node_hash);
+  enkf_node_type  * enkf_node_alloc_shared_container(const enkf_config_node_type * config, hash_type * node_hash);
 /*****************************************************************/
 /* Function callbacks */
 ecl_write_ftype * enkf_node_get_func_pointer( const enkf_node_type * node );
