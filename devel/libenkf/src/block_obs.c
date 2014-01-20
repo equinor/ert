@@ -223,10 +223,9 @@ block_obs_type * block_obs_alloc_complete(const char   * obs_key,
                                           const double * obs_std)
 {
   block_obs_validate_ijk( grid , size , i,j,k);
-  
   {
     block_obs_type * block_obs = block_obs_alloc( obs_key , data_config , grid );
-    {
+    if (block_obs) {
       for (int l=0; l < size; l++) {
 
         if (source_type == SOURCE_SUMMARY) {
@@ -236,8 +235,11 @@ block_obs_type * block_obs_alloc_complete(const char   * obs_key,
           block_obs_append_field_obs( block_obs , i[l] , j[l] , k[l] , obs_value[l] , obs_std[l]);
 
       }
+      return block_obs;
+    } else {
+      util_abort("%s: internal error - block_obs_alloc() returned NULL \n",__func__);
+      return NULL;
     }
-    return block_obs;
   }
 }
 
