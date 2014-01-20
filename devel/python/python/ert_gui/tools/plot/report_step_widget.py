@@ -24,8 +24,7 @@ class ReportStepWidget(QWidget):
             return "%s" % (str(item.date()))
 
         self.__items = ReportStepsModel().getList()
-        time_spinner = ListSpinBox(self.__items)
-        self.__time_spinner = time_spinner
+        self.__time_spinner = ListSpinBox(self.__items)
         self.__time_spinner.valueChanged[int].connect(self.valueSelected)
         self.__time_spinner.setStringConverter(converter)
         layout.addWidget(self.__time_spinner)
