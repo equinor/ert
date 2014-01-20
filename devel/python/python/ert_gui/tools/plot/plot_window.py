@@ -98,7 +98,7 @@ class PlotWindow(QMainWindow):
         self.__time_scale_tracker.setScaleValues(self.__data_type_key, time_min, time_max)
 
         for plot_panel in self.__plot_panels:
-            plot_panel.setValueScales(value_min, value_max)
+            plot_panel.setScales(time_min, time_max, value_min, value_max)
 
 
     def reportStepTimeChanged(self):
