@@ -55,6 +55,6 @@ void enkf_plot_blockvector_free( enkf_plot_blockvector_type * vector ) {
 }
 
 
-int enkf_plot_blockvector_get_size( const enkf_plot_blockvector_type * vector ) {
+int enkf_plot_blockvector_get_size( const enkf_plot_blockvector_type * vector ) { 
   return vector->size;
 }

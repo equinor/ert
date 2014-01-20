@@ -32,7 +32,8 @@ extern "C" {
   
   enkf_plot_blockvector_type * enkf_plot_blockvector_alloc( const block_obs_type * block_obs );
   void enkf_plot_blockvector_free( enkf_plot_blockvector_type * vector );
-  
+  int enkf_plot_blockvector_get_size( const enkf_plot_blockvector_type * vector );
+
   UTIL_IS_INSTANCE_HEADER( enkf_plot_blockvector );
 
 #ifdef __cplusplus
