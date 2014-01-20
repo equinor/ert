@@ -30,6 +30,7 @@
 
 #include <ert/enkf/enkf_node.h>
 #include <ert/enkf/enkf_config_node.h>
+#include <ert/enkf/container_config.h>
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/field.h>
 #include <ert/enkf/surface.h>
@@ -1131,25 +1132,41 @@ enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
 }
 
 
-static void enkf_node_container_add( enkf_node_type * node , const enkf_node_type * child_node ) {
-  vector_append_ref( node->container_nodes , child_node );
+static void enkf_node_container_add_node( enkf_node_type * node , const enkf_node_type * child_node , bool shared) {
+  if (shared)
+    vector_append_ref( node->container_nodes , child_node );
+  else
+    vector_append_owned_ref( node->container_nodes , child_node, enkf_node_free__ );
 }
 
-
-
-enkf_node_type * enkf_node_alloc_shared_container(const enkf_config_node_type * config, hash_type * node_hash) {
+static enkf_node_type * enkf_node_alloc_container(const enkf_config_node_type * config, hash_type * node_hash , bool shared) {
   enkf_node_type * container_node = enkf_node_alloc( config );
   {
     for (int i=0; i < enkf_config_node_container_size( config ); i++) {
       const enkf_config_node_type * child_config = enkf_config_node_container_iget( config , i );
-      enkf_node_type * child_node = hash_get( node_hash , enkf_config_node_get_key( child_config ));
+      enkf_node_type * child_node;
+
+      if (shared) 
+         child_node = hash_get( node_hash , enkf_config_node_get_key( child_config ));
+      else
+        child_node = enkf_node_alloc( child_config );
       
-      enkf_node_container_add( container_node , child_node );
+      enkf_node_container_add_node( container_node , child_node , shared);
       container_add_node( enkf_node_value_ptr( container_node ) , enkf_node_value_ptr( child_node ));
     }
   }
   return container_node;
 }
+
+enkf_node_type * enkf_node_alloc_shared_container(const enkf_config_node_type * config, hash_type * node_hash) {
+  return enkf_node_alloc_container( config , node_hash , true );
+}
+
+
+enkf_node_type * enkf_node_alloc_private_container(const enkf_config_node_type * config) {
+  return enkf_node_alloc_container( config , NULL , false );
+}
+
 
 
 bool enkf_node_internalize(const enkf_node_type * node, int report_step) {
