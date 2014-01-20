@@ -21,6 +21,8 @@ function BasePlot(element) {
 
     this.custom_y_min = null;
     this.custom_y_max = null;
+    this.custom_x_min = null;
+    this.custom_x_max = null;
 
 
     var group = this.root_elemenet.append("div")
@@ -72,12 +74,21 @@ function BasePlot(element) {
         .orient("left")
         .tickSize(-this.width, -this.width);
 
+    var customTimeFormat = d3.time.format.multi([
+        [".%L", function(d) { return d.getMilliseconds(); }],
+        [":%S", function(d) { return d.getSeconds(); }],
+        ["%I:%M", function(d) { return d.getMinutes(); }],
+        ["%I %p", function(d) { return d.getHours(); }],
+        ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
+        ["%b %d", function(d) { return d.getDate() != 1; }],
+        ["%b", function(d) { return d.getMonth(); }],
+        ["%Y", function() { return true; }]
+    ]);
+
     this.x_axis = d3.svg.axis()
         .scale(this.x_time_scale)
-        .ticks(10)
-        .tickPadding(10)
         .orient("bottom")
-        .tickSubdivide(true);
+        .tickFormat(customTimeFormat);
 
     this.plot_group.append("g")
         .attr("class", "y axis pale")
@@ -138,11 +149,14 @@ BasePlot.prototype.resize = function(width, height) {
     this.setData(this.stored_data);
 };
 
-BasePlot.prototype.setValueScales = function(min, max) {
+BasePlot.prototype.setScales = function(time_min, time_max, value_min, value_max) {
 
-    if(this.custom_y_min != min || this.custom_y_max != max) {
-        this.custom_y_min = min;
-        this.custom_y_max = max;
+    if(this.custom_y_min != value_min || this.custom_y_max != value_max ||
+        this.custom_x_min != time_min || this.custom_x_max != time_max) {
+        this.custom_y_min = value_min;
+        this.custom_y_max = value_max;
+        this.custom_x_min = time_min;
+        this.custom_x_max = time_max;
 
         this.setData(this.stored_data);
     }
@@ -165,9 +179,20 @@ BasePlot.prototype.setYDomain = function(min_y, max_y) {
 };
 
 BasePlot.prototype.setXDomain = function(min_x, max_x) {
-    this.x_time_scale.domain([new Date(min_x * 1000), new Date(max_x * 1000)]).nice();
+    var min = min_x;
+    var max = max_x;
+    if (this.custom_x_min != null) {
+        min = this.custom_x_min;
+    }
+
+    if (this.custom_x_max != null) {
+        max = this.custom_x_max;
+    }
+
+    this.x_time_scale.domain([new Date(min * 1000), new Date(max * 1000)]).nice();
     var domain = this.x_time_scale.domain();
     this.x_scale.domain([domain[0].getTime() / 1000, domain[1].getTime() / 1000]);
+
 };
 
 
