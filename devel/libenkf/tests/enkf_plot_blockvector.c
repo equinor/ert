@@ -27,18 +27,18 @@
 
 void test_create() {
   ecl_grid_type * grid = ecl_grid_alloc_rectangular(10 , 10 , 10 , 1 , 1, 1, NULL);
-  field_config_type * field_config = field_config_alloc_empty("FIELD" , grid , NULL );
-  block_obs_type * block_obs = block_obs_alloc("Obs" , field_config , grid );
-  
+  enkf_config_node_type * config_node = enkf_config_node_alloc_field( "FIELD" , grid , NULL , false);
+  enkf_config_node_update_state_field( config_node , TRUNCATE_NONE , 0 , 0 );
   {
-    enkf_plot_blockvector_type * block_vector = enkf_plot_blockvector_alloc( block_obs );
+    obs_vector_type * obs_vector = obs_vector_alloc(BLOCK_OBS , "OBS" , config_node , 100);
+    enkf_plot_blockvector_type * block_vector = enkf_plot_blockvector_alloc( obs_vector , 0 );
     test_assert_true( enkf_plot_blockvector_is_instance( block_vector ));
     test_assert_int_equal( 0 , enkf_plot_blockvector_get_size( block_vector ));
     enkf_plot_blockvector_free( block_vector );
+    obs_vector_free( obs_vector );
   }
   
-  block_obs_free( block_obs );
-  field_config_free( field_config );
+  enkf_config_node_free( config_node );
   ecl_grid_free( grid );
 }
 

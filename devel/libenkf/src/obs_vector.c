@@ -174,7 +174,7 @@ const char * obs_vector_get_state_kw(const obs_vector_type * obs_vector) {
 }
 
 
-enkf_config_node_type * obs_vector_get_config_node(obs_vector_type * obs_vector) {
+const enkf_config_node_type * obs_vector_get_config_node(const obs_vector_type * obs_vector) {
   return obs_vector->config_node;
 }
 

@@ -26,14 +26,23 @@ extern "C" {
 
 #include <ert/util/type_macros.h>
 
-#include <ert/enkf/block_obs.h>
+#include <ert/enkf/obs_vector.h>
+#include <ert/enkf/enkf_fs.h>
+#include <ert/enkf/enkf_plot_blockvector.h>
+
 
   typedef struct enkf_plot_blockdata_struct enkf_plot_blockdata_type;
   
-  enkf_plot_blockdata_type * enkf_plot_blockdata_alloc( const block_obs_type * block_obs );
+  enkf_plot_blockdata_type * enkf_plot_blockdata_alloc( const obs_vector_type * obs_vector );
   void enkf_plot_blockdata_free( enkf_plot_blockdata_type * data );
   int  enkf_plot_blockdata_get_size( const enkf_plot_blockdata_type * data );
-  
+  enkf_plot_blockvector_type * enkf_plot_blockdata_iget( const enkf_plot_blockdata_type * plot_data , int index);
+  void enkf_plot_blockdata_load( enkf_plot_blockdata_type * plot_data , 
+                                 enkf_fs_type * fs , 
+                                 int report_step , 
+                                 state_enum state , 
+                                 const bool_vector_type * input_mask);
+
   UTIL_IS_INSTANCE_HEADER( enkf_plot_blockdata );
 
 #ifdef __cplusplus

@@ -109,7 +109,7 @@ block_obs_type * create_block_obs(ecl_grid_type * grid, int size, double value, 
     k[num] = num;
   }
 
-  block_obs_type * block_obs = block_obs_alloc_complete("Label", SOURCE_FIELD, NULL, field_config , grid, size, i, j, k, obs_value, obs_std);
+  block_obs_type * block_obs = block_obs_alloc_complete("Label",  SOURCE_FIELD, NULL, field_config , grid, size, i, j, k, obs_value, obs_std);
 
   free(i);
   free(j);

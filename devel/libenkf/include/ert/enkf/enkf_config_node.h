@@ -162,7 +162,7 @@ extern "C" {
   bool                  enkf_config_node_use_forward_init(const enkf_config_node_type * config_node);
   void                  enkf_config_node_set_forward_init(enkf_config_node_type * config_node, bool forward_init);
       
-
+UTIL_IS_INSTANCE_HEADER( enkf_config_node );
 UTIL_SAFE_CAST_HEADER(enkf_config_node);
 VOID_FREE_HEADER(enkf_config_node);
 #ifdef __cplusplus

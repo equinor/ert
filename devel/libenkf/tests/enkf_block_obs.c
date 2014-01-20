@@ -43,7 +43,6 @@ void test_create_from_field(ecl_grid_type * grid) {
   test_assert_int_equal(1 , block_obs_get_size( block_obs ));
   block_obs_append_field_obs( block_obs , 10 , 12 , 9  , 100 , 25);
   test_assert_int_equal(2 , block_obs_get_size( block_obs ));
-  
   block_obs_free( block_obs );
   field_config_free( field_config );
 }
@@ -61,8 +60,8 @@ void test_create_from_summary(ecl_grid_type * grid) {
   test_assert_int_equal(1 , block_obs_get_size( block_obs ));
   block_obs_append_summary_obs( block_obs , 10 , 12 , 9  , "BPR:11,13,10" , 100 , 25);
   test_assert_int_equal(2 , block_obs_get_size( block_obs ));
-  
   block_obs_free( block_obs );
+
   container_config_free( container_config );
 }
 
