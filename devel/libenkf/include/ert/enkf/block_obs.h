@@ -74,6 +74,7 @@ int         block_obs_iget_k(const block_obs_type * , int index);
 int         block_obs_get_size(const block_obs_type * );
 void        block_obs_iget(const block_obs_type * block_obs, int  , double * , double * );
 void        block_obs_iget_ijk(const block_obs_type * block_obs , int block_nr , int * i , int * j , int * k);
+double      block_obs_iget_data( const block_obs_type * block_obs, const void * state , int iobs , node_id_type node_id );
 
 void        block_obs_scale_std(block_obs_type * block_obs, double scale_factor);
 void        block_obs_scale_std__(void * block_obs, double scale_factor);
