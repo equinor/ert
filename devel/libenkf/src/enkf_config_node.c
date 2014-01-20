@@ -361,7 +361,7 @@ const char * enkf_config_node_iget_container_key( const enkf_config_node_type * 
    This will create a new gen_kw_config instance which is NOT yet
    valid. Mainly support code for the GUI.
 */
-enkf_config_node_type * enkf_config_node_new_field( const char * key , ecl_grid_type * ecl_grid, field_trans_table_type * trans_table, bool forward_init) {
+enkf_config_node_type * enkf_config_node_alloc_field( const char * key , ecl_grid_type * ecl_grid, field_trans_table_type * trans_table, bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( INVALID , FIELD , key , forward_init);
   config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
   return config_node;
@@ -539,7 +539,7 @@ int enkf_config_node_get_data_size( const enkf_config_node_type * node , int rep
 
 void enkf_config_node_free(enkf_config_node_type * node) {
   /* Freeing the underlying node object. */
-  if (node->freef   != NULL) node->freef(node->data);
+  if (node->freef != NULL) node->freef(node->data);
   free(node->key);
   stringlist_free(node->obs_keys);
 
