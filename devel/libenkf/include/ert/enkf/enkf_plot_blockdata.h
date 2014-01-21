@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include <ert/util/type_macros.h>
+#include <ert/util/double_vector.h>
 
 #include <ert/enkf/obs_vector.h>
 #include <ert/enkf/enkf_fs.h>
@@ -42,6 +43,7 @@ extern "C" {
                                  int report_step , 
                                  state_enum state , 
                                  const bool_vector_type * input_mask);
+  const double_vector_type * enkf_plot_blockdata_get_depth( const enkf_plot_blockdata_type * plot_data);
 
   UTIL_IS_INSTANCE_HEADER( enkf_plot_blockdata );
 

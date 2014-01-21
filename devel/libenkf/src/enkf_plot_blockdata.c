@@ -129,6 +129,10 @@ static void enkf_plot_blockdata_reset( enkf_plot_blockdata_type * plot_data , in
 }
 
 
+const double_vector_type * enkf_plot_blockdata_get_depth( const enkf_plot_blockdata_type * plot_data) {
+  return plot_data->depth;
+}
+
 
 
 
