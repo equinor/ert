@@ -64,13 +64,17 @@ int enkf_plot_blockvector_get_size( const enkf_plot_blockvector_type * vector ) 
   return double_vector_size( vector->data );
 }
 
+double enkf_plot_blockvector_iget( const enkf_plot_blockvector_type * vector , int index)  {
+  return double_vector_iget( vector->data , index );
+}
+
 
 void enkf_plot_blockvector_reset( enkf_plot_blockvector_type * vector ) { 
   double_vector_reset( vector->data );
 }
 
 
-void enkf_plot_blockvector_load( enkf_plot_blockvector_type * vector , enkf_fs_type * fs , int report_step , state_enum state) {
+void enkf_plot_blockvector_load( enkf_plot_blockvector_type * vector , enkf_fs_type * fs , int report_step , state_enum state, const int * sort_perm) {
   enkf_plot_blockvector_reset( vector );
   {
     const enkf_config_node_type * config_node = obs_vector_get_config_node( vector->obs_vector );
@@ -88,6 +92,8 @@ void enkf_plot_blockvector_load( enkf_plot_blockvector_type * vector , enkf_fs_t
       const block_obs_type * block_obs = obs_vector_iget_node( vector->obs_vector , report_step );
       for (int i=0; i < block_obs_get_size( block_obs ); i++) 
         double_vector_append(vector->data , block_obs_iget_data( block_obs , enkf_node_value_ptr( data_node ) , i , node_id));
+      
+      double_vector_permute( vector->data , sort_perm );
     }
     enkf_node_free( data_node );
   }
@@ -101,7 +107,8 @@ void * enkf_plot_blockvector_load__( void * arg ) {
   enkf_fs_type * fs = arg_pack_iget_ptr( arg_pack , 1 );
   int report_step = arg_pack_iget_int( arg_pack , 2 );
   state_enum state = arg_pack_iget_int( arg_pack , 3 );
+  const int * sort_perm = arg_pack_iget_ptr( arg_pack , 4);
 
-  enkf_plot_blockvector_load( vector , fs , report_step , state );
+  enkf_plot_blockvector_load( vector , fs , report_step , state , sort_perm);
   return NULL;
 }

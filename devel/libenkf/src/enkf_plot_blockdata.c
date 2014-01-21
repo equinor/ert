@@ -39,6 +39,8 @@ struct enkf_plot_blockdata_struct {
   const obs_vector_type * obs_vector;
   enkf_plot_blockvector_type ** ensemble;
   arg_pack_type              ** work_arg;
+  int                         * sort_perm;
+  double_vector_type          * depth;
 };
 
 
@@ -52,6 +54,9 @@ enkf_plot_blockdata_type * enkf_plot_blockdata_alloc( const obs_vector_type * ob
   data->size = 0;
   data->work_arg = NULL;
   data->ensemble = NULL;
+  data->depth = double_vector_alloc(0,0);
+  data->sort_perm = NULL;
+  
   return data;
 }
 
@@ -61,6 +66,8 @@ void enkf_plot_blockdata_free( enkf_plot_blockdata_type * data ) {
     arg_pack_free( data->work_arg[iens] );
     enkf_plot_blockvector_free( data->ensemble[iens] );
   }
+  double_vector_free( data->depth );
+  util_safe_free( data->sort_perm );
   free( data->ensemble );
   free( data->work_arg );
   free( data );
@@ -103,10 +110,22 @@ static void enkf_plot_blockdata_resize( enkf_plot_blockdata_type * plot_blockdat
 }
 
 
-static void enkf_plot_blockdata_reset( enkf_plot_blockdata_type * plot_data ) {
+static void enkf_plot_blockdata_reset( enkf_plot_blockdata_type * plot_data , int report_step) {
   int iens;
   for (iens = 0; iens < plot_data->size; iens++) 
     arg_pack_clear( plot_data->work_arg[iens] );
+
+  {
+    const block_obs_type * block_obs = obs_vector_iget_node( plot_data->obs_vector , report_step );
+
+    util_safe_free( plot_data->sort_perm );
+    double_vector_reset( plot_data->depth );
+    for (int iobs=0; iobs < block_obs_get_size( block_obs); iobs++) 
+      double_vector_append( plot_data->depth , block_obs_iget_depth( block_obs , iobs));
+
+    plot_data->sort_perm = double_vector_alloc_sort_perm( plot_data->depth );
+    double_vector_permute( plot_data->depth , plot_data->sort_perm );
+  }
 }
 
 
@@ -131,7 +150,7 @@ void enkf_plot_blockdata_load( enkf_plot_blockdata_type * plot_data ,
   state_map_select_matching( state_map , mask , STATE_HAS_DATA );
 
   enkf_plot_blockdata_resize( plot_data , ens_size );
-  enkf_plot_blockdata_reset( plot_data );
+  enkf_plot_blockdata_reset( plot_data , report_step );
   
   {
     const int num_cpu = 4;
@@ -145,7 +164,8 @@ void enkf_plot_blockdata_load( enkf_plot_blockdata_type * plot_data ,
         arg_pack_append_ptr( work_arg , fs );
         arg_pack_append_int( work_arg , report_step);
         arg_pack_append_int( work_arg , state );
-        
+        arg_pack_append_ptr( work_arg , plot_data->sort_perm );
+
         thread_pool_add_job( tp , enkf_plot_blockvector_load__ , work_arg );
       }
     }
