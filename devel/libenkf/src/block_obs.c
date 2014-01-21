@@ -393,6 +393,10 @@ int block_obs_iget_k(const block_obs_type * block_obs, int index) {
   return point_obs->k;
 }
 
+double block_obs_iget_depth( const block_obs_type * block_obs , int index)  {
+  const point_obs_type * point_obs = block_obs_iget_point_const( block_obs , index);
+  return ecl_grid_get_cdepth3( block_obs->grid , point_obs->i , point_obs->j ,point_obs->k);
+}
 
 /*
   Returns by reference i,j,k for observation point nr block_nr.

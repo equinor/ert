@@ -67,7 +67,7 @@ void block_obs_free(
 
 block_obs_type * block_obs_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance, const history_type  * history);
 
-
+double      block_obs_iget_depth( const block_obs_type * block_obs , int index);
 int         block_obs_iget_i(const block_obs_type * , int index);
 int         block_obs_iget_j(const block_obs_type * , int index);
 int         block_obs_iget_k(const block_obs_type * , int index);
