@@ -35,6 +35,7 @@ extern "C" {
   int                          enkf_plot_blockvector_get_size( const enkf_plot_blockvector_type * vector );
   void                         enkf_plot_blockvector_reset( enkf_plot_blockvector_type * vector );
   void                       * enkf_plot_blockvector_load__( void * arg );  
+  double                       enkf_plot_blockvector_iget( const enkf_plot_blockvector_type * vector , int index);
 
   UTIL_IS_INSTANCE_HEADER( enkf_plot_blockvector );
 
