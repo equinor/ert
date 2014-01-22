@@ -72,13 +72,20 @@ struct enkf_config_node_struct {
 };
 
 
+UTIL_IS_INSTANCE_FUNCTION( enkf_config_node , ENKF_CONFIG_NODE_TYPE_ID )
+
 
 static bool enkf_config_node_has_container(const enkf_config_node_type * node , enkf_fs_type * fs , node_id_type node_id) {
   bool has_container = true;
-
   for (int inode=0; inode < vector_get_size( node->container_nodes ); inode++) {
     enkf_config_node_type * child_node = vector_iget( node->container_nodes , inode );
-    if (!enkf_config_node_has_node( child_node , fs , node_id )) {
+    bool has_child;
+    if (child_node->vector_storage)
+      has_child = enkf_config_node_has_vector( child_node , fs , node_id.iens , node_id.state);
+    else
+      has_child = enkf_config_node_has_node( child_node , fs , node_id );
+
+    if (!has_child) {
       has_container = false;
       break;
     }
@@ -91,7 +98,7 @@ static bool enkf_config_node_has_container(const enkf_config_node_type * node , 
 bool enkf_config_node_has_node( const enkf_config_node_type * node , enkf_fs_type * fs , node_id_type node_id) {
   if (node->impl_type == CONTAINER) 
     return enkf_config_node_has_container( node , fs , node_id );
-  else
+  else 
     return enkf_fs_has_node( fs , node->key , node->var_type , node_id.report_step , node_id.iens , node_id.state );
 }
 
@@ -277,6 +284,8 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
 
 
 
+
+
 void enkf_config_node_update_gen_kw( enkf_config_node_type * config_node ,
                                      const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
                                      const char * template_file    , 
@@ -361,7 +370,7 @@ const char * enkf_config_node_iget_container_key( const enkf_config_node_type * 
    This will create a new gen_kw_config instance which is NOT yet
    valid. Mainly support code for the GUI.
 */
-enkf_config_node_type * enkf_config_node_new_field( const char * key , ecl_grid_type * ecl_grid, field_trans_table_type * trans_table, bool forward_init) {
+enkf_config_node_type * enkf_config_node_alloc_field( const char * key , ecl_grid_type * ecl_grid, field_trans_table_type * trans_table, bool forward_init) {
   enkf_config_node_type * config_node = enkf_config_node_alloc__( INVALID , FIELD , key , forward_init);
   config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
   return config_node;
@@ -539,7 +548,7 @@ int enkf_config_node_get_data_size( const enkf_config_node_type * node , int rep
 
 void enkf_config_node_free(enkf_config_node_type * node) {
   /* Freeing the underlying node object. */
-  if (node->freef   != NULL) node->freef(node->data);
+  if (node->freef != NULL) node->freef(node->data);
   free(node->key);
   stringlist_free(node->obs_keys);
 

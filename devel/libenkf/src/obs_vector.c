@@ -174,7 +174,7 @@ const char * obs_vector_get_state_kw(const obs_vector_type * obs_vector) {
 }
 
 
-enkf_config_node_type * obs_vector_get_config_node(obs_vector_type * obs_vector) {
+const enkf_config_node_type * obs_vector_get_config_node(const obs_vector_type * obs_vector) {
   return obs_vector->config_node;
 }
 
@@ -691,7 +691,7 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
     if (source_type == SOURCE_FIELD) {
       const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , field_name);
       const field_config_type     * field_config = enkf_config_node_get_ref( config_node ); 
-      block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , NULL , field_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
+      block_obs_type * block_obs  = block_obs_alloc_complete(obs_label, source_type , NULL , field_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
       
       if (block_obs != NULL) {
         obs_vector = obs_vector_alloc( BLOCK_OBS , obs_label , ensemble_config_get_node(ensemble_config , field_name), size );
@@ -723,7 +723,8 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
         }
         
         {
-          block_obs_type * block_obs  = block_obs_alloc(obs_label, source_type , summary_keys , container_config , grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
+          block_obs_type * block_obs  = block_obs_alloc_complete(obs_label, source_type , summary_keys , enkf_config_node_get_ref(container_config) , 
+                                                                 grid , num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
           if (block_obs != NULL) {
             obs_vector = obs_vector_alloc( BLOCK_OBS , obs_label , container_config, size );
             obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
