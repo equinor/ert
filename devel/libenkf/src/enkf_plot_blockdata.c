@@ -48,16 +48,19 @@ UTIL_IS_INSTANCE_FUNCTION( enkf_plot_blockdata , ENKF_PLOT_BLOCKDATA_TYPE_ID )
 
 
 enkf_plot_blockdata_type * enkf_plot_blockdata_alloc( const obs_vector_type * obs_vector ) {
-  enkf_plot_blockdata_type * data = util_malloc( sizeof * data );
-  UTIL_TYPE_ID_INIT( data , ENKF_PLOT_BLOCKDATA_TYPE_ID );
-  data->obs_vector = obs_vector;
-  data->size = 0;
-  data->work_arg = NULL;
-  data->ensemble = NULL;
-  data->depth = double_vector_alloc(0,0);
-  data->sort_perm = NULL;
-  
-  return data;
+  if (obs_vector_get_impl_type( obs_vector ) == BLOCK_OBS) {
+    enkf_plot_blockdata_type * data = util_malloc( sizeof * data );
+    UTIL_TYPE_ID_INIT( data , ENKF_PLOT_BLOCKDATA_TYPE_ID );
+    data->obs_vector = obs_vector;
+    data->size = 0;
+    data->work_arg = NULL;
+    data->ensemble = NULL;
+    data->depth = double_vector_alloc(0,0);
+    data->sort_perm = NULL;
+    
+    return data;
+  } else
+    return NULL;
 }
 
 
