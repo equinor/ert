@@ -25,6 +25,17 @@
 #include <ert/enkf/enkf_plot_blockdata.h>
 #include <ert/enkf/obs_vector.h>
 
+void test_create_invalid() {
+  enkf_config_node_type * config_node = enkf_config_node_alloc_summary( "WWCT" , LOAD_FAIL_SILENT);
+  obs_vector_type * obs_vector = obs_vector_alloc(SUMMARY_OBS , "OBS" , config_node , 100);
+  enkf_plot_blockdata_type * block_data = enkf_plot_blockdata_alloc( obs_vector );
+
+  test_assert_NULL( block_data );
+  enkf_config_node_free( config_node );
+  obs_vector_free( obs_vector );
+}
+
+
 void test_create() {
   ecl_grid_type * grid = ecl_grid_alloc_rectangular(10 , 10 , 10 , 1 , 1, 1, NULL);
   enkf_config_node_type * config_node = enkf_config_node_alloc_field( "FIELD" , grid , NULL , false);
@@ -49,5 +60,6 @@ void test_create() {
 
 int main( int argc , char ** argv) {
   test_create();
+  test_create_invalid();
   exit(0);
 }
