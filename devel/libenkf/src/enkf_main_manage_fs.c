@@ -52,7 +52,6 @@ static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
           node_id_type src_id    = {.report_step = source_report_step , .iens = src_iens    , .state = source_state };
           node_id_type target_id = {.report_step = target_report_step , .iens = target_iens , .state = target_state };
 
-          printf("CALLING enkf_node_copy!!!\n");
           enkf_node_copy( config_node ,
                           source_case_fs , target_case_fs ,
                           src_id , target_id );
@@ -164,7 +163,6 @@ void enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
 
   bool_vector_free(iactive);
   stringlist_free(param_list);
-  printf("FINISHED!\n");
 }
 
 
