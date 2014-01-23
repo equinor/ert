@@ -7,11 +7,15 @@ from ert.util import DoubleVector, BoolVector
 
 class PlotBlockData(BaseCClass):
 
-    def __init__(self, obs_vector):
+    def __init__(self, obs_vector, file_system=None, report_step=None, state=EnkfStateType.FORECAST, input_mask=None):
         assert isinstance(obs_vector, ObsVector)
 
         c_pointer = PlotBlockData.cNamespace().alloc(obs_vector)
         super(PlotBlockData, self).__init__(c_pointer)
+
+        if not file_system is None:
+            self.load(file_system, report_step, state, input_mask)
+
 
 
     def load(self, file_system, report_step, state=EnkfStateType.FORECAST, input_mask=None):

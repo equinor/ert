@@ -36,6 +36,7 @@ class ObsVector(BaseCClass):
         pointer = ObsVector.cNamespace().alloc(observation_type, observation_key, config_node, num_reports)
         super(ObsVector, self).__init__(pointer)
 
+
     def get_state_kw(self):
         """ @rtype: str """
         return ObsVector.cNamespace().get_state_kw(self)
@@ -57,6 +58,10 @@ class ObsVector(BaseCClass):
         """ @rtype: bool """
         return ObsVector.cNamespace().iget_active(self, index)
 
+    def getNextActiveStep(self, previous_step=-1):
+        """ @rtype: int """
+        return  ObsVector.cNamespace().get_next_active_step(self, previous_step)
+
     def getImplementationType(self):
         """ @rtype: EnkfObservationImplementationType """
         return ObsVector.cNamespace().get_impl_type(self)
@@ -65,6 +70,17 @@ class ObsVector(BaseCClass):
         assert isinstance(node, SummaryObservation)
         node.convertToCReference(self)
         ObsVector.cNamespace().install_node(self, index, node.from_param(node))
+
+    def __iter__(self):
+        cur = -1
+        run = True
+        while run:
+            report_step = self.getNextActiveStep(cur)
+            if report_step >= 0:
+                cur = report_step
+                yield cur
+            else:
+                run = False
 
     def free(self):
         ObsVector.cNamespace().free(self)
@@ -83,3 +99,4 @@ ObsVector.cNamespace().get_num_active = cwrapper.prototype("int obs_vector_get_n
 ObsVector.cNamespace().iget_active = cwrapper.prototype("bool obs_vector_iget_active( obs_vector, int)")
 ObsVector.cNamespace().get_impl_type = cwrapper.prototype("enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)")
 ObsVector.cNamespace().install_node = cwrapper.prototype("void obs_vector_install_node(obs_vector, int, c_void_p)")
+ObsVector.cNamespace().get_next_active_step = cwrapper.prototype("int obs_vector_get_next_active_step(obs_vector, int)")
