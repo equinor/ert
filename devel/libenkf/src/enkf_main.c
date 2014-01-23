@@ -1965,40 +1965,6 @@ static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
 }
 
 
-void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, init_mode_enum init_mode) {
-  int num_cpu               = 4;
-  thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
-  int ens_sub_size          = (iens2 - iens1 + 1) / num_cpu;
-  arg_pack_type ** arg_list = util_calloc( num_cpu , sizeof * arg_list );
-  int i;
-  
-  printf("Initializing .... "); fflush( stdout );
-  for (i = 0; i < num_cpu;  i++) {
-    arg_list[i] = arg_pack_alloc();
-    arg_pack_append_ptr( arg_list[i] , enkf_main );
-    arg_pack_append_const_ptr( arg_list[i] , param_list );
-    {
-      int start_iens = i * ens_sub_size;
-      int end_iens   = start_iens + ens_sub_size;
-      
-      if (i == (num_cpu - 1)){
-        end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
-        if(ens_sub_size == 0)
-          start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
-      }
-      arg_pack_append_int( arg_list[i] , start_iens );
-      arg_pack_append_int( arg_list[i] , end_iens );
-    }
-    arg_pack_append_int( arg_list[i] , init_mode );
-    thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[i]);
-  }
-  thread_pool_join( tp );
-  for (i = 0; i < num_cpu; i++)
-    arg_pack_free( arg_list[i] ); 
-  free( arg_list );
-  thread_pool_free( tp );
-  printf("\n");
-}
 
 
 
@@ -2547,27 +2513,6 @@ static void update_case_log(enkf_main_type * enkf_main , const char * case_path)
 
 
 
-static void enkf_main_close_fs( enkf_main_type * enkf_main ) {
-  enkf_fs_umount( enkf_main->dbase );
-  enkf_main->dbase = NULL;
-}
-
-
-enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
-  return enkf_fs_get_weakref( enkf_main->dbase );
-}
-
-
-char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path) {
-  char * mount_point;
-  if (util_is_abs_path( case_path ))
-    mount_point = util_alloc_string_copy( case_path );
-  else
-    mount_point = util_alloc_filename( model_config_get_enspath( enkf_main->model_config) , case_path , NULL);
-  return mount_point;
-}
-
-
 void enkf_main_gen_data_special( enkf_main_type * enkf_main ) {
   stringlist_type * gen_data_keys = ensemble_config_alloc_keylist_from_impl_type( enkf_main->ensemble_config , GEN_DATA);
   for (int i=0; i < stringlist_get_size( gen_data_keys ); i++) {
@@ -2614,53 +2559,6 @@ static bool enkf_main_current_case_file_exists( const enkf_main_type * enkf_main
 
 
   
-  
-/**
-   The enkf_fs instances employ a simple reference counting
-   scheme. The main point with this system is to avoid opening the
-   full timesystem more than necessary (this is quite compute
-   intensive). This is essentially achieved by:
-
-      1. Create new fs instances by using the function
-         enkf_main_mount_alt_fs() - depending on the input arguments
-         this will either create a new enkf_fs instance or it will
-         just return a pointer to currently open fs instance; with an
-         increased refcount.
-
-      2. When you are finished with working with filesystem pointer
-         call enkf_fs_unmount() - this will reduce the refcount with
-         one, and eventually discard the complete datastructure when
-         the refcount has reached zero.
-
-      3. By using the function enkf_main_get_fs() /
-         enkf_fs_get_weakref() you get a pointer to the current fs
-         instance WITHOUT INCREASING THE REFCOUNT. This means that
-         scope calling one of these functions does not get any
-         ownership to the enkf_fs instance.
- 
-   The enkf_main instance will take ownership of the enkf_fs instance;
-   this implies that the calling scope must have proper ownership of
-   the fs instance which is passed in. The return value from
-   enkf_main_get_fs() can NOT be used as input to this function; this
-   is not checked for in any way - but the crash will be horrible if
-   this is not adhered to.
-*/
-
-
-void enkf_main_set_fs( enkf_main_type * enkf_main , enkf_fs_type * fs , const char * case_path /* Can be NULL */) {
-  if (!case_path)
-    case_path = enkf_fs_get_case_name( fs );
-    
-  if (enkf_main->dbase != NULL) 
-    enkf_main_close_fs( enkf_main );
-    
-  enkf_main->dbase = fs;
-  enkf_main_update_current_case(enkf_main, case_path); 
- }
-
-
-
-
 void enkf_main_create_fs( const enkf_main_type * enkf_main , const char * case_path ) {
   char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
 
@@ -2674,126 +2572,7 @@ void enkf_main_create_fs( const enkf_main_type * enkf_main , const char * case_p
 
 
 
-/*
-  All the return values from this function must be closed with
-  enkf_fs_umount(). If the return value is just a reference to the
-  current existing case the function will increase the reference count
-  on that enkf_fs instance, and the corresponding enkf_usmount will
-  decrease it again.
-*/
 
-enkf_fs_type * enkf_main_mount_alt_fs(const enkf_main_type * enkf_main , const char * case_path , bool read_only , bool create) {
-  if (enkf_main_case_is_current( enkf_main , case_path )) {
-    // Fast path - we just return a reference to the currently selected case;
-    // with increased refcount.
-    if(!read_only) {
-        enkf_fs_type * fs = enkf_main->dbase;
-        enkf_fs_set_writable(fs);
-    }
-    return enkf_fs_get_ref( enkf_main->dbase );
-  } else {
-    // We have asked for an alterantive fs - must mount and possibly create that first.
-    enkf_fs_type * new_fs = NULL;
-    if (case_path != NULL) {
-      char * new_mount_point    = enkf_main_alloc_mount_point( enkf_main , case_path );
-
-      if (!enkf_fs_exists( new_mount_point )) {
-        if (create)
-          enkf_main_create_fs( enkf_main , case_path );
-      }
-      
-      new_fs = enkf_fs_mount( new_mount_point , read_only );
-      free( new_mount_point );
-    }
-    return new_fs;
-  }
-}
-
-
-state_map_type * enkf_main_alloc_readonly_state_map( const enkf_main_type * enkf_main , const char * case_path) {
-  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
-  state_map_type * state_map = enkf_fs_alloc_readonly_state_map( mount_point );
-  free( mount_point );
-  return state_map;
-}
-
-
-time_map_type * enkf_main_alloc_readonly_time_map( const enkf_main_type * enkf_main , const char * case_path ) {
-  char * mount_point = enkf_main_alloc_mount_point( enkf_main , case_path );
-  time_map_type * time_map = enkf_fs_alloc_readonly_time_map( mount_point );
-  free( mount_point );
-  return time_map;
-}
-
-
-void enkf_main_select_fs( enkf_main_type * enkf_main , const char * case_path ) {
-  if (enkf_main_case_is_current( enkf_main , case_path ))
-    return;  /* We have tried to select the currently selected case - just return. */
-  else {
-
-    enkf_fs_type * new_fs = enkf_main_mount_alt_fs( enkf_main , case_path , false , true );
-    if (enkf_main->dbase == new_fs)
-      util_abort("%s : return reference to current FS in situation where that should not happen.\n",__func__);
-    
-    if (new_fs != NULL) 
-      enkf_main_set_fs( enkf_main , new_fs , case_path);
-    else {
-      const char * ens_path = model_config_get_enspath( enkf_main->model_config );
-      util_exit("%s: select filesystem %s:%s failed \n",__func__ , ens_path , case_path );
-    }
-
-  }
-}
-
-
-/*
-  Return a weak reference - i.e. the refocunt is not increased.
-*/
-const char * enkf_main_get_current_fs( const enkf_main_type * enkf_main ) {
-  return enkf_main->current_fs_case;
-}
-
-bool enkf_main_fs_exists(const enkf_main_type * enkf_main, const char * input_case){
-  bool exists = false;
-  char * new_mount_point = enkf_main_alloc_mount_point( enkf_main , input_case);
-  if(enkf_fs_exists( new_mount_point )) 
-    exists = true;
-
-  free( new_mount_point );
-  return exists;
-}
-
-
-void enkf_main_user_select_fs(enkf_main_type * enkf_main , const char * input_case ) {
-  const char * ens_path = model_config_get_enspath( enkf_main->model_config);      
-  int root_version = enkf_fs_get_version104( ens_path );
-  if (root_version == -1 || root_version == 105) {
-    if (input_case == NULL) {
-      char * current_mount_point = util_alloc_filename( ens_path , CURRENT_CASE , NULL);
-
-      if (enkf_main_current_case_file_exists(enkf_main)) { 
-        char * current_case = enkf_main_read_alloc_current_case_name(enkf_main);
-        enkf_main_select_fs(enkf_main, current_case);
-        free (current_case);
-      } else if (enkf_fs_exists( current_mount_point ) && util_is_link( current_mount_point )) {
-        /*If the current_case file does not exists, but the 'current' symlink does we use readlink to 
-          get hold of the actual target before calling the  enkf_main_select_fs() function. We then 
-          write the current_case file and delete the symlink.*/
-        char * target_case = util_alloc_atlink_target( ens_path , CURRENT_CASE );
-        enkf_main_select_fs( enkf_main , target_case );  
-        unlink(current_mount_point); 
-        enkf_main_write_current_case_file(enkf_main, target_case); 
-        free( target_case );
-        free( current_mount_point );
-      } else 
-        enkf_main_select_fs( enkf_main , DEFAULT_CASE );  // Selecting (a new) default case
-    } else
-      enkf_main_select_fs( enkf_main , input_case );
-  } else {
-    fprintf(stderr,"Sorry: the filesystem located in %s must be upgraded before the current ERT version can read it.\n" , ens_path);
-    exit(1);
-  }
-}
 
 
 /******************************************************************/
@@ -3568,11 +3347,6 @@ static bool enkf_main_case_is_initialized__( const enkf_main_type * enkf_main , 
   if (__mask == NULL)
     bool_vector_free( mask );
   return initialized;
-}
-
-
-bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_type * __mask) {
-  return enkf_main_case_is_initialized__(enkf_main , enkf_main->dbase , __mask);
 }
 
 
