@@ -251,6 +251,7 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
   bool              enkf_main_case_is_current(const enkf_main_type * enkf_main , const char * case_path);
   char *            enkf_main_read_alloc_current_case_name(const enkf_main_type * enkf_main);
   stringlist_type * enkf_main_alloc_caselist( const enkf_main_type * enkf_main );
+  void              enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file );
 
   void              enkf_main_initialize_from_scratch(enkf_main_type * enkf_main ,
                                                       const stringlist_type * param_list ,
@@ -276,11 +277,9 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
 
   bool              enkf_main_is_initialized( const enkf_main_type * enkf_main ,bool_vector_type * __mask);
 
-
   bool              enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
   ui_return_type  * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
-  void              enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_table_file );
-  
+
   char            * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path);
   enkf_fs_type    * enkf_main_get_fs(const enkf_main_type * );
   const char      * enkf_main_get_current_fs( const enkf_main_type * enkf_main );
