@@ -238,6 +238,36 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
 }
 
 
+void * enkf_main_init_case_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+
+  const char * source_case = stringlist_iget( args , 0 );
+  enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , false , true );
+
+  bool target_is_current = true;
+  enkf_fs_type * target_fs = enkf_main_get_fs(enkf_main);
+
+  if (stringlist_get_size(args) > 1) {
+    const char * current_case = enkf_main_get_current_fs(enkf_main);
+    const char * target_case = stringlist_iget( args , 1 );
+    if (0 != strcmp(current_case, target_case)) {
+      target_fs = enkf_main_mount_alt_fs( enkf_main , target_case , false , true );
+      target_is_current = false;
+    }
+  }
+
+  enkf_main_init_case_from_existing(enkf_main, source_fs, 0, ANALYZED, target_fs);
+
+  enkf_fs_umount(source_fs);
+
+  if (!target_is_current)
+    enkf_fs_umount(target_fs);
+
+  return NULL;
+}
+
+
+
 void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, enkf_main_get_ensemble_size(enkf_main));
