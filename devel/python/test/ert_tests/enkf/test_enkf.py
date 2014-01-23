@@ -20,6 +20,7 @@ from ert.enkf import EnsConfig, AnalysisConfig, ModelConfig, SiteConfig, EclConf
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enkf_main import EnKFMain
 from ert.enkf.enums import EnkfObservationImplementationType, LoadFailTypeEnum, EnkfInitModeEnum, ErtImplType, RealizationStateEnum
+from ert.enkf.enums.enkf_truncation_type import EnkfTruncationType
 from ert.enkf.observations.summary_observation import SummaryObservation
 from ert.util.test_area import TestAreaContext
 from ert_tests import ExtendedTestCase
@@ -46,6 +47,7 @@ class EnKFTest(ExtendedTestCase):
         self.assertEnumIsFullyDefined(ErtImplType, "ert_impl_type", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(EnkfInitModeEnum, "init_mode_enum", "libenkf/include/ert/enkf/enkf_types.h")
         self.assertEnumIsFullyDefined(RealizationStateEnum, "realisation_state_enum", "libenkf/include/ert/enkf/enkf_types.h")
+        self.assertEnumIsFullyDefined(EnkfTruncationType, "truncation_type", "libenkf/include/ert/enkf/enkf_types.h")
 
         self.assertEnumIsFullyDefined(EnkfObservationImplementationType, "obs_impl_type", "libenkf/include/ert/enkf/obs_vector.h")
         self.assertEnumIsFullyDefined(LoadFailTypeEnum, "load_fail_type", "libenkf/include/ert/enkf/summary_config.h")
