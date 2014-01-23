@@ -47,9 +47,16 @@ class EnkfFsManager(BaseCClass):
         EnkfFsManager.cNamespace().user_select_fs(self, input_case)
 
 
-    def initializeFromExistingCase(self, source_case, source_report_step, source_state, member_mask, ranking_key, node_list):
+    def initializeCurrentCaseFromExisting(self, source_fs, source_report_step, source_state):
         assert isinstance(source_state, EnkfStateType)
-        EnkfFsManager.cNamespace().initialize_from_existing(self, source_case, source_report_step, source_state, member_mask, ranking_key, node_list)
+        assert isinstance(source_fs, EnkfFs);
+        EnkfFsManager.cNamespace().initialize_current_case_from_existing(self, source_fs, source_report_step, source_state)
+
+    def initializeCurrentCaseFromExisting(self, source_fs, source_report_step, source_state, target_fs):
+        assert isinstance(source_state, EnkfStateType)
+        assert isinstance(source_fs, EnkfFs);
+        assert isinstance(target_fs, EnkfFs);
+        EnkfFsManager.cNamespace().initialize_case_from_existing(self, source_fs, source_report_step, source_state, target_fs)
 
 
     def initializeFromScratch(self, parameter_list, iens1, iens2, force_init=True):
@@ -117,7 +124,8 @@ EnkfFsManager.cNamespace().set_case_table = cwrapper.prototype("void enkf_main_s
 EnkfFsManager.cNamespace().initialize_from_scratch = cwrapper.prototype("void enkf_main_initialize_from_scratch(enkf_fs_manager, stringlist, int, int, bool)")
 EnkfFsManager.cNamespace().is_initialized = cwrapper.prototype("bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)")
 EnkfFsManager.cNamespace().is_case_initialized = cwrapper.prototype("bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)")
-EnkfFsManager.cNamespace().initialize_from_existing = cwrapper.prototype("void enkf_main_initialize_from_existing__(enkf_fs_manager, char*, int, enkf_state_type_enum, bool_vector, char*, stringlist)")
+EnkfFsManager.cNamespace().initialize_current_case_from_existing = cwrapper.prototype("void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_state_type_enum)")
+EnkfFsManager.cNamespace().initialize_case_from_existing = cwrapper.prototype("void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_state_type_enum, enkf_fs)")
 
 EnkfFsManager.cNamespace().alloc_readonly_state_map = cwrapper.prototype("state_map_obj enkf_main_alloc_readonly_state_map(enkf_fs_manager, char*)")
 EnkfFsManager.cNamespace().alloc_readonly_time_map = cwrapper.prototype("time_map_obj enkf_main_alloc_readonly_time_map(enkf_fs_manager, char*)")

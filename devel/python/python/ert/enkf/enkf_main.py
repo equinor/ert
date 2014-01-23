@@ -138,13 +138,6 @@ class EnKFMain(BaseCClass):
     def getHistoryLength(self):
         return EnKFMain.cNamespace().get_history_length(self)
 
-
-    def copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step,
-                      target_state, member_mask, ranking_key, node_list):
-        EnKFMain.cNamespace().copy_ensemble(self, source_case, source_report_step, source_state, target_case, target_report_step,
-                            target_state, member_mask, ranking_key, node_list)
-
-
     def getMemberRunningState(self, ensemble_member):
         """ @rtype: EnKFState """
         return EnKFMain.cNamespace().iget_state(self, ensemble_member).setParent(self)
@@ -212,7 +205,6 @@ EnKFMain.cNamespace().get_templates = cwrapper.prototype("ert_templates_ref enkf
 EnKFMain.cNamespace().get_site_config_file = cwrapper.prototype("char* enkf_main_get_site_config_file(enkf_main)")
 EnKFMain.cNamespace().get_history_length = cwrapper.prototype("int enkf_main_get_history_length(enkf_main)")
 
-EnKFMain.cNamespace().copy_ensemble = cwrapper.prototype("void enkf_main_copy_ensemble(enkf_main, char*, int, int, char*, int, int, bool_vector, char*, stringlist)")
 EnKFMain.cNamespace().get_observations = cwrapper.prototype("void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)")
 EnKFMain.cNamespace().get_observation_count = cwrapper.prototype("int enkf_main_get_observation_count(enkf_main, char*)")
 EnKFMain.cNamespace().iget_state = cwrapper.prototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
