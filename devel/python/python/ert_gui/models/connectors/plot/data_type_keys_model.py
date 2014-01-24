@@ -30,7 +30,7 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
     def getAllBlockObservationKeys(self):
         """ @rtype: list of str """
         if self.__block_observation_keys is None:
-            self.__block_observation_keys = BlockObservationDataFetcher(self.ert()).getBlockObservationKeys()
+            self.__block_observation_keys = BlockObservationDataFetcher(self.ert()).getSupportedKeys()
 
         return self.__block_observation_keys
 

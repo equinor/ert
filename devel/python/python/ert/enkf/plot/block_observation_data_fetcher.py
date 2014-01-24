@@ -22,13 +22,10 @@ class BlockObservationDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(BlockObservationDataFetcher, self).__init__(ert)
 
-    def getBlockObservationKeys(self, sort=True):
+    def fetchSupportedKeys(self):
         observations = self.ert().getObservations()
-        keys = observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
-        return sorted(keys) if sort else keys
-
-    def isBlockObsKey(self, key):
-        return key in self.getBlockObservationKeys(sort=False)
+        string_list = observations.getTypedKeylist(EnkfObservationImplementationType.BLOCK_OBS)
+        return [key for key in string_list]
 
     def __fetchObservationData(self, block_observation):
         assert isinstance(block_observation, BlockObservation)
