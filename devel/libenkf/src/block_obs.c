@@ -352,6 +352,15 @@ void block_obs_iget(const block_obs_type * block_obs, int index , double *value 
   *std   = point_obs->std;
 }
 
+double block_obs_iget_value(const block_obs_type * block_obs, int index ){
+    const point_obs_type * point_obs = block_obs_iget_point_const( block_obs , index );
+    return point_obs->value;
+}
+
+double block_obs_iget_std(const block_obs_type * block_obs, int index ){
+    const point_obs_type * point_obs = block_obs_iget_point_const( block_obs , index );
+    return point_obs->std;
+}
 
 void block_obs_user_get(const block_obs_type * block_obs , const char * index_key , double *value , double * std, bool * valid) {
   int      i,j,k;
