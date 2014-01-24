@@ -76,9 +76,6 @@ class EnKFMain(BaseCClass):
         """ @rtype: PlotConfig """
         return EnKFMain.cNamespace().get_plot_config(self).setParent(self)
 
-    def set_eclbase(self, eclbase):
-        EnKFMain.cNamespace().set_eclbase(self, eclbase)
-
     def set_datafile(self, datafile):
         EnKFMain.cNamespace().set_datafile(self, datafile)
 
