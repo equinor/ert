@@ -120,3 +120,14 @@ class EnKFTest(ExtendedTestCase):
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
             main.free()
+            
+    def test_enkf_create_config_file(self):
+        config_file      = "test_new_config"
+        firste_case_name = "default_1"
+        dbase_type       = "PLAIN"
+        num_realizations = 42
+        
+        with TestAreaContext("python/ens_condif/create_config") as ta:
+            EnKFMain.createNewConfig(config_file, ta.get_cwd(), firste_case_name, dbase_type, num_realizations)
+            main = EnKFMain(config_file, self.site_config_file)
+            self.assertEqual(main.getEnsembleSize(), num_realizations)

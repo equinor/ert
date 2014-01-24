@@ -27,6 +27,9 @@ class EnKFMain(BaseCClass):
         self.__simulation_runner = EnkfSimulationRunner(self)
         self.__fs_manager = EnkfFsManager(self)
 
+    @staticmethod
+    def createNewConfig(config_file, storage_path, case_name, dbase_type, num_realizations):
+        EnKFMain.cNamespace().create_new_config(config_file, storage_path, case_name, dbase_type, num_realizations)
 
     def set_eclbase(self, eclbase):
         EnKFMain.cNamespace().set_eclbase(self, eclbase)
@@ -154,11 +157,6 @@ class EnKFMain(BaseCClass):
 
     def get_observation_count(self, user_key):
         return EnKFMain.cNamespace().get_observation_count(self, user_key)
-
-
-    def createNewConfig(self, storage_path, case_name, dbase_type, num_realizations):
-        EnKFMain.cNamespace().create_new_config(self, storage_path, case_name, dbase_type, num_realizations)
-
 
     def getEnkfSimulationRunner(self):
         """ @rtype: EnkfSimulationRunner """
