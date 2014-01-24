@@ -57,7 +57,7 @@ void test_load_results_job(const char * config_file, const char * job_file) {
 }
 
 
-void test_init_case(const char * config_file, const char * job_file) {
+void test_init_case_job(const char * config_file, const char * job_file) {
   ert_test_context_type * test_context = ert_test_context_alloc("InitCaseJob" , config_file , NULL);
   stringlist_type * args = stringlist_alloc_new();
   enkf_main_type * enkf_main = ert_test_context_get_main(test_context);
@@ -72,6 +72,8 @@ void test_init_case(const char * config_file, const char * job_file) {
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
 
   enkf_fs_umount(cur_fs);
+  const char * current_case = enkf_main_get_current_fs(enkf_main);
+  test_assert_string_equal(current_case, "new_current_case");
   stringlist_clear(args);
 
   //Test init case from existing case:
@@ -96,7 +98,7 @@ int main(int argc , const char ** argv) {
 
   test_create_case_job(config_file, job_file_create_case);
   test_load_results_job(config_file, job_file_load_results);
-  test_init_case(config_file, job_file_init_case_job);
+  test_init_case_job(config_file, job_file_init_case_job);
 
   exit(0);
 }
