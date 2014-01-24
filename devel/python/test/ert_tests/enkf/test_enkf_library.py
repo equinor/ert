@@ -1,6 +1,6 @@
 import os
 from ert.ecl import EclSum
-from ert.enkf import BlockObs, AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, ObsVector
+from ert.enkf import AnalysisConfig, EclConfig, GenKwConfig, EnkfConfigNode, SiteConfig, ObsVector
 from ert.enkf import GenDataConfig, FieldConfig, EnkfFs, EnkfObs, EnKFState, EnsConfig
 from ert.enkf import ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, PlotConfig
 from ert.enkf.enkf_main import EnKFMain
@@ -17,7 +17,7 @@ class EnKFLibraryTest(ExtendedTestCase):
 
 
     def test_failed_class_creation(self):
-        classes = [BlockObs, FieldConfig, GenKwConfig, GenDataConfig,
+        classes = [FieldConfig, GenKwConfig, GenDataConfig,
                    EnkfConfigNode, EnkfFs, EnkfObs, TimeMap, EnKFState, EnsConfig,
                    ErtTemplate, ErtTemplates, LocalConfig, ModelConfig, PlotConfig, SiteConfig]
 

@@ -17,7 +17,7 @@ from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf.data import EnkfConfigNode
 from ert.enkf.enums import EnkfObservationImplementationType
-from ert.enkf.observations.summary_observation import SummaryObservation
+from ert.enkf.observations import BlockObservation, SummaryObservation
 
 
 
@@ -42,11 +42,15 @@ class ObsVector(BaseCClass):
         return ObsVector.cNamespace().get_state_kw(self)
 
     def getNode(self, index):
+        """ @rtype: SummaryObservation or BlockObservation """
+
         pointer = ObsVector.cNamespace().iget_node(self, index)
 
         node_type = self.getImplementationType()
         if node_type == EnkfObservationImplementationType.SUMMARY_OBS:
             return SummaryObservation.createCReference(pointer, self)
+        elif node_type == EnkfObservationImplementationType.BLOCK_OBS:
+            return BlockObservation.createCReference(pointer, self)
         else:
             raise AssertionError("Node type '%s' currently not supported!" % node_type)
 
@@ -72,6 +76,7 @@ class ObsVector(BaseCClass):
         ObsVector.cNamespace().install_node(self, index, node.from_param(node))
 
     def __iter__(self):
+        """ Iterate over active report steps. """
         cur = -1
         run = True
         while run:

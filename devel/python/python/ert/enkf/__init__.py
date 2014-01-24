@@ -31,7 +31,6 @@ from .observations import SummaryObservation, ObsVector
 
 from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
-from .block_obs import BlockObs
 from .ecl_config import EclConfig
 
 from .enkf_obs import EnkfObs
