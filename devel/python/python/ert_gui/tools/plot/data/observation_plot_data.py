@@ -23,7 +23,7 @@ class ObservationPlotData(QObject):
         self.__max_y = None
 
 
-    def setObservationData(self, x_values, y_values, std_values, continuous):
+    def setObservationData(self, x_values, y_values, std_values, continuous, histogram_support=True):
         if x_values is not None and y_values is not None and std_values is not None:
             self.__x_values = x_values
             self.__y_values = y_values
@@ -31,14 +31,13 @@ class ObservationPlotData(QObject):
             self.__is_continuous = continuous
             self.__has_data = True
 
-            for index in range(len(x_values)):
-                x = x_values[index]
-                # if x in self.__report_step_time_indexes:
-                #     print("[ObservationPlotData] value %d already in index list!" % x)
-                self.__report_step_time_indexes[x] = index
+            if histogram_support:
+                for index in range(len(x_values)):
+                    x = x_values[index]
+                    self.__report_step_time_indexes[x] = index
 
-            self.__first_report_step_time = min(x_values)
-            self.__last_report_step_time = max(x_values)
+                self.__first_report_step_time = min(x_values)
+                self.__last_report_step_time = max(x_values)
 
 
     def updateBoundaries(self, min_x, max_x, min_y, max_y):
