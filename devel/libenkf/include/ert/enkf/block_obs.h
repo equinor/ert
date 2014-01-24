@@ -73,6 +73,8 @@ int         block_obs_iget_j(const block_obs_type * , int index);
 int         block_obs_iget_k(const block_obs_type * , int index);
 int         block_obs_get_size(const block_obs_type * );
 void        block_obs_iget(const block_obs_type * block_obs, int  , double * , double * );
+double      block_obs_iget_value(const block_obs_type * block_obs, int index );
+double      block_obs_iget_std(const block_obs_type * block_obs, int index );
 void        block_obs_iget_ijk(const block_obs_type * block_obs , int block_nr , int * i , int * j , int * k);
 double      block_obs_iget_data( const block_obs_type * block_obs, const void * state , int iobs , node_id_type node_id );
 

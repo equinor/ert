@@ -82,6 +82,10 @@
         // Not supported by this plot
     }
 
+    function supportsPlotProperties(time, value, depth){
+        return time && value && !depth
+    }
+
 </script>
 
 <body onload="initialize();">
