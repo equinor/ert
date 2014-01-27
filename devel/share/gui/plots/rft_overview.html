@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (C) 2013 Statoil ASA, Norway. -->
 <!--   -->
-<!-- The file 'simple_plot.html' is part of ERT - Ensemble based Reservoir Tool. -->
+<!-- The file 'simple_overview_plot.html' is part of ERT - Ensemble based Reservoir Tool. -->
 <!--   -->
 <!-- ERT is free software: you can redistribute it and/or modify -->
 <!-- it under the terms of the GNU General Public License as published by -->
@@ -36,16 +36,14 @@
 <script src="libs/d3.v3.js"></script>
 <script src="scripts/styles.js"></script>
 <script src="scripts/base_plot.js"></script>
-<script src="scripts/base_plot_value_dimension.js"></script>
 <script src="scripts/base_plot_time_dimension.js"></script>
-<script src="scripts/render_tracker.js"></script>
-<script src="scripts/canvas_plot.js"></script>
+<script src="scripts/base_plot_value_dimension.js"></script>
+<script src="scripts/canvas_plot_overview.js"></script>
 <script src="scripts/canvas_plot_line.js"></script>
 <script src="scripts/canvas_plot_area.js"></script>
 <script src="scripts/canvas_error_bar.js"></script>
 <script src="scripts/canvas_plot_circle.js"></script>
 <script src="scripts/canvas_plot_legend.js"></script>
-<script src="data.js"></script>
 
 <script>
     var plot = null;
@@ -56,15 +54,17 @@
             updatePlot();
             plot_data_source.htmlInitialized();
         } else {
-            createPlot();
-            plot.setData(data);
+//            createPlot();
+//            plot.setData(data);
             console.log("Unable to load data!");
             alert("Unable to load data!");
         }
     }
 
     function createPlot() {
-        plot = new Plot(d3.select("body"), BasePlotTimeDimension(), BasePlotValueDimension());
+        plot = new OverviewPlot(d3.select("body"), BasePlotValueDimension(), BasePlotValueDimension(true));
+        plot.setVerticalErrorBar(false);
+        plot.setHorizontalDrawDirection(false);
     }
 
     function updatePlot() {
@@ -85,7 +85,7 @@
     }
 
     function supportsPlotProperties(time, value, depth){
-        return time && value && !depth
+        return !time && value && depth
     }
 
 </script>
