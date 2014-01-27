@@ -62,7 +62,9 @@
     }
 
     function createPlot() {
-        plot = new OverviewPlot(d3.select("body"), BasePlotTimeDimension(), BasePlotValueDimension());
+        plot = new OverviewPlot(d3.select("body"), BasePlotValueDimension(), BasePlotValueDimension(true));
+        plot.setVerticalErrorBar(false);
+        plot.setHorizontalDrawDirection(false);
     }
 
     function updatePlot() {
@@ -83,7 +85,7 @@
     }
 
     function supportsPlotProperties(time, value, depth){
-        return time && value && !depth
+        return !time && value && depth
     }
 
 </script>
