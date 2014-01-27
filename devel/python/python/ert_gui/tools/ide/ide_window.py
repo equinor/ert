@@ -23,17 +23,17 @@ class IdeWindow(QMainWindow):
 
         self.__view_menu = self.menuBar().addMenu("&View")
 
-        wizard_panel = WizardView()
-        wizard_panel.addGroup("Parameters")
-        wizard_panel.addItemToGroup("Parameters", "Add Summary key")
-        wizard_panel.addItemToGroup("Parameters", "Add Field parameter")
-        wizard_panel.addItemToGroup("Parameters", "Add Data Keyword")
-        wizard_panel.addGroup("Eclipse")
-        wizard_panel.addItemToGroup("Eclipse", "Setup Eclipse parameters")
-        wizard_panel.addGroup("Observations")
-        wizard_panel.addItemToGroup("Observations", "Add Observations")
-        wizard_panel.expandAll()
-        self.addDock("Wizards", wizard_panel)
+        # wizard_panel = WizardView()
+        # wizard_panel.addGroup("Parameters")
+        # wizard_panel.addItemToGroup("Parameters", "Add Summary key")
+        # wizard_panel.addItemToGroup("Parameters", "Add Field parameter")
+        # wizard_panel.addItemToGroup("Parameters", "Add Data Keyword")
+        # wizard_panel.addGroup("Eclipse")
+        # wizard_panel.addItemToGroup("Eclipse", "Setup Eclipse parameters")
+        # wizard_panel.addGroup("Observations")
+        # wizard_panel.addItemToGroup("Observations", "Add Observations")
+        # wizard_panel.expandAll()
+        # self.addDock("Wizards", wizard_panel)
 
         self.__help_dock = HelpDock.getInstance() # todo Turn HelpDock into a panel
         help_dock = self.addDockWidget(Qt.RightDockWidgetArea, self.__help_dock)
