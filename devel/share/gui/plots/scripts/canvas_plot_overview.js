@@ -16,7 +16,7 @@
 
 
 function OverviewPlot(element) {
-    this.plot = new BasePlot(element);
+    this.plot = new BasePlot(element, BasePlotTimeDimension(), BasePlotValueDimension());
 
     var self = this;
 
