@@ -23,6 +23,8 @@ class IdeWindow(QMainWindow):
 
         self.__view_menu = self.menuBar().addMenu("&View")
 
+
+
         # wizard_panel = WizardView()
         # wizard_panel.addGroup("Parameters")
         # wizard_panel.addItemToGroup("Parameters", "Add Summary key")
@@ -36,8 +38,7 @@ class IdeWindow(QMainWindow):
         # self.addDock("Wizards", wizard_panel)
 
         self.__help_dock = HelpDock.getInstance() # todo Turn HelpDock into a panel
-        help_dock = self.addDockWidget(Qt.RightDockWidgetArea, self.__help_dock)
-
+        help_dock = self.addDock("&Help", self.__help_dock, Qt.RightDockWidgetArea )
 
     def closeEvent(self, q_close_event):
         self.__geometry = self.geometry()
@@ -56,5 +57,6 @@ class IdeWindow(QMainWindow):
         dock_widget.setAllowedAreas(allowed_areas)
 
         self.addDockWidget(area, dock_widget)
+
         self.__view_menu.addAction(dock_widget.toggleViewAction())
         return dock_widget

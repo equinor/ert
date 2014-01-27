@@ -1,11 +1,11 @@
 from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import QDockWidget, QLabel, QWidget, QVBoxLayout
+from PyQt4.QtGui import QDockWidget, QLabel, QWidget, QVBoxLayout, QColor
 
 import os
 from ert_gui.pages.message_center import MessageCenter
 
 
-class HelpDock(QDockWidget):
+class HelpDock(QWidget):
     __instance = None
     help_prefix = None
     default_help_string = "No help available!"
@@ -17,13 +17,15 @@ class HelpDock(QDockWidget):
                            "</html>")
 
     def __init__(self):
-        QDockWidget.__init__(self, "Help")
+        QWidget.__init__(self)
         self.setObjectName("HelpDock")
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), QColor(255, 255, 224))
+        self.setPalette(palette)
+        self.setAutoFillBackground(True)
 
-        widget = QWidget()
-        widget.setStyleSheet("background-color: #ffffe0")
         layout = QVBoxLayout()
-        widget.setLayout(layout)
+        self.setLayout(layout)
 
         self.link_widget = QLabel()
         self.link_widget.setStyleSheet("font-weight: bold")
@@ -45,7 +47,6 @@ class HelpDock(QDockWidget):
         layout.addStretch(1)
         layout.addWidget(self.validation_widget)
 
-        self.setWidget(widget)
 
         self.help_messages = {}
 
