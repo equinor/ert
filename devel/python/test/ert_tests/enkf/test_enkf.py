@@ -128,10 +128,10 @@ class EnKFTest(ExtendedTestCase):
     def test_enkf_create_config_file(self):
         config_file      = "test_new_config"
         firste_case_name = "default_1"
-        dbase_type       = "PLAIN"
+        dbase_type       = "BLOCK_FS"
         num_realizations = 42
         
-        with TestAreaContext("python/ens_condif/create_config") as ta:
-            EnKFMain.createNewConfig(config_file, ta.get_cwd(), firste_case_name, dbase_type, num_realizations)
+        with TestAreaContext("python/ens_condif/create_config" , store_area = True) as ta:
+            EnKFMain.createNewConfig(config_file, "storage" , firste_case_name, dbase_type, num_realizations)
             main = EnKFMain(config_file, self.site_config_file)
             self.assertEqual(main.getEnsembleSize(), num_realizations)
