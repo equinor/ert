@@ -26,6 +26,7 @@ class PlotWindow(QMainWindow):
         self.addPlotPanel("Ensemble overview plot", "gui/plots/simple_overview_plot.html", short_name="oPlot")
         self.addPlotPanel("Histogram", "gui/plots/histogram.html", short_name="Histogram")
         self.addPlotPanel("RFT plot", "gui/plots/rft.html", short_name="RFT")
+        self.addPlotPanel("RFT overview plot", "gui/plots/rft_overview.html", short_name="oRFT")
 
         self.__data_type_keys_widget = DataTypeKeysWidget()
         self.__data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
