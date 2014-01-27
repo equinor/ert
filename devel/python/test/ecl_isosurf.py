@@ -24,7 +24,7 @@ import ert.util.tvector
 from   ert.util.lookup_table import LookupTable
 
 
-# This function will scan the vertical_error_bar column specified by (i,j) and
+# This function will scan the vertical column specified by (i,j) and
 # collect the pairs ( value(kw) , depth ) in a lookuptable. When the
 # full column has been scanned it will lookup the value @level in the
 # lookuptable and return the corresponding depth, based on linear
