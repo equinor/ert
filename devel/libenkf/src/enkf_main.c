@@ -1531,12 +1531,15 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
       
       /* Start the queue */
       if (run_mode != INIT_ONLY) {
-        arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
-        arg_pack_append_ptr(queue_args  , job_queue);
-        arg_pack_append_int(queue_args  , job_size);
-        arg_pack_append_bool(queue_args , verbose_queue);
-        job_queue_reset(job_queue);
-        pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+        if (site_config_has_job_script( enkf_main->site_config )) {
+          arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
+          arg_pack_append_ptr(queue_args  , job_queue);
+          arg_pack_append_int(queue_args  , job_size);
+          arg_pack_append_bool(queue_args , verbose_queue);
+          job_queue_reset(job_queue);
+          pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+        } else
+          util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
       }
 
       
