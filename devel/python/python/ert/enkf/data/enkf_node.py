@@ -15,8 +15,7 @@
 #  for more details.
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
-import ert
-
+import ert.enkf.data
 
 class EnkfNode(BaseCClass):
     def __init__(self, config_node):
