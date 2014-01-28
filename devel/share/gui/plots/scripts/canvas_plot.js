@@ -130,8 +130,8 @@ Plot.prototype.resize = function (width, height) {
     this.plot.resize(width, height);
 };
 
-Plot.prototype.setScales = function (time_min, time_max, value_min, value_max) {
-    this.plot.setScales(time_min, time_max, value_min, value_max);
+Plot.prototype.setScales = function (x_min, x_max, y_min, y_max) {
+    this.plot.setScales(x_min, x_max, y_min, y_max);
 };
 
 Plot.prototype.setYDomain = function (min_y, max_y) {
