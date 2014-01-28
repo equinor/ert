@@ -37,7 +37,8 @@ class IdeWindow(QMainWindow):
         # wizard_panel.expandAll()
         # self.addDock("Wizards", wizard_panel)
 
-        self.__help_dock = HelpDock.getInstance() # todo Turn HelpDock into a panel
+
+        self.__help_dock = HelpDock()
         help_dock = self.addDock("&Help", self.__help_dock, Qt.RightDockWidgetArea )
 
     def closeEvent(self, q_close_event):

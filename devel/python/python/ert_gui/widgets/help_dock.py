@@ -6,7 +6,7 @@ from ert_gui.pages.message_center import MessageCenter
 
 
 class HelpDock(QWidget):
-    __instance = None
+    __instances = []
     help_prefix = None
     default_help_string = "No help available!"
     validation_template = ("<html>"
@@ -51,41 +51,29 @@ class HelpDock(QWidget):
         self.help_messages = {}
 
         MessageCenter().addHelpMessageListeners(self)
-
-    def __new__(cls):
-        if cls.__instance is None:
-            cls.__instance = QDockWidget.__new__(cls)
-            return cls.__instance
-        return None
+        HelpDock.__instances.append(self)
 
 
-    @classmethod
-    def getInstance(cls):
-        """ @rtype: HelpDock """
-        if cls.__instance is None:
-            cls()
-
-        return cls.__instance
 
     @classmethod
     def setHelpMessageLink(cls, help_link):
-        instance = cls.getInstance()
-        if not help_link in instance.help_messages:
-            help_message = HelpDock.resolveHelpLink(help_link)
-            if help_message is not None:
-                instance.help_messages[help_link] = help_message
-            else:
-                instance.help_messages[help_link] = instance.default_help_string
+        for help_dock in cls.__instances:
+            if not help_link in help_dock.help_messages:
+                help_message = HelpDock.resolveHelpLink(help_link)
+                if help_message is not None:
+                    help_dock.help_messages[help_link] = help_message
+                else:
+                    help_dock.help_messages[help_link] = help_dock.default_help_string
 
-        instance.link_widget.setText(help_link)
-        instance.help_widget.setText(instance.help_messages[help_link])
-        instance.validation_widget.setText("")
+            help_dock.link_widget.setText(help_link)
+            help_dock.help_widget.setText(help_dock.help_messages[help_link])
+            help_dock.validation_widget.setText("")
 
     @classmethod
     def setValidationMessage(cls, message):
-        instance = cls.getInstance()
-        instance.validation_widget.setHidden(message is None)
-        instance.validation_widget.setText(instance.validation_template % message)
+        for help_dock in cls.__instances:
+            help_dock.validation_widget.setHidden(message is None)
+            help_dock.validation_widget.setText(help_dock.validation_template % message)
 
 
     # The setHelpLinkPrefix should be set to point to a directory
