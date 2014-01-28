@@ -78,8 +78,8 @@
         plot.resize(width, height - 75);
     }
 
-    function setScales(time_min, time_max, value_min, value_max) {
-        plot.setScales(time_min, time_max, value_min, value_max);
+    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max) {
+        plot.setScales(value_min, value_max, depth_min, depth_max);
     }
 
     function setReportStepTime(report_step_time) {
