@@ -1,5 +1,6 @@
 from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout
+from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget
+from ert_gui.widgets.help_dock import HelpDock
 
 
 class GertMainWindow(QMainWindow):
@@ -21,25 +22,22 @@ class GertMainWindow(QMainWindow):
         self.toolbar.setObjectName("Toolbar")
         self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
-        # configure_action = toolbar.addAction(util.resourceIcon("ide/cog_edit"), "Configure")
-        #
-        # plot_action = toolbar.addAction(util.resourceIcon("ide/chart_curve_add"), "Plot")
-        # save_action.triggered.connect(self.save)
-
-        # reload_action.triggered.connect(self.reload)
-
-        # toolbar.addSeparator()
-        #
-        # stretchy_separator = QWidget()
-        # stretchy_separator.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # toolbar.addWidget(stretchy_separator)
-
-        #
-
-
         self.__createMenu()
+        self.__help_dock = HelpDock()
+        help_dock = self.addDock("&Help", self.__help_dock, Qt.BottomDockWidgetArea )
+
         self.__fetchSettings()
 
+    def addDock(self, name, widget, area=Qt.RightDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
+        dock_widget = QDockWidget(name)
+        dock_widget.setObjectName("%sDock" % name)
+        dock_widget.setWidget(widget)
+        dock_widget.setAllowedAreas(allowed_areas)
+
+        self.addDockWidget(area, dock_widget)
+
+        self.__view_menu.addAction(dock_widget.toggleViewAction())
+        return dock_widget
 
     def addTool(self, tool):
         tool.setParent(self)
@@ -53,6 +51,7 @@ class GertMainWindow(QMainWindow):
     def __createMenu(self):
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction("Close", self.__quit)
+        self.__view_menu = self.menuBar().addMenu("&View")
 
 
     def __quit(self):
