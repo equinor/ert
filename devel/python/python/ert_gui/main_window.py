@@ -22,26 +22,10 @@ class GertMainWindow(QMainWindow):
         self.toolbar.setObjectName("Toolbar")
         self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
-        self.__view_menu = self.menuBar().addMenu("&View")
-
-        # configure_action = toolbar.addAction(util.resourceIcon("ide/cog_edit"), "Configure")
-        #
-        # plot_action = toolbar.addAction(util.resourceIcon("ide/chart_curve_add"), "Plot")
-        # save_action.triggered.connect(self.save)
-
-        # reload_action.triggered.connect(self.reload)
-
-        # toolbar.addSeparator()
-        #
-        # stretchy_separator = QWidget()
-        # stretchy_separator.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # toolbar.addWidget(stretchy_separator)
-
-        #
-        self.__help_dock = HelpDock.getInstance()
+        self.__createMenu()
+        self.__help_dock = HelpDock()
         help_dock = self.addDock("&Help", self.__help_dock, Qt.BottomDockWidgetArea )
 
-        self.__createMenu()
         self.__fetchSettings()
 
     def addDock(self, name, widget, area=Qt.RightDockWidgetArea, allowed_areas=Qt.AllDockWidgetAreas):
@@ -67,6 +51,7 @@ class GertMainWindow(QMainWindow):
     def __createMenu(self):
         file_menu = self.menuBar().addMenu("&File")
         file_menu.addAction("Close", self.__quit)
+        self.__view_menu = self.menuBar().addMenu("&View")
 
 
     def __quit(self):
