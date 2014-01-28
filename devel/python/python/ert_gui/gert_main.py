@@ -143,9 +143,12 @@ class Ert(object):
         self.__ert = enkf_main
 
     def reloadGERT(self):
-        python = sys.executable
+        python_executable = sys.executable
+        ert_gui_main = sys.argv[0]
+        config_file = self.__ert.getUserConfigFile()
+
         self.__ert.free()
-        os.execl(python, python, *sys.argv)
+        os.execl(python_executable, python_executable, ert_gui_main, config_file)
 
     def ert(self):
         return self.__ert

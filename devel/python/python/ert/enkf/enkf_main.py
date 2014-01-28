@@ -137,6 +137,11 @@ class EnKFMain(BaseCClass):
         site_conf_file = EnKFMain.cNamespace().get_site_config_file(self)
         return site_conf_file
 
+    def getUserConfigFile(self):
+        """ @rtype: str """
+        config_file = EnKFMain.cNamespace().get_user_config_file(self)
+        return config_file
+
 
     def getHistoryLength(self):
         return EnKFMain.cNamespace().get_history_length(self)
@@ -222,6 +227,8 @@ EnKFMain.cNamespace().get_workflow_list = cwrapper.prototype("ert_workflow_list_
 
 EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprintf_config(enkf_main)")
 EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_create_new_config(char* , char*, char* , char* , int)")
+
+EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main_get_user_config_file(enkf_main)")
 
 
 
