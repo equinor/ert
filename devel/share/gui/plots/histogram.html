@@ -129,7 +129,7 @@
         }
     }
 
-    function setScales(time_min, time_max, value_min, value_max) {
+    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max) {
         for(var i = 0; i < histograms.length; i++) {
             var histogram = histograms[i];
             histogram.setValueScales(value_min, value_max);

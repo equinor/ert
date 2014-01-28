@@ -47,6 +47,7 @@ class PlotWindow(QMainWindow):
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
         self.__value_scale_tracker = ScaleTracker("Value")
         self.__time_scale_tracker = ScaleTracker("Time")
+        self.__depth_scale_tracker = ScaleTracker("Depth")
 
 
 
@@ -96,12 +97,16 @@ class PlotWindow(QMainWindow):
         value_max = self.__plot_metrics_widget.getValueMax()
         time_min = self.__plot_metrics_widget.getTimeMin()
         time_max = self.__plot_metrics_widget.getTimeMax()
+        depth_min = self.__plot_metrics_widget.getDepthMin()
+        depth_max = self.__plot_metrics_widget.getDepthMax()
 
         self.__value_scale_tracker.setScaleValues(self.__data_type_key, value_min, value_max)
         self.__time_scale_tracker.setScaleValues(self.__data_type_key, time_min, time_max)
+        self.__depth_scale_tracker.setScaleValues(self.__data_type_key, depth_min, depth_max)
+
 
         for plot_panel in self.__plot_panels:
-            plot_panel.setScales(time_min, time_max, value_min, value_max)
+            plot_panel.setScales(time_min, time_max, value_min, value_max, depth_min, depth_max)
 
 
     def reportStepTimeChanged(self):
@@ -142,8 +147,10 @@ class PlotWindow(QMainWindow):
         value_max = self.__value_scale_tracker.getMaximumScaleValue(self.__data_type_key)
         time_min = self.__time_scale_tracker.getMinimumScaleValue(self.__data_type_key)
         time_max = self.__time_scale_tracker.getMaximumScaleValue(self.__data_type_key)
+        depth_min = self.__depth_scale_tracker.getMinimumScaleValue(self.__data_type_key)
+        depth_max = self.__depth_scale_tracker.getMaximumScaleValue(self.__data_type_key)
 
-        self.__plot_metrics_widget.updateScales(time_min, time_max, value_min, value_max)
+        self.__plot_metrics_widget.updateScales(time_min, time_max, value_min, value_max, depth_min, depth_max)
 
 
         if self.checkPlotStatus():
