@@ -59,3 +59,10 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
 
     def __isSummaryKeyObservationKey(self, key):
         return len(self.ert().ensembleConfig().getNode(key).getObservationKeys()) > 0
+
+    def isSummaryKey(self, key):
+        return key in self.__summary_keys
+
+    def isBlockKey(self, key):
+        return key in self.__block_observation_keys
+
