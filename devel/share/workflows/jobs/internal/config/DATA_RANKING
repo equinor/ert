@@ -1,0 +1,9 @@
+INTERNAL    True
+FUNCTION    enkf_main_rank_on_data_JOB
+MIN_ARG     4
+MIN_ARG     5
+ARG_TYPE    0  STRING
+ARG_TYPE    1  STRING
+ARG_TYPE    2  STRING
+ARG_TYPE    3  BOOL
+ARG_TYPE    4  INT
