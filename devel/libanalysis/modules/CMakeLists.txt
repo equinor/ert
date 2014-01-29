@@ -6,8 +6,6 @@ set( RMLI_SOURCE_FILES
      rml_enkf_imodel.c
      rml_enkf_common.c )
 
-
-#set( source_files rml_enkf.c rml_enkf_common.c rml_enkf_imodel.c )
 set( header_files analysis_module.h enkf_linalg.h analysis_table.h std_enkf.h rml_enkf_common.h)
 add_library( rml_enkf  SHARED ${RML_SOURCE_FILES} )
 add_library( rmli_enkf  SHARED ${RMLI_SOURCE_FILES} )
