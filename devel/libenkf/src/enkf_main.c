@@ -4073,7 +4073,7 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
 
 
 void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
-                                    const stringlist_type * ranking_keys,
+                                    const stringlist_type * obs_ranking_keys,
                                     const char * ranking_key,
                                     const char * ranking_file,
                                     int report_step1,
@@ -4090,7 +4090,7 @@ void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
 
   ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
 
-  ranking_table_add_misfit_ranking( ranking_table , misfit_ensemble , ranking_keys , report_step1 , report_step2 , ranking_key );
+  ranking_table_add_misfit_ranking( ranking_table , misfit_ensemble , obs_ranking_keys , report_step1 , report_step2 , ranking_key );
   ranking_table_display_ranking( ranking_table , ranking_key);
   ranking_table_fwrite_ranking( ranking_table, ranking_key, ranking_file);
 }

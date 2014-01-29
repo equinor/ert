@@ -360,16 +360,16 @@ void * enkf_main_rank_on_observations_JOB(void * self, const stringlist_type * a
     obs_key_char = stringlist_alloc_joined_substring( args , first_observation_index , stringlist_get_size(args) , " ");
 
   enkf_obs_type * enkf_obs = enkf_main_get_obs(enkf_main);
-  stringlist_type * ranking_keys = enkf_obs_alloc_matching_keylist( enkf_obs , obs_key_char );
+  stringlist_type * obs_ranking_keys = enkf_obs_alloc_matching_keylist( enkf_obs , obs_key_char );
 
-  if ((first_observation_index > 0) && (stringlist_get_size(ranking_keys) == 0)) {
+  if ((first_observation_index > 0) && (stringlist_get_size(obs_ranking_keys) == 0)) {
     fprintf(stderr,"The input string : \"%s\" did not resolve to any valid observation keys. Job not started\n", obs_key_char);
     return NULL;
   }
 
-  enkf_main_rank_on_observations(enkf_main, ranking_keys, ranking_name, ranking_file, step1, step2);
+  enkf_main_rank_on_observations(enkf_main, obs_ranking_keys, ranking_name, ranking_file, step1, step2);
 
-  stringlist_free(ranking_keys);
+  stringlist_free(obs_ranking_keys);
 
   if (first_observation_index > 0)
     free(obs_key_char);
