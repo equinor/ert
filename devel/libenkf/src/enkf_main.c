@@ -4112,11 +4112,9 @@ void enkf_main_rank_on_data(enkf_main_type * enkf_main,
 
   const enkf_config_node_type * config_node = ensemble_config_user_get_node( ensemble_config , data_key , &key_index);
   if (config_node) {
-    if (ranking_key) {
-      ranking_table_add_data_ranking( ranking_table , sort_increasing , ranking_key , data_key , key_index , fs , config_node, step , state );
-      ranking_table_display_ranking( ranking_table , ranking_key );
-      ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
-    }
+    ranking_table_add_data_ranking( ranking_table , sort_increasing , ranking_key , data_key , key_index , fs , config_node, step , state );
+    ranking_table_display_ranking( ranking_table , ranking_key );
+    ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
   } else {
     fprintf(stderr,"** No data found for key %s\n", data_key);
   }
