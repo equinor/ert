@@ -37,15 +37,11 @@ class DataTypeProxyModel(QSortFilterProxyModel):
             key = self.sourceModel().itemAt(source_index)
 
             summary_key = self.sourceModel().isSummaryKey(key)
-            if self.__show_summary_keys and summary_key:
-               show = True
-            elif not self.__show_summary_keys and summary_key:
+            if not self.__show_summary_keys and summary_key:
                 show = False
 
             block_key = self.sourceModel().isBlockKey(key)
-            if self.__show_block_keys and block_key:
-                show = True
-            elif not self.__show_block_keys and block_key:
+            if not self.__show_block_keys and block_key:
                 show = False
 
         return show
