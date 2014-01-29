@@ -4073,7 +4073,7 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
 
 
 void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
-                                    stringlist_type * ranking_keys,
+                                    const stringlist_type * ranking_keys,
                                     const char * ranking_key,
                                     const char * ranking_file,
                                     int report_step1,
