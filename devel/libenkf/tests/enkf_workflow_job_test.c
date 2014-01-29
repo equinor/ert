@@ -113,12 +113,21 @@ void test_rank_realizations_on_data_job(const char * config_file, const char * j
   ert_test_context_type * test_context = ert_test_context_alloc("RankRealizationsOnDataJob" , config_file , NULL);
   stringlist_type * args = stringlist_alloc_new();
   ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
+
   stringlist_append_copy( args , "NameOfDataRanking");
   stringlist_append_copy( args , "/tmp/fileToSaveDataRankingIn.txt");
   stringlist_append_copy( args , "PORO:1,2,3");
   stringlist_append_copy( args , "false");
   stringlist_append_copy( args , "0");
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+
+  stringlist_clear(args);
+  stringlist_append_copy( args , "NameOfDataRanking2");
+  stringlist_append_copy( args , "/tmp/fileToSaveDataRankingIn2.txt");
+  stringlist_append_copy( args , "PORO:1,2,3");
+  stringlist_append_copy( args , "false");
+  test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+
   stringlist_free( args );
   ert_test_context_free( test_context );
 }
