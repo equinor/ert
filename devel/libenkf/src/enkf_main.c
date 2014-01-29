@@ -3646,57 +3646,6 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
 
 
-/* Used by external application - this is a library ... */
-void  enkf_main_list_users(  set_type * users , const char * executable ) {
-  DIR * dir = opendir( DEFAULT_VAR_DIR );
-  if (dir != NULL) {
-    struct dirent * dp;
-    do {
-      dp = readdir(dir);
-      if (dp != NULL) {
-        int pid;
-        if (util_sscanf_int( dp->d_name , &pid )) {
-          char * full_path = util_alloc_filename( DEFAULT_VAR_DIR , dp->d_name , NULL );
-          bool add_user    = false;
-          int  uid;
-
-          {
-            FILE * stream    = util_fopen( full_path , "r");
-            char this_executable[512];
-
-            if (fscanf( stream , "%s %d" , this_executable , &uid) == 2) {
-              if (executable != NULL) {
-                if (util_string_equal( this_executable , executable ))
-                  add_user   = true;
-              } else
-                add_user = true;
-            }
-            fclose( stream );
-          }
-
-
-          /* Remove the pid files of dead processes. */
-          if (!util_proc_alive( pid )) {
-            unlink( full_path );
-            add_user = false;
-          }
-
-
-          if (add_user) {
-            struct passwd *pwd;
-            pwd = getpwuid( uid );
-            if (pwd != NULL)
-              set_add_key( users , pwd->pw_name );
-          }
-
-
-          free( full_path );
-        }
-      }
-    } while (dp != NULL );
-    closedir( dir );
-  }
-}
 
 
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main ) {
