@@ -308,6 +308,10 @@ BasePlot.prototype.createLineRenderer = function() {
     return CanvasPlotLine().x(this.x).y(this.y);
 };
 
+BasePlot.prototype.createCircleRenderer = function() {
+    return CanvasCircle().x(this.x).y(this.y);
+};
+
 
 BasePlot.prototype.setVerticalErrorBar = function(vertical){
     this.vertical_error_bar = vertical;

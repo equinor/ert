@@ -30,6 +30,12 @@ function BasePlotValueDimension(flip_range){
     }
 
     dimension.setDomain = function(min, max) {
+
+        if(min == max) {
+            min = min - 0.1 * min
+            max = max + 0.1 * max
+        }
+
         if(flip_range){
             var tmp = min;
             min = max;
