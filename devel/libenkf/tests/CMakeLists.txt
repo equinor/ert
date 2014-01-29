@@ -185,7 +185,9 @@ target_link_libraries( enkf_workflow_job_test ert-test test_util )
 add_test( enkf_workflow_job_test
           ${EXECUTABLE_OUTPUT_PATH}/enkf_workflow_job_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/CREATE_CASE
-                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS)
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/OBSERVATION_RANKING
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/DATA_RANKING)
 
 
 

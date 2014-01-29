@@ -113,6 +113,32 @@ bool ranking_table_display_ranking( const ranking_table_type * ranking_table , c
     return false;
 }
 
+
+bool ranking_table_fwrite_ranking( const ranking_table_type * ranking_table , const char * ranking_key, const char * filename ) {
+  if (hash_has_key( ranking_table->ranking_table , ranking_key)) {
+    void * ranking = hash_get( ranking_table->ranking_table , ranking_key );
+
+    FILE * file = util_fopen(filename, "w");
+
+    if (data_ranking_is_instance( ranking )) {
+      data_ranking_type * data_ranking = data_ranking_safe_cast( ranking );
+      data_ranking_display( data_ranking , file );
+    } else if (misfit_ranking_is_instance( ranking )) {
+      misfit_ranking_type * misfit_ranking = misfit_ranking_safe_cast( ranking );
+      misfit_ranking_display( misfit_ranking , file );
+    } else
+      util_abort("%s: internal error \n",__func__);
+
+    util_fclose(file);
+
+    return true;
+  } else
+    return false;
+}
+
+
+
+
 const int * ranking_table_get_permutation( const ranking_table_type * ranking_table , const char * ranking_key) {
   if (hash_has_key( ranking_table->ranking_table , ranking_key)) {
     void * ranking = hash_get( ranking_table->ranking_table , ranking_key );

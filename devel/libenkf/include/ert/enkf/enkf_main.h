@@ -286,6 +286,20 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
 
   void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_type * iactive, stringlist_type ** realizations_msg_list);
   
+  void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
+                                      stringlist_type * obs_keys_input,
+                                      const char * ranking_key,
+                                      const char * ranking_file,
+                                      int step1,
+                                      int step2 );
+
+  void enkf_main_rank_on_data(enkf_main_type * enkf_main,
+                              const char * data_key,
+                              bool sort_increasing,
+                              const char * ranking_key,
+                              const char * ranking_file,
+                              int step);
+
   
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
