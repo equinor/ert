@@ -42,14 +42,11 @@ class PlotWindow(QMainWindow):
         self.__plot_metrics_widget.reportStepTimeChanged.connect(self.reportStepTimeChanged)
         self.addDock("Plot metrics", self.__plot_metrics_widget)
 
-
         self.__data_type_key = None
         self.__plot_cases = self.__case_selection_widget.getPlotCaseNames()
         self.__value_scale_tracker = ScaleTracker("Value")
         self.__time_scale_tracker = ScaleTracker("Time")
         self.__depth_scale_tracker = ScaleTracker("Depth")
-
-
 
 
     def addPlotPanel(self, name, path, short_name=None):
