@@ -188,7 +188,8 @@ add_test( enkf_workflow_job_test
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/LOAD_RESULTS
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/OBSERVATION_RANKING
                                                            ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/DATA_RANKING
-                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RANKING)
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_RANKING
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/INIT_MISFIT_TABLE)
 
 
 

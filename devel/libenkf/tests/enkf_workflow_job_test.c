@@ -147,6 +147,30 @@ void test_rank_realizations_on_data_job(const char * config_file, const char * j
     ert_test_context_free( test_context );
   }
 
+  void test_init_misfit_table(const char * config_file, const char * job_file) {
+    ert_test_context_type * test_context = ert_test_context_alloc("ExportRankingJob" , config_file , NULL);
+    stringlist_type * args = stringlist_alloc_new();
+    ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
+
+    enkf_main_type * enkf_main = ert_test_context_get_main(test_context);
+    enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
+    const enkf_obs_type        * enkf_obs        = enkf_main_get_obs( enkf_main );
+    const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+    const int history_length                     = enkf_main_get_history_length( enkf_main );
+    const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
+
+    misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
+    test_assert_false(misfit_ensemble_initialized(misfit_ensemble));
+
+    test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+
+    test_assert_true(misfit_ensemble_initialized(misfit_ensemble));
+
+    stringlist_free( args );
+    ert_test_context_free( test_context );
+  }
+
+
 int main(int argc , const char ** argv) {
   enkf_main_install_SIGNALS();
   
@@ -156,12 +180,15 @@ int main(int argc , const char ** argv) {
   const char * job_file_observation_ranking = argv[4];
   const char * job_file_data_ranking        = argv[5];
   const char * job_file_ranking_export      = argv[6];
+  const char * job_file_init_misfit_table   = argv[7];
 
   test_create_case_job(config_file, job_file_create_case);
   test_load_results_job(config_file, job_file_load_results);
   test_rank_realizations_on_observations_job(config_file, job_file_observation_ranking);
   test_rank_realizations_on_data_job(config_file, job_file_data_ranking);
   test_export_ranking(config_file, job_file_ranking_export);
+  test_init_misfit_table(config_file, job_file_init_misfit_table);
+
 
 
   exit(0);
