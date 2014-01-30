@@ -4084,7 +4084,7 @@ void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
   const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
 
   misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
-  misfit_ensemble_update( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length );
+  misfit_ensemble_initialize( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length, false);
 
   ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
 

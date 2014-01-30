@@ -22,6 +22,7 @@
 #include <ert/util/menu.h>
 #include <ert/util/util.h>
 #include <ert/util/arg_pack.h>
+#include <ert/util/string_util.h>
 
 #include <ert/enkf/enkf_fs.h>
 #include <ert/enkf/enkf_main.h>
@@ -44,7 +45,7 @@ static void enkf_tui_ranking_make_misfit_ensemble( void * arg) {
   
     
   misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
-  misfit_ensemble_update( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length );
+  misfit_ensemble_initialize( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length , false);
   {
     menu_item_type * obs_item                    = arg_pack_iget_ptr( arg_pack , 1 ); 
     menu_item_enable( obs_item );
@@ -86,7 +87,7 @@ static void enkf_tui_ranking_create_obs( void * arg ) {
     util_printf_prompt(store_prompt , prompt_len , '=' , "=> ");
     ranking_file = util_alloc_stdin_line();
 
-    const char * report_steps = NULL;
+    char * report_steps = NULL;
     sprintf(report_steps, "%d-%d", step1, step2);
     int_vector_type * steps_vector = string_util_alloc_value_list(report_steps);
         
