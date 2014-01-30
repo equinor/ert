@@ -62,15 +62,13 @@ void test_rank_realizations_on_observations_job(const char * config_file, const 
   ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
 
   stringlist_append_copy( args , "NameOfObsRanking1");
-  stringlist_append_copy( args , "/tmp/fileToSaveObservationRankingIn1.txt");
   stringlist_append_copy( args , "|");
   stringlist_append_copy( args , "WOPR:*");
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
 
   stringlist_clear(args);
   stringlist_append_copy( args , "NameOfObsRanking2");
-  stringlist_append_copy( args , "/tmp/fileToSaveObservationRankingIn2.txt");
-  stringlist_append_copy( args, "5");
+  stringlist_append_copy( args, "1-5");
   stringlist_append_copy( args, "55");
   stringlist_append_copy( args , "|");
   stringlist_append_copy( args , "WWCT:*");
@@ -79,7 +77,6 @@ void test_rank_realizations_on_observations_job(const char * config_file, const 
 
   stringlist_clear(args);
   stringlist_append_copy( args , "NameOfObsRanking3");
-  stringlist_append_copy( args , "/tmp/fileToSaveObservationRankingIn3.txt");
   stringlist_append_copy( args, "5");
   stringlist_append_copy( args, "55");
   stringlist_append_copy( args, "|");
@@ -87,19 +84,16 @@ void test_rank_realizations_on_observations_job(const char * config_file, const 
 
   stringlist_clear(args);
   stringlist_append_copy( args , "NameOfObsRanking4");
-  stringlist_append_copy( args , "/tmp/fileToSaveObservationRankingIn4.txt");
-  stringlist_append_copy( args, "5");
+  stringlist_append_copy( args, "1,3,5-10");
   stringlist_append_copy( args, "55");
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
 
   stringlist_clear(args);
   stringlist_append_copy( args , "NameOfObsRanking5");
-  stringlist_append_copy( args , "/tmp/fileToSaveObservationRankingIn5.txt");
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
 
   stringlist_clear(args);
   stringlist_append_copy( args , "NameOfObsRanking6");
-  stringlist_append_copy( args , "/tmp/fileToSaveObservationRankingIn6.txt");
   stringlist_append_copy( args, "|");
   stringlist_append_copy( args , "UnrecognizableObservation");
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
@@ -115,7 +109,6 @@ void test_rank_realizations_on_data_job(const char * config_file, const char * j
   ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
 
   stringlist_append_copy( args , "NameOfDataRanking");
-  stringlist_append_copy( args , "/tmp/fileToSaveDataRankingIn.txt");
   stringlist_append_copy( args , "PORO:1,2,3");
   stringlist_append_copy( args , "false");
   stringlist_append_copy( args , "0");
@@ -123,7 +116,6 @@ void test_rank_realizations_on_data_job(const char * config_file, const char * j
 
   stringlist_clear(args);
   stringlist_append_copy( args , "NameOfDataRanking2");
-  stringlist_append_copy( args , "/tmp/fileToSaveDataRankingIn2.txt");
   stringlist_append_copy( args , "PORO:1,2,3");
   stringlist_append_copy( args , "false");
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
@@ -131,6 +123,29 @@ void test_rank_realizations_on_data_job(const char * config_file, const char * j
   stringlist_free( args );
   ert_test_context_free( test_context );
 }
+
+  void test_export_ranking(const char * config_file, const char * job_file) {
+    ert_test_context_type * test_context = ert_test_context_alloc("ExportRankingJob" , config_file , NULL);
+    stringlist_type * args = stringlist_alloc_new();
+    ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
+
+    stringlist_append_copy( args , "NameOfDataRanking");
+    stringlist_append_copy( args , "/tmp/fileToSaveDataRankingIn.txt");
+    test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+
+    stringlist_clear(args);
+    stringlist_append_copy( args , "NameOfObsRanking1");
+    stringlist_append_copy( args , "/tmp/fileToSaveObservationRankingIn1.txt");
+    test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+
+    stringlist_clear(args);
+    stringlist_append_copy( args , "NameOfObsRanking6");
+    stringlist_append_copy( args , "/tmp/fileToSaveObservationRankingIn6.txt");
+    test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+
+    stringlist_free( args );
+    ert_test_context_free( test_context );
+  }
 
 int main(int argc , const char ** argv) {
   enkf_main_install_SIGNALS();
@@ -140,11 +155,13 @@ int main(int argc , const char ** argv) {
   const char * job_file_load_results        = argv[3];
   const char * job_file_observation_ranking = argv[4];
   const char * job_file_data_ranking        = argv[5];
+  const char * job_file_ranking_export      = argv[6];
 
   test_create_case_job(config_file, job_file_create_case);
   test_load_results_job(config_file, job_file_load_results);
   test_rank_realizations_on_observations_job(config_file, job_file_observation_ranking);
   test_rank_realizations_on_data_job(config_file, job_file_data_ranking);
+  test_export_ranking(config_file, job_file_ranking_export);
 
 
   exit(0);

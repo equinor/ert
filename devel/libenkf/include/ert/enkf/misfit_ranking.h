@@ -24,6 +24,7 @@
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/enkf_fs.h>
+#include <ert/util/int_vector.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,7 +37,7 @@ extern "C" {
   
   void                  misfit_ranking_fprintf( const misfit_ranking_type * misfit_ranking , const char * filename);
   void                  misfit_ranking_display( const misfit_ranking_type * misfit_ranking , FILE * stream);
-  misfit_ranking_type * misfit_ranking_alloc(const misfit_ensemble_type * ensemble , const stringlist_type * sort_keys , int step1 , int step2, const char * ranking_key);
+  misfit_ranking_type * misfit_ranking_alloc(const misfit_ensemble_type * ensemble , const stringlist_type * sort_keys , int_vector_type * steps, const char * ranking_key);
   void                  misfit_ranking_free( misfit_ranking_type * misfit_ranking );
   void                  misfit_ranking_free__( void * arg );
   const int           * misfit_ranking_get_permutation( const misfit_ranking_type * misfit_ranking );

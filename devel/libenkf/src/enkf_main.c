@@ -4073,11 +4073,9 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
 
 
 void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
-                                    const stringlist_type * obs_ranking_keys,
                                     const char * ranking_key,
-                                    const char * ranking_file,
-                                    int report_step1,
-                                    int report_step2) {
+                                    const stringlist_type * obs_ranking_keys,
+                                    const int_vector_type * steps) {
 
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const enkf_obs_type        * enkf_obs        = enkf_main_get_obs( enkf_main );
@@ -4090,18 +4088,16 @@ void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
 
   ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
 
-  ranking_table_add_misfit_ranking( ranking_table , misfit_ensemble , obs_ranking_keys , report_step1 , report_step2 , ranking_key );
+  ranking_table_add_misfit_ranking( ranking_table , misfit_ensemble , obs_ranking_keys , steps , ranking_key );
   ranking_table_display_ranking( ranking_table , ranking_key);
-  ranking_table_fwrite_ranking( ranking_table, ranking_key, ranking_file);
 }
 
 
 
 void enkf_main_rank_on_data(enkf_main_type * enkf_main,
+                            const char * ranking_key,
                             const char * data_key,
                             bool sort_increasing,
-                            const char * ranking_key,
-                            const char * ranking_file,
                             int step) {
 
   ranking_table_type * ranking_table     = enkf_main_get_ranking_table( enkf_main );
@@ -4114,11 +4110,15 @@ void enkf_main_rank_on_data(enkf_main_type * enkf_main,
   if (config_node) {
     ranking_table_add_data_ranking( ranking_table , sort_increasing , ranking_key , data_key , key_index , fs , config_node, step , state );
     ranking_table_display_ranking( ranking_table , ranking_key );
-    ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
   } else {
     fprintf(stderr,"** No data found for key %s\n", data_key);
   }
 }
 
+
+void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_key, const char * ranking_file) {
+  ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
+  ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
+}
 
 

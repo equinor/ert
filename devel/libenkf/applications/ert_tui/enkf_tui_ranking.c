@@ -85,13 +85,18 @@ static void enkf_tui_ranking_create_obs( void * arg ) {
     
     util_printf_prompt(store_prompt , prompt_len , '=' , "=> ");
     ranking_file = util_alloc_stdin_line();
+
+    const char * report_steps = NULL;
+    sprintf(report_steps, "%d-%d", step1, step2);
+    int_vector_type * steps_vector = string_util_alloc_value_list(report_steps);
         
     if (stringlist_get_size( ranking_keys ) > 0) {
-      ranking_table_add_misfit_ranking( ranking_table , misfit_ensemble , ranking_keys , step1 , step2 , ranking_key );
+      ranking_table_add_misfit_ranking( ranking_table , misfit_ensemble , ranking_keys , steps_vector, ranking_key );
       ranking_table_display_ranking( ranking_table , ranking_key);
     } else
       fprintf(stderr,"The input string : \"%s\" did not resolve to any valid observation keys \n", obs_keys_input);
     
+    int_vector_free(steps_vector);
     free( obs_keys_input );
     stringlist_free( ranking_keys );
     free( ranking_key );

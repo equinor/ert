@@ -316,64 +316,59 @@ void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * ar
 void * enkf_main_rank_on_observations_JOB(void * self, const stringlist_type * args) {
   enkf_main_type * enkf_main  = enkf_main_safe_cast( self );
   const char * ranking_name   = stringlist_iget(args, 0);
-  const char * ranking_file   =  stringlist_iget(args, 1);
 
   bool step_arguments = false;
-  int step1           = 0;
-  int step2           = enkf_main_get_history_length(enkf_main);
-
-  int pipe_index      = stringlist_find_first(args, "|");
-  int first_observation_index = 0;
-  int num_args        = stringlist_get_size(args);
-
-  if ((-1 == pipe_index) && (num_args > 2)) {
-    step_arguments = true;
-  } else if ((2 == pipe_index) &&  (num_args > pipe_index+1)) {
-    first_observation_index = pipe_index + 1;
-  } else if (4 == pipe_index) {
-      step_arguments = true;
-      if (num_args > pipe_index+1) {
-        first_observation_index = pipe_index + 1;
-      }
-  }
-
-
-  if (step_arguments) {
-    bool step1_valid = true;
-    bool step2_valid = true;
-    step1 = stringlist_iget_as_int(args, 2, &step1_valid);
-    step2 = stringlist_iget_as_int(args, 3, &step2_valid);
-
-    if (!step1_valid) {
-      fprintf(stderr,"** Third argument \"step1\" not recognized as integer value, job not started\n");
-      return NULL;
-    }
-
-    if (!step2_valid) {
-      fprintf(stderr,"** Fourth argument \"step2\" not recognized as integer value, job not started\n");
-      return NULL;
+  bool obs_arguments  = false;
+  int  delimiter      = 0;
+  {
+    delimiter = stringlist_find_first(args, "|");
+    if (delimiter > -1) {
+      step_arguments = (delimiter > 1) ? true : false;
+      obs_arguments  = (stringlist_get_size(args) > delimiter + 1) ? true : false;
+    } else if (stringlist_get_size(args) > 1) {
+        step_arguments = true;
+        delimiter     = stringlist_get_size(args);
     }
   }
 
-  char * obs_key_char = NULL;
-  if (first_observation_index > 0)
-    obs_key_char = stringlist_alloc_joined_substring( args , first_observation_index , stringlist_get_size(args) , " ");
+  int_vector_type * steps_vector = NULL;
+  {
+    char * report_steps = NULL;
 
-  enkf_obs_type * enkf_obs = enkf_main_get_obs(enkf_main);
-  stringlist_type * obs_ranking_keys = enkf_obs_alloc_matching_keylist( enkf_obs , obs_key_char );
+    if (step_arguments)
+      report_steps = stringlist_alloc_joined_substring(args, 1, delimiter, ",");
+    else
+      report_steps = util_alloc_sprintf("0-%d", enkf_main_get_history_length(enkf_main));
 
-  if ((first_observation_index > 0) && (stringlist_get_size(obs_ranking_keys) == 0)) {
-    fprintf(stderr,"The input string : \"%s\" did not resolve to any valid observation keys. Job not started\n", obs_key_char);
-    return NULL;
+    steps_vector = string_util_alloc_value_list(report_steps);
+
+    free(report_steps);
   }
 
-  enkf_main_rank_on_observations(enkf_main, obs_ranking_keys, ranking_name, ranking_file, step1, step2);
+
+  stringlist_type * obs_ranking_keys = NULL;
+  {
+    char * obs_key_char = NULL;
+    if (obs_arguments)
+      obs_key_char = stringlist_alloc_joined_substring( args , delimiter+1 , stringlist_get_size(args) , " ");
+
+    enkf_obs_type * enkf_obs = enkf_main_get_obs(enkf_main);
+    obs_ranking_keys = enkf_obs_alloc_matching_keylist( enkf_obs , obs_key_char );
+
+    if ((obs_arguments) && (stringlist_get_size(obs_ranking_keys) == 0)) {
+      fprintf(stderr,"The input string : \"%s\" did not resolve to any valid observation keys. Job not started\n", obs_key_char);
+      return NULL;
+    }
+
+    if (obs_arguments)
+      free(obs_key_char);
+  }
+
+
+  enkf_main_rank_on_observations(enkf_main, ranking_name, obs_ranking_keys, steps_vector);
 
   stringlist_free(obs_ranking_keys);
-
-  if (first_observation_index > 0)
-    free(obs_key_char);
-
+  int_vector_free(steps_vector);
   return NULL;
 }
 
@@ -383,19 +378,18 @@ void * enkf_main_rank_on_observations_JOB(void * self, const stringlist_type * a
 void * enkf_main_rank_on_data_JOB(void * self, const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
   const char * ranking_name  = stringlist_iget(args, 0);
-  const char * ranking_file  = stringlist_iget(args, 1);
-  const char * data_key      = stringlist_iget(args, 2);
+  const char * data_key      = stringlist_iget(args, 1);
   bool valid = true;
-  bool sort_increasing       = stringlist_iget_as_bool(args, 3, &valid);
+  bool sort_increasing       = stringlist_iget_as_bool(args, 2, &valid);
 
   if (!valid) {
-    fprintf(stderr,"** Fourth argument \"sort increasing\" not recognized as bool value, job not started\n");
+    fprintf(stderr,"** Third argument \"sort increasing\" not recognized as bool value, job not started\n");
     return NULL;
   }
 
-  int report_step = (stringlist_get_size(args) > 4) ? stringlist_iget_as_int(args, 4, &valid) : enkf_main_get_history_length(enkf_main) ;
+  int report_step = (stringlist_get_size(args) > 3) ? stringlist_iget_as_int(args, 3, &valid) : enkf_main_get_history_length(enkf_main) ;
   if (!valid) {
-    fprintf(stderr,"** Fifth argument \"step\" not recognized as integer value, job not started\n");
+    fprintf(stderr,"** Fourth argument \"step\" not recognized as integer value, job not started\n");
     return NULL;
   }
 
@@ -404,8 +398,17 @@ void * enkf_main_rank_on_data_JOB(void * self, const stringlist_type * args) {
     return NULL;
   }
 
-  enkf_main_rank_on_data(enkf_main, data_key, sort_increasing, ranking_name, ranking_file, report_step);
+  enkf_main_rank_on_data(enkf_main, ranking_name, data_key, sort_increasing, report_step);
   return NULL;
 }
 
+
+void * enkf_main_export_ranking_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  const char * ranking_name  = stringlist_iget(args, 0);
+  const char * ranking_file  = stringlist_iget(args, 1);
+
+  enkf_main_export_ranking(enkf_main, ranking_name, ranking_file);
+  return NULL;
+}
 

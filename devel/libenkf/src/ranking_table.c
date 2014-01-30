@@ -76,8 +76,8 @@ void ranking_table_add_data_ranking( ranking_table_type * ranking_table , bool s
 
 
 
-void ranking_table_add_misfit_ranking( ranking_table_type * ranking_table , const misfit_ensemble_type * misfit_ensemble , const stringlist_type * obs_keys , int step1 , int step2 , const char * ranking_key) {
-  misfit_ranking_type * ranking = misfit_ranking_alloc( misfit_ensemble , obs_keys , step1 , step2 , ranking_key );
+void ranking_table_add_misfit_ranking( ranking_table_type * ranking_table , const misfit_ensemble_type * misfit_ensemble , const stringlist_type * obs_keys , int_vector_type * steps , const char * ranking_key) {
+  misfit_ranking_type * ranking = misfit_ranking_alloc( misfit_ensemble , obs_keys , steps , ranking_key );
   hash_insert_hash_owned_ref( ranking_table->ranking_table , ranking_key , ranking , misfit_ranking_free__ );
 }
 
