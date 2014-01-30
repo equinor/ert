@@ -154,10 +154,6 @@ void test_rank_realizations_on_data_job(const char * config_file, const char * j
 
     enkf_main_type * enkf_main = ert_test_context_get_main(test_context);
     enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
-    const enkf_obs_type        * enkf_obs        = enkf_main_get_obs( enkf_main );
-    const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-    const int history_length                     = enkf_main_get_history_length( enkf_main );
-    const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
 
     misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
     test_assert_false(misfit_ensemble_initialized(misfit_ensemble));
