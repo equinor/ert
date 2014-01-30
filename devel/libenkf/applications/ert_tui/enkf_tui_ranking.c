@@ -87,8 +87,7 @@ static void enkf_tui_ranking_create_obs( void * arg ) {
     util_printf_prompt(store_prompt , prompt_len , '=' , "=> ");
     ranking_file = util_alloc_stdin_line();
 
-    char * report_steps = NULL;
-    sprintf(report_steps, "%d-%d", step1, step2);
+    char * report_steps = util_alloc_sprintf("%d-%d", step1, step2);
     int_vector_type * steps_vector = string_util_alloc_value_list(report_steps);
         
     if (stringlist_get_size( ranking_keys ) > 0) {
@@ -97,6 +96,7 @@ static void enkf_tui_ranking_create_obs( void * arg ) {
     } else
       fprintf(stderr,"The input string : \"%s\" did not resolve to any valid observation keys \n", obs_keys_input);
     
+    free(report_steps);
     int_vector_free(steps_vector);
     free( obs_keys_input );
     stringlist_free( ranking_keys );
