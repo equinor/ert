@@ -174,7 +174,7 @@ static misfit_ranking_type * misfit_ranking_alloc_empty( int ens_size ) {
    Step and step2 are inclusive. The time direction is flattened.
 */
 
-misfit_ranking_type *  misfit_ranking_alloc(const misfit_ensemble_type * misfit_ensemble , const stringlist_type * sort_keys , int_vector_type * steps, const char * ranking_key) {
+misfit_ranking_type *  misfit_ranking_alloc(const misfit_ensemble_type * misfit_ensemble , const stringlist_type * sort_keys , const int_vector_type * steps, const char * ranking_key) {
   const int ens_size = misfit_ensemble_get_ens_size( misfit_ensemble );
   int iens;
   misfit_ranking_type * ranking = misfit_ranking_alloc_empty(ens_size);

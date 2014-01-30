@@ -51,7 +51,7 @@ extern "C" {
   void                 ranking_table_add_misfit_ranking( ranking_table_type * ranking_table , 
                                                          const misfit_ensemble_type * misfit_ensemble , 
                                                          const stringlist_type * obs_keys , 
-                                                         int_vector_type * steps,
+                                                         const int_vector_type * steps,
                                                          const char * ranking_key);
 
 
