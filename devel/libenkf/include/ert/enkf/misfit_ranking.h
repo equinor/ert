@@ -20,11 +20,12 @@
 #define __MISFIT_RANKING_H__
 
 #include <ert/util/type_macros.h>
+#include <ert/util/int_vector.h>
 
 #include <ert/enkf/enkf_obs.h>
 #include <ert/enkf/ensemble_config.h>
 #include <ert/enkf/enkf_fs.h>
-#include <ert/util/int_vector.h>
+
 
 #ifdef __cplusplus
 extern "C" {
