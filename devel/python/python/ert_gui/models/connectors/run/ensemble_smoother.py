@@ -23,7 +23,7 @@ class EnsembleSmoother(BaseRunModel):
 
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
 
-        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL)
+        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_CONDITIONAL , 0)
 
         if not success:
             raise ErtRunError("Simulation failed!")
@@ -44,7 +44,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhase(1, "Running simulations...", indeterminate=False)
 
         self.ert().getEnkfFsManager().switchFileSystem(target_fs)
-        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_NONE)
+        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, EnkfInitModeEnum.INIT_NONE, 1)
 
         if not success:
             raise ErtRunError("Simulation failed!")

@@ -129,10 +129,10 @@
         }
     }
 
-    function setValueScales(min, max) {
+    function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max) {
         for(var i = 0; i < histograms.length; i++) {
             var histogram = histograms[i];
-            histogram.setValueScales(min, max);
+            histogram.setValueScales(value_min, value_max);
             histogram();
         }
 
@@ -142,6 +142,10 @@
         stored_report_step_time = report_step_time;
         updatePlot();
 
+    }
+
+    function supportsPlotProperties(time, value, depth){
+        return time && value && !depth
     }
 
 </script>

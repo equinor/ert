@@ -23,7 +23,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase + 1, phase_count), indeterminate=False)
 
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
-        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode)
+        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode , phase)
 
         if not success:
             raise ErtRunError("Simulation failed!")

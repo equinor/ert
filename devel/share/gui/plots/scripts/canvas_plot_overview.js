@@ -15,21 +15,26 @@
 // for more details.
 
 
-function OverviewPlot(element) {
-    this.plot = new BasePlot(element);
+function OverviewPlot(element, x_dimension, y_dimension) {
+    this.plot = new BasePlot(element, x_dimension, y_dimension);
+
+    this.horizontal_draw_direction = true;
 
     var self = this;
 
-    var renderEnsemble = function(context, data) {
-        if(data.hasEnsembleData()) {
+    var renderEnsemble = function (context, data) {
+        if (data.hasEnsembleData()) {
             var case_list = data.caseList();
 
-            for(var i = 0; i < case_list.length; i++) {
+            for (var i = 0; i < case_list.length; i++) {
                 var style = STYLES[("ensemble_" + (i + 1))];
                 var case_name = case_list[i];
                 var ensemble_data = data.ensembleData(case_name);
 
-                var x_values = ensemble_data.xValues();
+                var values = ensemble_data.xValues();
+                if (!self.horizontal_draw_direction) {
+                    values = ensemble_data.yValues();
+                }
 
                 var y_min_values = ensemble_data.yMinValues();
                 var y_max_values = ensemble_data.yMaxValues();
@@ -38,19 +43,23 @@ function OverviewPlot(element) {
                 var y_area_values = [];
 
 
-                for (var j = 0; j < x_values.length; j++) {
-                    x_area_values.push(x_values[j]);
+                for (var j = 0; j < values.length; j++) {
+                    x_area_values.push(values[j]);
                     y_area_values.push(y_min_values[j]);
                 }
 
-                for (var k = x_values.length - 1; k >= 0; k--) {
-                    x_area_values.push(x_values[k]);
+                for (var k = values.length - 1; k >= 0; k--) {
+                    x_area_values.push(values[k]);
                     y_area_values.push(y_max_values[k]);
                 }
 
 
                 self.plot.area_renderer.style(style);
-                self.plot.area_renderer(context, x_area_values, y_area_values);
+                if (self.horizontal_draw_direction) {
+                    self.plot.area_renderer(context, x_area_values, y_area_values);
+                } else {
+                    self.plot.area_renderer(context, y_area_values, x_area_values);
+                }
 
                 self.plot.addLegend(style, case_name, CanvasPlotLegend.filledCircle);
             }
@@ -62,23 +71,32 @@ function OverviewPlot(element) {
     this.plot.setRenderCallback(renderEnsemble);
 }
 
-OverviewPlot.prototype.resize = function(width, height) {
+OverviewPlot.prototype.resize = function (width, height) {
     this.plot.resize(width, height);
 };
 
-OverviewPlot.prototype.setValueScales = function(min, max) {
-    this.plot.setValueScales(min, max);
+OverviewPlot.prototype.setScales = function (x_min, x_max, y_min, y_max) {
+    this.plot.setScales(x_min, x_max, y_min, y_max);
 };
 
-OverviewPlot.prototype.setYDomain = function(min_y, max_y) {
+OverviewPlot.prototype.setYDomain = function (min_y, max_y) {
     this.plot.setYDomain(min_y, max_y);
 };
 
-OverviewPlot.prototype.setXDomain = function(min_x, max_x) {
+OverviewPlot.prototype.setXDomain = function (min_x, max_x) {
     this.plot.setXDomain(min_x, max_x);
 };
 
-OverviewPlot.prototype.setData = function(data) {
+OverviewPlot.prototype.setData = function (data) {
     this.plot.setData(data);
+};
+
+
+OverviewPlot.prototype.setVerticalErrorBar = function (vertical) {
+    this.plot.setVerticalErrorBar(vertical);
+};
+
+OverviewPlot.prototype.setHorizontalDrawDirection = function (horizontal) {
+    this.horizontal_draw_direction = horizontal;
 };
 

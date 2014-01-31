@@ -15,8 +15,11 @@
 // for more details.
 
 
-function Plot(element) {
-    this.plot = new BasePlot(element);
+function Plot(element, x_dimension, y_dimension) {
+    this.plot = new BasePlot(element, x_dimension, y_dimension);
+
+    this.horizontal_draw_direction = true;
+
 
     this.line_renderers = [];
     for (var index = 1; index <= 5; index++) {
@@ -29,10 +32,10 @@ function Plot(element) {
 
     var self = this;
 
-    var progressivePreRenderer = function(context, data) {
+    var progressivePreRenderer = function (context, data) {
         var case_list = data.caseList();
 
-        for(var case_index = 0; case_index < case_list.length; case_index++) {
+        for (var case_index = 0; case_index < case_list.length; case_index++) {
             var style = STYLES["ensemble_" + (case_index + 1)];
             var case_name = case_list[case_index];
 
@@ -42,14 +45,16 @@ function Plot(element) {
         self.progressiveRenderer(context, data, self, 0, 0);
     };
 
-    var renderEnsembleProgressively = function(context, data) {
-        if(data.hasEnsembleData()) {
-            self.tracker.start(function() { progressivePreRenderer(context, data); });
+    var renderEnsembleProgressively = function (context, data) {
+        if (data.hasEnsembleData()) {
+            self.tracker.start(function () {
+                progressivePreRenderer(context, data);
+            });
         }
     };
 
-    this.progressiveRenderer = function(context, data, self, case_index, realization) {
-        if(self.tracker.shouldStop()) {
+    this.progressiveRenderer = function (context, data, self, case_index, realization) {
+        if (self.tracker.shouldStop()) {
             self.tracker.stoppedRendering();
             return;
         }
@@ -60,25 +65,35 @@ function Plot(element) {
 
         var ensemble_data = data.ensembleData(case_name);
         var x_values = ensemble_data.xValues();
-        var y_values_list = ensemble_data.yValues();
+        var y_values = ensemble_data.yValues();
+
+        var realization_count = y_values.length;
+        if (!self.horizontal_draw_direction) {
+            realization_count = x_values.length;
+        }
 
         self.tracker.loopStart();
-        for (var i = realization; i < y_values_list.length; i++) {
-            line_renderer(context, x_values, y_values_list[i]);
+        for (var i = realization; i < realization_count; i++) {
+            if (self.horizontal_draw_direction) {
+                line_renderer(context, x_values, y_values[i]);
+            } else {
+                line_renderer(context, x_values[i], y_values);
+            }
+
             realization++;
 
-            if(self.tracker.shouldLoopStop()) {
+            if (self.tracker.shouldLoopStop()) {
                 break;
             }
         }
 
-        if(realization == y_values_list.length) {
+        if (realization == realization_count) {
             case_index++;
             realization = 0;
         }
 
         if (case_index < case_list.length) {
-            window.setTimeout(function() {
+            window.setTimeout(function () {
                 self.progressiveRenderer(context, data, self, case_index, realization);
             }, 15);
         } else {
@@ -111,22 +126,30 @@ function Plot(element) {
     this.plot.setRenderCallback(renderEnsembleProgressively);
 }
 
-Plot.prototype.resize = function(width, height) {
+Plot.prototype.resize = function (width, height) {
     this.plot.resize(width, height);
 };
 
-Plot.prototype.setValueScales = function(min, max) {
-    this.plot.setValueScales(min, max);
+Plot.prototype.setScales = function (x_min, x_max, y_min, y_max) {
+    this.plot.setScales(x_min, x_max, y_min, y_max);
 };
 
-Plot.prototype.setYDomain = function(min_y, max_y) {
+Plot.prototype.setYDomain = function (min_y, max_y) {
     this.plot.setYDomain(min_y, max_y);
 };
 
-Plot.prototype.setXDomain = function(min_x, max_x) {
+Plot.prototype.setXDomain = function (min_x, max_x) {
     this.plot.setXDomain(min_x, max_x);
 };
 
-Plot.prototype.setData = function(data) {
+Plot.prototype.setData = function (data) {
     this.plot.setData(data);
+};
+
+Plot.prototype.setVerticalErrorBar = function (vertical) {
+    this.plot.setVerticalErrorBar(vertical);
+};
+
+Plot.prototype.setHorizontalDrawDirection = function (horizontal) {
+    this.horizontal_draw_direction = horizontal;
 };
