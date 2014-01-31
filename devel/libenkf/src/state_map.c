@@ -196,7 +196,8 @@ void state_map_fwrite( state_map_type * map , const char * filename) {
 
 
 
-void state_map_fread( state_map_type * map , const char * filename) {
+bool state_map_fread( state_map_type * map , const char * filename) {
+  bool file_exists = false;
   pthread_rwlock_wrlock( &map->rw_lock );
   {
     if (util_file_exists( filename )) {
@@ -206,10 +207,12 @@ void state_map_fread( state_map_type * map , const char * filename) {
         fclose( stream );
       } else
         util_abort("%s: failed to open:%s for reading \n",__func__ , filename );
+      file_exists = true;
     } else
       int_vector_reset( map->state );
   }
   pthread_rwlock_unlock( &map->rw_lock );
+  return file_exists;
 }
 
 
