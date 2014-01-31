@@ -80,6 +80,12 @@ class StateMap(BaseCClass):
     def free(self):
         StateMap.cNamespace().free(self)
 
+    
+    def load(self,filename):
+        if not self.cNamespace().fread( self , filename):
+            raise IOError("Failed to load state map from:%s" % filename)
+
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("state_map", StateMap)
@@ -87,9 +93,11 @@ cwrapper.registerType("state_map_obj", StateMap.createPythonObject)
 cwrapper.registerType("state_map_ref", StateMap.createCReference)
 
 StateMap.cNamespace().alloc = cwrapper.prototype("c_void_p state_map_alloc()")
+StateMap.cNamespace().fread = cwrapper.prototype("c_void_p state_map_fread(state_map , char*)")
 StateMap.cNamespace().free = cwrapper.prototype("void state_map_free(state_map)")
 StateMap.cNamespace().size = cwrapper.prototype("int state_map_get_size(state_map)")
 StateMap.cNamespace().iget = cwrapper.prototype("realisation_state_enum state_map_iget(state_map, int)")
 StateMap.cNamespace().iset = cwrapper.prototype("void state_map_iset(state_map, int, realisation_state_enum)")
 StateMap.cNamespace().is_read_only = cwrapper.prototype("bool state_map_is_readonly(state_map)")
 StateMap.cNamespace().is_legal_transition = cwrapper.prototype("bool state_map_legal_transition(realisation_state_enum, realisation_state_enum)")
+
