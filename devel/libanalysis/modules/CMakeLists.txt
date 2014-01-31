@@ -8,8 +8,8 @@ set( RMLI_SOURCE_FILES
      rml_enkf_common.c )
 
 set( header_files analysis_module.h enkf_linalg.h analysis_table.h std_enkf.h rml_enkf_common.h)
-add_library( rml_enkf   MODULE ${RML_SOURCE_FILES} )
-add_library( rmli_enkf  MODULE ${RMLI_SOURCE_FILES} )
+add_library( rml_enkf   SHARED ${RML_SOURCE_FILES} )
+add_library( rmli_enkf  SHARED ${RMLI_SOURCE_FILES} )
 
 set_target_properties( rml_enkf  PROPERTIES VERSION 1.0 SOVERSION 1.0 PREFIX "")
 set_target_properties( rmli_enkf PROPERTIES VERSION 1.0 SOVERSION 1.0 PREFIX "")
