@@ -282,7 +282,7 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
           if (!bool_vector_iget( forward_model_active , data_index ))
             continue;  /* Forward model has deactivated this index - just continue. */
         }
-        meas_block_iset( meas_block , node_id.iens , iobs , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
+        meas_block_iset( meas_block , node_id.iens , index , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
       }
     }
   }

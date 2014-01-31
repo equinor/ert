@@ -29,7 +29,7 @@ class PlotMetricsWidget(QWidget):
         self.__time_index_map = {}
         for index in range(len(self.__time_map)):
             time = self.__time_map[index]
-            self.__time_index_map[time.value] = index
+            self.__time_index_map[time] = index
 
 
         self.addScaler(PlotMetricsWidget.VALUE_MIN, self.__createDoubleSpinner())
@@ -37,6 +37,9 @@ class PlotMetricsWidget(QWidget):
 
         self.addScaler(PlotMetricsWidget.TIME_MIN, self.__createTimeSpinner(True))
         self.addScaler(PlotMetricsWidget.TIME_MAX, self.__createTimeSpinner(False))
+
+        self.addScaler(PlotMetricsWidget.DEPTH_MIN, self.__createDoubleSpinner())
+        self.addScaler(PlotMetricsWidget.DEPTH_MAX, self.__createDoubleSpinner())
 
         self.__layout.addSpacing(10)
 
@@ -139,9 +142,27 @@ class PlotMetricsWidget(QWidget):
         else:
             return None
 
-    def updateScales(self,time_min, time_max, value_min, value_max):
+    def getDepthMin(self):
+        scaler = self.__scalers[PlotMetricsWidget.DEPTH_MIN]
+
+        if scaler["checkbox"].isChecked():
+            return scaler["spinner"].value()
+        else:
+            return None
+
+    def getDepthMax(self):
+        scaler = self.__scalers[PlotMetricsWidget.DEPTH_MAX]
+
+        if scaler["checkbox"].isChecked():
+            return scaler["spinner"].value()
+        else:
+            return None
+
+
+    def updateScales(self,time_min, time_max, value_min, value_max, depth_min, depth_max):
         self.setTimeScales(time_min, time_max)
         self.setValueScales(value_min, value_max)
+        self.setDepthScales(depth_min, depth_max)
         self.plotScalesChanged.emit()
 
     def setTimeScales(self, time_min, time_max):
@@ -155,7 +176,9 @@ class PlotMetricsWidget(QWidget):
         self.__updateScale(PlotMetricsWidget.VALUE_MIN, value_min)
         self.__updateScale(PlotMetricsWidget.VALUE_MAX, value_max)
 
-
+    def setDepthScales(self, depth_min, depth_max):
+        self.__updateScale(PlotMetricsWidget.DEPTH_MIN, depth_min)
+        self.__updateScale(PlotMetricsWidget.DEPTH_MAX, depth_max)
 
     def __updateScale(self, name, value):
         scaler = self.__scalers[name]

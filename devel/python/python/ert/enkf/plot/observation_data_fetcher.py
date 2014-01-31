@@ -6,13 +6,11 @@ class ObservationDataFetcher(DataFetcher):
     def __init__(self, ert):
         super(ObservationDataFetcher, self).__init__(ert)
 
-
-    def getObservationKeys(self):
+    def fetchSupportedKeys(self):
         observations = self.ert().getObservations()
         keys = observations.getTypedKeylist(EnkfObservationImplementationType.SUMMARY_OBS)
         keys = sorted(keys)
         return keys
-
 
     def __getObservationData(self, key, data):
         observations = self.ert().getObservations()
@@ -85,3 +83,4 @@ class ObservationDataFetcher(DataFetcher):
             self.__getObservationData(obs_key, data)
 
         return data
+

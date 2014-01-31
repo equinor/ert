@@ -1268,7 +1268,7 @@ static void enkf_main_analysis_update( enkf_main_type * enkf_main ,
 **/
 
 
-static bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode) {
+bool enkf_main_UPDATE(enkf_main_type * enkf_main , const int_vector_type * step_list, enkf_fs_type * target_fs , int target_step , run_mode_type run_mode) {
   /*
      If merge_observations is true all observations in the time
      interval [step1+1,step2] will be used, otherwise only the last
@@ -1531,12 +1531,15 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
       
       /* Start the queue */
       if (run_mode != INIT_ONLY) {
-        arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
-        arg_pack_append_ptr(queue_args  , job_queue);
-        arg_pack_append_int(queue_args  , job_size);
-        arg_pack_append_bool(queue_args , verbose_queue);
-        job_queue_reset(job_queue);
-        pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+        if (site_config_has_job_script( enkf_main->site_config )) {
+          arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
+          arg_pack_append_ptr(queue_args  , job_queue);
+          arg_pack_append_int(queue_args  , job_size);
+          arg_pack_append_bool(queue_args , verbose_queue);
+          job_queue_reset(job_queue);
+          pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+        } else
+          util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
       }
 
       
@@ -3738,11 +3741,7 @@ void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * str
 
 
 void enkf_main_install_SIGNALS(void) {
-  signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
-  signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. 
-                                             Killing with SIGKILL (-9) will not give a backtrace.*/
-  signal(SIGABRT , util_abort_signal);    /* Signal abort. */ 
-  signal(SIGILL  , util_abort_signal);    /* Signal illegal instruction. */
+  util_install_signals();
 }
 
 
