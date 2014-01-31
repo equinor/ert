@@ -13,6 +13,9 @@ class StateMapTest(ExtendedTestCase):
         with self.assertRaises(TypeError):
             r = state_map["r"]
 
+        with self.assertRaises(IOError):
+            state_map.load("/file/does/not/exist")
+
         with self.assertRaises(IndexError):
             v = state_map[0]
 
