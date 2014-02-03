@@ -37,9 +37,13 @@ add_test( enkf_analysis  ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config)
 
 add_executable( enkf_analysis_config_ext_module enkf_analysis_config_ext_module.c )
 target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
+     unset(VAR_RML CACHE)
+     unset(VAR_RMLI CACHE)
+     find_library(VAR_RML NAMES rml_enkf.dylib rml_enkf.so PATHS ${LIBRARY_OUTPUT_PATH} )
+     find_library(VAR_RMLI NAMES rmli_enkf.so rmli_enkf.dylib PATHS ${LIBRARY_OUTPUT_PATH} )
 add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module 
-        rml_enkf ${LIBRARY_OUTPUT_PATH}/rml_enkf.so
-        rmli_enkf ${LIBRARY_OUTPUT_PATH}/rmli_enkf.so )
+        rml_enkf ${VAR_RML}
+        rmli_enkf ${VAR_RMLI} )
         
 
 add_executable( enkf_state_map enkf_state_map.c )

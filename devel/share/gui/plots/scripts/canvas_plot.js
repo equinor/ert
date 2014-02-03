@@ -28,6 +28,13 @@ function Plot(element, x_dimension, y_dimension) {
         this.line_renderers.push(renderer)
     }
 
+    this.circle_renderers = [];
+    for (var index = 1; index <= 5; index++) {
+        var renderer = this.plot.createCircleRenderer();
+        renderer.style(STYLES["ensemble_" + (index)]);
+        this.circle_renderers.push(renderer)
+    }
+
     this.tracker = new IncrementalRenderTracker();
 
     var self = this;
@@ -62,6 +69,7 @@ function Plot(element, x_dimension, y_dimension) {
         var case_list = data.caseList();
         var case_name = case_list[case_index];
         var line_renderer = self.line_renderers[case_index];
+        var circle_renderer = self.circle_renderers[case_index];
 
         var ensemble_data = data.ensembleData(case_name);
         var x_values = ensemble_data.xValues();
@@ -75,9 +83,18 @@ function Plot(element, x_dimension, y_dimension) {
         self.tracker.loopStart();
         for (var i = realization; i < realization_count; i++) {
             if (self.horizontal_draw_direction) {
-                line_renderer(context, x_values, y_values[i]);
+                if(x_values.length == 1) {
+                    circle_renderer(context, x_values[0], y_values[i][0])
+                } else {
+                    line_renderer(context, x_values, y_values[i]);
+                }
+
             } else {
-                line_renderer(context, x_values[i], y_values);
+                if(y_values.length == 1) {
+                    circle_renderer(context, x_values[i][0], y_values[0])
+                } else {
+                    line_renderer(context, x_values[i], y_values);
+                }
             }
 
             realization++;
