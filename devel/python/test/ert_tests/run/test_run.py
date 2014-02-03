@@ -30,7 +30,7 @@ class RunTest(ExtendedTestCase):
         self.assertEqual( "/tmp/test" , tr.ert_cmd )
 
 
-    def test_args(self):
+    def test_args2(self):
         tr = TestRun(self.testConfig , args = ["arg1","arg2","-v","latest"])
         self.assertEqual( tr.get_args() , ["arg1","arg2"])
         self.assertEqual(tr.ert_version , "latest")

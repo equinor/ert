@@ -62,7 +62,9 @@
     }
 
     function createPlot() {
-        plot = new OverviewPlot(d3.select("body"), BasePlotTimeDimension(), BasePlotValueDimension());
+        plot = new OverviewPlot(d3.select("body"), BasePlotValueDimension(), BasePlotValueDimension(true));
+        plot.setVerticalErrorBar(false);
+        plot.setHorizontalDrawDirection(false);
     }
 
     function updatePlot() {
@@ -75,7 +77,7 @@
     }
 
     function setScales(time_min, time_max, value_min, value_max, depth_min, depth_max) {
-        plot.setScales(time_min, time_max, value_min, value_max);
+        plot.setScales(value_min, value_max, depth_min, depth_max);
     }
 
     function setReportStepTime(report_step_time) {
@@ -83,7 +85,7 @@
     }
 
     function supportsPlotProperties(time, value, depth){
-        return time && value && !depth
+        return !time && value && depth
     }
 
 </script>

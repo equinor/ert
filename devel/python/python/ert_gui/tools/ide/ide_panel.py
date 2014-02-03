@@ -37,8 +37,8 @@ class IdePanel(QPlainTextEdit):
             configuration_line = user_data.configuration_line
 
             if configuration_line.keyword().hasKeywordDefinition():
-                HelpDock.getInstance().setHelpMessageLink("config/" + configuration_line.documentationLink())
-                # print(configuration_line.documentationLink())
+                HelpDock.setHelpMessageLink("config/" + configuration_line.documentationLink())
+
 
     def getText(self):
         return str(self.document().toPlainText())

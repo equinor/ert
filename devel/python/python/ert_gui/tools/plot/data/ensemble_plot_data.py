@@ -26,7 +26,7 @@ class EnsemblePlotData(QObject):
 
 
 
-    def setEnsembleData(self, x_values, y_values, y_min_values, y_max_values):
+    def setEnsembleData(self, x_values, y_values, y_min_values, y_max_values, histogram_support=True):
         if x_values is not None and y_values is not None and y_min_values is not None and y_max_values is not None:
             self.__x_values = x_values
             self.__y_values = y_values
@@ -36,11 +36,12 @@ class EnsemblePlotData(QObject):
 
             self.__has_data = True
 
-            for index in range(len(x_values)):
-                self.__report_step_time_indexes[x_values[index]] = index
+            if histogram_support:
+                for index in range(len(x_values)):
+                    self.__report_step_time_indexes[x_values[index]] = index
 
-            self.__first_report_step_time = min(x_values)
-            self.__last_report_step_time = max(x_values)
+                self.__first_report_step_time = min(x_values)
+                self.__last_report_step_time = max(x_values)
 
 
     def updateBoundaries(self, min_x, max_x, min_y, max_y):
