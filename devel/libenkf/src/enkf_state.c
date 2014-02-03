@@ -1137,8 +1137,17 @@ void enkf_state_forward_init(enkf_state_type * enkf_state ,
         if (!enkf_node_has_data( node , fs , node_id)) {   
           if (enkf_node_forward_init(node , run_info->run_path , iens ))
             enkf_node_store( node , fs, false , node_id );
-          else
+          else {
+            char * init_file = enkf_config_node_alloc_initfile( enkf_node_get_config( node ) , run_info->run_path , iens );
+
+            if (init_file && !util_file_exists( init_file )) 
+              fprintf(stderr,"File not found: %s - failed to initialize node: %s\n", init_file , enkf_node_get_key( node ));
+            else
+              fprintf(stderr,"Failed to initialize node: %s\n", enkf_node_get_key( node ));
+            
+            util_safe_free( init_file );
             *result |= LOAD_FAILURE;
+          }
         }
 
       }

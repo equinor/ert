@@ -309,7 +309,7 @@ void test_transitions() {
   test_assert_false( state_map_legal_transition(STATE_LOAD_FAILURE , STATE_UNDEFINED ));
   test_assert_true( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_INITIALIZED ));
   test_assert_true( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_HAS_DATA ));
-  test_assert_false( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_LOAD_FAILURE ));
+  test_assert_true( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_LOAD_FAILURE ));   
   test_assert_false( state_map_legal_transition(STATE_LOAD_FAILURE  , STATE_PARENT_FAILURE ));   
 
   test_assert_false( state_map_legal_transition(STATE_PARENT_FAILURE , STATE_UNDEFINED ));
