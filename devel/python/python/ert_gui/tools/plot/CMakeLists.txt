@@ -1,6 +1,7 @@
 set(PYTHON_SOURCES
     __init__.py
     data_type_keys_list_model.py
+    data_type_proxy_model.py
     data_type_keys_widget.py
     plot_case_model.py
     plot_case_selection_widget.py

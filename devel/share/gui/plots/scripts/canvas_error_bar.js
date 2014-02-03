@@ -22,32 +22,49 @@ function CanvasErrorBar() {
     var style = STYLES["default"];
     var radius = 2.5;
 
-    function render(context, x, y, error) {
+    function render(context, x, y, error, vertical) {
         context.lineWidth = style["stroke_width"];
         context.strokeStyle = style["stroke"];
 
         x = X(x);
-        error = Y(y + error) - Y(y);
         y = Y(y);
 
         context.beginPath();
         context.arc(x, y, radius, 0, 2 * Math.PI);
         context.stroke();
 
+
         context.beginPath();
+        if(vertical){
+            error = Y(y + error) - Y(y);
 
-        context.moveTo(x, y - radius);
-        context.lineTo(x, y - radius + error);
+            context.moveTo(x, y - radius);
+            context.lineTo(x, y - radius + error);
 
-        context.moveTo(x - radius, y - radius + error);
-        context.lineTo(x + radius, y - radius + error);
+            context.moveTo(x - radius, y - radius + error);
+            context.lineTo(x + radius, y - radius + error);
 
-        context.moveTo(x, y + radius);
-        context.lineTo(x, y + radius - error);
+            context.moveTo(x, y + radius);
+            context.lineTo(x, y + radius - error);
 
-        context.moveTo(x - radius, y + radius - error);
-        context.lineTo(x + radius, y + radius - error);
+            context.moveTo(x - radius, y + radius - error);
+            context.lineTo(x + radius, y + radius - error);
 
+        } else {
+            error = X(x + error) - X(x);
+
+            context.moveTo(x - radius, y);
+            context.lineTo(x - radius + error, y);
+
+            context.moveTo(x - radius + error, y - radius);
+            context.lineTo(x - radius + error, y + radius);
+
+            context.moveTo(x + radius, y);
+            context.lineTo(x + radius - error, y);
+
+            context.moveTo(x + radius - error, y - radius);
+            context.lineTo(x + radius - error, y + radius);
+        }
 
         context.stroke();
 

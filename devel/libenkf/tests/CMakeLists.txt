@@ -12,6 +12,10 @@ add_executable( enkf_plot_data enkf_plot_data.c )
 target_link_libraries( enkf_plot_data enkf test_util )
 add_test( enkf_plot_data ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data)
 
+add_executable( enkf_block_obs enkf_block_obs.c )
+target_link_libraries( enkf_block_obs enkf test_util )
+add_test( enkf_block_obs ${EXECUTABLE_OUTPUT_PATH}/enkf_block_obs ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE.EGRID)
+
 add_executable( enkf_plot_data_fs enkf_plot_data_fs.c )
 target_link_libraries( enkf_plot_data_fs enkf test_util )
 add_test( enkf_plot_data_fs ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_data_fs ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/plotData/config )
@@ -33,9 +37,13 @@ add_test( enkf_analysis  ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config)
 
 add_executable( enkf_analysis_config_ext_module enkf_analysis_config_ext_module.c )
 target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
+     unset(VAR_RML CACHE)
+     unset(VAR_RMLI CACHE)
+     find_library(VAR_RML NAMES rml_enkf.dylib rml_enkf.so PATHS ${LIBRARY_OUTPUT_PATH} )
+     find_library(VAR_RMLI NAMES rmli_enkf.so rmli_enkf.dylib PATHS ${LIBRARY_OUTPUT_PATH} )
 add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module 
-        rml_enkf ${LIBRARY_OUTPUT_PATH}/rml_enkf.so
-        rmli_enkf ${LIBRARY_OUTPUT_PATH}/rmli_enkf.so )
+        rml_enkf ${VAR_RML}
+        rmli_enkf ${VAR_RMLI} )
         
 
 add_executable( enkf_state_map enkf_state_map.c )
@@ -101,6 +109,23 @@ target_link_libraries( enkf_analysis_enkf_update_job ert-test test_util )
 add_test( enkf_analysis_enkf_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_enkf_update_job 
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config 
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/ANALYSIS_ENKF_UPDATE )
+
+add_executable( enkf_plot_blockdata enkf_plot_blockdata.c )
+target_link_libraries( enkf_plot_blockdata enkf test_util )
+add_test( enkf_plot_blockdata  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata )
+
+add_executable( enkf_plot_blockdata_fs enkf_plot_blockdata_fs.c )
+target_link_libraries( enkf_plot_blockdata_fs ert-test enkf test_util )
+add_test( enkf_plot_blockdata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata_fs 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_RFT/config )
+
+add_executable( enkf_plot_blockvector enkf_plot_blockvector.c )
+target_link_libraries( enkf_plot_blockvector enkf test_util )
+add_test( enkf_plot_blockvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockvector )
+
+add_executable( enkf_config_node enkf_config_node.c )
+target_link_libraries( enkf_config_node enkf test_util )
+add_test( enkf_config_node  ${EXECUTABLE_OUTPUT_PATH}/enkf_config_node )
 
 
 #-----------------------------------------------------------------
@@ -330,3 +355,5 @@ set_property( TEST enkf_state_runpath_test  PROPERTY LABELS StatoilData )
 set_property( TEST enkf_state_manual_load_test PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_update_job PROPERTY LABELS StatoilData )
 set_property( TEST enkf_analysis_enkf_update_job PROPERTY LABELS StatoilData )
+set_property( TEST enkf_plot_blockdata_fs PROPERTY LABELS StatoilData )
+set_property( TEST enkf_block_obs PROPERTY LABELS StatoilData )

@@ -16,7 +16,9 @@
 from ert.cwrap import BaseCClass, CWrapper
 from ert.enkf import ENKF_LIB
 from ert.enkf.data import FieldConfig, GenDataConfig, GenKwConfig, EnkfNode, SummaryConfig
+from ert.enkf.enums.enkf_truncation_type import EnkfTruncationType
 from ert.enkf.enums.load_fail_type_enum import LoadFailTypeEnum
+from ert.ecl.ecl import EclGrid
 
 
 class EnkfConfigNode(BaseCClass):
@@ -65,6 +67,10 @@ class EnkfConfigNode(BaseCClass):
         """ @rtype:  StringList """
         return EnkfConfigNode.cNamespace().get_obs_keys(self).setParent(self)
 
+    def updateStateField(self, truncation, value_min, value_max):
+        assert isinstance(truncation, EnkfTruncationType)
+        EnkfConfigNode.cNamespace().update_state_field(self, truncation, value_min, value_max)
+
     @classmethod
     def createSummaryConfigNode(cls, key, load_fail_type):
         """
@@ -75,6 +81,13 @@ class EnkfConfigNode(BaseCClass):
 
         assert isinstance(load_fail_type, LoadFailTypeEnum)
         return EnkfConfigNode.cNamespace().alloc_summary_node(key, load_fail_type)
+
+    @classmethod
+    def createFieldConfigNode(cls, key, grid, trans_table = None, forward_init = False):
+        """
+        @rtype: EnkfConfigNode
+        """
+        return EnkfConfigNode.cNamespace().alloc_field_node(key, grid, trans_table, forward_init)
 
     def free(self):
         EnkfConfigNode.cNamespace().free(self)
@@ -111,3 +124,5 @@ EnkfConfigNode.cNamespace().get_init_file_fmt = cwrapper.prototype("char* enkf_c
 EnkfConfigNode.cNamespace().get_var_type = cwrapper.prototype("c_void_p enkf_config_node_get_var_type(enkf_config_node)") #todo: fix return type as enum
 EnkfConfigNode.cNamespace().get_obs_keys = cwrapper.prototype("stringlist_ref enkf_config_node_get_obs_keys(enkf_config_node)")
 EnkfConfigNode.cNamespace().alloc_summary_node = cwrapper.prototype("enkf_config_node_obj enkf_config_node_alloc_summary(char*, load_fail_type)")
+EnkfConfigNode.cNamespace().alloc_field_node = cwrapper.prototype("enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, c_void_p, bool)")
+EnkfConfigNode.cNamespace().update_state_field = cwrapper.prototype("void enkf_config_node_update_state_field(enkf_config_node, enkf_truncation_type_enum, double, double)")

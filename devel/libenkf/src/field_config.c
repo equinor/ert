@@ -156,6 +156,7 @@ struct field_config_struct {
 };
 
 
+UTIL_IS_INSTANCE_FUNCTION(field_config , FIELD_CONFIG_ID)
 
 /*****************************************************************/
 

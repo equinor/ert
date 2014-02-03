@@ -1512,12 +1512,15 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
       
       /* Start the queue */
       if (run_mode != INIT_ONLY) {
-        arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
-        arg_pack_append_ptr(queue_args  , job_queue);
-        arg_pack_append_int(queue_args  , job_size);
-        arg_pack_append_bool(queue_args , verbose_queue);
-        job_queue_reset(job_queue);
-        pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+        if (site_config_has_job_script( enkf_main->site_config )) {
+          arg_pack_type  * queue_args = arg_pack_alloc();    /* This arg_pack will be freed() in the job_que_run_jobs__() */
+          arg_pack_append_ptr(queue_args  , job_queue);
+          arg_pack_append_int(queue_args  , job_size);
+          arg_pack_append_bool(queue_args , verbose_queue);
+          job_queue_reset(job_queue);
+          pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+        } else
+          util_exit("No job script specified, can not start any jobs. Use the key JOB_SCRIPT in the config file\n");
       }
 
       
@@ -3126,57 +3129,6 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
 
 
-/* Used by external application - this is a library ... */
-void  enkf_main_list_users(  set_type * users , const char * executable ) {
-  DIR * dir = opendir( DEFAULT_VAR_DIR );
-  if (dir != NULL) {
-    struct dirent * dp;
-    do {
-      dp = readdir(dir);
-      if (dp != NULL) {
-        int pid;
-        if (util_sscanf_int( dp->d_name , &pid )) {
-          char * full_path = util_alloc_filename( DEFAULT_VAR_DIR , dp->d_name , NULL );
-          bool add_user    = false;
-          int  uid;
-
-          {
-            FILE * stream    = util_fopen( full_path , "r");
-            char this_executable[512];
-
-            if (fscanf( stream , "%s %d" , this_executable , &uid) == 2) {
-              if (executable != NULL) {
-                if (util_string_equal( this_executable , executable ))
-                  add_user   = true;
-              } else
-                add_user = true;
-            }
-            fclose( stream );
-          }
-
-
-          /* Remove the pid files of dead processes. */
-          if (!util_proc_alive( pid )) {
-            unlink( full_path );
-            add_user = false;
-          }
-
-
-          if (add_user) {
-            struct passwd *pwd;
-            pwd = getpwuid( uid );
-            if (pwd != NULL)
-              set_add_key( users , pwd->pw_name );
-          }
-
-
-          free( full_path );
-        }
-      }
-    } while (dp != NULL );
-    closedir( dir );
-  }
-}
 
 
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main ) {
@@ -3216,11 +3168,7 @@ void enkf_main_log_fprintf_config( const enkf_main_type * enkf_main , FILE * str
 
 
 void enkf_main_install_SIGNALS(void) {
-  signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
-  signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. 
-                                             Killing with SIGKILL (-9) will not give a backtrace.*/
-  signal(SIGABRT , util_abort_signal);    /* Signal abort. */ 
-  signal(SIGILL  , util_abort_signal);    /* Signal illegal instruction. */
+  util_install_signals();
 }
 
 

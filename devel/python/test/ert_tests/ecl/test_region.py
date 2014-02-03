@@ -131,3 +131,10 @@ class RegionTest(ExtendedTestCase):
         self.assertTrue(2 * 3 * 6 == len(reg.global_list))
 
 
+
+    def test_index_list(self):
+        reg = EclRegion(self.grid, False)
+        reg.select_islice(0, 5)
+        active_list = reg.active_list
+        global_list = reg.global_list
+

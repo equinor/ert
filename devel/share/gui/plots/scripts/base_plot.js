@@ -14,7 +14,7 @@
 // See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 // for more details.
 
-function BasePlot(element) {
+function BasePlot(element, x_dimension, y_dimension) {
     this.stored_data = [];
     this.margin = {left: 90, right: 20, top: 20, bottom: 30};
     this.root_elemenet = element;
@@ -24,6 +24,10 @@ function BasePlot(element) {
     this.custom_x_min = null;
     this.custom_x_max = null;
 
+    this.dimension_y = y_dimension;
+    this.dimension_x = x_dimension;
+
+    this.vertical_error_bar = true;
 
     var group = this.root_elemenet.append("div")
         .attr("class", "plot");
@@ -62,33 +66,17 @@ function BasePlot(element) {
     this.legend_group = group.append("div")
         .attr("class", "plot-legend-group");
 
-    this.x_scale = d3.time.scale().range([0, this.width]);
-    this.x_time_scale = d3.time.scale().range([0, this.width]);
-    this.y_scale = d3.scale.linear().range([this.height, 0]).nice();
-
-
     this.y_axis = d3.svg.axis()
-        .scale(this.y_scale)
-        .ticks(10)
-        .tickPadding(10)
-        .orient("left")
-        .tickSize(-this.width, -this.width);
+        .scale(this.dimension_y.scale())
+        .orient("left");
 
-    var customTimeFormat = d3.time.format.multi([
-        [".%L", function(d) { return d.getMilliseconds(); }],
-        [":%S", function(d) { return d.getSeconds(); }],
-        ["%I:%M", function(d) { return d.getMinutes(); }],
-        ["%I %p", function(d) { return d.getHours(); }],
-        ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
-        ["%b %d", function(d) { return d.getDate() != 1; }],
-        ["%b", function(d) { return d.getMonth(); }],
-        ["%Y", function() { return true; }]
-    ]);
+    this.dimension_y.format(this.y_axis, this.width);
 
     this.x_axis = d3.svg.axis()
-        .scale(this.x_time_scale)
-        .orient("bottom")
-        .tickFormat(customTimeFormat);
+        .scale(this.dimension_x.scale())
+        .orient("bottom");
+
+    this.dimension_x.format(this.x_axis, this.height);
 
     this.plot_group.append("g")
         .attr("class", "y axis pale")
@@ -96,21 +84,14 @@ function BasePlot(element) {
         .call(this.y_axis);
 
     this.plot_group.append("g")
-        .attr("class", "x axis")
+        .attr("class", "x axis pale")
         .attr("transform", "translate(" + this.margin.left + ", " + (this.height + this.margin.top) + ")")
         .call(this.x_axis);
 
 
-    var self = this;
 
-
-    this.x = function (d) {
-        return self.x_scale(d);
-    };
-
-    this.y = function (d) {
-        return self.y_scale(d);
-    };
+    this.x = this.dimension_x;
+    this.y = this.dimension_y;
 
     this.legend = CanvasPlotLegend();
     this.legend_list = [];
@@ -133,11 +114,12 @@ BasePlot.prototype.resize = function(width, height) {
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;
 
-    this.x_scale.range([0, this.width]);
-    this.x_time_scale.range([0, this.width]);
-    this.y_scale.range([this.height, 0]).nice();
 
-    this.y_axis.tickSize(-this.width, -this.width);
+    this.dimension_x.setRange(0, this.width);
+    this.dimension_y.setRange(this.height, 0);
+
+    this.dimension_x.format(this.x_axis, this.height);
+    this.dimension_y.format(this.y_axis, this.width);
 
     this.plot_group.style("width", width + "px").style("height", height + "px");
 
@@ -149,14 +131,14 @@ BasePlot.prototype.resize = function(width, height) {
     this.setData(this.stored_data);
 };
 
-BasePlot.prototype.setScales = function(time_min, time_max, value_min, value_max) {
+BasePlot.prototype.setScales = function(x_min, x_max, y_min, y_max) {
 
-    if(this.custom_y_min != value_min || this.custom_y_max != value_max ||
-        this.custom_x_min != time_min || this.custom_x_max != time_max) {
-        this.custom_y_min = value_min;
-        this.custom_y_max = value_max;
-        this.custom_x_min = time_min;
-        this.custom_x_max = time_max;
+    if(this.custom_y_min != y_min || this.custom_y_max != y_max ||
+        this.custom_x_min != x_min || this.custom_x_max != x_max) {
+        this.custom_y_min = y_min;
+        this.custom_y_max = y_max;
+        this.custom_x_min = x_min;
+        this.custom_x_max = x_max;
 
         this.setData(this.stored_data);
     }
@@ -175,7 +157,7 @@ BasePlot.prototype.setYDomain = function(min_y, max_y) {
         max = this.custom_y_max;
     }
 
-    this.y_scale.domain([min, max]).nice();
+    this.dimension_y.setDomain(min, max);
 };
 
 BasePlot.prototype.setXDomain = function(min_x, max_x) {
@@ -189,10 +171,7 @@ BasePlot.prototype.setXDomain = function(min_x, max_x) {
         max = this.custom_x_max;
     }
 
-    this.x_time_scale.domain([new Date(min * 1000), new Date(max * 1000)]).nice();
-    var domain = this.x_time_scale.domain();
-    this.x_scale.domain([domain[0].getTime() / 1000, domain[1].getTime() / 1000]);
-
+    this.dimension_x.setDomain(min, max);
 };
 
 
@@ -305,7 +284,7 @@ BasePlot.prototype.renderObservations = function(context, data) {
                 var error = obs_std_samples[index];
 
                 this.error_bar_renderer.style(STYLES["observation_error_bar"]);
-                this.error_bar_renderer(context, x, y, error);
+                this.error_bar_renderer(context, x, y, error, this.vertical_error_bar);
             }
             this.addLegend(STYLES["observation_error_bar"], "Observation error bar", CanvasPlotLegend.errorBar);
         }
@@ -329,5 +308,13 @@ BasePlot.prototype.createLineRenderer = function() {
     return CanvasPlotLine().x(this.x).y(this.y);
 };
 
+BasePlot.prototype.createCircleRenderer = function() {
+    return CanvasCircle().x(this.x).y(this.y);
+};
 
+
+BasePlot.prototype.setVerticalErrorBar = function(vertical){
+    this.vertical_error_bar = vertical;
+
+};
 

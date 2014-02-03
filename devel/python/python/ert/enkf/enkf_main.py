@@ -27,6 +27,9 @@ class EnKFMain(BaseCClass):
         self.__simulation_runner = EnkfSimulationRunner(self)
         self.__fs_manager = EnkfFsManager(self)
 
+    @staticmethod
+    def createNewConfig(config_file, storage_path, case_name, dbase_type, num_realizations):
+        EnKFMain.cNamespace().create_new_config(config_file, storage_path, case_name, dbase_type, num_realizations)
 
     def set_eclbase(self, eclbase):
         EnKFMain.cNamespace().set_eclbase(self, eclbase)
@@ -72,9 +75,6 @@ class EnKFMain(BaseCClass):
     def plot_config(self):
         """ @rtype: PlotConfig """
         return EnKFMain.cNamespace().get_plot_config(self).setParent(self)
-
-    def set_eclbase(self, eclbase):
-        EnKFMain.cNamespace().set_eclbase(self, eclbase)
 
     def set_datafile(self, datafile):
         EnKFMain.cNamespace().set_datafile(self, datafile)
@@ -134,6 +134,11 @@ class EnKFMain(BaseCClass):
         site_conf_file = EnKFMain.cNamespace().get_site_config_file(self)
         return site_conf_file
 
+    def getUserConfigFile(self):
+        """ @rtype: str """
+        config_file = EnKFMain.cNamespace().get_user_config_file(self)
+        return config_file
+
 
     def getHistoryLength(self):
         return EnKFMain.cNamespace().get_history_length(self)
@@ -147,11 +152,6 @@ class EnKFMain(BaseCClass):
 
     def get_observation_count(self, user_key):
         return EnKFMain.cNamespace().get_observation_count(self, user_key)
-
-
-    def createNewConfig(self, storage_path, case_name, dbase_type, num_realizations):
-        EnKFMain.cNamespace().create_new_config(self, storage_path, case_name, dbase_type, num_realizations)
-
 
     def getEnkfSimulationRunner(self):
         """ @rtype: EnkfSimulationRunner """
@@ -216,6 +216,8 @@ EnKFMain.cNamespace().get_workflow_list = cwrapper.prototype("ert_workflow_list_
 
 EnKFMain.cNamespace().fprintf_config = cwrapper.prototype("void enkf_main_fprintf_config(enkf_main)")
 EnKFMain.cNamespace().create_new_config = cwrapper.prototype("void enkf_main_create_new_config(char* , char*, char* , char* , int)")
+
+EnKFMain.cNamespace().get_user_config_file = cwrapper.prototype("char* enkf_main_get_user_config_file(enkf_main)")
 
 
 
