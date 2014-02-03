@@ -123,6 +123,8 @@ add_subdirectory( libecl_well )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
+   include(cmake/ert_module_name.cmake)
+
    include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
    add_subdirectory( libconfig )
 
