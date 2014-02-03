@@ -1,5 +1,4 @@
 include(cmake/ert_module.cmake)
-include(cmake/ert_module_name.cmake)
 
 add_subdirectory( script )
 add_subdirectory( src )

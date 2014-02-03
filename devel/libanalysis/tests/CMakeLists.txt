@@ -1,5 +1,3 @@
-unset(VAR_RML CACHE)
-unset(VAR_RMLI CACHE)
 ert_module_name( VAR_RML  rml_enkf  ${LIBRARY_OUTPUT_PATH} )
 ert_module_name( VAR_RMLI rmli_enkf ${LIBRARY_OUTPUT_PATH} )
 
