@@ -119,7 +119,7 @@ add_executable( enkf_plot_blockvector enkf_plot_blockvector.c )
 target_link_libraries( enkf_plot_blockvector enkf test_util )
 add_test( enkf_plot_blockvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockvector )
 
-add_executable( enkf_plot_blockvector enkf_plot_genvector.c )
+add_executable( enkf_plot_genvector enkf_plot_genvector.c )
 target_link_libraries( enkf_plot_genvector enkf test_util )
 add_test( enkf_plot_genvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_genvector )
 

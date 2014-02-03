@@ -28,29 +28,23 @@ extern "C" {
 
 #include <ert/enkf/obs_vector.h>
 #include <ert/enkf/enkf_fs.h>
-#include <ert/enkf/enkf_node.h>
+#include <ert/enkf/enkf_config_node.h>
+#include <ert/enkf/enkf_plot_genvector.h>
 
 
 
 typedef struct enkf_plot_gendata_struct enkf_plot_gendata_type;
 
-enkf_plot_gendata_type * enkf_plot_gendata_alloc( const enkf_node_type * enkf_node );
-
-enkf_plot_gendata_type * enkf_plot_gendata_alloc( const enkf_node_type * enkf_node );
-
-void enkf_plot_gendata_free( enkf_plot_gendata_type * data );
-
-int  enkf_plot_gendata_get_size( const enkf_plot_gendata_type * data );
-
-enkf_plot_genvector_type * enkf_plot_gendata_iget( const enkf_plot_gendata_type * plot_data , int index);
-
-void enkf_plot_gendata_load( enkf_plot_gendata_type * plot_data ,
-                                 enkf_fs_type * fs ,
-                                 int report_step ,
-                                 state_enum state ,
-                                 const bool_vector_type * input_mask);
-
-const double_vector_type * enkf_plot_gendata_get_depth( const enkf_plot_gendata_type * plot_data);
+enkf_plot_gendata_type *    enkf_plot_gendata_alloc( const enkf_config_node_type * enkf_config_node);
+enkf_plot_gendata_type *    enkf_plot_gendata_alloc_from_obs_vector( const obs_vector_type * obs_vector );
+void                        enkf_plot_gendata_free( enkf_plot_gendata_type * data );
+int                         enkf_plot_gendata_get_size( const enkf_plot_gendata_type * data );
+enkf_plot_genvector_type *  enkf_plot_gendata_iget( const enkf_plot_gendata_type * plot_data , int index);
+void                        enkf_plot_gendata_load( enkf_plot_gendata_type * plot_data ,
+                                                    enkf_fs_type * fs ,
+                                                    int report_step ,
+                                                    state_enum state ,
+                                                    const bool_vector_type * input_mask);
 
 
 UTIL_IS_INSTANCE_HEADER( enkf_plot_gendata );
