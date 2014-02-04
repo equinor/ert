@@ -16,7 +16,6 @@
    for more details. 
 */
 
-#include <ert/enkf/enkf_main.h>
 
 static void enkf_main_copy_ensemble( const enkf_main_type * enkf_main,
                                      enkf_fs_type * source_case_fs,
