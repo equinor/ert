@@ -83,6 +83,42 @@ static void * enkf_main_initialize_from_scratch_mt(void * void_arg) {
 }
 
 
+void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, init_mode_enum init_mode) {
+  int num_cpu               = 4;
+  thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
+  int ens_sub_size          = (iens2 - iens1 + 1) / num_cpu;
+  arg_pack_type ** arg_list = util_calloc( num_cpu , sizeof * arg_list );
+  int i;
+
+  printf("Initializing .... "); fflush( stdout );
+  for (i = 0; i < num_cpu;  i++) {
+    arg_list[i] = arg_pack_alloc();
+    arg_pack_append_ptr( arg_list[i] , enkf_main );
+    arg_pack_append_const_ptr( arg_list[i] , param_list );
+    {
+      int start_iens = i * ens_sub_size;
+      int end_iens   = start_iens + ens_sub_size;
+
+      if (i == (num_cpu - 1)){
+        end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
+        if(ens_sub_size == 0)
+          start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
+      }
+      arg_pack_append_int( arg_list[i] , start_iens );
+      arg_pack_append_int( arg_list[i] , end_iens );
+    }
+    arg_pack_append_int( arg_list[i] , init_mode );
+    thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[i]);
+  }
+  thread_pool_join( tp );
+  for (i = 0; i < num_cpu; i++)
+    arg_pack_free( arg_list[i] );
+  free( arg_list );
+  thread_pool_free( tp );
+  printf("\n");
+}
+
+
 /**
    This function will go through the filesystem and check that we have
    initial data for all parameters and all realizations. If the second
@@ -277,41 +313,6 @@ void enkf_main_set_case_table( enkf_main_type * enkf_main , const char * case_ta
   model_config_set_case_table( enkf_main->model_config , enkf_main->ens_size , case_table_file );
 }
 
-
-void enkf_main_initialize_from_scratch(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2, init_mode_enum init_mode) {
-  int num_cpu               = 4;
-  thread_pool_type * tp     = thread_pool_alloc( num_cpu , true );
-  int ens_sub_size          = (iens2 - iens1 + 1) / num_cpu;
-  arg_pack_type ** arg_list = util_calloc( num_cpu , sizeof * arg_list );
-  int i;
-
-  printf("Initializing .... "); fflush( stdout );
-  for (i = 0; i < num_cpu;  i++) {
-    arg_list[i] = arg_pack_alloc();
-    arg_pack_append_ptr( arg_list[i] , enkf_main );
-    arg_pack_append_const_ptr( arg_list[i] , param_list );
-    {
-      int start_iens = i * ens_sub_size;
-      int end_iens   = start_iens + ens_sub_size;
-
-      if (i == (num_cpu - 1)){
-        end_iens = iens2 + 1;  /* Input is upper limit inclusive. */
-        if(ens_sub_size == 0)
-          start_iens = iens1;  /* Don't necessarily want to start from zero when ens_sub_size = 0*/
-      }
-      arg_pack_append_int( arg_list[i] , start_iens );
-      arg_pack_append_int( arg_list[i] , end_iens );
-    }
-    arg_pack_append_int( arg_list[i] , init_mode );
-    thread_pool_add_job( tp , enkf_main_initialize_from_scratch_mt , arg_list[i]);
-  }
-  thread_pool_join( tp );
-  for (i = 0; i < num_cpu; i++)
-    arg_pack_free( arg_list[i] );
-  free( arg_list );
-  thread_pool_free( tp );
-  printf("\n");
-}
 
 
 void enkf_main_init_current_case_from_existing(const enkf_main_type * enkf_main,
