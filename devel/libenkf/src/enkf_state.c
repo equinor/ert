@@ -815,7 +815,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
       enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
       
       if (enkf_node_vector_storage(node)) {
-
+        
         enkf_node_try_load_vector( node , fs , iens , FORECAST);
         if (enkf_node_forward_load_vector( node , run_info->run_path , NULL , NULL , load_start, last_report , iens)) {
           enkf_node_store_vector( node , fs , iens , FORECAST );
@@ -829,13 +829,16 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
         }
       
       } else {
-
+        
         for (int report_step = load_start; report_step <= last_report; report_step++) {
           if (enkf_node_internalize(node , report_step)) {
-
+            
             if (enkf_node_has_func(node , forward_load_func)) {
               if (enkf_node_forward_load(node , run_info->run_path , NULL , NULL  , report_step , iens )) {
-                node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
+                node_id_type node_id = {.report_step = report_step , 
+                                        .iens = iens , 
+                                        .state = FORECAST };
+
                 enkf_node_store( node , fs, false , node_id );
                 
                 if (interactive) 
@@ -1086,7 +1089,6 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
     hence we must load the summary results first.
   */
   
-        
   enkf_state_internalize_dynamic_eclipse_results(enkf_state , fs , model_config , result, interactive , msg_list);
   {
     int last_report = time_map_get_last_step( enkf_fs_get_time_map( fs ));
