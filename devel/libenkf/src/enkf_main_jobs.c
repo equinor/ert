@@ -238,7 +238,7 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
 }
 
 
-void * enkf_main_init_case_JOB( void * self , const stringlist_type * args) {
+void * enkf_main_init_case_from_existing_JOB( void * self , const stringlist_type * args) {
   enkf_main_type * enkf_main = enkf_main_safe_cast( self );
 
   const char * source_case = stringlist_iget( args , 0 );

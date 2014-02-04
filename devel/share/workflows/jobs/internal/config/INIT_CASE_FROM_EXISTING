@@ -1,5 +1,5 @@
 INTERNAL    True
-FUNCTION    enkf_main_init_case_JOB
+FUNCTION    enkf_main_init_case_from_existing_JOB
 MIN_ARG     1
 MAX_ARG     2
 ARG_TYPE    0  STRING
