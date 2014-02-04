@@ -23,23 +23,18 @@
 
 #include <ert/enkf/block_obs.h>
 #include <ert/enkf/enkf_plot_genvector.h>
+#include <ert/enkf/gen_data.h>
+#include <ert/enkf/enkf_config_node.h>
 
 
 void test_create() {
-  ecl_grid_type * grid = ecl_grid_alloc_rectangular(10 , 10 , 10 , 1 , 1, 1, NULL);
-  enkf_config_node_type * config_node = enkf_config_node_alloc_field( "FIELD" , grid , NULL , false);
-  enkf_config_node_update_state_field( config_node , TRUNCATE_NONE , 0 , 0 );
-  {
-    obs_vector_type * obs_vector = obs_vector_alloc(BLOCK_OBS , "OBS" , config_node , 100);
-    enkf_plot_genvector_type * gen_vector = enkf_plot_genvector_alloc( obs_vector , 0 );
-    test_assert_true( enkf_plot_genvector_is_instance( block_vector ));
-    test_assert_int_equal( 0 , enkf_plot_blockvector_get_size( block_vector ));
-    enkf_plot_blockvector_free( block_vector );
-    obs_vector_free( obs_vector );
-  }
-  
-  enkf_config_node_free( config_node );
-  ecl_grid_free( grid );
+    enkf_config_node_type * config_node = enkf_config_node_new_gen_data( "key" , false);
+
+    enkf_plot_genvector_type * gen_vector = enkf_plot_genvector_alloc( config_node , 0 );
+    test_assert_true( enkf_plot_genvector_is_instance( gen_vector ));
+    test_assert_int_equal( 0 , enkf_plot_genvector_get_size( gen_vector ));
+    enkf_config_node_free( config_node );
+    enkf_plot_genvector_free(gen_vector);
 }
 
 
