@@ -213,6 +213,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   const int ens_size         = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive = bool_vector_alloc( 0 , false );
   run_mode_type run_mode     = ENSEMBLE_EXPERIMENT;
+  int iter = 0;
   
   enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);  /* This is ugly */
 
@@ -228,6 +229,27 @@ void enkf_tui_run_manual_load__( void * arg ) {
     free( prompt );
   }
 
+  {
+    const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+    if (model_config_runpath_requires_iter( model_config )) {
+      const char * prompt = "Which iteration to load from [0...?) : ";
+      char * input;
+      bool OK;
+      util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
+
+      input = util_alloc_stdin_line();
+      if (input == NULL) 
+        return;
+
+      OK = util_sscanf_int( input , &iter ); 
+
+      free( input );
+      if (!OK)
+        return;
+    }
+  }
+  
+
   if (bool_vector_count_equal( iactive , true )) {
     stringlist_type ** realizations_msg_list = util_calloc( ens_size , sizeof * realizations_msg_list );
     int iens = 0;
@@ -235,7 +257,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
       realizations_msg_list[iens] = stringlist_alloc_new();
     }
 
-    enkf_main_load_from_forward_model(enkf_main, iactive, realizations_msg_list);
+    enkf_main_load_from_forward_model(enkf_main, iter , iactive, realizations_msg_list);
 
     {
       qc_module_type * qc_module = enkf_main_get_qc_module( enkf_main );
