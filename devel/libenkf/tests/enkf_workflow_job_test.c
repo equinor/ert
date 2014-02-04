@@ -173,7 +173,6 @@ void test_load_results_iter_job(ert_test_context_type * test_context , const cha
 }
 
 
-
 ert_test_context_type * create_context( const char * config_file ) {
   ert_test_context_type * test_context = ert_test_context_alloc("LoadResultsJob" , config_file , NULL);
   return test_context;
