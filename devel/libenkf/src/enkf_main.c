@@ -3903,7 +3903,7 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 }
 
 
-void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_type * iactive, stringlist_type ** realizations_msg_list) {
+void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list) {
   enkf_fs_type * fs         = enkf_main_get_fs( enkf_main );
   const int ens_size        = enkf_main_get_ensemble_size( enkf_main );
   int step1                 = 0;
@@ -3932,7 +3932,8 @@ void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_t
       arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */
       arg_pack_append_ptr(arg_pack, realizations_msg_list[iens]);                         /* 6: List of interactive mode messages. */
       arg_pack_append_bool( arg_pack, true );                                             /* 7: Manual load */
-      arg_pack_append_ptr(arg_pack, &result[iens]);                                       /* 8: Result */
+      arg_pack_append_int( arg_pack , iter );                                             /* 8: Iteration number */
+      arg_pack_append_ptr(arg_pack, &result[iens]);                                       /* 9: Result */
 
       thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
     }

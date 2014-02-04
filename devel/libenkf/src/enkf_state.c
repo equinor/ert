@@ -159,8 +159,8 @@ static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt
   util_safe_free(run_info->run_path);
   {
     char * tmp1 = path_fmt_alloc_path(run_path_fmt , false , iens, run_info->iter);   /* 1: Replace first %d with iens, if a second %d replace with iter */
-    char * tmp2 = subst_list_alloc_filtered_string( state_subst_list , tmp1 );                            /* 2: Filter out various magic strings like <CASE> and <CWD>. */
-    run_info->run_path = util_alloc_abs_path( tmp2 );                                                     /* 3: Ensure that the path is absolute. */
+    char * tmp2 = subst_list_alloc_filtered_string( state_subst_list , tmp1 );        /* 2: Filter out various magic strings like <CASE> and <CWD>. */
+    run_info->run_path = util_alloc_abs_path( tmp2 );                                 /* 3: Ensure that the path is absolute. */
     free( tmp1 );
     free( tmp2 );
   }
@@ -192,13 +192,16 @@ static void run_info_init_for_load(run_info_type * run_info ,
                                    int step1,
                                    int step2,
                                    int iens,
+                                   int iter , 
                                    path_fmt_type * run_path_fmt ,
                                    const subst_list_type * state_subst_list) {
   run_info->step1      = step1;
   run_info->step2      = step2;
   run_info->load_start = load_start;
+  run_info->iter       = iter;
   run_info_set_run_path(run_info , iens , run_path_fmt , state_subst_list );
 }
+
 
 
 static void run_info_set(run_info_type * run_info        , 
@@ -225,8 +228,7 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->run_mode             = run_mode;
   run_info->max_internal_submit  = max_internal_submit;
   run_info->num_internal_submit  = 0;
-  run_info->iter                 = iter;
-  run_info_init_for_load( run_info , load_start , step1 , step2 , iens , run_path_fmt , state_subst_list);
+  run_info_init_for_load( run_info , load_start , step1 , step2 , iens , iter , run_path_fmt , state_subst_list);
 }
 
 
@@ -1198,7 +1200,8 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
   stringlist_type * msg_list   = arg_pack_iget_ptr( arg_pack , 6 );
   bool manual_load             = arg_pack_iget_bool( arg_pack , 7 );
   int iens                     = member_config_get_iens( enkf_state->my_config );
-  int * result                 = arg_pack_iget_ptr( arg_pack , 8 );
+  int iter                     = arg_pack_iget_int( arg_pack , 8 );
+  int * result                 = arg_pack_iget_ptr( arg_pack , 9 );
   
   if (manual_load)
     state_map_update_undefined(enkf_fs_get_state_map(fs) , iens , STATE_INITIALIZED);
@@ -1208,6 +1211,7 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
                           step1 , 
                           step2 , 
                           iens , 
+                          iter , 
                           model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 
                           enkf_state->subst_list );
   
