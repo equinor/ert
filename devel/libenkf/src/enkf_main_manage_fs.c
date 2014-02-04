@@ -372,20 +372,6 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main , bool_vector_ty
   return enkf_main_case_is_initialized__(enkf_main , enkf_main->dbase , __mask);
 }
 
-bool enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path) {
-  bool set_refcase = ecl_config_load_refcase( enkf_main->ecl_config , refcase_path );
-
-  model_config_set_refcase( enkf_main->model_config , ecl_config_get_refcase( enkf_main->ecl_config ));
-  ensemble_config_set_refcase( enkf_main->ensemble_config , ecl_config_get_refcase( enkf_main->ecl_config ));
-
-  return set_refcase;
-}
-
-
-ui_return_type * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path) {
-  return ecl_config_validate_refcase( enkf_main->ecl_config , refcase_path );
-}
-
 
 
 char * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path) {

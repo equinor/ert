@@ -73,6 +73,8 @@ extern "C" {
   const char                  * enkf_main_get_rft_config_file( const enkf_main_type * enkf_main );
   bool                          enkf_main_get_pre_clear_runpath( const enkf_main_type * enkf_main );
   void                          enkf_main_set_pre_clear_runpath( enkf_main_type * enkf_main , bool pre_clear_runpath);
+  bool                          enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
+  ui_return_type              * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
 
   ert_report_list_type        * enkf_main_get_report_list( const enkf_main_type * enkf_main );
   ert_templates_type          * enkf_main_get_templates( enkf_main_type * enkf_main );
@@ -244,6 +246,7 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
 
 
 
+
   /********* File System / Case Management **********
           Implementation: enkf_main_manage_fs.c     */
 
@@ -276,9 +279,6 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                                                    bool_vector_type * __mask);
 
   bool              enkf_main_is_initialized( const enkf_main_type * enkf_main ,bool_vector_type * __mask);
-
-  bool              enkf_main_set_refcase( enkf_main_type * enkf_main , const char * refcase_path);
-  ui_return_type  * enkf_main_validata_refcase( const enkf_main_type * enkf_main , const char * refcase_path);
 
   char            * enkf_main_alloc_mount_point( const enkf_main_type * enkf_main , const char * case_path);
   enkf_fs_type    * enkf_main_get_fs(const enkf_main_type * );
