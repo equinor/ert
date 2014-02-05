@@ -34,9 +34,13 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    add_definitions( -DWINDOWS_LFS )
 endif()    
 
-if (NOT CMAKE_BUILD_TYPE)
-    message(STATUS "No build type selected, default to RelWithDebInfo")
-    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+   message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING 
+       "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+   # Set the possible values of build type for cmake-gui
+   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+                "MinSizeRel" "RelWithDebInfo")
 endif()
 
 # Treat warnings as errors if not on Windows
