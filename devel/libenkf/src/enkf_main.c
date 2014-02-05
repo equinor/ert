@@ -1867,7 +1867,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
       if (rerun) { 
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
-          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, 1))
+          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, iter + 1))
             enkf_main_run_post_workflow(enkf_main);
         } else {
           fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
