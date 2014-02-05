@@ -39,15 +39,15 @@ void test_gen_kw( enkf_main_type * enkf_main , const char * gen_kw_key , const c
     enkf_plot_gen_kw_type * gen_kw_data = enkf_plot_gen_kw_alloc( config_node );
 
     test_assert_true( enkf_plot_gen_kw_is_instance( gen_kw_data ) );
-    enkf_plot_gen_kw_load( gen_kw_data , fs , report_step , FORECAST , param_key, NULL );
+    enkf_plot_gen_kw_load( gen_kw_data , fs , report_step , ANALYZED , param_key, NULL );
     test_assert_int_equal( enkf_main_get_ensemble_size( enkf_main ) , enkf_plot_gen_kw_get_size( gen_kw_data ));
 
     {
 
       /* if (report_step == 0) { */
-      test_assert_double_equal( -0.6975 , enkf_plot_gen_kw_iget( gen_kw_data ,  0 ));
-      test_assert_double_equal( -0.299  , enkf_plot_gen_kw_iget( gen_kw_data ,  1 ));
-      test_assert_double_equal( -0.7383 , enkf_plot_gen_kw_iget( gen_kw_data , 99 ));
+      test_assert_double_equal( -0.7334  , enkf_plot_gen_kw_iget( gen_kw_data ,  0 ));
+      test_assert_double_equal( -0.40379 , enkf_plot_gen_kw_iget( gen_kw_data ,  1 ));
+      test_assert_double_equal(  0.70417 , enkf_plot_gen_kw_iget( gen_kw_data , 99 ));
     }
 
     enkf_plot_gen_kw_free( gen_kw_data );
