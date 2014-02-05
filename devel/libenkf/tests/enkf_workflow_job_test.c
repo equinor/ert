@@ -74,12 +74,20 @@ void test_init_case_job(const char * config_file, const char * job_file) {
   enkf_fs_umount(cur_fs);
   const char * current_case = enkf_main_get_current_fs(enkf_main);
   test_assert_string_equal(current_case, "new_current_case");
-  stringlist_clear(args);
+  test_assert_true(enkf_fs_has_node(enkf_main_get_fs(enkf_main), "PERMZ", PARAMETER, 0, 0, ANALYZED));
 
   //Test init case from existing case:
+  stringlist_clear(args);
   stringlist_append_copy(args, "default"); //case to init from
   stringlist_append_copy(args, "new_not_current_case");
   test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+  {
+    enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main, "new_not_current_case", true, false);
+    test_assert_not_NULL( fs );
+    test_assert_true( enkf_fs_has_node(fs, "PERMZ", PARAMETER, 0, 0, ANALYZED ));
+    enkf_fs_umount(fs);
+  }
+
 
   stringlist_free( args );
   ert_test_context_free( test_context );
