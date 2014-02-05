@@ -127,6 +127,11 @@ add_executable( enkf_plot_genvector enkf_plot_genvector.c )
 target_link_libraries( enkf_plot_genvector enkf test_util )
 add_test( enkf_plot_genvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_genvector )
 
+add_executable( enkf_plot_gendata_fs enkf_plot_gendata_fs.c )
+target_link_libraries( enkf_plot_gendata_fs ert-test enkf test_util )
+add_test( enkf_plot_gendata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gendata_fs
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_GEN_DATA/config )
+
 add_executable( enkf_plot_gendata enkf_plot_gendata.c )
 target_link_libraries( enkf_plot_gendata enkf test_util )
 add_test( enkf_plot_gendata  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gendata )
