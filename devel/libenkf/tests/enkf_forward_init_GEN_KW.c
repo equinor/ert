@@ -96,10 +96,11 @@ int main(int argc , char ** argv) {
       {
         int error = 0;
         stringlist_type * msg_list = stringlist_alloc_new();
+        bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size( enkf_main ) , true);
         
         {
           run_mode_type run_mode = ENSEMBLE_EXPERIMENT; 
-          enkf_main_init_run(enkf_main , NULL , run_mode , INIT_NONE);     /* This is ugly */
+          enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);     /* This is ugly */
         }
         
         
@@ -119,6 +120,7 @@ int main(int argc , char ** argv) {
         }
         enkf_state_load_from_forward_model( state , fs , &error , false , msg_list );
         stringlist_free( msg_list );
+        bool_vector_free( iactive );
         test_assert_true(LOAD_FAILURE & error);
       }
       
