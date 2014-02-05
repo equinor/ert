@@ -109,9 +109,7 @@ void enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * plot_gen_kw,
   if (input_mask)
     mask = bool_vector_alloc_copy( input_mask );
   else
-    mask = bool_vector_alloc( ens_size , false );
-
-  state_map_select_matching( state_map , mask , STATE_HAS_DATA );
+    mask = bool_vector_alloc( ens_size , true );
 
   plot_gen_kw->size = ens_size;
 
@@ -119,10 +117,7 @@ void enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * plot_gen_kw,
     int iens;
     enkf_node_type * data_node;
 
-    if (enkf_config_node_get_impl_type( plot_gen_kw->config_node ) == CONTAINER)
-      data_node = enkf_node_alloc_private_container( plot_gen_kw->config_node );
-    else
-      data_node = enkf_node_alloc( plot_gen_kw->config_node );
+    data_node = enkf_node_alloc( plot_gen_kw->config_node );
 
     for (iens = 0; iens < ens_size; ++iens) {
       if (bool_vector_iget( mask , iens)) {
