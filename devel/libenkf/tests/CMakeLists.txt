@@ -40,10 +40,10 @@ target_link_libraries( enkf_analysis_config_ext_module enkf test_util )
 
 ert_module_name( VAR_RML  rml_enkf  ${LIBRARY_OUTPUT_PATH} )
 ert_module_name( VAR_RMLI rmli_enkf ${LIBRARY_OUTPUT_PATH} )
-add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module
+add_test( enkf_analysis_config_ext_module ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_config_ext_module 
           rml_enkf ${VAR_RML}
           rmli_enkf ${VAR_RMLI} )
-
+        
 
 add_executable( enkf_state_map enkf_state_map.c )
 target_link_libraries( enkf_state_map enkf test_util )
@@ -91,7 +91,7 @@ add_test( enkf_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_fs )
 
 add_executable( enkf_ert_test_context enkf_ert_test_context.c )
 target_link_libraries( enkf_ert_test_context ert-test test_util )
-add_test( enkf_ert_test_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_test_context
+add_test( enkf_ert_test_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_test_context 
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/config
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/wf_job
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/test_context/wf_job_fail)
@@ -99,14 +99,14 @@ add_test( enkf_ert_test_context  ${EXECUTABLE_OUTPUT_PATH}/enkf_ert_test_context
 
 add_executable( enkf_analysis_update_job enkf_analysis_update_job.c )
 target_link_libraries( enkf_analysis_update_job ert-test test_util )
-add_test( enkf_analysis_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_update_job
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config
+add_test( enkf_analysis_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_update_job 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config 
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/ANALYSIS_UPDATE )
 
 add_executable( enkf_analysis_enkf_update_job enkf_analysis_enkf_update_job.c )
 target_link_libraries( enkf_analysis_enkf_update_job ert-test test_util )
-add_test( enkf_analysis_enkf_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_enkf_update_job
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config
+add_test( enkf_analysis_enkf_update_job ${EXECUTABLE_OUTPUT_PATH}/enkf_analysis_enkf_update_job 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_data/config 
           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/ANALYSIS_ENKF_UPDATE )
 
 add_executable( enkf_plot_blockdata enkf_plot_blockdata.c )
@@ -115,7 +115,7 @@ add_test( enkf_plot_blockdata  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata )
 
 add_executable( enkf_plot_blockdata_fs enkf_plot_blockdata_fs.c )
 target_link_libraries( enkf_plot_blockdata_fs ert-test enkf test_util )
-add_test( enkf_plot_blockdata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata_fs
+add_test( enkf_plot_blockdata_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_blockdata_fs 
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/with_RFT/config )
 
 add_executable( enkf_plot_blockvector enkf_plot_blockvector.c )
@@ -141,12 +141,12 @@ add_test( enkf_config_node  ${EXECUTABLE_OUTPUT_PATH}/enkf_config_node )
 add_executable( enkf_forward_init_GEN_KW enkf_forward_init_GEN_KW.c )
 target_link_libraries( enkf_forward_init_GEN_KW enkf test_util )
 
-add_test( enkf_forward_init_GEN_KW_TRUE
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW
+add_test( enkf_forward_init_GEN_KW_TRUE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW 
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_KW_true TRUE)
 
-add_test( enkf_forward_init_GEN_KW_FALSE
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW
+add_test( enkf_forward_init_GEN_KW_FALSE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_KW 
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_KW_false FALSE)
 
 
@@ -155,12 +155,12 @@ add_test( enkf_forward_init_GEN_KW_FALSE
 add_executable( enkf_state_report_step_compatible enkf_state_report_step_compatible.c )
 target_link_libraries( enkf_state_report_step_compatible enkf test_util )
 
-add_test( enkf_state_report_step_compatible_TRUE
+add_test( enkf_state_report_step_compatible_TRUE 
           ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_true  config_ecl_sum_compatible_true TRUE)
 
-add_test( enkf_state_report_step_compatible_FALSE
+add_test( enkf_state_report_step_compatible_FALSE 
           ${EXECUTABLE_OUTPUT_PATH}/enkf_state_report_step_compatible ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_sum_compatible_false  config_ecl_sum_compatible_false FALSE)
-
+                                                                      
 
 #-----------------------------------------------------------------
 
@@ -177,9 +177,9 @@ target_link_libraries( enkf_state_skip_summary_load_test enkf test_util )
 add_test( enkf_state_summary_vars_present
           ${EXECUTABLE_OUTPUT_PATH}/enkf_state_skip_summary_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_summary_vars_config  config_summary_vars)
 
-add_test( enkf_state_no_summary_vars_present
+add_test( enkf_state_no_summary_vars_present 
           ${EXECUTABLE_OUTPUT_PATH}/enkf_state_skip_summary_load_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/ecl_no_summary_vars_config  config_no_summary_vars)
-
+                                                                      
 
 #-----------------------------------------------------------------
 
@@ -214,12 +214,12 @@ add_test( enkf_select_case_job
 add_executable( enkf_forward_init_GEN_PARAM enkf_forward_init_GEN_PARAM.c )
 target_link_libraries( enkf_forward_init_GEN_PARAM enkf test_util )
 
-add_test( enkf_forward_init_GEN_PARAM_TRUE
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM
+add_test( enkf_forward_init_GEN_PARAM_TRUE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM 
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_PARAM_true TRUE)
 
-add_test( enkf_forward_init_GEN_PARAM_FALSE
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM
+add_test( enkf_forward_init_GEN_PARAM_FALSE  
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_GEN_PARAM 
           ${CMAKE_CURRENT_SOURCE_DIR}/data/config/forward/ert config_GEN_PARAM_false FALSE)
 
 #-----------------------------------------------------------------
@@ -227,14 +227,14 @@ add_test( enkf_forward_init_GEN_PARAM_FALSE
 add_executable( enkf_forward_init_SURFACE enkf_forward_init_SURFACE.c )
 target_link_libraries( enkf_forward_init_SURFACE enkf test_util )
 
-add_test( enkf_forward_init_SURFACE_TRUE
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_SURFACE
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_true
+add_test( enkf_forward_init_SURFACE_TRUE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_SURFACE 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_true   
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
           TRUE)
 
-add_test( enkf_forward_init_SURFACE_FALSE
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_SURFACE
+add_test( enkf_forward_init_SURFACE_FALSE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_SURFACE 
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface config_surface_false
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/surface/Surface.irap
           FALSE)
@@ -244,14 +244,14 @@ add_test( enkf_forward_init_SURFACE_FALSE
 add_executable( enkf_forward_init_FIELD enkf_forward_init_FIELD.c )
 target_link_libraries( enkf_forward_init_FIELD enkf test_util )
 
-add_test( enkf_forward_init_FIELD_TRUE
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_FIELD
-          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_true
+add_test( enkf_forward_init_FIELD_TRUE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_FIELD 
+          ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_true   
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/petro.grdecl
           TRUE)
 
-add_test( enkf_forward_init_FIELD_FALSE
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_FIELD
+add_test( enkf_forward_init_FIELD_FALSE   
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_forward_init_FIELD 
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field config_field_false
           ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/forward_init/field/petro.grdecl
           FALSE)
@@ -303,8 +303,8 @@ add_test( enkf_report_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_report_list ${CMAKE_C
 
 add_executable( enkf_refcase_list enkf_refcase_list.c )
 target_link_libraries( enkf_refcase_list enkf test_util )
-add_test( enkf_refcase_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_refcase_list ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE)
-add_test( enkf_refcase_list2  ${EXECUTABLE_OUTPUT_PATH}/enkf_refcase_list ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE.*)
+add_test( enkf_refcase_list  ${EXECUTABLE_OUTPUT_PATH}/enkf_refcase_list ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE) 
+add_test( enkf_refcase_list2  ${EXECUTABLE_OUTPUT_PATH}/enkf_refcase_list ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat/ECLIPSE ${PROJECT_SOURCE_DIR}/test-data/Statoil/ECLIPSE/Gurbat*/ECLIPSE.*) 
 set_property( TEST enkf_refcase_list PROPERTY LABELS StatoilData )
 set_property( TEST enkf_refcase_list2 PROPERTY LABELS StatoilData )
 
@@ -322,7 +322,7 @@ set_property( TEST enkf_ecl_config_config PROPERTY LABELS StatoilData )
 add_executable( enkf_qc_module_test enkf_qc_module_test.c )
 target_link_libraries( enkf_qc_module_test enkf test_util )
 add_test( enkf_qc_module_test ${EXECUTABLE_OUTPUT_PATH}/enkf_qc_module_test )
-
+ 
 add_executable(enkf_obs_tests enkf_obs_tests.c)
 target_link_libraries(enkf_obs_tests enkf test_util )
 add_test(enkf_obs_tests ${EXECUTABLE_OUTPUT_PATH}/enkf_obs_tests)
