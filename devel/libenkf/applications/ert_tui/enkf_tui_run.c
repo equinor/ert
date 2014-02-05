@@ -65,8 +65,7 @@ static void enkf_tui_run_set_runpath(void * arg) {
 
 void enkf_tui_run_start(void * enkf_main) {
   const int ens_size = enkf_main_get_ensemble_size( enkf_main );
-  bool_vector_type * iactive = bool_vector_alloc(0,true);
-  bool_vector_iset( iactive , ens_size - 1 , true );
+  bool_vector_type * iactive = bool_vector_alloc(ens_size , true);
 
   enkf_main_run_assimilation(enkf_main , iactive , 0 , 0 , ANALYZED);
   
