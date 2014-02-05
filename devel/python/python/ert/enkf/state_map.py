@@ -19,9 +19,12 @@ from ert.enkf.enums import RealizationStateEnum
 
 
 class StateMap(BaseCClass):
-    def __init__(self):
+    def __init__(self , filename = None):
         c_ptr = StateMap.cNamespace().alloc()
         super(StateMap, self).__init__(c_ptr)
+        if filename:
+            self.load(filename)
+            
 
     def __len__(self):
         """ @rtype: int """
@@ -34,6 +37,10 @@ class StateMap(BaseCClass):
         while index < size:
             yield self[index]
             index += 1
+
+    def __eq__(self , other):
+        return self.cNamespace().equal(self, other)
+
 
     def __getitem__(self, index):
         """ @rtype: RealizationStateEnum """
@@ -80,16 +87,30 @@ class StateMap(BaseCClass):
     def free(self):
         StateMap.cNamespace().free(self)
 
+    
+    def load(self,filename):
+        if not self.cNamespace().fread( self , filename):
+            raise IOError("Failed to load state map from:%s" % filename)
+
+
+    def save(self,filename):
+        self.cNamespace().fwrite( self , filename)        
+
+
 
 cwrapper = CWrapper(ENKF_LIB)
 cwrapper.registerType("state_map", StateMap)
 cwrapper.registerType("state_map_obj", StateMap.createPythonObject)
 cwrapper.registerType("state_map_ref", StateMap.createCReference)
 
-StateMap.cNamespace().alloc = cwrapper.prototype("c_void_p state_map_alloc()")
-StateMap.cNamespace().free = cwrapper.prototype("void state_map_free(state_map)")
-StateMap.cNamespace().size = cwrapper.prototype("int state_map_get_size(state_map)")
-StateMap.cNamespace().iget = cwrapper.prototype("realisation_state_enum state_map_iget(state_map, int)")
-StateMap.cNamespace().iset = cwrapper.prototype("void state_map_iset(state_map, int, realisation_state_enum)")
+StateMap.cNamespace().alloc  = cwrapper.prototype("c_void_p state_map_alloc()")
+StateMap.cNamespace().fread  = cwrapper.prototype("bool state_map_fread(state_map , char*)")
+StateMap.cNamespace().fwrite = cwrapper.prototype("void state_map_fwrite(state_map , char*)")
+StateMap.cNamespace().equal  = cwrapper.prototype("bool state_map_equal(state_map , state_map)")
+StateMap.cNamespace().free   = cwrapper.prototype("void state_map_free(state_map)")
+StateMap.cNamespace().size   = cwrapper.prototype("int state_map_get_size(state_map)")
+StateMap.cNamespace().iget   = cwrapper.prototype("realisation_state_enum state_map_iget(state_map, int)")
+StateMap.cNamespace().iset   = cwrapper.prototype("void state_map_iset(state_map, int, realisation_state_enum)")
 StateMap.cNamespace().is_read_only = cwrapper.prototype("bool state_map_is_readonly(state_map)")
 StateMap.cNamespace().is_legal_transition = cwrapper.prototype("bool state_map_legal_transition(realisation_state_enum, realisation_state_enum)")
+
