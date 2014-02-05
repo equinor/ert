@@ -1932,7 +1932,7 @@ void enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1, int iter2)
       } else
         break;
 
-      if (iter == iter2)
+      if (iter > iter2)
         break;
     }
     bool_vector_free(iactive);
