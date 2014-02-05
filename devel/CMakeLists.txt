@@ -34,14 +34,15 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    add_definitions( -DWINDOWS_LFS )
 endif()    
 
+if (NOT CMAKE_BUILD_TYPE)
+    message(STATUS "No build type selected, default to RelWithDebInfo")
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+endif()
 
 # Treat warnings as errors if not on Windows
-if (ERT_WINDOWS)
-   set( CMAKE_C_FLAGS    "-O2" )
-   set( CMAKE_CXX_FLAGS  "-O2" )
-else()
-   set( CMAKE_C_FLAGS    "-std=gnu99 -g -O2 -Wall -Wno-unknown-pragmas " )
-   set( CMAKE_CXX_FLAGS  "-g -Wall -O2 ")
+if (NOT ERT_WINDOWS)
+   set( CMAKE_C_FLAGS   "-std=gnu99 -Wall -Wno-unknown-pragmas ")
+   set( CMAKE_CXX_FLAGS "-Wall " )
 endif()
 
 if (ERT_USE_OPENMP)
