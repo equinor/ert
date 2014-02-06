@@ -34,14 +34,19 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    add_definitions( -DWINDOWS_LFS )
 endif()    
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+   message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING 
+       "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+   # Set the possible values of build type for cmake-gui
+   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+                "MinSizeRel" "RelWithDebInfo")
+endif()
 
 # Treat warnings as errors if not on Windows
-if (ERT_WINDOWS)
-   set( CMAKE_C_FLAGS    "-O2" )
-   set( CMAKE_CXX_FLAGS  "-O2" )
-else()
-   set( CMAKE_C_FLAGS    "-std=gnu99 -g -O2 -Wall -Wno-unknown-pragmas " )
-   set( CMAKE_CXX_FLAGS  "-g -Wall -O2 ")
+if (NOT ERT_WINDOWS)
+   set( CMAKE_C_FLAGS   "-std=gnu99 -Wall -Wno-unknown-pragmas ")
+   set( CMAKE_CXX_FLAGS "-Wall " )
 endif()
 
 if (ERT_USE_OPENMP)
