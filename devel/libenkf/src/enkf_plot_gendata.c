@@ -54,7 +54,6 @@ enkf_plot_gendata_type * enkf_plot_gendata_alloc( const enkf_config_node_type * 
         data->enkf_config_node = enkf_config_node;
         data->work_arg = NULL;
         data->ensemble = NULL;
-      //  data->sort_perm = NULL;
         return data;
     } else {
         return NULL;
