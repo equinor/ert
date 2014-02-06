@@ -1405,10 +1405,17 @@ static bool enkf_main_smoother_update__(enkf_main_type * enkf_main , const int_v
 
 bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * target_fs) {
   int stride = 1;
+  int step2;
   time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
-  int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
-  bool update_done = enkf_main_smoother_update__( enkf_main , step_list , target_fs );
-  
+  int_vector_type * step_list;
+  bool update_done;
+
+  step2 = time_map_get_last_step( time_map );
+  if (step2 < 0)
+    step2 = model_config_get_last_history_restart( enkf_main->model_config );
+
+  step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , step2 , stride);
+  update_done = enkf_main_smoother_update__( enkf_main , step_list , target_fs );
   int_vector_free( step_list );
   
   return update_done;
@@ -1646,6 +1653,9 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 */
 int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride) {
   int_vector_type * step_list = int_vector_alloc( 0 , 0 );
+
+  if (step2 < load_start)
+    util_abort("%s: fatal internal error: Tried to make step list %d ... %d \n",__func__ , load_start , step2);
   
   if (stride == 0) 
     int_vector_append( step_list , step2 );
@@ -3893,7 +3903,7 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 }
 
 
-void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_type * iactive, stringlist_type ** realizations_msg_list) {
+void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list) {
   enkf_fs_type * fs         = enkf_main_get_fs( enkf_main );
   const int ens_size        = enkf_main_get_ensemble_size( enkf_main );
   int step1                 = 0;
@@ -3922,7 +3932,8 @@ void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_t
       arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */
       arg_pack_append_ptr(arg_pack, realizations_msg_list[iens]);                         /* 6: List of interactive mode messages. */
       arg_pack_append_bool( arg_pack, true );                                             /* 7: Manual load */
-      arg_pack_append_ptr(arg_pack, &result[iens]);                                       /* 8: Result */
+      arg_pack_append_int( arg_pack , iter );                                             /* 8: Iteration number */
+      arg_pack_append_ptr(arg_pack, &result[iens]);                                       /* 9: Result */
 
       thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
     }

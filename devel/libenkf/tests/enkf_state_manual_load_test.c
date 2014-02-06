@@ -46,8 +46,9 @@ int test_load_manually_to_new_case(enkf_main_type * enkf_main) {
     arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */
     arg_pack_append_owned_ptr( arg_pack , stringlist_alloc_new() , stringlist_free__);  /* 6: List of interactive mode messages. */
     arg_pack_append_bool( arg_pack, true );                                             /* 7: Manual load */
-    arg_pack_append_ptr( arg_pack, &result );                                           /* 8: Result */
-
+    arg_pack_append_int( arg_pack , 0 );                                                /* 8: iter */
+    arg_pack_append_ptr( arg_pack, &result );                                           /* 9: Result */
+    
     enkf_state_load_from_forward_model_mt(arg_pack);
 
     arg_pack_free(arg_pack);

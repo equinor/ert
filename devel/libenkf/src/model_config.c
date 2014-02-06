@@ -114,9 +114,16 @@ path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_con
   return model_config->current_runpath;
 }
 
- const char * model_config_get_runpath_as_char( const model_config_type * model_config ) {
+const char * model_config_get_runpath_as_char( const model_config_type * model_config ) {
    return path_fmt_get_fmt( model_config->current_runpath );
- }
+}
+
+bool model_config_runpath_requires_iter( const model_config_type * model_config ) {
+  if (util_int_format_count( model_config_get_runpath_as_char( model_config)) > 1 )
+    return true;
+  else
+    return false;
+}
 
 
 const char * model_config_get_case_table_file( const model_config_type * model_config ) {
