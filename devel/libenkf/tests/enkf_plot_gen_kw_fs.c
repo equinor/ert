@@ -28,7 +28,7 @@
 
 
 
-void test_gen_kw( enkf_main_type * enkf_main , const char * gen_kw_key , const char * param_key , int report_step ) {
+void test_gen_kw( enkf_main_type * enkf_main , const char * gen_kw_key , int report_step ) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
   test_assert_true( ensemble_config_has_key( ensemble_config , gen_kw_key ) );
   const enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , gen_kw_key );
@@ -39,15 +39,21 @@ void test_gen_kw( enkf_main_type * enkf_main , const char * gen_kw_key , const c
     enkf_plot_gen_kw_type * gen_kw_data = enkf_plot_gen_kw_alloc( config_node );
 
     test_assert_true( enkf_plot_gen_kw_is_instance( gen_kw_data ) );
-    enkf_plot_gen_kw_load( gen_kw_data , fs , report_step , ANALYZED , param_key, NULL );
+    enkf_plot_gen_kw_load( gen_kw_data , fs , report_step , ANALYZED , NULL );
     test_assert_int_equal( enkf_main_get_ensemble_size( enkf_main ) , enkf_plot_gen_kw_get_size( gen_kw_data ));
 
     {
+      const enkf_plot_gen_kw_vector_type * vector = enkf_plot_gen_kw_iget( gen_kw_data ,  0 );
 
       /* if (report_step == 0) { */
-      test_assert_double_equal( -0.7334  , enkf_plot_gen_kw_iget( gen_kw_data ,  0 ));
-      test_assert_double_equal( -0.40379 , enkf_plot_gen_kw_iget( gen_kw_data ,  1 ));
-      test_assert_double_equal(  0.70417 , enkf_plot_gen_kw_iget( gen_kw_data , 99 ));
+      test_assert_double_equal( -0.7334  , enkf_plot_gen_kw_vector_iget( vector , 0 ));
+
+      vector = enkf_plot_gen_kw_iget( gen_kw_data ,  1 );
+      test_assert_double_equal( -0.40379 , enkf_plot_gen_kw_vector_iget( vector , 0 ));
+
+      vector = enkf_plot_gen_kw_iget( gen_kw_data , 99 );
+      test_assert_double_equal(  0.70417 , enkf_plot_gen_kw_vector_iget( vector , 0 ));
+
     }
 
     enkf_plot_gen_kw_free( gen_kw_data );
@@ -62,7 +68,7 @@ int main( int argc , char ** argv) {
   ert_test_context_type * test_context = ert_test_context_alloc("GEN_KW_DATA" , config_file , NULL );
   enkf_main_type * enkf_main = ert_test_context_get_main( test_context );
 
-  test_gen_kw( enkf_main , "FAULT_TRANSLATE_REL" , "TRANS_FAC", 0);
+  test_gen_kw( enkf_main , "FAULT_TRANSLATE_REL" , 0);
 
   ert_test_context_free( test_context );
   exit(0);

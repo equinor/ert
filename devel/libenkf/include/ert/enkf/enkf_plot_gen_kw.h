@@ -25,25 +25,24 @@ extern "C" {
 #endif
 
 #include <ert/util/bool_vector.h>
+#include <ert/util/stringlist.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_config_node.h>
+#include <ert/enkf/enkf_plot_gen_kw_vector.h>
 
   typedef struct enkf_plot_gen_kw_struct enkf_plot_gen_kw_type;
 
-  enkf_plot_gen_kw_type * enkf_plot_gen_kw_alloc( const enkf_config_node_type * enkf_config_node);
-  void                    enkf_plot_gen_kw_free( enkf_plot_gen_kw_type * gen_kw );
-  int                     enkf_plot_gen_kw_get_size( const enkf_plot_gen_kw_type * gen_kw );
-  /* * Number of keys. */
-  /*int                     enkf_plot_gen_kw_get_n_keys( const enkf_plot_gen_kw_type * gen_kw );*/
-  void                    enkf_plot_gen_kw_reset( enkf_plot_gen_kw_type * gen_kw );
-  void                    enkf_plot_gen_kw_load( enkf_plot_gen_kw_type * gen_kw ,
-                                                 enkf_fs_type * fs ,
-                                                 int report_step ,
-                                                 state_enum state ,
-                                                 const char * key,
-                                                 const bool_vector_type * input_mask);
-  double                  enkf_plot_gen_kw_iget( const enkf_plot_gen_kw_type * vector , int index);
+  enkf_plot_gen_kw_type        * enkf_plot_gen_kw_alloc( const enkf_config_node_type * enkf_config_node);
+  void                           enkf_plot_gen_kw_free( enkf_plot_gen_kw_type * gen_kw );
+  int                            enkf_plot_gen_kw_get_size( const enkf_plot_gen_kw_type * gen_kw );
+  enkf_plot_gen_kw_vector_type * enkf_plot_gen_kw_iget( const enkf_plot_gen_kw_type * vector , int index);
+  void                           enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * gen_kw ,
+                                                        enkf_fs_type           * fs ,
+                                                        int                      report_step ,
+                                                        state_enum               state ,
+                                                        const bool_vector_type * input_mask);
+  const stringlist_type        * enkf_plot_gen_kw_get_keys( const enkf_plot_gen_kw_type * gen_kw );
 
   UTIL_IS_INSTANCE_HEADER( enkf_plot_gen_kw );
 

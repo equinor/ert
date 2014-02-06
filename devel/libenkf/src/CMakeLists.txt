@@ -65,6 +65,7 @@ set( source_files
      enkf_plot_blockdata.c 
      enkf_plot_blockvector.c 
      enkf_plot_gen_kw.c
+     enkf_plot_gen_kw_vector.c
      enkf_plot_tvector.c 
      qc_module.c 
      ert_report_list.c 
@@ -158,6 +159,7 @@ set( header_files
      enkf_plot_blockdata.h
      enkf_plot_blockvector.h
      enkf_plot_gen_kw.h
+     enkf_plot_gen_kw_vector.h
      enkf_plot_tvector.h 
      qc_module.h 
      ert_report_list.h 
