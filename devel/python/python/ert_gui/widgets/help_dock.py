@@ -1,5 +1,5 @@
-from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import QDockWidget, QLabel, QWidget, QVBoxLayout, QColor
+from PyQt4.QtCore import Qt, QUrl
+from PyQt4.QtGui import QLabel, QWidget, QVBoxLayout, QColor, QDesktopServices
 
 import os
 from ert_gui.pages.message_center import MessageCenter
@@ -23,6 +23,8 @@ class HelpDock(QWidget):
         palette.setColor(self.backgroundRole(), QColor(255, 255, 224))
         self.setPalette(palette)
         self.setAutoFillBackground(True)
+        self.setMinimumWidth(300)
+        self.setMinimumHeight(200)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -34,6 +36,7 @@ class HelpDock(QWidget):
         self.help_widget = QLabel(HelpDock.default_help_string)
         self.help_widget.setWordWrap(True)
         self.help_widget.setTextFormat(Qt.RichText)
+        self.help_widget.linkActivated.connect(self.openHelpURL)
 
         self.validation_widget = QLabel("")
         self.validation_widget.setWordWrap(True)
@@ -54,6 +57,9 @@ class HelpDock(QWidget):
         HelpDock.__instances.append(self)
 
 
+    def openHelpURL(self, q_string):
+        url = QUrl(q_string)
+        QDesktopServices.openUrl(url)
 
     @classmethod
     def setHelpMessageLink(cls, help_link):

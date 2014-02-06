@@ -58,7 +58,8 @@ int main(int argc , char ** argv) {
 
     {
       enkf_main_type * enkf_main_single_run = enkf_main_bootstrap( NULL , config_file_single_run , strict , true );
-      enkf_main_init_run(enkf_main_single_run , NULL , run_mode , INIT_NONE);     /* This is ugly */
+      bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size( enkf_main_single_run ) , true );
+      enkf_main_init_run(enkf_main_single_run , iactive , run_mode , INIT_NONE);     /* This is ugly */
 
       state = enkf_main_iget_state( enkf_main_single_run , 0 );
       enkf_state_init_run(state, run_mode, active, max_internal_sumbit, init_step_parameter, init_state_parameter, init_state_dynamic, load_start, 0, step1, step2);
@@ -72,13 +73,15 @@ int main(int argc , char ** argv) {
 
       free(path_single_run0);
       free(path_single_run1);
+      bool_vector_free( iactive );
       enkf_main_free(enkf_main_single_run);
     }
 
 
     {
       enkf_main_type * enkf_main_iter = enkf_main_bootstrap( NULL , config_file_multiple_iter , strict , true );
-      enkf_main_init_run(enkf_main_iter , NULL , run_mode , INIT_NONE);     /* This is ugly */
+      bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size( enkf_main_iter ) , true );
+      enkf_main_init_run(enkf_main_iter , iactive , run_mode , INIT_NONE);     /* This is ugly */
       state = enkf_main_iget_state( enkf_main_iter , 0 );
 
       enkf_state_init_run(state, run_mode, active, max_internal_sumbit, init_step_parameter, init_state_parameter, init_state_dynamic, load_start, 0, step1, step2);
@@ -92,6 +95,7 @@ int main(int argc , char ** argv) {
 
       free(path_iter0_run0);
       free(path_iter1_run1);
+      bool_vector_free( iactive );
       enkf_main_free(enkf_main_iter);
     }
   }

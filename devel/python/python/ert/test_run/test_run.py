@@ -135,7 +135,7 @@ class TestRun(object):
     
     def run(self):
         if len(self.workflows):
-            with TestAreaContext(self.name , prefix = self.path_prefix , store_area = True) as work_area:
+            with TestAreaContext(self.name , prefix = self.path_prefix , store_area = False) as work_area:
                 test_cwd = work_area.get_cwd()
                 work_area.copy_parent_content( self.abs_config_file )
                 status = self.__run( work_area )
