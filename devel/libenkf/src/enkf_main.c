@@ -1698,7 +1698,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, const bool_vector_type * ia
   
   enkf_main_init_internalization(enkf_main , run_mode);
   
-  if (iactive) {
+  {
     const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
     enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , active_ens_size - 1 , init_mode );
@@ -3649,57 +3649,6 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
 
 
-/* Used by external application - this is a library ... */
-void  enkf_main_list_users(  set_type * users , const char * executable ) {
-  DIR * dir = opendir( DEFAULT_VAR_DIR );
-  if (dir != NULL) {
-    struct dirent * dp;
-    do {
-      dp = readdir(dir);
-      if (dp != NULL) {
-        int pid;
-        if (util_sscanf_int( dp->d_name , &pid )) {
-          char * full_path = util_alloc_filename( DEFAULT_VAR_DIR , dp->d_name , NULL );
-          bool add_user    = false;
-          int  uid;
-
-          {
-            FILE * stream    = util_fopen( full_path , "r");
-            char this_executable[512];
-
-            if (fscanf( stream , "%s %d" , this_executable , &uid) == 2) {
-              if (executable != NULL) {
-                if (util_string_equal( this_executable , executable ))
-                  add_user   = true;
-              } else
-                add_user = true;
-            }
-            fclose( stream );
-          }
-
-
-          /* Remove the pid files of dead processes. */
-          if (!util_proc_alive( pid )) {
-            unlink( full_path );
-            add_user = false;
-          }
-
-
-          if (add_user) {
-            struct passwd *pwd;
-            pwd = getpwuid( uid );
-            if (pwd != NULL)
-              set_add_key( users , pwd->pw_name );
-          }
-
-
-          free( full_path );
-        }
-      }
-    } while (dp != NULL );
-    closedir( dir );
-  }
-}
 
 
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main ) {
@@ -4070,3 +4019,55 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
 
   return ret; 
 }
+
+
+void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
+                                    const char * ranking_key,
+                                    const stringlist_type * obs_ranking_keys,
+                                    const int_vector_type * steps) {
+
+  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
+  const enkf_obs_type        * enkf_obs        = enkf_main_get_obs( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const int history_length                     = enkf_main_get_history_length( enkf_main );
+  const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
+
+  misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
+  misfit_ensemble_initialize( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length, false);
+
+  ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
+
+  ranking_table_add_misfit_ranking( ranking_table , misfit_ensemble , obs_ranking_keys , steps , ranking_key );
+  ranking_table_display_ranking( ranking_table , ranking_key);
+}
+
+
+
+void enkf_main_rank_on_data(enkf_main_type * enkf_main,
+                            const char * ranking_key,
+                            const char * data_key,
+                            bool sort_increasing,
+                            int step) {
+
+  ranking_table_type * ranking_table     = enkf_main_get_ranking_table( enkf_main );
+  ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
+  enkf_fs_type * fs                      = enkf_main_get_fs(enkf_main);
+  state_enum state                       = FORECAST;
+  char * key_index;
+
+  const enkf_config_node_type * config_node = ensemble_config_user_get_node( ensemble_config , data_key , &key_index);
+  if (config_node) {
+    ranking_table_add_data_ranking( ranking_table , sort_increasing , ranking_key , data_key , key_index , fs , config_node, step , state );
+    ranking_table_display_ranking( ranking_table , ranking_key );
+  } else {
+    fprintf(stderr,"** No data found for key %s\n", data_key);
+  }
+}
+
+
+void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_key, const char * ranking_file) {
+  ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
+  ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
+}
+
+

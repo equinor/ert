@@ -293,17 +293,16 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
     else {
       state_enum init_state = ANALYZED;
 
-      for (int ip = 0; ip < stringlist_get_size(param_list); ip++)
-        {
-          enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
-          node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
-          bool has_data = enkf_node_has_data(param_node, fs, node_id);
-          
-          if ((init_mode == INIT_FORCE) || (has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
-            if (enkf_node_initialize(param_node, iens, enkf_state->rng)) 
-              enkf_node_store(param_node, fs, true, node_id);
-          }
+      for (int ip = 0; ip < stringlist_get_size(param_list); ip++) {
+        enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
+        node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
+        bool has_data = enkf_node_has_data(param_node, fs, node_id);
+        
+        if ((init_mode == INIT_FORCE) || (has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
+          if (enkf_node_initialize(param_node, iens, enkf_state->rng)) 
+            enkf_node_store(param_node, fs, true, node_id);
         }
+      }
       state_map_update_matching(state_map , iens , STATE_UNDEFINED | STATE_LOAD_FAILURE , STATE_INITIALIZED);
       enkf_fs_fsync(fs);
     }
@@ -1138,8 +1137,17 @@ void enkf_state_forward_init(enkf_state_type * enkf_state ,
         if (!enkf_node_has_data( node , fs , node_id)) {   
           if (enkf_node_forward_init(node , run_info->run_path , iens ))
             enkf_node_store( node , fs, false , node_id );
-          else
+          else {
+            char * init_file = enkf_config_node_alloc_initfile( enkf_node_get_config( node ) , run_info->run_path , iens );
+
+            if (init_file && !util_file_exists( init_file )) 
+              fprintf(stderr,"File not found: %s - failed to initialize node: %s\n", init_file , enkf_node_get_key( node ));
+            else
+              fprintf(stderr,"Failed to initialize node: %s\n", enkf_node_get_key( node ));
+            
+            util_safe_free( init_file );
             *result |= LOAD_FAILURE;
+          }
         }
 
       }

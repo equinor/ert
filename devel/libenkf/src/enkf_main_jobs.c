@@ -313,7 +313,117 @@ void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * ar
 }
 
 
+void * enkf_main_rank_on_observations_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main  = enkf_main_safe_cast( self );
+  const char * ranking_name   = stringlist_iget(args, 0);
+
+  bool step_arguments = false;
+  bool obs_arguments  = false;
+  int  delimiter      = 0;
+  {
+    delimiter = stringlist_find_first(args, "|");
+    if (delimiter > -1) {
+      step_arguments = (delimiter > 1) ? true : false;
+      obs_arguments  = (stringlist_get_size(args) > delimiter + 1) ? true : false;
+    } else if (stringlist_get_size(args) > 1) {
+        step_arguments = true;
+        delimiter     = stringlist_get_size(args);
+    }
+  }
+
+  int_vector_type * steps_vector = NULL;
+  {
+    char * report_steps = NULL;
+
+    if (step_arguments)
+      report_steps = stringlist_alloc_joined_substring(args, 1, delimiter, ",");
+    else
+      report_steps = util_alloc_sprintf("0-%d", enkf_main_get_history_length(enkf_main));
+
+    steps_vector = string_util_alloc_value_list(report_steps);
+
+    free(report_steps);
+  }
+
+
+  stringlist_type * obs_ranking_keys = NULL;
+  {
+    char * obs_key_char = NULL;
+    if (obs_arguments)
+      obs_key_char = stringlist_alloc_joined_substring( args , delimiter+1 , stringlist_get_size(args) , " ");
+
+    enkf_obs_type * enkf_obs = enkf_main_get_obs(enkf_main);
+    obs_ranking_keys = enkf_obs_alloc_matching_keylist( enkf_obs , obs_key_char );
+
+    if ((obs_arguments) && (stringlist_get_size(obs_ranking_keys) == 0)) {
+      fprintf(stderr,"The input string : \"%s\" did not resolve to any valid observation keys. Job not started\n", obs_key_char);
+      return NULL;
+    }
+
+    if (obs_arguments)
+      free(obs_key_char);
+  }
+
+
+  enkf_main_rank_on_observations(enkf_main, ranking_name, obs_ranking_keys, steps_vector);
+
+  stringlist_free(obs_ranking_keys);
+  int_vector_free(steps_vector);
+  return NULL;
+}
 
 
 
 
+void * enkf_main_rank_on_data_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  const char * ranking_name  = stringlist_iget(args, 0);
+  const char * data_key      = stringlist_iget(args, 1);
+  bool valid = true;
+  bool sort_increasing       = stringlist_iget_as_bool(args, 2, &valid);
+
+  if (!valid) {
+    fprintf(stderr,"** Third argument \"sort increasing\" not recognized as bool value, job not started\n");
+    return NULL;
+  }
+
+  int report_step = (stringlist_get_size(args) > 3) ? stringlist_iget_as_int(args, 3, &valid) : enkf_main_get_history_length(enkf_main) ;
+  if (!valid) {
+    fprintf(stderr,"** Fourth argument \"step\" not recognized as integer value, job not started\n");
+    return NULL;
+  }
+
+  if (report_step < 0) {
+    fprintf(stderr,"** Negative report step, job not started\n");
+    return NULL;
+  }
+
+  enkf_main_rank_on_data(enkf_main, ranking_name, data_key, sort_increasing, report_step);
+  return NULL;
+}
+
+
+void * enkf_main_export_ranking_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  const char * ranking_name  = stringlist_iget(args, 0);
+  const char * ranking_file  = stringlist_iget(args, 1);
+
+  enkf_main_export_ranking(enkf_main, ranking_name, ranking_file);
+  return NULL;
+}
+
+void * enkf_main_init_misfit_table_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main   = enkf_main_safe_cast( self );
+  int history_length           = enkf_main_get_history_length(enkf_main);
+  enkf_obs_type * enkf_obs     = enkf_main_get_obs(enkf_main);
+  int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
+  enkf_fs_type * fs            = enkf_main_get_fs(enkf_main);
+  bool force_update            = true;
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+
+
+  misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
+  misfit_ensemble_initialize( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length, force_update);
+
+  return NULL;
+}
