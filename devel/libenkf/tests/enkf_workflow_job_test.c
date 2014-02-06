@@ -218,15 +218,15 @@ ert_test_context_type * create_context( const char * config_file ) {
 int main(int argc , const char ** argv) {
   enkf_main_install_SIGNALS();
   
-  const char * config_file                  = argv[0];
-  const char * job_file_create_case         = argv[1];
-  const char * job_file_init_case_job       = argv[2];
-  const char * job_file_load_results        = argv[3];
-  const char * job_file_load_results_iter   = argv[4];
-  const char * job_file_observation_ranking = argv[5];
-  const char * job_file_data_ranking        = argv[6];
-  const char * job_file_ranking_export      = argv[7];
-  const char * job_file_init_misfit_table   = argv[8];
+  const char * config_file                  = argv[1];
+  const char * job_file_create_case         = argv[2];
+  const char * job_file_init_case_job       = argv[3];
+  const char * job_file_load_results        = argv[4];
+  const char * job_file_load_results_iter   = argv[5];
+  const char * job_file_observation_ranking = argv[6];
+  const char * job_file_data_ranking        = argv[7];
+  const char * job_file_ranking_export      = argv[8];
+  const char * job_file_init_misfit_table   = argv[9];
 
 
   ert_test_context_type * test_context = create_context( config_file );
