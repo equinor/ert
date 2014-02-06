@@ -267,12 +267,27 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                                                               int source_report_step,
                                                               state_enum source_state);
 
+  void              enkf_main_init_current_case_from_existing_custom(const enkf_main_type * enkf_main,
+                                                                    enkf_fs_type * source_case_fs,
+                                                                    int source_report_step,
+                                                                    state_enum source_state,
+                                                                    stringlist_type * node_list,
+                                                                    bool_vector_type * iactive);
+
 
   void              enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
                                                       enkf_fs_type * source_case_fs,
                                                       int source_report_step,
                                                       state_enum source_state,
                                                       enkf_fs_type * target_case);
+
+  void              enkf_main_init_case_from_existing_custom(const enkf_main_type * enkf_main,
+                                                             enkf_fs_type * source_case_fs,
+                                                             int source_report_step,
+                                                             state_enum source_state,
+                                                             enkf_fs_type * target_case,
+                                                             stringlist_type * node_list,
+                                                             bool_vector_type * iactive);
 
   bool              enkf_main_case_is_initialized( const enkf_main_type * enkf_main ,
                                                    const char * case_name ,

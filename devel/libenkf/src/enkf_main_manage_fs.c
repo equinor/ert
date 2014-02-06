@@ -208,6 +208,25 @@ void enkf_main_init_current_case_from_existing(const enkf_main_type * enkf_main,
 }
 
 
+void enkf_main_init_current_case_from_existing_custom(const enkf_main_type * enkf_main,
+                                                      enkf_fs_type * source_case_fs,
+                                                      int source_report_step,
+                                                      state_enum source_state,
+                                                      stringlist_type * node_list,
+                                                      bool_vector_type * iactive) {
+
+  enkf_fs_type * current_fs = enkf_main_get_fs(enkf_main);
+
+  enkf_main_init_case_from_existing_custom(enkf_main,
+                                           source_case_fs,
+                                           source_report_step,
+                                           source_state,
+                                           current_fs,
+                                           node_list,
+                                           iactive);
+}
+
+
 void enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
                                        enkf_fs_type * source_case_fs,
                                        int source_report_step,
@@ -233,6 +252,31 @@ void enkf_main_init_case_from_existing(const enkf_main_type * enkf_main,
   bool_vector_free(iactive);
   stringlist_free(param_list);
 }
+
+
+void enkf_main_init_case_from_existing_custom(const enkf_main_type * enkf_main,
+                                              enkf_fs_type * source_case_fs,
+                                              int source_report_step,
+                                              state_enum source_state,
+                                              enkf_fs_type * target_case_fs,
+                                              stringlist_type * node_list,
+                                              bool_vector_type * iactive) {
+
+  int target_report_step  = 0;
+  state_enum target_state = ANALYZED;
+
+  enkf_main_copy_ensemble(enkf_main,
+                          source_case_fs,
+                          source_report_step,
+                          source_state,
+                          target_case_fs,
+                          target_report_step,
+                          target_state ,
+                          iactive,
+                          NULL,
+                          node_list);
+}
+
 
 
 
