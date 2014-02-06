@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2014  Statoil ASA, Norway.
 
-   The file 'enkf_plot_gendata.c' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'enkf_plot_genvector.c' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -67,13 +67,8 @@ double  enkf_plot_genvector_iget( const enkf_plot_genvector_type * vector , int 
     return double_vector_iget( vector->data , index );
 }
 
-void enkf_plot_genvector_reset( enkf_plot_genvector_type * vector ){
-
-}
 
 void enkf_plot_genvector_load( enkf_plot_genvector_type * vector , enkf_fs_type * fs , int report_step , state_enum state) {
-  enkf_plot_genvector_reset( vector );
-  {
     enkf_node_type * work_node  = enkf_node_alloc( vector->config_node );
 
     node_id_type node_id = { .report_step = report_step ,
@@ -86,7 +81,6 @@ void enkf_plot_genvector_load( enkf_plot_genvector_type * vector , enkf_fs_type 
 
     }
     enkf_node_free( work_node );
-  }
 }
 
 

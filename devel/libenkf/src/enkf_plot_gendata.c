@@ -39,9 +39,6 @@ struct enkf_plot_gendata_struct {
   const enkf_config_node_type * enkf_config_node;
   enkf_plot_genvector_type ** ensemble;
   arg_pack_type              ** work_arg;
- // int                         * sort_perm;
-  bool clean_enkf_node;
-
 };
 
 UTIL_IS_INSTANCE_FUNCTION( enkf_plot_gendata , ENKF_PLOT_GENDATA_TYPE_ID )
@@ -83,7 +80,11 @@ int  enkf_plot_gendata_get_size( const enkf_plot_gendata_type * data ){
 }
 
 enkf_plot_genvector_type * enkf_plot_gendata_iget( const enkf_plot_gendata_type * plot_data , int index){
-    return plot_data->ensemble[index];
+    if(index >=0 && index < plot_data->size){
+        return plot_data->ensemble[index];
+    } else {
+        return NULL;
+    }
 }
 
 static void enkf_plot_gendata_resize( enkf_plot_gendata_type * plot_gendata , int new_size ){
