@@ -24,6 +24,9 @@ ENABLE_TESTING()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
    set(ERT_LINUX TRUE )
    add_definitions( -DERT_LINUX )
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(ERT_LINUX TRUE )
+   add_definitions( -DERT_LINUX )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
    set(ERT_WINDOWS TRUE)
    add_definitions( -DERT_WINDOWS )
@@ -120,6 +123,8 @@ add_subdirectory( libecl_well )
 #-----------------------------------------------------------------
 if (BUILD_ERT)
 #-----------------------------------------------------------------
+   include(cmake/ert_module_name.cmake)
+
    include_directories( ${PROJECT_SOURCE_DIR}/libconfig/include )
    add_subdirectory( libconfig )
 
