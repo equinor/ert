@@ -1,4 +1,4 @@
-from ert.enkf.enums import EnkfInitModeEnum
+from ert.enkf.enums import EnkfInitModeEnum, EnkfStateType
 from ert_gui.models.connectors.run import NumberOfIterationsModel, ActiveRealizationsModel, IteratedAnalysisModuleModel, BaseRunModel
 from ert_gui.models.connectors.run.target_case_format_model import TargetCaseFormatModel
 from ert_gui.models.mixins import ErtRunError
@@ -53,6 +53,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseCount(phase_count)
 
         analysis_module = self.setAnalysisModule()
+
+        source_fs = self.ert().getEnkfFsManager().getFileSystem()
+        initial_fs = self.createTargetCaseFileSystem(0)
+
+        if not source_fs == initial_fs:
+            self.ert().getEnkfFsManager().switchFileSystem(initial_fs)
+            self.ert().getEnkfFsManager().initializeCurrentCaseFromExisting(source_fs, 0, EnkfStateType.ANALYZED)
 
         analysis_module.setVar("ITER", str(0))
         self.runAndPostProcess(0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
