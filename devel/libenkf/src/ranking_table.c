@@ -118,7 +118,7 @@ bool ranking_table_fwrite_ranking( const ranking_table_type * ranking_table , co
   if (hash_has_key( ranking_table->ranking_table , ranking_key)) {
     void * ranking = hash_get( ranking_table->ranking_table , ranking_key );
 
-    FILE * file = util_fopen(filename, "w");
+    FILE * file = util_mkdir_fopen(filename, "w");
 
     if (data_ranking_is_instance( ranking )) {
       data_ranking_type * data_ranking = data_ranking_safe_cast( ranking );
