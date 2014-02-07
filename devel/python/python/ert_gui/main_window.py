@@ -18,8 +18,6 @@ class GertMainWindow(QMainWindow):
 
         self.setCentralWidget(self.central_widget)
 
-        self.central_widget_content = None
-
         self.toolbar = self.addToolBar("Tools")
         self.toolbar.setObjectName("Toolbar")
         self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
