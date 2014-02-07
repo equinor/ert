@@ -189,10 +189,14 @@ add_test( enkf_state_no_summary_vars_present
 
 
 add_executable( enkf_export_field_test enkf_export_field_test.c )
-target_link_libraries( enkf_export_field_test  enkf test_util )
+target_link_libraries( enkf_export_field_test  ert-test test_util )
 
 add_test( enkf_export_field_test
-          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields config ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config)
+          ${EXECUTABLE_OUTPUT_PATH}/enkf_export_field_test ${PROJECT_SOURCE_DIR}/test-data/Statoil/config/export_fields/config
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_ECL_GRDECL
+                                                           ${PROJECT_SOURCE_DIR}/share/workflows/jobs/internal/config/EXPORT_FIELD_RMS_ROFF)
+
 
 
 add_executable( enkf_workflow_job_test enkf_workflow_job_test.c )
