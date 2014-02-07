@@ -126,6 +126,10 @@ add_executable( enkf_plot_gen_kw enkf_plot_gen_kw.c )
 target_link_libraries( enkf_plot_gen_kw enkf test_util )
 add_test( enkf_plot_gen_kw  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw )
 
+add_executable( enkf_plot_gen_kw_vector enkf_plot_gen_kw_vector.c )
+target_link_libraries( enkf_plot_gen_kw_vector enkf test_util )
+add_test( enkf_plot_gen_kw_vector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw_vector )
+
 add_executable( enkf_plot_genvector enkf_plot_genvector.c )
 target_link_libraries( enkf_plot_genvector enkf test_util )
 add_test( enkf_plot_genvector  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_genvector )
