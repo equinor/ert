@@ -242,12 +242,11 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
 
   source_case = enkf_tui_fs_alloc_existing_case( enkf_main , "Initialize from case" , prompt_len);
   if (source_case != NULL) {                                              
-    char * ranking_key  = NULL;
-    bool_vector_type * iens_mask = bool_vector_alloc( 0 , true ); 
-    src_step         = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
-    src_state        = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
-    enkf_main_initialize_from_existing( enkf_main , source_case , src_step , src_state , iens_mask , ranking_key );
-    bool_vector_free( iens_mask );
+    src_step                 = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
+    src_state                = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
+    enkf_fs_type * source_fs = enkf_main_mount_alt_fs( enkf_main , source_case , true , false );
+    enkf_main_init_current_case_from_existing(enkf_main, source_fs , src_step , src_state);
+    enkf_fs_umount(source_fs);
   }
   util_safe_free( source_case );
 }

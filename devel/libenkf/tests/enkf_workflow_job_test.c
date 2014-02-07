@@ -45,9 +45,56 @@ void test_create_case_job(ert_test_context_type * test_context, const char * job
 }
 
 
+void test_init_case_job(ert_test_context_type * test_context, const char * job_name , const char * job_file) {
+  stringlist_type * args = stringlist_alloc_new();
+  enkf_main_type * enkf_main = ert_test_context_get_main(test_context);
+
+  ert_test_context_install_workflow_job( test_context , "JOB" , job_file );
+
+  //Test init current case from existing
+  enkf_fs_type * cur_fs = enkf_main_mount_alt_fs( enkf_main , "new_current_case" , false , true );
+  enkf_main_select_fs(enkf_main, "new_current_case");
+
+  stringlist_append_copy( args, "default"); //case to init from
+  test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+
+  enkf_fs_umount(cur_fs);
+  const char * current_case = enkf_main_get_current_fs(enkf_main);
+  test_assert_string_equal(current_case, "new_current_case");
+  test_assert_true(enkf_fs_has_node(enkf_main_get_fs(enkf_main), "PERMZ", PARAMETER, 0, 0, ANALYZED));
+
+  //Test init case from existing case:
+  stringlist_clear(args);
+  stringlist_append_copy(args, "default"); //case to init from
+  stringlist_append_copy(args, "new_not_current_case");
+  test_assert_true( ert_test_context_run_worklow_job( test_context , "JOB" , args) );
+  {
+    enkf_fs_type * fs = enkf_main_mount_alt_fs(enkf_main, "new_not_current_case", true, false);
+    test_assert_not_NULL( fs );
+    test_assert_true( enkf_fs_has_node(fs, "PERMZ", PARAMETER, 0, 0, ANALYZED ));
+    enkf_fs_umount(fs);
+  }
+
+  stringlist_free( args );
+}
+
+
 void test_load_results_job(ert_test_context_type * test_context , const char * job_name , const char * job_file) {
   stringlist_type * args = stringlist_alloc_new();
   ert_test_context_install_workflow_job( test_context , job_name , job_file );
+  stringlist_append_copy( args , "0");
+  stringlist_append_copy( args , ",");
+  stringlist_append_copy( args , "1");
+  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
+  stringlist_free( args );
+}
+
+
+void test_load_results_iter_job(ert_test_context_type * test_context , const char * job_name , const char * job_file) {
+
+  stringlist_type * args = stringlist_alloc_new();
+  ert_test_context_install_workflow_job( test_context , job_name , job_file );
+  stringlist_append_copy( args , "0");
   stringlist_append_copy( args , "0");
   stringlist_append_copy( args , ",");
   stringlist_append_copy( args , "1");
@@ -160,18 +207,6 @@ void test_init_misfit_table(ert_test_context_type * test_context , const char * 
 }
 
 
-void test_load_results_iter_job(ert_test_context_type * test_context , const char * job_name , const char * job_file) {
-  
-  stringlist_type * args = stringlist_alloc_new();
-  ert_test_context_install_workflow_job( test_context , job_name , job_file );
-  stringlist_append_copy( args , "0");
-  stringlist_append_copy( args , "0");
-  stringlist_append_copy( args , ",");
-  stringlist_append_copy( args , "1");
-  test_assert_true( ert_test_context_run_worklow_job( test_context , job_name , args) );
-  stringlist_free( args );
-}
-
 
 ert_test_context_type * create_context( const char * config_file ) {
   ert_test_context_type * test_context = ert_test_context_alloc("LoadResultsJob" , config_file , NULL);
@@ -179,29 +214,30 @@ ert_test_context_type * create_context( const char * config_file ) {
 }
 
 
-
 int main(int argc , const char ** argv) {
   enkf_main_install_SIGNALS();
   
   const char * config_file                  = argv[1];
   const char * job_file_create_case         = argv[2];
-  const char * job_file_load_results        = argv[3];
-  const char * job_file_load_results_iter   = argv[4];
-  const char * job_file_observation_ranking = argv[5];
-  const char * job_file_data_ranking        = argv[6];
-  const char * job_file_ranking_export      = argv[7];
-  const char * job_file_init_misfit_table   = argv[8];
+  const char * job_file_init_case_job       = argv[3];
+  const char * job_file_load_results        = argv[4];
+  const char * job_file_load_results_iter   = argv[5];
+  const char * job_file_observation_ranking = argv[6];
+  const char * job_file_data_ranking        = argv[7];
+  const char * job_file_ranking_export      = argv[8];
+  const char * job_file_init_misfit_table   = argv[9];
 
 
   ert_test_context_type * test_context = create_context( config_file );
   {
-    test_create_case_job(test_context        , "JOB1" , job_file_create_case);
-    test_load_results_job(test_context       , "JOB2" , job_file_load_results);
-    test_load_results_iter_job( test_context , "JOB3" , job_file_load_results_iter );
-    test_init_misfit_table(test_context , "JOB7" , job_file_init_misfit_table);
-    test_rank_realizations_on_observations_job(test_context , "JOB4" , job_file_observation_ranking);
-    test_rank_realizations_on_data_job(test_context , "JOB5" , job_file_data_ranking);
-    test_export_ranking(test_context , "JOB6" , job_file_ranking_export);
+    test_create_case_job(test_context, "JOB1" , job_file_create_case);
+    test_init_case_job(test_context, "JOB2", job_file_init_case_job);
+    test_load_results_job(test_context, "JOB3" , job_file_load_results);
+    test_load_results_iter_job( test_context, "JOB4" , job_file_load_results_iter );
+    test_init_misfit_table(test_context, "JOB5" , job_file_init_misfit_table);
+    test_rank_realizations_on_observations_job(test_context, "JOB6" , job_file_observation_ranking);
+    test_rank_realizations_on_data_job(test_context , "JOB7" , job_file_data_ranking);
+    test_export_ranking(test_context, "JOB8" , job_file_ranking_export);
   }
   ert_test_context_free( test_context );
   exit(0);
