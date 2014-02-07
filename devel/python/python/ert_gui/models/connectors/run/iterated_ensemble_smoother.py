@@ -56,6 +56,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         analysis_module.setVar("ITER", str(0))
         self.runAndPostProcess(0, phase_count, EnkfInitModeEnum.INIT_CONDITIONAL)
+        target_case_format = TargetCaseFormatModel().getValue()
+        self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
 
         for phase in range(1, self.phaseCount()):
             target_fs = self.createTargetCaseFileSystem(phase)
