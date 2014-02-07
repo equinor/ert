@@ -126,11 +126,6 @@ add_executable( enkf_plot_gen_kw enkf_plot_gen_kw.c )
 target_link_libraries( enkf_plot_gen_kw enkf test_util )
 add_test( enkf_plot_gen_kw  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw )
 
-add_executable( enkf_plot_gen_kw_fs enkf_plot_gen_kw_fs.c )
-target_link_libraries( enkf_plot_gen_kw_fs ert-test enkf test_util )
-add_test( enkf_plot_gen_kw_fs  ${EXECUTABLE_OUTPUT_PATH}/enkf_plot_gen_kw_fs
-          /nr/project/sand/EnKF/PUNQS3/Til_Statoil_test/config_file )
-
 add_executable( enkf_config_node enkf_config_node.c )
 target_link_libraries( enkf_config_node enkf test_util )
 add_test( enkf_config_node  ${EXECUTABLE_OUTPUT_PATH}/enkf_config_node )
