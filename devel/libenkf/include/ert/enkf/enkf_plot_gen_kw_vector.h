@@ -31,7 +31,7 @@ extern "C" {
 
   typedef struct enkf_plot_gen_kw_vector_struct enkf_plot_gen_kw_vector_type;
 
-  enkf_plot_gen_kw_vector_type * enkf_plot_gen_kw_vector_alloc( const enkf_config_node_type * config_node , int iens , const stringlist_type * key_list );
+  enkf_plot_gen_kw_vector_type * enkf_plot_gen_kw_vector_alloc( const enkf_config_node_type * config_node , int iens );
   void                           enkf_plot_gen_kw_vector_free( enkf_plot_gen_kw_vector_type * vector );
   int                            enkf_plot_gen_kw_vector_get_size( const enkf_plot_gen_kw_vector_type * vector );
   void                           enkf_plot_gen_kw_vector_reset( enkf_plot_gen_kw_vector_type * vector );

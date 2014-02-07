@@ -46,14 +46,14 @@ UTIL_IS_INSTANCE_FUNCTION( enkf_plot_gen_kw , ENKF_PLOT_GEN_KW_TYPE_ID )
 
 enkf_plot_gen_kw_type * enkf_plot_gen_kw_alloc( const enkf_config_node_type * config_node ) {
   if (enkf_config_node_get_impl_type( config_node ) == GEN_KW) {
-    enkf_plot_gen_kw_type * gen_kw = util_malloc( sizeof * gen_kw );
-    UTIL_TYPE_ID_INIT( gen_kw , ENKF_PLOT_GEN_KW_TYPE_ID );
-    gen_kw->config_node = config_node;
-    gen_kw->size = 0;
-    gen_kw->ensemble = NULL;
-    gen_kw->key_list = stringlist_alloc_new();
+    enkf_plot_gen_kw_type * plot_gen_kw = util_malloc( sizeof * plot_gen_kw );
+    UTIL_TYPE_ID_INIT( plot_gen_kw , ENKF_PLOT_GEN_KW_TYPE_ID );
+    plot_gen_kw->config_node = config_node;
+    plot_gen_kw->size = 0;
+    plot_gen_kw->ensemble = NULL;
+    plot_gen_kw->key_list = stringlist_alloc_new();
 
-    return gen_kw;
+    return plot_gen_kw;
   }
   else {
     return NULL;
@@ -61,53 +61,55 @@ enkf_plot_gen_kw_type * enkf_plot_gen_kw_alloc( const enkf_config_node_type * co
 }
 
 
-void enkf_plot_gen_kw_free( enkf_plot_gen_kw_type * gen_kw ) {
+void enkf_plot_gen_kw_free( enkf_plot_gen_kw_type * plot_gen_kw ) {
   int iens;
-  for (iens = 0 ; iens < gen_kw->size ; ++iens) {
-    enkf_plot_gen_kw_vector_free( gen_kw->ensemble[iens] );
+  for (iens = 0 ; iens < plot_gen_kw->size ; ++iens) {
+    enkf_plot_gen_kw_vector_free( plot_gen_kw->ensemble[iens] );
   }
-  stringlist_free( gen_kw->key_list );
-  free( gen_kw );
+  stringlist_free( plot_gen_kw->key_list );
+  free( plot_gen_kw );
 }
 
 
-int enkf_plot_gen_kw_get_size( const enkf_plot_gen_kw_type * gen_kw ) {
-  return gen_kw->size;
+int enkf_plot_gen_kw_get_size( const enkf_plot_gen_kw_type * plot_gen_kw ) {
+  return plot_gen_kw->size;
 }
 
-enkf_plot_gen_kw_vector_type * enkf_plot_gen_kw_iget( const enkf_plot_gen_kw_type * gen_kw , int iens)  {
-  assert(iens >= 0 && iens < gen_kw->size);
-  return gen_kw->ensemble[iens];
+enkf_plot_gen_kw_vector_type * enkf_plot_gen_kw_iget( const enkf_plot_gen_kw_type * plot_gen_kw , int iens)  {
+  if ((iens < 0) || (iens >= plot_gen_kw->size))
+    util_abort("%s: index:%d invalid. Valid interval: [0,%d>.\n",__func__ , iens , plot_gen_kw->size);
+
+  return plot_gen_kw->ensemble[iens];
 }
 
 
-static void enkf_plot_gen_kw_resize( enkf_plot_gen_kw_type * gen_kw , int new_size ) {
-  if (new_size != gen_kw->size) {
+static void enkf_plot_gen_kw_resize( enkf_plot_gen_kw_type * plot_gen_kw , int new_size ) {
+  if (new_size != plot_gen_kw->size) {
     int iens;
 
-    if (new_size < gen_kw->size) {
-      for (iens = new_size; iens < gen_kw->size; iens++) {
-        enkf_plot_gen_kw_vector_free( gen_kw->ensemble[iens] );
+    if (new_size < plot_gen_kw->size) {
+      for (iens = new_size; iens < plot_gen_kw->size; iens++) {
+        enkf_plot_gen_kw_vector_free( plot_gen_kw->ensemble[iens] );
       }
     }
 
-    gen_kw->ensemble = util_realloc( gen_kw->ensemble , new_size * sizeof * gen_kw->ensemble);
+    plot_gen_kw->ensemble = util_realloc( plot_gen_kw->ensemble , new_size * sizeof * plot_gen_kw->ensemble);
 
-    if (new_size > gen_kw->size) {
-      for (iens = gen_kw->size; iens < new_size; iens++) {
-        gen_kw->ensemble[iens] = enkf_plot_gen_kw_vector_alloc( gen_kw->config_node , iens , gen_kw->key_list );
+    if (new_size > plot_gen_kw->size) {
+      for (iens = plot_gen_kw->size; iens < new_size; iens++) {
+        plot_gen_kw->ensemble[iens] = enkf_plot_gen_kw_vector_alloc( plot_gen_kw->config_node , iens );
       }
     }
-    gen_kw->size = new_size;
+    plot_gen_kw->size = new_size;
   }
 }
 
 
-static void enkf_plot_gen_kw_reset( enkf_plot_gen_kw_type * gen_kw ) {
-  const gen_kw_config_type * gen_kw_config = enkf_config_node_get_ref( gen_kw->config_node );
+static void enkf_plot_gen_kw_reset( enkf_plot_gen_kw_type * plot_gen_kw ) {
+  const gen_kw_config_type * gen_kw_config = enkf_config_node_get_ref( plot_gen_kw->config_node );
 
-  stringlist_free( gen_kw->key_list );
-  gen_kw->key_list = gen_kw_config_alloc_name_list( gen_kw_config );
+  stringlist_free( plot_gen_kw->key_list );
+  plot_gen_kw->key_list = gen_kw_config_alloc_name_list( gen_kw_config );
 }
 
 
