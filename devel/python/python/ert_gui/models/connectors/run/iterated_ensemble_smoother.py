@@ -20,10 +20,10 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
 
     def runAndPostProcess(self, phase, phase_count,  mode):
-        self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase + 1, phase_count), indeterminate=False)
+        self.setPhase(phase, "Running iteration %d of %d simulation iterations..." % (phase, phase_count - 1), indeterminate=False)
 
         active_realization_mask = ActiveRealizationsModel().getActiveRealizationsMask()
-        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode , phase)
+        success = self.ert().getEnkfSimulationRunner().runSimpleStep(active_realization_mask, mode, phase)
 
         if not success:
             raise ErtRunError("Simulation failed!")
@@ -49,7 +49,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def runSimulations(self):
         iteration_count = NumberOfIterationsModel().getValue()
-        phase_count = iteration_count
+        phase_count = iteration_count + 1
         self.setPhaseCount(phase_count)
 
         analysis_module = self.setAnalysisModule()
@@ -66,7 +66,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         target_case_format = TargetCaseFormatModel().getValue()
         self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat( target_case_format )
 
-        for phase in range(1, self.phaseCount()):
+        for phase in range(1, phase_count):
             target_fs = self.createTargetCaseFileSystem(phase)
 
             self.analyzeStep(target_fs)

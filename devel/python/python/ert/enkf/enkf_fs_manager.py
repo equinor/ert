@@ -46,9 +46,10 @@ class EnkfFsManager(BaseCClass):
     def userSelectFileSystem(self, input_case):
         EnkfFsManager.cNamespace().user_select_fs(self, input_case)
 
-    def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, source_state, member_mask, ranking_key, node_list):
+    def customInitializeCurrentFromExistingCase(self, source_case, source_report_step, source_state, member_mask, node_list):
         assert isinstance(source_state, EnkfStateType)
-        EnkfFsManager.cNamespace().custom_initialize_from_existing(self, source_case, source_report_step, source_state, node_list, member_mask)
+        source_case_fs = self.mountAlternativeFileSystem(source_case, False, False)
+        EnkfFsManager.cNamespace().custom_initialize_from_existing(self, source_case_fs, source_report_step, source_state, node_list, member_mask)
 
     def initializeCurrentCaseFromExisting(self, source_fs, source_report_step, source_state):
         assert isinstance(source_state, EnkfStateType)
