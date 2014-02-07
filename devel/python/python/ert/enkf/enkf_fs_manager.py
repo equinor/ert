@@ -68,7 +68,7 @@ class EnkfFsManager(BaseCClass):
     # def set_case_table(self, case_table_file):
     #     EnkfFsManager.cNamespace().set_case_table(self, case_table_file)
 
-    def lmountAlternativeFileSystem(self, case, read_only, create):
+    def mountAlternativeFileSystem(self, case, read_only, create):
         """ @rtype: EnkfFs """
         assert isinstance(case, str)
         assert isinstance(read_only, bool)
