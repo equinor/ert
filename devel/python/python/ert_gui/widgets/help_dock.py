@@ -24,7 +24,7 @@ class HelpDock(QWidget):
         self.setPalette(palette)
         self.setAutoFillBackground(True)
         self.setMinimumWidth(300)
-        self.setMinimumHeight(200)
+        self.setMinimumHeight(250)
 
         layout = QVBoxLayout()
         self.setLayout(layout)

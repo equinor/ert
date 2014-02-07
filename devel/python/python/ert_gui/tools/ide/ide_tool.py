@@ -6,7 +6,7 @@ from ert_gui.widgets import util
 
 class IdeTool(Tool):
     def __init__(self, path, reload_function):
-        super(IdeTool, self).__init__("Configure", util.resourceIcon("ide/widgets"))
+        super(IdeTool, self).__init__("Configure", "tools/ide", util.resourceIcon("ide/widgets"))
 
         self.ide_window = None
         self.path = path
