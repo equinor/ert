@@ -137,6 +137,10 @@ class PlotWindow(QMainWindow):
                 show_plot = plot_panel.supportsPlotProperties(depth=True, value=True)
                 self.showOrHidePlotTab(plot_panel, visible, show_plot)
 
+            elif PlotDataFetcher().isGenKWKey(self.__data_type_key):
+                show_plot = plot_panel.supportsPlotProperties()
+                self.showOrHidePlotTab(plot_panel, visible, show_plot)
+
             else:
                 raise NotImplementedError("Key %s not supported." % self.__data_type_key)
 

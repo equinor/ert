@@ -1,5 +1,5 @@
 from ert.enkf.enums import ErtImplType, EnkfObservationImplementationType
-from ert.enkf.plot.block_observation_data_fetcher import BlockObservationDataFetcher
+from ert.enkf.plot import BlockObservationDataFetcher, EnsembleGenKWFetcher
 from ert_gui.models import ErtConnector
 from ert_gui.models.mixins.list_model import ListModelMixin
 
@@ -11,13 +11,23 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
         self.__observation_keys = None
         self.__block_observation_keys = None
         self.__summary_keys = None
+        self.__gen_kw_keys = None
         super(DataTypeKeysModel, self).__init__()
 
 
     def getAllKeys(self):
         """ @rtype: list of str """
-        keys = self.getAllBlockObservationKeys() + self.getAllSummaryKeys()
+        keys = self.getAllBlockObservationKeys() + self.getAllSummaryKeys() + self.getAllGenKWKeys()
         return sorted([key for key in keys], key=lambda k : k.lower())
+
+    def getAllGenKWKeys(self):
+        """ @rtype: list of str """
+        if self.__gen_kw_keys is None:
+            self.__gen_kw_keys = EnsembleGenKWFetcher(self.ert()).getSupportedKeys()
+
+        return self.__gen_kw_keys
+
+
 
     def getAllSummaryKeys(self):
         """ @rtype: list of str """
@@ -65,4 +75,7 @@ class DataTypeKeysModel(ErtConnector, ListModelMixin):
 
     def isBlockKey(self, key):
         return key in self.__block_observation_keys
+
+    def isGenKWKey(self, key):
+        return key in self.__gen_kw_keys
 

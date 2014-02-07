@@ -1,4 +1,5 @@
-from ert.enkf.plot import EnsembleDataFetcher, ObservationDataFetcher, RefcaseDataFetcher, BlockObservationDataFetcher
+from ert.enkf.plot import EnsembleDataFetcher, ObservationDataFetcher, RefcaseDataFetcher, BlockObservationDataFetcher, \
+    EnsembleGenKWFetcher
 from ert.enkf.plot.ensemble_block_data_fetcher import EnsembleBlockDataFetcher
 from ert_gui.tools.plot.data import PlotData, ObservationPlotData, EnsemblePlotData, RefcasePlotData
 from ert_gui.models import ErtConnector
@@ -10,12 +11,16 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
     def getPlotDataForKeyAndCases(self, key, cases):
         observation_data_fetcher = ObservationDataFetcher(self.ert())
         block_observation_data_fetcher = BlockObservationDataFetcher(self.ert())
+        gen_kw_fetcher = EnsembleGenKWFetcher(self.ert())
 
         if self.isBlockObservationKey(key):
             return self.fetchBlockObservationData(block_observation_data_fetcher, key, cases)
 
         elif self.isSummaryKey(key):
             return self.fetchSummaryData(observation_data_fetcher, key, cases)
+
+        elif self.isGenKWKey(key):
+            return self.fetchGenKWData(gen_kw_fetcher, key, cases)
 
         else:
             raise NotImplementedError("Key %s not supported." % key)
@@ -30,6 +35,12 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
         block_observation_data_fetcher = BlockObservationDataFetcher(self.ert())
         return block_observation_data_fetcher.supportsKey(key)
 
+    def isGenKWKey(self, key):
+        gen_kw_fetcher = EnsembleGenKWFetcher(self.ert())
+        return gen_kw_fetcher.supportsKey(key)
+
+    def fetchGenKWData(self, gen_kw_fetcher, key, cases):
+        return PlotData(key)
 
     def fetchBlockObservationData(self, block_observation_data_fetcher, key, cases):
         plot_data = PlotData(key)
@@ -82,3 +93,4 @@ class PlotDataFetcher(ErtConnector, ModelMixin):
             plot_data.addEnsembleData(ensemble_plot_data)
 
         return plot_data
+

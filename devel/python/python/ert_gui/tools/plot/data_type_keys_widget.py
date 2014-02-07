@@ -24,6 +24,7 @@ class DataTypeKeysWidget(QWidget):
 
         data_type_model = QStandardItemModel(0, 1)
         item = QStandardItem("Select data types...")
+        item.setFlags(Qt.NoItemFlags)
 
         data_type_model.appendRow(item)
 
@@ -38,7 +39,14 @@ class DataTypeKeysWidget(QWidget):
         self.__block_item.setData(Qt.Checked, Qt.CheckStateRole)
         data_type_model.appendRow(self.__block_item)
 
+        self.__genkw_item = QStandardItem("Gen")
+        self.__genkw_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+        self.__genkw_item.setData(Qt.Checked, Qt.CheckStateRole)
+        data_type_model.appendRow(self.__genkw_item)
+
+
         data_type_model.itemChanged.connect(self.onItemChanged)
+
 
         combo = QComboBox()
         combo.setModel(data_type_model)
@@ -63,6 +71,8 @@ class DataTypeKeysWidget(QWidget):
             self.filter_model.setShowBlockKeys(checked)
         elif item == self.__summary_item:
             self.filter_model.setShowSummaryKeys(checked)
+        elif item == self.__genkw_item:
+            self.filter_model.setShowGenKWKeys(checked)
 
 
     def itemSelected(self):
