@@ -160,15 +160,11 @@ set( header_files
      enkf_plot_data.h 
      enkf_plot_blockdata.h
      enkf_plot_blockvector.h
-<<<<<<< HEAD
-     enkf_plot_gen_kw.h
-     enkf_plot_gen_kw_vector.h
-     enkf_plot_tvector.h 
-=======
      enkf_plot_tvector.h
      enkf_plot_gendata.h
      enkf_plot_genvector.h
->>>>>>> master
+     enkf_plot_gen_kw.h
+     enkf_plot_gen_kw_vector.h
      qc_module.h 
      ert_report_list.h 
      runpath_list.h 
