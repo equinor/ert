@@ -32,15 +32,15 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         number_of_realizations_label = ActiveLabel(number_of_realizations_model, "Number of realizations", "config/ensemble/num_realizations")
         layout.addRow(number_of_realizations_label.getLabel(), number_of_realizations_label)
 
-        analysis_module_model = AnalysisModuleModel()
-        analysis_module_choice = ComboChoice(analysis_module_model, "Analysis Module", "config/analysis/analysis_module")
-        layout.addRow(analysis_module_choice.getLabel(), analysis_module_choice)
-
 
         target_case_model = TargetCaseModel()
         self.target_case_field = StringBox(target_case_model, "Target case", "config/simulation/target_case")
         self.target_case_field.setValidator(ProperNameArgument())
         layout.addRow(self.target_case_field.getLabel(), self.target_case_field)
+
+        analysis_module_model = AnalysisModuleModel()
+        self.analysis_module_choice = ComboChoice(analysis_module_model, "Analysis Module", "config/analysis/analysis_module")
+        layout.addRow(self.analysis_module_choice.getLabel(), self.analysis_module_choice)
 
         active_realizations_model = ActiveRealizationsModel()
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
@@ -55,6 +55,13 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
     def isConfigurationValid(self):
         return self.target_case_field.isValid() and self.active_realizations_field.isValid()
+
+    def toggleAdvancedOptions(self, show_advanced):
+        self.active_realizations_field.setVisible(show_advanced)
+        self.layout().labelForField(self.active_realizations_field).setVisible(show_advanced)
+
+        self.analysis_module_choice.setVisible(show_advanced)
+        self.layout().labelForField(self.analysis_module_choice).setVisible(show_advanced)
 
 
 
