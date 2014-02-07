@@ -26,10 +26,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/string_util.h>
-#include <ert/util/bool_vector.h>
 
-#include <ert/enkf/enkf_types.h>
-#include <ert/enkf/enkf_main.h>
 
 
 void test_export_field(ert_test_context_type * test_context , const char * job_name , const char * job_file) {
