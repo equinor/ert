@@ -46,7 +46,7 @@ ert_test_context_type * ert_test_context_alloc( const char * test_name , const c
    ert_test_context_type * test_context = util_malloc( sizeof * test_context );
    UTIL_TYPE_ID_INIT( test_context , ERT_TEST_CONTEXT_TYPE_ID );
    if (util_file_exists(model_config)) {
-     test_context->work_area = test_work_area_alloc("ERT-TEST-CONTEXT");
+     test_context->work_area = test_work_area_alloc(test_name);
      test_work_area_set_store( test_context->work_area , false );
      test_work_area_copy_parent_content(test_context->work_area , model_config );
      {

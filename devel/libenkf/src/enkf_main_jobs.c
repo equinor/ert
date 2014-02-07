@@ -143,7 +143,7 @@ void * enkf_main_ensemble_run_JOB( void * self , const stringlist_type * args ) 
 
 
 #define CURRENT_CASE_STRING "*"
-void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
+static void * enkf_main_smoother_JOB__( void * self , int iter , const stringlist_type * args ) {
   enkf_main_type   * enkf_main = enkf_main_safe_cast( self );
   int ens_size                 = enkf_main_get_ensemble_size( enkf_main );
   bool_vector_type * iactive   = bool_vector_alloc( ens_size , true );
@@ -167,12 +167,29 @@ void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
       fprintf(stderr, "** Warning: Function %s : Second argument must be a bool value. Exiting job\n", __func__);
       return NULL;
   }
-
-  enkf_main_run_smoother( enkf_main , target_case , iactive , rerun);
+  enkf_main_run_smoother( enkf_main , target_case , iactive , iter , rerun);
   bool_vector_free( iactive );
   return NULL;
 }
 #undef CURRENT_CASE_STRING
+
+
+void * enkf_main_smoother_JOB( void * self , const stringlist_type * args ) {
+  return enkf_main_smoother_JOB__( self, 0 , args );
+}
+
+
+void * enkf_main_smoother_with_iter_JOB( void * self , const stringlist_type * args ) {
+  int iter;
+  stringlist_type * sub_args = stringlist_alloc_shallow_copy_with_limits( args , 1 , stringlist_get_size( args ) - 1);
+  util_sscanf_int( stringlist_iget(args , 0 ) , &iter );
+
+  enkf_main_smoother_JOB__( self , iter , sub_args );
+
+  stringlist_free( sub_args );
+  return NULL;
+}
+
 
 
 void * enkf_main_iterated_smoother_JOB( void * self , const stringlist_type * args ) {
@@ -238,30 +255,52 @@ void * enkf_main_create_case_JOB( void * self , const stringlist_type * args) {
 }
 
 
-void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+static void * enkf_main_load_results_JOB__( enkf_main_type * enkf_main , int iter , const stringlist_type * args) {
   bool_vector_type * iactive = alloc_iactive_vector_from_range(args, 0, enkf_main_get_ensemble_size(enkf_main));
   int ens_size = enkf_main_get_ensemble_size(enkf_main);
   stringlist_type ** realizations_msg_list = util_calloc(ens_size, sizeof * realizations_msg_list);
-  int iens = 0;
-  for (; iens < ens_size; ++iens)
-      realizations_msg_list[iens] = stringlist_alloc_new();
-
-  enkf_main_load_from_forward_model(enkf_main, iactive, realizations_msg_list);
-
-  for (iens = 0; iens < ens_size; ++iens) {
-      stringlist_type * msg = realizations_msg_list[iens];
-      if (stringlist_get_size(msg)) {
-        int msg_count = 0;
-        for (; msg_count < stringlist_get_size(msg); ++msg_count)
-          fprintf(stderr, "** Warning: Function %s : Load of realization number %d returned the following warning: %s\n", __func__, iens, stringlist_iget(msg, msg_count));
-      }
-      stringlist_free(msg);
-   }
-
+  for (int iens = 0; iens < ens_size; ++iens)
+    realizations_msg_list[iens] = stringlist_alloc_new();
+  
+  enkf_main_load_from_forward_model(enkf_main, iter , iactive, realizations_msg_list);
+  
+  for (int iens = 0; iens < ens_size; ++iens) {
+    stringlist_type * msg = realizations_msg_list[iens];
+    if (stringlist_get_size(msg)) {
+      int msg_count = 0;
+      for (; msg_count < stringlist_get_size(msg); ++msg_count)
+        fprintf(stderr, "** Warning: Function %s : Load of realization number %d returned the following warning: %s\n", __func__, iens, stringlist_iget(msg, msg_count));
+    }
+    stringlist_free(msg);
+  }
+  
   free(realizations_msg_list);
-
   bool_vector_free(iactive);
+  return NULL;
+} 
+
+
+void * enkf_main_load_results_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  int iter = 0;
+  {
+    const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+    if (model_config_runpath_requires_iter( model_config ))
+      fprintf(stderr,"**Warning: the runpath format:%s requires an iteration number - using default:0. Use the job: LOAD_RESULT_ITER instead.\n" , model_config_get_runpath_as_char( model_config ));
+  }
+  return enkf_main_load_results_JOB__(enkf_main , iter , args );
+}
+
+
+void * enkf_main_load_results_iter_JOB( void * self , const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  stringlist_type * iens_args = stringlist_alloc_shallow_copy_with_limits( args , 1 , stringlist_get_size( args ) - 1);
+  int iter;
+  
+  util_sscanf_int( stringlist_iget( args , 0 ) , &iter);
+  enkf_main_load_results_JOB__(enkf_main , iter , iens_args );
+  stringlist_free( iens_args );
+
   return NULL;
 }
 
@@ -313,7 +352,117 @@ void * enkf_main_export_field_to_ECL_JOB(void * self, const stringlist_type * ar
 }
 
 
+void * enkf_main_rank_on_observations_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main  = enkf_main_safe_cast( self );
+  const char * ranking_name   = stringlist_iget(args, 0);
+
+  bool step_arguments = false;
+  bool obs_arguments  = false;
+  int  delimiter      = 0;
+  {
+    delimiter = stringlist_find_first(args, "|");
+    if (delimiter > -1) {
+      step_arguments = (delimiter > 1) ? true : false;
+      obs_arguments  = (stringlist_get_size(args) > delimiter + 1) ? true : false;
+    } else if (stringlist_get_size(args) > 1) {
+        step_arguments = true;
+        delimiter     = stringlist_get_size(args);
+    }
+  }
+
+  int_vector_type * steps_vector = NULL;
+  {
+    char * report_steps = NULL;
+
+    if (step_arguments)
+      report_steps = stringlist_alloc_joined_substring(args, 1, delimiter, ",");
+    else
+      report_steps = util_alloc_sprintf("0-%d", enkf_main_get_history_length(enkf_main));
+
+    steps_vector = string_util_alloc_value_list(report_steps);
+
+    free(report_steps);
+  }
+
+
+  stringlist_type * obs_ranking_keys = NULL;
+  {
+    char * obs_key_char = NULL;
+    if (obs_arguments)
+      obs_key_char = stringlist_alloc_joined_substring( args , delimiter+1 , stringlist_get_size(args) , " ");
+
+    enkf_obs_type * enkf_obs = enkf_main_get_obs(enkf_main);
+    obs_ranking_keys = enkf_obs_alloc_matching_keylist( enkf_obs , obs_key_char );
+
+    if ((obs_arguments) && (stringlist_get_size(obs_ranking_keys) == 0)) {
+      fprintf(stderr,"The input string : \"%s\" did not resolve to any valid observation keys. Job not started\n", obs_key_char);
+      return NULL;
+    }
+
+    if (obs_arguments)
+      free(obs_key_char);
+  }
+
+
+  enkf_main_rank_on_observations(enkf_main, ranking_name, obs_ranking_keys, steps_vector);
+
+  stringlist_free(obs_ranking_keys);
+  int_vector_free(steps_vector);
+  return NULL;
+}
 
 
 
 
+void * enkf_main_rank_on_data_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  const char * ranking_name  = stringlist_iget(args, 0);
+  const char * data_key      = stringlist_iget(args, 1);
+  bool valid = true;
+  bool sort_increasing       = stringlist_iget_as_bool(args, 2, &valid);
+
+  if (!valid) {
+    fprintf(stderr,"** Third argument \"sort increasing\" not recognized as bool value, job not started\n");
+    return NULL;
+  }
+
+  int report_step = (stringlist_get_size(args) > 3) ? stringlist_iget_as_int(args, 3, &valid) : enkf_main_get_history_length(enkf_main) ;
+  if (!valid) {
+    fprintf(stderr,"** Fourth argument \"step\" not recognized as integer value, job not started\n");
+    return NULL;
+  }
+
+  if (report_step < 0) {
+    fprintf(stderr,"** Negative report step, job not started\n");
+    return NULL;
+  }
+
+  enkf_main_rank_on_data(enkf_main, ranking_name, data_key, sort_increasing, report_step);
+  return NULL;
+}
+
+
+void * enkf_main_export_ranking_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( self );
+  const char * ranking_name  = stringlist_iget(args, 0);
+  const char * ranking_file  = stringlist_iget(args, 1);
+
+  enkf_main_export_ranking(enkf_main, ranking_name, ranking_file);
+  return NULL;
+}
+
+void * enkf_main_init_misfit_table_JOB(void * self, const stringlist_type * args) {
+  enkf_main_type * enkf_main   = enkf_main_safe_cast( self );
+  int history_length           = enkf_main_get_history_length(enkf_main);
+  enkf_obs_type * enkf_obs     = enkf_main_get_obs(enkf_main);
+  int ens_size                 = enkf_main_get_ensemble_size(enkf_main);
+  enkf_fs_type * fs            = enkf_main_get_fs(enkf_main);
+  bool force_update            = true;
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+
+
+  misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
+  misfit_ensemble_initialize( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length, force_update);
+
+  return NULL;
+}

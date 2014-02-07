@@ -1405,10 +1405,17 @@ static bool enkf_main_smoother_update__(enkf_main_type * enkf_main , const int_v
 
 bool enkf_main_smoother_update(enkf_main_type * enkf_main , enkf_fs_type * target_fs) {
   int stride = 1;
+  int step2;
   time_map_type * time_map = enkf_fs_get_time_map( enkf_main_get_fs( enkf_main ));
-  int_vector_type * step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , time_map_get_last_step( time_map ) , stride);
-  bool update_done = enkf_main_smoother_update__( enkf_main , step_list , target_fs );
-  
+  int_vector_type * step_list;
+  bool update_done;
+
+  step2 = time_map_get_last_step( time_map );
+  if (step2 < 0)
+    step2 = model_config_get_last_history_restart( enkf_main->model_config );
+
+  step_list = enkf_main_update_alloc_step_list( enkf_main , 0 , step2 , stride);
+  update_done = enkf_main_smoother_update__( enkf_main , step_list , target_fs );
   int_vector_free( step_list );
   
   return update_done;
@@ -1646,6 +1653,9 @@ static bool enkf_main_run_step(enkf_main_type * enkf_main       ,
 */
 int_vector_type * enkf_main_update_alloc_step_list( const enkf_main_type * enkf_main , int load_start , int step2 , int stride) {
   int_vector_type * step_list = int_vector_alloc( 0 , 0 );
+
+  if (step2 < load_start)
+    util_abort("%s: fatal internal error: Tried to make step list %d ... %d \n",__func__ , load_start , step2);
   
   if (stride == 0) 
     int_vector_append( step_list , step2 );
@@ -1698,7 +1708,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, const bool_vector_type * ia
   
   enkf_main_init_internalization(enkf_main , run_mode);
   
-  if (iactive) {
+  {
     const int active_ens_size = util_int_min( bool_vector_size( iactive ) , enkf_main_get_ensemble_size( enkf_main ));
     stringlist_type * param_list = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
     enkf_main_initialize_from_scratch( enkf_main , param_list , 0 , active_ens_size - 1 , init_mode );
@@ -1845,10 +1855,10 @@ bool enkf_main_run_simple_step(enkf_main_type * enkf_main , bool_vector_type * i
 
 
 
-void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , bool rerun) {
+void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun) {
   analysis_config_type * analysis_config = enkf_main_get_analysis_config( enkf_main );
   if (!analysis_config_get_module_option( analysis_config , ANALYSIS_ITERABLE)) {
-    if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL, 0))
+    if (enkf_main_run_simple_step( enkf_main , iactive , INIT_CONDITIONAL, iter))
       enkf_main_run_post_workflow(enkf_main);
     {
       enkf_fs_type * target_fs = enkf_main_mount_alt_fs( enkf_main , target_fs_name , false , true );
@@ -1857,7 +1867,7 @@ void enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_
       if (rerun) { 
         if (update_done) {
           enkf_main_set_fs( enkf_main , target_fs , target_fs_name);
-          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, 1))
+          if (enkf_main_run_simple_step(enkf_main , iactive , INIT_NONE, iter + 1))
             enkf_main_run_post_workflow(enkf_main);
         } else {
           fprintf(stderr,"** Warning: the analysis update failed - no rerun started.\n");
@@ -3893,7 +3903,7 @@ void enkf_main_run_workflows( enkf_main_type * enkf_main , const stringlist_type
 }
 
 
-void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_type * iactive, stringlist_type ** realizations_msg_list) {
+void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list) {
   enkf_fs_type * fs         = enkf_main_get_fs( enkf_main );
   const int ens_size        = enkf_main_get_ensemble_size( enkf_main );
   int step1                 = 0;
@@ -3922,7 +3932,8 @@ void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_t
       arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */
       arg_pack_append_ptr(arg_pack, realizations_msg_list[iens]);                         /* 6: List of interactive mode messages. */
       arg_pack_append_bool( arg_pack, true );                                             /* 7: Manual load */
-      arg_pack_append_ptr(arg_pack, &result[iens]);                                       /* 8: Result */
+      arg_pack_append_int( arg_pack , iter );                                             /* 8: Iteration number */
+      arg_pack_append_ptr(arg_pack, &result[iens]);                                       /* 9: Result */
 
       thread_pool_add_job( tp , enkf_state_load_from_forward_model_mt , arg_pack);
     }
@@ -4019,3 +4030,55 @@ bool enkf_main_export_field(const enkf_main_type * enkf_main,
 
   return ret; 
 }
+
+
+void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
+                                    const char * ranking_key,
+                                    const stringlist_type * obs_ranking_keys,
+                                    const int_vector_type * steps) {
+
+  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
+  const enkf_obs_type        * enkf_obs        = enkf_main_get_obs( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const int history_length                     = enkf_main_get_history_length( enkf_main );
+  const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
+
+  misfit_ensemble_type * misfit_ensemble = enkf_fs_get_misfit_ensemble( fs );
+  misfit_ensemble_initialize( misfit_ensemble , ensemble_config , enkf_obs , fs , ens_size , history_length, false);
+
+  ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
+
+  ranking_table_add_misfit_ranking( ranking_table , misfit_ensemble , obs_ranking_keys , steps , ranking_key );
+  ranking_table_display_ranking( ranking_table , ranking_key);
+}
+
+
+
+void enkf_main_rank_on_data(enkf_main_type * enkf_main,
+                            const char * ranking_key,
+                            const char * data_key,
+                            bool sort_increasing,
+                            int step) {
+
+  ranking_table_type * ranking_table     = enkf_main_get_ranking_table( enkf_main );
+  ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
+  enkf_fs_type * fs                      = enkf_main_get_fs(enkf_main);
+  state_enum state                       = FORECAST;
+  char * key_index;
+
+  const enkf_config_node_type * config_node = ensemble_config_user_get_node( ensemble_config , data_key , &key_index);
+  if (config_node) {
+    ranking_table_add_data_ranking( ranking_table , sort_increasing , ranking_key , data_key , key_index , fs , config_node, step , state );
+    ranking_table_display_ranking( ranking_table , ranking_key );
+  } else {
+    fprintf(stderr,"** No data found for key %s\n", data_key);
+  }
+}
+
+
+void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_key, const char * ranking_file) {
+  ranking_table_type * ranking_table = enkf_main_get_ranking_table( enkf_main );
+  ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
+}
+
+

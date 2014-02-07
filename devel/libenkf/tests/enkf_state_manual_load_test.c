@@ -46,8 +46,9 @@ int test_load_manually_to_new_case(enkf_main_type * enkf_main) {
     arg_pack_append_bool( arg_pack , true );                                            /* 5: Interactive */
     arg_pack_append_owned_ptr( arg_pack , stringlist_alloc_new() , stringlist_free__);  /* 6: List of interactive mode messages. */
     arg_pack_append_bool( arg_pack, true );                                             /* 7: Manual load */
-    arg_pack_append_ptr( arg_pack, &result );                                           /* 8: Result */
-
+    arg_pack_append_int( arg_pack , 0 );                                                /* 8: iter */
+    arg_pack_append_ptr( arg_pack, &result );                                           /* 9: Result */
+    
     enkf_state_load_from_forward_model_mt(arg_pack);
 
     arg_pack_free(arg_pack);
@@ -59,7 +60,8 @@ int test_load_manually_to_new_case(enkf_main_type * enkf_main) {
 void initialize(enkf_main_type * enkf_main) {
 
   run_mode_type run_mode = ENSEMBLE_EXPERIMENT;
-  enkf_main_init_run(enkf_main , NULL , run_mode , INIT_NONE);     /* This is ugly */
+  bool_vector_type * iactive = bool_vector_alloc( enkf_main_get_ensemble_size(enkf_main) , true);
+  enkf_main_init_run(enkf_main , iactive , run_mode , INIT_NONE);     /* This is ugly */
 
   int step1 = 1;
   int step2 = 1;
@@ -72,6 +74,8 @@ void initialize(enkf_main_type * enkf_main) {
   int load_start = 1;
 
   enkf_state_init_run(state, run_mode, active, max_internal_sumbit, init_step_parameter, init_state_parameter, init_state_dynamic, load_start, 0, step1, step2);
+  
+  bool_vector_free( iactive );
 }
 
 

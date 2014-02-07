@@ -159,8 +159,8 @@ static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt
   util_safe_free(run_info->run_path);
   {
     char * tmp1 = path_fmt_alloc_path(run_path_fmt , false , iens, run_info->iter);   /* 1: Replace first %d with iens, if a second %d replace with iter */
-    char * tmp2 = subst_list_alloc_filtered_string( state_subst_list , tmp1 );                            /* 2: Filter out various magic strings like <CASE> and <CWD>. */
-    run_info->run_path = util_alloc_abs_path( tmp2 );                                                     /* 3: Ensure that the path is absolute. */
+    char * tmp2 = subst_list_alloc_filtered_string( state_subst_list , tmp1 );        /* 2: Filter out various magic strings like <CASE> and <CWD>. */
+    run_info->run_path = util_alloc_abs_path( tmp2 );                                 /* 3: Ensure that the path is absolute. */
     free( tmp1 );
     free( tmp2 );
   }
@@ -192,13 +192,16 @@ static void run_info_init_for_load(run_info_type * run_info ,
                                    int step1,
                                    int step2,
                                    int iens,
+                                   int iter , 
                                    path_fmt_type * run_path_fmt ,
                                    const subst_list_type * state_subst_list) {
   run_info->step1      = step1;
   run_info->step2      = step2;
   run_info->load_start = load_start;
+  run_info->iter       = iter;
   run_info_set_run_path(run_info , iens , run_path_fmt , state_subst_list );
 }
+
 
 
 static void run_info_set(run_info_type * run_info        , 
@@ -225,8 +228,7 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->run_mode             = run_mode;
   run_info->max_internal_submit  = max_internal_submit;
   run_info->num_internal_submit  = 0;
-  run_info->iter                 = iter;
-  run_info_init_for_load( run_info , load_start , step1 , step2 , iens , run_path_fmt , state_subst_list);
+  run_info_init_for_load( run_info , load_start , step1 , step2 , iens , iter , run_path_fmt , state_subst_list);
 }
 
 
@@ -293,17 +295,16 @@ void enkf_state_initialize(enkf_state_type * enkf_state , enkf_fs_type * fs , co
     else {
       state_enum init_state = ANALYZED;
 
-      for (int ip = 0; ip < stringlist_get_size(param_list); ip++)
-        {
-          enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
-          node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
-          bool has_data = enkf_node_has_data(param_node, fs, node_id);
-          
-          if ((init_mode == INIT_FORCE) || (has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
-            if (enkf_node_initialize(param_node, iens, enkf_state->rng)) 
-              enkf_node_store(param_node, fs, true, node_id);
-          }
+      for (int ip = 0; ip < stringlist_get_size(param_list); ip++) {
+        enkf_node_type * param_node = enkf_state_get_node(enkf_state, stringlist_iget(param_list, ip));
+        node_id_type node_id = { .report_step = 0, .iens = iens, .state = init_state };
+        bool has_data = enkf_node_has_data(param_node, fs, node_id);
+        
+        if ((init_mode == INIT_FORCE) || (has_data == false) || (current_state == STATE_LOAD_FAILURE)) {
+          if (enkf_node_initialize(param_node, iens, enkf_state->rng)) 
+            enkf_node_store(param_node, fs, true, node_id);
         }
+      }
       state_map_update_matching(state_map , iens , STATE_UNDEFINED | STATE_LOAD_FAILURE , STATE_INITIALIZED);
       enkf_fs_fsync(fs);
     }
@@ -816,7 +817,7 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
       enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( keylist_GEN_DATA , ikey));
       
       if (enkf_node_vector_storage(node)) {
-
+        
         enkf_node_try_load_vector( node , fs , iens , FORECAST);
         if (enkf_node_forward_load_vector( node , run_info->run_path , NULL , NULL , load_start, last_report , iens)) {
           enkf_node_store_vector( node , fs , iens , FORECAST );
@@ -830,13 +831,16 @@ static void enkf_state_internalize_GEN_DATA(enkf_state_type * enkf_state ,
         }
       
       } else {
-
+        
         for (int report_step = load_start; report_step <= last_report; report_step++) {
           if (enkf_node_internalize(node , report_step)) {
-
+            
             if (enkf_node_has_func(node , forward_load_func)) {
               if (enkf_node_forward_load(node , run_info->run_path , NULL , NULL  , report_step , iens )) {
-                node_id_type node_id = {.report_step = report_step , .iens = iens , .state = FORECAST };
+                node_id_type node_id = {.report_step = report_step , 
+                                        .iens = iens , 
+                                        .state = FORECAST };
+
                 enkf_node_store( node , fs, false , node_id );
                 
                 if (interactive) 
@@ -1087,7 +1091,6 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , enkf_f
     hence we must load the summary results first.
   */
   
-        
   enkf_state_internalize_dynamic_eclipse_results(enkf_state , fs , model_config , result, interactive , msg_list);
   {
     int last_report = time_map_get_last_step( enkf_fs_get_time_map( fs ));
@@ -1138,8 +1141,17 @@ void enkf_state_forward_init(enkf_state_type * enkf_state ,
         if (!enkf_node_has_data( node , fs , node_id)) {   
           if (enkf_node_forward_init(node , run_info->run_path , iens ))
             enkf_node_store( node , fs, false , node_id );
-          else
+          else {
+            char * init_file = enkf_config_node_alloc_initfile( enkf_node_get_config( node ) , run_info->run_path , iens );
+
+            if (init_file && !util_file_exists( init_file )) 
+              fprintf(stderr,"File not found: %s - failed to initialize node: %s\n", init_file , enkf_node_get_key( node ));
+            else
+              fprintf(stderr,"Failed to initialize node: %s\n", enkf_node_get_key( node ));
+            
+            util_safe_free( init_file );
             *result |= LOAD_FAILURE;
+          }
         }
 
       }
@@ -1188,7 +1200,8 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
   stringlist_type * msg_list   = arg_pack_iget_ptr( arg_pack , 6 );
   bool manual_load             = arg_pack_iget_bool( arg_pack , 7 );
   int iens                     = member_config_get_iens( enkf_state->my_config );
-  int * result                 = arg_pack_iget_ptr( arg_pack , 8 );
+  int iter                     = arg_pack_iget_int( arg_pack , 8 );
+  int * result                 = arg_pack_iget_ptr( arg_pack , 9 );
   
   if (manual_load)
     state_map_update_undefined(enkf_fs_get_state_map(fs) , iens , STATE_INITIALIZED);
@@ -1198,6 +1211,7 @@ void * enkf_state_load_from_forward_model_mt( void * arg ) {
                           step1 , 
                           step2 , 
                           iens , 
+                          iter , 
                           model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 
                           enkf_state->subst_list );
   

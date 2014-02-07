@@ -138,7 +138,7 @@ extern "C" {
                                                            int              start_report         ,
                                                            state_enum       start_state);
 
-  void                          enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , bool rerun);
+  void                          enkf_main_run_smoother(enkf_main_type * enkf_main , const char * target_fs_name , bool_vector_type * iactive , int iter , bool rerun);
   bool                          enkf_main_iterate_smoother(enkf_main_type * enkf_main, int iteration_number, const char * target_fs_name , bool_vector_type * iactive);
   void                          enkf_main_run_iterated_ES(enkf_main_type * enkf_main, int iter1 , int iter2);
   void                          enkf_main_run_one_more_iteration(enkf_main_type * enkf_main, int step2);
@@ -284,8 +284,25 @@ pca_plot_data_type * enkf_main_alloc_pca_plot_data( const enkf_main_type * enkf_
                               state_enum state);  
 
 
-  void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, bool_vector_type * iactive, stringlist_type ** realizations_msg_list);
+  void enkf_main_load_from_forward_model(enkf_main_type * enkf_main, int iter , bool_vector_type * iactive, stringlist_type ** realizations_msg_list);
   
+
+  void enkf_main_rank_on_observations(enkf_main_type * enkf_main,
+                                      const char * ranking_key,
+                                      const stringlist_type * obs_ranking_keys,
+                                      const int_vector_type * steps);
+
+
+
+  void enkf_main_rank_on_data(enkf_main_type * enkf_main,
+                              const char * ranking_key,
+                              const char * data_key,
+                              bool sort_increasing,
+                              int step);
+
+
+  void enkf_main_export_ranking(enkf_main_type * enkf_main, const char * ranking_key, const char * ranking_file);
+
   
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
