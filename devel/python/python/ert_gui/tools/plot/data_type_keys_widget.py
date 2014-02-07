@@ -1,7 +1,8 @@
 from PyQt4.QtCore import pyqtSignal, Qt
 from PyQt4.QtGui import QWidget, QVBoxLayout, QListView, QColor, QSortFilterProxyModel, QHBoxLayout, QToolButton, \
     QComboBox, QStandardItemModel, QStandardItem
-from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel
+from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, FilterPopup
+from ert_gui.widgets import util
 from ert_gui.widgets.legend import Legend
 from ert_gui.widgets.search_box import SearchBox
 
@@ -12,45 +13,25 @@ class DataTypeKeysWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
+        self.__filter_popup = FilterPopup(self)
+        self.__filter_popup.filterSettingsChanged.connect(self.onItemChanged)
+
         layout = QVBoxLayout()
 
         self.model = DataTypeKeysListModel()
         self.filter_model = DataTypeProxyModel(self.model)
 
+        filter_layout = QHBoxLayout()
+
         self.search_box = SearchBox()
         self.search_box.filterChanged.connect(self.setSearchString)
+        filter_layout.addWidget(self.search_box)
 
-        layout.addWidget(self.search_box)
-
-        data_type_model = QStandardItemModel(0, 1)
-        item = QStandardItem("Select data types...")
-        item.setFlags(Qt.NoItemFlags)
-
-        data_type_model.appendRow(item)
-
-        self.__summary_item = QStandardItem("Summary")
-        self.__summary_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-        self.__summary_item.setData(Qt.Checked, Qt.CheckStateRole)
-
-        data_type_model.appendRow(self.__summary_item)
-
-        self.__block_item = QStandardItem("Block")
-        self.__block_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-        self.__block_item.setData(Qt.Checked, Qt.CheckStateRole)
-        data_type_model.appendRow(self.__block_item)
-
-        self.__genkw_item = QStandardItem("Gen")
-        self.__genkw_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-        self.__genkw_item.setData(Qt.Checked, Qt.CheckStateRole)
-        data_type_model.appendRow(self.__genkw_item)
-
-
-        data_type_model.itemChanged.connect(self.onItemChanged)
-
-
-        combo = QComboBox()
-        combo.setModel(data_type_model)
-        layout.addWidget(combo)
+        filter_popup_button = QToolButton()
+        filter_popup_button.setIcon(util.resourceIcon("ide/cog_edit.png"))
+        filter_popup_button.clicked.connect(self.showFilterPopup)
+        filter_layout.addWidget(filter_popup_button)
+        layout.addLayout(filter_layout)
 
         self.data_type_keys_widget = QListView()
         self.data_type_keys_widget.setModel(self.filter_model)
@@ -65,14 +46,9 @@ class DataTypeKeysWidget(QWidget):
         self.setLayout(layout)
 
     def onItemChanged(self, item):
-        assert isinstance(item, QStandardItem)
-        checked = item.checkState()==Qt.Checked
-        if item == self.__block_item:
-            self.filter_model.setShowBlockKeys(checked)
-        elif item == self.__summary_item:
-            self.filter_model.setShowSummaryKeys(checked)
-        elif item == self.__genkw_item:
-            self.filter_model.setShowGenKWKeys(checked)
+        self.filter_model.setShowBlockKeys(item["block"])
+        self.filter_model.setShowSummaryKeys(item["summary"])
+        self.filter_model.setShowGenKWKeys(item["gen_kw"])
 
 
     def itemSelected(self):
@@ -94,3 +70,7 @@ class DataTypeKeysWidget(QWidget):
 
     def setSearchString(self, filter):
         self.filter_model.setFilterFixedString(filter)
+
+    def showFilterPopup(self):
+        self.__filter_popup.show()
+

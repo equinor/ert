@@ -1,5 +1,5 @@
 from .scale_tracker import ScaleTracker
-
+from .filter_popup import FilterPopup
 
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_proxy_model import DataTypeProxyModel
