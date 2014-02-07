@@ -8,6 +8,7 @@ from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 from ert_gui.widgets import util
 
 from ert_gui.widgets.combo_choice import ComboChoice
+from ert_gui.widgets.helped_widget import HelpedWidget
 
 
 class SimulationPanel(QWidget):
@@ -33,6 +34,7 @@ class SimulationPanel(QWidget):
         self.run_button.setIcon(util.resourceIcon("ide/gear_in_play"))
         self.run_button.clicked.connect(self.runSimulation)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        HelpedWidget.addHelpToWidget(self.run_button, "run/start_simulation")
 
         simulation_mode_layout.addWidget(self.run_button)
         simulation_mode_layout.addStretch(1)
@@ -55,6 +57,7 @@ class SimulationPanel(QWidget):
 
         self.setLayout(layout)
 
+
     def addSimulationConfigPanel(self, panel):
         assert isinstance(panel, SimulationConfigPanel)
 
@@ -66,6 +69,7 @@ class SimulationPanel(QWidget):
 
     def getCurrentSimulationMode(self):
         return SimulationModeModel().getCurrentChoice()
+
 
     def runSimulation(self):
         run_model = self.getCurrentSimulationMode()
