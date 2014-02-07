@@ -28,8 +28,9 @@ class GenKwConfig(BaseCClass):
     def get_parameter_file(self):
         return GenKwConfig.cNamespace().get_parameter_file(self)
 
-    def alloc_name_list(self):
-        return GenKwConfig.cNamespace().alloc_name_list(self).setParent(self)
+    def getKeyWords(self):
+        """ @rtype: StringList """
+        return GenKwConfig.cNamespace().alloc_name_list(self)
 
     def free(self):
         GenKwConfig.cNamespace().free(self)
@@ -44,4 +45,4 @@ cwrapper.registerType("gen_kw_config_ref", GenKwConfig.createCReference)
 GenKwConfig.cNamespace().free = cwrapper.prototype("void gen_kw_config_free( gen_kw_config )")
 GenKwConfig.cNamespace().get_template_file = cwrapper.prototype("char* gen_kw_config_get_template_file(gen_kw_config)")
 GenKwConfig.cNamespace().get_parameter_file = cwrapper.prototype("char* gen_kw_config_get_parameter_file(gen_kw_config)")
-GenKwConfig.cNamespace().alloc_name_list = cwrapper.prototype("stringlist_ref gen_kw_config_alloc_name_list(gen_kw_config)")
+GenKwConfig.cNamespace().alloc_name_list = cwrapper.prototype("stringlist_obj gen_kw_config_alloc_name_list(gen_kw_config)")
