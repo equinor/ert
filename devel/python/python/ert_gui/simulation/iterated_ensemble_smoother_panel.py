@@ -34,15 +34,14 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         num_iterations_spinner = IntegerSpinner(num_iterations_model, "Number of iterations", "config/simulation/number_of_iterations")
         layout.addRow(num_iterations_spinner.getLabel(), num_iterations_spinner)
 
-        iterated_analysis_module_model = IteratedAnalysisModuleModel()
-        iterated_analysis_module_choice = ComboChoice(iterated_analysis_module_model, "Analysis Module", "config/analysis/iterated_analysis_module")
-        layout.addRow(iterated_analysis_module_choice.getLabel(), iterated_analysis_module_choice)
-
-
         iterated_target_case_format_model = TargetCaseFormatModel()
         self.iterated_target_case_format_field = StringBox(iterated_target_case_format_model, "Target case format", "config/simulation/iterated_target_case_format")
         self.iterated_target_case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow(self.iterated_target_case_format_field.getLabel(), self.iterated_target_case_format_field)
+
+        iterated_analysis_module_model = IteratedAnalysisModuleModel()
+        self.iterated_analysis_module_choice = ComboChoice(iterated_analysis_module_model, "Analysis Module", "config/analysis/iterated_analysis_module")
+        layout.addRow(self.iterated_analysis_module_choice.getLabel(), self.iterated_analysis_module_choice)
 
         active_realizations_model = ActiveRealizationsModel()
         self.active_realizations_field = StringBox(active_realizations_model, "Active realizations", "config/simulation/active_realizations")
@@ -60,5 +59,11 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         return self.iterated_target_case_format_field.isValid() and self.active_realizations_field.isValid() and analysis_module is not None
 
 
+    def toggleAdvancedOptions(self, show_advanced):
+        self.active_realizations_field.setVisible(show_advanced)
+        self.layout().labelForField(self.active_realizations_field).setVisible(show_advanced)
+
+        self.iterated_analysis_module_choice.setVisible(show_advanced)
+        self.layout().labelForField(self.iterated_analysis_module_choice).setVisible(show_advanced)
 
 

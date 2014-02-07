@@ -1,5 +1,5 @@
 from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget
+from PyQt4.QtGui import QMainWindow, qApp, QWidget, QVBoxLayout, QDockWidget, QAction
 from ert_gui.widgets.help_dock import HelpDock
 
 
@@ -18,6 +18,8 @@ class GertMainWindow(QMainWindow):
 
         self.setCentralWidget(self.central_widget)
 
+        self.central_widget_content = None
+
         self.toolbar = self.addToolBar("Tools")
         self.toolbar.setObjectName("Toolbar")
         self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
@@ -25,6 +27,7 @@ class GertMainWindow(QMainWindow):
         self.__createMenu()
         self.__help_dock = HelpDock()
         help_dock = self.addDock("&Help", self.__help_dock, Qt.BottomDockWidgetArea )
+
 
         self.__fetchSettings()
 
@@ -79,7 +82,12 @@ class GertMainWindow(QMainWindow):
 
 
     def setWidget(self, widget):
+        actions = widget.getActions()
+        for action in actions:
+            self.__view_menu.addAction(action)
+
         self.central_layout.addWidget(widget)
+
 
 
 
