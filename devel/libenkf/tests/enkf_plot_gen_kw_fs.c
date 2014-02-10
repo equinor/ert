@@ -41,7 +41,7 @@ void test_load(const char * config_file) {
     enkf_plot_gen_kw_type * plot_gen_kw = enkf_plot_gen_kw_alloc( config_node );
     bool_vector_type      * input_mask  = bool_vector_alloc( ens_size , true );
 
-    enkf_plot_gen_kw_load( plot_gen_kw , enkf_main_get_fs( enkf_main ) , 0 , ANALYZED , input_mask );
+    enkf_plot_gen_kw_load( plot_gen_kw , enkf_main_get_fs( enkf_main ) , true , 0 , ANALYZED , input_mask );
     
     test_assert_int_equal( ens_size , enkf_plot_gen_kw_get_size( plot_gen_kw ));
     

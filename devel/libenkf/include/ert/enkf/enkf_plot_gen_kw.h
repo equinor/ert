@@ -39,6 +39,7 @@ extern "C" {
   enkf_plot_gen_kw_vector_type * enkf_plot_gen_kw_iget( const enkf_plot_gen_kw_type * vector , int index);
   void                           enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * gen_kw ,
                                                         enkf_fs_type           * fs ,
+                                                        bool                     transform_data , 
                                                         int                      report_step ,
                                                         state_enum               state ,
                                                         const bool_vector_type * input_mask);

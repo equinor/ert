@@ -120,6 +120,7 @@ const stringlist_type * enkf_plot_gen_kw_get_keys( const enkf_plot_gen_kw_type *
 
 void enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * plot_gen_kw,
                             enkf_fs_type           * fs,
+                            bool                     transform_data , 
                             int                      report_step,
                             state_enum               state,
                             const bool_vector_type * input_mask ) {
@@ -145,7 +146,7 @@ void enkf_plot_gen_kw_load( enkf_plot_gen_kw_type  * plot_gen_kw,
     for (iens = 0; iens < ens_size; ++iens) {
       if (bool_vector_iget( mask , iens)) {
         enkf_plot_gen_kw_vector_type * vector = enkf_plot_gen_kw_iget( plot_gen_kw , iens );
-        enkf_plot_gen_kw_vector_load( vector , fs , report_step , state );
+        enkf_plot_gen_kw_vector_load( vector , fs , transform_data , report_step , state );
       }
     }
 

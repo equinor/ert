@@ -73,7 +73,7 @@ void enkf_plot_gen_kw_vector_reset( enkf_plot_gen_kw_vector_type * vector ) {
 }
 
 
-void enkf_plot_gen_kw_vector_load( enkf_plot_gen_kw_vector_type * vector , enkf_fs_type * fs , int report_step , state_enum state ) {
+void enkf_plot_gen_kw_vector_load( enkf_plot_gen_kw_vector_type * vector , enkf_fs_type * fs , bool transform_data , int report_step , state_enum state ) {
   enkf_plot_gen_kw_vector_reset( vector );
   {
     node_id_type node_id = { .report_step = report_step ,
@@ -88,7 +88,7 @@ void enkf_plot_gen_kw_vector_load( enkf_plot_gen_kw_vector_type * vector , enkf_
       int i_kw;
 
       for (i_kw = 0 ; i_kw < n_kw ; ++i_kw) {
-        double_vector_append(vector->data , gen_kw_data_iget( gen_kw , i_kw , true ) );
+        double_vector_append(vector->data , gen_kw_data_iget( gen_kw , i_kw , transform_data ) );
       }
     }
 
